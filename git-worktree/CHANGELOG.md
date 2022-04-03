@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.0 (2022-04-03)
 
 An initial release with the ability to checkout indices with simple files only.
 
@@ -13,10 +13,10 @@ An initial release with the ability to checkout indices with simple files only.
 
 <csr-read-only-do-not-edit/>
 
- - 94 commits contributed to the release over the course of 59 calendar days.
+ - 95 commits contributed to the release over the course of 59 calendar days.
  - 84 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 5 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#366](https://github.com/Byron/gitoxide/issues/366)
+ - 6 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364), [#366](https://github.com/Byron/gitoxide/issues/366)
 
 ### Thanks Clippy
 
@@ -114,6 +114,8 @@ An initial release with the ability to checkout indices with simple files only.
     - Fix build ([`f6d9693`](https://github.com/Byron/gitoxide/commit/f6d969370b8ef05b3b29983dcd9f6fa11d6225f2))
  * **[#333](https://github.com/Byron/gitoxide/issues/333)**
     - Use git_features::path everywhere where there is a path conversion ([`2e1437c`](https://github.com/Byron/gitoxide/commit/2e1437cb0b5dc77f2317881767f71eaf9b009ebf))
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - update changelogs prior to release ([`746a676`](https://github.com/Byron/gitoxide/commit/746a676056cd4907da7137a00798344b5bdb4419))
  * **[#366](https://github.com/Byron/gitoxide/issues/366)**
     - the first possibly working version of loading a mailmap with multiple sources ([`98d745e`](https://github.com/Byron/gitoxide/commit/98d745e8080975a91cff1ce75e187258c851d3f4))
  * **Uncategorized**

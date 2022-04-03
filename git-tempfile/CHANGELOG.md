@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.0.1 (2022-04-03)
 
 A maintenance release without any changes on the surface.
 
@@ -13,10 +13,10 @@ A maintenance release without any changes on the surface.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 42 calendar days.
+ - 4 commits contributed to the release over the course of 42 calendar days.
  - 44 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 2 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#328](https://github.com/Byron/gitoxide/issues/328)
+ - 3 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#328](https://github.com/Byron/gitoxide/issues/328), [#364](https://github.com/Byron/gitoxide/issues/364)
 
 ### Commit Details
 
@@ -28,6 +28,8 @@ A maintenance release without any changes on the surface.
     - refactor ([`591b533`](https://github.com/Byron/gitoxide/commit/591b5338ecdc0da33151baa0781fd8dc1ee8d5a9))
  * **[#328](https://github.com/Byron/gitoxide/issues/328)**
     - a stress test to try conjure deadlocks in handlers ([`3bdecb5`](https://github.com/Byron/gitoxide/commit/3bdecb54570b46e4c140e783f49ff23ef465582d))
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - update changelogs prior to release ([`746a676`](https://github.com/Byron/gitoxide/commit/746a676056cd4907da7137a00798344b5bdb4419))
  * **Uncategorized**
     - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))
 </details>

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.0.0 (2022-04-03)
 
 A maintenance release due to mildly breaking changes in `git-tempfile`.
 
@@ -13,10 +13,10 @@ A maintenance release due to mildly breaking changes in `git-tempfile`.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 44 calendar days.
+ - 2 commits contributed to the release over the course of 44 calendar days.
  - 169 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 1 unique issue was worked on: [#364](https://github.com/Byron/gitoxide/issues/364)
 
 ### Commit Details
 
@@ -24,6 +24,8 @@ A maintenance release due to mildly breaking changes in `git-tempfile`.
 
 <details><summary>view details</summary>
 
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - update changelogs prior to release ([`746a676`](https://github.com/Byron/gitoxide/commit/746a676056cd4907da7137a00798344b5bdb4419))
  * **Uncategorized**
     - Release git-tempfile v2.0.0, safety bump 6 crates ([`90b1c42`](https://github.com/Byron/gitoxide/commit/90b1c42d5487904a9f329362d185b035d0ddb975))
 </details>

@@ -1073,7 +1073,7 @@ dependencies = [
 
 [[package]]
 name = "git-attributes"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bitflags",
  "bstr",
@@ -1086,7 +1086,7 @@ dependencies = [
 
 [[package]]
 name = "git-bitmap"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
  "git-testtools",
  "quick-error",
@@ -1305,7 +1305,7 @@ dependencies = [
 
 [[package]]
 name = "git-packetline"
-version = "0.12.3"
+version = "0.12.4"
 dependencies = [
  "async-std",
  "bstr",
@@ -1349,7 +1349,7 @@ dependencies = [
 
 [[package]]
 name = "git-quote"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bstr",
  "btoi",
@@ -1430,7 +1430,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-tempfile"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "dashmap",
  "libc",

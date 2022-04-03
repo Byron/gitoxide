@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.14.0 (2022-04-03)
 
 A maintenance release primarily to adapt to dependent crates.
 
@@ -13,7 +13,7 @@ A maintenance release primarily to adapt to dependent crates.
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 68 calendar days.
+ - 7 commits contributed to the release over the course of 68 calendar days.
  - 69 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#364](https://github.com/Byron/gitoxide/issues/364)
@@ -25,6 +25,7 @@ A maintenance release primarily to adapt to dependent crates.
 <details><summary>view details</summary>
 
  * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - update changelogs prior to release ([`746a676`](https://github.com/Byron/gitoxide/commit/746a676056cd4907da7137a00798344b5bdb4419))
     - Adjust to breaking changes in `git-traverse` ([`d79b506`](https://github.com/Byron/gitoxide/commit/d79b5064eab2d1bef445e6c9e62a53466a8d5225))
  * **Uncategorized**
     - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))

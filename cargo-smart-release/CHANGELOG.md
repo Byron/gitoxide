@@ -5,9 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.0 (2022-04-03)
 
 <csr-id-51d1c686763b4c036ec2c3c15d7c3ebb48e208de/>
+<csr-id-bbc6efeceb26050973e1425e68a52e51b9df4572/>
 
 A quality-of-life release which should make publishing of inter-dependent crates much more reliable.
 
@@ -42,7 +43,7 @@ A quality-of-life release which should make publishing of inter-dependent crates
 
 <csr-read-only-do-not-edit/>
 
- - 23 commits contributed to the release over the course of 69 calendar days.
+ - 24 commits contributed to the release over the course of 69 calendar days.
  - 69 days passed between releases.
  - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#317](https://github.com/Byron/gitoxide/issues/317), [#318](https://github.com/Byron/gitoxide/issues/318), [#364](https://github.com/Byron/gitoxide/issues/364)
@@ -71,6 +72,7 @@ A quality-of-life release which should make publishing of inter-dependent crates
  * **[#318](https://github.com/Byron/gitoxide/issues/318)**
     - Don't pass judgement on usefulness of certain kinds of git-conventional messages ([`1feb118`](https://github.com/Byron/gitoxide/commit/1feb118e87f302d030ceca03ce8f8c22d40d7f03))
  * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - prepare smart-release changelog ([`bba56ea`](https://github.com/Byron/gitoxide/commit/bba56ea71bb3ff86914e7fa940990d9fc0e73388))
     - dial down log level for unparseable items again ([`2990f6b`](https://github.com/Byron/gitoxide/commit/2990f6bee433a9fdbe9caa88cc18ccf41a8df689))
     - smart-release tries harder to wait for previously published packages ([`e175621`](https://github.com/Byron/gitoxide/commit/e1756218786fc1eb82bb4e74455bdf782a0e698c))
     - consolidate naming of directories, use same convention as git2 ([`a7dbed1`](https://github.com/Byron/gitoxide/commit/a7dbed193cc25d05e03c4f2148d0fa9562a4a586))
@@ -90,6 +92,8 @@ A quality-of-life release which should make publishing of inter-dependent crates
 </details>
 
 ## 0.8.0 (2022-01-23)
+
+<csr-id-a3caf3938bf0f1cea1bee0f55c082062dd250bed/>
 
 ### Chore
 
@@ -219,6 +223,8 @@ A quality-of-life release which should make publishing of inter-dependent crates
 </details>
 
 ## 0.6.0 (2021-11-16)
+
+<csr-id-82075e8a101adb2fda0c11e6567e2148d2e66b8f/>
 
 ### Other
 
@@ -509,6 +515,7 @@ This release contains an important bugfix which may have caused panics when the 
 ## v0.5.0 (2021-10-19)
 
 <csr-id-07372dd045de88f283d35d8f3dcc4c079dce88e9/>
+<csr-id-3519f9a1f4002232aec752dadf7d3737bd97ce3d/>
 
 A release with breaking changes as the dependency engine was reworked to handle even more cases
 and make future improvements easier.
@@ -701,6 +708,58 @@ and make future improvements easier.
 <csr-id-e59f901f47fb0180211494a1591aed62b856406a/>
 <csr-id-19fc134d2a34f2ea84b2cc8fbd15ca55c55df35e/>
 <csr-id-e668bf23ddba9a676a885f1f401d2d2885784eef/>
+<csr-id-8fe461281842b58aa11437445637c6e587bedd63/>
+<csr-id-e16603b15b5488b81563c583cd8f5292ab9d24a2/>
+<csr-id-fb750b65ca64c894ffb79cd0049f10a8db255ab6/>
+<csr-id-f6f2d1b2c1c50d36ee046ed58ffffed0444cd25a/>
+<csr-id-a040f7d882eb5f6db0d54ba7e32437da3579a075/>
+<csr-id-9b78c344ee287c4c2908ccbe64bd64c2c9648459/>
+<csr-id-b1a39046056bf4a862cebe69f44f3ea1e53a2069/>
+<csr-id-ecf38b8c013e46a33aa0b2c1b4e9cf547c8393c4/>
+<csr-id-342b443a4f49736a10c2b311d69841dbf581ceec/>
+<csr-id-0d30094f4d397f932288f8c04ffd01f956113dc8/>
+<csr-id-a56bd7b134d315e22e5c8d01ca2d927de75955a9/>
+<csr-id-c50704a0595884c3fb20629aba0f22bf99893cbf/>
+<csr-id-681d743e5579197d7262c40237dda0116fc4af1c/>
+<csr-id-798b650ad848001b10018087ed6c5d8a4055ece8/>
+<csr-id-7ca029c73eee51302d6828c6f9e8862d3fd4fbd4/>
+<csr-id-73794a4e382404cb7b684c9054278fb4ff8a84ce/>
+<csr-id-d1145d1a6219ddafa7a41c82d6149b289f033640/>
+<csr-id-443f000015de2117eae08fedf7d23f0d1ac6abff/>
+<csr-id-0c355ed24eb230e9834e797d5c8dc72ae21f0c46/>
+<csr-id-5fc33266b2626a07b19d2f5bd075e2c600204a3d/>
+<csr-id-17322fa378fdecad80ad1349292aaaee8bcd00f6/>
+<csr-id-ac0696b8226a1478fa90b932306f35e5dbf464b1/>
+<csr-id-87ebacc65f56f8765eb787fea1bd27f2c99dfd97/>
+<csr-id-41afad3386461b658ee859225785b6de86d13cfb/>
+<csr-id-ae7def47388aeb56c7df4a73fd13ff508cee7017/>
+<csr-id-fbf267eeb424bf90649be278ee847fe3f2a3db80/>
+<csr-id-d422b9a31a37a03551bec4382039aaf3a7e49902/>
+<csr-id-e7c061b10c263001eb4abf03098d6694b770f828/>
+<csr-id-66292fd1076c2c9db4694c5ded09799a0be11a03/>
+<csr-id-06996e032b1e451a674395ebaca94434fac46f05/>
+<csr-id-422701be4ed6d2a61361af9b6eb0f4f470d1d782/>
+<csr-id-daec7167df524b329daad7dabb1b9920b6ef8936/>
+<csr-id-debe0094826f83839f907523715def929133fd58/>
+<csr-id-56e39fac54bfa3871c42bbf76a9f7c49486b85be/>
+<csr-id-1954b467cf1e97e22629c55487b4a66cb1380a89/>
+<csr-id-9062a472ac63887900562ed341c7b68665b8587a/>
+<csr-id-293bfc0278c5983c0beaec93253fb51f00d81156/>
+<csr-id-650241251a420602f74037babfc24c9f64df78d8/>
+<csr-id-2b4a61589a7cba3f7600710e21304e731ae3b36a/>
+<csr-id-72e175209441b12f3d4630e5118e21a3156146df/>
+<csr-id-90e6128727932f917c485f411e623fc6a9c2ad4d/>
+<csr-id-ff894e5b0257722c31578772ed694324194c0741/>
+<csr-id-78d31d9de2710b4369862c1226f18d4a2d79a9c4/>
+<csr-id-0e02831fff83f6d6b0ea8889d54196e54e4e4aff/>
+<csr-id-d66c5aea01a7d1df2cc539c52b789ad39a058ad2/>
+<csr-id-d4ffb4f2ac935f6345bdc7d03cc1878007609503/>
+<csr-id-9fc15f92ddec4ccfd0803d2b1231ed08d424cf33/>
+<csr-id-9e430df135e87ee9e9673e7d52f072f39abaf4d9/>
+<csr-id-a33dd5d21039441556ab89c997195f1bcc5bc543/>
+<csr-id-1a683a91a2850d663cf87fb326e5ab66ae86fc96/>
+<csr-id-3677b782f8bc63a38d4d49b8555b5a6b9a618f84/>
+<csr-id-cdf41998360527161a1b04821bab377489f6c5f0/>
 
 This major release adds **changelog** support to automatically generate scaffolding to be filled in by hand. The feature is driven by
 [conventional commit](https://www.conventionalcommits.org) messages which are used sparingly to mark important changes only.

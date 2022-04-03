@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.27.0 (2022-04-03)
 
 - fixes a race condition around the first initialization of an ODB, which could leave the loosing
   thread without any packs are loose databases.
@@ -23,10 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 30 commits contributed to the release over the course of 44 calendar days.
- - 44 days passed between releases.
+ - 44 commits contributed to the release over the course of 68 calendar days.
+ - 69 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 5 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333)
+ - 6 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364)
 
 ### Thanks Clippy
 
@@ -55,6 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - simplify error of loose::Iter ([`622abd7`](https://github.com/Byron/gitoxide/commit/622abd756c4d950076974e91dbe1a144b61ca3b1))
     - support Rust 1.52 ([`9c14de3`](https://github.com/Byron/gitoxide/commit/9c14de391a1a9f1055922164d1757c9aa9720807))
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - adapt to changes in git-quote ([`ba48629`](https://github.com/Byron/gitoxide/commit/ba486297114154c334e0c38cd883504608973f3c))
+    - use git-quote crate in git-odb alternate parsing ([`8e49aa6`](https://github.com/Byron/gitoxide/commit/8e49aa6090c1c361e3ddd44798754c44c179ab49))
+    - all path-related tests are green ([`81d2bf2`](https://github.com/Byron/gitoxide/commit/81d2bf2ec5f571245d56eb853306d07ede3010a2))
+    - Update git-odb changelog to include information about bugfix ([`055b117`](https://github.com/Byron/gitoxide/commit/055b1170b9a96c9c6067a588fcd9679b618d9530))
     - fix the first race-condition around initialization in ODB ([`a891315`](https://github.com/Byron/gitoxide/commit/a89131517fd4805211c4037396d9411ee41363d1))
     - conversions from Rc to arc for Handle ([`c19331e`](https://github.com/Byron/gitoxide/commit/c19331e001e587e4fca74f3e9fec28a7df922c0a))
     - less restrictive ref-delta-base resolution ([`917480b`](https://github.com/Byron/gitoxide/commit/917480b6626363555ba818c8e1c4e18cb944aa40))
@@ -68,7 +72,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Adapt to changes in git_features::path to deal with Result ([`bba4c68`](https://github.com/Byron/gitoxide/commit/bba4c680c627a418efbd25f14bd168df19b8dedd))
  * **[#333](https://github.com/Byron/gitoxide/issues/333)**
     - Use git_features::path everywhere where there is a path conversion ([`2e1437c`](https://github.com/Byron/gitoxide/commit/2e1437cb0b5dc77f2317881767f71eaf9b009ebf))
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - A statement about replacement objects ([`2d32f4d`](https://github.com/Byron/gitoxide/commit/2d32f4d77efc6861323ec7de827cfe8db2c3c7a1))
+    - Implement object replacement ([`b16d5e9`](https://github.com/Byron/gitoxide/commit/b16d5e9a5dcc5d3ad8275a8c793df50bb112eb3e))
+    - add some precaution to avoid strange interactions with packs ([`b052a9a`](https://github.com/Byron/gitoxide/commit/b052a9a3e9127fd9a4029594ea9de6e436db03c6))
+    - An API and a test for replacement configuration ([`f2d6db1`](https://github.com/Byron/gitoxide/commit/f2d6db16f89bc70f1d167975cbd88937c4d38cfb))
+    - Initial test to assure we don't replace objects by default ([`6cb9ecc`](https://github.com/Byron/gitoxide/commit/6cb9ecc4ef2602606a90880880ea7deccaaa0729))
  * **Uncategorized**
+    - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
+    - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
+    - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))
+    - Merge branch 'describe-rev' ([`77b7cd9`](https://github.com/Byron/gitoxide/commit/77b7cd9a7813aaa1a15d035ea42c1e3fe4eef8dd))
+    - adapt to breaking changes in git-actor ([`40c48c3`](https://github.com/Byron/gitoxide/commit/40c48c390eb796b427ebd516dde92e9538ce5fb7))
     - thanks clippy ([`4618f8a`](https://github.com/Byron/gitoxide/commit/4618f8aa7648c0553a8e1b023fceb6738654e38b))
     - Release git-tempfile v2.0.0, safety bump 6 crates ([`90b1c42`](https://github.com/Byron/gitoxide/commit/90b1c42d5487904a9f329362d185b035d0ddb975))
     - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
@@ -82,6 +97,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/>
 <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
+<csr-id-e0b8636f96e4bfe1bc72b5aa6ad4c4c8538ff92c/>
+<csr-id-2d6960f886c1165f0bdb6f2d653388e1e0b57a2d/>
+<csr-id-424c9b3a2b467f5a1e339700257cd4ab72e2e692/>
+<csr-id-b1c82a7959fba1541642fc8dfae46b27848f2ba3/>
+<csr-id-9235106986e14551a28693bfe4ea92f046c65406/>
+<csr-id-c800fdd331e6d7a0b8d756ba822915259f26e9e8/>
 
 ### Refactor
 
@@ -952,6 +973,9 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 ## v0.12.0 (2021-04-30)
 
+<csr-id-747a13e9a1fe5200c53055dd961507c9fef667e1/>
+<csr-id-4c77e4c97641ab3b02b56aaa702a7d2ca5bced7c/>
+
 ### Other
 
  - <csr-id-747a13e9a1fe5200c53055dd961507c9fef667e1/> :borrowed::Object => git-odb::data::Object
@@ -1136,6 +1160,10 @@ A maintenance release to properly dealing with previously breaking changes in `g
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 8 times to make code idiomatic. 
 
 ## v0.10.0 (2021-04-08)
+
+<csr-id-d53c4b0f91f1b29769c9430f2d1c0bcab1170c75/>
+<csr-id-b317200b72096573d511d229c6e61e74e7ba14db/>
+<csr-id-eaae9c1bc723209d793eb93f5587fa2604d5cd92/>
 
 ### Other
 
@@ -1394,6 +1422,8 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 ## v0.4.2 (2020-11-18)
 
+<csr-id-13159eb972ed78ce4ebee2313b288023cec91c47/>
+
 ### Other
 
  - <csr-id-13159eb972ed78ce4ebee2313b288023cec91c47/> try to get rid of tree-traversal Boxed error…
@@ -1507,6 +1537,8 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 ## v0.4.1 (2020-09-18)
 
+<csr-id-0092c256b3bfaf2818566540e660cdefcf68d246/>
+
 ### Other
 
  - <csr-id-0092c256b3bfaf2818566540e660cdefcf68d246/> See if tree compaction saves considerable amounts of memory
@@ -1599,6 +1631,11 @@ A maintenance release to properly dealing with previously breaking changes in `g
 </details>
 
 ## v0.3.0 (2020-08-12)
+
+<csr-id-5d57c1f7e3b9a84f7b46a4378015572155f3104b/>
+<csr-id-9945eba749afb020e0deaaa5bb01fda6ff9ccd84/>
+<csr-id-cfd8a25f9125c48afe4b66eab6b6ecf71097c486/>
+<csr-id-1525f36d29574699d2fcb16b70678121030fd109/>
 
 ### Refactor
 
@@ -2048,6 +2085,10 @@ A maintenance release to properly dealing with previously breaking changes in `g
 [Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
 
 ## v0.1.0 (2020-07-12)
+
+<csr-id-47ca6ab2ff0cbf8801d0a82cebbbeb8c4f62cdae/>
+<csr-id-4ff21686c32a6edc84ea041c3040f33ae24f9519/>
+<csr-id-91c8fc1f0c50af55d7cb233bbe813c6d12fe11bc/>
 
 ### Refactor
 

@@ -5,6 +5,95 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.12.0 (2022-04-03)
+
+### New Features
+
+ - <csr-id-e7e4ba2739e5a15e826b5b4d9ef2b45a1cb016cc/> `Fullname(Ref)::category()` and `Category`
+   A way to classify references.
+ - <csr-id-af2d399261e4131299c2279904a1f224c116db66/> FullName(Ref)::strip_prefix()
+   Get a short-hand for any reference name.
+ - <csr-id-e4d6685064ad2b433f8acd3a74b320bf0169a994/> Add `git_config::values::Path` for a typesafe git path
+   Add a `Path` type to the `git_config::values` which
+   can be interpolated according to gits own path interpolation
+   rules.
+ - <csr-id-28e3251ee1996f638eaa0bc7b39b06be436f6eb7/> FullNameRef::file_name()
+ - <csr-id-cf50ae2b33da0161d801b4c0a9cd8b5d24bb3510/> Display implementation for `FullName`.
+
+### Bug Fixes
+
+ - <csr-id-42e0487286c1f745837c0ce337ed7c9d86b14516/> support Rust 1.52
+
+### Changed (BREAKING)
+
+ - <csr-id-7984e19417dff13445f3ef2e15dea96bbd194ce5/> `Target::as_(id|name)` -> `Target::try_(id|name)`
+   Conform to naming conventions, whenever something returns an option
+   or Result while there is a more direct name that panics, prefix `try_`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 34 commits contributed to the release over the course of 68 calendar days.
+ - 69 days passed between releases.
+ - 7 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 6 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - Use hash_hasher based hash state for better keys/less collisions ([`814de07`](https://github.com/Byron/gitoxide/commit/814de079f4226f42efa49ad334a348bce67184e4))
+    - FullNameRef::file_name() ([`28e3251`](https://github.com/Byron/gitoxide/commit/28e3251ee1996f638eaa0bc7b39b06be436f6eb7))
+    - Display implementation for `FullName`. ([`cf50ae2`](https://github.com/Byron/gitoxide/commit/cf50ae2b33da0161d801b4c0a9cd8b5d24bb3510))
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - performance issue on windows is due to slow process execution speed ([`60bcffc`](https://github.com/Byron/gitoxide/commit/60bcffc2d2921f01a0c8f42da9b43cd731eaf55d))
+    - speed up git-pack testing on windows ([`8ca400c`](https://github.com/Byron/gitoxide/commit/8ca400c8647e0e59a96a936d41c2dc2d07c6bf2d))
+ * **[#329](https://github.com/Byron/gitoxide/issues/329)**
+    - Document all features related to serde1 ([`72b97f2`](https://github.com/Byron/gitoxide/commit/72b97f2ae4dc7642b160f183c6d5df4502dc186f))
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - Add `git_config::values::Path` for a typesafe git path ([`e4d6685`](https://github.com/Byron/gitoxide/commit/e4d6685064ad2b433f8acd3a74b320bf0169a994))
+ * **[#333](https://github.com/Byron/gitoxide/issues/333)**
+    - Use git_features::path everywhere where there is a path conversion ([`2e1437c`](https://github.com/Byron/gitoxide/commit/2e1437cb0b5dc77f2317881767f71eaf9b009ebf))
+    - remove os-str-bytes everywhere ([`71a086a`](https://github.com/Byron/gitoxide/commit/71a086aaf0835c31c834aa32d968552de490f2e7))
+    - Found one valid case for using os-str-bytes ([`9c294bf`](https://github.com/Byron/gitoxide/commit/9c294bff45f8f04affd690327559e0e2c2415fa9))
+    - Make real clear panics are only possible on windows ([`6b283dc`](https://github.com/Byron/gitoxide/commit/6b283dc7b9339fd65ea35f56eb29f121f571caf7))
+    - one usage of os_str_bytes down, along with some custom conversion code ([`1cc95ce`](https://github.com/Byron/gitoxide/commit/1cc95cefbd132a4277ec52c2147f7c81fea92d48))
+    - gitoxide-core without os-str-bytes ([`909aa14`](https://github.com/Byron/gitoxide/commit/909aa1402c82c3128052023613a297b213716e3d))
+    - Don't use os_str_ext in git-features; adapt git-ref ([`9258b7b`](https://github.com/Byron/gitoxide/commit/9258b7baf0895593c13a152ff9e6f52e036cebe1))
+    - Use new git-features::path module ([`7c53b27`](https://github.com/Byron/gitoxide/commit/7c53b275a71b9d2ee477bd19464d49a97e031e0c))
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - `Target::as_(id|name)` -> `Target::try_(id|name)` ([`7984e19`](https://github.com/Byron/gitoxide/commit/7984e19417dff13445f3ef2e15dea96bbd194ce5))
+    - refactor ([`b1b9871`](https://github.com/Byron/gitoxide/commit/b1b9871e8b0c2bcbdee0c3ea4c060b4a7c32bc15))
+    - `Fullname(Ref)::category()` and `Category` ([`e7e4ba2`](https://github.com/Byron/gitoxide/commit/e7e4ba2739e5a15e826b5b4d9ef2b45a1cb016cc))
+    - FullName(Ref)::strip_prefix() ([`af2d399`](https://github.com/Byron/gitoxide/commit/af2d399261e4131299c2279904a1f224c116db66))
+    - Full error handling for CommitRefIter ([`b94471a`](https://github.com/Byron/gitoxide/commit/b94471a0ced50204156cf5d4126c676f0258a5eb))
+ * **Uncategorized**
+    - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
+    - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
+    - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
+    - thanks clippy ([`2066a80`](https://github.com/Byron/gitoxide/commit/2066a80664e239436685d10ba7bab92916661a56))
+    - adapt to breaking changes in git-actor ([`40c48c3`](https://github.com/Byron/gitoxide/commit/40c48c390eb796b427ebd516dde92e9538ce5fb7))
+    - Release git-tempfile v2.0.0, safety bump 6 crates ([`90b1c42`](https://github.com/Byron/gitoxide/commit/90b1c42d5487904a9f329362d185b035d0ddb975))
+    - thanks clippy ([`a8e9497`](https://github.com/Byron/gitoxide/commit/a8e9497caebf1c0e9faac537717cd86378f1acf6))
+    - thanks clippy ([`f242a24`](https://github.com/Byron/gitoxide/commit/f242a248909c61953030c112b34af565f851ac0d))
+    - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
+    - Release git-actor v0.8.1 ([`08fe550`](https://github.com/Byron/gitoxide/commit/08fe5508472f2eb209db8a5fc4e4942a9d7db93d))
+    - support Rust 1.52 ([`42e0487`](https://github.com/Byron/gitoxide/commit/42e0487286c1f745837c0ce337ed7c9d86b14516))
+    - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
+    - Release git-hash v0.9.2, git-object v0.17.1, git-pack v0.16.1 ([`0db19b8`](https://github.com/Byron/gitoxide/commit/0db19b8deaf11a4d4cbc03fa3ae40eea104bc302))
+    - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
+</details>
+
 ## 0.11.0 (2022-01-23)
 
 <csr-id-c46dec311c76a83dba136be5dba6b70d739c354d/>
@@ -43,10 +132,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 26 commits contributed to the release over the course of 55 calendar days.
+ - 24 commits contributed to the release over the course of 55 calendar days.
  - 55 days passed between releases.
- - 8 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 5 unique issues were worked on: [#263](https://github.com/Byron/gitoxide/issues/263), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298)
+ - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 4 unique issues were worked on: [#263](https://github.com/Byron/gitoxide/issues/263), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#293](https://github.com/Byron/gitoxide/issues/293)
 
 ### Thanks Clippy
 
@@ -80,17 +169,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - adapt to changes in git-hash ([`3e75e8c`](https://github.com/Byron/gitoxide/commit/3e75e8cd4c55f339525914fdc69e7a7da1fb06d4))
  * **[#293](https://github.com/Byron/gitoxide/issues/293)**
     - git-ref uses memmap2 ([`4dec3ea`](https://github.com/Byron/gitoxide/commit/4dec3ead7c28e88de1eb8e1576b9b29b1c0953c7))
- * **[#298](https://github.com/Byron/gitoxide/issues/298)**
-    - FullNameRef::file_name() ([`28e3251`](https://github.com/Byron/gitoxide/commit/28e3251ee1996f638eaa0bc7b39b06be436f6eb7))
  * **Uncategorized**
+    - Release git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`b286b24`](https://github.com/Byron/gitoxide/commit/b286b24a51878be7d2e0fd77ff0c5c99b439a6a0))
     - Release git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`42ebb53`](https://github.com/Byron/gitoxide/commit/42ebb536cd6086f096b8422291776c9720fa0948))
     - Release git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`1b76119`](https://github.com/Byron/gitoxide/commit/1b76119259b8168aeb99cbbec233f7ddaa2d7d2c))
     - Release git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`8f57c29`](https://github.com/Byron/gitoxide/commit/8f57c297d7d6ed68cf51415ea7ede4bf9263326e))
     - Release git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
-    - support Rust 1.52 ([`42e0487`](https://github.com/Byron/gitoxide/commit/42e0487286c1f745837c0ce337ed7c9d86b14516))
-    - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - thanks clippy ([`7dd2313`](https://github.com/Byron/gitoxide/commit/7dd2313d980fe7c058319ae66d313b3097e3ae5f))
 </details>
 
@@ -145,13 +231,13 @@ a 'frozen' version of the packed buffer for any amount of operations.
    use its own namespace.
  - <csr-id-95247322a8191edfa7fac9c5aa72b40239f3aa88/> move `git_ref::file::WriteRefLog` to `git_ref::store::WriteRefLog`
 
-### other (BREAKING)
+### Other (BREAKING)
 
  - <csr-id-951c050ecbb70c9de216603e55c7cfbc89a067e3/> Reference::logs() -> Reference::log_iter()
    The latter now returns a standard Platform to iterate over all
    reflog entries from oldest to newest or vice versa.
 
-### refactor (BREAKING)
+### Refactor (BREAKING)
 
  - <csr-id-0e1875363fea09452789d7a90fc6860a7996d6d3/> `file::Store::base` is now `file::Store::base()` and read-only
    That way, file databases can't be repositioned anymore, it's recommended
@@ -283,6 +369,10 @@ A maintenance release to properly dealing with previously breaking changes in `g
 This release contains no functional changes, but is considered breaking for safety reasons 
 as `git-traverse` is signalling a breaking change.
 
+### Other
+
+ - <csr-id-4ed4b2da50557aff540685441f4b5c7d5e582977/> add panicking `Target::id()` and `TargetRef::id()`
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -327,6 +417,17 @@ as `git-traverse` is signalling a breaking change.
 - Compatibility with Rust 1.55. It informed about the incorrect usage of `std::io::ErrorKind::Other` which this crate also dependent on causing
   runtime bugs. The latter were detected by tests and this release contains the fix to not rely on certain behaviour anymore.
 
+### Other
+
+ - <csr-id-293bfc0278c5983c0beaec93253fb51f00d81156/> loose reference iteration with non-dir prefixes…
+   Previously it was expected for the prefix `Path` to always exist for
+   the prefix to be valid. This, however, is not similar to packed
+   prefixes, which allow non-dir prefixes as well.
+   
+   Now we will check if the prefix is actually a directory, and if not
+   split it into its parent directory and the filename portion. The latter
+   is then used for prefix matching file names within that directory.
+
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
@@ -350,6 +451,10 @@ as `git-traverse` is signalling a breaking change.
 </details>
 
 ## v0.7.2 (2021-09-10)
+
+### Other
+
+ - <csr-id-90e6128727932f917c485f411e623fc6a9c2ad4d/> improve changelog format
 
 ### Commit Statistics
 

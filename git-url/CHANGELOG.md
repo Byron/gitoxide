@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.0 (2022-04-03)
 
 A maintenance release without surfacing changes.
 
@@ -13,10 +13,10 @@ A maintenance release without surfacing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 7 commits contributed to the release over the course of 68 calendar days.
+ - 8 commits contributed to the release over the course of 68 calendar days.
  - 69 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 3 unique issues were worked on: [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333)
+ - 4 unique issues were worked on: [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364)
 
 ### Commit Details
 
@@ -30,6 +30,8 @@ A maintenance release without surfacing changes.
     - Adapt to changes in git_features::path to deal with Result ([`bba4c68`](https://github.com/Byron/gitoxide/commit/bba4c680c627a418efbd25f14bd168df19b8dedd))
  * **[#333](https://github.com/Byron/gitoxide/issues/333)**
     - Use git_features::path everywhere where there is a path conversion ([`2e1437c`](https://github.com/Byron/gitoxide/commit/2e1437cb0b5dc77f2317881767f71eaf9b009ebf))
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - update changelogs prior to release ([`746a676`](https://github.com/Byron/gitoxide/commit/746a676056cd4907da7137a00798344b5bdb4419))
  * **Uncategorized**
     - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
     - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
@@ -234,6 +236,8 @@ This release contains no functional change, but a more useful changelog.
 </details>
 
 ## v0.1.0 (2020-09-12)
+
+<csr-id-098f802e6dc9f55632791ddf8d046563f75cba7a/>
 
 ### Other
 

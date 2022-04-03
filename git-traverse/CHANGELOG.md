@@ -5,10 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.13.0 (2022-04-03)
+
+### Changed (BREAKING)
+
+ - <csr-id-83746f613a559a86a0ea81370fca3f094bc81e35/> require `Ancestors` traversal `find()` to return `Result`
+   Previously it would return an `Option` and squelch legitimate errors
+   which already let to quite a bug hunt.
+   
+   Now `find()` should always return the original error when finding an
+   existing object, and keep it around in a Box.
+   That way we don't add yet another type parameter.
+   
+   Performance implications are measurable, but marginable. The error type
+   might be too big which is something we can indeed look at.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 11 commits contributed to the release over the course of 68 calendar days.
+ - 69 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#364](https://github.com/Byron/gitoxide/issues/364)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - fix docs ([`0a1caeb`](https://github.com/Byron/gitoxide/commit/0a1caebfcb5fe019fc8db3b51d16908da37be59f))
+    - require `Ancestors` traversal `find()` to return `Result` ([`83746f6`](https://github.com/Byron/gitoxide/commit/83746f613a559a86a0ea81370fca3f094bc81e35))
+    - Full error handling for CommitRefIter ([`b94471a`](https://github.com/Byron/gitoxide/commit/b94471a0ced50204156cf5d4126c676f0258a5eb))
+    - More speedy access to author/committer ([`6129607`](https://github.com/Byron/gitoxide/commit/61296077cebaaf2eb939fa6082121304bc6cf39b))
+ * **Uncategorized**
+    - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
+    - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
+    - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
+    - adapt to breaking changes in git-actor ([`40c48c3`](https://github.com/Byron/gitoxide/commit/40c48c390eb796b427ebd516dde92e9538ce5fb7))
+    - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
+    - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
+    - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
+</details>
+
 ## 0.12.0 (2022-01-23)
 
 <csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/>
 <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
+
+### Test
+
+ - <csr-id-1d5ab44145ccbc2064ee8cc7acebb62db82c45aa/> ensure tests use 'merge.ff false' and recreate fixtures on each run
 
 ### New Features
 
@@ -57,11 +106,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#270](https://github.com/Byron/gitoxide/issues/270)**
     - add test to validate parent mode is handled; don't clear object buffer ([`9498816`](https://github.com/Byron/gitoxide/commit/9498816b305697c25275c9f8a2ccd07835cf47ff))
  * **Uncategorized**
+    - Release git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`1b76119`](https://github.com/Byron/gitoxide/commit/1b76119259b8168aeb99cbbec233f7ddaa2d7d2c))
     - Release git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`8f57c29`](https://github.com/Byron/gitoxide/commit/8f57c297d7d6ed68cf51415ea7ede4bf9263326e))
     - Release git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0 ([`d78aab7`](https://github.com/Byron/gitoxide/commit/d78aab7b9c4b431d437ac70a0ef96263acb64e46))
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
-    - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - thanks clippy ([`03d0660`](https://github.com/Byron/gitoxide/commit/03d06609002933f23abe37a7208841cd152bd63d))
     - Add sorting mode to ancestor traversal  #270 ([`eb36a3d`](https://github.com/Byron/gitoxide/commit/eb36a3dda83a46ad59078a904f4e277f298a24e1))
     - ensure tests use 'merge.ff false' and recreate fixtures on each run ([`1d5ab44`](https://github.com/Byron/gitoxide/commit/1d5ab44145ccbc2064ee8cc7acebb62db82c45aa))
@@ -152,6 +201,23 @@ A maintenance release to properly dealing with previously breaking changes in `g
 <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/>
 
 Some module paths have been removed to avoid path duplication, possibly leading to breakage.
+
+### Other
+
+ - <csr-id-cbc5b8171cdef5933d684c481300d9fcff43cf4b/> try git-cliff…
+   …but to no avail as it simpy won't work for us if we don't follow
+   conventional commits properly, especially the absence of breaking
+   changes support is a real issue.
+   
+   It's probably better to just implement it ourselves in smart-release.
+ - <csr-id-329d183ad4e256a4f9cdeb34589b5f3432495f79/> object_id
+ - <csr-id-7bce49c1d27cb279b61ff51de0038e01fcf3561e/> commit traversal along the first parent…
+   …which allows to traverse only the 'mainline' part of the commit
+   ancestry, ignoring merges entirely.
+   
+   This kind of traversal is more suited to algorithms which want
+   to see a linear history as well as segments of commits between
+   references.
 
 ### BREAKING
 
