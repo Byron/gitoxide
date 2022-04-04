@@ -222,6 +222,25 @@ pub(crate) mod function {
                 candidate.commits_in_its_future += 1;
             }
 
+            if queue.is_empty() && !candidates.is_empty() {
+                // single-trunk history that waits to be replenished.
+                // Abort early if the best-candidate is in the current commits past.
+                let mut shortest_depth = Flags::MAX;
+                let mut best_candidates_at_same_depth = 0 as Flags;
+                for candidate in &candidates {
+                    if candidate.commits_in_its_future < shortest_depth {
+                        shortest_depth = candidate.commits_in_its_future;
+                        best_candidates_at_same_depth = candidate.identity_bit;
+                    } else if candidate.commits_in_its_future == shortest_depth {
+                        best_candidates_at_same_depth |= candidate.identity_bit;
+                    }
+                }
+
+                if (flags & best_candidates_at_same_depth) == best_candidates_at_same_depth {
+                    break;
+                }
+            }
+
             parents_by_date_onto_queue_and_track_names(
                 &mut find,
                 &mut buf,
@@ -349,7 +368,9 @@ pub(crate) mod function {
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
+        let mut seen_commit = 0;
         while let Some(commit) = queue.pop_front() {
+            seen_commit += 1;
             let flags = seen[&commit];
             if (flags & best_candidate.identity_bit) == best_candidate.identity_bit {
                 if queue
