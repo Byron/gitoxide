@@ -64,14 +64,10 @@ impl<'a> Format<'a> {
 
     /// Set this instance to print in long mode, that is if `depth` is 0, it will still print the whole
     /// long form even though it's not quite necessary.
-    pub fn long(&mut self) -> &mut Self {
-        self.long = true;
-        self
-    }
-
-    /// This is set by default, and causes the describe string to be shortened `id` lies directly on `name`.
-    pub fn short(&mut self) -> &mut Self {
-        self.long = false;
+    ///
+    /// Otherwise, it is allowed to shorten itself.
+    pub fn long(&mut self, long: bool) -> &mut Self {
+        self.long = long;
         self
     }
 }

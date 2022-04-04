@@ -15,20 +15,20 @@ fn exact_match_with_dirty_and_long() {
     .into_format(7);
     assert!(format.is_exact_match());
     assert_eq!(format.to_string(), "main");
-    assert_eq!(format.long().to_string(), "main-0-gb920bbb");
+    assert_eq!(format.long(true).to_string(), "main-0-gb920bbb");
 
     format.dirty_suffix = Some("dirty".into());
-    assert_eq!(format.short().to_string(), "main-dirty");
-    assert_eq!(format.long().to_string(), "main-0-gb920bbb-dirty");
+    assert_eq!(format.long(false).to_string(), "main-dirty");
+    assert_eq!(format.long(true).to_string(), "main-0-gb920bbb-dirty");
 
     format.dirty_suffix = None;
     format.depth = 42;
     assert!(!format.is_exact_match());
-    assert_eq!(format.short().to_string(), "main-42-gb920bbb");
+    assert_eq!(format.long(false).to_string(), "main-42-gb920bbb");
 
     format.dirty_suffix = Some("dirty".into());
     assert_eq!(format.to_string(), "main-42-gb920bbb-dirty");
-    assert_eq!(format.long().to_string(), "main-42-gb920bbb-dirty");
+    assert_eq!(format.long(true).to_string(), "main-42-gb920bbb-dirty");
 }
 
 #[test]
@@ -44,10 +44,10 @@ fn show_abbrev_hash_if_no_name_is_known() {
         format.is_exact_match(),
         "it reports true as it is only dependent on the depth which plays no role here"
     );
-    assert_eq!(format.short().to_string(), "b920bbb");
-    assert_eq!(format.long().to_string(), "b920bbb");
+    assert_eq!(format.long(false).to_string(), "b920bbb");
+    assert_eq!(format.long(true).to_string(), "b920bbb");
 
     format.dirty_suffix = Some("dirty".into());
-    assert_eq!(format.short().to_string(), "b920bbb-dirty");
-    assert_eq!(format.long().to_string(), "b920bbb-dirty");
+    assert_eq!(format.long(false).to_string(), "b920bbb-dirty");
+    assert_eq!(format.long(true).to_string(), "b920bbb-dirty");
 }
