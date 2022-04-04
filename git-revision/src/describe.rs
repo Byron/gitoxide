@@ -5,15 +5,24 @@ use std::{
 
 use git_object::bstr::BStr;
 
+/// The positive result produced by [describe()][function::describe()].
 #[derive(Debug, Clone)]
 pub struct Outcome<'name> {
+    /// The name of the tag or branch that is closest to the commit `id`.
+    ///
+    /// If `None`, no name was found but it was requested to provide the `id` itself as fallback.
     pub name: Option<Cow<'name, BStr>>,
+    /// The input commit object id that we describe.
     pub id: git_hash::ObjectId,
+    /// The number of commits that are between the tag or branch with `name` and `id`.
+    /// These commits are all in the future of the named tag or branch.
     pub depth: u32,
+    /// The mapping between object ids and their names initially provided by the describe call.
     pub name_by_oid: std::collections::HashMap<git_hash::ObjectId, Cow<'name, BStr>>,
 }
 
 impl<'a> Outcome<'a> {
+    /// Turn this outcome into a structure that can display itself in the typical `git describe` format.
     pub fn into_format(self, hex_len: usize) -> Format<'a> {
         Format {
             name: self.name,
@@ -26,24 +35,41 @@ impl<'a> Outcome<'a> {
     }
 }
 
+/// A structure implementing `Display`, producing a `git describe` like string.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Format<'a> {
+    /// The name of the branch or tag to display, as is.
+    ///
+    /// If `None`, the `id` will be displayed as a fallback.
     pub name: Option<Cow<'a, BStr>>,
+    /// The `id` of the commit to describe.
     pub id: git_hash::ObjectId,
+    /// The amount of hex characters to use to display `id`.
     pub hex_len: usize,
+    /// The amount of commits between `name` and `id`, where `id` is in the future of `name`.
     pub depth: u32,
+    /// If true, the long form of the describe string will be produced even if `id` lies directly on `name`,
+    /// hence has a depth of 0.
     pub long: bool,
+    /// If `Some(suffix)`, it will be appended to the describe string.
+    /// This should be set if the working tree was determined to be dirty.
     pub dirty_suffix: Option<String>,
 }
 
 impl<'a> Format<'a> {
+    /// Return true if the `name` is directly associated with `id`, i.e. there are no commits between them.
     pub fn is_exact_match(&self) -> bool {
         self.depth == 0
     }
+
+    /// Set this instance to print in long mode, that is if `depth` is 0, it will still print the whole
+    /// long form even though it's not quite necessary.
     pub fn long(&mut self) -> &mut Self {
         self.long = true;
         self
     }
+
+    /// This is set by default, and causes the describe string to be shortened `id` lies directly on `name`.
     pub fn short(&mut self) -> &mut Self {
         self.long = false;
         self
@@ -72,8 +98,11 @@ impl<'a> Display for Format<'a> {
 type Flags = u32;
 const MAX_CANDIDATES: usize = std::mem::size_of::<Flags>() * 8;
 
+/// The options required to call [`describe()`][function::describe()].
 #[derive(Clone, Debug)]
 pub struct Options<'name> {
+    /// The candidate names from which to determine the `name` to use for the describe string,
+    /// as a mapping from a commit id and the name associated with it.
     pub name_by_oid: std::collections::HashMap<git_hash::ObjectId, Cow<'name, BStr>>,
     /// The amount of names we will keep track of. Defaults to the maximum of 32.
     ///
@@ -82,6 +111,8 @@ pub struct Options<'name> {
     /// If no candidate for naming, always show the abbreviated hash. Default: false.
     pub fallback_to_oid: bool,
     /// Only follow the first parent during graph traversal. Default: false.
+    ///
+    /// This may speed up the traversal at the cost of accuracy.
     pub first_parent: bool,
 }
 
@@ -96,7 +127,9 @@ impl<'name> Default for Options<'name> {
     }
 }
 
+/// The error returned by the [`describe()`][function::describe()] function.
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error<E>
 where
     E: std::error::Error + Send + Sync + 'static,
@@ -127,6 +160,11 @@ pub(crate) mod function {
 
     use super::Outcome;
 
+    /// Given a `commit` id, traverse the commit graph and collect candidate names from the `name_by_oid` mapping to produce
+    /// an `Outcome`, which converted [`into_format()`][Outcome::into_format()] will produce a typical `git describe` string.
+    ///
+    /// Note that the `name_by_oid` map is returned in the [`Outcome`], which can be forcefully returned even if there was no matching
+    /// candidate by setting `fallback_to_oid` to true.
     pub fn describe<'name, Find, E>(
         commit: &oid,
         mut find: Find,
