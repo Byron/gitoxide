@@ -22,11 +22,6 @@ pub struct Id<'r> {
 }
 
 /// A decoded object with a reference to its owning repository.
-///
-/// ## Limitations
-///
-/// Note that it holds a reference to a buffer of it's associated repository handle, so there
-/// can only be one at a time, per handle.
 pub struct Object<'repo> {
     /// The id of the object
     pub id: ObjectId,
@@ -44,8 +39,6 @@ impl<'a> Drop for Object<'a> {
 }
 
 /// A decoded tree object with access to its owning repository.
-///
-/// Please note that the limitations described in [Object] apply here as well.
 pub struct Tree<'repo> {
     /// The id of the tree
     pub id: ObjectId,
@@ -60,9 +53,22 @@ impl<'a> Drop for Tree<'a> {
     }
 }
 
+/// A decoded tag object with access to its owning repository.
+pub struct Tag<'repo> {
+    /// The id of the tree
+    pub id: ObjectId,
+    /// The fully decoded tag data
+    pub data: Vec<u8>,
+    pub(crate) repo: &'repo crate::Repository,
+}
+
+impl<'a> Drop for Tag<'a> {
+    fn drop(&mut self) {
+        self.repo.reuse_buffer(&mut self.data);
+    }
+}
+
 /// A decoded commit object with access to its owning repository.
-///
-/// Please note that the limitations described in [Object] apply here as well.
 pub struct Commit<'repo> {
     /// The id of the commit
     pub id: ObjectId,

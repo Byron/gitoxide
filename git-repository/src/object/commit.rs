@@ -124,6 +124,18 @@ impl<'repo> Commit<'repo> {
     pub fn ancestors(&self) -> Ancestors<'repo> {
         self.id().ancestors()
     }
+
+    /// Create a platform to further configure a `git describe` operation to find a name for this commit by looking
+    /// at the closest annotated tags (by default) in its past.
+    pub fn describe(&self) -> crate::commit::describe::Platform<'repo> {
+        crate::commit::describe::Platform {
+            id: self.id,
+            repo: self.repo,
+            select: Default::default(),
+            first_parent: false,
+            id_as_fallback: false,
+        }
+    }
 }
 
 impl<'r> std::fmt::Debug for Commit<'r> {

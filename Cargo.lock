@@ -1397,6 +1397,7 @@ dependencies = [
  "git-pack",
  "git-protocol",
  "git-ref",
+ "git-revision",
  "git-tempfile",
  "git-testtools",
  "git-transport",

@@ -39,12 +39,18 @@ impl<'repo> Reference<'repo> {
         Reference { inner: reference, repo }
     }
 
+    /// Returns the attached id we point to, or `None` if this is a symbolic ref.
+    pub fn try_id(&self) -> Option<crate::Id<'repo>> {
+        match self.inner.target {
+            git_ref::Target::Symbolic(_) => None,
+            git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.repo).into(),
+        }
+    }
+
     /// Returns the attached id we point to, or panic if this is a symbolic ref.
     pub fn id(&self) -> crate::Id<'repo> {
-        match self.inner.target {
-            git_ref::Target::Symbolic(_) => panic!("BUG: tries to obtain object id from symbolic target"),
-            git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.repo),
-        }
+        self.try_id()
+            .expect("BUG: tries to obtain object id from symbolic target")
     }
 
     /// Follow all symbolic targets this reference might point to and peel the underlying object
@@ -52,14 +58,13 @@ impl<'repo> Reference<'repo> {
     ///
     /// This is useful to learn where this reference is ulitmately pointing to.
     pub fn peel_to_id_in_place(&mut self) -> Result<Id<'repo>, peel::Error> {
-        let handle = &self.repo;
-        let oid = self.inner.peel_to_id_in_place(&handle.refs, |oid, buf| {
-            handle
-                .objects
+        let repo = &self.repo;
+        let oid = self.inner.peel_to_id_in_place(&repo.refs, |oid, buf| {
+            repo.objects
                 .try_find(oid, buf)
                 .map(|po| po.map(|(o, _l)| (o.kind, o.data)))
         })?;
-        Ok(Id::from_id(oid, handle))
+        Ok(Id::from_id(oid, repo))
     }
 
     /// Similar to [`peel_to_id_in_place()`][Reference::peel_to_id_in_place()], but consumes this instance.

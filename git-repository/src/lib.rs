@@ -94,6 +94,7 @@
 //! * [`odb`]
 //!   * [`pack`][odb::pack]
 //! * [`refs`]
+//! * [`revision`]
 //! * [`interrupt`]
 //! * [`tempfile`]
 //! * [`lock`]
@@ -137,6 +138,7 @@ pub use git_odb as odb;
 #[cfg(all(feature = "unstable", feature = "git-protocol"))]
 pub use git_protocol as protocol;
 pub use git_ref as refs;
+pub use git_revision as revision;
 #[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
 #[cfg(feature = "unstable")]
@@ -182,8 +184,7 @@ pub enum Path {
 
 ///
 mod types;
-
-pub use types::{Commit, DetachedObject, Head, Id, Object, Reference, Repository, ThreadSafeRepository, Tree};
+pub use types::{Commit, DetachedObject, Head, Id, Object, Reference, Repository, Tag, ThreadSafeRepository, Tree};
 
 pub mod commit;
 pub mod head;
@@ -260,6 +261,19 @@ pub mod mailmap {
             #[error("Could not find object configured in `mailmap.blob`")]
             FindExisting(#[from] crate::object::find::existing::OdbError),
         }
+    }
+}
+
+///
+pub mod rev_parse {
+    /// The error returned by [`crate::Repository::rev_parse()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        IdFromHex(#[from] git_hash::decode::Error),
+        #[error(transparent)]
+        Find(#[from] crate::object::find::existing::OdbError),
     }
 }
 

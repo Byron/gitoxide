@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use crate::{object, Commit, DetachedObject, Object, Tree};
+use crate::{object, Commit, DetachedObject, Object, Tag, Tree};
 
 impl<'repo> From<Object<'repo>> for DetachedObject {
     fn from(mut v: Object<'repo>) -> Self {
@@ -17,6 +17,16 @@ impl<'repo> From<Commit<'repo>> for DetachedObject {
         DetachedObject {
             id: v.id,
             kind: git_object::Kind::Commit,
+            data: std::mem::take(&mut v.data),
+        }
+    }
+}
+
+impl<'repo> From<Tag<'repo>> for DetachedObject {
+    fn from(mut v: Tag<'repo>) -> Self {
+        DetachedObject {
+            id: v.id,
+            kind: git_object::Kind::Tag,
             data: std::mem::take(&mut v.data),
         }
     }
@@ -52,6 +62,22 @@ impl<'repo> TryFrom<Object<'repo>> for Commit<'repo> {
         let handle = value.repo;
         match value.kind {
             object::Kind::Commit => Ok(Commit {
+                id: value.id,
+                repo: handle,
+                data: steal_from_freelist(&mut value.data),
+            }),
+            _ => Err(value),
+        }
+    }
+}
+
+impl<'repo> TryFrom<Object<'repo>> for Tag<'repo> {
+    type Error = Object<'repo>;
+
+    fn try_from(mut value: Object<'repo>) -> Result<Self, Self::Error> {
+        let handle = value.repo;
+        match value.kind {
+            object::Kind::Tag => Ok(Tag {
                 id: value.id,
                 repo: handle,
                 data: steal_from_freelist(&mut value.data),

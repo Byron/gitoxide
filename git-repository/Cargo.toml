@@ -67,6 +67,7 @@ git-hash = { version = "^0.9.3", path = "../git-hash" }
 git-object = { version = "^0.18.0", path = "../git-object" }
 git-actor = { version = "^0.9.0", path = "../git-actor" }
 git-pack = { version = "^0.17.0", path = "../git-pack", features = ["object-cache-dynamic"] }
+git-revision = { version ="0.1.0", path = "../git-revision" }
 
 git-url = { version = "^0.4.0", path = "../git-url", optional = true }
 git-traverse = { version = "^0.13.0", path = "../git-traverse" }

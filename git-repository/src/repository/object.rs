@@ -11,6 +11,13 @@ use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference};
 
 /// Methods related to object creation.
 impl crate::Repository {
+    // TODO: tests, actual integration of rev-spec parsing when available.
+    /// Parse a revision specification and turn it into the full id to the object it describes, similar to `git rev-parse`.
+    /// NOTE that currently this only parses full hex names.
+    pub fn rev_parse<'a>(&'a self, spec: impl AsRef<str>) -> Result<crate::Id<'a>, crate::rev_parse::Error> {
+        Ok(git_hash::ObjectId::from_hex(spec.as_ref().as_bytes())?.attach(self))
+    }
+
     /// Find the object with `id` in the object database or return an error if it could not be found.
     ///
     /// There are various legitimate reasons for an object to not be present, which is why

@@ -4,7 +4,7 @@ use std::convert::TryInto;
 use git_hash::ObjectId;
 pub use git_object::Kind;
 
-use crate::{Commit, DetachedObject, Object, Tree};
+use crate::{Commit, DetachedObject, Object, Tag, Tree};
 
 mod errors;
 pub(crate) mod cache {
@@ -15,6 +15,7 @@ pub use errors::{conversion, find, write};
 pub mod commit;
 mod impls;
 pub mod peel;
+mod tag;
 ///
 pub mod tree;
 
@@ -55,6 +56,7 @@ impl std::fmt::Debug for DetachedObject {
     }
 }
 
+/// Consuming conversions to attached object kinds.
 impl<'repo> Object<'repo> {
     pub(crate) fn from_data(
         id: impl Into<ObjectId>,
@@ -95,6 +97,15 @@ impl<'repo> Object<'repo> {
         })
     }
 
+    /// Transform this object into a tag, or return it as part of the `Err` if it is no commit.
+    pub fn try_into_tag(self) -> Result<Tag<'repo>, try_into::Error> {
+        self.try_into().map_err(|this: Self| try_into::Error {
+            id: this.id,
+            actual: this.kind,
+            expected: git_object::Kind::Commit,
+        })
+    }
+
     /// Transform this object into a tree, or return it as part of the `Err` if it is no tree.
     pub fn try_into_tree(self) -> Result<Tree<'repo>, try_into::Error> {
         self.try_into().map_err(|this: Self| try_into::Error {
@@ -121,6 +132,7 @@ impl<'repo> Object<'repo> {
     }
 }
 
+/// Conversions to detached, lower-level object types.
 impl<'repo> Object<'repo> {
     /// Obtain a fully parsed commit whose fields reference our data buffer,
     ///
