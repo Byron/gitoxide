@@ -350,6 +350,11 @@ pub mod repo {
             #[clap(flatten)]
             args: super::pack::VerifyOptions,
         },
+        /// Describe the current commit or the given one using the name of the closest annotated tag in its ancestry.
+        Describe {
+            #[clap(subcommand)]
+            cmd: commit::Subcommands,
+        },
         /// Interact with tree objects.
         Tree {
             #[clap(subcommand)]
@@ -382,6 +387,33 @@ pub mod repo {
             Entries,
             /// Provide general information about the object database.
             Info,
+        }
+    }
+
+    pub mod commit {
+        #[derive(Debug, clap::Subcommand)]
+        pub enum Subcommands {
+            /// Describe the current commit or the given one using the name of the closest annotated tag in its ancestry.
+            Describe {
+                /// Use all tag references for naming, not only annotated tags.
+                #[clap(short = 't', conflicts_with("all-refs"))]
+                all_tags: bool,
+
+                /// Use all references under the `ref/` namespaces, which includes tag references, local and remote branches.
+                #[clap(short = 'a', conflicts_with("all-tags"))]
+                all_refs: bool,
+
+                /// Only follow the first parent when traversing the commit graph.
+                #[clap(short = 'f')]
+                first_parent: bool,
+
+                #[clap(short = 'a')]
+                /// If there was no way to describe the commit, fallback to using the abbreviated input revision.
+                always: bool,
+
+                /// A specification of the revision to use, or the current `HEAD` if unset.
+                rev_spec: Option<String>,
+            },
         }
     }
 

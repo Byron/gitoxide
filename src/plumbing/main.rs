@@ -156,6 +156,22 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Repository(repo::Platform { repository, cmd }) => match cmd {
+            repo::Subcommands::Describe { cmd } => match cmd {
+                repo::commit::Subcommands::Describe {
+                    all_tags,
+                    all_refs,
+                    first_parent,
+                    always,
+                    rev_spec,
+                } => prepare_and_run(
+                    "repository-commit-describe",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, err| todo!(),
+                ),
+            },
             repo::Subcommands::Mailmap { cmd } => match cmd {
                 repo::mailmap::Subcommands::Entries => prepare_and_run(
                     "repository-mailmap-entries",
