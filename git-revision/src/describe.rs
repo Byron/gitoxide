@@ -334,6 +334,7 @@ pub(crate) mod function {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn finish_depth_computation<'name, Find, E>(
         mut queue: VecDeque<git_hash::ObjectId>,
         mut find: Find,

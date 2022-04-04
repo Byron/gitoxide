@@ -14,7 +14,7 @@ impl crate::Repository {
     // TODO: tests, actual integration of rev-spec parsing when available.
     /// Parse a revision specification and turn it into the full id to the object it describes, similar to `git rev-parse`.
     /// NOTE that currently this only parses full hex names.
-    pub fn rev_parse<'a>(&'a self, spec: impl AsRef<str>) -> Result<crate::Id<'a>, crate::rev_parse::Error> {
+    pub fn rev_parse(&self, spec: impl AsRef<str>) -> Result<crate::Id<'_>, crate::rev_parse::Error> {
         Ok(git_hash::ObjectId::from_hex(spec.as_ref().as_bytes())?.attach(self))
     }
 
