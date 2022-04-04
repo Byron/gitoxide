@@ -7,7 +7,7 @@ use git_object::bstr::BStr;
 
 #[derive(Debug, Clone)]
 pub struct Outcome<'name> {
-    pub name: Cow<'name, BStr>,
+    pub name: Option<Cow<'name, BStr>>,
     pub id: git_hash::ObjectId,
     pub depth: u32,
     pub name_by_oid: std::collections::HashMap<git_hash::ObjectId, Cow<'name, BStr>>,
@@ -28,7 +28,7 @@ impl<'a> Outcome<'a> {
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Format<'a> {
-    pub name: Cow<'a, BStr>,
+    pub name: Option<Cow<'a, BStr>>,
     pub id: git_hash::ObjectId,
     pub hex_len: usize,
     pub depth: u32,
@@ -52,17 +52,16 @@ impl<'a> Format<'a> {
 
 impl<'a> Display for Format<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if !self.long && self.is_exact_match() {
-            self.name.fmt(f)?;
+        if let Some(name) = self.name.as_deref() {
+            if !self.long && self.is_exact_match() {
+                name.fmt(f)?;
+            } else {
+                write!(f, "{}-{}-g{}", name, self.depth, self.id.to_hex_with_len(self.hex_len))?;
+            }
         } else {
-            write!(
-                f,
-                "{}-{}-g{}",
-                self.name,
-                self.depth,
-                self.id.to_hex_with_len(self.hex_len)
-            )?;
+            self.id.to_hex_with_len(self.hex_len).fmt(f)?;
         }
+
         if let Some(suffix) = &self.dirty_suffix {
             write!(f, "-{}", suffix)?;
         }
@@ -133,7 +132,7 @@ pub(crate) mod function {
     {
         if let Some(name) = name_by_oid.get(commit) {
             return Ok(Some(Outcome {
-                name: name.clone(),
+                name: name.clone().into(),
                 id: commit.to_owned(),
                 depth: 0,
                 name_by_oid,
@@ -214,7 +213,7 @@ pub(crate) mod function {
         )?;
 
         Ok(candidates.into_iter().next().map(|c| Outcome {
-            name: c.name,
+            name: c.name.into(),
             id: commit.to_owned(),
             depth: c.commits_in_its_future,
             name_by_oid,

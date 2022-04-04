@@ -45,7 +45,7 @@ fn not_enough_candidates() {
     .unwrap()
     .expect("candidate found");
 
-    assert_eq!(res.name, name, "it finds the youngest/most-recent name");
+    assert_eq!(res.name, Some(name), "it finds the youngest/most-recent name");
     assert_eq!(res.id, commit.id);
     assert_eq!(
         res.depth, 3,
@@ -69,7 +69,7 @@ fn typical_usecases() {
     .unwrap()
     .expect("found a candidate");
 
-    assert_eq!(res.name, name, "this is an exact match");
+    assert_eq!(res.name, Some(name), "this is an exact match");
     assert_eq!(res.id, commit.id);
     assert_eq!(res.depth, 0);
 
@@ -94,7 +94,8 @@ fn typical_usecases() {
     .expect("found a candidate");
 
     assert_eq!(
-        res.name, name,
+        res.name,
+        Some(name),
         "a match to a tag 1 commit away with 2 commits on the other side of the merge/head"
     );
     assert_eq!(res.id, commit.id);
