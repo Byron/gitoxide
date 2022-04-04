@@ -9,6 +9,8 @@ pub fn init(directory: Option<PathBuf>) -> Result<git_repository::Path> {
 
 pub mod tree;
 
+pub mod commit;
+
 pub mod verify;
 
 pub mod odb;

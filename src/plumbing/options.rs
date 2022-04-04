@@ -350,8 +350,8 @@ pub mod repo {
             #[clap(flatten)]
             args: super::pack::VerifyOptions,
         },
-        /// Describe the current commit or the given one using the name of the closest annotated tag in its ancestry.
-        Describe {
+        /// Interact with commit objects.
+        Commit {
             #[clap(subcommand)]
             cmd: commit::Subcommands,
         },
@@ -396,18 +396,22 @@ pub mod repo {
             /// Describe the current commit or the given one using the name of the closest annotated tag in its ancestry.
             Describe {
                 /// Use all tag references for naming, not only annotated tags.
-                #[clap(short = 't', conflicts_with("all-refs"))]
+                #[clap(long, short = 't', conflicts_with("all-refs"))]
                 all_tags: bool,
 
                 /// Use all references under the `ref/` namespaces, which includes tag references, local and remote branches.
-                #[clap(short = 'a', conflicts_with("all-tags"))]
+                #[clap(long, short = 'a', conflicts_with("all-tags"))]
                 all_refs: bool,
 
                 /// Only follow the first parent when traversing the commit graph.
-                #[clap(short = 'f')]
+                #[clap(long, short = 'f')]
                 first_parent: bool,
 
-                #[clap(short = 'a')]
+                /// Always display the long format, even if that would not be necessary as the id is located directly on a reference.
+                #[clap(long, short = 'l')]
+                long: bool,
+
+                #[clap(long)]
                 /// If there was no way to describe the commit, fallback to using the abbreviated input revision.
                 always: bool,
 

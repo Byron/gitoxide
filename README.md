@@ -49,6 +49,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
       * [x] **verify** - check entries of a mailmap file for parse errors and display them
     * **repository**
       * **verify** - validate a whole repository, for now only the object database.
+      * **commit**
+         * [x] **describe** - identify a commit by its closest tag in its past
       * **tree**
          * [x] **entries** - list tree entries for a single tree or recursively
          * [x] **info** - display tree statistics

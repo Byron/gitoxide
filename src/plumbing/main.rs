@@ -156,12 +156,13 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Repository(repo::Platform { repository, cmd }) => match cmd {
-            repo::Subcommands::Describe { cmd } => match cmd {
+            repo::Subcommands::Commit { cmd } => match cmd {
                 repo::commit::Subcommands::Describe {
                     all_tags,
                     all_refs,
                     first_parent,
                     always,
+                    long,
                     rev_spec,
                 } => prepare_and_run(
                     "repository-commit-describe",
@@ -169,7 +170,20 @@ pub fn main() -> Result<()> {
                     progress,
                     progress_keep_open,
                     None,
-                    move |_progress, out, err| todo!(),
+                    move |_progress, out, _err| {
+                        core::repository::commit::describe(
+                            repository,
+                            rev_spec.as_deref(),
+                            out,
+                            core::repository::commit::describe::Options {
+                                all_tags,
+                                all_refs,
+                                long_format: long,
+                                first_parent,
+                                always,
+                            },
+                        )
+                    },
                 ),
             },
             repo::Subcommands::Mailmap { cmd } => match cmd {
