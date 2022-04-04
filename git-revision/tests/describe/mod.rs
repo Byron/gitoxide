@@ -115,11 +115,27 @@ fn typical_usecases() {
 
     assert_eq!(
         res.name,
-        Some(name),
+        Some(name.clone()),
         "a match to a tag 1 commit away with 2 commits on the other side of the merge/head"
     );
     assert_eq!(res.id, commit.id);
     assert_eq!(res.depth, 3);
+
+    let res = git_revision::describe(
+        &commit.id,
+        |id, buf| repo.objects.find_commit_iter(id, buf),
+        describe::Options {
+            name_by_oid: res.name_by_oid,
+            first_parent: true,
+            ..Default::default()
+        },
+    )
+    .unwrap()
+    .expect("found a candidate");
+
+    assert_eq!(res.name, Some(name),);
+    assert_eq!(res.id, commit.id);
+    assert_eq!(res.depth, 1);
 }
 
 fn repo() -> Repository {

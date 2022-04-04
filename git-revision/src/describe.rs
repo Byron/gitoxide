@@ -81,6 +81,8 @@ pub struct Options<'name> {
     pub max_candidates: usize,
     /// If no candidate for naming, always show the abbreviated hash. Default: false.
     pub fallback_to_oid: bool,
+    /// Only follow the first parent during graph traversal. Default: false.
+    pub first_parent: bool,
 }
 
 impl<'name> Default for Options<'name> {
@@ -89,6 +91,7 @@ impl<'name> Default for Options<'name> {
             max_candidates: MAX_CANDIDATES,
             name_by_oid: Default::default(),
             fallback_to_oid: false,
+            first_parent: false,
         }
     }
 }
@@ -131,6 +134,7 @@ pub(crate) mod function {
             name_by_oid,
             mut max_candidates,
             fallback_to_oid,
+            first_parent,
         }: Options<'name>,
     ) -> Result<Option<Outcome<'name>>, Error<E>>
     where
@@ -193,6 +197,7 @@ pub(crate) mod function {
                 &mut seen,
                 &commit,
                 flags,
+                first_parent,
             )?;
         }
 
@@ -227,6 +232,7 @@ pub(crate) mod function {
             buf,
             parent_buf,
             parents,
+            first_parent,
         )?;
 
         Ok(candidates.into_iter().next().map(|c| Outcome {
@@ -247,6 +253,7 @@ pub(crate) mod function {
         seen: &mut HashMap<git_hash::ObjectId, Flags, HashBuildHasher>,
         commit: &git_hash::oid,
         commit_flags: Flags,
+        first_parent: bool,
     ) -> Result<(), Error<E>>
     where
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
@@ -282,6 +289,9 @@ pub(crate) mod function {
                 Ok(_unused_token) => break,
                 Err(err) => return Err(err.into()),
             }
+            if first_parent {
+                break;
+            }
         }
 
         parents.sort_by(|a, b| a.1.cmp(&b.1).reverse());
@@ -298,6 +308,7 @@ pub(crate) mod function {
         mut buf: Vec<u8>,
         mut parent_buf: Vec<u8>,
         mut parents: Vec<(git_hash::ObjectId, Flags)>,
+        first_parent: bool,
     ) -> Result<(), Error<E>>
     where
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
@@ -325,6 +336,7 @@ pub(crate) mod function {
                 &mut seen,
                 &commit,
                 flags,
+                first_parent,
             )?;
         }
         Ok(())
