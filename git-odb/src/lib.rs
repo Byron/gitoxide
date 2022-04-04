@@ -9,8 +9,6 @@
 //! * loose object reading and writing
 //! * access to packed objects
 //! * multiple loose objects and pack locations as gathered from `alternates` files.
-// TODO: actually remove the deprecated items and remove thos allow
-#![allow(deprecated)]
 
 use std::{
     cell::RefCell,
@@ -23,7 +21,7 @@ use git_features::{threading::OwnShared, zlib::stream::deflate};
 pub use git_pack as pack;
 
 mod store_impls;
-pub use store_impls::{compound, dynamic as store, linked, loose};
+pub use store_impls::{dynamic as store, loose};
 
 pub mod alternate;
 

@@ -1,31 +1,21 @@
-#![allow(deprecated)]
-
-use git_odb::compound::Store;
+//! These are old tests of the now removed linked odb, but executed on the general store
+//! to be sure we don't loose coverage. This might, however, be overlapping with much more thorough
+//! tests o the general store itself, so they can possibly be removed at some point.
 
 use crate::fixture_path;
 
-fn db() -> Store {
-    Store::at(fixture_path("objects"), 0).expect("valid object path")
-}
-
-mod init {
-    use crate::odb::store::compound::db;
-
-    #[test]
-    fn has_packs() {
-        assert_eq!(db().bundles.len(), 3)
-    }
+fn db() -> git_odb::Handle {
+    git_odb::at(fixture_path("objects")).expect("valid object path")
 }
 
 mod locate {
-    use git_odb::compound::Store;
-
     use crate::{hex_to_id, odb::store::compound::db};
+    use git_odb::Find;
 
-    fn can_locate(db: &Store, hex_id: &str) {
+    fn can_locate(db: &git_odb::Handle, hex_id: &str) {
         let mut buf = vec![];
         assert!(db
-            .try_find(hex_to_id(hex_id), &mut buf, &mut git_pack::cache::Never)
+            .try_find(hex_to_id(hex_id), &mut buf)
             .expect("no read error")
             .is_some());
     }

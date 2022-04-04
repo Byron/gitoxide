@@ -4,7 +4,7 @@ use git_features::{
     parallel::{reduce::Finalize, InOrderIter},
     progress,
 };
-use git_odb::{compound, pack, pack::FindExt};
+use git_odb::{pack, pack::FindExt};
 use git_pack::data::{
     output,
     output::{count, entry},
@@ -336,7 +336,9 @@ fn write_and_verify(
     let (num_written_bytes, pack_hash) = {
         let num_entries = entries.len();
         let mut pack_writer = output::bytes::FromEntriesIter::new(
-            std::iter::once(Ok::<_, entry::iter_from_counts::Error<compound::find::Error>>(entries)),
+            std::iter::once(Ok::<_, entry::iter_from_counts::Error<git_odb::store::find::Error>>(
+                entries,
+            )),
             &mut pack_file,
             num_entries as u32,
             pack::data::Version::V2,

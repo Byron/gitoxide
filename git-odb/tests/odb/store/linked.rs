@@ -1,23 +1,10 @@
-#![allow(deprecated)]
-use git_odb::linked::Store;
-
+//! These are old tests of the now removed linked odb, but executed on the general store
+//! to be sure we don't loose coverage. This might, however, be overlapping with much more thorough
+//! tests o the general store itself, so they can possibly be removed at some point.
 use crate::fixture_path;
 
-fn db() -> Store {
-    Store::at(fixture_path("objects")).expect("valid object path")
-}
-
-#[test]
-fn refresh() {
-    let mut db = db();
-    assert_eq!(db.iter().count(), 146, "packed + loose objects");
-    db.dbs[0].bundles.clear();
-    assert_eq!(db.iter().count(), 7, "loose objects only");
-
-    db.refresh().unwrap();
-    assert_eq!(db.iter().count(), 146, "it replenished the packs");
-    db.refresh().unwrap();
-    assert_eq!(db.iter().count(), 146, "calling this multiple times is ok");
+fn db() -> git_odb::Handle {
+    git_odb::at(fixture_path("objects")).expect("valid object path")
 }
 
 mod iter {
@@ -26,28 +13,16 @@ mod iter {
     use crate::odb::store::linked::db;
 
     #[test]
-    fn arc_iter() {
-        let db = std::sync::Arc::new(db());
-        let _ = db.arc_iter();
-    }
-
-    #[test]
-    fn rc_iter() {
-        let db = std::rc::Rc::new(db());
-        let _ = db.rc_iter();
-    }
-
-    #[test]
     fn a_bunch_of_loose_and_packed_objects() -> crate::Result {
         let db = db();
-        let iter = db.iter();
+        let iter = db.iter()?;
         assert_eq!(
             iter.size_hint(),
             (139, None),
             "we only count packs and have no upper bound"
         );
         assert_eq!(iter.count(), 146, "it sees the correct amount of objects");
-        for id in db.iter() {
+        for id in db.iter()? {
             assert!(db.contains(id?), "each object exists");
         }
         Ok(())
@@ -55,12 +30,12 @@ mod iter {
 }
 
 mod locate {
-    use git_odb::linked::Store;
+    use git_odb::Handle;
     use git_pack::Find;
 
     use crate::{hex_to_id, odb::store::linked::db};
 
-    fn can_locate(db: &Store, hex_id: &str) {
+    fn can_locate(db: &Handle, hex_id: &str) {
         let mut buf = vec![];
         assert!(db
             .try_find(hex_to_id(hex_id), &mut buf)
@@ -82,36 +57,37 @@ mod locate {
 }
 
 mod init {
-    use std::convert::TryFrom;
-
-    use git_odb::linked;
-
     use crate::odb::{alternate::alternate, store::linked::db};
+    use git_hash::ObjectId;
+    use git_odb::Find;
 
     #[test]
     fn multiple_linked_repositories_via_alternates() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
-        let (object_path, linked_object_path) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
-        let db = linked::Store::try_from(object_path.clone())?;
-        assert_eq!(db.dbs.len(), 2);
-        assert_eq!(db.dbs[0].loose.path(), object_path);
-        assert_eq!(db.dbs[1].loose.path(), linked_object_path);
+        let (object_path, _linked_object_path) = alternate(tmp.path().join("a"), tmp.path().join("b"))?;
+        let db = git_odb::at(object_path.clone())?;
+        db.contains(ObjectId::null(git_hash::Kind::Sha1)); // trigger load
+
+        assert_eq!(db.store_ref().metrics().loose_dbs, 2);
+        assert_eq!(db.iter()?.count(), 0, "the test locations are actually empty");
+        assert_eq!(db.store_ref().path(), object_path);
         Ok(())
     }
 
     #[test]
-    fn a_linked_db_without_alternates() -> crate::Result {
+    fn a_db_without_alternates() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
-        let db = linked::Store::at(tmp.path())?;
-        assert_eq!(db.dbs.len(), 1);
-        assert_eq!(db.dbs[0].loose.path(), tmp.path());
+        let db = git_odb::at(tmp.path())?;
+        db.contains(ObjectId::null(git_hash::Kind::Sha1)); // trigger load
+        assert_eq!(db.store_ref().metrics().loose_dbs, 1);
+        assert_eq!(db.store_ref().path(), tmp.path());
         Ok(())
     }
 
     #[test]
     fn has_packs() {
         let db = db();
-        assert_eq!(db.dbs.len(), 1);
-        assert_eq!(db.dbs[0].bundles.len(), 3)
+        db.contains(ObjectId::null(git_hash::Kind::Sha1)); // trigger load
+        assert_eq!(db.store_ref().metrics().known_packs, 3);
     }
 }

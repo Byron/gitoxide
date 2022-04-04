@@ -1,7 +1,8 @@
 use crate::Store;
 
 impl Store {
-    /// The root path at which we expect to find all objects and packs.
+    /// The root path at which we expect to find all objects and packs, and which is the source of the
+    /// alternate file traversal in case there are linked repositories.
     pub fn path(&self) -> &std::path::Path {
         &self.path
     }
