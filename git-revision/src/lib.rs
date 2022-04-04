@@ -4,6 +4,9 @@
 #![forbid(unsafe_code, rust_2018_idioms)]
 #[deny(missing_docs)]
 
+/// Access to collections optimized for keys that are already a hash.
+pub use hash_hasher;
+
 ///
 pub mod describe;
 pub use describe::function::describe;

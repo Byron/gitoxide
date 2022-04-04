@@ -23,7 +23,6 @@ pub mod describe {
     use git_hash::ObjectId;
     use git_odb::FindExt;
     use std::borrow::Cow;
-    use std::collections::HashMap;
 
     /// The error returned by [try_format()][Platform::try_format()].
     #[derive(Debug, thiserror::Error)]
@@ -52,7 +51,10 @@ pub mod describe {
     }
 
     impl SelectRef {
-        fn names(&self, repo: &Repository) -> Result<HashMap<ObjectId, Cow<'static, BStr>>, Error> {
+        fn names(
+            &self,
+            repo: &Repository,
+        ) -> Result<git_revision::hash_hasher::HashedMap<ObjectId, Cow<'static, BStr>>, Error> {
             let platform = repo.references()?;
             let into_tuple =
                 |r: crate::Reference<'_>| (r.inner.target.into_id(), Cow::from(r.inner.name.shorten().to_owned()));

@@ -18,7 +18,7 @@ pub struct Outcome<'name> {
     /// These commits are all in the future of the named tag or branch.
     pub depth: u32,
     /// The mapping between object ids and their names initially provided by the describe call.
-    pub name_by_oid: std::collections::HashMap<git_hash::ObjectId, Cow<'name, BStr>>,
+    pub name_by_oid: hash_hasher::HashedMap<git_hash::ObjectId, Cow<'name, BStr>>,
 }
 
 impl<'a> Outcome<'a> {
@@ -99,7 +99,7 @@ const MAX_CANDIDATES: usize = std::mem::size_of::<Flags>() * 8;
 pub struct Options<'name> {
     /// The candidate names from which to determine the `name` to use for the describe string,
     /// as a mapping from a commit id and the name associated with it.
-    pub name_by_oid: std::collections::HashMap<git_hash::ObjectId, Cow<'name, BStr>>,
+    pub name_by_oid: hash_hasher::HashedMap<git_hash::ObjectId, Cow<'name, BStr>>,
     /// The amount of names we will keep track of. Defaults to the maximum of 32.
     ///
     /// If the number is exceeded, it will be capped at 32.
