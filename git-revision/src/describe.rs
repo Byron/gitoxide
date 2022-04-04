@@ -75,7 +75,12 @@ const MAX_CANDIDATES: usize = std::mem::size_of::<Flags>() * 8;
 #[derive(Clone, Debug)]
 pub struct Options<'name> {
     pub name_by_oid: std::collections::HashMap<git_hash::ObjectId, Cow<'name, BStr>>,
+    /// The amount of names we will keep track of. Defaults to the maximum of 32.
+    ///
+    /// If the number is exceeded, it will be capped at 32.
     pub max_candidates: usize,
+    /// If no candidate for naming, always show the abbreviated hash. Default: false.
+    pub fallback_to_oid: bool,
 }
 
 impl<'name> Default for Options<'name> {
@@ -83,6 +88,7 @@ impl<'name> Default for Options<'name> {
         Options {
             max_candidates: MAX_CANDIDATES,
             name_by_oid: Default::default(),
+            fallback_to_oid: false,
         }
     }
 }
@@ -112,7 +118,7 @@ pub(crate) mod function {
         iter::FromIterator,
     };
 
-    use crate::describe::{Flags, Options};
+    use crate::describe::{Flags, Options, MAX_CANDIDATES};
     use git_hash::oid;
     use git_object::{bstr::BStr, CommitRefIter};
 
@@ -123,7 +129,8 @@ pub(crate) mod function {
         mut find: Find,
         Options {
             name_by_oid,
-            max_candidates,
+            mut max_candidates,
+            fallback_to_oid,
         }: Options<'name>,
     ) -> Result<Option<Outcome<'name>>, Error<E>>
     where
@@ -138,6 +145,7 @@ pub(crate) mod function {
                 name_by_oid,
             }));
         }
+        max_candidates = max_candidates.min(MAX_CANDIDATES);
 
         let mut buf = Vec::new();
         let mut parent_buf = Vec::new();
@@ -189,7 +197,16 @@ pub(crate) mod function {
         }
 
         if candidates.is_empty() {
-            return Ok(None);
+            return if fallback_to_oid {
+                Ok(Some(Outcome {
+                    id: commit.to_owned(),
+                    name: None,
+                    name_by_oid,
+                    depth: 0,
+                }))
+            } else {
+                Ok(None)
+            };
         }
 
         candidates.sort_by(|a, b| {

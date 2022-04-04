@@ -21,6 +21,25 @@ fn option_none_if_no_tag_found() {
 }
 
 #[test]
+fn fallback_if_configured_in_options_but_no_candidate() {
+    let repo = repo();
+    let commit = repo.head_commit().unwrap();
+    let res = git_revision::describe(
+        &commit.id,
+        |id, buf| repo.objects.find_commit_iter(id, buf),
+        describe::Options {
+            fallback_to_oid: true,
+            ..Default::default()
+        },
+    )
+    .unwrap()
+    .expect("fallback activated");
+    assert!(res.name.is_none(), "no name can be found");
+    assert_eq!(res.depth, 0, "just a default, not relevant as there is no name");
+    assert_eq!(res.into_format(7).to_string(), "01ec18a");
+}
+
+#[test]
 fn not_enough_candidates() {
     let repo = repo();
     let commit = repo.head_commit().unwrap();
@@ -40,6 +59,7 @@ fn not_enough_candidates() {
             .into_iter()
             .collect(),
             max_candidates: 1,
+            ..Default::default()
         },
     )
     .unwrap()
