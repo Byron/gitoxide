@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 mod changes {
     mod to_obtain_tree {
         use git_diff::tree::{recorder, recorder::Change::*};
