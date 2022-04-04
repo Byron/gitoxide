@@ -62,15 +62,16 @@ impl<'a> FullNameRef<'a> {
         }
 
         if self.0.starts_with(Category::Note.prefix()) {
-            return Some((
+            Some((
                 Category::Note,
                 self.0
                     .strip_prefix(b"refs/")
                     .expect("we checked for refs/notes above")
                     .as_bstr(),
-            ));
+            ))
+        } else {
+            None
         }
-        None
     }
 }
 
