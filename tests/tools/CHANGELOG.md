@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## v0.6.0 (2022-04-04)
 
+<csr-id-1d5ab44145ccbc2064ee8cc7acebb62db82c45aa/>
+
 ### Test
 
  - <csr-id-1d5ab44145ccbc2064ee8cc7acebb62db82c45aa/> ensure tests use 'merge.ff false' and recreate fixtures on each run
@@ -15,10 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 24 commits contributed to the release over the course of 210 calendar days.
+ - 25 commits contributed to the release over the course of 210 calendar days.
  - 223 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 6 unique issues were worked on: [#198](https://github.com/Byron/gitoxide/issues/198), [#266](https://github.com/Byron/gitoxide/issues/266), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#366](https://github.com/Byron/gitoxide/issues/366)
+ - 7 unique issues were worked on: [#198](https://github.com/Byron/gitoxide/issues/198), [#266](https://github.com/Byron/gitoxide/issues/266), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#364](https://github.com/Byron/gitoxide/issues/364), [#366](https://github.com/Byron/gitoxide/issues/366)
 
 ### Thanks Clippy
 
@@ -45,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - upgrade parking_lot and cargo_toml ([`f95c1a0`](https://github.com/Byron/gitoxide/commit/f95c1a0d9c19bcc6feb9b8739a09d86f9970a0e0))
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
     - refactor ([`9ea1e44`](https://github.com/Byron/gitoxide/commit/9ea1e4474a3ce803da7a56e1fc1748f65c11a876))
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - add test-tools changelog prior to release ([`1ebc16a`](https://github.com/Byron/gitoxide/commit/1ebc16a6ac9ef188c188a52737820773aa949cee))
  * **[#366](https://github.com/Byron/gitoxide/issues/366)**
     - quickfix for unintentionally using 'unicode' feature of bytecode ([`fb5593a`](https://github.com/Byron/gitoxide/commit/fb5593a7272498ae042b6c8c7605faa3d253fa10))
  * **Uncategorized**
@@ -144,6 +148,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## v0.1.0 (2021-04-30)
+
+<csr-id-29bf8ca8399b6d4941aa242b9f08c74e59a179bb/>
 
 ### Other
 
