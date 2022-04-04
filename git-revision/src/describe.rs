@@ -143,6 +143,7 @@ where
 pub(crate) mod function {
     use super::Error;
     use hash_hasher::HashBuildHasher;
+    use std::cmp::Ordering;
     use std::collections::HashMap;
     use std::{
         borrow::Cow,
@@ -226,13 +227,17 @@ pub(crate) mod function {
                 // single-trunk history that waits to be replenished.
                 // Abort early if the best-candidate is in the current commits past.
                 let mut shortest_depth = Flags::MAX;
-                let mut best_candidates_at_same_depth = 0 as Flags;
+                let mut best_candidates_at_same_depth = 0_u32;
                 for candidate in &candidates {
-                    if candidate.commits_in_its_future < shortest_depth {
-                        shortest_depth = candidate.commits_in_its_future;
-                        best_candidates_at_same_depth = candidate.identity_bit;
-                    } else if candidate.commits_in_its_future == shortest_depth {
-                        best_candidates_at_same_depth |= candidate.identity_bit;
+                    match candidate.commits_in_its_future.cmp(&shortest_depth) {
+                        Ordering::Less => {
+                            shortest_depth = candidate.commits_in_its_future;
+                            best_candidates_at_same_depth = candidate.identity_bit;
+                        }
+                        Ordering::Equal => {
+                            best_candidates_at_same_depth |= candidate.identity_bit;
+                        }
+                        Ordering::Greater => {}
                     }
                 }
 
@@ -368,9 +373,7 @@ pub(crate) mod function {
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let mut seen_commit = 0;
         while let Some(commit) = queue.pop_front() {
-            seen_commit += 1;
             let flags = seen[&commit];
             if (flags & best_candidate.identity_bit) == best_candidate.identity_bit {
                 if queue
