@@ -24,4 +24,4 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
-git-repository = { version = "^0.16.0", path = "../git-repository", default-features = false, features = ["unstable"] }
+git-repository = { path = "../git-repository", default-features = false, features = ["unstable"] }
