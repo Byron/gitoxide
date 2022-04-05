@@ -159,7 +159,7 @@ pub fn main() -> Result<()> {
         Subcommands::Repository(repo::Platform { repository, cmd }) => match cmd {
             repo::Subcommands::Commit { cmd } => match cmd {
                 repo::commit::Subcommands::Describe {
-                    all_tags,
+                    annotated_tags,
                     all_refs,
                     first_parent,
                     always,
@@ -180,7 +180,7 @@ pub fn main() -> Result<()> {
                             out,
                             err,
                             core::repository::commit::describe::Options {
-                                all_tags,
+                                all_tags: !annotated_tags,
                                 all_refs,
                                 long_format: long,
                                 first_parent,

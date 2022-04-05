@@ -395,12 +395,12 @@ pub mod repo {
         pub enum Subcommands {
             /// Describe the current commit or the given one using the name of the closest annotated tag in its ancestry.
             Describe {
-                /// Use all tag references for naming, not only annotated tags.
+                /// Use annotated tag references only, not all tags.
                 #[clap(long, short = 't', conflicts_with("all-refs"))]
-                all_tags: bool,
+                annotated_tags: bool,
 
                 /// Use all references under the `ref/` namespaces, which includes tag references, local and remote branches.
-                #[clap(long, short = 'a', conflicts_with("all-tags"))]
+                #[clap(long, short = 'a', conflicts_with("annotated-tags"))]
                 all_refs: bool,
 
                 /// Only follow the first parent when traversing the commit graph.

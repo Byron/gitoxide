@@ -49,7 +49,7 @@ impl<'repo> Id<'repo> {
 
 fn calculate_auto_hex_len(num_packed_objects: u64) -> usize {
     let mut len = 64 - num_packed_objects.leading_zeros();
-    len = (len + 2 - 1) / 2;
+    len = (len + 1) / 2;
     len.max(7) as usize
 }
 
