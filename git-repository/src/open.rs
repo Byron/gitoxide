@@ -1,9 +1,5 @@
-use std::{borrow::Cow, path::PathBuf};
+use std::path::PathBuf;
 
-use git_config::{
-    file::GitConfig,
-    values::{Boolean, Integer},
-};
 use git_features::threading::OwnShared;
 
 /// A way to configure the usage of replacement objects, see `git replace`.
@@ -93,13 +89,11 @@ impl Options {
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    Config(#[from] crate::config::open::Error),
+    Config(#[from] crate::config::Error),
     #[error(transparent)]
     NotARepository(#[from] crate::path::is::Error),
     #[error(transparent)]
     ObjectStoreInitialization(#[from] std::io::Error),
-    #[error("Cannot handle objects formatted as {:?}", .name)]
-    UnsupportedObjectFormat { name: crate::bstr::BString },
 }
 
 impl crate::ThreadSafeRepository {
@@ -131,33 +125,16 @@ impl crate::ThreadSafeRepository {
             replacement_objects,
         }: Options,
     ) -> Result<Self, Error> {
-        let config = git_config::file::GitConfig::open(git_dir.join("config"))?;
-        if worktree_dir.is_none() {
-            let is_bare = config_bool(&config, "core.bare", false);
-            if !is_bare {
+        let mut config = crate::config::Cache::new(&git_dir)?;
+        match worktree_dir {
+            None if !config.is_bare => {
                 worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());
             }
-        }
-        let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true);
-        let repo_format_version = config
-            .value::<Integer>("core", None, "repositoryFormatVersion")
-            .map_or(0, |v| v.value);
-        let object_hash = if repo_format_version == 1 {
-            if let Ok(format) = config.value::<Cow<'_, [u8]>>("extensions", None, "objectFormat") {
-                match format.as_ref() {
-                    b"sha1" => git_hash::Kind::Sha1,
-                    _ => {
-                        return Err(Error::UnsupportedObjectFormat {
-                            name: format.to_vec().into(),
-                        })
-                    }
-                }
-            } else {
-                git_hash::Kind::Sha1
+            Some(_) => {
+                config.is_bare = false;
             }
-        } else {
-            git_hash::Kind::Sha1
-        };
+            None => {}
+        }
 
         let refs = crate::RefStore::at(
             &git_dir,
@@ -166,7 +143,7 @@ impl crate::ThreadSafeRepository {
             } else {
                 git_ref::store::WriteReflog::Normal
             },
-            object_hash,
+            config.object_hash,
         );
 
         let replacements = replacement_objects
@@ -194,21 +171,13 @@ impl crate::ThreadSafeRepository {
                 replacements,
                 git_odb::store::init::Options {
                     slots: object_store_slots,
-                    object_hash,
-                    use_multi_pack_index,
+                    object_hash: config.object_hash,
+                    use_multi_pack_index: config.use_multi_pack_index,
                 },
             )?),
             refs,
             work_tree: worktree_dir,
-            object_hash,
-            config: config.into(),
+            config,
         })
     }
-}
-
-fn config_bool(config: &GitConfig<'_>, key: &str, default: bool) -> bool {
-    let (section, key) = key.split_once('.').expect("valid section.key format");
-    config
-        .value::<Boolean<'_>>(section, None, key)
-        .map_or(default, |b| matches!(b, Boolean::True(_)))
 }

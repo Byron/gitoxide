@@ -35,7 +35,7 @@ impl crate::Repository {
 
     /// The kind of object hash the repository is configured to use.
     pub fn object_hash(&self) -> git_hash::Kind {
-        self.object_hash
+        self.config.object_hash
     }
 }
 
@@ -46,13 +46,11 @@ mod init {
         pub(crate) fn from_refs_and_objects(
             refs: crate::RefStore,
             objects: crate::OdbHandle,
-            object_hash: git_hash::Kind,
             work_tree: Option<std::path::PathBuf>,
-            config: crate::Config,
+            config: crate::config::Cache,
         ) -> Self {
             crate::Repository {
                 bufs: RefCell::new(Vec::with_capacity(4)),
-                object_hash,
                 work_tree,
                 objects: {
                     #[cfg(feature = "max-performance")]
@@ -65,7 +63,7 @@ mod init {
                     }
                 },
                 refs,
-                config,
+                config: config,
             }
         }
 

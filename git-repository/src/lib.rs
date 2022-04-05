@@ -234,12 +234,7 @@ pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repositor
 pub mod open;
 
 ///
-mod config {
-    ///
-    pub mod open {
-        pub type Error = git_config::parser::ParserOrIoError<'static>;
-    }
-}
+mod config;
 
 ///
 pub mod mailmap {

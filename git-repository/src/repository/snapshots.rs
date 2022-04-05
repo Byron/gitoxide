@@ -7,7 +7,7 @@ impl crate::Repository {
     pub fn load_index(&self) -> Option<Result<git_index::File, git_index::file::init::Error>> {
         // TODO: choose better/correct options
         let opts = git_index::decode::Options {
-            object_hash: self.object_hash,
+            object_hash: self.config.object_hash,
             thread_limit: None,
             min_extension_block_in_bytes_for_threading: 1024 * 256,
         };
@@ -47,6 +47,7 @@ impl crate::Repository {
         let mut buf = Vec::new();
         let mut blob_id = self
             .config
+            .resolved
             .get_raw_value("mailmap", None, "blob")
             .ok()
             .and_then(|spec| {
@@ -91,6 +92,7 @@ impl crate::Repository {
 
         let configured_path = self
             .config
+            .resolved
             .value::<git_config::values::Path<'_>>("mailmap", None, "file")
             .ok()
             .and_then(|path| {

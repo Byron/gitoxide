@@ -118,12 +118,10 @@ pub struct Repository {
     pub objects: crate::OdbHandle,
 
     pub(crate) work_tree: Option<PathBuf>,
-    /// The kind of hash that is used or should be used for object ids
-    pub(crate) object_hash: git_hash::Kind,
-    /// Access to all repository configuration, must be hidden as there is a lot figure out.
-    pub(crate) config: crate::Config,
     /// A free-list of re-usable object backing buffers
     pub(crate) bufs: RefCell<Vec<Vec<u8>>>,
+    /// A pre-assembled selection of often-accessed configuration values for quick access.
+    pub(crate) config: crate::config::Cache,
 }
 
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
@@ -143,9 +141,8 @@ pub struct ThreadSafeRepository {
     pub(crate) objects: git_features::threading::OwnShared<git_odb::Store>,
     /// The path to the worktree at which to find checked out files
     pub work_tree: Option<PathBuf>,
-    pub(crate) object_hash: git_hash::Kind,
     // TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
     //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
     //       packs are refreshed. This would be `git_config::fs::Config` when ready.
-    pub(crate) config: crate::Config,
+    pub(crate) config: crate::config::Cache,
 }

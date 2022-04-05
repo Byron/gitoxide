@@ -8,6 +8,7 @@ impl crate::Repository {
     pub(crate) fn config_int(&self, key: &str, default: i64) -> i64 {
         let (section, key) = key.split_once('.').expect("valid section.key format");
         self.config
+            .resolved
             .value::<git_config::values::Integer>(section, None, key)
             .map_or(default, |v| v.value)
     }
