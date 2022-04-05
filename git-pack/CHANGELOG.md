@@ -5,7 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.18.0 (2022-04-05)
+
+### Changed (BREAKING)
+
+ - <csr-id-8c5ae77f06a64c57df9a9ad1190266896a223dbe/> Remove deprecated compound and linked object databases
+   The dynamic/general store is the only maintained can-do-it-all
+   DB now.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 1 calendar day.
+ - 2 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#298](https://github.com/Byron/gitoxide/issues/298)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - restrict signature changes to 'Ancestores::sorting()` ([`d71bd9d`](https://github.com/Byron/gitoxide/commit/d71bd9ded1e5e5a61a27be3d55f4b85ee4049bcf))
+    - Adjust to changes in git-traverse ([`8240622`](https://github.com/Byron/gitoxide/commit/824062215865e6ec12afeb2d51b3c63f15291244))
+ * **Uncategorized**
+    - Remove deprecated compound and linked object databases ([`8c5ae77`](https://github.com/Byron/gitoxide/commit/8c5ae77f06a64c57df9a9ad1190266896a223dbe))
+</details>
+
 ## 0.17.0 (2022-04-03)
+
+<csr-id-25209454d3f7e27e12e8ddca92e43b1ff01d58aa/>
+<csr-id-9b9f10ad862b5e097c836c51df1eb98607df5ae1/>
 
 ### Chore
 
@@ -33,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 35 commits contributed to the release over the course of 73 calendar days.
+ - 36 commits contributed to the release over the course of 73 calendar days.
  - 60 days passed between releases.
  - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 7 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364), [#67](https://github.com/Byron/gitoxide/issues/67)
@@ -82,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#67](https://github.com/Byron/gitoxide/issues/67)**
     - Use an even faster way of counting ([`3877920`](https://github.com/Byron/gitoxide/commit/387792085542ebc8277ac0dcaf9e3dc3b522a69a))
  * **Uncategorized**
+    - Release git-diff v0.14.0, git-bitmap v0.1.0, git-index v0.2.0, git-tempfile v2.0.1, git-lock v2.0.0, git-mailmap v0.1.0, git-traverse v0.13.0, git-pack v0.17.0, git-quote v0.2.0, git-odb v0.27.0, git-packetline v0.12.4, git-url v0.4.0, git-transport v0.16.0, git-protocol v0.15.0, git-ref v0.12.0, git-worktree v0.1.0, git-repository v0.15.0, cargo-smart-release v0.9.0, safety bump 5 crates ([`e58dc30`](https://github.com/Byron/gitoxide/commit/e58dc3084cf17a9f618ae3a6554a7323e44428bf))
     - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
     - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))
@@ -133,6 +167,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
 <csr-id-e0b8636f96e4bfe1bc72b5aa6ad4c4c8538ff92c/>
 <csr-id-c800fdd331e6d7a0b8d756ba822915259f26e9e8/>
+<csr-id-e6ff1a885889cf88f6b34b1193aa03d8bce16af5/>
+<csr-id-f48630ba8f745c2ec61a1e3c51fa63a1789a088c/>
 
 ### Refactor
 

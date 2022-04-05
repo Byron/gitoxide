@@ -5,7 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.12.0 (2022-04-05)
+
+### New Features
+
+ - <csr-id-7e99e6aeee9bf200a561d215c586301f5e4a8cbc/> Add `gix repo commit describe`
+   It supports typical but basic flags mostly similar to the ones in git.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 1 calendar day.
+ - 2 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#298](https://github.com/Byron/gitoxide/issues/298)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - Use all tags by default, instead of requiring annotated tags ([`00c42ca`](https://github.com/Byron/gitoxide/commit/00c42ca36e93a22f233fc1d3f9a1afc241fd4464))
+    - support for the --max-candidates flag ([`b9e6754`](https://github.com/Byron/gitoxide/commit/b9e67540801f2630be8aa1acbfddfec4202360ac))
+    - Reduce amount of max candidates, add --debug flag ([`c8c13e3`](https://github.com/Byron/gitoxide/commit/c8c13e398671a21e96282547fc0e3bd445627e2f))
+    - Add `gix repo commit describe` ([`7e99e6a`](https://github.com/Byron/gitoxide/commit/7e99e6aeee9bf200a561d215c586301f5e4a8cbc))
+    - a first sketch of the `gix repo describe` plumbing command ([`2d6ccef`](https://github.com/Byron/gitoxide/commit/2d6ccefd5506d84ba14e3ff11c2af4cb107a386d))
+</details>
+
 ## 0.11.0 (2022-04-03)
+
+<csr-id-4d2d433e7e98ac42db858688edac06e68ee4d10d/>
 
 Adapt to changes in `git-features` which change `Send + Sync` to `Send + Clone`. This happens to allow non-sync implementations (i.e. thread-local), along with `Sync` ones
 which usually are `Clone` too as they are passed by immutable reference (which is `Clone + Copy`).

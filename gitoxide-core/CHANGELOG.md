@@ -5,7 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.0 (2022-04-05)
+
+### New Features
+
+ - <csr-id-7e99e6aeee9bf200a561d215c586301f5e4a8cbc/> Add `gix repo commit describe`
+   It supports typical but basic flags mostly similar to the ones in git.
+ - <csr-id-654f4afb794a370b7cd9d9502ff6d0c3378ec417/> `Commit::describe()`
+   A way to fluidly configure a `git describe` operation and run it.
+   
+   Along that, a new `Tag` top-level object was added as well to provide
+   convenient access to otherwise lower-level objects. It's not strictly
+   required for our implementation here but it's needed for a symmetric
+   API.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release.
+ - 2 days passed between releases.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#298](https://github.com/Byron/gitoxide/issues/298)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - restrict signature changes to 'Ancestores::sorting()` ([`d71bd9d`](https://github.com/Byron/gitoxide/commit/d71bd9ded1e5e5a61a27be3d55f4b85ee4049bcf))
+    - Adjust to changes in git-traverse ([`8240622`](https://github.com/Byron/gitoxide/commit/824062215865e6ec12afeb2d51b3c63f15291244))
+    - support for the --max-candidates flag ([`b9e6754`](https://github.com/Byron/gitoxide/commit/b9e67540801f2630be8aa1acbfddfec4202360ac))
+    - Reduce amount of max candidates, add --debug flag ([`c8c13e3`](https://github.com/Byron/gitoxide/commit/c8c13e398671a21e96282547fc0e3bd445627e2f))
+    - Add `gix repo commit describe` ([`7e99e6a`](https://github.com/Byron/gitoxide/commit/7e99e6aeee9bf200a561d215c586301f5e4a8cbc))
+    - `Commit::describe()` ([`654f4af`](https://github.com/Byron/gitoxide/commit/654f4afb794a370b7cd9d9502ff6d0c3378ec417))
+</details>
+
 ## 0.13.0 (2022-04-03)
+
+<csr-id-bbc6efeceb26050973e1425e68a52e51b9df4572/>
+<csr-id-4d2d433e7e98ac42db858688edac06e68ee4d10d/>
+<csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/>
+<csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
+<csr-id-424c9b3a2b467f5a1e339700257cd4ab72e2e692/>
 
 ### Refactor (BREAKING)
 
@@ -88,7 +132,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 143 commits contributed to the release over the course of 156 calendar days.
+ - 144 commits contributed to the release over the course of 156 calendar days.
  - 165 days passed between releases.
  - 26 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 14 unique issues were worked on: [#215](https://github.com/Byron/gitoxide/issues/215), [#247](https://github.com/Byron/gitoxide/issues/247), [#263](https://github.com/Byron/gitoxide/issues/263), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364), [#366](https://github.com/Byron/gitoxide/issues/366), [#67](https://github.com/Byron/gitoxide/issues/67)
@@ -227,6 +271,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - --counting-threads flag to configure amount of threads when counting ([`0090961`](https://github.com/Byron/gitoxide/commit/00909619ff04e247aabc9ffe3c025f0064c3092d))
     - Avoid the dashmap being cloned for each thread ([`6d3f52d`](https://github.com/Byron/gitoxide/commit/6d3f52dc13d7243a6bce6dab89a985114a75d94b))
  * **Uncategorized**
+    - Release git-commitgraph v0.7.0, gitoxide-core v0.13.0, gitoxide v0.11.0 ([`ab08a7f`](https://github.com/Byron/gitoxide/commit/ab08a7f066fb65671868424315d958ae985d76d8))
     - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
     - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
@@ -291,6 +336,12 @@ A maintenance release to properly dealing with previously breaking changes in `g
 <csr-id-a19567eceab0dd7f5478b83c2ff9ce79754db308/>
 <csr-id-da68bfb8104ecf58e73e3f99d87f81c90712a2ca/>
 <csr-id-c77bd7a01820110154f2c66cd954c1ccfff173c1/>
+<csr-id-71c628d46088ab455b54eb2330d24dcff96c911d/>
+<csr-id-8fe461281842b58aa11437445637c6e587bedd63/>
+<csr-id-54a64a588ff72515451a3d0343306ac4abe1cb35/>
+<csr-id-66292fd1076c2c9db4694c5ded09799a0be11a03/>
+<csr-id-7d2b6b66e09ff39727fccd68d190679b52d90126/>
+<csr-id-0456312dddbd9ffd01e29c6705bb794cb1abb414/>
 
 This is a maintenance release signalling breaking changes because some of the crates it depends on have breaking changes.
 
@@ -521,6 +572,8 @@ This is a maintenance release signalling breaking changes because some of the cr
 
 ## v0.10.0 (2021-08-10)
 
+<csr-id-8802fa7e28ea8fcd3ef8dbca84be4e1f55eca665/>
+
 ### Other
 
  - <csr-id-8802fa7e28ea8fcd3ef8dbca84be4e1f55eca665/> this version fails to detect any git repo
@@ -698,6 +751,9 @@ This is a maintenance release signalling breaking changes because some of the cr
 
 ## v0.9.0 (2021-05-09)
 
+<csr-id-747a13e9a1fe5200c53055dd961507c9fef667e1/>
+<csr-id-e7971a924df0ab958d56239f48eaafda30f15159/>
+
 ### Other
 
  - <csr-id-747a13e9a1fe5200c53055dd961507c9fef667e1/> :borrowed::Object => git-odb::data::Object
@@ -765,6 +821,9 @@ This is a maintenance release signalling breaking changes because some of the cr
 </details>
 
 ## v0.8.0 (2021-04-08)
+
+<csr-id-b85a3891a08248aaa0d7ec429940c9793a2ddcd1/>
+<csr-id-0f4265fa93060f47637ac7e9bd286d4918b3db62/>
 
 ### Other
 

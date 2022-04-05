@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.12.1 (2022-04-05)
+
+### New Features
+
+ - <csr-id-ecd60d7a75d4aef7c37cd0b28b57a8aea1166858/> add `FullName(Ref)::category_and_shortname()`
+   It's a combination of `shorten()` and `category()` for convenience.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 2 calendar days.
+ - 2 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#364](https://github.com/Byron/gitoxide/issues/364)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - add `FullName(Ref)::category_and_shortname()` ([`ecd60d7`](https://github.com/Byron/gitoxide/commit/ecd60d7a75d4aef7c37cd0b28b57a8aea1166858))
+ * **Uncategorized**
+    - refactor ([`2abedb8`](https://github.com/Byron/gitoxide/commit/2abedb851ba383f502c0c9f9f9a3a26349c1664d))
+</details>
+
 ## 0.12.0 (2022-04-03)
 
 ### New Features
@@ -34,7 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 34 commits contributed to the release over the course of 68 calendar days.
+ - 35 commits contributed to the release over the course of 68 calendar days.
  - 69 days passed between releases.
  - 7 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364)
@@ -78,6 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - FullName(Ref)::strip_prefix() ([`af2d399`](https://github.com/Byron/gitoxide/commit/af2d399261e4131299c2279904a1f224c116db66))
     - Full error handling for CommitRefIter ([`b94471a`](https://github.com/Byron/gitoxide/commit/b94471a0ced50204156cf5d4126c676f0258a5eb))
  * **Uncategorized**
+    - Release git-diff v0.14.0, git-bitmap v0.1.0, git-index v0.2.0, git-tempfile v2.0.1, git-lock v2.0.0, git-mailmap v0.1.0, git-traverse v0.13.0, git-pack v0.17.0, git-quote v0.2.0, git-odb v0.27.0, git-packetline v0.12.4, git-url v0.4.0, git-transport v0.16.0, git-protocol v0.15.0, git-ref v0.12.0, git-worktree v0.1.0, git-repository v0.15.0, cargo-smart-release v0.9.0, safety bump 5 crates ([`e58dc30`](https://github.com/Byron/gitoxide/commit/e58dc3084cf17a9f618ae3a6554a7323e44428bf))
     - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
     - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
@@ -181,6 +210,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 </details>
 
 ## 0.10.0 (2021-11-29)
+
+<csr-id-951c050ecbb70c9de216603e55c7cfbc89a067e3/>
+<csr-id-0e1875363fea09452789d7a90fc6860a7996d6d3/>
 
 With this release, `file::Store` is easier to use due to thread-safe handling of an internal and shared
 packed-buffer instance. An API for passing it as parameter like before is still present, allowing to use
@@ -366,6 +398,8 @@ A maintenance release to properly dealing with previously breaking changes in `g
 
 ## v0.8.0 (2021-10-15)
 
+<csr-id-4ed4b2da50557aff540685441f4b5c7d5e582977/>
+
 This release contains no functional changes, but is considered breaking for safety reasons 
 as `git-traverse` is signalling a breaking change.
 
@@ -414,6 +448,8 @@ as `git-traverse` is signalling a breaking change.
 
 ## v0.7.3 (2021-09-10)
 
+<csr-id-293bfc0278c5983c0beaec93253fb51f00d81156/>
+
 - Compatibility with Rust 1.55. It informed about the incorrect usage of `std::io::ErrorKind::Other` which this crate also dependent on causing
   runtime bugs. The latter were detected by tests and this release contains the fix to not rely on certain behaviour anymore.
 
@@ -451,6 +487,8 @@ as `git-traverse` is signalling a breaking change.
 </details>
 
 ## v0.7.2 (2021-09-10)
+
+<csr-id-90e6128727932f917c485f411e623fc6a9c2ad4d/>
 
 ### Other
 

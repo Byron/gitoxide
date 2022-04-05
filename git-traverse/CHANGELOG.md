@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.0 (2022-04-05)
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-dcdf6573a90c7f9a6855aa7be8bf707b92b73ecf/> commit traversal now sorts by commit-time more thoroughly
+   Previously the sorting was only partial as it was only among parents.
+   Now it is full and among all currently visible commits.
+   
+   That way it is similar to what `git log` would produce.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 2 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#298](https://github.com/Byron/gitoxide/issues/298)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - restrict signature changes to 'Ancestores::sorting()` ([`d71bd9d`](https://github.com/Byron/gitoxide/commit/d71bd9ded1e5e5a61a27be3d55f4b85ee4049bcf))
+    - commit traversal now sorts by commit-time more thoroughly ([`dcdf657`](https://github.com/Byron/gitoxide/commit/dcdf6573a90c7f9a6855aa7be8bf707b92b73ecf))
+    - higher-performance 'seen' tracking for commit traversal ([`8c530d1`](https://github.com/Byron/gitoxide/commit/8c530d1ff264b756bf627c905edc5801c17a6139))
+</details>
+
 ## 0.13.0 (2022-04-03)
 
 ### Changed (BREAKING)
@@ -24,7 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 11 commits contributed to the release over the course of 68 calendar days.
+ - 12 commits contributed to the release over the course of 68 calendar days.
  - 69 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#364](https://github.com/Byron/gitoxide/issues/364)
@@ -41,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Full error handling for CommitRefIter ([`b94471a`](https://github.com/Byron/gitoxide/commit/b94471a0ced50204156cf5d4126c676f0258a5eb))
     - More speedy access to author/committer ([`6129607`](https://github.com/Byron/gitoxide/commit/61296077cebaaf2eb939fa6082121304bc6cf39b))
  * **Uncategorized**
+    - Release git-diff v0.14.0, git-bitmap v0.1.0, git-index v0.2.0, git-tempfile v2.0.1, git-lock v2.0.0, git-mailmap v0.1.0, git-traverse v0.13.0, git-pack v0.17.0, git-quote v0.2.0, git-odb v0.27.0, git-packetline v0.12.4, git-url v0.4.0, git-transport v0.16.0, git-protocol v0.15.0, git-ref v0.12.0, git-worktree v0.1.0, git-repository v0.15.0, cargo-smart-release v0.9.0, safety bump 5 crates ([`e58dc30`](https://github.com/Byron/gitoxide/commit/e58dc3084cf17a9f618ae3a6554a7323e44428bf))
     - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
     - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
@@ -54,6 +86,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-id-ebc7f47708a63c3df4415ba0e702660d976dfb3e/>
 <csr-id-2290d006705ff47ad780b009fe58ee422b3285af/>
+<csr-id-1d5ab44145ccbc2064ee8cc7acebb62db82c45aa/>
 
 ### Test
 
@@ -199,6 +232,9 @@ A maintenance release to properly dealing with previously breaking changes in `g
 ## v0.9.0 (2021-10-15)
 
 <csr-id-2f2d856efe733d3cf81110c0e0607d2e7c40d968/>
+<csr-id-cbc5b8171cdef5933d684c481300d9fcff43cf4b/>
+<csr-id-329d183ad4e256a4f9cdeb34589b5f3432495f79/>
+<csr-id-7bce49c1d27cb279b61ff51de0038e01fcf3561e/>
 
 Some module paths have been removed to avoid path duplication, possibly leading to breakage.
 

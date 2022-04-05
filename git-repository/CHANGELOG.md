@@ -5,7 +5,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.16.0 (2022-04-05)
+
+### New Features
+
+ - <csr-id-47556f6815148ed960a727fd122f7162345544c3/> auto-calculation of a good hex-len, like what git does
+   If the `core.abbrev` value isn't set or is set to `auto`.
+ - <csr-id-654f4afb794a370b7cd9d9502ff6d0c3378ec417/> `Commit::describe()`
+   A way to fluidly configure a `git describe` operation and run it.
+   
+   Along that, a new `Tag` top-level object was added as well to provide
+   convenient access to otherwise lower-level objects. It's not strictly
+   required for our implementation here but it's needed for a symmetric
+   API.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 18 commits contributed to the release.
+ - 2 days passed between releases.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#298](https://github.com/Byron/gitoxide/issues/298)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - Use all tags by default, instead of requiring annotated tags ([`00c42ca`](https://github.com/Byron/gitoxide/commit/00c42ca36e93a22f233fc1d3f9a1afc241fd4464))
+    - Fix off-by-one error ([`d5b8fd5`](https://github.com/Byron/gitoxide/commit/d5b8fd5d93605912ccd8e3610ed3c10ec96cf5fe))
+    - auto-calculation of a good hex-len, like what git does ([`47556f6`](https://github.com/Byron/gitoxide/commit/47556f6815148ed960a727fd122f7162345544c3))
+    - Parse the hex-len from config on repo-initialization ([`aee55c0`](https://github.com/Byron/gitoxide/commit/aee55c02853ce91d1e9bc10349a630bf9c8f20d8))
+    - Support for simple BString powered string values ([`2381c5d`](https://github.com/Byron/gitoxide/commit/2381c5d3b91e3a071c887d9e1e166625977d5830))
+    - refactor configuration handling to allow pre-parsing of common values ([`e3d280f`](https://github.com/Byron/gitoxide/commit/e3d280fc3fe09787b27c0b6354797278f6f12c9f))
+    - restrict signature changes to 'Ancestores::sorting()` ([`d71bd9d`](https://github.com/Byron/gitoxide/commit/d71bd9ded1e5e5a61a27be3d55f4b85ee4049bcf))
+    - Adjust to changes in git-traverse ([`8240622`](https://github.com/Byron/gitoxide/commit/824062215865e6ec12afeb2d51b3c63f15291244))
+    - set MSRV to 1.54 as we really need VecDeque::binary_search ([`514e468`](https://github.com/Byron/gitoxide/commit/514e468fdc102f36f9719fcf4c8f99eb22d9c0ae))
+    - support for the --max-candidates flag ([`b9e6754`](https://github.com/Byron/gitoxide/commit/b9e67540801f2630be8aa1acbfddfec4202360ac))
+    - Reduce amount of max candidates, add --debug flag ([`c8c13e3`](https://github.com/Byron/gitoxide/commit/c8c13e398671a21e96282547fc0e3bd445627e2f))
+    - Use hashed-hasher for an eek of performance ([`324a839`](https://github.com/Byron/gitoxide/commit/324a839e6c72174f08779a97fa12cc313e2afac2))
+    - `Commit::describe()` ([`654f4af`](https://github.com/Byron/gitoxide/commit/654f4afb794a370b7cd9d9502ff6d0c3378ec417))
+ * **Uncategorized**
+    - thanks clippy ([`7887d8b`](https://github.com/Byron/gitoxide/commit/7887d8b5bedc49890bd73beb058a9828aa734729))
+    - thanks clippy ([`0f5a943`](https://github.com/Byron/gitoxide/commit/0f5a9439d6b1716345f0e122c23c1a566fdd3088))
+    - thanks clippy ([`9407532`](https://github.com/Byron/gitoxide/commit/9407532b98646d33bb0b947860a6a0022cfbae28))
+    - thanks clippy ([`60cb858`](https://github.com/Byron/gitoxide/commit/60cb8589e901981802be11289352510a9d43cd87))
+    - thanks clippy ([`f2faa00`](https://github.com/Byron/gitoxide/commit/f2faa001ed2c8e96e25dbd56544320055f8dbe1b))
+</details>
+
 ## 0.15.0 (2022-04-03)
+
+<csr-id-5f7595305efc85d6ca3c541e9f9adac3915cbd84/>
+<csr-id-c10f07c50f6dde4b39bf1e3ff26c239c5f202912/>
+<csr-id-bbc6efeceb26050973e1425e68a52e51b9df4572/>
 
 ### New Features
 
@@ -81,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 85 commits contributed to the release over the course of 68 calendar days.
+ - 86 commits contributed to the release over the course of 68 calendar days.
  - 69 days passed between releases.
  - 21 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 7 unique issues were worked on: [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#336](https://github.com/Byron/gitoxide/issues/336), [#364](https://github.com/Byron/gitoxide/issues/364), [#366](https://github.com/Byron/gitoxide/issues/366)
@@ -164,6 +225,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - frame for `Repository::load_mailmap_into()` ([`c8c87ec`](https://github.com/Byron/gitoxide/commit/c8c87ec12f7ff5061132f9e67828d59ac51a8043))
     - unstable mailmap module ([`e3bc1b4`](https://github.com/Byron/gitoxide/commit/e3bc1b410409a9e27894a5cac48b06d8c3295e36))
  * **Uncategorized**
+    - Release git-diff v0.14.0, git-bitmap v0.1.0, git-index v0.2.0, git-tempfile v2.0.1, git-lock v2.0.0, git-mailmap v0.1.0, git-traverse v0.13.0, git-pack v0.17.0, git-quote v0.2.0, git-odb v0.27.0, git-packetline v0.12.4, git-url v0.4.0, git-transport v0.16.0, git-protocol v0.15.0, git-ref v0.12.0, git-worktree v0.1.0, git-repository v0.15.0, cargo-smart-release v0.9.0, safety bump 5 crates ([`e58dc30`](https://github.com/Byron/gitoxide/commit/e58dc3084cf17a9f618ae3a6554a7323e44428bf))
     - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
     - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
@@ -355,6 +417,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.13.0 (2021-11-29)
 
+<csr-id-951c050ecbb70c9de216603e55c7cfbc89a067e3/>
+<csr-id-0e1875363fea09452789d7a90fc6860a7996d6d3/>
+
 With changes to `git-ref`, what follows is all the adjustments made to simplify the `git-repository` implementation.
 
 ### Changed (BREAKING)
@@ -506,6 +571,33 @@ A maintenance release to properly dealing with previously breaking changes in `g
 <csr-id-f644d0ede7a2e8d344a81c7003c3877eed64a6b0/>
 <csr-id-ac3b9efb7b90958274ce55800959d930f8641115/>
 <csr-id-03fe8a7ebd34608d725d4585da5c1630123762ec/>
+<csr-id-8fe461281842b58aa11437445637c6e587bedd63/>
+<csr-id-b209da29f361512ba757febf56bc1aca039f2a41/>
+<csr-id-741558dd8194590c5cc8566aa22f96e73df38edf/>
+<csr-id-e16603b15b5488b81563c583cd8f5292ab9d24a2/>
+<csr-id-54a64a588ff72515451a3d0343306ac4abe1cb35/>
+<csr-id-1f4e45a26a3d2727f00c3f248452dd41fc8a95be/>
+<csr-id-1958e8aa65eb97f9755f065d713f0a48c5e41b1b/>
+<csr-id-066f59b23a125b1ce9a015437a3f4468e5791da0/>
+<csr-id-329d183ad4e256a4f9cdeb34589b5f3432495f79/>
+<csr-id-1a1959f487d69ffdd5394775b707139c44dbd11d/>
+<csr-id-5e091fb2b4fd33879c176e6dadd3c9805d99af50/>
+<csr-id-e3760679547e0dc1bf31761acdb6e63b04a50919/>
+<csr-id-de004b318fdc6923711dd001bff5f4bcbba4270e/>
+<csr-id-41afad3386461b658ee859225785b6de86d13cfb/>
+<csr-id-f582439a3efe5c234f54c488792395e9de09a032/>
+<csr-id-42080aefe3b286afb58235c1c22491579ab73919/>
+<csr-id-d422b9a31a37a03551bec4382039aaf3a7e49902/>
+<csr-id-e7c061b10c263001eb4abf03098d6694b770f828/>
+<csr-id-66292fd1076c2c9db4694c5ded09799a0be11a03/>
+<csr-id-5aadf75a0d93d1a990ad0305c38366c5c22bdcb2/>
+<csr-id-d79a1b75304e397c16b5af7055906591a187ddfd/>
+<csr-id-7d2b6b66e09ff39727fccd68d190679b52d90126/>
+<csr-id-06996e032b1e451a674395ebaca94434fac46f05/>
+<csr-id-daec7167df524b329daad7dabb1b9920b6ef8936/>
+<csr-id-4fe4786797d240a59d29dbf2c6310490a381c8b6/>
+<csr-id-debe0094826f83839f907523715def929133fd58/>
+<csr-id-56e39fac54bfa3871c42bbf76a9f7c49486b85be/>
 
 ### New Features
 
@@ -712,6 +804,11 @@ A maintenance release to properly dealing with previously breaking changes in `g
 </details>
 
 ## v0.9.1 (2021-09-10)
+
+<csr-id-293bfc0278c5983c0beaec93253fb51f00d81156/>
+<csr-id-650241251a420602f74037babfc24c9f64df78d8/>
+<csr-id-2b4a61589a7cba3f7600710e21304e731ae3b36a/>
+<csr-id-8b82f7d44c7eb63b7922ddc31ada9cefdce776b0/>
 
 - Remove `max-performance` feature from default set until the `msvc` build issue is fixed. Otherwise it will surprisingly break windows builds.
 
