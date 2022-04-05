@@ -35,16 +35,15 @@ impl<'repo> Id<'repo> {
                 || self.repo.objects.packed_object_count().map(calculate_auto_hex_len),
                 Ok,
             )
-            .map_err(|err| shorten::Error::Find(err))?;
+            .map_err(shorten::Error::Find)?;
 
         let prefix = git_odb::find::PotentialPrefix::new(self.inner, hex_len)
             .expect("BUG: internal hex-len must always be valid");
-        Ok(self
-            .repo
+        self.repo
             .objects
             .disambiguate_prefix(prefix)
             .map_err(crate::object::find::existing::OdbError::Find)?
-            .ok_or(crate::object::find::existing::OdbError::NotFound { oid: self.inner })?)
+            .ok_or(crate::object::find::existing::OdbError::NotFound { oid: self.inner })
     }
 }
 

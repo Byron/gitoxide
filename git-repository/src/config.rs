@@ -62,7 +62,7 @@ mod cache {
 
             let mut hex_len = None;
             if let Ok(hex_len_str) = config.value::<values::String<'_>>("core", None, "abbrev") {
-                if hex_len_str.value.trim().len() == 0 {
+                if hex_len_str.value.trim().is_empty() {
                     return Err(Error::EmptyValue { key: "core.abbrev" });
                 }
                 if hex_len_str.value.as_ref() != "auto" {
