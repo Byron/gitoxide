@@ -27,11 +27,16 @@ impl<'repo> Id<'repo> {
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`.
     pub fn shorten(&self) -> Result<git_hash::Prefix, shorten::Error> {
-        let hex_len = self.repo.config.hex_len.unwrap_or(
-            // TODO: obtain calculated value
-            7,
-        );
-        // NOTE: this error shouldn't be possible
+        let hex_len = self
+            .repo
+            .config
+            .hex_len
+            .map_or_else(
+                || self.repo.objects.packed_object_count().map(calculate_auto_hex_len),
+                Ok,
+            )
+            .map_err(|err| shorten::Error::Find(err))?;
+
         let prefix = git_odb::find::PotentialPrefix::new(self.inner, hex_len)
             .expect("BUG: internal hex-len must always be valid");
         Ok(self
@@ -41,6 +46,12 @@ impl<'repo> Id<'repo> {
             .map_err(crate::object::find::existing::OdbError::Find)?
             .ok_or(crate::object::find::existing::OdbError::NotFound { oid: self.inner })?)
     }
+}
+
+fn calculate_auto_hex_len(num_packed_objects: u64) -> usize {
+    let mut len = 64 - num_packed_objects.leading_zeros() + 1;
+    len = (len + 2 - 1) / 2;
+    len.max(7) as usize
 }
 
 ///
