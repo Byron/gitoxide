@@ -20,6 +20,6 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.52.0"
+          toolchain: "1.54.0"
           override: true
       - run: make check-msrv-on-ci
