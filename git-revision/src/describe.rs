@@ -191,16 +191,15 @@ pub(crate) mod function {
 
         let mut buf = Vec::new();
         let mut parent_buf = Vec::new();
-        let mut parents = Vec::new();
 
-        let mut queue = VecDeque::from_iter(Some(commit.to_owned()));
+        let mut queue = VecDeque::from_iter(Some((commit.to_owned(), u32::MAX)));
         let mut candidates = Vec::new();
         let mut commits_seen = 0;
         let mut gave_up_on_commit = None;
-        let mut seen = hash_hasher::HashedMap::default();
+        let mut seen = hash_hasher::HashedMap::<git_hash::ObjectId, Flags>::default();
         seen.insert(commit.to_owned(), 0u32);
 
-        while let Some(commit) = queue.pop_front() {
+        while let Some((commit, _commit_time)) = queue.pop_front() {
             commits_seen += 1;
             if let Some(name) = name_by_oid.get(&commit) {
                 if candidates.len() < max_candidates {
@@ -253,7 +252,6 @@ pub(crate) mod function {
                 &mut find,
                 &mut buf,
                 &mut parent_buf,
-                &mut parents,
                 &mut queue,
                 &mut seen,
                 &commit,
@@ -283,7 +281,7 @@ pub(crate) mod function {
         });
 
         if let Some(commit_id) = gave_up_on_commit {
-            queue.push_front(commit_id);
+            queue.push_front((commit_id, u32::MAX));
             commits_seen -= 1;
         }
 
@@ -294,7 +292,6 @@ pub(crate) mod function {
             seen,
             buf,
             parent_buf,
-            parents,
             first_parent,
         )?;
 
@@ -312,8 +309,7 @@ pub(crate) mod function {
         find: &mut Find,
         buf: &mut Vec<u8>,
         parent_buf: &mut Vec<u8>,
-        parents: &mut Vec<(git_hash::ObjectId, Flags)>,
-        queue: &mut VecDeque<git_hash::ObjectId>,
+        queue: &mut VecDeque<(git_hash::ObjectId, u32)>,
         seen: &mut HashMap<git_hash::ObjectId, Flags, HashBuildHasher>,
         commit: &git_hash::oid,
         commit_flags: Flags,
@@ -327,7 +323,6 @@ pub(crate) mod function {
             err,
             oid: commit.to_owned(),
         })?;
-        parents.clear();
         for token in commit_iter {
             match token {
                 Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
@@ -344,7 +339,10 @@ pub(crate) mod function {
                             .unwrap_or_default();
 
                         entry.insert(commit_flags);
-                        parents.push((parent_id, parent_commit_date));
+                        match queue.binary_search_by(|c| c.1.cmp(&parent_commit_date).reverse()) {
+                            Ok(_) => queue.push_back((parent_id, parent_commit_date)),
+                            Err(pos) => queue.insert(pos, (parent_id, parent_commit_date)),
+                        };
                     }
                     hash_map::Entry::Occupied(mut entry) => {
                         *entry.get_mut() |= commit_flags;
@@ -358,21 +356,17 @@ pub(crate) mod function {
             }
         }
 
-        parents.sort_by(|a, b| a.1.cmp(&b.1).reverse());
-        queue.extend(parents.iter().map(|e| e.0));
-
         Ok(())
     }
 
     #[allow(clippy::too_many_arguments)]
     fn finish_depth_computation<'name, Find, E>(
-        mut queue: VecDeque<git_hash::ObjectId>,
+        mut queue: VecDeque<(git_hash::ObjectId, u32)>,
         mut find: Find,
         best_candidate: &mut Candidate<'name>,
         mut seen: hash_hasher::HashedMap<git_hash::ObjectId, Flags>,
         mut buf: Vec<u8>,
         mut parent_buf: Vec<u8>,
-        mut parents: Vec<(git_hash::ObjectId, Flags)>,
         first_parent: bool,
     ) -> Result<u32, Error<E>>
     where
@@ -380,13 +374,13 @@ pub(crate) mod function {
         E: std::error::Error + Send + Sync + 'static,
     {
         let mut commits_seen = 0;
-        while let Some(commit) = queue.pop_front() {
+        while let Some((commit, _commit_time)) = queue.pop_front() {
             commits_seen += 1;
             let flags = seen[&commit];
             if (flags & best_candidate.identity_bit) == best_candidate.identity_bit {
                 if queue
                     .iter()
-                    .all(|id| (seen[id] & best_candidate.identity_bit) == best_candidate.identity_bit)
+                    .all(|(id, _)| (seen[id] & best_candidate.identity_bit) == best_candidate.identity_bit)
                 {
                     break;
                 }
@@ -398,7 +392,6 @@ pub(crate) mod function {
                 &mut find,
                 &mut buf,
                 &mut parent_buf,
-                &mut parents,
                 &mut queue,
                 &mut seen,
                 &commit,
