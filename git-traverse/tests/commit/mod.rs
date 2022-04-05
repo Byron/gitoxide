@@ -55,8 +55,8 @@ mod ancestor {
                 commit::ancestors::State::default(),
                 move |oid, buf| store.find_commit_iter(oid, buf).map(|t| t.0),
                 predicate,
-            )?
-            .sorting(self.sorting)
+            )
+            .sorting(self.sorting)?
             .parents(self.mode)
             .collect();
 
@@ -69,8 +69,8 @@ mod ancestor {
             let oids: Result<Vec<_>, _> =
                 commit::Ancestors::new(tips, commit::ancestors::State::default(), move |oid, buf| {
                     store.find_commit_iter(oid, buf).map(|t| t.0)
-                })?
-                .sorting(self.sorting)
+                })
+                .sorting(self.sorting)?
                 .parents(self.mode)
                 .collect();
             assert_eq!(oids?, expected);

@@ -137,8 +137,8 @@ pub mod ancestors {
                         tips,
                         git_traverse::commit::ancestors::State::default(),
                         move |oid, buf| repo.objects.find_commit_iter(oid, buf),
-                    )?
-                    .sorting(sorting)
+                    )
+                    .sorting(sorting)?
                     .parents(parents),
                 ),
                 is_shallow: None,

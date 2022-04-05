@@ -91,11 +91,28 @@ pub mod ancestors {
             self.parents = mode;
             self
         }
+    }
 
+    impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
+    where
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
+        StateMut: BorrowMut<State>,
+        E: std::error::Error + Send + Sync + 'static,
+    {
         /// Set the sorting method, either topological or by author date
-        pub fn sorting(mut self, sorting: Sorting) -> Self {
+        pub fn sorting(mut self, sorting: Sorting) -> Result<Self, Error> {
             self.sorting = sorting;
-            self
+            if !matches!(self.sorting, Sorting::Topological) {
+                let state = self.state.borrow_mut();
+                for (commit_id, commit_time) in state.next.iter_mut() {
+                    let commit_iter = (self.find)(commit_id, &mut state.buf).map_err(|err| Error::FindExisting {
+                        oid: *commit_id,
+                        err: err.into(),
+                    })?;
+                    *commit_time = commit_iter.committer()?.time.seconds_since_unix_epoch;
+                }
+            }
+            Ok(self)
         }
     }
 
@@ -115,11 +132,7 @@ pub mod ancestors {
         /// * `tips`
         ///   * the starting points of the iteration, usually commits
         ///   * each commit they lead to will only be returned once, including the tip that started it
-        pub fn new(
-            tips: impl IntoIterator<Item = impl Into<ObjectId>>,
-            state: StateMut,
-            find: Find,
-        ) -> Result<Self, Error> {
+        pub fn new(tips: impl IntoIterator<Item = impl Into<ObjectId>>, state: StateMut, find: Find) -> Self {
             Self::filtered(tips, state, find, |_| true)
         }
     }
@@ -146,9 +159,9 @@ pub mod ancestors {
         pub fn filtered(
             tips: impl IntoIterator<Item = impl Into<ObjectId>>,
             mut state: StateMut,
-            mut find: Find,
+            find: Find,
             mut predicate: Predicate,
-        ) -> Result<Self, Error> {
+        ) -> Self {
             let tips = tips.into_iter();
             {
                 let state = state.borrow_mut();
@@ -156,25 +169,18 @@ pub mod ancestors {
                 state.next.reserve(tips.size_hint().0);
                 for tip in tips.map(Into::into) {
                     let was_inserted = state.seen.insert(tip);
-                    let commit = (find)(&tip, &mut state.buf).map_err(|err| Error::FindExisting {
-                        oid: tip,
-                        err: err.into(),
-                    })?;
-
                     if was_inserted && predicate(&tip) {
-                        state
-                            .next
-                            .push_back((tip, commit.committer()?.time.seconds_since_unix_epoch));
+                        state.next.push_back((tip, 0));
                     }
                 }
             }
-            Ok(Self {
+            Self {
                 find,
                 predicate,
                 state,
                 parents: Default::default(),
                 sorting: Default::default(),
-            })
+            }
         }
     }
 

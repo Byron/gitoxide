@@ -68,7 +68,7 @@ where
                     commits.push(o.data.to_owned());
                     objs::CommitRefIter::from_bytes(o.data)
                 })
-            })?,
+            }),
             || anyhow!("Cancelled by user"),
         );
         let mut is_shallow = false;
