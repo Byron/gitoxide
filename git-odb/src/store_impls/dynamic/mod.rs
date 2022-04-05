@@ -24,6 +24,7 @@ where
 
     pub(crate) token: Option<handle::Mode>,
     snapshot: RefCell<load_index::Snapshot>,
+    packed_object_count: RefCell<Option<u64>>,
 }
 
 /// Decide what happens when all indices are loaded.

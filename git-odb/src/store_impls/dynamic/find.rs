@@ -96,6 +96,25 @@ impl<S> super::Handle<S>
 where
     S: Deref<Target = super::Store> + Clone,
 {
+    /// Return the exact number of packed objects after loading all currently available indices
+    /// as last seen on disk.
+    pub fn packed_object_count(&self) -> Result<u64, Error> {
+        let mut count = self.packed_object_count.borrow_mut();
+        match *count {
+            Some(count) => Ok(count),
+            None => {
+                let mut snapshot = self.snapshot.borrow_mut();
+                *snapshot = self.store.load_all_indices()?;
+                let mut obj_count = 0;
+                for index in &snapshot.indices {
+                    obj_count += index.num_objects() as u64;
+                }
+                *count = Some(obj_count);
+                Ok(obj_count)
+            }
+        }
+    }
+
     /// Given a prefix `candidate` with an object id and an initial `hex_len`, check if it only matches a single
     /// object within the entire object database and increment its `hex_len` by one until it is unambiguous.
     pub fn disambiguate_prefix(&self, mut candidate: PotentialPrefix) -> Result<Option<git_hash::Prefix>, Error> {
@@ -215,6 +234,7 @@ where
                                     match self.store.load_one_index(self.refresh, snapshot.marker)? {
                                         Some(new_snapshot) => {
                                             *snapshot = new_snapshot;
+                                            self.clear_cache();
                                             continue 'outer;
                                         }
                                         None => {
@@ -359,10 +379,15 @@ where
             match self.store.load_one_index(self.refresh, snapshot.marker)? {
                 Some(new_snapshot) => {
                     *snapshot = new_snapshot;
+                    self.clear_cache();
                 }
                 None => return Ok(None),
             }
         }
+    }
+
+    fn clear_cache(&self) {
+        self.packed_object_count.borrow_mut().take();
     }
 }
 
@@ -395,6 +420,7 @@ where
             match self.store.load_one_index(self.refresh, snapshot.marker) {
                 Ok(Some(new_snapshot)) => {
                     *snapshot = new_snapshot;
+                    self.clear_cache();
                 }
                 Ok(None) => return false, // nothing more to load, or our refresh mode doesn't allow disk refreshes
                 Err(_) => return false, // something went wrong, nothing we can communicate here with this trait. TODO: Maybe that should change?
@@ -445,6 +471,7 @@ where
                                     match self.store.load_one_index(self.refresh, snapshot.marker).ok()? {
                                         Some(new_snapshot) => {
                                             *snapshot = new_snapshot;
+                                            self.clear_cache();
                                             continue 'outer;
                                         }
                                         None => {
@@ -481,6 +508,7 @@ where
             match self.store.load_one_index(self.refresh, snapshot.marker).ok()? {
                 Some(new_snapshot) => {
                     *snapshot = new_snapshot;
+                    self.clear_cache();
                 }
                 None => return None,
             }

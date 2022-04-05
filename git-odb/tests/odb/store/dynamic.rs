@@ -463,6 +463,14 @@ fn assert_all_indices_loaded(handle: &git_odb::Handle, num_refreshes: usize, ope
     );
 }
 
+#[test]
+fn packed_object_count_causes_all_indices_to_be_loaded() {
+    let (handle, _tmp) = db_with_all_object_sources().unwrap();
+
+    assert_eq!(handle.packed_object_count().unwrap(), 139);
+    assert_all_indices_loaded(&handle, 1, 2);
+}
+
 mod disambiguate_prefix {
     use std::cmp::Ordering;
 

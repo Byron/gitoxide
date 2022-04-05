@@ -250,6 +250,7 @@ impl super::Store {
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
             max_recursion_depth: Self::INITIAL_MAX_RECURSION_DEPTH,
+            packed_object_count: Default::default(),
         }
     }
 
@@ -265,6 +266,7 @@ impl super::Store {
             token: Some(token),
             snapshot: RefCell::new(self.collect_snapshot()),
             max_recursion_depth: Self::INITIAL_MAX_RECURSION_DEPTH,
+            packed_object_count: Default::default(),
         }
     }
 
@@ -381,6 +383,7 @@ where
             },
             snapshot: RefCell::new(self.store.collect_snapshot()),
             max_recursion_depth: self.max_recursion_depth,
+            packed_object_count: Default::default(),
         }
     }
 }
