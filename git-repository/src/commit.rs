@@ -166,7 +166,6 @@ pub mod describe {
                     fallback_to_oid: self.id_as_fallback,
                     first_parent: self.first_parent,
                     max_candidates: self.max_candidates,
-                    ..Default::default()
                 },
             )?;
 
