@@ -125,25 +125,25 @@ pub mod ancestors {
         }
 
         /// Return an iterator to traverse all commits in the history of the commit the parent [Id] is pointing to.
-        pub fn all(&mut self) -> Iter<'repo> {
+        pub fn all(&mut self) -> Result<Iter<'repo>, git_traverse::commit::ancestors::Error> {
             let tips = std::mem::replace(&mut self.tips, Box::new(None.into_iter()));
             let parents = self.parents;
             let sorting = self.sorting;
             let repo = self.repo;
-            Iter {
+            Ok(Iter {
                 repo,
                 inner: Box::new(
                     git_traverse::commit::Ancestors::new(
                         tips,
                         git_traverse::commit::ancestors::State::default(),
                         move |oid, buf| repo.objects.find_commit_iter(oid, buf),
-                    )
+                    )?
                     .sorting(sorting)
                     .parents(parents),
                 ),
                 is_shallow: None,
                 error_on_missing_commit: false,
-            }
+            })
         }
     }
 

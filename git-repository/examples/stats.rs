@@ -15,7 +15,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .into_fully_peeled_id()
         .ok_or_else(|| "There are no commits - nothing to do here.")??
         .ancestors()
-        .all()
+        .all()?
         .inspect(|id| {
             if let Ok(Ok(object)) = id.as_ref().map(|id| id.object()) {
                 avg_commit_size += object.data.len();

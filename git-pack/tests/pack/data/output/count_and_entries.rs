@@ -244,7 +244,7 @@ fn traversals() -> crate::Result {
             let mut commits = commit::Ancestors::new(Some(head), commit::ancestors::State::default(), {
                 let db = db.clone();
                 move |oid, buf| db.find_commit_iter(oid, buf).map(|t| t.0)
-            })
+            })?
             .map(Result::unwrap)
             .collect::<Vec<_>>();
             if let Some(take) = take {

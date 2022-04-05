@@ -42,8 +42,8 @@ pub fn collect(repo: &git::Repository) -> anyhow::Result<Option<commit::History>
     for commit_id in reference
         .id()
         .ancestors()
-        .sorting(git::traverse::commit::Sorting::ByCommitterDate)
-        .all()
+        .sorting(git::traverse::commit::Sorting::ByCommitTimeNewestFirst)
+        .all()?
     {
         let commit_id = commit_id?;
         let (message, tree_id, parent_tree_id, commit_time) = {

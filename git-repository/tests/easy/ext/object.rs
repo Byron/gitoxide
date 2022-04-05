@@ -24,7 +24,7 @@ mod find {
                 2 => repo.object_cache_size(128 * 1024),
                 _ => unreachable!("BUG"),
             }
-            for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors().all() {
+            for commit_id in repo.head()?.peeled()?.id().expect("born").ancestors().all()? {
                 let commit = commit_id?;
                 assert_eq!(commit.object()?.kind, git_object::Kind::Commit);
                 if round == 2 {

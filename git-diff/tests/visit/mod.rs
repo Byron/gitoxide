@@ -136,6 +136,7 @@ mod changes {
                 use git_odb::FindExt;
                 db.find_commit_iter(oid, buf)
             })
+            .unwrap()
             .collect::<Vec<_>>()
             .into_iter()
             .rev()
