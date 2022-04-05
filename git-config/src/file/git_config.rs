@@ -119,7 +119,6 @@ pub struct GitConfig<'event> {
 }
 
 pub mod from_paths {
-    use std::borrow::Cow;
 
     use quick_error::quick_error;
 
@@ -150,10 +149,10 @@ pub mod from_paths {
     }
 
     /// Options when loading git config using [`GitConfig::from_paths()`][super::GitConfig::from_paths()].
-    #[derive(Clone)]
+    #[derive(Clone, Copy)]
     pub struct Options<'a> {
         /// The location where gitoxide or git is installed
-        pub git_install_dir: Option<Cow<'a, std::path::Path>>,
+        pub git_install_dir: Option<&'a std::path::Path>,
         /// The maximum allowed length of the file include chain built by following nested includes where base level is depth = 0.
         pub max_depth: u8,
         /// When max depth is exceeded while following nested included, return an error if true or silently stop following
@@ -161,6 +160,10 @@ pub mod from_paths {
         ///
         /// Setting this value to false allows to read configuration with cycles, which otherwise always results in an error.
         pub error_on_max_depth_exceeded: bool,
+        /// The location of the .git directory
+        pub git_dir: Option<&'a std::path::Path>,
+        /// The name of the branch that is currently checked out
+        pub branch_name: Option<git_ref::FullNameRef<'a>>,
     }
 
     impl<'a> Default for Options<'a> {
@@ -169,6 +172,8 @@ pub mod from_paths {
                 git_install_dir: None,
                 max_depth: 10,
                 error_on_max_depth_exceeded: true,
+                git_dir: None,
+                branch_name: None,
             }
         }
     }
@@ -272,14 +277,37 @@ impl<'event> GitConfig<'event> {
         config_path: Option<&std::path::Path>,
         options: &from_paths::Options,
     ) -> Result<(), from_paths::Error> {
-        // TODO
-        fn include_condition_is_true(_condition: &Cow<str>, _options: &from_paths::Options) -> bool {
+        // TODO handle new git undocumented feature `hasconfig`
+        fn include_condition_is_true(
+            condition: &Cow<str>,
+            target_config_path: &Option<&Path>,
+            options: &from_paths::Options,
+        ) -> bool {
+            if let Some(git_dir) = options.git_dir {
+                if let Some(condition) = condition.strip_prefix("gitdir:") {
+                    let path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
+                    if let Ok(resolved) = resolve(path, target_config_path, options) {
+                        return resolved == git_dir;
+                    }
+                    return false;
+                } else if let Some(_condition) = condition.strip_prefix("gitdir/i:") {
+                    todo!()
+                }
+            }
+            if let Some(branch_name) = options.branch_name {
+                if branch_name.category() == Some(git_ref::Category::LocalBranch) {
+                    let branch_name = branch_name.shorten();
+                    if let Some(condition) = condition.strip_prefix("onbranch:") {
+                        return condition == branch_name;
+                    }
+                }
+            }
             false
         }
 
         fn resolve_includes_recursive(
             target_config: &mut GitConfig,
-            target_config_path: Option<&Path>,
+            target_config_path: &Option<&Path>,
             depth: u8,
             options: &from_paths::Options,
         ) -> Result<(), from_paths::Error> {
@@ -301,7 +329,7 @@ impl<'event> GitConfig<'event> {
 
             for (header, body) in target_config.sections_by_name_with_header("includeIf") {
                 if let Some(condition) = &header.subsection_name {
-                    if include_condition_is_true(condition, options) {
+                    if include_condition_is_true(condition, target_config_path, options) {
                         let paths: Vec<values::Path> = body
                             .values(&Key::from("path"))
                             .iter()
@@ -313,16 +341,7 @@ impl<'event> GitConfig<'event> {
             }
 
             for path in include_paths {
-                let path = path.interpolate(options.git_install_dir.as_deref())?;
-                let path: PathBuf = if path.is_relative() {
-                    target_config_path
-                        .ok_or(from_paths::Error::MissingConfigPath)?
-                        .parent()
-                        .expect("path is a config file which naturally lives in a directory")
-                        .join(path)
-                } else {
-                    path.into()
-                };
+                let path = resolve(path, target_config_path, options)?;
 
                 if path.is_file() {
                     paths_to_include.push(path);
@@ -331,13 +350,31 @@ impl<'event> GitConfig<'event> {
 
             for config_path in paths_to_include {
                 let mut include_config = GitConfig::open(&config_path)?;
-                resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
+                resolve_includes_recursive(&mut include_config, &Some(&config_path), depth + 1, options)?;
                 target_config.append(include_config);
             }
             Ok(())
         }
 
-        resolve_includes_recursive(self, config_path, 0, options)
+        fn resolve(
+            path: values::Path,
+            target_config_path: &Option<&Path>,
+            options: &from_paths::Options,
+        ) -> Result<PathBuf, from_paths::Error> {
+            let path = path.interpolate(options.git_install_dir.as_deref())?;
+            let path: PathBuf = if path.is_relative() {
+                target_config_path
+                    .ok_or(from_paths::Error::MissingConfigPath)?
+                    .parent()
+                    .expect("path is a config file which naturally lives in a directory")
+                    .join(path)
+            } else {
+                path.into()
+            };
+            Ok(path)
+        }
+
+        resolve_includes_recursive(self, &config_path, 0, options)
     }
 
     /// Constructs a `git-config` from the default cascading sequence.

@@ -676,6 +676,87 @@ mod from_paths_tests {
     }
 
     #[test]
+    fn include_if_with_gitdir() {
+        let dir = tempdir().unwrap();
+
+        let a_path = dir.path().join("a");
+        let b_path = dir.path().join("b");
+        let c_path = dir.path().join("c");
+        let d_path = dir.path().join("d");
+        let inside_a_x_path = dir.path().join("a").join("x").join(".git");
+
+        fs::write(
+            a_path.as_path(),
+            format!(
+                r#"
+            [core]
+              b = 1
+            [includeIf "gitdir:~/.git"]
+              path = {}
+            [includeIf "gitdir:a/.git"]
+              path = {}
+            [includeIf "gitdir:{}"]
+              path = {}"#,
+                escape_backslashes(&c_path),
+                escape_backslashes(&d_path),
+                escape_backslashes(&inside_a_x_path),
+                escape_backslashes(&b_path)
+            ),
+        )
+        .unwrap();
+
+        fs::write(
+            b_path.as_path(),
+            "
+            [core]
+              b = 2",
+        )
+        .unwrap();
+
+        fs::write(
+            c_path.as_path(),
+            "
+            [core]
+              b = 3",
+        )
+        .unwrap();
+
+        fs::write(
+            d_path.as_path(),
+            "
+            [core]
+              b = 4",
+        )
+        .unwrap();
+
+        // absolute path
+        let options = from_paths::Options {
+            git_dir: Some(inside_a_x_path.as_path()),
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"2")));
+
+        // tilde ~ path
+        let home_git_path = dirs::home_dir().unwrap().join(".git");
+        let options = from_paths::Options {
+            git_dir: Some(home_git_path.as_path()),
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"3")));
+
+        // relative path
+        let a_path_clone = a_path.clone().join(".git");
+        let options = from_paths::Options {
+            git_dir: Some(a_path_clone.as_path()),
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![a_path], &options).unwrap();
+        assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"4")));
+    }
+
+    #[test]
     fn multiple_paths_single_value() {
         let dir = tempdir().unwrap();
 
