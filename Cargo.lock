@@ -1489,6 +1489,7 @@ dependencies = [
  "git-object",
  "git-odb",
  "git-testtools",
+ "hash_hasher",
  "quick-error",
 ]
 

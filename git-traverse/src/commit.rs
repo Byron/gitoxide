@@ -41,10 +41,7 @@ impl Default for Sorting {
 
 ///
 pub mod ancestors {
-    use std::{
-        borrow::BorrowMut,
-        collections::{BTreeSet, VecDeque},
-    };
+    use std::{borrow::BorrowMut, collections::VecDeque};
 
     use git_hash::{oid, ObjectId};
     use git_object::CommitRefIter;
@@ -74,7 +71,7 @@ pub mod ancestors {
     pub struct State {
         next: VecDeque<ObjectId>,
         buf: Vec<u8>,
-        seen: BTreeSet<ObjectId>,
+        seen: hash_hasher::HashedSet<ObjectId>,
         parents_with_date: Vec<(ObjectId, u32)>,
         parents_buf: Vec<u8>,
     }
