@@ -1,5 +1,6 @@
 //! Rust containers for valid `git-config` types.
 
+use bstr::BStr;
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
 use quick_error::quick_error;
@@ -145,6 +146,7 @@ fn b(s: &str) -> &[u8] {
     s.as_bytes()
 }
 
+// TODO: remove bytes
 /// Any string value
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Bytes<'a> {
@@ -173,6 +175,25 @@ impl<'a> From<Cow<'a, [u8]>> for Bytes<'a> {
         match c {
             Cow::Borrowed(c) => Self::from(c),
             Cow::Owned(c) => Self::from(c),
+        }
+    }
+}
+
+/// Any string value
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct String<'a> {
+    /// The string value
+    pub value: Cow<'a, BStr>,
+}
+
+impl<'a> From<Cow<'a, [u8]>> for String<'a> {
+    #[inline]
+    fn from(c: Cow<'a, [u8]>) -> Self {
+        String {
+            value: match c {
+                Cow::Borrowed(c) => Cow::Borrowed(c.into()),
+                Cow::Owned(c) => Cow::Owned(c.into()),
+            },
         }
     }
 }
@@ -433,6 +454,13 @@ pub enum Boolean<'a> {
 }
 
 impl Boolean<'_> {
+    /// Return ourselves as plain bool.
+    pub fn to_bool(&self) -> bool {
+        match self {
+            Boolean::True(_) => true,
+            Boolean::False(_) => false,
+        }
+    }
     /// Generates a byte representation of the value. This should be used when
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
