@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::Result;
 use clap::Parser;
+
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
@@ -163,6 +164,7 @@ pub fn main() -> Result<()> {
                     first_parent,
                     always,
                     long,
+                    statistics,
                     rev_spec,
                 } => prepare_and_run(
                     "repository-commit-describe",
@@ -170,16 +172,18 @@ pub fn main() -> Result<()> {
                     progress,
                     progress_keep_open,
                     None,
-                    move |_progress, out, _err| {
+                    move |_progress, out, err| {
                         core::repository::commit::describe(
                             repository,
                             rev_spec.as_deref(),
                             out,
+                            err,
                             core::repository::commit::describe::Options {
                                 all_tags,
                                 all_refs,
                                 long_format: long,
                                 first_parent,
+                                statistics,
                                 always,
                             },
                         )

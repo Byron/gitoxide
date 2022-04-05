@@ -11,6 +11,7 @@ fn exact_match_with_dirty_and_long() {
         id: hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"),
         depth: 0,
         name_by_oid: Default::default(),
+        commits_seen: 0,
     }
     .into_format(7);
     assert!(format.is_exact_match());
@@ -38,6 +39,7 @@ fn show_abbrev_hash_if_no_name_is_known() {
         id: hex_to_id("b920bbb055e1efb9080592a409d3975738b6efb3"),
         depth: 0,
         name_by_oid: Default::default(),
+        commits_seen: 0,
     }
     .into_format(7);
     assert!(

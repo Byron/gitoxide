@@ -24,6 +24,22 @@ pub mod describe {
     use git_odb::FindExt;
     use std::borrow::Cow;
 
+    /// The result of [try_resolve()][Platform::try_resolve()].
+    pub struct Resolution<'repo> {
+        /// The outcome of the describe operation.
+        pub outcome: git_revision::describe::Outcome<'static>,
+        /// The id to describe.
+        pub id: crate::Id<'repo>,
+    }
+
+    impl<'repo> Resolution<'repo> {
+        /// Turn this instance into something displayable
+        pub fn format(self) -> Result<git_revision::describe::Format<'static>, Error> {
+            let prefix = self.id.shorten()?;
+            Ok(self.outcome.into_format(prefix.hex_len()))
+        }
+    }
+
     /// The error returned by [try_format()][Platform::try_format()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
@@ -126,6 +142,14 @@ pub mod describe {
         ///
         /// Note that there will always be `Some(format)`
         pub fn try_format(self) -> Result<Option<git_revision::describe::Format<'static>>, Error> {
+            Ok(self.try_resolve()?.map(|r| r.format()).transpose()?)
+        }
+
+        /// Try to find a name for the configured commit id using all prior configuration, returning `Some(Outcome)`
+        /// if one was found.
+        ///
+        /// The outcome provides additional information, but leaves the caller with the burden
+        pub fn try_resolve(self) -> Result<Option<crate::commit::describe::Resolution<'repo>>, Error> {
             // TODO: dirty suffix with respective dirty-detection
             let outcome = git_revision::describe(
                 &self.id,
@@ -137,8 +161,11 @@ pub mod describe {
                     ..Default::default()
                 },
             )?;
-            let prefix = self.id.attach(self.repo).shorten()?;
-            Ok(outcome.map(|o| o.into_format(prefix.hex_len())))
+
+            Ok(outcome.map(|outcome| crate::commit::describe::Resolution {
+                outcome,
+                id: self.id.attach(self.repo),
+            }))
         }
 
         /// Like [`try_format()`][Platform::try_format()], but turns `id_as_fallback()` on to always produce a format.

@@ -411,6 +411,10 @@ pub mod repo {
                 #[clap(long, short = 'l')]
                 long: bool,
 
+                /// Print information on stderr to inform about performance statistics
+                #[clap(long, short = 's')]
+                statistics: bool,
+
                 #[clap(long)]
                 /// If there was no way to describe the commit, fallback to using the abbreviated input revision.
                 always: bool,

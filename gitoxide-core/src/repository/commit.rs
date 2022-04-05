@@ -6,11 +6,13 @@ pub fn describe(
     repo: impl Into<PathBuf>,
     rev_spec: Option<&str>,
     mut out: impl std::io::Write,
+    mut err: impl std::io::Write,
     describe::Options {
         all_tags,
         all_refs,
         first_parent,
         always,
+        statistics,
         long_format,
     }: describe::Options,
 ) -> Result<()> {
@@ -27,14 +29,19 @@ pub fn describe(
     } else {
         Default::default()
     };
-    let mut describe_id = commit
+    let resolution = commit
         .describe()
         .names(select_ref)
         .traverse_first_parent(first_parent)
         .id_as_fallback(always)
-        .try_format()?
+        .try_resolve()?
         .with_context(|| format!("Did not find a single candidate ref for naming id '{}'", commit.id))?;
 
+    if statistics {
+        writeln!(err, "traversed {} commits", resolution.outcome.commits_seen)?;
+    }
+
+    let mut describe_id = resolution.format()?;
     describe_id.long(long_format);
 
     writeln!(out, "{}", describe_id)?;
@@ -49,5 +56,6 @@ pub mod describe {
         pub first_parent: bool,
         pub always: bool,
         pub long_format: bool,
+        pub statistics: bool,
     }
 }

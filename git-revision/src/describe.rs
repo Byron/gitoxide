@@ -19,6 +19,8 @@ pub struct Outcome<'name> {
     pub depth: u32,
     /// The mapping between object ids and their names initially provided by the describe call.
     pub name_by_oid: hash_hasher::HashedMap<git_hash::ObjectId, Cow<'name, BStr>>,
+    /// The amount of commits we traversed.
+    pub commits_seen: u32,
 }
 
 impl<'a> Outcome<'a> {
@@ -115,7 +117,7 @@ pub struct Options<'name> {
 impl<'name> Default for Options<'name> {
     fn default() -> Self {
         Options {
-            max_candidates: MAX_CANDIDATES,
+            max_candidates: 28, // the same number as git uses, otherwise we perform worse by default on big repos
             name_by_oid: Default::default(),
             fallback_to_oid: false,
             first_parent: false,
@@ -182,6 +184,7 @@ pub(crate) mod function {
                 id: commit.to_owned(),
                 depth: 0,
                 name_by_oid,
+                commits_seen: 0,
             }));
         }
         max_candidates = max_candidates.min(MAX_CANDIDATES);
@@ -192,19 +195,19 @@ pub(crate) mod function {
 
         let mut queue = VecDeque::from_iter(Some(commit.to_owned()));
         let mut candidates = Vec::new();
-        let mut seen_commits = 0;
+        let mut commits_seen = 0;
         let mut gave_up_on_commit = None;
         let mut seen = hash_hasher::HashedMap::default();
         seen.insert(commit.to_owned(), 0u32);
 
         while let Some(commit) = queue.pop_front() {
-            seen_commits += 1;
+            commits_seen += 1;
             if let Some(name) = name_by_oid.get(&commit) {
                 if candidates.len() < max_candidates {
                     let identity_bit = 1 << candidates.len();
                     candidates.push(Candidate {
                         name: name.clone(),
-                        commits_in_its_future: seen_commits - 1,
+                        commits_in_its_future: commits_seen - 1,
                         identity_bit,
                         order: candidates.len(),
                     });
@@ -266,6 +269,7 @@ pub(crate) mod function {
                     name: None,
                     name_by_oid,
                     depth: 0,
+                    commits_seen,
                 }))
             } else {
                 Ok(None)
@@ -280,9 +284,10 @@ pub(crate) mod function {
 
         if let Some(commit_id) = gave_up_on_commit {
             queue.push_front(commit_id);
+            commits_seen -= 1;
         }
 
-        finish_depth_computation(
+        commits_seen += finish_depth_computation(
             queue,
             find,
             candidates.first_mut().expect("at least one candidate"),
@@ -298,6 +303,7 @@ pub(crate) mod function {
             id: commit.to_owned(),
             depth: c.commits_in_its_future,
             name_by_oid,
+            commits_seen,
         }))
     }
 
@@ -368,12 +374,14 @@ pub(crate) mod function {
         mut parent_buf: Vec<u8>,
         mut parents: Vec<(git_hash::ObjectId, Flags)>,
         first_parent: bool,
-    ) -> Result<(), Error<E>>
+    ) -> Result<u32, Error<E>>
     where
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
+        let mut commits_seen = 0;
         while let Some(commit) = queue.pop_front() {
+            commits_seen += 1;
             let flags = seen[&commit];
             if (flags & best_candidate.identity_bit) == best_candidate.identity_bit {
                 if queue
@@ -398,7 +406,7 @@ pub(crate) mod function {
                 first_parent,
             )?;
         }
-        Ok(())
+        Ok(commits_seen)
     }
 
     #[derive(Debug)]
