@@ -142,7 +142,7 @@ pub mod describe {
         ///
         /// Note that there will always be `Some(format)`
         pub fn try_format(self) -> Result<Option<git_revision::describe::Format<'static>>, Error> {
-            Ok(self.try_resolve()?.map(|r| r.format()).transpose()?)
+            self.try_resolve()?.map(|r| r.format()).transpose()
         }
 
         /// Try to find a name for the configured commit id using all prior configuration, returning `Some(Outcome)`
