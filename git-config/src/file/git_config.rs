@@ -295,10 +295,11 @@ impl<'event> GitConfig<'event> {
                 }
             }
             if let Some(branch_name) = options.branch_name {
-                if branch_name.category() == Some(git_ref::Category::LocalBranch) {
-                    let branch_name = branch_name.shorten();
-                    if let Some(condition) = condition.strip_prefix("onbranch:") {
-                        return condition == branch_name;
+                if let Some((category, branch_name)) = branch_name.category_and_short_name() {
+                    if category == git_ref::Category::LocalBranch {
+                        if let Some(condition) = condition.strip_prefix("onbranch:") {
+                            return condition == branch_name;
+                        }
                     }
                 }
             }
