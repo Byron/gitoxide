@@ -1117,6 +1117,7 @@ dependencies = [
 name = "git-config"
 version = "0.2.0"
 dependencies = [
+ "bstr",
  "criterion",
  "dirs",
  "git-features",

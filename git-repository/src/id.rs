@@ -1,5 +1,5 @@
 //!
-use std::{convert::TryInto, ops::Deref};
+use std::ops::Deref;
 
 use git_hash::{oid, ObjectId};
 
@@ -27,18 +27,13 @@ impl<'repo> Id<'repo> {
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`.
     pub fn shorten(&self) -> Result<git_hash::Prefix, shorten::Error> {
-        let hex_len = self.repo.config_int("core.abbrev", 7);
-        let hex_len = hex_len.try_into().map_err(|_| shorten::Error::ConfigValue {
-            actual: hex_len,
-            max_range: self.inner.kind().len_in_hex(),
-            err: None,
-        })?;
-        let prefix =
-            git_odb::find::PotentialPrefix::new(self.inner, hex_len).map_err(|err| shorten::Error::ConfigValue {
-                actual: hex_len as i64,
-                max_range: self.inner.kind().len_in_hex(),
-                err: Some(err),
-            })?;
+        let hex_len = self.repo.config.hex_len.unwrap_or(
+            // TODO: obtain calculated value
+            7,
+        );
+        // NOTE: this error shouldn't be possible
+        let prefix = git_odb::find::PotentialPrefix::new(self.inner, hex_len)
+            .expect("BUG: internal hex-len must always be valid");
         Ok(self
             .repo
             .objects
@@ -51,19 +46,7 @@ impl<'repo> Id<'repo> {
 ///
 pub mod shorten {
     /// Returned by [`Id::prefix()`][super::Id::shorten()].
-    #[derive(thiserror::Error, Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        FindExisting(#[from] crate::object::find::existing::OdbError),
-        #[error("core.abbrev length was {}, but needs to be between 4 and {}", .actual, .max_range)]
-        ConfigValue {
-            #[source]
-            err: Option<git_hash::prefix::Error>,
-            actual: i64,
-            max_range: usize,
-        },
-    }
+    pub type Error = crate::object::find::existing::OdbError;
 }
 
 impl<'repo> Deref for Id<'repo> {

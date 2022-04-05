@@ -63,7 +63,7 @@ mod init {
                     }
                 },
                 refs,
-                config: config,
+                config,
             }
         }
 
@@ -81,8 +81,6 @@ mod snapshots;
 mod impls;
 
 mod cache;
-
-mod config;
 
 mod reference;
 
