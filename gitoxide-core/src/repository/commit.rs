@@ -13,6 +13,7 @@ pub fn describe(
         first_parent,
         always,
         statistics,
+        max_candidates,
         long_format,
     }: describe::Options,
 ) -> Result<()> {
@@ -34,6 +35,7 @@ pub fn describe(
         .names(select_ref)
         .traverse_first_parent(first_parent)
         .id_as_fallback(always)
+        .max_candidates(max_candidates)
         .try_resolve()?
         .with_context(|| format!("Did not find a single candidate ref for naming id '{}'", commit.id))?;
 
@@ -57,5 +59,6 @@ pub mod describe {
         pub always: bool,
         pub long_format: bool,
         pub statistics: bool,
+        pub max_candidates: usize,
     }
 }

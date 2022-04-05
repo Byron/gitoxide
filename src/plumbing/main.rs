@@ -165,6 +165,7 @@ pub fn main() -> Result<()> {
                     always,
                     long,
                     statistics,
+                    max_candidates,
                     rev_spec,
                 } => prepare_and_run(
                     "repository-commit-describe",
@@ -184,6 +185,7 @@ pub fn main() -> Result<()> {
                                 long_format: long,
                                 first_parent,
                                 statistics,
+                                max_candidates,
                                 always,
                             },
                         )

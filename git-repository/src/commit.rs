@@ -116,6 +116,7 @@ pub mod describe {
         pub(crate) select: SelectRef,
         pub(crate) first_parent: bool,
         pub(crate) id_as_fallback: bool,
+        pub(crate) max_candidates: usize,
     }
 
     impl<'repo> Platform<'repo> {
@@ -128,6 +129,12 @@ pub mod describe {
         /// If true, shorten the graph traversal time by just traversing the first parent of merge commits.
         pub fn traverse_first_parent(mut self, first_parent: bool) -> Self {
             self.first_parent = first_parent;
+            self
+        }
+
+        /// Only consider the given amount of candidates, instead of the default of 10.
+        pub fn max_candidates(mut self, candidates: usize) -> Self {
+            self.max_candidates = candidates;
             self
         }
 
@@ -158,6 +165,7 @@ pub mod describe {
                     name_by_oid: self.select.names(self.repo)?,
                     fallback_to_oid: self.id_as_fallback,
                     first_parent: self.first_parent,
+                    max_candidates: self.max_candidates,
                     ..Default::default()
                 },
             )?;

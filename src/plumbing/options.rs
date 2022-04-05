@@ -411,6 +411,10 @@ pub mod repo {
                 #[clap(long, short = 'l')]
                 long: bool,
 
+                /// Consider only the given `n` candidates. This can take longer, but potentially produces more accurate results.
+                #[clap(long, short = 'c', default_value = "10")]
+                max_candidates: usize,
+
                 /// Print information on stderr to inform about performance statistics
                 #[clap(long, short = 's')]
                 statistics: bool,

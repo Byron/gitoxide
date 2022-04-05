@@ -134,6 +134,7 @@ impl<'repo> Commit<'repo> {
             select: Default::default(),
             first_parent: false,
             id_as_fallback: false,
+            max_candidates: 10,
         }
     }
 }

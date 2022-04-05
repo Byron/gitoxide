@@ -104,7 +104,7 @@ pub struct Options<'name> {
     pub name_by_oid: hash_hasher::HashedMap<git_hash::ObjectId, Cow<'name, BStr>>,
     /// The amount of names we will keep track of. Defaults to the maximum of 32.
     ///
-    /// If the number is exceeded, it will be capped at 32.
+    /// If the number is exceeded, it will be capped at 32 and defaults to 10.
     pub max_candidates: usize,
     /// If no candidate for naming, always show the abbreviated hash. Default: false.
     pub fallback_to_oid: bool,
@@ -117,7 +117,7 @@ pub struct Options<'name> {
 impl<'name> Default for Options<'name> {
     fn default() -> Self {
         Options {
-            max_candidates: 28, // the same number as git uses, otherwise we perform worse by default on big repos
+            max_candidates: 10, // the same number as git uses, otherwise we perform worse by default on big repos
             name_by_oid: Default::default(),
             fallback_to_oid: false,
             first_parent: false,
