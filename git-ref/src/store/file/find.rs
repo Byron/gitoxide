@@ -111,7 +111,7 @@ impl file::Store {
         packed: Option<&packed::Buffer>,
         transform: Transform,
     ) -> Result<Option<Reference>, Error> {
-        let (base, is_definitely_absolute) = match transform {
+        let (base, is_definitely_full_path) = match transform {
             Transform::EnforceRefsPrefix => (
                 if relative_path.starts_with("refs") {
                     PathBuf::new()
@@ -124,14 +124,15 @@ impl file::Store {
         };
         let relative_path = base.join(inbetween).join(relative_path);
 
+        let path_to_open = git_features::path::convert::to_windows_separators_on_windows_or_panic(&relative_path);
         let contents = match self
-            .ref_contents(&relative_path)
+            .ref_contents(&path_to_open)
             .map_err(|err| Error::ReadFileContents {
                 err,
-                path: relative_path.to_owned(),
+                path: path_to_open.into_owned(),
             })? {
             None => {
-                if is_definitely_absolute {
+                if is_definitely_full_path {
                     if let Some(packed) = packed {
                         let full_name = path_to_name(match &self.namespace {
                             None => relative_path,

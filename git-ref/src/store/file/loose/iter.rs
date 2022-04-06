@@ -71,9 +71,6 @@ impl Iterator for SortedLoosePaths {
                     };
 
                     if git_validate::reference::name_partial(full_name.as_bstr()).is_ok() {
-                        #[cfg(not(windows))]
-                        let name = FullName(full_name.into());
-                        #[cfg(windows)]
                         let name = FullName(full_name.into());
                         return Some(Ok((full_path, name)));
                     } else {
