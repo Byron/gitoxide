@@ -196,7 +196,7 @@ pub mod convert {
     }
 
     /// Convert paths with slashes to backslashes on windows and do nothing on unix.
-    pub fn to_windows_separators_on_windows_or_panic<'a>(path: &std::path::Path) -> Cow<'_, std::path::Path> {
+    pub fn to_windows_separators_on_windows_or_panic(path: &std::path::Path) -> Cow<'_, std::path::Path> {
         #[cfg(not(windows))]
         {
             path.into()
@@ -204,8 +204,7 @@ pub mod convert {
         #[cfg(windows)]
         {
             crate::path::from_byte_slice_or_panic_on_windows(
-                crate::path::convert::to_windows_separators(crate::path::into_bytes_or_panic_on_windows(path.as_ref()))
-                    .as_ref(),
+                crate::path::convert::to_windows_separators(crate::path::into_bytes_or_panic_on_windows(path)).as_ref(),
             )
             .to_owned()
             .into()
