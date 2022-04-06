@@ -55,6 +55,11 @@ jobs:
         with:
           command: check
           args: --all --bins --tests --examples
+      - name: "Test ref (crossterm)"
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --package git-ref
       - name: "Test (crossterm)"
         uses: actions-rs/cargo@v1
         with:

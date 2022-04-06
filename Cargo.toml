@@ -108,9 +108,6 @@ miniz_oxide = { opt-level = 3 }
 sha-1 = { opt-level = 3 }
 sha1_smol = { opt-level = 3 }
 
-[profile.dev]
-opt-level = 1
-
 [profile.release]
 overflow-checks = false
 lto = "fat"
