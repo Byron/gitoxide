@@ -21,7 +21,7 @@ pub mod describe {
     use crate::ext::ObjectIdExt;
     use crate::Repository;
     use git_hash::ObjectId;
-    use git_odb::FindExt;
+    use git_odb::Find;
     use std::borrow::Cow;
 
     /// The result of [try_resolve()][Platform::try_resolve()].
@@ -45,9 +45,7 @@ pub mod describe {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Describe(
-            #[from] git_revision::describe::Error<git_odb::find::existing_iter::Error<git_odb::store::find::Error>>,
-        ),
+        Describe(#[from] git_revision::describe::Error<git_odb::store::find::Error>),
         #[error("Could not produce an unambiguous shortened id for formatting.")]
         ShortId(#[from] crate::id::shorten::Error),
         #[error(transparent)]
@@ -160,7 +158,13 @@ pub mod describe {
             // TODO: dirty suffix with respective dirty-detection
             let outcome = git_revision::describe(
                 &self.id,
-                |id, buf| self.repo.objects.find_commit_iter(id, buf),
+                |id, buf| {
+                    Ok(self
+                        .repo
+                        .objects
+                        .try_find(id, buf)?
+                        .and_then(|d| d.try_into_commit_iter()))
+                },
                 git_revision::describe::Options {
                     name_by_oid: self.select.names(self.repo)?,
                     fallback_to_oid: self.id_as_fallback,

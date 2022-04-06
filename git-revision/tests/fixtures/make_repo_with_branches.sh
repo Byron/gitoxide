@@ -21,3 +21,5 @@ git checkout -q main
 git commit -q --allow-empty -m c5
 git tag at-c5
 git merge branch1 -m m1b1
+
+git clone --depth 1 file://$PWD shallow-clone

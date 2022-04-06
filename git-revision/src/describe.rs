@@ -135,7 +135,7 @@ where
     #[error("Commit {} could not be found during graph traversal", .oid.to_hex())]
     Find {
         #[source]
-        err: E,
+        err: Option<E>,
         oid: git_hash::ObjectId,
     },
     #[error("A commit could not be decoded during traversal")]
@@ -175,7 +175,7 @@ pub(crate) mod function {
         }: Options<'name>,
     ) -> Result<Option<Outcome<'name>>, Error<E>>
     where
-        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
+        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<Option<CommitRefIter<'b>>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
         if let Some(name) = name_by_oid.get(commit) {
@@ -316,22 +316,30 @@ pub(crate) mod function {
         first_parent: bool,
     ) -> Result<(), Error<E>>
     where
-        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
+        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<Option<CommitRefIter<'b>>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let commit_iter = find(commit, buf).map_err(|err| Error::Find {
-            err,
-            oid: commit.to_owned(),
-        })?;
+        let commit_iter = find(commit, buf)
+            .map_err(|err| Error::Find {
+                err: Some(err),
+                oid: commit.to_owned(),
+            })?
+            .ok_or_else(|| Error::Find {
+                err: None,
+                oid: commit.to_owned(),
+            })?;
         for token in commit_iter {
             match token {
                 Ok(git_object::commit::ref_iter::Token::Tree { .. }) => continue,
                 Ok(git_object::commit::ref_iter::Token::Parent { id: parent_id }) => match seen.entry(parent_id) {
                     hash_map::Entry::Vacant(entry) => {
-                        let parent = find(&parent_id, parent_buf).map_err(|err| Error::Find {
-                            err,
+                        let parent = match find(&parent_id, parent_buf).map_err(|err| Error::Find {
+                            err: Some(err),
                             oid: commit.to_owned(),
-                        })?;
+                        })? {
+                            Some(p) => p,
+                            None => continue, // skip missing objects, they don't exist.
+                        };
 
                         let parent_commit_date = parent
                             .committer()
@@ -370,7 +378,7 @@ pub(crate) mod function {
         first_parent: bool,
     ) -> Result<u32, Error<E>>
     where
-        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<CommitRefIter<'b>, E>,
+        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<Option<CommitRefIter<'b>>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
         let mut commits_seen = 0;

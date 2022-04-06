@@ -1,53 +1,56 @@
 use std::borrow::Cow;
 
 use git_object::bstr::ByteSlice;
-use git_repository::{odb::FindExt, Repository};
+use git_repository::{
+    odb::{Find, FindExt},
+    Repository,
+};
 use git_revision::describe;
 use git_testtools::hex_to_id;
 
 mod format;
 
 #[test]
-fn option_none_if_no_tag_found() {
+fn option_none_if_no_tag_found() -> crate::Result {
     let repo = repo();
-    let commit = repo.head_commit().unwrap();
+    let commit = repo.head_commit()?;
     let res = git_revision::describe(
         &commit.id,
-        |id, buf| repo.objects.find_commit_iter(id, buf),
+        |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         Default::default(),
-    )
-    .unwrap();
+    )?;
     assert!(res.is_none(), "cannot find anything if there's no candidate");
+    Ok(())
 }
 
 #[test]
-fn fallback_if_configured_in_options_but_no_candidate() {
+fn fallback_if_configured_in_options_but_no_candidate() -> crate::Result {
     let repo = repo();
-    let commit = repo.head_commit().unwrap();
+    let commit = repo.head_commit()?;
     let res = git_revision::describe(
         &commit.id,
-        |id, buf| repo.objects.find_commit_iter(id, buf),
+        |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         describe::Options {
             fallback_to_oid: true,
             ..Default::default()
         },
-    )
-    .unwrap()
+    )?
     .expect("fallback activated");
     assert!(res.name.is_none(), "no name can be found");
     assert_eq!(res.depth, 0, "just a default, not relevant as there is no name");
     assert_eq!(res.into_format(7).to_string(), "01ec18a");
+    Ok(())
 }
 
 #[test]
-fn not_enough_candidates() {
+fn not_enough_candidates() -> crate::Result {
     let repo = repo();
-    let commit = repo.head_commit().unwrap();
+    let commit = repo.head_commit()?;
 
     let name = Cow::Borrowed(b"at-c5".as_bstr());
     let res = git_revision::describe(
         &commit.id,
-        |id, buf| repo.objects.find_commit_iter(id, buf),
+        |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         describe::Options {
             name_by_oid: vec![
                 (hex_to_id("efd9a841189668f1bab5b8ebade9cd0a1b139a37"), name.clone()),
@@ -61,8 +64,7 @@ fn not_enough_candidates() {
             max_candidates: 1,
             ..Default::default()
         },
-    )
-    .unwrap()
+    )?
     .expect("candidate found");
 
     assert_eq!(res.name, Some(name), "it finds the youngest/most-recent name");
@@ -71,6 +73,8 @@ fn not_enough_candidates() {
         res.depth, 3,
         "it calculates the final number of commits even though it aborted early"
     );
+
+    Ok(())
 }
 
 #[test]
@@ -96,7 +100,7 @@ fn typical_usecases() {
     let name = Cow::Borrowed(b"at-c5".as_bstr());
     let res = git_revision::describe(
         &commit.id,
-        |id, buf| repo.objects.find_commit_iter(id, buf),
+        |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         describe::Options {
             name_by_oid: vec![
                 (hex_to_id("efd9a841189668f1bab5b8ebade9cd0a1b139a37"), name.clone()),
@@ -123,7 +127,7 @@ fn typical_usecases() {
 
     let res = git_revision::describe(
         &commit.id,
-        |id, buf| repo.objects.find_commit_iter(id, buf),
+        |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
         describe::Options {
             name_by_oid: res.name_by_oid,
             first_parent: true,
@@ -136,6 +140,25 @@ fn typical_usecases() {
     assert_eq!(res.name, Some(name),);
     assert_eq!(res.id, commit.id);
     assert_eq!(res.depth, 1);
+
+    let shallow_repo = git_repository::open(repo.work_dir().expect("non-bare").join("shallow-clone")).unwrap();
+
+    let res = git_revision::describe(
+        &commit.id,
+        |id, buf| {
+            shallow_repo
+                .objects
+                .try_find(id, buf)
+                .map(|r| r.and_then(|d| d.try_into_commit_iter()))
+        },
+        describe::Options {
+            name_by_oid: res.name_by_oid,
+            first_parent: true,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert!(res.is_none(), "no candidate found on truncated history");
 }
 
 fn repo() -> Repository {
