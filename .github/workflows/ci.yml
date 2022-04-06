@@ -32,6 +32,13 @@ jobs:
       run: make tests
 
   build-and-test-on-windows:
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-pc-windows-gnu
+            rust: stable-gnu
+          - target: x86_64-pc-windows-msvc
+            rust: stable-msvc
     name: Windows
     runs-on: windows-2019
     steps:
@@ -39,7 +46,8 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: default
-          toolchain: stable
+          toolchain: ${{ matrix.rust }}
+          target: ${{ matrix.target }}
           override: true
       - uses: Swatinem/rust-cache@v1
       - name: "Check default features build on windows"
