@@ -64,7 +64,10 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
                 self.buf.clear();
                 f.read_to_end(&mut self.buf)
             })
-            .map_err(Error::ReadFileContents)?;
+            .map_err(|err| Error::ReadFileContents {
+                err,
+                path: refpath.to_owned(),
+            })?;
         loose::Reference::try_from_path(name, &self.buf)
             .map_err(|err| Error::ReferenceCreation {
                 err,
@@ -245,8 +248,8 @@ mod error {
                 display("The file system could not be traversed")
                 source(err)
             }
-            ReadFileContents(err: io::Error) {
-                display("The ref file could not be read in full")
+            ReadFileContents{err: io::Error, path: PathBuf} {
+                display("The ref file '{}' could not be read in full", path.display())
                 source(err)
             }
             ReferenceCreation{ err: file::loose::reference::decode::Error, relative_path: PathBuf } {

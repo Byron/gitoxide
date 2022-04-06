@@ -124,7 +124,12 @@ impl file::Store {
         };
         let relative_path = base.join(inbetween).join(relative_path);
 
-        let contents = match self.ref_contents(&relative_path)? {
+        let contents = match self
+            .ref_contents(&relative_path)
+            .map_err(|err| Error::ReadFileContents {
+                err,
+                path: relative_path.to_owned(),
+            })? {
             None => {
                 if is_definitely_absolute {
                     if let Some(packed) = packed {
@@ -302,9 +307,8 @@ mod error {
                 from()
                 source(err)
             }
-            ReadFileContents(err: io::Error) {
-                display("The ref file could not be read in full")
-                from()
+            ReadFileContents{err: io::Error, path: PathBuf} {
+                display("The ref file '{}' could not be read in full", path.display())
                 source(err)
             }
             ReferenceCreation{ err: file::loose::reference::decode::Error, relative_path: PathBuf } {
