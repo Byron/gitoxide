@@ -280,7 +280,7 @@ impl<'event> GitConfig<'event> {
         // TODO handle new git undocumented feature `hasconfig`
         fn include_condition_is_true(
             condition: &Cow<str>,
-            target_config_path: &Option<&Path>,
+            target_config_path: Option<&Path>,
             options: &from_paths::Options,
         ) -> bool {
             if let Some(git_dir) = options.git_dir {
@@ -295,11 +295,9 @@ impl<'event> GitConfig<'event> {
                 }
             }
             if let Some(branch_name) = options.branch_name {
-                if let Some((category, branch_name)) = branch_name.category_and_short_name() {
-                    if category == git_ref::Category::LocalBranch {
-                        if let Some(condition) = condition.strip_prefix("onbranch:") {
-                            return condition == branch_name;
-                        }
+                if let Some((git_ref::Category::LocalBranch, branch_name)) = branch_name.category_and_short_name() {
+                    if let Some(condition) = condition.strip_prefix("onbranch:") {
+                        return condition == branch_name;
                     }
                 }
             }
@@ -308,7 +306,7 @@ impl<'event> GitConfig<'event> {
 
         fn resolve_includes_recursive(
             target_config: &mut GitConfig,
-            target_config_path: &Option<&Path>,
+            target_config_path: Option<&Path>,
             depth: u8,
             options: &from_paths::Options,
         ) -> Result<(), from_paths::Error> {
@@ -331,11 +329,8 @@ impl<'event> GitConfig<'event> {
             for (header, body) in target_config.sections_by_name_with_header("includeIf") {
                 if let Some(condition) = &header.subsection_name {
                     if include_condition_is_true(condition, target_config_path, options) {
-                        let paths: Vec<values::Path> = body
-                            .values(&Key::from("path"))
-                            .iter()
-                            .map(|path| values::Path::from(path.clone()))
-                            .collect();
+                        let paths = body.values(&Key::from("path"));
+                        let paths = paths.iter().map(|path| values::Path::from(path.clone()));
                         include_paths.extend(paths);
                     }
                 }
@@ -351,7 +346,7 @@ impl<'event> GitConfig<'event> {
 
             for config_path in paths_to_include {
                 let mut include_config = GitConfig::open(&config_path)?;
-                resolve_includes_recursive(&mut include_config, &Some(&config_path), depth + 1, options)?;
+                resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
                 target_config.append(include_config);
             }
             Ok(())
@@ -359,7 +354,7 @@ impl<'event> GitConfig<'event> {
 
         fn resolve(
             path: values::Path,
-            target_config_path: &Option<&Path>,
+            target_config_path: Option<&Path>,
             options: &from_paths::Options,
         ) -> Result<PathBuf, from_paths::Error> {
             let path = path.interpolate(options.git_install_dir.as_deref())?;
@@ -375,7 +370,7 @@ impl<'event> GitConfig<'event> {
             Ok(path)
         }
 
-        resolve_includes_recursive(self, &config_path, 0, options)
+        resolve_includes_recursive(self, config_path, 0, options)
     }
 
     /// Constructs a `git-config` from the default cascading sequence.

@@ -729,31 +729,40 @@ mod from_paths_tests {
         )
         .unwrap();
 
-        // absolute path
         let options = from_paths::Options {
             git_dir: Some(inside_a_x_path.as_path()),
             ..Default::default()
         };
         let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-        assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"2")));
+        assert_eq!(
+            config.get_raw_value("core", None, "b"),
+            Ok(Cow::<[u8]>::Borrowed(b"2")),
+            "absolute paths from options and config are the same"
+        );
 
-        // tilde ~ path
         let home_git_path = dirs::home_dir().unwrap().join(".git");
         let options = from_paths::Options {
             git_dir: Some(home_git_path.as_path()),
             ..Default::default()
         };
         let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-        assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"3")));
+        assert_eq!(
+            config.get_raw_value("core", None, "b"),
+            Ok(Cow::<[u8]>::Borrowed(b"3")),
+            "tilde ~ path is resolved to home directory"
+        );
 
-        // relative path
         let a_path_clone = a_path.clone().join(".git");
         let options = from_paths::Options {
             git_dir: Some(a_path_clone.as_path()),
             ..Default::default()
         };
         let config = GitConfig::from_paths(vec![a_path], &options).unwrap();
-        assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"4")));
+        assert_eq!(
+            config.get_raw_value("core", None, "b"),
+            Ok(Cow::<[u8]>::Borrowed(b"4")),
+            "relative config path is resolved correctly"
+        );
     }
 
     #[test]
