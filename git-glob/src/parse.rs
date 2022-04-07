@@ -3,6 +3,8 @@ use crate::pattern::Mode;
 use bstr::{BString, ByteSlice};
 
 #[inline]
+/// A sloppy parser that performs only the most basic checks, providing additional information
+/// using `pattern::Mode` flags.
 pub fn parse_line(mut line: &[u8]) -> Option<(BString, pattern::Mode)> {
     let mut mode = Mode::empty();
     if line.is_empty() {
@@ -28,11 +30,13 @@ pub fn parse_line(mut line: &[u8]) -> Option<(BString, pattern::Mode)> {
     if !line.contains(&b'/') {
         mode |= Mode::NO_SUB_DIR;
     }
-    if line.first() == Some(&b'*') && line[1..].find_byteset(br"*?[\").is_none() {
+    if line.first() == Some(&b'*') && line[1..].find_byteset(GLOB_CHARACTERS).is_none() {
         mode |= Mode::ENDS_WITH;
     }
     Some((line, mode))
 }
+
+const GLOB_CHARACTERS: &[u8] = br"*?[\";
 
 /// We always copy just because that's ultimately needed anyway, not because we always have to.
 fn truncate_non_escaped_trailing_spaces(buf: &[u8]) -> BString {
