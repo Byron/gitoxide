@@ -1,5 +1,6 @@
 use bstr::{BStr, ByteSlice};
-use git_attributes::{ignore::pattern::Mode, parse, State};
+use git_attributes::{parse, State};
+use git_glob::pattern::Mode;
 use git_testtools::fixture_bytes;
 
 #[test]
@@ -250,7 +251,7 @@ fn value<'a, 'b>(attr: &'a str, value: &'b str) -> (&'a BStr, State<'b>) {
     (attr.as_bytes().as_bstr(), State::Value(value.as_bytes().as_bstr()))
 }
 
-fn pattern(name: &str, flags: git_attributes::ignore::pattern::Mode) -> parse::Kind {
+fn pattern(name: &str, flags: git_glob::pattern::Mode) -> parse::Kind {
     parse::Kind::Pattern(name.into(), flags)
 }
 

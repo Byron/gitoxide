@@ -18,8 +18,6 @@ pub enum State<'a> {
     Unspecified,
 }
 
-pub mod ignore;
-
 pub mod parse;
 
 pub fn parse(buf: &[u8]) -> parse::Lines<'_> {
