@@ -1075,8 +1075,8 @@ dependencies = [
 name = "git-attributes"
 version = "0.1.0"
 dependencies = [
- "bitflags",
  "bstr",
+ "git-glob",
  "git-quote",
  "git-testtools",
  "quick-error",

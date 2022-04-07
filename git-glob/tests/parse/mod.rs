@@ -40,7 +40,7 @@ fn hash_symbols_are_not_special() {
 }
 
 #[test]
-fn backslashes_before_hashes_are_no_comments() {
+fn backslashes_before_hashes_are_considered_an_escape_sequence() {
     assert_eq!(git_glob::parse(br"\#hello"), Some((r"#hello".into(), Mode::NO_SUB_DIR)));
 }
 
