@@ -1180,6 +1180,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-glob"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "bstr",
+ "git-quote",
+ "git-testtools",
+ "serde",
+]
+
+[[package]]
 name = "git-hash"
 version = "0.9.3"
 dependencies = [

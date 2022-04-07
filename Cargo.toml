@@ -135,6 +135,7 @@ members = [
     "git-chunk",
     "git-quote",
     "git-object",
+    "git-glob",
     "git-diff",
     "git-traverse",
     "git-index",
