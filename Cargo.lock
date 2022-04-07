@@ -1783,15 +1783,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kstring"
-version = "1.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b310ccceade8121d7d77fee406160e457c2f4e7c7982d589da3499bc7ea4526"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "kv-log-macro"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2794,14 +2785,13 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.13.4"
+version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "744e9ed5b352340aa47ce033716991b5589e23781acb97cad37d4ea70560f55b"
+checksum = "86e793cd7300306ebefde30a6282a9016899b7bad63799511253d95518a62bcd"
 dependencies = [
  "combine",
  "indexmap",
  "itertools",
- "kstring",
 ]
 
 [[package]]
