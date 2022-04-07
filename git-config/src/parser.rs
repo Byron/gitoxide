@@ -1273,8 +1273,9 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
     let mut is_in_quotes = false;
     // Used to determine if we return a Value or Value{Not,}Done
     let mut partial_value_found = false;
+    let mut index: usize = 0;
 
-    for (index, c) in i.iter().enumerate() {
+    for c in i.iter() {
         if was_prev_char_escape_char {
             was_prev_char_escape_char = false;
             match c {
@@ -1312,10 +1313,18 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
                 _ => {}
             }
         }
+        index += 1;
     }
 
     if parsed_index == 0 {
-        parsed_index = i.len();
+        if index != 0 {
+            parsed_index = i.len();
+        } else {
+            // Didn't parse anything at all, newline straight away.
+            events.push(Event::Value(Cow::Owned(Vec::new())));
+            events.push(Event::Newline(Cow::Borrowed("\n")));
+            return Ok((&i[1..], ()));
+        }
     }
 
     // Handle incomplete escape
@@ -1772,6 +1781,45 @@ mod section {
                     ]
                 },
                 3
+            ))
+        );
+    }
+
+    #[test]
+    fn section_with_empty_value() {
+        let mut node = ParserNode::SectionHeader;
+        let section_data = br#"[hello]
+            a = b
+            c=
+            d = "lol""#;
+        assert_eq!(
+            section(section_data, &mut node).unwrap(),
+            fully_consumed((
+                ParsedSection {
+                    section_header: parsed_section_header("hello", None),
+                    events: vec![
+                        newline_event(),
+                        whitespace_event("            "),
+                        name_event("a"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event("b"),
+                        newline_event(),
+                        whitespace_event("            "),
+                        name_event("c"),
+                        Event::KeyValueSeparator,
+                        value_event(""),
+                        newline_event(),
+                        whitespace_event("            "),
+                        name_event("d"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event("\"lol\"")
+                    ]
+                },
+                2
             ))
         );
     }
