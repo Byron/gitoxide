@@ -7,7 +7,7 @@ use bstr::{BString, ByteSlice};
 /// using `pattern::Mode` flags.
 ///
 /// Returns `(pattern, mode, no_wildcard_len)`
-pub fn pattern(mut pat: &[u8]) -> Option<(BString, pattern::Mode, usize)> {
+pub fn pattern(mut pat: &[u8]) -> Option<(BString, pattern::Mode, Option<usize>)> {
     let mut mode = Mode::empty();
     if pat.is_empty() {
         return None;
@@ -32,13 +32,14 @@ pub fn pattern(mut pat: &[u8]) -> Option<(BString, pattern::Mode, usize)> {
     if !line.contains(&b'/') {
         mode |= Mode::NO_SUB_DIR;
     }
-    if line.first() == Some(&b'*') && no_wildcard_len(&line[1..]).is_none() {
+    let pos_of_first_wildcard = first_wildcard_pos(&line);
+    if line.first() == Some(&b'*') && first_wildcard_pos(&line[1..]).is_none() {
         mode |= Mode::ENDS_WITH;
     }
-    Some((line, mode, 0))
+    Some((line, mode, pos_of_first_wildcard))
 }
 
-fn no_wildcard_len(pat: &[u8]) -> Option<usize> {
+fn first_wildcard_pos(pat: &[u8]) -> Option<usize> {
     pat.find_byteset(GLOB_CHARACTERS)
 }
 

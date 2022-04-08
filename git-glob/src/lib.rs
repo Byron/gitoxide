@@ -10,10 +10,8 @@ pub struct Pattern {
     pub text: BString,
     /// Additional information to help accelerate pattern matching.
     pub mode: pattern::Mode,
-    /// The amount of `text` bytes which aren't a wildcard character.
-    ///
-    /// Useful for optimizations. It's 0 if the first character is a wildcard.
-    pub no_wildcard_len: usize,
+    /// The position in `text` with the first wildcard character, or `None` if there is no wildcard at all.
+    pub first_wildcard_pos: Option<usize>,
 }
 
 pub mod pattern {
@@ -36,10 +34,10 @@ pub mod pattern {
 
     impl Pattern {
         pub fn from_bytes(text: &[u8]) -> Option<Self> {
-            crate::parse::pattern(text).map(|(text, mode, no_wildcard_len)| Pattern {
+            crate::parse::pattern(text).map(|(text, mode, first_wildcard_pos)| Pattern {
                 text,
                 mode,
-                no_wildcard_len,
+                first_wildcard_pos,
             })
         }
 
