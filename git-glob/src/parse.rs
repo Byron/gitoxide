@@ -30,10 +30,14 @@ pub fn pattern(mut pat: &[u8]) -> Option<(BString, pattern::Mode)> {
     if !line.contains(&b'/') {
         mode |= Mode::NO_SUB_DIR;
     }
-    if line.first() == Some(&b'*') && line[1..].find_byteset(GLOB_CHARACTERS).is_none() {
+    if line.first() == Some(&b'*') && no_wildcard_len(&line[1..]).is_none() {
         mode |= Mode::ENDS_WITH;
     }
     Some((line, mode))
+}
+
+fn no_wildcard_len(pat: &[u8]) -> Option<usize> {
+    pat.find_byteset(GLOB_CHARACTERS)
 }
 
 const GLOB_CHARACTERS: &[u8] = br"*?[\";
