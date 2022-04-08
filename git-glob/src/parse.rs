@@ -5,24 +5,24 @@ use bstr::{BString, ByteSlice};
 #[inline]
 /// A sloppy parser that performs only the most basic checks, providing additional information
 /// using `pattern::Mode` flags.
-pub fn parse_line(mut line: &[u8]) -> Option<(BString, pattern::Mode)> {
+pub fn pattern(mut pat: &[u8]) -> Option<(BString, pattern::Mode)> {
     let mut mode = Mode::empty();
-    if line.is_empty() {
+    if pat.is_empty() {
         return None;
     };
-    if line.first() == Some(&b'!') {
+    if pat.first() == Some(&b'!') {
         mode |= Mode::NEGATIVE;
-        line = &line[1..];
-    } else if line.first() == Some(&b'\\') {
-        let second = line.get(1);
+        pat = &pat[1..];
+    } else if pat.first() == Some(&b'\\') {
+        let second = pat.get(1);
         if second == Some(&b'!') || second == Some(&b'#') {
-            line = &line[1..];
+            pat = &pat[1..];
         }
     }
-    if line.iter().all(|b| b.is_ascii_whitespace()) {
+    if pat.iter().all(|b| b.is_ascii_whitespace()) {
         return None;
     }
-    let mut line = truncate_non_escaped_trailing_spaces(line);
+    let mut line = truncate_non_escaped_trailing_spaces(pat);
     if line.last() == Some(&b'/') {
         mode |= Mode::MUST_BE_DIR;
         line.pop();

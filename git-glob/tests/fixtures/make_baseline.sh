@@ -13,7 +13,6 @@ while read -r pattern nomatch; do
   git check-ignore -vn "$nomatch" 2>&1 || :
 done <<EOF >>git-baseline.nmatch
 abc?def abc/def
-abc*def abc/def
 a*b*c abcd
 abc*abc*abc abcabcabcabcabcabcabca
 some/**/needle.txt some/other/notthis.txt
@@ -60,7 +59,6 @@ abc[/]def  abc/def
 \\[a-z]  \\a
 \\?  \\a
 \\*  \\\\
-aBcDeFg  aBcDeFg
 aBcDeFg  abcdefg
 aBcDeFg  ABCDEFG
 aBcDeFg  AbCdEfG
@@ -73,7 +71,6 @@ while read -r pattern match; do
 done <<EOF >>git-baseline.match
 *.c mozilla-sha1/sha1.c
 a foo/a
-/**/test test
 a a
 a*b a_b 
 a*b*c abc 
@@ -133,6 +130,7 @@ abc/def  abc/def
 \\[  [
 \\?  ?  
 \\*  *  
+aBcDeFg  aBcDeFg
 EOF
 
 git config core.ignorecase true
