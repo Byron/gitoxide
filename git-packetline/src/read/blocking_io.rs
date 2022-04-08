@@ -13,10 +13,7 @@ impl<T> StreamingPeekableIter<T>
 where
     T: io::Read,
 {
-    fn read_line_inner<'a>(
-        reader: &mut T,
-        buf: &'a mut Vec<u8>,
-    ) -> io::Result<Result<PacketLineRef<'a>, decode::Error>> {
+    fn read_line_inner<'a>(reader: &mut T, buf: &'a mut [u8]) -> io::Result<Result<PacketLineRef<'a>, decode::Error>> {
         let (hex_bytes, data_bytes) = buf.split_at_mut(4);
         reader.read_exact(hex_bytes)?;
         let num_data_bytes = match decode::hex_prefix(hex_bytes) {

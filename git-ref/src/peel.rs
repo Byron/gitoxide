@@ -1,7 +1,7 @@
 /// A function for use in [`crate::file::ReferenceExt::peel_to_id_in_place()`] to indicate no peeling should happen.
 pub fn none(
     _id: git_hash::ObjectId,
-    _buf: &mut Vec<u8>,
+    #[allow(clippy::ptr_arg)] _buf: &mut Vec<u8>,
 ) -> Result<Option<(git_object::Kind, &[u8])>, std::convert::Infallible> {
     Ok(Some((git_object::Kind::Commit, &[])))
 }

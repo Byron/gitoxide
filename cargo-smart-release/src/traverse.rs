@@ -335,7 +335,7 @@ fn package_may_be_published(p: &Package) -> bool {
 
 fn forward_propagate_breaking_changes_for_publishing(
     ctx: &Context,
-    crates: &mut Vec<Dependency<'_>>,
+    crates: &mut [Dependency<'_>],
     bump_when_needed: bool,
     allow_auto_publish_of_stable_crates: bool,
 ) -> anyhow::Result<()> {
