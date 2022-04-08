@@ -1,4 +1,4 @@
-use bstr::{BString, ByteSlice};
+use bstr::ByteSlice;
 
 pub struct Lines<'a> {
     lines: bstr::Lines<'a>,
@@ -16,7 +16,7 @@ impl<'a> Lines<'a> {
 }
 
 impl<'a> Iterator for Lines<'a> {
-    type Item = (BString, git_glob::pattern::Mode, usize);
+    type Item = (git_glob::Pattern, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
         for line in self.lines.by_ref() {
@@ -24,9 +24,9 @@ impl<'a> Iterator for Lines<'a> {
             if line.first() == Some(&b'#') {
                 continue;
             }
-            match git_glob::parse(line) {
+            match git_glob::Pattern::from_bytes(line) {
                 None => continue,
-                Some((line, flags)) => return Some((line, flags, self.line_no)),
+                Some(pattern) => return Some((pattern, self.line_no)),
             }
         }
         None

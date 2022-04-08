@@ -5,7 +5,9 @@ use bstr::{BString, ByteSlice};
 #[inline]
 /// A sloppy parser that performs only the most basic checks, providing additional information
 /// using `pattern::Mode` flags.
-pub fn pattern(mut pat: &[u8]) -> Option<(BString, pattern::Mode)> {
+///
+/// Returns `(pattern, mode, no_wildcard_len)`
+pub fn pattern(mut pat: &[u8]) -> Option<(BString, pattern::Mode, usize)> {
     let mut mode = Mode::empty();
     if pat.is_empty() {
         return None;
@@ -33,7 +35,7 @@ pub fn pattern(mut pat: &[u8]) -> Option<(BString, pattern::Mode)> {
     if line.first() == Some(&b'*') && no_wildcard_len(&line[1..]).is_none() {
         mode |= Mode::ENDS_WITH;
     }
-    Some((line, mode))
+    Some((line, mode, 0))
 }
 
 fn no_wildcard_len(pat: &[u8]) -> Option<usize> {

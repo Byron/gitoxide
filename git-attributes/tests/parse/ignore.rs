@@ -1,10 +1,12 @@
+use bstr::BString;
 use git_glob::pattern::Mode;
+use git_glob::Pattern;
 use git_testtools::fixture_bytes;
 
 #[test]
 fn byte_order_marks_are_no_patterns() {
     assert_eq!(
-        git_attributes::parse::ignore("\u{feff}hello".as_bytes()).next(),
+        flatten(git_attributes::parse::ignore("\u{feff}hello".as_bytes()).next()),
         Some((r"hello".into(), Mode::NO_SUB_DIR, 1))
     );
 }
@@ -12,7 +14,7 @@ fn byte_order_marks_are_no_patterns() {
 #[test]
 fn line_numbers_are_counted_correctly() {
     let input = fixture_bytes("ignore/various.txt");
-    let actual: Vec<_> = git_attributes::parse::ignore(&input).collect();
+    let actual: Vec<_> = git_attributes::parse::ignore(&input).map(flat_map).collect();
     assert_eq!(
         actual,
         vec![
@@ -30,7 +32,9 @@ fn line_numbers_are_counted_correctly() {
 #[test]
 fn line_endings_can_be_windows_or_unix() {
     assert_eq!(
-        git_attributes::parse::ignore(b"unix\nwindows\r\nlast").collect::<Vec<_>>(),
+        git_attributes::parse::ignore(b"unix\nwindows\r\nlast")
+            .map(flat_map)
+            .collect::<Vec<_>>(),
         vec![
             (r"unix".into(), Mode::NO_SUB_DIR, 1),
             (r"windows".into(), Mode::NO_SUB_DIR, 2),
@@ -48,7 +52,15 @@ fn comments_are_ignored_as_well_as_empty_ones() {
 #[test]
 fn backslashes_before_hashes_are_no_comments() {
     assert_eq!(
-        git_attributes::parse::ignore(br"\#hello").next(),
+        flatten(git_attributes::parse::ignore(br"\#hello").next()),
         Some((r"#hello".into(), Mode::NO_SUB_DIR, 1))
     );
+}
+
+fn flatten(input: Option<(Pattern, usize)>) -> Option<(BString, git_glob::pattern::Mode, usize)> {
+    input.map(flat_map)
+}
+
+fn flat_map(input: (Pattern, usize)) -> (BString, git_glob::pattern::Mode, usize) {
+    (input.0.text, input.0.mode, input.1)
 }

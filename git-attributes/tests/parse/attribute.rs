@@ -252,7 +252,11 @@ fn value<'a, 'b>(attr: &'a str, value: &'b str) -> (&'a BStr, State<'b>) {
 }
 
 fn pattern(name: &str, flags: git_glob::pattern::Mode) -> parse::Kind {
-    parse::Kind::Pattern(name.into(), flags)
+    parse::Kind::Pattern(git_glob::Pattern {
+        text: name.into(),
+        mode: flags,
+        no_wildcard_len: 0,
+    })
 }
 
 fn macro_(name: &str) -> parse::Kind {

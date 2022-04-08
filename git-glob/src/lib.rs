@@ -3,11 +3,17 @@
 
 use bstr::BString;
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Pattern {
     /// the actual pattern bytes
     pub text: BString,
     /// Additional information to help accelerate pattern matching.
     pub mode: pattern::Mode,
+    /// The amount of `text` bytes which aren't a wildcard character.
+    ///
+    /// Useful for optimizations. It's 0 if the first character is a wildcard.
+    pub no_wildcard_len: usize,
 }
 
 pub mod pattern {
@@ -29,8 +35,12 @@ pub mod pattern {
     }
 
     impl Pattern {
-        pub fn from_bytes(text: &BStr) -> Option<Self> {
-            crate::parse::pattern(text).map(|(text, mode)| Pattern { text, mode })
+        pub fn from_bytes(text: &[u8]) -> Option<Self> {
+            crate::parse::pattern(text).map(|(text, mode, no_wildcard_len)| Pattern {
+                text,
+                mode,
+                no_wildcard_len,
+            })
         }
 
         pub fn matches(&self, _value: &BStr) -> bool {
