@@ -158,7 +158,7 @@ mod expand {
         seen_objs: &impl util::InsertImmutable<ObjectId>,
         oids: impl IntoIterator<Item = std::result::Result<Oid, IterErr>>,
         buf1: &mut Vec<u8>,
-        buf2: &mut Vec<u8>,
+        #[allow(clippy::ptr_arg)] buf2: &mut Vec<u8>,
         progress: &mut impl Progress,
         should_interrupt: &AtomicBool,
         allow_pack_lookups: bool,

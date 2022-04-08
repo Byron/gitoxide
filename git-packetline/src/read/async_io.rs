@@ -18,7 +18,7 @@ where
     #[allow(clippy::needless_lifetimes)] // TODO: remove once this is clippy false positive is fixed
     async fn read_line_inner<'a>(
         reader: &mut T,
-        buf: &'a mut Vec<u8>,
+        buf: &'a mut [u8],
     ) -> io::Result<Result<PacketLineRef<'a>, decode::Error>> {
         let (hex_bytes, data_bytes) = buf.split_at_mut(4);
         reader.read_exact(hex_bytes).await?;
