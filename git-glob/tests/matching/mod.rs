@@ -44,6 +44,7 @@ impl<'a> Baseline<'a> {
 #[ignore]
 fn compare_baseline_with_ours() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
+    let (mut total_matches, mut total_correct) = (0, 0);
     for (input_file, expected_matches) in &[("git-baseline.match", true), ("git-baseline.nmatch", false)] {
         let input = std::fs::read(dir.join(*input_file)).unwrap();
         let mut seen = BTreeSet::default();
@@ -54,6 +55,7 @@ fn compare_baseline_with_ours() {
             is_match,
         } in Baseline::new(&input)
         {
+            total_matches += 1;
             assert!(seen.insert(m), "duplicate match entry: {:?}", m);
             assert_eq!(
                 is_match, *expected_matches,
@@ -61,17 +63,19 @@ fn compare_baseline_with_ours() {
                 expected_matches, m
             );
             let pattern = git_glob::Pattern::from_bytes(pattern).expect("parsing works");
-            assert_eq!(
-                pattern.matches_path(
-                    value,
-                    value.rfind_byte(b'/').map(|pos| pos + 1),
-                    false, // TODO: does it make sense to pretent it is a dir and see what happens?
-                    pattern::Case::Sensitive
-                ),
-                is_match
-            )
+            let actual_match = pattern.matches_path(
+                value,
+                value.rfind_byte(b'/').map(|pos| pos + 1),
+                false, // TODO: does it make sense to pretent it is a dir and see what happens?
+                pattern::Case::Sensitive,
+            );
+            if actual_match == is_match {
+                total_correct += 1;
+            }
         }
     }
+
+    assert_eq!(total_correct, total_matches, "We perfectly agree with git here");
 }
 
 #[test]

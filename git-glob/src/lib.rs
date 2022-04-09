@@ -78,7 +78,7 @@ pub mod pattern {
                     Case::Fold => MatchOptions::IGNORE_CASE,
                     Case::Sensitive => MatchOptions::empty(),
                 };
-            todo!()
+            false
         }
 
         pub fn matches(&self, _value: &BStr, _options: MatchOptions) -> bool {
