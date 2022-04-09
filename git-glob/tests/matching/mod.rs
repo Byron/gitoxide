@@ -1,4 +1,5 @@
 use bstr::{BStr, ByteSlice};
+use git_glob::pattern;
 use std::collections::BTreeSet;
 
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
@@ -43,35 +44,32 @@ impl<'a> Baseline<'a> {
 #[ignore]
 fn compare_baseline_with_ours() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
-    {
-        let input = std::fs::read(dir.join("git-baseline.match")).unwrap();
+    for (input_file, expected_matches) in &[("git-baseline.match", true), ("git-baseline.nmatch", false)] {
+        let input = std::fs::read(dir.join(*input_file)).unwrap();
         let mut seen = BTreeSet::default();
 
-        for git_match in Baseline::new(&input) {
-            assert!(seen.insert(git_match), "duplicate match entry: {:?}", git_match);
-            assert!(
-                git_match.is_match,
-                "baseline for matches must indeed be matches - check baseline and git version: {:?}",
-                git_match
+        for m @ GitMatch {
+            pattern,
+            value,
+            is_match,
+        } in Baseline::new(&input)
+        {
+            assert!(seen.insert(m), "duplicate match entry: {:?}", m);
+            assert_eq!(
+                is_match, *expected_matches,
+                "baseline for matches must indeed be {} - check baseline and git version: {:?}",
+                expected_matches, m
             );
-            let pattern = git_glob::Pattern::from_bytes(git_match.pattern).expect("parsing works");
-            assert!(pattern.matches(git_match.value))
-        }
-    }
-
-    {
-        let input = std::fs::read(dir.join("git-baseline.nmatch")).unwrap();
-        let mut seen = BTreeSet::default();
-
-        for git_match in Baseline::new(&input) {
-            assert!(seen.insert(git_match), "duplicate match entry: {:?}", git_match);
-            assert!(
-                !git_match.is_match,
-                "baseline for no-matches must indeed not be matches - check baseline and git version: {:?}",
-                git_match
-            );
-            let pattern = git_glob::Pattern::from_bytes(git_match.pattern).expect("parsing works");
-            assert!(!pattern.matches(git_match.value))
+            let pattern = git_glob::Pattern::from_bytes(pattern).expect("parsing works");
+            assert_eq!(
+                pattern.matches_path(
+                    value,
+                    value.rfind_byte(b'/').map(|pos| pos + 1),
+                    false, // TODO: does it make sense to pretent it is a dir and see what happens?
+                    pattern::Case::Sensitive
+                ),
+                is_match
+            )
         }
     }
 }
