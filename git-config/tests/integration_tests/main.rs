@@ -9,3 +9,4 @@ type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 mod git_config_integration_tests;
 mod parser_integration_tests;
 mod value_integration_tests;
+mod values_integration_tests;
