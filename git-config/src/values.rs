@@ -1,5 +1,11 @@
 //! Rust containers for valid `git-config` types.
 
+use bstr::BStr;
+
+#[cfg(feature = "expiry-date")]
+use chrono::format::Fixed::{TimezoneName, TimezoneOffset};
+#[cfg(feature = "expiry-date")]
+use chrono::{DateTime, FixedOffset, NaiveDateTime, ParseError, TimeZone, Utc};
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
 use bstr::BStr;
@@ -1201,5 +1207,80 @@ impl TryFrom<&[u8]> for ColorAttribute {
     #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s)?)
+    }
+}
+
+quick_error! {
+    #[derive(Debug, PartialEq)]
+    ///
+    #[allow(missing_docs)]
+    pub enum ExpiryDateError {
+        Utf8Conversion(err: bstr::Utf8Error) {
+            display("Ill-formed UTF-8")
+            source(err)
+            from()
+        }
+        UnsupportedFormat {
+            display("Could not parse expiry date")
+        }
+    }
+}
+
+#[cfg(feature = "expiry-date")]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct ExpiryDate<'a> {
+    pub value: Cow<'a, BStr>,
+}
+
+#[cfg(feature = "expiry-date")]
+impl<'a> From<Cow<'a, [u8]>> for ExpiryDate<'a> {
+    fn from(c: Cow<'a, [u8]>) -> Self {
+        Self {
+            value: match c {
+                Cow::Borrowed(c) => Cow::Borrowed(c.into()),
+                Cow::Owned(c) => Cow::Owned(c.into()),
+            },
+        }
+    }
+}
+
+#[cfg(feature = "expiry-date")]
+impl<'a> ExpiryDate<'a> {
+    pub fn to_timestamp(self) -> Result<u64, ExpiryDateError> {
+        let v = self.value.to_str()?;
+
+        if v == "never" || v == "false" {
+            return Ok(0);
+        }
+
+        if v == "all" || v == "now" {
+            return Ok(u64::MAX);
+        }
+
+        if let Ok(date) = DateTime::parse_from_rfc2822(v) {
+            return Ok(date.timestamp() as u64);
+        }
+
+        if let Ok(date) = DateTime::parse_from_str(v, "%Y-%m-%d %H:%M:%S %z") {
+            return Ok(date.timestamp() as u64);
+        }
+
+        if let Ok(date) = DateTime::parse_from_str(v, "%a %b %e %H:%M:%S %Y %z") {
+            return Ok(date.timestamp() as u64);
+        }
+
+        if let Ok(date) = Utc.datetime_from_str(v, "%y/%m/%d %i:%m:%s%p") {
+            return Ok(date.timestamp() as u64);
+        }
+
+        if let Ok(date) = Utc.datetime_from_str(v, "%Y/%m/%d %I:%M:%S %p") {
+            return Ok(date.timestamp() as u64);
+        }
+
+        if let Ok(date) = Utc.datetime_from_str(v, "%a %b %e %H:%M:%S %Y") {
+            return Ok(date.timestamp() as u64);
+        }
+
+        Err(ExpiryDateError::UnsupportedFormat)
     }
 }
