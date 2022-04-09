@@ -602,13 +602,13 @@ impl Integer {
     /// Canonicalize values as simple decimal numbers.
     /// An optional suffix of k, m, or g, upon creation, will cause the value to be multiplied by
     /// 1024, 1048576, or 1073741824 respectively.
-    pub fn as_decimal(&self) -> i64 {
+    pub fn as_decimal(&self) -> Option<i64> {
         return match self.suffix {
-            None => self.value,
+            None => Some(self.value),
             Some(suffix) => match suffix {
-                IntegerSuffix::Kibi => 1024 * self.value,
-                IntegerSuffix::Mebi => 1048576 * self.value,
-                IntegerSuffix::Gibi => 1073741824 * self.value,
+                IntegerSuffix::Kibi => self.value.checked_mul(1024),
+                IntegerSuffix::Mebi => self.value.checked_mul(1048576),
+                IntegerSuffix::Gibi => self.value.checked_mul(1073741824),
             },
         };
     }
