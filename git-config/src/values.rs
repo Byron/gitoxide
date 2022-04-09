@@ -599,6 +599,9 @@ impl Integer {
         self.into()
     }
 
+    /// Canonicalize values as simple decimal numbers.
+    /// An optional suffix of k, m, or g, upon creation, will cause the value to be multiplied by
+    /// 1024, 1048576, or 1073741824 respectively.
     pub fn as_decimal(&self) -> i64 {
         return match self.suffix {
             None => self.value,
