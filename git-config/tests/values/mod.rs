@@ -14,3 +14,6 @@ mod color_value;
 mod color_attribute;
 
 mod path;
+
+#[cfg(feature = "expiry-date")]
+mod expiry_date;
