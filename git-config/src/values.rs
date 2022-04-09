@@ -598,6 +598,17 @@ impl Integer {
     pub fn to_vec(self) -> Vec<u8> {
         self.into()
     }
+
+    pub fn as_decimal(&self) -> i64 {
+        return match self.suffix {
+            None => self.value,
+            Some(suffix) => match suffix {
+                IntegerSuffix::Kibi => 1024 * self.value,
+                IntegerSuffix::Mebi => 1048576 * self.value,
+                IntegerSuffix::Gibi => 1073741824 * self.value,
+            },
+        };
+    }
 }
 
 impl Display for Integer {

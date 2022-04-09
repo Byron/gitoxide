@@ -167,6 +167,30 @@ mod integer {
         assert!(Integer::try_from(b("123123123123123123123123")).is_err());
         assert!(Integer::try_from(b("gg")).is_err());
     }
+
+    #[test]
+    fn as_decimal() {
+        assert_eq!(
+            Integer::try_from(b("12")).unwrap().as_decimal(),
+            12,
+            "works without suffix"
+        );
+        assert_eq!(
+            Integer::try_from(b("13k")).unwrap().as_decimal(),
+            13 * 1024,
+            "works with kilobyte suffix"
+        );
+        assert_eq!(
+            Integer::try_from(b("14m")).unwrap().as_decimal(),
+            14 * 1048576,
+            "works with megabyte suffix"
+        );
+        assert_eq!(
+            Integer::try_from(b("15g")).unwrap().as_decimal(),
+            15 * 1073741824,
+            "works with gigabyte suffix"
+        );
+    }
 }
 
 #[cfg(test)]
@@ -349,7 +373,7 @@ mod interpolate_tests {
     fn tilde_with_given_user_is_unsupported_on_windows() {
         assert!(matches!(
             Path::from(Cow::Borrowed(&b"~baz/foo/bar"[..])).interpolate(None),
-            Err(Error::UserInterpolationUnsupported)
+            Err(interpolate::Error::UserInterpolationUnsupported)
         ));
     }
 
