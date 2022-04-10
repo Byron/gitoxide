@@ -682,6 +682,7 @@ mod from_paths_tests {
         let a_path = dir.path().join("a");
         let b_path = dir.path().join("b");
         let c_path = dir.path().join("c");
+        let c_slash_path = dir.path().join("c_slash");
         let d_path = dir.path().join("d");
         let inside_a_x_path = dir.path().join("a").join("x").join(".git");
 
@@ -693,11 +694,14 @@ mod from_paths_tests {
               b = 1
             [includeIf "gitdir:~/.git"]
               path = {}
+            [includeIf "gitdir:~/.git/"]
+              path = {}
             [includeIf "gitdir:a/.git"]
               path = {}
             [includeIf "gitdir:{}"]
               path = {}"#,
                 escape_backslashes(&c_path),
+                escape_backslashes(&c_slash_path),
                 escape_backslashes(&d_path),
                 escape_backslashes(&inside_a_x_path),
                 escape_backslashes(&b_path)
@@ -718,6 +722,14 @@ mod from_paths_tests {
             "
             [core]
               b = 3",
+        )
+        .unwrap();
+
+        fs::write(
+            c_slash_path.as_path(),
+            "
+            [core]
+              b = 7",
         )
         .unwrap();
 
@@ -746,9 +758,19 @@ mod from_paths_tests {
             ..Default::default()
         };
         let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
+        // sometimes returns
+        // tilde ~ path is resolved to home directory
+        // Left:  Ok([[49], [55], [51]])
+        // Right: Ok([[49], [51], [55]])
+
+        // run multiple times
         assert_eq!(
-            config.get_raw_value("core", None, "b"),
-            Ok(Cow::<[u8]>::Borrowed(b"3")),
+            config.get_raw_multi_value("core", None, "b"),
+            Ok(vec![
+                Cow::<[u8]>::Borrowed(b"1"),
+                Cow::<[u8]>::Borrowed(b"3"),
+                Cow::<[u8]>::Borrowed(b"7")
+            ]),
             "tilde ~ path is resolved to home directory"
         );
 
