@@ -67,6 +67,6 @@ fn as_decimal() {
     assert_eq!(decimal("15g"), Some(15 * 1_073_741_824), "works with gigabyte suffix");
     assert_eq!(decimal("15G"), Some(15 * 1_073_741_824), "works with Gigabyte suffix");
 
-    let max_i64 = format!("{}g", i64::MAX);
-    assert_eq!(decimal(&max_i64), None, "overflow results in None");
+    assert_eq!(decimal(&format!("{}g", i64::MAX)), None, "overflow results in None");
+    assert_eq!(decimal(&format!("{}g", i64::MIN)), None, "underflow results in None");
 }
