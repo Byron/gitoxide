@@ -600,11 +600,11 @@ impl Integer {
     }
 
     /// Canonicalize values as simple decimal numbers.
-    /// An optional suffix of k, m, or g, upon creation, will cause the value to be multiplied by
-    /// 1024, 1048576, or 1073741824 respectively.
+    /// An optional suffix of k, m, or g (case-insensitive), upon creation, will cause the value to be multiplied by
+    /// 1024 (k), 1048576 (m), or 1073741824 (g) respectively.
     ///
     /// Returns the result if no multiplication overflow.
-    pub fn as_decimal(&self) -> Option<i64> {
+    pub fn to_decimal(&self) -> Option<i64> {
         return match self.suffix {
             None => Some(self.value),
             Some(suffix) => match suffix {
@@ -781,9 +781,9 @@ impl FromStr for IntegerSuffix {
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "k" => Ok(Self::Kibi),
-            "m" => Ok(Self::Mebi),
-            "g" => Ok(Self::Gibi),
+            "k" | "K" => Ok(Self::Kibi),
+            "m" | "M" => Ok(Self::Mebi),
+            "g" | "G" => Ok(Self::Gibi),
             _ => Err(IntegerError::InvalidSuffix),
         }
     }

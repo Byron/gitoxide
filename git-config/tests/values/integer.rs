@@ -55,30 +55,18 @@ fn invalid_from_str() {
 
 #[test]
 fn as_decimal() {
-    assert_eq!(
-        Integer::try_from(b("12")).unwrap().as_decimal().unwrap(),
-        12,
-        "works without suffix"
-    );
-    assert_eq!(
-        Integer::try_from(b("13k")).unwrap().as_decimal().unwrap(),
-        13 * 1024,
-        "works with kilobyte suffix"
-    );
-    assert_eq!(
-        Integer::try_from(b("14m")).unwrap().as_decimal().unwrap(),
-        14 * 1048576,
-        "works with megabyte suffix"
-    );
-    assert_eq!(
-        Integer::try_from(b("15g")).unwrap().as_decimal().unwrap(),
-        15 * 1073741824,
-        "works with gigabyte suffix"
-    );
+    fn decimal(input: &str) -> Option<i64> {
+        Integer::try_from(b(input)).unwrap().to_decimal()
+    }
+
+    assert_eq!(decimal("12"), Some(12), "works without suffix");
+    assert_eq!(decimal("13k"), Some(13 * 1024), "works with kilobyte suffix");
+    assert_eq!(decimal("13K"), Some(13 * 1024), "works with Kilobyte suffix");
+    assert_eq!(decimal("14m"), Some(14 * 1_048_576), "works with megabyte suffix");
+    assert_eq!(decimal("14M"), Some(14 * 1_048_576), "works with Megabyte suffix");
+    assert_eq!(decimal("15g"), Some(15 * 1_073_741_824), "works with gigabyte suffix");
+    assert_eq!(decimal("15G"), Some(15 * 1_073_741_824), "works with Gigabyte suffix");
 
     let max_i64 = format!("{}g", i64::MAX);
-    assert!(
-        Integer::try_from(b(&max_i64)).unwrap().as_decimal().is_none(),
-        "overflow results in None"
-    );
+    assert_eq!(decimal(&max_i64), None, "overflow results in None");
 }
