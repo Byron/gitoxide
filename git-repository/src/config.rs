@@ -72,13 +72,16 @@ mod cache {
                     if let Ok(Boolean::False(_)) = Boolean::try_from(value_bytes) {
                         hex_len = object_hash.len_in_hex().into();
                     } else {
-                        // TODO: let it resolve the suffix
                         let value = Integer::try_from(value_bytes)
                             .map_err(|_| Error::CoreAbbrev {
                                 value: hex_len_str.value.clone().into_owned(),
                                 max: object_hash.len_in_hex() as u8,
                             })?
-                            .value;
+                            .to_decimal()
+                            .ok_or_else(|| Error::CoreAbbrev {
+                                value: hex_len_str.value.clone().into_owned(),
+                                max: object_hash.len_in_hex() as u8,
+                            })?;
                         if value < 4 || value as usize > object_hash.len_in_hex() {
                             return Err(Error::CoreAbbrev {
                                 value: hex_len_str.value.clone().into_owned(),
