@@ -605,14 +605,14 @@ impl Integer {
     ///
     /// Returns the result if no multiplication overflow.
     pub fn to_decimal(&self) -> Option<i64> {
-        return match self.suffix {
+        match self.suffix {
             None => Some(self.value),
             Some(suffix) => match suffix {
                 IntegerSuffix::Kibi => self.value.checked_mul(1024),
                 IntegerSuffix::Mebi => self.value.checked_mul(1048576),
                 IntegerSuffix::Gibi => self.value.checked_mul(1073741824),
             },
-        };
+        }
     }
 }
 
