@@ -410,7 +410,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
   * [ ] merging
   * [ ] stashing
   * [ ] Use _Commit Graph_ to speed up certain queries
-* subtree
+* [ ] subtree
+* [ ] interactive rebase status/manipulation
 * submodules
 * [ ] API documentation
     * [ ] Some examples
