@@ -651,9 +651,6 @@ quick_error! {
             source(err)
             from()
         }
-        MissingPrefix {
-            display("Missing prefix")
-        }
         InvalidFormat {
             display("Invalid argument format")
         }
@@ -676,7 +673,7 @@ impl TryFrom<&[u8]> for Integer {
         // Assume we have a prefix at this point.
 
         if s.len() <= 1 {
-            return Err(IntegerError::MissingPrefix);
+            return Err(IntegerError::InvalidFormat);
         }
 
         let (number, suffix) = s.split_at(s.len() - 1);
