@@ -1,5 +1,6 @@
 use bstr::{BStr, ByteSlice};
 use git_glob::pattern;
+use git_glob::pattern::Case;
 use std::collections::BTreeSet;
 
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
@@ -62,11 +63,11 @@ fn compare_baseline_with_ours() {
                 "baseline for matches must indeed be {} - check baseline and git version: {:?}",
                 expected_matches, m
             );
-            let pattern = git_glob::Pattern::from_bytes(pattern).expect("parsing works");
+            let pattern = pat(pattern);
             let actual_match = pattern.matches_path(
                 value,
-                value.rfind_byte(b'/').map(|pos| pos + 1),
-                false, // TODO: does it make sense to pretent it is a dir and see what happens?
+                basename_start_pos(value),
+                false, // TODO: does it make sense to pretend it is a dir and see what happens?
                 pattern::Case::Sensitive,
             );
             if actual_match == is_match {
@@ -79,9 +80,54 @@ fn compare_baseline_with_ours() {
 }
 
 #[test]
-#[ignore]
-fn check_case_insensitive() {}
+fn non_dirs_for_must_be_dir_patterns_are_ignored() {
+    let pattern = pat("hello/");
+
+    assert!(pattern.mode.contains(pattern::Mode::MUST_BE_DIR));
+    assert_eq!(
+        pattern.text, "hello",
+        "a dir pattern doesn't actually end with the trailing slash"
+    );
+    let path = "hello";
+    assert!(
+        !pattern.matches_path(path, None, false /* is-dir */, Case::Sensitive),
+        "non-dirs never match a dir pattern"
+    );
+    assert!(
+        pattern.matches_path(path, None, true /* is-dir */, Case::Sensitive),
+        "dirs can match a dir pattern with the normal rules"
+    );
+}
+
+#[test]
+fn case_insensitive() {
+    let pattern = pat("foo");
+    assert!(pattern.matches_path("FoO", None, false, Case::Fold));
+    assert!(!pattern.matches_path("FoOo", None, false, Case::Fold));
+    assert!(!pattern.matches_path("Foo", None, false, Case::Sensitive));
+    assert!(pattern.matches_path("foo", None, false, Case::Sensitive));
+}
+
+#[test]
+fn glob_and_literal_is_ends_with() {
+    let pattern = pat("*foo");
+    assert!(pattern.matches_path("FoO", None, false, Case::Fold));
+    assert!(pattern.matches_path("BarFoO", None, false, Case::Fold));
+    assert!(!pattern.matches_path("BarFoOo", None, false, Case::Fold));
+    assert!(!pattern.matches_path("Foo", None, false, Case::Sensitive));
+    assert!(!pattern.matches_path("BarFoo", None, false, Case::Sensitive));
+    assert!(pattern.matches_path("barfoo", None, false, Case::Sensitive));
+    assert!(!pattern.matches_path("barfooo", None, false, Case::Sensitive));
+}
 
 #[test]
 #[ignore]
 fn negated_patterns() {}
+
+fn pat<'a>(pattern: impl Into<&'a BStr>) -> git_glob::Pattern {
+    git_glob::Pattern::from_bytes(pattern.into()).expect("parsing works")
+}
+
+fn basename_start_pos(value: &BStr) -> Option<usize> {
+    value.rfind_byte(b'/').map(|pos| pos + 1)
+}
