@@ -609,8 +609,8 @@ impl Integer {
             None => Some(self.value),
             Some(suffix) => match suffix {
                 IntegerSuffix::Kibi => self.value.checked_mul(1024),
-                IntegerSuffix::Mebi => self.value.checked_mul(1048576),
-                IntegerSuffix::Gibi => self.value.checked_mul(1073741824),
+                IntegerSuffix::Mebi => self.value.checked_mul(1024 * 1024),
+                IntegerSuffix::Gibi => self.value.checked_mul(1024 * 1024 * 1024),
             },
         }
     }
