@@ -120,7 +120,7 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
 
 #[test]
 fn basename_matches_from_end() {
-    let pattern = "foo";
+    let pattern = &pat("foo");
     assert!(match_file(pattern, "FoO", Case::Fold));
     assert!(!match_file(pattern, "FoOo", Case::Fold));
     assert!(!match_file(pattern, "Foo", Case::Sensitive));
@@ -131,7 +131,7 @@ fn basename_matches_from_end() {
 
 #[test]
 fn absolute_basename_matches_only_from_beginning() {
-    let pattern = "/foo";
+    let pattern = &pat("/foo");
     assert!(match_file(pattern, "FoO", Case::Fold));
     assert!(!match_file(pattern, "bar/Foo", Case::Fold));
     assert!(match_file(pattern, "foo", Case::Sensitive));
@@ -142,7 +142,7 @@ fn absolute_basename_matches_only_from_beginning() {
 #[test]
 #[ignore]
 fn absolute_path_matches_only_from_beginning() {
-    let pattern = "/bar/foo";
+    let pattern = &pat("/bar/foo");
     assert!(!match_file(pattern, "FoO", Case::Fold));
     assert!(match_file(pattern, "bar/Foo", Case::Fold));
     assert!(!match_file(pattern, "foo", Case::Sensitive));
@@ -153,7 +153,7 @@ fn absolute_path_matches_only_from_beginning() {
 #[test]
 #[ignore]
 fn relative_path_does_not_match_from_end() {
-    let pattern = "bar/foo";
+    let pattern = &pat("bar/foo");
     assert!(!match_file(pattern, "FoO", Case::Fold));
     assert!(match_file(pattern, "bar/Foo", Case::Fold));
     assert!(!match_file(pattern, "baz/bar/Foo", Case::Fold));
@@ -165,7 +165,7 @@ fn relative_path_does_not_match_from_end() {
 
 #[test]
 fn basename_glob_and_literal_is_ends_with() {
-    let pattern = "*foo";
+    let pattern = &pat("*foo");
     assert!(match_file(pattern, "FoO", Case::Fold));
     assert!(match_file(pattern, "BarFoO", Case::Fold));
     assert!(!match_file(pattern, "BarFoOo", Case::Fold));
@@ -180,7 +180,7 @@ fn basename_glob_and_literal_is_ends_with() {
 
 #[test]
 fn absolute_basename_glob_and_literal_is_ends_with() {
-    let pattern = "/*foo";
+    let pattern = &pat("/*foo");
 
     assert!(match_file(pattern, "FoO", Case::Fold));
     assert!(match_file(pattern, "BarFoO", Case::Fold));
@@ -202,12 +202,11 @@ fn pat<'a>(pattern: impl Into<&'a BStr>) -> git_glob::Pattern {
     git_glob::Pattern::from_bytes(pattern.into()).expect("parsing works")
 }
 
-fn match_file<'a>(pattern: impl Into<&'a BStr>, path: impl Into<&'a BStr>, case: Case) -> bool {
+fn match_file<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, case: Case) -> bool {
     match_path(pattern, path, false, case)
 }
 
-fn match_path<'a>(pattern: impl Into<&'a BStr>, path: impl Into<&'a BStr>, is_dir: bool, case: Case) -> bool {
-    let pattern = pat(pattern.into());
+fn match_path<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, is_dir: bool, case: Case) -> bool {
     let path = path.into();
     pattern.matches_path(path, basename_start_pos(path), is_dir, case)
 }
