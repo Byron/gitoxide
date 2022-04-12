@@ -233,6 +233,11 @@ fn basename_glob_and_literal_is_ends_with() {
 #[test]
 #[ignore]
 fn special_cases_from_corpus() {
+    let pattern = &pat("foo*bar");
+    assert!(
+        !match_file(pattern, "foo/baz/bar", Case::Sensitive),
+        "asterisk does not match path separators"
+    );
     let pattern = &pat("*some/path/to/hello.txt");
     assert!(
         !match_file(pattern, "a/bigger/some/path/to/hello.txt", Case::Sensitive),

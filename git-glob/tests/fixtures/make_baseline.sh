@@ -12,6 +12,9 @@ while read -r pattern nomatch; do
   echo "$pattern" > .gitignore
   git check-ignore -vn "$nomatch" 2>&1 || :
 done <<EOF >>git-baseline.nmatch
+*/\ XXX/\
+*/\\ XXX/\
+foo*bar foo/baz/bar
 /*foo.txt hello/foo.txt
 bar/foo baz/bar/foo
 *hello.txt hello.txt-and-then-some

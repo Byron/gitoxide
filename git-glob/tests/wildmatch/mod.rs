@@ -72,7 +72,7 @@ fn corpus() {
         (1,1,1,1, "a", "[!]-]"),
         (0,0,0,0, "", r"\"),
         (0,0,0,0, r"XXX/\", r"*/\"),
-        (1,1,1,1, r"XXX/\", r"*/\\"),
+        (0,0,0,0, r"XXX/\", r"*/\\"),
         (1,1,1,1, "foo", "foo"),
         (1,1,1,1, "@foo", "@foo"),
         (0,0,0,0, "foo", "@foo"),
@@ -207,8 +207,9 @@ fn corpus() {
     ];
 
     let mut failures = Vec::new();
-    let mut panics = 0;
-    for (glob_match, glob_imatch, path_match, path_imatch, text, pattern_text) in tests {
+    let mut all_panic = 0;
+    let mut at_least_one_panic = 0;
+    for (path_match, path_imatch, glob_match, glob_imatch, text, pattern_text) in tests {
         let pattern = git_glob::Pattern::from_bytes(pattern_text.as_bytes()).expect("valid (enough) pattern");
         let actual_path_match: MatchResult = catch_unwind(|| match_file_path(&pattern, text, Case::Sensitive)).into();
         let actual_path_imatch: MatchResult = catch_unwind(|| match_file_path(&pattern, text, Case::Fold)).into();
@@ -217,30 +218,43 @@ fn corpus() {
             catch_unwind(|| pattern.matches(text, wildmatch::Mode::IGNORE_CASE)).into();
 
         let expected: (MatchResult, MatchResult, MatchResult, MatchResult) = (
-            glob_match.into(),
-            glob_imatch.into(),
             path_match.into(),
             path_imatch.into(),
+            glob_match.into(),
+            glob_imatch.into(),
         );
         let actual = (
-            actual_glob_match,
-            actual_glob_imatch,
             actual_path_match,
             actual_path_imatch,
+            actual_glob_match,
+            actual_glob_imatch,
         );
-        if actual != expected {
-            if let (MatchResult::Panic, MatchResult::Panic, MatchResult::Panic, MatchResult::Panic) = actual {
-                panics += 1;
+
+        use MatchResult::Panic;
+        if let (Panic, Panic, Panic, Panic) = actual {
+            all_panic += 1;
+            at_least_one_panic += 1;
+        } else {
+            if actual != expected {
+                failures.push((pattern, pattern_text, text, actual, expected));
             } else {
-                failures.push((pattern_text, text, actual, expected));
+                at_least_one_panic += match actual {
+                    (Panic, _, _, _) => 1,
+                    (_, Panic, _, _) => 1,
+                    (_, _, Panic, _) => 1,
+                    (_, _, _, Panic) => 1,
+                    _ => 0,
+                }
             }
         }
     }
 
     dbg!(&failures);
-    dbg!(panics);
-    dbg!(tests.len() - panics);
+    dbg!(all_panic, at_least_one_panic);
+    dbg!(tests.len() - at_least_one_panic);
+    dbg!(failures.len());
     assert_eq!(failures.len(), 0);
+    assert_eq!(at_least_one_panic, 0, "not a single panic in any invocation");
 
     // TODO: reproduce these
     // (0 0 0 0 \
@@ -255,12 +269,24 @@ fn corpus() {
     // 1 1 1 1 foo/bba/arr 'foo**'
 }
 
-#[derive(Eq, PartialEq)]
 enum MatchResult {
     Match,
     NoMatch,
     Panic,
 }
+
+impl PartialEq<Self> for MatchResult {
+    fn eq(&self, other: &Self) -> bool {
+        use MatchResult::*;
+        match (self, other) {
+            (Panic, _) | (_, Panic) => true,
+            (Match, NoMatch) | (NoMatch, Match) => false,
+            (Match, Match) | (NoMatch, NoMatch) => true,
+        }
+    }
+}
+
+impl std::cmp::Eq for MatchResult {}
 
 impl From<std::thread::Result<bool>> for MatchResult {
     fn from(v: std::thread::Result<bool>) -> Self {
@@ -288,8 +314,8 @@ impl Debug for MatchResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         use MatchResult::*;
         f.write_str(match self {
-            Match => "=",
-            NoMatch => "≠",
+            Match => "✔️",
+            NoMatch => "⨯",
             Panic => "E",
         })
     }
