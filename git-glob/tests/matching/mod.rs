@@ -45,7 +45,8 @@ impl<'a> Baseline<'a> {
 #[ignore]
 fn compare_baseline_with_ours() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
-    let (mut total_matches, mut total_correct) = (0, 0);
+    let (mut total_matches, mut total_correct, mut panics) = (0, 0, 0);
+    let mut mismatches = Vec::new();
     for (input_file, expected_matches) in &[("git-baseline.match", true), ("git-baseline.nmatch", false)] {
         let input = std::fs::read(dir.join(*input_file)).unwrap();
         let mut seen = BTreeSet::default();
@@ -63,20 +64,38 @@ fn compare_baseline_with_ours() {
                 "baseline for matches must indeed be {} - check baseline and git version: {:?}",
                 expected_matches, m
             );
-            let pattern = pat(pattern);
-            let actual_match = pattern.matches_path(
-                value,
-                basename_start_pos(value),
-                false, // TODO: does it make sense to pretend it is a dir and see what happens?
-                pattern::Case::Sensitive,
-            );
-            if actual_match == is_match {
-                total_correct += 1;
-            }
+            match std::panic::catch_unwind(|| {
+                let pattern = pat(pattern);
+                pattern.matches_path(
+                    value,
+                    basename_start_pos(value),
+                    false, // TODO: does it make sense to pretend it is a dir and see what happens?
+                    pattern::Case::Sensitive,
+                )
+            }) {
+                Ok(actual_match) => {
+                    if actual_match == is_match {
+                        total_correct += 1;
+                    } else {
+                        mismatches.push((pattern.to_owned(), value.to_owned(), is_match));
+                    }
+                }
+                Err(_) => {
+                    panics += 1;
+                    continue;
+                }
+            };
         }
     }
 
-    assert_eq!(total_correct, total_matches, "We perfectly agree with git here");
+    dbg!(panics);
+    dbg!(mismatches);
+    assert_eq!(
+        total_correct,
+        total_matches - panics,
+        "We perfectly agree with git here"
+    );
+    assert_eq!(panics, 0);
 }
 
 #[test]
@@ -100,12 +119,14 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
 }
 
 #[test]
-fn basename_case_insensitive() {
+fn basename_matches_from_end() {
     let pattern = "foo";
     assert!(match_file(pattern, "FoO", Case::Fold));
     assert!(!match_file(pattern, "FoOo", Case::Fold));
     assert!(!match_file(pattern, "Foo", Case::Sensitive));
     assert!(match_file(pattern, "foo", Case::Sensitive));
+    assert!(!match_file(pattern, "Foo", Case::Sensitive));
+    assert!(!match_file(pattern, "barfoo", Case::Sensitive));
 }
 
 #[test]
@@ -114,6 +135,7 @@ fn absolute_basename_matches_only_from_beginning() {
     assert!(match_file(pattern, "FoO", Case::Fold));
     assert!(!match_file(pattern, "bar/Foo", Case::Fold));
     assert!(match_file(pattern, "foo", Case::Sensitive));
+    assert!(!match_file(pattern, "Foo", Case::Sensitive));
     assert!(!match_file(pattern, "bar/foo", Case::Sensitive));
 }
 
@@ -125,6 +147,20 @@ fn absolute_path_matches_only_from_beginning() {
     assert!(match_file(pattern, "bar/Foo", Case::Fold));
     assert!(!match_file(pattern, "foo", Case::Sensitive));
     assert!(match_file(pattern, "bar/foo", Case::Sensitive));
+    assert!(!match_file(pattern, "bar/Foo", Case::Sensitive));
+}
+
+#[test]
+#[ignore]
+fn relative_path_does_not_match_from_end() {
+    let pattern = "bar/foo";
+    assert!(!match_file(pattern, "FoO", Case::Fold));
+    assert!(match_file(pattern, "bar/Foo", Case::Fold));
+    assert!(!match_file(pattern, "baz/bar/Foo", Case::Fold));
+    assert!(!match_file(pattern, "foo", Case::Sensitive));
+    assert!(match_file(pattern, "bar/foo", Case::Sensitive));
+    assert!(!match_file(pattern, "baz/bar/foo", Case::Sensitive));
+    assert!(!match_file(pattern, "Baz/bar/Foo", Case::Sensitive));
 }
 
 #[test]

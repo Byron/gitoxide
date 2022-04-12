@@ -1,6 +1,6 @@
 use crate::{pattern, Pattern};
 use bitflags::bitflags;
-use bstr::BStr;
+use bstr::{BStr, BString, ByteSlice};
 
 bitflags! {
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -40,12 +40,25 @@ impl Pattern {
             text,
             mode,
             first_wildcard_pos,
+            base_path: None,
         })
     }
 
     /// Return true if a match is negated.
     pub fn is_negative(&self) -> bool {
         self.mode.contains(Mode::NEGATIVE)
+    }
+
+    /// Set the base path of the pattern.
+    /// Must be a slash-separated relative path with a trailing slash.
+    ///
+    /// Use this upon creation of the pattern when the source file is known.
+    pub fn with_base(mut self, path: impl Into<BString>) -> Self {
+        let path = path.into();
+        debug_assert!(path.ends_with(b"/"), "base must end with a trailing slash");
+        debug_assert!(!path.starts_with(b"/"), "base must be relative");
+        self.base_path = Some(path);
+        self
     }
 
     /// Match the given `path` which takes slashes (and only slashes) literally, and is relative to the repository root.
@@ -72,6 +85,11 @@ impl Pattern {
                 Case::Sensitive => MatchOptions::empty(),
             };
         let path = path.into();
+        debug_assert_eq!(
+            basename_start_pos,
+            path.rfind_byte(b'/').map(|p| p + 1),
+            "BUG: invalid cached basename_start_pos provided"
+        );
 
         if self.mode.contains(pattern::Mode::NO_SUB_DIR) {
             let basename = if self.mode.contains(pattern::Mode::ABSOLUTE) {

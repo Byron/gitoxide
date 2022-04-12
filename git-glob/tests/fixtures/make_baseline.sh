@@ -12,6 +12,8 @@ while read -r pattern nomatch; do
   echo "$pattern" > .gitignore
   git check-ignore -vn "$nomatch" 2>&1 || :
 done <<EOF >>git-baseline.nmatch
+/*foo.txt hello/foo.txt
+bar/foo baz/bar/foo
 *hello.txt hello.txt-and-then-some
 *hello.txt goodbye.txt
 *some/path/to/hello.txt some/path/to/hello.txt-and-then-some
@@ -69,13 +71,13 @@ while read -r pattern match; do
   echo "$pattern" > .gitignore
   git check-ignore -vn "$match" 2>&1 || :
 done <<EOF >>git-baseline.match
+/*foo.txt barfoo.txt
 *.c mozilla-sha1/sha1.c
 *.rs .rs
 *hello.txt hello.txt
 *hello.txt gareth_says_hello.txt
 *hello.txt some/path/to/hello.txt
 /*foo.txt foo.txt
-/*foo.txt hello/foo.txt
 *hello.txt some\path\to\hello.txt
 *hello.txt an/absolute/path/to/hello.txt
 *some/path/to/hello.txt some/path/to/hello.txt

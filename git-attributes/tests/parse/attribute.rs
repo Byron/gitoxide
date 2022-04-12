@@ -272,6 +272,7 @@ fn pattern(name: &str, flags: git_glob::pattern::Mode, first_wildcard_pos: Optio
         text: name.into(),
         mode: flags,
         first_wildcard_pos,
+        base_path: None,
     })
 }
 
