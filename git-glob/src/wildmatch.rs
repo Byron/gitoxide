@@ -66,7 +66,7 @@ pub(crate) mod function {
                             let next;
                             if next_p_ch == STAR {
                                 let leading_slash_idx = p_idx.checked_sub(1);
-                                while let Some(_) = p.next_if(|(_, c)| *c == STAR) {}
+                                while p.next_if(|(_, c)| *c == STAR).is_some() {}
                                 next = p.next();
                                 if !match_slash {
                                     // check for '/**/' or '/**' or '**'
@@ -74,17 +74,16 @@ pub(crate) mod function {
                                         && next.map_or(true, |(_, c)| {
                                             c == SLASH || (c == BACKSLASH && p.peek().map(|t| t.1) == Some(SLASH))
                                         })
-                                    {
-                                        if next.map_or(false, |t| {
+                                        && next.map_or(false, |t| {
                                             t.1 == SLASH
                                                 && match_recursive(
-                                                    &pattern[t.0 + 1..].as_bstr(),
-                                                    &text[t_idx..].as_bstr(),
+                                                    pattern[t.0 + 1..].as_bstr(),
+                                                    text[t_idx..].as_bstr(),
                                                     mode,
                                                 ) == Match
-                                        }) {
-                                            return Match;
-                                        }
+                                        })
+                                    {
+                                        return Match;
                                     }
                                 }
                             } else {

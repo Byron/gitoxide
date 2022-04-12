@@ -234,17 +234,15 @@ fn corpus() {
         if let (Panic, Panic, Panic, Panic) = actual {
             all_panic += 1;
             at_least_one_panic += 1;
+        } else if actual != expected {
+            failures.push((pattern, pattern_text, text, actual, expected));
         } else {
-            if actual != expected {
-                failures.push((pattern, pattern_text, text, actual, expected));
-            } else {
-                at_least_one_panic += match actual {
-                    (Panic, _, _, _) => 1,
-                    (_, Panic, _, _) => 1,
-                    (_, _, Panic, _) => 1,
-                    (_, _, _, Panic) => 1,
-                    _ => 0,
-                }
+            at_least_one_panic += match actual {
+                (Panic, _, _, _) => 1,
+                (_, Panic, _, _) => 1,
+                (_, _, Panic, _) => 1,
+                (_, _, _, Panic) => 1,
+                _ => 0,
             }
         }
     }
