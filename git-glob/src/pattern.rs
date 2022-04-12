@@ -144,10 +144,8 @@ impl Pattern {
                     {
                         return false;
                     }
-                } else {
-                    if !value.starts_with(&self.text[..pos]) {
-                        return false;
-                    }
+                } else if !value.starts_with(&self.text[..pos]) {
+                    return false;
                 }
                 todo!("actual wildcard match for '{}' ~= '{}'", self.text, value)
             }
