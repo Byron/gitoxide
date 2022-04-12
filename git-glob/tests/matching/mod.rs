@@ -109,13 +109,22 @@ fn basename_case_insensitive() {
 }
 
 #[test]
-#[ignore]
 fn absolute_basename_matches_only_from_beginning() {
     let pattern = "/foo";
     assert!(match_file(pattern, "FoO", Case::Fold));
     assert!(!match_file(pattern, "bar/Foo", Case::Fold));
     assert!(match_file(pattern, "foo", Case::Sensitive));
     assert!(!match_file(pattern, "bar/foo", Case::Sensitive));
+}
+
+#[test]
+#[ignore]
+fn absolute_path_matches_only_from_beginning() {
+    let pattern = "/bar/foo";
+    assert!(!match_file(pattern, "FoO", Case::Fold));
+    assert!(match_file(pattern, "bar/Foo", Case::Fold));
+    assert!(!match_file(pattern, "foo", Case::Sensitive));
+    assert!(match_file(pattern, "bar/foo", Case::Sensitive));
 }
 
 #[test]
@@ -128,12 +137,14 @@ fn basename_glob_and_literal_is_ends_with() {
     assert!(!match_file(pattern, "BarFoo", Case::Sensitive));
     assert!(match_file(pattern, "barfoo", Case::Sensitive));
     assert!(!match_file(pattern, "barfooo", Case::Sensitive));
+
+    assert!(match_file(pattern, "bar/foo", Case::Sensitive));
+    assert!(match_file(pattern, "bar/bazfoo", Case::Sensitive));
 }
 
 #[test]
-#[ignore]
 fn absolute_basename_glob_and_literal_is_ends_with() {
-    let _pattern = pat("/*foo");
+    let pattern = "/*foo";
 
     assert!(match_file(pattern, "FoO", Case::Fold));
     assert!(match_file(pattern, "BarFoO", Case::Fold));
@@ -142,6 +153,9 @@ fn absolute_basename_glob_and_literal_is_ends_with() {
     assert!(!match_file(pattern, "BarFoo", Case::Sensitive));
     assert!(match_file(pattern, "barfoo", Case::Sensitive));
     assert!(!match_file(pattern, "barfooo", Case::Sensitive));
+
+    assert!(match_file(pattern, "bar/foo", Case::Sensitive));
+    assert!(match_file(pattern, "bar/bazfoo", Case::Sensitive));
 }
 
 #[test]

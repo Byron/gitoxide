@@ -24,7 +24,6 @@ bitflags! {
         const SLASH_IS_LITERAL = 1 << 0;
         /// Match case insensitively for ascii characters only.
         const IGNORE_CASE = 1 << 1;
-        // TODO: Patterns match from the beginning only.
     }
 }
 
@@ -75,7 +74,11 @@ impl Pattern {
         let path = path.into();
 
         if self.mode.contains(pattern::Mode::NO_SUB_DIR) {
-            let basename = &path[basename_start_pos.unwrap_or_default()..];
+            let basename = if self.mode.contains(pattern::Mode::ABSOLUTE) {
+                path
+            } else {
+                &path[basename_start_pos.unwrap_or_default()..]
+            };
             self.matches(basename, flags)
         } else {
             // TODO
@@ -85,7 +88,7 @@ impl Pattern {
 
     pub fn matches(&self, value: &BStr, options: MatchOptions) -> bool {
         match self.first_wildcard_pos {
-            // "*literal" case
+            // "*literal" case, overrides starts-with
             Some(pos) if self.mode.contains(pattern::Mode::ENDS_WITH) => {
                 let text = &self.text[pos + 1..];
                 if options.contains(MatchOptions::IGNORE_CASE) {
