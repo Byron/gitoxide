@@ -9,7 +9,6 @@ use std::{
 
 use anyhow::Result;
 use clap::Parser;
-
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 

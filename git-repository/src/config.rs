@@ -30,13 +30,16 @@ pub(crate) struct Cache {
 }
 
 mod cache {
+    use std::{borrow::Cow, convert::TryFrom};
+
+    use git_config::{
+        file::GitConfig,
+        values,
+        values::{Boolean, Integer},
+    };
+
     use super::{Cache, Error};
     use crate::bstr::ByteSlice;
-    use git_config::file::GitConfig;
-    use git_config::values;
-    use git_config::values::{Boolean, Integer};
-    use std::borrow::Cow;
-    use std::convert::TryFrom;
 
     impl Cache {
         pub fn new(git_dir: &std::path::Path) -> Result<Self, Error> {

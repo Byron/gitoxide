@@ -9,8 +9,9 @@ fn db() -> git_odb::Handle {
 }
 
 mod locate {
-    use crate::{hex_to_id, odb::store::compound::db};
     use git_odb::Find;
+
+    use crate::{hex_to_id, odb::store::compound::db};
 
     fn can_locate(db: &git_odb::Handle, hex_id: &str) {
         let mut buf = vec![];

@@ -1,6 +1,5 @@
 use bstr::BString;
-use git_glob::pattern::Mode;
-use git_glob::Pattern;
+use git_glob::{pattern::Mode, Pattern};
 use git_testtools::fixture_bytes;
 
 #[test]

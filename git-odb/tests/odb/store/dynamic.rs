@@ -1,6 +1,6 @@
-use git_hash::ObjectId;
 use std::process::Command;
 
+use git_hash::ObjectId;
 use git_odb::{store, Find, FindExt, Write};
 use git_testtools::{fixture_path, hex_to_id};
 

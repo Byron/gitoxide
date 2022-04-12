@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod mutable_value {
-    use git_config::file::GitConfig;
     use std::convert::TryFrom;
+
+    use git_config::file::GitConfig;
 
     fn init_config() -> GitConfig<'static> {
         GitConfig::try_from(
@@ -137,8 +138,9 @@ b
 
 #[cfg(test)]
 mod mutable_multi_value {
-    use git_config::file::GitConfig;
     use std::{borrow::Cow, convert::TryFrom};
+
+    use git_config::file::GitConfig;
 
     fn init_config() -> GitConfig<'static> {
         GitConfig::try_from(
@@ -277,13 +279,12 @@ a"#,
 
 #[cfg(test)]
 mod from_paths_tests {
-    use std::borrow::Cow;
-    use std::path::Path;
-    use std::{fs, io};
+    use std::{borrow::Cow, fs, io, path::Path};
 
-    use git_config::file::from_paths::Error;
-    use git_config::file::{from_paths, GitConfig};
-    use git_config::parser::ParserOrIoError;
+    use git_config::{
+        file::{from_paths, from_paths::Error, GitConfig},
+        parser::ParserOrIoError,
+    };
     use tempfile::tempdir;
 
     /// Escapes backslash when writing a path as string so that it is a valid windows path
@@ -749,12 +750,9 @@ mod from_paths_tests {
 
 #[cfg(test)]
 mod from_env_tests {
-    use std::borrow::Cow;
-    use std::{env, fs};
+    use std::{borrow::Cow, env, fs};
 
-    use git_config::file::from_paths::Options;
-    use git_config::file::GitConfig;
-    use git_config::file::{from_env, from_paths};
+    use git_config::file::{from_env, from_paths, from_paths::Options, GitConfig};
     use serial_test::serial;
     use tempfile::tempdir;
 
@@ -892,10 +890,12 @@ mod from_env_tests {
 
 #[cfg(test)]
 mod get_raw_value {
-    use git_config::file::{GitConfig, GitConfigError};
-    use git_config::parser::SectionHeaderName;
-    use std::borrow::Cow;
-    use std::convert::TryFrom;
+    use std::{borrow::Cow, convert::TryFrom};
+
+    use git_config::{
+        file::{GitConfig, GitConfigError},
+        parser::SectionHeaderName,
+    };
 
     #[test]
     fn single_section() {
@@ -956,11 +956,12 @@ mod get_raw_value {
 
 #[cfg(test)]
 mod get_value {
-    use git_config::file::GitConfig;
-    use git_config::values::{Boolean, Bytes, TrueVariant};
-    use std::borrow::Cow;
-    use std::convert::TryFrom;
-    use std::error::Error;
+    use std::{borrow::Cow, convert::TryFrom, error::Error};
+
+    use git_config::{
+        file::GitConfig,
+        values::{Boolean, Bytes, TrueVariant},
+    };
 
     #[test]
     fn single_section() -> Result<(), Box<dyn Error>> {
@@ -1005,10 +1006,12 @@ mod get_value {
 
 #[cfg(test)]
 mod get_raw_multi_value {
-    use git_config::file::{GitConfig, GitConfigError};
-    use git_config::parser::SectionHeaderName;
-    use std::borrow::Cow;
-    use std::convert::TryFrom;
+    use std::{borrow::Cow, convert::TryFrom};
+
+    use git_config::{
+        file::{GitConfig, GitConfigError},
+        parser::SectionHeaderName,
+    };
 
     #[test]
     fn single_value_is_identical_to_single_value_query() {
@@ -1089,8 +1092,9 @@ mod get_raw_multi_value {
 
 #[cfg(test)]
 mod display {
-    use git_config::file::GitConfig;
     use std::convert::TryFrom;
+
+    use git_config::file::GitConfig;
 
     #[test]
     fn can_reconstruct_empty_config() {

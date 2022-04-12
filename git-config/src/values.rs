@@ -1,8 +1,8 @@
 //! Rust containers for valid `git-config` types.
 
-use bstr::BStr;
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
+use bstr::BStr;
 use quick_error::quick_error;
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};

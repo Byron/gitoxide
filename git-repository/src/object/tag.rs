@@ -1,5 +1,4 @@
-use crate::ext::ObjectIdExt;
-use crate::Tag;
+use crate::{ext::ObjectIdExt, Tag};
 
 impl<'repo> Tag<'repo> {
     /// Decode this tag and return the id of its target.
