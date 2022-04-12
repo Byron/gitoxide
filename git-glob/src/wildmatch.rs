@@ -10,7 +10,7 @@ bitflags! {
 }
 
 pub(crate) mod function {
-    use bstr::BStr;
+    use bstr::{BStr, ByteSlice};
 
     use crate::wildmatch::Mode;
 
@@ -35,10 +35,10 @@ pub(crate) mod function {
                 *c
             }
         };
-        let mut p = pattern.iter().map(possibly_lowercase).enumerate();
+        let mut p = pattern.iter().map(possibly_lowercase).enumerate().peekable();
         let mut t = text.iter().map(possibly_lowercase).enumerate();
 
-        while let Some((mut _p_idx, mut p_ch)) = p.next() {
+        while let Some((mut p_idx, mut p_ch)) = p.next() {
             let (t_idx, t_ch) = match t.next() {
                 Some(c) => c,
                 None if p_ch != STAR => return AbortAll,
@@ -46,7 +46,7 @@ pub(crate) mod function {
             };
 
             if p_ch == BACKSLASH {
-                (_p_idx, p_ch) = match p.next() {
+                (p_idx, p_ch) = match p.next() {
                     Some(c) => c,
                     None => return NoMatch,
                 };
@@ -62,10 +62,54 @@ pub(crate) mod function {
                 STAR => {
                     let match_slash = mode.contains(Mode::SLASH_IS_LITERAL).then(|| false).unwrap_or(true);
                     match p.next() {
-                        Some((_next_p_idx, next_p_ch)) => {
+                        Some((next_p_idx, next_p_ch)) => {
+                            let next;
                             if next_p_ch == STAR {
-                                // check for '/**/' or '/**'
-                                todo!("double star")
+                                let leading_slash_idx = p_idx.checked_sub(1);
+                                while let Some(_) = p.next_if(|(_, c)| *c == STAR) {}
+                                next = p.next();
+                                if !match_slash {
+                                    // check for '/**/' or '/**' or '**'
+                                    if leading_slash_idx.map_or(true, |idx| pattern[idx] == SLASH)
+                                        && next.map_or(true, |(_, c)| {
+                                            c == SLASH || (c == BACKSLASH && p.peek().map(|t| t.1) == Some(SLASH))
+                                        })
+                                    {
+                                        if next.map_or(false, |t| {
+                                            t.1 == SLASH
+                                                && match_recursive(
+                                                    &pattern[t.0 + 1..].as_bstr(),
+                                                    &text[t_idx..].as_bstr(),
+                                                    mode,
+                                                ) == Match
+                                        }) {
+                                            return Match;
+                                        }
+                                    }
+                                }
+                            } else {
+                                next = Some((next_p_idx, next_p_ch));
+                            }
+
+                            match next {
+                                None => {
+                                    return if !match_slash && text[t_idx..].contains(&SLASH) {
+                                        NoMatch
+                                    } else {
+                                        Match
+                                    }
+                                }
+                                Some((_, p_ch)) => {
+                                    if !match_slash && p_ch == SLASH {
+                                        match text[t_idx..].find_byte(SLASH) {
+                                            Some(distance_to_slash) => {
+                                                for _ in t.by_ref().take(distance_to_slash) {}
+                                                break;
+                                            }
+                                            None => return NoMatch,
+                                        }
+                                    }
+                                }
                             }
                         }
                         None => {
@@ -76,6 +120,7 @@ pub(crate) mod function {
                             }
                         }
                     }
+                    todo!("star handling");
                 }
                 non_glob_ch => {
                     if non_glob_ch != t_ch {
