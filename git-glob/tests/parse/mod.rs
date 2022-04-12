@@ -72,6 +72,19 @@ fn leading_exclamation_marks_can_be_escaped_with_backslash() {
 }
 
 #[test]
+fn leading_slashes_mark_patterns_as_absolute() {
+    assert_eq!(
+        git_glob::parse(br"/absolute"),
+        Some(("absolute".into(), Mode::NO_SUB_DIR | Mode::ABSOLUTE, None))
+    );
+
+    assert_eq!(
+        git_glob::parse(br"/absolute/path"),
+        Some(("absolute/path".into(), Mode::ABSOLUTE, None))
+    );
+}
+
+#[test]
 fn absence_of_sub_directories_are_marked() {
     assert_eq!(git_glob::parse(br"a/b"), Some(("a/b".into(), Mode::empty(), None)));
     assert_eq!(git_glob::parse(br"ab"), Some(("ab".into(), Mode::NO_SUB_DIR, None)));

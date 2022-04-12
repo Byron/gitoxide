@@ -100,7 +100,7 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
 }
 
 #[test]
-fn case_insensitive() {
+fn basename_case_insensitive() {
     let pattern = pat("foo");
     assert!(pattern.matches_path("FoO", None, false, Case::Fold));
     assert!(!pattern.matches_path("FoOo", None, false, Case::Fold));
@@ -109,7 +109,16 @@ fn case_insensitive() {
 }
 
 #[test]
-fn glob_and_literal_is_ends_with() {
+fn absolute_basename_matches_only_from_beginning() {
+    let pattern = pat("/foo");
+    assert!(pattern.matches_path("FoO", None, false, Case::Fold));
+    assert!(!pattern.matches_path("bar/Foo", None, false, Case::Fold));
+    assert!(pattern.matches_path("foo", None, false, Case::Sensitive));
+    assert!(!pattern.matches_path("bar/foo", None, false, Case::Sensitive));
+}
+
+#[test]
+fn basename_glob_and_literal_is_ends_with() {
     let pattern = pat("*foo");
     assert!(pattern.matches_path("FoO", None, false, Case::Fold));
     assert!(pattern.matches_path("BarFoO", None, false, Case::Fold));

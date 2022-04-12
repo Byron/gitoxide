@@ -24,6 +24,10 @@ pub fn pattern(mut pat: &[u8]) -> Option<(BString, pattern::Mode, Option<usize>)
     if pat.iter().all(|b| b.is_ascii_whitespace()) {
         return None;
     }
+    if pat.first() == Some(&b'/') {
+        mode |= Mode::ABSOLUTE;
+        pat = &pat[1..];
+    }
     let mut line = truncate_non_escaped_trailing_spaces(pat);
     if line.last() == Some(&b'/') {
         mode |= Mode::MUST_BE_DIR;

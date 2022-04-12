@@ -13,6 +13,8 @@ bitflags! {
         const MUST_BE_DIR = 1 << 2;
         /// The pattern matches, but should be negated. Note that this mode has to be checked and applied by the caller.
         const NEGATIVE = 1 << 3;
+        /// The pattern starts with a slash and thus matches only from the beginning.
+        const ABSOLUTE = 1 << 4;
     }
 }
 bitflags! {
@@ -46,9 +48,13 @@ impl Pattern {
         self.mode.contains(Mode::NEGATIVE)
     }
 
-    /// Match the given `path` which takes slashes (and only slashes) literally.
+    /// Match the given `path` which takes slashes (and only slashes) literally, and is relative to the repository root.
+    /// Note that `path` is assumed to be sharing the base with the pattern already so they can be reasonably compared.
+    ///
     /// We may take various shortcuts which is when `basename_start_pos` and `is_dir` come into play.
-    /// Lastly, case insensitive matches are supported as well.
+    /// `basename_start_pos` is the index at which the `path`'s basename starts.
+    ///
+    /// Lastly, `case` folding can be configured as well.
     pub fn matches_path<'a>(
         &self,
         path: impl Into<&'a BStr>,
