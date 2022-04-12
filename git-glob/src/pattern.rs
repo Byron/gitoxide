@@ -101,21 +101,30 @@ impl Pattern {
 
         if self.mode.contains(pattern::Mode::NO_SUB_DIR) {
             let basename = if self.mode.contains(pattern::Mode::ABSOLUTE) {
-                path
+                self.base_path
+                    .as_ref()
+                    .and_then(|base| path.strip_prefix(base.as_slice()).map(|b| b.as_bstr()))
+                    .unwrap_or(path)
             } else {
                 &path[basename_start_pos.unwrap_or_default()..]
             };
             self.matches(basename, flags)
         } else {
-            // TODO
-            false
+            let path = match self.base_path.as_ref() {
+                Some(base) => match path.strip_prefix(base.as_slice()) {
+                    Some(path) => path.as_bstr(),
+                    None => return false,
+                },
+                None => path,
+            };
+            self.matches(path, flags)
         }
     }
 
-    pub fn matches(&self, value: &BStr, options: MatchOptions) -> bool {
+    fn matches(&self, value: &BStr, options: MatchOptions) -> bool {
         match self.first_wildcard_pos {
             // "*literal" case, overrides starts-with
-            Some(pos) if self.mode.contains(pattern::Mode::ENDS_WITH) => {
+            Some(pos) if self.mode.contains(pattern::Mode::ENDS_WITH) && !value.contains(&b'/') => {
                 let text = &self.text[pos + 1..];
                 if options.contains(MatchOptions::IGNORE_CASE) {
                     value

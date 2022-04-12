@@ -72,6 +72,7 @@ while read -r pattern match; do
   git check-ignore -vn "$match" 2>&1 || :
 done <<EOF >>git-baseline.match
 /*foo.txt barfoo.txt
+*foo.txt bar/foo.txt
 *.c mozilla-sha1/sha1.c
 *.rs .rs
 *hello.txt hello.txt

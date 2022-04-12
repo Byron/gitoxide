@@ -138,27 +138,43 @@ fn base_path_must_match_or_panic_occours_in_debug_mode() {
 
 #[test]
 fn absolute_basename_matches_only_from_beginning() {
-    let pat = &pat("/foo");
+    let mut pattern = pat("/foo");
+    let pat = &pattern;
     assert!(match_file(pat, "FoO", Case::Fold));
     assert!(!match_file(pat, "bar/Foo", Case::Fold));
     assert!(match_file(pat, "foo", Case::Sensitive));
     assert!(!match_file(pat, "Foo", Case::Sensitive));
     assert!(!match_file(pat, "bar/foo", Case::Sensitive));
+
+    pattern = pattern.with_base("base/");
+    let pat = &pattern;
+    assert!(match_file(pat, "base/FoO", Case::Fold));
+    assert!(!match_file(pat, "base/bar/Foo", Case::Fold));
+    assert!(match_file(pat, "base/foo", Case::Sensitive));
+    assert!(!match_file(pat, "base/Foo", Case::Sensitive));
+    assert!(!match_file(pat, "base/bar/foo", Case::Sensitive));
 }
 
 #[test]
-#[ignore]
 fn absolute_path_matches_only_from_beginning() {
-    let pat = &pat("/bar/foo");
+    let mut pattern = pat("/bar/foo");
+    let pat = &pattern;
     assert!(!match_file(pat, "FoO", Case::Fold));
     assert!(match_file(pat, "bar/Foo", Case::Fold));
     assert!(!match_file(pat, "foo", Case::Sensitive));
     assert!(match_file(pat, "bar/foo", Case::Sensitive));
     assert!(!match_file(pat, "bar/Foo", Case::Sensitive));
+
+    pattern = pattern.with_base("base/");
+    let pat = &pattern;
+    assert!(!match_file(pat, "base/FoO", Case::Fold));
+    assert!(match_file(pat, "base/bar/Foo", Case::Fold));
+    assert!(!match_file(pat, "base/foo", Case::Sensitive));
+    assert!(match_file(pat, "base/bar/foo", Case::Sensitive));
+    assert!(!match_file(pat, "base/bar/Foo", Case::Sensitive));
 }
 
 #[test]
-#[ignore]
 fn relative_path_does_not_match_from_end() {
     let pattern = &pat("bar/foo");
     assert!(!match_file(pattern, "FoO", Case::Fold));
@@ -186,7 +202,24 @@ fn basename_glob_and_literal_is_ends_with() {
 }
 
 #[test]
-fn absolute_basename_glob_and_literal_is_ends_with() {
+#[ignore]
+fn special_cases_from_corpus() {
+    let pattern = &pat("*some/path/to/hello.txt");
+    assert!(
+        !match_file(pattern, "a/bigger/some/path/to/hello.txt", Case::Sensitive),
+        "asterisk doesn't match path separators"
+    );
+
+    let pattern = &pat("/*foo.txt");
+    assert!(match_file(pattern, "hello-foo.txt", Case::Sensitive));
+    assert!(
+        !match_file(pattern, "hello/foo.txt", Case::Sensitive),
+        "absolute single asterisk doesn't match paths"
+    );
+}
+
+#[test]
+fn absolute_basename_glob_and_literal_is_ends_with_in_basenames() {
     let pattern = &pat("/*foo");
 
     assert!(match_file(pattern, "FoO", Case::Fold));
@@ -196,14 +229,29 @@ fn absolute_basename_glob_and_literal_is_ends_with() {
     assert!(!match_file(pattern, "BarFoo", Case::Sensitive));
     assert!(match_file(pattern, "barfoo", Case::Sensitive));
     assert!(!match_file(pattern, "barfooo", Case::Sensitive));
-
-    assert!(match_file(pattern, "bar/foo", Case::Sensitive));
-    assert!(match_file(pattern, "bar/bazfoo", Case::Sensitive));
 }
 
 #[test]
 #[ignore]
-fn negated_patterns() {}
+fn absolute_basename_glob_and_literal_is_glob_in_paths() {
+    let pattern = &pat("/*foo");
+
+    assert!(match_file(pattern, "bar/foo", Case::Sensitive), "* does not match /");
+    assert!(match_file(pattern, "bar/bazfoo", Case::Sensitive));
+}
+
+#[test]
+fn negated_patterns_are_handled_by_caller() {
+    let pattern = &pat("!foo");
+    assert!(
+        match_file(pattern, "foo", Case::Sensitive),
+        "negative patterns match like any other"
+    );
+    assert!(
+        pattern.is_negative(),
+        "the caller checks for the negative flag and acts accordingly"
+    );
+}
 
 fn pat<'a>(pattern: impl Into<&'a BStr>) -> git_glob::Pattern {
     git_glob::Pattern::from_bytes(pattern.into()).expect("parsing works")
