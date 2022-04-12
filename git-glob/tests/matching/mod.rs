@@ -190,7 +190,6 @@ fn absolute_path_with_recursive_glob_detects_mismatches_quickly() {
 }
 
 #[test]
-#[ignore]
 fn absolute_path_with_recursive_glob_can_do_case_insensitive_prefix_search() {
     let mut pattern = pat("/bar/foo/**");
     let pat = &pattern;
@@ -231,7 +230,6 @@ fn basename_glob_and_literal_is_ends_with() {
 }
 
 #[test]
-#[ignore]
 fn special_cases_from_corpus() {
     let pattern = &pat("foo*bar");
     assert!(
@@ -266,7 +264,6 @@ fn absolute_basename_glob_and_literal_is_ends_with_in_basenames() {
 }
 
 #[test]
-#[ignore]
 fn absolute_basename_glob_and_literal_is_glob_in_paths() {
     let pattern = &pat("/*foo");
 

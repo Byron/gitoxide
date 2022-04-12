@@ -47,7 +47,7 @@ fn first_wildcard_pos(pat: &[u8]) -> Option<usize> {
     pat.find_byteset(GLOB_CHARACTERS)
 }
 
-const GLOB_CHARACTERS: &[u8] = br"*?[\";
+pub(crate) const GLOB_CHARACTERS: &[u8] = br"*?[\";
 
 /// We always copy just because that's ultimately needed anyway, not because we always have to.
 fn truncate_non_escaped_trailing_spaces(buf: &[u8]) -> BString {

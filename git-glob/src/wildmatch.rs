@@ -19,7 +19,7 @@ pub(crate) mod function {
         Match,
         NoMatch,
         AbortAll,
-        // AbortToStarStar,
+        AbortToStarStar,
     }
 
     const STAR: u8 = b'*';
@@ -39,10 +39,10 @@ pub(crate) mod function {
         let mut t = text.iter().map(possibly_lowercase).enumerate();
 
         while let Some((mut p_idx, mut p_ch)) = p.next() {
-            let (t_idx, t_ch) = match t.next() {
+            let (mut t_idx, mut t_ch) = match t.next() {
                 Some(c) => c,
                 None if p_ch != STAR => return AbortAll,
-                None => (text.len(), 0), // out of bounds, like in C, can we do better?
+                None => return NoMatch,
             };
 
             if p_ch == BACKSLASH {
@@ -98,7 +98,8 @@ pub(crate) mod function {
                                         Match
                                     }
                                 }
-                                Some((_, p_ch)) => {
+                                Some((next_p_idx, next_p_ch)) => {
+                                    (p_idx, p_ch) = (next_p_idx, next_p_ch);
                                     if !match_slash && p_ch == SLASH {
                                         match text[t_idx..].find_byte(SLASH) {
                                             Some(distance_to_slash) => {
@@ -119,7 +120,35 @@ pub(crate) mod function {
                             }
                         }
                     }
-                    todo!("star handling");
+
+                    return loop {
+                        if !crate::parse::GLOB_CHARACTERS.contains(&p_ch) {
+                            loop {
+                                if (!match_slash && t_ch == SLASH) || t_ch == p_ch {
+                                    break;
+                                }
+                                (t_idx, t_ch) = match t.next() {
+                                    Some(t) => (t.0, t.1),
+                                    None => break,
+                                };
+                            }
+                            if t_ch != p_ch {
+                                return NoMatch;
+                            }
+                        }
+                        let res = match_recursive(pattern[p_idx..].as_bstr(), text[t_idx..].as_bstr(), mode);
+                        if res != NoMatch {
+                            if !match_slash || res != AbortToStarStar {
+                                return res;
+                            }
+                        } else if !match_slash && t_ch == SLASH {
+                            return AbortToStarStar;
+                        }
+                        (t_idx, t_ch) = match t.next() {
+                            Some(t) => (t.0, t.1),
+                            None => break AbortAll,
+                        };
+                    };
                 }
                 non_glob_ch => {
                     if non_glob_ch != t_ch {
