@@ -66,7 +66,7 @@ fn compare_baseline_with_ours() {
             );
             match std::panic::catch_unwind(|| {
                 let pattern = pat(pattern);
-                pattern.matches_path(
+                pattern.matches_repo_relative_path(
                     value,
                     basename_start_pos(value),
                     false, // TODO: does it make sense to pretend it is a dir and see what happens?
@@ -109,32 +109,31 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
     );
     let path = "hello";
     assert!(
-        !pattern.matches_path(path, None, false /* is-dir */, Case::Sensitive),
+        !pattern.matches_repo_relative_path(path, None, false /* is-dir */, Case::Sensitive),
         "non-dirs never match a dir pattern"
     );
     assert!(
-        pattern.matches_path(path, None, true /* is-dir */, Case::Sensitive),
+        pattern.matches_repo_relative_path(path, None, true /* is-dir */, Case::Sensitive),
         "dirs can match a dir pattern with the normal rules"
     );
 }
 
 #[test]
 fn basename_matches_from_end() {
-    let mut pattern = pat("foo");
-    let pat = &pattern;
+    let pat = &pat("foo");
     assert!(match_file(pat, "FoO", Case::Fold));
     assert!(!match_file(pat, "FoOo", Case::Fold));
     assert!(!match_file(pat, "Foo", Case::Sensitive));
     assert!(match_file(pat, "foo", Case::Sensitive));
     assert!(!match_file(pat, "Foo", Case::Sensitive));
     assert!(!match_file(pat, "barfoo", Case::Sensitive));
+}
 
-    pattern.set_base("base/");
-    let pat = &pattern;
-    assert!(
-        match_file(pat, "other/FoO", Case::Fold),
-        "base is ignored for basename-only patterns"
-    );
+#[test]
+#[should_panic]
+fn base_path_must_match_or_panic_occours_in_debug_mode() {
+    let pat = pat("foo").with_base("base/");
+    match_file(&pat, "other/FoO", Case::Fold);
 }
 
 #[test]
@@ -216,7 +215,7 @@ fn match_file<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, case: 
 
 fn match_path<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, is_dir: bool, case: Case) -> bool {
     let path = path.into();
-    pattern.matches_path(path, basename_start_pos(path), is_dir, case)
+    pattern.matches_repo_relative_path(path, basename_start_pos(path), is_dir, case)
 }
 
 fn basename_start_pos(value: &BStr) -> Option<usize> {

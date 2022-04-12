@@ -54,26 +54,22 @@ impl Pattern {
     ///
     /// Use this upon creation of the pattern when the source file is known.
     pub fn with_base(mut self, path: impl Into<BString>) -> Self {
-        self.set_base(path);
-        self
-    }
-
-    /// Similar to [`with_base()`][Self::with_base()] but suitable borrowed patterns.
-    pub fn set_base(&mut self, path: impl Into<BString>) {
         let path = path.into();
         debug_assert!(path.ends_with(b"/"), "base must end with a trailing slash");
         debug_assert!(!path.starts_with(b"/"), "base must be relative");
         self.base_path = Some(path);
+        self
     }
 
     /// Match the given `path` which takes slashes (and only slashes) literally, and is relative to the repository root.
-    /// Note that `path` is assumed to be sharing the base with the pattern already so they can be reasonably compared.
+    /// Note that `path` is assumed to be relative to the repository, and that our [`base_path`][Self::base_path]
+    /// is assumed to contain `path`.
     ///
     /// We may take various shortcuts which is when `basename_start_pos` and `is_dir` come into play.
     /// `basename_start_pos` is the index at which the `path`'s basename starts.
     ///
     /// Lastly, `case` folding can be configured as well.
-    pub fn matches_path<'a>(
+    pub fn matches_repo_relative_path<'a>(
         &self,
         path: impl Into<&'a BStr>,
         basename_start_pos: Option<usize>,
@@ -94,6 +90,13 @@ impl Pattern {
             basename_start_pos,
             path.rfind_byte(b'/').map(|p| p + 1),
             "BUG: invalid cached basename_start_pos provided"
+        );
+        debug_assert!(
+            self.base_path
+                .as_ref()
+                .map(|base| path.starts_with(base))
+                .unwrap_or(true),
+            "repo-relative paths must be pre-filtered to match our base."
         );
 
         if self.mode.contains(pattern::Mode::NO_SUB_DIR) {
