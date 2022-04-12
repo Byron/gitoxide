@@ -136,7 +136,21 @@ impl Pattern {
                     value.ends_with(text.as_ref())
                 }
             }
-            Some(_pos) => todo!("actual wildcards for basename: {}", _pos),
+            Some(pos) => {
+                if options.contains(MatchOptions::IGNORE_CASE) {
+                    if !value
+                        .get(..pos)
+                        .map_or(false, |value| value.eq_ignore_ascii_case(&self.text[..pos]))
+                    {
+                        return false;
+                    }
+                } else {
+                    if !value.starts_with(&self.text[..pos]) {
+                        return false;
+                    }
+                }
+                todo!("actual wildcard match for '{}' ~= '{}'", self.text, value)
+            }
             None => {
                 if options.contains(MatchOptions::IGNORE_CASE) {
                     self.text.eq_ignore_ascii_case(value)

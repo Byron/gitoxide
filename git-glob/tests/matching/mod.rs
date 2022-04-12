@@ -175,6 +175,35 @@ fn absolute_path_matches_only_from_beginning() {
 }
 
 #[test]
+fn absolute_path_with_recursive_glob_detects_mismatches_quickly() {
+    let mut pattern = pat("/bar/foo/**");
+    let pat = &pattern;
+    assert!(!match_file(pat, "FoO", Case::Fold));
+    assert!(!match_file(pat, "bar/Fooo", Case::Fold));
+    assert!(!match_file(pat, "baz/bar/Foo", Case::Fold));
+
+    pattern = pattern.with_base("base/");
+    let pat = &pattern;
+    assert!(!match_file(pat, "base/FoO", Case::Fold));
+    assert!(!match_file(pat, "base/bar/Fooo", Case::Fold));
+    assert!(!match_file(pat, "base/baz/bar/foo", Case::Sensitive));
+}
+
+#[test]
+#[ignore]
+fn absolute_path_with_recursive_glob_can_do_case_insensitive_prefix_search() {
+    let mut pattern = pat("/bar/foo/**");
+    let pat = &pattern;
+    assert!(!match_file(pat, "bar/Foo/match", Case::Sensitive));
+    assert!(match_file(pat, "bar/Foo/match", Case::Fold));
+
+    pattern = pattern.with_base("base/");
+    let pat = &pattern;
+    assert!(!match_file(pat, "base/bar/Foo/match", Case::Sensitive));
+    assert!(match_file(pat, "base/bar/Foo/match", Case::Fold));
+}
+
+#[test]
 fn relative_path_does_not_match_from_end() {
     let pattern = &pat("bar/foo");
     assert!(!match_file(pattern, "FoO", Case::Fold));
