@@ -35,18 +35,18 @@ pub(crate) mod function {
                 *c
             }
         };
-        let mut p = pattern.iter().map(possibly_lowercase);
-        let mut t = text.iter().map(possibly_lowercase);
+        let mut p = pattern.iter().map(possibly_lowercase).enumerate();
+        let mut t = text.iter().map(possibly_lowercase).enumerate();
 
-        while let Some(mut p_ch) = p.next() {
-            let t_ch = match t.next() {
+        while let Some((mut _p_idx, mut p_ch)) = p.next() {
+            let (t_idx, t_ch) = match t.next() {
                 Some(c) => c,
                 None if p_ch != STAR => return AbortAll,
-                None => 0,
+                None => (text.len(), 0), // out of bounds, like in C, can we do better?
             };
 
             if p_ch == BACKSLASH {
-                p_ch = match p.next() {
+                (_p_idx, p_ch) = match p.next() {
                     Some(c) => c,
                     None => return NoMatch,
                 };
@@ -57,6 +57,24 @@ pub(crate) mod function {
                         return NoMatch;
                     } else {
                         continue;
+                    }
+                }
+                STAR => {
+                    let match_slash = mode.contains(Mode::SLASH_IS_LITERAL).then(|| false).unwrap_or(true);
+                    match p.next() {
+                        Some((_next_p_idx, next_p_ch)) => {
+                            if next_p_ch == STAR {
+                                // check for '/**/' or '/**'
+                                todo!("double star")
+                            }
+                        }
+                        None => {
+                            return if !match_slash && text[t_idx..].contains(&SLASH) {
+                                NoMatch
+                            } else {
+                                Match
+                            }
+                        }
                     }
                 }
                 non_glob_ch => {
