@@ -101,39 +101,47 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
 
 #[test]
 fn basename_case_insensitive() {
-    let pattern = pat("foo");
-    assert!(pattern.matches_path("FoO", None, false, Case::Fold));
-    assert!(!pattern.matches_path("FoOo", None, false, Case::Fold));
-    assert!(!pattern.matches_path("Foo", None, false, Case::Sensitive));
-    assert!(pattern.matches_path("foo", None, false, Case::Sensitive));
+    let pattern = "foo";
+    assert!(match_file(pattern, "FoO", Case::Fold));
+    assert!(!match_file(pattern, "FoOo", Case::Fold));
+    assert!(!match_file(pattern, "Foo", Case::Sensitive));
+    assert!(match_file(pattern, "foo", Case::Sensitive));
 }
 
 #[test]
 #[ignore]
 fn absolute_basename_matches_only_from_beginning() {
     let pattern = "/foo";
-    assert!(match_path(pattern, "FoO", false, Case::Fold));
-    assert!(!match_path(pattern, "bar/Foo", false, Case::Fold));
-    assert!(match_path(pattern, "foo", false, Case::Sensitive));
-    assert!(!match_path(pattern, "bar/foo", false, Case::Sensitive));
+    assert!(match_file(pattern, "FoO", Case::Fold));
+    assert!(!match_file(pattern, "bar/Foo", Case::Fold));
+    assert!(match_file(pattern, "foo", Case::Sensitive));
+    assert!(!match_file(pattern, "bar/foo", Case::Sensitive));
 }
 
 #[test]
 fn basename_glob_and_literal_is_ends_with() {
-    let pattern = pat("*foo");
-    assert!(pattern.matches_path("FoO", None, false, Case::Fold));
-    assert!(pattern.matches_path("BarFoO", None, false, Case::Fold));
-    assert!(!pattern.matches_path("BarFoOo", None, false, Case::Fold));
-    assert!(!pattern.matches_path("Foo", None, false, Case::Sensitive));
-    assert!(!pattern.matches_path("BarFoo", None, false, Case::Sensitive));
-    assert!(pattern.matches_path("barfoo", None, false, Case::Sensitive));
-    assert!(!pattern.matches_path("barfooo", None, false, Case::Sensitive));
+    let pattern = "*foo";
+    assert!(match_file(pattern, "FoO", Case::Fold));
+    assert!(match_file(pattern, "BarFoO", Case::Fold));
+    assert!(!match_file(pattern, "BarFoOo", Case::Fold));
+    assert!(!match_file(pattern, "Foo", Case::Sensitive));
+    assert!(!match_file(pattern, "BarFoo", Case::Sensitive));
+    assert!(match_file(pattern, "barfoo", Case::Sensitive));
+    assert!(!match_file(pattern, "barfooo", Case::Sensitive));
 }
 
 #[test]
 #[ignore]
 fn absolute_basename_glob_and_literal_is_ends_with() {
     let _pattern = pat("/*foo");
+
+    assert!(match_file(pattern, "FoO", Case::Fold));
+    assert!(match_file(pattern, "BarFoO", Case::Fold));
+    assert!(!match_file(pattern, "BarFoOo", Case::Fold));
+    assert!(!match_file(pattern, "Foo", Case::Sensitive));
+    assert!(!match_file(pattern, "BarFoo", Case::Sensitive));
+    assert!(match_file(pattern, "barfoo", Case::Sensitive));
+    assert!(!match_file(pattern, "barfooo", Case::Sensitive));
 }
 
 #[test]
@@ -142,6 +150,10 @@ fn negated_patterns() {}
 
 fn pat<'a>(pattern: impl Into<&'a BStr>) -> git_glob::Pattern {
     git_glob::Pattern::from_bytes(pattern.into()).expect("parsing works")
+}
+
+fn match_file<'a>(pattern: impl Into<&'a BStr>, path: impl Into<&'a BStr>, case: Case) -> bool {
+    match_path(pattern, path, false, case)
 }
 
 fn match_path<'a>(pattern: impl Into<&'a BStr>, path: impl Into<&'a BStr>, is_dir: bool, case: Case) -> bool {

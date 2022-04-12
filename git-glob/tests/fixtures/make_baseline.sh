@@ -74,6 +74,8 @@ done <<EOF >>git-baseline.match
 *hello.txt hello.txt
 *hello.txt gareth_says_hello.txt
 *hello.txt some/path/to/hello.txt
+/*foo.txt foo.txt
+/*foo.txt hello/foo.txt
 *hello.txt some\path\to\hello.txt
 *hello.txt an/absolute/path/to/hello.txt
 *some/path/to/hello.txt some/path/to/hello.txt
