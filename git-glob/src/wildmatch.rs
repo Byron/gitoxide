@@ -23,6 +23,8 @@ pub(crate) mod function {
     }
 
     const STAR: u8 = b'*';
+    const BACKSLASH: u8 = b'\\';
+    const SLASH: u8 = b'/';
 
     fn match_recursive(pattern: &BStr, text: &BStr, mode: Mode) -> Result {
         use self::Result::*;
@@ -43,13 +45,20 @@ pub(crate) mod function {
                 None => 0,
             };
 
-            if p_ch == b'\\' {
+            if p_ch == BACKSLASH {
                 p_ch = match p.next() {
                     Some(c) => c,
                     None => return NoMatch,
                 };
             }
             match p_ch {
+                b'?' => {
+                    if mode.contains(Mode::SLASH_IS_LITERAL) && t_ch == SLASH {
+                        return NoMatch;
+                    } else {
+                        continue;
+                    }
+                }
                 non_glob_ch => {
                     if non_glob_ch != t_ch {
                         return NoMatch;
