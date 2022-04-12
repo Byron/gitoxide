@@ -22,5 +22,8 @@ pub struct Pattern {
 
 pub mod pattern;
 
+pub mod wildmatch;
+pub use wildmatch::function::wildmatch;
+
 mod parse;
 pub use parse::pattern as parse;

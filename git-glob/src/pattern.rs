@@ -1,4 +1,4 @@
-use crate::{pattern, Pattern};
+use crate::{pattern, wildmatch, Pattern};
 use bitflags::bitflags;
 use bstr::{BStr, BString, ByteSlice};
 
@@ -15,15 +15,6 @@ bitflags! {
         const NEGATIVE = 1 << 3;
         /// The pattern starts with a slash and thus matches only from the beginning.
         const ABSOLUTE = 1 << 4;
-    }
-}
-bitflags! {
-    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-    pub struct MatchOptions: u8 {
-        /// Let globs not match the slash `/` literal.
-        const SLASH_IS_LITERAL = 1 << 0;
-        /// Match case insensitively for ascii characters only.
-        const IGNORE_CASE = 1 << 1;
     }
 }
 
@@ -80,10 +71,10 @@ impl Pattern {
             return false;
         }
 
-        let flags = MatchOptions::SLASH_IS_LITERAL
+        let flags = wildmatch::Mode::SLASH_IS_LITERAL
             | match case {
-                Case::Fold => MatchOptions::IGNORE_CASE,
-                Case::Sensitive => MatchOptions::empty(),
+                Case::Fold => wildmatch::Mode::IGNORE_CASE,
+                Case::Sensitive => wildmatch::Mode::empty(),
             };
         let path = path.into();
         debug_assert_eq!(
@@ -121,12 +112,12 @@ impl Pattern {
         }
     }
 
-    fn matches(&self, value: &BStr, options: MatchOptions) -> bool {
+    fn matches(&self, value: &BStr, mode: wildmatch::Mode) -> bool {
         match self.first_wildcard_pos {
             // "*literal" case, overrides starts-with
             Some(pos) if self.mode.contains(pattern::Mode::ENDS_WITH) && !value.contains(&b'/') => {
                 let text = &self.text[pos + 1..];
-                if options.contains(MatchOptions::IGNORE_CASE) {
+                if mode.contains(wildmatch::Mode::IGNORE_CASE) {
                     value
                         .len()
                         .checked_sub(text.len())
@@ -137,7 +128,7 @@ impl Pattern {
                 }
             }
             Some(pos) => {
-                if options.contains(MatchOptions::IGNORE_CASE) {
+                if mode.contains(wildmatch::Mode::IGNORE_CASE) {
                     if !value
                         .get(..pos)
                         .map_or(false, |value| value.eq_ignore_ascii_case(&self.text[..pos]))
@@ -147,10 +138,10 @@ impl Pattern {
                 } else if !value.starts_with(&self.text[..pos]) {
                     return false;
                 }
-                todo!("actual wildcard match for '{}' ~= '{}'", self.text, value)
+                crate::wildmatch(self.text.as_bstr(), value, mode)
             }
             None => {
-                if options.contains(MatchOptions::IGNORE_CASE) {
+                if mode.contains(wildmatch::Mode::IGNORE_CASE) {
                     self.text.eq_ignore_ascii_case(value)
                 } else {
                     self.text == value
