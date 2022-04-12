@@ -24,6 +24,7 @@ bitflags! {
         const SLASH_IS_LITERAL = 1 << 0;
         /// Match case insensitively for ascii characters only.
         const IGNORE_CASE = 1 << 1;
+        // TODO: Patterns match from the beginning only.
     }
 }
 

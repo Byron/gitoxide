@@ -109,12 +109,13 @@ fn basename_case_insensitive() {
 }
 
 #[test]
+#[ignore]
 fn absolute_basename_matches_only_from_beginning() {
-    let pattern = pat("/foo");
-    assert!(pattern.matches_path("FoO", None, false, Case::Fold));
-    assert!(!pattern.matches_path("bar/Foo", None, false, Case::Fold));
-    assert!(pattern.matches_path("foo", None, false, Case::Sensitive));
-    assert!(!pattern.matches_path("bar/foo", None, false, Case::Sensitive));
+    let pattern = "/foo";
+    assert!(match_path(pattern, "FoO", false, Case::Fold));
+    assert!(!match_path(pattern, "bar/Foo", false, Case::Fold));
+    assert!(match_path(pattern, "foo", false, Case::Sensitive));
+    assert!(!match_path(pattern, "bar/foo", false, Case::Sensitive));
 }
 
 #[test]
@@ -131,10 +132,22 @@ fn basename_glob_and_literal_is_ends_with() {
 
 #[test]
 #[ignore]
+fn absolute_basename_glob_and_literal_is_ends_with() {
+    let _pattern = pat("/*foo");
+}
+
+#[test]
+#[ignore]
 fn negated_patterns() {}
 
 fn pat<'a>(pattern: impl Into<&'a BStr>) -> git_glob::Pattern {
     git_glob::Pattern::from_bytes(pattern.into()).expect("parsing works")
+}
+
+fn match_path<'a>(pattern: impl Into<&'a BStr>, path: impl Into<&'a BStr>, is_dir: bool, case: Case) -> bool {
+    let pattern = pat(pattern.into());
+    let path = path.into();
+    pattern.matches_path(path, basename_start_pos(path), is_dir, case)
 }
 
 fn basename_start_pos(value: &BStr) -> Option<usize> {
