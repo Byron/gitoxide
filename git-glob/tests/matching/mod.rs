@@ -120,34 +120,42 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
 
 #[test]
 fn basename_matches_from_end() {
-    let pattern = &pat("foo");
-    assert!(match_file(pattern, "FoO", Case::Fold));
-    assert!(!match_file(pattern, "FoOo", Case::Fold));
-    assert!(!match_file(pattern, "Foo", Case::Sensitive));
-    assert!(match_file(pattern, "foo", Case::Sensitive));
-    assert!(!match_file(pattern, "Foo", Case::Sensitive));
-    assert!(!match_file(pattern, "barfoo", Case::Sensitive));
+    let mut pattern = pat("foo");
+    let pat = &pattern;
+    assert!(match_file(pat, "FoO", Case::Fold));
+    assert!(!match_file(pat, "FoOo", Case::Fold));
+    assert!(!match_file(pat, "Foo", Case::Sensitive));
+    assert!(match_file(pat, "foo", Case::Sensitive));
+    assert!(!match_file(pat, "Foo", Case::Sensitive));
+    assert!(!match_file(pat, "barfoo", Case::Sensitive));
+
+    pattern.set_base("base/");
+    let pat = &pattern;
+    assert!(
+        match_file(pat, "other/FoO", Case::Fold),
+        "base is ignored for basename-only patterns"
+    );
 }
 
 #[test]
 fn absolute_basename_matches_only_from_beginning() {
-    let pattern = &pat("/foo");
-    assert!(match_file(pattern, "FoO", Case::Fold));
-    assert!(!match_file(pattern, "bar/Foo", Case::Fold));
-    assert!(match_file(pattern, "foo", Case::Sensitive));
-    assert!(!match_file(pattern, "Foo", Case::Sensitive));
-    assert!(!match_file(pattern, "bar/foo", Case::Sensitive));
+    let pat = &pat("/foo");
+    assert!(match_file(pat, "FoO", Case::Fold));
+    assert!(!match_file(pat, "bar/Foo", Case::Fold));
+    assert!(match_file(pat, "foo", Case::Sensitive));
+    assert!(!match_file(pat, "Foo", Case::Sensitive));
+    assert!(!match_file(pat, "bar/foo", Case::Sensitive));
 }
 
 #[test]
 #[ignore]
 fn absolute_path_matches_only_from_beginning() {
-    let pattern = &pat("/bar/foo");
-    assert!(!match_file(pattern, "FoO", Case::Fold));
-    assert!(match_file(pattern, "bar/Foo", Case::Fold));
-    assert!(!match_file(pattern, "foo", Case::Sensitive));
-    assert!(match_file(pattern, "bar/foo", Case::Sensitive));
-    assert!(!match_file(pattern, "bar/Foo", Case::Sensitive));
+    let pat = &pat("/bar/foo");
+    assert!(!match_file(pat, "FoO", Case::Fold));
+    assert!(match_file(pat, "bar/Foo", Case::Fold));
+    assert!(!match_file(pat, "foo", Case::Sensitive));
+    assert!(match_file(pat, "bar/foo", Case::Sensitive));
+    assert!(!match_file(pat, "bar/Foo", Case::Sensitive));
 }
 
 #[test]

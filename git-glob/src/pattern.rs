@@ -54,11 +54,16 @@ impl Pattern {
     ///
     /// Use this upon creation of the pattern when the source file is known.
     pub fn with_base(mut self, path: impl Into<BString>) -> Self {
+        self.set_base(path);
+        self
+    }
+
+    /// Similar to [`with_base()`][Self::with_base()] but suitable borrowed patterns.
+    pub fn set_base(&mut self, path: impl Into<BString>) {
         let path = path.into();
         debug_assert!(path.ends_with(b"/"), "base must end with a trailing slash");
         debug_assert!(!path.starts_with(b"/"), "base must be relative");
         self.base_path = Some(path);
-        self
     }
 
     /// Match the given `path` which takes slashes (and only slashes) literally, and is relative to the repository root.
