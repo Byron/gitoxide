@@ -1,7 +1,7 @@
-use bstr::{BStr, ByteSlice};
-use git_glob::pattern;
-use git_glob::pattern::Case;
 use std::collections::BTreeSet;
+
+use bstr::{BStr, ByteSlice};
+use git_glob::{pattern, pattern::Case};
 
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq, Copy, Clone)]
 pub struct GitMatch<'a> {

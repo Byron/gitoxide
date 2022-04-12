@@ -10,8 +10,9 @@ bitflags! {
 }
 
 pub(crate) mod function {
-    use crate::wildmatch::Mode;
     use bstr::BStr;
+
+    use crate::wildmatch::Mode;
 
     pub fn wildmatch(pattern: &BStr, value: &BStr, _mode: Mode) -> bool {
         todo!("actual wildcard match for '{}' ~= '{}'", pattern, value)

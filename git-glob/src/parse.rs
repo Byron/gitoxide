@@ -1,6 +1,6 @@
-use crate::pattern;
-use crate::pattern::Mode;
 use bstr::{BString, ByteSlice};
+
+use crate::{pattern, pattern::Mode};
 
 #[inline]
 /// A sloppy parser that performs only the most basic checks, providing additional information

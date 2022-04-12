@@ -1,6 +1,7 @@
-use crate::{pattern, wildmatch, Pattern};
 use bitflags::bitflags;
 use bstr::{BStr, BString, ByteSlice};
+
+use crate::{pattern, wildmatch, Pattern};
 
 bitflags! {
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -112,7 +113,8 @@ impl Pattern {
         }
     }
 
-    fn matches(&self, value: &BStr, mode: wildmatch::Mode) -> bool {
+    pub fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
+        let value = value.into();
         match self.first_wildcard_pos {
             // "*literal" case, overrides starts-with
             Some(pos) if self.mode.contains(pattern::Mode::ENDS_WITH) && !value.contains(&b'/') => {
