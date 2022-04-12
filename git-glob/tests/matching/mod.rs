@@ -231,7 +231,6 @@ fn basename_glob_and_literal_is_ends_with() {
 }
 
 #[test]
-#[ignore]
 fn special_cases_from_corpus() {
     let pattern = &pat("foo*bar");
     assert!(
@@ -266,12 +265,11 @@ fn absolute_basename_glob_and_literal_is_ends_with_in_basenames() {
 }
 
 #[test]
-#[ignore]
 fn absolute_basename_glob_and_literal_is_glob_in_paths() {
     let pattern = &pat("/*foo");
 
-    assert!(match_file(pattern, "bar/foo", Case::Sensitive), "* does not match /");
-    assert!(match_file(pattern, "bar/bazfoo", Case::Sensitive));
+    assert!(!match_file(pattern, "bar/foo", Case::Sensitive), "* does not match /");
+    assert!(!match_file(pattern, "bar/bazfoo", Case::Sensitive));
 }
 
 #[test]

@@ -14,6 +14,8 @@ while read -r pattern nomatch; do
 done <<EOF >>git-baseline.nmatch
 */\ XXX/\
 */\\ XXX/\
+/*foo bar/foo
+/*foo bar/bazfoo
 foo*bar foo/baz/bar
 /*foo.txt hello/foo.txt
 bar/foo baz/bar/foo
