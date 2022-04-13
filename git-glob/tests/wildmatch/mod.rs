@@ -244,8 +244,8 @@ fn corpus() {
 }
 
 #[test]
-fn simple_double_star() {
-    let (_pattern, actual) = multi_match("test/**", "test/one/two");
+fn empty_brackets() {
+    let (_pattern, actual) = multi_match("a[]]b", "a]b");
     assert!(!actual.any_panicked());
     assert_eq!(actual, expect_multi(1, 1, 1, 1));
 }

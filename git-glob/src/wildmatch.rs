@@ -176,7 +176,6 @@ pub(crate) mod function {
                         match next {
                             None => return AbortAll,
                             Some((_p_idx, mut p_ch)) => match p_ch {
-                                BRACKET_CLOSE => break,
                                 BACKSLASH => match p.next() {
                                     Some((_, p_ch)) => {
                                         if p_ch == t_ch {
@@ -213,11 +212,14 @@ pub(crate) mod function {
                             },
                         };
                         next = p.next();
+                        if let Some((_, BRACKET_CLOSE)) = next {
+                            break;
+                        }
                     }
                     if matched == negated || mode.contains(Mode::SLASH_IS_LITERAL) && t_ch == SLASH {
                         return NoMatch;
                     }
-                    todo!("bracket support post loop");
+                    continue;
                 }
                 non_glob_ch => {
                     if non_glob_ch != t_ch {
