@@ -245,9 +245,9 @@ fn corpus() {
 
 #[test]
 fn simple_double_star() {
-    let (_pattern, actual) = multi_match("**/bar**", "foo/bar/baz");
+    let (_pattern, actual) = multi_match("test/**", "test/one/two");
     assert!(!actual.any_panicked());
-    assert_eq!(actual, expect_multi(0, 0, 1, 1));
+    assert_eq!(actual, expect_multi(1, 1, 1, 1));
 }
 
 fn multi_match(pattern_text: &str, text: &str) -> (Pattern, MultiMatch) {
