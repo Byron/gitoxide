@@ -196,7 +196,7 @@ impl<'a> From<Cow<'a, [u8]>> for String<'a> {
 pub mod path {
     use std::borrow::Cow;
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(not(any(target_os = "android", target_os = "windows")))]
     use pwd::Passwd;
     use quick_error::ResultExt;
 
@@ -275,7 +275,7 @@ pub mod path {
             }
         }
 
-        #[cfg(target_os = "windows")]
+        #[cfg(any(target_os = "windows", target_os = "android"))]
         fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
             Err(interpolate::Error::UserInterpolationUnsupported)
         }
