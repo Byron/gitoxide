@@ -89,7 +89,10 @@ fn compare_baseline_with_ours() {
     }
 
     dbg!(panics);
-    dbg!(mismatches);
+    dbg!(mismatches
+        .iter()
+        .filter(|e| e.0.contains(&b'*') && !e.0.contains(&b'['))
+        .next());
     assert_eq!(
         total_correct,
         total_matches - panics,

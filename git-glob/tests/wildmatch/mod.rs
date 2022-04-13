@@ -1,6 +1,6 @@
 use git_glob::pattern::Case;
-use git_glob::wildmatch;
-use std::fmt::{Debug, Formatter};
+use git_glob::{wildmatch, Pattern};
+use std::fmt::{Debug, Display, Formatter};
 use std::panic::catch_unwind;
 
 #[test]
@@ -210,44 +210,20 @@ fn corpus() {
     let mut all_panic = 0;
     let mut at_least_one_panic = 0;
     for (path_match, path_imatch, glob_match, glob_imatch, text, pattern_text) in tests {
-        let pattern = git_glob::Pattern::from_bytes(pattern_text.as_bytes()).expect("valid (enough) pattern");
-        let actual_path_match: MatchResult = catch_unwind(|| match_file_path(&pattern, text, Case::Sensitive)).into();
-        let actual_path_imatch: MatchResult = catch_unwind(|| match_file_path(&pattern, text, Case::Fold)).into();
-        let actual_glob_match: MatchResult = catch_unwind(|| pattern.matches(text, wildmatch::Mode::empty())).into();
-        let actual_glob_imatch: MatchResult =
-            catch_unwind(|| pattern.matches(text, wildmatch::Mode::IGNORE_CASE)).into();
+        let (pattern, actual) = multi_match(pattern_text, text);
+        let expected = expect_multi(path_match, path_imatch, glob_match, glob_imatch);
 
-        let expected: (MatchResult, MatchResult, MatchResult, MatchResult) = (
-            path_match.into(),
-            path_imatch.into(),
-            glob_match.into(),
-            glob_imatch.into(),
-        );
-        let actual = (
-            actual_path_match,
-            actual_path_imatch,
-            actual_glob_match,
-            actual_glob_imatch,
-        );
-
-        use MatchResult::Panic;
-        if let (Panic, Panic, Panic, Panic) = actual {
+        if actual.all_panicked() {
             all_panic += 1;
             at_least_one_panic += 1;
         } else if actual != expected {
             failures.push((pattern, pattern_text, text, actual, expected));
         } else {
-            at_least_one_panic += match actual {
-                (Panic, _, _, _) => 1,
-                (_, Panic, _, _) => 1,
-                (_, _, Panic, _) => 1,
-                (_, _, _, Panic) => 1,
-                _ => 0,
-            }
+            at_least_one_panic += if actual.any_panicked() { 1 } else { 0 };
         }
     }
 
-    dbg!(&failures);
+    dbg!(failures.first());
     dbg!(all_panic, at_least_one_panic);
     dbg!(tests.len() - at_least_one_panic);
     dbg!(failures.len());
@@ -265,6 +241,87 @@ fn corpus() {
     //      1 1 1 1 'ab[' 'ab['
     // (0 0 1 1 \
     // 1 1 1 1 foo/bba/arr 'foo**'
+}
+
+#[test]
+#[ignore]
+fn simple_star_boundary() {
+    let (_pattern, actual) = multi_match("*foo*", "foo");
+    assert!(!actual.any_panicked());
+    assert_eq!(actual, expect_multi(1, 1, 1, 1));
+}
+
+#[test]
+#[ignore]
+fn simple_double_star() {
+    let (_pattern, actual) = multi_match("some/**/needle.txt", "some/one/Needle.txt");
+    assert!(!actual.any_panicked());
+    assert_eq!(actual, expect_multi(0, 1, 0, 1));
+}
+
+fn multi_match(pattern_text: &str, text: &str) -> (Pattern, MultiMatch) {
+    let pattern = git_glob::Pattern::from_bytes(pattern_text.as_bytes()).expect("valid (enough) pattern");
+    let actual_path_match: MatchResult = catch_unwind(|| match_file_path(&pattern, text, Case::Sensitive)).into();
+    let actual_path_imatch: MatchResult = catch_unwind(|| match_file_path(&pattern, text, Case::Fold)).into();
+    let actual_glob_match: MatchResult = catch_unwind(|| pattern.matches(text, wildmatch::Mode::empty())).into();
+    let actual_glob_imatch: MatchResult = catch_unwind(|| pattern.matches(text, wildmatch::Mode::IGNORE_CASE)).into();
+    let actual = MultiMatch {
+        path_match: actual_path_match,
+        path_imatch: actual_path_imatch,
+        glob_match: actual_glob_match,
+        glob_imatch: actual_glob_imatch,
+    };
+    (pattern, actual)
+}
+
+fn expect_multi(path_match: u8, path_imatch: u8, glob_match: u8, glob_imatch: u8) -> MultiMatch {
+    (path_match, path_imatch, glob_match, glob_imatch).into()
+}
+
+#[derive(Eq, PartialEq)]
+struct MultiMatch {
+    path_match: MatchResult,
+    path_imatch: MatchResult,
+    glob_match: MatchResult,
+    glob_imatch: MatchResult,
+}
+
+impl MultiMatch {
+    fn all_panicked(&self) -> bool {
+        use MatchResult::Panic;
+        matches!(self.path_match, Panic)
+            && matches!(self.path_imatch, Panic)
+            && matches!(self.glob_match, Panic)
+            && matches!(self.glob_imatch, Panic)
+    }
+    fn any_panicked(&self) -> bool {
+        use MatchResult::Panic;
+        matches!(self.path_match, Panic)
+            || matches!(self.path_imatch, Panic)
+            || matches!(self.glob_match, Panic)
+            || matches!(self.glob_imatch, Panic)
+    }
+}
+
+impl From<(u8, u8, u8, u8)> for MultiMatch {
+    fn from(t: (u8, u8, u8, u8)) -> Self {
+        MultiMatch {
+            path_match: t.0.into(),
+            path_imatch: t.1.into(),
+            glob_match: t.2.into(),
+            glob_imatch: t.3.into(),
+        }
+    }
+}
+
+impl Debug for MultiMatch {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "({} {} {} {})",
+            self.path_match, self.path_imatch, self.glob_match, self.glob_imatch
+        )
+    }
 }
 
 enum MatchResult {
@@ -308,7 +365,7 @@ impl From<u8> for MatchResult {
     }
 }
 
-impl Debug for MatchResult {
+impl Display for MatchResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         use MatchResult::*;
         f.write_str(match self {
