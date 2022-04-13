@@ -74,24 +74,25 @@ pub(crate) mod function {
                                 let leading_slash_idx = p_idx.checked_sub(1);
                                 while p.next_if(|(_, c)| *c == STAR).is_some() {}
                                 next = p.next();
-                                if !match_slash {
-                                    // check for '/**/' or '/**' or '**'
-                                    if leading_slash_idx.map_or(true, |idx| pattern[idx] == SLASH)
-                                        && next.map_or(true, |(_, c)| {
-                                            c == SLASH || (c == BACKSLASH && p.peek().map(|t| t.1) == Some(SLASH))
-                                        })
-                                        && next.map_or(false, |t| {
-                                            t.1 == SLASH
-                                                && match_recursive(
-                                                    pattern[t.0 + 1..].as_bstr(),
-                                                    text[t_idx..].as_bstr(),
-                                                    mode,
-                                                ) == Match
-                                        })
+                                if !mode.contains(Mode::SLASH_IS_LITERAL) {
+                                    match_slash = true;
+                                } else if leading_slash_idx.map_or(true, |idx| pattern[idx] == SLASH)
+                                    && next.map_or(true, |(_, c)| {
+                                        c == SLASH || (c == BACKSLASH && p.peek().map(|t| t.1) == Some(SLASH))
+                                    })
+                                    && next.map_or(false, |t| t.1 == SLASH)
+                                {
+                                    if match_recursive(
+                                        pattern[next.expect("checked prior").0 + 1..].as_bstr(),
+                                        text[t_idx..].as_bstr(),
+                                        mode,
+                                    ) == Match
                                     {
                                         return Match;
                                     }
                                     match_slash = true;
+                                } else {
+                                    match_slash = false;
                                 }
                             } else {
                                 next = Some((next_p_idx, next_p_ch));
