@@ -223,7 +223,7 @@ fn corpus() {
         }
     }
 
-    dbg!(failures.iter().find(|e| !e.1.contains('[')));
+    dbg!(failures.first());
     dbg!(all_panic, at_least_one_panic);
     dbg!(tests.len() - at_least_one_panic);
     dbg!(failures.len());

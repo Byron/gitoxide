@@ -25,6 +25,10 @@ pub(crate) mod function {
     const STAR: u8 = b'*';
     const BACKSLASH: u8 = b'\\';
     const SLASH: u8 = b'/';
+    const BRACKET_OPEN: u8 = b'[';
+    const BRACKET_CLOSE: u8 = b']';
+
+    const NEGATE_CLASS: u8 = b'!';
 
     fn match_recursive(pattern: &BStr, text: &BStr, mode: Mode) -> Result {
         use self::Result::*;
@@ -154,6 +158,61 @@ pub(crate) mod function {
                             None => break AbortAll,
                         };
                     };
+                }
+                BRACKET_OPEN => {
+                    (p_idx, p_ch) = match p.next() {
+                        Some(t) => t,
+                        None => return AbortAll,
+                    };
+
+                    if p_ch == b'^' {
+                        p_ch = NEGATE_CLASS;
+                    }
+                    let negated = p_ch == NEGATE_CLASS;
+                    let mut next = if negated { p.next() } else { Some((p_idx, p_ch)) };
+                    let mut prev_p = None::<(usize, u8)>;
+                    let mut matched = false;
+                    loop {
+                        match next {
+                            None => return AbortAll,
+                            Some((_p_idx, mut p_ch)) => match p_ch {
+                                BRACKET_CLOSE => break,
+                                BACKSLASH => match p.next() {
+                                    Some((_, p_ch)) => {
+                                        if p_ch == t_ch {
+                                            matched = true
+                                        }
+                                    }
+                                    None => return AbortAll,
+                                },
+                                b'-' => {
+                                    if prev_p.is_some() && matches!(p.peek(), Some((_, c)) if *c != BRACKET_CLOSE) {
+                                        (_, p_ch) = p.next().expect("peeked");
+                                        if p_ch == BACKSLASH {
+                                            (_, p_ch) = match p.next() {
+                                                Some(t) => t,
+                                                None => return AbortAll,
+                                            };
+                                        }
+                                        if t_ch <= p_ch && t_ch >= prev_p.expect("matched prior").1 {
+                                            matched = true;
+                                        }
+                                    }
+                                }
+                                _ => {
+                                    if p_ch == t_ch {
+                                        matched = true;
+                                    }
+                                }
+                            },
+                        };
+                        prev_p = next;
+                        next = p.next();
+                    }
+                    if matched == negated || mode.contains(Mode::SLASH_IS_LITERAL) && t_ch == SLASH {
+                        return NoMatch;
+                    }
+                    todo!("bracket support post loop");
                 }
                 non_glob_ch => {
                     if non_glob_ch != t_ch {
