@@ -27,6 +27,7 @@ pub(crate) mod function {
     const SLASH: u8 = b'/';
     const BRACKET_OPEN: u8 = b'[';
     const BRACKET_CLOSE: u8 = b']';
+    const COLON: u8 = b':';
 
     const NEGATE_CLASS: u8 = b'!';
 
@@ -175,7 +176,7 @@ pub(crate) mod function {
                     loop {
                         match next {
                             None => return AbortAll,
-                            Some((_p_idx, mut p_ch)) => match p_ch {
+                            Some((p_idx, mut p_ch)) => match p_ch {
                                 BACKSLASH => match p.next() {
                                     Some((_, p_ch)) => {
                                         if p_ch == t_ch {
@@ -211,7 +212,47 @@ pub(crate) mod function {
                                     }
                                     prev_p_ch = 0;
                                 }
-                                BRACKET_OPEN => todo!("class open"),
+                                BRACKET_OPEN if matches!(p.peek(), Some((_, COLON))) => {
+                                    p.next();
+                                    while p.peek().map_or(false, |t| t.1 != BRACKET_CLOSE) {
+                                        p.next();
+                                    }
+                                    let closing_bracket_idx = match p.next() {
+                                        Some((idx, _)) => idx,
+                                        None => return AbortAll,
+                                    };
+                                    const BRACKET__COLON__BRACKET: usize = 3;
+                                    if closing_bracket_idx - p_idx < BRACKET__COLON__BRACKET
+                                        || pattern[closing_bracket_idx - 1] != COLON
+                                    {
+                                        if t_ch == BRACKET_OPEN {
+                                            matched = true
+                                        }
+                                        p = pattern[p_idx + 1..]
+                                            .iter()
+                                            .map(possibly_lowercase)
+                                            .enumerate()
+                                            .peekable();
+                                    } else {
+                                        let class = &pattern.as_ref()[p_idx + 2..closing_bracket_idx - 1];
+                                        match class {
+                                            b"alnum" => todo!("alnum"),
+                                            b"alpha" => todo!("alpha"),
+                                            b"blank" => todo!("blank"),
+                                            b"cntrl" => todo!("cntrl"),
+                                            b"digit" => todo!("digit"),
+                                            b"graph" => todo!("graph"),
+                                            b"lower" => todo!("lower"),
+                                            b"print" => todo!("print"),
+                                            b"punct" => todo!("punct"),
+                                            b"space" => todo!("space"),
+                                            b"upper" => todo!("upper"),
+                                            b"xdigit" => todo!("xdigit"),
+                                            _ => return AbortAll,
+                                        };
+                                        prev_p_ch = 0;
+                                    }
+                                }
                                 _ => {
                                     prev_p_ch = p_ch;
                                     if p_ch == t_ch {

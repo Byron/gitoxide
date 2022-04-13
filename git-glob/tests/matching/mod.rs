@@ -42,7 +42,6 @@ impl<'a> Baseline<'a> {
 }
 
 #[test]
-#[ignore]
 fn compare_baseline_with_ours() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
     let (mut total_matches, mut total_correct, mut panics) = (0, 0, 0);
