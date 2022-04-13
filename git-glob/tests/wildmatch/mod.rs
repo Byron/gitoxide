@@ -106,8 +106,8 @@ fn corpus() {
         (0,0,0,0, "q", "[a-c[:digit:]x-z]"),
 
         // Additional tests, including some malformed wild(patterns
-        (1,1,1,1, "]", "[\\-^]"),
-        (0,0,0,0, "[", "[\\-^]"),
+        (1,1,1,1, "]", r"[\\-^]"),
+        (0,0,0,0, "[", r"[\\-^]"),
         (1,1,1,1, "-", r"[\-_]"),
         (1,1,1,1, "]", r"[\]]"),
         (0,0,0,0, r"\]", r"[\]]"),
@@ -245,7 +245,7 @@ fn corpus() {
 
 #[test]
 fn empty_brackets() {
-    let (_pattern, actual) = multi_match("a[]]b", "a]b");
+    let (_pattern, actual) = multi_match(r"[A-\\]", "G");
     assert!(!actual.any_panicked());
     assert_eq!(actual, expect_multi(1, 1, 1, 1));
 }
