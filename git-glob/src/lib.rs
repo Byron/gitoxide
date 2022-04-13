@@ -29,4 +29,8 @@ pub mod wildmatch;
 pub use wildmatch::function::wildmatch;
 
 mod parse;
-pub use parse::pattern as parse;
+
+/// Create a [`Pattern`] by parsing `text` or return `None` if `text` is empty.
+pub fn parse(text: &[u8]) -> Option<Pattern> {
+    Pattern::from_bytes(text)
+}
