@@ -12,7 +12,7 @@ include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 
 [features]
 # serde = ["serde_crate"]
-expiry-date = ["dep:chrono"]
+expiry-date = ["chrono"]
 
 [dependencies]
 git-features = { version = "^0.20.0", path = "../git-features"}

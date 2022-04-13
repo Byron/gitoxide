@@ -1,7 +1,5 @@
 //! Rust containers for valid `git-config` types.
 
-use bstr::BStr;
-
 #[cfg(feature = "expiry-date")]
 use chrono::format::Fixed::{TimezoneName, TimezoneOffset};
 #[cfg(feature = "expiry-date")]
