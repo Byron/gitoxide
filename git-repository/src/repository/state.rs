@@ -1,22 +1,23 @@
 use crate::RepositoryState;
 
 impl crate::Repository {
-    /// Returns the status of an in-progress operation on a repository or [`RepositoryState::None`]
+    /// Returns the status of an in progress operation on a repository or [`RepositoryState::None`]
     /// if nothing is happening.
-    pub fn in_progress_state(&self) -> RepositoryState {
+    pub fn in_progress_operation(&self) -> RepositoryState {
         let repo_path = self.path();
 
-        // This is modeled on the logic from wt_status_get_state in git's wt-status.c
+        // This is modeled on the logic from wt_status_get_state in git's wt-status.c and
+        // ps1 from git-prompt.sh.
 
         if repo_path.join("rebase-apply/applying").is_file() {
             return RepositoryState::ApplyMailbox;
-        } else if repo_path.join("rebase-apply").is_dir() {
-            // Should this be a separate RebaseApplyMailbox or ApplyMailboxMerge?
+        } else if repo_path.join("rebase-apply/rebasing").is_file() {
             return RepositoryState::Rebase;
+        } else if repo_path.join("rebase-apply").is_dir() {
+            return RepositoryState::ApplyMailboxRebase;
         } else if repo_path.join("rebase-merge/interactive").is_file() {
             return RepositoryState::RebaseInteractive;
         } else if repo_path.join("rebase-merge").is_dir() {
-            // Should this be RebaseMerge?
             return RepositoryState::Rebase;
         } else if repo_path.join("CHERRY_PICK_HEAD").is_file() {
             if repo_path.join("todo").is_file() {

@@ -125,27 +125,30 @@ pub struct Repository {
 }
 
 /// The state of a git repository
+#[derive(Debug, PartialEq)]
 pub enum RepositoryState {
-    /// No operations are in-progress
+    /// No operations are in progress
     None,
-    /// Merge operation in-progress
-    Merge,
-    /// Revert operation in-progress
-    Revert,
-    ///
-    RevertSequence,
-    /// Cherry pick operation in-progress
-    CherryPick,
-    ///
-    CherryPickSequence,
-    /// Bisect in-progress
-    Bisect,
-    /// Rebase in-progress
-    Rebase,
-    /// Interactive rebase in-progress
-    RebaseInteractive,
-    /// Apply mailbox in-progress
+    /// Apply mailbox in progress
     ApplyMailbox,
+    /// Rebase while an apply mailbox operation is in progress
+    ApplyMailboxRebase,
+    /// Bisect in progress
+    Bisect,
+    /// Cherry pick operation in progress
+    CherryPick,
+    /// Cherry pick with multiple commits pending in the sequencer in progress
+    CherryPickSequence,
+    /// Merge operation in progress
+    Merge,
+    /// Rebase in progress
+    Rebase,
+    /// Interactive rebase in progress
+    RebaseInteractive,
+    /// Revert operation in progress
+    Revert,
+    /// Revert operation with multiple commits pending in the sequencer in progress
+    RevertSequence,
 }
 
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
