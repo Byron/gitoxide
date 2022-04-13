@@ -46,7 +46,7 @@ fn compare_baseline_with_ours() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
     let (mut total_matches, mut total_correct, mut panics) = (0, 0, 0);
     let mut mismatches = Vec::new();
-    for (input_file, expected_matches) in &[("git-baseline.match", true), ("git-baseline.nmatch", false)] {
+    for (input_file, _expected_matches) in &[("git-baseline.match", true), ("git-baseline.nmatch", false)] {
         let input = std::fs::read(dir.join(*input_file)).unwrap();
         let mut seen = BTreeSet::default();
 
@@ -58,11 +58,6 @@ fn compare_baseline_with_ours() {
         {
             total_matches += 1;
             assert!(seen.insert(m), "duplicate match entry: {:?}", m);
-            assert_eq!(
-                is_match, *expected_matches,
-                "baseline for matches must indeed be {} - check baseline and git version: {:?}",
-                expected_matches, m
-            );
             match std::panic::catch_unwind(|| {
                 let pattern = pat(pattern);
                 pattern.matches_repo_relative_path(
