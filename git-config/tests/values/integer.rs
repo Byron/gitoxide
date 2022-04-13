@@ -1,6 +1,8 @@
-use crate::values::b;
-use git_config::values::{Integer, IntegerSuffix};
 use std::convert::TryFrom;
+
+use git_config::values::{Integer, IntegerSuffix};
+
+use crate::values::b;
 
 #[test]
 fn from_str_no_suffix() {

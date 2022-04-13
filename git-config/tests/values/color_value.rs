@@ -1,5 +1,6 @@
-use git_config::values::ColorValue;
 use std::str::FromStr;
+
+use git_config::values::ColorValue;
 
 #[test]
 fn non_bright() {

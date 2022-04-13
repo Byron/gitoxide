@@ -1,7 +1,9 @@
-use git_glob::pattern::Case;
-use git_glob::{wildmatch, Pattern};
-use std::fmt::{Debug, Display, Formatter};
-use std::panic::catch_unwind;
+use std::{
+    fmt::{Debug, Display, Formatter},
+    panic::catch_unwind,
+};
+
+use git_glob::{pattern::Case, wildmatch, Pattern};
 
 #[test]
 fn corpus() {

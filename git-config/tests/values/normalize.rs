@@ -1,5 +1,6 @@
-use git_config::values::normalize_str;
 use std::borrow::Cow;
+
+use git_config::values::normalize_str;
 
 #[test]
 fn not_modified_is_borrowed() {
