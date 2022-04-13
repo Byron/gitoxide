@@ -170,7 +170,7 @@ pub(crate) mod function {
                     }
                     let negated = p_ch == NEGATE_CLASS;
                     let mut next = if negated { p.next() } else { Some((p_idx, p_ch)) };
-                    let mut prev_p = None::<(usize, u8)>;
+                    let mut prev_p_ch = 0;
                     let mut matched = false;
                     loop {
                         match next {
@@ -181,32 +181,37 @@ pub(crate) mod function {
                                     Some((_, p_ch)) => {
                                         if p_ch == t_ch {
                                             matched = true
+                                        } else {
+                                            prev_p_ch = p_ch;
                                         }
                                     }
                                     None => return AbortAll,
                                 },
-                                b'-' => {
-                                    if prev_p.is_some() && matches!(p.peek(), Some((_, c)) if *c != BRACKET_CLOSE) {
-                                        (_, p_ch) = p.next().expect("peeked");
-                                        if p_ch == BACKSLASH {
-                                            (_, p_ch) = match p.next() {
-                                                Some(t) => t,
-                                                None => return AbortAll,
-                                            };
-                                        }
-                                        if t_ch <= p_ch && t_ch >= prev_p.expect("matched prior").1 {
-                                            matched = true;
-                                        }
+                                b'-' if prev_p_ch != 0
+                                    && p.peek().is_some()
+                                    && p.peek().map(|t| t.1) != Some(BRACKET_CLOSE) =>
+                                {
+                                    p_ch = p.next().expect("peeked").1;
+                                    if p_ch == BACKSLASH {
+                                        p_ch = match p.next() {
+                                            Some(t) => t.1,
+                                            None => return AbortAll,
+                                        };
                                     }
+                                    if t_ch <= p_ch && t_ch >= prev_p_ch {
+                                        matched = true;
+                                    }
+                                    prev_p_ch = 0;
                                 }
+                                BRACKET_OPEN => todo!("class open"),
                                 _ => {
+                                    prev_p_ch = p_ch;
                                     if p_ch == t_ch {
                                         matched = true;
                                     }
                                 }
                             },
                         };
-                        prev_p = next;
                         next = p.next();
                     }
                     if matched == negated || mode.contains(Mode::SLASH_IS_LITERAL) && t_ch == SLASH {
