@@ -18,7 +18,7 @@ serde1 = ["serde", "bstr/serde1", "git-glob/serde1"]
 
 [dependencies]
 git-quote = { version = "^0.2.0", path = "../git-quote" }
-git-glob = { version = "^0.1.0", path = "../git-glob" }
+git-glob = { version = "^0.2.0", path = "../git-glob" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 unicode-bom = "1.1.4"

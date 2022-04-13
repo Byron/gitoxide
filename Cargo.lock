@@ -1181,7 +1181,7 @@ dependencies = [
 
 [[package]]
 name = "git-glob"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bitflags",
  "bstr",
@@ -1389,7 +1389,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.16.0"
+version = "0.17.0"
 dependencies = [
  "anyhow",
  "byte-unit",
@@ -1567,7 +1567,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "atty",
@@ -1585,7 +1585,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "anyhow",
  "async-io",

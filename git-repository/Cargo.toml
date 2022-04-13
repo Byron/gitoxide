@@ -3,7 +3,7 @@ name = "git-repository"
 repository = "https://github.com/Byron/gitoxide"
 description = "Abstractions for git repositories"
 license = "MIT/Apache-2.0"
-version = "0.16.0"
+version = "0.17.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 include = ["src/**/*", "CHANGELOG.md"]
@@ -78,7 +78,7 @@ git-mailmap = { version = "^0.1.0", path = "../git-mailmap", optional = true }
 git-features = { version = "^0.20.0", path = "../git-features", features = ["progress"] }
 
 # unstable only
-git-glob = { version = "^0.1.0", path = "../git-glob", optional = true }
+git-glob = { version = "^0.2.0", path = "../git-glob", optional = true }
 git-index = { version = "^0.2.0", path = "../git-index", optional = true }
 git-worktree = { version = "^0.1.0", path = "../git-worktree", optional = true }
 
