@@ -223,7 +223,7 @@ fn corpus() {
         }
     }
 
-    dbg!(failures.first());
+    dbg!(failures.iter().filter(|e| !e.1.contains('[')).next());
     dbg!(all_panic, at_least_one_panic);
     dbg!(tests.len() - at_least_one_panic);
     dbg!(failures.len());
@@ -244,7 +244,6 @@ fn corpus() {
 }
 
 #[test]
-#[ignore]
 fn simple_star_boundary() {
     let (_pattern, actual) = multi_match("*foo*", "foo");
     assert!(!actual.any_panicked());

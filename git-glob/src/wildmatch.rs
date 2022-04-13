@@ -42,12 +42,18 @@ pub(crate) mod function {
             let (mut t_idx, mut t_ch) = match t.next() {
                 Some(c) => c,
                 None if p_ch != STAR => return AbortAll,
-                None => return NoMatch,
+                None => (text.len(), 0),
             };
 
             if p_ch == BACKSLASH {
-                (p_idx, p_ch) = match p.next() {
-                    Some(c) => c,
+                match p.next() {
+                    Some((_p_idx, p_ch)) => {
+                        if p_ch != t_ch {
+                            return NoMatch;
+                        } else {
+                            continue;
+                        }
+                    }
                     None => return NoMatch,
                 };
             }
