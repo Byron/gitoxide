@@ -124,6 +124,30 @@ pub struct Repository {
     pub(crate) config: crate::config::Cache,
 }
 
+/// The state of a git repository
+pub enum RepositoryState {
+    /// No operations are in-progress
+    None,
+    /// Merge operation in-progress
+    Merge,
+    /// Revert operation in-progress
+    Revert,
+    ///
+    RevertSequence,
+    /// Cherry pick operation in-progress
+    CherryPick,
+    ///
+    CherryPickSequence,
+    /// Bisect in-progress
+    Bisect,
+    /// Rebase in-progress
+    Rebase,
+    /// Interactive rebase in-progress
+    RebaseInteractive,
+    /// Apply mailbox in-progress
+    ApplyMailbox,
+}
+
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
 /// for system resources required to interact with a `git` repository which are loaded in once the instance is created.
 ///

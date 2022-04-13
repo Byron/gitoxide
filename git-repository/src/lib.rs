@@ -184,7 +184,9 @@ pub enum Path {
 
 ///
 mod types;
-pub use types::{Commit, DetachedObject, Head, Id, Object, Reference, Repository, Tag, ThreadSafeRepository, Tree};
+pub use types::{
+    Commit, DetachedObject, Head, Id, Object, Reference, Repository, RepositoryState, Tag, ThreadSafeRepository, Tree,
+};
 
 pub mod commit;
 pub mod head;
