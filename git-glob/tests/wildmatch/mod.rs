@@ -4,7 +4,6 @@ use std::fmt::{Debug, Display, Formatter};
 use std::panic::catch_unwind;
 
 #[test]
-#[ignore]
 fn corpus() {
     // based on git/t/t3070.sh
     let tests = [
@@ -207,14 +206,12 @@ fn corpus() {
     ];
 
     let mut failures = Vec::new();
-    let mut all_panic = 0;
     let mut at_least_one_panic = 0;
     for (path_match, path_imatch, glob_match, glob_imatch, text, pattern_text) in tests {
         let (pattern, actual) = multi_match(pattern_text, text);
         let expected = expect_multi(path_match, path_imatch, glob_match, glob_imatch);
 
         if actual.all_panicked() {
-            all_panic += 1;
             at_least_one_panic += 1;
         } else if actual != expected {
             failures.push((pattern, pattern_text, text, actual, expected));
@@ -223,10 +220,6 @@ fn corpus() {
         }
     }
 
-    dbg!(failures.first());
-    dbg!(all_panic, at_least_one_panic);
-    dbg!(tests.len() - at_least_one_panic);
-    dbg!(failures.len());
     assert_eq!(failures.len(), 0);
     assert_eq!(at_least_one_panic, 0, "not a single panic in any invocation");
 

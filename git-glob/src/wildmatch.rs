@@ -251,20 +251,37 @@ pub(crate) mod function {
                                                     matched = true;
                                                 }
                                             }
-                                            b"cntrl" => todo!("cntrl"),
+                                            b"cntrl" => {
+                                                if t_ch.is_ascii_control() {
+                                                    matched = true;
+                                                }
+                                            }
                                             b"digit" => {
                                                 if t_ch.is_ascii_digit() {
                                                     matched = true;
                                                 }
                                             }
-                                            b"graph" => todo!("graph"),
+
+                                            b"graph" => {
+                                                if t_ch.is_ascii_graphic() {
+                                                    matched = true;
+                                                }
+                                            }
                                             b"lower" => {
                                                 if t_ch.is_ascii_lowercase() {
                                                     matched = true;
                                                 }
                                             }
-                                            b"print" => todo!("print"),
-                                            b"punct" => todo!("punct"),
+                                            b"print" => {
+                                                if (0x20u8..=0x7e).contains(&t_ch) {
+                                                    matched = true;
+                                                }
+                                            }
+                                            b"punct" => {
+                                                if t_ch.is_ascii_punctuation() {
+                                                    matched = true;
+                                                }
+                                            }
                                             b"space" => {
                                                 if t_ch == b' ' {
                                                     matched = true;

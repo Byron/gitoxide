@@ -87,8 +87,6 @@ fn compare_baseline_with_ours() {
         }
     }
 
-    dbg!(panics);
-    dbg!(mismatches.first());
     assert_eq!(
         total_correct,
         total_matches - panics,
