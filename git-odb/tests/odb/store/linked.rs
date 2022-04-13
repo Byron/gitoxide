@@ -57,9 +57,10 @@ mod locate {
 }
 
 mod init {
-    use crate::odb::{alternate::alternate, store::linked::db};
     use git_hash::ObjectId;
     use git_odb::Find;
+
+    use crate::odb::{alternate::alternate, store::linked::db};
 
     #[test]
     fn multiple_linked_repositories_via_alternates() -> crate::Result {

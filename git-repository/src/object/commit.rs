@@ -18,9 +18,9 @@ mod error {
     }
 }
 
-use crate::id::Ancestors;
-
 pub use error::Error;
+
+use crate::id::Ancestors;
 
 impl<'repo> Commit<'repo> {
     /// Create an owned instance of this object, copying our data in the process.

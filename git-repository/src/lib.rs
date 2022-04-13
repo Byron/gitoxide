@@ -88,6 +88,7 @@
 //! * [`actor`]
 //! * [`bstr`][bstr]
 //! * [`index`]
+//! * [`glob`]
 //! * [`worktree`]
 //! * [`mailmap`]
 //! * [`objs`]
@@ -126,6 +127,8 @@ pub use git_diff as diff;
 use git_features::threading::OwnShared;
 #[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress, threading};
+#[cfg(all(feature = "unstable", feature = "git-glob"))]
+pub use git_glob as glob;
 pub use git_hash as hash;
 #[doc(inline)]
 #[cfg(all(feature = "unstable", feature = "git-index"))]

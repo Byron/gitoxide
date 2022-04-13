@@ -143,21 +143,19 @@ where
 }
 
 pub(crate) mod function {
-    use super::Error;
-    use hash_hasher::HashBuildHasher;
-    use std::cmp::Ordering;
-    use std::collections::HashMap;
     use std::{
         borrow::Cow,
-        collections::{hash_map, VecDeque},
+        cmp::Ordering,
+        collections::{hash_map, HashMap, VecDeque},
         iter::FromIterator,
     };
 
-    use crate::describe::{Flags, Options, MAX_CANDIDATES};
     use git_hash::oid;
     use git_object::{bstr::BStr, CommitRefIter};
+    use hash_hasher::HashBuildHasher;
 
-    use super::Outcome;
+    use super::{Error, Outcome};
+    use crate::describe::{Flags, Options, MAX_CANDIDATES};
 
     /// Given a `commit` id, traverse the commit graph and collect candidate names from the `name_by_oid` mapping to produce
     /// an `Outcome`, which converted [`into_format()`][Outcome::into_format()] will produce a typical `git describe` string.

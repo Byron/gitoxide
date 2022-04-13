@@ -1,6 +1,7 @@
 mod _ref {
-    use crate::{signature::decode, Signature, SignatureRef};
     use bstr::ByteSlice;
+
+    use crate::{signature::decode, Signature, SignatureRef};
 
     impl<'a> SignatureRef<'a> {
         /// Deserialize a signature from the given `data`.

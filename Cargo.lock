@@ -1075,8 +1075,8 @@ dependencies = [
 name = "git-attributes"
 version = "0.1.0"
 dependencies = [
- "bitflags",
  "bstr",
+ "git-glob",
  "git-quote",
  "git-testtools",
  "quick-error",
@@ -1177,6 +1177,17 @@ dependencies = [
  "sha1_smol",
  "time",
  "walkdir",
+]
+
+[[package]]
+name = "git-glob"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "bstr",
+ "git-quote",
+ "git-testtools",
+ "serde",
 ]
 
 [[package]]
@@ -1389,6 +1400,7 @@ dependencies = [
  "git-config",
  "git-diff",
  "git-features",
+ "git-glob",
  "git-hash",
  "git-index",
  "git-lock",

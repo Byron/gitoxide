@@ -1,6 +1,7 @@
+use std::path::PathBuf;
+
 use anyhow::{Context, Result};
 use git_repository as git;
-use std::path::PathBuf;
 
 pub fn describe(
     repo: impl Into<PathBuf>,

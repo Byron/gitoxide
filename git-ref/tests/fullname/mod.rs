@@ -1,5 +1,6 @@
-use git_ref::Category;
 use std::convert::TryInto;
+
+use git_ref::Category;
 
 #[test]
 fn file_name() {
