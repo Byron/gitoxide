@@ -201,8 +201,10 @@ pub(crate) mod function {
                                         matched = true;
                                     } else if mode.contains(Mode::IGNORE_CASE) && t_ch.is_ascii_lowercase() {
                                         let t_ch_upper = t_ch.to_ascii_uppercase();
-                                        if t_ch_upper <= p_ch.to_ascii_uppercase()
-                                            && t_ch_upper >= prev_p_ch.to_ascii_uppercase()
+                                        if (t_ch_upper <= p_ch.to_ascii_uppercase()
+                                            && t_ch_upper >= prev_p_ch.to_ascii_uppercase())
+                                            || (t_ch_upper <= prev_p_ch.to_ascii_uppercase()
+                                                && t_ch_upper >= p_ch.to_ascii_uppercase())
                                         {
                                             matched = true;
                                         }

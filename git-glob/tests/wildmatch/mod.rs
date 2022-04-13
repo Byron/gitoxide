@@ -244,10 +244,10 @@ fn corpus() {
 }
 
 #[test]
-fn empty_brackets() {
-    let (_pattern, actual) = multi_match(r"[A-\\]", "G");
+fn brackets() {
+    let (_pattern, actual) = multi_match(r"[B-a]", "A");
     assert!(!actual.any_panicked());
-    assert_eq!(actual, expect_multi(1, 1, 1, 1));
+    assert_eq!(actual, expect_multi(0, 1, 0, 1));
 }
 
 fn multi_match(pattern_text: &str, text: &str) -> (Pattern, MultiMatch) {
