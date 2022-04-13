@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
-#![deny(rust_2018_idioms)]
+#![deny(rust_2018_idioms, missing_docs)]
+//! Provide glob [`Patterns`][Pattern] for matching against paths or anything else.
 
 use bstr::BString;
 
@@ -20,8 +21,10 @@ pub struct Pattern {
     pub base_path: Option<BString>,
 }
 
+///
 pub mod pattern;
 
+///
 pub mod wildmatch;
 pub use wildmatch::function::wildmatch;
 

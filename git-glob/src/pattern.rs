@@ -4,6 +4,12 @@ use bstr::{BStr, BString, ByteSlice};
 use crate::{pattern, wildmatch, Pattern};
 
 bitflags! {
+    /// Information about a [`Pattern`].
+    ///
+    /// Its main purpose is to accelerate pattern matching, or to negate the match result or to
+    /// keep special rules only applicable when matching paths.
+    ///
+    /// The mode is typically created when parsing the pattern by inspecting it and isn't typically handled by the user.
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Mode: u32 {
         /// The pattern does not contain a sub-directory and - it doesn't contain slashes after removing the trailing one.
@@ -19,6 +25,9 @@ bitflags! {
     }
 }
 
+/// Describes whether to match a path case sensitively or not.
+///
+/// Used in [Pattern::matches_repo_relative_path()].
 pub enum Case {
     /// The case affects the match
     Sensitive,
@@ -27,6 +36,7 @@ pub enum Case {
 }
 
 impl Pattern {
+    /// Parse the given `text` as pattern, or return `None` if `text` was empty.
     pub fn from_bytes(text: &[u8]) -> Option<Self> {
         crate::parse::pattern(text).map(|(text, mode, first_wildcard_pos)| Pattern {
             text,
@@ -61,6 +71,8 @@ impl Pattern {
     /// `basename_start_pos` is the index at which the `path`'s basename starts.
     ///
     /// Lastly, `case` folding can be configured as well.
+    ///
+    /// Note that this method uses shortcuts to accelerate simple patterns.
     pub fn matches_repo_relative_path<'a>(
         &self,
         path: impl Into<&'a BStr>,
@@ -113,6 +125,12 @@ impl Pattern {
         }
     }
 
+    /// See if `value` matches this pattern in the given `mode`.
+    ///
+    /// `mode` can identify `value` as path which won't match the slash character, and can match
+    /// strings with cases ignored as well. Note that the case folding performed here is ASCII only.
+    ///
+    /// Note that this method uses some shortcuts to accelerate simple patterns.
     pub fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
         let value = value.into();
         match self.first_wildcard_pos {

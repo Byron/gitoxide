@@ -1,5 +1,6 @@
 use bitflags::bitflags;
 bitflags! {
+    /// The match mode employed in [`Pattern::matches()`][crate::Pattern::matches()].
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Mode: u8 {
         /// Let globs not match the slash `/` literal.
@@ -334,6 +335,9 @@ pub(crate) mod function {
         t.next().map(|_| NoMatch).unwrap_or(Match)
     }
 
+    /// Employ pattern matching to see if `value` matches `pattern`.
+    ///
+    /// `mode` can be used to adjust the way the matching is performed.
     pub fn wildmatch(pattern: &BStr, value: &BStr, mode: Mode) -> bool {
         match_recursive(pattern, value, mode) == Result::Match
     }

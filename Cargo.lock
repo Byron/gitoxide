@@ -1400,6 +1400,7 @@ dependencies = [
  "git-config",
  "git-diff",
  "git-features",
+ "git-glob",
  "git-hash",
  "git-index",
  "git-lock",
