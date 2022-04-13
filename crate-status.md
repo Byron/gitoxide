@@ -8,8 +8,8 @@
     * [ ] Some examples
 
 ### git-chunk
-* [ ] decode the chunk file table of contents and provide convenient API
-* [ ] write the table of contents
+* [x] decode the chunk file table of contents and provide convenient API
+* [x] write the table of contents
 
 ### git-object
 * *decode (zero-copy)* borrowed objects
@@ -232,8 +232,8 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 * [ ] CRUD for git notes
 
 ### git-glob
-* [ ] parse pattern
-* [ ] a type for pattern matching
+* [x] parse pattern
+* [x] a type for pattern matching of paths and non-paths, optionally case-insensitively.
 
 ### git-worktree
 * handle the working tree/checkout

@@ -90,15 +90,16 @@ Follow linked crate name for detailed status. Please note that all crates follow
 Crates that seem feature complete and need to see some more use before they can be released as 1.0.
 
 * [git-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap)
+* [git-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-chunk)
 
 ### Initial Development
 * **usable**
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
   * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
-  * [git-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-chunk)
   * [git-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-object)
   * [git-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-validate)
   * [git-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-url)
+  * [git-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-glob)
   * [git-packetline](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-packetline)
   * [git-transport](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-transport)
   * [git-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-protocol)
@@ -119,7 +120,6 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
   * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
-  * [git-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-glob)
 * **idea**
   * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
