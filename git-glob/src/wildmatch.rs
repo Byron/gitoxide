@@ -236,18 +236,52 @@ pub(crate) mod function {
                                     } else {
                                         let class = &pattern.as_ref()[p_idx + 2..closing_bracket_idx - 1];
                                         match class {
-                                            b"alnum" => todo!("alnum"),
-                                            b"alpha" => todo!("alpha"),
-                                            b"blank" => todo!("blank"),
+                                            b"alnum" => {
+                                                if t_ch.is_ascii_alphanumeric() {
+                                                    matched = true;
+                                                }
+                                            }
+                                            b"alpha" => {
+                                                if t_ch.is_ascii_alphabetic() {
+                                                    matched = true;
+                                                }
+                                            }
+                                            b"blank" => {
+                                                if t_ch.is_ascii_whitespace() {
+                                                    matched = true;
+                                                }
+                                            }
                                             b"cntrl" => todo!("cntrl"),
-                                            b"digit" => todo!("digit"),
+                                            b"digit" => {
+                                                if t_ch.is_ascii_digit() {
+                                                    matched = true;
+                                                }
+                                            }
                                             b"graph" => todo!("graph"),
-                                            b"lower" => todo!("lower"),
+                                            b"lower" => {
+                                                if t_ch.is_ascii_lowercase() {
+                                                    matched = true;
+                                                }
+                                            }
                                             b"print" => todo!("print"),
                                             b"punct" => todo!("punct"),
-                                            b"space" => todo!("space"),
-                                            b"upper" => todo!("upper"),
-                                            b"xdigit" => todo!("xdigit"),
+                                            b"space" => {
+                                                if t_ch == b' ' {
+                                                    matched = true;
+                                                }
+                                            }
+                                            b"upper" => {
+                                                if t_ch.is_ascii_uppercase()
+                                                    || mode.contains(Mode::IGNORE_CASE) && t_ch.is_ascii_lowercase()
+                                                {
+                                                    matched = true;
+                                                }
+                                            }
+                                            b"xdigit" => {
+                                                if t_ch.is_ascii_hexdigit() {
+                                                    matched = true;
+                                                }
+                                            }
                                             _ => return AbortAll,
                                         };
                                         prev_p_ch = 0;
