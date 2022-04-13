@@ -110,7 +110,7 @@ pub(crate) mod function {
                                         match text[t_idx..].find_byte(SLASH) {
                                             Some(distance_to_slash) => {
                                                 for _ in t.by_ref().take(distance_to_slash) {}
-                                                break;
+                                                continue;
                                             }
                                             None => return NoMatch,
                                         }

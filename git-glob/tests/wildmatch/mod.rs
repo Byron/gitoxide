@@ -251,11 +251,10 @@ fn simple_star_boundary() {
 }
 
 #[test]
-#[ignore]
 fn simple_double_star() {
-    let (_pattern, actual) = multi_match("some/**/needle.txt", "some/one/Needle.txt");
+    let (_pattern, actual) = multi_match("some/**/needle.txt", "some/one/needle.txt");
     assert!(!actual.any_panicked());
-    assert_eq!(actual, expect_multi(0, 1, 0, 1));
+    assert_eq!(actual, expect_multi(1, 1, 1, 1));
 }
 
 fn multi_match(pattern_text: &str, text: &str) -> (Pattern, MultiMatch) {
