@@ -244,15 +244,8 @@ fn corpus() {
 }
 
 #[test]
-fn simple_star_boundary() {
-    let (_pattern, actual) = multi_match("*foo*", "foo");
-    assert!(!actual.any_panicked());
-    assert_eq!(actual, expect_multi(1, 1, 1, 1));
-}
-
-#[test]
 fn simple_double_star() {
-    let (_pattern, actual) = multi_match("some/**/needle.txt", "some/one/needle.txt");
+    let (_pattern, actual) = multi_match("foo/**/bar", "foo/a/b/bar");
     assert!(!actual.any_panicked());
     assert_eq!(actual, expect_multi(1, 1, 1, 1));
 }

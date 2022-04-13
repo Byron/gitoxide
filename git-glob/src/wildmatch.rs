@@ -66,7 +66,7 @@ pub(crate) mod function {
                     }
                 }
                 STAR => {
-                    let match_slash = mode.contains(Mode::SLASH_IS_LITERAL).then(|| false).unwrap_or(true);
+                    let mut match_slash = mode.contains(Mode::SLASH_IS_LITERAL).then(|| false).unwrap_or(true);
                     match p.next() {
                         Some((next_p_idx, next_p_ch)) => {
                             let next;
@@ -91,6 +91,7 @@ pub(crate) mod function {
                                     {
                                         return Match;
                                     }
+                                    match_slash = true;
                                 }
                             } else {
                                 next = Some((next_p_idx, next_p_ch));
@@ -102,7 +103,7 @@ pub(crate) mod function {
                                         NoMatch
                                     } else {
                                         Match
-                                    }
+                                    };
                                 }
                                 Some((next_p_idx, next_p_ch)) => {
                                     (p_idx, p_ch) = (next_p_idx, next_p_ch);
