@@ -46,7 +46,7 @@ fn compare_baseline_with_ours() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
     let (mut total_matches, mut total_correct, mut panics) = (0, 0, 0);
     let mut mismatches = Vec::new();
-    for (input_file, _expected_matches) in &[("git-baseline.match", true), ("git-baseline.nmatch", false)] {
+    for (input_file, expected_matches) in &[("git-baseline.match", true), ("git-baseline.nmatch", false)] {
         let input = std::fs::read(dir.join(*input_file)).unwrap();
         let mut seen = BTreeSet::default();
 
@@ -71,7 +71,7 @@ fn compare_baseline_with_ours() {
                     if actual_match == is_match {
                         total_correct += 1;
                     } else {
-                        mismatches.push((pattern.to_owned(), value.to_owned(), is_match));
+                        mismatches.push((pattern.to_owned(), value.to_owned(), is_match, expected_matches));
                     }
                 }
                 Err(_) => {

@@ -42,9 +42,6 @@ a[^0-9]b a9b
 {*.foo,*.bar,*.wat} test.bar
 {*.foo,*.bar,*.wat} test.wat
 abc*def abc/def
-\[a-z] \a
-\? \a
-\* \\
 aBcDeFg abcdefg
 aBcDeFg ABCDEFG
 aBcDeFg AbCdEfG
@@ -168,6 +165,9 @@ EOF
 # "\\a"  "a"
 #"abc\\def"  "abc/def"
 #"abc?def"  "abc/def"
+# \[a-z] \a
+# \? \a
+# \* \\
 
 # windows only
 # "abc[/]def" "abc/def"
