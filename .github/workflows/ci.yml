@@ -26,6 +26,7 @@ jobs:
       if: startsWith(matrix.os, 'macos')
       run:
         brew install tree openssl
+    - run: git lfs pull
     - name: test
       env:
         CI: true
@@ -47,6 +48,7 @@ jobs:
         with:
           command: check
           args: --all --bins --tests --examples
+      - run: git lfs pull
       - name: "Test (crossterm)"
         uses: actions-rs/cargo@v1
         with:
