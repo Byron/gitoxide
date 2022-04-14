@@ -26,7 +26,6 @@ jobs:
       if: startsWith(matrix.os, 'macos')
       run:
         brew install tree openssl
-    - run: git lfs pull
     - name: test
       env:
         CI: true
