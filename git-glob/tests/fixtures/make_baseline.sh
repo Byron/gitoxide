@@ -7,11 +7,11 @@ git config commit.gpgsign false
 git config core.autocrlf false
 git config core.ignorecase false
 
-while read -r pattern nomatch; do
-  echo "$pattern" "$nomatch"
+while read -r pattern value; do
+  echo "$pattern" "$value"
   echo "$pattern" > .gitignore
-  git check-ignore -vn "$nomatch" 2>&1 || :
-done <<EOF >>git-baseline.nmatch
+  echo "$value" | git check-ignore -vn --stdin 2>&1 || :
+done <<EOF >git-baseline.nmatch
 */\ XXX/\
 */\\ XXX/\
 /*foo bar/foo
@@ -68,11 +68,15 @@ foo/** foo
 abc[/]def abc/def
 EOF
 
-while read -r pattern match; do
-  echo "$pattern" "$match"
+while read -r pattern value; do
+  echo "$pattern" "$value"
   echo "$pattern" > .gitignore
-  git check-ignore -vn "$match" 2>&1 || :
-done <<EOF >>git-baseline.match
+  echo "$value" | git check-ignore -vn --stdin 2>&1 || :
+done <<EOF >git-baseline.match
+\a  a
+\\\[a-z] \a
+\\\? \a
+\\\* \\
 /*foo.txt barfoo.txt
 *foo.txt bar/foo.txt
 *.c mozilla-sha1/sha1.c
@@ -141,11 +145,11 @@ abc/def abc/def
 EOF
 
 git config core.ignorecase true
-while read -r pattern match; do
-  echo "$pattern" "$match"
+while read -r pattern value; do
+  echo "$pattern" "$value"
   echo "$pattern" > .gitignore
-  git check-ignore -vn "$match" 2>&1 || :
-done <<EOF >>git-baseline.match-icase
+  echo "$value" | git check-ignore -vn --stdin 2>&1 || :
+done <<EOF >git-baseline.match-icase
 aBcDeFg  aBcDeFg
 aBcDeFg  abcdefg
 aBcDeFg  ABCDEFG
@@ -153,26 +157,13 @@ aBcDeFg  AbCdEfG
 EOF
 
 # nmatches OS specific
-# windows
-#    "abc?def" "abc\\def"
 # unix
 #    "abc\\def" "abc/def"
 
 
-# matches OS specific
-
-# unix only
-# "\\a"  "a"
-#"abc\\def"  "abc/def"
-#"abc?def"  "abc/def"
-# \[a-z] \a
-# \? \a
-# \* \\
-
 # windows only
-# "abc[/]def" "abc/def"
-# "abc\\def"  "abc/def"
-#"abc?def"  "abc\\def"
+# abc[/]def "abc/def"
+# abc\def  "abc/def"
 
 # empty string is not a valid path-spec
 #** " "
