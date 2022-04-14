@@ -109,9 +109,7 @@ pub fn scripted_fixture_repo_read_only_with_args(
 
     let script_basename = script_location.file_stem().unwrap_or(script_location.as_os_str());
     let archive_file_path = fixture_path(
-        Path::new("generated-archives")
-            .join(crate_under_test())
-            .join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
+        Path::new("generated-archives").join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
     );
     let script_result_directory = fixture_path(
         Path::new("generated-do-not-edit")
@@ -137,7 +135,13 @@ pub fn scripted_fixture_repo_read_only_with_args(
             }
             Err(err) => {
                 if err.kind() != std::io::ErrorKind::NotFound {
-                    eprintln!("{}", err);
+                    eprintln!("failed to extract '{}': {}", archive_file_path.display(), err);
+                } else {
+                    eprintln!(
+                        "Archive at '{}' not found, creating fixture using script '{}'",
+                        archive_file_path.display(),
+                        script_location.display()
+                    );
                 }
                 let script_absolute_path = std::env::current_dir()?.join(script_path);
                 let output = std::process::Command::new("bash")
