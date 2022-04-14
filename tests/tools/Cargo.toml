@@ -22,3 +22,6 @@ tempfile = "3.2.0"
 fs_extra = "1.2.0"
 parking_lot = { version = "0.12.0" }
 is_ci = "1.1.1"
+io-close = "0.3.7"
+tar = { version = "0.4.38", default-features = false }
+lzma-rs = { version = "0.2.0", default-features = false }

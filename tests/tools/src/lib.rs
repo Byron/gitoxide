@@ -5,6 +5,7 @@ use std::{
 
 pub use bstr;
 use bstr::{BStr, ByteSlice};
+use io_close::Close;
 use nom::error::VerboseError;
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
@@ -38,16 +39,14 @@ pub fn scripted_fixture_repo_read_only(script_name: impl AsRef<Path>) -> Result<
     scripted_fixture_repo_read_only_with_args(script_name, None)
 }
 
-pub fn scripted_fixture_repo_writable(
-    script_name: &str,
-) -> std::result::Result<tempfile::TempDir, Box<dyn std::error::Error>> {
+pub fn scripted_fixture_repo_writable(script_name: &str) -> Result<tempfile::TempDir> {
     scripted_fixture_repo_writable_with_args(script_name, None)
 }
 
 pub fn scripted_fixture_repo_writable_with_args(
     script_name: &str,
     args: impl IntoIterator<Item = &'static str>,
-) -> std::result::Result<tempfile::TempDir, Box<dyn std::error::Error>> {
+) -> Result<tempfile::TempDir> {
     let ro_dir = scripted_fixture_repo_read_only_with_args(script_name, args)?;
     let dst = tempfile::TempDir::new()?;
     copy_recursively_into_existing_dir(&ro_dir, dst.path())?;
@@ -76,7 +75,7 @@ pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: im
 pub fn scripted_fixture_repo_read_only_with_args(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = &'static str>,
-) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
+) -> Result<PathBuf> {
     let script_name = script_name.as_ref();
     let script_path = fixture_path(script_name);
 
@@ -109,7 +108,10 @@ pub fn scripted_fixture_repo_read_only_with_args(
     if !script_result_directory.is_dir() {
         match extract_archive(&archive_file_path, &script_result_directory, script_identity) {
             Ok(_) => {}
-            Err(_err) => {
+            Err(err) => {
+                if err.kind() != std::io::ErrorKind::NotFound {
+                    eprintln!("{}", err);
+                }
                 std::fs::create_dir_all(&script_result_directory)?;
                 let script_absolute_path = std::env::current_dir()?.join(script_path);
                 let output = std::process::Command::new("bash")
@@ -144,21 +146,54 @@ pub fn scripted_fixture_repo_read_only_with_args(
 
 /// The `script_identity` will be baked into the soon to be created `archive` as it identitifies the script
 /// that created the contents of `source_dir`.
-fn create_archive_if_not_on_ci(_source_dir: &Path, archive: &Path, _script_identity: u32) -> Result<()> {
+fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identity: u32) -> std::io::Result<()> {
     if is_ci::cached() {
         return Ok(());
     }
     std::fs::create_dir_all(archive.parent().expect("archive is a file"))?;
-    // TODO
-    Ok(())
+
+    let meta_dir = populate_meta_dir(&source_dir, script_identity)?;
+    let res = (move || {
+        let mut buf = Vec::<u8>::new();
+        {
+            let mut ar = tar::Builder::new(&mut buf);
+            ar.mode(tar::HeaderMode::Deterministic);
+            ar.append_dir_all(".", source_dir)?;
+            ar.finish()?;
+        }
+        let mut archive = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .append(false)
+            .open(archive)?;
+        lzma_rs::xz_compress(&mut &*buf, &mut archive)?;
+        archive.close()
+    })();
+    std::fs::remove_dir_all(meta_dir)?;
+    res
+}
+
+const META_NAME: &str = "__gitoxide_meta__";
+const META_IDENTITY: &str = "identity";
+const META_GIT_VERSION: &str = "git-version";
+
+fn populate_meta_dir(destination_dir: &Path, script_identity: u32) -> std::io::Result<PathBuf> {
+    let meta_dir = destination_dir.join(META_NAME);
+    std::fs::create_dir_all(&meta_dir)?;
+    std::fs::write(meta_dir.join(META_IDENTITY), format!("{}", script_identity).as_bytes())?;
+    std::fs::write(
+        meta_dir.join(META_GIT_VERSION),
+        &std::process::Command::new("git").arg("--version").output()?.stdout,
+    )?;
+    Ok(meta_dir)
 }
 
 /// `required_script_identity` is the identity of the script that generated the state that is contained in `archive`.
 /// If this is not the case, the arvhive will be ignored.
-fn extract_archive(_archive: &Path, destination_dir: &Path, _required_script_identity: u32) -> Result<()> {
+fn extract_archive(_archive: &Path, destination_dir: &Path, _required_script_identity: u32) -> std::io::Result<()> {
     std::fs::create_dir_all(destination_dir)?;
     // TODO
-    Err("to be done".into())
+    Err(std::io::ErrorKind::NotFound.into())
 }
 
 pub fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
