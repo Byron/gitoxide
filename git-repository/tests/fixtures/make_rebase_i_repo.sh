@@ -31,4 +31,12 @@ sed=${_gsed:=_sed}
 unset _sed _gsed
 
 # NOTE: Starting with git 2.35.0 --preserve-merges was renamed to --rebase-merges
-EDITOR="${sed} -i.bak -z 's/pick/edit/2'" git rebase --rebase-merges --interactive HEAD~2
+# TODO: Revisit this after git 3.x is released
+IFS=. read git_major git_minor <<< $(git --version | awk '{print $3}')
+if [ "${git_major}" -eq 2 ] && [ "$(bc <<< "${git_minor} >= 35.0")" = "1" ]; then
+    rebase_command="--rebase-merges"
+else
+    rebase_command="--preserve-merges"
+fi
+EDITOR="${sed} -i.bak -z 's/pick/edit/2'" git rebase "${rebase_command}" --interactive HEAD~2
+
