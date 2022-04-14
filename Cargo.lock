@@ -1462,6 +1462,7 @@ dependencies = [
  "crc",
  "fs_extra",
  "git-hash",
+ "git-lock",
  "io-close",
  "is_ci",
  "nom",

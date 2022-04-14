@@ -1,4 +1,5 @@
 use std::io::Read;
+use std::time::Duration;
 use std::{
     collections::BTreeMap,
     path::{Path, PathBuf},
@@ -87,8 +88,8 @@ pub fn scripted_fixture_repo_read_only_with_args(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = &'static str>,
 ) -> Result<PathBuf> {
-    let script_name = script_name.as_ref();
-    let script_path = fixture_path(script_name);
+    let script_location = script_name.as_ref();
+    let script_path = fixture_path(script_location);
 
     // keep this lock to assure we don't return unfinished directories for threaded callers
     let args: Vec<String> = args.into_iter().map(Into::into).collect();
@@ -106,7 +107,7 @@ pub fn scripted_fixture_repo_read_only_with_args(
         })
         .to_owned();
 
-    let script_basename = script_name.file_stem().unwrap_or(script_name.as_os_str());
+    let script_basename = script_location.file_stem().unwrap_or(script_location.as_os_str());
     let archive_file_path = fixture_path(
         Path::new("generated-archives")
             .join(crate_under_test())
@@ -118,14 +119,19 @@ pub fn scripted_fixture_repo_read_only_with_args(
             .join(format!("{}", script_identity)),
     );
 
+    let _marker = git_lock::Marker::acquire_to_hold_resource(
+        script_basename,
+        git_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(5)),
+        None,
+    )?;
     if !script_result_directory.is_dir() {
+        std::fs::create_dir_all(&script_result_directory)?;
         match extract_archive(&archive_file_path, &script_result_directory, script_identity) {
             Ok(_) => {}
             Err(err) => {
                 if err.kind() != std::io::ErrorKind::NotFound {
                     eprintln!("{}", err);
                 }
-                std::fs::create_dir_all(&script_result_directory)?;
                 let script_absolute_path = std::env::current_dir()?.join(script_path);
                 let output = std::process::Command::new("bash")
                     .arg(script_absolute_path)
@@ -206,8 +212,6 @@ fn populate_meta_dir(destination_dir: &Path, script_identity: u32) -> std::io::R
 /// `required_script_identity` is the identity of the script that generated the state that is contained in `archive`.
 /// If this is not the case, the arvhive will be ignored.
 fn extract_archive(archive: &Path, destination_dir: &Path, required_script_identity: u32) -> std::io::Result<()> {
-    std::fs::create_dir_all(destination_dir)?;
-
     let mut archive_buf = Vec::<u8>::new();
     let mut decoder = xz2::bufread::XzDecoder::new(std::io::BufReader::new(std::fs::File::open(archive)?));
     std::io::copy(&mut decoder, &mut archive_buf)?;
