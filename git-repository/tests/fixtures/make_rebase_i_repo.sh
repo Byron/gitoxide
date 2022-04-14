@@ -28,12 +28,5 @@ git commit -m 3 3
 sed=$(which gsed sed | head -1 || true)
 
 # NOTE: Starting with git 2.35.0 --preserve-merges was renamed to --rebase-merges
-# TODO: Revisit this after git 3.x is released
-IFS=. read git_major git_minor <<< $(git --version | awk '{print $3}')
-if [ "${git_major}" -eq 2 ] && [ "$(bc <<< "${git_minor} >= 35.0")" = "1" ]; then
-    rebase_command="--rebase-merges"
-else
-    rebase_command="--preserve-merges"
-fi
-EDITOR="${sed} -i.bak -z 's/pick/edit/2'" git rebase "${rebase_command}" --interactive HEAD~2
-
+# however --preserve-merges first appeared in git 2.18.  That should cover most use cases.
+EDITOR="${sed} -i.bak -z 's/pick/edit/2'" git rebase --rebase-merges --interactive HEAD~2
