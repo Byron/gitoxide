@@ -8,3 +8,4 @@ target/
 /tests/fixtures/repos
 
 **/generated-do-not-edit/
+**/generated-archives/*.tar.xz
