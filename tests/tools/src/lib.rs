@@ -10,6 +10,8 @@ use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 pub use tempfile;
 
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
 
 pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::process::ExitStatus> {
@@ -32,9 +34,7 @@ pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
         Err(_) => panic!("File at '{}' not found", path.as_ref().display()),
     }
 }
-pub fn scripted_fixture_repo_read_only(
-    script_name: impl AsRef<Path>,
-) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
+pub fn scripted_fixture_repo_read_only(script_name: impl AsRef<Path>) -> Result<PathBuf> {
     scripted_fixture_repo_read_only_with_args(script_name, None)
 }
 
@@ -58,7 +58,7 @@ pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: im
     fs_extra::copy_items(
         &std::fs::read_dir(src_dir)?
             .map(|e| e.map(|e| e.path()))
-            .collect::<Result<Vec<_>, _>>()?,
+            .collect::<std::result::Result<Vec<_>, _>>()?,
         dst_dir,
         &fs_extra::dir::CopyOptions {
             overwrite: false,
@@ -95,40 +95,67 @@ pub fn scripted_fixture_repo_read_only_with_args(
             crc_digest.finalize()
         })
         .to_owned();
+
+    let script_basename = script_name.file_stem().unwrap_or(script_name.as_os_str());
+    let archive_file_path = fixture_path(Path::new("generated-archives").join(script_basename));
     let script_result_directory = fixture_path(
         Path::new("generated-do-not-edit")
-            .join(script_name.file_stem().unwrap_or(script_name.as_os_str()))
+            .join(script_basename)
             .join(format!("{}", script_identity)),
     );
 
     if !script_result_directory.is_dir() {
-        std::fs::create_dir_all(&script_result_directory)?;
-        let script_absolute_path = std::env::current_dir()?.join(script_path);
-        let output = std::process::Command::new("bash")
-            .arg(script_absolute_path)
-            .args(args)
-            .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::piped())
-            .current_dir(&script_result_directory)
-            .env_remove("GIT_DIR")
-            .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
-            .env("GIT_AUTHOR_EMAIL", "author@example.com")
-            .env("GIT_AUTHOR_NAME", "author")
-            .env("GIT_COMMITTER_DATE", "2000-01-02 00:00:00 +0000")
-            .env("GIT_COMMITTER_EMAIL", "committer@example.com")
-            .env("GIT_COMMITTER_NAME", "committer")
-            .env("GIT_CONFIG_COUNT", "1")
-            .env("GIT_CONFIG_KEY_0", "commit.gpgsign")
-            .env("GIT_CONFIG_VALUE_0", "false")
-            .output()?;
-        assert!(
-            output.status.success(),
-            "repo script failed: stdout: {}\nstderr: {}",
-            output.stdout.as_bstr(),
-            output.stderr.as_bstr()
-        );
+        if !archive_file_path.is_file()
+            || extract_archive(&archive_file_path, &script_result_directory, script_identity).is_err()
+        {
+            std::fs::create_dir_all(&script_result_directory)?;
+            let script_absolute_path = std::env::current_dir()?.join(script_path);
+            let output = std::process::Command::new("bash")
+                .arg(script_absolute_path)
+                .args(args)
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .current_dir(&script_result_directory)
+                .env_remove("GIT_DIR")
+                .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
+                .env("GIT_AUTHOR_EMAIL", "author@example.com")
+                .env("GIT_AUTHOR_NAME", "author")
+                .env("GIT_COMMITTER_DATE", "2000-01-02 00:00:00 +0000")
+                .env("GIT_COMMITTER_EMAIL", "committer@example.com")
+                .env("GIT_COMMITTER_NAME", "committer")
+                .env("GIT_CONFIG_COUNT", "1")
+                .env("GIT_CONFIG_KEY_0", "commit.gpgsign")
+                .env("GIT_CONFIG_VALUE_0", "false")
+                .output()?;
+            assert!(
+                output.status.success(),
+                "repo script failed: stdout: {}\nstderr: {}",
+                output.stdout.as_bstr(),
+                output.stderr.as_bstr()
+            );
+            create_archive_if_not_on_ci(&script_result_directory, &archive_file_path, script_identity)?;
+        }
     }
     Ok(script_result_directory)
+}
+
+/// The `script_identity` will be baked into the soon to be created `archive` as it identitifies the script
+/// that created the contents of `source_dir`.
+fn create_archive_if_not_on_ci(_source_dir: &Path, archive: &Path, _script_identity: u32) -> Result<()> {
+    if is_ci::cached() {
+        return Ok(());
+    }
+    std::fs::create_dir_all(archive.parent().expect("archive is a file"))?;
+    // TODO
+    Ok(())
+}
+
+/// `required_script_identity` is the identity of the script that generated the state that is contained in `archive`.
+/// If this is not the case, the arvhive will be ignored.
+fn extract_archive(_archive: &Path, destination_dir: &Path, _required_script_identity: u32) -> Result<()> {
+    std::fs::create_dir_all(destination_dir)?;
+    // TODO
+    Ok(())
 }
 
 pub fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {

@@ -1462,6 +1462,7 @@ dependencies = [
  "crc",
  "fs_extra",
  "git-hash",
+ "is_ci",
  "nom",
  "once_cell",
  "parking_lot 0.12.0",
@@ -1747,6 +1748,12 @@ dependencies = [
  "libc",
  "winapi",
 ]
+
+[[package]]
+name = "is_ci"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "616cde7c720bb2bb5824a224687d8f77bfd38922027f01d825cd7453be5099fb"
 
 [[package]]
 name = "itertools"
