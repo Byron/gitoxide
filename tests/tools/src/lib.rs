@@ -152,7 +152,7 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     }
     std::fs::create_dir_all(archive.parent().expect("archive is a file"))?;
 
-    let meta_dir = populate_meta_dir(&source_dir, script_identity)?;
+    let meta_dir = populate_meta_dir(source_dir, script_identity)?;
     let res = (move || {
         let mut buf = Vec::<u8>::new();
         {
