@@ -3,7 +3,6 @@ set -eu -o pipefail
 
 export GIT_INDEX_VERSION=4
 git init -q
-git config commit.gpgsign false
 git config index.threads 2
 
 touch a b c
