@@ -47,7 +47,7 @@ jobs:
         with:
           command: check
           args: --all --bins --tests --examples
-      - run: git lfs pull
+      - run: git lfs fetch && git lfs checkout
       - name: "Test (crossterm)"
         uses: actions-rs/cargo@v1
         with:
