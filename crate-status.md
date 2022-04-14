@@ -231,6 +231,9 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 
 * [ ] CRUD for git notes
 
+### git-date
+* [ ] parse git dates
+
 ### git-glob
 * [x] parse pattern
 * [x] a type for pattern matching of paths and non-paths, optionally case-insensitively.

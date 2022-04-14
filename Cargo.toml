@@ -137,6 +137,7 @@ members = [
     "git-object",
     "git-glob",
     "git-diff",
+    "git-date",
     "git-traverse",
     "git-index",
     "git-bitmap",
