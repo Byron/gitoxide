@@ -1,3 +1,4 @@
+use std::io::Read;
 use std::{
     collections::BTreeMap,
     path::{Path, PathBuf},
@@ -186,12 +187,12 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     res
 }
 
-const META_NAME: &str = "__gitoxide_meta__";
+const META_DIR_NAME: &str = "__gitoxide_meta__";
 const META_IDENTITY: &str = "identity";
 const META_GIT_VERSION: &str = "git-version";
 
 fn populate_meta_dir(destination_dir: &Path, script_identity: u32) -> std::io::Result<PathBuf> {
-    let meta_dir = destination_dir.join(META_NAME);
+    let meta_dir = destination_dir.join(META_DIR_NAME);
     std::fs::create_dir_all(&meta_dir)?;
     std::fs::write(meta_dir.join(META_IDENTITY), format!("{}", script_identity).as_bytes())?;
     std::fs::write(
@@ -203,10 +204,46 @@ fn populate_meta_dir(destination_dir: &Path, script_identity: u32) -> std::io::R
 
 /// `required_script_identity` is the identity of the script that generated the state that is contained in `archive`.
 /// If this is not the case, the arvhive will be ignored.
-fn extract_archive(_archive: &Path, destination_dir: &Path, _required_script_identity: u32) -> std::io::Result<()> {
+fn extract_archive(archive: &Path, destination_dir: &Path, required_script_identity: u32) -> std::io::Result<()> {
     std::fs::create_dir_all(destination_dir)?;
-    // TODO
-    Err(std::io::ErrorKind::NotFound.into())
+
+    let mut archive_buf = Vec::<u8>::new();
+    let mut decoder = xz2::bufread::XzDecoder::new(std::io::BufReader::new(std::fs::File::open(archive)?));
+    std::io::copy(&mut decoder, &mut archive_buf)?;
+
+    let mut entry_buf = Vec::<u8>::new();
+    let archive_identity: u32 = tar::Archive::new(std::io::Cursor::new(&mut &*archive_buf))
+        .entries_with_seek()?
+        .filter_map(|e| e.ok())
+        .find_map(|mut e: tar::Entry<'_, _>| {
+            let path = e.path().ok()?;
+            if path.parent()?.file_name()? == META_DIR_NAME && path.file_name()? == META_IDENTITY {
+                entry_buf.clear();
+                e.read_to_end(&mut entry_buf).ok()?;
+                entry_buf.to_str().ok()?.trim().parse().ok()
+            } else {
+                None
+            }
+        })
+        .ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "BUG: Could not find meta directory in our own archive",
+            )
+        })?;
+    if archive_identity != required_script_identity {
+        return Err(std::io::ErrorKind::NotFound.into());
+    }
+
+    for entry in tar::Archive::new(&mut &*archive_buf).entries()? {
+        let mut entry = entry?;
+        let path = entry.path()?;
+        if path.to_str() == Some(META_DIR_NAME) || path.parent().and_then(|p| p.to_str()) == Some(META_DIR_NAME) {
+            continue;
+        }
+        entry.unpack_in(&destination_dir)?;
+    }
+    Ok(())
 }
 
 pub fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
