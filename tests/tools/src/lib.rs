@@ -97,7 +97,9 @@ pub fn scripted_fixture_repo_read_only_with_args(
         .to_owned();
 
     let script_basename = script_name.file_stem().unwrap_or(script_name.as_os_str());
-    let archive_file_path = fixture_path(Path::new("generated-archives").join(script_basename));
+    let archive_file_path = fixture_path(
+        Path::new("generated-archives").join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
+    );
     let script_result_directory = fixture_path(
         Path::new("generated-do-not-edit")
             .join(script_basename)
