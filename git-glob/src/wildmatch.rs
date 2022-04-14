@@ -3,8 +3,8 @@ bitflags! {
     /// The match mode employed in [`Pattern::matches()`][crate::Pattern::matches()].
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
     pub struct Mode: u8 {
-        /// Let globs not match the slash `/` literal.
-        const SLASH_IS_LITERAL = 1 << 0;
+        /// Let globs like `*` and `?` not match the slash `/` literal, which is useful when matching paths.
+        const NO_MATCH_SLASH_LITERAL = 1 << 0;
         /// Match case insensitively for ascii characters only.
         const IGNORE_CASE = 1 << 1;
     }
@@ -65,14 +65,17 @@ pub(crate) mod function {
             }
             match p_ch {
                 b'?' => {
-                    if mode.contains(Mode::SLASH_IS_LITERAL) && t_ch == SLASH {
+                    if mode.contains(Mode::NO_MATCH_SLASH_LITERAL) && t_ch == SLASH {
                         return NoMatch;
                     } else {
                         continue;
                     }
                 }
                 STAR => {
-                    let mut match_slash = mode.contains(Mode::SLASH_IS_LITERAL).then(|| false).unwrap_or(true);
+                    let mut match_slash = mode
+                        .contains(Mode::NO_MATCH_SLASH_LITERAL)
+                        .then(|| false)
+                        .unwrap_or(true);
                     match p.next() {
                         Some((next_p_idx, next_p_ch)) => {
                             let next;
@@ -80,7 +83,7 @@ pub(crate) mod function {
                                 let leading_slash_idx = p_idx.checked_sub(1);
                                 while p.next_if(|(_, c)| *c == STAR).is_some() {}
                                 next = p.next();
-                                if !mode.contains(Mode::SLASH_IS_LITERAL) {
+                                if !mode.contains(Mode::NO_MATCH_SLASH_LITERAL) {
                                     match_slash = true;
                                 } else if leading_slash_idx.map_or(true, |idx| pattern[idx] == SLASH)
                                     && next.map_or(true, |(_, c)| {
@@ -318,7 +321,7 @@ pub(crate) mod function {
                             break;
                         }
                     }
-                    if matched == negated || mode.contains(Mode::SLASH_IS_LITERAL) && t_ch == SLASH {
+                    if matched == negated || mode.contains(Mode::NO_MATCH_SLASH_LITERAL) && t_ch == SLASH {
                         return NoMatch;
                     }
                     continue;

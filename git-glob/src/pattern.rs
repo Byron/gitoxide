@@ -28,6 +28,7 @@ bitflags! {
 /// Describes whether to match a path case sensitively or not.
 ///
 /// Used in [Pattern::matches_repo_relative_path()].
+#[derive(Debug, PartialOrd, PartialEq, Copy, Clone, Hash, Ord, Eq)]
 pub enum Case {
     /// The case affects the match
     Sensitive,
@@ -84,7 +85,7 @@ impl Pattern {
             return false;
         }
 
-        let flags = wildmatch::Mode::SLASH_IS_LITERAL
+        let flags = wildmatch::Mode::NO_MATCH_SLASH_LITERAL
             | match case {
                 Case::Fold => wildmatch::Mode::IGNORE_CASE,
                 Case::Sensitive => wildmatch::Mode::empty(),
