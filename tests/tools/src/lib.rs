@@ -29,6 +29,16 @@ pub fn hex_to_id(hex: &str) -> git_hash::ObjectId {
 pub fn fixture_path(path: impl AsRef<Path>) -> PathBuf {
     PathBuf::from("tests").join("fixtures").join(path.as_ref())
 }
+
+pub fn crate_under_test() -> String {
+    std::env::current_dir()
+        .expect("CWD is valid")
+        .file_name()
+        .expect("typical cargo invocation")
+        .to_string_lossy()
+        .into_owned()
+}
+
 pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
     match std::fs::read(fixture_path(path.as_ref())) {
         Ok(res) => res,
@@ -97,7 +107,9 @@ pub fn scripted_fixture_repo_read_only_with_args(
 
     let script_basename = script_name.file_stem().unwrap_or(script_name.as_os_str());
     let archive_file_path = fixture_path(
-        Path::new("generated-archives").join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
+        Path::new("generated-archives")
+            .join(crate_under_test())
+            .join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
     );
     let script_result_directory = fixture_path(
         Path::new("generated-do-not-edit")
