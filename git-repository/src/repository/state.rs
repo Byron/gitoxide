@@ -10,33 +10,33 @@ impl crate::Repository {
         // ps1 from git-prompt.sh.
 
         if repo_path.join("rebase-apply/applying").is_file() {
-            return Some(RepositoryState::ApplyMailbox);
+            Some(RepositoryState::ApplyMailbox)
         } else if repo_path.join("rebase-apply/rebasing").is_file() {
-            return Some(RepositoryState::Rebase);
+            Some(RepositoryState::Rebase)
         } else if repo_path.join("rebase-apply").is_dir() {
-            return Some(RepositoryState::ApplyMailboxRebase);
+            Some(RepositoryState::ApplyMailboxRebase)
         } else if repo_path.join("rebase-merge/interactive").is_file() {
-            return Some(RepositoryState::RebaseInteractive);
+            Some(RepositoryState::RebaseInteractive)
         } else if repo_path.join("rebase-merge").is_dir() {
-            return Some(RepositoryState::Rebase);
+            Some(RepositoryState::Rebase)
         } else if repo_path.join("CHERRY_PICK_HEAD").is_file() {
             if repo_path.join("todo").is_file() {
-                return Some(RepositoryState::CherryPickSequence);
+                Some(RepositoryState::CherryPickSequence)
             } else {
-                return Some(RepositoryState::CherryPick);
+                Some(RepositoryState::CherryPick)
             }
         } else if repo_path.join("MERGE_HEAD").is_file() {
-            return Some(RepositoryState::Merge);
+            Some(RepositoryState::Merge)
         } else if repo_path.join("BISECT_LOG").is_file() {
-            return Some(RepositoryState::Bisect);
+            Some(RepositoryState::Bisect)
         } else if repo_path.join("REVERT_HEAD").is_file() {
             if repo_path.join("todo").is_file() {
-                return Some(RepositoryState::RevertSequence);
+                Some(RepositoryState::RevertSequence)
             } else {
-                return Some(RepositoryState::Revert);
+                Some(RepositoryState::Revert)
             }
         } else {
-            return None;
+            None
         }
     }
 }
