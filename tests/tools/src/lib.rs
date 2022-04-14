@@ -161,13 +161,14 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
             ar.append_dir_all(".", source_dir)?;
             ar.finish()?;
         }
-        let mut archive = std::fs::OpenOptions::new()
+        let archive = std::fs::OpenOptions::new()
             .write(true)
             .create(true)
             .append(false)
             .open(archive)?;
-        lzma_rs::xz_compress(&mut &*buf, &mut archive)?;
-        archive.close()
+        let mut xz_write = xz2::write::XzEncoder::new(archive, 3);
+        std::io::copy(&mut &*buf, &mut xz_write)?;
+        xz_write.finish()?.close()
     })();
     std::fs::remove_dir_all(meta_dir)?;
     res
