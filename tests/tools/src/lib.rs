@@ -77,6 +77,7 @@ pub fn scripted_fixture_repo_read_only_with_args(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = &'static str>,
 ) -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
+    let script_name = script_name.as_ref();
     let script_path = fixture_path(script_name);
 
     // keep this lock to assure we don't return unfinished directories for threaded callers
@@ -94,7 +95,12 @@ pub fn scripted_fixture_repo_read_only_with_args(
             crc_digest.finalize()
         })
         .to_owned();
-    let script_result_directory = fixture_path(Path::new("generated-do-not-edit").join(format!("{}", script_identity)));
+    let script_result_directory = fixture_path(
+        Path::new("generated-do-not-edit")
+            .join(script_name.file_stem().unwrap_or(script_name.as_os_str()))
+            .join(format!("{}", script_identity)),
+    );
+
     if !script_result_directory.is_dir() {
         std::fs::create_dir_all(&script_result_directory)?;
         let script_absolute_path = std::env::current_dir()?.join(script_path);
