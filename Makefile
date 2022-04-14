@@ -91,6 +91,7 @@ check: ## Build all code in suitable configurations
 	cd git-index && cargo check --features serde1
 	cd git-revision && cargo check --features serde1
 	cd git-attributes && cargo check --features serde1
+	cd git-glob && cargo check --features serde1
 	cd git-mailmap && cargo check --features serde1
 	cd git-worktree && cargo check --features serde1
 	cd git-actor && cargo check --features serde1

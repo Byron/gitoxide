@@ -26,16 +26,20 @@ pub(crate) struct Cache {
     pub object_hash: git_hash::Kind,
     /// If true, multi-pack indices, whether present or not, may be used by the object database.
     pub use_multi_pack_index: bool,
+    // TODO: make core.precomposeUnicode available as well.
 }
 
 mod cache {
+    use std::{borrow::Cow, convert::TryFrom};
+
+    use git_config::{
+        file::GitConfig,
+        values,
+        values::{Boolean, Integer},
+    };
+
     use super::{Cache, Error};
     use crate::bstr::ByteSlice;
-    use git_config::file::GitConfig;
-    use git_config::values;
-    use git_config::values::{Boolean, Integer};
-    use std::borrow::Cow;
-    use std::convert::TryFrom;
 
     impl Cache {
         pub fn new(git_dir: &std::path::Path) -> Result<Self, Error> {

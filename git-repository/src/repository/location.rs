@@ -9,7 +9,7 @@ impl crate::Repository {
         self.work_tree.as_deref()
     }
 
-    // TODO: tests
+    // TODO: tests, respect precomposeUnicode
     /// The directory of the binary path of the current process.
     pub fn install_dir(&self) -> std::io::Result<std::path::PathBuf> {
         std::env::current_exe().and_then(|exe| {

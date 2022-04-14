@@ -1,5 +1,4 @@
 ### git-actor
-
 * [x] read and write a signature that uniquely identifies an actor within a git repository
 
 ### git-hash
@@ -9,8 +8,8 @@
     * [ ] Some examples
 
 ### git-chunk
-* [ ] decode the chunk file table of contents and provide convenient API
-* [ ] write the table of contents
+* [x] decode the chunk file table of contents and provide convenient API
+* [x] write the table of contents
 
 ### git-object
 * *decode (zero-copy)* borrowed objects
@@ -28,7 +27,6 @@
     * [ ] Some examples
 
 ### git-pack
-
 * **packs**
     * [x] traverse pack index
     * [x] 'object' abstraction
@@ -73,7 +71,6 @@
     * [ ] Some examples
 
 ### git-odb
-
 * **loose object store**
     * [x] traverse
     * [x] read
@@ -210,25 +207,21 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] Some examples
      
 ### git-attributes
-
 * [x] parse git-ignore files (aka git-attributes without the attributes or negation)
 * [x] parse git-attributes files
 * [ ] create an attributes stack, ideally one that includes 'ignored' status from .gitignore files.
    * [ ] support for built-in `binary` macro for `-text -diff -merge`
     
 ### git-quote
-
 * **ansi-c**
   * [x] quote
   * [ ] unquote
    
 ### git-mailmap
-
 * [x] parsing
 * [x] lookup and mapping of author names
 
 ### git-pathspec
-
 * [ ] parse
 * [ ] check for match
 
@@ -237,6 +230,10 @@ Check out the [performance discussion][git-traverse-performance] as well.
 A mechanism to associate metadata with any object, and keep revisions of it using git itself.
 
 * [ ] CRUD for git notes
+
+### git-glob
+* [x] parse pattern
+* [x] a type for pattern matching of paths and non-paths, optionally case-insensitively.
 
 ### git-worktree
 * handle the working tree/checkout
@@ -263,7 +260,6 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 * parse specifications into revisions (like `git rev-parse`)
  
 ### git-submodule
-
 * CRUD for submodules
 * try to handle with all the nifty interactions and be a little more comfortable than what git offers, lay a foundation for smarter git submodules.
 
@@ -488,6 +484,10 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 ### git-tui
 * _a terminal user interface seeking to replace and improve on `tig`_
 * Can display complex history in novel ways to make them graspable. Maybe [this post] can be an inspiration.
+ 
+### git-tix
+
+A re-implementation of a minimal `tig` like UI that aims to be fast and to the point.
 
 [tagname-validation]: https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23
 [this post]: http://blog.danieljanus.pl/2021/07/01/commit-groups/

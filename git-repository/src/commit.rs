@@ -17,12 +17,12 @@ pub enum Error {
 
 ///
 pub mod describe {
-    use crate::bstr::BStr;
-    use crate::ext::ObjectIdExt;
-    use crate::Repository;
+    use std::borrow::Cow;
+
     use git_hash::ObjectId;
     use git_odb::Find;
-    use std::borrow::Cow;
+
+    use crate::{bstr::BStr, ext::ObjectIdExt, Repository};
 
     /// The result of [try_resolve()][Platform::try_resolve()].
     pub struct Resolution<'repo> {

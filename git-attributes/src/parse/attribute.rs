@@ -6,8 +6,9 @@ use bstr::{BStr, BString, ByteSlice};
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
     /// A pattern to match paths against
-    Pattern(BString, crate::ignore::pattern::Mode),
+    Pattern(git_glob::Pattern),
     /// The name of the macro to define, always a valid attribute name
+    // TODO: turn it into its own type for maximum safety
     Macro(BString),
 }
 
@@ -162,14 +163,14 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
                 _ => unreachable!("BUG: check_attr() must only return attribute errors"),
             }),
         None => {
-            let (pattern, flags) = super::ignore::parse_line(line.as_ref())?;
-            if flags.contains(crate::ignore::pattern::Mode::NEGATIVE) {
+            let pattern = git_glob::Pattern::from_bytes(line.as_ref())?;
+            if pattern.mode.contains(git_glob::pattern::Mode::NEGATIVE) {
                 Err(Error::PatternNegation {
                     line: line.into_owned(),
                     line_number,
                 })
             } else {
-                Ok(Kind::Pattern(pattern, flags))
+                Ok(Kind::Pattern(pattern))
             }
         }
     };
