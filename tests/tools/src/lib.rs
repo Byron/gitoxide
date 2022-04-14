@@ -107,35 +107,36 @@ pub fn scripted_fixture_repo_read_only_with_args(
     );
 
     if !script_result_directory.is_dir() {
-        if !archive_file_path.is_file()
-            || extract_archive(&archive_file_path, &script_result_directory, script_identity).is_err()
-        {
-            std::fs::create_dir_all(&script_result_directory)?;
-            let script_absolute_path = std::env::current_dir()?.join(script_path);
-            let output = std::process::Command::new("bash")
-                .arg(script_absolute_path)
-                .args(args)
-                .stdout(std::process::Stdio::piped())
-                .stderr(std::process::Stdio::piped())
-                .current_dir(&script_result_directory)
-                .env_remove("GIT_DIR")
-                .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
-                .env("GIT_AUTHOR_EMAIL", "author@example.com")
-                .env("GIT_AUTHOR_NAME", "author")
-                .env("GIT_COMMITTER_DATE", "2000-01-02 00:00:00 +0000")
-                .env("GIT_COMMITTER_EMAIL", "committer@example.com")
-                .env("GIT_COMMITTER_NAME", "committer")
-                .env("GIT_CONFIG_COUNT", "1")
-                .env("GIT_CONFIG_KEY_0", "commit.gpgsign")
-                .env("GIT_CONFIG_VALUE_0", "false")
-                .output()?;
-            assert!(
-                output.status.success(),
-                "repo script failed: stdout: {}\nstderr: {}",
-                output.stdout.as_bstr(),
-                output.stderr.as_bstr()
-            );
-            create_archive_if_not_on_ci(&script_result_directory, &archive_file_path, script_identity)?;
+        match extract_archive(&archive_file_path, &script_result_directory, script_identity) {
+            Ok(_) => {}
+            Err(_err) => {
+                std::fs::create_dir_all(&script_result_directory)?;
+                let script_absolute_path = std::env::current_dir()?.join(script_path);
+                let output = std::process::Command::new("bash")
+                    .arg(script_absolute_path)
+                    .args(args)
+                    .stdout(std::process::Stdio::piped())
+                    .stderr(std::process::Stdio::piped())
+                    .current_dir(&script_result_directory)
+                    .env_remove("GIT_DIR")
+                    .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
+                    .env("GIT_AUTHOR_EMAIL", "author@example.com")
+                    .env("GIT_AUTHOR_NAME", "author")
+                    .env("GIT_COMMITTER_DATE", "2000-01-02 00:00:00 +0000")
+                    .env("GIT_COMMITTER_EMAIL", "committer@example.com")
+                    .env("GIT_COMMITTER_NAME", "committer")
+                    .env("GIT_CONFIG_COUNT", "1")
+                    .env("GIT_CONFIG_KEY_0", "commit.gpgsign")
+                    .env("GIT_CONFIG_VALUE_0", "false")
+                    .output()?;
+                assert!(
+                    output.status.success(),
+                    "repo script failed: stdout: {}\nstderr: {}",
+                    output.stdout.as_bstr(),
+                    output.stderr.as_bstr()
+                );
+                create_archive_if_not_on_ci(&script_result_directory, &archive_file_path, script_identity)?;
+            }
         }
     }
     Ok(script_result_directory)
@@ -157,7 +158,7 @@ fn create_archive_if_not_on_ci(_source_dir: &Path, archive: &Path, _script_ident
 fn extract_archive(_archive: &Path, destination_dir: &Path, _required_script_identity: u32) -> Result<()> {
     std::fs::create_dir_all(destination_dir)?;
     // TODO
-    Ok(())
+    Err("to be done".into())
 }
 
 pub fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
