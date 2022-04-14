@@ -127,7 +127,14 @@ pub fn scripted_fixture_repo_read_only_with_args(
     if !script_result_directory.is_dir() {
         std::fs::create_dir_all(&script_result_directory)?;
         match extract_archive(&archive_file_path, &script_result_directory, script_identity) {
-            Ok(_) => {}
+            Ok((archive_id, platform)) => {
+                eprintln!(
+                    "Extracted fixture from archive '{}' ({}, {:?})",
+                    archive_file_path.display(),
+                    archive_id,
+                    platform
+                )
+            }
             Err(err) => {
                 if err.kind() != std::io::ErrorKind::NotFound {
                     eprintln!("{}", err);
@@ -201,7 +208,10 @@ const META_GIT_VERSION: &str = "git-version";
 fn populate_meta_dir(destination_dir: &Path, script_identity: u32) -> std::io::Result<PathBuf> {
     let meta_dir = destination_dir.join(META_DIR_NAME);
     std::fs::create_dir_all(&meta_dir)?;
-    std::fs::write(meta_dir.join(META_IDENTITY), format!("{}", script_identity).as_bytes())?;
+    std::fs::write(
+        meta_dir.join(META_IDENTITY),
+        format!("{}-{}", script_identity, if cfg!(windows) { "windows" } else { "unix" }).as_bytes(),
+    )?;
     std::fs::write(
         meta_dir.join(META_GIT_VERSION),
         &std::process::Command::new("git").arg("--version").output()?.stdout,
@@ -211,13 +221,17 @@ fn populate_meta_dir(destination_dir: &Path, script_identity: u32) -> std::io::R
 
 /// `required_script_identity` is the identity of the script that generated the state that is contained in `archive`.
 /// If this is not the case, the arvhive will be ignored.
-fn extract_archive(archive: &Path, destination_dir: &Path, required_script_identity: u32) -> std::io::Result<()> {
+fn extract_archive(
+    archive: &Path,
+    destination_dir: &Path,
+    required_script_identity: u32,
+) -> std::io::Result<(u32, Option<String>)> {
     let mut archive_buf = Vec::<u8>::new();
     let mut decoder = xz2::bufread::XzDecoder::new(std::io::BufReader::new(std::fs::File::open(archive)?));
     std::io::copy(&mut decoder, &mut archive_buf)?;
 
     let mut entry_buf = Vec::<u8>::new();
-    let archive_identity: u32 = tar::Archive::new(std::io::Cursor::new(&mut &*archive_buf))
+    let (archive_identity, platform): (u32, _) = tar::Archive::new(std::io::Cursor::new(&mut &*archive_buf))
         .entries_with_seek()?
         .filter_map(|e| e.ok())
         .find_map(|mut e: tar::Entry<'_, _>| {
@@ -225,7 +239,11 @@ fn extract_archive(archive: &Path, destination_dir: &Path, required_script_ident
             if path.parent()?.file_name()? == META_DIR_NAME && path.file_name()? == META_IDENTITY {
                 entry_buf.clear();
                 e.read_to_end(&mut entry_buf).ok()?;
-                entry_buf.to_str().ok()?.trim().parse().ok()
+                let mut tokens = entry_buf.to_str().ok()?.trim().splitn(2, '-');
+                match (tokens.next(), tokens.next()) {
+                    (Some(id), platform) => Some((id.parse().ok()?, platform.map(ToOwned::to_owned))),
+                    _ => None,
+                }
             } else {
                 None
             }
@@ -248,7 +266,7 @@ fn extract_archive(archive: &Path, destination_dir: &Path, required_script_ident
         }
         entry.unpack_in(&destination_dir)?;
     }
-    Ok(())
+    Ok((archive_identity, platform))
 }
 
 pub fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
