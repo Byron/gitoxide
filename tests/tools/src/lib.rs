@@ -171,6 +171,7 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
         {
             let mut ar = tar::Builder::new(&mut buf);
             ar.mode(tar::HeaderMode::Deterministic);
+            ar.follow_symlinks(false);
             ar.append_dir_all(".", source_dir)?;
             ar.finish()?;
         }
