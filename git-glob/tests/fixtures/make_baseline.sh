@@ -155,17 +155,3 @@ aBcDeFg  abcdefg
 aBcDeFg  ABCDEFG
 aBcDeFg  AbCdEfG
 EOF
-
-# nmatches OS specific
-# unix
-#    "abc\\def" "abc/def"
-
-
-# windows only
-# abc[/]def "abc/def"
-# abc\def  "abc/def"
-
-# empty string is not a valid path-spec
-#** " "
-#{} " "
-#{,} " "

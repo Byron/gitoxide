@@ -46,22 +46,13 @@ fn compare_baseline_with_ours() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
     let (mut total_matches, mut total_correct, mut panics) = (0, 0, 0);
     let mut mismatches = Vec::new();
-    for (input_file, mut expected_matches, case, invert_expectation_on_other_os) in &[
-        ("git-baseline.match", true, pattern::Case::Sensitive, false),
-        ("git-baseline.nmatch", false, pattern::Case::Sensitive, false),
-        ("git-baseline.match-icase", true, pattern::Case::Fold, false),
-        // (
-        //     "git-baseline-unix.match",
-        //     true,
-        //     pattern::Case::Sensitive,
-        //     if cfg!(unix) { false } else { true },
-        // ),
+    for (input_file, expected_matches, case) in &[
+        ("git-baseline.match", true, pattern::Case::Sensitive),
+        ("git-baseline.nmatch", false, pattern::Case::Sensitive),
+        ("git-baseline.match-icase", true, pattern::Case::Fold),
     ] {
         let input = std::fs::read(dir.join(*input_file)).unwrap();
         let mut seen = BTreeSet::default();
-        if *invert_expectation_on_other_os {
-            expected_matches = !expected_matches;
-        }
 
         for m @ GitMatch {
             pattern,
@@ -72,7 +63,7 @@ fn compare_baseline_with_ours() {
             total_matches += 1;
             assert!(seen.insert(m), "duplicate match entry: {:?}", m);
             assert_eq!(
-                is_match, expected_matches,
+                is_match, *expected_matches,
                 "baseline for matches must be {} - check baseline and git version: {:?}",
                 expected_matches, m
             );
