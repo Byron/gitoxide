@@ -484,6 +484,10 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 ### git-tui
 * _a terminal user interface seeking to replace and improve on `tig`_
 * Can display complex history in novel ways to make them graspable. Maybe [this post] can be an inspiration.
+ 
+### git-tix
+
+A re-implementation of a minimal `tig` like UI that aims to be fast and to the point.
 
 [tagname-validation]: https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L23:L23
 [this post]: http://blog.danieljanus.pl/2021/07/01/commit-groups/
