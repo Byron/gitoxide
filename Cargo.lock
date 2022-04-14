@@ -1469,6 +1469,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-tix"
+version = "0.0.0"
+
+[[package]]
 name = "git-transport"
 version = "0.16.0"
 dependencies = [

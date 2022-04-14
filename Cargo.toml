@@ -157,6 +157,7 @@ members = [
     "git-repository",
     "gitoxide-core",
     "git-tui",
+    "git-tix",
 
     "experiments/object-access",
     "experiments/diffing",
