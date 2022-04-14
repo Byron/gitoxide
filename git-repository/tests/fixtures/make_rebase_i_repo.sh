@@ -25,7 +25,7 @@ git commit -m 3 3
 
 # NOTE: This relies on GNU sed behavior and will fail on *BSDs (including macOS) without GNU
 # sed installed.  
-sed=$(which gsed sed | head -1)
+sed=$(which gsed sed | head -1 || true)
 
 # NOTE: Starting with git 2.35.0 --preserve-merges was renamed to --rebase-merges
 # TODO: Revisit this after git 3.x is released
