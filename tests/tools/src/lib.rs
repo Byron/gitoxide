@@ -177,7 +177,7 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
         let archive = std::fs::OpenOptions::new()
             .write(true)
             .create(true)
-            .append(false)
+            .truncate(true)
             .open(archive)?;
         let mut xz_write = xz2::write::XzEncoder::new(archive, 3);
         std::io::copy(&mut &*buf, &mut xz_write)?;
