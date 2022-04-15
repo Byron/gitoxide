@@ -50,11 +50,12 @@ jobs:
           command: check
           args: --all --bins --tests --examples
       - run: git lfs fetch && git lfs checkout
-      - name: "Test (crossterm)"
-        uses: actions-rs/cargo@v1
+      - uses: taiki-e/install-action@v1
         with:
-          command: test
-          args: --all
+          tool: nextest
+          version: 0.9
+      - name: "Test (nextest)"
+        run: cargo nextest run --all
       - name: "Install prerequisites"
         run: vcpkg install  zlib:x64-windows-static-md
       - name: "Installation from crates.io"
