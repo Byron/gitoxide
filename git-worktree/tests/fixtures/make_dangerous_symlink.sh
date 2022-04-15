@@ -2,7 +2,6 @@
 set -eu -o pipefail
 
 git init -q
-git config commit.gpgsign false
 
 # Every symlink is dangerous as it might either link to another directory and thus redirect
 # all writes in the path, or it might point to a file and opening the symlink actually opens

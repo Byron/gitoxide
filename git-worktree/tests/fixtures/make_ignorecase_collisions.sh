@@ -2,7 +2,6 @@
 set -eu -o pipefail
 
 git init -q
-git config commit.gpgsign false
 
 empty_oid=$(git hash-object -w --stdin </dev/null)
 symlink_target=$(echo -n 'X' | git hash-object -w --stdin)

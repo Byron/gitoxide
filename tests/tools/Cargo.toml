@@ -14,6 +14,8 @@ path = "src/main.rs"
 
 [dependencies]
 git-hash = { version = "^0.9.3", path = "../../git-hash" }
+git-lock = { version = "^2.0.0", path = "../../git-lock" }
+
 nom = { version = "7", default-features = false, features = ["std"]}
 bstr = "0.2.15"
 crc = "2.0.0"
@@ -21,3 +23,7 @@ once_cell = "1.8.0"
 tempfile = "3.2.0"
 fs_extra = "1.2.0"
 parking_lot = { version = "0.12.0" }
+is_ci = "1.1.1"
+io-close = "0.3.7"
+tar = { version = "0.4.38", default-features = false }
+xz2 = "0.1.6"

@@ -1,0 +1,4 @@
+**/generated-archives/*.tar.xz filter=lfs diff=lfs merge=lfs -text
+
+# assure line feeds don't interfere with our working copy hash 
+**/tests/fixtures/*.sh text crlf=input	eol=lf

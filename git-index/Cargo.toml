@@ -6,6 +6,7 @@ license = "MIT/Apache-2.0"
 description = "A work-in-progress crate of the gitoxide project dedicated implementing the git index file"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
+include = ["src/**/*", "README.md", "CHANGELOG.md"]
 
 [lib]
 doctest = false
