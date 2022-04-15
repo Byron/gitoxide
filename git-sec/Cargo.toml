@@ -1,6 +1,6 @@
 [package]
 name = "git-sec"
-version = "0.0.0"
+version = "0.1.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project providing a shared trust model"
@@ -10,6 +10,11 @@ edition = "2018"
 [lib]
 doctest = false
 
+[features]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = [ "serde" ]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
