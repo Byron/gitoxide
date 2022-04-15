@@ -18,3 +18,10 @@ serde1 = [ "serde" ]
 
 [dependencies]
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"] }
+
+[target.'cfg(not(windows))'.dependencies]
+libc = "0.2.123"
+
+
+[dev-dependencies]
+tempfile = "3.3.0"
