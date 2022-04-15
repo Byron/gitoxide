@@ -1121,6 +1121,7 @@ dependencies = [
  "criterion",
  "dirs",
  "git-features",
+ "itertools",
  "memchr",
  "nom",
  "pwd",

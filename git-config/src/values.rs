@@ -2,14 +2,10 @@
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
-use bstr::{BStr, ByteSlice};
+use bstr::BStr;
 use quick_error::quick_error;
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
-#[cfg(feature = "expiry-date")]
-use time::macros::format_description;
-#[cfg(feature = "expiry-date")]
-use time::{OffsetDateTime, PrimitiveDateTime};
 
 /// Removes quotes, if any, from the provided inputs. This assumes the input
 /// contains a even number of unescaped quotes, and will unescape escaped
@@ -1225,68 +1221,178 @@ quick_error! {
 }
 
 #[cfg(feature = "expiry-date")]
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct ExpiryDate<'a> {
-    pub value: Cow<'a, BStr>,
-}
+pub mod expiry_date {
+    use crate::values::ExpiryDateError;
+    use bstr::{BStr, ByteSlice};
+    use itertools::EitherOrBoth::{Both, Left};
+    use itertools::Itertools;
+    use std::borrow::Cow;
+    use std::hash::Hash;
+    use std::str::FromStr;
+    use std::time::UNIX_EPOCH;
+    use time::macros::format_description;
+    use time::{OffsetDateTime, PrimitiveDateTime, Time};
 
-#[cfg(feature = "expiry-date")]
-impl<'a> From<Cow<'a, [u8]>> for ExpiryDate<'a> {
-    fn from(c: Cow<'a, [u8]>) -> Self {
-        Self {
-            value: match c {
-                Cow::Borrowed(c) => Cow::Borrowed(c.into()),
-                Cow::Owned(c) => Cow::Owned(c.into()),
-            },
+    #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+    pub struct ExpiryDate<'a> {
+        pub value: Cow<'a, BStr>,
+    }
+
+    impl<'a> From<Cow<'a, [u8]>> for ExpiryDate<'a> {
+        fn from(c: Cow<'a, [u8]>) -> Self {
+            Self {
+                value: match c {
+                    Cow::Borrowed(c) => Cow::Borrowed(c.into()),
+                    Cow::Owned(c) => Cow::Owned(c.into()),
+                },
+            }
         }
     }
-}
 
-#[cfg(feature = "expiry-date")]
-impl<'a> ExpiryDate<'a> {
-    pub fn to_timestamp(self) -> Result<u64, ExpiryDateError> {
-        let v = self.value.to_str()?;
+    impl<'a> ExpiryDate<'a> {
+        pub fn to_timestamp(self) -> Result<u64, ExpiryDateError> {
+            let v = self.value.to_str()?;
 
-        if v == "never" || v == "false" {
-            return Ok(0);
+            if v == "never" || v == "false" {
+                return Ok(0);
+            }
+
+            if v == "all" || v == "now" {
+                return Ok(u64::MAX);
+            }
+
+            let tz_format_descriptions = [
+                // rfc2822: Fri, 4 Jun 2010 15:46:55 +0400
+                &format_description!("[weekday repr:short], [day padding:none] [month repr:short] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"),
+                // iso8601: 2006-07-03 17:18:43 +0200 
+                &format_description!("[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"),
+                // local with tz: Fri Jun 4 15:46:55 2010 +0300
+                &format_description!("[weekday repr:short] [month repr:short] [day padding:none] [hour]:[minute]:[second] [year] [offset_hour sign:mandatory][offset_minute]"),
+            ];
+
+            for descr in tz_format_descriptions {
+                if let Ok(date) = OffsetDateTime::parse(v, descr) {
+                    return Ok(date.unix_timestamp() as u64);
+                }
+            }
+
+            let notz_format_descriptions = [
+                // local: Fri Jun 4 15:46:55 2010
+                &format_description!(
+                    "[weekday repr:short] [month repr:short] [day padding:none] [hour]:[minute]:[second] [year]"
+                ),
+                // 2017/11/11 11:11:11PM
+                &format_description!(
+                    "[year]/[month]/[day] [hour repr:12]:[minute]:[second][period case_sensitive:false]"
+                ),
+                // 2017/11/11 11:11:11 PM
+                &format_description!(
+                    "[year]/[month]/[day] [hour repr:12]:[minute]:[second] [period case_sensitive:false]"
+                ),
+            ];
+
+            for descr in notz_format_descriptions {
+                if let Ok(date) = PrimitiveDateTime::parse(v, descr) {
+                    let date = to_offset_date_time(date);
+                    return Ok(date.unix_timestamp() as u64);
+                    // dbg!(d, UtcOffset::local_offset_at(d));
+                    // return Ok(date.assume_utc().unix_timestamp() as u64);
+                }
+            }
+
+            if let Some(seconds) = relative_to_seconds(v) {
+                if let Some(time) = std::time::SystemTime::now().checked_sub(std::time::Duration::new(seconds, 0)) {
+                    return Ok(time
+                        .duration_since(UNIX_EPOCH)
+                        .expect("Clock might have gone backwards")
+                        .as_secs());
+                }
+            }
+
+            Err(ExpiryDateError::UnsupportedFormat)
         }
+    }
 
-        if v == "all" || v == "now" {
-            return Ok(u64::MAX);
-        }
+    fn to_offset_date_time(date: PrimitiveDateTime) -> OffsetDateTime {
+        let offset_date_time = date.assume_utc();
 
-        let tz_format_descriptions = [
-            // rfc2822: Fri, 4 Jun 2010 15:46:55 +0400
-            &format_description!("[weekday repr:short], [day padding:none] [month repr:short] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"),
-            // iso8601: 2006-07-03 17:18:43 +0200 
-            &format_description!("[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"),
-            // local with tz: Fri Jun 4 15:46:55 2010 +0300
-            &format_description!("[weekday repr:short] [month repr:short] [day padding:none] [hour]:[minute]:[second] [year] [offset_hour sign:mandatory][offset_minute]"),
-        ];
+        offset_date_time
 
-        for descr in tz_format_descriptions {
-            if let Ok(date) = OffsetDateTime::parse(v, descr) {
-                return Ok(date.unix_timestamp() as u64);
+        // let sys_time = SystemTime::from(offset_date_time);
+        //
+        // let local_date_time: DateTime<Local> = DateTime::from(sys_time);
+        // let offset = UtcOffset::from_whole_seconds(local_date_time.offset().local_minus_utc())
+        //     .expect("the range must be from -24h to +24h");
+        //
+        // date.assume_offset(offset)
+    }
+
+    fn period_to_secs(period: &str) -> Option<u64> {
+        return match period {
+            "second" => Some(1),
+            "minute" => Some(60),
+            "hour" => Some(60 * 60),
+            "day" => Some(24 * 60 * 60),
+            "week" => Some(7 * 24 * 60 * 60),
+            // TODO months & years
+            _ => None,
+        };
+    }
+
+    fn relative_to_seconds(val: &str) -> Option<u64> {
+        let v = val.replace(".", " ");
+        let mut total_seconds = 0u64;
+
+        for (i, item) in v
+            .split_whitespace()
+            .zip_longest(v.split_whitespace().skip(1))
+            .step_by(2)
+            .enumerate()
+        {
+            match item {
+                Both(val, period) => {
+                    let period = period.strip_suffix("s").unwrap_or(period);
+                    if let (Some(seconds), Ok(num)) = (period_to_secs(period), u64::from_str(val)) {
+                        total_seconds += seconds * num;
+                    }
+                }
+                Left(time) => {
+                    if i > 0 {
+                        if let Ok(time) = Time::parse(time, &format_description!("[hour]:[minute]")) {
+                            total_seconds += time.hour() as u64 * 60 * 60 + time.minute() as u64 * 60;
+                        }
+                    }
+                }
+                _ => unreachable!("Left iterator must be longer"),
             }
         }
 
-        let notz_format_descriptions = [
-            // local: Fri Jun 4 15:46:55 2010
-            &format_description!(
-                "[weekday repr:short] [month repr:short] [day padding:none] [hour]:[minute]:[second] [year]"
-            ),
-            // 2017/11/11 11:11:11PM
-            &format_description!("[year]/[month]/[day] [hour repr:12]:[minute]:[second][period case_sensitive:false]"),
-            // 2017/11/11 11:11:11 PM
-            &format_description!("[year]/[month]/[day] [hour repr:12]:[minute]:[second] [period case_sensitive:false]"),
-        ];
+        return if total_seconds > 0 { Some(total_seconds) } else { None };
+    }
 
-        for descr in notz_format_descriptions {
-            if let Ok(date) = PrimitiveDateTime::parse(v, descr) {
-                return Ok(date.assume_utc().unix_timestamp() as u64);
-            }
+    #[cfg(test)]
+    mod expiry_date_tests {
+        use crate::values::expiry_date::relative_to_seconds;
+        use chrono::{DateTime, Local, Utc};
+        use std::time::SystemTime;
+
+        #[test]
+        fn test_relative_to_epoch() {
+            assert_eq!(relative_to_seconds("1"), None);
+
+            assert_eq!(relative_to_seconds("3.weeks.1.day"), Some(1_900_800));
+            assert_eq!(
+                relative_to_seconds("1 week 5 days 01:20"),
+                Some(1_036_800 + 3_600 + 1_200)
+            );
         }
 
-        Err(ExpiryDateError::UnsupportedFormat)
+        #[test]
+        fn ttt() {
+            let utc = Utc::now();
+            let local = Local::now();
+
+            let converted: DateTime<Local> = DateTime::from(utc);
+        }
     }
 }
