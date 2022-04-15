@@ -2,7 +2,7 @@
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
-use bstr::BStr;
+use bstr::{BStr, ByteSlice};
 use quick_error::quick_error;
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
