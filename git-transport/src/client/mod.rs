@@ -28,7 +28,7 @@ pub use capabilities::Capabilities;
 mod non_io_types;
 pub use non_io_types::{Error, MessageKind, WriteMode};
 
-pub use git_sec::Identity;
+pub use git_sec::identity::Account;
 
 ///
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]

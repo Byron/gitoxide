@@ -71,7 +71,7 @@ impl NextAction {
 /// The outcome of [`action()`].
 pub struct Outcome {
     /// The obtained identity.
-    pub identity: git_sec::Identity,
+    pub identity: git_sec::identity::Account,
     /// A handle to the action to perform next using another call to [`action()`].
     pub next: NextAction,
 }
@@ -127,7 +127,7 @@ pub fn action(action: Action<'_>) -> Result {
                 .map(|(_, n)| n.to_owned())
         };
         Ok(Some(Outcome {
-            identity: git_sec::Identity::Account {
+            identity: git_sec::identity::Account {
                 username: find("username")?,
                 password: find("password")?,
             },
