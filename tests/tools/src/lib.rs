@@ -88,6 +88,11 @@ pub fn scripted_fixture_repo_read_only_with_args(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = &'static str>,
 ) -> Result<PathBuf> {
+    // Assure tempfiles get removed when aborting the test.
+    git_lock::tempfile::setup(
+        git_lock::tempfile::SignalHandlerMode::DeleteTempfilesOnTerminationAndRestoreDefaultBehaviour,
+    );
+
     let script_location = script_name.as_ref();
     let script_path = fixture_path(script_location);
 
