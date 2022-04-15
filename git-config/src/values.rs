@@ -1,15 +1,15 @@
 //! Rust containers for valid `git-config` types.
 
-#[cfg(feature = "expiry-date")]
-use chrono::format::Fixed::{TimezoneName, TimezoneOffset};
-#[cfg(feature = "expiry-date")]
-use chrono::{DateTime, FixedOffset, NaiveDateTime, ParseError, TimeZone, Utc};
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
 use bstr::BStr;
 use quick_error::quick_error;
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
+#[cfg(feature = "expiry-date")]
+use time::macros::format_description;
+#[cfg(feature = "expiry-date")]
+use time::{OffsetDateTime, PrimitiveDateTime};
 
 /// Removes quotes, if any, from the provided inputs. This assumes the input
 /// contains a even number of unescaped quotes, and will unescape escaped
@@ -1255,28 +1255,36 @@ impl<'a> ExpiryDate<'a> {
             return Ok(u64::MAX);
         }
 
-        if let Ok(date) = DateTime::parse_from_rfc2822(v) {
-            return Ok(date.timestamp() as u64);
+        let tz_format_descriptions = [
+            // rfc2822: Fri, 4 Jun 2010 15:46:55 +0400
+            &format_description!("[weekday repr:short], [day padding:none] [month repr:short] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"),
+            // iso8601: 2006-07-03 17:18:43 +0200 
+            &format_description!("[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"),
+            // local with tz: Fri Jun 4 15:46:55 2010 +0300
+            &format_description!("[weekday repr:short] [month repr:short] [day padding:none] [hour]:[minute]:[second] [year] [offset_hour sign:mandatory][offset_minute]"),
+        ];
+
+        for descr in tz_format_descriptions {
+            if let Ok(date) = OffsetDateTime::parse(v, descr) {
+                return Ok(date.unix_timestamp() as u64);
+            }
         }
 
-        if let Ok(date) = DateTime::parse_from_str(v, "%Y-%m-%d %H:%M:%S %z") {
-            return Ok(date.timestamp() as u64);
-        }
+        let notz_format_descriptions = [
+            // local: Fri Jun 4 15:46:55 2010
+            &format_description!(
+                "[weekday repr:short] [month repr:short] [day padding:none] [hour]:[minute]:[second] [year]"
+            ),
+            // 2017/11/11 11:11:11PM
+            &format_description!("[year]/[month]/[day] [hour repr:12]:[minute]:[second][period case_sensitive:false]"),
+            // 2017/11/11 11:11:11 PM
+            &format_description!("[year]/[month]/[day] [hour repr:12]:[minute]:[second] [period case_sensitive:false]"),
+        ];
 
-        if let Ok(date) = DateTime::parse_from_str(v, "%a %b %e %H:%M:%S %Y %z") {
-            return Ok(date.timestamp() as u64);
-        }
-
-        if let Ok(date) = Utc.datetime_from_str(v, "%y/%m/%d %i:%m:%s%p") {
-            return Ok(date.timestamp() as u64);
-        }
-
-        if let Ok(date) = Utc.datetime_from_str(v, "%Y/%m/%d %I:%M:%S %p") {
-            return Ok(date.timestamp() as u64);
-        }
-
-        if let Ok(date) = Utc.datetime_from_str(v, "%a %b %e %H:%M:%S %Y") {
-            return Ok(date.timestamp() as u64);
+        for descr in notz_format_descriptions {
+            if let Ok(date) = PrimitiveDateTime::parse(v, descr) {
+                return Ok(date.assume_utc().unix_timestamp() as u64);
+            }
         }
 
         Err(ExpiryDateError::UnsupportedFormat)

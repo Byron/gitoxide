@@ -1,6 +1,4 @@
-use chrono::{DateTime, TimeZone, Utc};
 use git_config::values::ExpiryDate;
-use nom::AsBytes;
 use std::borrow::Cow;
 
 #[test]
