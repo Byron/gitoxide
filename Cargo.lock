@@ -1144,6 +1144,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-credentials"
+version = "0.0.0"
+
+[[package]]
 name = "git-date"
 version = "0.0.0"
 

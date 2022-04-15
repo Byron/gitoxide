@@ -149,6 +149,7 @@ members = [
     "git-sec",
     "git-submodule",
     "git-transport",
+    "git-credentials",
     "git-protocol",
     "git-pack",
     "git-odb",
