@@ -60,8 +60,8 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         uses: actions-rs/cargo@v1
         with:
-          command: install --force
-          args: "gitoxide cargo-smart-release"
+          command: install
+          args: "--force gitoxide cargo-smart-release"
 
   lint:
     runs-on: ubuntu-latest
