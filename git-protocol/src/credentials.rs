@@ -140,7 +140,7 @@ pub fn helper(action: Action<'_>) -> Result {
 }
 
 /// Encode `url` to `out` for consumption by a `git credentials` helper program.
-pub fn encode_message(url: &str, mut out: impl io::Write) -> io::Result<()> {
+fn encode_message(url: &str, mut out: impl io::Write) -> io::Result<()> {
     validate(url)?;
     writeln!(out, "url={}\n", url)
 }
@@ -156,7 +156,7 @@ fn validate(url: &str) -> io::Result<()> {
 }
 
 /// Decode all lines in `input` as key-value pairs produced by a `git credentials` helper program.
-pub fn decode_message(mut input: impl io::Read) -> io::Result<Vec<(String, String)>> {
+fn decode_message(mut input: impl io::Read) -> io::Result<Vec<(String, String)>> {
     let mut buf = String::new();
     input.read_to_string(&mut buf)?;
     buf.lines()
