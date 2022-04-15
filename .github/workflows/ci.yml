@@ -45,7 +45,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all --bins --tests --examples
+          args: --all --bins --examples
       - run: git lfs fetch && git lfs checkout
       - uses: taiki-e/install-action@v1
         with:
