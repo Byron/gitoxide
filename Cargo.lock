@@ -1443,6 +1443,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-sec"
+version = "0.0.0"
+
+[[package]]
 name = "git-submodule"
 version = "0.0.0"
 
