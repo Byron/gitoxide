@@ -235,7 +235,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 * [ ] parse git dates
  
 ### git-credentials
-* [ ] launch git credentials helpers with a given action
+* [x] launch git credentials helpers with a given action
  
 ### git-sec
 
