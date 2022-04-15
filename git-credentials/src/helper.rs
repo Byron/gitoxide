@@ -3,14 +3,13 @@ use std::{
     process::{Command, Stdio},
 };
 
-use crate::Identity;
 use quick_error::quick_error;
 
-/// The result used in [`helper()`].
+/// The result used in [`action()`].
 pub type Result = std::result::Result<Option<Outcome>, Error>;
 
 quick_error! {
-    /// The error used in the [credentials helper][helper()].
+    /// The error used in the [credentials helper][action()].
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -28,7 +27,7 @@ quick_error! {
     }
 }
 
-/// The action to perform by the credentials [`helper()`].
+/// The action to perform by the credentials [`action()`].
 #[derive(Clone, Debug)]
 pub enum Action<'a> {
     /// Provide credentials using the given repository URL (as &str) as context.
@@ -69,11 +68,11 @@ impl NextAction {
     }
 }
 
-/// The outcome of [`helper()`].
+/// The outcome of [`action()`].
 pub struct Outcome {
     /// The obtained identity.
-    pub identity: Identity,
-    /// A handle to the action to perform next using another call to [`helper()`].
+    pub identity: git_sec::Identity,
+    /// A handle to the action to perform next using another call to [`action()`].
     pub next: NextAction,
 }
 
@@ -91,7 +90,7 @@ fn git_program() -> &'static str {
 ///
 /// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
 /// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
-pub fn helper(action: Action<'_>) -> Result {
+pub fn action(action: Action<'_>) -> Result {
     let mut cmd = Command::new(git_program());
     cmd.arg("credential")
         .arg(action.as_str())
@@ -128,7 +127,7 @@ pub fn helper(action: Action<'_>) -> Result {
                 .map(|(_, n)| n.to_owned())
         };
         Ok(Some(Outcome {
-            identity: Identity::Account {
+            identity: git_sec::Identity::Account {
                 username: find("username")?,
                 password: find("password")?,
             },
