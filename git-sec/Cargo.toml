@@ -22,6 +22,8 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 [target.'cfg(not(windows))'.dependencies]
 libc = "0.2.123"
 
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.35.0", features = ["Win32_System_Threading", "Win32_Foundation", "Win32_Security", "Win32_Security_Authorization"] }
 
 [dev-dependencies]
 tempfile = "3.3.0"
