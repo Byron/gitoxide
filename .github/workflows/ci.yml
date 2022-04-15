@@ -40,7 +40,7 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run:
           brew install tree openssl
-      - name: "Check default features build"
+      - name: "cargo check default features"
         if: startsWith(matrix.os, 'windows')
         uses: actions-rs/cargo@v1
         with:
@@ -57,6 +57,7 @@ jobs:
         run: vcpkg install  zlib:x64-windows-static-md
         if: startsWith(matrix.os, 'windows')
       - name: "Installation from crates.io"
+        if: startsWith(matrix.os, 'windows')
         uses: actions-rs/cargo@v1
         with:
           command: install
