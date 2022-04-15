@@ -89,6 +89,8 @@
 //! * [`bstr`][bstr]
 //! * [`index`]
 //! * [`glob`]
+//! * [`credentials`]
+//! * [`sec`]
 //! * [`worktree`]
 //! * [`mailmap`]
 //! * [`objs`]
@@ -122,6 +124,8 @@ use std::path::PathBuf;
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
 pub use git_actor as actor;
+#[cfg(all(feature = "unstable", feature = "git-credentials"))]
+pub use git_credentials as credentials;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
 use git_features::threading::OwnShared;
@@ -142,6 +146,8 @@ pub use git_odb as odb;
 pub use git_protocol as protocol;
 pub use git_ref as refs;
 pub use git_revision as revision;
+#[cfg(all(feature = "unstable", feature = "git-sec"))]
+pub use git_sec as sec;
 #[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
 #[cfg(feature = "unstable")]

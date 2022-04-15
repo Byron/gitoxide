@@ -18,7 +18,7 @@ quick_error! {
             from()
             source(err)
         }
-        Credentials(err: credentials::Error) {
+        Credentials(err: credentials::helper::Error) {
             display("Failed to obtain, approve or reject credentials")
             from()
             source(err)

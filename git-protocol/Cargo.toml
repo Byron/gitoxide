@@ -42,6 +42,7 @@ required-features = ["async-client"]
 git-features = { version = "^0.20.0", path = "../git-features", features = ["progress"] }
 git-transport = { version = "^0.16.0", path = "../git-transport" }
 git-hash = { version = "^0.9.3", path = "../git-hash" }
+git-credentials = { version = "^0.1.0", path = "../git-credentials" }
 
 quick-error = "2.0.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}

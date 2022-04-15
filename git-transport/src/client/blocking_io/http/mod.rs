@@ -32,7 +32,7 @@ pub struct Transport<H: Http> {
     http: H,
     service: Option<Service>,
     line_provider: Option<git_packetline::StreamingPeekableIter<H::ResponseBody>>,
-    identity: Option<client::Identity>,
+    identity: Option<git_sec::Identity>,
 }
 
 impl Transport<Impl> {
@@ -73,7 +73,7 @@ impl<H: Http> Transport<H> {
     fn add_basic_auth_if_present(&self, headers: &mut Vec<Cow<'_, str>>) -> Result<(), client::Error> {
         if let Some(identity) = &self.identity {
             match identity {
-                client::Identity::Account { username, password } => {
+                git_sec::Identity::Account { username, password } => {
                     #[cfg(not(debug_assertions))]
                     if self.url.starts_with("http://") {
                         return Err(client::Error::AuthenticationRefused(
@@ -100,7 +100,7 @@ fn append_url(base: &str, suffix: &str) -> String {
 }
 
 impl<H: Http> client::TransportWithoutIO for Transport<H> {
-    fn set_identity(&mut self, identity: client::Identity) -> Result<(), client::Error> {
+    fn set_identity(&mut self, identity: git_sec::Identity) -> Result<(), client::Error> {
         self.identity = Some(identity);
         Ok(())
     }

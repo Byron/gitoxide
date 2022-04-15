@@ -1148,6 +1148,7 @@ name = "git-credentials"
 version = "0.1.0"
 dependencies = [
  "bstr",
+ "git-sec",
  "quick-error",
  "serde",
 ]
@@ -1360,6 +1361,7 @@ dependencies = [
  "document-features",
  "futures-io",
  "futures-lite",
+ "git-credentials",
  "git-features",
  "git-hash",
  "git-packetline",
@@ -1410,6 +1412,7 @@ dependencies = [
  "document-features",
  "git-actor",
  "git-config",
+ "git-credentials",
  "git-diff",
  "git-features",
  "git-glob",
@@ -1423,6 +1426,7 @@ dependencies = [
  "git-protocol",
  "git-ref",
  "git-revision",
+ "git-sec",
  "git-tempfile",
  "git-testtools",
  "git-transport",
@@ -1453,7 +1457,10 @@ dependencies = [
 
 [[package]]
 name = "git-sec"
-version = "0.0.0"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "git-submodule"
@@ -1511,6 +1518,7 @@ dependencies = [
  "git-hash",
  "git-pack",
  "git-packetline",
+ "git-sec",
  "git-url",
  "maybe-async",
  "pin-project-lite",

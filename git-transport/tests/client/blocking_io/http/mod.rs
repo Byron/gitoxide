@@ -9,7 +9,7 @@ use std::{
 
 use bstr::ByteSlice;
 use git_transport::{
-    client::{self, http, Identity, SetServiceResponse, Transport, TransportV2Ext, TransportWithoutIO},
+    client::{self, http, SetServiceResponse, Transport, TransportV2Ext, TransportWithoutIO},
     Protocol, Service,
 };
 
@@ -42,7 +42,7 @@ fn assert_error_status(
 fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted() -> crate::Result {
     let (server, mut client) = assert_error_status(401, std::io::ErrorKind::PermissionDenied)?;
     server.next_read_and_respond_with(fixture_bytes("v1/http-handshake.response"));
-    client.set_identity(Identity::Account {
+    client.set_identity(git_sec::Identity::Account {
         username: "user".into(),
         password: "password".into(),
     })?;

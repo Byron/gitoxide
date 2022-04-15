@@ -29,19 +29,6 @@ pub enum MessageKind {
     Text(&'static [u8]),
 }
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-/// An identity for use when authenticating the transport layer.
-pub enum Identity {
-    /// An account based identity
-    Account {
-        /// The user's name
-        username: String,
-        /// The user's password
-        password: String,
-    },
-}
-
 pub(crate) mod connect {
     use quick_error::quick_error;
     quick_error! {

@@ -2,10 +2,7 @@ use std::ops::{Deref, DerefMut};
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 use crate::client::{MessageKind, RequestWriter, WriteMode};
-use crate::{
-    client::{Error, Identity},
-    Protocol,
-};
+use crate::{client::Error, Protocol};
 
 /// This trait represents all transport related functions that don't require any input/output to be done which helps
 /// implementation to share more code across blocking and async programs.
@@ -16,7 +13,7 @@ pub trait TransportWithoutIO {
     /// of the identity in order to mark it as invalid. Otherwise the user might have difficulty updating obsolete
     /// credentials.
     /// Please note that most transport layers are unauthenticated and thus return [an error][Error::AuthenticationUnsupported] here.
-    fn set_identity(&mut self, _identity: Identity) -> Result<(), Error> {
+    fn set_identity(&mut self, _identity: git_sec::Identity) -> Result<(), Error> {
         Err(Error::AuthenticationUnsupported)
     }
     /// Get a writer for sending data and obtaining the response. It can be configured in various ways
@@ -53,7 +50,7 @@ pub trait TransportWithoutIO {
 
 // Would be nice if the box implementation could auto-forward to all implemented traits.
 impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for Box<T> {
-    fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
+    fn set_identity(&mut self, identity: git_sec::Identity) -> Result<(), Error> {
         self.deref_mut().set_identity(identity)
     }
 
@@ -76,7 +73,7 @@ impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for Box<T> {
 }
 
 impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for &mut T {
-    fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
+    fn set_identity(&mut self, identity: git_sec::Identity) -> Result<(), Error> {
         self.deref_mut().set_identity(identity)
     }
 
