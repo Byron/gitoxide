@@ -52,8 +52,8 @@ pub mod identity {
         use std::borrow::Cow;
         use std::path::Path;
 
-        fn err(msg: &str) -> std::io::Error {
-            std::io::Error::new(std::io::ErrorKind::Other, msg)
+        fn err(msg: impl Into<String>) -> std::io::Error {
+            std::io::Error::new(std::io::ErrorKind::Other, msg.into())
         }
 
         pub fn is_path_owned_by_current_user(path: Cow<'_, Path>) -> std::io::Result<bool> {
@@ -75,14 +75,15 @@ pub mod identity {
                     .map_err(|_| err("Failed to open process token"))?;
 
                 let mut len = 0_u32;
-                if Security::GetTokenInformation(&handle, Security::TokenUser, std::ptr::null_mut(), 0, &mut len)
+                if !Security::GetTokenInformation(handle, Security::TokenUser, std::ptr::null_mut(), 0, &mut len)
                     .as_bool()
                 {
-                    let mut token_user = Security::TOKEN_USER::default();
+                    let mut info_buf = Vec::<u8>::new();
+                    info_buf.reserve_exact(len as usize);
                     if Security::GetTokenInformation(
-                        &handle,
+                        handle,
                         Security::TokenUser,
-                        &mut token_user as *mut _ as *mut std::ffi::c_void,
+                        info_buf.as_mut_ptr() as *mut std::ffi::c_void,
                         len,
                         &mut len,
                     )
@@ -91,38 +92,36 @@ pub mod identity {
                         // NOTE: we avoid to copy the sid or cache it in any way for now, even though it should be possible
                         //       with a custom allocation/vec/box and it's just very raw. Can the `windows` crate do better?
                         //       When/If yes, then let's improve this.
-                        if Security::IsValidSid(token_user.User.Sid).as_bool() {
-                            use std::os::windows::ffi::OsStrExt;
-                            let mut wide_path: Vec<_> = path.as_ref().as_os_str().encode_wide().collect();
-                            // err = GetNamedSecurityInfoW(wpath, SE_FILE_OBJECT,
-                            //                             OWNER_SECURITY_INFORMATION |
-                            //                                 DACL_SECURITY_INFORMATION,
-                            //                             &sid, NULL, NULL, NULL, &descriptor);
+                        //       It should however be possible to create strings from SIDs, check this once more.
+                        let info: *const Security::TOKEN_USER = std::mem::transmute(info_buf.as_ptr());
+                        if Security::IsValidSid((*info).User.Sid).as_bool() {
+                            let wide_path = to_wide_path(&path);
                             let mut path_sid = PSID::default();
                             let res = Security::Authorization::GetNamedSecurityInfoW(
-                                windows::core::PCWSTR(wide_path.as_mut_ptr()),
+                                windows::core::PCWSTR(wide_path.as_ptr()),
                                 SE_FILE_OBJECT,
                                 Security::OWNER_SECURITY_INFORMATION | Security::DACL_SECURITY_INFORMATION,
-                                &mut path_sid,
+                                &mut path_sid as *mut _,
                                 std::ptr::null_mut(),
                                 std::ptr::null_mut(),
                                 std::ptr::null_mut(),
-                                &mut descriptor,
+                                &mut descriptor as *mut _,
                             );
 
                             if res == ERROR_SUCCESS.0 && Security::IsValidSid(path_sid).as_bool() {
-                                is_owned = Security::EqualSid(path_sid, token_user.User.Sid).as_bool();
+                                is_owned = Security::EqualSid(path_sid, (*info).User.Sid).as_bool();
+                                dbg!(is_owned, path.as_ref());
                             } else {
-                                err_msg = "couldn't get owner for path or it wasn't valid".into();
+                                err_msg = format!("couldn't get owner for path or it wasn't valid: {}", res).into();
                             }
                         } else {
-                            err_msg = "owner id of current process wasn't set or valid".into();
+                            err_msg = String::from("owner id of current process wasn't set or valid").into();
                         }
                     } else {
-                        err_msg = "Could not get information about the token user".into();
+                        err_msg = String::from("Could not get information about the token user").into();
                     }
                 } else {
-                    err_msg = "Could not get token information for length of token user".into();
+                    err_msg = String::from("Could not get token information for length of token user").into();
                 }
                 CloseHandle(handle);
                 if !descriptor.is_invalid() {
@@ -130,6 +129,13 @@ pub mod identity {
                 }
             }
             err_msg.map(|msg| Err(err(msg))).unwrap_or(Ok(is_owned))
+        }
+
+        fn to_wide_path(path: &Path) -> Vec<u16> {
+            use std::os::windows::ffi::OsStrExt;
+            let mut wide_path: Vec<_> = path.as_os_str().encode_wide().collect();
+            wide_path.push(0);
+            wide_path
         }
     }
 }
