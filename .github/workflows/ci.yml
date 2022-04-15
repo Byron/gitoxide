@@ -47,7 +47,7 @@ jobs:
         with:
           command: check
           args: --all --bins --tests --examples
-      - run: git lfs fetch && git lfs checkout && cargo test --package git-ref -- --nocapture
+      - run: git lfs fetch && git lfs checkout && find git-ref/tests/fixtures/generated-archives/ -type f && cat git-ref/tests/fixtures/generated-archives/make_repository_with_lots_of_packed_refs.tar.xz && cargo test --package git-ref -- --nocapture
       - name: "Test (crossterm)"
         uses: actions-rs/cargo@v1
         with:
