@@ -27,6 +27,14 @@ git commit -m 3 3
 # sed installed.  
 sed=$(which gsed sed | head -1 || true)
 
+# GNU sed recognizes long arguments, BSD sed does not
+${sed} --version 2&>/dev/null && fail=false || fail=true
+if [ "${fail}" = "true" ]; then
+  echo "GNU sed is required for this test, but was not found"
+  exit 1
+fi
+unset fail
+
 # NOTE: Starting with git 2.35.0 --preserve-merges was renamed to --rebase-merges
 # however --preserve-merges first appeared in git 2.18.  That should cover most use cases.
 EDITOR="${sed} -i.bak -z 's/pick/edit/2'" git rebase --rebase-merges --interactive HEAD~2
