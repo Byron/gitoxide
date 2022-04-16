@@ -86,6 +86,8 @@ fn git_program() -> &'static str {
     "git"
 }
 
+// TODO(sec): reimplement helper execution so it won't use the `git credential` anymore to allow enforcing our own security model.
+//            Currently we support more flexible configuration than downright not working at all.
 /// Call the `git` credentials helper program performing the given `action`.
 ///
 /// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
