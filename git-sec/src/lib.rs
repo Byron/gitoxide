@@ -57,77 +57,52 @@ pub mod identity {
         }
 
         pub fn is_path_owned_by_current_user(path: Cow<'_, Path>) -> std::io::Result<bool> {
-            use windows::Win32::{
-                Foundation::{CloseHandle, ERROR_SUCCESS, HANDLE, PSID},
-                Security,
-                Security::Authorization::SE_FILE_OBJECT,
-                System::Threading,
+            use windows::{
+                core::PCWSTR,
+                Win32::{
+                    Foundation::{BOOL, ERROR_SUCCESS, HANDLE, PSID},
+                    Security::{
+                        Authorization::{GetNamedSecurityInfoW, SE_FILE_OBJECT},
+                        CheckTokenMembershipEx, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
+                    },
+                    System::Memory::LocalFree,
+                },
             };
-            let mut handle = HANDLE::default();
-            let mut descriptor = Security::PSECURITY_DESCRIPTOR::default();
+
             let mut err_msg = None;
             let mut is_owned = false;
 
             #[allow(unsafe_code)]
             unsafe {
-                Threading::OpenProcessToken(Threading::GetCurrentProcess(), Security::TOKEN_QUERY, &mut handle)
-                    .ok()
-                    .map_err(|_| err("Failed to open process token"))?;
+                let mut psid = PSID::default();
+                let mut pdescriptor = PSECURITY_DESCRIPTOR::default();
+                let wpath = to_wide_path(&path);
 
-                let mut len = 0_u32;
-                if !Security::GetTokenInformation(handle, Security::TokenUser, std::ptr::null_mut(), 0, &mut len)
-                    .as_bool()
-                {
-                    let mut info_buf = Vec::<u8>::new();
-                    info_buf.reserve_exact(len as usize);
-                    if Security::GetTokenInformation(
-                        handle,
-                        Security::TokenUser,
-                        info_buf.as_mut_ptr() as *mut std::ffi::c_void,
-                        len,
-                        &mut len,
-                    )
-                    .as_bool()
-                    {
-                        // NOTE: we avoid to copy the sid or cache it in any way for now, even though it should be possible
-                        //       with a custom allocation/vec/box and it's just very raw. Can the `windows` crate do better?
-                        //       When/If yes, then let's improve this.
-                        //       It should however be possible to create strings from SIDs, check this once more.
-                        let info: *const Security::TOKEN_USER = std::mem::transmute(info_buf.as_ptr());
-                        if Security::IsValidSid((*info).User.Sid).as_bool() {
-                            let wide_path = to_wide_path(&path);
-                            let mut path_sid = PSID::default();
-                            let res = Security::Authorization::GetNamedSecurityInfoW(
-                                windows::core::PCWSTR(wide_path.as_ptr()),
-                                SE_FILE_OBJECT,
-                                Security::OWNER_SECURITY_INFORMATION | Security::DACL_SECURITY_INFORMATION,
-                                &mut path_sid as *mut _,
-                                std::ptr::null_mut(),
-                                std::ptr::null_mut(),
-                                std::ptr::null_mut(),
-                                &mut descriptor as *mut _,
-                            );
+                let result = GetNamedSecurityInfoW(
+                    PCWSTR(wpath.as_ptr()),
+                    SE_FILE_OBJECT,
+                    OWNER_SECURITY_INFORMATION,
+                    &mut psid,
+                    std::ptr::null_mut(),
+                    std::ptr::null_mut(),
+                    std::ptr::null_mut(),
+                    &mut pdescriptor,
+                );
 
-                            if res == ERROR_SUCCESS.0 && Security::IsValidSid(path_sid).as_bool() {
-                                is_owned = Security::EqualSid(path_sid, (*info).User.Sid).as_bool();
-                                dbg!(is_owned, path.as_ref());
-                            } else {
-                                err_msg = format!("couldn't get owner for path or it wasn't valid: {}", res).into();
-                            }
-                        } else {
-                            err_msg = String::from("owner id of current process wasn't set or valid").into();
-                        }
+                if result == ERROR_SUCCESS.0 {
+                    let mut is_member = BOOL(0);
+                    if CheckTokenMembershipEx(HANDLE::default(), psid, 0, &mut is_member).as_bool() {
+                        is_owned = is_member.as_bool();
                     } else {
-                        err_msg = String::from("Could not get information about the token user").into();
+                        err_msg = String::from("Could not check token membership").into();
                     }
                 } else {
-                    err_msg = String::from("Could not get token information for length of token user").into();
+                    err_msg = format!("Could not get security information for path with err: {}", result).into();
                 }
-                CloseHandle(handle);
-                if !descriptor.is_invalid() {
-                    windows::core::heap_free(descriptor.0);
-                }
+
+                LocalFree(pdescriptor.0 as isize);
             }
+
             err_msg.map(|msg| Err(err(msg))).unwrap_or(Ok(is_owned))
         }
 

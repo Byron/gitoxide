@@ -40,8 +40,6 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run:
           brew install tree openssl
-      - run: cargo test --package git-sec
-        if: startsWith(matrix.os, 'windows')
       - name: "cargo check default features"
         if: startsWith(matrix.os, 'windows')
         uses: actions-rs/cargo@v1
