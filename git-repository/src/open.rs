@@ -125,13 +125,14 @@ impl crate::ThreadSafeRepository {
             replacement_objects,
         }: Options,
     ) -> Result<Self, Error> {
-        let mut config = crate::config::Cache::new(&git_dir)?;
+        let config = crate::config::Cache::new(&git_dir)?;
         match worktree_dir {
             None if !config.is_bare => {
                 worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());
             }
             Some(_) => {
-                config.is_bare = false;
+                // note that we might be bare even with a worktree directory - work trees don't have to be
+                // the parent of a non-bare repository.
             }
             None => {}
         }

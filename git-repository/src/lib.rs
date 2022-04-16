@@ -146,7 +146,6 @@ pub use git_odb as odb;
 pub use git_protocol as protocol;
 pub use git_ref as refs;
 pub use git_revision as revision;
-#[cfg(all(feature = "unstable", feature = "git-sec"))]
 pub use git_sec as sec;
 #[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
@@ -185,7 +184,7 @@ pub(crate) type Config = OwnShared<git_config::file::GitConfig<'static>>;
 /// A repository path which either points to a work tree or the `.git` repository itself.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Path {
-    /// The currently checked out or nascent work tree of a git repositore
+    /// The currently checked out or nascent work tree of a git repository
     WorkTree(PathBuf),
     /// The git repository itself
     Repository(PathBuf),
