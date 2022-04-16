@@ -1,9 +1,7 @@
 #!/bin/bash
 set -eu -o pipefail
 
-
 git init -q
-git config commit.gpgsign false
 git config core.autocrlf false
 git config core.ignorecase false
 

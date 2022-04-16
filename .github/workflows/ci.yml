@@ -9,31 +9,25 @@ on:
 
 jobs:
   test:
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: Swatinem/rust-cache@v1
-    - name: Setup dependencies (ubuntu)
-      if: startsWith(matrix.os, 'ubuntu')
+    - name: Setup dependencies
       run:
         sudo apt-get install tree
-    - name: Setup dependencies (macos)
-      if: startsWith(matrix.os, 'macos')
-      run:
-        brew install tree openssl gnu-sed
     - name: test
       env:
         CI: true
       run: make tests
 
-  build-and-test-on-windows:
-    name: Windows
-    runs-on: windows-2019
+  test-fast:
+    strategy:
+      matrix:
+        os:
+          - windows-2019
+          - macos-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
@@ -42,19 +36,28 @@ jobs:
           toolchain: stable
           override: true
       - uses: Swatinem/rust-cache@v1
-      - name: "Check default features build on windows"
+      - name: Setup dependencies (macos)
+        if: startsWith(matrix.os, 'macos')
+        run:
+          brew install tree openssl gnu-sed
+      - name: "cargo check default features"
+        if: startsWith(matrix.os, 'windows')
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --all --bins --tests --examples
-      - name: "Test (crossterm)"
-        uses: actions-rs/cargo@v1
+          args: --all --bins --examples
+      - run: git lfs fetch && git lfs checkout
+      - uses: taiki-e/install-action@v1
         with:
-          command: test
-          args: --all
+          tool: nextest
+          version: 0.9
+      - name: "Test (nextest)"
+        run: cargo nextest run --all
       - name: "Install prerequisites"
         run: vcpkg install  zlib:x64-windows-static-md
+        if: startsWith(matrix.os, 'windows')
       - name: "Installation from crates.io"
+        if: startsWith(matrix.os, 'windows')
         uses: actions-rs/cargo@v1
         with:
           command: install
