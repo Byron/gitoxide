@@ -1,3 +1,5 @@
+use std::path::Path;
+
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 /// An account based identity
@@ -8,23 +10,19 @@ pub struct Account {
     pub password: String,
 }
 
-use std::borrow::Cow;
-use std::path::Path;
-
 /// Returns true if the given `path` is owned by the user who is executing the current process.
 ///
 /// Note that this method is very specific to avoid having to deal with any operating system types.
-pub fn is_path_owned_by_current_user(path: Cow<'_, Path>) -> std::io::Result<bool> {
+pub fn is_path_owned_by_current_user(path: impl AsRef<Path>) -> std::io::Result<bool> {
     impl_::is_path_owned_by_current_user(path)
 }
 
 #[cfg(not(windows))]
 mod impl_ {
-    use std::borrow::Cow;
     use std::path::Path;
 
-    pub fn is_path_owned_by_current_user(path: Cow<'_, Path>) -> std::io::Result<bool> {
-        fn from_path(path: Cow<'_, Path>) -> std::io::Result<u32> {
+    pub fn is_path_owned_by_current_user(path: impl AsRef<Path>) -> std::io::Result<bool> {
+        fn from_path(path: impl AsRef<Path>) -> std::io::Result<u32> {
             use std::os::unix::fs::MetadataExt;
             let meta = std::fs::symlink_metadata(path)?;
             Ok(meta.uid())
@@ -43,14 +41,13 @@ mod impl_ {
 
 #[cfg(windows)]
 mod impl_ {
-    use std::borrow::Cow;
     use std::path::Path;
 
     fn err(msg: impl Into<String>) -> std::io::Error {
         std::io::Error::new(std::io::ErrorKind::Other, msg.into())
     }
 
-    pub fn is_path_owned_by_current_user(path: Cow<'_, Path>) -> std::io::Result<bool> {
+    pub fn is_path_owned_by_current_user(path: impl AsRef<Path>) -> std::io::Result<bool> {
         use windows::{
             core::PCWSTR,
             Win32::{
@@ -100,9 +97,9 @@ mod impl_ {
         err_msg.map(|msg| Err(err(msg))).unwrap_or(Ok(is_owned))
     }
 
-    fn to_wide_path(path: &Path) -> Vec<u16> {
+    fn to_wide_path(path: impl AsRef<Path>) -> Vec<u16> {
         use std::os::windows::ffi::OsStrExt;
-        let mut wide_path: Vec<_> = path.as_os_str().encode_wide().collect();
+        let mut wide_path: Vec<_> = path.as_ref().as_os_str().encode_wide().collect();
         wide_path.push(0);
         wide_path
     }

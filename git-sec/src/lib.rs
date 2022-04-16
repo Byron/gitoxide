@@ -1,6 +1,48 @@
 #![deny(unsafe_code, rust_2018_idioms, missing_docs)]
 //! A shared trust model for `gitoxide` crates.
 
+use std::path::Path;
+
+/// A way to specify how 'safe' we feel about a resource, typically about a git repository.
+pub enum Trust {
+    /// We have no doubts that this resource means no harm and it can be used at will.
+    Full,
+    /// Caution is warranted when using the resource.
+    Reduced,
+}
+
+impl Trust {
+    /// Derive `Full` trust if `path` is owned by the user executing the current process, or `Reduced` trust otherwise.
+    pub fn from_path_ownership(path: impl AsRef<Path>) -> std::io::Result<Self> {
+        Ok(identity::is_path_owned_by_current_user(path.as_ref())?
+            .then(|| Trust::Full)
+            .unwrap_or(Trust::Reduced))
+    }
+}
+
+///
+pub mod trust {
+    use crate::Trust;
+
+    /// Associate instructions for how to deal with various `Trust` levels as they are encountered in the wild.
+    pub struct Mapping<T> {
+        /// The value for fully trusted resources.
+        pub full: T,
+        /// The value for resources with reduced trust.
+        pub reduced: T,
+    }
+
+    impl<T> Mapping<T> {
+        /// Obtain the value for the given trust `level`.
+        pub fn by_trust(&self, level: &Trust) -> &T {
+            match level {
+                Trust::Full => &self.full,
+                Trust::Reduced => &self.reduced,
+            }
+        }
+    }
+}
+
 ///
 pub mod path {
     /// Permissions related to _locations_ to executables, resources or destinations for operations.
