@@ -2,9 +2,11 @@
 //! A shared trust model for `gitoxide` crates.
 
 use std::marker::PhantomData;
+use std::ops::Deref;
 use std::path::Path;
 
 /// A way to specify how 'safe' we feel about a resource, typically about a git repository.
+#[derive(Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Debug)]
 pub enum Trust {
     /// We have no doubts that this resource means no harm and it can be used at will.
     Full,
@@ -25,6 +27,12 @@ impl Trust {
 pub mod trust {
     use crate::Trust;
 
+    /// A trait to help creating default values based on a trust level.
+    pub trait DefaultForLevel {
+        /// Produce a default value for the given trust `level`.
+        fn default_for_level(level: Trust) -> Self;
+    }
+
     /// Associate instructions for how to deal with various `Trust` levels as they are encountered in the wild.
     pub struct Mapping<T> {
         /// The value for fully trusted resources.
@@ -33,12 +41,32 @@ pub mod trust {
         pub reduced: T,
     }
 
+    impl<T> Default for Mapping<T>
+    where
+        T: DefaultForLevel,
+    {
+        fn default() -> Self {
+            Mapping {
+                full: T::default_for_level(Trust::Full),
+                reduced: T::default_for_level(Trust::Reduced),
+            }
+        }
+    }
+
     impl<T> Mapping<T> {
         /// Obtain the value for the given trust `level`.
-        pub fn by_trust(&self, level: &Trust) -> &T {
+        pub fn by_trust(&self, level: Trust) -> &T {
             match level {
                 Trust::Full => &self.full,
                 Trust::Reduced => &self.reduced,
+            }
+        }
+
+        /// Obtain the contained permission for the given `level` once.
+        pub fn into_permission(self, level: Trust) -> T {
+            match level {
+                Trust::Full => self.full,
+                Trust::Reduced => self.reduced,
             }
         }
     }
@@ -46,7 +74,7 @@ pub mod trust {
 
 ///
 pub mod permission {
-    use crate::{Access, Permission};
+    use crate::Access;
 
     /// A marker trait to signal tags for permissions.
     pub trait Tag {}
@@ -56,14 +84,14 @@ pub mod permission {
     impl Tag for Config {}
 
     /// A tag indicating that a permission is applying to the resource itself.
-    pub struct File;
-    impl Tag for File {}
+    pub struct Resource;
+    impl Tag for Resource {}
 
-    impl Access<Config> {
+    impl<P> Access<Config, P> {
         /// Create a permission for values contained in git configuration files.
         ///
         /// This applies permissions to values contained inside of these files.
-        pub fn config(permission: Permission) -> Self {
+        pub fn config(permission: P) -> Self {
             Access {
                 permission,
                 _data: Default::default(),
@@ -71,11 +99,12 @@ pub mod permission {
         }
     }
 
-    impl Access<File> {
-        /// Create a permission a file itself.
+    impl<P> Access<Resource, P> {
+        /// Create a permission a file or directory itself.
         ///
-        /// This applies permissions to a configuration file itself and whether it can be used at all.
-        pub fn resource(permission: Permission) -> Self {
+        /// This applies permissions to a configuration file itself and whether it can be used at all, or to a directory
+        /// to read from or write to.
+        pub fn resource(permission: P) -> Self {
             Access {
                 permission,
                 _data: Default::default(),
@@ -84,13 +113,22 @@ pub mod permission {
     }
 }
 
-/// A container to define tagged access permissions
-pub struct Access<T: permission::Tag> {
+/// A container to define tagged access permissions, rendering the permission read-only.
+pub struct Access<T: permission::Tag, P> {
     /// The access permission itself.
-    pub permission: Permission,
+    permission: P,
     _data: PhantomData<T>,
 }
 
+impl<T: permission::Tag, P> Deref for Access<T, P> {
+    type Target = P;
+
+    fn deref(&self) -> &Self::Target {
+        &self.permission
+    }
+}
+
+// TODO: this probably belongs to `git-config` and can be simplified then as AllowIfOwned and Deny can probably be merged.
 /// Permissions related to resources at _locations_, like configuration files, executables or destinations for operations.
 ///
 /// Note that typically the permission refers to the place where the _location_ is configured, not to the _location_ itself.

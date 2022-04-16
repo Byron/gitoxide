@@ -200,6 +200,7 @@ pub mod id;
 pub mod object;
 pub mod reference;
 mod repository;
+pub use repository::{permissions, permissions::Permissions};
 pub mod tag;
 
 /// The kind of `Repository`
