@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
+use crate::Permissions;
 use git_features::threading::OwnShared;
+use git_sec::Trust;
 
 /// A way to configure the usage of replacement objects, see `git replace`.
 pub enum ReplacementObjects {
@@ -92,6 +94,23 @@ impl Options {
     }
 }
 
+impl git_sec::trust::DefaultForLevel for Options {
+    fn default_for_level(level: Trust) -> Self {
+        match level {
+            git_sec::Trust::Full => Options {
+                object_store_slots: Default::default(),
+                replacement_objects: Default::default(),
+                permissions: Permissions::all(),
+            },
+            git_sec::Trust::Reduced => Options {
+                object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
+                replacement_objects: ReplacementObjects::Disable, // don't be tricked into seeing manufactured objects
+                permissions: Default::default(),
+            },
+        }
+    }
+}
+
 /// The error returned by [`crate::open()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -112,8 +131,9 @@ impl crate::ThreadSafeRepository {
         Self::open_opts(path, Options::default())
     }
 
-    /// Open a git repository at the given `path`, possibly expanding it to `path/.git` if `path` is a work tree dir.
-    fn open_opts(path: impl Into<std::path::PathBuf>, options: Options) -> Result<Self, Error> {
+    /// Open a git repository at the given `path`, possibly expanding it to `path/.git` if `path` is a work tree dir, and use
+    /// `options` for fine-grained control.
+    pub fn open_opts(path: impl Into<std::path::PathBuf>, options: Options) -> Result<Self, Error> {
         let path = path.into();
         let (path, kind) = match crate::path::is::git(&path) {
             Ok(kind) => (path, kind),

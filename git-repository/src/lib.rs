@@ -283,7 +283,8 @@ pub mod rev_parse {
 
 ///
 pub mod init {
-    use std::{convert::TryInto, path::Path};
+    use crate::ThreadSafeRepository;
+    use std::path::Path;
 
     /// The error returned by [`crate::init()`].
     #[derive(Debug, thiserror::Error)]
@@ -301,17 +302,23 @@ pub mod init {
         /// Fails without action if there is already a `.git` repository inside of `directory`, but
         /// won't mind if the `directory` otherwise is non-empty.
         pub fn init(directory: impl AsRef<Path>, kind: crate::Kind) -> Result<Self, Error> {
+            use git_sec::trust::DefaultForLevel;
             let path = crate::path::create::into(directory.as_ref(), kind)?;
-            Ok(path.try_into()?)
+            let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
+            ThreadSafeRepository::open_from_paths(
+                git_dir,
+                worktree_dir,
+                crate::open::Options::default_for_level(git_sec::Trust::Full),
+            )
+            .map_err(Into::into)
         }
     }
 }
 
 ///
 pub mod discover {
-    use std::{convert::TryInto, path::Path};
-
-    use crate::path;
+    use crate::{path, ThreadSafeRepository};
+    use std::path::Path;
 
     /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]
@@ -323,11 +330,23 @@ pub mod discover {
         Open(#[from] crate::open::Error),
     }
 
-    impl crate::ThreadSafeRepository {
+    impl ThreadSafeRepository {
         /// Try to open a git repository in `directory` and search upwards through its parents until one is found.
         pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
-            let path = path::discover(directory)?;
-            Ok(path.try_into()?)
+            Self::discover_opts(directory, Default::default(), Default::default())
+        }
+
+        /// Try to open a git repository in `directory` and search upwards through its parents until one is found,
+        /// while applying `options`. Then use the `trust_map` to determine which of our own repository options to use
+        /// for instantiations.
+        pub fn discover_opts(
+            directory: impl AsRef<Path>,
+            options: crate::path::discover::Options,
+            trust_map: git_sec::trust::Mapping<crate::open::Options>,
+        ) -> Result<Self, Error> {
+            let (path, trust) = path::discover_opts(directory, options)?;
+            let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
+            Self::open_from_paths(git_dir, worktree_dir, trust_map.into_value_by_level(trust)).map_err(Into::into)
         }
     }
 }

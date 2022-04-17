@@ -8,10 +8,35 @@ pub enum Error {
     InaccessibleDirectory { path: PathBuf },
     #[error("Could find a git repository in '{}' or in any of its parents", .path.display())]
     NoGitRepository { path: PathBuf },
+    #[error("Could not determine trust level for path '{}'.", .path.display())]
+    CheckTrust {
+        path: PathBuf,
+        #[source]
+        err: std::io::Error,
+    },
+}
+
+/// Options to help guide the [discovery][function::discover()] of repositories, along with their options
+/// when instantiated.
+pub struct Options {
+    /// When discovering a repository, assure it has at least this trust level or ignore it otherwise.
+    ///
+    /// This defaults to [`Reduced`][git_sec::Trust::Reduced] as our default settings are geared towards avoiding abuse.
+    /// Set it to `Full` to only see repositories that [are owned by the current user][git_sec::Trust::from_path_ownership()].
+    pub required_trust: git_sec::Trust,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            required_trust: git_sec::Trust::Reduced,
+        }
+    }
 }
 
 pub(crate) mod function {
-    use super::Error;
+    use super::{Error, Options};
+    use git_sec::Trust;
     use std::{
         borrow::Cow,
         path::{Component, Path},
@@ -19,10 +44,15 @@ pub(crate) mod function {
 
     use crate::path;
 
-    /// Find the location of the git repository directly in `directory` or in any of its parent directories.
+    /// Find the location of the git repository directly in `directory` or in any of its parent directories and provide
+    /// an associated Trust level by looking at the git directory's ownership, and control discovery using `options`.
     ///
     /// Fail if no valid-looking git repository could be found.
-    pub fn discover(directory: impl AsRef<Path>) -> Result<crate::Path, Error> {
+    // TODO: tests for trust-based discovery
+    pub fn discover_opts(
+        directory: impl AsRef<Path>,
+        Options { required_trust }: Options,
+    ) -> Result<(crate::Path, git_sec::Trust), Error> {
         // Canonicalize the path so that `Path::parent` _actually_ gives
         // us the parent directory. (`Path::parent` just strips off the last
         // path component, which means it will not do what you expect when
@@ -36,17 +66,40 @@ pub(crate) mod function {
             });
         }
 
-        let mut cursor: &Path = &directory;
-        loop {
-            if let Ok(kind) = path::is::git(cursor) {
-                break Ok(crate::Path::from_dot_git_dir(cursor, kind));
-            }
-            let git_dir = cursor.join(".git");
-            if let Ok(kind) = path::is::git(&git_dir) {
-                break Ok(crate::Path::from_dot_git_dir(git_dir, kind));
+        let filter_by_trust =
+            |x: &std::path::Path, kind: crate::path::Kind| -> Result<Option<(crate::Path, git_sec::Trust)>, Error> {
+                let trust =
+                    git_sec::Trust::from_path_ownership(x).map_err(|err| Error::CheckTrust { path: x.into(), err })?;
+                Ok((trust >= required_trust).then(|| (crate::Path::from_dot_git_dir(x, kind), trust)))
+            };
+
+        let mut cursor = directory.clone();
+        'outer: loop {
+            for append_dot_git in &[false, true] {
+                if *append_dot_git {
+                    cursor = cursor.into_owned().into();
+                    if let Cow::Owned(p) = &mut cursor {
+                        p.push(".git");
+                    }
+                }
+                if let Ok(kind) = path::is::git(&cursor) {
+                    match filter_by_trust(&cursor, kind)? {
+                        Some(res) => break 'outer Ok(res),
+                        None => {
+                            break 'outer Err(Error::NoGitRepository {
+                                path: directory.into_owned(),
+                            })
+                        }
+                    }
+                }
+                if *append_dot_git {
+                    if let Cow::Owned(p) = &mut cursor {
+                        p.pop();
+                    }
+                }
             }
             match cursor.parent() {
-                Some(parent) => cursor = parent,
+                Some(parent) => cursor = parent.to_owned().into(),
                 None => {
                     break Err(Error::NoGitRepository {
                         path: directory.into_owned(),
@@ -54,6 +107,14 @@ pub(crate) mod function {
                 }
             }
         }
+    }
+
+    /// Find the location of the git repository directly in `directory` or in any of its parent directories, and provide
+    /// the trust level derived from Path ownership.
+    ///
+    /// Fail if no valid-looking git repository could be found.
+    pub fn discover(directory: impl AsRef<Path>) -> Result<(crate::Path, Trust), Error> {
+        discover_opts(directory, Default::default())
     }
 
     fn maybe_canonicalize(path: &Path) -> std::io::Result<Cow<'_, Path>> {
