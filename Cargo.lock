@@ -1459,6 +1459,7 @@ dependencies = [
 name = "git-sec"
 version = "0.1.0"
 dependencies = [
+ "bitflags",
  "libc",
  "serde",
  "tempfile",

@@ -136,7 +136,7 @@ impl crate::ThreadSafeRepository {
             permissions,
         }: Options,
     ) -> Result<Self, Error> {
-        if !permissions.git_dir.read_write {
+        if *permissions.git_dir != git_sec::ReadWrite::all() {
             // TODO: respect `save.directory`, which needs more support from git-config to do properly.
             return Err(Error::UnsafeGitDir { path: git_dir });
         }

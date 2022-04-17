@@ -113,6 +113,17 @@ pub mod permission {
     }
 }
 
+bitflags::bitflags! {
+    /// Whether something can be read or written.
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub struct ReadWrite: u8 {
+        /// The item can be read.
+        const READ = 1 << 0;
+        /// The item can be written
+        const WRITE = 1 << 1;
+    }
+}
+
 /// A container to define tagged access permissions, rendering the permission read-only.
 pub struct Access<T: permission::Tag, P> {
     /// The access permission itself.

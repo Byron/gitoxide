@@ -44,17 +44,12 @@ pub mod permissions {
     use git_sec::permission::Resource;
     use git_sec::{Access, Trust};
 
-    /// Permissions for the `.git` directory containing the repository.
-    pub struct GitDir {
-        /// If set, we can both read and write a git repository's git dir and by relation, its work tree(s).
-        /// Otherwise, the git-dir will be rejected and any open operation fails.
-        pub read_write: bool,
-    }
-
     /// Permissions associated with various resources of a git repository
     pub struct Permissions {
         /// Control how a git-dir can be used.
-        pub git_dir: Access<Resource, GitDir>,
+        ///
+        /// Note that a repository won't be usable at all unless read and write permissions are given.
+        pub git_dir: Access<Resource, git_sec::ReadWrite>,
     }
 
     impl Permissions {
@@ -62,7 +57,7 @@ pub mod permissions {
         /// thus refusing all operations in it.
         pub fn strict() -> Self {
             Permissions {
-                git_dir: Access::resource(GitDir { read_write: false }),
+                git_dir: Access::resource(git_sec::ReadWrite::empty()),
             }
         }
 
@@ -73,7 +68,7 @@ pub mod permissions {
         /// anything else that could cause us to write into unknown locations or use programs beyond our `PATH`.
         pub fn secure() -> Self {
             Permissions {
-                git_dir: Access::resource(GitDir { read_write: true }),
+                git_dir: Access::resource(git_sec::ReadWrite::all()),
             }
         }
 
@@ -81,7 +76,7 @@ pub mod permissions {
         /// does with owned repositories.
         pub fn all() -> Self {
             Permissions {
-                git_dir: Access::resource(GitDir { read_write: true }),
+                git_dir: Access::resource(git_sec::ReadWrite::all()),
             }
         }
     }
