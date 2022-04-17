@@ -32,7 +32,7 @@ pub struct Transport<H: Http> {
     http: H,
     service: Option<Service>,
     line_provider: Option<git_packetline::StreamingPeekableIter<H::ResponseBody>>,
-    identity: Option<client::Identity>,
+    identity: Option<git_sec::identity::Account>,
 }
 
 impl Transport<Impl> {
@@ -71,21 +71,17 @@ impl<H: Http> Transport<H> {
 
     #[allow(clippy::unnecessary_wraps, unknown_lints)]
     fn add_basic_auth_if_present(&self, headers: &mut Vec<Cow<'_, str>>) -> Result<(), client::Error> {
-        if let Some(identity) = &self.identity {
-            match identity {
-                client::Identity::Account { username, password } => {
-                    #[cfg(not(debug_assertions))]
-                    if self.url.starts_with("http://") {
-                        return Err(client::Error::AuthenticationRefused(
-                            "Will not send credentials in clear text over http",
-                        ));
-                    }
-                    headers.push(Cow::Owned(format!(
-                        "Authorization: Basic {}",
-                        base64::encode(format!("{}:{}", username, password))
-                    )))
-                }
+        if let Some(git_sec::identity::Account { username, password }) = &self.identity {
+            #[cfg(not(debug_assertions))]
+            if self.url.starts_with("http://") {
+                return Err(client::Error::AuthenticationRefused(
+                    "Will not send credentials in clear text over http",
+                ));
             }
+            headers.push(Cow::Owned(format!(
+                "Authorization: Basic {}",
+                base64::encode(format!("{}:{}", username, password))
+            )))
         }
         Ok(())
     }
@@ -100,7 +96,7 @@ fn append_url(base: &str, suffix: &str) -> String {
 }
 
 impl<H: Http> client::TransportWithoutIO for Transport<H> {
-    fn set_identity(&mut self, identity: client::Identity) -> Result<(), client::Error> {
+    fn set_identity(&mut self, identity: git_sec::identity::Account) -> Result<(), client::Error> {
         self.identity = Some(identity);
         Ok(())
     }

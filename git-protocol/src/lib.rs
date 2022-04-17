@@ -10,11 +10,10 @@
 #![deny(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 
+pub use git_credentials as credentials;
 /// A convenience export allowing users of git-protocol to use the transport layer without their own cargo dependency.
 pub use git_transport as transport;
 
-///
-pub mod credentials;
 ///
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub mod fetch;

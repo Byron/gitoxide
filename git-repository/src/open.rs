@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
+use crate::Permissions;
 use git_features::threading::OwnShared;
+use git_sec::Trust;
 
 /// A way to configure the usage of replacement objects, see `git replace`.
 pub enum ReplacementObjects {
@@ -61,6 +63,7 @@ impl ReplacementObjects {
 pub struct Options {
     object_store_slots: git_odb::store::init::Slots,
     replacement_objects: ReplacementObjects,
+    permissions: crate::Permissions,
 }
 
 impl Options {
@@ -78,9 +81,33 @@ impl Options {
         self
     }
 
+    // TODO: tests
+    /// Set the given permissions, which are typically derived by a `Trust` level.
+    pub fn permissions(mut self, permissions: crate::Permissions) -> Self {
+        self.permissions = permissions;
+        self
+    }
+
     /// Open a repository at `path` with the options set so far.
     pub fn open(self, path: impl Into<std::path::PathBuf>) -> Result<crate::ThreadSafeRepository, Error> {
         crate::ThreadSafeRepository::open_opts(path, self)
+    }
+}
+
+impl git_sec::trust::DefaultForLevel for Options {
+    fn default_for_level(level: Trust) -> Self {
+        match level {
+            git_sec::Trust::Full => Options {
+                object_store_slots: Default::default(),
+                replacement_objects: Default::default(),
+                permissions: Permissions::all(),
+            },
+            git_sec::Trust::Reduced => Options {
+                object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
+                replacement_objects: ReplacementObjects::Disable, // don't be tricked into seeing manufactured objects
+                permissions: Default::default(),
+            },
+        }
     }
 }
 
@@ -94,6 +121,8 @@ pub enum Error {
     NotARepository(#[from] crate::path::is::Error),
     #[error(transparent)]
     ObjectStoreInitialization(#[from] std::io::Error),
+    #[error("The git directory at '{}' is considered unsafe as it's not owned by the current user.", .path.display())]
+    UnsafeGitDir { path: std::path::PathBuf },
 }
 
 impl crate::ThreadSafeRepository {
@@ -102,8 +131,9 @@ impl crate::ThreadSafeRepository {
         Self::open_opts(path, Options::default())
     }
 
-    /// Open a git repository at the given `path`, possibly expanding it to `path/.git` if `path` is a work tree dir.
-    fn open_opts(path: impl Into<std::path::PathBuf>, options: Options) -> Result<Self, Error> {
+    /// Open a git repository at the given `path`, possibly expanding it to `path/.git` if `path` is a work tree dir, and use
+    /// `options` for fine-grained control.
+    pub fn open_opts(path: impl Into<std::path::PathBuf>, options: Options) -> Result<Self, Error> {
         let path = path.into();
         let (path, kind) = match crate::path::is::git(&path) {
             Ok(kind) => (path, kind),
@@ -123,15 +153,25 @@ impl crate::ThreadSafeRepository {
         Options {
             object_store_slots,
             replacement_objects,
+            permissions,
         }: Options,
     ) -> Result<Self, Error> {
-        let mut config = crate::config::Cache::new(&git_dir)?;
+        if *permissions.git_dir != git_sec::ReadWrite::all() {
+            // TODO: respect `save.directory`, which needs more support from git-config to do properly.
+            return Err(Error::UnsafeGitDir { path: git_dir });
+        }
+        // TODO: assure we handle the worktree-dir properly as we can have config per worktree with an extension.
+        //       This would be something read in later as have to first check for extensions. Also this means
+        //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
+        //       as it may have its own configuration. That's fine actually.
+        let config = crate::config::Cache::new(&git_dir)?;
         match worktree_dir {
             None if !config.is_bare => {
                 worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());
             }
             Some(_) => {
-                config.is_bare = false;
+                // note that we might be bare even with a worktree directory - work trees don't have to be
+                // the parent of a non-bare repository.
             }
             None => {}
         }

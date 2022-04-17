@@ -3,14 +3,13 @@ use std::{
     process::{Command, Stdio},
 };
 
-use git_transport::client;
 use quick_error::quick_error;
 
-/// The result used in [`helper()`].
+/// The result used in [`action()`].
 pub type Result = std::result::Result<Option<Outcome>, Error>;
 
 quick_error! {
-    /// The error used in the [credentials helper][helper()].
+    /// The error used in the [credentials helper][action()].
     #[derive(Debug)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -28,7 +27,7 @@ quick_error! {
     }
 }
 
-/// The action to perform by the credentials [`helper()`].
+/// The action to perform by the credentials [`action()`].
 #[derive(Clone, Debug)]
 pub enum Action<'a> {
     /// Provide credentials using the given repository URL (as &str) as context.
@@ -69,11 +68,11 @@ impl NextAction {
     }
 }
 
-/// The outcome of [`helper()`].
+/// The outcome of [`action()`].
 pub struct Outcome {
     /// The obtained identity.
-    pub identity: client::Identity,
-    /// A handle to the action to perform next using another call to [`helper()`].
+    pub identity: git_sec::identity::Account,
+    /// A handle to the action to perform next using another call to [`action()`].
     pub next: NextAction,
 }
 
@@ -87,11 +86,13 @@ fn git_program() -> &'static str {
     "git"
 }
 
+// TODO(sec): reimplement helper execution so it won't use the `git credential` anymore to allow enforcing our own security model.
+//            Currently we support more flexible configuration than downright not working at all.
 /// Call the `git` credentials helper program performing the given `action`.
 ///
 /// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
 /// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
-pub fn helper(action: Action<'_>) -> Result {
+pub fn action(action: Action<'_>) -> Result {
     let mut cmd = Command::new(git_program());
     cmd.arg("credential")
         .arg(action.as_str())
@@ -128,7 +129,7 @@ pub fn helper(action: Action<'_>) -> Result {
                 .map(|(_, n)| n.to_owned())
         };
         Ok(Some(Outcome {
-            identity: client::Identity::Account {
+            identity: git_sec::identity::Account {
                 username: find("username")?,
                 password: find("password")?,
             },
@@ -172,4 +173,71 @@ pub fn decode_message(mut input: impl io::Read) -> io::Result<Vec<(String, Strin
             }
         })
         .collect::<io::Result<Vec<_>>>()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    type Result = std::result::Result<(), Box<dyn std::error::Error>>;
+
+    mod encode_message {
+        use super::*;
+        use bstr::ByteSlice;
+
+        #[test]
+        fn from_url() -> super::Result {
+            let mut out = Vec::new();
+            encode_message("https://github.com/byron/gitoxide", &mut out)?;
+            assert_eq!(out.as_bstr(), b"url=https://github.com/byron/gitoxide\n\n".as_bstr());
+            Ok(())
+        }
+
+        mod invalid {
+            use super::*;
+            use std::io;
+
+            #[test]
+            fn contains_null() {
+                assert_eq!(
+                    encode_message("https://foo\u{0}", Vec::new()).err().map(|e| e.kind()),
+                    Some(io::ErrorKind::Other)
+                );
+            }
+            #[test]
+            fn contains_newline() {
+                assert_eq!(
+                    encode_message("https://foo\n", Vec::new()).err().map(|e| e.kind()),
+                    Some(io::ErrorKind::Other)
+                );
+            }
+        }
+    }
+
+    mod decode_message {
+        use super::*;
+
+        #[test]
+        fn typical_response() -> super::Result {
+            assert_eq!(
+                decode_message(
+                    "protocol=https
+host=example.com
+username=bob
+password=secr3t\n\n
+this=is-skipped-past-empty-line"
+                        .as_bytes()
+                )?,
+                vec![
+                    ("protocol", "https"),
+                    ("host", "example.com"),
+                    ("username", "bob"),
+                    ("password", "secr3t")
+                ]
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect::<Vec<_>>()
+            );
+            Ok(())
+        }
+    }
 }

@@ -5,6 +5,5 @@ pub fn fixture_bytes(path: &str) -> Vec<u8> {
         .expect("fixture to be present and readable")
 }
 
-mod credentials;
 mod fetch;
 mod remote_progress;

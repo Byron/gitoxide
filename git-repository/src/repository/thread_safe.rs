@@ -17,21 +17,6 @@ mod access {
     }
 }
 
-mod from_path {
-    use std::convert::TryFrom;
-
-    use crate::Path;
-
-    impl TryFrom<crate::Path> for crate::ThreadSafeRepository {
-        type Error = crate::open::Error;
-
-        fn try_from(value: Path) -> Result<Self, Self::Error> {
-            let (git_dir, worktree_dir) = value.into_repository_and_work_tree_directories();
-            crate::ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, Default::default())
-        }
-    }
-}
-
 mod location {
 
     impl crate::ThreadSafeRepository {
