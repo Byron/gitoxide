@@ -146,6 +146,8 @@ members = [
     "git-packetline",
     "git-mailmap",
     "git-note",
+    "git-lfs",
+    "git-rebase",
     "git-submodule",
     "git-transport",
     "git-protocol",

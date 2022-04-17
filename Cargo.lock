@@ -1224,6 +1224,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-lfs"
+version = "0.0.0"
+
+[[package]]
 name = "git-lock"
 version = "2.0.0"
 dependencies = [
@@ -1370,6 +1374,10 @@ dependencies = [
  "btoi",
  "quick-error",
 ]
+
+[[package]]
+name = "git-rebase"
+version = "0.0.0"
 
 [[package]]
 name = "git-ref"
