@@ -3,29 +3,28 @@
 
 use std::marker::PhantomData;
 use std::ops::Deref;
-use std::path::Path;
 
 /// A way to specify how 'safe' we feel about a resource, typically about a git repository.
 #[derive(Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Debug)]
 pub enum Trust {
-    /// We have no doubts that this resource means no harm and it can be used at will.
-    Full,
     /// Caution is warranted when using the resource.
     Reduced,
-}
-
-impl Trust {
-    /// Derive `Full` trust if `path` is owned by the user executing the current process, or `Reduced` trust otherwise.
-    pub fn from_path_ownership(path: impl AsRef<Path>) -> std::io::Result<Self> {
-        Ok(identity::is_path_owned_by_current_user(path.as_ref())?
-            .then(|| Trust::Full)
-            .unwrap_or(Trust::Reduced))
-    }
+    /// We have no doubts that this resource means no harm and it can be used at will.
+    Full,
 }
 
 ///
 pub mod trust {
     use crate::Trust;
+
+    impl Trust {
+        /// Derive `Full` trust if `path` is owned by the user executing the current process, or `Reduced` trust otherwise.
+        pub fn from_path_ownership(path: impl AsRef<std::path::Path>) -> std::io::Result<Self> {
+            Ok(crate::identity::is_path_owned_by_current_user(path.as_ref())?
+                .then(|| Trust::Full)
+                .unwrap_or(Trust::Reduced))
+        }
+    }
 
     /// A trait to help creating default values based on a trust level.
     pub trait DefaultForLevel {
@@ -55,15 +54,15 @@ pub mod trust {
 
     impl<T> Mapping<T> {
         /// Obtain the value for the given trust `level`.
-        pub fn by_trust(&self, level: Trust) -> &T {
+        pub fn by_level(&self, level: Trust) -> &T {
             match level {
                 Trust::Full => &self.full,
                 Trust::Reduced => &self.reduced,
             }
         }
 
-        /// Obtain the contained permission for the given `level` once.
-        pub fn into_permission(self, level: Trust) -> T {
+        /// Obtain the value for the given `level` once.
+        pub fn into_value_by_level(self, level: Trust) -> T {
             match level {
                 Trust::Full => self.full,
                 Trust::Reduced => self.reduced,
