@@ -311,14 +311,14 @@ pub mod init {
 pub mod discover {
     use std::{convert::TryInto, path::Path};
 
-    use crate::path::discover;
+    use crate::path;
 
     /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Discover(#[from] discover::existing::Error),
+        Discover(#[from] path::discover::Error),
         #[error(transparent)]
         Open(#[from] crate::open::Error),
     }
@@ -326,7 +326,7 @@ pub mod discover {
     impl crate::ThreadSafeRepository {
         /// Try to open a git repository in `directory` and search upwards through its parents until one is found.
         pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
-            let path = discover::existing(directory)?;
+            let path = path::discover(directory)?;
             Ok(path.try_into()?)
         }
     }

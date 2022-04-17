@@ -4,7 +4,10 @@ use crate::{Kind, Path};
 
 ///
 pub mod create;
+///
 pub mod discover;
+pub use discover::function::discover;
+///
 pub mod is;
 
 impl AsRef<std::path::Path> for Path {
