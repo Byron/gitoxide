@@ -326,21 +326,7 @@ impl<'event> GitConfig<'event> {
                 .multi_value::<values::Path>("include", None, "path")
                 .unwrap_or_default();
 
-            let section_headers_to_id: HashMap<_, _> = target_config
-                .section_headers
-                .values()
-                .zip(target_config.section_headers.keys())
-                .collect();
-
-            let mut include_if_sections = target_config.sections_by_name_with_header("includeIf");
-            include_if_sections.sort_by(|a, b| {
-                section_headers_to_id
-                    .get(a.0)
-                    .expect("section_id exists")
-                    .cmp(section_headers_to_id.get(b.0).expect("section_id exists"))
-            });
-
-            for (header, body) in include_if_sections {
+            for (header, body) in get_include_if_sections(target_config) {
                 if let Some(condition) = &header.subsection_name {
                     if include_condition_is_true(condition, target_config_path, options) {
                         let paths = body.values(&Key::from("path"));
@@ -364,6 +350,24 @@ impl<'event> GitConfig<'event> {
                 target_config.append(include_config);
             }
             Ok(())
+        }
+
+        fn get_include_if_sections<'a>(
+            target_config: &'a GitConfig<'_>,
+        ) -> Vec<(&'a ParsedSectionHeader<'a>, &'a SectionBody<'a>)> {
+            let section_headers_to_id: HashMap<_, _> = target_config
+                .section_headers
+                .values()
+                .zip(target_config.section_headers.keys())
+                .collect();
+            let mut include_if_sections = target_config.sections_by_name_with_header("includeIf");
+            include_if_sections.sort_by(|a, b| {
+                section_headers_to_id
+                    .get(a.0)
+                    .expect("section_id exists")
+                    .cmp(section_headers_to_id.get(b.0).expect("section_id exists"))
+            });
+            include_if_sections
         }
 
         fn resolve(
