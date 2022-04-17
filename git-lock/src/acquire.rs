@@ -121,6 +121,12 @@ fn lock_with_mode<T>(
                 attempts += 1;
                 match try_lock(&lock_path, directory, cleanup.clone()) {
                     Ok(v) => return Ok((lock_path, v)),
+                    #[cfg(windows)]
+                    Err(err) if err.kind() == AlreadyExists || err.kind() == PermissionDenied => {
+                        std::thread::sleep(wait);
+                        continue;
+                    }
+                    #[cfg(not(windows))]
                     Err(err) if err.kind() == AlreadyExists => {
                         std::thread::sleep(wait);
                         continue;
