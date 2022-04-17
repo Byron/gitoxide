@@ -147,6 +147,8 @@ members = [
     "git-mailmap",
     "git-note",
     "git-sec",
+    "git-lfs",
+    "git-rebase",
     "git-submodule",
     "git-transport",
     "git-credentials",

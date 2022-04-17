@@ -241,6 +241,15 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 
 Provides a trust model to share across gitoxide crates. It helps configuring how to interact with external processes, among other things.
 
+### git-rebase
+* [ ] obtain rebase status
+* [ ] drive a rebase operation
+
+### git-lfs
+
+Implement git large file support using the process protocol and make it flexible enough to handle a variety of cases.
+Make it the best-performing implementation and the most convenient one.
+
 ### git-glob
 * [x] parse pattern
 * [x] a type for pattern matching of paths and non-paths, optionally case-insensitively.
