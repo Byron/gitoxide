@@ -173,7 +173,7 @@ pub fn scripted_fixture_repo_read_only_with_args(
                     .env("GIT_CONFIG_VALUE_1", "main")
                     .output()?;
                 if !output.status.success() {
-                    std::fs::write(failure_marker, &[]).ok();
+                    write_failure_marker(&failure_marker);
                 }
                 assert!(
                     output.status.success(),
@@ -181,11 +181,20 @@ pub fn scripted_fixture_repo_read_only_with_args(
                     output.stdout.as_bstr(),
                     output.stderr.as_bstr()
                 );
-                create_archive_if_not_on_ci(&script_result_directory, &archive_file_path, script_identity)?;
+                create_archive_if_not_on_ci(&script_result_directory, &archive_file_path, script_identity).map_err(
+                    |err| {
+                        write_failure_marker(&failure_marker);
+                        err
+                    },
+                )?;
             }
         }
     }
     Ok(script_result_directory)
+}
+
+fn write_failure_marker(failure_marker: &Path) {
+    std::fs::write(failure_marker, &[]).ok();
 }
 
 /// The `script_identity` will be baked into the soon to be created `archive` as it identitifies the script
