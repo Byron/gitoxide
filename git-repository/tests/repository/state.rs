@@ -2,6 +2,19 @@ use crate::{named_repo, Result};
 use git_repository as git;
 
 #[test]
+fn bisect() -> Result {
+    let repo = named_repo("make_bisect_repo.sh")?;
+
+    let head = repo.head()?;
+    let head_name = head.referent_name().expect("no detached head").shorten();
+    assert_eq!(head_name, "main");
+
+    assert_eq!(repo.in_progress_operation(), Some(git::state::InProgress::Bisect));
+
+    Ok(())
+}
+
+#[test]
 fn cherry_pick() -> Result {
     let repo = named_repo("make_cherry_pick_repo.sh")?;
 
