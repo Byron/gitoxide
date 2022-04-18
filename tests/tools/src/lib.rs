@@ -127,7 +127,11 @@ pub fn scripted_fixture_repo_read_only_with_args(
         git_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(5)),
         None,
     )?;
-    if !script_result_directory.is_dir() {
+    let failure_marker = script_result_directory.join("_invalid_state_due_to_script_failure_");
+    if !script_result_directory.is_dir() || failure_marker.is_file() {
+        if failure_marker.is_file() {
+            std::fs::remove_dir_all(&script_result_directory)?;
+        }
         std::fs::create_dir_all(&script_result_directory)?;
         match extract_archive(&archive_file_path, &script_result_directory, script_identity) {
             Ok((archive_id, platform)) => {
@@ -168,6 +172,9 @@ pub fn scripted_fixture_repo_read_only_with_args(
                     .env("GIT_CONFIG_KEY_1", "init.defaultBranch")
                     .env("GIT_CONFIG_VALUE_1", "main")
                     .output()?;
+                if !output.status.success() {
+                    std::fs::write(failure_marker, &[]).ok();
+                }
                 assert!(
                     output.status.success(),
                     "repo script failed: stdout: {}\nstderr: {}",
