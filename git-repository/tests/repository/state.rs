@@ -14,6 +14,19 @@ fn cherry_pick() -> Result {
 }
 
 #[test]
+fn cherry_pick_sequence() -> Result {
+    let repo = named_repo("make_cherry_pick_sequence_repo.sh")?;
+
+    let head = repo.head()?;
+    let head_name = head.referent_name().expect("no detached head").shorten();
+    assert_eq!(head_name, "main");
+
+    assert_eq!(repo.in_progress_operation(), Some(git::state::InProgress::CherryPickSequence));
+
+    Ok(())
+}
+
+#[test]
 fn rebase_interactive() -> Result {
     let repo = named_repo("make_rebase_i_repo.sh")?;
 
