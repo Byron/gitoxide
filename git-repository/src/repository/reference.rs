@@ -200,6 +200,11 @@ impl crate::Repository {
             .map_err(Into::into)
     }
 
+    /// Return the name to the symbolic reference `HEAD` points to, or `None` if the head is detached.
+    pub fn head_name(&self) -> Result<Option<git_ref::FullName>, crate::reference::find::existing::Error> {
+        Ok(self.head()?.referent_name().map(|n| n.to_owned()))
+    }
+
     /// Return the commit object the `HEAD` reference currently points to after peeling it fully.
     ///
     /// Note that this may fail for various reasons, most notably because the repository
