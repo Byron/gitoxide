@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-/// The error returned by [path::discover::existing()][super::existing()].
+/// The error returned by [path::discover()][function::discover()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
