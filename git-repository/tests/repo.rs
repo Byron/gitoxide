@@ -7,7 +7,12 @@ fn repo(name: &str) -> crate::Result<ThreadSafeRepository> {
     Ok(ThreadSafeRepository::open(repo_path)?)
 }
 
-fn repo_rw(name: &str) -> crate::Result<(git_repository::Repository, tempfile::TempDir)> {
+fn named_repo(name: &str) -> crate::Result<Repository> {
+    let repo_path = git_testtools::scripted_fixture_repo_read_only(name)?;
+    Ok(ThreadSafeRepository::open(repo_path)?.to_thread_local())
+}
+
+fn repo_rw(name: &str) -> crate::Result<(Repository, tempfile::TempDir)> {
     let repo_path = git_testtools::scripted_fixture_repo_writable(name)?;
     Ok((
         ThreadSafeRepository::discover(repo_path.path())?.to_thread_local(),

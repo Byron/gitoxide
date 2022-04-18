@@ -162,9 +162,11 @@ pub fn scripted_fixture_repo_read_only_with_args(
                     .env("GIT_COMMITTER_DATE", "2000-01-02 00:00:00 +0000")
                     .env("GIT_COMMITTER_EMAIL", "committer@example.com")
                     .env("GIT_COMMITTER_NAME", "committer")
-                    .env("GIT_CONFIG_COUNT", "1")
+                    .env("GIT_CONFIG_COUNT", "2")
                     .env("GIT_CONFIG_KEY_0", "commit.gpgsign")
                     .env("GIT_CONFIG_VALUE_0", "false")
+                    .env("GIT_CONFIG_KEY_1", "init.defaultBranch")
+                    .env("GIT_CONFIG_VALUE_1", "main")
                     .output()?;
                 assert!(
                     output.status.success(),
