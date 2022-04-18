@@ -3,7 +3,9 @@ use crate::state;
 impl crate::Repository {
     /// Returns the status of an in progress operation on a repository or [`None`]
     /// if no operation is currently in progress.
-    pub fn in_progress_operation(&self) -> Option<state::InProgress> {
+    ///
+    /// Note to be confused with the repositories 'status'.
+    pub fn state(&self) -> Option<state::InProgress> {
         let git_dir = self.path();
 
         // This is modeled on the logic from wt_status_get_state in git's wt-status.c and
@@ -20,7 +22,7 @@ impl crate::Repository {
         } else if git_dir.join("rebase-merge").is_dir() {
             Some(state::InProgress::Rebase)
         } else if git_dir.join("CHERRY_PICK_HEAD").is_file() {
-            if git_dir.join("todo").is_file() {
+            if git_dir.join("sequencer/todo").is_file() {
                 Some(state::InProgress::CherryPickSequence)
             } else {
                 Some(state::InProgress::CherryPick)
@@ -30,7 +32,7 @@ impl crate::Repository {
         } else if git_dir.join("BISECT_LOG").is_file() {
             Some(state::InProgress::Bisect)
         } else if git_dir.join("REVERT_HEAD").is_file() {
-            if git_dir.join("todo").is_file() {
+            if git_dir.join("sequencer/todo").is_file() {
                 Some(state::InProgress::RevertSequence)
             } else {
                 Some(state::InProgress::Revert)
