@@ -86,17 +86,31 @@ pub mod describe {
                     .filter_map(Result::ok)
                     .map(into_tuple)
                     .collect(),
-                SelectRef::AnnotatedTags => platform
-                    .tags()?
-                    .filter_map(Result::ok)
-                    .filter_map(|r: crate::Reference<'_>| {
-                        // TODO: we assume direct refs for tags, which is the common case, but it doesn't have to be
-                        //       so rather follow symrefs till the first object and then peel tags after the first object was found.
-                        let tag = r.try_id()?.object().ok()?.try_into_tag().ok()?;
-                        let commit_id = tag.target_id().ok()?.object().ok()?.try_into_commit().ok()?.id;
-                        Some((commit_id, r.name().shorten().to_owned().into()))
-                    })
-                    .collect(),
+                SelectRef::AnnotatedTags => {
+                    let mut peeled_commits_and_tag_date: Vec<_> = platform
+                        .tags()?
+                        .filter_map(Result::ok)
+                        .filter_map(|r: crate::Reference<'_>| {
+                            // TODO: we assume direct refs for tags, which is the common case, but it doesn't have to be
+                            //       so rather follow symrefs till the first object and then peel tags after the first object was found.
+                            let tag = r.try_id()?.object().ok()?.try_into_tag().ok()?;
+                            let tag_time = tag
+                                .tagger()
+                                .ok()
+                                .and_then(|s| s.map(|s| s.time.seconds_since_unix_epoch))
+                                .unwrap_or(0);
+                            let commit_id = tag.target_id().ok()?.object().ok()?.try_into_commit().ok()?.id;
+                            Some((commit_id, tag_time, r.name().shorten().to_owned().into()))
+                        })
+                        .collect();
+                    // TODO: this kind of sorting would also have to apply to the AllRefs/AlLTags cases, where annotated tags are preferred
+                    //       and sorted accordingly.
+                    peeled_commits_and_tag_date.sort_by(|a, b| a.1.cmp(&b.1).reverse()); // by time, ascending, causing older names to overwrite newer ones.
+                    peeled_commits_and_tag_date
+                        .into_iter()
+                        .map(|(a, _, c)| (a, c))
+                        .collect()
+                }
             })
         }
     }
