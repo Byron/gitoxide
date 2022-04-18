@@ -215,7 +215,10 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
         std::io::copy(&mut &*buf, &mut xz_write)?;
         xz_write.finish()?.close()
     })();
+    #[cfg(not(windows))]
     std::fs::remove_dir_all(meta_dir)?;
+    #[cfg(windows)]
+    std::fs::remove_dir_all(meta_dir).ok(); // it really can't delete these directories for some reason (even after 10 seconds)
     res
 }
 
