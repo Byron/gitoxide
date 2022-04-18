@@ -168,6 +168,12 @@ by humans.
 Utilities to aid in keeping the project fresh and in sync can be found in the `Maintenance` section of the `makefile`. Run `make` to
 get an overview.
 
+## Reviewing PRs
+
+- be sure to clone locally and run tests with `GITOXIDE_TEST_IGNORE_ARCHIVES=1` to assure new fixture scripts (if there are any) are validated
+  on _MacOS_ and _Windows_. Note that linux doesn't need to be tested that way as CI on linux ignores them by merit of not checking them out
+  via `git-lfs`.
+
 ## Creating a release
 
 Run `make publish-all` to publish all crates in leaf-first order using `cargo release` based on the currently set version.

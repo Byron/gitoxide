@@ -237,9 +237,22 @@ fn extract_archive(
     destination_dir: &Path,
     required_script_identity: u32,
 ) -> std::io::Result<(u32, Option<String>)> {
-    let mut archive_buf = Vec::<u8>::new();
-    let mut decoder = xz2::bufread::XzDecoder::new(std::io::BufReader::new(std::fs::File::open(archive)?));
-    std::io::copy(&mut decoder, &mut archive_buf)?;
+    let archive_buf: Vec<u8> = {
+        let mut buf = Vec::new();
+        let input_archive = std::fs::File::open(archive)?;
+        if std::env::var_os("GITOXIDE_TEST_IGNORE_ARCHIVES").is_some() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!(
+                    "Ignoring archive at '{}' as GITOXIDE_TEST_IGNORE_ARCHIVES is set.",
+                    archive.display()
+                ),
+            ));
+        }
+        let mut decoder = xz2::bufread::XzDecoder::new(std::io::BufReader::new(input_archive));
+        std::io::copy(&mut decoder, &mut buf)?;
+        buf
+    };
 
     let mut entry_buf = Vec::<u8>::new();
     let (archive_identity, platform): (u32, _) = tar::Archive::new(std::io::Cursor::new(&mut &*archive_buf))
