@@ -55,6 +55,7 @@ pub mod describe {
     }
 
     /// A selector to choose what kind of references should contribute to names.
+    #[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
     pub enum SelectRef {
         /// Only use annotated tags for names.
         AnnotatedTags,
@@ -160,7 +161,7 @@ pub mod describe {
         /// if one was found.
         ///
         /// Note that there will always be `Some(format)`
-        pub fn try_format(self) -> Result<Option<git_revision::describe::Format<'static>>, Error> {
+        pub fn try_format(&self) -> Result<Option<git_revision::describe::Format<'static>>, Error> {
             self.try_resolve()?.map(|r| r.format()).transpose()
         }
 
@@ -168,7 +169,7 @@ pub mod describe {
         /// if one was found.
         ///
         /// The outcome provides additional information, but leaves the caller with the burden
-        pub fn try_resolve(self) -> Result<Option<crate::commit::describe::Resolution<'repo>>, Error> {
+        pub fn try_resolve(&self) -> Result<Option<crate::commit::describe::Resolution<'repo>>, Error> {
             // TODO: dirty suffix with respective dirty-detection
             let outcome = git_revision::describe(
                 &self.id,
@@ -194,7 +195,7 @@ pub mod describe {
         }
 
         /// Like [`try_format()`][Platform::try_format()], but turns `id_as_fallback()` on to always produce a format.
-        pub fn format(mut self) -> Result<git_revision::describe::Format<'static>, Error> {
+        pub fn format(&mut self) -> Result<git_revision::describe::Format<'static>, Error> {
             self.id_as_fallback = true;
             Ok(self.try_format()?.expect("BUG: fallback must always produce a format"))
         }
