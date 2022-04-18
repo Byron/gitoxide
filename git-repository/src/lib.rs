@@ -321,31 +321,25 @@ pub mod state {
     #[derive(Debug, PartialEq)]
     pub enum InProgress {
         /// A mailbox is being applied.
-        // TODO: test
         ApplyMailbox,
         /// A rebase is happening while a mailbox is being applied.
         // TODO: test
         ApplyMailboxRebase,
         /// A git bisect operation has not yet been concluded.
-        // TODO: test
         Bisect,
         /// A cherry pick operation.
         CherryPick,
         /// A cherry pick with multiple commits pending.
-        // TODO: test
         CherryPickSequence,
         /// A merge operation.
-        // TODO: test
         Merge,
         /// A rebase operation.
-        // TODO: test
         Rebase,
         /// An interactive rebase operation.
         RebaseInteractive,
         /// A revert operation.
         Revert,
         /// A revert operation with multiple commits pending.
-        // TODO: test
         RevertSequence,
     }
 }
