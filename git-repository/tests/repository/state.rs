@@ -2,6 +2,18 @@ use crate::{named_repo, Result};
 use git_repository as git;
 
 #[test]
+fn apply_mailbox() -> Result {
+    let repo = named_repo("make_am_repo.sh")?;
+
+    let head = repo.head()?;
+    let head_name = head.referent_name().expect("no detached head").shorten();
+    assert_eq!(head_name, "main");
+
+    assert_eq!(repo.in_progress_operation(), Some(git::state::InProgress::ApplyMailbox));
+    Ok(())
+}
+
+#[test]
 fn bisect() -> Result {
     let repo = named_repo("make_bisect_repo.sh")?;
 
