@@ -127,8 +127,6 @@ pub struct Repository {
 /// The state of a git repository
 #[derive(Debug, PartialEq)]
 pub enum RepositoryState {
-    /// No operations are in progress
-    None,
     /// Apply mailbox in progress
     ApplyMailbox,
     /// Rebase while an apply mailbox operation is in progress
