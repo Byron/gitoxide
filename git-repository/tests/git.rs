@@ -29,7 +29,8 @@ fn basic_rw_repo() -> crate::Result<(Repository, tempfile::TempDir)> {
 }
 
 mod discover;
-mod easy;
+mod id;
 mod init;
+mod object;
 mod reference;
-mod state;
+mod repository;
