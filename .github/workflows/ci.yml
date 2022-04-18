@@ -61,7 +61,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: install
-          args: "gitoxide cargo-smart-release"
+          args: "--force gitoxide cargo-smart-release"
 
   lint:
     runs-on: ubuntu-latest

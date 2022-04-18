@@ -49,7 +49,7 @@ max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-
 local-time-support = ["git-actor/local-time-support"]
 ## Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
 ## Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
-unstable = ["git-index", "git-worktree", "git-mailmap", "git-glob"]
+unstable = ["git-index", "git-worktree", "git-mailmap", "git-glob", "git-credentials"]
 ## Print debugging information about usage of object database caches, useful for tuning cache sizes.
 cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 
@@ -60,6 +60,7 @@ git-ref = { version = "^0.12.1", path = "../git-ref" }
 git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-validate = { version ="^0.5.3", path = "../git-validate" }
+git-sec = { version = "^0.1.0", path = "../git-sec" }
 
 git-config = { version = "^0.2.1", path = "../git-config" }
 git-odb = { version = "^0.28.0", path = "../git-odb" }
@@ -79,6 +80,7 @@ git-features = { version = "^0.20.0", path = "../git-features", features = ["pro
 
 # unstable only
 git-glob = { version = "^0.2.0", path = "../git-glob", optional = true }
+git-credentials = { version = "^0.1.0", path = "../git-credentials", optional = true }
 git-index = { version = "^0.2.0", path = "../git-index", optional = true }
 git-worktree = { version = "^0.1.0", path = "../git-worktree", optional = true }
 

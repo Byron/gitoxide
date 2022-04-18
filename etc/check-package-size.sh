@@ -4,7 +4,7 @@ set -eu -o pipefail
 
 function enter () {
   local dir="${1:?need directory to enter}"
-  echo $'  in' $dir
+  echo -n $'  in' $dir $'\t→\t'
   cd $dir
 }
 
@@ -36,6 +36,11 @@ echo "in root: gitoxide CLI"
 (enter git-traverse && indent cargo diet -n --package-size-limit 10KB)
 (enter git-url && indent cargo diet -n --package-size-limit 15KB)
 (enter git-validate && indent cargo diet -n --package-size-limit 5KB)
+(enter git-date && indent cargo diet -n --package-size-limit 5KB)
+(enter git-note && indent cargo diet -n --package-size-limit 5KB)
+(enter git-sec && indent cargo diet -n --package-size-limit 5KB)
+(enter git-tix && indent cargo diet -n --package-size-limit 5KB)
+(enter git-credentials && indent cargo diet -n --package-size-limit 5KB)
 (enter git-object && indent cargo diet -n --package-size-limit 25KB)
 (enter git-commitgraph && indent cargo diet -n --package-size-limit 25KB)
 (enter git-pack && indent cargo diet -n --package-size-limit 115KB)

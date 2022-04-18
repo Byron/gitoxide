@@ -233,6 +233,13 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 
 ### git-date
 * [ ] parse git dates
+ 
+### git-credentials
+* [x] launch git credentials helpers with a given action
+ 
+### git-sec
+
+Provides a trust model to share across gitoxide crates. It helps configuring how to interact with external processes, among other things.
 
 ### git-rebase
 * [ ] obtain rebase status

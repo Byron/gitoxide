@@ -20,14 +20,14 @@ struct Transport<T> {
 mod impls {
     use git_transport::{
         client,
-        client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+        client::{Error, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
 
     use crate::fetch::tests::arguments::Transport;
 
     impl<T: client::TransportWithoutIO> client::TransportWithoutIO for Transport<T> {
-        fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
+        fn set_identity(&mut self, identity: client::Account) -> Result<(), Error> {
             self.inner.set_identity(identity)
         }
 
@@ -64,13 +64,13 @@ mod impls {
     use async_trait::async_trait;
     use git_transport::{
         client,
-        client::{Error, Identity, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
+        client::{Error, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
         Protocol, Service,
     };
 
     use crate::fetch::tests::arguments::Transport;
     impl<T: client::TransportWithoutIO + Send> client::TransportWithoutIO for Transport<T> {
-        fn set_identity(&mut self, identity: Identity) -> Result<(), Error> {
+        fn set_identity(&mut self, identity: client::Account) -> Result<(), Error> {
             self.inner.set_identity(identity)
         }
 

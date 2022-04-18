@@ -58,7 +58,7 @@ pub async fn fetch<F, D, T>(
     fetch_mode: FetchConnection,
 ) -> Result<(), Error>
 where
-    F: FnMut(credentials::Action<'_>) -> credentials::Result,
+    F: FnMut(credentials::helper::Action<'_>) -> credentials::helper::Result,
     D: Delegate,
     T: client::Transport,
 {
@@ -85,8 +85,8 @@ where
                 drop(result); // needed to workaround this: https://github.com/rust-lang/rust/issues/76149
                 let url = transport.to_url();
                 progress.set_name("authentication");
-                let credentials::Outcome { identity, next } =
-                    authenticate(credentials::Action::Fill(&url))?.expect("FILL provides an identity");
+                let credentials::helper::Outcome { identity, next } =
+                    authenticate(credentials::helper::Action::Fill(&url))?.expect("FILL provides an identity");
                 transport.set_identity(identity)?;
                 progress.step();
                 progress.set_name("handshake (authenticated)");
