@@ -52,3 +52,16 @@ fn revert() -> Result {
 
     Ok(())
 }
+
+#[test]
+fn revert_sequence() -> Result {
+    let repo = named_repo("make_revert_sequence_repo.sh")?;
+
+    let head = repo.head()?;
+    let head_name = head.referent_name().expect("no detached head").shorten();
+    assert_eq!(head_name, "main");
+
+    assert_eq!(repo.in_progress_operation(), Some(git::state::InProgress::RevertSequence));
+
+    Ok(())
+}

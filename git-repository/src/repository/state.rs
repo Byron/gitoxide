@@ -30,7 +30,7 @@ impl crate::Repository {
         } else if git_dir.join("BISECT_LOG").is_file() {
             Some(state::InProgress::Bisect)
         } else if git_dir.join("REVERT_HEAD").is_file() {
-            if git_dir.join("todo").is_file() {
+            if git_dir.join("sequencer/todo").is_file() {
                 Some(state::InProgress::RevertSequence)
             } else {
                 Some(state::InProgress::Revert)
