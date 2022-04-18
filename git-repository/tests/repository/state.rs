@@ -40,6 +40,22 @@ fn cherry_pick_sequence() -> Result {
 }
 
 #[test]
+fn merge() -> Result {
+    let repo = named_repo("make_merge_repo.sh")?;
+
+    let head = repo.head()?;
+    let head_name = head.referent_name().expect("no detached head").shorten();
+    assert_eq!(head_name, "main");
+
+    assert_eq!(
+        repo.in_progress_operation(),
+        Some(git::state::InProgress::Merge)
+    );
+
+    Ok(())
+}
+
+#[test]
 fn rebase_interactive() -> Result {
     let repo = named_repo("make_rebase_i_repo.sh")?;
 
