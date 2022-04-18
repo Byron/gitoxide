@@ -34,7 +34,10 @@ fn cherry_pick_sequence() -> Result {
     let head_name = head.referent_name().expect("no detached head").shorten();
     assert_eq!(head_name, "main");
 
-    assert_eq!(repo.in_progress_operation(), Some(git::state::InProgress::CherryPickSequence));
+    assert_eq!(
+        repo.in_progress_operation(),
+        Some(git::state::InProgress::CherryPickSequence)
+    );
 
     Ok(())
 }
@@ -47,10 +50,7 @@ fn merge() -> Result {
     let head_name = head.referent_name().expect("no detached head").shorten();
     assert_eq!(head_name, "main");
 
-    assert_eq!(
-        repo.in_progress_operation(),
-        Some(git::state::InProgress::Merge)
-    );
+    assert_eq!(repo.in_progress_operation(), Some(git::state::InProgress::Merge));
 
     Ok(())
 }
@@ -90,7 +90,10 @@ fn revert_sequence() -> Result {
     let head_name = head.referent_name().expect("no detached head").shorten();
     assert_eq!(head_name, "main");
 
-    assert_eq!(repo.in_progress_operation(), Some(git::state::InProgress::RevertSequence));
+    assert_eq!(
+        repo.in_progress_operation(),
+        Some(git::state::InProgress::RevertSequence)
+    );
 
     Ok(())
 }
