@@ -3,20 +3,20 @@ set -eu -o pipefail
 
 git init -q
 
-echo 1.main > 1
-git add 1
-git commit -m 1.main 1
+echo file.main > file
+git add file
+git commit -m file.main file
 
 git checkout -b other-branch
-echo 1.other-branch > 1
-git commit -m 1.other-branch 1
+echo file.other-branch > file
+git commit -m file.other-branch file
 # Create an mbox formatted patch and save the path
 patch_path=$(git format-patch main)
 
 git checkout main
 # Create a conflict
-echo 1.main.update > 1
-git commit -m 1.main.update 1
+echo file.main.update > file
+git commit -m file.main.update file
 
 # This will fail due to the merge conflict and leave us in a 'apply mbox in progress' state
-git am 0001-1.other-branch.patch || true
+git am 0001-file.other-branch.patch || true
