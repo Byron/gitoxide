@@ -26,17 +26,21 @@ mod iter {
 
     #[test]
     fn empty() -> crate::Result {
+        let tag = fixture_bytes("tag", "empty.txt");
+        let tag_iter = TagRefIter::from_bytes(&tag);
+        let target_id = hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc");
+        let tagger = Some(signature(1592381636));
         assert_eq!(
-            TagRefIter::from_bytes(&fixture_bytes("tag", "empty.txt")).collect::<Result<Vec<_>, _>>()?,
+            tag_iter.collect::<Result<Vec<_>, _>>()?,
             vec![
-                Token::Target {
-                    id: hex_to_id("01dd4e2a978a9f5bd773dae6da7aa4a5ac1cdbbc")
-                },
+                Token::Target { id: target_id },
                 Token::TargetKind(Kind::Commit),
                 Token::Name(b"empty".as_bstr()),
-                Token::Tagger(Some(signature(1592381636))),
+                Token::Tagger(tagger),
             ]
         );
+        assert_eq!(tag_iter.target_id()?, target_id);
+        assert_eq!(tag_iter.tagger()?, tagger);
         Ok(())
     }
 
