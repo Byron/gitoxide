@@ -3,7 +3,9 @@ use crate::state;
 impl crate::Repository {
     /// Returns the status of an in progress operation on a repository or [`None`]
     /// if no operation is currently in progress.
-    pub fn in_progress_operation(&self) -> Option<state::InProgress> {
+    ///
+    /// Note to be confused with the repositories 'status'.
+    pub fn state(&self) -> Option<state::InProgress> {
         let git_dir = self.path();
 
         // This is modeled on the logic from wt_status_get_state in git's wt-status.c and
