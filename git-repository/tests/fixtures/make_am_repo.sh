@@ -19,4 +19,4 @@ echo file.main.update > file
 git commit -m file.main.update file
 
 # This will fail due to the merge conflict and leave us in a 'apply mbox in progress' state
-git am 0001-file.other-branch.patch || true
+git am "$patch_path" || true
