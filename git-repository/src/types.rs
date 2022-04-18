@@ -124,31 +124,6 @@ pub struct Repository {
     pub(crate) config: crate::config::Cache,
 }
 
-/// The state of a git repository
-#[derive(Debug, PartialEq)]
-pub enum RepositoryState {
-    /// Apply mailbox in progress
-    ApplyMailbox,
-    /// Rebase while an apply mailbox operation is in progress
-    ApplyMailboxRebase,
-    /// Bisect in progress
-    Bisect,
-    /// Cherry pick operation in progress
-    CherryPick,
-    /// Cherry pick with multiple commits pending in the sequencer in progress
-    CherryPickSequence,
-    /// Merge operation in progress
-    Merge,
-    /// Rebase in progress
-    Rebase,
-    /// Interactive rebase in progress
-    RebaseInteractive,
-    /// Revert operation in progress
-    Revert,
-    /// Revert operation with multiple commits pending in the sequencer in progress
-    RevertSequence,
-}
-
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
 /// for system resources required to interact with a `git` repository which are loaded in once the instance is created.
 ///

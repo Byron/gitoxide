@@ -1,5 +1,5 @@
 use crate::{named_repo, Result};
-use git_repository::RepositoryState;
+use git_repository as git;
 
 #[test]
 fn cherry_pick() -> Result {
@@ -9,7 +9,7 @@ fn cherry_pick() -> Result {
     let head_name = head.referent_name().expect("no detached head").shorten();
     assert_eq!(head_name, "main");
 
-    assert_eq!(repo.in_progress_operation(), Some(RepositoryState::CherryPick));
+    assert_eq!(repo.in_progress_operation(), Some(git::state::InProgress::CherryPick));
     Ok(())
 }
 
@@ -19,7 +19,10 @@ fn rebase_interactive() -> Result {
 
     let head = repo.head()?;
     assert!(head.is_detached());
-    assert_eq!(repo.in_progress_operation(), Some(RepositoryState::RebaseInteractive));
+    assert_eq!(
+        repo.in_progress_operation(),
+        Some(git::state::InProgress::RebaseInteractive)
+    );
 
     Ok(())
 }
@@ -32,7 +35,7 @@ fn revert() -> Result {
     let head_name = head.referent_name().expect("no detached head").shorten();
     assert_eq!(head_name, "main");
 
-    assert_eq!(Some(RepositoryState::Revert), repo.in_progress_operation());
+    assert_eq!(repo.in_progress_operation(), Some(git::state::InProgress::Revert));
 
     Ok(())
 }
