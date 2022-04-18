@@ -71,22 +71,37 @@ pub mod describe {
             repo: &Repository,
         ) -> Result<git_revision::hash_hasher::HashedMap<ObjectId, Cow<'static, BStr>>, Error> {
             let platform = repo.references()?;
-            let into_tuple =
-                |r: crate::Reference<'_>| (r.inner.target.into_id(), Cow::from(r.inner.name.shorten().to_owned()));
 
             Ok(match self {
-                SelectRef::AllTags => platform
-                    .tags()?
-                    .peeled()
+                SelectRef::AllTags | SelectRef::AllRefs => {
+                    let mut refs: Vec<_> = match self {
+                        SelectRef::AllRefs => platform.all()?,
+                        SelectRef::AllTags => platform.tags()?,
+                        _ => unreachable!(),
+                    }
                     .filter_map(Result::ok)
-                    .map(into_tuple)
-                    .collect(),
-                SelectRef::AllRefs => platform
-                    .all()?
-                    .peeled()
-                    .filter_map(Result::ok)
-                    .map(into_tuple)
-                    .collect(),
+                    .filter_map(|mut r: crate::Reference<'_>| {
+                        let target_id = r.target().try_id().map(ToOwned::to_owned);
+                        let peeled_id = r.peel_to_id_in_place().ok()?;
+                        let (prio, tag_time) = match target_id {
+                            Some(target_id) if peeled_id != *target_id => {
+                                let tag = repo.find_object(target_id).ok()?.try_into_tag().ok()?;
+                                (1, tag.tagger().ok()??.time.seconds_since_unix_epoch)
+                            }
+                            _ => (0, 0),
+                        };
+                        (
+                            peeled_id.inner,
+                            prio,
+                            tag_time,
+                            Cow::from(r.inner.name.shorten().to_owned()),
+                        )
+                            .into()
+                    })
+                    .collect();
+                    refs.sort_by(|a, b| a.2.cmp(&b.2).then_with(|| a.1.cmp(&b.1))); // by time ascending, then by priority. Older entries overwrite newer ones.
+                    refs.into_iter().map(|(a, _, _, b)| (a, b)).collect()
+                }
                 SelectRef::AnnotatedTags => {
                     let mut peeled_commits_and_tag_date: Vec<_> = platform
                         .tags()?
@@ -104,9 +119,7 @@ pub mod describe {
                             Some((commit_id, tag_time, r.name().shorten().to_owned().into()))
                         })
                         .collect();
-                    // TODO: this kind of sorting would also have to apply to the AllRefs/AlLTags cases, where annotated tags are preferred
-                    //       and sorted accordingly.
-                    peeled_commits_and_tag_date.sort_by(|a, b| a.1.cmp(&b.1).reverse()); // by time, ascending, causing older names to overwrite newer ones.
+                    peeled_commits_and_tag_date.sort_by(|a, b| a.1.cmp(&b.1)); // by time, ascending, causing older names to overwrite newer ones.
                     peeled_commits_and_tag_date
                         .into_iter()
                         .map(|(a, _, c)| (a, c))
