@@ -72,6 +72,7 @@ fn compare_baseline_with_ours() {
                 pattern.matches_repo_relative_path(
                     value,
                     basename_start_pos(value),
+                    None,
                     false, // TODO: does it make sense to pretend it is a dir and see what happens?
                     *case,
                 )
@@ -111,11 +112,11 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
     );
     let path = "hello";
     assert!(
-        !pattern.matches_repo_relative_path(path, None, false /* is-dir */, Case::Sensitive),
+        !pattern.matches_repo_relative_path(path, None, None, false /* is-dir */, Case::Sensitive),
         "non-dirs never match a dir pattern"
     );
     assert!(
-        pattern.matches_repo_relative_path(path, None, true /* is-dir */, Case::Sensitive),
+        pattern.matches_repo_relative_path(path, None, None, true /* is-dir */, Case::Sensitive),
         "dirs can match a dir pattern with the normal rules"
     );
 }
@@ -134,74 +135,66 @@ fn basename_matches_from_end() {
 #[test]
 #[should_panic]
 fn base_path_must_match_or_panic_occours_in_debug_mode() {
-    let pat = pat("foo").with_base("base/");
-    match_file(&pat, "other/FoO", Case::Fold);
+    let pat = pat("foo");
+    assert!(match_file_with_base(&pat, "other/FoO", "base/", Case::Fold));
 }
 
 #[test]
 fn absolute_basename_matches_only_from_beginning() {
-    let mut pattern = pat("/foo");
-    let pat = &pattern;
+    let pat = &pat("/foo");
     assert!(match_file(pat, "FoO", Case::Fold));
     assert!(!match_file(pat, "bar/Foo", Case::Fold));
     assert!(match_file(pat, "foo", Case::Sensitive));
     assert!(!match_file(pat, "Foo", Case::Sensitive));
     assert!(!match_file(pat, "bar/foo", Case::Sensitive));
 
-    pattern = pattern.with_base("base/");
-    let pat = &pattern;
-    assert!(match_file(pat, "base/FoO", Case::Fold));
-    assert!(!match_file(pat, "base/bar/Foo", Case::Fold));
-    assert!(match_file(pat, "base/foo", Case::Sensitive));
-    assert!(!match_file(pat, "base/Foo", Case::Sensitive));
-    assert!(!match_file(pat, "base/bar/foo", Case::Sensitive));
+    let base = "base/";
+    assert!(match_file_with_base(pat, "base/FoO", base, Case::Fold));
+    assert!(!match_file_with_base(pat, "base/bar/Foo", base, Case::Fold));
+    assert!(match_file_with_base(pat, "base/foo", base, Case::Sensitive));
+    assert!(!match_file_with_base(pat, "base/Foo", base, Case::Sensitive));
+    assert!(!match_file_with_base(pat, "base/bar/foo", base, Case::Sensitive));
 }
 
 #[test]
 fn absolute_path_matches_only_from_beginning() {
-    let mut pattern = pat("/bar/foo");
-    let pat = &pattern;
+    let pat = &pat("/bar/foo");
     assert!(!match_file(pat, "FoO", Case::Fold));
     assert!(match_file(pat, "bar/Foo", Case::Fold));
     assert!(!match_file(pat, "foo", Case::Sensitive));
     assert!(match_file(pat, "bar/foo", Case::Sensitive));
     assert!(!match_file(pat, "bar/Foo", Case::Sensitive));
 
-    pattern = pattern.with_base("base/");
-    let pat = &pattern;
-    assert!(!match_file(pat, "base/FoO", Case::Fold));
-    assert!(match_file(pat, "base/bar/Foo", Case::Fold));
-    assert!(!match_file(pat, "base/foo", Case::Sensitive));
-    assert!(match_file(pat, "base/bar/foo", Case::Sensitive));
-    assert!(!match_file(pat, "base/bar/Foo", Case::Sensitive));
+    let base = "base/";
+    assert!(!match_file_with_base(pat, "base/FoO", base, Case::Fold));
+    assert!(match_file_with_base(pat, "base/bar/Foo", base, Case::Fold));
+    assert!(!match_file_with_base(pat, "base/foo", base, Case::Sensitive));
+    assert!(match_file_with_base(pat, "base/bar/foo", base, Case::Sensitive));
+    assert!(!match_file_with_base(pat, "base/bar/Foo", base, Case::Sensitive));
 }
 
 #[test]
 fn absolute_path_with_recursive_glob_detects_mismatches_quickly() {
-    let mut pattern = pat("/bar/foo/**");
-    let pat = &pattern;
+    let pat = &pat("/bar/foo/**");
     assert!(!match_file(pat, "FoO", Case::Fold));
     assert!(!match_file(pat, "bar/Fooo", Case::Fold));
     assert!(!match_file(pat, "baz/bar/Foo", Case::Fold));
 
-    pattern = pattern.with_base("base/");
-    let pat = &pattern;
-    assert!(!match_file(pat, "base/FoO", Case::Fold));
-    assert!(!match_file(pat, "base/bar/Fooo", Case::Fold));
-    assert!(!match_file(pat, "base/baz/bar/foo", Case::Sensitive));
+    let base = "base/";
+    assert!(!match_file_with_base(pat, "base/FoO", base, Case::Fold));
+    assert!(!match_file_with_base(pat, "base/bar/Fooo", base, Case::Fold));
+    assert!(!match_file_with_base(pat, "base/baz/bar/foo", base, Case::Sensitive));
 }
 
 #[test]
 fn absolute_path_with_recursive_glob_can_do_case_insensitive_prefix_search() {
-    let mut pattern = pat("/bar/foo/**");
-    let pat = &pattern;
+    let pat = &pat("/bar/foo/**");
     assert!(!match_file(pat, "bar/Foo/match", Case::Sensitive));
     assert!(match_file(pat, "bar/Foo/match", Case::Fold));
 
-    pattern = pattern.with_base("base/");
-    let pat = &pattern;
-    assert!(!match_file(pat, "base/bar/Foo/match", Case::Sensitive));
-    assert!(match_file(pat, "base/bar/Foo/match", Case::Fold));
+    let base = "base/";
+    assert!(!match_file_with_base(pat, "base/bar/Foo/match", base, Case::Sensitive));
+    assert!(match_file_with_base(pat, "base/bar/Foo/match", base, Case::Fold));
 }
 
 #[test]
@@ -296,7 +289,18 @@ fn match_file<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, case: 
 
 fn match_path<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, is_dir: bool, case: Case) -> bool {
     let path = path.into();
-    pattern.matches_repo_relative_path(path, basename_start_pos(path), is_dir, case)
+    pattern.matches_repo_relative_path(path, basename_start_pos(path), None, is_dir, case)
+}
+
+fn match_file_with_base<'a>(
+    pattern: &git_glob::Pattern,
+    path: impl Into<&'a BStr>,
+    base: impl Into<&'a BStr>,
+    case: Case,
+) -> bool {
+    let path = path.into();
+    let base = base.into();
+    pattern.matches_repo_relative_path(path, basename_start_pos(path), Some(base), false, case)
 }
 
 fn basename_start_pos(value: &BStr) -> Option<usize> {

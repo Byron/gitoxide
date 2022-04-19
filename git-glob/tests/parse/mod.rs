@@ -31,7 +31,6 @@ fn pat(pattern: &str, mode: Mode, first_glob_char_pos: Option<usize>) -> Option<
         text: pattern.into(),
         mode,
         first_wildcard_pos: first_glob_char_pos,
-        base_path: None,
     })
 }
 
