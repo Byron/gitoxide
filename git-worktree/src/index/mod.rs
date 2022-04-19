@@ -260,7 +260,7 @@ mod chunk {
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let res = entry::checkout(entry, entry_path, find, path_cache, *options, buf);
+        let res = entry::checkout(entry, entry_path, entry::Context { find, path_cache, buf }, *options);
         files.inc();
         num_files.fetch_add(1, Ordering::SeqCst);
         match res {

@@ -7,12 +7,17 @@ use io_close::Close;
 
 use crate::{index, index::checkout::PathCache, os};
 
+pub struct Context<'a, Find> {
+    pub find: &'a mut Find,
+    pub path_cache: &'a mut PathCache,
+    pub buf: &'a mut Vec<u8>,
+}
+
 #[cfg_attr(not(unix), allow(unused_variables))]
 pub fn checkout<Find, E>(
     entry: &mut Entry,
     entry_path: &BStr,
-    find: &mut Find,
-    cache: &mut PathCache,
+    Context { find, path_cache, buf }: Context<'_, Find>,
     index::checkout::Options {
         fs: crate::fs::Capabilities {
             symlink,
@@ -23,7 +28,6 @@ pub fn checkout<Find, E>(
         overwrite_existing,
         ..
     }: index::checkout::Options,
-    buf: &mut Vec<u8>,
 ) -> Result<usize, index::checkout::Error<E>>
 where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
@@ -33,7 +37,7 @@ where
         git_features::path::from_byte_slice(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {
             path: entry_path.to_owned(),
         })?;
-    let dest = cache.append_relative_path_assure_leading_dir(dest_relative, entry.mode)?;
+    let dest = path_cache.append_relative_path_assure_leading_dir(dest_relative, entry.mode)?;
 
     let object_size = match entry.mode {
         git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
