@@ -1,5 +1,4 @@
-use std::path::PathBuf;
-
+use crate::fs;
 use bstr::BString;
 
 /// A cache for directory creation to reduce the amount of stat calls when creating
@@ -18,15 +17,7 @@ use bstr::BString;
 /// The caching is only useful if consecutive calls to create a directory are using a sorted list of entries.
 #[allow(unused)]
 pub struct PathCache {
-    /// The prefix/root for all paths we handle.
-    root: PathBuf,
-    /// the most recent known cached that we know is valid.
-    valid: PathBuf,
-    /// The relative portion of `valid` that was added previously.
-    valid_relative: PathBuf,
-    /// The amount of path components of 'valid' beyond the roots components. If `root` has 2, and this is 2, `valid` has 4 components.
-    valid_components: usize,
-
+    stack: fs::Stack<()>,
     /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
     pub unlink_on_collision: bool,
 
@@ -39,7 +30,7 @@ mod cache {
     use std::path::{Path, PathBuf};
 
     use super::PathCache;
-    use crate::os;
+    use crate::{fs, os};
 
     impl PathCache {
         /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
@@ -47,10 +38,7 @@ mod cache {
         pub fn new(root: impl Into<PathBuf>) -> Self {
             let root = root.into();
             PathCache {
-                valid: root.clone(),
-                valid_relative: PathBuf::with_capacity(128),
-                valid_components: 0,
-                root,
+                stack: fs::Stack::new(root),
                 #[cfg(debug_assertions)]
                 test_mkdir_calls: 0,
                 unlink_on_collision: false,
@@ -66,58 +54,33 @@ mod cache {
             relative: impl AsRef<Path>,
             mode: git_index::entry::Mode,
         ) -> std::io::Result<&Path> {
-            let relative = relative.as_ref();
-            debug_assert!(
-                relative.is_relative(),
-                "only index paths are handled correctly here, must be relative"
-            );
-
-            let mut components = relative.components().peekable();
-            let mut existing_components = self.valid_relative.components();
-            let mut matching_components = 0;
-            while let (Some(existing_comp), Some(new_comp)) = (existing_components.next(), components.peek()) {
-                if existing_comp == *new_comp {
-                    components.next();
-                    matching_components += 1;
-                } else {
-                    break;
-                }
-            }
-
-            for _ in 0..self.valid_components - matching_components {
-                self.valid.pop();
-                self.valid_relative.pop();
-            }
-
-            self.valid_components = matching_components;
-
-            let target_is_dir = mode == git_index::entry::Mode::COMMIT || mode == git_index::entry::Mode::DIR;
-            while let Some(comp) = components.next() {
-                self.valid.push(comp);
-                self.valid_relative.push(comp);
-                self.valid_components += 1;
-                let res = (|| {
+            #[cfg(debug_assertions)]
+            let mkdir_calls = &mut self.test_mkdir_calls;
+            let unlink_on_collision = self.unlink_on_collision;
+            self.stack
+                .make_relative_path_current(relative, |components, stack: &fs::Stack<()>| {
+                    let target_is_dir = mode == git_index::entry::Mode::COMMIT || mode == git_index::entry::Mode::DIR;
                     if components.peek().is_some() || target_is_dir {
                         #[cfg(debug_assertions)]
                         {
-                            self.test_mkdir_calls += 1;
+                            *mkdir_calls += 1;
                         }
-                        match std::fs::create_dir(&self.valid) {
+                        match std::fs::create_dir(stack.current()) {
                             Ok(()) => {}
                             Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => {
-                                let meta = self.valid.symlink_metadata()?;
+                                let meta = stack.current().symlink_metadata()?;
                                 if !meta.is_dir() {
-                                    if self.unlink_on_collision {
+                                    if unlink_on_collision {
                                         if meta.is_symlink() {
-                                            os::remove_symlink(&self.valid)?;
+                                            os::remove_symlink(stack.current())?;
                                         } else {
-                                            std::fs::remove_file(&self.valid)?;
+                                            std::fs::remove_file(stack.current())?;
                                         }
                                         #[cfg(debug_assertions)]
                                         {
-                                            self.test_mkdir_calls += 1;
+                                            *mkdir_calls += 1;
                                         }
-                                        std::fs::create_dir(&self.valid)?;
+                                        std::fs::create_dir(stack.current())?;
                                     } else {
                                         return Err(err);
                                     }
@@ -127,17 +90,8 @@ mod cache {
                         }
                     }
                     Ok(())
-                })();
-
-                if let Err(err) = res {
-                    self.valid.pop();
-                    self.valid_relative.pop();
-                    self.valid_components -= 1;
-                    return Err(err);
-                }
-            }
-
-            Ok(&self.valid)
+                })
+                .map(|(p, _)| p)
         }
     }
 }

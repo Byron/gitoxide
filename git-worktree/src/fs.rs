@@ -189,7 +189,7 @@ pub mod stack {
         /// along with the stacks state for inspection to perform an operation that produces some data.
         ///
         /// The full path to `relative` will be returned along with the data returned by push_comp.
-        pub fn make_relative_path_current<F>(
+        pub fn make_relative_path_current(
             &mut self,
             relative: impl AsRef<Path>,
             mut push_comp: impl FnMut(&mut std::iter::Peekable<std::path::Components<'_>>, &Self) -> std::io::Result<T>,
