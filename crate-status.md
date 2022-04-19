@@ -236,6 +236,14 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
  
 ### git-credentials
 * [x] launch git credentials helpers with a given action
+
+### git-filter
+
+Provide base-implementations for dealing with smudge and clean filters as well as filter processes, facilitating their development.
+
+* [ ] clean filter base
+* [ ] smudge filter base
+* [ ] filter process base
  
 ### git-sec
 
