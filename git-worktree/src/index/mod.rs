@@ -3,7 +3,7 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use git_features::{interrupt, parallel::in_parallel, progress, progress::Progress};
 use git_hash::oid;
 
-use crate::index::checkout::PathCache;
+use crate::fs;
 
 pub mod checkout;
 pub(crate) mod entry;
@@ -28,7 +28,12 @@ where
     let mut ctx = chunk::Context {
         buf: Vec::new(),
         path_cache: {
-            let mut cache = PathCache::new(dir.clone());
+            let mut cache = fs::Cache::new(
+                dir.clone(),
+                fs::cache::Options {
+                    create_directories: true,
+                },
+            );
             cache.unlink_on_collision = options.overwrite_existing;
             cache
         },
@@ -67,7 +72,12 @@ where
                         chunk::Context {
                             find: find.clone(),
                             path_cache: {
-                                let mut cache = PathCache::new(dir.clone());
+                                let mut cache = fs::Cache::new(
+                                    dir.clone(),
+                                    fs::cache::Options {
+                                        create_directories: true,
+                                    },
+                                );
                                 cache.unlink_on_collision = options.overwrite_existing;
                                 cache
                             },
@@ -117,8 +127,8 @@ mod chunk {
     use git_hash::oid;
 
     use crate::{
-        index,
-        index::{checkout, checkout::PathCache, entry},
+        fs, index,
+        index::{checkout, entry},
         os,
     };
 
@@ -187,7 +197,7 @@ mod chunk {
 
     pub struct Context<'a, Find> {
         pub find: Find,
-        pub path_cache: PathCache,
+        pub path_cache: fs::Cache,
         pub buf: Vec<u8>,
         pub options: checkout::Options,
         /// We keep these shared so that there is the chance for printing numbers that aren't looking like

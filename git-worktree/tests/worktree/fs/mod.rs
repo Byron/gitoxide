@@ -17,3 +17,5 @@ fn from_probing_cwd() {
         entries
     );
 }
+
+mod cache;

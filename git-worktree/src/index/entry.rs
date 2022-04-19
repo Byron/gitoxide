@@ -5,11 +5,11 @@ use git_hash::oid;
 use git_index::Entry;
 use io_close::Close;
 
-use crate::{index, index::checkout::PathCache, os};
+use crate::{fs, index, os};
 
 pub struct Context<'a, Find> {
     pub find: &'a mut Find,
-    pub path_cache: &'a mut PathCache,
+    pub path_cache: &'a mut fs::Cache,
     pub buf: &'a mut Vec<u8>,
 }
 
