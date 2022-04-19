@@ -17,7 +17,7 @@ use bstr::BString;
 /// The caching is only useful if consecutive calls to create a directory are using a sorted list of entries.
 #[allow(unused)]
 pub struct PathCache {
-    stack: fs::Stack<()>,
+    stack: fs::Stack,
     /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
     pub unlink_on_collision: bool,
 
@@ -57,8 +57,9 @@ mod cache {
             #[cfg(debug_assertions)]
             let mkdir_calls = &mut self.test_mkdir_calls;
             let unlink_on_collision = self.unlink_on_collision;
-            self.stack
-                .make_relative_path_current(relative, |components, stack: &fs::Stack<()>| {
+            self.stack.make_relative_path_current(
+                relative,
+                |components, stack: &fs::Stack| {
                     let target_is_dir = mode == git_index::entry::Mode::COMMIT || mode == git_index::entry::Mode::DIR;
                     if components.peek().is_some() || target_is_dir {
                         #[cfg(debug_assertions)]
@@ -90,8 +91,10 @@ mod cache {
                         }
                     }
                     Ok(())
-                })
-                .map(|(p, _)| p)
+                },
+                |_| {},
+            )?;
+            Ok(self.stack.current())
         }
     }
 }

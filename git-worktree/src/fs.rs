@@ -140,15 +140,13 @@ impl Default for Capabilities {
     }
 }
 
-pub struct Stack<T> {
+pub struct Stack {
     /// The prefix/root for all paths we handle.
     root: PathBuf,
     /// the most recent known cached that we know is valid.
     current: PathBuf,
     /// The relative portion of `valid` that was added previously.
     current_relative: PathBuf,
-    /// The data associated with each component in `current_relative`.
-    current_data: Vec<T>,
     /// The amount of path components of 'current' beyond the roots components.
     valid_components: usize,
 }
@@ -157,7 +155,7 @@ pub mod stack {
     use crate::fs::Stack;
     use std::path::{Path, PathBuf};
 
-    impl<T> Stack<T> {
+    impl Stack {
         pub fn root(&self) -> &Path {
             &self.root
         }
@@ -171,7 +169,7 @@ pub mod stack {
         }
     }
 
-    impl<T> Stack<T> {
+    impl Stack {
         /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
         /// symbolic links to be included in it as well.
         pub fn new(root: impl Into<PathBuf>) -> Self {
@@ -179,7 +177,6 @@ pub mod stack {
             Stack {
                 current: root.clone(),
                 current_relative: PathBuf::with_capacity(128),
-                current_data: Vec::new(),
                 valid_components: 0,
                 root,
             }
@@ -192,8 +189,9 @@ pub mod stack {
         pub fn make_relative_path_current(
             &mut self,
             relative: impl AsRef<Path>,
-            mut push_comp: impl FnMut(&mut std::iter::Peekable<std::path::Components<'_>>, &Self) -> std::io::Result<T>,
-        ) -> std::io::Result<(&Path, &mut T)> {
+            mut push_comp: impl FnMut(&mut std::iter::Peekable<std::path::Components<'_>>, &Self) -> std::io::Result<()>,
+            mut pop_comp: impl FnMut(&Self),
+        ) -> std::io::Result<()> {
             let relative = relative.as_ref();
             debug_assert!(
                 relative.is_relative(),
@@ -215,7 +213,7 @@ pub mod stack {
             for _ in 0..self.valid_components - matching_components {
                 self.current.pop();
                 self.current_relative.pop();
-                self.current_data.pop();
+                pop_comp(&*self);
             }
             self.valid_components = matching_components;
 
@@ -225,21 +223,15 @@ pub mod stack {
                 self.valid_components += 1;
                 let res = push_comp(&mut components, &*self);
 
-                match res {
-                    Ok(res) => self.current_data.push(res),
-                    Err(err) => {
-                        self.current.pop();
-                        self.current_relative.pop();
-                        self.valid_components -= 1;
-                        return Err(err);
-                    }
+                if let Err(err) = res {
+                    self.current.pop();
+                    self.current_relative.pop();
+                    self.valid_components -= 1;
+                    pop_comp(&*self);
+                    return Err(err);
                 }
             }
-
-            Ok((
-                &self.current,
-                self.current_data.last_mut().expect("no empty paths are added"),
-            ))
+            Ok(())
         }
     }
 }
