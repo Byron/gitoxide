@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Common knowledge about the worktree that is needed across most interactions with the work tree
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -136,6 +136,110 @@ impl Default for Capabilities {
             ignore_case: false,
             executable_bit: true,
             symlink: true,
+        }
+    }
+}
+
+pub struct Stack<T> {
+    /// The prefix/root for all paths we handle.
+    root: PathBuf,
+    /// the most recent known cached that we know is valid.
+    current: PathBuf,
+    /// The relative portion of `valid` that was added previously.
+    current_relative: PathBuf,
+    /// The data associated with each component in `current_relative`.
+    current_data: Vec<T>,
+    /// The amount of path components of 'current' beyond the roots components.
+    valid_components: usize,
+}
+
+pub mod stack {
+    use crate::fs::Stack;
+    use std::path::{Path, PathBuf};
+
+    impl<T> Stack<T> {
+        pub fn root(&self) -> &Path {
+            &self.root
+        }
+
+        pub fn current(&self) -> &Path {
+            &self.current
+        }
+
+        pub fn current_relative(&self) -> &Path {
+            &self.current_relative
+        }
+    }
+
+    impl<T> Stack<T> {
+        /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
+        /// symbolic links to be included in it as well.
+        pub fn new(root: impl Into<PathBuf>) -> Self {
+            let root = root.into();
+            Stack {
+                current: root.clone(),
+                current_relative: PathBuf::with_capacity(128),
+                current_data: Vec::new(),
+                valid_components: 0,
+                root,
+            }
+        }
+
+        /// Set the current stack to point to the `relative` path and call `push_comp()` each time a new path component is popped
+        /// along with the stacks state for inspection to perform an operation that produces some data.
+        ///
+        /// The full path to `relative` will be returned along with the data returned by push_comp.
+        pub fn make_relative_path_current<F>(
+            &mut self,
+            relative: impl AsRef<Path>,
+            mut push_comp: impl FnMut(&mut std::iter::Peekable<std::path::Components<'_>>, &Self) -> std::io::Result<T>,
+        ) -> std::io::Result<(&Path, &mut T)> {
+            let relative = relative.as_ref();
+            debug_assert!(
+                relative.is_relative(),
+                "only index paths are handled correctly here, must be relative"
+            );
+
+            let mut components = relative.components().peekable();
+            let mut existing_components = self.current_relative.components();
+            let mut matching_components = 0;
+            while let (Some(existing_comp), Some(new_comp)) = (existing_components.next(), components.peek()) {
+                if existing_comp == *new_comp {
+                    components.next();
+                    matching_components += 1;
+                } else {
+                    break;
+                }
+            }
+
+            for _ in 0..self.valid_components - matching_components {
+                self.current.pop();
+                self.current_relative.pop();
+                self.current_data.pop();
+            }
+            self.valid_components = matching_components;
+
+            while let Some(comp) = components.next() {
+                self.current.push(comp);
+                self.current_relative.push(comp);
+                self.valid_components += 1;
+                let res = push_comp(&mut components, &*self);
+
+                match res {
+                    Ok(res) => self.current_data.push(res),
+                    Err(err) => {
+                        self.current.pop();
+                        self.current_relative.pop();
+                        self.valid_components -= 1;
+                        return Err(err);
+                    }
+                }
+            }
+
+            Ok((
+                &self.current,
+                self.current_data.last_mut().expect("no empty paths are added"),
+            ))
         }
     }
 }
