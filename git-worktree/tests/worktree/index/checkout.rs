@@ -399,7 +399,6 @@ fn checkout_index_in_tmp_dir_opts(
     let outcome = index::checkout(
         &mut index,
         destination.path(),
-        git_dir,
         move |oid, buf| {
             if allow_return_object(oid) {
                 odb.find_blob(oid, buf)

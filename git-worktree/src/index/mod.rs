@@ -1,4 +1,3 @@
-use std::path::Path;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use git_features::{interrupt, parallel::in_parallel, progress, progress::Progress};
@@ -16,7 +15,6 @@ pub(crate) mod entry;
 pub fn checkout<Find, E>(
     index: &mut git_index::State,
     dir: impl Into<std::path::PathBuf>,
-    git_dir: impl AsRef<Path>,
     find: Find,
     files: &mut impl Progress,
     bytes: &mut impl Progress,
@@ -35,7 +33,6 @@ where
         path_cache: fs::Cache::new(
             dir.clone(),
             fs::cache::Mode::checkout(options.overwrite_existing, options.attributes_file.clone()),
-            git_dir.as_ref(),
         ),
         find: find.clone(),
         options: options.clone(),
@@ -65,7 +62,6 @@ where
             thread_limit,
             {
                 let num_files = &num_files;
-                let git_dir = git_dir.as_ref().to_owned();
                 move |_| {
                     (
                         progress::Discard,
@@ -75,7 +71,6 @@ where
                             path_cache: fs::Cache::new(
                                 dir.clone(),
                                 fs::cache::Mode::checkout(options.overwrite_existing, options.attributes_file.clone()),
-                                &git_dir,
                             ),
                             buf: Vec::new(),
                             options: options.clone(),

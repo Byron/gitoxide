@@ -57,8 +57,6 @@ pub struct Cache {
     stack: Stack,
     /// tells us what to do as we change paths.
     mode: cache::Mode,
-    /// The `.git` repository for reading additional exclude and attribute files. Only set when uninitialized.
-    git_dir: Option<PathBuf>,
 }
 
 ///

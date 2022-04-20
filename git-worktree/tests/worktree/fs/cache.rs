@@ -11,7 +11,6 @@ mod create_directory {
         let mut cache = fs::Cache::new(
             dir.path().join("non-existing-root"),
             fs::cache::Mode::checkout(false, None),
-            dir.path().join(".git"),
         );
         assert_eq!(cache.num_mkdir_calls(), 0);
 
@@ -90,11 +89,7 @@ mod create_directory {
 
     fn new_cache() -> (fs::Cache, TempDir) {
         let dir = tempdir().unwrap();
-        let cache = fs::Cache::new(
-            dir.path(),
-            fs::cache::Mode::checkout(false, None),
-            dir.path().join(".git"),
-        );
+        let cache = fs::Cache::new(dir.path(), fs::cache::Mode::checkout(false, None));
         (cache, dir)
     }
 }
@@ -109,7 +104,7 @@ mod ignore_only {
 
     fn new_cache() -> fs::Cache {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_ignore_setup.sh").unwrap();
-        let cache = fs::Cache::new(dir, todo!(), dir.join(".git")); // TODO: also test initialization
+        let cache = fs::Cache::new(dir, todo!()); // TODO: also test initialization
         cache
     }
 }

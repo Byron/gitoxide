@@ -89,9 +89,6 @@ impl<'a> std::fmt::Debug for Platform<'a> {
 
 impl Cache {
     fn assure_init(&mut self) -> std::io::Result<()> {
-        if let Some(_git_dir) = self.git_dir.take() {
-            // TODO: init attributes and possibly gitignore
-        }
         Ok(())
     }
 }
@@ -99,14 +96,11 @@ impl Cache {
 impl Cache {
     /// Create a new instance with `worktree_root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
-    ///
-    /// `git_dir` is the path to the git repository directory, used to find the per-repository excludes files like `info/exclude` and `info/attributes`.
-    pub fn new(worktree_root: impl Into<PathBuf>, mode: Mode, git_dir: impl Into<PathBuf>) -> Self {
+    pub fn new(worktree_root: impl Into<PathBuf>, mode: Mode) -> Self {
         let root = worktree_root.into();
         Cache {
             stack: fs::Stack::new(root),
             mode,
-            git_dir: Some(git_dir.into()),
         }
     }
 
