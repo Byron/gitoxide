@@ -1,5 +1,4 @@
 mod create_directory {
-
     use std::path::Path;
 
     use git_index::entry::Mode;
@@ -9,15 +8,12 @@ mod create_directory {
     #[test]
     fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() {
         let dir = tempdir().unwrap();
-        let mut cache = fs::Cache::new(
-            dir.path().join("non-existing-root"),
-            fs::cache::Mode::CreateDirectoryAndProvideAttributes,
-        );
-        assert_eq!(cache.test_mkdir_calls, 0);
+        let mut cache = fs::Cache::new(dir.path().join("non-existing-root"), fs::cache::Mode::checkout(false));
+        assert_eq!(cache.num_mkdir_calls(), 0);
 
         let path = cache.at_entry("hello", Mode::FILE).unwrap().leading_dir();
         assert!(!path.parent().unwrap().exists(), "prefix itself is never created");
-        assert_eq!(cache.test_mkdir_calls, 0);
+        assert_eq!(cache.num_mkdir_calls(), 0);
     }
 
     #[test]
@@ -38,7 +34,7 @@ mod create_directory {
             assert!(path.parent().unwrap().is_dir(), "dir exists");
         }
 
-        assert_eq!(cache.test_mkdir_calls, 3);
+        assert_eq!(cache.num_mkdir_calls(), 3);
     }
 
     #[test]
@@ -49,7 +45,7 @@ mod create_directory {
         let path = cache.at_entry("dir/file", Mode::FILE).unwrap().leading_dir();
         assert!(path.parent().unwrap().is_dir(), "directory is still present");
         assert!(!path.exists(), "it won't create the file");
-        assert_eq!(cache.test_mkdir_calls, 1);
+        assert_eq!(cache.num_mkdir_calls(), 1);
     }
 
     #[test]
@@ -61,7 +57,7 @@ mod create_directory {
         std::fs::write(tmp.path().join("file-in-dir"), &[]).unwrap();
 
         for dirname in &["file-in-dir", "link-to-dir"] {
-            cache.unlink_on_collision = false;
+            cache.unlink_on_collision(false);
             let relative_path = format!("{}/file", dirname);
             assert_eq!(
                 cache.at_entry(&relative_path, Mode::FILE).unwrap_err().kind(),
@@ -69,26 +65,28 @@ mod create_directory {
             );
         }
         assert_eq!(
-            cache.test_mkdir_calls, 2,
+            cache.num_mkdir_calls(),
+            2,
             "it tries to create each directory once, but it's a file"
         );
-        cache.test_mkdir_calls = 0;
+        cache.reset_mkdir_calls();
         for dirname in &["link-to-dir", "file-in-dir"] {
-            cache.unlink_on_collision = true;
+            cache.unlink_on_collision(true);
             let relative_path = format!("{}/file", dirname);
             let path = cache.at_entry(&relative_path, Mode::FILE).unwrap().leading_dir();
             assert!(path.parent().unwrap().is_dir(), "directory was forcefully created");
             assert!(!path.exists());
         }
         assert_eq!(
-            cache.test_mkdir_calls, 4,
+            cache.num_mkdir_calls(),
+            4,
             "like before, but it unlinks what's there and tries again"
         );
     }
 
     fn new_cache() -> (fs::Cache, TempDir) {
         let dir = tempdir().unwrap();
-        let cache = fs::Cache::new(dir.path(), fs::cache::Mode::CreateDirectoryAndProvideAttributes);
+        let cache = fs::Cache::new(dir.path(), fs::cache::Mode::checkout(false));
         (cache, dir)
     }
 }

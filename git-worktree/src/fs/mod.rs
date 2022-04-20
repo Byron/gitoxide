@@ -21,6 +21,17 @@ pub struct Capabilities {
     pub symlink: bool,
 }
 
+pub struct Stack {
+    /// The prefix/root for all paths we handle.
+    root: PathBuf,
+    /// the most recent known cached that we know is valid.
+    current: PathBuf,
+    /// The relative portion of `valid` that was added previously.
+    current_relative: PathBuf,
+    /// The amount of path components of 'current' beyond the roots components.
+    valid_components: usize,
+}
+
 /// A cache for efficiently executing operations on directories and files which are encountered in sorted order.
 /// That way, these operations can be re-used for subsequent invocations in the same directory.
 ///
@@ -46,29 +57,11 @@ pub struct Cache {
     stack: Stack,
     /// tells us what to do as we change paths.
     mode: cache::Mode,
-    /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
-    pub unlink_on_collision: bool,
-
-    /// just for testing
-    #[cfg(debug_assertions)]
-    pub test_mkdir_calls: usize,
 }
 
-pub struct Stack {
-    /// The prefix/root for all paths we handle.
-    root: PathBuf,
-    /// the most recent known cached that we know is valid.
-    current: PathBuf,
-    /// The relative portion of `valid` that was added previously.
-    current_relative: PathBuf,
-    /// The amount of path components of 'current' beyond the roots components.
-    valid_components: usize,
-}
-
+///
+pub mod cache;
 ///
 pub mod stack;
 
 mod capabilities;
-
-///
-pub mod cache;

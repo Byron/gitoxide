@@ -6,9 +6,51 @@ use std::path::{Path, PathBuf};
 #[derive(Copy, Clone)]
 pub enum Mode {
     /// Useful for checkout where directories need creation, but we need to access attributes as well.
-    CreateDirectoryAndProvideAttributes,
+    CreateDirectoryAndProvideAttributes {
+        /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
+        unlink_on_collision: bool,
+
+        /// just for testing
+        #[cfg(debug_assertions)]
+        test_mkdir_calls: usize,
+    },
     /// Used when adding files, requiring access to both attributes and ignore information.
     ProvideAttributesAndIgnore,
+}
+
+impl Mode {
+    pub fn checkout(unlink_on_collision: bool) -> Self {
+        Mode::CreateDirectoryAndProvideAttributes {
+            unlink_on_collision,
+            #[cfg(debug_assertions)]
+            test_mkdir_calls: 0,
+        }
+    }
+}
+
+#[cfg(debug_assertions)]
+impl Cache {
+    pub fn num_mkdir_calls(&self) -> usize {
+        match self.mode {
+            Mode::CreateDirectoryAndProvideAttributes { test_mkdir_calls, .. } => test_mkdir_calls,
+            _ => 0,
+        }
+    }
+
+    pub fn reset_mkdir_calls(&mut self) {
+        if let Mode::CreateDirectoryAndProvideAttributes { test_mkdir_calls, .. } = &mut self.mode {
+            *test_mkdir_calls = 0;
+        }
+    }
+
+    pub fn unlink_on_collision(&mut self, value: bool) {
+        if let Mode::CreateDirectoryAndProvideAttributes {
+            unlink_on_collision, ..
+        } = &mut self.mode
+        {
+            *unlink_on_collision = value;
+        }
+    }
 }
 
 pub struct Platform<'a> {
@@ -36,9 +78,6 @@ impl Cache {
         Cache {
             stack: fs::Stack::new(root),
             mode,
-            #[cfg(debug_assertions)]
-            test_mkdir_calls: 0,
-            unlink_on_collision: false,
         }
     }
 
@@ -52,16 +91,16 @@ impl Cache {
         mode: git_index::entry::Mode,
     ) -> std::io::Result<Platform<'_>> {
         #[cfg(debug_assertions)]
-        let mkdir_calls = &mut self.test_mkdir_calls;
-        let unlink_on_collision = self.unlink_on_collision;
-        let op_mode = self.mode;
+        let op_mode = &mut self.mode;
         self.stack.make_relative_path_current(
             relative,
             |components, stack: &fs::Stack| {
                 match op_mode {
-                    Mode::CreateDirectoryAndProvideAttributes => {
-                        create_leading_directory(components, stack, mode, mkdir_calls, unlink_on_collision)?
-                    }
+                    Mode::CreateDirectoryAndProvideAttributes {
+                        #[cfg(debug_assertions)]
+                        test_mkdir_calls,
+                        unlink_on_collision,
+                    } => create_leading_directory(components, stack, mode, test_mkdir_calls, *unlink_on_collision)?,
                     Mode::ProvideAttributesAndIgnore => todo!(),
                 }
                 Ok(())

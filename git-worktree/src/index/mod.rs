@@ -27,11 +27,7 @@ where
 
     let mut ctx = chunk::Context {
         buf: Vec::new(),
-        path_cache: {
-            let mut cache = fs::Cache::new(dir.clone(), fs::cache::Mode::CreateDirectoryAndProvideAttributes);
-            cache.unlink_on_collision = options.overwrite_existing;
-            cache
-        },
+        path_cache: fs::Cache::new(dir.clone(), fs::cache::Mode::checkout(options.overwrite_existing)),
         find: find.clone(),
         options,
         num_files: &num_files,
@@ -66,12 +62,10 @@ where
                         progress::Discard,
                         chunk::Context {
                             find: find.clone(),
-                            path_cache: {
-                                let mut cache =
-                                    fs::Cache::new(dir.clone(), fs::cache::Mode::CreateDirectoryAndProvideAttributes);
-                                cache.unlink_on_collision = options.overwrite_existing;
-                                cache
-                            },
+                            path_cache: fs::Cache::new(
+                                dir.clone(),
+                                fs::cache::Mode::checkout(options.overwrite_existing),
+                            ),
                             buf: Vec::new(),
                             options,
                             num_files,
