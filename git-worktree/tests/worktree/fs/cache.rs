@@ -100,16 +100,16 @@ mod create_directory {
 }
 
 #[allow(unused)]
-mod attributes_and_ignore {
+mod ignore_only {
     use std::path::Path;
 
     use git_index::entry::Mode;
     use git_worktree::fs;
     use tempfile::{tempdir, TempDir};
 
-    fn new_cache() -> (fs::Cache, TempDir) {
-        let dir = tempdir().unwrap();
-        let cache = fs::Cache::new(dir.path(), todo!(), dir.path().join(".git")); // TODO: also test initialization
-        (cache, dir)
+    fn new_cache() -> fs::Cache {
+        let dir = git_testtools::scripted_fixture_repo_read_only("make_ignore_setup.sh").unwrap();
+        let cache = fs::Cache::new(dir, todo!(), dir.join(".git")); // TODO: also test initialization
+        cache
     }
 }
