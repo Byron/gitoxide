@@ -8,7 +8,11 @@ mod create_directory {
     #[test]
     fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() {
         let dir = tempdir().unwrap();
-        let mut cache = fs::Cache::new(dir.path().join("non-existing-root"), fs::cache::Mode::checkout(false));
+        let mut cache = fs::Cache::new(
+            dir.path().join("non-existing-root"),
+            fs::cache::Mode::checkout(false, None),
+            dir.path().join(".git"),
+        );
         assert_eq!(cache.num_mkdir_calls(), 0);
 
         let path = cache.at_entry("hello", Mode::FILE).unwrap().leading_dir();
@@ -86,7 +90,26 @@ mod create_directory {
 
     fn new_cache() -> (fs::Cache, TempDir) {
         let dir = tempdir().unwrap();
-        let cache = fs::Cache::new(dir.path(), fs::cache::Mode::checkout(false));
+        let cache = fs::Cache::new(
+            dir.path(),
+            fs::cache::Mode::checkout(false, None),
+            dir.path().join(".git"),
+        );
+        (cache, dir)
+    }
+}
+
+#[allow(unused)]
+mod attributes_and_ignore {
+    use std::path::Path;
+
+    use git_index::entry::Mode;
+    use git_worktree::fs;
+    use tempfile::{tempdir, TempDir};
+
+    fn new_cache() -> (fs::Cache, TempDir) {
+        let dir = tempdir().unwrap();
+        let cache = fs::Cache::new(dir.path(), todo!(), dir.path().join(".git")); // TODO: also test initialization
         (cache, dir)
     }
 }

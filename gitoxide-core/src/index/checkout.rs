@@ -83,31 +83,36 @@ pub fn checkout_exclusive(
         files_updated,
         bytes_written,
     } = match repo {
-        Some(repo) => git::worktree::index::checkout(
-            &mut index,
-            dest_directory,
-            {
-                let objects = repo.objects.into_arc()?;
-                move |oid, buf| {
-                    objects.find_blob(oid, buf).ok();
-                    if empty_files {
-                        // We always want to query the ODB here…
-                        objects.find_blob(oid, buf)?;
-                        buf.clear();
-                        // …but write nothing
-                        Ok(git::objs::BlobRef { data: buf })
-                    } else {
-                        objects.find_blob(oid, buf)
+        Some(repo) => {
+            let git_dir = repo.git_dir().to_owned();
+            git::worktree::index::checkout(
+                &mut index,
+                dest_directory,
+                git_dir,
+                {
+                    let objects = repo.objects.into_arc()?;
+                    move |oid, buf| {
+                        objects.find_blob(oid, buf).ok();
+                        if empty_files {
+                            // We always want to query the ODB here…
+                            objects.find_blob(oid, buf)?;
+                            buf.clear();
+                            // …but write nothing
+                            Ok(git::objs::BlobRef { data: buf })
+                        } else {
+                            objects.find_blob(oid, buf)
+                        }
                     }
-                }
-            },
-            &mut files,
-            &mut bytes,
-            should_interrupt,
-            opts,
-        ),
+                },
+                &mut files,
+                &mut bytes,
+                should_interrupt,
+                opts,
+            )
+        }
         None => git::worktree::index::checkout(
             &mut index,
+            dest_directory,
             dest_directory,
             |_, buf| {
                 buf.clear();

@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use git_features::{interrupt, parallel::in_parallel, progress, progress::Progress};
@@ -9,9 +10,13 @@ pub mod checkout;
 pub(crate) mod entry;
 
 /// Note that interruption still produce an `Ok(…)` value, so the caller should look at `should_interrupt` to communicate the outcome.
+/// `dir` is the directory into which to checkout the `index`.
+/// `git_dir` is the `.git` directory for reading additional per-repository configuration files.
+#[allow(clippy::too_many_arguments)]
 pub fn checkout<Find, E>(
     index: &mut git_index::State,
     dir: impl Into<std::path::PathBuf>,
+    git_dir: impl AsRef<Path>,
     find: Find,
     files: &mut impl Progress,
     bytes: &mut impl Progress,
@@ -27,9 +32,13 @@ where
 
     let mut ctx = chunk::Context {
         buf: Vec::new(),
-        path_cache: fs::Cache::new(dir.clone(), fs::cache::Mode::checkout(options.overwrite_existing)),
+        path_cache: fs::Cache::new(
+            dir.clone(),
+            fs::cache::Mode::checkout(options.overwrite_existing, options.attributes_file.clone()),
+            git_dir.as_ref(),
+        ),
         find: find.clone(),
-        options,
+        options: options.clone(),
         num_files: &num_files,
     };
     let (chunk_size, thread_limit, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
@@ -56,6 +65,7 @@ where
             thread_limit,
             {
                 let num_files = &num_files;
+                let git_dir = git_dir.as_ref().to_owned();
                 move |_| {
                     (
                         progress::Discard,
@@ -64,10 +74,11 @@ where
                             find: find.clone(),
                             path_cache: fs::Cache::new(
                                 dir.clone(),
-                                fs::cache::Mode::checkout(options.overwrite_existing),
+                                fs::cache::Mode::checkout(options.overwrite_existing, options.attributes_file.clone()),
+                                &git_dir,
                             ),
                             buf: Vec::new(),
-                            options,
+                            options: options.clone(),
                             num_files,
                         },
                     )
@@ -255,7 +266,12 @@ mod chunk {
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let res = entry::checkout(entry, entry_path, entry::Context { find, path_cache, buf }, *options);
+        let res = entry::checkout(
+            entry,
+            entry_path,
+            entry::Context { find, path_cache, buf },
+            options.clone(),
+        );
         files.inc();
         num_files.fetch_add(1, Ordering::SeqCst);
         match res {

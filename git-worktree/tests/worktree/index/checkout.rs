@@ -21,7 +21,7 @@ fn accidental_writes_through_symlinks_are_prevented_if_overwriting_is_forbidden(
     // without overwrite mode, everything is safe.
     opts.overwrite_existing = false;
     let (source_tree, destination, _index, outcome) =
-        checkout_index_in_tmp_dir(opts, "make_dangerous_symlink").unwrap();
+        checkout_index_in_tmp_dir(opts.clone(), "make_dangerous_symlink").unwrap();
 
     let source_files = dir_structure(&source_tree);
     let worktree_files = dir_structure(&destination);
@@ -62,7 +62,7 @@ fn writes_through_symlinks_are_prevented_even_if_overwriting_is_allowed() {
     // with overwrite mode
     opts.overwrite_existing = true;
     let (source_tree, destination, _index, outcome) =
-        checkout_index_in_tmp_dir(opts, "make_dangerous_symlink").unwrap();
+        checkout_index_in_tmp_dir(opts.clone(), "make_dangerous_symlink").unwrap();
 
     let source_files = dir_structure(&source_tree);
     let worktree_files = dir_structure(&destination);
@@ -91,7 +91,7 @@ fn overwriting_files_and_lone_directories_works() {
     opts.overwrite_existing = true;
     opts.destination_is_initially_empty = false;
     let (_source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir_opts(
-        opts,
+        opts.clone(),
         "make_mixed_without_submodules",
         |_| true,
         |d| {
@@ -150,7 +150,8 @@ fn overwriting_files_and_lone_directories_works() {
 fn symlinks_become_files_if_disabled() -> crate::Result {
     let mut opts = opts_from_probe();
     opts.fs.symlink = false;
-    let (source_tree, destination, _index, outcome) = checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
+    let (source_tree, destination, _index, outcome) =
+        checkout_index_in_tmp_dir(opts.clone(), "make_mixed_without_submodules")?;
 
     assert_equality(&source_tree, &destination, opts.fs.symlink)?;
     assert!(outcome.collisions.is_empty());
@@ -163,7 +164,7 @@ fn allow_or_disallow_symlinks() -> crate::Result {
     for allowed in &[false, true] {
         opts.fs.symlink = *allowed;
         let (source_tree, destination, _index, outcome) =
-            checkout_index_in_tmp_dir(opts, "make_mixed_without_submodules")?;
+            checkout_index_in_tmp_dir(opts.clone(), "make_mixed_without_submodules")?;
 
         assert_equality(&source_tree, &destination, opts.fs.symlink)?;
         assert!(outcome.collisions.is_empty());
@@ -239,7 +240,7 @@ fn no_case_related_collisions_on_case_sensitive_filesystem() {
         return;
     }
     let (source_tree, destination, index, outcome) =
-        checkout_index_in_tmp_dir(opts, "make_ignorecase_collisions").unwrap();
+        checkout_index_in_tmp_dir(opts.clone(), "make_ignorecase_collisions").unwrap();
 
     assert!(outcome.collisions.is_empty());
     let num_files = assert_equality(&source_tree, &destination, opts.fs.symlink).unwrap();
@@ -398,6 +399,7 @@ fn checkout_index_in_tmp_dir_opts(
     let outcome = index::checkout(
         &mut index,
         destination.path(),
+        git_dir,
         move |oid, buf| {
             if allow_return_object(oid) {
                 odb.find_blob(oid, buf)

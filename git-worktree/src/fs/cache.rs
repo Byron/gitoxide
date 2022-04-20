@@ -3,7 +3,7 @@ use crate::fs::Stack;
 use crate::{fs, os};
 use std::path::{Path, PathBuf};
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum Mode {
     /// Useful for checkout where directories need creation, but we need to access attributes as well.
     CreateDirectoryAndProvideAttributes {
@@ -13,17 +13,34 @@ pub enum Mode {
         /// just for testing
         #[cfg(debug_assertions)]
         test_mkdir_calls: usize,
+        /// An additional per-user attributes file, similar to `$GIT_DIR/info/attributes`
+        attributes_file: Option<PathBuf>,
     },
     /// Used when adding files, requiring access to both attributes and ignore information.
-    ProvideAttributesAndIgnore,
+    ProvideAttributesAndIgnore {
+        /// An additional per-user excludes file, similar to `$GIT_DIR/info/exclude`. It's an error if it is set but can't be read/opened.
+        excludes_file: Option<PathBuf>,
+        /// An additional per-user attributes file, similar to `$GIT_DIR/info/attributes`
+        attributes_file: Option<PathBuf>,
+    },
 }
 
 impl Mode {
-    pub fn checkout(unlink_on_collision: bool) -> Self {
+    /// Configure a mode to be suitable for checking out files.
+    pub fn checkout(unlink_on_collision: bool, attributes_file: Option<PathBuf>) -> Self {
         Mode::CreateDirectoryAndProvideAttributes {
             unlink_on_collision,
             #[cfg(debug_assertions)]
             test_mkdir_calls: 0,
+            attributes_file,
+        }
+    }
+
+    /// Configure a mode for adding files.
+    pub fn add(excludes_file: Option<PathBuf>, attributes_file: Option<PathBuf>) -> Self {
+        Mode::ProvideAttributesAndIgnore {
+            excludes_file,
+            attributes_file,
         }
     }
 }
@@ -71,13 +88,25 @@ impl<'a> std::fmt::Debug for Platform<'a> {
 }
 
 impl Cache {
-    /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
+    fn assure_init(&mut self) -> std::io::Result<()> {
+        if let Some(_git_dir) = self.git_dir.take() {
+            // TODO: init attributes and possibly gitignore
+        }
+        Ok(())
+    }
+}
+
+impl Cache {
+    /// Create a new instance with `worktree_root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
-    pub fn new(root: impl Into<PathBuf>, mode: Mode) -> Self {
-        let root = root.into();
+    ///
+    /// `git_dir` is the path to the git repository directory, used to find the per-repository excludes files like `info/exclude` and `info/attributes`.
+    pub fn new(worktree_root: impl Into<PathBuf>, mode: Mode, git_dir: impl Into<PathBuf>) -> Self {
+        let root = worktree_root.into();
         Cache {
             stack: fs::Stack::new(root),
             mode,
+            git_dir: Some(git_dir.into()),
         }
     }
 
@@ -90,7 +119,7 @@ impl Cache {
         relative: impl AsRef<Path>,
         mode: git_index::entry::Mode,
     ) -> std::io::Result<Platform<'_>> {
-        #[cfg(debug_assertions)]
+        self.assure_init()?;
         let op_mode = &mut self.mode;
         self.stack.make_relative_path_current(
             relative,
@@ -100,8 +129,9 @@ impl Cache {
                         #[cfg(debug_assertions)]
                         test_mkdir_calls,
                         unlink_on_collision,
+                        attributes_file: _,
                     } => create_leading_directory(components, stack, mode, test_mkdir_calls, *unlink_on_collision)?,
-                    Mode::ProvideAttributesAndIgnore => todo!(),
+                    Mode::ProvideAttributesAndIgnore { .. } => todo!(),
                 }
                 Ok(())
             },
