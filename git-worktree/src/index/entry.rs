@@ -37,7 +37,7 @@ where
         git_features::path::from_byte_slice(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {
             path: entry_path.to_owned(),
         })?;
-    let dest = path_cache.append_relative_path_assure_leading_dir(dest_relative, entry.mode)?;
+    let dest = path_cache.at_entry(dest_relative, entry.mode)?.leading_dir();
 
     let object_size = match entry.mode {
         git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {

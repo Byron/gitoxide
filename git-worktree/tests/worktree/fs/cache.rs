@@ -15,9 +15,7 @@ mod create_directory {
         );
         assert_eq!(cache.test_mkdir_calls, 0);
 
-        let path = cache
-            .append_relative_path_assure_leading_dir("hello", Mode::FILE)
-            .unwrap();
+        let path = cache.at_entry("hello", Mode::FILE).unwrap().leading_dir();
         assert!(!path.parent().unwrap().exists(), "prefix itself is never created");
         assert_eq!(cache.test_mkdir_calls, 0);
     }
@@ -34,8 +32,9 @@ mod create_directory {
             ("link", Mode::SYMLINK),
         ] {
             let path = cache
-                .append_relative_path_assure_leading_dir(Path::new("dir").join(name), *mode)
-                .unwrap();
+                .at_entry(Path::new("dir").join(name), *mode)
+                .unwrap()
+                .leading_dir();
             assert!(path.parent().unwrap().is_dir(), "dir exists");
         }
 
@@ -47,9 +46,7 @@ mod create_directory {
         let (mut cache, tmp) = new_cache();
         std::fs::create_dir(tmp.path().join("dir")).unwrap();
 
-        let path = cache
-            .append_relative_path_assure_leading_dir("dir/file", Mode::FILE)
-            .unwrap();
+        let path = cache.at_entry("dir/file", Mode::FILE).unwrap().leading_dir();
         assert!(path.parent().unwrap().is_dir(), "directory is still present");
         assert!(!path.exists(), "it won't create the file");
         assert_eq!(cache.test_mkdir_calls, 1);
@@ -67,10 +64,7 @@ mod create_directory {
             cache.unlink_on_collision = false;
             let relative_path = format!("{}/file", dirname);
             assert_eq!(
-                cache
-                    .append_relative_path_assure_leading_dir(&relative_path, Mode::FILE)
-                    .unwrap_err()
-                    .kind(),
+                cache.at_entry(&relative_path, Mode::FILE).unwrap_err().kind(),
                 std::io::ErrorKind::AlreadyExists
             );
         }
@@ -82,9 +76,7 @@ mod create_directory {
         for dirname in &["link-to-dir", "file-in-dir"] {
             cache.unlink_on_collision = true;
             let relative_path = format!("{}/file", dirname);
-            let path = cache
-                .append_relative_path_assure_leading_dir(&relative_path, Mode::FILE)
-                .unwrap();
+            let path = cache.at_entry(&relative_path, Mode::FILE).unwrap().leading_dir();
             assert!(path.parent().unwrap().is_dir(), "directory was forcefully created");
             assert!(!path.exists());
         }

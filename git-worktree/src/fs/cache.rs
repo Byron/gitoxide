@@ -11,6 +11,23 @@ pub enum Mode {
     ProvideAttributesAndIgnore,
 }
 
+pub struct Platform<'a> {
+    parent: &'a Cache,
+}
+
+impl<'a> Platform<'a> {
+    /// The full path to `relative` will be returned for use on the file system.
+    pub fn leading_dir(&self) -> &'a Path {
+        self.parent.stack.current()
+    }
+}
+
+impl<'a> std::fmt::Debug for Platform<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.leading_dir(), f)
+    }
+}
+
 impl Cache {
     /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
@@ -28,12 +45,12 @@ impl Cache {
     /// Append the `relative` path to the root directory the cache contains and efficiently create leading directories
     /// unless `mode` indicates `relative` points to a directory itself in which case the entire resulting path is created as directory.
     ///
-    /// The full path to `relative` will be returned for use on the file system.
-    pub fn append_relative_path_assure_leading_dir(
+    /// Provide access to cached information for that `relative` entry via the platform returned.
+    pub fn at_entry(
         &mut self,
         relative: impl AsRef<Path>,
         mode: git_index::entry::Mode,
-    ) -> std::io::Result<&Path> {
+    ) -> std::io::Result<Platform<'_>> {
         #[cfg(debug_assertions)]
         let mkdir_calls = &mut self.test_mkdir_calls;
         let unlink_on_collision = self.unlink_on_collision;
@@ -51,7 +68,7 @@ impl Cache {
             },
             |_| {},
         )?;
-        Ok(self.stack.current())
+        Ok(Platform { parent: self })
     }
 }
 
