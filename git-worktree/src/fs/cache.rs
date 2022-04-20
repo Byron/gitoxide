@@ -93,21 +93,19 @@ fn create_leading_directory(
             let meta = stack.current().symlink_metadata()?;
             if meta.is_dir() {
                 Ok(())
-            } else {
-                if unlink_on_collision {
-                    if meta.is_symlink() {
-                        os::remove_symlink(stack.current())?;
-                    } else {
-                        std::fs::remove_file(stack.current())?;
-                    }
-                    #[cfg(debug_assertions)]
-                    {
-                        *mkdir_calls += 1;
-                    }
-                    std::fs::create_dir(stack.current())
+            } else if unlink_on_collision {
+                if meta.is_symlink() {
+                    os::remove_symlink(stack.current())?;
                 } else {
-                    Err(err)
+                    std::fs::remove_file(stack.current())?;
                 }
+                #[cfg(debug_assertions)]
+                {
+                    *mkdir_calls += 1;
+                }
+                std::fs::create_dir(stack.current())
+            } else {
+                Err(err)
             }
         }
         Err(err) => Err(err),
