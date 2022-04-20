@@ -2,7 +2,6 @@
 #![deny(rust_2018_idioms)]
 
 use bstr::{BStr, BString};
-use std::path::PathBuf;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -19,47 +18,57 @@ pub enum State<'a> {
     Unspecified,
 }
 
-/// A way to describe the combination of files of a given kind one wants to instantiate, with support for additional
-/// overrides as passed by a command-line.
-pub struct Description<T: description::Kind> {
-    /// Paths to files whose patterns don't have a root directory, thus apply as if the file was at the root of the repository.
-    pub global_files: Vec<PathBuf>,
-    /// Paths to files whose patterns apply only to the directory they themselves are in.
-    /// They have higher priority than `global_files`.
-    pub per_directory_files: Vec<PathBuf>,
-    /// Additional pattern/data combinations that should have the highest priority and apply from the root of the repository.
-    /// These are unparsed as of yet and will be parsed later when preparing the files.
-    pub global_overrides: Vec<(BString, T::Value)>,
+/// A grouping of lists of patterns while possibly keeping associated to their base path.
+///
+/// Patterns with base path are queryable relative to that base, otherwise they are relative to the repository root.
+#[derive(Debug, Clone)]
+pub struct MatchGroup<T: description::Tag> {
+    /// A list of pattern lists, each representing a patterns from a file or specified by hand, in the order they were
+    /// specified in.
+    ///
+    /// During matching, this order is reversed.
+    pub patterns: Vec<PatternList<T>>,
 }
 
-///
-pub mod description {
-    use crate::Description;
+/// A list of patterns with an optional names, for matching against it.
+#[derive(Debug, Clone)]
+pub struct PatternList<T: description::Tag> {
+    /// Patterns and their associated data in the order they were loaded in or specified.
+    ///
+    /// During matching, this order is reversed.
+    pub patterns: Vec<(git_glob::Pattern, T::Value)>,
 
+    /// The path at which the patterns are located in a format suitable for matches, or `None` if the patterns
+    /// are relative to the worktree root.
+    _base: Option<BString>,
+}
+
+mod description {
     /// A marker trait to identify the type of a description.
-    pub trait Kind {
+    pub trait Tag {
         /// The value associated with a pattern.
-        type Value;
+        type Value: std::fmt::Debug + Clone;
     }
 
     /// Identify ignore patterns.
+    #[derive(Debug)]
     pub struct Ignore;
-    impl Kind for Ignore {
+    impl Tag for Ignore {
         type Value = ();
     }
 
     /// Identify patterns with attributes.
+    #[derive(Debug)]
     pub struct Attributes;
-    impl Kind for Attributes {
+    impl Tag for Attributes {
         /// TODO: identify the actual value, should be name/State pairs, but there is the question of storage.
         type Value = ();
     }
-
-    impl Description<Ignore> {}
 }
+pub use description::{Attributes, Ignore, Tag};
 
-pub type Files = Description<description::Attributes>;
-pub type IgnoreFiles = Description<description::Ignore>;
+pub type Files = MatchGroup<Attributes>;
+pub type IgnoreFiles = MatchGroup<Ignore>;
 
 pub mod parse;
 
