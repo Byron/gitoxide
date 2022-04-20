@@ -21,8 +21,8 @@ pub enum State<'a> {
 /// A grouping of lists of patterns while possibly keeping associated to their base path.
 ///
 /// Patterns with base path are queryable relative to that base, otherwise they are relative to the repository root.
-#[derive(Debug, Clone)]
-pub struct MatchGroup<T: description::Tag> {
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct MatchGroup<T: match_group::Tag> {
     /// A list of pattern lists, each representing a patterns from a file or specified by hand, in the order they were
     /// specified in.
     ///
@@ -31,8 +31,8 @@ pub struct MatchGroup<T: description::Tag> {
 }
 
 /// A list of patterns with an optional names, for matching against it.
-#[derive(Debug, Clone)]
-pub struct PatternList<T: description::Tag> {
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct PatternList<T: match_group::Tag> {
     /// Patterns and their associated data in the order they were loaded in or specified.
     ///
     /// During matching, this order is reversed.
@@ -40,32 +40,62 @@ pub struct PatternList<T: description::Tag> {
 
     /// The path at which the patterns are located in a format suitable for matches, or `None` if the patterns
     /// are relative to the worktree root.
-    _base: Option<BString>,
+    base: Option<BString>,
 }
 
-mod description {
+mod match_group {
+    use crate::{MatchGroup, PatternList};
+    use std::ffi::OsString;
+    use std::path::PathBuf;
+
     /// A marker trait to identify the type of a description.
-    pub trait Tag {
+    pub trait Tag: Clone + PartialEq + Eq + std::fmt::Debug + std::hash::Hash + Ord + PartialOrd {
         /// The value associated with a pattern.
-        type Value: std::fmt::Debug + Clone;
+        type Value: PartialEq + Eq + std::fmt::Debug + std::hash::Hash + Ord + PartialOrd + Clone;
     }
 
     /// Identify ignore patterns.
-    #[derive(Debug)]
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
     pub struct Ignore;
     impl Tag for Ignore {
         type Value = ();
     }
 
     /// Identify patterns with attributes.
-    #[derive(Debug)]
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
     pub struct Attributes;
     impl Tag for Attributes {
         /// TODO: identify the actual value, should be name/State pairs, but there is the question of storage.
         type Value = ();
     }
+
+    impl MatchGroup<Ignore> {
+        /// See [PatternList::<Ignore>::from_overrides()] for details.
+        pub fn from_overrides(patterns: impl IntoIterator<Item = impl Into<OsString>>) -> Self {
+            MatchGroup {
+                patterns: vec![PatternList::<Ignore>::from_overrides(patterns)],
+            }
+        }
+    }
+
+    impl PatternList<Ignore> {
+        /// Parse a list of patterns, using slashes as path separators
+        pub fn from_overrides(patterns: impl IntoIterator<Item = impl Into<OsString>>) -> Self {
+            PatternList {
+                patterns: patterns
+                    .into_iter()
+                    .map(Into::into)
+                    .filter_map(|pattern| {
+                        let pattern = git_features::path::into_bytes(PathBuf::from(pattern)).ok()?;
+                        git_glob::parse(pattern.as_ref()).map(|p| (p, ()))
+                    })
+                    .collect(),
+                base: None,
+            }
+        }
+    }
 }
-pub use description::{Attributes, Ignore, Tag};
+pub use match_group::{Attributes, Ignore, Tag};
 
 pub type Files = MatchGroup<Attributes>;
 pub type IgnoreFiles = MatchGroup<Ignore>;
