@@ -8,7 +8,7 @@ mod ignore {
         assert_eq!(patterns.len(), 1);
         assert_eq!(
             git_attributes::PatternList::<Ignore>::from_overrides(input),
-            patterns.into_iter().nth(0).unwrap()
+            patterns.into_iter().next().unwrap()
         );
     }
 }
