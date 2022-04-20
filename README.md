@@ -110,6 +110,9 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-traverse)
   * [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
   * [git-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-features)
+  * [git-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-credentials)
+  * [git-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sec)
+  * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
   * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
   * [git-repository](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository)
   * `gitoxide-core`
@@ -119,10 +122,7 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
   * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
-  * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
 * **idea**
-  * [git-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-credentials)
-  * [git-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sec)
   * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
   * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)
   * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
