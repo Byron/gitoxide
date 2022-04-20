@@ -1,3 +1,4 @@
+use git_glob::wildmatch::Mode;
 use std::{
     borrow::Cow,
     collections::{HashMap, VecDeque},
@@ -278,21 +279,31 @@ impl<'event> GitConfig<'event> {
         options: &from_paths::Options,
     ) -> Result<(), from_paths::Error> {
         // TODO handle new git undocumented feature `hasconfig`
-        fn include_condition_is_true(
-            condition: &Cow<str>,
-            target_config_path: Option<&Path>,
-            options: &from_paths::Options,
-        ) -> bool {
-            if let Some(git_dir) = options.git_dir {
-                if let Some(condition) = condition.strip_prefix("gitdir:") {
-                    let path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
-                    if let Ok(resolved) = resolve(path, target_config_path, options) {
-                        return resolved == git_dir;
+        fn include_condition_is_true(condition: &Cow<str>, options: &from_paths::Options) -> bool {
+            if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir:")) {
+                let path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
+                if let Ok(resolved) = path.interpolate(options.git_install_dir.as_deref()) {
+                    let resolved: PathBuf = resolved.into();
+                    let mut resolved = resolved.to_string_lossy();
+                    if !["~/", "./", "/"].iter().any(|&str| resolved.starts_with(str)) {
+                        resolved = Cow::Owned(format!("**/{}", resolved));
                     }
-                    return false;
-                } else if let Some(_condition) = condition.strip_prefix("gitdir/i:") {
-                    todo!()
+                    if resolved.ends_with("/") {
+                        resolved = Cow::Owned(format!("{}**", resolved));
+                    }
+                    if let Some(pattern) = git_glob::Pattern::from_bytes(resolved.as_bytes()) {
+                        if let Some(value) = git_dir.to_str() {
+                            println!();
+                            dbg!(&pattern, &value);
+                            let result = pattern.matches(value, Mode::NO_MATCH_SLASH_LITERAL);
+                            dbg!(&result);
+                            return result;
+                        }
+                    }
                 }
+                return false;
+            } else if let Some(_condition) = condition.strip_prefix("gitdir/i:") {
+                todo!()
             }
             if let Some(branch_name) = options.branch_name {
                 if let Some((git_ref::Category::LocalBranch, branch_name)) = branch_name.category_and_short_name() {
@@ -328,7 +339,7 @@ impl<'event> GitConfig<'event> {
 
             for (header, body) in get_include_if_sections(target_config) {
                 if let Some(condition) = &header.subsection_name {
-                    if include_condition_is_true(condition, target_config_path, options) {
+                    if include_condition_is_true(condition, options) {
                         let paths = body.values(&Key::from("path"));
                         let paths = paths.iter().map(|path| values::Path::from(path.clone()));
                         include_paths.extend(paths);
@@ -344,6 +355,7 @@ impl<'event> GitConfig<'event> {
                 }
             }
 
+            dbg!("vvvv", &paths_to_include);
             for config_path in paths_to_include {
                 let mut include_config = GitConfig::open(&config_path)?;
                 resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
@@ -355,6 +367,7 @@ impl<'event> GitConfig<'event> {
         fn get_include_if_sections<'a>(
             target_config: &'a GitConfig<'_>,
         ) -> Vec<(&'a ParsedSectionHeader<'a>, &'a SectionBody<'a>)> {
+            // TODO can we have same values in section_headers.values()?
             let section_headers_to_id: HashMap<_, _> = target_config
                 .section_headers
                 .values()
