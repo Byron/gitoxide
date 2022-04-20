@@ -45,7 +45,7 @@ pub struct Capabilities {
 pub struct Cache {
     stack: Stack,
     /// tells us what to do as we change paths.
-    options: cache::Options,
+    mode: cache::Mode,
     /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
     pub unlink_on_collision: bool,
 

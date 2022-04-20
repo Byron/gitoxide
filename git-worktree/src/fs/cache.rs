@@ -3,21 +3,22 @@ use crate::fs::Stack;
 use crate::{fs, os};
 use std::path::{Path, PathBuf};
 
-#[derive(Copy, Clone, Default)]
-pub struct Options {
-    /// If set, the cache will create directories leading up to a given relative path, or create it as directory as a whole
-    /// depending on its type.
-    pub create_directories: bool,
+#[derive(Copy, Clone)]
+pub enum Mode {
+    /// Useful for checkout where directories need creation, but we need to access attributes as well.
+    CreateDirectoryAndProvideAttributes,
+    /// Used when adding files, requiring access to both attributes and ignore information.
+    ProvideAttributesAndIgnore,
 }
 
 impl Cache {
     /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
-    pub fn new(root: impl Into<PathBuf>, options: Options) -> Self {
+    pub fn new(root: impl Into<PathBuf>, mode: Mode) -> Self {
         let root = root.into();
         Cache {
             stack: fs::Stack::new(root),
-            options,
+            mode,
             #[cfg(debug_assertions)]
             test_mkdir_calls: 0,
             unlink_on_collision: false,
@@ -36,12 +37,15 @@ impl Cache {
         #[cfg(debug_assertions)]
         let mkdir_calls = &mut self.test_mkdir_calls;
         let unlink_on_collision = self.unlink_on_collision;
-        let options = self.options;
+        let op_mode = self.mode;
         self.stack.make_relative_path_current(
             relative,
             |components, stack: &fs::Stack| {
-                if options.create_directories {
-                    create_leading_directory(components, stack, mode, mkdir_calls, unlink_on_collision)?;
+                match op_mode {
+                    Mode::CreateDirectoryAndProvideAttributes => {
+                        create_leading_directory(components, stack, mode, mkdir_calls, unlink_on_collision)?
+                    }
+                    Mode::ProvideAttributesAndIgnore => todo!(),
                 }
                 Ok(())
             },
