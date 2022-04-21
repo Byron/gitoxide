@@ -285,12 +285,16 @@ impl<'event> GitConfig<'event> {
                 if let Ok(resolved) = path.interpolate(options.git_install_dir.as_deref()) {
                     let resolved: PathBuf = resolved.into();
                     let mut resolved = resolved.to_string_lossy();
-                    if !["~/", "./", "/"].iter().any(|&str| resolved.starts_with(str)) {
-                        resolved = Cow::Owned(format!("**/{}", resolved));
+                    if !["~/", "./", &std::path::MAIN_SEPARATOR.to_string()]
+                        .iter()
+                        .any(|&str| resolved.starts_with(str))
+                    {
+                        resolved = Cow::Owned(format!("**{}{}", std::path::MAIN_SEPARATOR, resolved));
                     }
-                    if resolved.ends_with("/") {
+                    if resolved.ends_with(std::path::MAIN_SEPARATOR) {
                         resolved = Cow::Owned(format!("{}**", resolved));
                     }
+                    dbg!(&resolved);
                     if let Some(pattern) = git_glob::Pattern::from_bytes(resolved.as_bytes()) {
                         if let Some(value) = git_dir.to_str() {
                             println!();

@@ -280,6 +280,7 @@ a"#,
 #[cfg(test)]
 mod from_paths_tests {
     use bstr::{BStr, BString, ByteSlice};
+    use std::path::PathBuf;
     use std::{borrow::Cow, fs, io, path::Path};
 
     use git_config::{
@@ -676,11 +677,15 @@ mod from_paths_tests {
         );
     }
 
+    #[test]
     #[ignore]
     fn test_glob() {
-        let pt = git_glob::Pattern::from_bytes("/a/.git".as_bytes()).unwrap();
+        let pt = git_glob::Pattern::from_bytes("**\\.git".as_bytes()).unwrap();
         dbg!(&pt);
-        assert!(pt.matches("/a/.git", git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL));
+        assert!(pt.matches(
+            "\\IdeaProjects\\gitoxide\\.git",
+            git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL
+        ));
     }
 
     #[test]
