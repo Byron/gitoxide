@@ -84,20 +84,15 @@ impl Pattern {
         );
         debug_assert!(!path.starts_with(b"/"), "input path must be relative");
 
-        let (text, first_wildcard_pos) = self
-            .mode
-            .contains(pattern::Mode::ABSOLUTE)
-            .then(|| (self.text[1..].as_bstr(), self.first_wildcard_pos.map(|p| p - 1)))
-            .unwrap_or((self.text.as_bstr(), self.first_wildcard_pos));
         if self.mode.contains(pattern::Mode::NO_SUB_DIR) {
             let basename = if self.mode.contains(pattern::Mode::ABSOLUTE) {
                 path
             } else {
                 &path[basename_start_pos.unwrap_or_default()..]
             };
-            self.matches_inner(text, first_wildcard_pos, basename, flags)
+            self.matches(basename, flags)
         } else {
-            self.matches_inner(text, first_wildcard_pos, path, flags)
+            self.matches(path, flags)
         }
     }
 
@@ -107,22 +102,12 @@ impl Pattern {
     /// strings with cases ignored as well. Note that the case folding performed here is ASCII only.
     ///
     /// Note that this method uses some shortcuts to accelerate simple patterns.
-    pub fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
-        self.matches_inner(self.text.as_bstr(), self.first_wildcard_pos, value, mode)
-    }
-
-    fn matches_inner<'a>(
-        &self,
-        text: &BStr,
-        first_wildcard_pos: Option<usize>,
-        value: impl Into<&'a BStr>,
-        mode: wildmatch::Mode,
-    ) -> bool {
+    fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
         let value = value.into();
-        match first_wildcard_pos {
+        match self.first_wildcard_pos {
             // "*literal" case, overrides starts-with
             Some(pos) if self.mode.contains(pattern::Mode::ENDS_WITH) && !value.contains(&b'/') => {
-                let text = &text[pos + 1..];
+                let text = &self.text[pos + 1..];
                 if mode.contains(wildmatch::Mode::IGNORE_CASE) {
                     value
                         .len()
@@ -137,20 +122,20 @@ impl Pattern {
                 if mode.contains(wildmatch::Mode::IGNORE_CASE) {
                     if !value
                         .get(..pos)
-                        .map_or(false, |value| value.eq_ignore_ascii_case(&text[..pos]))
+                        .map_or(false, |value| value.eq_ignore_ascii_case(&self.text[..pos]))
                     {
                         return false;
                     }
-                } else if !value.starts_with(&text[..pos]) {
+                } else if !value.starts_with(&self.text[..pos]) {
                     return false;
                 }
-                crate::wildmatch(text.as_bstr(), value, mode)
+                crate::wildmatch(self.text.as_bstr(), value, mode)
             }
             None => {
                 if mode.contains(wildmatch::Mode::IGNORE_CASE) {
-                    text.eq_ignore_ascii_case(value)
+                    self.text.eq_ignore_ascii_case(value)
                 } else {
-                    text == value
+                    self.text == value
                 }
             }
         }

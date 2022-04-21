@@ -77,12 +77,12 @@ fn leading_exclamation_marks_can_be_escaped_with_backslash() {
 fn leading_slashes_mark_patterns_as_absolute() {
     assert_eq!(
         git_glob::parse(br"/absolute"),
-        pat("/absolute", Mode::NO_SUB_DIR | Mode::ABSOLUTE, None)
+        pat("absolute", Mode::NO_SUB_DIR | Mode::ABSOLUTE, None)
     );
 
     assert_eq!(
         git_glob::parse(br"/absolute/path"),
-        pat("/absolute/path", Mode::ABSOLUTE, None)
+        pat("absolute/path", Mode::ABSOLUTE, None)
     );
 }
 
