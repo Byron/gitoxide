@@ -124,7 +124,16 @@ impl Cache {
                         test_mkdir_calls,
                         unlink_on_collision,
                         attributes_file: _,
-                    } => create_leading_directory(components, stack, mode, test_mkdir_calls, *unlink_on_collision)?,
+                    } => {
+                        #[cfg(debug_assertions)]
+                        {
+                            create_leading_directory(components, stack, mode, test_mkdir_calls, *unlink_on_collision)?
+                        }
+                        #[cfg(not(debug_assertions))]
+                        {
+                            create_leading_directory(components, stack, mode, *unlink_on_collision)?
+                        }
+                    }
                     Mode::ProvideAttributesAndIgnore { .. } => todo!(),
                 }
                 Ok(())
@@ -139,7 +148,7 @@ fn create_leading_directory(
     components: &mut std::iter::Peekable<std::path::Components<'_>>,
     stack: &Stack,
     mode: git_index::entry::Mode,
-    mkdir_calls: &mut usize,
+    #[cfg(debug_assertions)] mkdir_calls: &mut usize,
     unlink_on_collision: bool,
 ) -> std::io::Result<()> {
     let target_is_dir = mode == git_index::entry::Mode::COMMIT || mode == git_index::entry::Mode::DIR;
