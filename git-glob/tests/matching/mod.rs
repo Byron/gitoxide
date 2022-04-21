@@ -122,6 +122,21 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
 }
 
 #[test]
+#[ignore]
+fn matches_of_absolute_paths_work() {
+    let input = "/hello/git";
+    let pat = pat(input);
+    assert!(
+        pat.matches(input, git_glob::wildmatch::Mode::empty()),
+        "patterns always match themselves"
+    );
+    assert!(
+        pat.matches(input, git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL),
+        "patterns always match themselves, path mode doesn't change that"
+    );
+}
+
+#[test]
 fn basename_matches_from_end() {
     let pat = &pat("foo");
     assert!(match_file(pat, "FoO", Case::Fold));
