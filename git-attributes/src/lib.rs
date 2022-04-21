@@ -38,7 +38,7 @@ pub struct PatternList<T: match_group::Tag> {
     /// the line number in its source file or its sequence number (_`(pattern, value, line_number)`_).
     ///
     /// During matching, this order is reversed.
-    pub patterns: Vec<(git_glob::Pattern, T::Value, usize)>,
+    pub patterns: Vec<PatternMapping<T::Value>>,
 
     /// The path from which the patterns were read, or `None` if the patterns
     /// don't originate in a file on disk.
@@ -47,6 +47,13 @@ pub struct PatternList<T: match_group::Tag> {
     /// The parent directory of source, or `None` if the patterns are _global_ to match against the repository root.
     /// It's processed to contain slashes only and to end with a trailing slash, and is relative to the repository root.
     base: Option<BString>,
+}
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct PatternMapping<T> {
+    pub pattern: git_glob::Pattern,
+    pub value: T,
+    pub sequence_number: usize,
 }
 
 mod match_group;

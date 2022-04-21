@@ -1,4 +1,4 @@
-use crate::{MatchGroup, PatternList};
+use crate::{MatchGroup, PatternList, PatternMapping};
 use bstr::{BStr, ByteSlice};
 use std::ffi::OsString;
 use std::io::Read;
@@ -22,6 +22,11 @@ impl Tag for Ignore {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
 pub struct Attributes;
 
+impl Tag for Attributes {
+    /// TODO: identify the actual value, should be name/State pairs, but there is the question of storage.
+    type Value = ();
+}
+
 /// Describes a matching value within a [`MatchGroup`].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Match<'a, T> {
@@ -32,11 +37,6 @@ pub struct Match<'a, T> {
     pub source: Option<&'a Path>,
     /// The line at which the pattern was found in its `source` file, or the occurrence in which it was provided.
     pub sequence_number: usize,
-}
-
-impl Tag for Attributes {
-    /// TODO: identify the actual value, should be name/State pairs, but there is the question of storage.
-    type Value = ();
 }
 
 impl<T> MatchGroup<T>
@@ -109,7 +109,11 @@ impl PatternList<Ignore> {
     pub fn from_bytes(bytes: &[u8], source: impl Into<PathBuf>, root: Option<&Path>) -> Self {
         let source = source.into();
         let patterns = crate::parse::ignore(bytes)
-            .map(|(pattern, line_number)| (pattern, (), line_number))
+            .map(|(pattern, line_number)| PatternMapping {
+                pattern,
+                value: (),
+                sequence_number: line_number,
+            })
             .collect();
 
         let base = root
@@ -159,16 +163,22 @@ where
                 )
             })
             .unwrap_or((relative_path, basename_pos));
-        self.patterns.iter().rev().find_map(|(pattern, value, seq_id)| {
-            pattern
-                .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
-                .then(|| Match {
-                    pattern,
-                    value,
-                    source: self.source.as_deref(),
-                    sequence_number: *seq_id,
-                })
-        })
+        self.patterns.iter().rev().find_map(
+            |PatternMapping {
+                 pattern,
+                 value,
+                 sequence_number,
+             }| {
+                pattern
+                    .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
+                    .then(|| Match {
+                        pattern,
+                        value,
+                        source: self.source.as_deref(),
+                        sequence_number: *sequence_number,
+                    })
+            },
+        )
     }
 }
 
@@ -182,7 +192,11 @@ impl PatternList<Ignore> {
                 .enumerate()
                 .filter_map(|(seq_id, pattern)| {
                     let pattern = git_features::path::into_bytes(PathBuf::from(pattern)).ok()?;
-                    git_glob::parse(pattern.as_ref()).map(|p| (p, (), seq_id))
+                    git_glob::parse(pattern.as_ref()).map(|p| PatternMapping {
+                        pattern: p,
+                        value: (),
+                        sequence_number: seq_id,
+                    })
                 })
                 .collect(),
             source: None,
