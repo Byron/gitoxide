@@ -30,6 +30,6 @@ mod parse;
 /// Create a [`Pattern`] by parsing `text` or return `None` if `text` is empty.
 ///
 /// Note that
-pub fn parse(text: &[u8]) -> Option<Pattern> {
-    Pattern::from_bytes(text)
+pub fn parse(text: impl AsRef<[u8]>) -> Option<Pattern> {
+    Pattern::from_bytes(text.as_ref())
 }
