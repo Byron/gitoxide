@@ -20,10 +20,10 @@ fn line_numbers_are_counted_correctly() {
             ("*.[oa]".into(), Mode::NO_SUB_DIR, 2),
             ("*.html".into(), Mode::NO_SUB_DIR | Mode::ENDS_WITH, 5),
             ("foo.html".into(), Mode::NO_SUB_DIR | Mode::NEGATIVE, 8),
-            ("*".into(), Mode::NO_SUB_DIR | Mode::ENDS_WITH | Mode::ABSOLUTE, 11),
-            ("foo".into(), Mode::NEGATIVE | Mode::NO_SUB_DIR | Mode::ABSOLUTE, 12),
-            ("foo/*".into(), Mode::ABSOLUTE, 13),
-            ("foo/bar".into(), Mode::ABSOLUTE | Mode::NEGATIVE, 14)
+            ("/*".into(), Mode::NO_SUB_DIR | Mode::ENDS_WITH | Mode::ABSOLUTE, 11),
+            ("/foo".into(), Mode::NEGATIVE | Mode::NO_SUB_DIR | Mode::ABSOLUTE, 12),
+            ("/foo/*".into(), Mode::ABSOLUTE, 13),
+            ("/foo/bar".into(), Mode::ABSOLUTE | Mode::NEGATIVE, 14)
         ]
     );
 }

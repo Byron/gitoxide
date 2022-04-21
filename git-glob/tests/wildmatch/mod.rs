@@ -363,7 +363,7 @@ impl Display for MatchResult {
 }
 
 fn match_file_path(pattern: &git_glob::Pattern, path: &str, case: Case) -> bool {
-    pattern.matches_repo_relative_path(path, basename_of(path), None, false /* is_dir */, case)
+    pattern.matches_repo_relative_path(path, basename_of(path), false /* is_dir */, case)
 }
 fn basename_of(path: &str) -> Option<usize> {
     path.rfind('/').map(|pos| pos + 1)

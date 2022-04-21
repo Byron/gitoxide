@@ -52,8 +52,7 @@ impl Pattern {
     }
 
     /// Match the given `path` which takes slashes (and only slashes) literally, and is relative to the repository root.
-    /// Note that `path` is assumed to be relative to the repository, and that `base_path` is assumed to contain `path`
-    /// and is also relative to the repository.
+    /// Note that `path` is assumed to be relative to the repository.
     ///
     /// We may take various shortcuts which is when `basename_start_pos` and `is_dir` come into play.
     /// `basename_start_pos` is the index at which the `path`'s basename starts.
@@ -65,7 +64,6 @@ impl Pattern {
         &self,
         path: impl Into<&'a BStr>,
         basename_start_pos: Option<usize>,
-        base_path: Option<&BStr>,
         is_dir: bool,
         case: Case,
     ) -> bool {
@@ -84,15 +82,7 @@ impl Pattern {
             path.rfind_byte(b'/').map(|p| p + 1),
             "BUG: invalid cached basename_start_pos provided"
         );
-        debug_assert!(
-            base_path.map_or(true, |p| p.ends_with(b"/")),
-            "base must end with a trailing slash"
-        );
         debug_assert!(!path.starts_with(b"/"), "input path must be relative");
-        debug_assert!(
-            base_path.map(|base| path.starts_with(base)).unwrap_or(true),
-            "repo-relative paths must be pre-filtered to match our base."
-        );
 
         let (text, first_wildcard_pos) = self
             .mode
@@ -101,21 +91,12 @@ impl Pattern {
             .unwrap_or((self.text.as_bstr(), self.first_wildcard_pos));
         if self.mode.contains(pattern::Mode::NO_SUB_DIR) {
             let basename = if self.mode.contains(pattern::Mode::ABSOLUTE) {
-                base_path
-                    .and_then(|base| path.strip_prefix(base.as_ref()).map(|b| b.as_bstr()))
-                    .unwrap_or(path)
+                path
             } else {
                 &path[basename_start_pos.unwrap_or_default()..]
             };
             self.matches_inner(text, first_wildcard_pos, basename, flags)
         } else {
-            let path = match base_path {
-                Some(base) => match path.strip_prefix(base.as_ref()) {
-                    Some(path) => path.as_bstr(),
-                    None => return false,
-                },
-                None => path,
-            };
             self.matches_inner(text, first_wildcard_pos, path, flags)
         }
     }
