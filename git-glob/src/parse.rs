@@ -26,21 +26,23 @@ pub fn pattern(mut pat: &[u8]) -> Option<(BString, pattern::Mode, Option<usize>)
     }
     if pat.first() == Some(&b'/') {
         mode |= Mode::ABSOLUTE;
-        pat = &pat[1..];
     }
-    let mut line = truncate_non_escaped_trailing_spaces(pat);
-    if line.last() == Some(&b'/') {
+    let mut pat = truncate_non_escaped_trailing_spaces(pat);
+    if pat.last() == Some(&b'/') {
         mode |= Mode::MUST_BE_DIR;
-        line.pop();
+        pat.pop();
     }
-    if !line.contains(&b'/') {
+
+    let relative_pattern = mode.contains(Mode::ABSOLUTE).then(|| &pat[1..]).unwrap_or(&pat);
+    if !relative_pattern.contains(&b'/') {
         mode |= Mode::NO_SUB_DIR;
     }
-    let pos_of_first_wildcard = first_wildcard_pos(&line);
-    if line.first() == Some(&b'*') && first_wildcard_pos(&line[1..]).is_none() {
+    if relative_pattern.first() == Some(&b'*') && first_wildcard_pos(&relative_pattern[1..]).is_none() {
         mode |= Mode::ENDS_WITH;
     }
-    Some((line, mode, pos_of_first_wildcard))
+
+    let pos_of_first_wildcard = first_wildcard_pos(&pat);
+    Some((pat, mode, pos_of_first_wildcard))
 }
 
 fn first_wildcard_pos(pat: &[u8]) -> Option<usize> {

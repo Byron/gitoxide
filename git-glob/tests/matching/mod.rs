@@ -122,7 +122,6 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
 }
 
 #[test]
-#[ignore]
 fn matches_of_absolute_paths_work() {
     let input = "/hello/git";
     let pat = pat(input);
