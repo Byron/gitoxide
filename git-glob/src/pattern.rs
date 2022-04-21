@@ -1,5 +1,5 @@
 use bitflags::bitflags;
-use bstr::{BStr, BString, ByteSlice};
+use bstr::{BStr, ByteSlice};
 
 use crate::{pattern, wildmatch, Pattern};
 
@@ -43,7 +43,6 @@ impl Pattern {
             text,
             mode,
             first_wildcard_pos,
-            base_path: None,
         })
     }
 
@@ -52,21 +51,8 @@ impl Pattern {
         self.mode.contains(Mode::NEGATIVE)
     }
 
-    /// Set the base path of the pattern.
-    /// Must be a slash-separated relative path with a trailing slash.
-    ///
-    /// Use this upon creation of the pattern when the source file is known.
-    pub fn with_base(mut self, path: impl Into<BString>) -> Self {
-        let path = path.into();
-        debug_assert!(path.ends_with(b"/"), "base must end with a trailing slash");
-        debug_assert!(!path.starts_with(b"/"), "base must be relative");
-        self.base_path = Some(path);
-        self
-    }
-
     /// Match the given `path` which takes slashes (and only slashes) literally, and is relative to the repository root.
-    /// Note that `path` is assumed to be relative to the repository, and that our [`base_path`][Self::base_path]
-    /// is assumed to contain `path`.
+    /// Note that `path` is assumed to be relative to the repository.
     ///
     /// We may take various shortcuts which is when `basename_start_pos` and `is_dir` come into play.
     /// `basename_start_pos` is the index at which the `path`'s basename starts.
@@ -96,33 +82,22 @@ impl Pattern {
             path.rfind_byte(b'/').map(|p| p + 1),
             "BUG: invalid cached basename_start_pos provided"
         );
-        debug_assert!(
-            self.base_path
-                .as_ref()
-                .map(|base| path.starts_with(base))
-                .unwrap_or(true),
-            "repo-relative paths must be pre-filtered to match our base."
-        );
+        debug_assert!(!path.starts_with(b"/"), "input path must be relative");
 
+        let (text, first_wildcard_pos) = self
+            .mode
+            .contains(pattern::Mode::ABSOLUTE)
+            .then(|| (self.text[1..].as_bstr(), self.first_wildcard_pos.map(|p| p - 1)))
+            .unwrap_or((self.text.as_bstr(), self.first_wildcard_pos));
         if self.mode.contains(pattern::Mode::NO_SUB_DIR) {
             let basename = if self.mode.contains(pattern::Mode::ABSOLUTE) {
-                self.base_path
-                    .as_ref()
-                    .and_then(|base| path.strip_prefix(base.as_slice()).map(|b| b.as_bstr()))
-                    .unwrap_or(path)
+                path
             } else {
                 &path[basename_start_pos.unwrap_or_default()..]
             };
-            self.matches(basename, flags)
+            self.matches_inner(text, first_wildcard_pos, basename, flags)
         } else {
-            let path = match self.base_path.as_ref() {
-                Some(base) => match path.strip_prefix(base.as_slice()) {
-                    Some(path) => path.as_bstr(),
-                    None => return false,
-                },
-                None => path,
-            };
-            self.matches(path, flags)
+            self.matches_inner(text, first_wildcard_pos, path, flags)
         }
     }
 
@@ -133,11 +108,21 @@ impl Pattern {
     ///
     /// Note that this method uses some shortcuts to accelerate simple patterns.
     pub fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
+        self.matches_inner(self.text.as_bstr(), self.first_wildcard_pos, value, mode)
+    }
+
+    fn matches_inner<'a>(
+        &self,
+        text: &BStr,
+        first_wildcard_pos: Option<usize>,
+        value: impl Into<&'a BStr>,
+        mode: wildmatch::Mode,
+    ) -> bool {
         let value = value.into();
-        match self.first_wildcard_pos {
+        match first_wildcard_pos {
             // "*literal" case, overrides starts-with
             Some(pos) if self.mode.contains(pattern::Mode::ENDS_WITH) && !value.contains(&b'/') => {
-                let text = &self.text[pos + 1..];
+                let text = &text[pos + 1..];
                 if mode.contains(wildmatch::Mode::IGNORE_CASE) {
                     value
                         .len()
@@ -152,20 +137,20 @@ impl Pattern {
                 if mode.contains(wildmatch::Mode::IGNORE_CASE) {
                     if !value
                         .get(..pos)
-                        .map_or(false, |value| value.eq_ignore_ascii_case(&self.text[..pos]))
+                        .map_or(false, |value| value.eq_ignore_ascii_case(&text[..pos]))
                     {
                         return false;
                     }
-                } else if !value.starts_with(&self.text[..pos]) {
+                } else if !value.starts_with(&text[..pos]) {
                     return false;
                 }
-                crate::wildmatch(self.text.as_bstr(), value, mode)
+                crate::wildmatch(text.as_bstr(), value, mode)
             }
             None => {
                 if mode.contains(wildmatch::Mode::IGNORE_CASE) {
-                    self.text.eq_ignore_ascii_case(value)
+                    text.eq_ignore_ascii_case(value)
                 } else {
-                    self.text == value
+                    text == value
                 }
             }
         }

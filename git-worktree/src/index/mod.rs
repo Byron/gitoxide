@@ -3,12 +3,15 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use git_features::{interrupt, parallel::in_parallel, progress, progress::Progress};
 use git_hash::oid;
 
-use crate::index::checkout::PathCache;
+use crate::fs;
 
 pub mod checkout;
 pub(crate) mod entry;
 
 /// Note that interruption still produce an `Ok(…)` value, so the caller should look at `should_interrupt` to communicate the outcome.
+/// `dir` is the directory into which to checkout the `index`.
+/// `git_dir` is the `.git` directory for reading additional per-repository configuration files.
+#[allow(clippy::too_many_arguments)]
 pub fn checkout<Find, E>(
     index: &mut git_index::State,
     dir: impl Into<std::path::PathBuf>,
@@ -27,13 +30,12 @@ where
 
     let mut ctx = chunk::Context {
         buf: Vec::new(),
-        path_cache: {
-            let mut cache = PathCache::new(dir.clone());
-            cache.unlink_on_collision = options.overwrite_existing;
-            cache
-        },
+        path_cache: fs::Cache::new(
+            dir.clone(),
+            fs::cache::Mode::checkout(options.overwrite_existing, options.attributes_file.clone()),
+        ),
         find: find.clone(),
-        options,
+        options: options.clone(),
         num_files: &num_files,
     };
     let (chunk_size, thread_limit, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
@@ -66,13 +68,12 @@ where
                         progress::Discard,
                         chunk::Context {
                             find: find.clone(),
-                            path_cache: {
-                                let mut cache = PathCache::new(dir.clone());
-                                cache.unlink_on_collision = options.overwrite_existing;
-                                cache
-                            },
+                            path_cache: fs::Cache::new(
+                                dir.clone(),
+                                fs::cache::Mode::checkout(options.overwrite_existing, options.attributes_file.clone()),
+                            ),
                             buf: Vec::new(),
-                            options,
+                            options: options.clone(),
                             num_files,
                         },
                     )
@@ -117,8 +118,8 @@ mod chunk {
     use git_hash::oid;
 
     use crate::{
-        index,
-        index::{checkout, checkout::PathCache, entry},
+        fs, index,
+        index::{checkout, entry},
         os,
     };
 
@@ -187,7 +188,7 @@ mod chunk {
 
     pub struct Context<'a, Find> {
         pub find: Find,
-        pub path_cache: PathCache,
+        pub path_cache: fs::Cache,
         pub buf: Vec<u8>,
         pub options: checkout::Options,
         /// We keep these shared so that there is the chance for printing numbers that aren't looking like
@@ -260,7 +261,12 @@ mod chunk {
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let res = entry::checkout(entry, entry_path, find, path_cache, *options, buf);
+        let res = entry::checkout(
+            entry,
+            entry_path,
+            entry::Context { find, path_cache, buf },
+            options.clone(),
+        );
         files.inc();
         num_files.fetch_add(1, Ordering::SeqCst);
         match res {

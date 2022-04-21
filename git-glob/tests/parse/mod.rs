@@ -1,5 +1,4 @@
-use git_glob::pattern::Mode;
-use git_glob::Pattern;
+use git_glob::{pattern::Mode, Pattern};
 
 #[test]
 fn mark_ends_with_pattern_specifically() {
@@ -32,7 +31,6 @@ fn pat(pattern: &str, mode: Mode, first_glob_char_pos: Option<usize>) -> Option<
         text: pattern.into(),
         mode,
         first_wildcard_pos: first_glob_char_pos,
-        base_path: None,
     })
 }
 
@@ -79,12 +77,12 @@ fn leading_exclamation_marks_can_be_escaped_with_backslash() {
 fn leading_slashes_mark_patterns_as_absolute() {
     assert_eq!(
         git_glob::parse(br"/absolute"),
-        pat("absolute", Mode::NO_SUB_DIR | Mode::ABSOLUTE, None)
+        pat("/absolute", Mode::NO_SUB_DIR | Mode::ABSOLUTE, None)
     );
 
     assert_eq!(
         git_glob::parse(br"/absolute/path"),
-        pat("absolute/path", Mode::ABSOLUTE, None)
+        pat("/absolute/path", Mode::ABSOLUTE, None)
     );
 }
 

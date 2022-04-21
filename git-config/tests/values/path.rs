@@ -1,7 +1,8 @@
-use crate::values::b;
-use git_config::values::path::interpolate;
-use git_config::values::Path;
 use std::borrow::Cow;
+
+use git_config::values::{path::interpolate, Path};
+
+use crate::values::b;
 
 #[test]
 fn no_interpolation_for_paths_without_tilde_or_prefix() {

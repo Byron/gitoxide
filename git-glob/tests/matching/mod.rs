@@ -121,6 +121,20 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
 }
 
 #[test]
+fn matches_of_absolute_paths_work() {
+    let input = "/hello/git";
+    let pat = pat(input);
+    assert!(
+        pat.matches(input, git_glob::wildmatch::Mode::empty()),
+        "patterns always match themselves"
+    );
+    assert!(
+        pat.matches(input, git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL),
+        "patterns always match themselves, path mode doesn't change that"
+    );
+}
+
+#[test]
 fn basename_matches_from_end() {
     let pat = &pat("foo");
     assert!(match_file(pat, "FoO", Case::Fold));
@@ -132,76 +146,38 @@ fn basename_matches_from_end() {
 }
 
 #[test]
-#[should_panic]
-fn base_path_must_match_or_panic_occours_in_debug_mode() {
-    let pat = pat("foo").with_base("base/");
-    match_file(&pat, "other/FoO", Case::Fold);
-}
-
-#[test]
 fn absolute_basename_matches_only_from_beginning() {
-    let mut pattern = pat("/foo");
-    let pat = &pattern;
+    let pat = &pat("/foo");
     assert!(match_file(pat, "FoO", Case::Fold));
     assert!(!match_file(pat, "bar/Foo", Case::Fold));
     assert!(match_file(pat, "foo", Case::Sensitive));
     assert!(!match_file(pat, "Foo", Case::Sensitive));
     assert!(!match_file(pat, "bar/foo", Case::Sensitive));
-
-    pattern = pattern.with_base("base/");
-    let pat = &pattern;
-    assert!(match_file(pat, "base/FoO", Case::Fold));
-    assert!(!match_file(pat, "base/bar/Foo", Case::Fold));
-    assert!(match_file(pat, "base/foo", Case::Sensitive));
-    assert!(!match_file(pat, "base/Foo", Case::Sensitive));
-    assert!(!match_file(pat, "base/bar/foo", Case::Sensitive));
 }
 
 #[test]
 fn absolute_path_matches_only_from_beginning() {
-    let mut pattern = pat("/bar/foo");
-    let pat = &pattern;
+    let pat = &pat("/bar/foo");
     assert!(!match_file(pat, "FoO", Case::Fold));
     assert!(match_file(pat, "bar/Foo", Case::Fold));
     assert!(!match_file(pat, "foo", Case::Sensitive));
     assert!(match_file(pat, "bar/foo", Case::Sensitive));
     assert!(!match_file(pat, "bar/Foo", Case::Sensitive));
-
-    pattern = pattern.with_base("base/");
-    let pat = &pattern;
-    assert!(!match_file(pat, "base/FoO", Case::Fold));
-    assert!(match_file(pat, "base/bar/Foo", Case::Fold));
-    assert!(!match_file(pat, "base/foo", Case::Sensitive));
-    assert!(match_file(pat, "base/bar/foo", Case::Sensitive));
-    assert!(!match_file(pat, "base/bar/Foo", Case::Sensitive));
 }
 
 #[test]
 fn absolute_path_with_recursive_glob_detects_mismatches_quickly() {
-    let mut pattern = pat("/bar/foo/**");
-    let pat = &pattern;
+    let pat = &pat("/bar/foo/**");
     assert!(!match_file(pat, "FoO", Case::Fold));
     assert!(!match_file(pat, "bar/Fooo", Case::Fold));
     assert!(!match_file(pat, "baz/bar/Foo", Case::Fold));
-
-    pattern = pattern.with_base("base/");
-    let pat = &pattern;
-    assert!(!match_file(pat, "base/FoO", Case::Fold));
-    assert!(!match_file(pat, "base/bar/Fooo", Case::Fold));
-    assert!(!match_file(pat, "base/baz/bar/foo", Case::Sensitive));
 }
 
 #[test]
 fn absolute_path_with_recursive_glob_can_do_case_insensitive_prefix_search() {
-    let mut pattern = pat("/bar/foo/**");
-    let pat = &pattern;
+    let pat = &pat("/bar/foo/**");
     assert!(!match_file(pat, "bar/Foo/match", Case::Sensitive));
     assert!(match_file(pat, "bar/Foo/match", Case::Fold));
-
-    pattern = pattern.with_base("base/");
-    let pat = &pattern;
-    assert!(!match_file(pat, "base/bar/Foo/match", Case::Sensitive));
-    assert!(match_file(pat, "base/bar/Foo/match", Case::Fold));
 }
 
 #[test]

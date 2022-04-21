@@ -201,9 +201,9 @@ dependencies = [
 
 [[package]]
 name = "atoi"
-version = "1.0.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7c57d12312ff59c811c0643f4d80830505833c9ffaebd193d819392b265be8e"
+checksum = "616896e05fc0e2649463a93a15183c6a16bf03413a7af88ef1285ddedfa9cda5"
 dependencies = [
  "num-traits",
 ]
@@ -1076,6 +1076,7 @@ name = "git-attributes"
 version = "0.1.0"
 dependencies = [
  "bstr",
+ "git-features",
  "git-glob",
  "git-quote",
  "git-testtools",
