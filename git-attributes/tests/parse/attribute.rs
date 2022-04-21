@@ -30,7 +30,7 @@ fn line_numbers_are_counted_correctly() {
             (pattern(r"!foo.html", Mode::NO_SUB_DIR, None), vec![set("x")], 8),
             (pattern(r"#a/path", Mode::empty(), None), vec![unset("a")], 10),
             (
-                pattern(r"/*", Mode::ABSOLUTE | Mode::NO_SUB_DIR | Mode::ENDS_WITH, Some(1)),
+                pattern(r"*", Mode::ABSOLUTE | Mode::NO_SUB_DIR | Mode::ENDS_WITH, Some(0)),
                 vec![unspecified("b")],
                 11
             ),
