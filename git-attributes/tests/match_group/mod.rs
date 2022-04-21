@@ -33,7 +33,7 @@ mod ignore {
         let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline")).unwrap();
         let mut buf = Vec::new();
         let _group = MatchGroup::from_git_dir(git_dir, Some(dir.join("user.exclude")), &mut buf).unwrap();
-        for (value, source_and_line) in (Expectations {
+        for (_value, _source_and_line) in (Expectations {
             lines: baseline.lines(),
         }) {}
     }

@@ -105,30 +105,33 @@ fn read_in_full_ignore_missing(path: &Path, buf: &mut Vec<u8>) -> std::io::Resul
     })
 }
 impl PatternList<Ignore> {
+    /// `source` is the location of the `bytes` which represent a list of patterns line by line.
+    pub fn from_bytes(bytes: &[u8], source: impl Into<PathBuf>, root: Option<&Path>) -> Self {
+        let source = source.into();
+        let patterns = crate::parse::ignore(bytes)
+            .map(|(pattern, line_number)| (pattern, (), line_number))
+            .collect();
+
+        let base = root
+            .and_then(|root| source.parent().expect("file").strip_prefix(root).ok())
+            .map(|base| {
+                git_features::path::into_bytes_or_panic_on_windows(base)
+                    .into_owned()
+                    .into()
+            });
+        PatternList {
+            patterns,
+            source: Some(source),
+            base,
+        }
+    }
     pub fn from_file(
         source: impl Into<PathBuf>,
         root: Option<&Path>,
         buf: &mut Vec<u8>,
     ) -> std::io::Result<Option<Self>> {
         let source = source.into();
-        Ok(read_in_full_ignore_missing(&source, buf)?.then(|| {
-            let patterns = crate::parse::ignore(buf)
-                .map(|(pattern, line_number)| (pattern, (), line_number))
-                .collect();
-
-            let base = root
-                .and_then(|root| source.parent().expect("file").strip_prefix(root).ok())
-                .map(|base| {
-                    git_features::path::into_bytes_or_panic_on_windows(base)
-                        .into_owned()
-                        .into()
-                });
-            PatternList {
-                patterns,
-                source: Some(source),
-                base,
-            }
-        }))
+        Ok(read_in_full_ignore_missing(&source, buf)?.then(|| Self::from_bytes(buf, source, root)))
     }
 }
 
