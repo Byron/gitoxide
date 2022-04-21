@@ -714,13 +714,14 @@ mod from_paths_tests {
               path = {}
             [includeIf "gitdir:a/.git"]
               path = {}
-            [includeIf "gitdir:y/.git"]
+            [includeIf "gitdir:{}"]
               path = {}
             [includeIf "gitdir:{}"]
               path = {}"#,
                 escape_backslashes(&c_path),
                 escape_backslashes(&c_slash_path),
                 escape_backslashes(&d_path),
+                escape_backslashes(PathBuf::from(format!("y{}.git", std::path::MAIN_SEPARATOR)).as_path()),
                 escape_backslashes(&e_path),
                 escape_backslashes(&inside_a_x_path),
                 escape_backslashes(&b_path)
