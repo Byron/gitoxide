@@ -157,7 +157,7 @@ fn create_leading_directory(
             if meta.is_dir() {
                 Ok(())
             } else if unlink_on_collision {
-                if meta.is_symlink() {
+                if meta.file_type().is_symlink() {
                     os::remove_symlink(stack.current())?;
                 } else {
                     std::fs::remove_file(stack.current())?;

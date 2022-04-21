@@ -111,7 +111,7 @@ impl Capabilities {
             return Ok(false);
         }
 
-        let res = std::fs::symlink_metadata(&link_path).map(|m| m.is_symlink());
+        let res = std::fs::symlink_metadata(&link_path).map(|m| m.file_type().is_symlink());
 
         let cleanup = crate::os::remove_symlink(&link_path).or_else(|_| std::fs::remove_file(&link_path));
         std::fs::remove_file(&src_path).and(cleanup)?;

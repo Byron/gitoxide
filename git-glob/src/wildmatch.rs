@@ -113,7 +113,8 @@ pub(crate) mod function {
                                     };
                                 }
                                 Some((next_p_idx, next_p_ch)) => {
-                                    (p_idx, p_ch) = (next_p_idx, next_p_ch);
+                                    p_idx = next_p_idx;
+                                    p_ch = next_p_ch;
                                     if !match_slash && p_ch == SLASH {
                                         match text[t_idx..].find_byte(SLASH) {
                                             Some(distance_to_slash) => {
@@ -141,8 +142,11 @@ pub(crate) mod function {
                                 if (!match_slash && t_ch == SLASH) || t_ch == p_ch {
                                     break;
                                 }
-                                (t_idx, t_ch) = match t.next() {
-                                    Some(t) => (t.0, t.1),
+                                match t.next() {
+                                    Some(t) => {
+                                        t_idx = t.0;
+                                        t_ch = t.1;
+                                    }
                                     None => break,
                                 };
                             }
@@ -158,15 +162,21 @@ pub(crate) mod function {
                         } else if !match_slash && t_ch == SLASH {
                             return AbortToStarStar;
                         }
-                        (t_idx, t_ch) = match t.next() {
-                            Some(t) => (t.0, t.1),
+                        match t.next() {
+                            Some(t) => {
+                                t_idx = t.0;
+                                t_ch = t.1;
+                            }
                             None => break AbortAll,
                         };
                     };
                 }
                 BRACKET_OPEN => {
-                    (p_idx, p_ch) = match p.next() {
-                        Some(t) => t,
+                    match p.next() {
+                        Some(t) => {
+                            p_idx = t.0;
+                            p_ch = t.1;
+                        }
                         None => return AbortAll,
                     };
 

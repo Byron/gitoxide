@@ -131,7 +131,7 @@ fn try_write_or_unlink<T>(
 fn try_unlink_path_recursively(path: &Path, path_meta: &std::fs::Metadata) -> std::io::Result<()> {
     if path_meta.is_dir() {
         std::fs::remove_dir_all(path)
-    } else if path_meta.is_symlink() {
+    } else if path_meta.file_type().is_symlink() {
         os::remove_symlink(path)
     } else {
         std::fs::remove_file(path)
@@ -146,7 +146,7 @@ fn debug_assert_dest_is_no_symlink(_path: &Path) {}
 fn debug_assert_dest_is_no_symlink(path: &Path) {
     if let Ok(meta) = path.metadata() {
         debug_assert!(
-            !meta.is_symlink(),
+            !meta.file_type().is_symlink(),
             "BUG: should not ever allow to overwrite/write-into the target of a symbolic link: {}",
             path.display()
         );
