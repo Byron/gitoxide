@@ -150,6 +150,7 @@ members = [
     "git-sec",
     "git-lfs",
     "git-rebase",
+    "git-sequencer",
     "git-submodule",
     "git-transport",
     "git-credentials",

@@ -128,6 +128,7 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
   * [git-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lfs)
   * [git-rebase](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-rebase)
+  * [git-sequencer](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sequencer)
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
   * [git-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-submodule)
   * [git-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tui)

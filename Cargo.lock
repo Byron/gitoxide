@@ -1481,6 +1481,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-sequencer"
+version = "0.0.0"
+
+[[package]]
 name = "git-submodule"
 version = "0.0.0"
 
