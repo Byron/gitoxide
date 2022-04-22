@@ -66,11 +66,7 @@ mod ignore {
                     );
                 }
                 (None, None) => {}
-                (actual, expected) => assert!(
-                    false,
-                    "actual {:?} should match {:?} with path '{}'",
-                    actual, expected, path
-                ),
+                (actual, expected) => panic!("actual {:?} should match {:?} with path '{}'", actual, expected, path),
             }
         }
     }
