@@ -5,26 +5,80 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 /// A marker trait to identify the type of a description.
-pub trait Tag: Clone + PartialEq + Eq + std::fmt::Debug + std::hash::Hash + Ord + PartialOrd + Default {
+pub trait Pattern: Clone + PartialEq + Eq + std::fmt::Debug + std::hash::Hash + Ord + PartialOrd + Default {
     /// The value associated with a pattern.
     type Value: PartialEq + Eq + std::fmt::Debug + std::hash::Hash + Ord + PartialOrd + Clone;
+
+    /// Parse all patterns in `bytes` line by line, ignoring lines with errors, and collect them.
+    fn bytes_to_patterns(bytes: &[u8]) -> Vec<PatternMapping<Self::Value>>;
+
+    fn use_pattern(pattern: &git_glob::Pattern) -> bool;
 }
 
 /// Identify ignore patterns.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
 pub struct Ignore;
 
-impl Tag for Ignore {
+impl Pattern for Ignore {
     type Value = ();
+
+    fn bytes_to_patterns(bytes: &[u8]) -> Vec<PatternMapping<Self::Value>> {
+        crate::parse::ignore(bytes)
+            .map(|(pattern, line_number)| PatternMapping {
+                pattern,
+                value: (),
+                sequence_number: line_number,
+            })
+            .collect()
+    }
+
+    fn use_pattern(_pattern: &git_glob::Pattern) -> bool {
+        true
+    }
+}
+
+/// A value of an attribute pattern, which is either a macro definition or
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub enum Value {
+    MacroAttributes(()),
+    /// TODO: identify the actual value, should be name/State pairs, but there is the question of storage.
+    Attributes(()),
 }
 
 /// Identify patterns with attributes.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
 pub struct Attributes;
 
-impl Tag for Attributes {
-    /// TODO: identify the actual value, should be name/State pairs, but there is the question of storage.
-    type Value = ();
+impl Pattern for Attributes {
+    type Value = Value;
+
+    fn bytes_to_patterns(bytes: &[u8]) -> Vec<PatternMapping<Self::Value>> {
+        crate::parse(bytes)
+            .filter_map(Result::ok)
+            .map(|(pattern_kind, _attrs, line_number)| {
+                let (pattern, value) = match pattern_kind {
+                    crate::parse::Kind::Macro(macro_name) => (
+                        git_glob::Pattern {
+                            text: macro_name,
+                            mode: git_glob::pattern::Mode::all(),
+                            first_wildcard_pos: None,
+                        },
+                        Value::MacroAttributes(()),
+                    ),
+                    crate::parse::Kind::Pattern(p) => (p, Value::Attributes(())),
+                };
+                PatternMapping {
+                    pattern,
+                    value,
+                    sequence_number: line_number,
+                }
+            })
+            .collect()
+    }
+
+    fn use_pattern(pattern: &git_glob::Pattern) -> bool {
+        pattern.mode != git_glob::pattern::Mode::all()
+    }
 }
 
 /// Describes a matching value within a [`MatchGroup`].
@@ -41,7 +95,7 @@ pub struct Match<'a, T> {
 
 impl<T> MatchGroup<T>
 where
-    T: Tag,
+    T: Pattern,
 {
     /// Match `relative_path`, a path relative to the repository containing all patterns.
     // TODO: better docs
@@ -120,17 +174,15 @@ fn read_in_full_ignore_missing(path: &Path, buf: &mut Vec<u8>) -> std::io::Resul
         Err(err) => return Err(err),
     })
 }
-impl PatternList<Ignore> {
+
+impl<T> PatternList<T>
+where
+    T: Pattern,
+{
     /// `source` is the location of the `bytes` which represent a list of patterns line by line.
     pub fn from_bytes(bytes: &[u8], source: impl Into<PathBuf>, root: Option<&Path>) -> Self {
         let source = source.into();
-        let patterns = crate::parse::ignore(bytes)
-            .map(|(pattern, line_number)| PatternMapping {
-                pattern,
-                value: (),
-                sequence_number: line_number,
-            })
-            .collect();
+        let patterns = T::bytes_to_patterns(bytes);
 
         let base = root
             .and_then(|root| source.parent().expect("file").strip_prefix(root).ok())
@@ -163,7 +215,7 @@ impl PatternList<Ignore> {
 
 impl<T> PatternList<T>
 where
-    T: Tag,
+    T: Pattern,
 {
     fn pattern_matching_relative_path(
         &self,
@@ -182,22 +234,26 @@ where
             ),
             None => (relative_path, basename_pos),
         };
-        self.patterns.iter().rev().find_map(
-            |PatternMapping {
-                 pattern,
-                 value,
-                 sequence_number,
-             }| {
-                pattern
-                    .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
-                    .then(|| Match {
-                        pattern,
-                        value,
-                        source: self.source.as_deref(),
-                        sequence_number: *sequence_number,
-                    })
-            },
-        )
+        self.patterns
+            .iter()
+            .rev()
+            .filter(|pm| T::use_pattern(&pm.pattern))
+            .find_map(
+                |PatternMapping {
+                     pattern,
+                     value,
+                     sequence_number,
+                 }| {
+                    pattern
+                        .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
+                        .then(|| Match {
+                            pattern,
+                            value,
+                            source: self.source.as_deref(),
+                            sequence_number: *sequence_number,
+                        })
+                },
+            )
     }
 }
 

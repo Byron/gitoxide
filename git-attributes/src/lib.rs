@@ -23,7 +23,7 @@ pub enum State<'a> {
 ///
 /// Patterns with base path are queryable relative to that base, otherwise they are relative to the repository root.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
-pub struct MatchGroup<T: match_group::Tag = Attributes> {
+pub struct MatchGroup<T: match_group::Pattern = Attributes> {
     /// A list of pattern lists, each representing a patterns from a file or specified by hand, in the order they were
     /// specified in.
     ///
@@ -33,7 +33,7 @@ pub struct MatchGroup<T: match_group::Tag = Attributes> {
 
 /// A list of patterns with an optional names, for matching against it.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct PatternList<T: match_group::Tag> {
+pub struct PatternList<T: match_group::Pattern> {
     /// Patterns and their associated data in the order they were loaded in or specified,
     /// the line number in its source file or its sequence number (_`(pattern, value, line_number)`_).
     ///
@@ -57,7 +57,7 @@ pub struct PatternMapping<T> {
 }
 
 mod match_group;
-pub use match_group::{Attributes, Ignore, Match, Tag};
+pub use match_group::{Attributes, Ignore, Match, Pattern};
 
 pub mod parse;
 
