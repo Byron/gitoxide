@@ -1,13 +1,14 @@
 mod ignore {
     use bstr::{BStr, ByteSlice};
     use git_attributes::{Ignore, Match, MatchGroup};
+    use git_glob::pattern::Case;
 
     struct Expectations<'a> {
         lines: bstr::Lines<'a>,
     }
 
     impl<'a> Iterator for Expectations<'a> {
-        type Item = (&'a BStr, Option<(&'a BStr, usize)>);
+        type Item = (&'a BStr, Option<(&'a BStr, usize, &'a BStr)>);
 
         fn next(&mut self) -> Option<Self::Item> {
             let line = self.lines.next()?;
@@ -20,7 +21,8 @@ mod ignore {
                 let mut tokens = left.split(|b| *b == b':');
                 let source = tokens.next()?.as_bstr();
                 let line_number: usize = tokens.next()?.to_str_lossy().parse().ok()?;
-                Some((source, line_number))
+                let pattern = tokens.next()?.as_bstr();
+                Some((source, line_number, pattern))
             };
             Some((value, source_and_line))
         }
@@ -29,13 +31,48 @@ mod ignore {
     #[test]
     fn from_git_dir() {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_global_ignores_and_external_ignore.sh").unwrap();
-        let git_dir = dir.join("repo").join(".git");
+        let repo_dir = dir.join("repo");
+        let git_dir = repo_dir.join(".git");
         let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline")).unwrap();
         let mut buf = Vec::new();
-        let _group = MatchGroup::from_git_dir(git_dir, Some(dir.join("user.exclude")), &mut buf).unwrap();
-        for (_value, _source_and_line) in (Expectations {
+        let group = MatchGroup::from_git_dir(git_dir, Some(dir.join("user.exclude")), &mut buf).unwrap();
+        for (path, source_and_line) in (Expectations {
             lines: baseline.lines(),
-        }) {}
+        }) {
+            let actual = group.pattern_matching_relative_path(
+                path,
+                repo_dir.join(path.to_str_lossy().as_ref()).is_dir(),
+                Case::Sensitive,
+            );
+            match (actual, source_and_line) {
+                (
+                    Some(Match {
+                        sequence_number,
+                        pattern: _,
+                        source,
+                        value: _,
+                    }),
+                    Some((expected_source, line, _expected_pattern)),
+                ) => {
+                    assert_eq!(sequence_number, line, "our counting should match the one used in git");
+                    assert_eq!(
+                        source.map(|p| p.canonicalize().unwrap()),
+                        Some(
+                            repo_dir
+                                .join(expected_source.to_str_lossy().as_ref())
+                                .canonicalize()
+                                .unwrap()
+                        )
+                    );
+                }
+                (None, None) => {}
+                (actual, expected) => assert!(
+                    false,
+                    "actual {:?} should match {:?} with path '{}'",
+                    actual, expected, path
+                ),
+            }
+        }
     }
 
     #[test]

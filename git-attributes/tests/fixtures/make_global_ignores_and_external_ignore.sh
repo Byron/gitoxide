@@ -41,7 +41,6 @@ dir/user-file-anywhere
 user-file-from-top
 no-match/user-file-from-top
 user-dir-anywhere
-user-dir-anywhere/
 dir/user-dir-anywhere
 user-dir-from-top
 no-match/user-dir-from-top
