@@ -38,9 +38,8 @@ mod ignore {
         let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline")).unwrap();
         let mut buf = Vec::new();
         let mut group = MatchGroup::from_git_dir(git_dir, Some(dir.join("user.exclude")), &mut buf).unwrap();
-        assert_eq!(
-            group.add_patterns_file("not-a-file", None).unwrap(),
-            false,
+        assert!(
+            !group.add_patterns_file("not-a-file", None).unwrap(),
             "missing files are no problem and cause a negative response"
         );
         assert!(
