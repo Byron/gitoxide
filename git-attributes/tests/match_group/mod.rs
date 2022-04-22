@@ -12,16 +12,16 @@ mod ignore {
 
         fn next(&mut self) -> Option<Self::Item> {
             let line = self.lines.next()?;
-            let (left, value) = line.split_at(line.find_byte(b'\t')?);
+            let (left, value) = line.split_at(line.find_byte(b'\t').unwrap());
             let value = value[1..].as_bstr();
 
             let source_and_line = if left == b"::" {
                 None
             } else {
                 let mut tokens = left.split(|b| *b == b':');
-                let source = tokens.next()?.as_bstr();
-                let line_number: usize = tokens.next()?.to_str_lossy().parse().ok()?;
-                let pattern = tokens.next()?.as_bstr();
+                let source = tokens.next().unwrap().as_bstr();
+                let line_number: usize = tokens.next().unwrap().to_str_lossy().parse().ok().unwrap();
+                let pattern = tokens.next().unwrap().as_bstr();
                 Some((source, line_number, pattern))
             };
             Some((value, source_and_line))
