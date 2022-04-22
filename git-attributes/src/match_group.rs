@@ -1,5 +1,5 @@
 use crate::{MatchGroup, PatternList, PatternMapping};
-use bstr::{BStr, ByteSlice};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::ffi::OsString;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -43,7 +43,8 @@ impl<T> MatchGroup<T>
 where
     T: Tag,
 {
-    /// Match `relative_path`, a path relative to the repository containing all patterns,
+    /// Match `relative_path`, a path relative to the repository containing all patterns.
+    // TODO: better docs
     pub fn pattern_matching_relative_path<'a>(
         &self,
         relative_path: impl Into<&'a BStr>,
@@ -91,6 +92,21 @@ impl MatchGroup<Ignore> {
             patterns: vec![PatternList::<Ignore>::from_overrides(patterns)],
         }
     }
+
+    /// Add the given file at `source` if it exists, otherwise do nothing. If a `root` is provided, it's not considered a global file anymore.
+    /// Returns true if the file was added, or false if it didn't exist.
+    pub fn add_patterns_file(&mut self, source: impl Into<PathBuf>, root: Option<&Path>) -> std::io::Result<bool> {
+        let mut buf = Vec::with_capacity(1024);
+        let previous_len = self.patterns.len();
+        self.patterns
+            .extend(PatternList::<Ignore>::from_file(source.into(), root, &mut buf)?);
+        Ok(self.patterns.len() != previous_len)
+    }
+
+    pub fn add_patterns_buffer(&mut self, bytes: &[u8], source: impl Into<PathBuf>, root: Option<&Path>) {
+        self.patterns
+            .push(PatternList::<Ignore>::from_bytes(bytes, source.into(), root));
+    }
 }
 
 fn read_in_full_ignore_missing(path: &Path, buf: &mut Vec<u8>) -> std::io::Result<bool> {
@@ -118,10 +134,16 @@ impl PatternList<Ignore> {
 
         let base = root
             .and_then(|root| source.parent().expect("file").strip_prefix(root).ok())
-            .map(|base| {
-                git_features::path::into_bytes_or_panic_on_windows(base)
+            .and_then(|base| {
+                (!base.as_os_str().is_empty()).then(|| {
+                    let mut base: BString = git_features::path::convert::to_unix_separators(
+                        git_features::path::into_bytes_or_panic_on_windows(base),
+                    )
                     .into_owned()
-                    .into()
+                    .into();
+                    base.push_byte(b'/');
+                    base
+                })
             });
         PatternList {
             patterns,
@@ -150,19 +172,16 @@ where
         is_dir: bool,
         case: git_glob::pattern::Case,
     ) -> Option<Match<'_, T::Value>> {
-        let (relative_path, basename_start_pos) = self
-            .base
-            .as_deref()
-            .map(|base| {
-                (
-                    relative_path
-                        .strip_prefix(base.as_slice())
-                        .expect("input paths must be relative to base")
-                        .as_bstr(),
-                    basename_pos.map(|pos| pos - base.len()),
-                )
-            })
-            .unwrap_or((relative_path, basename_pos));
+        let (relative_path, basename_start_pos) = match self.base.as_deref() {
+            Some(base) => (
+                relative_path.strip_prefix(base.as_slice())?.as_bstr(),
+                basename_pos.and_then(|pos| {
+                    let pos = pos - base.len();
+                    (pos != 0).then(|| pos)
+                }),
+            ),
+            None => (relative_path, basename_pos),
+        };
         self.patterns.iter().rev().find_map(
             |PatternMapping {
                  pattern,

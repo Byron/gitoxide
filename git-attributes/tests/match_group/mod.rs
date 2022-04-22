@@ -2,6 +2,7 @@ mod ignore {
     use bstr::{BStr, ByteSlice};
     use git_attributes::{Ignore, Match, MatchGroup};
     use git_glob::pattern::Case;
+    use std::io::Read;
 
     struct Expectations<'a> {
         lines: bstr::Lines<'a>,
@@ -30,12 +31,33 @@ mod ignore {
 
     #[test]
     fn from_git_dir() {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_global_ignores_and_external_ignore.sh").unwrap();
+        let dir =
+            git_testtools::scripted_fixture_repo_read_only("make_global_and_external_and_dir_ignores.sh").unwrap();
         let repo_dir = dir.join("repo");
         let git_dir = repo_dir.join(".git");
         let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline")).unwrap();
         let mut buf = Vec::new();
-        let group = MatchGroup::from_git_dir(git_dir, Some(dir.join("user.exclude")), &mut buf).unwrap();
+        let mut group = MatchGroup::from_git_dir(git_dir, Some(dir.join("user.exclude")), &mut buf).unwrap();
+        assert_eq!(
+            group.add_patterns_file("not-a-file", None).unwrap(),
+            false,
+            "missing files are no problem and cause a negative response"
+        );
+        assert!(
+            group
+                .add_patterns_file(repo_dir.join(".gitignore"), repo_dir.as_path().into())
+                .unwrap(),
+            "existing files return true"
+        );
+
+        buf.clear();
+        let ignore_file = repo_dir.join("dir-with-ignore").join(".gitignore");
+        std::fs::File::open(&ignore_file)
+            .unwrap()
+            .read_to_end(&mut buf)
+            .unwrap();
+        group.add_patterns_buffer(&buf, ignore_file, repo_dir.as_path().into());
+
         for (path, source_and_line) in (Expectations {
             lines: baseline.lines(),
         }) {

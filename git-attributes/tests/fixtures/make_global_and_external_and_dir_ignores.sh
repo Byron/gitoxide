@@ -30,6 +30,18 @@ subdir/file
 **/subdir-anywhere/file
 EOF
 
+  cat <<EOF >.gitignore
+# a sample .gitignore
+top-level-local-file-anywhere
+EOF
+
+  mkdir dir-with-ignore
+  cat <<EOF >dir-with-ignore/.gitignore
+# a sample .gitignore
+sub-level-local-file-anywhere
+EOF
+
+  git add .gitignore dir-with-ignore
   git commit --allow-empty -m "init"
 
   mkdir user-dir-anywhere user-dir-from-top dir-anywhere dir-from-top
@@ -56,6 +68,11 @@ dir-from-top
 no-match/dir-from-top
 subdir/file
 subdir/subdir-anywhere/file
+top-level-local-file-anywhere
+dir/top-level-local-file-anywhere
+no-match/sub-level-local-file-anywhere
+dir-with-ignore/sub-level-local-file-anywhere
+dir-with-ignore/sub-dir/sub-level-local-file-anywhere
 EOF
 
 )
