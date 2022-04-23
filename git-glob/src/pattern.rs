@@ -59,16 +59,19 @@ impl Pattern {
     ///
     /// Lastly, `case` folding can be configured as well.
     ///
-    /// Note that this method uses shortcuts to accelerate simple patterns.
+    /// Note that this method uses shortcuts to accelerate simple patterns, and is specific to **exclude** style matching.
+    /// Hence this shouldn't be used for **attribute** style patterns.
     pub fn matches_repo_relative_path<'a>(
         &self,
         path: impl Into<&'a BStr>,
         basename_start_pos: Option<usize>,
-        is_dir: bool,
+        is_dir: Option<bool>,
         case: Case,
     ) -> bool {
-        if !is_dir && self.mode.contains(pattern::Mode::MUST_BE_DIR) {
-            return false;
+        if let Some(is_dir) = is_dir {
+            if !is_dir && self.mode.contains(pattern::Mode::MUST_BE_DIR) {
+                return false;
+            }
         }
 
         let flags = wildmatch::Mode::NO_MATCH_SLASH_LITERAL
@@ -84,12 +87,12 @@ impl Pattern {
         );
         debug_assert!(!path.starts_with(b"/"), "input path must be relative");
 
-        if self.mode.contains(pattern::Mode::NO_SUB_DIR) {
-            let basename = if self.mode.contains(pattern::Mode::ABSOLUTE) {
-                path
-            } else {
-                &path[basename_start_pos.unwrap_or_default()..]
-            };
+        // if self.mode.contains(pattern::Mode::NO_SUB_DIR) &&  {
+        if self.mode.contains(pattern::Mode::NO_SUB_DIR)
+            && !self.mode.contains(pattern::Mode::ABSOLUTE)
+            && !self.mode.contains(pattern::Mode::MUST_BE_DIR)
+        {
+            let basename = &path[basename_start_pos.unwrap_or_default()..];
             self.matches(basename, flags)
         } else {
             self.matches(path, flags)

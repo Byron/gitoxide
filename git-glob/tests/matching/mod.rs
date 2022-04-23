@@ -42,6 +42,7 @@ impl<'a> Baseline<'a> {
 }
 
 #[test]
+#[ignore]
 fn compare_baseline_with_ours() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
     let (mut total_matches, mut total_correct, mut panics) = (0, 0, 0);
@@ -69,12 +70,7 @@ fn compare_baseline_with_ours() {
             );
             match std::panic::catch_unwind(|| {
                 let pattern = pat(pattern);
-                pattern.matches_repo_relative_path(
-                    value,
-                    basename_start_pos(value),
-                    false, // TODO: does it make sense to pretend it is a dir and see what happens?
-                    *case,
-                )
+                pattern.matches_repo_relative_path(value, basename_start_pos(value), None, *case)
             }) {
                 Ok(actual_match) => {
                     if actual_match == is_match {
@@ -111,11 +107,11 @@ fn non_dirs_for_must_be_dir_patterns_are_ignored() {
     );
     let path = "hello";
     assert!(
-        !pattern.matches_repo_relative_path(path, None, false /* is-dir */, Case::Sensitive),
+        !pattern.matches_repo_relative_path(path, None, false.into() /* is-dir */, Case::Sensitive),
         "non-dirs never match a dir pattern"
     );
     assert!(
-        pattern.matches_repo_relative_path(path, None, true /* is-dir */, Case::Sensitive),
+        pattern.matches_repo_relative_path(path, None, true.into() /* is-dir */, Case::Sensitive),
         "dirs can match a dir pattern with the normal rules"
     );
 }
@@ -264,16 +260,41 @@ fn negated_patterns_are_handled_by_caller() {
         "the caller checks for the negative flag and acts accordingly"
     );
 }
+#[test]
+#[ignore]
+fn names_automatically_match_entire_directories() {
+    let pattern = &pat("foo");
+    assert!(!match_file(pattern, "foobar", Case::Sensitive));
+    assert!(match_file(pattern, "foo/bar", Case::Sensitive));
+    assert!(match_file(pattern, "foo/bar/baz", Case::Sensitive));
+}
+
+#[test]
+#[ignore]
+fn directory_patterns_match_files_within_a_directory_as_well_like_slash_star_star() {
+    let pattern = &pat("dir/");
+    assert!(match_path(pattern, "dir/file", None, Case::Sensitive));
+    assert!(match_path(pattern, "base/dir/file", None, Case::Sensitive));
+    assert!(match_path(pattern, "base/ndir/file", None, Case::Sensitive));
+    assert!(match_path(pattern, "Dir/File", None, Case::Fold));
+    assert!(match_path(pattern, "Base/Dir/File", None, Case::Fold));
+    assert!(!match_path(pattern, "dir2/file", None, Case::Sensitive));
+
+    let pattern = &pat("dir/sub-dir/");
+    assert!(match_path(pattern, "dir/sub-dir/file", None, Case::Sensitive));
+    assert!(match_path(pattern, "dir/Sub-dir/File", None, Case::Fold));
+    assert!(!match_path(pattern, "dir/Sub-dir2/File", None, Case::Fold));
+}
 
 fn pat<'a>(pattern: impl Into<&'a BStr>) -> git_glob::Pattern {
     git_glob::Pattern::from_bytes(pattern.into()).expect("parsing works")
 }
 
 fn match_file<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, case: Case) -> bool {
-    match_path(pattern, path, false, case)
+    match_path(pattern, path, false.into(), case)
 }
 
-fn match_path<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, is_dir: bool, case: Case) -> bool {
+fn match_path<'a>(pattern: &git_glob::Pattern, path: impl Into<&'a BStr>, is_dir: Option<bool>, case: Case) -> bool {
     let path = path.into();
     pattern.matches_repo_relative_path(path, basename_start_pos(path), is_dir, case)
 }

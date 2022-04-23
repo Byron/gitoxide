@@ -223,6 +223,7 @@ fn corpus() {
         }
     }
 
+    dbg!(&failures);
     assert_eq!(failures.len(), 0);
     assert_eq!(at_least_one_panic, 0, "not a single panic in any invocation");
 
@@ -366,7 +367,7 @@ impl Display for MatchResult {
 }
 
 fn match_file_path(pattern: &git_glob::Pattern, path: &str, case: Case) -> bool {
-    pattern.matches_repo_relative_path(path, basename_of(path), false /* is_dir */, case)
+    pattern.matches_repo_relative_path(path, basename_of(path), false.into() /* is_dir */, case)
 }
 fn basename_of(path: &str) -> Option<usize> {
     path.rfind('/').map(|pos| pos + 1)
