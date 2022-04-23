@@ -56,20 +56,20 @@ impl<'a> Iter<'a> {
         }
     }
 
-    fn parse_attr(&self, attr: &'a [u8]) -> Result<(&'a BStr, crate::State<'a>), Error> {
+    fn parse_attr(&self, attr: &'a [u8]) -> Result<(&'a BStr, crate::StateRef<'a>), Error> {
         let mut tokens = attr.splitn(2, |b| *b == b'=');
         let attr = tokens.next().expect("attr itself").as_bstr();
         let possibly_value = tokens.next();
         let (attr, state) = if attr.first() == Some(&b'-') {
-            (&attr[1..], crate::State::Unset)
+            (&attr[1..], crate::StateRef::Unset)
         } else if attr.first() == Some(&b'!') {
-            (&attr[1..], crate::State::Unspecified)
+            (&attr[1..], crate::StateRef::Unspecified)
         } else {
             (
                 attr,
                 possibly_value
-                    .map(|v| crate::State::Value(v.as_bstr()))
-                    .unwrap_or(crate::State::Set),
+                    .map(|v| crate::StateRef::Value(v.as_bstr()))
+                    .unwrap_or(crate::StateRef::Set),
             )
         };
         Ok((check_attr(attr, self.line_no)?, state))
@@ -95,7 +95,7 @@ fn check_attr(attr: &BStr, line_number: usize) -> Result<&BStr, Error> {
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = Result<(&'a BStr, crate::State<'a>), Error>;
+    type Item = Result<(&'a BStr, crate::StateRef<'a>), Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let attr = self.attrs.next().filter(|a| !a.is_empty())?;

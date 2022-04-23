@@ -1,8 +1,32 @@
-use crate::{MatchGroup, PatternList, PatternMapping};
+use crate::{Assignment, MatchGroup, PatternList, PatternMapping, State, StateRef};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::ffi::OsString;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+
+impl<'a> From<StateRef<'a>> for State {
+    fn from(s: StateRef<'a>) -> Self {
+        match s {
+            StateRef::Value(v) => State::Value(v.to_str().expect("no illformed unicode").into()),
+            StateRef::Set => State::Set,
+            StateRef::Unset => State::Unset,
+            StateRef::Unspecified => State::Unspecified,
+        }
+    }
+}
+
+fn attrs_to_assignments<'a>(
+    attrs: impl Iterator<Item = Result<(&'a BStr, StateRef<'a>), crate::parse::Error>>,
+) -> Result<Vec<Assignment>, crate::parse::Error> {
+    attrs
+        .map(|res| {
+            res.map(|(name, state)| Assignment {
+                name: name.to_str().expect("no illformed unicode").into(),
+                state: state.into(),
+            })
+        })
+        .collect()
+}
 
 /// A marker trait to identify the type of a description.
 pub trait Pattern: Clone + PartialEq + Eq + std::fmt::Debug + std::hash::Hash + Ord + PartialOrd + Default {
@@ -40,9 +64,8 @@ impl Pattern for Ignore {
 /// A value of an attribute pattern, which is either a macro definition or
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Value {
-    MacroAttributes(()),
-    /// TODO: identify the actual value, should be name/State pairs, but there is the question of storage.
-    Attributes(()),
+    MacroAttributes(Vec<Assignment>),
+    Attributes(Vec<Assignment>),
 }
 
 /// Identify patterns with attributes.
@@ -55,7 +78,7 @@ impl Pattern for Attributes {
     fn bytes_to_patterns(bytes: &[u8]) -> Vec<PatternMapping<Self::Value>> {
         crate::parse(bytes)
             .filter_map(Result::ok)
-            .filter_map(|(pattern_kind, _attrs, line_number)| {
+            .filter_map(|(pattern_kind, attrs, line_number)| {
                 let (pattern, value) = match pattern_kind {
                     crate::parse::Kind::Macro(macro_name) => (
                         git_glob::Pattern {
@@ -63,9 +86,12 @@ impl Pattern for Attributes {
                             mode: git_glob::pattern::Mode::all(),
                             first_wildcard_pos: None,
                         },
-                        Value::MacroAttributes(()),
+                        Value::MacroAttributes(attrs_to_assignments(attrs).ok()?),
                     ),
-                    crate::parse::Kind::Pattern(p) => ((!p.is_negative()).then(|| p)?, Value::Attributes(())),
+                    crate::parse::Kind::Pattern(p) => (
+                        (!p.is_negative()).then(|| p)?,
+                        Value::Attributes(attrs_to_assignments(attrs).ok()?),
+                    ),
                 };
                 PatternMapping {
                     pattern,
