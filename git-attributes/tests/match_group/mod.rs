@@ -30,31 +30,26 @@ mod ignore {
     }
 
     #[test]
-    fn from_git_dir() {
-        let dir =
-            git_testtools::scripted_fixture_repo_read_only("make_global_and_external_and_dir_ignores.sh").unwrap();
+    fn from_git_dir() -> crate::Result {
+        let dir = git_testtools::scripted_fixture_repo_read_only("make_global_and_external_and_dir_ignores.sh")?;
         let repo_dir = dir.join("repo");
         let git_dir = repo_dir.join(".git");
-        let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline")).unwrap();
+        let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline"))?;
         let mut buf = Vec::new();
-        let mut group = MatchGroup::from_git_dir(git_dir, Some(dir.join("user.exclude")), &mut buf).unwrap();
+        let mut group = MatchGroup::from_git_dir(git_dir, Some(dir.join("user.exclude")), &mut buf)?;
+
         assert!(
-            !group.add_patterns_file("not-a-file", None).unwrap(),
+            !group.add_patterns_file("not-a-file", None)?,
             "missing files are no problem and cause a negative response"
         );
         assert!(
-            group
-                .add_patterns_file(repo_dir.join(".gitignore"), repo_dir.as_path().into())
-                .unwrap(),
+            group.add_patterns_file(repo_dir.join(".gitignore"), repo_dir.as_path().into())?,
             "existing files return true"
         );
 
         buf.clear();
         let ignore_file = repo_dir.join("dir-with-ignore").join(".gitignore");
-        std::fs::File::open(&ignore_file)
-            .unwrap()
-            .read_to_end(&mut buf)
-            .unwrap();
+        std::fs::File::open(&ignore_file)?.read_to_end(&mut buf)?;
         group.add_patterns_buffer(&buf, ignore_file, repo_dir.as_path().into());
 
         for (path, source_and_line) in (Expectations {
@@ -78,18 +73,14 @@ mod ignore {
                     assert_eq!(sequence_number, line, "our counting should match the one used in git");
                     assert_eq!(
                         source.map(|p| p.canonicalize().unwrap()),
-                        Some(
-                            repo_dir
-                                .join(expected_source.to_str_lossy().as_ref())
-                                .canonicalize()
-                                .unwrap()
-                        )
+                        Some(repo_dir.join(expected_source.to_str_lossy().as_ref()).canonicalize()?)
                     );
                 }
                 (None, None) => {}
                 (actual, expected) => panic!("actual {:?} should match {:?} with path '{}'", actual, expected, path),
             }
         }
+        Ok(())
     }
 
     #[test]
