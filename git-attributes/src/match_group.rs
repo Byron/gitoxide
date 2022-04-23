@@ -102,7 +102,7 @@ where
     pub fn pattern_matching_relative_path<'a>(
         &self,
         relative_path: impl Into<&'a BStr>,
-        is_dir: bool,
+        is_dir: Option<bool>,
         case: git_glob::pattern::Case,
     ) -> Option<Match<'_, T::Value>> {
         let relative_path = relative_path.into();
@@ -221,7 +221,7 @@ where
         &self,
         relative_path: &BStr,
         basename_pos: Option<usize>,
-        is_dir: bool,
+        is_dir: Option<bool>,
         case: git_glob::pattern::Case,
     ) -> Option<Match<'_, T::Value>> {
         let (relative_path, basename_start_pos) = match self.base.as_deref() {

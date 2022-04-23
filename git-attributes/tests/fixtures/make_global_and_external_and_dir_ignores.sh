@@ -6,6 +6,7 @@ cat <<EOF >user.exclude
 user-file-anywhere
 /user-file-from-top
 
+dir/user-dir/
 user-dir-anywhere/
 /user-dir-from-top
 
@@ -45,7 +46,7 @@ EOF
   git commit --allow-empty -m "init"
 
   mkdir user-dir-anywhere user-dir-from-top dir-anywhere dir-from-top
-  mkdir -p dir/user-dir-anywhere dir/dir-anywhere
+  mkdir -p dir/user-dir-anywhere dir/dir-anywhere dir/user-dir
 
   git check-ignore -vn --stdin 2>&1 <<EOF >git-check-ignore.baseline || :
 user-file-anywhere
@@ -53,6 +54,12 @@ dir/user-file-anywhere
 user-file-from-top
 no-match/user-file-from-top
 user-dir-anywhere
+dir/no-match-user-dir-anywhere/file
+user-dir-anywhere/file
+dir/user-dir-anywhere/file
+sub/dir/user-dir/file
+dir/user-dir
+dir/user-dir/file
 dir/user-dir-anywhere
 user-dir-from-top
 no-match/user-dir-from-top
@@ -63,6 +70,7 @@ dir/file-anywhere
 file-from-top
 no-match/file-from-top
 dir-anywhere
+dir-anywhere/file
 dir/dir-anywhere
 dir-from-top
 no-match/dir-from-top

@@ -30,6 +30,7 @@ mod ignore {
     }
 
     #[test]
+    #[ignore]
     fn from_git_dir() -> crate::Result {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_global_and_external_and_dir_ignores.sh")?;
         let repo_dir = dir.join("repo");
@@ -57,7 +58,11 @@ mod ignore {
         }) {
             let actual = group.pattern_matching_relative_path(
                 path,
-                repo_dir.join(path.to_str_lossy().as_ref()).is_dir(),
+                repo_dir
+                    .join(path.to_str_lossy().as_ref())
+                    .metadata()
+                    .ok()
+                    .map(|m| m.is_dir()),
                 Case::Sensitive,
             );
             match (actual, source_and_line) {
@@ -88,11 +93,11 @@ mod ignore {
         let input = ["simple", "pattern/"];
         let group = git_attributes::MatchGroup::<Ignore>::from_overrides(input);
         assert_eq!(
-            group.pattern_matching_relative_path("Simple", false, git_glob::pattern::Case::Fold),
+            group.pattern_matching_relative_path("Simple", None, git_glob::pattern::Case::Fold),
             Some(pattern_to_match(&git_glob::parse("simple").unwrap(), 0))
         );
         assert_eq!(
-            group.pattern_matching_relative_path("pattern", true, git_glob::pattern::Case::Sensitive),
+            group.pattern_matching_relative_path("pattern", Some(true), git_glob::pattern::Case::Sensitive),
             Some(pattern_to_match(&git_glob::parse("pattern/").unwrap(), 1))
         );
         assert_eq!(group.patterns.len(), 1);
