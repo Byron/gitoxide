@@ -58,9 +58,6 @@ impl Pattern {
     /// `basename_start_pos` is the index at which the `path`'s basename starts.
     ///
     /// Lastly, `case` folding can be configured as well.
-    ///
-    /// Note that this method uses shortcuts to accelerate simple patterns, and is specific to **exclude** style matching.
-    /// Hence this shouldn't be used for **attribute** style patterns.
     pub fn matches_repo_relative_path<'a>(
         &self,
         path: impl Into<&'a BStr>,

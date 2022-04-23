@@ -180,14 +180,16 @@ fn absolute_path_with_recursive_glob_can_do_case_insensitive_prefix_search() {
 
 #[test]
 fn relative_path_does_not_match_from_end() {
-    let pattern = &pat("bar/foo");
-    assert!(!match_file(pattern, "FoO", Case::Fold));
-    assert!(match_file(pattern, "bar/Foo", Case::Fold));
-    assert!(!match_file(pattern, "baz/bar/Foo", Case::Fold));
-    assert!(!match_file(pattern, "foo", Case::Sensitive));
-    assert!(match_file(pattern, "bar/foo", Case::Sensitive));
-    assert!(!match_file(pattern, "baz/bar/foo", Case::Sensitive));
-    assert!(!match_file(pattern, "Baz/bar/Foo", Case::Sensitive));
+    for pattern in &["bar/foo", "/bar/foo"] {
+        let pattern = &pat(*pattern);
+        assert!(!match_file(pattern, "FoO", Case::Fold));
+        assert!(match_file(pattern, "bar/Foo", Case::Fold));
+        assert!(!match_file(pattern, "baz/bar/Foo", Case::Fold));
+        assert!(!match_file(pattern, "foo", Case::Sensitive));
+        assert!(match_file(pattern, "bar/foo", Case::Sensitive));
+        assert!(!match_file(pattern, "baz/bar/foo", Case::Sensitive));
+        assert!(!match_file(pattern, "Baz/bar/Foo", Case::Sensitive));
+    }
 }
 
 #[test]
@@ -297,6 +299,10 @@ fn single_paths_match_anywhere() {
     assert!(!match_file(pattern, "dir/target", Case::Sensitive));
     assert!(match_path(pattern, "dir/target", None, Case::Sensitive));
     assert!(match_path(pattern, "dir/target", Some(true), Case::Sensitive));
+    assert!(
+        !match_path(pattern, "dir/target/", Some(true), Case::Sensitive),
+        "we need sanitized paths that don't have trailing slashes"
+    );
 }
 
 fn pat<'a>(pattern: impl Into<&'a BStr>) -> git_glob::Pattern {
