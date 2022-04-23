@@ -73,21 +73,6 @@ while read -r pattern value; do
   echo "$pattern" > .gitignore
   echo "$value" | git check-ignore -vn --stdin 2>&1 || :
 done <<EOF >git-baseline.match
-foo foo/baz
-foo foo/baz/bam
-*foo barfoo
-/*foo barfoo
-*foo barfoo/baz/bam
-/*foo barfoo/baz/bam
-*foo bam/barfoo/baz/bam
-*foo bar/bam/barfoo/baz/bam
-foo/* foo/baz
-foo/* foo/baz/bam
-*foo/* barfoo/baz
-*foo/* barfoo/baz/bam
-*foo barfoo/baz
-/*foo/ hellofoo/bar
-*foo/ hellofoo/bar
 \a  a
 \\\[a-z] \a
 \\\? \a

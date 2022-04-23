@@ -42,7 +42,6 @@ impl<'a> Baseline<'a> {
 }
 
 #[test]
-#[ignore]
 fn compare_baseline_with_ours() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
     let (mut total_matches, mut total_correct, mut panics) = (0, 0, 0);
@@ -261,28 +260,28 @@ fn negated_patterns_are_handled_by_caller() {
     );
 }
 #[test]
-#[ignore]
-fn names_automatically_match_entire_directories() {
+fn names_do_not_automatically_match_entire_directories() {
+    // this feature is implemented with the directory stack.
     let pattern = &pat("foo");
     assert!(!match_file(pattern, "foobar", Case::Sensitive));
-    assert!(match_file(pattern, "foo/bar", Case::Sensitive));
-    assert!(match_file(pattern, "foo/bar/baz", Case::Sensitive));
+    assert!(!match_file(pattern, "foo/bar", Case::Sensitive));
+    assert!(!match_file(pattern, "foo/bar/baz", Case::Sensitive));
 }
 
 #[test]
-#[ignore]
-fn directory_patterns_match_files_within_a_directory_as_well_like_slash_star_star() {
+fn directory_patterns_do_not_match_files_within_a_directory_as_well_like_slash_star_star() {
+    // this feature is implemented with the directory stack, which excludes entire directories
     let pattern = &pat("dir/");
-    assert!(match_path(pattern, "dir/file", None, Case::Sensitive));
-    assert!(match_path(pattern, "base/dir/file", None, Case::Sensitive));
-    assert!(match_path(pattern, "base/ndir/file", None, Case::Sensitive));
-    assert!(match_path(pattern, "Dir/File", None, Case::Fold));
-    assert!(match_path(pattern, "Base/Dir/File", None, Case::Fold));
+    assert!(!match_path(pattern, "dir/file", None, Case::Sensitive));
+    assert!(!match_path(pattern, "base/dir/file", None, Case::Sensitive));
+    assert!(!match_path(pattern, "base/ndir/file", None, Case::Sensitive));
+    assert!(!match_path(pattern, "Dir/File", None, Case::Fold));
+    assert!(!match_path(pattern, "Base/Dir/File", None, Case::Fold));
     assert!(!match_path(pattern, "dir2/file", None, Case::Sensitive));
 
     let pattern = &pat("dir/sub-dir/");
-    assert!(match_path(pattern, "dir/sub-dir/file", None, Case::Sensitive));
-    assert!(match_path(pattern, "dir/Sub-dir/File", None, Case::Fold));
+    assert!(!match_path(pattern, "dir/sub-dir/file", None, Case::Sensitive));
+    assert!(!match_path(pattern, "dir/Sub-dir/File", None, Case::Fold));
     assert!(!match_path(pattern, "dir/Sub-dir2/File", None, Case::Fold));
 }
 
