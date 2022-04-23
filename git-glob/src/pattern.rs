@@ -87,11 +87,7 @@ impl Pattern {
         );
         debug_assert!(!path.starts_with(b"/"), "input path must be relative");
 
-        // if self.mode.contains(pattern::Mode::NO_SUB_DIR) &&  {
-        if self.mode.contains(pattern::Mode::NO_SUB_DIR)
-            && !self.mode.contains(pattern::Mode::ABSOLUTE)
-            && !self.mode.contains(pattern::Mode::MUST_BE_DIR)
-        {
+        if self.mode.contains(pattern::Mode::NO_SUB_DIR) && !self.mode.contains(pattern::Mode::ABSOLUTE) {
             let basename = &path[basename_start_pos.unwrap_or_default()..];
             self.matches(basename, flags)
         } else {

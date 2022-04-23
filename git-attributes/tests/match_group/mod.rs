@@ -30,7 +30,6 @@ mod ignore {
     }
 
     #[test]
-    #[ignore]
     fn from_git_dir() -> crate::Result {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_global_and_external_and_dir_ignores.sh")?;
         let repo_dir = dir.join("repo");

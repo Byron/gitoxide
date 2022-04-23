@@ -13,7 +13,7 @@ done <<EOF >git-baseline.nmatch
 /*foo bam/barfoo/baz/bam
 /*foo bar/bam/barfoo/baz/bam
 foo foobaz
-*/\ XXX/\\
+*/\' XXX/\'
 /*foo bar/foo
 /*foo bar/bazfoo
 foo*bar foo/baz/bar
@@ -73,6 +73,7 @@ while read -r pattern value; do
   echo "$pattern" > .gitignore
   echo "$value" | git check-ignore -vn --stdin 2>&1 || :
 done <<EOF >git-baseline.match
+*/' XXX/'
 \a  a
 \\\[a-z] \a
 \\\? \a

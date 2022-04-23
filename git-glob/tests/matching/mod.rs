@@ -285,6 +285,20 @@ fn directory_patterns_do_not_match_files_within_a_directory_as_well_like_slash_s
     assert!(!match_path(pattern, "dir/Sub-dir2/File", None, Case::Fold));
 }
 
+#[test]
+fn single_paths_match_anywhere() {
+    let pattern = &pat("target");
+    assert!(match_file(pattern, "dir/target", Case::Sensitive));
+    assert!(!match_file(pattern, "dir/atarget", Case::Sensitive));
+    assert!(!match_file(pattern, "dir/targeta", Case::Sensitive));
+    assert!(match_path(pattern, "dir/target", Some(true), Case::Sensitive));
+
+    let pattern = &pat("target/");
+    assert!(!match_file(pattern, "dir/target", Case::Sensitive));
+    assert!(match_path(pattern, "dir/target", None, Case::Sensitive));
+    assert!(match_path(pattern, "dir/target", Some(true), Case::Sensitive));
+}
+
 fn pat<'a>(pattern: impl Into<&'a BStr>) -> git_glob::Pattern {
     git_glob::Pattern::from_bytes(pattern.into()).expect("parsing works")
 }
