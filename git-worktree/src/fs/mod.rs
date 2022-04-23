@@ -56,7 +56,7 @@ pub struct Stack {
 pub struct Cache {
     stack: Stack,
     /// tells us what to do as we change paths.
-    mode: cache::Mode,
+    mode: cache::State,
 }
 
 ///

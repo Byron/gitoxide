@@ -1,5 +1,5 @@
 use bstr::BString;
-use std::path::PathBuf;
+use git_attributes::Attributes;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Collision {
@@ -57,8 +57,8 @@ pub struct Options {
     ///
     /// Default true.
     pub check_stat: bool,
-    /// The location of the per-user attributes file. It must exist if it is set, causing failure otherwise.
-    pub attributes_file: Option<PathBuf>,
+    /// A group of attribute files that are applied globally, i.e. aren't rooted within the repository itself.
+    pub attribute_globals: git_attributes::MatchGroup<Attributes>,
 }
 
 impl Default for Options {
@@ -71,7 +71,7 @@ impl Default for Options {
             trust_ctime: true,
             check_stat: true,
             overwrite_existing: false,
-            attributes_file: None,
+            attribute_globals: Default::default(),
         }
     }
 }

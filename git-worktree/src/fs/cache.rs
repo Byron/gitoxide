@@ -1,10 +1,11 @@
 use super::Cache;
 use crate::fs::Stack;
 use crate::{fs, os};
+use git_attributes::Attributes;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone)]
-pub enum Mode {
+pub enum State {
     /// Useful for checkout where directories need creation, but we need to access attributes as well.
     CreateDirectoryAndProvideAttributes {
         /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
@@ -13,34 +14,36 @@ pub enum Mode {
         /// just for testing
         #[cfg(debug_assertions)]
         test_mkdir_calls: usize,
-        /// An additional per-user attributes file, similar to `$GIT_DIR/info/attributes`
-        attributes_file: Option<PathBuf>,
+        /// Global attribute information typically created from per repository and per user pattern files.
+        attribute_globals: git_attributes::MatchGroup<Attributes>,
     },
-    /// Used when adding files, requiring access to both attributes and ignore information.
+    /// Used when adding files, requiring access to both attributes and ignore information, for example during add operations.
     ProvideAttributesAndIgnore {
         /// An additional per-user excludes file, similar to `$GIT_DIR/info/exclude`. It's an error if it is set but can't be read/opened.
         excludes_file: Option<PathBuf>,
-        /// An additional per-user attributes file, similar to `$GIT_DIR/info/attributes`
-        attributes_file: Option<PathBuf>,
+        /// Global attribute information typically created from per repository and per user pattern files.
+        attribute_globals: git_attributes::MatchGroup<Attributes>,
     },
+    /// Used when providing worktree status information.
+    ProvideIgnore,
 }
 
-impl Mode {
+impl State {
     /// Configure a mode to be suitable for checking out files.
-    pub fn checkout(unlink_on_collision: bool, attributes_file: Option<PathBuf>) -> Self {
-        Mode::CreateDirectoryAndProvideAttributes {
+    pub fn checkout(unlink_on_collision: bool, attribute_globals: git_attributes::MatchGroup<Attributes>) -> Self {
+        State::CreateDirectoryAndProvideAttributes {
             unlink_on_collision,
             #[cfg(debug_assertions)]
             test_mkdir_calls: 0,
-            attributes_file,
+            attribute_globals,
         }
     }
 
     /// Configure a mode for adding files.
-    pub fn add(excludes_file: Option<PathBuf>, attributes_file: Option<PathBuf>) -> Self {
-        Mode::ProvideAttributesAndIgnore {
+    pub fn add(excludes_file: Option<PathBuf>, attribute_globals: git_attributes::MatchGroup<Attributes>) -> Self {
+        State::ProvideAttributesAndIgnore {
             excludes_file,
-            attributes_file,
+            attribute_globals,
         }
     }
 }
@@ -49,19 +52,19 @@ impl Mode {
 impl Cache {
     pub fn num_mkdir_calls(&self) -> usize {
         match self.mode {
-            Mode::CreateDirectoryAndProvideAttributes { test_mkdir_calls, .. } => test_mkdir_calls,
+            State::CreateDirectoryAndProvideAttributes { test_mkdir_calls, .. } => test_mkdir_calls,
             _ => 0,
         }
     }
 
     pub fn reset_mkdir_calls(&mut self) {
-        if let Mode::CreateDirectoryAndProvideAttributes { test_mkdir_calls, .. } = &mut self.mode {
+        if let State::CreateDirectoryAndProvideAttributes { test_mkdir_calls, .. } = &mut self.mode {
             *test_mkdir_calls = 0;
         }
     }
 
     pub fn unlink_on_collision(&mut self, value: bool) {
-        if let Mode::CreateDirectoryAndProvideAttributes {
+        if let State::CreateDirectoryAndProvideAttributes {
             unlink_on_collision, ..
         } = &mut self.mode
         {
@@ -96,7 +99,7 @@ impl Cache {
 impl Cache {
     /// Create a new instance with `worktree_root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
-    pub fn new(worktree_root: impl Into<PathBuf>, mode: Mode) -> Self {
+    pub fn new(worktree_root: impl Into<PathBuf>, mode: State) -> Self {
         let root = worktree_root.into();
         Cache {
             stack: fs::Stack::new(root),
@@ -119,13 +122,14 @@ impl Cache {
             relative,
             |components, stack: &fs::Stack| {
                 match op_mode {
-                    Mode::CreateDirectoryAndProvideAttributes {
+                    State::CreateDirectoryAndProvideAttributes {
                         #[cfg(debug_assertions)]
                         test_mkdir_calls,
                         unlink_on_collision,
-                        attributes_file: _,
+                        attribute_globals: _,
                     } => create_leading_directory(components, stack, mode, test_mkdir_calls, *unlink_on_collision)?,
-                    Mode::ProvideAttributesAndIgnore { .. } => todo!(),
+                    State::ProvideAttributesAndIgnore { .. } => todo!(),
+                    State::ProvideIgnore { .. } => todo!(),
                 }
                 Ok(())
             },

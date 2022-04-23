@@ -10,7 +10,7 @@ mod create_directory {
         let dir = tempdir().unwrap();
         let mut cache = fs::Cache::new(
             dir.path().join("non-existing-root"),
-            fs::cache::Mode::checkout(false, None),
+            fs::cache::State::checkout(false, Default::default()),
         );
         assert_eq!(cache.num_mkdir_calls(), 0);
 
@@ -89,7 +89,7 @@ mod create_directory {
 
     fn new_cache() -> (fs::Cache, TempDir) {
         let dir = tempdir().unwrap();
-        let cache = fs::Cache::new(dir.path(), fs::cache::Mode::checkout(false, None));
+        let cache = fs::Cache::new(dir.path(), fs::cache::State::checkout(false, Default::default()));
         (cache, dir)
     }
 }
