@@ -55,7 +55,7 @@ impl Pattern for Attributes {
     fn bytes_to_patterns(bytes: &[u8]) -> Vec<PatternMapping<Self::Value>> {
         crate::parse(bytes)
             .filter_map(Result::ok)
-            .map(|(pattern_kind, _attrs, line_number)| {
+            .filter_map(|(pattern_kind, _attrs, line_number)| {
                 let (pattern, value) = match pattern_kind {
                     crate::parse::Kind::Macro(macro_name) => (
                         git_glob::Pattern {
@@ -65,13 +65,14 @@ impl Pattern for Attributes {
                         },
                         Value::MacroAttributes(()),
                     ),
-                    crate::parse::Kind::Pattern(p) => (p, Value::Attributes(())),
+                    crate::parse::Kind::Pattern(p) => ((!p.is_negative()).then(|| p)?, Value::Attributes(())),
                 };
                 PatternMapping {
                     pattern,
                     value,
                     sequence_number: line_number,
                 }
+                .into()
             })
             .collect()
     }
