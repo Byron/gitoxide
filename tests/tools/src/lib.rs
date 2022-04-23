@@ -13,7 +13,7 @@ use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 pub use tempfile;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
 
