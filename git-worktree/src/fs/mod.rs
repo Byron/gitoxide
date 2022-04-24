@@ -57,6 +57,8 @@ pub struct Cache {
     stack: Stack,
     /// tells us what to do as we change paths.
     mode: cache::State,
+    /// A buffer used when reading attribute or ignore files or their respective objects from the object database.
+    buf: Vec<u8>,
 }
 
 ///

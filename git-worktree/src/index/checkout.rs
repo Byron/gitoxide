@@ -57,7 +57,7 @@ pub struct Options {
     ///
     /// Default true.
     pub check_stat: bool,
-    /// A group of attribute files that are applied globally, i.e. aren't rooted within the repository itself.
+    /// A group of attribute patterns that are applied globally, i.e. aren't rooted within the repository itself.
     pub attribute_globals: git_attributes::MatchGroup<Attributes>,
 }
 

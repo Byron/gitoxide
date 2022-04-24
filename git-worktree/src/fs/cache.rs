@@ -23,9 +23,39 @@ pub enum State {
         excludes_file: Option<PathBuf>,
         /// Global attribute information typically created from per repository and per user pattern files.
         attribute_globals: git_attributes::MatchGroup<Attributes>,
+        /// State to handle exclusion information
+        ignore: state::Ignore,
     },
     /// Used when providing worktree status information.
-    ProvideIgnore,
+    ProvideIgnore(state::Ignore),
+}
+
+///
+pub mod state {
+    type IgnoreMatchGroup = git_attributes::MatchGroup<git_attributes::Ignore>;
+
+    /// State related to the exclusion of files.
+    #[derive(Default, Clone)]
+    #[allow(unused)]
+    pub struct Ignore {
+        /// Ignore patterns passed as overrides to everything else, typically passed on the command-line and the first patterns to
+        /// be consulted.
+        ignore_overrides: IgnoreMatchGroup,
+        /// Ignore patterns that match the currently set directory
+        ignore_stack: IgnoreMatchGroup,
+        /// Ignore patterns which aren't tied to the repository root, hence are global. They are the last ones being consulted.
+        ignore_globals: IgnoreMatchGroup,
+    }
+
+    impl Ignore {
+        pub fn new(ignore_overrides: IgnoreMatchGroup, ignore_globals: IgnoreMatchGroup) -> Self {
+            Ignore {
+                ignore_overrides,
+                ignore_globals,
+                ignore_stack: Default::default(),
+            }
+        }
+    }
 }
 
 impl State {
@@ -40,10 +70,15 @@ impl State {
     }
 
     /// Configure a mode for adding files.
-    pub fn add(excludes_file: Option<PathBuf>, attribute_globals: git_attributes::MatchGroup<Attributes>) -> Self {
+    pub fn add(
+        excludes_file: Option<PathBuf>,
+        attribute_globals: git_attributes::MatchGroup<Attributes>,
+        ignore: state::Ignore,
+    ) -> Self {
         State::ProvideAttributesAndIgnore {
             excludes_file,
             attribute_globals,
+            ignore,
         }
     }
 }
@@ -104,6 +139,7 @@ impl Cache {
         Cache {
             stack: fs::Stack::new(root),
             mode,
+            buf: Vec::with_capacity(512),
         }
     }
 
