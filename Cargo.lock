@@ -1604,6 +1604,7 @@ dependencies = [
  "document-features",
  "git-attributes",
  "git-features",
+ "git-glob",
  "git-hash",
  "git-index",
  "git-object",
