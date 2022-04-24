@@ -36,6 +36,12 @@ pub enum Case {
     Fold,
 }
 
+impl Default for Case {
+    fn default() -> Self {
+        Case::Sensitive
+    }
+}
+
 impl Pattern {
     /// Parse the given `text` as pattern, or return `None` if `text` was empty.
     pub fn from_bytes(text: &[u8]) -> Option<Self> {
