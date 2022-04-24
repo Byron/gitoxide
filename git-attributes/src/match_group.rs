@@ -124,7 +124,7 @@ impl<T> MatchGroup<T>
 where
     T: Pattern,
 {
-    /// Match `relative_path`, a path relative to the repository containing all patterns.
+    /// Match `relative_path`, a path relative to the repository containing all patterns, and return the first match if available.
     // TODO: better docs
     pub fn pattern_matching_relative_path<'a>(
         &self,

@@ -5,6 +5,8 @@ use bstr::{BStr, BString};
 use compact_str::CompactStr;
 use std::path::PathBuf;
 
+pub use git_glob as glob;
+
 /// The state an attribute can be in, referencing the value.
 ///
 /// Note that this doesn't contain the name.
