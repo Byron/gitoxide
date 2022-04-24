@@ -28,6 +28,8 @@ pub enum State {
 
 ///
 pub mod state {
+    use std::path::Path;
+
     type AttributeMatchGroup = git_attributes::MatchGroup<git_attributes::Attributes>;
     type IgnoreMatchGroup = git_attributes::MatchGroup<git_attributes::Ignore>;
 
@@ -61,6 +63,15 @@ pub mod state {
                 globals,
                 stack: Default::default(),
             }
+        }
+
+        pub fn push(&mut self, root: &Path, dir: &Path, buf: &mut Vec<u8>) -> std::io::Result<()> {
+            if !self.stack.add_patterns_file(dir.join(".gitignore"), Some(root), buf)? {
+                // Need one stack level per component so push and pop matches.
+                self.stack.patterns.push(Default::default());
+            }
+            // TODO: from index
+            Ok(())
         }
     }
 
@@ -245,8 +256,16 @@ impl<'a> fs::stack::Delegate for PlatformMut<'a> {
                     create_leading_directory(is_last_component, stack, self.is_dir, *unlink_on_collision)?
                 }
             }
-            State::AttributesAndIgnoreStack { .. } => todo!(),
-            State::IgnoreStack(_ignore) => todo!(),
+            State::AttributesAndIgnoreStack { ignore, .. } => ignore.push(
+                &stack.root,
+                stack.current.parent().expect("component was just pushed"),
+                self.buf,
+            )?,
+            State::IgnoreStack(ignore) => ignore.push(
+                &stack.root,
+                stack.current.parent().expect("component was just pushed"),
+                self.buf,
+            )?,
         }
         Ok(())
     }

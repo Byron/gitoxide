@@ -176,11 +176,15 @@ impl MatchGroup<Ignore> {
 
     /// Add the given file at `source` if it exists, otherwise do nothing. If a `root` is provided, it's not considered a global file anymore.
     /// Returns true if the file was added, or false if it didn't exist.
-    pub fn add_patterns_file(&mut self, source: impl Into<PathBuf>, root: Option<&Path>) -> std::io::Result<bool> {
-        let mut buf = Vec::with_capacity(1024);
+    pub fn add_patterns_file(
+        &mut self,
+        source: impl Into<PathBuf>,
+        root: Option<&Path>,
+        buf: &mut Vec<u8>,
+    ) -> std::io::Result<bool> {
         let previous_len = self.patterns.len();
         self.patterns
-            .extend(PatternList::<Ignore>::from_file(source.into(), root, &mut buf)?);
+            .extend(PatternList::<Ignore>::from_file(source.into(), root, buf)?);
         Ok(self.patterns.len() != previous_len)
     }
 

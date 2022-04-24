@@ -68,7 +68,7 @@ pub struct MatchGroup<T: match_group::Pattern = Attributes> {
 ///
 /// Knowing their base which is relative to a source directory, it will ignore all path to match against
 /// that don't also start with said base.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
 pub struct PatternList<T: match_group::Pattern> {
     /// Patterns and their associated data in the order they were loaded in or specified,
     /// the line number in its source file or its sequence number (_`(pattern, value, line_number)`_).
