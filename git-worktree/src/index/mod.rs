@@ -32,7 +32,7 @@ where
         buf: Vec::new(),
         path_cache: fs::Cache::new(
             dir.clone(),
-            fs::cache::State::checkout(options.overwrite_existing, options.attribute_globals.clone()),
+            fs::cache::State::checkout(options.overwrite_existing, options.attribute_globals.clone().into()),
         ),
         find: find.clone(),
         options: options.clone(),
@@ -72,7 +72,7 @@ where
                                 dir.clone(),
                                 fs::cache::State::checkout(
                                     options.overwrite_existing,
-                                    options.attribute_globals.clone(),
+                                    options.attribute_globals.clone().into(),
                                 ),
                             ),
                             buf: Vec::new(),

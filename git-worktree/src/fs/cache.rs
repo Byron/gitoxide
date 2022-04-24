@@ -1,7 +1,6 @@
 use super::Cache;
 use crate::fs::Stack;
 use crate::{fs, os};
-use git_attributes::Attributes;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone)]
@@ -14,15 +13,15 @@ pub enum State {
         /// just for testing
         #[cfg(debug_assertions)]
         test_mkdir_calls: usize,
-        /// Global attribute information typically created from per repository and per user pattern files.
-        attribute_globals: git_attributes::MatchGroup<Attributes>,
+        /// State to handle attribute information
+        attributes: state::Attributes,
     },
     /// Used when adding files, requiring access to both attributes and ignore information, for example during add operations.
     ProvideAttributesAndIgnore {
         /// An additional per-user excludes file, similar to `$GIT_DIR/info/exclude`. It's an error if it is set but can't be read/opened.
         excludes_file: Option<PathBuf>,
-        /// Global attribute information typically created from per repository and per user pattern files.
-        attribute_globals: git_attributes::MatchGroup<Attributes>,
+        /// State to handle attribute information
+        attributes: state::Attributes,
         /// State to handle exclusion information
         ignore: state::Ignore,
     },
@@ -32,7 +31,18 @@ pub enum State {
 
 ///
 pub mod state {
+    type AttributeMatchGroup = git_attributes::MatchGroup<git_attributes::Attributes>;
     type IgnoreMatchGroup = git_attributes::MatchGroup<git_attributes::Ignore>;
+
+    /// State related to attributes associated with files in the repository.
+    #[derive(Default, Clone)]
+    #[allow(unused)]
+    pub struct Attributes {
+        /// Attribute patterns that match the currently set directory (in the stack).
+        stack: AttributeMatchGroup,
+        /// Attribute patterns which aren't tied to the repository root, hence are global. They are consulted last.
+        globals: AttributeMatchGroup,
+    }
 
     /// State related to the exclusion of files.
     #[derive(Default, Clone)]
@@ -40,44 +50,55 @@ pub mod state {
     pub struct Ignore {
         /// Ignore patterns passed as overrides to everything else, typically passed on the command-line and the first patterns to
         /// be consulted.
-        ignore_overrides: IgnoreMatchGroup,
-        /// Ignore patterns that match the currently set directory
-        ignore_stack: IgnoreMatchGroup,
-        /// Ignore patterns which aren't tied to the repository root, hence are global. They are the last ones being consulted.
-        ignore_globals: IgnoreMatchGroup,
+        overrides: IgnoreMatchGroup,
+        /// Ignore patterns that match the currently set director (in the stack).
+        stack: IgnoreMatchGroup,
+        /// Ignore patterns which aren't tied to the repository root, hence are global. They are consulted last.
+        globals: IgnoreMatchGroup,
     }
 
     impl Ignore {
-        pub fn new(ignore_overrides: IgnoreMatchGroup, ignore_globals: IgnoreMatchGroup) -> Self {
+        pub fn new(overrides: IgnoreMatchGroup, globals: IgnoreMatchGroup) -> Self {
             Ignore {
-                ignore_overrides,
-                ignore_globals,
-                ignore_stack: Default::default(),
+                overrides,
+                globals,
+                stack: Default::default(),
             }
+        }
+    }
+
+    impl Attributes {
+        pub fn new(globals: AttributeMatchGroup) -> Self {
+            Attributes {
+                globals,
+                stack: Default::default(),
+            }
+        }
+    }
+
+    impl From<AttributeMatchGroup> for Attributes {
+        fn from(group: AttributeMatchGroup) -> Self {
+            Attributes::new(group)
         }
     }
 }
 
 impl State {
     /// Configure a mode to be suitable for checking out files.
-    pub fn checkout(unlink_on_collision: bool, attribute_globals: git_attributes::MatchGroup<Attributes>) -> Self {
+    pub fn checkout(unlink_on_collision: bool, attributes: state::Attributes) -> Self {
         State::CreateDirectoryAndProvideAttributes {
             unlink_on_collision,
             #[cfg(debug_assertions)]
             test_mkdir_calls: 0,
-            attribute_globals,
+            attributes,
         }
     }
 
     /// Configure a mode for adding files.
-    pub fn add(
-        excludes_file: Option<PathBuf>,
-        attribute_globals: git_attributes::MatchGroup<Attributes>,
-        ignore: state::Ignore,
-    ) -> Self {
+    pub fn add(excludes_file: Option<PathBuf>, attributes: state::Attributes, ignore: state::Ignore) -> Self {
         State::ProvideAttributesAndIgnore {
             excludes_file,
-            attribute_globals,
+            attributes,
             ignore,
         }
     }
@@ -162,7 +183,7 @@ impl Cache {
                         #[cfg(debug_assertions)]
                         test_mkdir_calls,
                         unlink_on_collision,
-                        attribute_globals: _,
+                        attributes: _,
                     } => {
                         #[cfg(debug_assertions)]
                         {
