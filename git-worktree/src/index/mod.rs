@@ -27,12 +27,17 @@ where
 {
     let num_files = AtomicUsize::default();
     let dir = dir.into();
-
+    let case = if options.fs.ignore_case {
+        git_glob::pattern::Case::Fold
+    } else {
+        git_glob::pattern::Case::Sensitive
+    };
     let mut ctx = chunk::Context {
         buf: Vec::new(),
         path_cache: fs::Cache::new(
             dir.clone(),
             fs::cache::State::for_checkout(options.overwrite_existing, options.attribute_globals.clone().into()),
+            case,
             Vec::with_capacity(512),
         ),
         find: find.clone(),
@@ -75,6 +80,7 @@ where
                                     options.overwrite_existing,
                                     options.attribute_globals.clone().into(),
                                 ),
+                                case,
                                 Vec::with_capacity(512),
                             ),
                             buf: Vec::new(),

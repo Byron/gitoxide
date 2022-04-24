@@ -1,5 +1,4 @@
 use super::Cache;
-use crate::fs::Stack;
 use crate::{fs, os};
 use std::path::{Path, PathBuf};
 
@@ -37,9 +36,9 @@ pub mod state {
     #[allow(unused)]
     pub struct Attributes {
         /// Attribute patterns that match the currently set directory (in the stack).
-        stack: AttributeMatchGroup,
+        pub stack: AttributeMatchGroup,
         /// Attribute patterns which aren't tied to the repository root, hence are global. They are consulted last.
-        globals: AttributeMatchGroup,
+        pub globals: AttributeMatchGroup,
     }
 
     /// State related to the exclusion of files.
@@ -48,11 +47,11 @@ pub mod state {
     pub struct Ignore {
         /// Ignore patterns passed as overrides to everything else, typically passed on the command-line and the first patterns to
         /// be consulted.
-        overrides: IgnoreMatchGroup,
+        pub overrides: IgnoreMatchGroup,
         /// Ignore patterns that match the currently set director (in the stack).
-        stack: IgnoreMatchGroup,
+        pub stack: IgnoreMatchGroup,
         /// Ignore patterns which aren't tied to the repository root, hence are global. They are consulted last.
-        globals: IgnoreMatchGroup,
+        pub globals: IgnoreMatchGroup,
     }
 
     impl Ignore {
@@ -103,17 +102,29 @@ impl State {
     }
 }
 
+impl State {
+    pub(crate) fn ignore_or_panic(&self) -> &state::Ignore {
+        match self {
+            State::IgnoreStack(v) => v,
+            State::AttributesAndIgnoreStack { ignore, .. } => ignore,
+            State::CreateDirectoryAndAttributesStack { .. } => {
+                unreachable!("BUG: must not try to check excludes without it being setup")
+            }
+        }
+    }
+}
+
 #[cfg(debug_assertions)]
 impl Cache {
     pub fn num_mkdir_calls(&self) -> usize {
-        match self.mode {
+        match self.state {
             State::CreateDirectoryAndAttributesStack { test_mkdir_calls, .. } => test_mkdir_calls,
             _ => 0,
         }
     }
 
     pub fn reset_mkdir_calls(&mut self) {
-        if let State::CreateDirectoryAndAttributesStack { test_mkdir_calls, .. } = &mut self.mode {
+        if let State::CreateDirectoryAndAttributesStack { test_mkdir_calls, .. } = &mut self.state {
             *test_mkdir_calls = 0;
         }
     }
@@ -121,7 +132,7 @@ impl Cache {
     pub fn unlink_on_collision(&mut self, value: bool) {
         if let State::CreateDirectoryAndAttributesStack {
             unlink_on_collision, ..
-        } = &mut self.mode
+        } = &mut self.state
         {
             *unlink_on_collision = value;
         }
@@ -130,6 +141,13 @@ impl Cache {
 
 pub struct Platform<'a> {
     parent: &'a Cache,
+    is_dir: Option<bool>,
+}
+
+struct PlatformMut<'a> {
+    state: &'a mut State,
+    buf: &'a mut Vec<u8>,
+    is_dir: Option<bool>,
 }
 
 impl<'a> Platform<'a> {
@@ -139,20 +157,31 @@ impl<'a> Platform<'a> {
     }
 
     /// See if the currently set entry is excluded as per exclude and git-ignore files.
-    pub fn is_excluded(&self, case: git_glob::pattern::Case) -> bool {
-        self.matching_exclude_pattern(case)
+    ///
+    /// # Panics
+    ///
+    /// If the cache was configured without exclude patterns.
+    pub fn is_excluded(&self) -> bool {
+        self.matching_exclude_pattern()
             .map_or(false, |m| m.pattern.is_negative())
     }
 
     /// Check all exclude patterns to see if the currently set path matches any of them.
     ///
-    /// Note that this pattern might be negated, so means the opposite.
+    /// Note that this pattern might be negated, and means this path in included.
     ///
     /// # Panics
     ///
     /// If the cache was configured without exclude patterns.
-    pub fn matching_exclude_pattern(&self, _case: git_glob::pattern::Case) -> Option<git_attributes::Match<'_, ()>> {
-        todo!()
+    pub fn matching_exclude_pattern(&self) -> Option<git_attributes::Match<'_, ()>> {
+        let ignore_groups = self.parent.state.ignore_or_panic();
+        let relative_path =
+            git_features::path::into_bytes_or_panic_on_windows(self.parent.stack.current_relative.as_path());
+        [&ignore_groups.overrides, &ignore_groups.stack, &ignore_groups.globals]
+            .iter()
+            .find_map(|group| {
+                group.pattern_matching_relative_path(relative_path.as_ref(), self.is_dir, self.parent.case)
+            })
     }
 }
 
@@ -163,19 +192,15 @@ impl<'a> std::fmt::Debug for Platform<'a> {
 }
 
 impl Cache {
-    fn assure_init(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
-}
-
-impl Cache {
     /// Create a new instance with `worktree_root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
-    pub fn new(worktree_root: impl Into<PathBuf>, mode: State, buf: Vec<u8>) -> Self {
+    /// The `case` configures attribute and exclusion query case sensitivity.
+    pub fn new(worktree_root: impl Into<PathBuf>, mode: State, case: git_glob::pattern::Case, buf: Vec<u8>) -> Self {
         let root = worktree_root.into();
         Cache {
             stack: fs::Stack::new(root),
-            mode,
+            state: mode,
+            case,
             buf,
         }
     }
@@ -186,47 +211,71 @@ impl Cache {
     ///
     /// Provide access to cached information for that `relative` entry via the platform returned.
     pub fn at_entry(&mut self, relative: impl AsRef<Path>, is_dir: Option<bool>) -> std::io::Result<Platform<'_>> {
-        self.assure_init()?;
-        let op_mode = &mut self.mode;
-        self.stack.make_relative_path_current(
-            relative,
-            |components, stack: &fs::Stack| {
-                match op_mode {
-                    State::CreateDirectoryAndAttributesStack {
-                        #[cfg(debug_assertions)]
+        let mut platform = PlatformMut {
+            state: &mut self.state,
+            buf: &mut self.buf,
+            is_dir,
+        };
+        self.stack.make_relative_path_current(relative, &mut platform)?;
+        Ok(Platform { parent: self, is_dir })
+    }
+}
+
+impl<'a> fs::stack::Delegate for PlatformMut<'a> {
+    fn push(&mut self, is_last_component: bool, stack: &fs::Stack) -> std::io::Result<()> {
+        match &mut self.state {
+            State::CreateDirectoryAndAttributesStack {
+                #[cfg(debug_assertions)]
+                test_mkdir_calls,
+                unlink_on_collision,
+                attributes: _,
+            } => {
+                #[cfg(debug_assertions)]
+                {
+                    create_leading_directory(
+                        is_last_component,
+                        stack,
+                        self.is_dir,
                         test_mkdir_calls,
-                        unlink_on_collision,
-                        attributes: _,
-                    } => {
-                        #[cfg(debug_assertions)]
-                        {
-                            create_leading_directory(components, stack, is_dir, test_mkdir_calls, *unlink_on_collision)?
-                        }
-                        #[cfg(not(debug_assertions))]
-                        {
-                            create_leading_directory(components, stack, is_dir, *unlink_on_collision)?
-                        }
-                    }
-                    State::AttributesAndIgnoreStack { .. } => todo!(),
-                    State::IgnoreStack { .. } => todo!(),
+                        *unlink_on_collision,
+                    )?
                 }
-                Ok(())
-            },
-            |_| {},
-        )?;
-        Ok(Platform { parent: self })
+                #[cfg(not(debug_assertions))]
+                {
+                    create_leading_directory(is_last_component, stack, self.is_dir, *unlink_on_collision)?
+                }
+            }
+            State::AttributesAndIgnoreStack { .. } => todo!(),
+            State::IgnoreStack(_ignore) => todo!(),
+        }
+        Ok(())
+    }
+
+    fn pop(&mut self, _stack: &fs::Stack) {
+        match &mut self.state {
+            State::CreateDirectoryAndAttributesStack { attributes, .. } => {
+                attributes.stack.patterns.pop();
+            }
+            State::AttributesAndIgnoreStack { attributes, ignore } => {
+                attributes.stack.patterns.pop();
+                ignore.stack.patterns.pop();
+            }
+            State::IgnoreStack(ignore) => {
+                ignore.stack.patterns.pop();
+            }
+        }
     }
 }
 
 fn create_leading_directory(
-    components: &mut std::iter::Peekable<std::path::Components<'_>>,
-    stack: &Stack,
+    is_last_component: bool,
+    stack: &fs::Stack,
     target_is_dir: Option<bool>,
     #[cfg(debug_assertions)] mkdir_calls: &mut usize,
     unlink_on_collision: bool,
 ) -> std::io::Result<()> {
     let target_is_dir = target_is_dir.unwrap_or(false);
-    if !(components.peek().is_some() || target_is_dir) {
+    if is_last_component && !target_is_dir {
         return Ok(());
     }
     #[cfg(debug_assertions)]

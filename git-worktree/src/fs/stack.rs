@@ -15,6 +15,11 @@ impl Stack {
     }
 }
 
+pub trait Delegate {
+    fn push(&mut self, is_last_component: bool, stack: &Stack) -> std::io::Result<()>;
+    fn pop(&mut self, stack: &Stack);
+}
+
 impl Stack {
     /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
@@ -35,8 +40,7 @@ impl Stack {
     pub fn make_relative_path_current(
         &mut self,
         relative: impl AsRef<Path>,
-        mut push_comp: impl FnMut(&mut std::iter::Peekable<std::path::Components<'_>>, &Self) -> std::io::Result<()>,
-        mut pop_comp: impl FnMut(&Self),
+        delegate: &mut impl Delegate,
     ) -> std::io::Result<()> {
         let relative = relative.as_ref();
         debug_assert!(
@@ -59,7 +63,7 @@ impl Stack {
         for _ in 0..self.valid_components - matching_components {
             self.current.pop();
             self.current_relative.pop();
-            pop_comp(&*self);
+            delegate.pop(self);
         }
         self.valid_components = matching_components;
 
@@ -67,13 +71,13 @@ impl Stack {
             self.current.push(comp);
             self.current_relative.push(comp);
             self.valid_components += 1;
-            let res = push_comp(&mut components, &*self);
+            let res = delegate.push(components.peek().is_none(), self);
 
             if let Err(err) = res {
                 self.current.pop();
                 self.current_relative.pop();
                 self.valid_components -= 1;
-                pop_comp(&*self);
+                delegate.pop(self);
                 return Err(err);
             }
         }

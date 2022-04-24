@@ -10,6 +10,7 @@ mod create_directory {
         let mut cache = fs::Cache::new(
             dir.path().join("non-existing-root"),
             fs::cache::State::for_checkout(false, Default::default()),
+            Default::default(),
             Vec::new(),
         );
         assert_eq!(cache.num_mkdir_calls(), 0);
@@ -89,6 +90,7 @@ mod create_directory {
         let cache = fs::Cache::new(
             dir.path(),
             fs::cache::State::for_checkout(false, Default::default()),
+            Default::default(),
             Vec::new(),
         );
         (cache, dir)
@@ -149,18 +151,21 @@ mod ignore_and_attributes {
                     git_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf).unwrap(),
                 ),
             ),
+            Default::default(),
             buf,
         );
 
-        let case_sensitive = git_glob::pattern::Case::Sensitive;
         for (relative_path, source_and_line) in (IgnoreExpectations {
             lines: baseline.lines(),
         }) {
             let relative_path = git_features::path::from_byte_slice_or_panic_on_windows(relative_path);
             let is_dir = worktree_dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
+
+            // TODO: ignore file in index only
             let platform = cache.at_entry(relative_path, is_dir).unwrap();
-            let match_ = platform.matching_exclude_pattern(case_sensitive);
-            let is_excluded = platform.is_excluded(case_sensitive);
+
+            let match_ = platform.matching_exclude_pattern();
+            let is_excluded = platform.is_excluded();
             match (match_, source_and_line) {
                 (None, None) => {
                     assert!(!is_excluded);
@@ -177,14 +182,12 @@ mod ignore_and_attributes {
                                 .unwrap()
                         )
                     );
-                    todo!()
                 }
                 (actual, expected) => {
                     panic!("actual {:?} didn't match {:?}", actual, expected);
                 }
             }
         }
-
         // TODO: at least one case-insensitive test
     }
 }
