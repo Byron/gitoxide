@@ -152,16 +152,18 @@ impl MatchGroup<Ignore> {
     ) -> std::io::Result<Self> {
         let mut group = Self::default();
 
+        let follow_symlinks = true;
         // order matters! More important ones first.
         group.patterns.extend(
             excludes_file
-                .map(|file| PatternList::<Ignore>::from_file(file, None, buf))
+                .map(|file| PatternList::<Ignore>::from_file(file, None, follow_symlinks, buf))
                 .transpose()?
                 .flatten(),
         );
         group.patterns.extend(PatternList::<Ignore>::from_file(
             git_dir.as_ref().join("info").join("exclude"),
             None,
+            follow_symlinks,
             buf,
         )?);
         Ok(group)
@@ -179,12 +181,17 @@ impl MatchGroup<Ignore> {
     pub fn add_patterns_file(
         &mut self,
         source: impl Into<PathBuf>,
+        follow_symlinks: bool,
         root: Option<&Path>,
         buf: &mut Vec<u8>,
     ) -> std::io::Result<bool> {
         let previous_len = self.patterns.len();
-        self.patterns
-            .extend(PatternList::<Ignore>::from_file(source.into(), root, buf)?);
+        self.patterns.extend(PatternList::<Ignore>::from_file(
+            source.into(),
+            root,
+            follow_symlinks,
+            buf,
+        )?);
         Ok(self.patterns.len() != previous_len)
     }
 
@@ -194,9 +201,14 @@ impl MatchGroup<Ignore> {
     }
 }
 
-fn read_in_full_ignore_missing(path: &Path, buf: &mut Vec<u8>) -> std::io::Result<bool> {
+fn read_in_full_ignore_missing(path: &Path, follow_symlinks: bool, buf: &mut Vec<u8>) -> std::io::Result<bool> {
     buf.clear();
-    Ok(match std::fs::File::open(path) {
+    let file = if follow_symlinks {
+        std::fs::File::open(path)
+    } else {
+        git_features::fs::open_options_no_follow().read(true).open(path)
+    };
+    Ok(match file {
         Ok(mut file) => {
             file.read_to_end(buf)?;
             true
@@ -237,10 +249,11 @@ where
     pub fn from_file(
         source: impl Into<PathBuf>,
         root: Option<&Path>,
+        follow_symlinks: bool,
         buf: &mut Vec<u8>,
     ) -> std::io::Result<Option<Self>> {
         let source = source.into();
-        Ok(read_in_full_ignore_missing(&source, buf)?.then(|| Self::from_bytes(buf, source, root)))
+        Ok(read_in_full_ignore_missing(&source, follow_symlinks, buf)?.then(|| Self::from_bytes(buf, source, root)))
     }
 }
 

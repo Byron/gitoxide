@@ -39,11 +39,11 @@ mod ignore {
         let mut group = MatchGroup::from_git_dir(git_dir, Some(dir.join("user.exclude")), &mut buf)?;
 
         assert!(
-            !group.add_patterns_file("not-a-file", None, &mut buf)?,
+            !group.add_patterns_file("not-a-file", false, None, &mut buf)?,
             "missing files are no problem and cause a negative response"
         );
         assert!(
-            group.add_patterns_file(repo_dir.join(".gitignore"), repo_dir.as_path().into(), &mut buf)?,
+            group.add_patterns_file(repo_dir.join(".gitignore"), true, repo_dir.as_path().into(), &mut buf)?,
             "existing files return true"
         );
 
