@@ -161,6 +161,7 @@ mod ignore_and_attributes {
             let is_dir = worktree_dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
 
             // TODO: ignore file in index only
+            // TODO: dir-excludes
             // TODO: a sibling dir to exercise pop() impl.
             let platform = cache.at_entry(relative_path, is_dir).unwrap();
 

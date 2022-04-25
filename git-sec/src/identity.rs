@@ -49,48 +49,85 @@ mod impl_ {
 
     pub fn is_path_owned_by_current_user(path: impl AsRef<Path>) -> std::io::Result<bool> {
         use windows::{
-            core::PCWSTR,
+            core::{Error, PCWSTR},
             Win32::{
-                Foundation::{BOOL, ERROR_SUCCESS, HANDLE, PSID},
+                Foundation::{ERROR_SUCCESS, HANDLE, PSID},
                 Security::{
                     Authorization::{GetNamedSecurityInfoW, SE_FILE_OBJECT},
-                    CheckTokenMembershipEx, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
+                    EqualSid, GetTokenInformation, TokenOwner, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
+                    TOKEN_OWNER, TOKEN_QUERY,
                 },
-                System::Memory::LocalFree,
+                System::{
+                    Memory::LocalFree,
+                    Threading::{GetCurrentProcess, OpenProcessToken},
+                },
             },
         };
 
         let mut err_msg = None;
         let mut is_owned = false;
+        let path = path.as_ref();
 
         #[allow(unsafe_code)]
         unsafe {
-            let mut psid = PSID::default();
+            let mut folder_owner = PSID::default();
             let mut pdescriptor = PSECURITY_DESCRIPTOR::default();
-            let wpath = to_wide_path(&path);
-
             let result = GetNamedSecurityInfoW(
-                PCWSTR(wpath.as_ptr()),
+                PCWSTR(to_wide_path(path).as_ptr()),
                 SE_FILE_OBJECT,
                 OWNER_SECURITY_INFORMATION,
-                &mut psid,
+                &mut folder_owner,
                 std::ptr::null_mut(),
                 std::ptr::null_mut(),
                 std::ptr::null_mut(),
                 &mut pdescriptor,
             );
 
+            // Workaround for https://github.com/microsoft/win32metadata/issues/884
             if result == ERROR_SUCCESS.0 {
-                let mut is_member = BOOL(0);
-                if CheckTokenMembershipEx(HANDLE::default(), psid, 0, &mut is_member).as_bool() {
-                    is_owned = is_member.as_bool();
+                let mut token = HANDLE::default();
+                OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token).ok()?;
+
+                let mut buffer_size = 0;
+                let mut buffer = Vec::<u8>::new();
+                GetTokenInformation(token, TokenOwner, std::ptr::null_mut(), 0, &mut buffer_size);
+                if buffer_size != 0 {
+                    buffer.resize(buffer_size as usize, 0);
+                    if GetTokenInformation(
+                        token,
+                        TokenOwner,
+                        buffer.as_mut_ptr() as _,
+                        buffer_size,
+                        &mut buffer_size,
+                    )
+                    .as_bool()
+                    {
+                        let token_owner = buffer.as_ptr() as *const TOKEN_OWNER;
+                        let token_owner = (*token_owner).Owner;
+
+                        is_owned = EqualSid(folder_owner, token_owner).as_bool();
+                    } else {
+                        err_msg = format!(
+                            "Couldn't get actual token information for current process with err: {}",
+                            Error::from_win32()
+                        )
+                        .into();
+                    }
                 } else {
-                    err_msg = String::from("Could not check token membership").into();
+                    err_msg = format!(
+                        "Couldn't get token information size info for current process with err: {}",
+                        Error::from_win32()
+                    )
+                    .into();
                 }
             } else {
-                err_msg = format!("Could not get security information for path with err: {}", result).into();
+                err_msg = format!(
+                    "Couldn't get security information for path '{}' with err {}",
+                    path.display(),
+                    Error::from_win32()
+                )
+                .into();
             }
-
             LocalFree(pdescriptor.0 as isize);
         }
 
