@@ -132,6 +132,7 @@ mod ignore_and_attributes {
     }
 
     #[test]
+    #[ignore]
     fn check_against_baseline() {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_ignore_and_attributes_setup.sh").unwrap();
         let worktree_dir = dir.join("repo");

@@ -66,7 +66,11 @@ pub mod state {
         }
 
         pub fn push(&mut self, root: &Path, dir: &Path, buf: &mut Vec<u8>) -> std::io::Result<()> {
-            if !self.stack.add_patterns_file(dir.join(".gitignore"), Some(root), buf)? {
+            let follow_symlinks = true;
+            if !self
+                .stack
+                .add_patterns_file(dir.join(".gitignore"), follow_symlinks, Some(root), buf)?
+            {
                 // Need one stack level per component so push and pop matches.
                 self.stack.patterns.push(Default::default());
             }

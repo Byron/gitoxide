@@ -41,15 +41,17 @@ EOF
 sub-level-local-file-anywhere
 EOF
 
+  git add .gitignore dir-with-ignore
+  git commit --allow-empty -m "init"
+
+  # just add this git-ignore file, so it's a new file that doesn't exist on disk.
   mkdir other-dir-with-ignore
-  cat <<EOF >other-dir-with-ignore/.gitignore
+  skip_worktree_ignore=other-dir-with-ignore/.gitignore
+  cat <<EOF >"$skip_worktree_ignore"
 # a sample .gitignore
 other-sub-level-local-file-anywhere
 EOF
-
-  git add .gitignore dir-with-ignore other-dir-with-ignore
-  rm other-dir-with-ignore/.gitignore
-  git commit --allow-empty -m "init"
+  git add $skip_worktree_ignore && git update-index --skip-worktree $skip_worktree_ignore && rm $skip_worktree_ignore
 
   mkdir user-dir-anywhere user-dir-from-top dir-anywhere dir-from-top
   mkdir -p dir/user-dir-anywhere dir/dir-anywhere
