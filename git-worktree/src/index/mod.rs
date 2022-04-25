@@ -32,14 +32,11 @@ where
     } else {
         git_glob::pattern::Case::Sensitive
     };
+    let state = fs::cache::State::for_checkout(options.overwrite_existing, options.attribute_globals.clone().into());
+    let attribute_files = state.build_attribute_list(index, case);
     let mut ctx = chunk::Context {
         buf: Vec::new(),
-        path_cache: fs::Cache::new(
-            dir.clone(),
-            fs::cache::State::for_checkout(options.overwrite_existing, options.attribute_globals.clone().into()),
-            case,
-            Vec::with_capacity(512),
-        ),
+        path_cache: fs::Cache::new(dir.clone(), state, case, Vec::with_capacity(512), attribute_files),
         find: find.clone(),
         options: options.clone(),
         num_files: &num_files,
@@ -68,6 +65,11 @@ where
             thread_limit,
             {
                 let num_files = &num_files;
+                let state = fs::cache::State::for_checkout(
+                    options.overwrite_existing,
+                    options.attribute_globals.clone().into(),
+                );
+                let attribute_files = state.build_attribute_list(index, case);
                 move |_| {
                     (
                         progress::Discard,
@@ -76,12 +78,10 @@ where
                             find: find.clone(),
                             path_cache: fs::Cache::new(
                                 dir.clone(),
-                                fs::cache::State::for_checkout(
-                                    options.overwrite_existing,
-                                    options.attribute_globals.clone().into(),
-                                ),
+                                state.clone(),
                                 case,
                                 Vec::with_capacity(512),
+                                attribute_files.clone(),
                             ),
                             buf: Vec::new(),
                             options: options.clone(),
@@ -197,9 +197,9 @@ mod chunk {
         pub bytes_written: u64,
     }
 
-    pub struct Context<'a, Find> {
+    pub struct Context<'a, 'path_in_index, Find> {
         pub find: Find,
-        pub path_cache: fs::Cache,
+        pub path_cache: fs::Cache<'path_in_index>,
         pub buf: Vec<u8>,
         pub options: checkout::Options,
         /// We keep these shared so that there is the chance for printing numbers that aren't looking like
@@ -211,7 +211,7 @@ mod chunk {
         entries_with_paths: impl Iterator<Item = (&'entry mut git_index::Entry, &'entry BStr)>,
         files: &mut impl Progress,
         bytes: &mut impl Progress,
-        ctx: &mut Context<'_, Find>,
+        ctx: &mut Context<'_, '_, Find>,
     ) -> Result<Outcome<'entry>, checkout::Error<E>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
@@ -266,7 +266,7 @@ mod chunk {
             buf,
             options,
             num_files,
-        }: &mut Context<'_, Find>,
+        }: &mut Context<'_, '_, Find>,
     ) -> Result<usize, checkout::Error<E>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
