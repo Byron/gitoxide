@@ -119,18 +119,18 @@ impl State {
         let names = match self {
             State::IgnoreStack(v) => {
                 a1_backing = [(v.exclude_file_name_for_directories.as_bytes().as_bstr(), true)];
-                a1_backing.as_slice()
+                a1_backing.as_ref()
             }
             State::AttributesAndIgnoreStack { ignore, .. } => {
                 a2_backing = [
                     (ignore.exclude_file_name_for_directories.as_bytes().as_bstr(), true),
                     (".gitattributes".into(), false),
                 ];
-                a2_backing.as_slice()
+                a2_backing.as_ref()
             }
             State::CreateDirectoryAndAttributesStack { .. } => {
                 a1_backing = [(".gitattributes".into(), true)];
-                a1_backing.as_slice()
+                a1_backing.as_ref()
             }
         };
 
