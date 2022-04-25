@@ -25,6 +25,26 @@ where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Send + Clone,
     E: std::error::Error + Send + Sync + 'static,
 {
+    let paths = index.take_path_backing();
+    let res = checkout_inner(index, &paths, dir, find, files, bytes, should_interrupt, options);
+    index.return_path_backing(paths);
+    res
+}
+#[allow(clippy::too_many_arguments)]
+fn checkout_inner<Find, E>(
+    index: &mut git_index::State,
+    paths: &git_index::PathStorage,
+    dir: impl Into<std::path::PathBuf>,
+    find: Find,
+    files: &mut impl Progress,
+    bytes: &mut impl Progress,
+    should_interrupt: &AtomicBool,
+    options: checkout::Options,
+) -> Result<checkout::Outcome, checkout::Error<E>>
+where
+    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Send + Clone,
+    E: std::error::Error + Send + Sync + 'static,
+{
     let num_files = AtomicUsize::default();
     let dir = dir.into();
     let case = if options.fs.ignore_case {
@@ -33,7 +53,7 @@ where
         git_glob::pattern::Case::Sensitive
     };
     let state = fs::cache::State::for_checkout(options.overwrite_existing, options.attribute_globals.clone().into());
-    let attribute_files = state.build_attribute_list(index, case);
+    let attribute_files = state.build_attribute_list(index, paths, case);
     let mut ctx = chunk::Context {
         buf: Vec::new(),
         path_cache: fs::Cache::new(
@@ -54,7 +74,7 @@ where
         None,
     );
 
-    let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths(), should_interrupt);
+    let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths_in(paths), should_interrupt);
     let chunk::Outcome {
         mut collisions,
         mut errors,

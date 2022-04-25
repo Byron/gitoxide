@@ -111,6 +111,7 @@ impl State {
     pub(crate) fn build_attribute_list(
         &self,
         index: &git_index::State,
+        paths: &git_index::PathStorage,
         case: git_glob::pattern::Case,
     ) -> Vec<PathIdMapping> {
         let a1_backing;
@@ -137,7 +138,7 @@ impl State {
             .entries()
             .iter()
             .filter_map(move |entry| {
-                let path = entry.path(index);
+                let path = entry.path_in(paths);
 
                 // Stage 0 means there is no merge going on, stage 2 means it's 'our' side of the merge, but then
                 // there won't be a stage 0.

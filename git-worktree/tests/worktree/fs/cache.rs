@@ -12,6 +12,7 @@ mod create_directory {
             fs::cache::State::for_checkout(false, Default::default()),
             Default::default(),
             Vec::new(),
+            Default::default(),
         );
         assert_eq!(cache.num_mkdir_calls(), 0);
 
@@ -92,6 +93,7 @@ mod create_directory {
             fs::cache::State::for_checkout(false, Default::default()),
             Default::default(),
             Vec::new(),
+            Default::default(),
         );
         (cache, dir)
     }
@@ -154,6 +156,7 @@ mod ignore_and_attributes {
             ),
             Default::default(),
             buf,
+            Default::default(), // TODO: get the index, use it to ask state to get the attributes files LUT
         );
 
         for (relative_path, source_and_line) in (IgnoreExpectations {
