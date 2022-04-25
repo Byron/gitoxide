@@ -2,7 +2,7 @@ use crate::fs;
 use crate::fs::cache::{Platform, State};
 use std::path::Path;
 
-impl<'a, 'path_in_index> Platform<'a, 'path_in_index> {
+impl<'a> Platform<'a> {
     /// The full path to `relative` will be returned for use on the file system.
     pub fn path(&self) -> &'a Path {
         self.parent.stack.current()
@@ -37,7 +37,7 @@ impl<'a, 'path_in_index> Platform<'a, 'path_in_index> {
     }
 }
 
-impl<'a, 'path_in_index> std::fmt::Debug for Platform<'a, 'path_in_index> {
+impl<'a, 'path_in_index> std::fmt::Debug for Platform<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Debug::fmt(&self.path(), f)
     }

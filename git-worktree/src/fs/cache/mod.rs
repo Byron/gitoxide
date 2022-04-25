@@ -1,6 +1,6 @@
 use super::Cache;
 use crate::fs;
-use bstr::BStr;
+use crate::fs::PathIdMapping;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone)]
@@ -28,7 +28,7 @@ pub enum State {
 }
 
 #[cfg(debug_assertions)]
-impl<'index> Cache<'index> {
+impl Cache {
     pub fn num_mkdir_calls(&self) -> usize {
         match self.state {
             State::CreateDirectoryAndAttributesStack { test_mkdir_calls, .. } => test_mkdir_calls,
@@ -52,12 +52,12 @@ impl<'index> Cache<'index> {
     }
 }
 
-pub struct Platform<'a, 'path_in_index> {
-    parent: &'a Cache<'path_in_index>,
+pub struct Platform<'a> {
+    parent: &'a Cache,
     is_dir: Option<bool>,
 }
 
-impl<'path_in_index> Cache<'path_in_index> {
+impl Cache {
     /// Create a new instance with `worktree_root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
     /// The `case` configures attribute and exclusion query case sensitivity.
@@ -66,7 +66,7 @@ impl<'path_in_index> Cache<'path_in_index> {
         state: State,
         case: git_glob::pattern::Case,
         buf: Vec<u8>,
-        attribute_files_in_index: Vec<(&'path_in_index BStr, git_hash::ObjectId)>,
+        attribute_files_in_index: Vec<PathIdMapping>,
     ) -> Self {
         let root = worktree_root.into();
         Cache {
@@ -83,11 +83,7 @@ impl<'path_in_index> Cache<'path_in_index> {
     /// path is created as directory. If it's not known it is assumed to be a file.
     ///
     /// Provide access to cached information for that `relative` entry via the platform returned.
-    pub fn at_entry(
-        &mut self,
-        relative: impl AsRef<Path>,
-        is_dir: Option<bool>,
-    ) -> std::io::Result<Platform<'_, 'path_in_index>> {
+    pub fn at_entry(&mut self, relative: impl AsRef<Path>, is_dir: Option<bool>) -> std::io::Result<Platform<'_>> {
         let mut platform = platform::StackDelegate {
             state: &mut self.state,
             buf: &mut self.buf,

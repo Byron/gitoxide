@@ -1,4 +1,5 @@
 use crate::fs::cache::{state, State};
+use crate::fs::PathIdMapping;
 use bstr::{BStr, BString, ByteSlice};
 use git_glob::pattern::Case;
 use std::path::Path;
@@ -107,11 +108,11 @@ impl State {
     /// - ignores entries which aren't blobs
     /// - ignores ignore entries which are not skip-worktree
     /// - within merges, picks 'our' stage both for ignore and attribute files.
-    pub(crate) fn build_attribute_list<'a>(
+    pub(crate) fn build_attribute_list(
         &self,
-        index: &'a git_index::State,
+        index: &git_index::State,
         case: git_glob::pattern::Case,
-    ) -> Vec<(&'a BStr, git_hash::ObjectId)> {
+    ) -> Vec<PathIdMapping> {
         let a1_backing;
         let a2_backing;
         let names = match self {
@@ -156,7 +157,7 @@ impl State {
                     if is_ignore && !entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
                         return None;
                     }
-                    Some((path, entry.id))
+                    Some((path.to_owned(), entry.id))
                 } else {
                     None
                 }

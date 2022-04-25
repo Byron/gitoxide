@@ -7,9 +7,9 @@ use io_close::Close;
 
 use crate::{fs, index, os};
 
-pub struct Context<'a, 'path_in_index, Find> {
+pub struct Context<'a, Find> {
     pub find: &'a mut Find,
-    pub path_cache: &'a mut fs::Cache<'path_in_index>,
+    pub path_cache: &'a mut fs::Cache,
     pub buf: &'a mut Vec<u8>,
 }
 
@@ -17,7 +17,7 @@ pub struct Context<'a, 'path_in_index, Find> {
 pub fn checkout<Find, E>(
     entry: &mut Entry,
     entry_path: &BStr,
-    Context { find, path_cache, buf }: Context<'_, '_, Find>,
+    Context { find, path_cache, buf }: Context<'_, Find>,
     index::checkout::Options {
         fs: crate::fs::Capabilities {
             symlink,

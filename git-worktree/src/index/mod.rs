@@ -36,7 +36,13 @@ where
     let attribute_files = state.build_attribute_list(index, case);
     let mut ctx = chunk::Context {
         buf: Vec::new(),
-        path_cache: fs::Cache::new(dir.clone(), state, case, Vec::with_capacity(512), attribute_files),
+        path_cache: fs::Cache::new(
+            dir.clone(),
+            state,
+            case,
+            Vec::with_capacity(512),
+            attribute_files.clone(),
+        ),
         find: find.clone(),
         options: options.clone(),
         num_files: &num_files,
@@ -69,7 +75,6 @@ where
                     options.overwrite_existing,
                     options.attribute_globals.clone().into(),
                 );
-                let attribute_files = state.build_attribute_list(index, case);
                 move |_| {
                     (
                         progress::Discard,
@@ -197,9 +202,9 @@ mod chunk {
         pub bytes_written: u64,
     }
 
-    pub struct Context<'a, 'path_in_index, Find> {
+    pub struct Context<'a, Find> {
         pub find: Find,
-        pub path_cache: fs::Cache<'path_in_index>,
+        pub path_cache: fs::Cache,
         pub buf: Vec<u8>,
         pub options: checkout::Options,
         /// We keep these shared so that there is the chance for printing numbers that aren't looking like
@@ -211,7 +216,7 @@ mod chunk {
         entries_with_paths: impl Iterator<Item = (&'entry mut git_index::Entry, &'entry BStr)>,
         files: &mut impl Progress,
         bytes: &mut impl Progress,
-        ctx: &mut Context<'_, '_, Find>,
+        ctx: &mut Context<'_, Find>,
     ) -> Result<Outcome<'entry>, checkout::Error<E>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
@@ -266,7 +271,7 @@ mod chunk {
             buf,
             options,
             num_files,
-        }: &mut Context<'_, '_, Find>,
+        }: &mut Context<'_, Find>,
     ) -> Result<usize, checkout::Error<E>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
