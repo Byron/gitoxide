@@ -145,21 +145,18 @@ impl State {
                         .rfind_byte(b'/')
                         .map(|pos| path[pos + 1..].as_bstr())
                         .unwrap_or(path);
-                    for (desired, is_ignore) in names {
-                        let is_match = match case {
-                            Case::Sensitive => basename == *desired,
-                            Case::Fold => basename.eq_ignore_ascii_case(desired),
-                        };
-                        if !is_match {
-                            continue;
-                        };
-                        // See https://github.com/git/git/blob/master/dir.c#L912:L912
-                        if *is_ignore && !entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
-                            return None;
+                    let is_ignore = names.iter().find_map(|t| {
+                        match case {
+                            Case::Sensitive => basename == t.0,
+                            Case::Fold => basename.eq_ignore_ascii_case(t.0),
                         }
-                        return Some((path, entry.id));
+                        .then(|| t.1)
+                    })?;
+                    // See https://github.com/git/git/blob/master/dir.c#L912:L912
+                    if is_ignore && !entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
+                        return None;
                     }
-                    None
+                    Some((path, entry.id))
                 } else {
                     None
                 }
