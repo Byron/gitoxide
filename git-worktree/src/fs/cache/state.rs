@@ -45,7 +45,7 @@ impl Ignore {
             stack: Default::default(),
             exclude_file_name_for_directories: exclude_file_name_for_directories
                 .map(ToOwned::to_owned)
-                .unwrap_or(".gitignore".into()),
+                .unwrap_or_else(|| ".gitignore".into()),
         }
     }
 
