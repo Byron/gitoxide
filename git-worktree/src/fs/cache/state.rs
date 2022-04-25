@@ -1,5 +1,6 @@
 use crate::fs::cache::{state, State};
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteSlice};
+use git_glob::pattern::Case;
 use std::path::Path;
 
 type AttributeMatchGroup = git_attributes::MatchGroup<git_attributes::Attributes>;
@@ -101,6 +102,63 @@ impl State {
 }
 
 impl State {
+    /// Returns a vec of tuples of relative index paths along with the best usable OID for either ignore, attribute files or both.
+    ///
+    /// - ignores entries which aren't blobs
+    /// - ignores ignore entries which are not skip-worktree
+    /// - within merges, picks 'our' stage both for ignore and attribute files.
+    pub(crate) fn build_attribute_list<'a>(
+        &self,
+        index: &'a git_index::State,
+        case: git_glob::pattern::Case,
+    ) -> Vec<(&'a BStr, git_hash::ObjectId)> {
+        let a1_backing;
+        let a2_backing;
+        let names = match self {
+            State::IgnoreStack(v) => {
+                a1_backing = [(v.exclude_file_name_for_directories.as_bytes().as_bstr(), true)];
+                a1_backing.as_slice()
+            }
+            State::AttributesAndIgnoreStack { ignore, attributes } => {
+                a2_backing = [
+                    (ignore.exclude_file_name_for_directories.as_bytes().as_bstr(), true),
+                    (".gitattributes".into(), false),
+                ];
+                a2_backing.as_slice()
+            }
+            State::CreateDirectoryAndAttributesStack { attributes, .. } => {
+                a1_backing = [(".gitattributes".into(), true)];
+                a1_backing.as_slice()
+            }
+        };
+        index
+            .entries_with_paths_by_filter_map(|path, entry| {
+                // Stage 0 means there is no merge going on, stage 2 means it's 'our' side of the merge, but then
+                // there won't be a stage 0.
+                if entry.mode == git_index::entry::Mode::FILE && (entry.stage() == 0 || entry.stage() == 2) {
+                    let basename = path
+                        .rfind_byte(b'/')
+                        .map(|pos| path[pos + 1..].as_bstr())
+                        .unwrap_or(path);
+                    for (desired, is_ignore) in names {
+                        let is_match = match case {
+                            Case::Sensitive => basename == *desired,
+                            Case::Fold => basename.eq_ignore_ascii_case(desired),
+                        };
+                        // See https://github.com/git/git/blob/master/dir.c#L912:L912
+                        if *is_ignore && !entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
+                            return None;
+                        }
+                        return Some(entry.id);
+                    }
+                    None
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
     pub(crate) fn ignore_or_panic(&self) -> &state::Ignore {
         match self {
             State::IgnoreStack(v) => v,

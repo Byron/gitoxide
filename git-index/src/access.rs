@@ -12,9 +12,12 @@ impl State {
     }
     pub fn entries_with_paths_by_filter_map<'a, T>(
         &'a self,
-        mut filter_map: impl FnMut(&BStr, &Entry) -> Option<T> + 'a,
-    ) -> impl Iterator<Item = T> + 'a {
-        self.entries.iter().filter_map(move |e| filter_map(e.path(self), e))
+        mut filter_map: impl FnMut(&'a BStr, &Entry) -> Option<T> + 'a,
+    ) -> impl Iterator<Item = (&'a BStr, T)> + 'a {
+        self.entries.iter().filter_map(move |e| {
+            let p = e.path(self);
+            filter_map(p, e).map(|t| (p, t))
+        })
     }
     pub fn entries_mut(&mut self) -> &mut [Entry] {
         &mut self.entries
