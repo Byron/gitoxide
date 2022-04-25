@@ -86,7 +86,7 @@ mod create_directory {
         );
     }
 
-    fn new_cache() -> (fs::Cache, TempDir) {
+    fn new_cache() -> (fs::Cache<'static>, TempDir) {
         let dir = tempdir().unwrap();
         let cache = fs::Cache::new(
             dir.path(),

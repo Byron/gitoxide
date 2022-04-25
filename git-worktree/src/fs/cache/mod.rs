@@ -28,7 +28,7 @@ pub enum State {
 }
 
 #[cfg(debug_assertions)]
-impl Cache {
+impl<'paths> Cache<'paths> {
     pub fn num_mkdir_calls(&self) -> usize {
         match self.state {
             State::CreateDirectoryAndAttributesStack { test_mkdir_calls, .. } => test_mkdir_calls,
@@ -52,12 +52,12 @@ impl Cache {
     }
 }
 
-pub struct Platform<'a> {
-    parent: &'a Cache,
+pub struct Platform<'a, 'paths> {
+    parent: &'a Cache<'paths>,
     is_dir: Option<bool>,
 }
 
-impl Cache {
+impl<'paths> Cache<'paths> {
     /// Create a new instance with `worktree_root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
     /// The `case` configures attribute and exclusion query case sensitivity.
@@ -66,7 +66,7 @@ impl Cache {
         state: State,
         case: git_glob::pattern::Case,
         buf: Vec<u8>,
-        attribute_files_in_index: Vec<PathIdMapping>,
+        attribute_files_in_index: Vec<PathIdMapping<'paths>>,
     ) -> Self {
         let root = worktree_root.into();
         Cache {
@@ -83,7 +83,11 @@ impl Cache {
     /// path is created as directory. If it's not known it is assumed to be a file.
     ///
     /// Provide access to cached information for that `relative` entry via the platform returned.
-    pub fn at_entry(&mut self, relative: impl AsRef<Path>, is_dir: Option<bool>) -> std::io::Result<Platform<'_>> {
+    pub fn at_entry(
+        &mut self,
+        relative: impl AsRef<Path>,
+        is_dir: Option<bool>,
+    ) -> std::io::Result<Platform<'_, 'paths>> {
         let mut platform = platform::StackDelegate {
             state: &mut self.state,
             buf: &mut self.buf,

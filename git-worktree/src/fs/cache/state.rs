@@ -108,12 +108,12 @@ impl State {
     /// - ignores entries which aren't blobs
     /// - ignores ignore entries which are not skip-worktree
     /// - within merges, picks 'our' stage both for ignore and attribute files.
-    pub(crate) fn build_attribute_list(
+    pub(crate) fn build_attribute_list<'paths>(
         &self,
         index: &git_index::State,
-        paths: &git_index::PathStorage,
+        paths: &'paths git_index::PathStorage,
         case: git_glob::pattern::Case,
-    ) -> Vec<PathIdMapping> {
+    ) -> Vec<PathIdMapping<'paths>> {
         let a1_backing;
         let a2_backing;
         let names = match self {
@@ -158,7 +158,7 @@ impl State {
                     if is_ignore && !entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
                         return None;
                     }
-                    Some((path.to_owned(), entry.id))
+                    Some((path, entry.id))
                 } else {
                     None
                 }
