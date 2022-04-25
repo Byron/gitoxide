@@ -28,6 +28,7 @@ pub enum State {
 
 ///
 pub mod state {
+    use bstr::{BStr, BString};
     use std::path::Path;
 
     type AttributeMatchGroup = git_attributes::MatchGroup<git_attributes::Attributes>;
@@ -54,14 +55,26 @@ pub mod state {
         pub stack: IgnoreMatchGroup,
         /// Ignore patterns which aren't tied to the repository root, hence are global. They are consulted last.
         pub globals: IgnoreMatchGroup,
+        ///  The name of the file to look for in directories.
+        pub exclude_file_name_for_directories: BString,
     }
 
     impl Ignore {
-        pub fn new(overrides: IgnoreMatchGroup, globals: IgnoreMatchGroup) -> Self {
+        /// The `exclude_file_name_for_directories` is an optional override for the filename to use when checking per-directory
+        /// ignore files within the repository, defaults to`.gitignore`.
+        // TODO: more docs
+        pub fn new(
+            overrides: IgnoreMatchGroup,
+            globals: IgnoreMatchGroup,
+            exclude_file_name_for_directories: Option<&BStr>,
+        ) -> Self {
             Ignore {
                 overrides,
                 globals,
                 stack: Default::default(),
+                exclude_file_name_for_directories: exclude_file_name_for_directories
+                    .map(ToOwned::to_owned)
+                    .unwrap_or(".gitignore".into()),
             }
         }
 

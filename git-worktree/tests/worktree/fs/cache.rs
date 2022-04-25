@@ -149,6 +149,7 @@ mod ignore_and_attributes {
                 git_worktree::fs::cache::state::Ignore::new(
                     git_attributes::MatchGroup::from_overrides(vec!["!force-include"]),
                     git_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf).unwrap(),
+                    None,
                 ),
             ),
             Default::default(),
