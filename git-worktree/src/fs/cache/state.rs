@@ -119,20 +119,25 @@ impl State {
                 a1_backing = [(v.exclude_file_name_for_directories.as_bytes().as_bstr(), true)];
                 a1_backing.as_slice()
             }
-            State::AttributesAndIgnoreStack { ignore, attributes } => {
+            State::AttributesAndIgnoreStack { ignore, .. } => {
                 a2_backing = [
                     (ignore.exclude_file_name_for_directories.as_bytes().as_bstr(), true),
                     (".gitattributes".into(), false),
                 ];
                 a2_backing.as_slice()
             }
-            State::CreateDirectoryAndAttributesStack { attributes, .. } => {
+            State::CreateDirectoryAndAttributesStack { .. } => {
                 a1_backing = [(".gitattributes".into(), true)];
                 a1_backing.as_slice()
             }
         };
+
         index
-            .entries_with_paths_by_filter_map(|path, entry| {
+            .entries()
+            .iter()
+            .filter_map(move |entry| {
+                let path = entry.path(index);
+
                 // Stage 0 means there is no merge going on, stage 2 means it's 'our' side of the merge, but then
                 // there won't be a stage 0.
                 if entry.mode == git_index::entry::Mode::FILE && (entry.stage() == 0 || entry.stage() == 2) {
@@ -145,11 +150,14 @@ impl State {
                             Case::Sensitive => basename == *desired,
                             Case::Fold => basename.eq_ignore_ascii_case(desired),
                         };
+                        if !is_match {
+                            continue;
+                        };
                         // See https://github.com/git/git/blob/master/dir.c#L912:L912
                         if *is_ignore && !entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
                             return None;
                         }
-                        return Some(entry.id);
+                        return Some((path, entry.id));
                     }
                     None
                 } else {
