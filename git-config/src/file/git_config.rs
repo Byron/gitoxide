@@ -292,6 +292,7 @@ impl<'event> GitConfig<'event> {
                     let mut condition_path = git_features::path::into_bytes_or_panic_on_windows(condition_path)
                         .as_bstr()
                         .to_owned();
+                    condition_path = BString::from(condition_path.replace("\\", "/"));
 
                     dbg!(&target_config_path);
                     if condition_path.starts_with(DOT) {
