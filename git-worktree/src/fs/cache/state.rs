@@ -1,7 +1,8 @@
 use crate::fs::cache::{state, State};
-use crate::fs::PathIdMapping;
+use crate::fs::PathOidMapping;
 use bstr::{BStr, BString, ByteSlice};
 use git_glob::pattern::Case;
+use git_hash::oid;
 use std::path::Path;
 
 type AttributeMatchGroup = git_attributes::MatchGroup<git_attributes::Attributes>;
@@ -51,16 +52,40 @@ impl Ignore {
         }
     }
 
-    pub fn push(&mut self, root: &Path, dir: &Path, buf: &mut Vec<u8>) -> std::io::Result<()> {
-        let follow_symlinks = true;
+    pub fn push<Find, E>(
+        &mut self,
+        root: &Path,
+        dir: &Path,
+        buf: &mut Vec<u8>,
+        attribute_files_in_index: &Vec<PathOidMapping<'_>>,
+        _find: Find,
+    ) -> std::io::Result<()>
+    where
+        Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
+    {
+        let ignore_path = git_features::path::convert::to_unix_separators(
+            git_features::path::into_bytes_or_panic_on_windows(dir.join(".gitignore")),
+        );
+        let ignore_file_in_index = attribute_files_in_index.binary_search_by(|t| t.0.cmp(ignore_path.as_bstr()));
+        let ignore_path = git_features::path::from_byte_vec_or_panic_on_windows(ignore_path);
+        let follow_symlinks = ignore_file_in_index.is_err();
         if !self
             .stack
-            .add_patterns_file(dir.join(".gitignore"), follow_symlinks, Some(root), buf)?
+            .add_patterns_file(ignore_path, follow_symlinks, Some(root), buf)?
         {
-            // Need one stack level per component so push and pop matches.
-            self.stack.patterns.push(Default::default());
+            match ignore_file_in_index {
+                Ok(_idx) => {
+                    // let ignore_blob = find(&attribute_files_in_index[0].1, buf)
+                    //     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+                    // self.stack.add_patterns_buffer(ignore_blob.data);
+                    todo!()
+                }
+                Err(_) => {
+                    // Need one stack level per component so push and pop matches.
+                    self.stack.patterns.push(Default::default())
+                }
+            }
         }
-        // TODO: from index
         Ok(())
     }
 }
@@ -108,12 +133,12 @@ impl State {
     /// - ignores entries which aren't blobs
     /// - ignores ignore entries which are not skip-worktree
     /// - within merges, picks 'our' stage both for ignore and attribute files.
-    pub(crate) fn build_attribute_list<'paths>(
+    pub fn build_attribute_list<'paths>(
         &self,
         index: &git_index::State,
         paths: &'paths git_index::PathStorage,
         case: git_glob::pattern::Case,
-    ) -> Vec<PathIdMapping<'paths>> {
+    ) -> Vec<PathOidMapping<'paths>> {
         let a1_backing;
         let a2_backing;
         let names = match self {

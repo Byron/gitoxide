@@ -4,6 +4,13 @@ mod create_directory {
     use git_worktree::fs;
     use tempfile::{tempdir, TempDir};
 
+    fn panic_on_find<'buf>(
+        _oid: &git_hash::oid,
+        _buf: &'buf mut Vec<u8>,
+    ) -> std::io::Result<git_object::BlobRef<'buf>> {
+        unreachable!("find should nto be called")
+    }
+
     #[test]
     fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() {
         let dir = tempdir().unwrap();
@@ -16,7 +23,7 @@ mod create_directory {
         );
         assert_eq!(cache.num_mkdir_calls(), 0);
 
-        let path = cache.at_entry("hello", Some(false)).unwrap().path();
+        let path = cache.at_entry("hello", Some(false), panic_on_find).unwrap().path();
         assert!(!path.parent().unwrap().exists(), "prefix itself is never created");
         assert_eq!(cache.num_mkdir_calls(), 0);
     }
@@ -32,7 +39,10 @@ mod create_directory {
             ("exe", Some(false)),
             ("link", None),
         ] {
-            let path = cache.at_entry(Path::new("dir").join(name), *is_dir).unwrap().path();
+            let path = cache
+                .at_entry(Path::new("dir").join(name), *is_dir, panic_on_find)
+                .unwrap()
+                .path();
             assert!(path.parent().unwrap().is_dir(), "dir exists");
         }
 
@@ -44,7 +54,7 @@ mod create_directory {
         let (mut cache, tmp) = new_cache();
         std::fs::create_dir(tmp.path().join("dir")).unwrap();
 
-        let path = cache.at_entry("dir/file", Some(false)).unwrap().path();
+        let path = cache.at_entry("dir/file", Some(false), panic_on_find).unwrap().path();
         assert!(path.parent().unwrap().is_dir(), "directory is still present");
         assert!(!path.exists(), "it won't create the file");
         assert_eq!(cache.num_mkdir_calls(), 1);
@@ -62,7 +72,10 @@ mod create_directory {
             cache.unlink_on_collision(false);
             let relative_path = format!("{}/file", dirname);
             assert_eq!(
-                cache.at_entry(&relative_path, Some(false)).unwrap_err().kind(),
+                cache
+                    .at_entry(&relative_path, Some(false), panic_on_find)
+                    .unwrap_err()
+                    .kind(),
                 std::io::ErrorKind::AlreadyExists
             );
         }
@@ -75,7 +88,10 @@ mod create_directory {
         for dirname in &["link-to-dir", "file-in-dir"] {
             cache.unlink_on_collision(true);
             let relative_path = format!("{}/file", dirname);
-            let path = cache.at_entry(&relative_path, Some(false)).unwrap().path();
+            let path = cache
+                .at_entry(&relative_path, Some(false), panic_on_find)
+                .unwrap()
+                .path();
             assert!(path.parent().unwrap().is_dir(), "directory was forcefully created");
             assert!(!path.exists());
         }
@@ -105,6 +121,8 @@ mod ignore_and_attributes {
     use std::path::Path;
 
     use git_index::entry::Mode;
+    use git_odb::pack::bundle::write::Options;
+    use git_odb::FindExt;
     use git_worktree::fs;
     use tempfile::{tempdir, TempDir};
 
@@ -134,7 +152,6 @@ mod ignore_and_attributes {
     }
 
     #[test]
-    #[ignore]
     fn check_against_baseline() {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_ignore_and_attributes_setup.sh").unwrap();
         let worktree_dir = dir.join("repo");
@@ -144,20 +161,21 @@ mod ignore_and_attributes {
         let user_exclude_path = dir.join("user.exclude");
         assert!(user_exclude_path.is_file());
 
-        let mut cache = fs::Cache::new(
-            &worktree_dir,
-            git_worktree::fs::cache::State::for_add(
-                Default::default(),
-                git_worktree::fs::cache::state::Ignore::new(
-                    git_attributes::MatchGroup::from_overrides(vec!["!force-include"]),
-                    git_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf).unwrap(),
-                    None,
-                ),
+        let mut index = git_index::File::at(git_dir.join("index"), Default::default()).unwrap();
+        let odb = git_odb::at(git_dir.join("objects")).unwrap();
+        let state = git_worktree::fs::cache::State::for_add(
+            Default::default(), // TODO: attribute tests
+            git_worktree::fs::cache::state::Ignore::new(
+                git_attributes::MatchGroup::from_overrides(vec!["!force-include"]),
+                git_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf).unwrap(),
+                None,
             ),
-            Default::default(),
-            buf,
-            Default::default(), // TODO: get the index, use it to ask state to get the attributes files LUT
         );
+        let case = git_glob::pattern::Case::Sensitive;
+        let paths_storage = index.take_path_backing();
+        let attribute_files_in_index = state.build_attribute_list(&index.state, &paths_storage, case);
+        assert_eq!(attribute_files_in_index, vec![]);
+        let mut cache = fs::Cache::new(&worktree_dir, state, case, buf, attribute_files_in_index);
 
         for (relative_path, source_and_line) in (IgnoreExpectations {
             lines: baseline.lines(),
@@ -168,7 +186,9 @@ mod ignore_and_attributes {
             // TODO: ignore file in index only
             // TODO: dir-excludes
             // TODO: a sibling dir to exercise pop() impl.
-            let platform = cache.at_entry(relative_path, is_dir).unwrap();
+            let platform = cache
+                .at_entry(relative_path, is_dir, |oid, buf| odb.find_blob(oid, buf))
+                .unwrap();
 
             let match_ = platform.matching_exclude_pattern();
             let is_excluded = platform.is_excluded();

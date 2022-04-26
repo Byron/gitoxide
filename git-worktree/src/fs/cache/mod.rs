@@ -1,6 +1,7 @@
 use super::Cache;
 use crate::fs;
-use crate::fs::PathIdMapping;
+use crate::fs::PathOidMapping;
+use git_hash::oid;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone)]
@@ -66,7 +67,7 @@ impl<'paths> Cache<'paths> {
         state: State,
         case: git_glob::pattern::Case,
         buf: Vec<u8>,
-        attribute_files_in_index: Vec<PathIdMapping<'paths>>,
+        attribute_files_in_index: Vec<PathOidMapping<'paths>>,
     ) -> Self {
         let root = worktree_root.into();
         Cache {
@@ -83,15 +84,21 @@ impl<'paths> Cache<'paths> {
     /// path is created as directory. If it's not known it is assumed to be a file.
     ///
     /// Provide access to cached information for that `relative` entry via the platform returned.
-    pub fn at_entry(
+    pub fn at_entry<Find, E>(
         &mut self,
         relative: impl AsRef<Path>,
         is_dir: Option<bool>,
-    ) -> std::io::Result<Platform<'_, 'paths>> {
+        find: Find,
+    ) -> std::io::Result<Platform<'_, 'paths>>
+    where
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+    {
         let mut platform = platform::StackDelegate {
             state: &mut self.state,
             buf: &mut self.buf,
             is_dir,
+            attribute_files_in_index: &self.attribute_files_in_index,
+            find,
         };
         self.stack.make_relative_path_current(relative, &mut platform)?;
         Ok(Platform { parent: self, is_dir })

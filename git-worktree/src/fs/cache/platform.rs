@@ -1,5 +1,7 @@
 use crate::fs;
 use crate::fs::cache::{Platform, State};
+use crate::fs::PathOidMapping;
+use git_hash::oid;
 use std::path::Path;
 
 impl<'a, 'paths> Platform<'a, 'paths> {
@@ -43,13 +45,18 @@ impl<'a, 'paths> std::fmt::Debug for Platform<'a, 'paths> {
     }
 }
 
-pub struct StackDelegate<'a> {
+pub struct StackDelegate<'a, 'paths, Find> {
     pub state: &'a mut State,
     pub buf: &'a mut Vec<u8>,
     pub is_dir: Option<bool>,
+    pub attribute_files_in_index: &'a Vec<PathOidMapping<'paths>>,
+    pub find: Find,
 }
 
-impl<'a> fs::stack::Delegate for StackDelegate<'a> {
+impl<'a, 'paths, Find, E> fs::stack::Delegate for StackDelegate<'a, 'paths, Find>
+where
+    Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
+{
     fn push(&mut self, is_last_component: bool, stack: &fs::Stack) -> std::io::Result<()> {
         match &mut self.state {
             State::CreateDirectoryAndAttributesStack {
@@ -77,11 +84,15 @@ impl<'a> fs::stack::Delegate for StackDelegate<'a> {
                 &stack.root,
                 stack.current.parent().expect("component was just pushed"),
                 self.buf,
+                self.attribute_files_in_index,
+                &mut self.find,
             )?,
             State::IgnoreStack(ignore) => ignore.push(
                 &stack.root,
                 stack.current.parent().expect("component was just pushed"),
                 self.buf,
+                self.attribute_files_in_index,
+                &mut self.find,
             )?,
         }
         Ok(())

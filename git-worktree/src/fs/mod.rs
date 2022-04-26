@@ -65,10 +65,10 @@ pub struct Cache<'paths> {
     /// If case folding should happen when looking up attributes or exclusions.
     case: git_glob::pattern::Case,
     /// A lookup table for object ids to read from in some situations when looking up attributes or exclusions.
-    attribute_files_in_index: Vec<PathIdMapping<'paths>>,
+    attribute_files_in_index: Vec<PathOidMapping<'paths>>,
 }
 
-pub(crate) type PathIdMapping<'paths> = (&'paths BStr, git_hash::ObjectId);
+pub(crate) type PathOidMapping<'paths> = (&'paths BStr, git_hash::ObjectId);
 
 ///
 pub mod cache;

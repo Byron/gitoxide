@@ -38,7 +38,7 @@ where
             path: entry_path.to_owned(),
         })?;
     let is_dir = Some(entry.mode == git_index::entry::Mode::COMMIT || entry.mode == git_index::entry::Mode::DIR);
-    let dest = path_cache.at_entry(dest_relative, is_dir)?.path();
+    let dest = path_cache.at_entry(dest_relative, is_dir, &mut *find)?.path();
 
     let object_size = match entry.mode {
         git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
