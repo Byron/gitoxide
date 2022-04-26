@@ -52,21 +52,22 @@ where
     } else {
         git_glob::pattern::Case::Sensitive
     };
-    let state = fs::cache::State::for_checkout(options.overwrite_existing, options.attribute_globals.clone().into());
-    let attribute_files = state.build_attribute_list(index, paths, case);
-    let mut ctx = chunk::Context {
-        buf: Vec::new(),
-        path_cache: fs::Cache::new(dir.clone(), state, case, Vec::with_capacity(512), attribute_files),
-        find: find.clone(),
-        options: options.clone(),
-        num_files: &num_files,
-    };
     let (chunk_size, thread_limit, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
         100,
         index.entries().len().into(),
         options.thread_limit,
         None,
     );
+
+    let state = fs::cache::State::for_checkout(options.overwrite_existing, options.attribute_globals.clone().into());
+    let attribute_files = state.build_attribute_list(index, paths, case);
+    let mut ctx = chunk::Context {
+        buf: Vec::new(),
+        path_cache: fs::Cache::new(dir.clone(), state, case, Vec::with_capacity(512), attribute_files),
+        find,
+        options,
+        num_files: &num_files,
+    };
 
     let chunk::Outcome {
         mut collisions,
@@ -77,9 +78,6 @@ where
         let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths_in(paths), should_interrupt);
         chunk::process(entries_with_paths, files, bytes, &mut ctx)?
     } else {
-        let state =
-            fs::cache::State::for_checkout(options.overwrite_existing, options.attribute_globals.clone().into());
-        let attribute_files = state.build_attribute_list(index, paths, case);
         let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths_in(paths), should_interrupt);
         in_parallel(
             git_features::iter::Chunks {
@@ -88,26 +86,8 @@ where
             },
             thread_limit,
             {
-                let num_files = &num_files;
-                move |_| {
-                    (
-                        progress::Discard,
-                        progress::Discard,
-                        chunk::Context {
-                            find: find.clone(),
-                            path_cache: fs::Cache::new(
-                                dir.clone(),
-                                state.clone(),
-                                case,
-                                Vec::with_capacity(512),
-                                attribute_files.clone(),
-                            ),
-                            buf: Vec::new(),
-                            options: options.clone(),
-                            num_files,
-                        },
-                    )
-                }
+                let ctx = ctx.clone();
+                move |_| (progress::Discard, progress::Discard, ctx.clone())
             },
             |chunk, (files, bytes, ctx)| chunk::process(chunk.into_iter(), files, bytes, ctx),
             chunk::Reduce {
@@ -133,7 +113,7 @@ where
     }
 
     Ok(checkout::Outcome {
-        files_updated: ctx.num_files.load(Ordering::Relaxed),
+        files_updated: num_files.load(Ordering::Relaxed),
         collisions,
         errors,
         bytes_written,
@@ -216,7 +196,8 @@ mod chunk {
         pub bytes_written: u64,
     }
 
-    pub struct Context<'a, 'paths, Find> {
+    #[derive(Clone)]
+    pub struct Context<'a, 'paths, Find: Clone> {
         pub find: Find,
         pub path_cache: fs::Cache<'paths>,
         pub buf: Vec<u8>,
@@ -233,7 +214,7 @@ mod chunk {
         ctx: &mut Context<'_, '_, Find>,
     ) -> Result<Outcome<'entry>, checkout::Error<E>>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
         let mut delayed = Vec::new();
@@ -288,7 +269,7 @@ mod chunk {
         }: &mut Context<'_, '_, Find>,
     ) -> Result<usize, checkout::Error<E>>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
         let res = entry::checkout(

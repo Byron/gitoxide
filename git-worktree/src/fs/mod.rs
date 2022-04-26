@@ -22,6 +22,7 @@ pub struct Capabilities {
     pub symlink: bool,
 }
 
+#[derive(Clone)]
 pub struct Stack {
     /// The prefix/root for all paths we handle.
     root: PathBuf,
@@ -54,6 +55,7 @@ pub struct Stack {
 ///
 /// The caching is only useful if consecutive calls to create a directory are using a sorted list of entries.
 #[allow(unused)]
+#[derive(Clone)]
 pub struct Cache<'paths> {
     stack: Stack,
     /// tells us what to do as we change paths.
