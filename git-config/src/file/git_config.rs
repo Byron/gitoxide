@@ -288,6 +288,7 @@ impl<'event> GitConfig<'event> {
         ) -> bool {
             if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir:")) {
                 let condition_path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
+
                 if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir.as_deref()) {
                     let mut condition_path = git_features::path::into_bytes_or_panic_on_windows(condition_path)
                         .as_bstr()
@@ -301,6 +302,7 @@ impl<'event> GitConfig<'event> {
                                 let parent_dir = git_features::path::into_bytes_or_panic_on_windows(parent_path);
                                 let v = bstr::concat(&[parent_dir.as_bstr(), condition_path[DOT.len()..].as_bstr()]);
                                 condition_path = BString::from(v);
+                                condition_path = BString::from(condition_path.replace("\\", "/"));
                             }
                         }
                     }
