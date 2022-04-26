@@ -692,7 +692,7 @@ mod from_paths_tests {
     }
 
     #[test]
-    fn include_if_with_gitdir() {
+    fn include_if_matches_and_includes_config_files() {
         let dir = tempdir().unwrap();
 
         let a_path = dir.path().join("a");
@@ -703,7 +703,7 @@ mod from_paths_tests {
         let e_path = dir.path().join("e");
         let g_path = dir.path().join("g");
         let w_path = dir.path().join("w");
-        let e_x_path = dir.path().join("e").join("x");
+        let x_path = dir.path().join("x");
 
         fs::write(
             a_path.as_path(),
@@ -712,6 +712,9 @@ mod from_paths_tests {
             [core]
               a = 1
               b = 1
+              c = 1
+            [includeIf "gitdir:c\\d"]
+              path = {}
             [includeIf "gitdir:./p/"]
               path = {}
             [includeIf "gitdir:z/y/"]
@@ -724,17 +727,25 @@ mod from_paths_tests {
               path = {}
             [includeIf "gitdir:a/.git"]
               path = {}
-            [includeIf "gitdir:{}/"]
+            [includeIf "gitdir:/e/x/"]
               path = {}"#,
+                escape_backslashes(&x_path),
                 escape_backslashes(&g_path),
                 escape_backslashes(&e_path),
                 escape_backslashes(&w_path),
                 escape_backslashes(&c_path),
                 escape_backslashes(&c_slash_path),
                 escape_backslashes(&d_path),
-                escape_backslashes(&e_x_path),
                 escape_backslashes(&b_path)
             ),
+        )
+        .unwrap();
+
+        fs::write(
+            x_path.as_path(),
+            "
+            [core]
+              c = 5",
         )
         .unwrap();
 
@@ -793,6 +804,19 @@ mod from_paths_tests {
               b = 8",
         )
         .unwrap();
+
+        let a_c_d_path = PathBuf::from("/a/c/d/.git");
+        let options = from_paths::Options {
+            git_dir: Some(a_c_d_path.as_path()),
+            ..Default::default()
+        };
+
+        let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
+        assert_eq!(
+            config.get_raw_value("core", None, "c"),
+            Ok(Cow::<[u8]>::Borrowed(b"1")),
+            "paterns with backslashes do not match"
+        );
 
         let a_p_path = a_path.parent().unwrap().join("p").join("q").join(".git");
         let options = from_paths::Options {
@@ -868,7 +892,7 @@ mod from_paths_tests {
             "** is prepended so paths ending with the pattern are matched"
         );
 
-        let e_x_y_path = e_x_path.join("y").join(".git");
+        let e_x_y_path = PathBuf::from("/e/x/y/.git");
         let options = from_paths::Options {
             git_dir: Some(e_x_y_path.as_path()),
             ..Default::default()

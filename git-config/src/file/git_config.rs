@@ -287,8 +287,10 @@ impl<'event> GitConfig<'event> {
             options: &from_paths::Options,
         ) -> bool {
             if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir:")) {
+                if condition.contains("\\") {
+                    return false;
+                }
                 let condition_path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
-
                 if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir.as_deref()) {
                     let mut condition_path = git_features::path::into_bytes_or_panic_on_windows(condition_path)
                         .as_bstr()
