@@ -92,6 +92,7 @@ impl<'paths> Cache<'paths> {
     ) -> std::io::Result<Platform<'_, 'paths>>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+        E: std::error::Error + Send + Sync + 'static,
     {
         let mut platform = platform::StackDelegate {
             state: &mut self.state,

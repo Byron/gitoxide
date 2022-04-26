@@ -123,6 +123,7 @@ mod ignore_and_attributes {
     use git_index::entry::Mode;
     use git_odb::pack::bundle::write::Options;
     use git_odb::FindExt;
+    use git_testtools::hex_to_id;
     use git_worktree::fs;
     use tempfile::{tempdir, TempDir};
 
@@ -174,7 +175,13 @@ mod ignore_and_attributes {
         let case = git_glob::pattern::Case::Sensitive;
         let paths_storage = index.take_path_backing();
         let attribute_files_in_index = state.build_attribute_list(&index.state, &paths_storage, case);
-        assert_eq!(attribute_files_in_index, vec![]);
+        assert_eq!(
+            attribute_files_in_index,
+            vec![(
+                "other-dir-with-ignore/.gitignore".as_bytes().as_bstr(),
+                hex_to_id("52920e774c53e5f7873c7ed08f9ad44e2f35fa83")
+            )]
+        );
         let mut cache = fs::Cache::new(&worktree_dir, state, case, buf, attribute_files_in_index);
 
         for (relative_path, source_and_line) in (IgnoreExpectations {
@@ -198,15 +205,18 @@ mod ignore_and_attributes {
                 }
                 (Some(m), Some((source_file, line, _pattern))) => {
                     assert_eq!(m.sequence_number, line);
-                    assert_eq!(
-                        m.source.map(|p| p.canonicalize().unwrap()),
-                        Some(
-                            worktree_dir
-                                .join(source_file.to_str_lossy().as_ref())
-                                .canonicalize()
-                                .unwrap()
-                        )
-                    );
+                    // Paths read from the index are relative to the repo, and they don't exist locally due tot skip-worktree
+                    if m.source.map_or(false, |p| p.exists()) {
+                        assert_eq!(
+                            m.source.map(|p| p.canonicalize().unwrap()),
+                            Some(
+                                worktree_dir
+                                    .join(source_file.to_str_lossy().as_ref())
+                                    .canonicalize()
+                                    .unwrap()
+                            )
+                        );
+                    }
                 }
                 (actual, expected) => {
                     panic!("actual {:?} didn't match {:?}", actual, expected);

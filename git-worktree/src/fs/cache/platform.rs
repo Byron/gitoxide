@@ -56,6 +56,7 @@ pub struct StackDelegate<'a, 'paths, Find> {
 impl<'a, 'paths, Find, E> fs::stack::Delegate for StackDelegate<'a, 'paths, Find>
 where
     Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
+    E: std::error::Error + Send + Sync + 'static,
 {
     fn push(&mut self, is_last_component: bool, stack: &fs::Stack) -> std::io::Result<()> {
         match &mut self.state {
