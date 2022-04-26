@@ -5,6 +5,17 @@ use git_config::values::{path::interpolate, Path};
 use crate::values::b;
 
 #[test]
+fn backslash_is_not_special() {
+    let path = &b"C:\\foo\\bar"[..];
+    let actual = Path::from(Cow::Borrowed(path));
+    assert_eq!(&*actual, path);
+    assert!(
+        matches!(&actual.value, Cow::Borrowed(_)),
+        "it does not unnecessarily copy values"
+    );
+}
+
+#[test]
 fn no_interpolation_for_paths_without_tilde_or_prefix() {
     let path = &b"/foo/bar"[..];
     let actual = Path::from(Cow::Borrowed(path));

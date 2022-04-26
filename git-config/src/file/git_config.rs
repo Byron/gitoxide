@@ -1,4 +1,4 @@
-use git_glob::wildmatch::Mode;
+use bstr::{BString, ByteSlice};
 use std::{
     borrow::Cow,
     collections::{HashMap, VecDeque},
@@ -118,6 +118,8 @@ pub struct GitConfig<'event> {
     /// Section order for output ordering.
     section_order: VecDeque<SectionId>,
 }
+
+const DOT: &[u8] = b".";
 
 pub mod from_paths {
 
@@ -279,31 +281,50 @@ impl<'event> GitConfig<'event> {
         options: &from_paths::Options,
     ) -> Result<(), from_paths::Error> {
         // TODO handle new git undocumented feature `hasconfig`
-        fn include_condition_is_true(condition: &Cow<str>, options: &from_paths::Options) -> bool {
+        fn include_condition_is_true(
+            condition: &Cow<str>,
+            target_config_path: Option<&Path>,
+            options: &from_paths::Options,
+        ) -> bool {
             if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir:")) {
-                let path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
-                if let Ok(resolved) = path.interpolate(options.git_install_dir.as_deref()) {
-                    let resolved: PathBuf = resolved.into();
-                    let mut resolved = resolved.to_string_lossy();
-                    if !["~/", "./", &std::path::MAIN_SEPARATOR.to_string()]
-                        .iter()
-                        .any(|&str| resolved.starts_with(str))
-                    {
-                        resolved = Cow::Owned(format!("**{}{}", std::path::MAIN_SEPARATOR, resolved));
-                    }
-                    if resolved.ends_with(std::path::MAIN_SEPARATOR) {
-                        resolved = Cow::Owned(format!("{}**", resolved));
-                    }
-                    dbg!(&resolved);
-                    if let Some(pattern) = git_glob::Pattern::from_bytes(resolved.as_bytes()) {
-                        if let Some(value) = git_dir.to_str() {
-                            println!();
-                            dbg!(&pattern, &value);
-                            let result = pattern.matches(value, Mode::NO_MATCH_SLASH_LITERAL);
-                            dbg!(&result);
-                            return result;
+                let condition_path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
+                if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir.as_deref()) {
+                    let mut condition_path = git_features::path::into_bytes_or_panic_on_windows(condition_path)
+                        .as_bstr()
+                        .to_owned();
+
+                    dbg!(&target_config_path);
+                    if condition_path.starts_with(DOT) {
+                        if let Some(parent_dir_path) = target_config_path {
+                            if let Some(parent_path) = parent_dir_path.parent() {
+                                let parent_dir = git_features::path::into_bytes_or_panic_on_windows(parent_path);
+                                let v = bstr::concat(&[parent_dir.as_bstr(), condition_path[DOT.len()..].as_bstr()]);
+                                condition_path = BString::from(v);
+                            }
                         }
                     }
+                    if !["~/", "./", "/"]
+                        .iter()
+                        .any(|&str| condition_path.starts_with(str.as_bytes()))
+                    {
+                        let v = bstr::concat(&["**/".as_bytes().as_bstr(), condition_path.as_bstr()]);
+                        condition_path = BString::from(v);
+                    }
+                    if condition_path.ends_with(b"/") {
+                        condition_path.push(b'*');
+                        condition_path.push(b'*');
+                    }
+                    let value: Cow<[u8]> = git_features::path::into_bytes_or_panic_on_windows(git_dir);
+                    let value = value.replace("\\", "/");
+                    let value = value.as_bstr();
+                    let condition_path = condition_path.as_bstr();
+
+                    println!();
+                    dbg!(&condition_path, &value);
+                    let result =
+                        git_glob::wildmatch(condition_path, value, git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL);
+                    dbg!(&result);
+                    return result;
                 }
                 return false;
             } else if let Some(_condition) = condition.strip_prefix("gitdir/i:") {
@@ -343,7 +364,7 @@ impl<'event> GitConfig<'event> {
 
             for (header, body) in get_include_if_sections(target_config) {
                 if let Some(condition) = &header.subsection_name {
-                    if include_condition_is_true(condition, options) {
+                    if include_condition_is_true(condition, target_config_path, options) {
                         let paths = body.values(&Key::from("path"));
                         let paths = paths.iter().map(|path| values::Path::from(path.clone()));
                         include_paths.extend(paths);
@@ -359,7 +380,7 @@ impl<'event> GitConfig<'event> {
                 }
             }
 
-            dbg!("vvvv", &paths_to_include);
+            dbg!(&paths_to_include);
             for config_path in paths_to_include {
                 let mut include_config = GitConfig::open(&config_path)?;
                 resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
