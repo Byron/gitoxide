@@ -63,7 +63,7 @@ where
     let attribute_files = state.build_attribute_list(index, paths, case);
     let mut ctx = chunk::Context {
         buf: Vec::new(),
-        path_cache: fs::Cache::new(dir.clone(), state, case, Vec::with_capacity(512), attribute_files),
+        path_cache: fs::Cache::new(dir, state, case, Vec::with_capacity(512), attribute_files),
         find,
         options,
         num_files: &num_files,

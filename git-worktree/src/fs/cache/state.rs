@@ -57,7 +57,7 @@ impl Ignore {
         root: &Path,
         dir: &Path,
         buf: &mut Vec<u8>,
-        attribute_files_in_index: &Vec<PathOidMapping<'_>>,
+        attribute_files_in_index: &[PathOidMapping<'_>],
         mut find: Find,
     ) -> std::io::Result<()>
     where
