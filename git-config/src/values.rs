@@ -261,17 +261,17 @@ pub mod path {
                 })?;
                 let (_prefix, path_without_trailing_slash) = self.split_at(PREFIX.len());
                 let path_without_trailing_slash =
-                    git_path::from_bstring(path_without_trailing_slash).context("path past %(prefix)")?;
+                    git_path::try_from_bstring(path_without_trailing_slash).context("path past %(prefix)")?;
                 Ok(git_install_dir.join(path_without_trailing_slash).into())
             } else if self.starts_with(USER_HOME) {
                 let home_path = dirs::home_dir().ok_or(interpolate::Error::Missing { what: "home dir" })?;
                 let (_prefix, val) = self.split_at(USER_HOME.len());
-                let val = git_path::from_byte_slice(val).context("path past ~/")?;
+                let val = git_path::try_from_byte_slice(val).context("path past ~/")?;
                 Ok(home_path.join(val).into())
             } else if self.starts_with(b"~") && self.contains(&b'/') {
                 self.interpolate_user()
             } else {
-                Ok(git_path::from_bstr_or_panic_on_windows(self.value))
+                Ok(git_path::from_bstr(self.value))
             }
         }
 
@@ -294,7 +294,7 @@ pub mod path {
                 .ok_or(interpolate::Error::Missing { what: "pwd user info" })?
                 .dir;
             let path_past_user_prefix =
-                git_path::from_byte_slice(&path_with_leading_slash["/".len()..]).context("path past ~user/")?;
+                git_path::try_from_byte_slice(&path_with_leading_slash["/".len()..]).context("path past ~user/")?;
             Ok(std::path::PathBuf::from(home).join(path_past_user_prefix).into())
         }
     }

@@ -106,7 +106,7 @@ pub fn with(
     fn make_relative(path: &Path) -> PathBuf {
         path.components().skip(1).collect()
     }
-    let path = git_path::from_byte_slice(path).map_err(|_| Error::IllformedUtf8 { path: path.to_owned() })?;
+    let path = git_path::try_from_byte_slice(path).map_err(|_| Error::IllformedUtf8 { path: path.to_owned() })?;
     Ok(match user {
         Some(user) => home_for_user(user)
             .ok_or_else(|| Error::MissingHome(user.to_owned().into()))?

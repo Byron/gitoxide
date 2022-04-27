@@ -71,10 +71,9 @@ impl Pattern {
         is_dir: Option<bool>,
         case: Case,
     ) -> bool {
-        if let Some(is_dir) = is_dir {
-            if !is_dir && self.mode.contains(pattern::Mode::MUST_BE_DIR) {
-                return false;
-            }
+        let is_dir = is_dir.unwrap_or(false);
+        if !is_dir && self.mode.contains(pattern::Mode::MUST_BE_DIR) {
+            return false;
         }
 
         let flags = wildmatch::Mode::NO_MATCH_SLASH_LITERAL

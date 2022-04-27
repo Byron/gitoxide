@@ -232,8 +232,7 @@ where
             .and_then(|base| {
                 (!base.as_os_str().is_empty()).then(|| {
                     let mut base: BString =
-                        git_path::to_unix_separators_on_windows(git_path::into_bstr_or_panic_on_windows(base))
-                            .into_owned();
+                        git_path::to_unix_separators_on_windows(git_path::into_bstr(base)).into_owned();
 
                     base.push_byte(b'/');
                     base
@@ -309,7 +308,7 @@ impl PatternList<Ignore> {
                 .map(Into::into)
                 .enumerate()
                 .filter_map(|(seq_id, pattern)| {
-                    let pattern = git_path::into_bstr(PathBuf::from(pattern)).ok()?;
+                    let pattern = git_path::try_into_bstr(PathBuf::from(pattern)).ok()?;
                     git_glob::parse(pattern.as_ref()).map(|p| PatternMapping {
                         pattern: p,
                         value: (),

@@ -26,7 +26,7 @@ impl Category {
 impl<'a> FullNameRef<'a> {
     /// Convert this name into the relative path identifying the reference location.
     pub fn to_path(self) -> &'a Path {
-        git_path::from_byte_slice_or_panic_on_windows(self.0)
+        git_path::from_byte_slice(self.0)
     }
 
     /// Return ourselves as byte string which is a valid refname
@@ -79,7 +79,7 @@ impl<'a> PartialNameRef<'a> {
     /// Convert this name into the relative path possibly identifying the reference location.
     /// Note that it may be only a partial path though.
     pub fn to_partial_path(&'a self) -> &'a Path {
-        git_path::from_byte_slice_or_panic_on_windows(self.0.as_ref())
+        git_path::from_byte_slice(self.0.as_ref())
     }
 
     /// Provide the name as binary string which is known to be a valid partial ref name.

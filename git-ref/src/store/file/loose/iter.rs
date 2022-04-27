@@ -61,7 +61,7 @@ impl Iterator for SortedLoosePaths {
                     let full_name = full_path
                         .strip_prefix(&self.base)
                         .expect("prefix-stripping cannot fail as prefix is our root");
-                    let full_name = match git_path::into_bstr(full_name) {
+                    let full_name = match git_path::try_into_bstr(full_name) {
                         Ok(name) => {
                             let name = git_path::to_unix_separators_on_windows(name);
                             name.into_owned()
@@ -200,7 +200,7 @@ impl file::Store {
                 base.file_name()
                     .map(ToOwned::to_owned)
                     .map(|p| {
-                        git_path::into_bstr(PathBuf::from(p))
+                        git_path::try_into_bstr(PathBuf::from(p))
                             .map(|p| p.into_owned())
                             .map_err(|_| {
                                 std::io::Error::new(

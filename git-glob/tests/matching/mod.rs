@@ -297,7 +297,10 @@ fn single_paths_match_anywhere() {
 
     let pattern = &pat("target/");
     assert!(!match_file(pattern, "dir/target", Case::Sensitive));
-    assert!(match_path(pattern, "dir/target", None, Case::Sensitive));
+    assert!(
+        !match_path(pattern, "dir/target", None, Case::Sensitive),
+        "it assumes unknown to not be a directory"
+    );
     assert!(match_path(pattern, "dir/target", Some(true), Case::Sensitive));
     assert!(
         !match_path(pattern, "dir/target/", Some(true), Case::Sensitive),

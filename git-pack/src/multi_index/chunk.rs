@@ -34,7 +34,7 @@ pub mod index_names {
             let null_byte_pos = chunk.find_byte(b'\0').ok_or(decode::Error::MissingNullByte)?;
 
             let path = &chunk[..null_byte_pos];
-            let path = git_path::from_byte_slice(path)
+            let path = git_path::try_from_byte_slice(path)
                 .map_err(|_| decode::Error::PathEncoding {
                     path: BString::from(path),
                 })?

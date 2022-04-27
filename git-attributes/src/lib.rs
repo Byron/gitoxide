@@ -78,11 +78,11 @@ pub struct PatternList<T: match_group::Pattern> {
 
     /// The path from which the patterns were read, or `None` if the patterns
     /// don't originate in a file on disk.
-    source: Option<PathBuf>,
+    pub source: Option<PathBuf>,
 
     /// The parent directory of source, or `None` if the patterns are _global_ to match against the repository root.
     /// It's processed to contain slashes only and to end with a trailing slash, and is relative to the repository root.
-    base: Option<BString>,
+    pub base: Option<BString>,
 }
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
