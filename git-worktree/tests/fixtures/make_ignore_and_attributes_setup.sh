@@ -39,6 +39,7 @@ EOF
   cat <<EOF >dir-with-ignore/.gitignore
 # a sample .gitignore
 sub-level-local-file-anywhere
+sub-level-dir-anywhere/
 EOF
 
   git add .gitignore dir-with-ignore
@@ -50,6 +51,7 @@ EOF
   cat <<EOF >"$skip_worktree_ignore"
 # a sample .gitignore
 other-sub-level-local-file-anywhere
+other-sub-level-dir-anywhere/
 EOF
   git add $skip_worktree_ignore && git update-index --skip-worktree $skip_worktree_ignore && rm $skip_worktree_ignore
 
@@ -66,6 +68,8 @@ user-dir-from-top
 no-match/user-dir-from-top
 user-subdir/file
 subdir/user-subdir-anywhere/file
+user-dir-anywhere/hello
+dir/user-dir-anywhere/hello
 file-anywhere
 dir/file-anywhere
 file-from-top
@@ -88,6 +92,15 @@ other-dir-with-ignore/no-match/sub-level-local-file-anywhere
 non-existing/dir-anywhere
 dir-anywhere/hello
 dir/dir-anywhere/hello
+no-match/sub-level-dir-anywhere/hello
+no-match/other-sub-level-dir-anywhere/hello
+dir-with-ignore/sub-level-dir-anywhere/hello
+dir-with-ignore/sub-level-dir-anywhere/
+dir-with-ignore/sub-level-dir-anywhere
+other-dir-with-ignore/sub-level-dir-anywhere/hello
+other-dir-with-ignore/other-sub-level-dir-anywhere/hello
+other-dir-with-ignore/other-sub-level-dir-anywhere/
+other-dir-with-ignore/other-sub-level-dir-anywhere
 EOF
 
 )

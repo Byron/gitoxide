@@ -153,6 +153,7 @@ mod ignore_and_attributes {
     }
 
     #[test]
+    #[ignore]
     fn check_against_baseline() {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_ignore_and_attributes_setup.sh").unwrap();
         let worktree_dir = dir.join("repo");
@@ -180,7 +181,7 @@ mod ignore_and_attributes {
             attribute_files_in_index,
             vec![(
                 "other-dir-with-ignore/.gitignore".as_bytes().as_bstr(),
-                hex_to_id("52920e774c53e5f7873c7ed08f9ad44e2f35fa83")
+                hex_to_id("5c7e0ed672d3d31d83a3df61f13cc8f7b22d5bfd")
             )]
         );
         let mut cache = fs::Cache::new(&worktree_dir, state, case, buf, attribute_files_in_index);
