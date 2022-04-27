@@ -32,6 +32,8 @@ pub struct Stack {
     current_relative: PathBuf,
     /// The amount of path components of 'current' beyond the roots components.
     valid_components: usize,
+    /// If set, we assume the `current` element is a directory to affect calls to `(push|pop)_directory()`.
+    current_is_directory: bool,
 }
 
 /// A cache for efficiently executing operations on directories and files which are encountered in sorted order.

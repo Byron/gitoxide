@@ -101,5 +101,44 @@ fn delegate_calls_are_consistent() -> crate::Result {
         }
     );
 
+    dirs.push(root.join("x").join("z"));
+    s.make_relative_path_current("x/z/a", &mut r)?;
+    assert_eq!(
+        r,
+        Record {
+            push_dir: 7,
+            dirs: dirs.clone(),
+            push: 12,
+        }
+    );
+
+    dirs.push(root.join("x").join("z").join("a"));
+    dirs.push(root.join("x").join("z").join("a").join("b"));
+    s.make_relative_path_current("x/z/a/b/c", &mut r)?;
+    assert_eq!(
+        r,
+        Record {
+            push_dir: 9,
+            dirs: dirs.clone(),
+            push: 14,
+        }
+    );
+
+    dirs.drain(dirs.len() - 2..).count();
+    s.make_relative_path_current("x/z", &mut r)?;
+    assert_eq!(
+        r,
+        Record {
+            push_dir: 9,
+            dirs: dirs.clone(),
+            push: 14,
+        }
+    );
+    assert_eq!(
+        dirs.last(),
+        Some(&PathBuf::from("./x/z")),
+        "the stack is state so keeps thinking it's a directory which is consistent. Git does it differently though."
+    );
+
     Ok(())
 }

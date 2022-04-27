@@ -31,6 +31,7 @@ impl Stack {
             current_relative: PathBuf::with_capacity(128),
             valid_components: 0,
             root,
+            current_is_directory: true,
         }
     }
 
@@ -68,22 +69,28 @@ impl Stack {
             }
         }
 
-        for popped_items in 0..self.valid_components - matching_components {
+        for _ in 0..self.valid_components - matching_components {
             self.current.pop();
             self.current_relative.pop();
-            if popped_items > 0 {
+            if self.current_is_directory {
                 delegate.pop_directory();
             }
+            self.current_is_directory = true;
         }
         self.valid_components = matching_components;
 
+        if !self.current_is_directory && components.peek().is_some() {
+            delegate.push_directory(self)?;
+        }
+
         while let Some(comp) = components.next() {
             let is_last_component = components.peek().is_none();
+            self.current_is_directory = !is_last_component;
             self.current.push(comp);
             self.current_relative.push(comp);
             self.valid_components += 1;
             let res = delegate.push(is_last_component, self);
-            if !is_last_component {
+            if self.current_is_directory {
                 delegate.push_directory(self)?;
             }
 
