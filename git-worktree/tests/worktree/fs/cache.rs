@@ -164,15 +164,16 @@ mod ignore_and_attributes {
 
         let mut index = git_index::File::at(git_dir.join("index"), Default::default()).unwrap();
         let odb = git_odb::at(git_dir.join("objects")).unwrap();
+        let case = git_glob::pattern::Case::Sensitive;
         let state = git_worktree::fs::cache::State::for_add(
             Default::default(), // TODO: attribute tests
             git_worktree::fs::cache::state::Ignore::new(
                 git_attributes::MatchGroup::from_overrides(vec!["!force-include"]),
                 git_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf).unwrap(),
                 None,
+                case,
             ),
         );
-        let case = git_glob::pattern::Case::Sensitive;
         let paths_storage = index.take_path_backing();
         let attribute_files_in_index = state.build_attribute_list(&index.state, &paths_storage, case);
         assert_eq!(

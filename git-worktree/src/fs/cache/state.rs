@@ -1,4 +1,4 @@
-use crate::fs::cache::{state, State};
+use crate::fs::cache::State;
 use crate::fs::PathOidMapping;
 use bstr::{BStr, BString, ByteSlice};
 use git_glob::pattern::Case;
@@ -35,6 +35,9 @@ pub struct Ignore {
     matched_directory_patterns_stack: Vec<Option<(usize, usize, usize)>>,
     ///  The name of the file to look for in directories.
     exclude_file_name_for_directories: BString,
+    /// The case to use when matching directories as they are pushed onto the stack. We run them against the exclude engine
+    /// to know if an entire path can be ignored as a parent directory is ignored.
+    case: Case,
 }
 
 impl Ignore {
@@ -45,8 +48,10 @@ impl Ignore {
         overrides: IgnoreMatchGroup,
         globals: IgnoreMatchGroup,
         exclude_file_name_for_directories: Option<&BStr>,
+        case: Case,
     ) -> Self {
         Ignore {
+            case,
             overrides,
             globals,
             stack: Default::default(),
@@ -72,7 +77,7 @@ impl Ignore {
         &self,
         relative_path: &BStr,
         is_dir: Option<bool>,
-        case: git_glob::pattern::Case,
+        case: Case,
     ) -> Option<git_attributes::Match<'_, ()>> {
         let groups = self.match_groups();
         if let Some((source, mapping)) = self
@@ -108,13 +113,13 @@ impl Ignore {
         &self,
         relative_path: &BStr,
         is_dir: Option<bool>,
-        case: git_glob::pattern::Case,
+        case: Case,
     ) -> Option<(usize, usize, usize)> {
         pub fn pattern_matching_relative_path(
             group: &IgnoreMatchGroup,
             relative_path: &BStr,
             is_dir: Option<bool>,
-            case: git_glob::pattern::Case,
+            case: Case,
         ) -> Option<(usize, usize)> {
             let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
             group.patterns.iter().enumerate().rev().find_map(|(plidx, pl)| {
@@ -142,11 +147,7 @@ impl Ignore {
     {
         let rela_dir = dir.strip_prefix(root).expect("dir in root");
         self.matched_directory_patterns_stack
-            .push(self.matching_exclude_pattern_no_dir(
-                git_path::into_bstr(rela_dir).as_ref(),
-                Some(true),
-                git_glob::pattern::Case::Sensitive, // TODO: pass actual case as configured
-            ));
+            .push(self.matching_exclude_pattern_no_dir(git_path::into_bstr(rela_dir).as_ref(), Some(true), self.case));
 
         let ignore_path_relative = rela_dir.join(".gitignore");
         let ignore_path_relative = git_path::to_unix_separators_on_windows(git_path::into_bstr(ignore_path_relative));
@@ -192,7 +193,7 @@ impl From<AttributeMatchGroup> for Attributes {
 
 impl State {
     /// Configure a state to be suitable for checking out files.
-    pub fn for_checkout(unlink_on_collision: bool, attributes: state::Attributes) -> Self {
+    pub fn for_checkout(unlink_on_collision: bool, attributes: Attributes) -> Self {
         State::CreateDirectoryAndAttributesStack {
             unlink_on_collision,
             #[cfg(debug_assertions)]
@@ -202,12 +203,12 @@ impl State {
     }
 
     /// Configure a state for adding files.
-    pub fn for_add(attributes: state::Attributes, ignore: state::Ignore) -> Self {
+    pub fn for_add(attributes: Attributes, ignore: Ignore) -> Self {
         State::AttributesAndIgnoreStack { attributes, ignore }
     }
 
     /// Configure a state for status retrieval.
-    pub fn for_status(ignore: state::Ignore) -> Self {
+    pub fn for_status(ignore: Ignore) -> Self {
         State::IgnoreStack(ignore)
     }
 }
@@ -222,7 +223,7 @@ impl State {
         &self,
         index: &git_index::State,
         paths: &'paths git_index::PathStorage,
-        case: git_glob::pattern::Case,
+        case: Case,
     ) -> Vec<PathOidMapping<'paths>> {
         let a1_backing;
         let a2_backing;
@@ -276,7 +277,7 @@ impl State {
             .collect()
     }
 
-    pub(crate) fn ignore_or_panic(&self) -> &state::Ignore {
+    pub(crate) fn ignore_or_panic(&self) -> &Ignore {
         match self {
             State::IgnoreStack(v) => v,
             State::AttributesAndIgnoreStack { ignore, .. } => ignore,
