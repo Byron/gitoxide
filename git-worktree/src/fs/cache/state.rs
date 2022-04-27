@@ -75,10 +75,11 @@ impl Ignore {
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let ignore_path_relative =
-            git_features::path::convert::to_unix_separators(git_features::path::into_bytes_or_panic_on_windows(
+        let ignore_path_relative = git_features::path::convert::to_unix_separators_on_windows(
+            git_features::path::into_bytes_or_panic_on_windows(
                 dir.strip_prefix(root).expect("dir in root").join(".gitignore"),
-            ));
+            ),
+        );
         let ignore_file_in_index =
             attribute_files_in_index.binary_search_by(|t| t.0.cmp(ignore_path_relative.as_bstr()));
         let follow_symlinks = ignore_file_in_index.is_err();

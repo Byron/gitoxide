@@ -231,7 +231,7 @@ where
             .and_then(|root| source.parent().expect("file").strip_prefix(root).ok())
             .and_then(|base| {
                 (!base.as_os_str().is_empty()).then(|| {
-                    let mut base: BString = git_features::path::convert::to_unix_separators(
+                    let mut base: BString = git_features::path::convert::to_unix_separators_on_windows(
                         git_features::path::into_bytes_or_panic_on_windows(base),
                     )
                     .into_owned()

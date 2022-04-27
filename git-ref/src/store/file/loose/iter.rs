@@ -63,8 +63,7 @@ impl Iterator for SortedLoosePaths {
                         .expect("prefix-stripping cannot fail as prefix is our root");
                     let full_name = match git_features::path::into_bytes(full_name) {
                         Ok(name) => {
-                            #[cfg(windows)]
-                            let name = git_features::path::convert::to_unix_separators(name);
+                            let name = git_features::path::convert::to_unix_separators_on_windows(name);
                             name.into_owned()
                         }
                         Err(_) => continue, // TODO: silently skipping ill-formed UTF-8 on windows here, maybe there are better ways?
