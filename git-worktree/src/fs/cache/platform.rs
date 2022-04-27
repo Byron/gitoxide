@@ -45,7 +45,7 @@ impl<'a, 'paths> std::fmt::Debug for Platform<'a, 'paths> {
 pub struct StackDelegate<'a, 'paths, Find> {
     pub state: &'a mut State,
     pub buf: &'a mut Vec<u8>,
-    pub is_dir: Option<bool>,
+    pub is_dir: bool,
     pub attribute_files_in_index: &'a Vec<PathOidMapping<'paths>>,
     pub find: Find,
 }
@@ -128,12 +128,11 @@ where
 fn create_leading_directory(
     is_last_component: bool,
     stack: &fs::Stack,
-    target_is_dir: Option<bool>,
+    is_dir: bool,
     #[cfg(debug_assertions)] mkdir_calls: &mut usize,
     unlink_on_collision: bool,
 ) -> std::io::Result<()> {
-    let target_is_dir = target_is_dir.unwrap_or(false);
-    if is_last_component && !target_is_dir {
+    if is_last_component && !is_dir {
         return Ok(());
     }
     #[cfg(debug_assertions)]

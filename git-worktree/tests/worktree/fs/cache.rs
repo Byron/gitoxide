@@ -23,7 +23,7 @@ mod create_directory {
         );
         assert_eq!(cache.num_mkdir_calls(), 0);
 
-        let path = cache.at_entry("hello", Some(false), panic_on_find).unwrap().path();
+        let path = cache.at_path("hello", Some(false), panic_on_find).unwrap().path();
         assert!(!path.parent().unwrap().exists(), "prefix itself is never created");
         assert_eq!(cache.num_mkdir_calls(), 0);
     }
@@ -40,7 +40,7 @@ mod create_directory {
             ("link", None),
         ] {
             let path = cache
-                .at_entry(Path::new("dir").join(name), *is_dir, panic_on_find)
+                .at_path(Path::new("dir").join(name), *is_dir, panic_on_find)
                 .unwrap()
                 .path();
             assert!(path.parent().unwrap().is_dir(), "dir exists");
@@ -54,7 +54,7 @@ mod create_directory {
         let (mut cache, tmp) = new_cache();
         std::fs::create_dir(tmp.path().join("dir")).unwrap();
 
-        let path = cache.at_entry("dir/file", Some(false), panic_on_find).unwrap().path();
+        let path = cache.at_path("dir/file", Some(false), panic_on_find).unwrap().path();
         assert!(path.parent().unwrap().is_dir(), "directory is still present");
         assert!(!path.exists(), "it won't create the file");
         assert_eq!(cache.num_mkdir_calls(), 1);
@@ -73,7 +73,7 @@ mod create_directory {
             let relative_path = format!("{}/file", dirname);
             assert_eq!(
                 cache
-                    .at_entry(&relative_path, Some(false), panic_on_find)
+                    .at_path(&relative_path, Some(false), panic_on_find)
                     .unwrap_err()
                     .kind(),
                 std::io::ErrorKind::AlreadyExists
@@ -89,7 +89,7 @@ mod create_directory {
             cache.unlink_on_collision(true);
             let relative_path = format!("{}/file", dirname);
             let path = cache
-                .at_entry(&relative_path, Some(false), panic_on_find)
+                .at_path(&relative_path, Some(false), panic_on_find)
                 .unwrap()
                 .path();
             assert!(path.parent().unwrap().is_dir(), "directory was forcefully created");
@@ -153,7 +153,6 @@ mod ignore_and_attributes {
     }
 
     #[test]
-    #[ignore]
     fn check_against_baseline() {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_ignore_and_attributes_setup.sh").unwrap();
         let worktree_dir = dir.join("repo");
@@ -186,14 +185,14 @@ mod ignore_and_attributes {
         );
         let mut cache = fs::Cache::new(&worktree_dir, state, case, buf, attribute_files_in_index);
 
-        for (relative_path, source_and_line) in (IgnoreExpectations {
+        for (relative_entry, source_and_line) in (IgnoreExpectations {
             lines: baseline.lines(),
         }) {
-            let relative_path = git_path::from_byte_slice(relative_path);
+            let relative_path = git_path::from_byte_slice(relative_entry);
             let is_dir = worktree_dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
 
             let platform = cache
-                .at_entry(relative_path, is_dir, |oid, buf| odb.find_blob(oid, buf))
+                .at_entry(relative_entry, is_dir, |oid, buf| odb.find_blob(oid, buf))
                 .unwrap();
 
             let match_ = platform.matching_exclude_pattern();
@@ -220,9 +219,7 @@ mod ignore_and_attributes {
                 (actual, expected) => {
                     panic!(
                         "actual {:?} didn't match {:?} at '{}'",
-                        actual,
-                        expected,
-                        relative_path.display()
+                        actual, expected, relative_entry
                     );
                 }
             }

@@ -102,7 +102,6 @@ dir-with-ignore/sub-level-dir-anywhere/
 other-dir-with-ignore/sub-level-dir-anywhere/hello
 other-dir-with-ignore/other-sub-level-dir-anywhere/hello
 other-dir-with-ignore/other-sub-level-dir-anywhere/
-other-dir-with-ignore/other-sub-level-dir-anywhere
 EOF
 
 )
