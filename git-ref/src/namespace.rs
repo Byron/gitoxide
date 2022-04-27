@@ -18,13 +18,13 @@ impl Namespace {
     }
     /// Return ourselves as a path for use within the filesystem.
     pub fn to_path(&self) -> &Path {
-        git_features::path::from_byte_slice_or_panic_on_windows(&self.0)
+        git_path::from_byte_slice_or_panic_on_windows(&self.0)
     }
     /// Append the given `prefix` to this namespace so it becomes usable for prefixed iteration.
     pub fn into_namespaced_prefix(mut self, prefix: impl AsRef<Path>) -> PathBuf {
         self.0
-            .push_str(git_features::path::into_bytes_or_panic_on_windows(prefix.as_ref()));
-        git_features::path::convert::to_windows_separators_on_windows_or_panic({
+            .push_str(git_path::into_bytes_or_panic_on_windows(prefix.as_ref()));
+        git_path::to_windows_separators_on_windows_or_panic({
             let v: Vec<_> = self.0.into();
             v
         })

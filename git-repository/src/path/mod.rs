@@ -2,6 +2,9 @@ use std::path::PathBuf;
 
 use crate::{Kind, Path};
 
+#[cfg(all(feature = "unstable", feature = "git-path"))]
+pub use git_path::*;
+
 ///
 pub mod create;
 ///

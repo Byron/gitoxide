@@ -34,6 +34,7 @@ git-index = { version = "^0.2.0", path = "../git-index" }
 git-hash = { version = "^0.9.3", path = "../git-hash" }
 git-object = { version = "^0.18.0", path = "../git-object" }
 git-glob = { version = "^0.2.0", path = "../git-glob" }
+git-path = { version = "^0.1.0", path = "../git-path" }
 git-attributes = { version = "^0.1.0", path = "../git-attributes" }
 git-features = { version = "^0.20.0", path = "../git-features" }
 

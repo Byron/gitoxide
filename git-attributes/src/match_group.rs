@@ -231,11 +231,10 @@ where
             .and_then(|root| source.parent().expect("file").strip_prefix(root).ok())
             .and_then(|base| {
                 (!base.as_os_str().is_empty()).then(|| {
-                    let mut base: BString = git_features::path::convert::to_unix_separators_on_windows(
-                        git_features::path::into_bytes_or_panic_on_windows(base),
-                    )
-                    .into_owned()
-                    .into();
+                    let mut base: BString =
+                        git_path::to_unix_separators_on_windows(git_path::into_bytes_or_panic_on_windows(base))
+                            .into_owned()
+                            .into();
                     base.push_byte(b'/');
                     base
                 })
@@ -310,7 +309,7 @@ impl PatternList<Ignore> {
                 .map(Into::into)
                 .enumerate()
                 .filter_map(|(seq_id, pattern)| {
-                    let pattern = git_features::path::into_bytes(PathBuf::from(pattern)).ok()?;
+                    let pattern = git_path::into_bytes(PathBuf::from(pattern)).ok()?;
                     git_glob::parse(pattern.as_ref()).map(|p| PatternMapping {
                         pattern: p,
                         value: (),

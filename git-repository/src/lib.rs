@@ -89,6 +89,7 @@
 //! * [`bstr`][bstr]
 //! * [`index`]
 //! * [`glob`]
+//! * [`path`]
 //! * [`credentials`]
 //! * [`sec`]
 //! * [`worktree`]

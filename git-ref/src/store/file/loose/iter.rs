@@ -49,7 +49,7 @@ impl Iterator for SortedLoosePaths {
                         .as_deref()
                         .and_then(|prefix| full_path.file_name().map(|name| (prefix, name)))
                     {
-                        match git_features::path::os_str_into_bytes(name) {
+                        match git_path::os_str_into_bytes(name) {
                             Ok(name) => {
                                 if !name.starts_with(prefix) {
                                     continue;
@@ -61,9 +61,9 @@ impl Iterator for SortedLoosePaths {
                     let full_name = full_path
                         .strip_prefix(&self.base)
                         .expect("prefix-stripping cannot fail as prefix is our root");
-                    let full_name = match git_features::path::into_bytes(full_name) {
+                    let full_name = match git_path::into_bytes(full_name) {
                         Ok(name) => {
-                            let name = git_features::path::convert::to_unix_separators_on_windows(name);
+                            let name = git_path::to_unix_separators_on_windows(name);
                             name.into_owned()
                         }
                         Err(_) => continue, // TODO: silently skipping ill-formed UTF-8 on windows here, maybe there are better ways?
@@ -200,7 +200,7 @@ impl file::Store {
                 base.file_name()
                     .map(ToOwned::to_owned)
                     .map(|p| {
-                        git_features::path::into_bytes(PathBuf::from(p))
+                        git_path::into_bytes(PathBuf::from(p))
                             .map(|p| BString::from(p.into_owned()))
                             .map_err(|_| {
                                 std::io::Error::new(

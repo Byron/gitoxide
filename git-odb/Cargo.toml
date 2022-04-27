@@ -30,7 +30,8 @@ required-features = []
 all-features = true
 
 [dependencies]
-git-features = { version = "^0.20.0", path = "../git-features", features = ["rustsha1", "walkdir", "zlib", "crc32", "bstr"] }
+git-features = { version = "^0.20.0", path = "../git-features", features = ["rustsha1", "walkdir", "zlib", "crc32" ] }
+git-path = { version = "^0.1.0", path = "../git-path" }
 git-hash = { version = "^0.9.3", path = "../git-hash" }
 git-quote = { version = "^0.2.0", path = "../git-quote" }
 git-object = { version = "^0.18.0", path = "../git-object" }

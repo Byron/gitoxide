@@ -187,7 +187,7 @@ mod ignore_and_attributes {
         for (relative_path, source_and_line) in (IgnoreExpectations {
             lines: baseline.lines(),
         }) {
-            let relative_path = git_features::path::from_byte_slice_or_panic_on_windows(relative_path);
+            let relative_path = git_path::from_byte_slice_or_panic_on_windows(relative_path);
             let is_dir = worktree_dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
 
             // TODO: ignore file in index only

@@ -15,6 +15,7 @@ include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 
 [dependencies]
 git-features = { version = "^0.20.0", path = "../git-features"}
+git-path = { version = "^0.1.0", path = "../git-path" }
 git-sec = { version = "^0.1.0", path = "../git-sec" }
 
 dirs = "4"

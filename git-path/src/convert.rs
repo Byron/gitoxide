@@ -92,7 +92,6 @@ pub fn from_bytes_or_panic_on_windows<'a>(input: impl Into<Cow<'a, [u8]>>) -> Co
 }
 
 /// Similar to [`from_byte_slice()`], but takes either borrowed or owned `input` as bstr.
-#[cfg(feature = "bstr")]
 pub fn from_bstr<'a>(input: impl Into<Cow<'a, bstr::BStr>>) -> Result<Cow<'a, Path>, Utf8Error> {
     let input = input.into();
     match input {
