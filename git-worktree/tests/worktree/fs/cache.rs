@@ -192,9 +192,6 @@ mod ignore_and_attributes {
             let relative_path = git_path::from_byte_slice(relative_path);
             let is_dir = worktree_dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
 
-            // TODO: ignore file in index only
-            // TODO: dir-excludes
-            // TODO: a sibling dir to exercise pop() impl.
             let platform = cache
                 .at_entry(relative_path, is_dir, |oid, buf| odb.find_blob(oid, buf))
                 .unwrap();

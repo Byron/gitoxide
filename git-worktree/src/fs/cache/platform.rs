@@ -55,32 +55,6 @@ where
     Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
     E: std::error::Error + Send + Sync + 'static,
 {
-    fn init(&mut self, stack: &fs::Stack) -> std::io::Result<()> {
-        match &mut self.state {
-            State::CreateDirectoryAndAttributesStack { attributes: _, .. } => {
-                // TODO: attribute init
-            }
-            State::AttributesAndIgnoreStack { ignore, attributes: _ } => {
-                // TODO: attribute init
-                ignore.push_directory(
-                    &stack.root,
-                    &stack.root,
-                    self.buf,
-                    self.attribute_files_in_index,
-                    &mut self.find,
-                )?
-            }
-            State::IgnoreStack(ignore) => ignore.push_directory(
-                &stack.root,
-                &stack.root,
-                self.buf,
-                self.attribute_files_in_index,
-                &mut self.find,
-            )?,
-        }
-        Ok(())
-    }
-
     fn push_directory(&mut self, stack: &fs::Stack) -> std::io::Result<()> {
         match &mut self.state {
             State::CreateDirectoryAndAttributesStack { attributes: _, .. } => {

@@ -19,3 +19,4 @@ fn from_probing_cwd() {
 }
 
 mod cache;
+mod stack;

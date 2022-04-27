@@ -59,6 +59,9 @@ EOF
   mkdir -p dir/user-dir-anywhere dir/dir-anywhere
 
   git check-ignore -vn --stdin 2>&1 <<EOF >git-check-ignore.baseline || :
+dir-with-ignore/sub-level-dir-anywhere/
+dir-with-ignore/foo/sub-level-dir-anywhere/
+dir-with-ignore/sub-level-dir-anywhere
 user-file-anywhere
 dir/user-file-anywhere
 user-file-from-top
@@ -96,7 +99,6 @@ no-match/sub-level-dir-anywhere/hello
 no-match/other-sub-level-dir-anywhere/hello
 dir-with-ignore/sub-level-dir-anywhere/hello
 dir-with-ignore/sub-level-dir-anywhere/
-dir-with-ignore/sub-level-dir-anywhere
 other-dir-with-ignore/sub-level-dir-anywhere/hello
 other-dir-with-ignore/other-sub-level-dir-anywhere/hello
 other-dir-with-ignore/other-sub-level-dir-anywhere/
