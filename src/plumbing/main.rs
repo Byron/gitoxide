@@ -379,7 +379,7 @@ pub fn main() -> Result<()> {
                         directory,
                         refs_directory,
                         refs.into_iter().map(|r| r.into()).collect(),
-                        git_features::progress::DoOrDiscard::from(progress),
+                        progress,
                         core::pack::receive::Context {
                             thread_limit,
                             format,
@@ -568,7 +568,7 @@ pub fn main() -> Result<()> {
                     core::remote::refs::list(
                         protocol,
                         &url,
-                        git_features::progress::DoOrDiscard::from(progress),
+                        progress,
                         core::remote::refs::Context {
                             thread_limit,
                             format,

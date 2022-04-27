@@ -257,7 +257,7 @@ where
             progress.fail(format!(
                 "Error when handling directory {:?}: {}",
                 path_to_move.display(),
-                err.to_string()
+                err
             ));
             num_errors += 1;
         }
