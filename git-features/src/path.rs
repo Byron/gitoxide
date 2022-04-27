@@ -127,6 +127,11 @@ pub fn from_bytes<'a>(input: impl Into<Cow<'a, [u8]>>) -> Result<Cow<'a, Path>, 
     }
 }
 
+/// Similar to [`from_byte_slice()`], but takes either borrowed or owned `input`.
+pub fn from_bytes_or_panic_on_windows<'a>(input: impl Into<Cow<'a, [u8]>>) -> Cow<'a, Path> {
+    from_bytes(input).expect("prefix path doesn't contain ill-formed UTF-8")
+}
+
 /// Similar to [`from_byte_slice()`], but takes either borrowed or owned `input` as bstr.
 #[cfg(feature = "bstr")]
 pub fn from_bstr<'a>(input: impl Into<Cow<'a, bstr::BStr>>) -> Result<Cow<'a, Path>, Utf8Error> {
@@ -195,30 +200,40 @@ pub mod convert {
         p
     }
 
-    /// Convert paths with slashes to backslashes on windows and do nothing on unix.
-    pub fn to_windows_separators_on_windows_or_panic(path: &std::path::Path) -> Cow<'_, std::path::Path> {
+    /// Convert paths with slashes to backslashes on windows and do nothing on unix. Takes a Cow as input
+    pub fn to_windows_separators_on_windows_or_panic<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, std::path::Path> {
+        #[cfg(not(windows))]
+        {
+            crate::path::from_bytes_or_panic_on_windows(path)
+        }
+        #[cfg(windows)]
+        {
+            crate::path::from_bytes_or_panic_on_windows(to_windows_separators(path))
+        }
+    }
+
+    /// Replaces windows path separators with slashes, but only do so on windows.
+    pub fn to_unix_separators_on_windows<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
+        #[cfg(windows)]
+        {
+            replace(path, b'\\', b'/')
+        }
         #[cfg(not(windows))]
         {
             path.into()
         }
-        #[cfg(windows)]
-        {
-            crate::path::from_byte_slice_or_panic_on_windows(
-                crate::path::convert::to_windows_separators(crate::path::into_bytes_or_panic_on_windows(path)).as_ref(),
-            )
-            .to_owned()
-            .into()
-        }
     }
 
     /// Replaces windows path separators with slashes.
+    ///
+    /// **Note** Do not use these and prefer the conditional versions of this method.
     pub fn to_unix_separators<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
         replace(path, b'\\', b'/')
     }
 
     /// Find backslashes and replace them with slashes, which typically resembles a unix path.
     ///
-    /// No other transformation is performed, the caller must check other invariants.
+    /// **Note** Do not use these and prefer the conditional versions of this method.
     pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
         replace(path, b'/', b'\\')
     }
