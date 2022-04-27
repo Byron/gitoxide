@@ -7,6 +7,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::file::from_paths::Options;
 use crate::{
     file::{
         error::GitConfigError,
@@ -287,53 +288,9 @@ impl<'event> GitConfig<'event> {
             options: &from_paths::Options,
         ) -> bool {
             if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir:")) {
-                if condition.contains("\\") {
-                    return false;
-                }
-                let condition_path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
-                if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir.as_deref()) {
-                    let mut condition_path = git_features::path::into_bytes_or_panic_on_windows(condition_path)
-                        .as_bstr()
-                        .to_owned();
-                    condition_path = BString::from(condition_path.replace("\\", "/"));
-
-                    dbg!(&target_config_path);
-                    if condition_path.starts_with(DOT) {
-                        if let Some(parent_dir_path) = target_config_path {
-                            if let Some(parent_path) = parent_dir_path.parent() {
-                                let parent_dir = git_features::path::into_bytes_or_panic_on_windows(parent_path);
-                                let v = bstr::concat(&[parent_dir.as_bstr(), condition_path[DOT.len()..].as_bstr()]);
-                                condition_path = BString::from(v);
-                                condition_path = BString::from(condition_path.replace("\\", "/"));
-                            }
-                        }
-                    }
-                    if !["~/", "./", "/"]
-                        .iter()
-                        .any(|&str| condition_path.starts_with(str.as_bytes()))
-                    {
-                        let v = bstr::concat(&["**/".as_bytes().as_bstr(), condition_path.as_bstr()]);
-                        condition_path = BString::from(v);
-                    }
-                    if condition_path.ends_with(b"/") {
-                        condition_path.push(b'*');
-                        condition_path.push(b'*');
-                    }
-                    let value: Cow<[u8]> = git_features::path::into_bytes_or_panic_on_windows(git_dir);
-                    let value = value.replace("\\", "/");
-                    let value = value.as_bstr();
-                    let condition_path = condition_path.as_bstr();
-
-                    println!();
-                    dbg!(&condition_path, &value);
-                    let result =
-                        git_glob::wildmatch(condition_path, value, git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL);
-                    dbg!(&result);
-                    return result;
-                }
-                return false;
-            } else if let Some(_condition) = condition.strip_prefix("gitdir/i:") {
-                todo!()
+                return is_match(&target_config_path, options, git_dir, condition);
+            } else if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir/i:")) {
+                return is_match(&target_config_path, options, git_dir, &condition.to_lowercase());
             }
             if let Some(branch_name) = options.branch_name {
                 if let Some((git_ref::Category::LocalBranch, branch_name)) = branch_name.category_and_short_name() {
@@ -343,6 +300,54 @@ impl<'event> GitConfig<'event> {
                 }
             }
             false
+        }
+
+        fn is_match(target_config_path: &Option<&Path>, options: &Options, git_dir: &Path, condition: &str) -> bool {
+            if condition.contains("\\") {
+                return false;
+            }
+            let condition_path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
+            if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir.as_deref()) {
+                let mut condition_path = git_features::path::into_bytes_or_panic_on_windows(condition_path)
+                    .as_bstr()
+                    .to_owned();
+                condition_path = BString::from(condition_path.replace("\\", "/"));
+
+                dbg!(&target_config_path);
+                if condition_path.starts_with(DOT) {
+                    if let Some(parent_dir_path) = target_config_path {
+                        if let Some(parent_path) = parent_dir_path.parent() {
+                            let parent_dir = git_features::path::into_bytes_or_panic_on_windows(parent_path);
+                            let v = bstr::concat(&[parent_dir.as_bstr(), condition_path[DOT.len()..].as_bstr()]);
+                            condition_path = BString::from(v);
+                            condition_path = BString::from(condition_path.replace("\\", "/"));
+                        }
+                    }
+                }
+                if !["~/", "./", "/"]
+                    .iter()
+                    .any(|&str| condition_path.starts_with(str.as_bytes()))
+                {
+                    let v = bstr::concat(&["**/".as_bytes().as_bstr(), condition_path.as_bstr()]);
+                    condition_path = BString::from(v);
+                }
+                if condition_path.ends_with(b"/") {
+                    condition_path.push(b'*');
+                    condition_path.push(b'*');
+                }
+                let value: Cow<[u8]> = git_features::path::into_bytes_or_panic_on_windows(git_dir);
+                let value = value.replace("\\", "/");
+                let value = value.as_bstr();
+                let condition_path = condition_path.as_bstr();
+
+                println!();
+                dbg!(&condition_path, &value);
+                let result =
+                    git_glob::wildmatch(condition_path, value, git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL);
+                dbg!(&result);
+                return result;
+            }
+            return false;
         }
 
         fn resolve_includes_recursive(

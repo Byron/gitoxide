@@ -701,6 +701,7 @@ mod from_paths_tests {
         let c_slash_path = dir.path().join("c_slash");
         let d_path = dir.path().join("d");
         let e_path = dir.path().join("e");
+        let i_path = dir.path().join("i");
         let g_path = dir.path().join("g");
         let w_path = dir.path().join("w");
         let x_path = dir.path().join("x");
@@ -713,6 +714,9 @@ mod from_paths_tests {
               a = 1
               b = 1
               c = 1
+              i = 1
+            [includeIf "gitdir/i:a/B/c/D/"]
+              path = {}
             [includeIf "gitdir:c\\d"]
               path = {}
             [includeIf "gitdir:./p/"]
@@ -729,6 +733,7 @@ mod from_paths_tests {
               path = {}
             [includeIf "gitdir:/e/x/"]
               path = {}"#,
+                escape_backslashes(&i_path),
                 escape_backslashes(&x_path),
                 escape_backslashes(&g_path),
                 escape_backslashes(&e_path),
@@ -738,6 +743,14 @@ mod from_paths_tests {
                 escape_backslashes(&d_path),
                 escape_backslashes(&b_path)
             ),
+        )
+        .unwrap();
+
+        fs::write(
+            i_path.as_path(),
+            "
+            [core]
+              i = 3",
         )
         .unwrap();
 
@@ -805,6 +818,19 @@ mod from_paths_tests {
         )
         .unwrap();
 
+        let a_c_d_path = PathBuf::from("/a/b/c/d/.git");
+        let options = from_paths::Options {
+            git_dir: Some(a_c_d_path.as_path()),
+            ..Default::default()
+        };
+
+        let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
+        assert_eq!(
+            config.get_raw_value("core", None, "i"),
+            Ok(Cow::<[u8]>::Borrowed(b"3")),
+            "case insensitive patterns match"
+        );
+
         let a_c_d_path = PathBuf::from("/a/c/d/.git");
         let options = from_paths::Options {
             git_dir: Some(a_c_d_path.as_path()),
@@ -815,7 +841,7 @@ mod from_paths_tests {
         assert_eq!(
             config.get_raw_value("core", None, "c"),
             Ok(Cow::<[u8]>::Borrowed(b"1")),
-            "paterns with backslashes do not match"
+            "patterns with backslashes do not match"
         );
 
         let a_p_path = a_path.parent().unwrap().join("p").join("q").join(".git");
