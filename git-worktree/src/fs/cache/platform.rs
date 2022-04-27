@@ -1,6 +1,7 @@
 use crate::fs;
 use crate::fs::cache::{Platform, State};
 use crate::fs::PathOidMapping;
+use bstr::ByteSlice;
 use git_hash::oid;
 use std::path::Path;
 
@@ -28,14 +29,11 @@ impl<'a, 'paths> Platform<'a, 'paths> {
     ///
     /// If the cache was configured without exclude patterns.
     pub fn matching_exclude_pattern(&self) -> Option<git_attributes::Match<'_, ()>> {
-        let ignore_groups = self.parent.state.ignore_or_panic();
-        let relative_path =
-            git_features::path::into_bytes_or_panic_on_windows(self.parent.stack.current_relative.as_path());
-        [&ignore_groups.overrides, &ignore_groups.stack, &ignore_groups.globals]
-            .iter()
-            .find_map(|group| {
-                group.pattern_matching_relative_path(relative_path.as_ref(), self.is_dir, self.parent.case)
-            })
+        let ignore = self.parent.state.ignore_or_panic();
+        let relative_path = git_features::path::convert::to_unix_separators(
+            git_features::path::into_bytes_or_panic_on_windows(self.parent.stack.current_relative.as_path()),
+        );
+        ignore.matching_exclude_pattern(relative_path.as_bstr(), self.is_dir, self.parent.case)
     }
 }
 

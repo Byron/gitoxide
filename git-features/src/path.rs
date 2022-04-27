@@ -186,7 +186,7 @@ pub mod convert {
         }
     }
 
-    /// Replaces windows path separators with slashes.
+    /// Assures the given bytes use the native path separator.
     pub fn to_native_separators<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
         #[cfg(not(windows))]
         let p = to_unix_separators(path);

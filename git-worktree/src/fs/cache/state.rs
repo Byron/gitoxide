@@ -52,6 +52,17 @@ impl Ignore {
         }
     }
 
+    pub fn matching_exclude_pattern(
+        &self,
+        relative_path: &BStr,
+        is_dir: Option<bool>,
+        case: git_glob::pattern::Case,
+    ) -> Option<git_attributes::Match<'_, ()>> {
+        [&self.overrides, &self.stack, &self.globals]
+            .iter()
+            .find_map(|group| group.pattern_matching_relative_path(relative_path.as_ref(), is_dir, case))
+    }
+
     pub fn push_directory<Find, E>(
         &mut self,
         root: &Path,
