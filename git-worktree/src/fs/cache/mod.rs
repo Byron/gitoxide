@@ -31,6 +31,9 @@ pub enum State {
 
 #[cfg(debug_assertions)]
 impl<'paths> Cache<'paths> {
+    pub fn set_case(&mut self, case: git_glob::pattern::Case) {
+        self.case = case;
+    }
     pub fn num_mkdir_calls(&self) -> usize {
         match self.state {
             State::CreateDirectoryAndAttributesStack { test_mkdir_calls, .. } => test_mkdir_calls,

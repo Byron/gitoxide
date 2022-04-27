@@ -12,8 +12,8 @@ mod create_directory {
     }
 
     #[test]
-    fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() {
-        let dir = tempdir().unwrap();
+    fn root_is_assumed_to_exist_and_files_in_root_do_not_create_directory() -> crate::Result {
+        let dir = tempdir()?;
         let mut cache = fs::Cache::new(
             dir.path().join("non-existing-root"),
             fs::cache::State::for_checkout(false, Default::default()),
@@ -23,9 +23,10 @@ mod create_directory {
         );
         assert_eq!(cache.num_mkdir_calls(), 0);
 
-        let path = cache.at_path("hello", Some(false), panic_on_find).unwrap().path();
+        let path = cache.at_path("hello", Some(false), panic_on_find)?.path();
         assert!(!path.parent().unwrap().exists(), "prefix itself is never created");
         assert_eq!(cache.num_mkdir_calls(), 0);
+        Ok(())
     }
 
     #[test]
@@ -50,23 +51,24 @@ mod create_directory {
     }
 
     #[test]
-    fn existing_directories_are_fine() {
+    fn existing_directories_are_fine() -> crate::Result {
         let (mut cache, tmp) = new_cache();
-        std::fs::create_dir(tmp.path().join("dir")).unwrap();
+        std::fs::create_dir(tmp.path().join("dir"))?;
 
-        let path = cache.at_path("dir/file", Some(false), panic_on_find).unwrap().path();
+        let path = cache.at_path("dir/file", Some(false), panic_on_find)?.path();
         assert!(path.parent().unwrap().is_dir(), "directory is still present");
         assert!(!path.exists(), "it won't create the file");
         assert_eq!(cache.num_mkdir_calls(), 1);
+        Ok(())
     }
 
     #[test]
-    fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() {
+    fn symlinks_or_files_in_path_are_forbidden_or_unlinked_when_forced() -> crate::Result {
         let (mut cache, tmp) = new_cache();
         let forbidden = tmp.path().join("forbidden");
-        std::fs::create_dir(&forbidden).unwrap();
-        symlink::symlink_dir(&forbidden, tmp.path().join("link-to-dir")).unwrap();
-        std::fs::write(tmp.path().join("file-in-dir"), &[]).unwrap();
+        std::fs::create_dir(&forbidden)?;
+        symlink::symlink_dir(&forbidden, tmp.path().join("link-to-dir"))?;
+        std::fs::write(tmp.path().join("file-in-dir"), &[])?;
 
         for dirname in &["file-in-dir", "link-to-dir"] {
             cache.unlink_on_collision(false);
@@ -88,10 +90,7 @@ mod create_directory {
         for dirname in &["link-to-dir", "file-in-dir"] {
             cache.unlink_on_collision(true);
             let relative_path = format!("{}/file", dirname);
-            let path = cache
-                .at_path(&relative_path, Some(false), panic_on_find)
-                .unwrap()
-                .path();
+            let path = cache.at_path(&relative_path, Some(false), panic_on_find)?.path();
             assert!(path.parent().unwrap().is_dir(), "directory was forcefully created");
             assert!(!path.exists());
         }
@@ -100,6 +99,7 @@ mod create_directory {
             4,
             "like before, but it unlinks what's there and tries again"
         );
+        Ok(())
     }
 
     fn new_cache() -> (fs::Cache<'static>, TempDir) {
@@ -120,6 +120,7 @@ mod ignore_and_attributes {
     use bstr::{BStr, ByteSlice};
     use std::path::Path;
 
+    use git_glob::pattern::Case;
     use git_index::entry::Mode;
     use git_odb::pack::bundle::write::Options;
     use git_odb::FindExt;
@@ -153,23 +154,23 @@ mod ignore_and_attributes {
     }
 
     #[test]
-    fn check_against_baseline() {
-        let dir = git_testtools::scripted_fixture_repo_read_only("make_ignore_and_attributes_setup.sh").unwrap();
+    fn check_against_baseline() -> crate::Result {
+        let dir = git_testtools::scripted_fixture_repo_read_only("make_ignore_and_attributes_setup.sh")?;
         let worktree_dir = dir.join("repo");
         let git_dir = worktree_dir.join(".git");
         let mut buf = Vec::new();
-        let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline")).unwrap();
+        let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline"))?;
         let user_exclude_path = dir.join("user.exclude");
         assert!(user_exclude_path.is_file());
 
-        let mut index = git_index::File::at(git_dir.join("index"), Default::default()).unwrap();
-        let odb = git_odb::at(git_dir.join("objects")).unwrap();
+        let mut index = git_index::File::at(git_dir.join("index"), Default::default())?;
+        let odb = git_odb::at(git_dir.join("objects"))?;
         let case = git_glob::pattern::Case::Sensitive;
         let state = git_worktree::fs::cache::State::for_add(
             Default::default(), // TODO: attribute tests
             git_worktree::fs::cache::state::Ignore::new(
                 git_attributes::MatchGroup::from_overrides(vec!["!force-include"]),
-                git_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf).unwrap(),
+                git_attributes::MatchGroup::from_git_dir(&git_dir, Some(user_exclude_path), &mut buf)?,
                 None,
                 case,
             ),
@@ -191,9 +192,7 @@ mod ignore_and_attributes {
             let relative_path = git_path::from_byte_slice(relative_entry);
             let is_dir = worktree_dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
 
-            let platform = cache
-                .at_entry(relative_entry, is_dir, |oid, buf| odb.find_blob(oid, buf))
-                .unwrap();
+            let platform = cache.at_entry(relative_entry, is_dir, |oid, buf| odb.find_blob(oid, buf))?;
 
             let match_ = platform.matching_exclude_pattern();
             let is_excluded = platform.is_excluded();
@@ -207,12 +206,7 @@ mod ignore_and_attributes {
                     if m.source.map_or(false, |p| p.exists()) {
                         assert_eq!(
                             m.source.map(|p| p.canonicalize().unwrap()),
-                            Some(
-                                worktree_dir
-                                    .join(source_file.to_str_lossy().as_ref())
-                                    .canonicalize()
-                                    .unwrap()
-                            )
+                            Some(worktree_dir.join(source_file.to_str_lossy().as_ref()).canonicalize()?)
                         );
                     }
                 }
@@ -224,6 +218,11 @@ mod ignore_and_attributes {
                 }
             }
         }
-        // TODO: at least one case-insensitive test
+
+        cache.set_case(Case::Fold);
+        let platform = cache.at_entry("User-file-ANYWHERE", Some(false), |oid, buf| odb.find_blob(oid, buf))?;
+        let m = platform.matching_exclude_pattern().expect("match");
+        assert_eq!(m.pattern.text, "user-file-anywhere");
+        Ok(())
     }
 }
