@@ -52,7 +52,7 @@ impl Ignore {
         }
     }
 
-    pub fn push<Find, E>(
+    pub fn push_directory<Find, E>(
         &mut self,
         root: &Path,
         dir: &Path,

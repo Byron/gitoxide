@@ -16,8 +16,10 @@ impl Stack {
 }
 
 pub trait Delegate {
+    fn init(&mut self, stack: &Stack) -> std::io::Result<()>;
+    fn push_directory(&mut self, stack: &Stack) -> std::io::Result<()>;
     fn push(&mut self, is_last_component: bool, stack: &Stack) -> std::io::Result<()>;
-    fn pop(&mut self, stack: &Stack);
+    fn pop_directory(&mut self);
 }
 
 impl Stack {
@@ -47,6 +49,10 @@ impl Stack {
             relative.is_relative(),
             "only index paths are handled correctly here, must be relative"
         );
+        // Only true if we were never called before, good for initialization.
+        if self.valid_components == 0 {
+            delegate.init(self)?;
+        }
 
         let mut components = relative.components().peekable();
         let mut existing_components = self.current_relative.components();
@@ -60,24 +66,30 @@ impl Stack {
             }
         }
 
-        for _ in 0..self.valid_components - matching_components {
+        for popped_items in 0..self.valid_components - matching_components {
             self.current.pop();
             self.current_relative.pop();
-            delegate.pop(self);
+            if popped_items > 0 {
+                delegate.pop_directory();
+            }
         }
         self.valid_components = matching_components;
 
+        let mut pushed_items = 0;
         while let Some(comp) = components.next() {
+            if pushed_items > 0 {
+                delegate.push_directory(self)?;
+            }
             self.current.push(comp);
             self.current_relative.push(comp);
             self.valid_components += 1;
             let res = delegate.push(components.peek().is_none(), self);
+            pushed_items += 1;
 
             if let Err(err) = res {
                 self.current.pop();
                 self.current_relative.pop();
                 self.valid_components -= 1;
-                delegate.pop(self);
                 return Err(err);
             }
         }

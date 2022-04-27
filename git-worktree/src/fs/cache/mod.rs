@@ -94,14 +94,14 @@ impl<'paths> Cache<'paths> {
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let mut platform = platform::StackDelegate {
+        let mut delegate = platform::StackDelegate {
             state: &mut self.state,
             buf: &mut self.buf,
             is_dir,
             attribute_files_in_index: &self.attribute_files_in_index,
             find,
         };
-        self.stack.make_relative_path_current(relative, &mut platform)?;
+        self.stack.make_relative_path_current(relative, &mut delegate)?;
         Ok(Platform { parent: self, is_dir })
     }
 }

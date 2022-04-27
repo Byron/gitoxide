@@ -58,6 +58,58 @@ where
     Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
     E: std::error::Error + Send + Sync + 'static,
 {
+    fn init(&mut self, stack: &fs::Stack) -> std::io::Result<()> {
+        match &mut self.state {
+            State::CreateDirectoryAndAttributesStack { attributes: _, .. } => {
+                // TODO: attribute init
+            }
+            State::AttributesAndIgnoreStack { ignore, attributes: _ } => {
+                // TODO: attribute init
+                ignore.push_directory(
+                    &stack.root,
+                    &stack.root,
+                    self.buf,
+                    self.attribute_files_in_index,
+                    &mut self.find,
+                )?
+            }
+            State::IgnoreStack(ignore) => ignore.push_directory(
+                &stack.root,
+                &stack.root,
+                self.buf,
+                self.attribute_files_in_index,
+                &mut self.find,
+            )?,
+        }
+        Ok(())
+    }
+
+    fn push_directory(&mut self, stack: &fs::Stack) -> std::io::Result<()> {
+        match &mut self.state {
+            State::CreateDirectoryAndAttributesStack { attributes: _, .. } => {
+                // TODO: attributes
+            }
+            State::AttributesAndIgnoreStack { ignore, attributes: _ } => {
+                // TODO: attributes
+                ignore.push_directory(
+                    &stack.root,
+                    &stack.current,
+                    self.buf,
+                    self.attribute_files_in_index,
+                    &mut self.find,
+                )?
+            }
+            State::IgnoreStack(ignore) => ignore.push_directory(
+                &stack.root,
+                &stack.current,
+                self.buf,
+                self.attribute_files_in_index,
+                &mut self.find,
+            )?,
+        }
+        Ok(())
+    }
+
     fn push(&mut self, is_last_component: bool, stack: &fs::Stack) -> std::io::Result<()> {
         match &mut self.state {
             State::CreateDirectoryAndAttributesStack {
@@ -81,35 +133,22 @@ where
                     create_leading_directory(is_last_component, stack, self.is_dir, *unlink_on_collision)?
                 }
             }
-            State::AttributesAndIgnoreStack { ignore, .. } => ignore.push(
-                &stack.root,
-                stack.current.parent().expect("component was just pushed"),
-                self.buf,
-                self.attribute_files_in_index,
-                &mut self.find,
-            )?,
-            State::IgnoreStack(ignore) => ignore.push(
-                &stack.root,
-                stack.current.parent().expect("component was just pushed"),
-                self.buf,
-                self.attribute_files_in_index,
-                &mut self.find,
-            )?,
+            State::AttributesAndIgnoreStack { .. } | State::IgnoreStack(_) => {}
         }
         Ok(())
     }
 
-    fn pop(&mut self, _stack: &fs::Stack) {
+    fn pop_directory(&mut self) {
         match &mut self.state {
-            State::CreateDirectoryAndAttributesStack { attributes, .. } => {
-                attributes.stack.patterns.pop();
+            State::CreateDirectoryAndAttributesStack { attributes: _, .. } => {
+                // TODO: attributes
             }
-            State::AttributesAndIgnoreStack { attributes, ignore } => {
-                attributes.stack.patterns.pop();
-                ignore.stack.patterns.pop();
+            State::AttributesAndIgnoreStack { attributes: _, ignore } => {
+                // TODO: attributes
+                ignore.stack.patterns.pop().expect("something to pop");
             }
             State::IgnoreStack(ignore) => {
-                ignore.stack.patterns.pop();
+                ignore.stack.patterns.pop().expect("something to pop");
             }
         }
     }
