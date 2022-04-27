@@ -295,9 +295,19 @@ impl<'event> GitConfig<'event> {
             if let Some(branch_name) = options.branch_name {
                 if let Some((git_ref::Category::LocalBranch, branch_name)) = branch_name.category_and_short_name() {
                     if let Some(condition) = condition.strip_prefix("onbranch:") {
-                        return condition == branch_name;
+                        let mut condition = Cow::Borrowed(condition);
+                        if condition.starts_with("/") {
+                            condition = Cow::Owned(format!("**{}", condition));
+                        }
+                        if condition.ends_with("/") {
+                            condition = Cow::Owned(format!("{}**", condition));
+                        }
+                        let pattern = condition.as_bytes().as_bstr();
+                        dbg!(&branch_name, &pattern);
+                        return git_glob::wildmatch(pattern, branch_name, git_glob::wildmatch::Mode::empty());
                     }
                 }
+                return false;
             }
             false
         }

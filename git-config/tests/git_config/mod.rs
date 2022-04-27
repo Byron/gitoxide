@@ -279,6 +279,7 @@ a"#,
 
 #[cfg(test)]
 mod from_paths_tests {
+    use std::convert::TryFrom;
     use std::path::PathBuf;
     use std::{borrow::Cow, fs, io, path::Path};
 
@@ -286,6 +287,7 @@ mod from_paths_tests {
         file::{from_paths, from_paths::Error, GitConfig},
         parser::ParserOrIoError,
     };
+    use git_ref::FullName;
     use tempfile::tempdir;
 
     /// Escapes backslash when writing a path as string so that it is a valid windows path
@@ -705,16 +707,20 @@ mod from_paths_tests {
         let g_path = dir.path().join("g");
         let w_path = dir.path().join("w");
         let x_path = dir.path().join("x");
+        let branch_path = dir.path().join("branch");
 
         fs::write(
             a_path.as_path(),
             format!(
                 r#"
             [core]
+              x = 1
               a = 1
               b = 1
               c = 1
               i = 1
+            [includeIf "onbranch:/br/"]
+              path = {}
             [includeIf "gitdir/i:a/B/c/D/"]
               path = {}
             [includeIf "gitdir:c\\d"]
@@ -733,6 +739,7 @@ mod from_paths_tests {
               path = {}
             [includeIf "gitdir:/e/x/"]
               path = {}"#,
+                escape_backslashes(&branch_path),
                 escape_backslashes(&i_path),
                 escape_backslashes(&x_path),
                 escape_backslashes(&g_path),
@@ -743,6 +750,14 @@ mod from_paths_tests {
                 escape_backslashes(&d_path),
                 escape_backslashes(&b_path)
             ),
+        )
+        .unwrap();
+
+        fs::write(
+            branch_path.as_path(),
+            "
+            [core]
+              x = 7",
         )
         .unwrap();
 
@@ -817,6 +832,20 @@ mod from_paths_tests {
               b = 8",
         )
         .unwrap();
+
+        let branch_name = FullName::try_from("refs/heads/repo/br/one").unwrap();
+        let branch_name = branch_name.to_ref();
+        let options = from_paths::Options {
+            branch_name: Some(branch_name),
+            ..Default::default()
+        };
+
+        let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
+        assert_eq!(
+            config.get_raw_value("core", None, "x"),
+            Ok(Cow::<[u8]>::Borrowed(b"7")),
+            "branch name match"
+        );
 
         let a_c_d_path = PathBuf::from("/a/b/c/d/.git");
         let options = from_paths::Options {
