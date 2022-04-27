@@ -1367,6 +1367,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-path"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+]
+
+[[package]]
 name = "git-pathspec"
 version = "0.0.0"
 
