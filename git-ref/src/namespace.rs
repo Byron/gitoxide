@@ -23,12 +23,8 @@ impl Namespace {
     /// Append the given `prefix` to this namespace so it becomes usable for prefixed iteration.
     pub fn into_namespaced_prefix(mut self, prefix: impl AsRef<Path>) -> PathBuf {
         self.0
-            .push_str(git_path::into_bytes_or_panic_on_windows(prefix.as_ref()));
-        git_path::to_windows_separators_on_windows_or_panic({
-            let v: Vec<_> = self.0.into();
-            v
-        })
-        .into_owned()
+            .push_str(git_path::into_bstr_or_panic_on_windows(prefix.as_ref()).as_ref());
+        git_path::to_windows_separators_on_windows_or_panic(self.0.clone()).into_owned()
     }
 }
 

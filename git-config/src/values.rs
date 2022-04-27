@@ -261,17 +261,17 @@ pub mod path {
                 })?;
                 let (_prefix, path_without_trailing_slash) = self.split_at(PREFIX.len());
                 let path_without_trailing_slash =
-                    git_path::from_byte_vec(path_without_trailing_slash).context("path past %(prefix)")?;
+                    git_path::from_bstring(path_without_trailing_slash).context("path past %(prefix)")?;
                 Ok(git_install_dir.join(path_without_trailing_slash).into())
             } else if self.starts_with(USER_HOME) {
                 let home_path = dirs::home_dir().ok_or(interpolate::Error::Missing { what: "home dir" })?;
                 let (_prefix, val) = self.split_at(USER_HOME.len());
-                let val = git_path::from_bytes(val).context("path past ~/")?;
+                let val = git_path::from_byte_slice(val).context("path past ~/")?;
                 Ok(home_path.join(val).into())
             } else if self.starts_with(b"~") && self.contains(&b'/') {
                 self.interpolate_user()
             } else {
-                Ok(git_path::from_bytes(self.value).context("unexpanded path")?)
+                Ok(git_path::from_bstr_or_panic_on_windows(self.value))
             }
         }
 
@@ -306,11 +306,11 @@ pub mod path {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Path<'a> {
     /// The path string, un-interpolated
-    pub value: Cow<'a, [u8]>,
+    pub value: Cow<'a, BStr>,
 }
 
 impl<'a> std::ops::Deref for Path<'a> {
-    type Target = [u8];
+    type Target = BStr;
 
     fn deref(&self) -> &Self::Target {
         self.value.as_ref()
@@ -323,10 +323,21 @@ impl<'a> AsRef<[u8]> for Path<'a> {
     }
 }
 
+impl<'a> AsRef<BStr> for Path<'a> {
+    fn as_ref(&self) -> &BStr {
+        self.value.as_ref()
+    }
+}
+
 impl<'a> From<Cow<'a, [u8]>> for Path<'a> {
     #[inline]
     fn from(value: Cow<'a, [u8]>) -> Self {
-        Path { value }
+        Path {
+            value: match value {
+                Cow::Borrowed(v) => Cow::Borrowed(v.into()),
+                Cow::Owned(v) => Cow::Owned(v.into()),
+            },
+        }
     }
 }
 

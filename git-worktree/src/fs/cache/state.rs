@@ -75,7 +75,7 @@ impl Ignore {
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let ignore_path_relative = git_path::to_unix_separators_on_windows(git_path::into_bytes_or_panic_on_windows(
+        let ignore_path_relative = git_path::to_unix_separators_on_windows(git_path::into_bstr_or_panic_on_windows(
             dir.strip_prefix(root).expect("dir in root").join(".gitignore"),
         ));
         let ignore_file_in_index =
@@ -89,7 +89,7 @@ impl Ignore {
                 Ok(idx) => {
                     let ignore_blob = find(&attribute_files_in_index[idx].1, buf)
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-                    let ignore_path = git_path::from_byte_vec_or_panic_on_windows(ignore_path_relative.into_owned());
+                    let ignore_path = git_path::from_bstring_or_panic_on_windows(ignore_path_relative.into_owned());
                     self.stack
                         .add_patterns_buffer(ignore_blob.data, ignore_path, Some(root));
                 }

@@ -125,7 +125,7 @@ impl file::Store {
         let relative_path = base.join(inbetween).join(relative_path);
 
         let path_to_open = git_path::to_windows_separators_on_windows_or_panic(
-            git_path::into_bytes_or_panic_on_windows(&relative_path),
+            git_path::into_bstr_or_panic_on_windows(&relative_path),
         );
         let contents = match self
             .ref_contents(&path_to_open)
