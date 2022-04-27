@@ -1,3 +1,4 @@
+use bstr::{BStr, BString};
 use std::{
     borrow::Cow,
     ffi::OsStr,
@@ -5,7 +6,7 @@ use std::{
 };
 
 #[derive(Debug)]
-/// The error type returned by [`into_bytes()`] and others may suffer from failed conversions from or to bytes.
+/// The error type returned by [`into_bstr()`] and others may suffer from failed conversions from or to bytes.
 pub struct Utf8Error;
 
 impl std::fmt::Display for Utf8Error {
@@ -16,9 +17,9 @@ impl std::fmt::Display for Utf8Error {
 
 impl std::error::Error for Utf8Error {}
 
-/// Like [`into_bytes()`], but takes `OsStr` as input for a lossless, but fallible, conversion.
-pub fn os_str_into_bytes(path: &OsStr) -> Result<&[u8], Utf8Error> {
-    let path = into_bytes(Cow::Borrowed(path.as_ref()))?;
+/// Like [`into_bstr()`], but takes `OsStr` as input for a lossless, but fallible, conversion.
+pub fn os_str_into_bstr(path: &OsStr) -> Result<&BStr, Utf8Error> {
+    let path = into_bstr(Cow::Borrowed(path.as_ref()))?;
     match path {
         Cow::Borrowed(path) => Ok(path),
         Cow::Owned(_) => unreachable!("borrowed cows stay borrowed"),
@@ -29,36 +30,36 @@ pub fn os_str_into_bytes(path: &OsStr) -> Result<&[u8], Utf8Error> {
 ///
 /// On windows, if the source Path contains ill-formed, lone surrogates, the UTF-8 conversion will fail
 /// causing `Utf8Error` to be returned.
-pub fn into_bytes<'a>(path: impl Into<Cow<'a, Path>>) -> Result<Cow<'a, [u8]>, Utf8Error> {
+pub fn into_bstr<'a>(path: impl Into<Cow<'a, Path>>) -> Result<Cow<'a, BStr>, Utf8Error> {
     let path = path.into();
-    let utf8_bytes = match path {
+    let path_str = match path {
         Cow::Owned(path) => Cow::Owned({
             #[cfg(unix)]
-            let p = {
+            let p: BString = {
                 use std::os::unix::ffi::OsStringExt;
-                path.into_os_string().into_vec()
+                path.into_os_string().into_vec().into()
             };
             #[cfg(not(unix))]
-            let p: Vec<_> = path.into_os_string().into_string().map_err(|_| Utf8Error)?.into();
+            let p: BString = path.into_os_string().into_string().map_err(|_| Utf8Error)?.into();
             p
         }),
         Cow::Borrowed(path) => Cow::Borrowed({
             #[cfg(unix)]
-            let p = {
+            let p: &BStr = {
                 use std::os::unix::ffi::OsStrExt;
-                path.as_os_str().as_bytes()
+                path.as_os_str().as_bytes().into()
             };
             #[cfg(not(unix))]
-            let p = path.to_str().ok_or(Utf8Error)?.as_bytes();
+            let p: &BStr = path.to_str().ok_or(Utf8Error)?.as_bytes().into();
             p
         }),
     };
-    Ok(utf8_bytes)
+    Ok(path_str)
 }
 
-/// Similar to [`into_bytes()`] but panics if malformed surrogates are encountered on windows.
-pub fn into_bytes_or_panic_on_windows<'a>(path: impl Into<Cow<'a, Path>>) -> Cow<'a, [u8]> {
-    into_bytes(path).expect("prefix path doesn't contain ill-formed UTF-8")
+/// Similar to [`into_bstr()`] but panics if malformed surrogates are encountered on windows.
+pub fn into_bstr_or_panic_on_windows<'a>(path: impl Into<Cow<'a, Path>>) -> Cow<'a, BStr> {
+    into_bstr(path).expect("prefix path doesn't contain ill-formed UTF-8")
 }
 
 /// Given `input` bytes, produce a `Path` from them ignoring encoding entirely if on unix.
@@ -78,44 +79,45 @@ pub fn from_byte_slice(input: &[u8]) -> Result<&Path, Utf8Error> {
 }
 
 /// Similar to [`from_byte_slice()`], but takes either borrowed or owned `input`.
-pub fn from_bytes<'a>(input: impl Into<Cow<'a, [u8]>>) -> Result<Cow<'a, Path>, Utf8Error> {
+pub fn from_bstr<'a>(input: impl Into<Cow<'a, BStr>>) -> Result<Cow<'a, Path>, Utf8Error> {
     let input = input.into();
     match input {
         Cow::Borrowed(input) => from_byte_slice(input).map(Cow::Borrowed),
-        Cow::Owned(input) => from_byte_vec(input).map(Cow::Owned),
+        Cow::Owned(input) => from_bstring(input).map(Cow::Owned),
     }
 }
 
 /// Similar to [`from_byte_slice()`], but takes either borrowed or owned `input`.
-pub fn from_bytes_or_panic_on_windows<'a>(input: impl Into<Cow<'a, [u8]>>) -> Cow<'a, Path> {
-    from_bytes(input).expect("prefix path doesn't contain ill-formed UTF-8")
-}
-
-/// Similar to [`from_byte_slice()`], but takes either borrowed or owned `input` as bstr.
-pub fn from_bstr<'a>(input: impl Into<Cow<'a, bstr::BStr>>) -> Result<Cow<'a, Path>, Utf8Error> {
-    let input = input.into();
-    match input {
-        Cow::Borrowed(input) => from_byte_slice(input).map(Cow::Borrowed),
-        Cow::Owned(input) => from_byte_vec(input).map(Cow::Owned),
-    }
+pub fn from_bstr_or_panic_on_windows<'a>(input: impl Into<Cow<'a, BStr>>) -> Cow<'a, Path> {
+    from_bstr(input).expect("prefix path doesn't contain ill-formed UTF-8")
 }
 
 /// Similar to [`from_byte_slice()`], but takes and produces owned data.
-pub fn from_byte_vec(input: impl Into<Vec<u8>>) -> Result<PathBuf, Utf8Error> {
+pub fn from_bstring(input: impl Into<BString>) -> Result<PathBuf, Utf8Error> {
     let input = input.into();
     #[cfg(unix)]
     let p = {
         use std::os::unix::ffi::OsStringExt;
-        std::ffi::OsString::from_vec(input).into()
+        std::ffi::OsString::from_vec(input.into()).into()
     };
     #[cfg(not(unix))]
-    let p = PathBuf::from(String::from_utf8(input).map_err(|_| Utf8Error)?);
+    let p = {
+        use bstr::ByteVec;
+        PathBuf::from(
+            {
+                let v: Vec<_> = input.into();
+                v
+            }
+            .into_string()
+            .map_err(|_| Utf8Error)?,
+        )
+    };
     Ok(p)
 }
 
-/// Similar to [`from_byte_vec()`], but will panic if there is ill-formed UTF-8 in the `input`.
-pub fn from_byte_vec_or_panic_on_windows(input: impl Into<Vec<u8>>) -> PathBuf {
-    from_byte_vec(input).expect("well-formed UTF-8 on windows")
+/// Similar to [`from_bstring()`], but will panic if there is ill-formed UTF-8 in the `input`.
+pub fn from_bstring_or_panic_on_windows(input: impl Into<BString>) -> PathBuf {
+    from_bstring(input).expect("well-formed UTF-8 on windows")
 }
 
 /// Similar to [`from_byte_slice()`], but will panic if there is ill-formed UTF-8 in the `input`.
@@ -123,7 +125,7 @@ pub fn from_byte_slice_or_panic_on_windows(input: &[u8]) -> &Path {
     from_byte_slice(input).expect("well-formed UTF-8 on windows")
 }
 
-fn replace<'a>(path: impl Into<Cow<'a, [u8]>>, find: u8, replace: u8) -> Cow<'a, [u8]> {
+fn replace<'a>(path: impl Into<Cow<'a, BStr>>, find: u8, replace: u8) -> Cow<'a, BStr> {
     let path = path.into();
     match path {
         Cow::Owned(mut path) => {
@@ -146,7 +148,7 @@ fn replace<'a>(path: impl Into<Cow<'a, [u8]>>, find: u8, replace: u8) -> Cow<'a,
 }
 
 /// Assures the given bytes use the native path separator.
-pub fn to_native_separators<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
+pub fn to_native_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
     #[cfg(not(windows))]
     let p = to_unix_separators(path);
     #[cfg(windows)]
@@ -155,19 +157,19 @@ pub fn to_native_separators<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]>
 }
 
 /// Convert paths with slashes to backslashes on windows and do nothing on unix. Takes a Cow as input
-pub fn to_windows_separators_on_windows_or_panic<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, std::path::Path> {
+pub fn to_windows_separators_on_windows_or_panic<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, std::path::Path> {
     #[cfg(not(windows))]
     {
-        crate::from_bytes_or_panic_on_windows(path)
+        crate::from_bstr_or_panic_on_windows(path)
     }
     #[cfg(windows)]
     {
-        crate::from_bytes_or_panic_on_windows(to_windows_separators(path))
+        crate::from_bstr_or_panic_on_windows(to_windows_separators(path))
     }
 }
 
 /// Replaces windows path separators with slashes, but only do so on windows.
-pub fn to_unix_separators_on_windows<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
+pub fn to_unix_separators_on_windows<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
     #[cfg(windows)]
     {
         replace(path, b'\\', b'/')
@@ -181,21 +183,13 @@ pub fn to_unix_separators_on_windows<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<
 /// Replaces windows path separators with slashes.
 ///
 /// **Note** Do not use these and prefer the conditional versions of this method.
-pub fn to_unix_separators<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
+pub fn to_unix_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
     replace(path, b'\\', b'/')
 }
 
 /// Find backslashes and replace them with slashes, which typically resembles a unix path.
 ///
 /// **Note** Do not use these and prefer the conditional versions of this method.
-pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, [u8]>>) -> Cow<'a, [u8]> {
+pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
     replace(path, b'/', b'\\')
-}
-
-/// Obtain a `BStr` compatible `Cow` from one that is bytes.
-pub fn into_bstr(path: Cow<'_, [u8]>) -> Cow<'_, bstr::BStr> {
-    match path {
-        Cow::Owned(p) => Cow::Owned(p.into()),
-        Cow::Borrowed(p) => Cow::Borrowed(p.into()),
-    }
 }
