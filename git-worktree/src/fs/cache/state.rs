@@ -115,21 +115,19 @@ impl Ignore {
         is_dir: Option<bool>,
         case: Case,
     ) -> Option<(usize, usize, usize)> {
-        pub fn pattern_matching_relative_path(
-            group: &IgnoreMatchGroup,
-            relative_path: &BStr,
-            is_dir: Option<bool>,
-            case: Case,
-        ) -> Option<(usize, usize)> {
-            let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
-            group.patterns.iter().enumerate().rev().find_map(|(plidx, pl)| {
-                pl.pattern_idx_matching_relative_path(relative_path, basename_pos, is_dir, case)
-                    .map(|idx| (plidx, idx))
-            })
-        }
         let groups = self.match_groups();
         groups.iter().enumerate().rev().find_map(|(gidx, group)| {
-            pattern_matching_relative_path(group, relative_path, is_dir, case).map(|(plidx, pidx)| (gidx, plidx, pidx))
+            let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
+            group
+                .patterns
+                .iter()
+                .enumerate()
+                .rev()
+                .find_map(|(plidx, pl)| {
+                    pl.pattern_idx_matching_relative_path(relative_path, basename_pos, is_dir, case)
+                        .map(|idx| (plidx, idx))
+                })
+                .map(|(plidx, pidx)| (gidx, plidx, pidx))
         })
     }
 

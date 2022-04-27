@@ -92,7 +92,7 @@ pub fn from_bstr<'a>(input: impl Into<Cow<'a, BStr>>) -> Cow<'a, Path> {
     try_from_bstr(input).expect("prefix path doesn't contain ill-formed UTF-8")
 }
 
-/// Similar to [`from_byte_bstr()`], but takes and produces owned data.
+/// Similar to [`try_from_bstr()`], but takes and produces owned data.
 pub fn try_from_bstring(input: impl Into<BString>) -> Result<PathBuf, Utf8Error> {
     let input = input.into();
     #[cfg(unix)]
