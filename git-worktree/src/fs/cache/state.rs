@@ -24,13 +24,17 @@ pub struct Attributes {
 pub struct Ignore {
     /// Ignore patterns passed as overrides to everything else, typically passed on the command-line and the first patterns to
     /// be consulted.
-    pub overrides: IgnoreMatchGroup,
-    /// Ignore patterns that match the currently set director (in the stack).
-    pub stack: IgnoreMatchGroup,
+    overrides: IgnoreMatchGroup,
+    /// Ignore patterns that match the currently set director (in the stack), which is pushed and popped as needed.
+    stack: IgnoreMatchGroup,
     /// Ignore patterns which aren't tied to the repository root, hence are global. They are consulted last.
-    pub globals: IgnoreMatchGroup,
+    globals: IgnoreMatchGroup,
+    /// A matching stack of pattern indices which is empty if we have just been initialized to indicate that the
+    /// currently set directory had a pattern matched. Note that this one could be negated.
+    /// (index into match groups, index into list of pattern lists, index into pattern list)
+    matched_directory_patterns_stack: Vec<Option<(usize, usize, usize)>>,
     ///  The name of the file to look for in directories.
-    pub exclude_file_name_for_directories: BString,
+    exclude_file_name_for_directories: BString,
 }
 
 impl Ignore {
@@ -46,24 +50,85 @@ impl Ignore {
             overrides,
             globals,
             stack: Default::default(),
+            matched_directory_patterns_stack: Vec::with_capacity(6),
             exclude_file_name_for_directories: exclude_file_name_for_directories
                 .map(ToOwned::to_owned)
                 .unwrap_or_else(|| ".gitignore".into()),
         }
     }
+}
 
-    pub fn matching_exclude_pattern(
+impl Ignore {
+    pub(crate) fn pop_directory(&mut self) {
+        self.matched_directory_patterns_stack.pop().expect("something to pop");
+        self.stack.patterns.pop().expect("something to pop");
+    }
+    /// The match groups from lowest priority to highest.
+    pub(crate) fn match_groups(&self) -> [&IgnoreMatchGroup; 3] {
+        [&self.globals, &self.stack, &self.overrides]
+    }
+
+    pub(crate) fn matching_exclude_pattern(
         &self,
         relative_path: &BStr,
         is_dir: Option<bool>,
         case: git_glob::pattern::Case,
     ) -> Option<git_attributes::Match<'_, ()>> {
-        [&self.overrides, &self.stack, &self.globals]
+        let groups = self.match_groups();
+        if let Some((source, mapping)) = self
+            .matched_directory_patterns_stack
             .iter()
+            .rev()
+            .filter_map(|v| *v)
+            .map(|(gidx, plidx, pidx)| {
+                let list = &groups[gidx].patterns[plidx];
+                (list.source.as_deref(), &list.patterns[pidx])
+            })
+            .next()
+        {
+            if !mapping.pattern.is_negative() {
+                return git_attributes::Match {
+                    pattern: &mapping.pattern,
+                    value: &mapping.value,
+                    sequence_number: mapping.sequence_number,
+                    source,
+                }
+                .into();
+            }
+        }
+        groups
+            .iter()
+            .rev()
             .find_map(|group| group.pattern_matching_relative_path(relative_path.as_ref(), is_dir, case))
     }
 
-    pub fn push_directory<Find, E>(
+    /// Like `matching_exclude_pattern()` but without checking if the current directory is excluded.
+    /// It returns a triple-index into our data structure from which a match can be reconstructed.
+    pub(crate) fn matching_exclude_pattern_no_dir(
+        &self,
+        relative_path: &BStr,
+        is_dir: Option<bool>,
+        case: git_glob::pattern::Case,
+    ) -> Option<(usize, usize, usize)> {
+        pub fn pattern_matching_relative_path(
+            group: &IgnoreMatchGroup,
+            relative_path: &BStr,
+            is_dir: Option<bool>,
+            case: git_glob::pattern::Case,
+        ) -> Option<(usize, usize)> {
+            let basename_pos = relative_path.rfind(b"/").map(|p| p + 1);
+            group.patterns.iter().enumerate().rev().find_map(|(plidx, pl)| {
+                pl.pattern_idx_matching_relative_path(relative_path, basename_pos, is_dir, case)
+                    .map(|idx| (plidx, idx))
+            })
+        }
+        let groups = self.match_groups();
+        groups.iter().enumerate().rev().find_map(|(gidx, group)| {
+            pattern_matching_relative_path(group, relative_path, is_dir, case).map(|(plidx, pidx)| (gidx, plidx, pidx))
+        })
+    }
+
+    pub(crate) fn push_directory<Find, E>(
         &mut self,
         root: &Path,
         dir: &Path,
@@ -75,11 +140,18 @@ impl Ignore {
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::BlobRef<'b>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let ignore_path_relative = git_path::to_unix_separators_on_windows(git_path::into_bstr_or_panic_on_windows(
-            dir.strip_prefix(root).expect("dir in root").join(".gitignore"),
-        ));
+        let rela_dir = dir.strip_prefix(root).expect("dir in root");
+        self.matched_directory_patterns_stack
+            .push(self.matching_exclude_pattern_no_dir(
+                git_path::into_bstr(rela_dir).as_ref(),
+                Some(true),
+                git_glob::pattern::Case::Sensitive, // TODO: pass actual case as configured
+            ));
+
+        let ignore_path_relative = rela_dir.join(".gitignore");
+        let ignore_path_relative = git_path::to_unix_separators_on_windows(git_path::into_bstr(ignore_path_relative));
         let ignore_file_in_index =
-            attribute_files_in_index.binary_search_by(|t| t.0.cmp(ignore_path_relative.as_bstr()));
+            attribute_files_in_index.binary_search_by(|t| t.0.cmp(ignore_path_relative.as_ref()));
         let follow_symlinks = ignore_file_in_index.is_err();
         if !self
             .stack
@@ -89,7 +161,7 @@ impl Ignore {
                 Ok(idx) => {
                     let ignore_blob = find(&attribute_files_in_index[idx].1, buf)
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-                    let ignore_path = git_path::from_bstring_or_panic_on_windows(ignore_path_relative.into_owned());
+                    let ignore_path = git_path::from_bstring(ignore_path_relative.into_owned());
                     self.stack
                         .add_patterns_buffer(ignore_blob.data, ignore_path, Some(root));
                 }

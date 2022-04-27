@@ -30,9 +30,8 @@ impl<'a, 'paths> Platform<'a, 'paths> {
     /// If the cache was configured without exclude patterns.
     pub fn matching_exclude_pattern(&self) -> Option<git_attributes::Match<'_, ()>> {
         let ignore = self.parent.state.ignore_or_panic();
-        let relative_path = git_path::to_unix_separators_on_windows(git_path::into_bstr_or_panic_on_windows(
-            self.parent.stack.current_relative.as_path(),
-        ));
+        let relative_path =
+            git_path::to_unix_separators_on_windows(git_path::into_bstr(self.parent.stack.current_relative.as_path()));
         ignore.matching_exclude_pattern(relative_path.as_bstr(), self.is_dir, self.parent.case)
     }
 }
@@ -143,10 +142,10 @@ where
             }
             State::AttributesAndIgnoreStack { attributes: _, ignore } => {
                 // TODO: attributes
-                ignore.stack.patterns.pop().expect("something to pop");
+                ignore.pop_directory();
             }
             State::IgnoreStack(ignore) => {
-                ignore.stack.patterns.pop().expect("something to pop");
+                ignore.pop_directory();
             }
         }
     }

@@ -259,23 +259,15 @@ impl<T> PatternList<T>
 where
     T: Pattern,
 {
-    fn pattern_matching_relative_path(
+    pub fn pattern_matching_relative_path(
         &self,
         relative_path: &BStr,
         basename_pos: Option<usize>,
         is_dir: Option<bool>,
         case: git_glob::pattern::Case,
     ) -> Option<Match<'_, T::Value>> {
-        let (relative_path, basename_start_pos) = match self.base.as_deref() {
-            Some(base) => (
-                relative_path.strip_prefix(base.as_slice())?.as_bstr(),
-                basename_pos.and_then(|pos| {
-                    let pos = pos - base.len();
-                    (pos != 0).then(|| pos)
-                }),
-            ),
-            None => (relative_path, basename_pos),
-        };
+        let (relative_path, basename_start_pos) =
+            self.strip_base_handle_recompute_basename_pos(relative_path, basename_pos)?;
         self.patterns
             .iter()
             .rev()
@@ -296,6 +288,45 @@ where
                         })
                 },
             )
+    }
+
+    pub fn pattern_idx_matching_relative_path(
+        &self,
+        relative_path: &BStr,
+        basename_pos: Option<usize>,
+        is_dir: Option<bool>,
+        case: git_glob::pattern::Case,
+    ) -> Option<usize> {
+        let (relative_path, basename_start_pos) =
+            self.strip_base_handle_recompute_basename_pos(relative_path, basename_pos)?;
+        self.patterns
+            .iter()
+            .enumerate()
+            .rev()
+            .filter(|(_, pm)| T::use_pattern(&pm.pattern))
+            .find_map(|(idx, pm)| {
+                pm.pattern
+                    .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)
+                    .then(|| idx)
+            })
+    }
+
+    fn strip_base_handle_recompute_basename_pos<'a>(
+        &self,
+        relative_path: &'a BStr,
+        basename_pos: Option<usize>,
+    ) -> Option<(&'a BStr, Option<usize>)> {
+        match self.base.as_deref() {
+            Some(base) => (
+                relative_path.strip_prefix(base.as_slice())?.as_bstr(),
+                basename_pos.and_then(|pos| {
+                    let pos = pos - base.len();
+                    (pos != 0).then(|| pos)
+                }),
+            ),
+            None => (relative_path, basename_pos),
+        }
+        .into()
     }
 }
 

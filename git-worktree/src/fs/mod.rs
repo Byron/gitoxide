@@ -54,7 +54,6 @@ pub struct Stack {
 /// As directories are created, the cache will be adjusted to reflect the latest seen directory.
 ///
 /// The caching is only useful if consecutive calls to create a directory are using a sorted list of entries.
-#[allow(unused)]
 #[derive(Clone)]
 pub struct Cache<'paths> {
     stack: Stack,

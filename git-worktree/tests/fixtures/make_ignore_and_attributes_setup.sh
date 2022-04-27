@@ -85,6 +85,9 @@ other-dir-with-ignore/other-sub-level-local-file-anywhere
 other-dir-with-ignore/sub-level-local-file-anywhere
 other-dir-with-ignore/sub-dir/other-sub-level-local-file-anywhere
 other-dir-with-ignore/no-match/sub-level-local-file-anywhere
+non-existing/dir-anywhere
+dir-anywhere/hello
+dir/dir-anywhere/hello
 EOF
 
 )

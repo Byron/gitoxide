@@ -33,9 +33,10 @@ where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
     E: std::error::Error + Send + Sync + 'static,
 {
-    let dest_relative = git_path::from_byte_slice(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {
-        path: entry_path.to_owned(),
-    })?;
+    let dest_relative =
+        git_path::try_from_byte_slice(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {
+            path: entry_path.to_owned(),
+        })?;
     let is_dir = Some(entry.mode == git_index::entry::Mode::COMMIT || entry.mode == git_index::entry::Mode::DIR);
     let dest = path_cache.at_entry(dest_relative, is_dir, &mut *find)?.path();
 
@@ -81,7 +82,7 @@ where
                 oid: entry.id,
                 path: dest.to_path_buf(),
             })?;
-            let symlink_destination = git_path::from_byte_slice(obj.data)
+            let symlink_destination = git_path::try_from_byte_slice(obj.data)
                 .map_err(|_| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
 
             if symlink {
