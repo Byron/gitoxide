@@ -271,7 +271,7 @@ impl<'event> SectionBody<'event> {
     /// Returns an error if the key was not found, or if the conversion failed.
     pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<T, lookup::Error<T::Error>> {
         T::try_from(self.value(key).ok_or(lookup::existing::Error::KeyMissing)?)
-            .map_err(|err| lookup::Error::FailedConversion(err))
+            .map_err(lookup::Error::FailedConversion)
     }
 
     /// Retrieves all values that have the provided key name. This may return
@@ -322,7 +322,7 @@ impl<'event> SectionBody<'event> {
             .into_iter()
             .map(T::try_from)
             .collect::<Result<Vec<T>, _>>()
-            .map_err(|err| lookup::Error::FailedConversion(err))
+            .map_err(lookup::Error::FailedConversion)
     }
 
     /// Returns an iterator visiting all keys in order.

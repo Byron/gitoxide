@@ -438,8 +438,7 @@ impl<'event> GitConfig<'event> {
         subsection_name: Option<&str>,
         key: &str,
     ) -> Result<T, lookup::Error<T::Error>> {
-        T::try_from(self.raw_value(section_name, subsection_name, key)?)
-            .map_err(|err| lookup::Error::FailedConversion(err))
+        T::try_from(self.raw_value(section_name, subsection_name, key)?).map_err(lookup::Error::FailedConversion)
     }
 
     /// Returns all interpreted values given a section, an optional subsection
@@ -502,7 +501,7 @@ impl<'event> GitConfig<'event> {
             .into_iter()
             .map(T::try_from)
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|err| lookup::Error::FailedConversion(err))
+            .map_err(lookup::Error::FailedConversion)
     }
 
     /// Returns an immutable section reference.
