@@ -23,11 +23,20 @@ fn get_value_for_all_provided_values() -> crate::Result {
         file.value::<Boolean>("core", None, "bool-explicit")?,
         Boolean::False(Cow::Borrowed("false"))
     );
+    assert_eq!(file.boolean("core", None, "bool-explicit").expect("exists")?, false);
 
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-implicit")?,
         Boolean::True(TrueVariant::Implicit)
     );
+    assert_eq!(
+        file.try_value::<Boolean>("core", None, "bool-implicit")
+            .expect("exists")?,
+        Boolean::True(TrueVariant::Implicit)
+    );
+
+    assert_eq!(file.boolean("core", None, "bool-implicit").expect("present")?, true);
+    assert_eq!(file.try_value::<String>("doesnt", None, "exist"), None);
 
     assert_eq!(
         file.value::<Integer>("core", None, "integer-no-prefix")?,
@@ -67,6 +76,11 @@ fn get_value_for_all_provided_values() -> crate::Result {
         Bytes {
             value: Cow::Borrowed(b"hello world")
         }
+    );
+
+    assert_eq!(
+        file.string("core", None, "other").expect("present").as_ref(),
+        "hello world"
     );
 
     let actual = file.value::<git_config::values::Path>("core", None, "location")?;

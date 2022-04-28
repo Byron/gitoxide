@@ -2,7 +2,7 @@
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
-use bstr::BStr;
+use bstr::{BStr, BString};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 
@@ -377,9 +377,9 @@ impl Boolean<'_> {
 /// The error returned when creating `Boolean` from byte string.
 #[derive(Debug, PartialEq, thiserror::Error)]
 #[allow(missing_docs)]
-pub enum BooleanError {
-    #[error("Invalid argument format")]
-    InvalidFormat,
+#[error("Invalid boolean value: '{}'", .input)]
+pub struct BooleanError {
+    pub input: BString,
 }
 
 impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
@@ -401,7 +401,7 @@ impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
             ));
         }
 
-        Err(BooleanError::InvalidFormat)
+        Err(BooleanError { input: value.into() })
     }
 }
 
@@ -512,7 +512,7 @@ impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
-            Err(BooleanError::InvalidFormat)
+            Err(BooleanError { input: value.into() })
         }
     }
 }
@@ -532,7 +532,7 @@ impl TryFrom<Vec<u8>> for TrueVariant<'_> {
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
-            Err(BooleanError::InvalidFormat)
+            Err(BooleanError { input: value.into() })
         }
     }
 }

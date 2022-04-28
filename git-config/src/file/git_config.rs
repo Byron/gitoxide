@@ -1,3 +1,4 @@
+use bstr::BStr;
 use std::{
     borrow::Cow,
     collections::{HashMap, VecDeque},
@@ -439,6 +440,42 @@ impl<'event> GitConfig<'event> {
         key: &str,
     ) -> Result<T, lookup::Error<T::Error>> {
         T::try_from(self.raw_value(section_name, subsection_name, key)?).map_err(lookup::Error::FailedConversion)
+    }
+
+    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the value wasn't found.
+    pub fn try_value<T: TryFrom<Cow<'event, [u8]>>>(
+        &'event self,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
+    ) -> Option<Result<T, T::Error>> {
+        self.raw_value(section_name, subsection_name, key).ok().map(T::try_from)
+    }
+
+    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the string wasn't found.
+    ///
+    /// As strings perform no conversions, this will never fail.
+    pub fn string(
+        &'event self,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
+    ) -> Option<Cow<'event, BStr>> {
+        self.raw_value(section_name, subsection_name, key)
+            .ok()
+            .map(|v| values::String::from(v).value)
+    }
+
+    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the boolean wasn't found.
+    pub fn boolean(
+        &'event self,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
+    ) -> Option<Result<bool, values::BooleanError>> {
+        self.raw_value(section_name, subsection_name, key)
+            .ok()
+            .map(|v| values::Boolean::try_from(v).map(|b| b.to_bool()))
     }
 
     /// Returns all interpreted values given a section, an optional subsection
