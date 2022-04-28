@@ -10,6 +10,9 @@ impl State {
     pub fn entries(&self) -> &[Entry] {
         &self.entries
     }
+    pub fn path_backing(&self) -> &PathStorage {
+        &self.path_backing
+    }
     pub fn take_path_backing(&mut self) -> PathStorage {
         assert_eq!(
             self.entries.is_empty(),
