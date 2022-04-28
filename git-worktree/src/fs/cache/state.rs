@@ -3,6 +3,7 @@ use crate::fs::PathOidMapping;
 use bstr::{BStr, BString, ByteSlice};
 use git_glob::pattern::Case;
 use git_hash::oid;
+use std::borrow::Cow;
 use std::path::Path;
 
 type AttributeMatchGroup = git_attributes::MatchGroup<git_attributes::Attributes>;
@@ -150,7 +151,7 @@ impl Ignore {
         let ignore_path_relative = rela_dir.join(".gitignore");
         let ignore_path_relative = git_path::to_unix_separators_on_windows(git_path::into_bstr(ignore_path_relative));
         let ignore_file_in_index =
-            attribute_files_in_index.binary_search_by(|t| t.0.cmp(ignore_path_relative.as_ref()));
+            attribute_files_in_index.binary_search_by(|t| t.0.as_ref().cmp(ignore_path_relative.as_ref()));
         let follow_symlinks = ignore_file_in_index.is_err();
         if !self
             .stack
@@ -267,7 +268,7 @@ impl State {
                     if is_ignore && !entry.flags.contains(git_index::entry::Flags::SKIP_WORKTREE) {
                         return None;
                     }
-                    Some((path, entry.id))
+                    Some((Cow::Borrowed(path), entry.id))
                 } else {
                     None
                 }
