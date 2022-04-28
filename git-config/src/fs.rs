@@ -240,7 +240,7 @@ impl<'config> Config<'config> {
     /// Retrieves the underlying [`GitConfig`] object, if one was found during
     /// initialization.
     #[must_use]
-    pub fn get_config(&self, source: ConfigSource) -> Option<&GitConfig<'config>> {
+    pub fn config(&self, source: ConfigSource) -> Option<&GitConfig<'config>> {
         match source {
             ConfigSource::System => self.system_conf.as_ref(),
             ConfigSource::Global => self.global_conf.as_ref(),
@@ -254,7 +254,7 @@ impl<'config> Config<'config> {
     /// Retrieves the underlying [`GitConfig`] object as a mutable reference,
     /// if one was found during initialization.
     #[must_use]
-    pub fn get_config_mut(&mut self, source: ConfigSource) -> Option<&mut GitConfig<'config>> {
+    pub fn config_mut(&mut self, source: ConfigSource) -> Option<&mut GitConfig<'config>> {
         match source {
             ConfigSource::System => self.system_conf.as_mut(),
             ConfigSource::Global => self.global_conf.as_mut(),

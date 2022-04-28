@@ -160,7 +160,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
             offset_index,
         } in &self.indices_and_sizes
         {
-            let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
+            let (offset, size) = MutableMultiValue::index_and_size(&self.offsets, *section_id, *offset_index);
             for event in &self
                 .section
                 .get(section_id)
@@ -347,7 +347,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
         offset_index: usize,
         input: Cow<'a, [u8]>,
     ) {
-        let (offset, size) = MutableMultiValue::get_index_and_size(offsets, section_id, offset_index);
+        let (offset, size) = MutableMultiValue::index_and_size(offsets, section_id, offset_index);
         section.as_mut().drain(offset..offset + size);
 
         MutableMultiValue::set_offset(offsets, section_id, offset_index, 3);
@@ -369,7 +369,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
             section_id,
             offset_index,
         } = &self.indices_and_sizes[index];
-        let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
+        let (offset, size) = MutableMultiValue::index_and_size(&self.offsets, *section_id, *offset_index);
         if size > 0 {
             self.section
                 .get_mut(section_id)
@@ -390,7 +390,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
             offset_index,
         } in &self.indices_and_sizes
         {
-            let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
+            let (offset, size) = MutableMultiValue::index_and_size(&self.offsets, *section_id, *offset_index);
             if size > 0 {
                 self.section
                     .get_mut(section_id)
@@ -406,7 +406,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     // SectionId is the same size as a reference, which means it's just as
     // efficient passing in a value instead of a reference.
     #[inline]
-    fn get_index_and_size(
+    fn index_and_size(
         offsets: &'lookup HashMap<SectionId, Vec<usize>>,
         section_id: SectionId,
         offset_index: usize,

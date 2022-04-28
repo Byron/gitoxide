@@ -73,7 +73,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     /// Returns the previous value if it replaced a value, or None if it adds
     /// the value.
     pub fn set(&mut self, key: Key<'event>, value: Cow<'event, [u8]>) -> Option<Cow<'event, [u8]>> {
-        let range = self.get_value_range_by_key(&key);
+        let range = self.value_range_by_key(&key);
         if range.is_empty() {
             self.push(key, value);
             return None;
@@ -86,7 +86,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
     /// Removes the latest value by key and returns it, if it exists.
     pub fn remove(&mut self, key: &Key<'event>) -> Option<Cow<'event, [u8]>> {
-        let range = self.get_value_range_by_key(key);
+        let range = self.value_range_by_key(key);
         if range.is_empty() {
             return None;
         }
@@ -241,7 +241,7 @@ impl<'event> SectionBody<'event> {
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
     pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
-        let range = self.get_value_range_by_key(key);
+        let range = self.value_range_by_key(key);
         if range.is_empty() {
             return None;
         }
@@ -375,7 +375,7 @@ impl<'event> SectionBody<'event> {
 
     /// Returns the the range containing the value events for the section.
     /// If the value is not found, then this returns an empty range.
-    fn get_value_range_by_key(&self, key: &Key<'event>) -> Range<usize> {
+    fn value_range_by_key(&self, key: &Key<'event>) -> Range<usize> {
         let mut values_start = 0;
         // value end needs to be offset by one so that the last value's index
         // is included in the range
