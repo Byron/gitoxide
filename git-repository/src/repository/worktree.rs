@@ -19,38 +19,3 @@ impl<'repo> worktree::Platform<'repo> {
         })
     }
 }
-
-impl<'repo> Worktree<'repo> {
-    /// Open a new copy of the index file and decode it entirely.
-    ///
-    /// It will use the `index.threads` configuration key to learn how many threads to use.
-    #[cfg(feature = "git-index")]
-    pub fn open_index(&self) -> Result<git_index::File, crate::worktree::open_index::Error> {
-        use std::convert::{TryFrom, TryInto};
-        let repo = self.parent;
-        let thread_limit = repo
-            .config
-            .resolved
-            .boolean("index", None, "threads")
-            .map(|res| {
-                res.map(|value| if value { 0usize } else { 1 }).or_else(|err| {
-                    git_config::values::Integer::try_from(err.input.as_ref())
-                        .map_err(|err| crate::worktree::open_index::Error::ConfigIndexThreads {
-                            value: err.input.clone(),
-                            err,
-                        })
-                        .map(|value| value.to_decimal().and_then(|v| v.try_into().ok()).unwrap_or(1))
-                })
-            })
-            .transpose()?;
-        git_index::File::at(
-            repo.git_dir().join("index"),
-            git_index::decode::Options {
-                object_hash: repo.object_hash(),
-                thread_limit,
-                min_extension_block_in_bytes_for_threading: 0,
-            },
-        )
-        .map_err(Into::into)
-    }
-}

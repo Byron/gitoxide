@@ -270,36 +270,7 @@ pub mod mailmap {
 }
 
 ///
-pub mod worktree {
-    use crate::Repository;
-    #[cfg(all(feature = "unstable", feature = "git-worktree"))]
-    pub use git_worktree::*;
-
-    ///
-    #[cfg(feature = "git-index")]
-    pub mod open_index {
-        use crate::bstr::BString;
-
-        /// The error returned by [`Worktree::open_index()`][crate::Worktree::open_index()].
-        #[derive(Debug, thiserror::Error)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            #[error("Could not interpret value '{}' as 'index.threads'", .value)]
-            ConfigIndexThreads {
-                value: BString,
-                #[source]
-                err: git_config::value::parse::Error,
-            },
-            #[error(transparent)]
-            IndexFile(#[from] git_index::file::init::Error),
-        }
-    }
-
-    /// A structure to make the API more stuctured.
-    pub struct Platform<'repo> {
-        pub(crate) parent: &'repo Repository,
-    }
-}
+pub mod worktree;
 
 ///
 pub mod rev_parse {
