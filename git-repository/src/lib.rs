@@ -276,6 +276,7 @@ pub mod worktree {
     pub use git_worktree::*;
 
     ///
+    #[cfg(feature = "git-index")]
     pub mod open_index {
         use crate::bstr::BString;
 

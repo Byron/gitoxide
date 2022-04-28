@@ -1,5 +1,4 @@
 use crate::{worktree, Worktree};
-use std::convert::{TryFrom, TryInto};
 
 impl crate::Repository {
     /// Return a platform for interacting with worktrees
@@ -27,6 +26,7 @@ impl<'repo> Worktree<'repo> {
     /// It will use the `index.threads` configuration key to learn how many threads to use.
     #[cfg(feature = "git-index")]
     pub fn open_index(&self) -> Result<git_index::File, crate::worktree::open_index::Error> {
+        use std::convert::{TryFrom, TryInto};
         let repo = self.parent;
         let thread_limit = repo
             .config
@@ -35,14 +35,7 @@ impl<'repo> Worktree<'repo> {
             .map(|res| {
                 res.map(|value| if value { 0usize } else { 1 }).or_else(|err| {
                     git_config::values::Integer::try_from(err.input.as_ref())
-                        .map_err(|_err| crate::worktree::open_index::Error::ConfigIndexThreads {
-                            value: repo
-                                .config
-                                .resolved
-                                .string("core", None, "threads")
-                                .expect("present")
-                                .into_owned(),
-                        })
+                        .map_err(|err| crate::worktree::open_index::Error::ConfigIndexThreads { value: err.input })
                         .map(|value| value.to_decimal().and_then(|v| v.try_into().ok()).unwrap_or(1))
                 })
             })
