@@ -54,6 +54,46 @@
 #[cfg(feature = "serde")]
 extern crate serde_crate as serde;
 
+pub mod lookup {
+    use quick_error::quick_error;
+
+    quick_error! {
+        /// The error when looking up a value.
+        #[derive(Debug)]
+        pub enum Error {
+            Missing(err: crate::lookup::existing::Error) {
+                display("The desired value could not be found")
+                from(err)
+                source(err)
+            }
+            FailedConversion(err: Box<dyn std::error::Error + Send + Sync + 'static>) {
+                display("The conversion into the provided type failed.")
+                from(err)
+                source(&**err)
+            }
+        }
+    }
+    pub mod existing {
+        use quick_error::quick_error;
+
+        quick_error! {
+            /// The error when looking up a value that doesn't exist.
+            #[derive(Debug)]
+            pub enum Error {
+                SectionMissing {
+                    display("The requested section does not exist.")
+                }
+                SubSectionMissing {
+                    display("The requested subsection does not exist.")
+                }
+                KeyMissing {
+                    display("The key does not exist in the requested section.")
+                }
+            }
+        }
+    }
+}
+
 pub mod file;
 pub mod fs;
 pub mod parser;
