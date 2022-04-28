@@ -477,7 +477,7 @@ impl<'event> GitConfig<'event> {
     ) -> Option<values::Path<'event>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
-            .map(|v| values::Path::from(v))
+            .map(values::Path::from)
     }
 
     /// Like [`value()`][GitConfig::value()], but returning an `Option` if the boolean wasn't found.

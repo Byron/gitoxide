@@ -6,7 +6,7 @@ fn display() {
     fn pat(text: &str, mode: Mode) -> String {
         Pattern {
             text: text.into(),
-            mode: mode,
+            mode,
             first_wildcard_pos: None,
         }
         .to_string()
