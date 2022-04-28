@@ -12,6 +12,8 @@ pub enum Error {
     CoreAbbrev { value: BString, max: u8 },
     #[error("Value '{}' at key '{}' could not be decoded as boolean", .value, .key)]
     DecodeBoolean { key: String, value: BString },
+    #[error(transparent)]
+    PathInterpolation(#[from] git_config::values::path::interpolate::Error),
 }
 
 /// Utility type to keep pre-obtained configuration values.
@@ -22,12 +24,16 @@ pub(crate) struct Cache {
     pub resolved: crate::Config,
     /// The hex-length to assume when shortening object ids. If `None`, it should be computed based on the approximate object count.
     pub hex_len: Option<usize>,
-    /// true if the repository is designated as 'bare', without work tree
+    /// true if the repository is designated as 'bare', without work tree.
     pub is_bare: bool,
-    /// The type of hash to use
+    /// The type of hash to use.
     pub object_hash: git_hash::Kind,
     /// If true, multi-pack indices, whether present or not, may be used by the object database.
     pub use_multi_pack_index: bool,
+    /// If true, we are on a case-insensitive file system.
+    pub ignore_case: bool,
+    /// The path to the user-level excludes file to ignore certain files in the worktree.
+    pub excludes_file: Option<std::path::PathBuf>,
     // TODO: make core.precomposeUnicode available as well.
 }
 
@@ -43,10 +49,16 @@ mod cache {
     use crate::bstr::ByteSlice;
 
     impl Cache {
-        pub fn new(git_dir: &std::path::Path) -> Result<Self, Error> {
+        pub fn new(git_dir: &std::path::Path, git_install_dir: Option<&std::path::Path>) -> Result<Self, Error> {
             let config = GitConfig::open(git_dir.join("config"))?;
+
             let is_bare = config_bool(&config, "core.bare", false)?;
             let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
+            let ignore_case = config_bool(&config, "core.ignorecase", false)?;
+            let excludes_file = config
+                .path("core", None, "excludesFile")
+                .map(|p| p.interpolate(git_install_dir).map(|p| p.into_owned()))
+                .transpose()?;
             let repo_format_version = config
                 .value::<Integer>("core", None, "repositoryFormatVersion")
                 .map_or(0, |v| v.value);
@@ -102,7 +114,9 @@ mod cache {
                 use_multi_pack_index,
                 object_hash,
                 is_bare,
+                ignore_case,
                 hex_len,
+                excludes_file,
             })
         }
     }

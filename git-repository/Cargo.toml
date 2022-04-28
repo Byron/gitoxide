@@ -41,7 +41,7 @@ one-stop-shop = [ "local", "local-time-support" ]
 #! ### Other
 
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1", "git-odb/serde1", "git-index/serde1", "git-mailmap/serde1"]
+serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1", "git-odb/serde1", "git-index/serde1", "git-mailmap/serde1", "git-attributes/serde1"]
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
 ## **Note** that
 max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
@@ -49,7 +49,7 @@ max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-
 local-time-support = ["git-actor/local-time-support"]
 ## Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
 ## Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
-unstable = ["git-index", "git-worktree", "git-mailmap", "git-glob", "git-credentials", "git-path"]
+unstable = ["git-index", "git-worktree", "git-mailmap", "git-glob", "git-credentials", "git-path", "git-attributes"]
 ## Print debugging information about usage of object database caches, useful for tuning cache sizes.
 cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 
@@ -80,6 +80,7 @@ git-mailmap = { version = "^0.1.0", path = "../git-mailmap", optional = true }
 git-features = { version = "^0.20.0", path = "../git-features", features = ["progress"] }
 
 # unstable only
+git-attributes = { version = "^0.1.0", path = "../git-attributes", optional = true }
 git-glob = { version = "^0.2.0", path = "../git-glob", optional = true }
 git-credentials = { version = "^0.1.0", path = "../git-credentials", optional = true }
 git-index = { version = "^0.2.0", path = "../git-index", optional = true }

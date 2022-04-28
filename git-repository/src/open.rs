@@ -164,7 +164,7 @@ impl crate::ThreadSafeRepository {
         //       This would be something read in later as have to first check for extensions. Also this means
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
         //       as it may have its own configuration. That's fine actually.
-        let config = crate::config::Cache::new(&git_dir)?;
+        let config = crate::config::Cache::new(&git_dir, crate::path::install_dir().ok().as_deref())?;
         match worktree_dir {
             None if !config.is_bare => {
                 worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());

@@ -27,7 +27,53 @@ pub struct Platform<'repo> {
     pub(crate) parent: &'repo Repository,
 }
 
+/// Access
 impl<'repo> crate::Worktree<'repo> {
+    /// Returns the root of the worktree under which all checked out files are located.
+    pub fn root(&self) -> &std::path::Path {
+        self.path
+    }
+}
+
+impl<'repo> crate::Worktree<'repo> {
+    /// Configure a file-system cache checking if files below the repository are excluded.
+    ///
+    /// This takes into consideration all the usual repository configuration.
+    // TODO: test
+    #[cfg(feature = "git-index")]
+    pub fn excludes<'a>(
+        &self,
+        index: &'a git_index::State,
+        overrides: Option<git_attributes::MatchGroup<git_attributes::Ignore>>,
+    ) -> std::io::Result<git_worktree::fs::Cache<'a>> {
+        let repo = self.parent;
+        let case = repo
+            .config
+            .ignore_case
+            .then(|| git_glob::pattern::Case::Fold)
+            .unwrap_or_default();
+        let mut buf = Vec::with_capacity(512);
+        let state = git_worktree::fs::cache::State::IgnoreStack(git_worktree::fs::cache::state::Ignore::new(
+            overrides.unwrap_or_default(),
+            git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(
+                repo.git_dir(),
+                repo.config.excludes_file.clone(), // TODO: read from XDG home and make it controllable how env vars are used via git-sec
+                &mut buf,
+            )?,
+            None,
+            case,
+        ));
+        let attribute_list = state.build_attribute_list(index, index.path_backing(), case);
+        Ok(git_worktree::fs::Cache::new(
+            self.path,
+            state,
+            case,
+            buf,
+            attribute_list,
+        ))
+    }
+
+    // pub fn
     /// Open a new copy of the index file and decode it entirely.
     ///
     /// It will use the `index.threads` configuration key to learn how many threads to use.

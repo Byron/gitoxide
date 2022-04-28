@@ -83,6 +83,7 @@
 //! even if this crate doesn't, hence breaking downstream.
 //!
 //! `git_repository::`
+//! * [`attrs`]
 //! * [`hash`]
 //! * [`url`]
 //! * [`actor`]
@@ -125,6 +126,8 @@ use std::path::PathBuf;
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
 pub use git_actor as actor;
+#[cfg(all(feature = "unstable", feature = "git-attributes"))]
+pub use git_attributes as attrs;
 #[cfg(all(feature = "unstable", feature = "git-credentials"))]
 pub use git_credentials as credentials;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]

@@ -23,10 +23,12 @@ pub fn query(
         bail!("JSON output isn't implemented yet");
     }
 
-    repo.worktree()
+    let worktree = repo
+        .worktree()
         .current()
-        .with_context(|| "Cannot check excludes without a current worktree")?
-        .open_index()?;
+        .with_context(|| "Cannot check excludes without a current worktree")?;
+    let index = worktree.open_index()?;
+    worktree.excludes(&index.state, None)?; // TODO: support CLI overrides
 
     todo!("impl");
 }

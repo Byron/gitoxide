@@ -1447,6 +1447,7 @@ dependencies = [
  "clru",
  "document-features",
  "git-actor",
+ "git-attributes",
  "git-config",
  "git-credentials",
  "git-diff",
