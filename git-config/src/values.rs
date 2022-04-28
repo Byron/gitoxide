@@ -639,18 +639,21 @@ impl Serialize for Integer {
 /// The error returned when creating `Integer` from byte string.
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
-pub enum IntegerError {
-    #[error(transparent)]
-    Utf8Conversion(#[from] std::str::Utf8Error),
-    #[error("Invalid argument format")]
-    Invalid { input: BString },
+#[error("Invalid argument format: '{}'", .input)]
+pub struct IntegerError {
+    pub input: BString,
+    #[source]
+    pub err: Option<std::str::Utf8Error>,
 }
 
 impl TryFrom<&[u8]> for Integer {
     type Error = IntegerError;
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        let s = std::str::from_utf8(s)?;
+        let s = std::str::from_utf8(s).map_err(|err| IntegerError {
+            input: s.into(),
+            err: err.into(),
+        })?;
         if let Ok(value) = s.parse() {
             return Ok(Self { value, suffix: None });
         }
@@ -658,7 +661,10 @@ impl TryFrom<&[u8]> for Integer {
         // Assume we have a prefix at this point.
 
         if s.len() <= 1 {
-            return Err(IntegerError::Invalid { input: s.into() });
+            return Err(IntegerError {
+                input: s.into(),
+                err: None,
+            });
         }
 
         let (number, suffix) = s.split_at(s.len() - 1);
@@ -668,7 +674,10 @@ impl TryFrom<&[u8]> for Integer {
                 suffix: Some(suffix),
             })
         } else {
-            Err(IntegerError::Invalid { input: s.into() })
+            Err(IntegerError {
+                input: s.into(),
+                err: None,
+            })
         }
     }
 }
