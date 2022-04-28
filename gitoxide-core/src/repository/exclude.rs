@@ -1,4 +1,4 @@
-use anyhow::bail;
+use anyhow::{bail, Context};
 use std::io;
 
 use crate::OutputFormat;
@@ -15,13 +15,17 @@ pub mod query {
 }
 
 pub fn query(
-    repository: git::Repository,
-    mut out: impl io::Write,
+    repo: git::Repository,
+    out: impl io::Write,
     query::Options { format, pathspecs }: query::Options,
 ) -> anyhow::Result<()> {
     if format != OutputFormat::Human {
         bail!("JSON output isn't implemented yet");
     }
+
+    repo.worktree()
+        .current()
+        .with_context(|| "Cannot check excludes without a current worktree")?;
 
     todo!("impl");
 }

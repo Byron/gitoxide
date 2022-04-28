@@ -4,13 +4,20 @@ use git_hash::ObjectId;
 
 use crate::head;
 
+/// A worktree checkout containing the files of the repository in consumable form.
+pub struct Worktree<'repo> {
+    pub(crate) parent: &'repo Repository,
+    /// The root path of the checkout.
+    pub(crate) path: &'repo std::path::Path,
+}
+
 /// The head reference, as created from looking at `.git/HEAD`, able to represent all of its possible states.
 ///
 /// Note that like [`Reference`], this type's data is snapshot of persisted state on disk.
 pub struct Head<'repo> {
     /// One of various possible states for the HEAD reference
     pub kind: head::Kind,
-    pub(crate) repo: &'repo crate::Repository,
+    pub(crate) repo: &'repo Repository,
 }
 
 /// An [ObjectId] with access to a repository.
@@ -18,7 +25,7 @@ pub struct Head<'repo> {
 pub struct Id<'r> {
     /// The actual object id
     pub(crate) inner: ObjectId,
-    pub(crate) repo: &'r crate::Repository,
+    pub(crate) repo: &'r Repository,
 }
 
 /// A decoded object with a reference to its owning repository.
@@ -29,7 +36,7 @@ pub struct Object<'repo> {
     pub kind: git_object::Kind,
     /// The fully decoded object data
     pub data: Vec<u8>,
-    pub(crate) repo: &'repo crate::Repository,
+    pub(crate) repo: &'repo Repository,
 }
 
 impl<'a> Drop for Object<'a> {
@@ -44,7 +51,7 @@ pub struct Tree<'repo> {
     pub id: ObjectId,
     /// The fully decoded tree data
     pub data: Vec<u8>,
-    pub(crate) repo: &'repo crate::Repository,
+    pub(crate) repo: &'repo Repository,
 }
 
 impl<'a> Drop for Tree<'a> {
@@ -59,7 +66,7 @@ pub struct Tag<'repo> {
     pub id: ObjectId,
     /// The fully decoded tag data
     pub data: Vec<u8>,
-    pub(crate) repo: &'repo crate::Repository,
+    pub(crate) repo: &'repo Repository,
 }
 
 impl<'a> Drop for Tag<'a> {
@@ -74,7 +81,7 @@ pub struct Commit<'repo> {
     pub id: ObjectId,
     /// The fully decoded commit data
     pub data: Vec<u8>,
-    pub(crate) repo: &'repo crate::Repository,
+    pub(crate) repo: &'repo Repository,
 }
 
 impl<'a> Drop for Commit<'a> {
@@ -102,7 +109,7 @@ pub struct DetachedObject {
 pub struct Reference<'r> {
     /// The actual reference data
     pub inner: git_ref::Reference,
-    pub(crate) repo: &'r crate::Repository,
+    pub(crate) repo: &'r Repository,
 }
 
 /// A thread-local handle to interact with a repository from a single thread.
@@ -127,7 +134,7 @@ pub struct Repository {
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
 /// for system resources required to interact with a `git` repository which are loaded in once the instance is created.
 ///
-/// Use this type to reference it in a threaded context for creation the creation of a thread-local [`Repositories`][crate::Repository].
+/// Use this type to reference it in a threaded context for creation the creation of a thread-local [`Repositories`][Repository].
 ///
 /// Note that this type purposefully isn't very useful until it is converted into a thread-local repository with `to_thread_local()`,
 /// it's merely meant to be able to exist in a `Sync` context.

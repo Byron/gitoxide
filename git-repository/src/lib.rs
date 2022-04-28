@@ -157,8 +157,6 @@ pub use git_url as url;
 #[doc(inline)]
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url::Url;
-#[cfg(all(feature = "unstable", feature = "git-worktree"))]
-pub use git_worktree as worktree;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
@@ -193,7 +191,9 @@ pub enum Path {
 
 ///
 mod types;
-pub use types::{Commit, DetachedObject, Head, Id, Object, Reference, Repository, Tag, ThreadSafeRepository, Tree};
+pub use types::{
+    Commit, DetachedObject, Head, Id, Object, Reference, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
+};
 
 pub mod commit;
 pub mod head;
@@ -266,6 +266,18 @@ pub mod mailmap {
             #[error("Could not find object configured in `mailmap.blob`")]
             FindExisting(#[from] crate::object::find::existing::OdbError),
         }
+    }
+}
+
+///
+pub mod worktree {
+    use crate::Repository;
+    #[cfg(all(feature = "unstable", feature = "git-worktree"))]
+    pub use git_worktree::*;
+
+    /// A structure to make the API more stuctured.
+    pub struct Platform<'repo> {
+        pub(crate) parent: &'repo Repository,
     }
 }
 

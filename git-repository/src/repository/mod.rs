@@ -39,98 +39,34 @@ impl crate::Repository {
     }
 }
 
-/// Various permissions for parts of git repositories.
-pub mod permissions {
-    use git_sec::permission::Resource;
-    use git_sec::{Access, Trust};
-
-    /// Permissions associated with various resources of a git repository
-    pub struct Permissions {
-        /// Control how a git-dir can be used.
-        ///
-        /// Note that a repository won't be usable at all unless read and write permissions are given.
-        pub git_dir: Access<Resource, git_sec::ReadWrite>,
-    }
-
-    impl Permissions {
-        /// Return permissions similar to what git does when the repository isn't owned by the current user,
-        /// thus refusing all operations in it.
-        pub fn strict() -> Self {
-            Permissions {
-                git_dir: Access::resource(git_sec::ReadWrite::empty()),
-            }
-        }
-
-        /// Return permissions that will not include configuration files not owned by the current user,
-        /// but trust system and global configuration files along with those which are owned by the current user.
-        ///
-        /// This allows to read and write repositories even if they aren't owned by the current user, but avoid using
-        /// anything else that could cause us to write into unknown locations or use programs beyond our `PATH`.
-        pub fn secure() -> Self {
-            Permissions {
-                git_dir: Access::resource(git_sec::ReadWrite::all()),
-            }
-        }
-
-        /// Everything is allowed with this set of permissions, thus we read all configuration and do what git typically
-        /// does with owned repositories.
-        pub fn all() -> Self {
-            Permissions {
-                git_dir: Access::resource(git_sec::ReadWrite::all()),
-            }
-        }
-    }
-
-    impl git_sec::trust::DefaultForLevel for Permissions {
-        fn default_for_level(level: Trust) -> Self {
-            match level {
-                Trust::Full => Permissions::all(),
-                Trust::Reduced => Permissions::secure(),
-            }
-        }
-    }
-
-    impl Default for Permissions {
-        fn default() -> Self {
-            Permissions::secure()
-        }
-    }
-}
-
-mod init {
-    use std::cell::RefCell;
+mod worktree {
+    use crate::{worktree, Worktree};
 
     impl crate::Repository {
-        pub(crate) fn from_refs_and_objects(
-            refs: crate::RefStore,
-            objects: crate::OdbHandle,
-            work_tree: Option<std::path::PathBuf>,
-            config: crate::config::Cache,
-        ) -> Self {
-            crate::Repository {
-                bufs: RefCell::new(Vec::with_capacity(4)),
-                work_tree,
-                objects: {
-                    #[cfg(feature = "max-performance")]
-                    {
-                        objects.with_pack_cache(|| Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default()))
-                    }
-                    #[cfg(not(feature = "max-performance"))]
-                    {
-                        objects
-                    }
-                },
-                refs,
-                config,
-            }
+        /// Return a platform for interacting with worktrees
+        pub fn worktree(&self) -> worktree::Platform<'_> {
+            worktree::Platform { parent: self }
         }
+    }
 
-        /// Convert this instance into a [`ThreadSafeRepository`][crate::ThreadSafeRepository] by dropping all thread-local data.
-        pub fn into_sync(self) -> crate::ThreadSafeRepository {
-            self.into()
+    impl<'repo> worktree::Platform<'repo> {
+        /// Return the currently set worktree if there is one.
+        ///
+        /// Note that there would be `None` if this repository is `bare` and the parent [`Repository`] was instantiated without
+        /// registered worktree in the current working dir.
+        pub fn current(&self) -> Option<Worktree<'repo>> {
+            self.parent.work_dir().map(|path| Worktree {
+                parent: self.parent,
+                path,
+            })
         }
     }
 }
+
+/// Various permissions for parts of git repositories.
+pub mod permissions;
+
+mod init;
 
 mod location;
 
