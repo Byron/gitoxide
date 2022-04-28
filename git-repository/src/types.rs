@@ -8,6 +8,7 @@ use crate::head;
 pub struct Worktree<'repo> {
     pub(crate) parent: &'repo Repository,
     /// The root path of the checkout.
+    #[allow(dead_code)]
     pub(crate) path: &'repo std::path::Path,
 }
 

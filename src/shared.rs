@@ -52,12 +52,56 @@ pub mod pretty {
 
     use crate::shared::ProgressRange;
 
+    #[cfg(feature = "small")]
+    pub fn prepare_and_run<T>(
+        name: &str,
+        verbose: bool,
+        progress: bool,
+        #[cfg_attr(not(feature = "prodash-render-tui"), allow(unused_variables))] progress_keep_open: bool,
+        range: impl Into<Option<ProgressRange>>,
+        run: impl FnOnce(
+            progress::DoOrDiscard<prodash::tree::Item>,
+            &mut dyn std::io::Write,
+            &mut dyn std::io::Write,
+        ) -> Result<T>,
+    ) -> Result<T> {
+        crate::shared::init_env_logger();
+
+        match (verbose, progress) {
+            (false, false) => {
+                let stdout = stdout();
+                let mut stdout_lock = stdout.lock();
+                let stderr = stderr();
+                let mut stderr_lock = stderr.lock();
+                run(progress::DoOrDiscard::from(None), &mut stdout_lock, &mut stderr_lock)
+            }
+            (true, false) => {
+                let progress = crate::shared::progress_tree();
+                let sub_progress = progress.add_child(name);
+
+                use crate::shared::{self, STANDARD_RANGE};
+                let handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
+
+                let mut out = Vec::<u8>::new();
+                let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr());
+                handle.shutdown_and_wait();
+                std::io::Write::write_all(&mut stdout(), &out)?;
+                res
+            }
+            #[cfg(not(feature = "prodash-render-tui"))]
+            (true, true) | (false, true) => {
+                unreachable!("BUG: This branch can't be run without a TUI built-in")
+            }
+        }
+    }
+
+    #[cfg(not(feature = "small"))]
     pub fn prepare_and_run<T: Send + 'static>(
         name: &str,
         verbose: bool,
         progress: bool,
         #[cfg_attr(not(feature = "prodash-render-tui"), allow(unused_variables))] progress_keep_open: bool,
-        #[cfg_attr(not(feature = "prodash-render-line"), allow(unused_variables))] range: impl Into<Option<ProgressRange>>,
+        range: impl Into<Option<ProgressRange>>,
         run: impl FnOnce(
                 progress::DoOrDiscard<prodash::tree::Item>,
                 &mut dyn std::io::Write,

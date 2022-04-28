@@ -16,8 +16,8 @@ pub mod query {
 
 pub fn query(
     repo: git::Repository,
-    out: impl io::Write,
-    query::Options { format, pathspecs }: query::Options,
+    _out: impl io::Write,
+    query::Options { format, pathspecs: _ }: query::Options,
 ) -> anyhow::Result<()> {
     if format != OutputFormat::Human {
         bail!("JSON output isn't implemented yet");

@@ -157,7 +157,7 @@ pub fn main() -> Result<()> {
         },
         Subcommands::Repository(repo::Platform { repository, cmd }) => {
             use git_repository as git;
-            let repository = git::open(repository)?.apply_environment();
+            let repository = git::ThreadSafeRepository::open(repository)?;
             match cmd {
                 repo::Subcommands::Commit { cmd } => match cmd {
                     repo::commit::Subcommands::Describe {
@@ -177,7 +177,7 @@ pub fn main() -> Result<()> {
                         None,
                         move |_progress, out, err| {
                             core::repository::commit::describe(
-                                repository,
+                                repository.into(),
                                 rev_spec.as_deref(),
                                 out,
                                 err,
@@ -203,7 +203,7 @@ pub fn main() -> Result<()> {
                         None,
                         move |_progress, out, _err| {
                             core::repository::exclude::query(
-                                repository,
+                                repository.into(),
                                 out,
                                 core::repository::exclude::query::Options { format, pathspecs },
                             )
@@ -217,7 +217,9 @@ pub fn main() -> Result<()> {
                         progress,
                         progress_keep_open,
                         None,
-                        move |_progress, out, err| core::repository::mailmap::entries(repository, format, out, err),
+                        move |_progress, out, err| {
+                            core::repository::mailmap::entries(repository.into(), format, out, err)
+                        },
                     ),
                 },
                 repo::Subcommands::Odb { cmd } => match cmd {
@@ -227,7 +229,7 @@ pub fn main() -> Result<()> {
                         progress,
                         progress_keep_open,
                         None,
-                        move |_progress, out, _err| core::repository::odb::entries(repository, format, out),
+                        move |_progress, out, _err| core::repository::odb::entries(repository.into(), format, out),
                     ),
                     repo::odb::Subcommands::Info => prepare_and_run(
                         "repository-odb-info",
@@ -235,7 +237,7 @@ pub fn main() -> Result<()> {
                         progress,
                         progress_keep_open,
                         None,
-                        move |_progress, out, err| core::repository::odb::info(repository, format, out, err),
+                        move |_progress, out, err| core::repository::odb::info(repository.into(), format, out, err),
                     ),
                 },
                 repo::Subcommands::Tree { cmd } => match cmd {
@@ -251,7 +253,7 @@ pub fn main() -> Result<()> {
                         None,
                         move |_progress, out, _err| {
                             core::repository::tree::entries(
-                                repository,
+                                repository.into(),
                                 treeish.as_deref(),
                                 recursive,
                                 extended,
@@ -267,7 +269,14 @@ pub fn main() -> Result<()> {
                         progress_keep_open,
                         None,
                         move |_progress, out, err| {
-                            core::repository::tree::info(repository, treeish.as_deref(), extended, format, out, err)
+                            core::repository::tree::info(
+                                repository.into(),
+                                treeish.as_deref(),
+                                extended,
+                                format,
+                                out,
+                                err,
+                            )
                         },
                     ),
                 },
@@ -287,7 +296,7 @@ pub fn main() -> Result<()> {
                     core::repository::verify::PROGRESS_RANGE,
                     move |progress, out, _err| {
                         core::repository::verify::integrity(
-                            repository,
+                            repository.into(),
                             out,
                             progress,
                             &should_interrupt,
