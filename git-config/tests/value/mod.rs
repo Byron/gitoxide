@@ -23,7 +23,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         file.value::<Boolean>("core", None, "bool-explicit")?,
         Boolean::False(Cow::Borrowed("false"))
     );
-    assert_eq!(file.boolean("core", None, "bool-explicit").expect("exists")?, false);
+    assert!(!file.boolean("core", None, "bool-explicit").expect("exists")?);
 
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-implicit")?,
@@ -35,7 +35,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         Boolean::True(TrueVariant::Implicit)
     );
 
-    assert_eq!(file.boolean("core", None, "bool-implicit").expect("present")?, true);
+    assert!(file.boolean("core", None, "bool-implicit").expect("present")?);
     assert_eq!(file.try_value::<String>("doesnt", None, "exist"), None);
 
     assert_eq!(
