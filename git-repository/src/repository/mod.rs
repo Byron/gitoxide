@@ -61,6 +61,25 @@ mod worktree {
             })
         }
     }
+
+    impl<'repo> Worktree<'repo> {
+        /// Open a new copy of the index file and decode it entirely.
+        ///
+        /// It will use the `index.threads` configuration key to learn how many threads to use.
+        #[cfg(feature = "git-index")]
+        pub fn open_index(&self) -> Result<git_index::File, git_index::file::init::Error> {
+            let repo = self.parent;
+            // repo.config.resolved.value::<git_config::values::Boolean>("index", None, "threads")
+            git_index::File::at(
+                repo.git_dir().join("index"),
+                git_index::decode::Options {
+                    object_hash: repo.object_hash(),
+                    thread_limit: None, // TODO: read config
+                    min_extension_block_in_bytes_for_threading: 0,
+                },
+            )
+        }
+    }
 }
 
 /// Various permissions for parts of git repositories.

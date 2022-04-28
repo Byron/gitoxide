@@ -16,7 +16,7 @@ pub enum Error {
 #[derive(Debug, Clone)]
 pub(crate) struct Cache {
     // TODO: remove this once resolved is used without a feature dependency
-    #[cfg_attr(not(feature = "git-mailmap"), allow(dead_code))]
+    #[cfg_attr(not(any(feature = "git-mailmap", feature = "git-index")), allow(dead_code))]
     pub resolved: crate::Config,
     /// The hex-length to assume when shortening object ids. If `None`, it should be computed based on the approximate object count.
     pub hex_len: Option<usize>,

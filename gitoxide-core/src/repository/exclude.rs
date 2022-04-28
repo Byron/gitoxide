@@ -25,7 +25,8 @@ pub fn query(
 
     repo.worktree()
         .current()
-        .with_context(|| "Cannot check excludes without a current worktree")?;
+        .with_context(|| "Cannot check excludes without a current worktree")?
+        .open_index();
 
     todo!("impl");
 }
