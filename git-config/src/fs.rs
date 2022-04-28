@@ -152,10 +152,7 @@ impl<'config> Config<'config> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-    ) -> Option<T>
-    where
-        <T as TryFrom<Cow<'config, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> Option<T> {
         self.value_with_source(section_name, subsection_name, key)
             .map(|(value, _)| value)
     }
@@ -165,10 +162,7 @@ impl<'config> Config<'config> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-    ) -> Option<(T, ConfigSource)>
-    where
-        <T as TryFrom<Cow<'config, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> Option<(T, ConfigSource)> {
         let mapping = self.mapping();
 
         for (conf, source) in mapping.iter() {
@@ -187,10 +181,7 @@ impl<'config> Config<'config> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Option<T>, lookup::Error>
-    where
-        <T as TryFrom<Cow<'config, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> Result<Option<T>, lookup::Error<T::Error>> {
         self.try_value_with_source(section_name, subsection_name, key)
             .map(|res| res.map(|(value, _)| value))
     }
@@ -204,10 +195,7 @@ impl<'config> Config<'config> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Option<(T, ConfigSource)>, lookup::Error>
-    where
-        <T as TryFrom<Cow<'config, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> Result<Option<(T, ConfigSource)>, lookup::Error<T::Error>> {
         let mapping = self.mapping();
 
         for (conf, source) in mapping.iter() {

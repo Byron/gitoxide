@@ -3,7 +3,6 @@
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
 use bstr::BStr;
-use quick_error::quick_error;
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 
@@ -192,38 +191,28 @@ pub mod path {
 
     #[cfg(not(any(target_os = "android", target_os = "windows")))]
     use pwd::Passwd;
-    use quick_error::ResultExt;
 
     use crate::values::Path;
 
     pub mod interpolate {
-        use quick_error::quick_error;
-
-        quick_error! {
-            #[derive(Debug)]
-            /// The error returned by [`Path::interpolate()`].
-            #[allow(missing_docs)]
-            pub enum Error {
-                Missing { what: &'static str } {
-                    display("{} is missing", what)
-                }
-                Utf8Conversion(what: &'static str, err: git_path::Utf8Error) {
-                    display("Ill-formed UTF-8 in {}", what)
-                    context(what: &'static str, err: git_path::Utf8Error) -> (what, err)
-                    source(err)
-                }
-                UsernameConversion(err: std::str::Utf8Error) {
-                    display("Ill-formed UTF-8 in username")
-                    source(err)
-                    from()
-                }
-                PwdFileQuery {
-                    display("User home info missing")
-                }
-                UserInterpolationUnsupported {
-                    display("User interpolation is not available on this platform")
-                }
-            }
+        /// The error returned by [`Path::interpolate()`].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("{} is missing", .what)]
+            Missing { what: &'static str },
+            #[error("Ill-formed UTF-8 in {}", .what)]
+            Utf8Conversion {
+                what: &'static str,
+                #[source]
+                err: git_path::Utf8Error,
+            },
+            #[error("Ill-formed UTF-8 in username")]
+            UsernameConversion(#[from] std::str::Utf8Error),
+            #[error("User home info missing")]
+            PwdFileQuery,
+            #[error("User interpolation is not available on this platform")]
+            UserInterpolationUnsupported,
         }
     }
 
@@ -255,12 +244,20 @@ pub mod path {
                 })?;
                 let (_prefix, path_without_trailing_slash) = self.split_at(PREFIX.len());
                 let path_without_trailing_slash =
-                    git_path::try_from_bstring(path_without_trailing_slash).context("path past %(prefix)")?;
+                    git_path::try_from_bstring(path_without_trailing_slash).map_err(|err| {
+                        interpolate::Error::Utf8Conversion {
+                            what: "path past %(prefix)",
+                            err,
+                        }
+                    })?;
                 Ok(git_install_dir.join(path_without_trailing_slash).into())
             } else if self.starts_with(USER_HOME) {
                 let home_path = dirs::home_dir().ok_or(interpolate::Error::Missing { what: "home dir" })?;
                 let (_prefix, val) = self.split_at(USER_HOME.len());
-                let val = git_path::try_from_byte_slice(val).context("path past ~/")?;
+                let val = git_path::try_from_byte_slice(val).map_err(|err| interpolate::Error::Utf8Conversion {
+                    what: "path past ~/",
+                    err,
+                })?;
                 Ok(home_path.join(val).into())
             } else if self.starts_with(b"~") && self.contains(&b'/') {
                 self.interpolate_user()
@@ -288,7 +285,12 @@ pub mod path {
                 .ok_or(interpolate::Error::Missing { what: "pwd user info" })?
                 .dir;
             let path_past_user_prefix =
-                git_path::try_from_byte_slice(&path_with_leading_slash["/".len()..]).context("path past ~user/")?;
+                git_path::try_from_byte_slice(&path_with_leading_slash["/".len()..]).map_err(|err| {
+                    interpolate::Error::Utf8Conversion {
+                        what: "path past ~user/",
+                        err,
+                    }
+                })?;
             Ok(std::path::PathBuf::from(home).join(path_past_user_prefix).into())
         }
     }
@@ -372,15 +374,12 @@ impl Boolean<'_> {
     }
 }
 
-quick_error! {
-    #[derive(Debug, PartialEq)]
-    /// The error returned when creating `Boolean` from byte string.
-    #[allow(missing_docs)]
-    pub enum BooleanError {
-        InvalidFormat {
-            display("Invalid argument format")
-        }
-    }
+/// The error returned when creating `Boolean` from byte string.
+#[derive(Debug, PartialEq, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum BooleanError {
+    #[error("Invalid argument format")]
+    InvalidFormat,
 }
 
 impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
@@ -637,23 +636,16 @@ impl Serialize for Integer {
     }
 }
 
-quick_error! {
-    #[derive(Debug)]
-    /// The error returned when creating `Integer` from byte string.
-    #[allow(missing_docs)]
-    pub enum IntegerError {
-        Utf8Conversion(err: std::str::Utf8Error) {
-            display("Ill-formed UTF-8")
-            source(err)
-            from()
-        }
-        InvalidFormat {
-            display("Invalid argument format")
-        }
-        InvalidSuffix {
-            display("Invalid suffix")
-        }
-    }
+/// The error returned when creating `Integer` from byte string.
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum IntegerError {
+    #[error(transparent)]
+    Utf8Conversion(#[from] std::str::Utf8Error),
+    #[error("Invalid argument format")]
+    InvalidFormat,
+    #[error("Invalid suffix")]
+    InvalidSuffix,
 }
 
 impl TryFrom<&[u8]> for Integer {
@@ -846,23 +838,16 @@ impl Serialize for Color {
     }
 }
 
-quick_error! {
-    #[derive(Debug, PartialEq)]
-    ///
-    #[allow(missing_docs)]
-    pub enum ColorError {
-        Utf8Conversion(err: std::str::Utf8Error) {
-            display("Ill-formed UTF-8")
-            source(err)
-            from()
-        }
-        InvalidColorItem {
-            display("Invalid color item")
-        }
-        InvalidFormat {
-            display("Invalid argument format")
-        }
-    }
+/// The error returned for color conversions
+#[derive(Debug, PartialEq, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum ColorError {
+    #[error(transparent)]
+    Utf8Conversion(#[from] std::str::Utf8Error),
+    #[error("Invalid color item")]
+    InvalidColorItem,
+    #[error("Invalid argument format")]
+    InvalidFormat,
 }
 
 impl TryFrom<&[u8]> for Color {

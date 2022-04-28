@@ -55,40 +55,26 @@
 extern crate serde_crate as serde;
 
 pub mod lookup {
-    use quick_error::quick_error;
 
-    quick_error! {
-        /// The error when looking up a value.
-        #[derive(Debug)]
-        pub enum Error {
-            ValueMissing(err: crate::lookup::existing::Error) {
-                display("The desired value could not be found")
-                from()
-                source(err)
-            }
-            FailedConversion(err: Box<dyn std::error::Error + Send + Sync + 'static>) {
-                display("The conversion into the provided type failed.")
-                source(&**err)
-            }
-        }
+    /// The error when looking up a value.
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error<E> {
+        #[error(transparent)]
+        ValueMissing(#[from] crate::lookup::existing::Error),
+        #[error(transparent)]
+        FailedConversion(E),
     }
-    pub mod existing {
-        use quick_error::quick_error;
 
-        quick_error! {
-            /// The error when looking up a value that doesn't exist.
-            #[derive(Debug)]
-            pub enum Error {
-                SectionMissing {
-                    display("The requested section does not exist.")
-                }
-                SubSectionMissing {
-                    display("The requested subsection does not exist.")
-                }
-                KeyMissing {
-                    display("The key does not exist in the requested section.")
-                }
-            }
+    pub mod existing {
+        /// The error when looking up a value that doesn't exist.
+        #[derive(Debug, thiserror::Error)]
+        pub enum Error {
+            #[error("The requested section does not exist")]
+            SectionMissing,
+            #[error("The requested subsection does not exist")]
+            SubSectionMissing,
+            #[error("The key does not exist in the requested section")]
+            KeyMissing,
         }
     }
 }

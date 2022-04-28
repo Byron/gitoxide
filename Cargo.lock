@@ -1138,11 +1138,11 @@ dependencies = [
  "memchr",
  "nom",
  "pwd",
- "quick-error",
  "serde",
  "serde_derive",
  "serial_test",
  "tempfile",
+ "thiserror",
  "unicode-bom",
 ]
 

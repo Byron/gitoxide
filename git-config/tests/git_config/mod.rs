@@ -814,7 +814,7 @@ mod from_env_tests {
     fn parse_error_with_invalid_count() {
         let _env = Env::new().set("GIT_CONFIG_COUNT", "invalid");
         let err = GitConfig::from_env(&Options::default()).unwrap_err();
-        assert!(matches!(err, from_env::Error::ParseError(_)));
+        assert!(matches!(err, from_env::Error::ParseError { .. }));
     }
 
     #[test]

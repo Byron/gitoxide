@@ -120,32 +120,20 @@ pub struct GitConfig<'event> {
 pub mod from_paths {
     use std::borrow::Cow;
 
-    use quick_error::quick_error;
-
     use crate::{parser, values::path::interpolate};
 
-    quick_error! {
-        #[derive(Debug)]
-        /// The error returned by [`GitConfig::from_paths()`][super::GitConfig::from_paths()] and [`GitConfig::from_env_paths()`][super::GitConfig::from_env_paths()].
-        #[allow(missing_docs)]
-        pub enum Error {
-            ParserOrIoError(err: parser::ParserOrIoError<'static>) {
-                display("Could not read config")
-                source(err)
-                from()
-            }
-            Interpolate(err: interpolate::Error) {
-                display("Could not interpolate path")
-                source(err)
-                from()
-            }
-            IncludeDepthExceeded { max_depth: u8 } {
-                display("The maximum allowed length {} of the file include chain built by following nested includes is exceeded", max_depth)
-            }
-            MissingConfigPath {
-                display("Include paths from environment variables must not be relative.")
-            }
-        }
+    /// The error returned by [`GitConfig::from_paths()`][super::GitConfig::from_paths()] and [`GitConfig::from_env_paths()`][super::GitConfig::from_env_paths()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        ParserOrIoError(#[from] parser::ParserOrIoError<'static>),
+        #[error(transparent)]
+        Interpolate(#[from] interpolate::Error),
+        #[error("The maximum allowed length {} of the file include chain built by following nested includes is exceeded", .max_depth)]
+        IncludeDepthExceeded { max_depth: u8 },
+        #[error("Include paths from environment variables must not be relative")]
+        MissingConfigPath,
     }
 
     /// Options when loading git config using [`GitConfig::from_paths()`][super::GitConfig::from_paths()].
@@ -174,39 +162,25 @@ pub mod from_paths {
 }
 
 pub mod from_env {
-    use quick_error::quick_error;
-
     use super::from_paths;
     use crate::values::path::interpolate;
 
-    quick_error! {
-        #[derive(Debug)]
-        /// Represents the errors that may occur when calling [`GitConfig::from_env`][crate::file::GitConfig::from_env()].
-        #[allow(missing_docs)]
-        pub enum Error {
-            ParseError (err: String) {
-                display("GIT_CONFIG_COUNT was not a positive integer: {}", err)
-            }
-            InvalidKeyId (key_id: usize) {
-                display("GIT_CONFIG_KEY_{} was not set.", key_id)
-            }
-            InvalidKeyValue (key_id: usize, key_val: String) {
-                display("GIT_CONFIG_KEY_{} was set to an invalid value: {}", key_id, key_val)
-            }
-            InvalidValueId (value_id: usize) {
-                display("GIT_CONFIG_VALUE_{} was not set.", value_id)
-            }
-            PathInterpolationError (err: interpolate::Error) {
-                display("Could not interpolate path while loading a config file.")
-                source(err)
-                from()
-            }
-            FromPathsError (err: from_paths::Error) {
-                display("Could not load config from a file")
-                source(err)
-                from()
-            }
-        }
+    /// Represents the errors that may occur when calling [`GitConfig::from_env`][crate::file::GitConfig::from_env()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("GIT_CONFIG_COUNT was not a positive integer: {}", .input)]
+        ParseError { input: String },
+        #[error("GIT_CONFIG_KEY_{} was not set", .key_id)]
+        InvalidKeyId { key_id: usize },
+        #[error("GIT_CONFIG_KEY_{} was set to an invalid value: {}", .key_id, .key_val)]
+        InvalidKeyValue { key_id: usize, key_val: String },
+        #[error("GIT_CONFIG_VALUE_{} was not set", .value_id)]
+        InvalidValueId { value_id: usize },
+        #[error(transparent)]
+        PathInterpolationError(#[from] interpolate::Error),
+        #[error(transparent)]
+        FromPathsError(#[from] from_paths::Error),
     }
 }
 
@@ -371,14 +345,16 @@ impl<'event> GitConfig<'event> {
     pub fn from_env(options: &from_paths::Options) -> Result<Option<Self>, from_env::Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
-            Ok(v) => v.parse().map_err(|_| from_env::Error::ParseError(v))?,
+            Ok(v) => v.parse().map_err(|_| from_env::Error::ParseError { input: v })?,
             Err(_) => return Ok(None),
         };
 
         let mut config = Self::new();
         for i in 0..count {
-            let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| from_env::Error::InvalidKeyId(i))?;
-            let value = env::var(format!("GIT_CONFIG_VALUE_{}", i)).map_err(|_| from_env::Error::InvalidValueId(i))?;
+            let key =
+                env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| from_env::Error::InvalidKeyId { key_id: i })?;
+            let value = env::var(format!("GIT_CONFIG_VALUE_{}", i))
+                .map_err(|_| from_env::Error::InvalidValueId { value_id: i })?;
             if let Some((section_name, maybe_subsection)) = key.split_once('.') {
                 let (subsection, key) = if let Some((subsection, key)) = maybe_subsection.rsplit_once('.') {
                     (Some(subsection), key)
@@ -402,7 +378,10 @@ impl<'event> GitConfig<'event> {
                     Cow::Owned(value.into_bytes()),
                 );
             } else {
-                return Err(from_env::Error::InvalidKeyValue(i, key.to_string()));
+                return Err(from_env::Error::InvalidKeyValue {
+                    key_id: i,
+                    key_val: key.to_string(),
+                });
             }
         }
 
@@ -458,12 +437,9 @@ impl<'event> GitConfig<'event> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-    ) -> Result<T, lookup::Error>
-    where
-        <T as TryFrom<Cow<'event, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> Result<T, lookup::Error<T::Error>> {
         T::try_from(self.raw_value(section_name, subsection_name, key)?)
-            .map_err(|err| lookup::Error::FailedConversion(Box::new(err)))
+            .map_err(|err| lookup::Error::FailedConversion(err))
     }
 
     /// Returns all interpreted values given a section, an optional subsection
@@ -505,7 +481,7 @@ impl<'event> GitConfig<'event> {
     /// // ... or explicitly declare the type to avoid the turbofish
     /// let c_value: Vec<Bytes> = git_config.multi_value("core", None, "c")?;
     /// assert_eq!(c_value, vec![Bytes { value: Cow::Borrowed(b"g") }]);
-    /// # Ok::<(), git_config::lookup::Error>(())
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
     /// # Errors
@@ -521,15 +497,12 @@ impl<'event> GitConfig<'event> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Vec<T>, lookup::Error>
-    where
-        <T as TryFrom<Cow<'event, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
-    {
+    ) -> Result<Vec<T>, lookup::Error<T::Error>> {
         self.raw_multi_value(section_name, subsection_name, key)?
             .into_iter()
             .map(T::try_from)
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|err| lookup::Error::FailedConversion(Box::new(err)))
+            .map_err(|err| lookup::Error::FailedConversion(err))
     }
 
     /// Returns an immutable section reference.
@@ -1149,7 +1122,7 @@ impl<'event> GitConfig<'event> {
     /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// git_config.set_raw_value("core", None, "a", vec![b'e'])?;
     /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::Borrowed(b"e"));
-    /// # Ok::<(), git_config::lookup::Error>(())
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
     /// # Errors

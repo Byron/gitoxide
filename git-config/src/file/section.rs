@@ -269,12 +269,9 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the key was not found, or if the conversion failed.
-    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<T, lookup::Error>
-    where
-        <T as TryFrom<Cow<'event, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
-    {
+    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<T, lookup::Error<T::Error>> {
         T::try_from(self.value(key).ok_or(lookup::existing::Error::KeyMissing)?)
-            .map_err(|err| lookup::Error::FailedConversion(Box::new(err)))
+            .map_err(|err| lookup::Error::FailedConversion(err))
     }
 
     /// Retrieves all values that have the provided key name. This may return
@@ -320,15 +317,12 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the conversion failed.
-    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<Vec<T>, lookup::Error>
-    where
-        <T as TryFrom<Cow<'event, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
-    {
+    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<Vec<T>, lookup::Error<T::Error>> {
         self.values(key)
             .into_iter()
             .map(T::try_from)
             .collect::<Result<Vec<T>, _>>()
-            .map_err(|err| lookup::Error::FailedConversion(Box::new(err)))
+            .map_err(|err| lookup::Error::FailedConversion(err))
     }
 
     /// Returns an iterator visiting all keys in order.
