@@ -1,10 +1,8 @@
-use std::path::PathBuf;
-
 use anyhow::{Context, Result};
 use git_repository as git;
 
 pub fn describe(
-    repo: impl Into<PathBuf>,
+    repo: git::Repository,
     rev_spec: Option<&str>,
     mut out: impl std::io::Write,
     mut err: impl std::io::Write,
@@ -18,7 +16,6 @@ pub fn describe(
         long_format,
     }: describe::Options,
 ) -> Result<()> {
-    let repo = git::open(repo)?.apply_environment();
     let commit = match rev_spec {
         Some(spec) => repo.rev_parse(spec)?.object()?.try_into_commit()?,
         None => repo.head_commit()?,

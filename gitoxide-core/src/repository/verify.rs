@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::atomic::AtomicBool};
+use std::sync::atomic::AtomicBool;
 
 use git_repository as git;
 use git_repository::Progress;
@@ -20,7 +20,7 @@ pub struct Context {
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub fn integrity(
-    repo: PathBuf,
+    repo: git::Repository,
     mut out: impl std::io::Write,
     progress: impl Progress,
     should_interrupt: &AtomicBool,
@@ -31,7 +31,6 @@ pub fn integrity(
         algorithm,
     }: Context,
 ) -> anyhow::Result<()> {
-    let repo = git_repository::open(repo)?;
     #[cfg_attr(not(feature = "serde1"), allow(unused))]
     let mut outcome = repo.objects.store_ref().verify_integrity(
         progress,

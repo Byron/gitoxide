@@ -155,149 +155,153 @@ pub fn main() -> Result<()> {
                 },
             ),
         },
-        Subcommands::Repository(repo::Platform { repository, cmd }) => match cmd {
-            repo::Subcommands::Commit { cmd } => match cmd {
-                repo::commit::Subcommands::Describe {
-                    annotated_tags,
-                    all_refs,
-                    first_parent,
-                    always,
-                    long,
-                    statistics,
-                    max_candidates,
-                    rev_spec,
+        Subcommands::Repository(repo::Platform { repository, cmd }) => {
+            use git_repository as git;
+            let repository = git::open(repository)?.apply_environment();
+            match cmd {
+                repo::Subcommands::Commit { cmd } => match cmd {
+                    repo::commit::Subcommands::Describe {
+                        annotated_tags,
+                        all_refs,
+                        first_parent,
+                        always,
+                        long,
+                        statistics,
+                        max_candidates,
+                        rev_spec,
+                    } => prepare_and_run(
+                        "repository-commit-describe",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        None,
+                        move |_progress, out, err| {
+                            core::repository::commit::describe(
+                                repository,
+                                rev_spec.as_deref(),
+                                out,
+                                err,
+                                core::repository::commit::describe::Options {
+                                    all_tags: !annotated_tags,
+                                    all_refs,
+                                    long_format: long,
+                                    first_parent,
+                                    statistics,
+                                    max_candidates,
+                                    always,
+                                },
+                            )
+                        },
+                    ),
+                },
+                repo::Subcommands::Exclude { cmd } => match cmd {
+                    repo::exclude::Subcommands::Query { pathspecs } => prepare_and_run(
+                        "repository-exclude-query",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        None,
+                        move |_progress, out, _err| {
+                            core::repository::exclude::query(
+                                repository,
+                                out,
+                                core::repository::exclude::query::Options { format, pathspecs },
+                            )
+                        },
+                    ),
+                },
+                repo::Subcommands::Mailmap { cmd } => match cmd {
+                    repo::mailmap::Subcommands::Entries => prepare_and_run(
+                        "repository-mailmap-entries",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        None,
+                        move |_progress, out, err| core::repository::mailmap::entries(repository, format, out, err),
+                    ),
+                },
+                repo::Subcommands::Odb { cmd } => match cmd {
+                    repo::odb::Subcommands::Entries => prepare_and_run(
+                        "repository-odb-entries",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        None,
+                        move |_progress, out, _err| core::repository::odb::entries(repository, format, out),
+                    ),
+                    repo::odb::Subcommands::Info => prepare_and_run(
+                        "repository-odb-info",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        None,
+                        move |_progress, out, err| core::repository::odb::info(repository, format, out, err),
+                    ),
+                },
+                repo::Subcommands::Tree { cmd } => match cmd {
+                    repo::tree::Subcommands::Entries {
+                        treeish,
+                        recursive,
+                        extended,
+                    } => prepare_and_run(
+                        "repository-tree-entries",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        None,
+                        move |_progress, out, _err| {
+                            core::repository::tree::entries(
+                                repository,
+                                treeish.as_deref(),
+                                recursive,
+                                extended,
+                                format,
+                                out,
+                            )
+                        },
+                    ),
+                    repo::tree::Subcommands::Info { treeish, extended } => prepare_and_run(
+                        "repository-tree-info",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        None,
+                        move |_progress, out, err| {
+                            core::repository::tree::info(repository, treeish.as_deref(), extended, format, out, err)
+                        },
+                    ),
+                },
+                repo::Subcommands::Verify {
+                    args:
+                        pack::VerifyOptions {
+                            statistics,
+                            algorithm,
+                            decode,
+                            re_encode,
+                        },
                 } => prepare_and_run(
-                    "repository-commit-describe",
+                    "repository-verify",
                     verbose,
                     progress,
                     progress_keep_open,
-                    None,
-                    move |_progress, out, err| {
-                        core::repository::commit::describe(
+                    core::repository::verify::PROGRESS_RANGE,
+                    move |progress, out, _err| {
+                        core::repository::verify::integrity(
                             repository,
-                            rev_spec.as_deref(),
                             out,
-                            err,
-                            core::repository::commit::describe::Options {
-                                all_tags: !annotated_tags,
-                                all_refs,
-                                long_format: long,
-                                first_parent,
-                                statistics,
-                                max_candidates,
-                                always,
+                            progress,
+                            &should_interrupt,
+                            core::repository::verify::Context {
+                                output_statistics: statistics.then(|| format),
+                                algorithm,
+                                verify_mode: verify_mode(decode, re_encode),
+                                thread_limit,
                             },
                         )
                     },
                 ),
-            },
-            repo::Subcommands::Exclude { cmd } => match cmd {
-                repo::exclude::Subcommands::Query { pathspecs } => prepare_and_run(
-                    "repository-exclude-query",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, _err| {
-                        core::repository::exclude::query(
-                            repository,
-                            out,
-                            core::repository::exclude::query::Options { format, pathspecs },
-                        )
-                    },
-                ),
-            },
-            repo::Subcommands::Mailmap { cmd } => match cmd {
-                repo::mailmap::Subcommands::Entries => prepare_and_run(
-                    "repository-mailmap-entries",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, err| core::repository::mailmap::entries(repository, format, out, err),
-                ),
-            },
-            repo::Subcommands::Odb { cmd } => match cmd {
-                repo::odb::Subcommands::Entries => prepare_and_run(
-                    "repository-odb-entries",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, _err| core::repository::odb::entries(repository, format, out),
-                ),
-                repo::odb::Subcommands::Info => prepare_and_run(
-                    "repository-odb-info",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, err| core::repository::odb::info(repository, format, out, err),
-                ),
-            },
-            repo::Subcommands::Tree { cmd } => match cmd {
-                repo::tree::Subcommands::Entries {
-                    treeish,
-                    recursive,
-                    extended,
-                } => prepare_and_run(
-                    "repository-tree-entries",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, _err| {
-                        core::repository::tree::entries(
-                            repository,
-                            treeish.as_deref(),
-                            recursive,
-                            extended,
-                            format,
-                            out,
-                        )
-                    },
-                ),
-                repo::tree::Subcommands::Info { treeish, extended } => prepare_and_run(
-                    "repository-tree-info",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, err| {
-                        core::repository::tree::info(repository, treeish.as_deref(), extended, format, out, err)
-                    },
-                ),
-            },
-            repo::Subcommands::Verify {
-                args:
-                    pack::VerifyOptions {
-                        statistics,
-                        algorithm,
-                        decode,
-                        re_encode,
-                    },
-            } => prepare_and_run(
-                "repository-verify",
-                verbose,
-                progress,
-                progress_keep_open,
-                core::repository::verify::PROGRESS_RANGE,
-                move |progress, out, _err| {
-                    core::repository::verify::integrity(
-                        repository,
-                        out,
-                        progress,
-                        &should_interrupt,
-                        core::repository::verify::Context {
-                            output_statistics: statistics.then(|| format),
-                            algorithm,
-                            verify_mode: verify_mode(decode, re_encode),
-                            thread_limit,
-                        },
-                    )
-                },
-            ),
-        },
+            }
+        }
         Subcommands::Pack(subcommands) => match subcommands {
             pack::Subcommands::Create {
                 repository,

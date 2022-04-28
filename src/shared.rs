@@ -64,7 +64,6 @@ pub mod pretty {
                 &mut dyn std::io::Write,
             ) -> Result<T>
             + Send
-            + std::panic::UnwindSafe
             + 'static,
     ) -> Result<T> {
         crate::shared::init_env_logger();

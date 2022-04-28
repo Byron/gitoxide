@@ -1,4 +1,4 @@
-use std::{borrow::Cow, io, path::PathBuf};
+use std::{borrow::Cow, io};
 
 use anyhow::bail;
 use git_repository as git;
@@ -117,7 +117,7 @@ mod entries {
 
 #[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
 pub fn info(
-    repository: PathBuf,
+    repo: git::Repository,
     treeish: Option<&str>,
     extended: bool,
     format: OutputFormat,
@@ -128,7 +128,6 @@ pub fn info(
         writeln!(err, "Only JSON is implemented - using that instead")?;
     }
 
-    let repo = git::open(repository)?.apply_environment();
     let tree = treeish_to_tree(treeish, &repo)?;
 
     let mut delegate = entries::Traverse::new(extended.then(|| &repo), None);
@@ -144,7 +143,7 @@ pub fn info(
 }
 
 pub fn entries(
-    repository: PathBuf,
+    repo: git::Repository,
     treeish: Option<&str>,
     recursive: bool,
     extended: bool,
@@ -155,7 +154,6 @@ pub fn entries(
         bail!("Only human output format is supported at the moment");
     }
 
-    let repo = git::open(repository)?.apply_environment();
     let tree = treeish_to_tree(treeish, &repo)?;
 
     if recursive {

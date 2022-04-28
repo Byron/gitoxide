@@ -1,6 +1,5 @@
 use anyhow::bail;
 use std::io;
-use std::path::PathBuf;
 
 use crate::OutputFormat;
 use git_repository as git;
@@ -16,7 +15,7 @@ pub mod query {
 }
 
 pub fn query(
-    repository: PathBuf,
+    repository: git::Repository,
     mut out: impl io::Write,
     query::Options { format, pathspecs }: query::Options,
 ) -> anyhow::Result<()> {
@@ -24,6 +23,5 @@ pub fn query(
         bail!("JSON output isn't implemented yet");
     }
 
-    let repo = git::open(repository)?.apply_environment();
     todo!("impl");
 }

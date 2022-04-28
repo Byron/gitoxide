@@ -1,4 +1,4 @@
-use std::{io, path::PathBuf};
+use std::io;
 
 use anyhow::bail;
 use git_repository as git;
@@ -22,7 +22,7 @@ mod info {
 
 #[cfg_attr(not(feature = "serde1"), allow(unused_variables))]
 pub fn info(
-    repository: PathBuf,
+    repo: git::Repository,
     format: OutputFormat,
     out: impl io::Write,
     mut err: impl io::Write,
@@ -31,7 +31,6 @@ pub fn info(
         writeln!(err, "Only JSON is implemented - using that instead")?;
     }
 
-    let repo = git::open(repository)?.apply_environment();
     let store = repo.objects.store_ref();
     let stats = info::Statistics {
         path: store.path().into(),
@@ -49,12 +48,10 @@ pub fn info(
     Ok(())
 }
 
-pub fn entries(repository: PathBuf, format: OutputFormat, mut out: impl io::Write) -> anyhow::Result<()> {
+pub fn entries(repo: git::Repository, format: OutputFormat, mut out: impl io::Write) -> anyhow::Result<()> {
     if format != OutputFormat::Human {
         bail!("Only human output format is supported at the moment");
     }
-
-    let repo = git::open(repository)?.apply_environment();
 
     for object in repo.objects.iter()? {
         let object = object?;
