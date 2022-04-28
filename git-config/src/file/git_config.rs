@@ -466,6 +466,20 @@ impl<'event> GitConfig<'event> {
             .map(|v| values::String::from(v).value)
     }
 
+    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the paty wasn't found.
+    ///
+    /// As strings perform no conversions, this will never fail.
+    pub fn path(
+        &'event self,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
+    ) -> Option<values::Path<'event>> {
+        self.raw_value(section_name, subsection_name, key)
+            .ok()
+            .map(|v| values::Path::from(v))
+    }
+
     /// Like [`value()`][GitConfig::value()], but returning an `Option` if the boolean wasn't found.
     pub fn boolean(
         &'event self,

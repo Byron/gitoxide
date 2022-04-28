@@ -85,12 +85,14 @@ fn get_value_for_all_provided_values() -> crate::Result {
 
     let actual = file.value::<git_config::values::Path>("core", None, "location")?;
     assert_eq!(
-        &*actual,
-        "~/tmp".as_bytes(),
+        &*actual, "~/tmp",
         "no interpolation occurs when querying a path due to lack of context"
     );
     let expected = PathBuf::from(format!("{}/tmp", dirs::home_dir().expect("empty home dir").display()));
     assert_eq!(actual.interpolate(None).unwrap(), expected);
+
+    let actual = file.path("core", None, "location").expect("present");
+    assert_eq!(&*actual, "~/tmp",);
 
     Ok(())
 }
