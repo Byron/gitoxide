@@ -275,6 +275,21 @@ pub mod worktree {
     #[cfg(all(feature = "unstable", feature = "git-worktree"))]
     pub use git_worktree::*;
 
+    ///
+    pub mod open_index {
+        use crate::bstr::BString;
+
+        /// The error returned by [`Worktree::open_index()`][crate::Worktree::open_index()].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("Could not interpret value '{}' as 'index.threads', it should be boolean or a positive integer", .value)]
+            ConfigIndexThreads { value: BString },
+            #[error(transparent)]
+            IndexFile(#[from] git_index::file::init::Error),
+        }
+    }
+
     /// A structure to make the API more stuctured.
     pub struct Platform<'repo> {
         pub(crate) parent: &'repo Repository,
