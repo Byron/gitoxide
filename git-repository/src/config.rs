@@ -10,6 +10,8 @@ pub enum Error {
     EmptyValue { key: &'static str },
     #[error("Invalid value for 'core.abbrev' = '{}'. It must be between 4 and {}", .value, .max)]
     CoreAbbrev { value: BString, max: u8 },
+    #[error("Value '{}' at key '{}' could not be decoded as boolean", .value, .key)]
+    DecodeBoolean { key: String, value: BString },
 }
 
 /// Utility type to keep pre-obtained configuration values.
@@ -30,11 +32,10 @@ pub(crate) struct Cache {
 }
 
 mod cache {
-    use std::{borrow::Cow, convert::TryFrom};
+    use std::convert::TryFrom;
 
     use git_config::{
         file::GitConfig,
-        values,
         values::{Boolean, Integer},
     };
 
@@ -44,51 +45,50 @@ mod cache {
     impl Cache {
         pub fn new(git_dir: &std::path::Path) -> Result<Self, Error> {
             let config = GitConfig::open(git_dir.join("config"))?;
-            let is_bare = config_bool(&config, "core.bare", false);
-            let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true);
+            let is_bare = config_bool(&config, "core.bare", false)?;
+            let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
             let repo_format_version = config
                 .value::<Integer>("core", None, "repositoryFormatVersion")
                 .map_or(0, |v| v.value);
-            let object_hash = if repo_format_version == 1 {
-                if let Ok(format) = config.value::<Cow<'_, [u8]>>("extensions", None, "objectFormat") {
-                    match format.as_ref() {
-                        b"sha1" => git_hash::Kind::Sha1,
-                        _ => {
-                            return Err(Error::UnsupportedObjectFormat {
+            let object_hash = (repo_format_version != 1)
+                .then(|| Ok(git_hash::Kind::Sha1))
+                .or_else(|| {
+                    config
+                        .raw_value("extensions", None, "objectFormat")
+                        .ok()
+                        .map(|format| match format.as_ref() {
+                            b"sha1" => Ok(git_hash::Kind::Sha1),
+                            _ => Err(Error::UnsupportedObjectFormat {
                                 name: format.to_vec().into(),
-                            })
-                        }
-                    }
-                } else {
-                    git_hash::Kind::Sha1
-                }
-            } else {
-                git_hash::Kind::Sha1
-            };
+                            }),
+                        })
+                })
+                .transpose()?
+                .unwrap_or(git_hash::Kind::Sha1);
 
             let mut hex_len = None;
-            if let Ok(hex_len_str) = config.value::<values::String<'_>>("core", None, "abbrev") {
-                if hex_len_str.value.trim().is_empty() {
+            if let Some(hex_len_str) = config.string("core", None, "abbrev") {
+                if hex_len_str.trim().is_empty() {
                     return Err(Error::EmptyValue { key: "core.abbrev" });
                 }
-                if hex_len_str.value.as_ref() != "auto" {
-                    let value_bytes = hex_len_str.value.as_ref().as_ref();
+                if hex_len_str.as_ref() != "auto" {
+                    let value_bytes = hex_len_str.as_ref().as_ref();
                     if let Ok(Boolean::False(_)) = Boolean::try_from(value_bytes) {
                         hex_len = object_hash.len_in_hex().into();
                     } else {
                         let value = Integer::try_from(value_bytes)
                             .map_err(|_| Error::CoreAbbrev {
-                                value: hex_len_str.value.clone().into_owned(),
+                                value: hex_len_str.clone().into_owned(),
                                 max: object_hash.len_in_hex() as u8,
                             })?
                             .to_decimal()
                             .ok_or_else(|| Error::CoreAbbrev {
-                                value: hex_len_str.value.clone().into_owned(),
+                                value: hex_len_str.clone().into_owned(),
                                 max: object_hash.len_in_hex() as u8,
                             })?;
                         if value < 4 || value as usize > object_hash.len_in_hex() {
                             return Err(Error::CoreAbbrev {
-                                value: hex_len_str.value.clone().into_owned(),
+                                value: hex_len_str.clone().into_owned(),
                                 max: object_hash.len_in_hex() as u8,
                             });
                         }
@@ -107,10 +107,14 @@ mod cache {
         }
     }
 
-    fn config_bool(config: &GitConfig<'_>, key: &str, default: bool) -> bool {
+    fn config_bool(config: &GitConfig<'_>, key: &str, default: bool) -> Result<bool, Error> {
         let (section, key) = key.split_once('.').expect("valid section.key format");
         config
-            .value::<Boolean<'_>>(section, None, key)
-            .map_or(default, |b| b.to_bool())
+            .boolean(section, None, key)
+            .unwrap_or(Ok(default))
+            .map_err(|err| Error::DecodeBoolean {
+                value: err.input,
+                key: key.into(),
+            })
     }
 }
