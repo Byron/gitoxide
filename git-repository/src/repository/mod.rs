@@ -52,7 +52,7 @@ mod worktree {
     impl<'repo> worktree::Platform<'repo> {
         /// Return the currently set worktree if there is one.
         ///
-        /// Note that there would be `None` if this repository is `bare` and the parent [`Repository`] was instantiated without
+        /// Note that there would be `None` if this repository is `bare` and the parent [`Repository`][crate::Repository] was instantiated without
         /// registered worktree in the current working dir.
         pub fn current(&self) -> Option<Worktree<'repo>> {
             self.parent.work_dir().map(|path| Worktree {

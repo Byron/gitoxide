@@ -6,6 +6,7 @@ use crate::head;
 
 /// A worktree checkout containing the files of the repository in consumable form.
 pub struct Worktree<'repo> {
+    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub(crate) parent: &'repo Repository,
     /// The root path of the checkout.
     #[allow(dead_code)]

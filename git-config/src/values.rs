@@ -195,7 +195,7 @@ pub mod path {
     use crate::values::Path;
 
     pub mod interpolate {
-        /// The error returned by [`Path::interpolate()`].
+        /// The error returned by [`Path::interpolate()`][crate::values::Path::interpolate()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
