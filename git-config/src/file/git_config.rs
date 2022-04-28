@@ -18,7 +18,7 @@ use crate::{
         parse_from_bytes, parse_from_path, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser,
         SectionHeaderName,
     },
-    values,
+    value, values,
 };
 
 /// The section ID is a monotonically increasing ID used to refer to sections.
@@ -472,7 +472,7 @@ impl<'event> GitConfig<'event> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-    ) -> Option<Result<bool, values::BooleanError>> {
+    ) -> Option<Result<bool, value::parse::Error>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
             .map(|v| values::Boolean::try_from(v).map(|b| b.to_bool()))

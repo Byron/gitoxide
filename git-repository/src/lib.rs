@@ -284,8 +284,12 @@ pub mod worktree {
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
-            #[error("Could not interpret value '{}' as 'index.threads', it should be boolean or a positive integer", .value)]
-            ConfigIndexThreads { value: BString },
+            #[error("Could not interpret value '{}' as 'index.threads'", .value)]
+            ConfigIndexThreads {
+                value: BString,
+                #[source]
+                err: git_config::value::parse::Error,
+            },
             #[error(transparent)]
             IndexFile(#[from] git_index::file::init::Error),
         }

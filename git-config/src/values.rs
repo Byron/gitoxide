@@ -2,6 +2,7 @@
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
+use crate::value;
 use bstr::{BStr, BString};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
@@ -374,16 +375,15 @@ impl Boolean<'_> {
     }
 }
 
-/// The error returned when creating `Boolean` from byte string.
-#[derive(Debug, PartialEq, thiserror::Error)]
-#[allow(missing_docs)]
-#[error("Invalid boolean value: '{}'", .input)]
-pub struct BooleanError {
-    pub input: BString,
+fn bool_err(input: impl Into<BString>) -> value::parse::Error {
+    value::parse::Error::new(
+        "Booleans need to be 'no', 'off', 'false', 'zero' or 'yes', 'on', 'true', 'one'",
+        input,
+    )
 }
 
 impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
-    type Error = BooleanError;
+    type Error = value::parse::Error;
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         if let Ok(v) = TrueVariant::try_from(value) {
@@ -401,12 +401,12 @@ impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
             ));
         }
 
-        Err(BooleanError { input: value.into() })
+        Err(bool_err(value))
     }
 }
 
 impl TryFrom<Vec<u8>> for Boolean<'_> {
-    type Error = BooleanError;
+    type Error = value::parse::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"no")
@@ -425,7 +425,7 @@ impl TryFrom<Vec<u8>> for Boolean<'_> {
 }
 
 impl<'a> TryFrom<Cow<'a, [u8]>> for Boolean<'a> {
-    type Error = BooleanError;
+    type Error = value::parse::Error;
     fn try_from(c: Cow<'a, [u8]>) -> Result<Self, Self::Error> {
         match c {
             Cow::Borrowed(c) => Self::try_from(c),
@@ -498,7 +498,7 @@ pub enum TrueVariant<'a> {
 }
 
 impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
-    type Error = BooleanError;
+    type Error = value::parse::Error;
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"yes")
@@ -512,13 +512,13 @@ impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
-            Err(BooleanError { input: value.into() })
+            Err(bool_err(value))
         }
     }
 }
 
 impl TryFrom<Vec<u8>> for TrueVariant<'_> {
-    type Error = BooleanError;
+    type Error = value::parse::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"yes")
@@ -532,7 +532,7 @@ impl TryFrom<Vec<u8>> for TrueVariant<'_> {
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
-            Err(BooleanError { input: value.into() })
+            Err(bool_err(value))
         }
     }
 }
@@ -636,24 +636,18 @@ impl Serialize for Integer {
     }
 }
 
-/// The error returned when creating `Integer` from byte string.
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-#[error("Invalid argument format: '{}'", .input)]
-pub struct IntegerError {
-    pub input: BString,
-    #[source]
-    pub err: Option<std::str::Utf8Error>,
+fn int_err(input: impl Into<BString>) -> value::parse::Error {
+    value::parse::Error::new(
+        "Intgers needs to be positive or negative numbers which may have a suffix like 1k, or 50G",
+        input,
+    )
 }
 
 impl TryFrom<&[u8]> for Integer {
-    type Error = IntegerError;
+    type Error = value::parse::Error;
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        let s = std::str::from_utf8(s).map_err(|err| IntegerError {
-            input: s.into(),
-            err: err.into(),
-        })?;
+        let s = std::str::from_utf8(s).map_err(|err| int_err(s).with_err(err))?;
         if let Ok(value) = s.parse() {
             return Ok(Self { value, suffix: None });
         }
@@ -661,10 +655,7 @@ impl TryFrom<&[u8]> for Integer {
         // Assume we have a prefix at this point.
 
         if s.len() <= 1 {
-            return Err(IntegerError {
-                input: s.into(),
-                err: None,
-            });
+            return Err(int_err(s));
         }
 
         let (number, suffix) = s.split_at(s.len() - 1);
@@ -674,16 +665,13 @@ impl TryFrom<&[u8]> for Integer {
                 suffix: Some(suffix),
             })
         } else {
-            Err(IntegerError {
-                input: s.into(),
-                err: None,
-            })
+            Err(int_err(s))
         }
     }
 }
 
 impl TryFrom<Vec<u8>> for Integer {
-    type Error = IntegerError;
+    type Error = value::parse::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
@@ -691,7 +679,7 @@ impl TryFrom<Vec<u8>> for Integer {
 }
 
 impl TryFrom<Cow<'_, [u8]>> for Integer {
-    type Error = IntegerError;
+    type Error = value::parse::Error;
 
     fn try_from(c: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
         match c {
@@ -845,23 +833,18 @@ impl Serialize for Color {
     }
 }
 
-/// The error returned for color conversions
-#[derive(Debug, PartialEq, thiserror::Error)]
-#[allow(missing_docs)]
-pub enum ColorError {
-    #[error(transparent)]
-    Utf8Conversion(#[from] std::str::Utf8Error),
-    #[error("Invalid color item")]
-    InvalidColorItem,
-    #[error("Invalid argument format")]
-    InvalidFormat,
+fn color_err(input: impl Into<BString>) -> value::parse::Error {
+    value::parse::Error::new(
+        "Colors are specific color values and their attributes, like 'brightred', or 'blue'",
+        input,
+    )
 }
 
 impl TryFrom<&[u8]> for Color {
-    type Error = ColorError;
+    type Error = value::parse::Error;
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        let s = std::str::from_utf8(s)?;
+        let s = std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?;
         enum ColorItem {
             Value(ColorValue),
             Attr(ColorAttribute),
@@ -889,12 +872,12 @@ impl TryFrom<&[u8]> for Color {
                         } else if new_self.background.is_none() {
                             new_self.background = Some(v);
                         } else {
-                            return Err(ColorError::InvalidColorItem);
+                            return Err(color_err(s));
                         }
                     }
                     ColorItem::Attr(a) => new_self.attributes.push(a),
                 },
-                Err(_) => return Err(ColorError::InvalidColorItem),
+                Err(_) => return Err(color_err(s)),
             }
         }
 
@@ -903,7 +886,7 @@ impl TryFrom<&[u8]> for Color {
 }
 
 impl TryFrom<Vec<u8>> for Color {
-    type Error = ColorError;
+    type Error = value::parse::Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
@@ -911,7 +894,7 @@ impl TryFrom<Vec<u8>> for Color {
 }
 
 impl TryFrom<Cow<'_, [u8]>> for Color {
-    type Error = ColorError;
+    type Error = value::parse::Error;
 
     fn try_from(c: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
         match c {
@@ -998,7 +981,7 @@ impl Serialize for ColorValue {
 }
 
 impl FromStr for ColorValue {
-    type Err = ColorError;
+    type Err = value::parse::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut s = s;
@@ -1011,7 +994,7 @@ impl FromStr for ColorValue {
 
         match s {
             "normal" if !bright => return Ok(Self::Normal),
-            "normal" if bright => return Err(ColorError::InvalidFormat),
+            "normal" if bright => return Err(color_err(s)),
             "black" if !bright => return Ok(Self::Black),
             "black" if bright => return Ok(Self::BrightBlack),
             "red" if !bright => return Ok(Self::Red),
@@ -1049,15 +1032,15 @@ impl FromStr for ColorValue {
             }
         }
 
-        Err(ColorError::InvalidFormat)
+        Err(color_err(s))
     }
 }
 
 impl TryFrom<&[u8]> for ColorValue {
-    type Error = ColorError;
+    type Error = value::parse::Error;
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        Self::from_str(std::str::from_utf8(s)?)
+        Self::from_str(std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?)
     }
 }
 
@@ -1132,7 +1115,7 @@ impl Serialize for ColorAttribute {
 }
 
 impl FromStr for ColorAttribute {
-    type Err = ColorError;
+    type Err = value::parse::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let inverted = s.starts_with("no");
@@ -1161,15 +1144,15 @@ impl FromStr for ColorAttribute {
             "italic" if inverted => Ok(Self::NoItalic),
             "strike" if !inverted => Ok(Self::Strike),
             "strike" if inverted => Ok(Self::NoStrike),
-            _ => Err(ColorError::InvalidFormat),
+            _ => Err(color_err(parsed)),
         }
     }
 }
 
 impl TryFrom<&[u8]> for ColorAttribute {
-    type Error = ColorError;
+    type Error = value::parse::Error;
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        Self::from_str(std::str::from_utf8(s)?)
+        Self::from_str(std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?)
     }
 }

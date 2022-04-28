@@ -35,7 +35,10 @@ impl<'repo> Worktree<'repo> {
             .map(|res| {
                 res.map(|value| if value { 0usize } else { 1 }).or_else(|err| {
                     git_config::values::Integer::try_from(err.input.as_ref())
-                        .map_err(|err| crate::worktree::open_index::Error::ConfigIndexThreads { value: err.input })
+                        .map_err(|err| crate::worktree::open_index::Error::ConfigIndexThreads {
+                            value: err.input.clone(),
+                            err,
+                        })
                         .map(|value| value.to_decimal().and_then(|v| v.try_into().ok()).unwrap_or(1))
                 })
             })
