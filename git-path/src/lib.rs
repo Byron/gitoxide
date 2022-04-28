@@ -40,5 +40,19 @@
 //! Callers may `.expect()` on the result to indicate they don't wish to handle this special and rare case. Note that servers should not
 //! ever get into a code-path which does panic though.
 
+/// A dummy type to represent path specs and help finding all spots that take path specs once it is implemented.
+#[derive(Clone, Debug)]
+pub struct Spec(String);
+
+impl FromStr for Spec {
+    type Err = std::convert::Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Spec(s.to_owned()))
+    }
+}
+
 mod convert;
+
 pub use convert::*;
+use std::str::FromStr;

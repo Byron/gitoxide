@@ -48,6 +48,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * **mailmap**
       * [x] **verify** - check entries of a mailmap file for parse errors and display them
     * **repository**
+      * **exclude**
+         * [x] **query** - check if path specs are excluded via gits exclusion rules like `.gitignore`.
       * **verify** - validate a whole repository, for now only the object database.
       * **commit**
          * [x] **describe** - identify a commit by its closest tag in its past

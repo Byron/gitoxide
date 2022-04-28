@@ -436,7 +436,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
   * **refs**
     * [ ] run transaction hooks and handle special repository states like quarantine
     * [ ] support for different backends like `files` and `reftable`
-  * [ ] worktrees
+  * **worktrees**
+    * [ ] open a repository with worktrees
   * [ ] remotes with push and pull
   * [x] mailmap   
   * [x] object replacements (`git replace`)

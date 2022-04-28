@@ -370,6 +370,24 @@ pub mod repo {
             #[clap(subcommand)]
             cmd: mailmap::Subcommands,
         },
+        /// Interact with the exclude files like .gitignore.
+        Exclude {
+            #[clap(subcommand)]
+            cmd: exclude::Subcommands,
+        },
+    }
+
+    pub mod exclude {
+        use git_repository as git;
+
+        #[derive(Debug, clap::Subcommand)]
+        pub enum Subcommands {
+            /// Check if path-specs are excluded and print the result similar to `git check-ignore`.
+            Query {
+                /// The git path specifications to check for exclusion.
+                pathspecs: Vec<git::path::Spec>,
+            },
+        }
     }
 
     pub mod mailmap {

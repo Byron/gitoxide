@@ -191,6 +191,22 @@ pub fn main() -> Result<()> {
                     },
                 ),
             },
+            repo::Subcommands::Exclude { cmd } => match cmd {
+                repo::exclude::Subcommands::Query { pathspecs } => prepare_and_run(
+                    "repository-exclude-query",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, _err| {
+                        core::repository::exclude::query(
+                            repository,
+                            out,
+                            core::repository::exclude::query::Options { format, pathspecs },
+                        )
+                    },
+                ),
+            },
             repo::Subcommands::Mailmap { cmd } => match cmd {
                 repo::mailmap::Subcommands::Entries => prepare_and_run(
                     "repository-mailmap-entries",
