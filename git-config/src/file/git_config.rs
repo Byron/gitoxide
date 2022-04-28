@@ -212,7 +212,6 @@ pub mod from_env {
 
 impl<'event> GitConfig<'event> {
     /// Constructs an empty `git-config` file.
-    #[inline]
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -224,7 +223,6 @@ impl<'event> GitConfig<'event> {
     ///
     /// Returns an error if there was an IO error or if the file wasn't a valid
     /// git-config file.
-    #[inline]
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, parser::ParserOrIoError<'static>> {
         parse_from_path(path).map(Self::from)
     }
@@ -238,7 +236,6 @@ impl<'event> GitConfig<'event> {
     /// git-config file.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
-    #[inline]
     pub fn from_paths(paths: Vec<PathBuf>, options: &from_paths::Options) -> Result<Self, from_paths::Error> {
         let mut target = Self::new();
         for path in paths {
@@ -456,7 +453,6 @@ impl<'event> GitConfig<'event> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    #[inline]
     pub fn value<T: TryFrom<Cow<'event, [u8]>>>(
         &'event self,
         section_name: &str,
@@ -520,7 +516,6 @@ impl<'event> GitConfig<'event> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    #[inline]
     pub fn multi_value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
         &'event self,
         section_name: &'lookup str,
@@ -1382,7 +1377,6 @@ impl<'a> TryFrom<&'a str> for GitConfig<'a> {
     /// [`GitConfig`]. See [`parse_from_str`] for more information.
     ///
     /// [`parse_from_str`]: crate::parser::parse_from_str
-    #[inline]
     fn try_from(s: &'a str) -> Result<GitConfig<'a>, Self::Error> {
         parse_from_str(s).map(Self::from)
     }
@@ -1395,7 +1389,6 @@ impl<'a> TryFrom<&'a [u8]> for GitConfig<'a> {
     //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
-    #[inline]
     fn try_from(value: &'a [u8]) -> Result<GitConfig<'a>, Self::Error> {
         parse_from_bytes(value).map(GitConfig::from)
     }
@@ -1408,7 +1401,6 @@ impl<'a> TryFrom<&'a Vec<u8>> for GitConfig<'a> {
     //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
-    #[inline]
     fn try_from(value: &'a Vec<u8>) -> Result<GitConfig<'a>, Self::Error> {
         parse_from_bytes(value).map(GitConfig::from)
     }
@@ -1458,7 +1450,6 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
 }
 
 impl From<GitConfig<'_>> for Vec<u8> {
-    #[inline]
     fn from(c: GitConfig) -> Self {
         c.into()
     }

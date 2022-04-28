@@ -114,14 +114,12 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
     /// Adds a new line event. Note that you don't need to call this unless
     /// you've disabled implicit newlines.
-    #[inline]
     pub fn push_newline(&mut self) {
         self.section.0.push(Event::Newline("\n".into()));
     }
 
     /// Enables or disables automatically adding newline events after adding
     /// a value. This is enabled by default.
-    #[inline]
     pub fn implicit_newline(&mut self, on: bool) {
         self.implicit_newline = on;
     }
@@ -129,14 +127,12 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     /// Sets the number of spaces before the start of a key value. By default,
     /// this is set to two. Set to 0 to disable adding whitespace before a key
     /// value.
-    #[inline]
     pub fn set_whitespace(&mut self, num: usize) {
         self.whitespace = num;
     }
 
     /// Returns the number of whitespace this section will insert before the
     /// beginning of a key.
-    #[inline]
     #[must_use]
     pub const fn whitespace(&self) -> usize {
         self.whitespace
@@ -145,7 +141,6 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
 // Internal methods that may require exact indices for faster operations.
 impl<'borrow, 'event> MutableSection<'borrow, 'event> {
-    #[inline]
     pub(super) fn new(section: &'borrow mut SectionBody<'event>) -> Self {
         Self {
             section,
@@ -192,7 +187,6 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
             .ok_or(lookup::existing::Error::KeyMissing)
     }
 
-    #[inline]
     pub(super) fn delete(&mut self, start: Index, end: Index) {
         self.section.0.drain(start.0..=end.0);
     }
@@ -207,7 +201,6 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 impl<'event> Deref for MutableSection<'_, 'event> {
     type Target = SectionBody<'event>;
 
-    #[inline]
     fn deref(&self) -> &Self::Target {
         self.section
     }
@@ -228,7 +221,6 @@ impl<'event> SectionBody<'event> {
     }
 
     /// Constructs a new empty section body.
-    #[inline]
     pub(super) fn new() -> Self {
         Self::default()
     }
@@ -277,7 +269,6 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the key was not found, or if the conversion failed.
-    #[inline]
     pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<T, lookup::Error>
     where
         <T as TryFrom<Cow<'event, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
@@ -329,7 +320,6 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the conversion failed.
-    #[inline]
     pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<Vec<T>, lookup::Error>
     where
         <T as TryFrom<Cow<'event, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
@@ -342,7 +332,6 @@ impl<'event> SectionBody<'event> {
     }
 
     /// Returns an iterator visiting all keys in order.
-    #[inline]
     pub fn keys(&self) -> impl Iterator<Item = &Key<'event>> {
         self.0
             .iter()
@@ -360,14 +349,12 @@ impl<'event> SectionBody<'event> {
     }
 
     /// Returns the number of entries in the section.
-    #[inline]
     #[must_use]
     pub fn len(&self) -> usize {
         self.0.iter().filter(|e| matches!(e, Event::Key(_))).count()
     }
 
     /// Returns if the section is empty.
-    #[inline]
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
@@ -413,7 +400,6 @@ impl<'event> IntoIterator for SectionBody<'event> {
 
     type IntoIter = SectionBodyIter<'event>;
 
-    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         SectionBodyIter(self.0.into())
     }
@@ -455,7 +441,6 @@ impl<'event> Iterator for SectionBodyIter<'event> {
 impl FusedIterator for SectionBodyIter<'_> {}
 
 impl<'event> From<Vec<Event<'event>>> for SectionBody<'event> {
-    #[inline]
     fn from(e: Vec<Event<'event>>) -> Self {
         Self(e)
     }

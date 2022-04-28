@@ -41,7 +41,6 @@ pub struct ConfigBuilder {
 
 impl ConfigBuilder {
     /// Constructs a new builder that finds the default location
-    #[inline]
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -147,7 +146,6 @@ pub struct Config<'config> {
 }
 
 impl<'config> Config<'config> {
-    #[inline]
     #[must_use]
     pub fn value<T: TryFrom<Cow<'config, [u8]>>>(
         &'config self,
@@ -184,7 +182,6 @@ impl<'config> Config<'config> {
         None
     }
 
-    #[inline]
     pub fn try_value<'lookup, T: TryFrom<Cow<'config, [u8]>>>(
         &'config self,
         section_name: &'lookup str,

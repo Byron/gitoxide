@@ -120,21 +120,18 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
 }
 
 /// `&[u8]` variant of [`normalize_cow`].
-#[inline]
 #[must_use]
 pub fn normalize_bytes(input: &[u8]) -> Cow<'_, [u8]> {
     normalize_cow(Cow::Borrowed(input))
 }
 
 /// `Vec[u8]` variant of [`normalize_cow`].
-#[inline]
 #[must_use]
 pub fn normalize_vec(input: Vec<u8>) -> Cow<'static, [u8]> {
     normalize_cow(Cow::Owned(input))
 }
 
 /// [`str`] variant of [`normalize_cow`].
-#[inline]
 #[must_use]
 pub fn normalize_str(input: &str) -> Cow<'_, [u8]> {
     normalize_bytes(input.as_bytes())
@@ -149,7 +146,6 @@ pub struct Bytes<'a> {
 }
 
 impl<'a> From<&'a [u8]> for Bytes<'a> {
-    #[inline]
     fn from(s: &'a [u8]) -> Self {
         Self {
             value: Cow::Borrowed(s),
@@ -164,7 +160,6 @@ impl From<Vec<u8>> for Bytes<'_> {
 }
 
 impl<'a> From<Cow<'a, [u8]>> for Bytes<'a> {
-    #[inline]
     fn from(c: Cow<'a, [u8]>) -> Self {
         match c {
             Cow::Borrowed(c) => Self::from(c),
@@ -181,7 +176,6 @@ pub struct String<'a> {
 }
 
 impl<'a> From<Cow<'a, [u8]>> for String<'a> {
-    #[inline]
     fn from(c: Cow<'a, [u8]>) -> Self {
         String {
             value: match c {
@@ -330,7 +324,6 @@ impl<'a> AsRef<BStr> for Path<'a> {
 }
 
 impl<'a> From<Cow<'a, [u8]>> for Path<'a> {
-    #[inline]
     fn from(value: Cow<'a, [u8]>) -> Self {
         Path {
             value: match value {
@@ -365,7 +358,6 @@ impl Boolean<'_> {
     /// Generates a byte representation of the value. This should be used when
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
-    #[inline]
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
@@ -374,7 +366,6 @@ impl Boolean<'_> {
     /// Generates a byte representation of the value. This should be used when
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
-    #[inline]
     #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         self.into()
@@ -445,7 +436,6 @@ impl<'a> TryFrom<Cow<'a, [u8]>> for Boolean<'a> {
 }
 
 impl Display for Boolean<'_> {
-    #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Boolean::True(v) => v.fmt(f),
@@ -455,7 +445,6 @@ impl Display for Boolean<'_> {
 }
 
 impl From<Boolean<'_>> for bool {
-    #[inline]
     fn from(b: Boolean) -> Self {
         match b {
             Boolean::True(_) => true,
@@ -465,7 +454,6 @@ impl From<Boolean<'_>> for bool {
 }
 
 impl<'a, 'b: 'a> From<&'b Boolean<'a>> for &'a [u8] {
-    #[inline]
     fn from(b: &'b Boolean) -> Self {
         match b {
             Boolean::True(t) => t.into(),
@@ -475,14 +463,12 @@ impl<'a, 'b: 'a> From<&'b Boolean<'a>> for &'a [u8] {
 }
 
 impl From<Boolean<'_>> for Vec<u8> {
-    #[inline]
     fn from(b: Boolean) -> Self {
         b.into()
     }
 }
 
 impl From<&Boolean<'_>> for Vec<u8> {
-    #[inline]
     fn from(b: &Boolean) -> Self {
         b.to_string().into_bytes()
     }
@@ -563,7 +549,6 @@ impl Display for TrueVariant<'_> {
 }
 
 impl<'a, 'b: 'a> From<&'b TrueVariant<'a>> for &'a [u8] {
-    #[inline]
     fn from(t: &'b TrueVariant<'a>) -> Self {
         match t {
             TrueVariant::Explicit(e) => e.as_bytes(),
@@ -674,7 +659,6 @@ quick_error! {
 impl TryFrom<&[u8]> for Integer {
     type Error = IntegerError;
 
-    #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         let s = std::str::from_utf8(s)?;
         if let Ok(value) = s.parse() {
@@ -702,7 +686,6 @@ impl TryFrom<&[u8]> for Integer {
 impl TryFrom<Vec<u8>> for Integer {
     type Error = IntegerError;
 
-    #[inline]
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
     }
@@ -711,7 +694,6 @@ impl TryFrom<Vec<u8>> for Integer {
 impl TryFrom<Cow<'_, [u8]>> for Integer {
     type Error = IntegerError;
 
-    #[inline]
     fn try_from(c: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
         match c {
             Cow::Borrowed(c) => Self::try_from(c),
@@ -721,14 +703,12 @@ impl TryFrom<Cow<'_, [u8]>> for Integer {
 }
 
 impl From<Integer> for Vec<u8> {
-    #[inline]
     fn from(i: Integer) -> Self {
         i.into()
     }
 }
 
 impl From<&Integer> for Vec<u8> {
-    #[inline]
     fn from(i: &Integer) -> Self {
         i.to_string().into_bytes()
     }
@@ -747,7 +727,6 @@ pub enum IntegerSuffix {
 
 impl IntegerSuffix {
     /// Returns the number of bits that the suffix shifts left by.
-    #[inline]
     #[must_use]
     pub const fn bitwise_offset(self) -> usize {
         match self {
@@ -759,7 +738,6 @@ impl IntegerSuffix {
 }
 
 impl Display for IntegerSuffix {
-    #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Kibi => write!(f, "k"),
@@ -786,7 +764,6 @@ impl Serialize for IntegerSuffix {
 impl FromStr for IntegerSuffix {
     type Err = IntegerError;
 
-    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "k" | "K" => Ok(Self::Kibi),
@@ -800,7 +777,6 @@ impl FromStr for IntegerSuffix {
 impl TryFrom<&[u8]> for IntegerSuffix {
     type Error = IntegerError;
 
-    #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s)?)
     }
@@ -809,7 +785,6 @@ impl TryFrom<&[u8]> for IntegerSuffix {
 impl TryFrom<Vec<u8>> for IntegerSuffix {
     type Error = IntegerError;
 
-    #[inline]
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
     }
@@ -836,7 +811,6 @@ impl Color {
     /// Generates a byte representation of the value. This should be used when
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
-    #[inline]
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
@@ -894,7 +868,6 @@ quick_error! {
 impl TryFrom<&[u8]> for Color {
     type Error = ColorError;
 
-    #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         let s = std::str::from_utf8(s)?;
         enum ColorItem {
@@ -940,7 +913,6 @@ impl TryFrom<&[u8]> for Color {
 impl TryFrom<Vec<u8>> for Color {
     type Error = ColorError;
 
-    #[inline]
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
     }
@@ -949,7 +921,6 @@ impl TryFrom<Vec<u8>> for Color {
 impl TryFrom<Cow<'_, [u8]>> for Color {
     type Error = ColorError;
 
-    #[inline]
     fn try_from(c: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
         match c {
             Cow::Borrowed(c) => Self::try_from(c),
@@ -959,14 +930,12 @@ impl TryFrom<Cow<'_, [u8]>> for Color {
 }
 
 impl From<Color> for Vec<u8> {
-    #[inline]
     fn from(c: Color) -> Self {
         c.into()
     }
 }
 
 impl From<&Color> for Vec<u8> {
-    #[inline]
     fn from(c: &Color) -> Self {
         c.to_string().into_bytes()
     }
@@ -1095,7 +1064,6 @@ impl FromStr for ColorValue {
 impl TryFrom<&[u8]> for ColorValue {
     type Error = ColorError;
 
-    #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s)?)
     }
@@ -1209,7 +1177,6 @@ impl FromStr for ColorAttribute {
 impl TryFrom<&[u8]> for ColorAttribute {
     type Error = ColorError;
 
-    #[inline]
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s)?)
     }
