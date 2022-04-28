@@ -200,7 +200,8 @@ mod ignore_and_attributes {
                 (None, None) => {
                     assert!(!is_excluded);
                 }
-                (Some(m), Some((source_file, line, _pattern))) => {
+                (Some(m), Some((source_file, line, pattern))) => {
+                    assert_eq!(m.pattern.to_string(), pattern);
                     assert_eq!(m.sequence_number, line);
                     // Paths read from the index are relative to the repo, and they don't exist locally due tot skip-worktree
                     if m.source.map_or(false, |p| p.exists()) {
