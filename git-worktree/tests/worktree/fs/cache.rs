@@ -118,7 +118,6 @@ mod create_directory {
 #[allow(unused)]
 mod ignore_and_attributes {
     use bstr::{BStr, ByteSlice};
-    use std::borrow::Cow;
     use std::path::Path;
 
     use git_glob::pattern::Case;
@@ -181,7 +180,7 @@ mod ignore_and_attributes {
         assert_eq!(
             attribute_files_in_index,
             vec![(
-                Cow::Borrowed("other-dir-with-ignore/.gitignore".as_bytes().as_bstr()),
+                "other-dir-with-ignore/.gitignore".as_bytes().as_bstr(),
                 hex_to_id("5c7e0ed672d3d31d83a3df61f13cc8f7b22d5bfd")
             )]
         );

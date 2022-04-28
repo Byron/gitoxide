@@ -1,5 +1,4 @@
 use bstr::BStr;
-use std::borrow::Cow;
 use std::path::PathBuf;
 
 /// Common knowledge about the worktree that is needed across most interactions with the work tree
@@ -70,7 +69,7 @@ pub struct Cache<'paths> {
     attribute_files_in_index: Vec<PathOidMapping<'paths>>,
 }
 
-pub(crate) type PathOidMapping<'paths> = (Cow<'paths, BStr>, git_hash::ObjectId);
+pub(crate) type PathOidMapping<'paths> = (&'paths BStr, git_hash::ObjectId);
 
 ///
 pub mod cache;
