@@ -7,7 +7,8 @@ use std::{
 };
 
 use crate::{
-    file::{error::GitConfigError, Index},
+    file::Index,
+    lookup,
     parser::{Event, Key},
     values::{normalize_cow, normalize_vec},
 };
@@ -158,7 +159,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         key: &Key<'key>,
         start: Index,
         end: Index,
-    ) -> Result<Cow<'_, [u8]>, GitConfigError<'key>> {
+    ) -> Result<Cow<'_, [u8]>, lookup::existing::Error> {
         let mut found_key = false;
         let mut latest_value = None;
         let mut partial_value = None;
@@ -188,7 +189,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         latest_value
             .map(normalize_cow)
             .or_else(|| partial_value.map(normalize_vec))
-            .ok_or(GitConfigError::KeyDoesNotExist)
+            .ok_or(lookup::existing::Error::KeyMissing)
     }
 
     #[inline]
@@ -277,9 +278,12 @@ impl<'event> SectionBody<'event> {
     ///
     /// Returns an error if the key was not found, or if the conversion failed.
     #[inline]
-    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<T, GitConfigError<'event>> {
-        T::try_from(self.value(key).ok_or(GitConfigError::KeyDoesNotExist)?)
-            .map_err(|_| GitConfigError::FailedConversion)
+    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<T, lookup::Error>
+    where
+        <T as TryFrom<Cow<'event, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
+    {
+        T::try_from(self.value(key).ok_or(lookup::existing::Error::KeyMissing)?)
+            .map_err(|err| lookup::Error::FailedConversion(Box::new(err)))
     }
 
     /// Retrieves all values that have the provided key name. This may return
@@ -326,12 +330,15 @@ impl<'event> SectionBody<'event> {
     ///
     /// Returns an error if the conversion failed.
     #[inline]
-    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<Vec<T>, GitConfigError<'event>> {
+    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<Vec<T>, lookup::Error>
+    where
+        <T as TryFrom<Cow<'event, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
+    {
         self.values(key)
             .into_iter()
             .map(T::try_from)
             .collect::<Result<Vec<T>, _>>()
-            .map_err(|_| GitConfigError::FailedConversion)
+            .map_err(|err| lookup::Error::FailedConversion(Box::new(err)))
     }
 
     /// Returns an iterator visiting all keys in order.

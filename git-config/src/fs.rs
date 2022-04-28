@@ -7,7 +7,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::file::{from_paths, GitConfig, GitConfigError};
+use crate::file::{from_paths, GitConfig};
+use crate::lookup;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum ConfigSource {
@@ -153,7 +154,10 @@ impl<'config> Config<'config> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-    ) -> Option<T> {
+    ) -> Option<T>
+    where
+        <T as TryFrom<Cow<'config, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
+    {
         self.value_with_source(section_name, subsection_name, key)
             .map(|(value, _)| value)
     }
@@ -163,7 +167,10 @@ impl<'config> Config<'config> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-    ) -> Option<(T, ConfigSource)> {
+    ) -> Option<(T, ConfigSource)>
+    where
+        <T as TryFrom<Cow<'config, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
+    {
         let mapping = self.mapping();
 
         for (conf, source) in mapping.iter() {
@@ -183,7 +190,10 @@ impl<'config> Config<'config> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Option<T>, GitConfigError<'lookup>> {
+    ) -> Result<Option<T>, lookup::Error>
+    where
+        <T as TryFrom<Cow<'config, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
+    {
         self.try_value_with_source(section_name, subsection_name, key)
             .map(|res| res.map(|(value, _)| value))
     }
@@ -197,7 +207,10 @@ impl<'config> Config<'config> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Option<(T, ConfigSource)>, GitConfigError<'lookup>> {
+    ) -> Result<Option<(T, ConfigSource)>, lookup::Error>
+    where
+        <T as TryFrom<Cow<'config, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
+    {
         let mapping = self.mapping();
 
         for (conf, source) in mapping.iter() {

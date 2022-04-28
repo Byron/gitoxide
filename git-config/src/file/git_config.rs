@@ -8,12 +8,11 @@ use std::{
 
 use crate::{
     file::{
-        error::GitConfigError,
         section::{MutableSection, SectionBody},
         value::{EntryData, MutableMultiValue, MutableValue},
         Index, Size,
     },
-    parser,
+    lookup, parser,
     parser::{
         parse_from_bytes, parse_from_path, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser,
         SectionHeaderName,
@@ -87,7 +86,7 @@ pub(super) enum LookupTreeNode<'a> {
 /// # use std::borrow::Cow;
 /// # use std::convert::TryFrom;
 /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-/// assert_eq!(git_config.get_raw_value("core", None, "a"), Ok(Cow::Borrowed("d".as_bytes())));
+/// assert_eq!(git_config.get_raw_value("core", None, "a").unwrap(), Cow::Borrowed("d".as_bytes()));
 /// ```
 ///
 /// Consider the `multi` variants of the methods instead, if you want to work
@@ -432,7 +431,7 @@ impl<'event> GitConfig<'event> {
     /// # Examples
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use git_config::values::{Integer, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
@@ -458,14 +457,17 @@ impl<'event> GitConfig<'event> {
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
     #[inline]
-    pub fn value<'lookup, T: TryFrom<Cow<'event, [u8]>>>(
+    pub fn value<T: TryFrom<Cow<'event, [u8]>>>(
         &'event self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
-    ) -> Result<T, GitConfigError<'lookup>> {
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
+    ) -> Result<T, lookup::Error>
+    where
+        <T as TryFrom<Cow<'event, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
+    {
         T::try_from(self.get_raw_value(section_name, subsection_name, key)?)
-            .map_err(|_| GitConfigError::FailedConversion)
+            .map_err(|err| lookup::Error::FailedConversion(Box::new(err)))
     }
 
     /// Returns all interpreted values given a section, an optional subsection
@@ -481,7 +483,7 @@ impl<'event> GitConfig<'event> {
     /// # Examples
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use git_config::values::{Integer, Bytes, Boolean, TrueVariant};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
@@ -507,7 +509,7 @@ impl<'event> GitConfig<'event> {
     /// // ... or explicitly declare the type to avoid the turbofish
     /// let c_value: Vec<Bytes> = git_config.multi_value("core", None, "c")?;
     /// assert_eq!(c_value, vec![Bytes { value: Cow::Borrowed(b"g") }]);
-    /// # Ok::<(), GitConfigError>(())
+    /// # Ok::<(), git_config::lookup::Error>(())
     /// ```
     ///
     /// # Errors
@@ -524,12 +526,15 @@ impl<'event> GitConfig<'event> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Vec<T>, GitConfigError<'lookup>> {
+    ) -> Result<Vec<T>, lookup::Error>
+    where
+        <T as TryFrom<Cow<'event, [u8]>>>::Error: std::error::Error + Send + Sync + 'static,
+    {
         self.get_raw_multi_value(section_name, subsection_name, key)?
             .into_iter()
             .map(T::try_from)
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| GitConfigError::FailedConversion)
+            .map_err(|err| lookup::Error::FailedConversion(Box::new(err)))
     }
 
     /// Returns an immutable section reference.
@@ -542,15 +547,10 @@ impl<'event> GitConfig<'event> {
         &mut self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
-    ) -> Result<&SectionBody<'event>, GitConfigError<'lookup>> {
+    ) -> Result<&SectionBody<'event>, lookup::existing::Error> {
         let section_ids = self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
-        let id = section_ids
-            .last()
-            .expect("Section lookup vec was empty, internal invariant violated");
-        Ok(self
-            .sections
-            .get(id)
-            .expect("Section did not have id from lookup, internal invariant violated"))
+        let id = section_ids.last().expect("BUG: Section lookup vec was empty");
+        Ok(self.sections.get(id).expect("BUG: Section did not have id from lookup"))
     }
 
     /// Returns an mutable section reference.
@@ -563,14 +563,14 @@ impl<'event> GitConfig<'event> {
         &mut self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
-    ) -> Result<MutableSection<'_, 'event>, GitConfigError<'lookup>> {
+    ) -> Result<MutableSection<'_, 'event>, lookup::existing::Error> {
         let section_ids = self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
-        let id = section_ids
-            .last()
-            .expect("Section lookup vec was empty, internal invariant violated");
-        Ok(MutableSection::new(self.sections.get_mut(id).expect(
-            "Section did not have id from lookup, internal invariant violated",
-        )))
+        let id = section_ids.last().expect("BUG: Section lookup vec was empty");
+        Ok(MutableSection::new(
+            self.sections
+                .get_mut(id)
+                .expect("BUG: Section did not have id from lookup"),
+        ))
     }
 
     /// Gets all sections that match the provided name, ignoring any subsections.
@@ -591,7 +591,7 @@ impl<'event> GitConfig<'event> {
     /// Calling this method will yield all sections:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use git_config::values::{Integer, Boolean, TrueVariant};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
@@ -635,7 +635,7 @@ impl<'event> GitConfig<'event> {
     /// Calling this method will yield all section bodies and their header:
     ///
     /// ```rust
-    /// use git_config::file::{GitConfig, GitConfigError};
+    /// use git_config::file::{GitConfig};
     /// use git_config::parser::Key;
     /// use std::borrow::Cow;
     /// use std::convert::TryFrom;
@@ -694,7 +694,7 @@ impl<'event> GitConfig<'event> {
     /// Creating a new empty section:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use std::convert::TryFrom;
     /// let mut git_config = GitConfig::new();
     /// let _section = git_config.new_section("hello", Some("world".into()));
@@ -704,7 +704,7 @@ impl<'event> GitConfig<'event> {
     /// Creating a new empty section and adding values to it:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use std::convert::TryFrom;
     /// let mut git_config = GitConfig::new();
     /// let mut section = git_config.new_section("hello", Some("world".into()));
@@ -732,7 +732,7 @@ impl<'event> GitConfig<'event> {
     /// Creating and removing a section:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use std::convert::TryFrom;
     /// let mut git_config = GitConfig::try_from(
     /// r#"[hello "world"]
@@ -746,7 +746,7 @@ impl<'event> GitConfig<'event> {
     /// Precedence example for removing sections with the same name:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use std::convert::TryFrom;
     /// let mut git_config = GitConfig::try_from(
     /// r#"[hello "world"]
@@ -817,7 +817,7 @@ impl<'event> GitConfig<'event> {
         subsection_name: impl Into<Option<&'lookup str>>,
         new_section_name: impl Into<SectionHeaderName<'event>>,
         new_subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) -> Result<(), GitConfigError<'lookup>> {
+    ) -> Result<(), lookup::existing::Error> {
         let id = self.get_section_ids_by_name_and_subname(section_name, subsection_name.into())?;
         let id = id
             .last()
@@ -867,7 +867,7 @@ impl<'event> GitConfig<'event> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Cow<'_, [u8]>, GitConfigError<'lookup>> {
+    ) -> Result<Cow<'_, [u8]>, lookup::existing::Error> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
@@ -887,7 +887,7 @@ impl<'event> GitConfig<'event> {
             }
         }
 
-        Err(GitConfigError::KeyDoesNotExist)
+        Err(lookup::existing::Error::KeyMissing)
     }
 
     /// Returns a mutable reference to an uninterpreted value given a section,
@@ -905,7 +905,7 @@ impl<'event> GitConfig<'event> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableValue<'_, 'lookup, 'event>, GitConfigError<'lookup>> {
+    ) -> Result<MutableValue<'_, 'lookup, 'event>, lookup::existing::Error> {
         let section_ids = self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
         let key = Key(key.into());
 
@@ -955,7 +955,7 @@ impl<'event> GitConfig<'event> {
             ));
         }
 
-        Err(GitConfigError::KeyDoesNotExist)
+        Err(lookup::existing::Error::KeyMissing)
     }
 
     /// Returns all uninterpreted values given a section, an optional subsection
@@ -981,12 +981,12 @@ impl<'event> GitConfig<'event> {
     /// # use std::convert::TryFrom;
     /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
-    ///     git_config.get_raw_multi_value("core", None, "a"),
-    ///     Ok(vec![
+    ///     git_config.get_raw_multi_value("core", None, "a").unwrap(),
+    ///     vec![
     ///         Cow::<[u8]>::Borrowed(b"b"),
     ///         Cow::<[u8]>::Borrowed(b"c"),
     ///         Cow::<[u8]>::Borrowed(b"d"),
-    ///     ]),
+    ///     ],
     /// );
     /// ```
     ///
@@ -998,12 +998,12 @@ impl<'event> GitConfig<'event> {
     /// This function will return an error if the key is not in any requested
     /// section and subsection, or if no instance of the section and subsections
     /// exist.
-    pub fn get_raw_multi_value<'lookup>(
+    pub fn get_raw_multi_value(
         &self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
-    ) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError<'lookup>> {
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
+    ) -> Result<Vec<Cow<'_, [u8]>>, lookup::existing::Error> {
         let mut values = vec![];
         for section_id in self.get_section_ids_by_name_and_subname(section_name, subsection_name)? {
             values.extend(
@@ -1017,7 +1017,7 @@ impl<'event> GitConfig<'event> {
         }
 
         if values.is_empty() {
-            Err(GitConfigError::KeyDoesNotExist)
+            Err(lookup::existing::Error::KeyMissing)
         } else {
             Ok(values)
         }
@@ -1041,7 +1041,7 @@ impl<'event> GitConfig<'event> {
     /// Attempting to get all values of `a` yields the following:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
@@ -1064,7 +1064,7 @@ impl<'event> GitConfig<'event> {
     ///         Cow::Borrowed(b"g")
     ///     ],
     /// );
-    /// # Ok::<(), GitConfigError>(())
+    /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///
     /// Consider [`Self::get_raw_value`] if you want to get the resolved single
@@ -1083,7 +1083,7 @@ impl<'event> GitConfig<'event> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableMultiValue<'_, 'lookup, 'event>, GitConfigError<'lookup>> {
+    ) -> Result<MutableMultiValue<'_, 'lookup, 'event>, lookup::existing::Error> {
         let section_ids = self.get_section_ids_by_name_and_subname(section_name, subsection_name)?;
         let key = Key(key.into());
 
@@ -1125,7 +1125,7 @@ impl<'event> GitConfig<'event> {
         entries.sort();
 
         if entries.is_empty() {
-            Err(GitConfigError::KeyDoesNotExist)
+            Err(lookup::existing::Error::KeyMissing)
         } else {
             Ok(MutableMultiValue::new(&mut self.sections, key, entries, offsets))
         }
@@ -1148,13 +1148,13 @@ impl<'event> GitConfig<'event> {
     /// Setting a new value to the key `core.a` will yield the following:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// git_config.set_raw_value("core", None, "a", vec![b'e'])?;
     /// assert_eq!(git_config.get_raw_value("core", None, "a")?, Cow::Borrowed(b"e"));
-    /// # Ok::<(), GitConfigError>(())
+    /// # Ok::<(), git_config::lookup::Error>(())
     /// ```
     ///
     /// # Errors
@@ -1166,7 +1166,7 @@ impl<'event> GitConfig<'event> {
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
         new_value: Vec<u8>,
-    ) -> Result<(), GitConfigError<'lookup>> {
+    ) -> Result<(), lookup::existing::Error> {
         self.get_raw_value_mut(section_name, subsection_name, key)
             .map(|mut entry| entry.set_bytes(new_value))
     }
@@ -1200,7 +1200,7 @@ impl<'event> GitConfig<'event> {
     /// Setting an equal number of values:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
@@ -1214,13 +1214,13 @@ impl<'event> GitConfig<'event> {
     /// assert!(fetched_config.contains(&Cow::Borrowed(b"x")));
     /// assert!(fetched_config.contains(&Cow::Borrowed(b"y")));
     /// assert!(fetched_config.contains(&Cow::Borrowed(b"z")));
-    /// # Ok::<(), GitConfigError>(())
+    /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///
     /// Setting less than the number of present values sets the first ones found:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
@@ -1232,13 +1232,13 @@ impl<'event> GitConfig<'event> {
     /// let fetched_config = git_config.get_raw_multi_value("core", None, "a")?;
     /// assert!(fetched_config.contains(&Cow::Borrowed(b"x")));
     /// assert!(fetched_config.contains(&Cow::Borrowed(b"y")));
-    /// # Ok::<(), GitConfigError>(())
+    /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///
     /// Setting more than the number of present values discards the rest:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig, GitConfigError};
+    /// # use git_config::file::{GitConfig};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
@@ -1250,7 +1250,7 @@ impl<'event> GitConfig<'event> {
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// assert!(!git_config.get_raw_multi_value("core", None, "a")?.contains(&Cow::Borrowed(b"discarded")));
-    /// # Ok::<(), GitConfigError>(())
+    /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///
     /// # Errors
@@ -1264,7 +1264,7 @@ impl<'event> GitConfig<'event> {
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
         new_values: impl Iterator<Item = Cow<'event, [u8]>>,
-    ) -> Result<(), GitConfigError<'lookup>> {
+    ) -> Result<(), lookup::existing::Error> {
         self.get_raw_multi_value_mut(section_name, subsection_name, key)
             .map(|mut v| v.set_values(new_values))
     }
@@ -1325,12 +1325,12 @@ impl<'event> GitConfig<'event> {
         &self,
         section_name: impl Into<SectionHeaderName<'lookup>>,
         subsection_name: Option<&'lookup str>,
-    ) -> Result<Vec<SectionId>, GitConfigError<'lookup>> {
+    ) -> Result<Vec<SectionId>, lookup::existing::Error> {
         let section_name = section_name.into();
         let section_ids = self
             .section_lookup_tree
             .get(&section_name)
-            .ok_or(GitConfigError::SectionDoesNotExist(section_name))?;
+            .ok_or(lookup::existing::Error::SectionMissing)?;
         let mut maybe_ids = None;
         // Don't simplify if and matches here -- the for loop currently needs
         // `n + 1` checks, while the if and matches will result in the for loop
@@ -1352,13 +1352,13 @@ impl<'event> GitConfig<'event> {
         }
         maybe_ids
             .map(Vec::to_owned)
-            .ok_or(GitConfigError::SubSectionDoesNotExist(subsection_name))
+            .ok_or(lookup::existing::Error::SubSectionMissing)
     }
 
     fn get_section_ids_by_name<'lookup>(
         &self,
         section_name: impl Into<SectionHeaderName<'lookup>>,
-    ) -> Result<Vec<SectionId>, GitConfigError<'lookup>> {
+    ) -> Result<Vec<SectionId>, lookup::existing::Error> {
         let section_name = section_name.into();
         self.section_lookup_tree
             .get(&section_name)
@@ -1371,7 +1371,7 @@ impl<'event> GitConfig<'event> {
                     })
                     .collect()
             })
-            .ok_or(GitConfigError::SectionDoesNotExist(section_name))
+            .ok_or(lookup::existing::Error::SectionMissing)
     }
 }
 

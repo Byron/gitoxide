@@ -6,11 +6,11 @@ use std::{
 
 use crate::{
     file::{
-        error::GitConfigError,
         git_config::SectionId,
         section::{MutableSection, SectionBody},
         Index, Size,
     },
+    lookup,
     parser::{Event, Key},
     values::{normalize_bytes, normalize_vec},
 };
@@ -55,7 +55,7 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
     ///
     /// Returns an error if the lookup failed.
     #[inline]
-    pub fn get(&self) -> Result<Cow<'_, [u8]>, GitConfigError> {
+    pub fn get(&self) -> Result<Cow<'_, [u8]>, lookup::existing::Error> {
         self.section.get(&self.key, self.index, self.index + self.size)
     }
 
@@ -149,7 +149,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// # Errors
     ///
     /// Returns an error if the lookup failed.
-    pub fn get(&self) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError> {
+    pub fn get(&self) -> Result<Vec<Cow<'_, [u8]>>, lookup::existing::Error> {
         let mut found_key = false;
         let mut values = vec![];
         let mut partial_value = None;
@@ -190,7 +190,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
         }
 
         if values.is_empty() {
-            return Err(GitConfigError::KeyDoesNotExist);
+            return Err(lookup::existing::Error::KeyMissing);
         }
 
         Ok(values)

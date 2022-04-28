@@ -113,10 +113,9 @@ fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
 fn section_names_are_case_insensitive() -> crate::Result {
     let config = "[core] bool-implicit";
     let file = GitConfig::try_from(config)?;
-    assert!(file.value::<Boolean>("core", None, "bool-implicit").is_ok());
     assert_eq!(
-        file.value::<Boolean>("core", None, "bool-implicit"),
-        file.value::<Boolean>("CORE", None, "bool-implicit")
+        file.value::<Boolean>("core", None, "bool-implicit").unwrap(),
+        file.value::<Boolean>("CORE", None, "bool-implicit").unwrap()
     );
 
     Ok(())
@@ -130,8 +129,8 @@ fn value_names_are_case_insensitive() -> crate::Result {
     let file = GitConfig::try_from(config)?;
     assert_eq!(file.multi_value::<Boolean>("core", None, "a")?.len(), 2);
     assert_eq!(
-        file.value::<Boolean>("core", None, "a"),
-        file.value::<Boolean>("core", None, "A")
+        file.value::<Boolean>("core", None, "a").unwrap(),
+        file.value::<Boolean>("core", None, "A").unwrap()
     );
 
     Ok(())

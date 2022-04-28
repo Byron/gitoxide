@@ -61,14 +61,13 @@ pub mod lookup {
         /// The error when looking up a value.
         #[derive(Debug)]
         pub enum Error {
-            Missing(err: crate::lookup::existing::Error) {
+            ValueMissing(err: crate::lookup::existing::Error) {
                 display("The desired value could not be found")
-                from(err)
+                from()
                 source(err)
             }
             FailedConversion(err: Box<dyn std::error::Error + Send + Sync + 'static>) {
                 display("The conversion into the provided type failed.")
-                from(err)
                 source(&**err)
             }
         }
