@@ -643,9 +643,7 @@ pub enum IntegerError {
     #[error(transparent)]
     Utf8Conversion(#[from] std::str::Utf8Error),
     #[error("Invalid argument format")]
-    InvalidFormat,
-    #[error("Invalid suffix")]
-    InvalidSuffix,
+    Invalid { input: BString },
 }
 
 impl TryFrom<&[u8]> for Integer {
@@ -660,7 +658,7 @@ impl TryFrom<&[u8]> for Integer {
         // Assume we have a prefix at this point.
 
         if s.len() <= 1 {
-            return Err(IntegerError::InvalidFormat);
+            return Err(IntegerError::Invalid { input: s.into() });
         }
 
         let (number, suffix) = s.split_at(s.len() - 1);
@@ -670,7 +668,7 @@ impl TryFrom<&[u8]> for Integer {
                 suffix: Some(suffix),
             })
         } else {
-            Err(IntegerError::InvalidFormat)
+            Err(IntegerError::Invalid { input: s.into() })
         }
     }
 }
@@ -754,28 +752,28 @@ impl Serialize for IntegerSuffix {
 }
 
 impl FromStr for IntegerSuffix {
-    type Err = IntegerError;
+    type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "k" | "K" => Ok(Self::Kibi),
             "m" | "M" => Ok(Self::Mebi),
             "g" | "G" => Ok(Self::Gibi),
-            _ => Err(IntegerError::InvalidSuffix),
+            _ => Err(()),
         }
     }
 }
 
 impl TryFrom<&[u8]> for IntegerSuffix {
-    type Error = IntegerError;
+    type Error = ();
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        Self::from_str(std::str::from_utf8(s)?)
+        Self::from_str(std::str::from_utf8(s).map_err(|_| ())?)
     }
 }
 
 impl TryFrom<Vec<u8>> for IntegerSuffix {
-    type Error = IntegerError;
+    type Error = ();
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
