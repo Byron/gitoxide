@@ -40,6 +40,9 @@ EOF
 # a sample .gitignore
 sub-level-local-file-anywhere
 sub-level-dir-anywhere/
+!/negated
+/negated-dir/
+!/negated-dir/
 EOF
 
   git add .gitignore dir-with-ignore
@@ -102,6 +105,8 @@ dir-with-ignore/sub-level-dir-anywhere/
 other-dir-with-ignore/sub-level-dir-anywhere/hello
 other-dir-with-ignore/other-sub-level-dir-anywhere/hello
 other-dir-with-ignore/other-sub-level-dir-anywhere/
+dir-with-ignore/negated
+dir-with-ignore/negated-dir/hello
 EOF
 
 )
