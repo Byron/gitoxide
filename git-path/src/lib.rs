@@ -41,18 +41,12 @@
 //! ever get into a code-path which does panic though.
 
 /// A dummy type to represent path specs and help finding all spots that take path specs once it is implemented.
+
+/// A preliminary version of a path-spec based on glances of the code.
 #[derive(Clone, Debug)]
-pub struct Spec(String);
-
-impl FromStr for Spec {
-    type Err = std::convert::Infallible;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Spec(s.to_owned()))
-    }
-}
+pub struct Spec(bstr::BString);
 
 mod convert;
+mod spec;
 
 pub use convert::*;
-use std::str::FromStr;

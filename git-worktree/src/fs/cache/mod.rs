@@ -57,6 +57,7 @@ impl<'paths> Cache<'paths> {
     }
 }
 
+#[must_use]
 pub struct Platform<'a, 'paths> {
     parent: &'a Cache<'paths>,
     is_dir: Option<bool>,

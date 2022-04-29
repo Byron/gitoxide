@@ -391,6 +391,7 @@ pub mod repo {
                 #[clap(long, short = 'p')]
                 patterns: Vec<OsString>,
                 /// The git path specifications to check for exclusion.
+                #[clap(parse(try_from_os_str = std::convert::TryFrom::try_from))]
                 pathspecs: Vec<git::path::Spec>,
             },
         }

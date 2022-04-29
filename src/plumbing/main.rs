@@ -157,7 +157,7 @@ pub fn main() -> Result<()> {
         },
         Subcommands::Repository(repo::Platform { repository, cmd }) => {
             use git_repository as git;
-            let repository = git::ThreadSafeRepository::open(repository)?;
+            let repository = git::ThreadSafeRepository::discover(repository)?;
             match cmd {
                 repo::Subcommands::Commit { cmd } => match cmd {
                     repo::commit::Subcommands::Describe {
