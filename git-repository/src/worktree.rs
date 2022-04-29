@@ -73,13 +73,10 @@ impl<'repo> crate::Worktree<'repo> {
             overrides.unwrap_or_default(),
             git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(
                 repo.git_dir(),
-                repo.config
-                    .excludes_file
-                    .as_ref()
-                    .map(|p| Ok(Some(p.to_owned())))
-                    .or_else(|| repo.config.xdg_config_path("ignore").into())
-                    .transpose()?
-                    .flatten(),
+                match repo.config.excludes_file.as_ref() {
+                    Some(user_path) => Some(user_path.to_owned()),
+                    None => repo.config.xdg_config_path("ignore")?,
+                },
                 &mut buf,
             )?,
             None,
