@@ -28,6 +28,7 @@ pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
 /// What constitutes a valid git repository, and what's yet to be implemented, returning the guessed repository kind
 /// purely based on the presence of files. Note that the git-config ultimately decides what's bare.
 ///
+/// * [ ] git files
 /// * [x] a valid head
 /// * [ ] git common directory
 ///   * [ ] respect GIT_COMMON_DIR

@@ -27,7 +27,11 @@ impl Path {
     pub fn from_dot_git_dir(dir: impl Into<PathBuf>, kind: Kind) -> Self {
         let dir = dir.into();
         match kind {
-            Kind::WorkTree => Path::WorkTree(dir.parent().expect("this is a sub-directory").to_owned()),
+            Kind::WorkTree => Path::WorkTree(if dir == std::path::Path::new(".git") {
+                PathBuf::from(".")
+            } else {
+                dir.parent().expect("this is a sub-directory").to_owned()
+            }),
             Kind::Bare => Path::Repository(dir),
         }
     }

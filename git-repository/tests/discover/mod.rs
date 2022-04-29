@@ -1,5 +1,5 @@
 mod existing {
-    use std::path::{Component, PathBuf};
+    use std::path::PathBuf;
 
     use git_repository::Kind;
 
@@ -75,12 +75,9 @@ mod existing {
         let (path, trust) = git_repository::path::discover(&dir)?;
         assert_eq!(path.kind(), Kind::WorkTree);
         assert_eq!(
-            path.as_ref()
-                .components()
-                .filter(|c| matches!(c, Component::ParentDir | Component::CurDir))
-                .count(),
-            0,
-            "there are no relative path components anymore"
+            path.as_ref(),
+            std::path::Path::new(".."),
+            "there is only the minimal amount of relative path components to see this worktree"
         );
         assert_ne!(
             path.as_ref().canonicalize()?,

@@ -183,6 +183,7 @@ pub fn to_unix_separators_on_windows<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<
 /// Replaces windows path separators with slashes, unconditionally.
 ///
 /// **Note** Do not use these and prefer the conditional versions of this method.
+// TODO: use https://lib.rs/crates/path-slash to handle escapes
 pub fn to_unix_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
     replace(path, b'\\', b'/')
 }
@@ -190,6 +191,7 @@ pub fn to_unix_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
 /// Find backslashes and replace them with slashes, which typically resembles a unix path, unconditionally.
 ///
 /// **Note** Do not use these and prefer the conditional versions of this method.
+// TODO: use https://lib.rs/crates/path-slash to handle escapes
 pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
     replace(path, b'/', b'\\')
 }
