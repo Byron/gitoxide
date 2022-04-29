@@ -466,9 +466,15 @@ impl<'event> GitConfig<'event> {
             .map(|v| values::String::from(v).value)
     }
 
-    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the paty wasn't found.
+    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the path wasn't found.
     ///
-    /// As strings perform no conversions, this will never fail.
+    /// Note that this path is not vetted and should only point to resources which can't be used
+    /// to pose a security risk.
+    ///
+    /// As paths perform no conversions, this will never fail.
+    // TODO: add `secure_path()` or similar to make use of our knowledge of the trust associated with each configuration
+    //       file, maybe even remove the insecure version to force every caller to ask themselves if the resource can
+    //       be used securely or not.
     pub fn path(
         &'event self,
         section_name: &str,
