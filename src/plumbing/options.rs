@@ -379,11 +379,17 @@ pub mod repo {
 
     pub mod exclude {
         use git_repository as git;
+        use std::ffi::OsString;
 
         #[derive(Debug, clap::Subcommand)]
         pub enum Subcommands {
             /// Check if path-specs are excluded and print the result similar to `git check-ignore`.
             Query {
+                /// Additional patterns to use for exclusions. They have the highest priority.
+                ///
+                /// Useful for undoing previous patterns using the '!' prefix.
+                #[clap(long, short = 'p')]
+                patterns: Vec<OsString>,
                 /// The git path specifications to check for exclusion.
                 pathspecs: Vec<git::path::Spec>,
             },

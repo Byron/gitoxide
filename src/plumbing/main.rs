@@ -195,7 +195,7 @@ pub fn main() -> Result<()> {
                     ),
                 },
                 repo::Subcommands::Exclude { cmd } => match cmd {
-                    repo::exclude::Subcommands::Query { pathspecs } => prepare_and_run(
+                    repo::exclude::Subcommands::Query { patterns, pathspecs } => prepare_and_run(
                         "repository-exclude-query",
                         verbose,
                         progress,
@@ -205,7 +205,11 @@ pub fn main() -> Result<()> {
                             core::repository::exclude::query(
                                 repository.into(),
                                 out,
-                                core::repository::exclude::query::Options { format, pathspecs },
+                                core::repository::exclude::query::Options {
+                                    format,
+                                    pathspecs,
+                                    overrides: patterns,
+                                },
                             )
                         },
                     ),
