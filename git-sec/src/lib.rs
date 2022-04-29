@@ -1,6 +1,7 @@
 #![deny(unsafe_code, rust_2018_idioms, missing_docs)]
 //! A shared trust model for `gitoxide` crates.
 
+use std::fmt::{Debug, Display, Formatter};
 use std::marker::PhantomData;
 use std::ops::Deref;
 
@@ -75,19 +76,22 @@ pub mod trust {
 ///
 pub mod permission {
     use crate::Access;
+    use std::fmt::{Debug, Display};
 
     /// A marker trait to signal tags for permissions.
-    pub trait Tag {}
+    pub trait Tag: Debug {}
 
     /// A tag indicating that a permission is applying to the contents of a configuration file.
+    #[derive(Debug)]
     pub struct Config;
     impl Tag for Config {}
 
     /// A tag indicating that a permission is applying to the resource itself.
+    #[derive(Debug)]
     pub struct Resource;
     impl Tag for Resource {}
 
-    impl<P> Access<Config, P> {
+    impl<P: Debug + Display> Access<Config, P> {
         /// Create a permission for values contained in git configuration files.
         ///
         /// This applies permissions to values contained inside of these files.
@@ -99,7 +103,7 @@ pub mod permission {
         }
     }
 
-    impl<P> Access<Resource, P> {
+    impl<P: Debug + Display> Access<Resource, P> {
         /// Create a permission a file or directory itself.
         ///
         /// This applies permissions to a configuration file itself and whether it can be used at all, or to a directory
@@ -110,6 +114,18 @@ pub mod permission {
                 _data: Default::default(),
             }
         }
+    }
+
+    /// An error to use if an operation cannot proceed due to insufficient permissions.
+    ///
+    /// It's up to the implementation to decide which permission is required for an operation, and which one
+    /// causes errors.
+    #[cfg(feature = "thiserror")]
+    #[derive(Debug, thiserror::Error)]
+    #[error("Not allowed to handle resource {:?}: permission {}", .resource, .permission)]
+    pub struct Error<R: Debug, P: Debug + Display> {
+        resource: R,
+        permission: P,
     }
 }
 
@@ -125,6 +141,19 @@ pub enum Permission {
     Allow,
 }
 
+impl Display for Permission {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(
+            match self {
+                Permission::Allow => "allowed",
+                Permission::Deny => "denied",
+                Permission::Forbid => "forbidden",
+            },
+            f,
+        )
+    }
+}
+
 bitflags::bitflags! {
     /// Whether something can be read or written.
     #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -136,14 +165,27 @@ bitflags::bitflags! {
     }
 }
 
+impl Display for ReadWrite {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Debug::fmt(self, f)
+    }
+}
+
 /// A container to define tagged access permissions, rendering the permission read-only.
-pub struct Access<T: permission::Tag, P> {
+#[derive(Debug)]
+pub struct Access<T: permission::Tag, P: Debug + Display> {
     /// The access permission itself.
     permission: P,
     _data: PhantomData<T>,
 }
 
-impl<T: permission::Tag, P> Deref for Access<T, P> {
+impl<T: permission::Tag, P: Debug + Display> Display for Access<T, P> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.permission, f)
+    }
+}
+
+impl<T: permission::Tag, P: Debug + Display> Deref for Access<T, P> {
     type Target = P;
 
     fn deref(&self) -> &Self::Target {
