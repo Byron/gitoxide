@@ -147,6 +147,7 @@ impl Permission {
     /// Check this permissions and produce a reply to indicate if the `resource` can be used and in which way.
     ///
     /// Only if this permission is set to `Allow` will the resource be usable.
+    #[cfg(feature = "thiserror")]
     pub fn check<R: Debug>(&self, resource: R) -> Result<Option<R>, permission::Error<R, Self>> {
         match self {
             Permission::Allow => Ok(Some(resource)),

@@ -32,12 +32,16 @@ pub(crate) struct Cache {
     /// If true, multi-pack indices, whether present or not, may be used by the object database.
     pub use_multi_pack_index: bool,
     /// If true, we are on a case-insensitive file system.
+    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub ignore_case: bool,
     /// The path to the user-level excludes file to ignore certain files in the worktree.
+    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub excludes_file: Option<std::path::PathBuf>,
     /// Define how we can use values obtained with `xdg_config(…)` and its `XDG_CONFIG_HOME` variable.
+    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     xdg_config_home_env: EnvVarResourcePermission,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.
+    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     home_env: EnvVarResourcePermission,
     // TODO: make core.precomposeUnicode available as well.
 }
@@ -135,6 +139,7 @@ mod cache {
         }
 
         /// Return a path by using the `$XDF_CONFIG_HOME` or `$HOME/.config/…` environment variables locations.
+        #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
         pub fn xdg_config_path(
             &self,
             resource_file_name: &str,
