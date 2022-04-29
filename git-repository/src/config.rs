@@ -1,4 +1,5 @@
 use crate::bstr::BString;
+use crate::permission::EnvVarResourcePermission;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -34,11 +35,16 @@ pub(crate) struct Cache {
     pub ignore_case: bool,
     /// The path to the user-level excludes file to ignore certain files in the worktree.
     pub excludes_file: Option<std::path::PathBuf>,
+    /// Define how we can use values obtained with `xdg_config(…)` and its `XDG_CONFIG_HOME` variable.
+    xdg_config_home_env: EnvVarResourcePermission,
+    /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.
+    home_env: EnvVarResourcePermission,
     // TODO: make core.precomposeUnicode available as well.
 }
 
 mod cache {
     use std::convert::TryFrom;
+    use std::path::PathBuf;
 
     use git_config::{
         file::GitConfig,
@@ -47,9 +53,15 @@ mod cache {
 
     use super::{Cache, Error};
     use crate::bstr::ByteSlice;
+    use crate::permission::EnvVarResourcePermission;
 
     impl Cache {
-        pub fn new(git_dir: &std::path::Path, git_install_dir: Option<&std::path::Path>) -> Result<Self, Error> {
+        pub fn new(
+            git_dir: &std::path::Path,
+            xdg_config_home_env: EnvVarResourcePermission,
+            home_env: EnvVarResourcePermission,
+            git_install_dir: Option<&std::path::Path>,
+        ) -> Result<Self, Error> {
             let config = GitConfig::open(git_dir.join("config"))?;
 
             let is_bare = config_bool(&config, "core.bare", false)?;
@@ -117,7 +129,25 @@ mod cache {
                 ignore_case,
                 hex_len,
                 excludes_file,
+                xdg_config_home_env,
+                home_env,
             })
+        }
+
+        /// Return a path by using the `$XDF_CONFIG_HOME` or `$HOME/.config/…` environment variables locations.
+        pub fn xdg_config_path(
+            &self,
+            resource_file_name: &str,
+        ) -> Result<Option<PathBuf>, git_sec::permission::Error<PathBuf, git_sec::Permission>> {
+            std::env::var_os("XDG_CONFIG_HOME")
+                .map(|path| (path, &self.xdg_config_home_env))
+                .or_else(|| std::env::var_os("HOME").map(|path| (path, &self.home_env)))
+                .map(|(base, permission)| {
+                    let resource = std::path::PathBuf::from(base).join("git").join(resource_file_name);
+                    permission.check(resource).transpose()
+                })
+                .flatten()
+                .transpose()
         }
     }
 

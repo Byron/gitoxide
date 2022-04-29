@@ -60,7 +60,7 @@ git-ref = { version = "^0.12.1", path = "../git-ref" }
 git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-validate = { version ="^0.5.3", path = "../git-validate" }
-git-sec = { version = "^0.1.0", path = "../git-sec" }
+git-sec = { version = "^0.1.0", path = "../git-sec", features = ["thiserror"] }
 
 git-config = { version = "^0.2.1", path = "../git-config" }
 git-odb = { version = "^0.28.0", path = "../git-odb" }

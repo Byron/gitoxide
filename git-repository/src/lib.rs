@@ -204,7 +204,6 @@ pub mod id;
 pub mod object;
 pub mod reference;
 mod repository;
-pub use repository::{permissions, permissions::Permissions};
 pub mod tag;
 
 /// The kind of `Repository`
@@ -242,6 +241,16 @@ pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<crate::Reposi
 pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repository, open::Error> {
     ThreadSafeRepository::open(directory).map(Into::into)
 }
+
+///
+pub mod permission {
+    use git_sec::permission::Resource;
+    use git_sec::Access;
+
+    /// A permission to control access to the resource pointed to an environment variable.
+    pub type EnvVarResourcePermission = Access<Resource, git_sec::Permission>;
+}
+pub use repository::permissions::Permissions;
 
 ///
 pub mod open;

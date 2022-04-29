@@ -22,6 +22,22 @@ pub mod open_index {
     }
 }
 
+///
+#[cfg(feature = "git-index")]
+pub mod excludes {
+    use std::path::PathBuf;
+
+    /// The error returned by [`Worktree::excludes()`][crate::Worktree::excludes()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Could not read repository exclude.")]
+        Io(#[from] std::io::Error),
+        #[error(transparent)]
+        EnvironmentPermission(#[from] git_sec::permission::Error<PathBuf, git_sec::Permission>),
+    }
+}
+
 /// A structure to make the API more stuctured.
 pub struct Platform<'repo> {
     pub(crate) parent: &'repo Repository,
@@ -45,7 +61,7 @@ impl<'repo> crate::Worktree<'repo> {
         &self,
         index: &'a git_index::State,
         overrides: Option<git_attributes::MatchGroup<git_attributes::Ignore>>,
-    ) -> std::io::Result<git_worktree::fs::Cache<'a>> {
+    ) -> Result<git_worktree::fs::Cache<'a>, excludes::Error> {
         let repo = self.parent;
         let case = repo
             .config
@@ -57,7 +73,13 @@ impl<'repo> crate::Worktree<'repo> {
             overrides.unwrap_or_default(),
             git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(
                 repo.git_dir(),
-                repo.config.excludes_file.clone(), // TODO: read from XDG home and make it controllable how env vars are used via git-sec
+                repo.config
+                    .excludes_file
+                    .as_ref()
+                    .map(|p| Ok(Some(p.to_owned())))
+                    .or_else(|| repo.config.xdg_config_path("ignore").into())
+                    .transpose()?
+                    .flatten(),
                 &mut buf,
             )?,
             None,

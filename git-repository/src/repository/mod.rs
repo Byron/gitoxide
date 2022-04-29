@@ -42,7 +42,7 @@ impl crate::Repository {
 mod worktree;
 
 /// Various permissions for parts of git repositories.
-pub mod permissions;
+pub(crate) mod permissions;
 
 mod init;
 

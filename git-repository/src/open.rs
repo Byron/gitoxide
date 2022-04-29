@@ -153,10 +153,15 @@ impl crate::ThreadSafeRepository {
         Options {
             object_store_slots,
             replacement_objects,
-            permissions,
+            permissions:
+                Permissions {
+                    git_dir: git_dir_perm,
+                    xdg_config_home,
+                    home,
+                },
         }: Options,
     ) -> Result<Self, Error> {
-        if *permissions.git_dir != git_sec::ReadWrite::all() {
+        if *git_dir_perm != git_sec::ReadWrite::all() {
             // TODO: respect `save.directory`, which needs more support from git-config to do properly.
             return Err(Error::UnsafeGitDir { path: git_dir });
         }
@@ -164,7 +169,12 @@ impl crate::ThreadSafeRepository {
         //       This would be something read in later as have to first check for extensions. Also this means
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
         //       as it may have its own configuration. That's fine actually.
-        let config = crate::config::Cache::new(&git_dir, crate::path::install_dir().ok().as_deref())?;
+        let config = crate::config::Cache::new(
+            &git_dir,
+            xdg_config_home,
+            home,
+            crate::path::install_dir().ok().as_deref(),
+        )?;
         match worktree_dir {
             None if !config.is_bare => {
                 worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());

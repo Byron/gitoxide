@@ -1,3 +1,4 @@
+use crate::permission::EnvVarResourcePermission;
 use git_sec::permission::Resource;
 use git_sec::{Access, Trust};
 
@@ -7,6 +8,12 @@ pub struct Permissions {
     ///
     /// Note that a repository won't be usable at all unless read and write permissions are given.
     pub git_dir: Access<Resource, git_sec::ReadWrite>,
+    /// Control whether resources pointed to by `XDG_CONFIG_HOME` can be used when looking up common configuration values.
+    ///
+    /// Note that [`git_sec::Permission::Forbid`] will cause the operation to abort if a resource is set via the XDG config environment.
+    pub xdg_config_home: EnvVarResourcePermission,
+    /// Control if resources pointed to by the
+    pub home: EnvVarResourcePermission,
 }
 
 impl Permissions {
@@ -15,6 +22,8 @@ impl Permissions {
     pub fn strict() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::empty()),
+            xdg_config_home: Access::resource(git_sec::Permission::Allow),
+            home: Access::resource(git_sec::Permission::Allow),
         }
     }
 
@@ -26,6 +35,8 @@ impl Permissions {
     pub fn secure() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::all()),
+            xdg_config_home: Access::resource(git_sec::Permission::Allow),
+            home: Access::resource(git_sec::Permission::Allow),
         }
     }
 
@@ -34,6 +45,8 @@ impl Permissions {
     pub fn all() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::all()),
+            xdg_config_home: Access::resource(git_sec::Permission::Allow),
+            home: Access::resource(git_sec::Permission::Allow),
         }
     }
 }
