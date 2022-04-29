@@ -153,7 +153,7 @@ impl Permission {
             Permission::Deny => Ok(None),
             Permission::Forbid => Err(permission::Error {
                 resource,
-                permission: self.clone(),
+                permission: *self,
             }),
         }
     }

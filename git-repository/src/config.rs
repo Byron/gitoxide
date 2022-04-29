@@ -142,11 +142,10 @@ mod cache {
             std::env::var_os("XDG_CONFIG_HOME")
                 .map(|path| (path, &self.xdg_config_home_env))
                 .or_else(|| std::env::var_os("HOME").map(|path| (path, &self.home_env)))
-                .map(|(base, permission)| {
+                .and_then(|(base, permission)| {
                     let resource = std::path::PathBuf::from(base).join("git").join(resource_file_name);
                     permission.check(resource).transpose()
                 })
-                .flatten()
                 .transpose()
         }
     }
