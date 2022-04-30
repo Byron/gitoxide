@@ -43,7 +43,6 @@ impl Default for Options {
 pub(crate) mod function {
     use super::{Error, Options};
     use git_sec::Trust;
-    use std::path::PathBuf;
     use std::{
         borrow::Cow,
         path::{Component, Path},
@@ -92,22 +91,19 @@ pub(crate) mod function {
                             // TODO: test this more
                             let path = if is_canonicalized {
                                 match std::env::current_dir() {
-                                    Ok(cwd) => {
-                                        dbg!(&cwd, &cursor);
-                                        let short_path_components = cwd
-                                            .strip_prefix(&cursor.parent().expect(".git appended"))
-                                            .expect("cwd is always within canonicalized candidate")
-                                            .components()
-                                            .count();
-                                        if short_path_components < cursor.components().count() {
-                                            let mut p = PathBuf::new();
-                                            p.extend(std::iter::repeat("..").take(short_path_components));
-                                            p.push(".git");
-                                            p
-                                        } else {
-                                            cursor.into_owned()
-                                        }
-                                    }
+                                    Ok(cwd) => cwd
+                                        .strip_prefix(&cursor.parent().expect(".git appended"))
+                                        .ok()
+                                        .and_then(|p| {
+                                            let short_path_components = p.components().count();
+                                            (short_path_components < cursor.components().count()).then(|| {
+                                                std::iter::repeat("..")
+                                                    .take(short_path_components)
+                                                    .chain(Some(".git"))
+                                                    .collect()
+                                            })
+                                        })
+                                        .unwrap_or_else(|| cursor.into_owned()),
                                     Err(_) => cursor.into_owned(),
                                 }
                             } else {

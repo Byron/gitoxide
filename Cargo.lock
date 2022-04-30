@@ -1472,6 +1472,7 @@ dependencies = [
  "git-url",
  "git-validate",
  "git-worktree",
+ "is_ci",
  "log",
  "signal-hook",
  "tempfile",
