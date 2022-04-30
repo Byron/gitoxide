@@ -93,6 +93,7 @@ pub(crate) mod function {
                             let path = if is_canonicalized {
                                 match std::env::current_dir() {
                                     Ok(cwd) => {
+                                        dbg!(&cwd, &cursor);
                                         let short_path_components = cwd
                                             .strip_prefix(&cursor.parent().expect(".git appended"))
                                             .expect("cwd is always within canonicalized candidate")
