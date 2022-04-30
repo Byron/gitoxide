@@ -139,7 +139,7 @@ pub enum Permission {
     Forbid,
     /// Ignore resources or try to avoid performing an operation.
     Deny,
-    /// Allow loading a reasource or performing an action.
+    /// Allow loading a resource or performing an action.
     Allow,
 }
 

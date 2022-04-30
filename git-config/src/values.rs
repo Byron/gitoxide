@@ -638,7 +638,7 @@ impl Serialize for Integer {
 
 fn int_err(input: impl Into<BString>) -> value::parse::Error {
     value::parse::Error::new(
-        "Intgers needs to be positive or negative numbers which may have a suffix like 1k, or 50G",
+        "Integers needs to be positive or negative numbers which may have a suffix like 1k, 42, or 50G",
         input,
     )
 }
