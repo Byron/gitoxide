@@ -964,7 +964,7 @@ mod from_paths_tests {
             git_dir: Some(e_x_y_path.as_path()),
             ..Default::default()
         };
-        let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
+        let config = GitConfig::from_paths(vec![a_path], &options).unwrap();
         assert_eq!(
             config.raw_value("core", None, "b").unwrap(),
             Cow::<[u8]>::Borrowed(b"2"),

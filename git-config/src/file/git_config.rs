@@ -254,7 +254,7 @@ impl<'event> GitConfig<'event> {
     ) -> Result<(), from_paths::Error> {
         // TODO handle new git undocumented feature `hasconfig`
         fn include_condition_is_true(
-            condition: &Cow<str>,
+            condition: &str,
             target_config_path: Option<&Path>,
             options: &from_paths::Options,
         ) -> bool {
@@ -267,10 +267,10 @@ impl<'event> GitConfig<'event> {
                 if let Some((git_ref::Category::LocalBranch, branch_name)) = branch_name.category_and_short_name() {
                     if let Some(condition) = condition.strip_prefix("onbranch:") {
                         let mut condition = Cow::Borrowed(condition);
-                        if condition.starts_with("/") {
+                        if condition.starts_with('/') {
                             condition = Cow::Owned(format!("**{}", condition));
                         }
-                        if condition.ends_with("/") {
+                        if condition.ends_with('/') {
                             condition = Cow::Owned(format!("{}**", condition));
                         }
                         let pattern = condition.as_bytes().as_bstr();
@@ -284,11 +284,11 @@ impl<'event> GitConfig<'event> {
         }
 
         fn is_match(target_config_path: &Option<&Path>, options: &Options, git_dir: &Path, condition: &str) -> bool {
-            if condition.contains("\\") {
+            if condition.contains('\\') {
                 return false;
             }
             let condition_path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
-            if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir.as_deref()) {
+            if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir) {
                 let mut condition_path = git_path::into_bstr(condition_path).as_bstr().to_owned();
                 condition_path = BString::from(condition_path.replace("\\", "/"));
 
@@ -326,7 +326,7 @@ impl<'event> GitConfig<'event> {
                 dbg!(&result);
                 return result;
             }
-            return false;
+            false
         }
 
         fn resolve_includes_recursive(
@@ -402,7 +402,7 @@ impl<'event> GitConfig<'event> {
             target_config_path: Option<&Path>,
             options: &from_paths::Options,
         ) -> Result<PathBuf, from_paths::Error> {
-            let path = path.interpolate(options.git_install_dir.as_deref())?;
+            let path = path.interpolate(options.git_install_dir)?;
             let path: PathBuf = if path.is_relative() {
                 target_config_path
                     .ok_or(from_paths::Error::MissingConfigPath)?
