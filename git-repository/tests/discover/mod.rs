@@ -71,7 +71,7 @@ mod existing {
         // up far enough. (This tests that `discover::existing` canonicalizes paths before
         // exploring ancestors.)
         let working_dir = repo_path()?;
-        let dir = working_dir.join("some/very/deeply/nested/subdir/../../../../../../..");
+        let dir = working_dir.join("some/very/deeply/nested/subdir/../../../../../..");
         let (path, trust) = git_repository::path::discover(&dir)?;
         assert_eq!(path.kind(), Kind::WorkTree);
         assert_eq!(
