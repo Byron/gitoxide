@@ -14,6 +14,7 @@ pub mod query {
         pub format: OutputFormat,
         pub pathspecs: Vec<git::path::Spec>,
         pub overrides: Vec<OsString>,
+        pub show_ignore_patterns: bool,
     }
 }
 
@@ -24,6 +25,7 @@ pub fn query(
         overrides,
         format,
         pathspecs,
+        show_ignore_patterns,
     }: query::Options,
 ) -> anyhow::Result<()> {
     if format != OutputFormat::Human {
@@ -50,7 +52,7 @@ pub fn query(
             let entry = cache.at_entry(path, is_dir, |oid, buf| repo.objects.find_blob(oid, buf))?;
             let match_ = entry
                 .matching_exclude_pattern()
-                .and_then(|m| (!m.pattern.is_negative()).then(|| m));
+                .and_then(|m| (show_ignore_patterns || !m.pattern.is_negative()).then(|| m));
             match match_ {
                 Some(m) => writeln!(
                     out,

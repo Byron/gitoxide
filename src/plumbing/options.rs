@@ -385,6 +385,11 @@ pub mod repo {
         pub enum Subcommands {
             /// Check if path-specs are excluded and print the result similar to `git check-ignore`.
             Query {
+                /// Show actual ignore patterns instead of un-excluding an entry.
+                ///
+                /// That way one can understand why an entry might not be excluded.
+                #[clap(long, short = 'i')]
+                show_ignore_patterns: bool,
                 /// Additional patterns to use for exclusions. They have the highest priority.
                 ///
                 /// Useful for undoing previous patterns using the '!' prefix.
