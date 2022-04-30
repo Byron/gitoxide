@@ -215,8 +215,7 @@ pub fn main() -> Result<()> {
                                         stdin_or_bail()?
                                             .byte_lines()
                                             .filter_map(Result::ok)
-                                            .map(|line| git::path::Spec::from_bytes(line.as_bstr()))
-                                            .flatten(),
+                                            .filter_map(|line| git::path::Spec::from_bytes(line.as_bstr())),
                                     ) as Box<dyn Iterator<Item = git::path::Spec>>
                                 } else {
                                     Box::new(pathspecs.into_iter())
