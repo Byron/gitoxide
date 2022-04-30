@@ -124,7 +124,7 @@ impl file::Store {
         };
         let relative_path = base.join(inbetween).join(relative_path);
 
-        let path_to_open = git_features::path::convert::to_windows_separators_on_windows_or_panic(&relative_path);
+        let path_to_open = git_path::to_native_path_on_windows(git_path::into_bstr(&relative_path));
         let contents = match self
             .ref_contents(&path_to_open)
             .map_err(|err| Error::ReadFileContents {

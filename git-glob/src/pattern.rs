@@ -1,5 +1,6 @@
 use bitflags::bitflags;
 use bstr::{BStr, ByteSlice};
+use std::fmt;
 
 use crate::{pattern, wildmatch, Pattern};
 
@@ -36,6 +37,12 @@ pub enum Case {
     Fold,
 }
 
+impl Default for Case {
+    fn default() -> Self {
+        Case::Sensitive
+    }
+}
+
 impl Pattern {
     /// Parse the given `text` as pattern, or return `None` if `text` was empty.
     pub fn from_bytes(text: &[u8]) -> Option<Self> {
@@ -58,15 +65,14 @@ impl Pattern {
     /// `basename_start_pos` is the index at which the `path`'s basename starts.
     ///
     /// Lastly, `case` folding can be configured as well.
-    ///
-    /// Note that this method uses shortcuts to accelerate simple patterns.
     pub fn matches_repo_relative_path<'a>(
         &self,
         path: impl Into<&'a BStr>,
         basename_start_pos: Option<usize>,
-        is_dir: bool,
+        is_dir: Option<bool>,
         case: Case,
     ) -> bool {
+        let is_dir = is_dir.unwrap_or(false);
         if !is_dir && self.mode.contains(pattern::Mode::MUST_BE_DIR) {
             return false;
         }
@@ -84,20 +90,11 @@ impl Pattern {
         );
         debug_assert!(!path.starts_with(b"/"), "input path must be relative");
 
-        let (text, first_wildcard_pos) = self
-            .mode
-            .contains(pattern::Mode::ABSOLUTE)
-            .then(|| (self.text[1..].as_bstr(), self.first_wildcard_pos.map(|p| p - 1)))
-            .unwrap_or((self.text.as_bstr(), self.first_wildcard_pos));
-        if self.mode.contains(pattern::Mode::NO_SUB_DIR) {
-            let basename = if self.mode.contains(pattern::Mode::ABSOLUTE) {
-                path
-            } else {
-                &path[basename_start_pos.unwrap_or_default()..]
-            };
-            self.matches_inner(text, first_wildcard_pos, basename, flags)
+        if self.mode.contains(pattern::Mode::NO_SUB_DIR) && !self.mode.contains(pattern::Mode::ABSOLUTE) {
+            let basename = &path[basename_start_pos.unwrap_or_default()..];
+            self.matches(basename, flags)
         } else {
-            self.matches_inner(text, first_wildcard_pos, path, flags)
+            self.matches(path, flags)
         }
     }
 
@@ -107,22 +104,12 @@ impl Pattern {
     /// strings with cases ignored as well. Note that the case folding performed here is ASCII only.
     ///
     /// Note that this method uses some shortcuts to accelerate simple patterns.
-    pub fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
-        self.matches_inner(self.text.as_bstr(), self.first_wildcard_pos, value, mode)
-    }
-
-    fn matches_inner<'a>(
-        &self,
-        text: &BStr,
-        first_wildcard_pos: Option<usize>,
-        value: impl Into<&'a BStr>,
-        mode: wildmatch::Mode,
-    ) -> bool {
+    fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
         let value = value.into();
-        match first_wildcard_pos {
+        match self.first_wildcard_pos {
             // "*literal" case, overrides starts-with
             Some(pos) if self.mode.contains(pattern::Mode::ENDS_WITH) && !value.contains(&b'/') => {
-                let text = &text[pos + 1..];
+                let text = &self.text[pos + 1..];
                 if mode.contains(wildmatch::Mode::IGNORE_CASE) {
                     value
                         .len()
@@ -137,22 +124,38 @@ impl Pattern {
                 if mode.contains(wildmatch::Mode::IGNORE_CASE) {
                     if !value
                         .get(..pos)
-                        .map_or(false, |value| value.eq_ignore_ascii_case(&text[..pos]))
+                        .map_or(false, |value| value.eq_ignore_ascii_case(&self.text[..pos]))
                     {
                         return false;
                     }
-                } else if !value.starts_with(&text[..pos]) {
+                } else if !value.starts_with(&self.text[..pos]) {
                     return false;
                 }
-                crate::wildmatch(text.as_bstr(), value, mode)
+                crate::wildmatch(self.text.as_bstr(), value, mode)
             }
             None => {
                 if mode.contains(wildmatch::Mode::IGNORE_CASE) {
-                    text.eq_ignore_ascii_case(value)
+                    self.text.eq_ignore_ascii_case(value)
                 } else {
-                    text == value
+                    self.text == value
                 }
             }
         }
+    }
+}
+
+impl fmt::Display for Pattern {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.mode.contains(Mode::NEGATIVE) {
+            "!".fmt(f)?;
+        }
+        if self.mode.contains(Mode::ABSOLUTE) {
+            "/".fmt(f)?;
+        }
+        self.text.fmt(f)?;
+        if self.mode.contains(Mode::MUST_BE_DIR) {
+            "/".fmt(f)?;
+        }
+        Ok(())
     }
 }

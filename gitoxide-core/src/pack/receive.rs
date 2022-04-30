@@ -4,6 +4,7 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
 };
 
+pub use git_repository as git;
 use git_repository::{
     hash::ObjectId,
     objs::bstr::{BString, ByteSlice},
@@ -304,7 +305,7 @@ fn print(out: &mut impl io::Write, res: pack::bundle::write::Outcome, refs: &[Re
 fn write_raw_refs(refs: &[Ref], directory: PathBuf) -> std::io::Result<()> {
     let assure_dir_exists = |path: &BString| {
         assert!(!path.starts_with_str("/"), "no ref start with a /, they are relative");
-        let path = directory.join(git_features::path::from_byte_slice_or_panic_on_windows(path));
+        let path = directory.join(git::path::from_byte_slice(path));
         std::fs::create_dir_all(path.parent().expect("multi-component path")).map(|_| path)
     };
     for r in refs {

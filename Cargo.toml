@@ -161,6 +161,7 @@ members = [
     "git-lock",
     "git-attributes",
     "git-pathspec",
+    "git-path",
     "git-repository",
     "gitoxide-core",
     "git-tui",

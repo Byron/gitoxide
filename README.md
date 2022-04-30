@@ -48,6 +48,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * **mailmap**
       * [x] **verify** - check entries of a mailmap file for parse errors and display them
     * **repository**
+      * **exclude**
+         * [x] **query** - check if path specs are excluded via gits exclusion rules like `.gitignore`.
       * **verify** - validate a whole repository, for now only the object database.
       * **commit**
          * [x] **describe** - identify a commit by its closest tag in its past
@@ -122,6 +124,7 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
   * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
+  * [git-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-path)
 * **idea**
   * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
   * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)

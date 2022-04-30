@@ -23,11 +23,20 @@ fn get_value_for_all_provided_values() -> crate::Result {
         file.value::<Boolean>("core", None, "bool-explicit")?,
         Boolean::False(Cow::Borrowed("false"))
     );
+    assert!(!file.boolean("core", None, "bool-explicit").expect("exists")?);
 
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-implicit")?,
         Boolean::True(TrueVariant::Implicit)
     );
+    assert_eq!(
+        file.try_value::<Boolean>("core", None, "bool-implicit")
+            .expect("exists")?,
+        Boolean::True(TrueVariant::Implicit)
+    );
+
+    assert!(file.boolean("core", None, "bool-implicit").expect("present")?);
+    assert_eq!(file.try_value::<String>("doesnt", None, "exist"), None);
 
     assert_eq!(
         file.value::<Integer>("core", None, "integer-no-prefix")?,
@@ -69,14 +78,21 @@ fn get_value_for_all_provided_values() -> crate::Result {
         }
     );
 
+    assert_eq!(
+        file.string("core", None, "other").expect("present").as_ref(),
+        "hello world"
+    );
+
     let actual = file.value::<git_config::values::Path>("core", None, "location")?;
     assert_eq!(
-        &*actual,
-        "~/tmp".as_bytes(),
+        &*actual, "~/tmp",
         "no interpolation occurs when querying a path due to lack of context"
     );
     let expected = PathBuf::from(format!("{}/tmp", dirs::home_dir().expect("empty home dir").display()));
     assert_eq!(actual.interpolate(None).unwrap(), expected);
+
+    let actual = file.path("core", None, "location").expect("present");
+    assert_eq!(&*actual, "~/tmp",);
 
     Ok(())
 }
@@ -113,10 +129,9 @@ fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
 fn section_names_are_case_insensitive() -> crate::Result {
     let config = "[core] bool-implicit";
     let file = GitConfig::try_from(config)?;
-    assert!(file.value::<Boolean>("core", None, "bool-implicit").is_ok());
     assert_eq!(
-        file.value::<Boolean>("core", None, "bool-implicit"),
-        file.value::<Boolean>("CORE", None, "bool-implicit")
+        file.value::<Boolean>("core", None, "bool-implicit").unwrap(),
+        file.value::<Boolean>("CORE", None, "bool-implicit").unwrap()
     );
 
     Ok(())
@@ -130,8 +145,8 @@ fn value_names_are_case_insensitive() -> crate::Result {
     let file = GitConfig::try_from(config)?;
     assert_eq!(file.multi_value::<Boolean>("core", None, "a")?.len(), 2);
     assert_eq!(
-        file.value::<Boolean>("core", None, "a"),
-        file.value::<Boolean>("core", None, "A")
+        file.value::<Boolean>("core", None, "a").unwrap(),
+        file.value::<Boolean>("core", None, "A").unwrap()
     );
 
     Ok(())

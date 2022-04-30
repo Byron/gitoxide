@@ -2,6 +2,9 @@ use std::path::PathBuf;
 
 use crate::{Kind, Path};
 
+#[cfg(all(feature = "unstable", feature = "git-path"))]
+pub use git_path::*;
+
 ///
 pub mod create;
 ///
@@ -24,7 +27,11 @@ impl Path {
     pub fn from_dot_git_dir(dir: impl Into<PathBuf>, kind: Kind) -> Self {
         let dir = dir.into();
         match kind {
-            Kind::WorkTree => Path::WorkTree(dir.parent().expect("this is a sub-directory").to_owned()),
+            Kind::WorkTree => Path::WorkTree(if dir == std::path::Path::new(".git") {
+                PathBuf::from(".")
+            } else {
+                dir.parent().expect("this is a sub-directory").to_owned()
+            }),
             Kind::Bare => Path::Repository(dir),
         }
     }
@@ -43,4 +50,12 @@ impl Path {
             crate::Path::Repository(repository) => (repository, None),
         }
     }
+}
+
+pub(crate) fn install_dir() -> std::io::Result<std::path::PathBuf> {
+    std::env::current_exe().and_then(|exe| {
+        exe.parent()
+            .map(ToOwned::to_owned)
+            .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "no parent for current executable"))
+    })
 }

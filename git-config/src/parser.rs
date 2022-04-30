@@ -75,7 +75,6 @@ impl Event<'_> {
     /// Generates a byte representation of the value. This should be used when
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
-    #[inline]
     #[must_use]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
@@ -95,7 +94,6 @@ impl Event<'_> {
     /// not.
     ///
     /// [`clone`]: Self::clone
-    #[inline]
     #[must_use]
     pub fn to_owned(&self) -> Event<'static> {
         match self {
@@ -116,7 +114,6 @@ impl Display for Event<'_> {
     /// Note that this is a best-effort attempt at printing an `Event`. If
     /// there are non UTF-8 values in your config, this will _NOT_ render
     /// as read.
-    #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => match std::str::from_utf8(e) {
@@ -133,14 +130,12 @@ impl Display for Event<'_> {
 }
 
 impl From<Event<'_>> for Vec<u8> {
-    #[inline]
     fn from(event: Event) -> Self {
         event.into()
     }
 }
 
 impl From<&Event<'_>> for Vec<u8> {
-    #[inline]
     fn from(event: &Event) -> Self {
         match event {
             Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.to_vec(),
@@ -177,7 +172,6 @@ impl ParsedSection<'_> {
     /// not.
     ///
     /// [`clone`]: Self::clone
-    #[inline]
     #[must_use]
     pub fn to_owned(&self) -> ParsedSection<'static> {
         ParsedSection {
@@ -218,7 +212,6 @@ macro_rules! generate_case_insensitive {
             /// while `clone` does not.
             ///
             /// [`clone`]: Self::clone
-            #[inline]
             #[must_use]
             pub fn to_owned(&self) -> $name<'static> {
                 $name(Cow::Owned(self.0.clone().into_owned()))
@@ -226,21 +219,18 @@ macro_rules! generate_case_insensitive {
         }
 
         impl PartialEq for $name<'_> {
-            #[inline]
             fn eq(&self, other: &Self) -> bool {
                 self.0.eq_ignore_ascii_case(&other.0)
             }
         }
 
         impl Display for $name<'_> {
-            #[inline]
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 self.0.fmt(f)
             }
         }
 
         impl PartialOrd for $name<'_> {
-            #[inline]
             fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
                 self.0
                     .to_ascii_lowercase()
@@ -249,21 +239,18 @@ macro_rules! generate_case_insensitive {
         }
 
         impl std::hash::Hash for $name<'_> {
-            #[inline]
             fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
                 self.0.to_ascii_lowercase().hash(state)
             }
         }
 
         impl<'a> From<&'a str> for $name<'a> {
-            #[inline]
             fn from(s: &'a str) -> Self {
                 Self(Cow::Borrowed(s))
             }
         }
 
         impl<'a> From<Cow<'a, str>> for $name<'a> {
-            #[inline]
             fn from(s: Cow<'a, str>) -> Self {
                 Self(s)
             }
@@ -272,7 +259,6 @@ macro_rules! generate_case_insensitive {
         impl<'a> std::ops::Deref for $name<'a> {
             type Target = $cow_inner_type;
 
-            #[inline]
             fn deref(&self) -> &Self::Target {
                 &self.0
             }
@@ -316,7 +302,6 @@ impl ParsedSectionHeader<'_> {
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
     #[must_use]
-    #[inline]
     pub fn to_vec(&self) -> Vec<u8> {
         self.into()
     }
@@ -335,7 +320,6 @@ impl ParsedSectionHeader<'_> {
     /// not.
     ///
     /// [`clone`]: Self::clone
-    #[inline]
     #[must_use]
     pub fn to_owned(&self) -> ParsedSectionHeader<'static> {
         ParsedSectionHeader {
@@ -366,21 +350,18 @@ impl Display for ParsedSectionHeader<'_> {
 }
 
 impl From<ParsedSectionHeader<'_>> for Vec<u8> {
-    #[inline]
     fn from(header: ParsedSectionHeader) -> Self {
         header.into()
     }
 }
 
 impl From<&ParsedSectionHeader<'_>> for Vec<u8> {
-    #[inline]
     fn from(header: &ParsedSectionHeader) -> Self {
         header.to_string().into_bytes()
     }
 }
 
 impl<'a> From<ParsedSectionHeader<'a>> for Event<'a> {
-    #[inline]
     fn from(header: ParsedSectionHeader) -> Event {
         Event::SectionHeader(header)
     }
@@ -410,7 +391,6 @@ impl ParsedComment<'_> {
     /// not.
     ///
     /// [`clone`]: Self::clone
-    #[inline]
     #[must_use]
     pub fn to_owned(&self) -> ParsedComment<'static> {
         ParsedComment {
@@ -435,14 +415,12 @@ impl Display for ParsedComment<'_> {
 }
 
 impl From<ParsedComment<'_>> for Vec<u8> {
-    #[inline]
     fn from(c: ParsedComment) -> Self {
         c.into()
     }
 }
 
 impl From<&ParsedComment<'_>> for Vec<u8> {
-    #[inline]
     fn from(c: &ParsedComment) -> Self {
         let mut values = vec![c.comment_tag as u8];
         values.extend(c.comment.iter());
@@ -463,14 +441,12 @@ pub struct Error<'a> {
 impl Error<'_> {
     /// The one-indexed line number where the error occurred. This is determined
     /// by the number of newlines that were successfully parsed.
-    #[inline]
     #[must_use]
     pub const fn line_number(&self) -> usize {
         self.line_number + 1
     }
 
     /// The remaining data that was left unparsed.
-    #[inline]
     #[must_use]
     pub fn remaining_data(&self) -> &[u8] {
         &self.parsed_until
@@ -490,7 +466,6 @@ impl Error<'_> {
     /// not.
     ///
     /// [`clone`]: std::clone::Clone::clone
-    #[inline]
     #[must_use]
     pub fn to_owned(&self) -> Error<'static> {
         Error {
@@ -567,7 +542,6 @@ impl ParserOrIoError<'_> {
 }
 
 impl Display for ParserOrIoError<'_> {
-    #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ParserOrIoError::Parser(e) => e.fmt(f),
@@ -577,7 +551,6 @@ impl Display for ParserOrIoError<'_> {
 }
 
 impl From<std::io::Error> for ParserOrIoError<'_> {
-    #[inline]
     fn from(e: std::io::Error) -> Self {
         Self::Io(e)
     }
@@ -594,7 +567,6 @@ enum ParserNode {
 }
 
 impl Display for ParserNode {
-    #[inline]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::SectionHeader => write!(f, "section header"),
@@ -822,7 +794,6 @@ impl<'a> Parser<'a> {
     /// a section) from the parser. Consider [`Parser::take_frontmatter`] if
     /// you need an owned copy only once. If that function was called, then this
     /// will always return an empty slice.
-    #[inline]
     #[must_use]
     pub fn frontmatter(&self) -> &[Event<'a>] {
         &self.frontmatter
@@ -832,7 +803,6 @@ impl<'a> Parser<'a> {
     /// a section) from the parser. Subsequent calls will return an empty vec.
     /// Consider [`Parser::frontmatter`] if you only need a reference to the
     /// frontmatter
-    #[inline]
     pub fn take_frontmatter(&mut self) -> Vec<Event<'a>> {
         std::mem::take(&mut self.frontmatter)
     }
@@ -840,7 +810,6 @@ impl<'a> Parser<'a> {
     /// Returns the parsed sections from the parser. Consider
     /// [`Parser::take_sections`] if you need an owned copy only once. If that
     /// function was called, then this will always return an empty slice.
-    #[inline]
     #[must_use]
     pub fn sections(&self) -> &[ParsedSection<'a>] {
         &self.sections
@@ -849,7 +818,6 @@ impl<'a> Parser<'a> {
     /// Takes the parsed sections from the parser. Subsequent calls will return
     /// an empty vec. Consider [`Parser::sections`] if you only need a reference
     /// to the comments.
-    #[inline]
     pub fn take_sections(&mut self) -> Vec<ParsedSection<'a>> {
         let mut to_return = vec![];
         std::mem::swap(&mut self.sections, &mut to_return);
@@ -857,7 +825,6 @@ impl<'a> Parser<'a> {
     }
 
     /// Consumes the parser to produce a Vec of Events.
-    #[inline]
     #[must_use]
     pub fn into_vec(self) -> Vec<Event<'a>> {
         self.into_iter().collect()
@@ -878,7 +845,6 @@ impl<'a> Parser<'a> {
 impl<'a> TryFrom<&'a str> for Parser<'a> {
     type Error = Error<'a>;
 
-    #[inline]
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
         parse_from_str(value)
     }
@@ -887,7 +853,6 @@ impl<'a> TryFrom<&'a str> for Parser<'a> {
 impl<'a> TryFrom<&'a [u8]> for Parser<'a> {
     type Error = Error<'a>;
 
-    #[inline]
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         parse_from_bytes(value)
     }
@@ -925,7 +890,6 @@ pub fn parse_from_path<P: AsRef<Path>>(path: P) -> Result<Parser<'static>, Parse
 /// Returns an error if the string provided is not a valid `git-config`.
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
-#[inline]
 pub fn parse_from_str(input: &str) -> Result<Parser, Error> {
     parse_from_bytes(input.as_bytes())
 }

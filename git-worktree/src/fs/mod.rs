@@ -1,3 +1,4 @@
+use bstr::BStr;
 use std::path::PathBuf;
 
 /// Common knowledge about the worktree that is needed across most interactions with the work tree
@@ -21,6 +22,7 @@ pub struct Capabilities {
     pub symlink: bool,
 }
 
+#[derive(Clone)]
 pub struct Stack {
     /// The prefix/root for all paths we handle.
     root: PathBuf,
@@ -30,6 +32,8 @@ pub struct Stack {
     current_relative: PathBuf,
     /// The amount of path components of 'current' beyond the roots components.
     valid_components: usize,
+    /// If set, we assume the `current` element is a directory to affect calls to `(push|pop)_directory()`.
+    current_is_directory: bool,
 }
 
 /// A cache for efficiently executing operations on directories and files which are encountered in sorted order.
@@ -52,12 +56,20 @@ pub struct Stack {
 /// As directories are created, the cache will be adjusted to reflect the latest seen directory.
 ///
 /// The caching is only useful if consecutive calls to create a directory are using a sorted list of entries.
-#[allow(unused)]
-pub struct Cache {
+#[derive(Clone)]
+pub struct Cache<'paths> {
     stack: Stack,
     /// tells us what to do as we change paths.
-    mode: cache::Mode,
+    state: cache::State,
+    /// A buffer used when reading attribute or ignore files or their respective objects from the object database.
+    buf: Vec<u8>,
+    /// If case folding should happen when looking up attributes or exclusions.
+    case: git_glob::pattern::Case,
+    /// A lookup table for object ids to read from in some situations when looking up attributes or exclusions.
+    attribute_files_in_index: Vec<PathOidMapping<'paths>>,
 }
+
+pub(crate) type PathOidMapping<'paths> = (&'paths BStr, git_hash::ObjectId);
 
 ///
 pub mod cache;

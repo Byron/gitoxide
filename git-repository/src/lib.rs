@@ -83,12 +83,14 @@
 //! even if this crate doesn't, hence breaking downstream.
 //!
 //! `git_repository::`
+//! * [`attrs`]
 //! * [`hash`]
 //! * [`url`]
 //! * [`actor`]
 //! * [`bstr`][bstr]
 //! * [`index`]
 //! * [`glob`]
+//! * [`path`]
 //! * [`credentials`]
 //! * [`sec`]
 //! * [`worktree`]
@@ -124,6 +126,8 @@ use std::path::PathBuf;
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
 pub use git_actor as actor;
+#[cfg(all(feature = "unstable", feature = "git-attributes"))]
+pub use git_attributes as attrs;
 #[cfg(all(feature = "unstable", feature = "git-credentials"))]
 pub use git_credentials as credentials;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
@@ -156,8 +160,6 @@ pub use git_url as url;
 #[doc(inline)]
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url::Url;
-#[cfg(all(feature = "unstable", feature = "git-worktree"))]
-pub use git_worktree as worktree;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
@@ -192,7 +194,9 @@ pub enum Path {
 
 ///
 mod types;
-pub use types::{Commit, DetachedObject, Head, Id, Object, Reference, Repository, Tag, ThreadSafeRepository, Tree};
+pub use types::{
+    Commit, DetachedObject, Head, Id, Object, Reference, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
+};
 
 pub mod commit;
 pub mod head;
@@ -200,7 +204,6 @@ pub mod id;
 pub mod object;
 pub mod reference;
 mod repository;
-pub use repository::{permissions, permissions::Permissions};
 pub mod tag;
 
 /// The kind of `Repository`
@@ -240,6 +243,16 @@ pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repositor
 }
 
 ///
+pub mod permission {
+    use git_sec::permission::Resource;
+    use git_sec::Access;
+
+    /// A permission to control access to the resource pointed to an environment variable.
+    pub type EnvVarResourcePermission = Access<Resource, git_sec::Permission>;
+}
+pub use repository::permissions::Permissions;
+
+///
 pub mod open;
 
 ///
@@ -267,6 +280,9 @@ pub mod mailmap {
         }
     }
 }
+
+///
+pub mod worktree;
 
 ///
 pub mod rev_parse {

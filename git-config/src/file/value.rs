@@ -6,11 +6,11 @@ use std::{
 
 use crate::{
     file::{
-        error::GitConfigError,
         git_config::SectionId,
         section::{MutableSection, SectionBody},
         Index, Size,
     },
+    lookup,
     parser::{Event, Key},
     values::{normalize_bytes, normalize_vec},
 };
@@ -54,15 +54,13 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
     /// # Errors
     ///
     /// Returns an error if the lookup failed.
-    #[inline]
-    pub fn get(&self) -> Result<Cow<'_, [u8]>, GitConfigError> {
+    pub fn get(&self) -> Result<Cow<'_, [u8]>, lookup::existing::Error> {
         self.section.get(&self.key, self.index, self.index + self.size)
     }
 
     /// Update the value to the provided one. This modifies the value such that
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
-    #[inline]
     pub fn set_string(&mut self, input: String) {
         self.set_bytes(input.into_bytes());
     }
@@ -149,7 +147,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// # Errors
     ///
     /// Returns an error if the lookup failed.
-    pub fn get(&self) -> Result<Vec<Cow<'_, [u8]>>, GitConfigError> {
+    pub fn get(&self) -> Result<Vec<Cow<'_, [u8]>>, lookup::existing::Error> {
         let mut found_key = false;
         let mut values = vec![];
         let mut partial_value = None;
@@ -160,7 +158,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
             offset_index,
         } in &self.indices_and_sizes
         {
-            let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
+            let (offset, size) = MutableMultiValue::index_and_size(&self.offsets, *section_id, *offset_index);
             for event in &self
                 .section
                 .get(section_id)
@@ -190,14 +188,13 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
         }
 
         if values.is_empty() {
-            return Err(GitConfigError::KeyDoesNotExist);
+            return Err(lookup::existing::Error::KeyMissing);
         }
 
         Ok(values)
     }
 
     /// Returns the size of values the multivar has.
-    #[inline]
     #[must_use]
     pub fn len(&self) -> usize {
         self.indices_and_sizes.len()
@@ -205,7 +202,6 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
 
     /// Returns if the multivar has any values. This might occur if the value
     /// was deleted but not set with a new value.
-    #[inline]
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.indices_and_sizes.is_empty()
@@ -216,7 +212,6 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// # Safety
     ///
     /// This will panic if the index is out of range.
-    #[inline]
     pub fn set_string(&mut self, index: usize, input: String) {
         self.set_bytes(index, input.into_bytes());
     }
@@ -226,7 +221,6 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// # Safety
     ///
     /// This will panic if the index is out of range.
-    #[inline]
     pub fn set_bytes(&mut self, index: usize, input: Vec<u8>) {
         self.set_value(index, Cow::Owned(input));
     }
@@ -260,7 +254,6 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// remaining values are ignored.
     ///
     /// [`zip`]: std::iter::Iterator::zip
-    #[inline]
     pub fn set_values<'a: 'event>(&mut self, input: impl Iterator<Item = Cow<'a, [u8]>>) {
         for (
             EntryData {
@@ -285,14 +278,12 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
 
     /// Sets all values in this multivar to the provided one by copying the
     /// input for all values.
-    #[inline]
     pub fn set_str_all(&mut self, input: &str) {
         self.set_owned_values_all(input.as_bytes());
     }
 
     /// Sets all values in this multivar to the provided one by copying the
     /// input bytes for all values.
-    #[inline]
     pub fn set_owned_values_all(&mut self, input: &[u8]) {
         for EntryData {
             section_id,
@@ -319,7 +310,6 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// need for a more ergonomic interface.
     ///
     /// [`GitConfig`]: super::GitConfig
-    #[inline]
     pub fn set_values_all<'a: 'event>(&mut self, input: &'a [u8]) {
         for EntryData {
             section_id,
@@ -347,7 +337,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
         offset_index: usize,
         input: Cow<'a, [u8]>,
     ) {
-        let (offset, size) = MutableMultiValue::get_index_and_size(offsets, section_id, offset_index);
+        let (offset, size) = MutableMultiValue::index_and_size(offsets, section_id, offset_index);
         section.as_mut().drain(offset..offset + size);
 
         MutableMultiValue::set_offset(offsets, section_id, offset_index, 3);
@@ -369,7 +359,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
             section_id,
             offset_index,
         } = &self.indices_and_sizes[index];
-        let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
+        let (offset, size) = MutableMultiValue::index_and_size(&self.offsets, *section_id, *offset_index);
         if size > 0 {
             self.section
                 .get_mut(section_id)
@@ -390,7 +380,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
             offset_index,
         } in &self.indices_and_sizes
         {
-            let (offset, size) = MutableMultiValue::get_index_and_size(&self.offsets, *section_id, *offset_index);
+            let (offset, size) = MutableMultiValue::index_and_size(&self.offsets, *section_id, *offset_index);
             if size > 0 {
                 self.section
                     .get_mut(section_id)
@@ -405,8 +395,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
 
     // SectionId is the same size as a reference, which means it's just as
     // efficient passing in a value instead of a reference.
-    #[inline]
-    fn get_index_and_size(
+    fn index_and_size(
         offsets: &'lookup HashMap<SectionId, Vec<usize>>,
         section_id: SectionId,
         offset_index: usize,
@@ -424,7 +413,6 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     //
     // SectionId is the same size as a reference, which means it's just as
     // efficient passing in a value instead of a reference.
-    #[inline]
     fn set_offset(
         offsets: &mut HashMap<SectionId, Vec<usize>>,
         section_id: SectionId,

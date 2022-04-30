@@ -1,5 +1,5 @@
 use bstr::{BStr, ByteSlice};
-use git_attributes::{parse, State};
+use git_attributes::{parse, StateRef};
 use git_glob::pattern::Mode;
 use git_testtools::fixture_bytes;
 
@@ -30,7 +30,7 @@ fn line_numbers_are_counted_correctly() {
             (pattern(r"!foo.html", Mode::NO_SUB_DIR, None), vec![set("x")], 8),
             (pattern(r"#a/path", Mode::empty(), None), vec![unset("a")], 10),
             (
-                pattern(r"/*", Mode::ABSOLUTE | Mode::NO_SUB_DIR | Mode::ENDS_WITH, Some(1)),
+                pattern(r"*", Mode::ABSOLUTE | Mode::NO_SUB_DIR | Mode::ENDS_WITH, Some(0)),
                 vec![unspecified("b")],
                 11
             ),
@@ -249,22 +249,22 @@ fn trailing_whitespace_in_attributes_is_ignored() {
     );
 }
 
-type ExpandedAttribute<'a> = (parse::Kind, Vec<(&'a BStr, git_attributes::State<'a>)>, usize);
+type ExpandedAttribute<'a> = (parse::Kind, Vec<(&'a BStr, git_attributes::StateRef<'a>)>, usize);
 
-fn set(attr: &str) -> (&BStr, State) {
-    (attr.as_bytes().as_bstr(), State::Set)
+fn set(attr: &str) -> (&BStr, StateRef) {
+    (attr.as_bytes().as_bstr(), StateRef::Set)
 }
 
-fn unset(attr: &str) -> (&BStr, State) {
-    (attr.as_bytes().as_bstr(), State::Unset)
+fn unset(attr: &str) -> (&BStr, StateRef) {
+    (attr.as_bytes().as_bstr(), StateRef::Unset)
 }
 
-fn unspecified(attr: &str) -> (&BStr, State) {
-    (attr.as_bytes().as_bstr(), State::Unspecified)
+fn unspecified(attr: &str) -> (&BStr, StateRef) {
+    (attr.as_bytes().as_bstr(), StateRef::Unspecified)
 }
 
-fn value<'a, 'b>(attr: &'a str, value: &'b str) -> (&'a BStr, State<'b>) {
-    (attr.as_bytes().as_bstr(), State::Value(value.as_bytes().as_bstr()))
+fn value<'a, 'b>(attr: &'a str, value: &'b str) -> (&'a BStr, StateRef<'b>) {
+    (attr.as_bytes().as_bstr(), StateRef::Value(value.as_bytes().as_bstr()))
 }
 
 fn pattern(name: &str, flags: git_glob::pattern::Mode, first_wildcard_pos: Option<usize>) -> parse::Kind {

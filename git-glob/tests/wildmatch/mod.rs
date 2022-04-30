@@ -1,3 +1,4 @@
+use bstr::ByteSlice;
 use std::{
     fmt::{Debug, Display, Formatter},
     panic::catch_unwind,
@@ -222,6 +223,7 @@ fn corpus() {
         }
     }
 
+    dbg!(&failures);
     assert_eq!(failures.len(), 0);
     assert_eq!(at_least_one_panic, 0, "not a single panic in any invocation");
 
@@ -249,8 +251,10 @@ fn multi_match(pattern_text: &str, text: &str) -> (Pattern, MultiMatch) {
     let pattern = git_glob::Pattern::from_bytes(pattern_text.as_bytes()).expect("valid (enough) pattern");
     let actual_path_match: MatchResult = catch_unwind(|| match_file_path(&pattern, text, Case::Sensitive)).into();
     let actual_path_imatch: MatchResult = catch_unwind(|| match_file_path(&pattern, text, Case::Fold)).into();
-    let actual_glob_match: MatchResult = catch_unwind(|| pattern.matches(text, wildmatch::Mode::empty())).into();
-    let actual_glob_imatch: MatchResult = catch_unwind(|| pattern.matches(text, wildmatch::Mode::IGNORE_CASE)).into();
+    let actual_glob_match: MatchResult =
+        catch_unwind(|| git_glob::wildmatch(pattern.text.as_bstr(), text.into(), wildmatch::Mode::empty())).into();
+    let actual_glob_imatch: MatchResult =
+        catch_unwind(|| git_glob::wildmatch(pattern.text.as_bstr(), text.into(), wildmatch::Mode::IGNORE_CASE)).into();
     let actual = MultiMatch {
         path_match: actual_path_match,
         path_imatch: actual_path_imatch,
@@ -363,7 +367,7 @@ impl Display for MatchResult {
 }
 
 fn match_file_path(pattern: &git_glob::Pattern, path: &str, case: Case) -> bool {
-    pattern.matches_repo_relative_path(path, basename_of(path), false /* is_dir */, case)
+    pattern.matches_repo_relative_path(path, basename_of(path), false.into() /* is_dir */, case)
 }
 fn basename_of(path: &str) -> Option<usize> {
     path.rfind('/').map(|pos| pos + 1)

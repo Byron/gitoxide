@@ -504,6 +504,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3f6d59c71e7dc3af60f0af9db32364d96a16e9310f3f5db2b55ed642162dd35"
 
 [[package]]
+name = "compact_str"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d0e60dedcb8b23cedf6f23ee35ecf5c7889961e99f26f79ab196aaf4a8b48608"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "concurrent-queue"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1076,8 +1085,10 @@ name = "git-attributes"
 version = "0.1.0"
 dependencies = [
  "bstr",
+ "compact_str",
  "git-features",
  "git-glob",
+ "git-path",
  "git-quote",
  "git-testtools",
  "quick-error",
@@ -1122,15 +1133,16 @@ dependencies = [
  "criterion",
  "dirs",
  "git-features",
+ "git-path",
  "git-sec",
  "memchr",
  "nom",
  "pwd",
- "quick-error",
  "serde",
  "serde_derive",
  "serial_test",
  "tempfile",
+ "thiserror",
  "unicode-bom",
 ]
 
@@ -1300,6 +1312,7 @@ dependencies = [
  "git-hash",
  "git-object",
  "git-pack",
+ "git-path",
  "git-quote",
  "git-testtools",
  "parking_lot 0.12.0",
@@ -1325,6 +1338,7 @@ dependencies = [
  "git-hash",
  "git-object",
  "git-odb",
+ "git-path",
  "git-tempfile",
  "git-testtools",
  "git-traverse",
@@ -1354,6 +1368,13 @@ dependencies = [
  "pin-project-lite",
  "quick-error",
  "serde",
+]
+
+[[package]]
+name = "git-path"
+version = "0.1.0"
+dependencies = [
+ "bstr",
 ]
 
 [[package]]
@@ -1406,6 +1427,7 @@ dependencies = [
  "git-lock",
  "git-object",
  "git-odb",
+ "git-path",
  "git-tempfile",
  "git-testtools",
  "git-validate",
@@ -1425,6 +1447,7 @@ dependencies = [
  "clru",
  "document-features",
  "git-actor",
+ "git-attributes",
  "git-config",
  "git-credentials",
  "git-diff",
@@ -1437,6 +1460,7 @@ dependencies = [
  "git-object",
  "git-odb",
  "git-pack",
+ "git-path",
  "git-protocol",
  "git-ref",
  "git-revision",
@@ -1448,6 +1472,7 @@ dependencies = [
  "git-url",
  "git-validate",
  "git-worktree",
+ "is_ci",
  "log",
  "signal-hook",
  "tempfile",
@@ -1477,6 +1502,7 @@ dependencies = [
  "libc",
  "serde",
  "tempfile",
+ "thiserror",
  "windows",
 ]
 
@@ -1571,6 +1597,7 @@ version = "0.4.0"
 dependencies = [
  "bstr",
  "git-features",
+ "git-path",
  "home",
  "quick-error",
  "serde",
@@ -1592,11 +1619,14 @@ version = "0.1.0"
 dependencies = [
  "bstr",
  "document-features",
+ "git-attributes",
  "git-features",
+ "git-glob",
  "git-hash",
  "git-index",
  "git-object",
  "git-odb",
+ "git-path",
  "git-testtools",
  "io-close",
  "serde",

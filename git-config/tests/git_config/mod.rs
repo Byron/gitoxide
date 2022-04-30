@@ -19,7 +19,7 @@ mod mutable_value {
     fn value_is_correct() {
         let mut git_config = init_config();
 
-        let value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        let value = git_config.raw_value_mut("core", None, "a").unwrap();
         assert_eq!(&*value.get().unwrap(), b"b100");
     }
 
@@ -27,7 +27,7 @@ mod mutable_value {
     fn set_string_cleanly_updates() {
         let mut git_config = init_config();
 
-        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        let mut value = git_config.raw_value_mut("core", None, "a").unwrap();
         value.set_string("hello world".to_string());
         assert_eq!(
             git_config.to_string(),
@@ -38,7 +38,7 @@ mod mutable_value {
                 e=f"#,
         );
 
-        let mut value = git_config.get_raw_value_mut("core", None, "e").unwrap();
+        let mut value = git_config.raw_value_mut("core", None, "e").unwrap();
         value.set_string(String::new());
         assert_eq!(
             git_config.to_string(),
@@ -54,7 +54,7 @@ mod mutable_value {
     fn delete_value() {
         let mut git_config = init_config();
 
-        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        let mut value = git_config.raw_value_mut("core", None, "a").unwrap();
         value.delete();
         assert_eq!(
             git_config.to_string(),
@@ -63,7 +63,7 @@ mod mutable_value {
                 e=f",
         );
 
-        let mut value = git_config.get_raw_value_mut("core", None, "c").unwrap();
+        let mut value = git_config.raw_value_mut("core", None, "c").unwrap();
         value.delete();
         assert_eq!(
             git_config.to_string(),
@@ -75,7 +75,7 @@ mod mutable_value {
     fn get_value_after_deleted() {
         let mut git_config = init_config();
 
-        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        let mut value = git_config.raw_value_mut("core", None, "a").unwrap();
         value.delete();
         assert!(value.get().is_err());
     }
@@ -84,7 +84,7 @@ mod mutable_value {
     fn set_string_after_deleted() {
         let mut git_config = init_config();
 
-        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        let mut value = git_config.raw_value_mut("core", None, "a").unwrap();
         value.delete();
         value.set_string("hello world".to_string());
         assert_eq!(
@@ -101,7 +101,7 @@ mod mutable_value {
     fn subsequent_delete_calls_are_noop() {
         let mut git_config = init_config();
 
-        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        let mut value = git_config.raw_value_mut("core", None, "a").unwrap();
         for _ in 0..10 {
             value.delete();
         }
@@ -124,7 +124,7 @@ b
                 e=f"#,
         )
         .unwrap();
-        let mut value = git_config.get_raw_value_mut("core", None, "a").unwrap();
+        let mut value = git_config.raw_value_mut("core", None, "a").unwrap();
         assert_eq!(&*value.get().unwrap(), b"b100b");
         value.delete();
         assert_eq!(
@@ -157,7 +157,7 @@ mod mutable_multi_value {
     fn value_is_correct() {
         let mut git_config = init_config();
 
-        let value = git_config.get_raw_multi_value_mut("core", None, "a").unwrap();
+        let value = git_config.raw_multi_value_mut("core", None, "a").unwrap();
         assert_eq!(
             &*value.get().unwrap(),
             vec![
@@ -171,17 +171,14 @@ mod mutable_multi_value {
     #[test]
     fn non_empty_sizes_are_correct() {
         let mut git_config = init_config();
-        assert_eq!(git_config.get_raw_multi_value_mut("core", None, "a").unwrap().len(), 3);
-        assert!(!git_config
-            .get_raw_multi_value_mut("core", None, "a")
-            .unwrap()
-            .is_empty());
+        assert_eq!(git_config.raw_multi_value_mut("core", None, "a").unwrap().len(), 3);
+        assert!(!git_config.raw_multi_value_mut("core", None, "a").unwrap().is_empty());
     }
 
     #[test]
     fn set_value_at_start() {
         let mut git_config = init_config();
-        let mut values = git_config.get_raw_multi_value_mut("core", None, "a").unwrap();
+        let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
         values.set_string(0, "Hello".to_string());
         assert_eq!(
             git_config.to_string(),
@@ -196,7 +193,7 @@ mod mutable_multi_value {
     #[test]
     fn set_value_at_end() {
         let mut git_config = init_config();
-        let mut values = git_config.get_raw_multi_value_mut("core", None, "a").unwrap();
+        let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
         values.set_string(2, "Hello".to_string());
         assert_eq!(
             git_config.to_string(),
@@ -211,7 +208,7 @@ mod mutable_multi_value {
     #[test]
     fn set_values_all() {
         let mut git_config = init_config();
-        let mut values = git_config.get_raw_multi_value_mut("core", None, "a").unwrap();
+        let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
         values.set_owned_values_all(b"Hello");
         assert_eq!(
             git_config.to_string(),
@@ -226,7 +223,7 @@ mod mutable_multi_value {
     #[test]
     fn delete() {
         let mut git_config = init_config();
-        let mut values = git_config.get_raw_multi_value_mut("core", None, "a").unwrap();
+        let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
         values.delete(0);
         assert_eq!(
             git_config.to_string(),
@@ -239,7 +236,7 @@ mod mutable_multi_value {
     #[test]
     fn delete_all() {
         let mut git_config = init_config();
-        let mut values = git_config.get_raw_multi_value_mut("core", None, "a").unwrap();
+        let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
         values.delete_all();
         assert!(values.get().is_err());
         assert_eq!(
@@ -261,7 +258,7 @@ b
 a"#,
         )
         .unwrap();
-        let mut values = git_config.get_raw_multi_value_mut("core", None, "a").unwrap();
+        let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
 
         assert_eq!(
             &*values.get().unwrap(),
@@ -320,8 +317,8 @@ mod from_paths_tests {
         let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
 
         assert_eq!(
-            config.get_raw_value("core", None, "boolean"),
-            Ok(Cow::<[u8]>::Borrowed(b"true"))
+            config.raw_value("core", None, "boolean").unwrap(),
+            Cow::<[u8]>::Borrowed(b"true")
         );
 
         assert_eq!(config.len(), 1);
@@ -390,26 +387,26 @@ mod from_paths_tests {
         let config = GitConfig::from_paths(vec![c_path], &Default::default()).unwrap();
 
         assert_eq!(
-            config.get_raw_value("core", None, "c"),
-            Ok(Cow::<[u8]>::Borrowed(b"12"))
+            config.raw_value("core", None, "c").unwrap(),
+            Cow::<[u8]>::Borrowed(b"12")
         );
         assert_eq!(
-            config.get_raw_value("core", None, "d"),
-            Ok(Cow::<[u8]>::Borrowed(b"41"))
+            config.raw_value("core", None, "d").unwrap(),
+            Cow::<[u8]>::Borrowed(b"41")
         );
         assert_eq!(
-            config.get_raw_value("http", None, "sslVerify"),
-            Ok(Cow::<[u8]>::Borrowed(b"false"))
-        );
-
-        assert_eq!(
-            config.get_raw_value("diff", None, "renames"),
-            Ok(Cow::<[u8]>::Borrowed(b"true"))
+            config.raw_value("http", None, "sslVerify").unwrap(),
+            Cow::<[u8]>::Borrowed(b"false")
         );
 
         assert_eq!(
-            config.get_raw_value("core", None, "a"),
-            Ok(Cow::<[u8]>::Borrowed(b"false"))
+            config.raw_value("diff", None, "renames").unwrap(),
+            Cow::<[u8]>::Borrowed(b"true")
+        );
+
+        assert_eq!(
+            config.raw_value("core", None, "a").unwrap(),
+            Cow::<[u8]>::Borrowed(b"false")
         );
     }
 
@@ -452,7 +449,7 @@ mod from_paths_tests {
         let options = from_paths::Options::default();
         let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
         assert_eq!(
-            config.get_raw_multi_value("core", None, "i").unwrap(),
+            config.raw_multi_value("core", None, "i").unwrap(),
             vec![
                 Cow::Borrowed(b"0"),
                 Cow::Borrowed(b"1"),
@@ -470,12 +467,18 @@ mod from_paths_tests {
             ..Default::default()
         };
         let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
-        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"1")));
+        assert_eq!(
+            config.raw_value("core", None, "i").unwrap(),
+            Cow::<[u8]>::Borrowed(b"1")
+        );
 
         // with default max_allowed_depth of 10 and 4 levels of includes, last level is read
         let options = from_paths::Options::default();
         let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
-        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"4")));
+        assert_eq!(
+            config.raw_value("core", None, "i").unwrap(),
+            Cow::<[u8]>::Borrowed(b"4")
+        );
 
         // with max_allowed_depth of 5, the base and 4 levels of includes, last level is read
         let options = from_paths::Options {
@@ -483,7 +486,10 @@ mod from_paths_tests {
             ..Default::default()
         };
         let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
-        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"4")));
+        assert_eq!(
+            config.raw_value("core", None, "i").unwrap(),
+            Cow::<[u8]>::Borrowed(b"4")
+        );
 
         // with max_allowed_depth of 2 and 4 levels of includes, max_allowed_depth is exceeded and error is returned
         let options = from_paths::Options {
@@ -503,7 +509,10 @@ mod from_paths_tests {
             ..Default::default()
         };
         let config = GitConfig::from_paths(vec![dir.path().join("0")], &options).unwrap();
-        assert_eq!(config.get_raw_value("core", None, "i"), Ok(Cow::<[u8]>::Borrowed(b"2")));
+        assert_eq!(
+            config.raw_value("core", None, "i").unwrap(),
+            Cow::<[u8]>::Borrowed(b"2")
+        );
 
         // with max_allowed_depth of 0 and 4 levels of includes, max_allowed_depth is exceeded and error is returned
         let options = from_paths::Options {
@@ -552,8 +561,8 @@ mod from_paths_tests {
 
         let config = GitConfig::from_paths(vec![a_path], &Default::default()).unwrap();
         assert_eq!(
-            config.get_raw_value("core", None, "b"),
-            Ok(Cow::<[u8]>::Borrowed(b"false"))
+            config.raw_value("core", None, "b").unwrap(),
+            Cow::<[u8]>::Borrowed(b"false")
         );
     }
 
@@ -607,7 +616,7 @@ mod from_paths_tests {
         };
         let config = GitConfig::from_paths(vec![a_path], &options).unwrap();
         assert_eq!(
-            config.get_raw_multi_value("core", None, "b").unwrap(),
+            config.raw_multi_value("core", None, "b").unwrap(),
             vec![
                 Cow::Borrowed(b"0"),
                 Cow::Borrowed(b"1"),
@@ -662,16 +671,19 @@ mod from_paths_tests {
 
         let config = GitConfig::from_paths(vec![c_path], &Default::default()).unwrap();
 
-        assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"1")));
-
         assert_eq!(
-            config.get_raw_value("core", None, "b"),
-            Ok(Cow::<[u8]>::Borrowed(b"true"))
+            config.raw_value("core", None, "c").unwrap(),
+            Cow::<[u8]>::Borrowed(b"1")
         );
 
         assert_eq!(
-            config.get_raw_value("core", None, "a"),
-            Ok(Cow::<[u8]>::Borrowed(b"false"))
+            config.raw_value("core", None, "b").unwrap(),
+            Cow::<[u8]>::Borrowed(b"true")
+        );
+
+        assert_eq!(
+            config.raw_value("core", None, "a").unwrap(),
+            Cow::<[u8]>::Borrowed(b"false")
         );
     }
 
@@ -695,18 +707,18 @@ mod from_paths_tests {
         let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
 
         assert_eq!(
-            config.get_raw_value("core", None, "a"),
-            Ok(Cow::<[u8]>::Borrowed(b"false"))
+            config.raw_value("core", None, "a").unwrap(),
+            Cow::<[u8]>::Borrowed(b"false")
         );
 
         assert_eq!(
-            config.get_raw_value("core", None, "b"),
-            Ok(Cow::<[u8]>::Borrowed(b"true"))
+            config.raw_value("core", None, "b").unwrap(),
+            Cow::<[u8]>::Borrowed(b"true")
         );
 
         assert_eq!(
-            config.get_raw_value("core", None, "c"),
-            Ok(Cow::<[u8]>::Borrowed(b"true"))
+            config.raw_value("core", None, "c").unwrap(),
+            Cow::<[u8]>::Borrowed(b"true")
         );
 
         assert_eq!(config.len(), 4);
@@ -735,12 +747,12 @@ mod from_paths_tests {
         let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
 
         assert_eq!(
-            config.get_raw_multi_value("core", None, "key").unwrap(),
+            config.raw_multi_value("core", None, "key").unwrap(),
             vec![Cow::Borrowed(b"a"), Cow::Borrowed(b"b"), Cow::Borrowed(b"c")]
         );
 
         assert_eq!(
-            config.get_raw_multi_value("include", None, "path").unwrap(),
+            config.raw_multi_value("include", None, "path").unwrap(),
             vec![Cow::Borrowed(b"d_path"), Cow::Borrowed(b"e_path")]
         );
 
@@ -802,7 +814,7 @@ mod from_env_tests {
     fn parse_error_with_invalid_count() {
         let _env = Env::new().set("GIT_CONFIG_COUNT", "invalid");
         let err = GitConfig::from_env(&Options::default()).unwrap_err();
-        assert!(matches!(err, from_env::Error::ParseError(_)));
+        assert!(matches!(err, from_env::Error::ParseError { .. }));
     }
 
     #[test]
@@ -815,8 +827,8 @@ mod from_env_tests {
 
         let config = GitConfig::from_env(&Options::default()).unwrap().unwrap();
         assert_eq!(
-            config.get_raw_value("core", None, "key"),
-            Ok(Cow::<[u8]>::Borrowed(b"value"))
+            config.raw_value("core", None, "key").unwrap(),
+            Cow::<[u8]>::Borrowed(b"value")
         );
 
         assert_eq!(config.len(), 1);
@@ -836,9 +848,18 @@ mod from_env_tests {
 
         let config = GitConfig::from_env(&Options::default()).unwrap().unwrap();
 
-        assert_eq!(config.get_raw_value("core", None, "a"), Ok(Cow::<[u8]>::Borrowed(b"a")));
-        assert_eq!(config.get_raw_value("core", None, "b"), Ok(Cow::<[u8]>::Borrowed(b"b")));
-        assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"c")));
+        assert_eq!(
+            config.raw_value("core", None, "a").unwrap(),
+            Cow::<[u8]>::Borrowed(b"a")
+        );
+        assert_eq!(
+            config.raw_value("core", None, "b").unwrap(),
+            Cow::<[u8]>::Borrowed(b"b")
+        );
+        assert_eq!(
+            config.raw_value("core", None, "c").unwrap(),
+            Cow::<[u8]>::Borrowed(b"c")
+        );
         assert_eq!(config.len(), 3);
     }
 
@@ -881,8 +902,8 @@ mod from_env_tests {
         let config = GitConfig::from_env(&Options::default()).unwrap().unwrap();
 
         assert_eq!(
-            config.get_raw_value("core", None, "key"),
-            Ok(Cow::<[u8]>::Borrowed(b"changed"))
+            config.raw_value("core", None, "key").unwrap(),
+            Cow::<[u8]>::Borrowed(b"changed")
         );
         assert_eq!(config.len(), 5);
     }
@@ -892,64 +913,76 @@ mod from_env_tests {
 mod get_raw_value {
     use std::{borrow::Cow, convert::TryFrom};
 
-    use git_config::{
-        file::{GitConfig, GitConfigError},
-        parser::SectionHeaderName,
-    };
+    use git_config::{file::GitConfig, lookup};
 
     #[test]
     fn single_section() {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
-        assert_eq!(config.get_raw_value("core", None, "a"), Ok(Cow::<[u8]>::Borrowed(b"b")));
-        assert_eq!(config.get_raw_value("core", None, "c"), Ok(Cow::<[u8]>::Borrowed(b"d")));
+        assert_eq!(
+            config.raw_value("core", None, "a").unwrap(),
+            Cow::<[u8]>::Borrowed(b"b")
+        );
+        assert_eq!(
+            config.raw_value("core", None, "c").unwrap(),
+            Cow::<[u8]>::Borrowed(b"d")
+        );
     }
 
     #[test]
     fn last_one_wins_respected_in_section() {
         let config = GitConfig::try_from("[core]\na=b\na=d").unwrap();
-        assert_eq!(config.get_raw_value("core", None, "a"), Ok(Cow::<[u8]>::Borrowed(b"d")));
+        assert_eq!(
+            config.raw_value("core", None, "a").unwrap(),
+            Cow::<[u8]>::Borrowed(b"d")
+        );
     }
 
     #[test]
     fn last_one_wins_respected_across_section() {
         let config = GitConfig::try_from("[core]\na=b\n[core]\na=d").unwrap();
-        assert_eq!(config.get_raw_value("core", None, "a"), Ok(Cow::<[u8]>::Borrowed(b"d")));
+        assert_eq!(
+            config.raw_value("core", None, "a").unwrap(),
+            Cow::<[u8]>::Borrowed(b"d")
+        );
     }
 
     #[test]
     fn section_not_found() {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
-        assert_eq!(
-            config.get_raw_value("foo", None, "a"),
-            Err(GitConfigError::SectionDoesNotExist(SectionHeaderName("foo".into())))
-        );
+        assert!(matches!(
+            config.raw_value("foo", None, "a"),
+            Err(lookup::existing::Error::SectionMissing)
+        ));
     }
 
     #[test]
     fn subsection_not_found() {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
-        assert_eq!(
-            config.get_raw_value("core", Some("a"), "a"),
-            Err(GitConfigError::SubSectionDoesNotExist(Some("a")))
-        );
+        assert!(matches!(
+            config.raw_value("core", Some("a"), "a"),
+            Err(lookup::existing::Error::SubSectionMissing)
+        ));
     }
 
     #[test]
     fn key_not_found() {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
-        assert_eq!(
-            config.get_raw_value("core", None, "aaaaaa"),
-            Err(GitConfigError::KeyDoesNotExist)
-        );
+        assert!(matches!(
+            config.raw_value("core", None, "aaaaaa"),
+            Err(lookup::existing::Error::KeyMissing)
+        ));
     }
 
     #[test]
     fn subsection_must_be_respected() {
         let config = GitConfig::try_from("[core]a=b\n[core.a]a=c").unwrap();
-        assert_eq!(config.get_raw_value("core", None, "a"), Ok(Cow::<[u8]>::Borrowed(b"b")));
         assert_eq!(
-            config.get_raw_value("core", Some("a"), "a"),
-            Ok(Cow::<[u8]>::Borrowed(b"c"))
+            config.raw_value("core", None, "a").unwrap(),
+            Cow::<[u8]>::Borrowed(b"b")
+        );
+        assert_eq!(
+            config.raw_value("core", Some("a"), "a").unwrap(),
+            Cow::<[u8]>::Borrowed(b"c")
         );
     }
 }
@@ -1008,17 +1041,15 @@ mod get_value {
 mod get_raw_multi_value {
     use std::{borrow::Cow, convert::TryFrom};
 
-    use git_config::{
-        file::{GitConfig, GitConfigError},
-        parser::SectionHeaderName,
-    };
+    use git_config::file::GitConfig;
+    use git_config::lookup;
 
     #[test]
     fn single_value_is_identical_to_single_value_query() {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
         assert_eq!(
-            vec![config.get_raw_value("core", None, "a").unwrap()],
-            config.get_raw_multi_value("core", None, "a").unwrap()
+            vec![config.raw_value("core", None, "a").unwrap()],
+            config.raw_multi_value("core", None, "a").unwrap()
         );
     }
 
@@ -1026,7 +1057,7 @@ mod get_raw_multi_value {
     fn multi_value_in_section() {
         let config = GitConfig::try_from("[core]\na=b\na=c").unwrap();
         assert_eq!(
-            config.get_raw_multi_value("core", None, "a").unwrap(),
+            config.raw_multi_value("core", None, "a").unwrap(),
             vec![Cow::Borrowed(b"b"), Cow::Borrowed(b"c")]
         );
     }
@@ -1035,7 +1066,7 @@ mod get_raw_multi_value {
     fn multi_value_across_sections() {
         let config = GitConfig::try_from("[core]\na=b\na=c\n[core]a=d").unwrap();
         assert_eq!(
-            config.get_raw_multi_value("core", None, "a").unwrap(),
+            config.raw_multi_value("core", None, "a").unwrap(),
             vec![Cow::Borrowed(b"b"), Cow::Borrowed(b"c"), Cow::Borrowed(b"d")]
         );
     }
@@ -1043,39 +1074,39 @@ mod get_raw_multi_value {
     #[test]
     fn section_not_found() {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
-        assert_eq!(
-            config.get_raw_multi_value("foo", None, "a"),
-            Err(GitConfigError::SectionDoesNotExist(SectionHeaderName("foo".into())))
-        );
+        assert!(matches!(
+            config.raw_multi_value("foo", None, "a"),
+            Err(lookup::existing::Error::SectionMissing)
+        ));
     }
 
     #[test]
     fn subsection_not_found() {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
-        assert_eq!(
-            config.get_raw_multi_value("core", Some("a"), "a"),
-            Err(GitConfigError::SubSectionDoesNotExist(Some("a")))
-        );
+        assert!(matches!(
+            config.raw_multi_value("core", Some("a"), "a"),
+            Err(lookup::existing::Error::SubSectionMissing)
+        ));
     }
 
     #[test]
     fn key_not_found() {
         let config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
-        assert_eq!(
-            config.get_raw_multi_value("core", None, "aaaaaa"),
-            Err(GitConfigError::KeyDoesNotExist)
-        );
+        assert!(matches!(
+            config.raw_multi_value("core", None, "aaaaaa"),
+            Err(lookup::existing::Error::KeyMissing)
+        ));
     }
 
     #[test]
     fn subsection_must_be_respected() {
         let config = GitConfig::try_from("[core]a=b\n[core.a]a=c").unwrap();
         assert_eq!(
-            config.get_raw_multi_value("core", None, "a").unwrap(),
+            config.raw_multi_value("core", None, "a").unwrap(),
             vec![Cow::Borrowed(b"b")]
         );
         assert_eq!(
-            config.get_raw_multi_value("core", Some("a"), "a").unwrap(),
+            config.raw_multi_value("core", Some("a"), "a").unwrap(),
             vec![Cow::Borrowed(b"c")]
         );
     }
@@ -1084,7 +1115,7 @@ mod get_raw_multi_value {
     fn non_relevant_subsection_is_ignored() {
         let config = GitConfig::try_from("[core]\na=b\na=c\n[core]a=d\n[core]g=g").unwrap();
         assert_eq!(
-            config.get_raw_multi_value("core", None, "a").unwrap(),
+            config.raw_multi_value("core", None, "a").unwrap(),
             vec![Cow::Borrowed(b"b"), Cow::Borrowed(b"c"), Cow::Borrowed(b"d")]
         );
     }

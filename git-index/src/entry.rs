@@ -143,6 +143,10 @@ mod access {
             (&state.path_backing[self.path.clone()]).as_bstr()
         }
 
+        pub fn path_in<'backing>(&self, backing: &'backing crate::PathStorage) -> &'backing BStr {
+            (backing[self.path.clone()]).as_bstr()
+        }
+
         pub fn stage(&self) -> u32 {
             self.flags.stage()
         }

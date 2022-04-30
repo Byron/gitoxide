@@ -48,7 +48,7 @@ impl crate::Repository {
         let mut blob_id = self
             .config
             .resolved
-            .get_raw_value("mailmap", None, "blob")
+            .raw_value("mailmap", None, "blob")
             .ok()
             .and_then(|spec| {
                 // TODO: actually resolve this as spec (once we can do that)

@@ -7,7 +7,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::file::{from_paths, GitConfig, GitConfigError};
+use crate::file::{from_paths, GitConfig};
+use crate::lookup;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum ConfigSource {
@@ -40,7 +41,6 @@ pub struct ConfigBuilder {
 
 impl ConfigBuilder {
     /// Constructs a new builder that finds the default location
-    #[inline]
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -146,7 +146,6 @@ pub struct Config<'config> {
 }
 
 impl<'config> Config<'config> {
-    #[inline]
     #[must_use]
     pub fn value<T: TryFrom<Cow<'config, [u8]>>>(
         &'config self,
@@ -177,13 +176,12 @@ impl<'config> Config<'config> {
         None
     }
 
-    #[inline]
     pub fn try_value<'lookup, T: TryFrom<Cow<'config, [u8]>>>(
         &'config self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Option<T>, GitConfigError<'lookup>> {
+    ) -> Result<Option<T>, lookup::Error<T::Error>> {
         self.try_value_with_source(section_name, subsection_name, key)
             .map(|res| res.map(|(value, _)| value))
     }
@@ -197,7 +195,7 @@ impl<'config> Config<'config> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Option<(T, ConfigSource)>, GitConfigError<'lookup>> {
+    ) -> Result<Option<(T, ConfigSource)>, lookup::Error<T::Error>> {
         let mapping = self.mapping();
 
         for (conf, source) in mapping.iter() {
@@ -227,7 +225,7 @@ impl<'config> Config<'config> {
     /// Retrieves the underlying [`GitConfig`] object, if one was found during
     /// initialization.
     #[must_use]
-    pub fn get_config(&self, source: ConfigSource) -> Option<&GitConfig<'config>> {
+    pub fn config(&self, source: ConfigSource) -> Option<&GitConfig<'config>> {
         match source {
             ConfigSource::System => self.system_conf.as_ref(),
             ConfigSource::Global => self.global_conf.as_ref(),
@@ -241,7 +239,7 @@ impl<'config> Config<'config> {
     /// Retrieves the underlying [`GitConfig`] object as a mutable reference,
     /// if one was found during initialization.
     #[must_use]
-    pub fn get_config_mut(&mut self, source: ConfigSource) -> Option<&mut GitConfig<'config>> {
+    pub fn config_mut(&mut self, source: ConfigSource) -> Option<&mut GitConfig<'config>> {
         match source {
             ConfigSource::System => self.system_conf.as_mut(),
             ConfigSource::Global => self.global_conf.as_mut(),

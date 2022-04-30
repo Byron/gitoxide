@@ -15,6 +15,12 @@ impl Stack {
     }
 }
 
+pub trait Delegate {
+    fn push_directory(&mut self, stack: &Stack) -> std::io::Result<()>;
+    fn push(&mut self, is_last_component: bool, stack: &Stack) -> std::io::Result<()>;
+    fn pop_directory(&mut self);
+}
+
 impl Stack {
     /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
     /// symbolic links to be included in it as well.
@@ -25,6 +31,7 @@ impl Stack {
             current_relative: PathBuf::with_capacity(128),
             valid_components: 0,
             root,
+            current_is_directory: true,
         }
     }
 
@@ -32,17 +39,23 @@ impl Stack {
     /// along with the stacks state for inspection to perform an operation that produces some data.
     ///
     /// The full path to `relative` will be returned along with the data returned by push_comp.
+    /// Note that this only works correctly for the delegate's `push_directory()` and `pop_directory()` methods if
+    /// `relative` paths are terminal, so point to their designated file or directory.
     pub fn make_relative_path_current(
         &mut self,
         relative: impl AsRef<Path>,
-        mut push_comp: impl FnMut(&mut std::iter::Peekable<std::path::Components<'_>>, &Self) -> std::io::Result<()>,
-        mut pop_comp: impl FnMut(&Self),
+        delegate: &mut impl Delegate,
     ) -> std::io::Result<()> {
         let relative = relative.as_ref();
         debug_assert!(
             relative.is_relative(),
             "only index paths are handled correctly here, must be relative"
         );
+        debug_assert!(!relative.to_string_lossy().is_empty(), "empty paths are not allowed");
+
+        if self.valid_components == 0 {
+            delegate.push_directory(self)?;
+        }
 
         let mut components = relative.components().peekable();
         let mut existing_components = self.current_relative.components();
@@ -59,21 +72,32 @@ impl Stack {
         for _ in 0..self.valid_components - matching_components {
             self.current.pop();
             self.current_relative.pop();
-            pop_comp(&*self);
+            if self.current_is_directory {
+                delegate.pop_directory();
+            }
+            self.current_is_directory = true;
         }
         self.valid_components = matching_components;
 
+        if !self.current_is_directory && components.peek().is_some() {
+            delegate.push_directory(self)?;
+        }
+
         while let Some(comp) = components.next() {
+            let is_last_component = components.peek().is_none();
+            self.current_is_directory = !is_last_component;
             self.current.push(comp);
             self.current_relative.push(comp);
             self.valid_components += 1;
-            let res = push_comp(&mut components, &*self);
+            let res = delegate.push(is_last_component, self);
+            if self.current_is_directory {
+                delegate.push_directory(self)?;
+            }
 
             if let Err(err) = res {
                 self.current.pop();
                 self.current_relative.pop();
                 self.valid_components -= 1;
-                pop_comp(&*self);
                 return Err(err);
             }
         }
