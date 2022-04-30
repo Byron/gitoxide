@@ -395,7 +395,7 @@ pub mod repo {
                 /// Useful for undoing previous patterns using the '!' prefix.
                 #[clap(long, short = 'p')]
                 patterns: Vec<OsString>,
-                /// The git path specifications to check for exclusion.
+                /// The git path specifications to check for exclusion, or unset to read from stdin one per line.
                 #[clap(parse(try_from_os_str = std::convert::TryFrom::try_from))]
                 pathspecs: Vec<git::path::Spec>,
             },

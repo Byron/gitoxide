@@ -9,6 +9,7 @@ use std::{
 
 use anyhow::Result;
 use clap::Parser;
+use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
@@ -206,12 +207,23 @@ pub fn main() -> Result<()> {
                         progress_keep_open,
                         None,
                         move |_progress, out, _err| {
+                            use git::bstr::ByteSlice;
                             core::repository::exclude::query(
                                 repository.into(),
+                                if pathspecs.is_empty() {
+                                    Box::new(
+                                        stdin_or_bail()?
+                                            .byte_lines()
+                                            .filter_map(Result::ok)
+                                            .map(|line| git::path::Spec::from_bytes(line.as_bstr()))
+                                            .flatten(),
+                                    ) as Box<dyn Iterator<Item = git::path::Spec>>
+                                } else {
+                                    Box::new(pathspecs.into_iter())
+                                },
                                 out,
                                 core::repository::exclude::query::Options {
                                     format,
-                                    pathspecs,
                                     show_ignore_patterns,
                                     overrides: patterns,
                                 },
@@ -341,16 +353,7 @@ pub fn main() -> Result<()> {
                     progress_keep_open,
                     core::pack::create::PROGRESS_RANGE,
                     move |progress, out, _err| {
-                        let input = if has_tips {
-                            None
-                        } else {
-                            if atty::is(atty::Stream::Stdin) {
-                                anyhow::bail!(
-                                    "Refusing to read from standard input as no path is given, but it's a terminal."
-                                )
-                            }
-                            Some(BufReader::new(stdin()))
-                        };
+                        let input = if has_tips { None } else { stdin_or_bail()?.into() };
                         let repository = repository.unwrap_or_else(|| PathBuf::from("."));
                         let context = core::pack::create::Context {
                             thread_limit,
@@ -639,6 +642,13 @@ pub fn main() -> Result<()> {
         },
     }?;
     Ok(())
+}
+
+fn stdin_or_bail() -> anyhow::Result<std::io::BufReader<std::io::Stdin>> {
+    if atty::is(atty::Stream::Stdin) {
+        anyhow::bail!("Refusing to read from standard input while a terminal is connected")
+    }
+    Ok(BufReader::new(stdin()))
 }
 
 fn verify_mode(decode: bool, re_encode: bool) -> verify::Mode {

@@ -7,12 +7,10 @@ use git_repository::prelude::FindExt;
 
 pub mod query {
     use crate::OutputFormat;
-    use git_repository as git;
     use std::ffi::OsString;
 
     pub struct Options {
         pub format: OutputFormat,
-        pub pathspecs: Vec<git::path::Spec>,
         pub overrides: Vec<OsString>,
         pub show_ignore_patterns: bool,
     }
@@ -20,11 +18,11 @@ pub mod query {
 
 pub fn query(
     repo: git::Repository,
+    pathspecs: impl Iterator<Item = git::path::Spec>,
     mut out: impl io::Write,
     query::Options {
         overrides,
         format,
-        pathspecs,
         show_ignore_patterns,
     }: query::Options,
 ) -> anyhow::Result<()> {
