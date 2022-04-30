@@ -1,4 +1,5 @@
 use bstr::BStr;
+use bstr::{BString, ByteSlice};
 use std::{
     borrow::Cow,
     collections::{HashMap, VecDeque},
@@ -7,6 +8,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::file::from_paths::Options;
 use crate::{
     file::{
         section::{MutableSection, SectionBody},
@@ -118,8 +120,9 @@ pub struct GitConfig<'event> {
     section_order: VecDeque<SectionId>,
 }
 
+const DOT: &[u8] = b".";
+
 pub mod from_paths {
-    use std::borrow::Cow;
 
     use crate::{parser, values::path::interpolate};
 
@@ -138,10 +141,10 @@ pub mod from_paths {
     }
 
     /// Options when loading git config using [`GitConfig::from_paths()`][super::GitConfig::from_paths()].
-    #[derive(Clone)]
+    #[derive(Clone, Copy)]
     pub struct Options<'a> {
         /// The location where gitoxide or git is installed
-        pub git_install_dir: Option<Cow<'a, std::path::Path>>,
+        pub git_install_dir: Option<&'a std::path::Path>,
         /// The maximum allowed length of the file include chain built by following nested includes where base level is depth = 0.
         pub max_depth: u8,
         /// When max depth is exceeded while following nested included, return an error if true or silently stop following
@@ -149,6 +152,10 @@ pub mod from_paths {
         ///
         /// Setting this value to false allows to read configuration with cycles, which otherwise always results in an error.
         pub error_on_max_depth_exceeded: bool,
+        /// The location of the .git directory
+        pub git_dir: Option<&'a std::path::Path>,
+        /// The name of the branch that is currently checked out
+        pub branch_name: Option<git_ref::FullNameRef<'a>>,
     }
 
     impl<'a> Default for Options<'a> {
@@ -157,6 +164,8 @@ pub mod from_paths {
                 git_install_dir: None,
                 max_depth: 10,
                 error_on_max_depth_exceeded: true,
+                git_dir: None,
+                branch_name: None,
             }
         }
     }
@@ -243,6 +252,83 @@ impl<'event> GitConfig<'event> {
         config_path: Option<&std::path::Path>,
         options: &from_paths::Options,
     ) -> Result<(), from_paths::Error> {
+        // TODO handle new git undocumented feature `hasconfig`
+        fn include_condition_is_true(
+            condition: &Cow<str>,
+            target_config_path: Option<&Path>,
+            options: &from_paths::Options,
+        ) -> bool {
+            if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir:")) {
+                return is_match(&target_config_path, options, git_dir, condition);
+            } else if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir/i:")) {
+                return is_match(&target_config_path, options, git_dir, &condition.to_lowercase());
+            }
+            if let Some(branch_name) = options.branch_name {
+                if let Some((git_ref::Category::LocalBranch, branch_name)) = branch_name.category_and_short_name() {
+                    if let Some(condition) = condition.strip_prefix("onbranch:") {
+                        let mut condition = Cow::Borrowed(condition);
+                        if condition.starts_with("/") {
+                            condition = Cow::Owned(format!("**{}", condition));
+                        }
+                        if condition.ends_with("/") {
+                            condition = Cow::Owned(format!("{}**", condition));
+                        }
+                        let pattern = condition.as_bytes().as_bstr();
+                        dbg!(&branch_name, &pattern);
+                        return git_glob::wildmatch(pattern, branch_name, git_glob::wildmatch::Mode::empty());
+                    }
+                }
+                return false;
+            }
+            false
+        }
+
+        fn is_match(target_config_path: &Option<&Path>, options: &Options, git_dir: &Path, condition: &str) -> bool {
+            if condition.contains("\\") {
+                return false;
+            }
+            let condition_path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
+            if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir.as_deref()) {
+                let mut condition_path = git_path::into_bstr(condition_path).as_bstr().to_owned();
+                condition_path = BString::from(condition_path.replace("\\", "/"));
+
+                dbg!(&target_config_path);
+                if condition_path.starts_with(DOT) {
+                    if let Some(parent_dir_path) = target_config_path {
+                        if let Some(parent_path) = parent_dir_path.parent() {
+                            let parent_dir = git_path::into_bstr(parent_path);
+                            let v = bstr::concat(&[parent_dir.as_bstr(), condition_path[DOT.len()..].as_bstr()]);
+                            condition_path = BString::from(v);
+                            condition_path = BString::from(condition_path.replace("\\", "/"));
+                        }
+                    }
+                }
+                if !["~/", "./", "/"]
+                    .iter()
+                    .any(|&str| condition_path.starts_with(str.as_bytes()))
+                {
+                    let v = bstr::concat(&["**/".as_bytes().as_bstr(), condition_path.as_bstr()]);
+                    condition_path = BString::from(v);
+                }
+                if condition_path.ends_with(b"/") {
+                    condition_path.push(b'*');
+                    condition_path.push(b'*');
+                }
+                let value = git_path::into_bstr(git_dir);
+                let value = value.replace("\\", "/");
+                let value = value.as_bstr();
+                let condition_path = condition_path.as_bstr();
+
+                println!();
+                dbg!(&condition_path, &value);
+                let result =
+                    git_glob::wildmatch(condition_path, value, git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL);
+                dbg!(&result);
+                return result;
+            }
+            return false;
+        }
+
         fn resolve_includes_recursive(
             target_config: &mut GitConfig,
             target_config_path: Option<&Path>,
@@ -260,32 +346,73 @@ impl<'event> GitConfig<'event> {
             }
 
             let mut paths_to_include = Vec::new();
-            for path in target_config
+
+            let mut include_paths = target_config
                 .multi_value::<values::Path>("include", None, "path")
-                .unwrap_or_default()
-            {
-                let path = path.interpolate(options.git_install_dir.as_deref())?;
-                let path: PathBuf = if path.is_relative() {
-                    target_config_path
-                        .ok_or(from_paths::Error::MissingConfigPath)?
-                        .parent()
-                        .expect("path is a config file which naturally lives in a directory")
-                        .join(path)
-                } else {
-                    path.into()
-                };
+                .unwrap_or_default();
+
+            for (header, body) in get_include_if_sections(target_config) {
+                if let Some(condition) = &header.subsection_name {
+                    if include_condition_is_true(condition, target_config_path, options) {
+                        let paths = body.values(&Key::from("path"));
+                        let paths = paths.iter().map(|path| values::Path::from(path.clone()));
+                        include_paths.extend(paths);
+                    }
+                }
+            }
+
+            for path in include_paths {
+                let path = resolve(path, target_config_path, options)?;
 
                 if path.is_file() {
                     paths_to_include.push(path);
                 }
             }
 
+            dbg!(&paths_to_include);
             for config_path in paths_to_include {
                 let mut include_config = GitConfig::open(&config_path)?;
                 resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
                 target_config.append(include_config);
             }
             Ok(())
+        }
+
+        fn get_include_if_sections<'a>(
+            target_config: &'a GitConfig<'_>,
+        ) -> Vec<(&'a ParsedSectionHeader<'a>, &'a SectionBody<'a>)> {
+            // TODO can we have same values in section_headers.values()?
+            let section_headers_to_id: HashMap<_, _> = target_config
+                .section_headers
+                .values()
+                .zip(target_config.section_headers.keys())
+                .collect();
+            let mut include_if_sections = target_config.sections_by_name_with_header("includeIf");
+            include_if_sections.sort_by(|a, b| {
+                section_headers_to_id
+                    .get(a.0)
+                    .expect("section_id exists")
+                    .cmp(section_headers_to_id.get(b.0).expect("section_id exists"))
+            });
+            include_if_sections
+        }
+
+        fn resolve(
+            path: values::Path,
+            target_config_path: Option<&Path>,
+            options: &from_paths::Options,
+        ) -> Result<PathBuf, from_paths::Error> {
+            let path = path.interpolate(options.git_install_dir.as_deref())?;
+            let path: PathBuf = if path.is_relative() {
+                target_config_path
+                    .ok_or(from_paths::Error::MissingConfigPath)?
+                    .parent()
+                    .expect("path is a config file which naturally lives in a directory")
+                    .join(path)
+            } else {
+                path.into()
+            };
+            Ok(path)
         }
 
         resolve_includes_recursive(self, config_path, 0, options)

@@ -17,6 +17,8 @@ include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 git-features = { version = "^0.20.0", path = "../git-features"}
 git-path = { version = "^0.1.0", path = "../git-path" }
 git-sec = { version = "^0.1.0", path = "../git-sec" }
+git-ref = { version = "0.12.1", path = "../git-ref" }
+git-glob = { version = "0.2.0", path = "../git-glob" }
 
 dirs = "4"
 nom = { version = "7", default_features = false, features = [ "std" ] }
