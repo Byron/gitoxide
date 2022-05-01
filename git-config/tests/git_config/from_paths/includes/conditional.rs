@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
+use std::fs;
 use std::path::{Path, PathBuf};
-use std::{borrow::Cow, fs};
 
 use crate::git_config::cow_str;
 use crate::git_config::from_paths::escape_backslashes;
@@ -13,7 +13,7 @@ fn girdir_and_onbranch() {
     let dir = tempdir().unwrap();
 
     let config_path = dir.path().join("a");
-    let b_path = dir.path().join("b");
+    let absolute_path = dir.path().join("b");
     let home_dot_git_path = dir.path().join("c");
     let home_trailing_slash_path = dir.path().join("c_slash");
     let relative_dot_git_path2 = dir.path().join("d");
@@ -63,7 +63,7 @@ fn girdir_and_onbranch() {
             escape_backslashes(&home_dot_git_path),
             escape_backslashes(&home_trailing_slash_path),
             escape_backslashes(&relative_dot_git_path2),
-            escape_backslashes(&b_path)
+            escape_backslashes(&absolute_path)
         ),
     )
     .unwrap();
@@ -93,10 +93,10 @@ fn girdir_and_onbranch() {
     .unwrap();
 
     fs::write(
-        b_path.as_path(),
+        absolute_path.as_path(),
         "
 [core]
-  b = 2",
+  b = absolute-path",
     )
     .unwrap();
 
@@ -223,12 +223,8 @@ fn girdir_and_onbranch() {
     }
 
     {
-        let cw_path = PathBuf::from("C:\\w\\.git".to_string());
-        let options = from_paths::Options {
-            git_dir: Some(cw_path.as_path()),
-            ..Default::default()
-        };
-        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        let dir = PathBuf::from("C:\\w\\.git".to_string());
+        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "a"),
             Some(cow_str("relative-dot-git")),
@@ -237,12 +233,8 @@ fn girdir_and_onbranch() {
     }
 
     {
-        let home_git_path = dirs::home_dir().unwrap().join(".git");
-        let options = from_paths::Options {
-            git_dir: Some(home_git_path.as_path()),
-            ..Default::default()
-        };
-        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        let dir = dirs::home_dir().unwrap().join(".git");
+        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.strings("core", None, "b"),
             Some(vec![cow_str("1"), cow_str("home-dot-git")]),
@@ -278,15 +270,24 @@ fn girdir_and_onbranch() {
         );
     }
 
-    let e_x_y_path = PathBuf::from("/e/x/y/.git");
-    let options = from_paths::Options {
-        git_dir: Some(e_x_y_path.as_path()),
+    {
+        let e_x_y_path = PathBuf::from("/e/x/y/.git");
+        let options = from_paths::Options {
+            git_dir: Some(e_x_y_path.as_path()),
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(vec![config_path], options).unwrap();
+        assert_eq!(
+            config.string("core", None, "b"),
+            Some(cow_str("absolute-path")),
+            "absolute path pattern is matched with sub path from GIT_DIR"
+        );
+    }
+}
+
+fn options_with_git_dir(git_dir: &Path) -> from_paths::Options<'_> {
+    from_paths::Options {
+        git_dir: Some(git_dir),
         ..Default::default()
-    };
-    let config = GitConfig::from_paths(vec![config_path], options).unwrap();
-    assert_eq!(
-        config.raw_value("core", None, "b").unwrap(),
-        Cow::<[u8]>::Borrowed(b"2"),
-        "absolute path pattern is matched with sub path from GIT_DIR"
-    );
+    }
 }
