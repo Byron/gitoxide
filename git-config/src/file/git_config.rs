@@ -220,11 +220,15 @@ impl<'event> GitConfig<'event> {
     /// git-config file.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
-    pub fn from_paths(paths: Vec<PathBuf>, options: &from_paths::Options) -> Result<Self, from_paths::Error> {
+    pub fn from_paths(
+        paths: impl IntoIterator<Item = impl AsRef<Path>>,
+        options: &from_paths::Options,
+    ) -> Result<Self, from_paths::Error> {
         let mut target = Self::new();
         for path in paths {
-            let mut config = Self::open(&path)?;
-            config.resolve_includes(Some(&path), options)?;
+            let path = path.as_ref();
+            let mut config = Self::open(path)?;
+            config.resolve_includes(Some(path), options)?;
             target.append(config);
         }
         Ok(target)
