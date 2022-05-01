@@ -1195,6 +1195,29 @@ impl<'event> GitConfig<'event> {
             .map(|values| values.into_iter().map(|v| values::String::from(v).value).collect())
     }
 
+    /// Similar to [`multi_value(…)`][GitConfig::multi_value()] but returning integers if at least one of them was found
+    /// and if none of them overflows.
+    pub fn integers(
+        &self,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
+    ) -> Option<Result<Vec<i64>, value::parse::Error>> {
+        self.raw_multi_value(section_name, subsection_name, key)
+            .ok()
+            .map(|values| {
+                values
+                    .into_iter()
+                    .map(|v| {
+                        values::Integer::try_from(v.as_ref()).and_then(|int| {
+                            int.to_decimal()
+                                .ok_or_else(|| value::parse::Error::new("Integer overflow", v.into_owned()))
+                        })
+                    })
+                    .collect()
+            })
+    }
+
     /// Returns mutable references to all uninterpreted values given a section,
     /// an optional subsection and key.
     ///
