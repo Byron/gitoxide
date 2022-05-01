@@ -1174,6 +1174,13 @@ impl<'event> GitConfig<'event> {
         }
     }
 
+    /// Similar to [`multi_value(…)`][GitConfig::multi_value()] but returning strings if at least one of them was found.
+    pub fn strings(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Vec<Cow<'_, BStr>>> {
+        self.raw_multi_value(section_name, subsection_name, key)
+            .ok()
+            .map(|values| values.into_iter().map(|v| values::String::from(v).value).collect())
+    }
+
     /// Returns mutable references to all uninterpreted values given a section,
     /// an optional subsection and key.
     ///
