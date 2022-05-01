@@ -432,7 +432,7 @@ impl<'event> GitConfig<'event> {
         let mut paths = vec![];
 
         if env::var("GIT_CONFIG_NO_SYSTEM").is_err() {
-            if let Ok(git_config_system) = env::var("GIT_CONFIG_SYSTEM") {
+            if let Some(git_config_system) = env::var_os("GIT_CONFIG_SYSTEM") {
                 paths.push(PathBuf::from(git_config_system))
             } else {
                 // In git the fallback is set to a build time macro which defaults to /etc/gitconfig
@@ -440,24 +440,24 @@ impl<'event> GitConfig<'event> {
             }
         }
 
-        if let Ok(git_config_global) = env::var("GIT_CONFIG_GLOBAL") {
+        if let Some(git_config_global) = env::var_os("GIT_CONFIG_GLOBAL") {
             paths.push(PathBuf::from(git_config_global));
         } else {
             // Divergence from git-config(1)
             // These two are supposed to share the same scope and override
             // rather than append according to git-config(1) documentation.
-            if let Ok(xdg_config_home) = env::var("XDG_CONFIG_HOME") {
+            if let Some(xdg_config_home) = env::var_os("XDG_CONFIG_HOME") {
                 paths.push(PathBuf::from(xdg_config_home).join("git/config"));
-            } else if let Ok(home) = env::var("HOME") {
+            } else if let Some(home) = env::var_os("HOME") {
                 paths.push(PathBuf::from(home).join(".config/git/config"));
             }
 
-            if let Ok(home) = env::var("HOME") {
+            if let Some(home) = env::var_os("HOME") {
                 paths.push(PathBuf::from(home).join(".gitconfig"));
             }
         }
 
-        if let Ok(git_dir) = env::var("GIT_DIR") {
+        if let Some(git_dir) = env::var_os("GIT_DIR") {
             paths.push(PathBuf::from(git_dir).join("config"));
         }
 
@@ -485,8 +485,8 @@ impl<'event> GitConfig<'event> {
         for i in 0..count {
             let key =
                 env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| from_env::Error::InvalidKeyId { key_id: i })?;
-            let value = env::var(format!("GIT_CONFIG_VALUE_{}", i))
-                .map_err(|_| from_env::Error::InvalidValueId { value_id: i })?;
+            let value = env::var_os(format!("GIT_CONFIG_VALUE_{}", i))
+                .ok_or_else(|| from_env::Error::InvalidValueId { value_id: i })?;
             if let Some((section_name, maybe_subsection)) = key.split_once('.') {
                 let (subsection, key) = if let Some((subsection, key)) = maybe_subsection.rsplit_once('.') {
                     (Some(subsection), key)
@@ -507,7 +507,7 @@ impl<'event> GitConfig<'event> {
 
                 section.push(
                     Cow::<str>::Owned(key.to_string()).into(),
-                    Cow::Owned(value.into_bytes()),
+                    Cow::Owned(git_path::into_bstr(PathBuf::from(value)).into_owned().into()),
                 );
             } else {
                 return Err(from_env::Error::InvalidKeyValue {
