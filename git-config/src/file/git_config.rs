@@ -486,7 +486,7 @@ impl<'event> GitConfig<'event> {
             let key =
                 env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| from_env::Error::InvalidKeyId { key_id: i })?;
             let value = env::var_os(format!("GIT_CONFIG_VALUE_{}", i))
-                .ok_or_else(|| from_env::Error::InvalidValueId { value_id: i })?;
+                .ok_or(from_env::Error::InvalidValueId { value_id: i })?;
             if let Some((section_name, maybe_subsection)) = key.split_once('.') {
                 let (subsection, key) = if let Some((subsection, key)) = maybe_subsection.rsplit_once('.') {
                     (Some(subsection), key)
