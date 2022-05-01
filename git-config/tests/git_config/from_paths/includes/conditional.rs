@@ -246,7 +246,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = PathBuf::from("/e/x/y/.git");
-        let config = GitConfig::from_paths(vec![config_path], options_with_git_dir(&dir)).unwrap();
+        let config = GitConfig::from_paths(Some(config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "b"),
             Some(cow_str("absolute-path")),
