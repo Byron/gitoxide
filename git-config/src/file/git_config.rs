@@ -222,7 +222,7 @@ impl<'event> GitConfig<'event> {
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
     pub fn from_paths(
         paths: impl IntoIterator<Item = impl AsRef<Path>>,
-        options: &from_paths::Options,
+        options: from_paths::Options,
     ) -> Result<Self, from_paths::Error> {
         let mut target = Self::new();
         for path in paths {
@@ -254,13 +254,13 @@ impl<'event> GitConfig<'event> {
     pub(crate) fn resolve_includes(
         &mut self,
         config_path: Option<&std::path::Path>,
-        options: &from_paths::Options,
+        options: from_paths::Options,
     ) -> Result<(), from_paths::Error> {
         // TODO handle new git undocumented feature `hasconfig`
         fn include_condition_is_true(
             condition: &str,
             target_config_path: Option<&Path>,
-            options: &from_paths::Options,
+            options: from_paths::Options,
         ) -> bool {
             if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir:")) {
                 return is_match(&target_config_path, options, git_dir, condition);
@@ -287,7 +287,7 @@ impl<'event> GitConfig<'event> {
             false
         }
 
-        fn is_match(target_config_path: &Option<&Path>, options: &Options, git_dir: &Path, condition: &str) -> bool {
+        fn is_match(target_config_path: &Option<&Path>, options: Options, git_dir: &Path, condition: &str) -> bool {
             if condition.contains('\\') {
                 return false;
             }
@@ -337,7 +337,7 @@ impl<'event> GitConfig<'event> {
             target_config: &mut GitConfig,
             target_config_path: Option<&Path>,
             depth: u8,
-            options: &from_paths::Options,
+            options: from_paths::Options,
         ) -> Result<(), from_paths::Error> {
             if depth == options.max_depth {
                 return if options.error_on_max_depth_exceeded {
@@ -404,7 +404,7 @@ impl<'event> GitConfig<'event> {
         fn resolve(
             path: values::Path,
             target_config_path: Option<&Path>,
-            options: &from_paths::Options,
+            options: from_paths::Options,
         ) -> Result<PathBuf, from_paths::Error> {
             let path = path.interpolate(options.git_install_dir)?;
             let path: PathBuf = if path.is_relative() {
@@ -426,7 +426,7 @@ impl<'event> GitConfig<'event> {
     /// This is neither zero-alloc nor zero-copy.
     ///
     /// See <https://git-scm.com/docs/git-config#FILES> for details.
-    pub fn from_env_paths(options: &from_paths::Options) -> Result<Self, from_paths::Error> {
+    pub fn from_env_paths(options: from_paths::Options) -> Result<Self, from_paths::Error> {
         use std::env;
 
         let mut paths = vec![];
@@ -474,7 +474,7 @@ impl<'event> GitConfig<'event> {
     /// there was an invalid key value pair.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_env(options: &from_paths::Options) -> Result<Option<Self>, from_env::Error> {
+    pub fn from_env(options: from_paths::Options) -> Result<Option<Self>, from_env::Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
             Ok(v) => v.parse().map_err(|_| from_env::Error::ParseError { input: v })?,
