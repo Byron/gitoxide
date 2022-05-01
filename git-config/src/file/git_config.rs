@@ -625,6 +625,20 @@ impl<'event> GitConfig<'event> {
             .map(|v| values::Boolean::try_from(v).map(|b| b.to_bool()))
     }
 
+    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the integer wasn't found.
+    pub fn integer(
+        &'event self,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
+    ) -> Option<Result<i64, value::parse::Error>> {
+        let int = self.raw_value(section_name, subsection_name, key).ok()?;
+        Some(values::Integer::try_from(int.as_ref()).and_then(|b| {
+            b.to_decimal()
+                .ok_or_else(|| value::parse::Error::new("Integer overflow", int.into_owned()))
+        }))
+    }
+
     /// Returns all interpreted values given a section, an optional subsection
     /// and key.
     ///
