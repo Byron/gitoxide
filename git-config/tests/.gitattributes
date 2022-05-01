@@ -1,0 +1,3 @@
+# assure line feeds don't interfere with our working copy hash 
+/fixtures/**/* text crlf=input	eol=lf
+

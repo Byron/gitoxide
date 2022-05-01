@@ -1,23 +1,25 @@
-#[cfg(test)]
-mod mutable_value;
+use bstr::{BStr, ByteSlice};
+use std::borrow::Cow;
 
-#[cfg(test)]
-mod mutable_multi_value;
+pub fn cow_str(s: &str) -> Cow<'_, BStr> {
+    Cow::Borrowed(s.as_bytes().as_bstr())
+}
 
-#[cfg(test)]
-mod paths;
+mod open {
+    use git_config::file::GitConfig;
+    use git_testtools::fixture_path;
 
-#[cfg(test)]
-mod from_env;
+    #[test]
+    fn parse_config_with_windows_line_endings_successfully() {
+        GitConfig::open(fixture_path("repo-config.crlf")).unwrap();
+    }
+}
 
-#[cfg(test)]
-mod raw_value;
-
-#[cfg(test)]
-mod value;
-
-#[cfg(test)]
-mod raw_multi_value;
-
-#[cfg(test)]
 mod display;
+mod from_env;
+mod from_paths;
+mod mutable_multi_value;
+mod mutable_value;
+mod raw_multi_value;
+mod raw_value;
+mod value;
