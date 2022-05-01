@@ -1137,6 +1137,7 @@ dependencies = [
  "git-path",
  "git-ref",
  "git-sec",
+ "git-testtools",
  "memchr",
  "nom",
  "pwd",
