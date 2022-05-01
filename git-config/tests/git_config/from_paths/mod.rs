@@ -18,7 +18,7 @@ fn file_not_found() {
     let config_path = dir.path().join("config");
 
     let paths = vec![config_path];
-    let error = GitConfig::from_paths(paths, &Default::default()).unwrap_err();
+    let error = GitConfig::from_paths(paths, Default::default()).unwrap_err();
     assert!(
         matches!(error,  Error::ParserOrIoError(ParserOrIoError::Io(io_error)) if io_error.kind() == io::ErrorKind::NotFound)
     );
@@ -31,7 +31,7 @@ fn single_path() {
     fs::write(config_path.as_path(), b"[core]\nboolean = true").unwrap();
 
     let paths = vec![config_path];
-    let config = GitConfig::from_paths(paths, &Default::default()).unwrap();
+    let config = GitConfig::from_paths(paths, Default::default()).unwrap();
 
     assert_eq!(
         config.raw_value("core", None, "boolean").unwrap(),
@@ -58,7 +58,7 @@ fn multiple_paths_single_value() -> crate::Result {
     fs::write(d_path.as_path(), b"[core]\na = false")?;
 
     let paths = vec![a_path, b_path, c_path, d_path];
-    let config = GitConfig::from_paths(paths, &Default::default())?;
+    let config = GitConfig::from_paths(paths, Default::default())?;
 
     assert_eq!(config.boolean("core", None, "a"), Some(Ok(false)));
     assert_eq!(config.boolean("core", None, "b"), Some(Ok(true)));
@@ -88,7 +88,7 @@ fn multiple_paths_multi_value() -> crate::Result {
     fs::write(e_path.as_path(), b"[include]\npath = e_path")?;
 
     let paths = vec![a_path, b_path, c_path, d_path, e_path];
-    let config = GitConfig::from_paths(paths, &Default::default())?;
+    let config = GitConfig::from_paths(paths, Default::default())?;
 
     assert_eq!(
         config.strings("core", None, "key"),

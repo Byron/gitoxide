@@ -1,7 +1,8 @@
 use std::convert::TryFrom;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{borrow::Cow, fs};
 
+use crate::git_config::cow_str;
 use crate::git_config::from_paths::escape_backslashes;
 use git_config::file::{from_paths, GitConfig};
 use git_ref::FullName;
@@ -11,20 +12,20 @@ use tempfile::tempdir;
 fn girdir_and_onbranch() {
     let dir = tempdir().unwrap();
 
-    let a_path = dir.path().join("a");
+    let config_path = dir.path().join("a");
     let b_path = dir.path().join("b");
-    let c_path = dir.path().join("c");
-    let c_slash_path = dir.path().join("c_slash");
-    let d_path = dir.path().join("d");
-    let e_path = dir.path().join("e");
-    let i_path = dir.path().join("i");
-    let g_path = dir.path().join("g");
-    let w_path = dir.path().join("w");
-    let x_path = dir.path().join("x");
+    let home_dot_git_path = dir.path().join("c");
+    let home_trailing_slash_path = dir.path().join("c_slash");
+    let relative_dot_git_path2 = dir.path().join("d");
+    let relative_path = dir.path().join("e");
+    let casei_path = dir.path().join("i");
+    let relative_dot_slash_path = dir.path().join("g");
+    let relative_dot_git_path = dir.path().join("w");
+    let relative_with_backslash_path = dir.path().join("x");
     let branch_path = dir.path().join("branch");
 
     fs::write(
-        a_path.as_path(),
+        config_path.as_path(),
         format!(
             r#"
 [core]
@@ -54,14 +55,14 @@ fn girdir_and_onbranch() {
 [includeIf "gitdir:/e/x/"]
   path = {}"#,
             escape_backslashes(&branch_path),
-            escape_backslashes(&i_path),
-            escape_backslashes(&x_path),
-            escape_backslashes(&g_path),
-            escape_backslashes(&e_path),
-            escape_backslashes(&w_path),
-            escape_backslashes(&c_path),
-            escape_backslashes(&c_slash_path),
-            escape_backslashes(&d_path),
+            escape_backslashes(&casei_path),
+            escape_backslashes(&relative_with_backslash_path),
+            escape_backslashes(&relative_dot_slash_path),
+            escape_backslashes(&relative_path),
+            escape_backslashes(&relative_dot_git_path),
+            escape_backslashes(&home_dot_git_path),
+            escape_backslashes(&home_trailing_slash_path),
+            escape_backslashes(&relative_dot_git_path2),
             escape_backslashes(&b_path)
         ),
     )
@@ -71,23 +72,23 @@ fn girdir_and_onbranch() {
         branch_path.as_path(),
         "
 [core]
-  x = 7",
+  x = branch-override",
     )
     .unwrap();
 
     fs::write(
-        i_path.as_path(),
+        casei_path.as_path(),
         "
 [core]
-  i = 3",
+  i = case-i-match",
     )
     .unwrap();
 
     fs::write(
-        x_path.as_path(),
+        relative_with_backslash_path.as_path(),
         "
 [core]
-  c = 5",
+  c = relative with backslash do not match",
     )
     .unwrap();
 
@@ -100,173 +101,189 @@ fn girdir_and_onbranch() {
     .unwrap();
 
     fs::write(
-        c_path.as_path(),
+        home_dot_git_path.as_path(),
         "
 [core]
-  b = 3",
+  b = home-dot-git",
     )
     .unwrap();
 
     fs::write(
-        d_path.as_path(),
+        relative_dot_git_path2.as_path(),
         "
 [core]
-  b = 4",
+  b = relative-dot-git-2",
     )
     .unwrap();
 
     fs::write(
-        e_path.as_path(),
+        relative_path.as_path(),
         "
 [core]
-  a = 5",
+  a = relative-path",
     )
     .unwrap();
 
     fs::write(
-        w_path.as_path(),
+        relative_dot_git_path.as_path(),
         "
 [core]
-  a = 6",
+  a = relative-dot-git",
     )
     .unwrap();
 
     fs::write(
-        c_slash_path.as_path(),
+        home_trailing_slash_path.as_path(),
         "
 [core]
-  b = 7",
+  b = home-trailing-slash",
     )
     .unwrap();
 
     fs::write(
-        g_path.as_path(),
+        relative_dot_slash_path.as_path(),
         "
 [core]
-  b = 8",
+  b = relative-dot-slash-path",
     )
     .unwrap();
 
-    let branch_name = FullName::try_from("refs/heads/repo/br/one").unwrap();
-    let branch_name = branch_name.to_ref();
-    let options = from_paths::Options {
-        branch_name: Some(branch_name),
-        ..Default::default()
-    };
+    {
+        let branch_name = FullName::try_from("refs/heads/repo/br/one").unwrap();
+        let branch_name = branch_name.to_ref();
+        let options = from_paths::Options {
+            branch_name: Some(branch_name),
+            ..Default::default()
+        };
 
-    let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-    assert_eq!(
-        config.raw_value("core", None, "x").unwrap(),
-        Cow::<[u8]>::Borrowed(b"7"),
-        "branch name match"
-    );
+        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.string("core", None, "x"),
+            Some(cow_str("branch-override")),
+            "branch name match"
+        );
+    }
 
-    let a_c_d_path = PathBuf::from("/a/b/c/d/.git");
-    let options = from_paths::Options {
-        git_dir: Some(a_c_d_path.as_path()),
-        ..Default::default()
-    };
+    {
+        let options = from_paths::Options {
+            git_dir: Some(Path::new("/a/b/c/d/.git")),
+            ..Default::default()
+        };
 
-    let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-    assert_eq!(
-        config.raw_value("core", None, "i").unwrap(),
-        Cow::<[u8]>::Borrowed(b"3"),
-        "case insensitive patterns match"
-    );
+        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.string("core", None, "i"),
+            Some(cow_str("case-i-match")),
+            "case insensitive patterns match"
+        );
+    }
 
-    let a_c_d_path = PathBuf::from("/a/c/d/.git");
-    let options = from_paths::Options {
-        git_dir: Some(a_c_d_path.as_path()),
-        ..Default::default()
-    };
+    {
+        let options = from_paths::Options {
+            git_dir: Some(Path::new("/a/b/c/d/.git")),
+            ..Default::default()
+        };
 
-    let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-    assert_eq!(
-        config.raw_value("core", None, "c").unwrap(),
-        Cow::<[u8]>::Borrowed(b"1"),
-        "patterns with backslashes do not match"
-    );
+        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.integer("core", None, "c"),
+            Some(Ok(1)),
+            "patterns with backslashes do not match"
+        );
+    }
 
-    let a_p_path = a_path.parent().unwrap().join("p").join("q").join(".git");
-    let options = from_paths::Options {
-        git_dir: Some(a_p_path.as_path()),
-        ..Default::default()
-    };
+    {
+        let a_p_path = config_path.parent().unwrap().join("p").join("q").join(".git");
+        let options = from_paths::Options {
+            git_dir: Some(a_p_path.as_path()),
+            ..Default::default()
+        };
 
-    let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-    assert_eq!(
-        config.raw_value("core", None, "b").unwrap(),
-        Cow::<[u8]>::Borrowed(b"8"),
-        "relative path pattern is matched correctly"
-    );
+        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.string("core", None, "b"),
+            Some(cow_str("relative-dot-slash-path")),
+            "relative path pattern is matched correctly"
+        );
+    }
 
-    let a_z_y_b_path = a_path.join("z").join("y").join("b").join(".git");
-    let options = from_paths::Options {
-        git_dir: Some(a_z_y_b_path.as_path()),
-        ..Default::default()
-    };
+    {
+        let a_z_y_b_path = config_path.join("z").join("y").join("b").join(".git");
+        let options = from_paths::Options {
+            git_dir: Some(a_z_y_b_path.as_path()),
+            ..Default::default()
+        };
 
-    let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-    assert_eq!(
-        config.raw_value("core", None, "a").unwrap(),
-        Cow::<[u8]>::Borrowed(b"5"),
-        "the pattern is prefixed and suffixed with ** to match GIT_DIR containing it in the middle"
-    );
+        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.string("core", None, "a"),
+            Some(cow_str("relative-path")),
+            "the pattern is prefixed and suffixed with ** to match GIT_DIR containing it in the middle"
+        );
+    }
 
-    let cw_path = PathBuf::from("C:\\w\\.git".to_string());
-    let options = from_paths::Options {
-        git_dir: Some(cw_path.as_path()),
-        ..Default::default()
-    };
-    let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-    assert_eq!(
-        config.raw_value("core", None, "a").unwrap(),
-        Cow::<[u8]>::Borrowed(b"6"),
-        "backslashes in GIT_DIR are converted to forward slashes"
-    );
+    {
+        let cw_path = PathBuf::from("C:\\w\\.git".to_string());
+        let options = from_paths::Options {
+            git_dir: Some(cw_path.as_path()),
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.string("core", None, "a"),
+            Some(cow_str("relative-dot-git")),
+            "backslashes in GIT_DIR are converted to forward slashes"
+        );
+    }
 
-    let home_git_path = dirs::home_dir().unwrap().join(".git");
-    let options = from_paths::Options {
-        git_dir: Some(home_git_path.as_path()),
-        ..Default::default()
-    };
-    let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-    assert_eq!(
-        config.raw_multi_value("core", None, "b").unwrap(),
-        vec![Cow::<[u8]>::Borrowed(b"1"), Cow::<[u8]>::Borrowed(b"3")],
-        "tilde ~ path is resolved to home directory"
-    );
+    {
+        let home_git_path = dirs::home_dir().unwrap().join(".git");
+        let options = from_paths::Options {
+            git_dir: Some(home_git_path.as_path()),
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.strings("core", None, "b"),
+            Some(vec![cow_str("1"), cow_str("home-dot-git")]),
+            "tilde ~ path is resolved to home directory"
+        );
+    }
 
-    let home_git_path = dirs::home_dir().unwrap().join("c").join("d").join(".git");
-    let options = from_paths::Options {
-        git_dir: Some(home_git_path.as_path()),
-        ..Default::default()
-    };
-    let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-    assert_eq!(
-        config.raw_value("core", None, "b").unwrap(),
-        Cow::<[u8]>::Borrowed(b"7"),
-        "path with trailing slash is matched"
-    );
+    {
+        let home_git_path = dirs::home_dir().unwrap().join("c").join("d").join(".git");
+        let options = from_paths::Options {
+            git_dir: Some(home_git_path.as_path()),
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.string("core", None, "b"),
+            Some(cow_str("home-trailing-slash")),
+            "path with trailing slash is matched"
+        );
+    }
 
-    let x_a_path = dir.path().join("x").join("a").join(".git");
-    let options = from_paths::Options {
-        git_dir: Some(x_a_path.as_path()),
-        ..Default::default()
-    };
-    let config = GitConfig::from_paths(vec![a_path.clone()], &options).unwrap();
-    assert_eq!(
-        config.raw_value("core", None, "b").unwrap(),
-        Cow::<[u8]>::Borrowed(b"4"),
-        "** is prepended so paths ending with the pattern are matched"
-    );
+    {
+        let x_a_path = dir.path().join("x").join("a").join(".git");
+        let options = from_paths::Options {
+            git_dir: Some(x_a_path.as_path()),
+            ..Default::default()
+        };
+        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.string("core", None, "b"),
+            Some(cow_str("relative-dot-git-2")), // TODO: figure out what's the difference to the non -2 version
+            "** is prepended so paths ending with the pattern are matched"
+        );
+    }
 
     let e_x_y_path = PathBuf::from("/e/x/y/.git");
     let options = from_paths::Options {
         git_dir: Some(e_x_y_path.as_path()),
         ..Default::default()
     };
-    let config = GitConfig::from_paths(vec![a_path], &options).unwrap();
+    let config = GitConfig::from_paths(vec![config_path], options).unwrap();
     assert_eq!(
         config.raw_value("core", None, "b").unwrap(),
         Cow::<[u8]>::Borrowed(b"2"),
