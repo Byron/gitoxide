@@ -386,6 +386,7 @@ impl<'event> GitConfig<'event> {
             target_config: &'a GitConfig<'_>,
         ) -> Vec<(&'a ParsedSectionHeader<'a>, &'a SectionBody<'a>)> {
             // TODO can we have same values in section_headers.values()?
+            // ADD test
             let section_headers_to_id: HashMap<_, _> = target_config
                 .section_headers
                 .values()
