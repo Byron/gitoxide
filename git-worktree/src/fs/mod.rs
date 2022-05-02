@@ -1,5 +1,6 @@
-use bstr::BStr;
 use std::path::PathBuf;
+
+use bstr::BStr;
 
 /// Common knowledge about the worktree that is needed across most interactions with the work tree
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

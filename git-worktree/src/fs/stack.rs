@@ -1,5 +1,6 @@
-use crate::fs::Stack;
 use std::path::{Path, PathBuf};
+
+use crate::fs::Stack;
 
 impl Stack {
     pub fn root(&self) -> &Path {

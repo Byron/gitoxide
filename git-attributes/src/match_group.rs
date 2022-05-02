@@ -1,8 +1,12 @@
-use crate::{Assignment, MatchGroup, PatternList, PatternMapping, State, StateRef};
+use std::{
+    ffi::OsString,
+    io::Read,
+    path::{Path, PathBuf},
+};
+
 use bstr::{BStr, BString, ByteSlice, ByteVec};
-use std::ffi::OsString;
-use std::io::Read;
-use std::path::{Path, PathBuf};
+
+use crate::{Assignment, MatchGroup, PatternList, PatternMapping, State, StateRef};
 
 impl<'a> From<StateRef<'a>> for State {
     fn from(s: StateRef<'a>) -> Self {

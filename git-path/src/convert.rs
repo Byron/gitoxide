@@ -1,9 +1,10 @@
-use bstr::{BStr, BString};
 use std::{
     borrow::Cow,
     ffi::OsStr,
     path::{Path, PathBuf},
 };
+
+use bstr::{BStr, BString};
 
 #[derive(Debug)]
 /// The error type returned by [`into_bstr()`] and others may suffer from failed conversions from or to bytes.

@@ -378,8 +378,9 @@ pub mod repo {
     }
 
     pub mod exclude {
-        use git_repository as git;
         use std::ffi::OsString;
+
+        use git_repository as git;
 
         #[derive(Debug, clap::Subcommand)]
         pub enum Subcommands {

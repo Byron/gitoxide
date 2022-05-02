@@ -1,5 +1,6 @@
-use crate::fs::Capabilities;
 use std::path::Path;
+
+use crate::fs::Capabilities;
 
 #[cfg(windows)]
 impl Default for Capabilities {

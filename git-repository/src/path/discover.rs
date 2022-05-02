@@ -41,13 +41,14 @@ impl Default for Options {
 }
 
 pub(crate) mod function {
-    use super::{Error, Options};
-    use git_sec::Trust;
     use std::{
         borrow::Cow,
         path::{Component, Path},
     };
 
+    use git_sec::Trust;
+
+    use super::{Error, Options};
     use crate::path;
 
     /// Find the location of the git repository directly in `directory` or in any of its parent directories and provide

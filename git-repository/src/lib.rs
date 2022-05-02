@@ -244,8 +244,7 @@ pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repositor
 
 ///
 pub mod permission {
-    use git_sec::permission::Resource;
-    use git_sec::Access;
+    use git_sec::{permission::Resource, Access};
 
     /// A permission to control access to the resource pointed to an environment variable.
     pub type EnvVarResourcePermission = Access<Resource, git_sec::Permission>;
@@ -299,8 +298,9 @@ pub mod rev_parse {
 
 ///
 pub mod init {
-    use crate::ThreadSafeRepository;
     use std::path::Path;
+
+    use crate::ThreadSafeRepository;
 
     /// The error returned by [`crate::init()`].
     #[derive(Debug, thiserror::Error)]
@@ -362,8 +362,9 @@ pub mod state {
 
 ///
 pub mod discover {
-    use crate::{path, ThreadSafeRepository};
     use std::path::Path;
+
+    use crate::{path, ThreadSafeRepository};
 
     /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]

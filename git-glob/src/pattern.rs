@@ -1,6 +1,7 @@
+use std::fmt;
+
 use bitflags::bitflags;
 use bstr::{BStr, ByteSlice};
-use std::fmt;
 
 use crate::{pattern, wildmatch, Pattern};
 

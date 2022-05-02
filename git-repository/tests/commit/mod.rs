@@ -1,6 +1,7 @@
 mod describe {
-    use crate::named_repo;
     use git_repository::commit::describe::SelectRef::{AllRefs, AllTags, AnnotatedTags};
+
+    use crate::named_repo;
 
     #[test]
     fn tags_are_sorted_by_date_and_lexigraphically() {
