@@ -187,7 +187,7 @@ mod tests {
     #[test]
     fn conventional_with_additions() {
         assert_eq!(
-            Message::from("feat!: hi (#123)\n\nthe body\nBREAKING-CHANGE: breaks\n\nSigned: foobar"),
+            Message::from("feat!: hi (#123)\n\nthe body\n\nBREAKING-CHANGE: breaks\n\nSigned: foobar"),
             Message {
                 title: "hi".into(),
                 body: Some("the body".into()),
