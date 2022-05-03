@@ -1,5 +1,7 @@
+use std::fmt;
+
 use bitflags::bitflags;
-use bstr::{BStr, BString, ByteSlice};
+use bstr::{BStr, ByteSlice};
 
 use crate::{pattern, wildmatch, Pattern};
 
@@ -36,6 +38,12 @@ pub enum Case {
     Fold,
 }
 
+impl Default for Case {
+    fn default() -> Self {
+        Case::Sensitive
+    }
+}
+
 impl Pattern {
     /// Parse the given `text` as pattern, or return `None` if `text` was empty.
     pub fn from_bytes(text: &[u8]) -> Option<Self> {
@@ -43,7 +51,6 @@ impl Pattern {
             text,
             mode,
             first_wildcard_pos,
-            base_path: None,
         })
     }
 
@@ -52,35 +59,21 @@ impl Pattern {
         self.mode.contains(Mode::NEGATIVE)
     }
 
-    /// Set the base path of the pattern.
-    /// Must be a slash-separated relative path with a trailing slash.
-    ///
-    /// Use this upon creation of the pattern when the source file is known.
-    pub fn with_base(mut self, path: impl Into<BString>) -> Self {
-        let path = path.into();
-        debug_assert!(path.ends_with(b"/"), "base must end with a trailing slash");
-        debug_assert!(!path.starts_with(b"/"), "base must be relative");
-        self.base_path = Some(path);
-        self
-    }
-
     /// Match the given `path` which takes slashes (and only slashes) literally, and is relative to the repository root.
-    /// Note that `path` is assumed to be relative to the repository, and that our [`base_path`][Self::base_path]
-    /// is assumed to contain `path`.
+    /// Note that `path` is assumed to be relative to the repository.
     ///
     /// We may take various shortcuts which is when `basename_start_pos` and `is_dir` come into play.
     /// `basename_start_pos` is the index at which the `path`'s basename starts.
     ///
     /// Lastly, `case` folding can be configured as well.
-    ///
-    /// Note that this method uses shortcuts to accelerate simple patterns.
     pub fn matches_repo_relative_path<'a>(
         &self,
         path: impl Into<&'a BStr>,
         basename_start_pos: Option<usize>,
-        is_dir: bool,
+        is_dir: Option<bool>,
         case: Case,
     ) -> bool {
+        let is_dir = is_dir.unwrap_or(false);
         if !is_dir && self.mode.contains(pattern::Mode::MUST_BE_DIR) {
             return false;
         }
@@ -96,32 +89,12 @@ impl Pattern {
             path.rfind_byte(b'/').map(|p| p + 1),
             "BUG: invalid cached basename_start_pos provided"
         );
-        debug_assert!(
-            self.base_path
-                .as_ref()
-                .map(|base| path.starts_with(base))
-                .unwrap_or(true),
-            "repo-relative paths must be pre-filtered to match our base."
-        );
+        debug_assert!(!path.starts_with(b"/"), "input path must be relative");
 
-        if self.mode.contains(pattern::Mode::NO_SUB_DIR) {
-            let basename = if self.mode.contains(pattern::Mode::ABSOLUTE) {
-                self.base_path
-                    .as_ref()
-                    .and_then(|base| path.strip_prefix(base.as_slice()).map(|b| b.as_bstr()))
-                    .unwrap_or(path)
-            } else {
-                &path[basename_start_pos.unwrap_or_default()..]
-            };
+        if self.mode.contains(pattern::Mode::NO_SUB_DIR) && !self.mode.contains(pattern::Mode::ABSOLUTE) {
+            let basename = &path[basename_start_pos.unwrap_or_default()..];
             self.matches(basename, flags)
         } else {
-            let path = match self.base_path.as_ref() {
-                Some(base) => match path.strip_prefix(base.as_slice()) {
-                    Some(path) => path.as_bstr(),
-                    None => return false,
-                },
-                None => path,
-            };
             self.matches(path, flags)
         }
     }
@@ -132,7 +105,7 @@ impl Pattern {
     /// strings with cases ignored as well. Note that the case folding performed here is ASCII only.
     ///
     /// Note that this method uses some shortcuts to accelerate simple patterns.
-    pub fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
+    fn matches<'a>(&self, value: impl Into<&'a BStr>, mode: wildmatch::Mode) -> bool {
         let value = value.into();
         match self.first_wildcard_pos {
             // "*literal" case, overrides starts-with
@@ -169,5 +142,21 @@ impl Pattern {
                 }
             }
         }
+    }
+}
+
+impl fmt::Display for Pattern {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.mode.contains(Mode::NEGATIVE) {
+            "!".fmt(f)?;
+        }
+        if self.mode.contains(Mode::ABSOLUTE) {
+            "/".fmt(f)?;
+        }
+        self.text.fmt(f)?;
+        if self.mode.contains(Mode::MUST_BE_DIR) {
+            "/".fmt(f)?;
+        }
+        Ok(())
     }
 }

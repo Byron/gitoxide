@@ -1,146 +1,5 @@
-use std::path::PathBuf;
-
 use bstr::BString;
-
-/// A cache for directory creation to reduce the amount of stat calls when creating
-/// directories safely, that is without following symlinks that might be on the way.
-///
-/// As a special case, it offers a 'prefix' which (by itself) is assumed to exist and may contain symlinks.
-/// Everything past that prefix boundary must not contain a symlink. We do this by allowing any input path.
-///
-/// Another added benefit is its ability to store the path of full path of the entry to which leading directories
-/// are to be created to avoid allocating memory.
-///
-/// For this to work, it remembers the last 'good' path to a directory and assumes that all components of it
-/// are still valid, too.
-/// As directories are created, the cache will be adjusted to reflect the latest seen directory.
-///
-/// The caching is only useful if consecutive calls to create a directory are using a sorted list of entries.
-#[allow(unused)]
-pub struct PathCache {
-    /// The prefix/root for all paths we handle.
-    root: PathBuf,
-    /// the most recent known cached that we know is valid.
-    valid: PathBuf,
-    /// The relative portion of `valid` that was added previously.
-    valid_relative: PathBuf,
-    /// The amount of path components of 'valid' beyond the roots components. If `root` has 2, and this is 2, `valid` has 4 components.
-    valid_components: usize,
-
-    /// If there is a symlink or a file in our path, try to unlink it before creating the directory.
-    pub unlink_on_collision: bool,
-
-    /// just for testing
-    #[cfg(debug_assertions)]
-    pub test_mkdir_calls: usize,
-}
-
-mod cache {
-    use std::path::{Path, PathBuf};
-
-    use super::PathCache;
-    use crate::os;
-
-    impl PathCache {
-        /// Create a new instance with `root` being the base for all future paths we handle, assuming it to be valid which includes
-        /// symbolic links to be included in it as well.
-        pub fn new(root: impl Into<PathBuf>) -> Self {
-            let root = root.into();
-            PathCache {
-                valid: root.clone(),
-                valid_relative: PathBuf::with_capacity(128),
-                valid_components: 0,
-                root,
-                #[cfg(debug_assertions)]
-                test_mkdir_calls: 0,
-                unlink_on_collision: false,
-            }
-        }
-
-        /// Append the `relative` path to the root directory the cache contains and efficiently create leading directories
-        /// unless `mode` indicates `relative` points to a directory itself in which case the entire resulting path is created as directory.
-        ///
-        /// The full path to `relative` will be returned for use on the file system.
-        pub fn append_relative_path_assure_leading_dir(
-            &mut self,
-            relative: impl AsRef<Path>,
-            mode: git_index::entry::Mode,
-        ) -> std::io::Result<&Path> {
-            let relative = relative.as_ref();
-            debug_assert!(
-                relative.is_relative(),
-                "only index paths are handled correctly here, must be relative"
-            );
-
-            let mut components = relative.components().peekable();
-            let mut existing_components = self.valid_relative.components();
-            let mut matching_components = 0;
-            while let (Some(existing_comp), Some(new_comp)) = (existing_components.next(), components.peek()) {
-                if existing_comp == *new_comp {
-                    components.next();
-                    matching_components += 1;
-                } else {
-                    break;
-                }
-            }
-
-            for _ in 0..self.valid_components - matching_components {
-                self.valid.pop();
-                self.valid_relative.pop();
-            }
-
-            self.valid_components = matching_components;
-
-            let target_is_dir = mode == git_index::entry::Mode::COMMIT || mode == git_index::entry::Mode::DIR;
-            while let Some(comp) = components.next() {
-                self.valid.push(comp);
-                self.valid_relative.push(comp);
-                self.valid_components += 1;
-                let res = (|| {
-                    if components.peek().is_some() || target_is_dir {
-                        #[cfg(debug_assertions)]
-                        {
-                            self.test_mkdir_calls += 1;
-                        }
-                        match std::fs::create_dir(&self.valid) {
-                            Ok(()) => {}
-                            Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => {
-                                let meta = self.valid.symlink_metadata()?;
-                                if !meta.is_dir() {
-                                    if self.unlink_on_collision {
-                                        if meta.is_symlink() {
-                                            os::remove_symlink(&self.valid)?;
-                                        } else {
-                                            std::fs::remove_file(&self.valid)?;
-                                        }
-                                        #[cfg(debug_assertions)]
-                                        {
-                                            self.test_mkdir_calls += 1;
-                                        }
-                                        std::fs::create_dir(&self.valid)?;
-                                    } else {
-                                        return Err(err);
-                                    }
-                                }
-                            }
-                            Err(err) => return Err(err),
-                        }
-                    }
-                    Ok(())
-                })();
-
-                if let Err(err) = res {
-                    self.valid.pop();
-                    self.valid_relative.pop();
-                    self.valid_components -= 1;
-                    return Err(err);
-                }
-            }
-
-            Ok(&self.valid)
-        }
-    }
-}
+use git_attributes::Attributes;
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Collision {
@@ -166,7 +25,7 @@ pub struct Outcome {
     pub errors: Vec<ErrorRecord>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Options {
     /// capabilities of the file system
     pub fs: crate::fs::Capabilities,
@@ -198,6 +57,8 @@ pub struct Options {
     ///
     /// Default true.
     pub check_stat: bool,
+    /// A group of attribute patterns that are applied globally, i.e. aren't rooted within the repository itself.
+    pub attribute_globals: git_attributes::MatchGroup<Attributes>,
 }
 
 impl Default for Options {
@@ -210,6 +71,7 @@ impl Default for Options {
             trust_ctime: true,
             check_stat: true,
             overwrite_existing: false,
+            attribute_globals: Default::default(),
         }
     }
 }

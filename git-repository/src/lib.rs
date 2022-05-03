@@ -83,12 +83,14 @@
 //! even if this crate doesn't, hence breaking downstream.
 //!
 //! `git_repository::`
+//! * [`attrs`]
 //! * [`hash`]
 //! * [`url`]
 //! * [`actor`]
 //! * [`bstr`][bstr]
 //! * [`index`]
 //! * [`glob`]
+//! * [`path`]
 //! * [`credentials`]
 //! * [`sec`]
 //! * [`worktree`]
@@ -124,6 +126,8 @@ use std::path::PathBuf;
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
 pub use git_actor as actor;
+#[cfg(all(feature = "unstable", feature = "git-attributes"))]
+pub use git_attributes as attrs;
 #[cfg(all(feature = "unstable", feature = "git-credentials"))]
 pub use git_credentials as credentials;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
@@ -156,8 +160,6 @@ pub use git_url as url;
 #[doc(inline)]
 #[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url::Url;
-#[cfg(all(feature = "unstable", feature = "git-worktree"))]
-pub use git_worktree as worktree;
 pub use hash::{oid, ObjectId};
 
 pub mod interrupt;
@@ -192,7 +194,9 @@ pub enum Path {
 
 ///
 mod types;
-pub use types::{Commit, DetachedObject, Head, Id, Object, Reference, Repository, Tag, ThreadSafeRepository, Tree};
+pub use types::{
+    Commit, DetachedObject, Head, Id, Object, Reference, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
+};
 
 pub mod commit;
 pub mod head;
@@ -200,7 +204,6 @@ pub mod id;
 pub mod object;
 pub mod reference;
 mod repository;
-pub use repository::{permissions, permissions::Permissions};
 pub mod tag;
 
 /// The kind of `Repository`
@@ -240,6 +243,15 @@ pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repositor
 }
 
 ///
+pub mod permission {
+    use git_sec::{permission::Resource, Access};
+
+    /// A permission to control access to the resource pointed to an environment variable.
+    pub type EnvVarResourcePermission = Access<Resource, git_sec::Permission>;
+}
+pub use repository::permissions::Permissions;
+
+///
 pub mod open;
 
 ///
@@ -269,6 +281,9 @@ pub mod mailmap {
 }
 
 ///
+pub mod worktree;
+
+///
 pub mod rev_parse {
     /// The error returned by [`crate::Repository::rev_parse()`].
     #[derive(Debug, thiserror::Error)]
@@ -283,8 +298,9 @@ pub mod rev_parse {
 
 ///
 pub mod init {
-    use crate::ThreadSafeRepository;
     use std::path::Path;
+
+    use crate::ThreadSafeRepository;
 
     /// The error returned by [`crate::init()`].
     #[derive(Debug, thiserror::Error)]
@@ -321,39 +337,34 @@ pub mod state {
     #[derive(Debug, PartialEq)]
     pub enum InProgress {
         /// A mailbox is being applied.
-        // TODO: test
         ApplyMailbox,
         /// A rebase is happening while a mailbox is being applied.
         // TODO: test
         ApplyMailboxRebase,
         /// A git bisect operation has not yet been concluded.
-        // TODO: test
         Bisect,
         /// A cherry pick operation.
         CherryPick,
         /// A cherry pick with multiple commits pending.
-        // TODO: test
         CherryPickSequence,
         /// A merge operation.
-        // TODO: test
         Merge,
         /// A rebase operation.
-        // TODO: test
         Rebase,
         /// An interactive rebase operation.
         RebaseInteractive,
         /// A revert operation.
         Revert,
         /// A revert operation with multiple commits pending.
-        // TODO: test
         RevertSequence,
     }
 }
 
 ///
 pub mod discover {
-    use crate::{path, ThreadSafeRepository};
     use std::path::Path;
+
+    use crate::{path, ThreadSafeRepository};
 
     /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]

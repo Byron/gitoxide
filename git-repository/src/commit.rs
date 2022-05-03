@@ -55,6 +55,7 @@ pub mod describe {
     }
 
     /// A selector to choose what kind of references should contribute to names.
+    #[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
     pub enum SelectRef {
         /// Only use annotated tags for names.
         AnnotatedTags,
@@ -70,33 +71,60 @@ pub mod describe {
             repo: &Repository,
         ) -> Result<git_revision::hash_hasher::HashedMap<ObjectId, Cow<'static, BStr>>, Error> {
             let platform = repo.references()?;
-            let into_tuple =
-                |r: crate::Reference<'_>| (r.inner.target.into_id(), Cow::from(r.inner.name.shorten().to_owned()));
 
             Ok(match self {
-                SelectRef::AllTags => platform
-                    .tags()?
-                    .peeled()
+                SelectRef::AllTags | SelectRef::AllRefs => {
+                    let mut refs: Vec<_> = match self {
+                        SelectRef::AllRefs => platform.all()?,
+                        SelectRef::AllTags => platform.tags()?,
+                        _ => unreachable!(),
+                    }
                     .filter_map(Result::ok)
-                    .map(into_tuple)
-                    .collect(),
-                SelectRef::AllRefs => platform
-                    .all()?
-                    .peeled()
-                    .filter_map(Result::ok)
-                    .map(into_tuple)
-                    .collect(),
-                SelectRef::AnnotatedTags => platform
-                    .tags()?
-                    .filter_map(Result::ok)
-                    .filter_map(|r: crate::Reference<'_>| {
-                        // TODO: we assume direct refs for tags, which is the common case, but it doesn't have to be
-                        //       so rather follow symrefs till the first object and then peel tags after the first object was found.
-                        let tag = r.try_id()?.object().ok()?.try_into_tag().ok()?;
-                        let commit_id = tag.target_id().ok()?.object().ok()?.try_into_commit().ok()?.id;
-                        Some((commit_id, r.name().shorten().to_owned().into()))
+                    .filter_map(|mut r: crate::Reference<'_>| {
+                        let target_id = r.target().try_id().map(ToOwned::to_owned);
+                        let peeled_id = r.peel_to_id_in_place().ok()?;
+                        let (prio, tag_time) = match target_id {
+                            Some(target_id) if peeled_id != *target_id => {
+                                let tag = repo.find_object(target_id).ok()?.try_into_tag().ok()?;
+                                (1, tag.tagger().ok()??.time.seconds_since_unix_epoch)
+                            }
+                            _ => (0, 0),
+                        };
+                        (
+                            peeled_id.inner,
+                            prio,
+                            tag_time,
+                            Cow::from(r.inner.name.shorten().to_owned()),
+                        )
+                            .into()
                     })
-                    .collect(),
+                    .collect();
+                    refs.sort_by(|a, b| a.2.cmp(&b.2).then_with(|| a.1.cmp(&b.1))); // by time ascending, then by priority. Older entries overwrite newer ones.
+                    refs.into_iter().map(|(a, _, _, b)| (a, b)).collect()
+                }
+                SelectRef::AnnotatedTags => {
+                    let mut peeled_commits_and_tag_date: Vec<_> = platform
+                        .tags()?
+                        .filter_map(Result::ok)
+                        .filter_map(|r: crate::Reference<'_>| {
+                            // TODO: we assume direct refs for tags, which is the common case, but it doesn't have to be
+                            //       so rather follow symrefs till the first object and then peel tags after the first object was found.
+                            let tag = r.try_id()?.object().ok()?.try_into_tag().ok()?;
+                            let tag_time = tag
+                                .tagger()
+                                .ok()
+                                .and_then(|s| s.map(|s| s.time.seconds_since_unix_epoch))
+                                .unwrap_or(0);
+                            let commit_id = tag.target_id().ok()?.object().ok()?.try_into_commit().ok()?.id;
+                            Some((commit_id, tag_time, r.name().shorten().to_owned().into()))
+                        })
+                        .collect();
+                    peeled_commits_and_tag_date.sort_by(|a, b| a.1.cmp(&b.1)); // by time, ascending, causing older names to overwrite newer ones.
+                    peeled_commits_and_tag_date
+                        .into_iter()
+                        .map(|(a, _, c)| (a, c))
+                        .collect()
+                }
             })
         }
     }
@@ -146,7 +174,7 @@ pub mod describe {
         /// if one was found.
         ///
         /// Note that there will always be `Some(format)`
-        pub fn try_format(self) -> Result<Option<git_revision::describe::Format<'static>>, Error> {
+        pub fn try_format(&self) -> Result<Option<git_revision::describe::Format<'static>>, Error> {
             self.try_resolve()?.map(|r| r.format()).transpose()
         }
 
@@ -154,7 +182,7 @@ pub mod describe {
         /// if one was found.
         ///
         /// The outcome provides additional information, but leaves the caller with the burden
-        pub fn try_resolve(self) -> Result<Option<crate::commit::describe::Resolution<'repo>>, Error> {
+        pub fn try_resolve(&self) -> Result<Option<crate::commit::describe::Resolution<'repo>>, Error> {
             // TODO: dirty suffix with respective dirty-detection
             let outcome = git_revision::describe(
                 &self.id,
@@ -180,7 +208,7 @@ pub mod describe {
         }
 
         /// Like [`try_format()`][Platform::try_format()], but turns `id_as_fallback()` on to always produce a format.
-        pub fn format(mut self) -> Result<git_revision::describe::Format<'static>, Error> {
+        pub fn format(&mut self) -> Result<git_revision::describe::Format<'static>, Error> {
             self.id_as_fallback = true;
             Ok(self.try_format()?.expect("BUG: fallback must always produce a format"))
         }

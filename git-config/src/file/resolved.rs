@@ -31,7 +31,6 @@ impl ResolvedGitConfig<'static> {
     ///
     /// This returns an error if an IO error occurs, or if the file is not a
     /// valid `git-config` file.
-    #[inline]
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, parser::ParserOrIoError<'static>> {
         GitConfig::open(path.as_ref()).map(Self::from)
     }
@@ -107,14 +106,12 @@ fn resolve_sections<'key, 'data>(
 impl TryFrom<&Path> for ResolvedGitConfig<'static> {
     type Error = parser::ParserOrIoError<'static>;
 
-    #[inline]
     fn try_from(path: &Path) -> Result<Self, Self::Error> {
         Self::open(path)
     }
 }
 
 impl<'data> From<GitConfig<'data>> for ResolvedGitConfig<'data> {
-    #[inline]
     fn from(config: GitConfig<'data>) -> Self {
         Self::from_config(config)
     }

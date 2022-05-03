@@ -1,4 +1,4 @@
-use std::{io, path::PathBuf};
+use std::io;
 
 use git_repository as git;
 #[cfg(feature = "serde1")]
@@ -29,7 +29,7 @@ impl<'a> From<Entry<'a>> for JsonEntry {
 }
 
 pub fn entries(
-    repository: PathBuf,
+    repo: git::Repository,
     format: OutputFormat,
     #[cfg_attr(not(feature = "serde1"), allow(unused_variables))] out: impl io::Write,
     mut err: impl io::Write,
@@ -38,7 +38,6 @@ pub fn entries(
         writeln!(err, "Defaulting to JSON as human format isn't implemented").ok();
     }
 
-    let repo = git::open(repository)?.apply_environment();
     let mut mailmap = git::mailmap::Snapshot::default();
     if let Err(e) = repo.load_mailmap_into(&mut mailmap) {
         writeln!(err, "Error while loading mailmap, the first error is: {}", e).ok();

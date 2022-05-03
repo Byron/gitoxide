@@ -9,6 +9,7 @@ use nom::{
 
 use crate::{bstr::ByteSlice, parse, parse::NL, tag::decode, Kind, TagRefIter};
 
+#[derive(Copy, Clone)]
 pub(crate) enum State {
     Target,
     TargetKind,
@@ -39,9 +40,20 @@ impl<'a> TagRefIter<'a> {
     /// Errors are coerced into options, hiding whether there was an error or not. The caller should assume an error if they
     /// call the method as intended. Such a squelched error cannot be recovered unless the objects data is retrieved and parsed again.
     /// `next()`.
-    pub fn target_id(&mut self) -> Result<ObjectId, crate::decode::Error> {
+    pub fn target_id(mut self) -> Result<ObjectId, crate::decode::Error> {
         let token = self.next().ok_or_else(missing_field)??;
         Token::into_id(token).ok_or_else(missing_field)
+    }
+
+    /// Returns the taggers signature if there is no decoding error, and if this field exists.
+    /// Errors are coerced into options, hiding whether there was an error or not. The caller knows if there was an error or not.
+    pub fn tagger(mut self) -> Result<Option<git_actor::SignatureRef<'a>>, crate::decode::Error> {
+        self.find_map(|t| match t {
+            Ok(Token::Tagger(signature)) => Some(Ok(signature)),
+            Err(err) => Some(Err(err)),
+            _ => None,
+        })
+        .ok_or_else(missing_field)?
     }
 }
 

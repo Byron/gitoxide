@@ -1,3 +1,3 @@
-mod matching;
 mod parse;
+mod pattern;
 mod wildmatch;

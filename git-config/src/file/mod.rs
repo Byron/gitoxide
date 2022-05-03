@@ -1,6 +1,5 @@
 //! This module provides a high level wrapper around a single `git-config` file.
 
-mod error;
 mod git_config;
 mod resolved;
 mod section;
@@ -8,7 +7,6 @@ mod value;
 
 use std::ops::{Add, AddAssign};
 
-pub use error::*;
 pub use resolved::*;
 pub use section::*;
 pub use value::*;

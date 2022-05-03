@@ -4,9 +4,9 @@
 
 use bstr::BString;
 
-/// A glob pattern at a particular base path.
+/// A glob pattern optimized for matching paths relative to a root directory.
 ///
-/// This closely models how patterns appear in a directory hierarchy of include or attribute files.
+/// For normal globbing, use [`wildmatch()`] instead.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Pattern {
@@ -16,9 +16,6 @@ pub struct Pattern {
     pub mode: pattern::Mode,
     /// The position in `text` with the first wildcard character, or `None` if there is no wildcard at all.
     pub first_wildcard_pos: Option<usize>,
-    /// The relative base at which this pattern resides, with trailing slash, using slashes as path separator.
-    /// If `None`, the pattern is considered to be at the root of the repository.
-    pub base_path: Option<BString>,
 }
 
 ///
@@ -31,6 +28,8 @@ pub use wildmatch::function::wildmatch;
 mod parse;
 
 /// Create a [`Pattern`] by parsing `text` or return `None` if `text` is empty.
-pub fn parse(text: &[u8]) -> Option<Pattern> {
-    Pattern::from_bytes(text)
+///
+/// Note that
+pub fn parse(text: impl AsRef<[u8]>) -> Option<Pattern> {
+    Pattern::from_bytes(text.as_ref())
 }

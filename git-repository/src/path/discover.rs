@@ -8,6 +8,12 @@ pub enum Error {
     InaccessibleDirectory { path: PathBuf },
     #[error("Could find a git repository in '{}' or in any of its parents", .path.display())]
     NoGitRepository { path: PathBuf },
+    #[error("Could find a trusted git repository in '{}' or in any of its parents, candidate at '{}' discarded", .path.display(), .candidate.display())]
+    NoTrustedGitRepository {
+        path: PathBuf,
+        candidate: PathBuf,
+        required: git_sec::Trust,
+    },
     #[error("Could not determine trust level for path '{}'.", .path.display())]
     CheckTrust {
         path: PathBuf,
@@ -35,13 +41,14 @@ impl Default for Options {
 }
 
 pub(crate) mod function {
-    use super::{Error, Options};
-    use git_sec::Trust;
     use std::{
         borrow::Cow,
         path::{Component, Path},
     };
 
+    use git_sec::Trust;
+
+    use super::{Error, Options};
     use crate::path;
 
     /// Find the location of the git repository directly in `directory` or in any of its parent directories and provide
@@ -57,23 +64,20 @@ pub(crate) mod function {
         // us the parent directory. (`Path::parent` just strips off the last
         // path component, which means it will not do what you expect when
         // working with paths paths that contain '..'.)
-        let directory = maybe_canonicalize(directory.as_ref()).map_err(|_| Error::InaccessibleDirectory {
-            path: directory.as_ref().into(),
-        })?;
-        if !directory.is_dir() {
-            return Err(Error::InaccessibleDirectory {
-                path: directory.into_owned(),
-            });
+        let directory = directory.as_ref();
+        let dir = maybe_canonicalize(directory).map_err(|_| Error::InaccessibleDirectory { path: directory.into() })?;
+        let is_canonicalized = dir.as_ref() != directory;
+        if !dir.is_dir() {
+            return Err(Error::InaccessibleDirectory { path: dir.into_owned() });
         }
 
-        let filter_by_trust =
-            |x: &std::path::Path, kind: crate::path::Kind| -> Result<Option<(crate::Path, git_sec::Trust)>, Error> {
-                let trust =
-                    git_sec::Trust::from_path_ownership(x).map_err(|err| Error::CheckTrust { path: x.into(), err })?;
-                Ok((trust >= required_trust).then(|| (crate::Path::from_dot_git_dir(x, kind), trust)))
-            };
+        let filter_by_trust = |x: &std::path::Path| -> Result<Option<git_sec::Trust>, Error> {
+            let trust =
+                git_sec::Trust::from_path_ownership(x).map_err(|err| Error::CheckTrust { path: x.into(), err })?;
+            Ok((trust >= required_trust).then(|| (trust)))
+        };
 
-        let mut cursor = directory.clone();
+        let mut cursor = dir.clone();
         'outer: loop {
             for append_dot_git in &[false, true] {
                 if *append_dot_git {
@@ -83,11 +87,36 @@ pub(crate) mod function {
                     }
                 }
                 if let Ok(kind) = path::is::git(&cursor) {
-                    match filter_by_trust(&cursor, kind)? {
-                        Some(res) => break 'outer Ok(res),
+                    match filter_by_trust(&cursor)? {
+                        Some(trust) => {
+                            // TODO: test this more
+                            let path = if is_canonicalized {
+                                match std::env::current_dir() {
+                                    Ok(cwd) => cwd
+                                        .strip_prefix(&cursor.parent().expect(".git appended"))
+                                        .ok()
+                                        .and_then(|p| {
+                                            let short_path_components = p.components().count();
+                                            (short_path_components < cursor.components().count()).then(|| {
+                                                std::iter::repeat("..")
+                                                    .take(short_path_components)
+                                                    .chain(Some(".git"))
+                                                    .collect()
+                                            })
+                                        })
+                                        .unwrap_or_else(|| cursor.into_owned()),
+                                    Err(_) => cursor.into_owned(),
+                                }
+                            } else {
+                                cursor.into_owned()
+                            };
+                            break 'outer Ok((crate::Path::from_dot_git_dir(path, kind), trust));
+                        }
                         None => {
-                            break 'outer Err(Error::NoGitRepository {
-                                path: directory.into_owned(),
+                            break 'outer Err(Error::NoTrustedGitRepository {
+                                path: dir.into_owned(),
+                                candidate: cursor.into_owned(),
+                                required: required_trust,
                             })
                         }
                     }
@@ -100,11 +129,7 @@ pub(crate) mod function {
             }
             match cursor.parent() {
                 Some(parent) => cursor = parent.to_owned().into(),
-                None => {
-                    break Err(Error::NoGitRepository {
-                        path: directory.into_owned(),
-                    })
-                }
+                None => break Err(Error::NoGitRepository { path: dir.into_owned() }),
             }
         }
     }

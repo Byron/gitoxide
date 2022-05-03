@@ -221,6 +221,13 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] parsing
 * [x] lookup and mapping of author names
 
+### git-path
+* [x] transformations to and from bytes
+* [x] conversions between different platforms
+* **spec**
+    * [ ] parse
+    * [ ] check for match
+
 ### git-pathspec
 * [ ] parse
 * [ ] check for match
@@ -236,6 +243,14 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
  
 ### git-credentials
 * [x] launch git credentials helpers with a given action
+
+### git-filter
+
+Provide base-implementations for dealing with smudge and clean filters as well as filter processes, facilitating their development.
+
+* [ ] clean filter base
+* [ ] smudge filter base
+* [ ] filter process base
  
 ### git-sec
 
@@ -244,6 +259,10 @@ Provides a trust model to share across gitoxide crates. It helps configuring how
 ### git-rebase
 * [ ] obtain rebase status
 * [ ] drive a rebase operation
+
+### git-sequencer
+
+Handle human-aided operations which cannot be completed in one command invocation.
 
 ### git-lfs
 
@@ -417,7 +436,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
   * **refs**
     * [ ] run transaction hooks and handle special repository states like quarantine
     * [ ] support for different backends like `files` and `reftable`
-  * [ ] worktrees
+  * **worktrees**
+    * [ ] open a repository with worktrees
   * [ ] remotes with push and pull
   * [x] mailmap   
   * [x] object replacements (`git replace`)

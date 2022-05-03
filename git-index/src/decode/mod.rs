@@ -41,12 +41,13 @@ use crate::util::read_u32;
 pub struct Options {
     pub object_hash: git_hash::Kind,
     /// If Some(_), we are allowed to use more than one thread. If Some(N), use no more than N threads. If Some(0)|None, use as many threads
-    /// as there are physical cores.
+    /// as there are logical cores.
     ///
     /// This applies to loading extensions in parallel to entries if the common EOIE extension is available.
     /// It also allows to use multiple threads for loading entries if the IEOT extension is present.
     pub thread_limit: Option<usize>,
     /// The minimum size in bytes to load extensions in their own thread, assuming there is enough `num_threads` available.
+    /// If set to 0, for example, extensions will always be read in their own thread if enough threads are available.
     pub min_extension_block_in_bytes_for_threading: usize,
 }
 

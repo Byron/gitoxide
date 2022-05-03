@@ -12,10 +12,31 @@ impl crate::Repository {
     // TODO: tests, respect precomposeUnicode
     /// The directory of the binary path of the current process.
     pub fn install_dir(&self) -> std::io::Result<std::path::PathBuf> {
-        std::env::current_exe().and_then(|exe| {
-            exe.parent()
-                .map(ToOwned::to_owned)
-                .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "no parent for current executable"))
+        crate::path::install_dir()
+    }
+
+    /// Returns the relative path which is the components between the working tree and the current working dir (CWD).
+    /// Note that there may be `None` if there is no work tree, even though the `PathBuf` will be empty
+    /// if the CWD is at the root of the work tree.
+    // TODO: tests, details - there is a lot about environment variables to change things around.
+    pub fn prefix(&self) -> Option<std::io::Result<std::path::PathBuf>> {
+        self.work_tree.as_ref().map(|root| {
+            root.canonicalize().and_then(|root| {
+                std::env::current_dir().and_then(|cwd| {
+                    cwd.strip_prefix(&root)
+                        .map_err(|_| {
+                            std::io::Error::new(
+                                std::io::ErrorKind::Other,
+                                format!(
+                                    "CWD '{}' isn't within the work tree '{}'",
+                                    cwd.display(),
+                                    root.display()
+                                ),
+                            )
+                        })
+                        .map(ToOwned::to_owned)
+                })
+            })
         })
     }
 

@@ -75,7 +75,7 @@ impl FullName {
 
     /// Convert this name into the relative path, lossily, identifying the reference location relative to a repository
     pub fn to_path(&self) -> &Path {
-        git_features::path::from_byte_slice_or_panic_on_windows(&self.0)
+        git_path::from_byte_slice(&self.0)
     }
 
     /// Dissolve this instance and return the buffer.

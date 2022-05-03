@@ -1,8 +1,8 @@
-use std::io::Read;
-use std::time::Duration;
 use std::{
     collections::BTreeMap,
+    io::Read,
     path::{Path, PathBuf},
+    time::Duration,
 };
 
 pub use bstr;
@@ -13,7 +13,7 @@ use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 pub use tempfile;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
 
@@ -124,10 +124,14 @@ pub fn scripted_fixture_repo_read_only_with_args(
 
     let _marker = git_lock::Marker::acquire_to_hold_resource(
         script_basename,
-        git_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(5)),
+        git_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(if cfg!(windows) { 3 * 60 } else { 30 })),
         None,
     )?;
-    if !script_result_directory.is_dir() {
+    let failure_marker = script_result_directory.join("_invalid_state_due_to_script_failure_");
+    if !script_result_directory.is_dir() || failure_marker.is_file() {
+        if failure_marker.is_file() {
+            std::fs::remove_dir_all(&script_result_directory)?;
+        }
         std::fs::create_dir_all(&script_result_directory)?;
         match extract_archive(&archive_file_path, &script_result_directory, script_identity) {
             Ok((archive_id, platform)) => {
@@ -168,17 +172,29 @@ pub fn scripted_fixture_repo_read_only_with_args(
                     .env("GIT_CONFIG_KEY_1", "init.defaultBranch")
                     .env("GIT_CONFIG_VALUE_1", "main")
                     .output()?;
+                if !output.status.success() {
+                    write_failure_marker(&failure_marker);
+                }
                 assert!(
                     output.status.success(),
                     "repo script failed: stdout: {}\nstderr: {}",
                     output.stdout.as_bstr(),
                     output.stderr.as_bstr()
                 );
-                create_archive_if_not_on_ci(&script_result_directory, &archive_file_path, script_identity)?;
+                create_archive_if_not_on_ci(&script_result_directory, &archive_file_path, script_identity).map_err(
+                    |err| {
+                        write_failure_marker(&failure_marker);
+                        err
+                    },
+                )?;
             }
         }
     }
     Ok(script_result_directory)
+}
+
+fn write_failure_marker(failure_marker: &Path) {
+    std::fs::write(failure_marker, &[]).ok();
 }
 
 /// The `script_identity` will be baked into the soon to be created `archive` as it identitifies the script
@@ -208,7 +224,10 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
         std::io::copy(&mut &*buf, &mut xz_write)?;
         xz_write.finish()?.close()
     })();
+    #[cfg(not(windows))]
     std::fs::remove_dir_all(meta_dir)?;
+    #[cfg(windows)]
+    std::fs::remove_dir_all(meta_dir).ok(); // it really can't delete these directories for some reason (even after 10 seconds)
     res
 }
 
@@ -237,9 +256,22 @@ fn extract_archive(
     destination_dir: &Path,
     required_script_identity: u32,
 ) -> std::io::Result<(u32, Option<String>)> {
-    let mut archive_buf = Vec::<u8>::new();
-    let mut decoder = xz2::bufread::XzDecoder::new(std::io::BufReader::new(std::fs::File::open(archive)?));
-    std::io::copy(&mut decoder, &mut archive_buf)?;
+    let archive_buf: Vec<u8> = {
+        let mut buf = Vec::new();
+        let input_archive = std::fs::File::open(archive)?;
+        if std::env::var_os("GITOXIDE_TEST_IGNORE_ARCHIVES").is_some() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!(
+                    "Ignoring archive at '{}' as GITOXIDE_TEST_IGNORE_ARCHIVES is set.",
+                    archive.display()
+                ),
+            ));
+        }
+        let mut decoder = xz2::bufread::XzDecoder::new(std::io::BufReader::new(input_archive));
+        std::io::copy(&mut decoder, &mut buf)?;
+        buf
+    };
 
     let mut entry_buf = Vec::<u8>::new();
     let (archive_identity, platform): (u32, _) = tar::Archive::new(std::io::Cursor::new(&mut &*archive_buf))

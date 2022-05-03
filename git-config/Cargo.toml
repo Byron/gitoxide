@@ -15,6 +15,7 @@ include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 
 [dependencies]
 git-features = { version = "^0.20.0", path = "../git-features"}
+git-path = { version = "^0.1.0", path = "../git-path" }
 git-sec = { version = "^0.1.0", path = "../git-sec" }
 
 dirs = "4"
@@ -22,7 +23,7 @@ nom = { version = "7", default_features = false, features = [ "std" ] }
 memchr = "2"
 serde_crate = { version = "1", package = "serde", optional = true }
 pwd = "1.3.1"
-quick-error = "2.0.0"
+thiserror = "1.0.26"
 unicode-bom = "1.1.4"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 

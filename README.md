@@ -48,6 +48,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * **mailmap**
       * [x] **verify** - check entries of a mailmap file for parse errors and display them
     * **repository**
+      * **exclude**
+         * [x] **query** - check if path specs are excluded via gits exclusion rules like `.gitignore`.
       * **verify** - validate a whole repository, for now only the object database.
       * **commit**
          * [x] **describe** - identify a commit by its closest tag in its past
@@ -110,6 +112,9 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-traverse)
   * [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
   * [git-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-features)
+  * [git-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-credentials)
+  * [git-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sec)
+  * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
   * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
   * [git-repository](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository)
   * `gitoxide-core`
@@ -119,14 +124,14 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
   * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
-  * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
+  * [git-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-path)
 * **idea**
-  * [git-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-credentials)
-  * [git-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sec)
   * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
+  * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)
   * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
   * [git-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lfs)
   * [git-rebase](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-rebase)
+  * [git-sequencer](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sequencer)
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
   * [git-submodule](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-submodule)
   * [git-tui](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-tui)

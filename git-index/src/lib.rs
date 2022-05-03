@@ -51,6 +51,9 @@ pub struct File {
     pub checksum: git_hash::ObjectId,
 }
 
+/// The type to use and store paths to all entries.
+pub type PathStorage = Vec<u8>;
+
 /// An in-memory cache of a fully parsed git index file.
 ///
 /// As opposed to a snapshot, it's meant to be altered and eventually be written back to disk or converted into a tree.
@@ -65,7 +68,7 @@ pub struct State {
     version: Version,
     entries: Vec<Entry>,
     /// A memory area keeping all index paths, in full length, independently of the index version.
-    path_backing: Vec<u8>,
+    path_backing: PathStorage,
     /// True if one entry in the index has a special marker mode
     #[allow(dead_code)]
     is_sparse: bool,

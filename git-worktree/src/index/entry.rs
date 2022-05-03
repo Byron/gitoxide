@@ -5,14 +5,19 @@ use git_hash::oid;
 use git_index::Entry;
 use io_close::Close;
 
-use crate::{index, index::checkout::PathCache, os};
+use crate::{fs, index, os};
+
+pub struct Context<'a, 'paths, Find> {
+    pub find: &'a mut Find,
+    pub path_cache: &'a mut fs::Cache<'paths>,
+    pub buf: &'a mut Vec<u8>,
+}
 
 #[cfg_attr(not(unix), allow(unused_variables))]
 pub fn checkout<Find, E>(
     entry: &mut Entry,
     entry_path: &BStr,
-    find: &mut Find,
-    cache: &mut PathCache,
+    Context { find, path_cache, buf }: Context<'_, '_, Find>,
     index::checkout::Options {
         fs: crate::fs::Capabilities {
             symlink,
@@ -23,17 +28,16 @@ pub fn checkout<Find, E>(
         overwrite_existing,
         ..
     }: index::checkout::Options,
-    buf: &mut Vec<u8>,
 ) -> Result<usize, index::checkout::Error<E>>
 where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
     E: std::error::Error + Send + Sync + 'static,
 {
-    let dest_relative =
-        git_features::path::from_byte_slice(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {
-            path: entry_path.to_owned(),
-        })?;
-    let dest = cache.append_relative_path_assure_leading_dir(dest_relative, entry.mode)?;
+    let dest_relative = git_path::try_from_bstr(entry_path).map_err(|_| index::checkout::Error::IllformedUtf8 {
+        path: entry_path.to_owned(),
+    })?;
+    let is_dir = Some(entry.mode == git_index::entry::Mode::COMMIT || entry.mode == git_index::entry::Mode::DIR);
+    let dest = path_cache.at_path(dest_relative, is_dir, &mut *find)?.path();
 
     let object_size = match entry.mode {
         git_index::entry::Mode::FILE | git_index::entry::Mode::FILE_EXECUTABLE => {
@@ -77,7 +81,7 @@ where
                 oid: entry.id,
                 path: dest.to_path_buf(),
             })?;
-            let symlink_destination = git_features::path::from_byte_slice(obj.data)
+            let symlink_destination = git_path::try_from_byte_slice(obj.data)
                 .map_err(|_| index::checkout::Error::IllformedUtf8 { path: obj.data.into() })?;
 
             if symlink {
@@ -127,7 +131,7 @@ fn try_write_or_unlink<T>(
 fn try_unlink_path_recursively(path: &Path, path_meta: &std::fs::Metadata) -> std::io::Result<()> {
     if path_meta.is_dir() {
         std::fs::remove_dir_all(path)
-    } else if path_meta.is_symlink() {
+    } else if path_meta.file_type().is_symlink() {
         os::remove_symlink(path)
     } else {
         std::fs::remove_file(path)
@@ -142,7 +146,7 @@ fn debug_assert_dest_is_no_symlink(_path: &Path) {}
 fn debug_assert_dest_is_no_symlink(path: &Path) {
     if let Ok(meta) = path.metadata() {
         debug_assert!(
-            !meta.is_symlink(),
+            !meta.file_type().is_symlink(),
             "BUG: should not ever allow to overwrite/write-into the target of a symbolic link: {}",
             path.display()
         );

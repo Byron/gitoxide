@@ -148,6 +148,7 @@ pub struct TagRef<'a> {
 
 /// Like [`TagRef`], but as `Iterator` to support entirely allocation free parsing.
 /// It's particularly useful to dereference only the target chain.
+#[derive(Copy, Clone)]
 pub struct TagRefIter<'a> {
     data: &'a [u8],
     state: tag::ref_iter::State,

@@ -53,7 +53,7 @@ pub fn main() -> Result<()> {
                         hours::estimate(
                             &working_dir,
                             &refname,
-                            git_features::progress::DoOrDiscard::from(progress),
+                            progress,
                             hours::Context {
                                 show_pii,
                                 omit_unify_identities,
@@ -75,7 +75,7 @@ pub fn main() -> Result<()> {
                         organize::discover(
                             root.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
                             out,
-                            git_features::progress::DoOrDiscard::from(progress),
+                            progress,
                             debug,
                         )
                     },
@@ -102,7 +102,7 @@ pub fn main() -> Result<()> {
                             },
                             repository_source.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
                             destination_directory.unwrap_or_else(|| [std::path::Component::CurDir].iter().collect()),
-                            git_features::progress::DoOrDiscard::from(progress),
+                            progress,
                         )
                     },
                 )

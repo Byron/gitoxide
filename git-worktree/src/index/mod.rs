@@ -3,12 +3,15 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use git_features::{interrupt, parallel::in_parallel, progress, progress::Progress};
 use git_hash::oid;
 
-use crate::index::checkout::PathCache;
+use crate::fs;
 
 pub mod checkout;
 pub(crate) mod entry;
 
 /// Note that interruption still produce an `Ok(…)` value, so the caller should look at `should_interrupt` to communicate the outcome.
+/// `dir` is the directory into which to checkout the `index`.
+/// `git_dir` is the `.git` directory for reading additional per-repository configuration files.
+#[allow(clippy::too_many_arguments)]
 pub fn checkout<Find, E>(
     index: &mut git_index::State,
     dir: impl Into<std::path::PathBuf>,
@@ -22,19 +25,32 @@ where
     Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Send + Clone,
     E: std::error::Error + Send + Sync + 'static,
 {
+    let paths = index.take_path_backing();
+    let res = checkout_inner(index, &paths, dir, find, files, bytes, should_interrupt, options);
+    index.return_path_backing(paths);
+    res
+}
+#[allow(clippy::too_many_arguments)]
+fn checkout_inner<Find, E>(
+    index: &mut git_index::State,
+    paths: &git_index::PathStorage,
+    dir: impl Into<std::path::PathBuf>,
+    find: Find,
+    files: &mut impl Progress,
+    bytes: &mut impl Progress,
+    should_interrupt: &AtomicBool,
+    options: checkout::Options,
+) -> Result<checkout::Outcome, checkout::Error<E>>
+where
+    Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Send + Clone,
+    E: std::error::Error + Send + Sync + 'static,
+{
     let num_files = AtomicUsize::default();
     let dir = dir.into();
-
-    let mut ctx = chunk::Context {
-        buf: Vec::new(),
-        path_cache: {
-            let mut cache = PathCache::new(dir.clone());
-            cache.unlink_on_collision = options.overwrite_existing;
-            cache
-        },
-        find: find.clone(),
-        options,
-        num_files: &num_files,
+    let case = if options.fs.ignore_case {
+        git_glob::pattern::Case::Fold
+    } else {
+        git_glob::pattern::Case::Sensitive
     };
     let (chunk_size, thread_limit, num_threads) = git_features::parallel::optimize_chunk_size_and_thread_limit(
         100,
@@ -43,15 +59,26 @@ where
         None,
     );
 
-    let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths(), should_interrupt);
+    let state = fs::cache::State::for_checkout(options.overwrite_existing, options.attribute_globals.clone().into());
+    let attribute_files = state.build_attribute_list(index, paths, case);
+    let mut ctx = chunk::Context {
+        buf: Vec::new(),
+        path_cache: fs::Cache::new(dir, state, case, Vec::with_capacity(512), attribute_files),
+        find,
+        options,
+        num_files: &num_files,
+    };
+
     let chunk::Outcome {
         mut collisions,
         mut errors,
         mut bytes_written,
         delayed,
     } = if num_threads == 1 {
+        let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths_in(paths), should_interrupt);
         chunk::process(entries_with_paths, files, bytes, &mut ctx)?
     } else {
+        let entries_with_paths = interrupt::Iter::new(index.entries_mut_with_paths_in(paths), should_interrupt);
         in_parallel(
             git_features::iter::Chunks {
                 inner: entries_with_paths,
@@ -59,24 +86,8 @@ where
             },
             thread_limit,
             {
-                let num_files = &num_files;
-                move |_| {
-                    (
-                        progress::Discard,
-                        progress::Discard,
-                        chunk::Context {
-                            find: find.clone(),
-                            path_cache: {
-                                let mut cache = PathCache::new(dir.clone());
-                                cache.unlink_on_collision = options.overwrite_existing;
-                                cache
-                            },
-                            buf: Vec::new(),
-                            options,
-                            num_files,
-                        },
-                    )
-                }
+                let ctx = ctx.clone();
+                move |_| (progress::Discard, progress::Discard, ctx.clone())
             },
             |chunk, (files, bytes, ctx)| chunk::process(chunk.into_iter(), files, bytes, ctx),
             chunk::Reduce {
@@ -102,7 +113,7 @@ where
     }
 
     Ok(checkout::Outcome {
-        files_updated: ctx.num_files.load(Ordering::Relaxed),
+        files_updated: num_files.load(Ordering::Relaxed),
         collisions,
         errors,
         bytes_written,
@@ -117,8 +128,8 @@ mod chunk {
     use git_hash::oid;
 
     use crate::{
-        index,
-        index::{checkout, checkout::PathCache, entry},
+        fs, index,
+        index::{checkout, entry},
         os,
     };
 
@@ -185,9 +196,10 @@ mod chunk {
         pub bytes_written: u64,
     }
 
-    pub struct Context<'a, Find> {
+    #[derive(Clone)]
+    pub struct Context<'a, 'paths, Find: Clone> {
         pub find: Find,
-        pub path_cache: PathCache,
+        pub path_cache: fs::Cache<'paths>,
         pub buf: Vec<u8>,
         pub options: checkout::Options,
         /// We keep these shared so that there is the chance for printing numbers that aren't looking like
@@ -199,10 +211,10 @@ mod chunk {
         entries_with_paths: impl Iterator<Item = (&'entry mut git_index::Entry, &'entry BStr)>,
         files: &mut impl Progress,
         bytes: &mut impl Progress,
-        ctx: &mut Context<'_, Find>,
+        ctx: &mut Context<'_, '_, Find>,
     ) -> Result<Outcome<'entry>, checkout::Error<E>>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
         let mut delayed = Vec::new();
@@ -254,13 +266,18 @@ mod chunk {
             buf,
             options,
             num_files,
-        }: &mut Context<'_, Find>,
+        }: &mut Context<'_, '_, Find>,
     ) -> Result<usize, checkout::Error<E>>
     where
-        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E>,
+        Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_object::BlobRef<'a>, E> + Clone,
         E: std::error::Error + Send + Sync + 'static,
     {
-        let res = entry::checkout(entry, entry_path, find, path_cache, *options, buf);
+        let res = entry::checkout(
+            entry,
+            entry_path,
+            entry::Context { find, path_cache, buf },
+            options.clone(),
+        );
         files.inc();
         num_files.fetch_add(1, Ordering::SeqCst);
         match res {
