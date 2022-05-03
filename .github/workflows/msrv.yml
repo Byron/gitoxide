@@ -25,6 +25,6 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.54.0"
+          toolchain: "1.59.0" # dictated by `windows` crates effectively
           override: true
       - run: make check-msrv-on-ci

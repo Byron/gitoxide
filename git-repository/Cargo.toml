@@ -7,7 +7,7 @@ version = "0.17.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 include = ["src/**/*", "CHANGELOG.md"]
-rust-version = "1.54" # need VecDeque::binary_search
+rust-version = "1.59"
 
 [lib]
 doctest = false
