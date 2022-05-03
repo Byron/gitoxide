@@ -79,7 +79,7 @@ jobs:
       - name: Run cargo diet
         run: |
           curl -LSfs https://raw.githubusercontent.com/the-lean-crate/cargo-diet/master/ci/install.sh | \
-           sh -s -- --git the-lean-crate/cargo-diet --target x86_64-unknown-linux-musl
+           sh -s -- --git the-lean-crate/cargo-diet --target x86_64-unknown-linux-musl --tag v1.2.4
 
           # Let's not fail CI for this, it will fail locally often enough, and a crate a little bigger
           # than allows is no problem either if it comes to that.
