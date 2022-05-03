@@ -51,7 +51,7 @@ mod impl_ {
         use windows::{
             core::PCWSTR,
             Win32::{
-                Foundation::{BOOL, ERROR_SUCCESS, HANDLE, PSID},
+                Foundation::{BOOL, HANDLE, PSID},
                 Security::{
                     Authorization::{GetNamedSecurityInfoW, SE_FILE_OBJECT},
                     CheckTokenMembershipEx, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
@@ -80,7 +80,7 @@ mod impl_ {
                 &mut pdescriptor,
             );
 
-            if result == ERROR_SUCCESS.0 {
+            if result.is_ok() {
                 let mut is_member = BOOL(0);
                 if CheckTokenMembershipEx(HANDLE::default(), psid, 0, &mut is_member).as_bool() {
                     is_owned = is_member.as_bool();
@@ -88,7 +88,7 @@ mod impl_ {
                     err_msg = String::from("Could not check token membership").into();
                 }
             } else {
-                err_msg = format!("Could not get security information for path with err: {}", result).into();
+                err_msg = format!("Could not get security information for path with err: {:?}", result).into();
             }
 
             LocalFree(pdescriptor.0 as isize);
