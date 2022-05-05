@@ -181,6 +181,7 @@ pub fn scripted_fixture_repo_read_only_with_args(
                     output.stdout.as_bstr(),
                     output.stderr.as_bstr()
                 );
+                // TODO: use plumbing crates to obtain an exclude file cache to not create ignored archives
                 create_archive_if_not_on_ci(&script_result_directory, &archive_file_path, script_identity).map_err(
                     |err| {
                         write_failure_marker(&failure_marker);
