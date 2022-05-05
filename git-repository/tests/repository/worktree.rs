@@ -18,13 +18,17 @@ mod baseline {
         }
     }
 
+    pub type Reason = BString;
+
     #[derive(Debug)]
+    #[allow(dead_code)]
     pub struct Worktree {
         root: PathBuf,
         bare: bool,
-        locked: Option<BString>,
+        locked: Option<Reason>,
         peeled: git_hash::ObjectId,
         branch: Option<BString>,
+        prunable: Option<Reason>,
     }
 
     impl<'a> Iterator for Baseline<'a> {
@@ -36,6 +40,7 @@ mod baseline {
             let mut branch = None;
             let mut peeled = git_hash::ObjectId::null(git_hash::Kind::Sha1);
             let mut locked = None;
+            let mut prunable = None;
             while let Some(line) = self.lines.next() {
                 if line.is_empty() {
                     break;
@@ -51,6 +56,7 @@ mod baseline {
                     f if f == "HEAD" => peeled = git_hash::ObjectId::from_hex(value).expect("valid hash"),
                     f if f == "branch" => branch = Some(value.to_owned()),
                     f if f == "locked" => locked = Some(value.to_owned()),
+                    f if f == "prunable" => prunable = Some(value.to_owned()),
                     _ => unreachable!("unknown field: {}", field),
                 }
             }
@@ -60,6 +66,7 @@ mod baseline {
                 locked,
                 peeled,
                 branch,
+                prunable,
             })
         }
     }
@@ -76,7 +83,7 @@ fn from_bare_parent_repo() {
     let repo = git::open(dir.join("repo.git")).unwrap();
 
     assert!(repo.is_bare());
-    dbg!(Baseline::collect(dir));
+    dbg!(Baseline::collect(dir).unwrap());
 }
 
 #[test]
@@ -85,5 +92,5 @@ fn from_nonbare_parent_repo() {
     let repo = git::open(dir.join("repo")).unwrap();
 
     assert!(!repo.is_bare());
-    dbg!(Baseline::collect(dir));
+    dbg!(Baseline::collect(dir).unwrap());
 }

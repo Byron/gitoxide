@@ -29,5 +29,6 @@ git worktree add ../prev/wt-a HEAD~1
 git worktree add ../wt-b HEAD~1
 git worktree add ../wt-a/nested-wt-b HEAD~1
 git worktree add --lock ../wt-c-locked
+git worktree add ../wt-deleted && rm -Rf ../wt-deleted
 
 git worktree list --porcelain > ../worktree-list.baseline

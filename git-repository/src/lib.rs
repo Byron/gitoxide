@@ -259,7 +259,7 @@ mod config;
 
 ///
 pub mod mailmap {
-    #[cfg(all(feature = "unstable", feature = "git-worktree"))]
+    #[cfg(all(feature = "unstable", feature = "git-mailmap"))]
     pub use git_mailmap::*;
 
     ///

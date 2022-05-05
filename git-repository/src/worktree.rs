@@ -1,7 +1,48 @@
-#[cfg(all(feature = "unstable", feature = "git-worktree"))]
 pub use git_worktree::*;
+use std::path::PathBuf;
 
 use crate::Repository;
+
+/// A stand-in to a worktree as result of a worktree iteration.
+///
+/// It provides access to typical worktree state, but may not actually point to a valid checkout as the latter has been moved or
+/// deleted.
+#[allow(dead_code)]
+pub struct Proxy {
+    /// The git directory for the work tree.
+    private_git_dir: PathBuf,
+}
+
+mod proxy {
+    use crate::bstr::BString;
+    use crate::worktree::Proxy;
+    use std::path::PathBuf;
+
+    impl Proxy {
+        /// Read the location of the checkout, the base of the work tree
+        pub fn base(&self) -> std::io::Result<PathBuf> {
+            todo!()
+        }
+        /// Return true if this worktree is the main worktree associated with a non-bare git repository.
+        ///
+        /// It cannot be removed.
+        pub fn is_main(&self) -> bool {
+            todo!()
+        }
+
+        /// Return true if the worktree cannot be pruned, moved or deleted, which is useful if it is located on an external storage device.
+        pub fn is_locked(&self) -> bool {
+            todo!()
+        }
+        /// Provide a reason for the locking of this worktree, if it is locked at all.
+        ///
+        /// Note that we squelch errors in case the file cannot be read in which case the
+        /// reason is an empty string.
+        pub fn lock_reason(&self) -> Option<BString> {
+            todo!()
+        }
+    }
+}
 
 ///
 #[cfg(feature = "git-index")]
