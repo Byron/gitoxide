@@ -1,6 +1,6 @@
 use git_sec::{permission::Resource, Access, Trust};
 
-use crate::permission::EnvVarResourcePermission;
+use crate::permission;
 
 /// Permissions associated with various resources of a git repository
 pub struct Permissions {
@@ -11,9 +11,11 @@ pub struct Permissions {
     /// Control whether resources pointed to by `XDG_CONFIG_HOME` can be used when looking up common configuration values.
     ///
     /// Note that [`git_sec::Permission::Forbid`] will cause the operation to abort if a resource is set via the XDG config environment.
-    pub xdg_config_home: EnvVarResourcePermission,
-    /// Control if resources pointed to by the
-    pub home: EnvVarResourcePermission,
+    pub xdg_config_home: permission::env_var::Resource,
+    /// Control the way resources pointed to by the home directory (similar to `xdg_config_home`) may be used.
+    pub home: permission::env_var::Resource,
+    /// Control if environment variables prefixed with `GIT_` may be used.
+    pub git_env: permission::env_var::Resource,
 }
 
 impl Permissions {
@@ -24,6 +26,7 @@ impl Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::empty()),
             xdg_config_home: Access::resource(git_sec::Permission::Allow),
             home: Access::resource(git_sec::Permission::Allow),
+            git_env: Access::resource(git_sec::Permission::Allow),
         }
     }
 
@@ -37,6 +40,7 @@ impl Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::all()),
             xdg_config_home: Access::resource(git_sec::Permission::Allow),
             home: Access::resource(git_sec::Permission::Allow),
+            git_env: Access::resource(git_sec::Permission::Allow),
         }
     }
 
@@ -47,6 +51,7 @@ impl Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::all()),
             xdg_config_home: Access::resource(git_sec::Permission::Allow),
             home: Access::resource(git_sec::Permission::Allow),
+            git_env: Access::resource(git_sec::Permission::Allow),
         }
     }
 }

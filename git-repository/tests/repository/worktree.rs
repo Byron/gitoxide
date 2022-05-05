@@ -118,7 +118,8 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
         )
     }
 
-    for expected in baseline {
+    // let actual = main_repo.worktree().list()
+    for expected in &baseline {
         dbg!(expected);
     }
 }

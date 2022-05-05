@@ -244,10 +244,18 @@ pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repositor
 
 ///
 pub mod permission {
-    use git_sec::{permission::Resource, Access};
+    ///
+    pub mod env_var {
+        use git_sec::{permission, Access};
 
-    /// A permission to control access to the resource pointed to an environment variable.
-    pub type EnvVarResourcePermission = Access<Resource, git_sec::Permission>;
+        /// A permission to control access to the resource pointed to an environment variable.
+        pub type Resource = Access<permission::Resource, git_sec::Permission>;
+        ///
+        pub mod resource {
+            ///
+            pub type Error = git_sec::permission::Error<std::path::PathBuf, git_sec::Permission>;
+        }
+    }
 }
 pub use repository::permissions::Permissions;
 
