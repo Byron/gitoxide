@@ -13,13 +13,21 @@ pub struct Proxy {
     private_git_dir: PathBuf,
 }
 
+#[allow(missing_docs)]
+pub mod git_dir {
+    #[derive(Debug, thiserror::Error)]
+    #[error("TBD: errors when reading git dir file")]
+    pub struct Error;
+}
+
 mod proxy {
     use crate::bstr::BString;
     use crate::worktree::Proxy;
+    use crate::Repository;
     use std::path::PathBuf;
 
     impl Proxy {
-        /// Read the location of the checkout, the base of the work tree
+        /// Read the location of the checkout, the base of the work tree.
         pub fn base(&self) -> std::io::Result<PathBuf> {
             todo!()
         }
@@ -34,11 +42,27 @@ mod proxy {
         pub fn is_locked(&self) -> bool {
             todo!()
         }
+
         /// Provide a reason for the locking of this worktree, if it is locked at all.
         ///
         /// Note that we squelch errors in case the file cannot be read in which case the
         /// reason is an empty string.
         pub fn lock_reason(&self) -> Option<BString> {
+            todo!()
+        }
+
+        /// Transform this proxy into a [`Repository`] while doing no safety checks.
+        ///
+        /// Most importantly, the `Repository` might be initialized with a non-existing work tree directory as the checkout
+        /// was removed or moved in the mean time or is unavailable for other reasons.
+        /// The caller will encounter io errors if it's used like the work tree is guaranteed to be present, but can still access
+        /// a lot of information if work tree access is avoided.
+        pub fn into_repo(self) -> Repository {
+            todo!()
+        }
+
+        /// Like `into_repo()` but with the guarantee that the work tree directory is accessible.
+        pub fn try_into_repo(self) -> std::io::Result<Repository> {
             todo!()
         }
     }
@@ -93,6 +117,20 @@ impl<'repo> crate::Worktree<'repo> {
     }
 }
 
+/// Access
+impl<'repo> crate::Worktree<'repo> {
+    /// Read the location of the checkout, the base of the work tree
+    pub fn base(&self) -> &'repo std::path::Path {
+        self.path
+    }
+    /// Return true if this worktree is the main worktree associated with a non-bare git repository.
+    ///
+    /// It cannot be removed.
+    pub fn is_main(&self) -> bool {
+        todo!()
+    }
+}
+
 impl<'repo> crate::Worktree<'repo> {
     /// Configure a file-system cache checking if files below the repository are excluded.
     ///
@@ -134,38 +172,9 @@ impl<'repo> crate::Worktree<'repo> {
         ))
     }
 
-    // pub fn
-    /// Open a new copy of the index file and decode it entirely.
-    ///
-    /// It will use the `index.threads` configuration key to learn how many threads to use.
-    // TODO: test
+    /// A shortcut to [`Repository::open_index()`].
     #[cfg(feature = "git-index")]
     pub fn open_index(&self) -> Result<git_index::File, crate::worktree::open_index::Error> {
-        use std::convert::{TryFrom, TryInto};
-        let repo = self.parent;
-        let thread_limit = repo
-            .config
-            .resolved
-            .boolean("index", None, "threads")
-            .map(|res| {
-                res.map(|value| if value { 0usize } else { 1 }).or_else(|err| {
-                    git_config::values::Integer::try_from(err.input.as_ref())
-                        .map_err(|err| crate::worktree::open_index::Error::ConfigIndexThreads {
-                            value: err.input.clone(),
-                            err,
-                        })
-                        .map(|value| value.to_decimal().and_then(|v| v.try_into().ok()).unwrap_or(1))
-                })
-            })
-            .transpose()?;
-        git_index::File::at(
-            repo.git_dir().join("index"),
-            git_index::decode::Options {
-                object_hash: repo.object_hash(),
-                thread_limit,
-                min_extension_block_in_bytes_for_threading: 0,
-            },
-        )
-        .map_err(Into::into)
+        self.parent.open_index()
     }
 }

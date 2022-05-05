@@ -23,12 +23,12 @@ mod baseline {
     #[derive(Debug)]
     #[allow(dead_code)]
     pub struct Worktree {
-        root: PathBuf,
-        bare: bool,
-        locked: Option<Reason>,
-        peeled: git_hash::ObjectId,
-        branch: Option<BString>,
-        prunable: Option<Reason>,
+        pub root: PathBuf,
+        pub bare: bool,
+        pub locked: Option<Reason>,
+        pub peeled: git_hash::ObjectId,
+        pub branch: Option<BString>,
+        pub prunable: Option<Reason>,
     }
 
     impl<'a> Iterator for Baseline<'a> {
@@ -82,8 +82,7 @@ fn from_bare_parent_repo() {
     let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
     let repo = git::open(dir.join("repo.git")).unwrap();
 
-    assert!(repo.is_bare());
-    dbg!(Baseline::collect(dir).unwrap());
+    run_assertions(repo, true /* bare */);
 }
 
 #[test]
@@ -91,6 +90,35 @@ fn from_nonbare_parent_repo() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_worktree_repo.sh").unwrap();
     let repo = git::open(dir.join("repo")).unwrap();
 
-    assert!(!repo.is_bare());
-    dbg!(Baseline::collect(dir).unwrap());
+    run_assertions(repo, false /* bare */);
+}
+
+fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
+    assert_eq!(main_repo.is_bare(), should_be_bare);
+    let mut baseline = Baseline::collect(
+        main_repo
+            .work_dir()
+            .map(|p| p.parent())
+            .unwrap_or_else(|| main_repo.git_dir().parent())
+            .expect("a temp dir as parent"),
+    )
+    .unwrap();
+    let expected_main = baseline.remove(0);
+    assert_eq!(expected_main.bare, should_be_bare);
+
+    if !should_be_bare {
+        assert_eq!(
+            main_repo.work_dir().expect("non-bare").canonicalize().unwrap(),
+            expected_main.root
+        );
+        assert_eq!(main_repo.head_id().unwrap(), expected_main.peeled);
+        assert_eq!(
+            main_repo.head_name().unwrap().expect("no detached head").as_bstr(),
+            expected_main.branch.unwrap()
+        )
+    }
+
+    for expected in baseline {
+        dbg!(expected);
+    }
 }
