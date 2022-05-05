@@ -1,4 +1,6 @@
 use bstr::{BStr, BString};
+use std::iter::FromIterator;
+use std::path::Component::{CurDir, Normal, ParentDir, RootDir};
 use std::{
     borrow::Cow,
     ffi::OsStr,
@@ -194,4 +196,63 @@ pub fn to_unix_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
 // TODO: use https://lib.rs/crates/path-slash to handle escapes
 pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
     replace(path, b'/', b'\\')
+}
+
+/// TODO
+pub fn real_path(path: &Path, cwd: &Path) -> Result<PathBuf, String> {
+    // TODO add test
+    const MAX_SYMLINKS: u8 = 32;
+
+    if path.as_os_str().is_empty() {
+        return Err("Empty is not a valid path".into());
+    }
+
+    let input_path = PathBuf::from(path);
+    let mut real_path = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
+    let num_symlinks = 0;
+
+    if input_path.is_relative() {
+        real_path.push(cwd);
+    }
+
+    fn traverse(input_path: PathBuf, mut num_symlinks: u8, mut real_path: PathBuf) -> Result<PathBuf, String> {
+        let next_input_path = PathBuf::from_iter(input_path.components().skip(1));
+        match input_path.components().next() {
+            None => Ok(real_path),
+            Some(part) => match part {
+                RootDir | CurDir => traverse(next_input_path, num_symlinks, real_path),
+                ParentDir => {
+                    let parent_path = PathBuf::from(real_path.parent().expect("parent component exists"));
+                    Ok(real_path.join(traverse(next_input_path, num_symlinks, parent_path).unwrap()))
+                }
+                Normal(part) => {
+                    real_path.push(part);
+                    if real_path.is_symlink() {
+                        if num_symlinks > MAX_SYMLINKS {
+                            return Err(format!("More than {} nested symlinks", MAX_SYMLINKS));
+                        }
+                        num_symlinks += 1;
+                        return match std::fs::read_link(real_path.as_path()) {
+                            Err(e) => return Err(e.to_string()),
+                            Ok(mut resolved_symlink) => {
+                                if resolved_symlink.is_absolute() {
+                                    real_path = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
+                                } else {
+                                    real_path = real_path.parent().expect("parent component exists").into();
+                                }
+                                if next_input_path.components().peekable().peek().is_some() {
+                                    resolved_symlink.push(next_input_path);
+                                }
+                                traverse(resolved_symlink, num_symlinks, real_path)
+                            }
+                        };
+                    }
+                    traverse(next_input_path, num_symlinks, real_path)
+                }
+                _ => todo!(),
+            },
+        }
+    }
+
+    traverse(input_path, num_symlinks, real_path)
 }
