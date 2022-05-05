@@ -109,7 +109,7 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
     if !should_be_bare {
         assert_eq!(
             main_repo.work_dir().expect("non-bare").canonicalize().unwrap(),
-            expected_main.root
+            expected_main.root.canonicalize().unwrap()
         );
         assert_eq!(main_repo.head_id().unwrap(), expected_main.peeled);
         assert_eq!(
