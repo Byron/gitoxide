@@ -41,7 +41,7 @@ mod baseline {
             let mut peeled = git_hash::ObjectId::null(git_hash::Kind::Sha1);
             let mut locked = None;
             let mut prunable = None;
-            while let Some(line) = self.lines.next() {
+            for line in self.lines.by_ref() {
                 if line.is_empty() {
                     break;
                 }
