@@ -1101,7 +1101,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (
 fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
     let (i, _) = char('[')(i)?;
     // No spaces must be between section name and section start
-    let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
+    let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'_' || c == b'-' || c == b'.')(i)?;
 
     let name = std::str::from_utf8(name).map_err(|_| {
         nom::Err::Error(NomError::<&[u8]> {
@@ -1195,7 +1195,7 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &str> {
         }));
     }
 
-    let (i, v) = take_while(|c: u8| (c as char).is_alphanumeric() || c == b'-')(i)?;
+    let (i, v) = take_while(|c: u8| (c as char).is_alphanumeric() || c == b'-' || c == b'_')(i)?;
     let v = std::str::from_utf8(v).map_err(|_| {
         nom::Err::Error(NomError::<&[u8]> {
             input: i,
