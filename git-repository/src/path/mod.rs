@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-#[cfg(all(feature = "unstable", feature = "git-path"))]
+#[cfg(all(feature = "unstable"))]
 pub use git_path::*;
 
 use crate::{Kind, Path};
@@ -46,16 +46,29 @@ impl Path {
     /// Consume and split this path into the location of the `.git` directory as well as an optional path to the work tree.
     pub fn into_repository_and_work_tree_directories(self) -> (PathBuf, Option<PathBuf>) {
         match self {
-            crate::Path::WorkTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),
-            crate::Path::Repository(repository) => (repository, None),
+            Path::WorkTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),
+            Path::Repository(repository) => (repository, None),
         }
     }
 }
 
-pub(crate) fn install_dir() -> std::io::Result<std::path::PathBuf> {
+pub(crate) fn install_dir() -> std::io::Result<PathBuf> {
     std::env::current_exe().and_then(|exe| {
         exe.parent()
             .map(ToOwned::to_owned)
             .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "no parent for current executable"))
     })
+}
+
+/// Reads a path from a file that has it on the very first line, or `None` if `path` does not exist.
+pub(crate) fn read_from_file(path: impl AsRef<std::path::Path>) -> Option<std::io::Result<PathBuf>> {
+    use crate::bstr::ByteSlice;
+    let mut buf = match std::fs::read(path) {
+        Ok(buf) => buf,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return None,
+        Err(err) => return Some(Err(err)),
+    };
+    let trimmed_len = buf.trim_end().len();
+    buf.truncate(buf.len() - trimmed_len);
+    Some(Ok(git_path::from_bstring(buf)))
 }

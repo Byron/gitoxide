@@ -5,11 +5,13 @@ impl crate::Repository {
         refs: crate::RefStore,
         objects: crate::OdbHandle,
         work_tree: Option<std::path::PathBuf>,
+        common_dir: Option<std::path::PathBuf>,
         config: crate::config::Cache,
     ) -> Self {
         crate::Repository {
             bufs: RefCell::new(Vec::with_capacity(4)),
             work_tree,
+            common_dir,
             objects: {
                 #[cfg(feature = "max-performance")]
                 {

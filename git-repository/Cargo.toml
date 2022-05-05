@@ -49,7 +49,7 @@ max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-
 local-time-support = ["git-actor/local-time-support"]
 ## Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
 ## Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
-unstable = ["git-index", "git-mailmap", "git-glob", "git-credentials", "git-path", "git-attributes"]
+unstable = ["git-index", "git-mailmap", "git-glob", "git-credentials", "git-attributes"]
 ## Print debugging information about usage of object database caches, useful for tuning cache sizes.
 cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 
@@ -70,7 +70,7 @@ git-actor = { version = "^0.9.0", path = "../git-actor" }
 git-pack = { version = "^0.18.0", path = "../git-pack", features = ["object-cache-dynamic"] }
 git-revision = { version = "^0.1.0", path = "../git-revision" }
 
-git-path = { version = "^0.1.0", path = "../git-path", optional = true }
+git-path = { version = "^0.1.0", path = "../git-path" }
 git-url = { version = "^0.4.0", path = "../git-url", optional = true }
 git-traverse = { version = "^0.14.0", path = "../git-traverse" }
 git-protocol = { version = "^0.15.0", path = "../git-protocol", optional = true }

@@ -190,7 +190,7 @@ impl crate::ThreadSafeRepository {
         Options {
             object_store_slots,
             replacement_objects,
-            common_dir: _,
+            common_dir,
             worktree_dir_override,
             git_dir_override,
             permissions:
@@ -210,15 +210,18 @@ impl crate::ThreadSafeRepository {
         //       This would be something read in later as have to first check for extensions. Also this means
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
         //       as it may have its own configuration. That's fine actually.
+        let git_dir = git_dir_override.unwrap_or(git_dir);
+        let mut worktree_dir = worktree_dir_override.map(|wt| git_dir.join(wt)).or(worktree_dir);
+        let common_dir = common_dir
+            .map(|common| Ok(git_dir.join(common)))
+            .or_else(|| crate::path::read_from_file(git_dir.join("commondir")))
+            .transpose()?;
         let config = crate::config::Cache::new(
-            &git_dir,
+            common_dir.as_deref().unwrap_or(&git_dir),
             xdg_config_home,
             home,
             crate::path::install_dir().ok().as_deref(),
         )?;
-        let git_dir = git_dir_override.unwrap_or(git_dir);
-        let mut worktree_dir = worktree_dir_override.map(|wt| git_dir.join(wt)).or(worktree_dir);
-        // let common_dir = common_dir.map()
         match worktree_dir {
             None if !config.is_bare => {
                 worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());
@@ -269,6 +272,7 @@ impl crate::ThreadSafeRepository {
                     use_multi_pack_index: config.use_multi_pack_index,
                 },
             )?),
+            common_dir,
             refs,
             work_tree: worktree_dir,
             config,
