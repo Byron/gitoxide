@@ -26,4 +26,9 @@ impl<'repo> worktree::Platform<'repo> {
             path,
         })
     }
+
+    /// List all _linked_ worktrees, with the _main_ worktree being the first one if this repository isn't a bare one.
+    pub fn list(&self) -> ! {
+        todo!()
+    }
 }

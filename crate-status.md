@@ -439,6 +439,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
   * **worktrees**
     * [ ] open a repository with worktrees and interact with them
     * [ ] create, move and remove
+    * [ ] read per-worktree config if `extensions.worktreeConfig` is enabled.
   * [ ] remotes with push and pull
   * [x] mailmap   
   * [x] object replacements (`git replace`)
@@ -476,6 +477,9 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [ ] special handling of `FETCH_HEAD` and `MERGE_HEAD`
     * [x] iterate refs with optional prefix
     * [ ] [worktree support]
+        * [ ] support multiple bases and classify refs to know which one to use
+        * [ ] special support for ref iteration to not accidentally (see iterator setup)
+        * [ ] potentially special support for iteration to support listing worktree refs for bisect/rewritten,… from the main worktree
     * ~~symbolic ref support, using symbolic links~~
         * This is a legacy feature which is not in use anymore.
     * **transactions** 
