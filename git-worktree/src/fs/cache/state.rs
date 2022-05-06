@@ -221,7 +221,7 @@ impl State {
     pub fn build_attribute_list<'paths>(
         &self,
         index: &git_index::State,
-        paths: &'paths git_index::PathStorage,
+        paths: &'paths git_index::PathStorageRef,
         case: Case,
     ) -> Vec<PathOidMapping<'paths>> {
         let a1_backing;

@@ -133,6 +133,13 @@ impl<'paths> Cache<'paths> {
             find,
         )
     }
+
+    /// Return the base path against which all entries or paths should be relative to when querying.
+    ///
+    /// Note that this path _may_ not be canonicalized.
+    pub fn base(&self) -> &Path {
+        self.stack.root()
+    }
 }
 
 mod platform;
