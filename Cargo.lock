@@ -1473,6 +1473,7 @@ dependencies = [
  "git-config",
  "git-credentials",
  "git-diff",
+ "git-discover",
  "git-features",
  "git-glob",
  "git-hash",
