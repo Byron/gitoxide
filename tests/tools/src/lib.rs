@@ -1,3 +1,4 @@
+use std::convert::Infallible;
 use std::{
     collections::BTreeMap,
     io::Read,
@@ -16,6 +17,33 @@ pub use tempfile;
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
+static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache<'static>>>> = Lazy::new(|| {
+    let cache = (|| {
+        let (repo_path, _) = git_discover::upwards(Path::new(".")).ok()?;
+        let (git_dir, work_tree) = repo_path.into_repository_and_work_tree_directories();
+        let work_tree = work_tree?.canonicalize().ok()?;
+
+        let mut buf = Vec::with_capacity(512);
+        let case = git_worktree::fs::Capabilities::probe(&work_tree)
+            .ignore_case
+            .then(|| git_attributes::glob::pattern::Case::Fold)
+            .unwrap_or_default();
+        let state = git_worktree::fs::cache::State::IgnoreStack(git_worktree::fs::cache::state::Ignore::new(
+            Default::default(),
+            git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(git_dir, None, &mut buf).ok()?,
+            None,
+            case,
+        ));
+        Some(git_worktree::fs::Cache::new(
+            work_tree,
+            state,
+            case,
+            buf,
+            Default::default(),
+        ))
+    })();
+    Mutex::new(cache)
+});
 
 pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::process::ExitStatus> {
     std::process::Command::new("git")
@@ -181,7 +209,6 @@ pub fn scripted_fixture_repo_read_only_with_args(
                     output.stdout.as_bstr(),
                     output.stderr.as_bstr()
                 );
-                // TODO: use plumbing crates to obtain an exclude file cache to not create ignored archives
                 create_archive_if_not_on_ci(&script_result_directory, &archive_file_path, script_identity).map_err(
                     |err| {
                         write_failure_marker(&failure_marker);
@@ -204,6 +231,28 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     if is_ci::cached() {
         return Ok(());
     }
+    let is_excluded_in_git = {
+        let mut lut = EXCLUDE_LUT.lock();
+        lut.as_mut()
+            .and_then(|cache| {
+                let archive = std::env::current_dir().ok()?.join(archive);
+                let relative_path = archive.strip_prefix(cache.base()).ok()?;
+                cache
+                    .at_path(
+                        relative_path,
+                        Some(false),
+                        |_oid, _buf| -> std::result::Result<_, Infallible> { unreachable!("") },
+                    )
+                    .ok()?
+                    .is_excluded()
+                    .into()
+            })
+            .unwrap_or(false)
+    };
+    if is_excluded_in_git {
+        return Ok(());
+    }
+    // if EXCLUDE_LUT.borrow().as_ref().map(|cache| cache.at_entry())
     std::fs::create_dir_all(archive.parent().expect("archive is a file"))?;
 
     let meta_dir = populate_meta_dir(source_dir, script_identity)?;
