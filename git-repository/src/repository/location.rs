@@ -1,7 +1,7 @@
 impl crate::Repository {
     /// Returns the main git repository if this is a repository on a linked work-tree, or the `git_dir` itself.
     pub fn common_dir(&self) -> &std::path::Path {
-        self.common_dir.as_deref().unwrap_or(self.git_dir())
+        self.common_dir.as_deref().unwrap_or_else(|| self.git_dir())
     }
 
     /// The path to the `.git` directory itself, or equivalent if this is a bare repository.
