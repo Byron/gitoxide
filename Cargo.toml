@@ -130,6 +130,7 @@ members = [
     "git-validate",
     "git-ref",
     "git-config",
+    "git-discover",
     "git-features",
     "git-commitgraph",
     "git-chunk",

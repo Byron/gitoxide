@@ -237,6 +237,12 @@ Check out the [performance discussion][git-traverse-performance] as well.
 A mechanism to associate metadata with any object, and keep revisions of it using git itself.
 
 * [ ] CRUD for git notes
+* 
+### git-discover
+
+* [x] check if a git directory is a git repository
+* [x] find a git repository by searching upward
+* [ ] handle linked worktrees
 
 ### git-date
 * [ ] parse git dates
