@@ -53,6 +53,8 @@ pub struct File {
 
 /// The type to use and store paths to all entries.
 pub type PathStorage = Vec<u8>;
+/// The type to use and store paths to all entries, as reference
+pub type PathStorageRef = [u8];
 
 /// An in-memory cache of a fully parsed git index file.
 ///
