@@ -39,17 +39,25 @@ impl crate::Repository {
 
 /// Interact with individual worktree and their information.
 impl crate::Repository {
+    /// Return the repository owning the main worktree, if there is one.
+    pub fn main_repo(&self) -> Result<crate::Repository, crate::open::Error> {
+        crate::open(self.common_dir())
+    }
+
+    /// Return the currently set worktree if there is one, acting as platform providing a validated worktree base path.
+    ///
+    /// Note that there would be `None` if this repository is `bare` and the parent [`Repository`][crate::Repository] was instantiated without
+    /// registered worktree in the current working dir.
+    pub fn worktree(&self) -> Option<Worktree<'_>> {
+        self.work_dir().map(|path| Worktree { parent: self, path })
+    }
+
     /// Return true if this repository is bare, and has no main work tree.
     ///
     /// This is not to be confused with the [`current()`][worktree::Platform::current()] worktree, which may exists if this instance
     /// was opened in a worktree that was created separately.
     pub fn is_bare(&self) -> bool {
         self.config.is_bare
-    }
-
-    /// Return a platform for interacting with worktrees
-    pub fn worktree(&self) -> worktree::Platform<'_> {
-        worktree::Platform { parent: self }
     }
 
     /// Open a new copy of the index file and decode it entirely.
@@ -104,29 +112,5 @@ impl crate::Repository {
             git_dir: self.git_dir().into(),
         }
         .lock_reason()
-    }
-}
-
-impl<'repo> worktree::Platform<'repo> {
-    /// Return the repository owning the main worktree, if there is one.
-    ///
-    /// This will have to be checked with using `worktree().current()`
-    pub fn main_repo(&self) -> Result<crate::Repository, crate::open::Error> {
-        crate::open(self.parent.common_dir())
-    }
-    /// Return the repository owning the main worktree, if it is not a bare repository.
-    pub fn main(&self) -> Option<crate::Repository> {
-        todo!()
-    }
-
-    /// Return the currently set worktree if there is one.
-    ///
-    /// Note that there would be `None` if this repository is `bare` and the parent [`Repository`][crate::Repository] was instantiated without
-    /// registered worktree in the current working dir.
-    pub fn current(&self) -> Option<Worktree<'repo>> {
-        self.parent.work_dir().map(|path| Worktree {
-            parent: self.parent,
-            path,
-        })
     }
 }

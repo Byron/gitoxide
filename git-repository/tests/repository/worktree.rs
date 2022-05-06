@@ -78,6 +78,7 @@ mod baseline {
 }
 
 #[test]
+#[ignore]
 fn from_bare_parent_repo() {
     let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
     let repo = git::open(dir.join("repo.git")).unwrap();
@@ -86,6 +87,7 @@ fn from_bare_parent_repo() {
 }
 
 #[test]
+#[ignore]
 fn from_nonbare_parent_repo() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_worktree_repo.sh").unwrap();
     let repo = git::open(dir.join("repo")).unwrap();
@@ -120,13 +122,18 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
 
     let actual = main_repo.worktrees().unwrap();
     assert_eq!(actual.len(), baseline.len());
-    for (expected, actual) in baseline.iter().zip(actual) {
-        assert_eq!(actual.lock_reason(), expected.locked);
-        assert_eq!(actual.is_locked(), actual.lock_reason().is_some());
+    for actual in actual {
+        let base = actual.base().unwrap();
+        let expected = baseline
+            .iter()
+            .find(|exp| exp.root == base)
+            .expect("we get the same root and it matches");
         assert!(
             !expected.bare,
             "only the main worktree can be bare, and we don't see it in this loop"
         );
+        assert_eq!(actual.lock_reason(), expected.locked);
+        assert_eq!(actual.is_locked(), actual.lock_reason().is_some());
 
         dbg!(expected);
     }

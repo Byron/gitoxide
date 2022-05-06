@@ -1,8 +1,6 @@
 pub use git_worktree::*;
 use std::path::PathBuf;
 
-use crate::Repository;
-
 /// A stand-in to a worktree as result of a worktree iteration.
 ///
 /// It provides access to typical worktree state, but may not actually point to a valid checkout as the latter has been moved or
@@ -21,7 +19,7 @@ pub mod git_dir {
 }
 
 mod proxy {
-    use crate::bstr::{BString, ByteSlice};
+    use crate::bstr::{BStr, BString, ByteSlice};
     use crate::worktree::Proxy;
     use crate::Repository;
     use std::path::PathBuf;
@@ -30,6 +28,12 @@ mod proxy {
         /// Read the location of the checkout, the base of the work tree.
         pub fn base(&self) -> std::io::Result<PathBuf> {
             todo!()
+        }
+
+        /// The name of the worktree, which is derived from its folder within the `worktrees` directory within the parent `.git` folder.
+        pub fn id(&self) -> &BStr {
+            git_path::os_str_into_bstr(self.git_dir.file_name().expect("worktrees/ parent dir"))
+                .expect("no illformed UTF-8")
         }
 
         /// Return true if the worktree cannot be pruned, moved or deleted, which is useful if it is located on an external storage device.
@@ -98,11 +102,6 @@ pub mod excludes {
         #[error(transparent)]
         EnvironmentPermission(#[from] git_sec::permission::Error<PathBuf, git_sec::Permission>),
     }
-}
-
-/// A structure to make the API more stuctured.
-pub struct Platform<'repo> {
-    pub(crate) parent: &'repo Repository,
 }
 
 /// Access
