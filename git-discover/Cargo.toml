@@ -6,6 +6,7 @@ license = "MIT/Apache-2.0"
 description = "Discover git repositories and check if a directory is a git repository"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
+include = ["src/**/*", "CHANGELOG.md"]
 
 [lib]
 doctest = false
