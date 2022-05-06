@@ -118,8 +118,16 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
         )
     }
 
-    // let actual = main_repo.worktree().list()
-    for expected in &baseline {
+    let actual = main_repo.worktrees().unwrap();
+    assert_eq!(actual.len(), baseline.len());
+    for (expected, actual) in baseline.iter().zip(actual) {
+        assert_eq!(actual.lock_reason(), expected.locked);
+        assert_eq!(actual.is_locked(), actual.lock_reason().is_some());
+        assert!(
+            !expected.bare,
+            "only the main worktree can be bare, and we don't see it in this loop"
+        );
+
         dbg!(expected);
     }
 }

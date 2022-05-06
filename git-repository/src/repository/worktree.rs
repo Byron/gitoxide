@@ -1,6 +1,43 @@
 use crate::bstr::BString;
 use crate::{worktree, Worktree};
 
+/// Worktree iteration
+impl crate::Repository {
+    /// Return a list of all _linked_ worktrees sorted by private git dir path as a lightweight proxy.
+    ///
+    /// Note that these need additional processing to become usable, but provide a first glimpse a typical worktree information.
+    pub fn worktrees(&self) -> std::io::Result<Vec<worktree::Proxy>> {
+        let mut res = Vec::new();
+        let iter = match std::fs::read_dir(self.common_dir().join("worktrees")) {
+            Ok(iter) => iter,
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(res),
+            Err(err) => return Err(err),
+        };
+        for entry in iter {
+            let entry = entry?;
+            let worktree_git_dir = entry.path();
+            if worktree_git_dir.join("gitdir").is_file() {
+                res.push(worktree::Proxy {
+                    git_dir: worktree_git_dir,
+                })
+            }
+        }
+        res.sort_by(|a, b| a.git_dir.cmp(&b.git_dir));
+        Ok(res)
+    }
+
+    /// Iterate all _linked_ worktrees in sort order and resolve them, ignoring those without an accessible work tree, into repositories
+    /// whose [`current()`][worktree::Platform::current()] is the worktree currently being iterated.
+    ///
+    /// Note that for convenience all io errors are squelched so if there is a chance for IO errors during
+    /// traversal of an owned directory, better use `list()` directly. The latter allows to resolve repositories
+    /// even if the worktree checkout isn't accessible.
+    pub fn worktree_repos(&self) -> ! {
+        todo!()
+    }
+}
+
+/// Interact with individual worktree and their information.
 impl crate::Repository {
     /// Return true if this repository is bare, and has no main work tree.
     ///
@@ -49,27 +86,34 @@ impl crate::Repository {
         .map_err(Into::into)
     }
 
-    /// Return true if the worktree cannot be pruned, moved or deleted, which is useful if it is located on an external storage device.
+    /// Return true if this _linked_ worktree cannot be pruned, moved or deleted, which is useful if it is located on an external storage device.
+    ///
+    /// Always false for the main worktree.
     pub fn is_locked(&self) -> bool {
-        todo!()
+        worktree::Proxy {
+            git_dir: self.git_dir().into(),
+        }
+        .is_locked()
     }
     /// Provide a reason for the locking of this worktree, if it is locked at all.
     ///
     /// Note that we squelch errors in case the file cannot be read in which case the
     /// reason is an empty string.
     pub fn lock_reason(&self) -> Option<BString> {
-        todo!()
-    }
-
-    /// Provide a reason
-    // TODO: have a custom error type to indicate what when wrong while determining the prunable state.
-    //       Potentially add an expiry date here later.
-    pub fn is_prunable(&self) -> std::io::Result<()> {
-        todo!()
+        worktree::Proxy {
+            git_dir: self.git_dir().into(),
+        }
+        .lock_reason()
     }
 }
 
 impl<'repo> worktree::Platform<'repo> {
+    /// Return the repository owning the main worktree, if there is one.
+    ///
+    /// This will have to be checked with using `worktree().current()`
+    pub fn main_repo(&self) -> Result<crate::Repository, crate::open::Error> {
+        crate::open(self.parent.common_dir())
+    }
     /// Return the repository owning the main worktree, if it is not a bare repository.
     pub fn main(&self) -> Option<crate::Repository> {
         todo!()
@@ -84,22 +128,5 @@ impl<'repo> worktree::Platform<'repo> {
             parent: self.parent,
             path,
         })
-    }
-
-    /// Return a list of all _linked_ worktrees sorted by private git dir path as a lightweight proxy.
-    ///
-    /// Note that these need additional processing to become usable, but provide a first glimpse a typical worktree information.
-    pub fn list(&self) -> ! {
-        todo!()
-    }
-
-    /// Iterate all _linked_ worktrees in sort order and resolve them, ignoring those without an accessible work tree, into repositories
-    /// whose [`current()`][worktree::Platform::current()] is the worktree currently being iterated.
-    ///
-    /// Note that for convenience all io errors are squelched so if there is a chance for IO errors during
-    /// traversal of an owned directory, better use `list()` directly. The latter allows to resolve repositories
-    /// even if the worktree checkout isn't accessible.
-    pub fn iter_repos(&self) -> ! {
-        todo!()
     }
 }
