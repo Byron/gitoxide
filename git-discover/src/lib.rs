@@ -66,10 +66,36 @@ pub mod repository {
         /// A `git` repository along with a checked out files in a work tree.
         WorkTree,
     }
+
+    impl Kind {
+        /// Returns true if this is a bare repository, one without a work tree.
+        pub fn is_bare(&self) -> bool {
+            matches!(self, Kind::Bare)
+        }
+    }
 }
 
 ///
-pub mod is;
+pub mod is_git {
+    use std::path::PathBuf;
+
+    /// The error returned by [`git()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Could not find a valid HEAD reference")]
+        FindHeadRef(#[from] git_ref::file::find::existing::Error),
+        #[error("Expected HEAD at '.git/HEAD', got '.git/{}'", .name)]
+        MisplacedHead { name: bstr::BString },
+        #[error("Expected an objects directory at '{}'", .missing.display())]
+        MissingObjectsDirectory { missing: PathBuf },
+        #[error("Expected a refs directory at '{}'", .missing.display())]
+        MissingRefsDirectory { missing: PathBuf },
+    }
+}
+
+mod is;
+pub use is::{bare as is_bare, git as is_git};
 
 ///
 pub mod upwards;

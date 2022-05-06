@@ -3,20 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-/// The error returned by [`git()`].
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error("Could not find a valid HEAD reference")]
-    FindHeadRef(#[from] git_ref::file::find::existing::Error),
-    #[error("Expected HEAD at '.git/HEAD', got '.git/{}'", .name)]
-    MisplacedHead { name: bstr::BString },
-    #[error("Expected an objects directory at '{}'", .missing.display())]
-    MissingObjectsDirectory { missing: PathBuf },
-    #[error("Expected a refs directory at '{}'", .missing.display())]
-    MissingRefsDirectory { missing: PathBuf },
-}
-
 /// Returns true if the given `git_dir` seems to be a bare repository.
 ///
 /// Please note that repositories without any file in their work tree will also appear bare.
@@ -35,7 +21,7 @@ pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
 /// * [x] an objects directory
 ///   * [x] respect GIT_OBJECT_DIRECTORY
 /// * [x] a refs directory
-pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, Error> {
+pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::is_git::Error> {
     let dot_git = git_dir.as_ref();
 
     {
@@ -50,7 +36,7 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, Error> 
         );
         let head = refs.find_loose("HEAD")?;
         if head.name.as_bstr() != "HEAD" {
-            return Err(Error::MisplacedHead {
+            return Err(crate::is_git::Error::MisplacedHead {
                 name: head.name.into_inner(),
             });
         }
@@ -61,13 +47,13 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, Error> 
             .map(PathBuf::from)
             .unwrap_or_else(|_| dot_git.join("objects"));
         if !objects_path.is_dir() {
-            return Err(Error::MissingObjectsDirectory { missing: objects_path });
+            return Err(crate::is_git::Error::MissingObjectsDirectory { missing: objects_path });
         }
     }
     {
         let refs_path = dot_git.join("refs");
         if !refs_path.is_dir() {
-            return Err(Error::MissingRefsDirectory { missing: refs_path });
+            return Err(crate::is_git::Error::MissingRefsDirectory { missing: refs_path });
         }
     }
 
