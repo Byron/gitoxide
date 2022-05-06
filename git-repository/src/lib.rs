@@ -88,7 +88,7 @@
 //! * [`url`]
 //! * [`actor`]
 //! * [`bstr`][bstr]
-//! * [`discover`]
+//! * [`mod@discover`]
 //! * [`index`]
 //! * [`glob`]
 //! * [`path`]

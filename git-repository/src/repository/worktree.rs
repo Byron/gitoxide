@@ -27,7 +27,7 @@ impl crate::Repository {
     }
 
     /// Iterate all _linked_ worktrees in sort order and resolve them, ignoring those without an accessible work tree, into repositories
-    /// whose [`current()`][worktree::Platform::current()] is the worktree currently being iterated.
+    /// whose [`worktree()`][crate::Repository::worktree()] is the worktree currently being iterated.
     ///
     /// Note that for convenience all io errors are squelched so if there is a chance for IO errors during
     /// traversal of an owned directory, better use `list()` directly. The latter allows to resolve repositories
@@ -54,7 +54,7 @@ impl crate::Repository {
 
     /// Return true if this repository is bare, and has no main work tree.
     ///
-    /// This is not to be confused with the [`current()`][worktree::Platform::current()] worktree, which may exists if this instance
+    /// This is not to be confused with the [`worktree()`][crate::Repository::worktree()] worktree, which may exists if this instance
     /// was opened in a worktree that was created separately.
     pub fn is_bare(&self) -> bool {
         self.config.is_bare

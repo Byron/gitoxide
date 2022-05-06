@@ -79,7 +79,7 @@ pub mod repository {
 pub mod is_git {
     use std::path::PathBuf;
 
-    /// The error returned by [`git()`].
+    /// The error returned by [`crate::is_git()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

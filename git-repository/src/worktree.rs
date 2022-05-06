@@ -167,7 +167,7 @@ impl<'repo> crate::Worktree<'repo> {
         ))
     }
 
-    /// A shortcut to [`Repository::open_index()`].
+    /// A shortcut to [`crate::Repository::open_index()`].
     #[cfg(feature = "git-index")]
     pub fn open_index(&self) -> Result<git_index::File, crate::worktree::open_index::Error> {
         self.parent.open_index()
