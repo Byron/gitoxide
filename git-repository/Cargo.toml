@@ -57,6 +57,7 @@ cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 
 [dependencies]
 git-ref = { version = "^0.12.1", path = "../git-ref" }
+git-discover = { version = "^0.1.0", path = "../git-discover" }
 git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-validate = { version ="^0.5.3", path = "../git-validate" }

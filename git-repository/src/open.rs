@@ -155,7 +155,7 @@ pub enum Error {
     #[error(transparent)]
     Config(#[from] crate::config::Error),
     #[error(transparent)]
-    NotARepository(#[from] crate::path::is::Error),
+    NotARepository(#[from] git_discover::is_git::Error),
     #[error(transparent)]
     ObjectStoreInitialization(#[from] std::io::Error),
     #[error("The git directory at '{}' is considered unsafe as it's not owned by the current user.", .path.display())]
@@ -172,15 +172,15 @@ impl crate::ThreadSafeRepository {
     /// `options` for fine-grained control.
     pub fn open_opts(path: impl Into<std::path::PathBuf>, options: Options) -> Result<Self, Error> {
         let path = path.into();
-        let (path, kind) = match crate::path::is::git(&path) {
+        let (path, kind) = match git_discover::is_git(&path) {
             Ok(kind) => (path, kind),
             Err(_) => {
                 let git_dir = path.join(".git");
-                crate::path::is::git(&git_dir).map(|kind| (git_dir, kind))?
+                git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?
             }
         };
         let (git_dir, worktree_dir) =
-            crate::Path::from_dot_git_dir(path, kind).into_repository_and_work_tree_directories();
+            git_discover::repository::Path::from_dot_git_dir(path, kind).into_repository_and_work_tree_directories();
         crate::ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
     }
 

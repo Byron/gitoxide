@@ -88,6 +88,7 @@
 //! * [`url`]
 //! * [`actor`]
 //! * [`bstr`][bstr]
+//! * [`discover`]
 //! * [`index`]
 //! * [`glob`]
 //! * [`path`]
@@ -119,8 +120,6 @@
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
 #![deny(missing_docs, unsafe_code, rust_2018_idioms)]
-
-use std::path::PathBuf;
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
@@ -183,15 +182,6 @@ pub type OdbHandle = git_odb::Handle;
 /// A way to access git configuration
 pub(crate) type Config = OwnShared<git_config::file::GitConfig<'static>>;
 
-/// A repository path which either points to a work tree or the `.git` repository itself.
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum Path {
-    /// The currently checked out or nascent work tree of a git repository
-    WorkTree(PathBuf),
-    /// The git repository itself
-    Repository(PathBuf),
-}
-
 ///
 mod types;
 pub use types::{
@@ -206,21 +196,8 @@ pub mod reference;
 mod repository;
 pub mod tag;
 
-/// The kind of `Repository`
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum Kind {
-    /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
-    Bare,
-    /// A `git` repository along with a checked out files in a work tree.
-    WorkTree,
-}
-
-impl Kind {
-    /// Returns true if this is a bare repository, one without a work tree.
-    pub fn is_bare(&self) -> bool {
-        matches!(self, Kind::Bare)
-    }
-}
+/// A basic way to categorize git repositories.
+pub type Kind = git_discover::repository::Kind;
 
 /// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, discover::Error> {
@@ -372,14 +349,16 @@ pub mod state {
 pub mod discover {
     use std::path::Path;
 
-    use crate::{path, ThreadSafeRepository};
+    use crate::ThreadSafeRepository;
+
+    pub use git_discover::*;
 
     /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Discover(#[from] path::discover::Error),
+        Discover(#[from] upwards::Error),
         #[error(transparent)]
         Open(#[from] crate::open::Error),
     }
@@ -395,10 +374,10 @@ pub mod discover {
         /// for instantiations.
         pub fn discover_opts(
             directory: impl AsRef<Path>,
-            options: crate::path::discover::Options,
+            options: upwards::Options,
             trust_map: git_sec::trust::Mapping<crate::open::Options>,
         ) -> Result<Self, Error> {
-            let (path, trust) = path::discover_opts(directory, options)?;
+            let (path, trust) = git_discover::upwards_opts(directory, options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
             Self::open_from_paths(git_dir, worktree_dir, trust_map.into_value_by_level(trust)).map_err(Into::into)
         }

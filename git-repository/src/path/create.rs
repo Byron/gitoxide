@@ -100,7 +100,7 @@ fn create_dir(p: &Path) -> Result<(), Error> {
 
 /// Create a new `.git` repository of `kind` within the possibly non-existing `directory`
 /// and return its path.
-pub fn into(directory: impl Into<PathBuf>, kind: crate::Kind) -> Result<crate::Path, Error> {
+pub fn into(directory: impl Into<PathBuf>, kind: crate::Kind) -> Result<git_discover::repository::Path, Error> {
     let mut dot_git = directory.into();
 
     match kind {
@@ -184,5 +184,5 @@ pub fn into(directory: impl Into<PathBuf>, kind: crate::Kind) -> Result<crate::P
         }
     }
 
-    Ok(crate::Path::from_dot_git_dir(dot_git, kind))
+    Ok(git_discover::repository::Path::from_dot_git_dir(dot_git, kind))
 }
