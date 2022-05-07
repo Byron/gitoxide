@@ -3,9 +3,6 @@ use std::path::PathBuf;
 #[cfg(all(feature = "unstable"))]
 pub use git_path::*;
 
-///
-pub mod create;
-
 pub(crate) fn install_dir() -> std::io::Result<PathBuf> {
     std::env::current_exe().and_then(|exe| {
         exe.parent()
