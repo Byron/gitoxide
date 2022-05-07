@@ -26,8 +26,19 @@ mod proxy {
 
     impl Proxy {
         /// Read the location of the checkout, the base of the work tree.
+        /// Note that the location might not exist.
         pub fn base(&self) -> std::io::Result<PathBuf> {
-            todo!()
+            let git_dir = self.git_dir.join("gitdir");
+            let mut base_dot_git = crate::path::read_from_file(&git_dir).ok_or_else(|| {
+                std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    format!("Required file '{}' does not exist", git_dir.display()),
+                )
+            })??;
+            if base_dot_git.file_name().and_then(|n| n.to_str()) == Some(".git") {
+                base_dot_git.pop();
+            }
+            Ok(base_dot_git)
         }
 
         /// The name of the worktree, which is derived from its folder within the `worktrees` directory within the parent `.git` folder.

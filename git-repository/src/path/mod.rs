@@ -23,6 +23,6 @@ pub(crate) fn read_from_file(path: impl AsRef<std::path::Path>) -> Option<std::i
         Err(err) => return Some(Err(err)),
     };
     let trimmed_len = buf.trim_end().len();
-    buf.truncate(buf.len() - trimmed_len);
+    buf.truncate(trimmed_len);
     Some(Ok(git_path::from_bstring(buf)))
 }
