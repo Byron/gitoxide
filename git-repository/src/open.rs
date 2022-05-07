@@ -6,11 +6,12 @@ use git_sec::Trust;
 use crate::Permissions;
 
 /// A way to configure the usage of replacement objects, see `git replace`.
+#[derive(Debug, Clone)]
 pub enum ReplacementObjects {
     /// Allow replacement objects and configure the ref prefix the standard environment variable `GIT_REPLACE_REF_BASE`,
     /// or default to the standard `refs/replace/` prefix.
     UseWithEnvironmentRefPrefixOrDefault {
-        /// If true, default true, a standard environment variable `GIT_NO_REPLACE_OBJECTS`
+        /// If true, default true, a standard environment variable `GIT_NO_REPLACE_OBJECTS` to disable replacement objects entirely.
         allow_disable_via_environment: bool,
     },
     /// Use replacement objects and configure the prefix yourself.
@@ -60,7 +61,7 @@ impl ReplacementObjects {
 }
 
 /// The options used in [`Repository::open_opts
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Options {
     object_store_slots: git_odb::store::init::Slots,
     replacement_objects: ReplacementObjects,
@@ -215,8 +216,8 @@ impl crate::ThreadSafeRepository {
             .transpose()?;
         let config = crate::config::Cache::new(
             common_dir.as_deref().unwrap_or(&git_dir),
-            env.xdg_config_home,
-            env.home,
+            env.xdg_config_home.clone(),
+            env.home.clone(),
             crate::path::install_dir().ok().as_deref(),
         )?;
         match worktree_dir {
@@ -241,6 +242,7 @@ impl crate::ThreadSafeRepository {
         );
 
         let replacements = replacement_objects
+            .clone()
             .refs_prefix()
             .and_then(|prefix| {
                 let platform = refs.iter().ok()?;
@@ -259,6 +261,19 @@ impl crate::ThreadSafeRepository {
             })
             .unwrap_or_default();
 
+        // used when spawning new repositories off this one when following worktrees
+        let linked_worktree_options = Options {
+            object_store_slots,
+            replacement_objects,
+            permissions: Permissions {
+                env,
+                git_dir: git_dir_perm,
+            },
+            common_dir: None,
+            worktree_dir_override: None,
+            git_dir_override: None,
+        };
+
         Ok(crate::ThreadSafeRepository {
             objects: OwnShared::new(git_odb::Store::at_opts(
                 git_dir.join("objects"),
@@ -273,6 +288,21 @@ impl crate::ThreadSafeRepository {
             refs,
             work_tree: worktree_dir,
             config,
+            linked_worktree_options,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn size_of_options() {
+        assert_eq!(
+            std::mem::size_of::<Options>(),
+            128,
+            "size shouldn't change without us knowing"
+        );
     }
 }

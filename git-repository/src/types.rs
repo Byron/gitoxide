@@ -132,6 +132,8 @@ pub struct Repository {
     pub(crate) bufs: RefCell<Vec<Vec<u8>>>,
     /// A pre-assembled selection of often-accessed configuration values for quick access.
     pub(crate) config: crate::config::Cache,
+    /// options obtained when instantiating this repository for use when following linked worktrees.
+    pub(crate) linked_worktree_options: crate::open::Options,
 }
 
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
@@ -157,4 +159,6 @@ pub struct ThreadSafeRepository {
     //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
     //       packs are refreshed. This would be `git_config::fs::Config` when ready.
     pub(crate) config: crate::config::Cache,
+    /// options obtained when instantiating this repository for use when following linked worktrees.
+    pub(crate) linked_worktree_options: crate::open::Options,
 }
