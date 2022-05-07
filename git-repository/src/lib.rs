@@ -234,6 +234,10 @@ pub mod permission {
         }
     }
 }
+///
+pub mod permissions {
+    pub use crate::repository::permissions::Environment;
+}
 pub use repository::permissions::Permissions;
 
 ///

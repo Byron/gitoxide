@@ -83,17 +83,17 @@ impl Options {
     pub fn apply_environment(mut self) -> Result<Self, crate::permission::env_var::resource::Error> {
         if self.common_dir.is_none() {
             if let Some(path) = std::env::var_os("GIT_COMMON_DIR") {
-                self.common_dir = self.permissions.git_env.check(PathBuf::from(path))?;
+                self.common_dir = self.permissions.env.with_git_prefix.check(PathBuf::from(path))?;
             }
         }
         if self.worktree_dir_override.is_none() {
             if let Some(path) = std::env::var_os("GIT_WORK_TREE") {
-                self.worktree_dir_override = self.permissions.git_env.check(PathBuf::from(path))?;
+                self.worktree_dir_override = self.permissions.env.with_git_prefix.check(PathBuf::from(path))?;
             }
         }
         if self.git_dir_override.is_none() {
             if let Some(path) = std::env::var_os("GIT_DIR") {
-                self.git_dir_override = self.permissions.git_env.check(PathBuf::from(path))?;
+                self.git_dir_override = self.permissions.env.with_git_prefix.check(PathBuf::from(path))?;
             }
         }
         Ok(self)
@@ -193,13 +193,10 @@ impl crate::ThreadSafeRepository {
             common_dir,
             worktree_dir_override,
             git_dir_override,
-            permissions:
-                Permissions {
-                    git_dir: git_dir_perm,
-                    xdg_config_home,
-                    home,
-                    git_env: _,
-                },
+            permissions: Permissions {
+                git_dir: git_dir_perm,
+                env,
+            },
         }: Options,
     ) -> Result<Self, Error> {
         if *git_dir_perm != git_sec::ReadWrite::all() {
@@ -218,8 +215,8 @@ impl crate::ThreadSafeRepository {
             .transpose()?;
         let config = crate::config::Cache::new(
             common_dir.as_deref().unwrap_or(&git_dir),
-            xdg_config_home,
-            home,
+            env.xdg_config_home,
+            env.home,
             crate::path::install_dir().ok().as_deref(),
         )?;
         match worktree_dir {

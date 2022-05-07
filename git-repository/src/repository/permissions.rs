@@ -3,11 +3,19 @@ use git_sec::{permission::Resource, Access, Trust};
 use crate::permission;
 
 /// Permissions associated with various resources of a git repository
+#[derive(Debug, Clone)]
 pub struct Permissions {
     /// Control how a git-dir can be used.
     ///
     /// Note that a repository won't be usable at all unless read and write permissions are given.
     pub git_dir: Access<Resource, git_sec::ReadWrite>,
+    /// Permissions related to the environment
+    pub env: Environment,
+}
+
+/// Permissions related to the usage of environment variables
+#[derive(Debug, Clone)]
+pub struct Environment {
     /// Control whether resources pointed to by `XDG_CONFIG_HOME` can be used when looking up common configuration values.
     ///
     /// Note that [`git_sec::Permission::Forbid`] will cause the operation to abort if a resource is set via the XDG config environment.
@@ -15,7 +23,7 @@ pub struct Permissions {
     /// Control the way resources pointed to by the home directory (similar to `xdg_config_home`) may be used.
     pub home: permission::env_var::Resource,
     /// Control if environment variables prefixed with `GIT_` may be used.
-    pub git_env: permission::env_var::Resource,
+    pub with_git_prefix: permission::env_var::Resource,
 }
 
 impl Permissions {
@@ -24,9 +32,11 @@ impl Permissions {
     pub fn strict() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::empty()),
-            xdg_config_home: Access::resource(git_sec::Permission::Allow),
-            home: Access::resource(git_sec::Permission::Allow),
-            git_env: Access::resource(git_sec::Permission::Allow),
+            env: Environment {
+                xdg_config_home: Access::resource(git_sec::Permission::Allow),
+                home: Access::resource(git_sec::Permission::Allow),
+                with_git_prefix: Access::resource(git_sec::Permission::Allow),
+            },
         }
     }
 
@@ -38,9 +48,11 @@ impl Permissions {
     pub fn secure() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::all()),
-            xdg_config_home: Access::resource(git_sec::Permission::Allow),
-            home: Access::resource(git_sec::Permission::Allow),
-            git_env: Access::resource(git_sec::Permission::Allow),
+            env: Environment {
+                xdg_config_home: Access::resource(git_sec::Permission::Allow),
+                home: Access::resource(git_sec::Permission::Allow),
+                with_git_prefix: Access::resource(git_sec::Permission::Allow),
+            },
         }
     }
 
@@ -49,9 +61,11 @@ impl Permissions {
     pub fn all() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::all()),
-            xdg_config_home: Access::resource(git_sec::Permission::Allow),
-            home: Access::resource(git_sec::Permission::Allow),
-            git_env: Access::resource(git_sec::Permission::Allow),
+            env: Environment {
+                xdg_config_home: Access::resource(git_sec::Permission::Allow),
+                home: Access::resource(git_sec::Permission::Allow),
+                with_git_prefix: Access::resource(git_sec::Permission::Allow),
+            },
         }
     }
 }
