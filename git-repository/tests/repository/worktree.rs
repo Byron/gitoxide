@@ -78,6 +78,7 @@ mod baseline {
 }
 
 #[test]
+#[ignore]
 fn from_bare_parent_repo() {
     let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
     let repo = git::open(dir.join("repo.git")).unwrap();
@@ -155,7 +156,13 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
         );
 
         let repo = if base.is_dir() {
-            actual.into_repo().unwrap()
+            let repo = actual.into_repo().unwrap();
+            assert_eq!(
+                &git::open(base).unwrap(),
+                &repo,
+                "repos are considered the same no matter if opened from worktree or from git dir"
+            );
+            repo
         } else {
             assert!(
                 matches!(
@@ -172,7 +179,6 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
         assert_eq!(worktree.is_locked(), proxy_is_locked);
         assert_eq!(worktree.id(), Some(proxy_id.as_ref()));
 
-        // TODO: open repo from linked worktree path.
         dbg!(expected);
     }
 }

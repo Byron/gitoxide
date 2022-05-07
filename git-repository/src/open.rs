@@ -213,7 +213,7 @@ impl crate::ThreadSafeRepository {
         let mut worktree_dir = worktree_dir_override.map(|wt| git_dir.join(wt)).or(worktree_dir);
         let common_dir = common_dir
             .map(|common| Ok(git_dir.join(common)))
-            .or_else(|| crate::path::read_from_file(git_dir.join("commondir")))
+            .or_else(|| git_discover::path::from_plain_file(git_dir.join("commondir")))
             .transpose()?;
         let common_dir_ref = common_dir
             .as_deref()

@@ -34,7 +34,7 @@ impl<'repo> Proxy<'repo> {
     /// Note that the location might not exist.
     pub fn base(&self) -> std::io::Result<PathBuf> {
         let git_dir = self.git_dir.join("gitdir");
-        let mut base_dot_git = crate::path::read_from_file(&git_dir).ok_or_else(|| {
+        let mut base_dot_git = git_discover::path::from_plain_file(&git_dir).ok_or_else(|| {
             std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 format!("Required file '{}' does not exist", git_dir.display()),
