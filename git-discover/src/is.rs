@@ -1,26 +1,22 @@
-use std::{
-    ffi::OsStr,
-    path::{Path, PathBuf},
-};
+use std::{ffi::OsStr, path::Path};
 
 /// Returns true if the given `git_dir` seems to be a bare repository.
 ///
-/// Please note that repositories without any file in their work tree will also appear bare.
+/// Please note that repositories without an index generally _look_ bare, even though they might also be uninitialized.
 pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
     let git_dir = git_dir_candidate.as_ref();
     !(git_dir.join("index").exists() || (git_dir.file_name() == Some(OsStr::new(".git")) && git_dir.is_file()))
 }
 
-/// What constitutes a valid git repository, and what's yet to be implemented, returning the guessed repository kind
+/// What constitutes a valid git repository, returning the guessed repository kind
 /// purely based on the presence of files. Note that the git-config ultimately decides what's bare.
 ///
 /// * [ ] git files
 /// * [x] a valid head
 /// * [ ] git common directory
-///   * [ ] respect GIT_COMMON_DIR
 /// * [x] an objects directory
-///   * [x] respect GIT_OBJECT_DIRECTORY
 /// * [x] a refs directory
+// TODO: allow configuring common dirs at least
 pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::is_git::Error> {
     let dot_git = git_dir.as_ref();
 
@@ -43,9 +39,7 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
     }
 
     {
-        let objects_path = std::env::var("GIT_OBJECT_DIRECTORY")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| dot_git.join("objects"));
+        let objects_path = dot_git.join("objects");
         if !objects_path.is_dir() {
             return Err(crate::is_git::Error::MissingObjectsDirectory { missing: objects_path });
         }
