@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 pub mod into_repo {
     use std::path::PathBuf;
 
-    /// The error returned by [`Worktree::into_repo()`][crate::Worktree::into_repo()].
+    /// The error returned by [`Proxy::into_repo()`][super::Proxy::into_repo()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
