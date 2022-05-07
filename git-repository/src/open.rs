@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
@@ -214,8 +215,12 @@ impl crate::ThreadSafeRepository {
             .map(|common| Ok(git_dir.join(common)))
             .or_else(|| crate::path::read_from_file(git_dir.join("commondir")))
             .transpose()?;
+        let common_dir_ref = common_dir
+            .as_deref()
+            .map(|cmn| Cow::Owned(git_dir.join(cmn)))
+            .unwrap_or_else(|| Cow::Borrowed(&git_dir));
         let config = crate::config::Cache::new(
-            common_dir.as_deref().unwrap_or(&git_dir),
+            &common_dir_ref,
             env.xdg_config_home.clone(),
             env.home.clone(),
             crate::path::install_dir().ok().as_deref(),
@@ -276,7 +281,7 @@ impl crate::ThreadSafeRepository {
 
         Ok(crate::ThreadSafeRepository {
             objects: OwnShared::new(git_odb::Store::at_opts(
-                git_dir.join("objects"),
+                common_dir_ref.join("objects"),
                 replacements,
                 git_odb::store::init::Options {
                     slots: object_store_slots,
