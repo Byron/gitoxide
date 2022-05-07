@@ -1,4 +1,6 @@
-//! Find git repositories or search them upwards from a starting point.
+//! Find git repositories or search them upwards from a starting point, or determine if a directory looks like a git repository.
+//!
+//! Note that detection methods are educated guesses using the presence of files, without looking too much into the details.
 #![forbid(unsafe_code, rust_2018_idioms)]
 #![deny(missing_docs)]
 
@@ -100,3 +102,21 @@ pub use is::{bare as is_bare, git as is_git};
 ///
 pub mod upwards;
 pub use upwards::function::{discover as upwards, discover_opts as upwards_opts};
+
+///
+pub mod path {
+    use std::path::PathBuf;
+
+    /// Reads a plain path from a file that contains it as its only content, with trailing newlines trimmed.
+    pub fn from_plain_file(path: impl AsRef<std::path::Path>) -> Option<std::io::Result<PathBuf>> {
+        use bstr::ByteSlice;
+        let mut buf = match std::fs::read(path) {
+            Ok(buf) => buf,
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => return None,
+            Err(err) => return Some(Err(err)),
+        };
+        let trimmed_len = buf.trim_end().len();
+        buf.truncate(trimmed_len);
+        Some(Ok(git_path::from_bstring(buf)))
+    }
+}
