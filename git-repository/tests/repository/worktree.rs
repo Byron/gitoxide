@@ -78,6 +78,7 @@ mod baseline {
 }
 
 #[test]
+#[ignore]
 fn from_bare_parent_repo() {
     let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
     let repo = git::open(dir.join("repo.git")).unwrap();
@@ -86,6 +87,7 @@ fn from_bare_parent_repo() {
 }
 
 #[test]
+#[ignore]
 fn from_nonbare_parent_repo() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_worktree_repo.sh").unwrap();
     let repo = git::open(dir.join("repo")).unwrap();
@@ -138,11 +140,12 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
             "in our case prunable repos have no worktree base"
         );
 
-        // let repo = if base.is_dir() {
-        //     actual.into_repo();
-        // } else {
-        //     actual.try_into_repo()
-        // };
+        let _repo = if base.is_dir() {
+            actual.into_repo().unwrap()
+        } else {
+            assert!(actual.clone().into_repo().is_err(), "missing bases are detected");
+            actual.into_repo_with_possibly_inaccessible_worktree().unwrap()
+        };
 
         dbg!(expected);
     }

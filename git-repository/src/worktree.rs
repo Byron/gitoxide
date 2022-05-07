@@ -1,3 +1,4 @@
+use crate::Repository;
 pub use git_worktree::*;
 use std::path::PathBuf;
 
@@ -5,10 +6,10 @@ use std::path::PathBuf;
 ///
 /// It provides access to typical worktree state, but may not actually point to a valid checkout as the latter has been moved or
 /// deleted.
-#[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash)]
-pub struct Proxy {
-    /// The git directory for the work tree, typically contained within the parent git dir.
-    pub git_dir: PathBuf,
+#[derive(Debug, Clone)]
+pub struct Proxy<'repo> {
+    pub(crate) parent: &'repo Repository,
+    pub(crate) git_dir: PathBuf,
 }
 
 #[allow(missing_docs)]
@@ -21,10 +22,19 @@ pub mod git_dir {
 mod proxy {
     use crate::bstr::{BStr, BString, ByteSlice};
     use crate::worktree::Proxy;
-    use crate::Repository;
-    use std::path::PathBuf;
+    use crate::{Repository, ThreadSafeRepository};
+    use std::path::{Path, PathBuf};
 
-    impl Proxy {
+    impl<'repo> Proxy<'repo> {
+        pub(crate) fn new(parent: &'repo Repository, git_dir: impl Into<PathBuf>) -> Self {
+            Proxy {
+                parent,
+                git_dir: git_dir.into(),
+            }
+        }
+    }
+
+    impl<'repo> Proxy<'repo> {
         /// Read the location of the checkout, the base of the work tree.
         /// Note that the location might not exist.
         pub fn base(&self) -> std::io::Result<PathBuf> {
@@ -39,6 +49,11 @@ mod proxy {
                 base_dot_git.pop();
             }
             Ok(base_dot_git)
+        }
+
+        /// The git directory for the work tree, typically contained within the parent git dir.
+        pub fn git_dir(&self) -> &Path {
+            &self.git_dir
         }
 
         /// The name of the worktree, which is derived from its folder within the `worktrees` directory within the parent `.git` folder.
@@ -62,19 +77,34 @@ mod proxy {
                 .map(|contents| contents.trim().into())
         }
 
-        /// Transform this proxy into a [`Repository`] while doing no safety checks.
+        /// Transform this proxy into a [`Repository`] while ignoring issues reading `base()` and ignoring that it might not exist.
         ///
         /// Most importantly, the `Repository` might be initialized with a non-existing work tree directory as the checkout
         /// was removed or moved in the mean time or is unavailable for other reasons.
         /// The caller will encounter io errors if it's used like the work tree is guaranteed to be present, but can still access
         /// a lot of information if work tree access is avoided.
-        pub fn into_repo(self) -> Repository {
-            todo!()
+        pub fn into_repo_with_possibly_inaccessible_worktree(self) -> Result<Repository, crate::open::Error> {
+            let base = self.base().ok();
+            let repo =
+                ThreadSafeRepository::open_from_paths(self.git_dir, base, self.parent.linked_worktree_options.clone())?;
+            Ok(repo.into())
         }
 
-        /// Like `into_repo()` but with the guarantee that the work tree directory is accessible.
-        pub fn try_into_repo(self) -> std::io::Result<Repository> {
-            todo!()
+        /// Like `into_repo_with_possibly_inaccessible_worktree()` but will fail if the `base()` cannot be read or
+        /// if the worktree doesn't exist.
+        ///
+        /// Note that it won't fail if the worktree doesn't exist.
+        pub fn into_repo(self) -> Result<Repository, crate::open::Error> {
+            let base = self.base()?;
+            if !base.is_dir() {
+                todo!()
+            }
+            let repo = ThreadSafeRepository::open_from_paths(
+                self.git_dir,
+                base.into(),
+                self.parent.linked_worktree_options.clone(),
+            )?;
+            Ok(repo.into())
         }
     }
 }

@@ -6,7 +6,7 @@ impl crate::Repository {
     /// Return a list of all _linked_ worktrees sorted by private git dir path as a lightweight proxy.
     ///
     /// Note that these need additional processing to become usable, but provide a first glimpse a typical worktree information.
-    pub fn worktrees(&self) -> std::io::Result<Vec<worktree::Proxy>> {
+    pub fn worktrees(&self) -> std::io::Result<Vec<worktree::Proxy<'_>>> {
         let mut res = Vec::new();
         let iter = match std::fs::read_dir(self.common_dir().join("worktrees")) {
             Ok(iter) => iter,
@@ -18,6 +18,7 @@ impl crate::Repository {
             let worktree_git_dir = entry.path();
             if worktree_git_dir.join("gitdir").is_file() {
                 res.push(worktree::Proxy {
+                    parent: self,
                     git_dir: worktree_git_dir,
                 })
             }
@@ -98,19 +99,13 @@ impl crate::Repository {
     ///
     /// Always false for the main worktree.
     pub fn is_locked(&self) -> bool {
-        worktree::Proxy {
-            git_dir: self.git_dir().into(),
-        }
-        .is_locked()
+        worktree::Proxy::new(self, self.git_dir()).is_locked()
     }
     /// Provide a reason for the locking of this worktree, if it is locked at all.
     ///
     /// Note that we squelch errors in case the file cannot be read in which case the
     /// reason is an empty string.
     pub fn lock_reason(&self) -> Option<BString> {
-        worktree::Proxy {
-            git_dir: self.git_dir().into(),
-        }
-        .lock_reason()
+        worktree::Proxy::new(self, self.git_dir()).lock_reason()
     }
 }
