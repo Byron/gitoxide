@@ -197,13 +197,27 @@ pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr
     replace(path, b'/', b'\\')
 }
 
+/// the error returned when expanding a path with symlinks
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum RealPathError {
+    #[error("The maximum allowed number {} of symlinks in path is exceeded", .max_symlinks)]
+    MaxSymlinksExceeded { max_symlinks: u8 },
+    #[error(transparent)]
+    ReadLink(#[from] std::io::Error),
+    #[error("Empty is not a valid path")]
+    EmptyPath,
+    #[error("Parent component of {} does not exist", .path)]
+    MissingParent { path: String },
+}
+
 /// TODO
-pub fn real_path(path: &Path, cwd: &Path) -> Result<PathBuf, String> {
+pub fn real_path(path: &Path, cwd: &Path) -> Result<PathBuf, RealPathError> {
     // TODO add test
     const MAX_SYMLINKS: u8 = 32;
 
     if path.as_os_str().is_empty() {
-        return Err("Empty is not a valid path".into());
+        return Err(RealPathError::EmptyPath);
     }
 
     let input_path = PathBuf::from(path);
@@ -218,38 +232,43 @@ pub fn real_path(path: &Path, cwd: &Path) -> Result<PathBuf, String> {
         mut input_path: std::path::Components<'_>,
         mut num_symlinks: u8,
         mut real_path: PathBuf,
-    ) -> Result<PathBuf, String> {
+    ) -> Result<PathBuf, RealPathError> {
         match input_path.next() {
             None => Ok(real_path),
             Some(part) => match part {
                 RootDir | CurDir => traverse(input_path, num_symlinks, real_path),
                 ParentDir => {
-                    let parent_path = PathBuf::from(real_path.parent().expect("parent component exists"));
-                    Ok(real_path.join(traverse(input_path, num_symlinks, parent_path).unwrap()))
+                    let parent_path = PathBuf::from(real_path.parent().ok_or(RealPathError::MissingParent {
+                        path: real_path.to_string_lossy().into(),
+                    })?);
+                    Ok(real_path.join(traverse(input_path, num_symlinks, parent_path)?))
                 }
                 Normal(part) => {
                     real_path.push(part);
                     if real_path.is_symlink() {
                         if num_symlinks > MAX_SYMLINKS {
-                            return Err(format!("More than {} nested symlinks", MAX_SYMLINKS));
+                            return Err(RealPathError::MaxSymlinksExceeded {
+                                max_symlinks: MAX_SYMLINKS,
+                            });
                         }
                         num_symlinks += 1;
-                        return match std::fs::read_link(real_path.as_path()) {
-                            Err(e) => return Err(e.to_string()),
-                            Ok(mut resolved_symlink) => {
-                                if resolved_symlink.is_absolute() {
-                                    real_path = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
-                                } else {
-                                    real_path = real_path.parent().expect("parent component exists").into();
-                                }
 
-                                resolved_symlink.push(input_path.collect::<PathBuf>());
-
-                                traverse(resolved_symlink.components(), num_symlinks, real_path)
-                            }
-                        };
+                        let mut resolved_symlink = std::fs::read_link(real_path.as_path())?;
+                        if resolved_symlink.is_absolute() {
+                            real_path = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
+                        } else {
+                            real_path = real_path
+                                .parent()
+                                .ok_or(RealPathError::MissingParent {
+                                    path: real_path.to_string_lossy().into(),
+                                })?
+                                .into();
+                        }
+                        resolved_symlink.push(input_path.collect::<PathBuf>());
+                        traverse(resolved_symlink.components(), num_symlinks, real_path)
+                    } else {
+                        traverse(input_path, num_symlinks, real_path)
                     }
-                    traverse(input_path, num_symlinks, real_path)
                 }
                 _ => todo!(),
             },

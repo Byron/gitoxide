@@ -1,4 +1,4 @@
-#![forbid(unsafe_code, rust_2018_idioms, missing_docs)]
+#![forbid(unsafe_code, rust_2018_idioms)]
 //! ### Research
 //!
 //! * **windows**

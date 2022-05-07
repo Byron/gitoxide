@@ -1,6 +1,6 @@
 mod convert {
     use bstr::ByteSlice;
-    use git_path::{real_path, to_unix_separators, to_windows_separators};
+    use git_path::{real_path, to_unix_separators, to_windows_separators, RealPathError};
     use std::fs::create_dir_all;
     use std::os::unix::fs;
     use std::path::{Path, PathBuf};
@@ -33,9 +33,8 @@ mod convert {
         let tmp_dir = tmp_dir.path();
 
         let empty_path = Path::new("");
-        assert_eq!(
-            real_path(empty_path, cwd),
-            Err("Empty is not a valid path".into()),
+        assert!(
+            matches!(real_path(empty_path, cwd).err().unwrap(), RealPathError::EmptyPath),
             "Empty path is error"
         );
 
