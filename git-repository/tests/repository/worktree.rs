@@ -78,7 +78,6 @@ mod baseline {
 }
 
 #[test]
-#[ignore]
 fn from_bare_parent_repo() {
     let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
     let repo = git::open(dir.join("repo.git")).unwrap();
@@ -108,7 +107,9 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
     let expected_main = baseline.remove(0);
     assert_eq!(expected_main.bare, should_be_bare);
 
-    if !should_be_bare {
+    if should_be_bare {
+        assert!(main_repo.worktree().is_none());
+    } else {
         assert_eq!(
             main_repo.work_dir().expect("non-bare").canonicalize().unwrap(),
             expected_main.root.canonicalize().unwrap()
@@ -117,11 +118,20 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
         assert_eq!(
             main_repo.head_name().unwrap().expect("no detached head").as_bstr(),
             expected_main.branch.unwrap()
-        )
+        );
+        let worktree = main_repo.worktree().expect("not bare");
+        assert!(
+            worktree.lock_reason().is_none(),
+            "main worktrees, bare or not, are never locked"
+        );
+        assert!(!worktree.is_locked());
+        assert!(worktree.is_main());
     }
+    // TODO: compare main_repo() ;
 
     let actual = main_repo.worktrees().unwrap();
     assert_eq!(actual.len(), baseline.len());
+
     for actual in actual {
         let base = actual.base().unwrap();
         let expected = baseline
@@ -132,21 +142,37 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
             !expected.bare,
             "only the main worktree can be bare, and we don't see it in this loop"
         );
-        assert_eq!(actual.lock_reason(), expected.locked);
-        assert_eq!(actual.is_locked(), actual.lock_reason().is_some());
+        let proxy_lock_reason = actual.lock_reason();
+        assert_eq!(proxy_lock_reason, expected.locked);
+        let proxy_is_locked = actual.is_locked();
+        assert_eq!(proxy_is_locked, proxy_lock_reason.is_some());
+        // TODO: check id of expected worktree, but need access to .gitdir from worktree base
+        let proxy_id = actual.id().to_owned();
         assert_eq!(
             base.is_dir(),
             expected.prunable.is_none(),
             "in our case prunable repos have no worktree base"
         );
 
-        let _repo = if base.is_dir() {
+        let repo = if base.is_dir() {
             actual.into_repo().unwrap()
         } else {
-            assert!(actual.clone().into_repo().is_err(), "missing bases are detected");
+            assert!(
+                matches!(
+                    actual.clone().into_repo(),
+                    Err(git::worktree::proxy::into_repo::Error::MissingWorktree { .. })
+                ),
+                "missing bases are detected"
+            );
             actual.into_repo_with_possibly_inaccessible_worktree().unwrap()
         };
+        let worktree = repo.worktree().expect("linked worktrees have at least a path");
+        assert!(!worktree.is_main());
+        assert_eq!(worktree.lock_reason(), proxy_lock_reason);
+        assert_eq!(worktree.is_locked(), proxy_is_locked);
+        assert_eq!(worktree.id(), Some(proxy_id.as_ref()));
 
+        // TODO: open repo from linked worktree path.
         dbg!(expected);
     }
 }

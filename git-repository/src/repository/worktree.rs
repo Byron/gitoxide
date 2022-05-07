@@ -1,4 +1,3 @@
-use crate::bstr::BString;
 use crate::{worktree, Worktree};
 
 /// Worktree iteration
@@ -38,9 +37,12 @@ impl crate::Repository {
     }
 }
 
-/// Interact with individual worktree and their information.
+/// Interact with individual worktrees and their information.
 impl crate::Repository {
-    /// Return the repository owning the main worktree, if there is one.
+    /// Return the repository owning the main worktree.
+    ///
+    /// Note that it might be the one that is currently open if this repository dosn't point to a linked worktree.
+    /// Also note that the main repo might be bare.
     pub fn main_repo(&self) -> Result<crate::Repository, crate::open::Error> {
         crate::open(self.common_dir())
     }
@@ -93,19 +95,5 @@ impl crate::Repository {
             },
         )
         .map_err(Into::into)
-    }
-
-    /// Return true if this _linked_ worktree cannot be pruned, moved or deleted, which is useful if it is located on an external storage device.
-    ///
-    /// Always false for the main worktree.
-    pub fn is_locked(&self) -> bool {
-        worktree::Proxy::new(self, self.git_dir()).is_locked()
-    }
-    /// Provide a reason for the locking of this worktree, if it is locked at all.
-    ///
-    /// Note that we squelch errors in case the file cannot be read in which case the
-    /// reason is an empty string.
-    pub fn lock_reason(&self) -> Option<BString> {
-        worktree::Proxy::new(self, self.git_dir()).lock_reason()
     }
 }
