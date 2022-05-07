@@ -212,47 +212,42 @@ pub enum RealPathError {
 }
 
 /// TODO
-pub fn real_path(path: &Path, cwd: &Path) -> Result<PathBuf, RealPathError> {
+pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, RealPathError> {
     // TODO add test
-    const MAX_SYMLINKS: u8 = 32;
 
     if path.as_os_str().is_empty() {
         return Err(RealPathError::EmptyPath);
     }
 
-    let input_path = PathBuf::from(path);
     let mut real_path = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
-    let num_symlinks = 0;
 
-    if input_path.is_relative() {
+    if path.is_relative() {
         real_path.push(cwd);
     }
 
     fn traverse(
         mut input_path: std::path::Components<'_>,
         mut num_symlinks: u8,
+        max_symlinks: u8,
         mut real_path: PathBuf,
     ) -> Result<PathBuf, RealPathError> {
         match input_path.next() {
             None => Ok(real_path),
             Some(part) => match part {
-                RootDir | CurDir => traverse(input_path, num_symlinks, real_path),
+                RootDir | CurDir => traverse(input_path, num_symlinks, max_symlinks, real_path),
                 ParentDir => {
                     let parent_path = PathBuf::from(real_path.parent().ok_or(RealPathError::MissingParent {
                         path: real_path.to_string_lossy().into(),
                     })?);
-                    Ok(real_path.join(traverse(input_path, num_symlinks, parent_path)?))
+                    Ok(real_path.join(traverse(input_path, num_symlinks, max_symlinks, parent_path)?))
                 }
                 Normal(part) => {
                     real_path.push(part);
                     if real_path.is_symlink() {
-                        if num_symlinks > MAX_SYMLINKS {
-                            return Err(RealPathError::MaxSymlinksExceeded {
-                                max_symlinks: MAX_SYMLINKS,
-                            });
-                        }
                         num_symlinks += 1;
-
+                        if num_symlinks > max_symlinks {
+                            return Err(RealPathError::MaxSymlinksExceeded { max_symlinks });
+                        }
                         let mut resolved_symlink = std::fs::read_link(real_path.as_path())?;
                         if resolved_symlink.is_absolute() {
                             real_path = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
@@ -265,9 +260,9 @@ pub fn real_path(path: &Path, cwd: &Path) -> Result<PathBuf, RealPathError> {
                                 .into();
                         }
                         resolved_symlink.push(input_path.collect::<PathBuf>());
-                        traverse(resolved_symlink.components(), num_symlinks, real_path)
+                        traverse(resolved_symlink.components(), num_symlinks, max_symlinks, real_path)
                     } else {
-                        traverse(input_path, num_symlinks, real_path)
+                        traverse(input_path, num_symlinks, max_symlinks, real_path)
                     }
                 }
                 _ => todo!(),
@@ -275,5 +270,5 @@ pub fn real_path(path: &Path, cwd: &Path) -> Result<PathBuf, RealPathError> {
         }
     }
 
-    traverse(input_path.components(), num_symlinks, real_path)
+    traverse(path.components(), 0, max_symlinks, real_path)
 }
