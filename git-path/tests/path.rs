@@ -23,6 +23,8 @@ mod convert {
         assert_eq!(to_windows_separators(b"/a/b//".as_bstr()).as_bstr(), "\\a\\b\\\\");
     }
 
+    // git_repository tests, baseline
+
     #[test]
     fn real_path_tests() {
         let cwd = tempdir().unwrap();
@@ -100,6 +102,28 @@ mod convert {
             cwd.join("p").join("q").join(".git"),
             "symlink to relative path gets expanded"
         );
+    }
+
+    #[test]
+    #[ignore]
+    fn test_prefix_component() {
+        // todo!()
+
+        // enum Component.Prefix
+
+        let a = PathBuf::from("a");
+        let mut a = a.components();
+        let _ = a.next();
+
+        let mut pb = PathBuf::new();
+        pb.push(a.collect::<PathBuf>());
+
+        assert_eq!(pb, PathBuf::new());
+        assert_eq!(pb.components().next(), None);
+
+        // pass iterator input_path.components() instead of input_path
+        // have real_path mut and not return it
+        // change error to this_error
     }
 
     fn create_symlink(link: &Path, link_dest: &Path) {

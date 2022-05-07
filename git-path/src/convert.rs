@@ -1,5 +1,4 @@
 use bstr::{BStr, BString};
-use std::iter::FromIterator;
 use std::path::Component::{CurDir, Normal, ParentDir, RootDir};
 use std::{
     borrow::Cow,
@@ -215,15 +214,18 @@ pub fn real_path(path: &Path, cwd: &Path) -> Result<PathBuf, String> {
         real_path.push(cwd);
     }
 
-    fn traverse(input_path: PathBuf, mut num_symlinks: u8, mut real_path: PathBuf) -> Result<PathBuf, String> {
-        let next_input_path = PathBuf::from_iter(input_path.components().skip(1));
-        match input_path.components().next() {
+    fn traverse(
+        mut input_path: std::path::Components<'_>,
+        mut num_symlinks: u8,
+        mut real_path: PathBuf,
+    ) -> Result<PathBuf, String> {
+        match input_path.next() {
             None => Ok(real_path),
             Some(part) => match part {
-                RootDir | CurDir => traverse(next_input_path, num_symlinks, real_path),
+                RootDir | CurDir => traverse(input_path, num_symlinks, real_path),
                 ParentDir => {
                     let parent_path = PathBuf::from(real_path.parent().expect("parent component exists"));
-                    Ok(real_path.join(traverse(next_input_path, num_symlinks, parent_path).unwrap()))
+                    Ok(real_path.join(traverse(input_path, num_symlinks, parent_path).unwrap()))
                 }
                 Normal(part) => {
                     real_path.push(part);
@@ -240,19 +242,19 @@ pub fn real_path(path: &Path, cwd: &Path) -> Result<PathBuf, String> {
                                 } else {
                                     real_path = real_path.parent().expect("parent component exists").into();
                                 }
-                                if next_input_path.components().peekable().peek().is_some() {
-                                    resolved_symlink.push(next_input_path);
-                                }
-                                traverse(resolved_symlink, num_symlinks, real_path)
+
+                                resolved_symlink.push(input_path.collect::<PathBuf>());
+
+                                traverse(resolved_symlink.components(), num_symlinks, real_path)
                             }
                         };
                     }
-                    traverse(next_input_path, num_symlinks, real_path)
+                    traverse(input_path, num_symlinks, real_path)
                 }
                 _ => todo!(),
             },
         }
     }
 
-    traverse(input_path, num_symlinks, real_path)
+    traverse(input_path.components(), num_symlinks, real_path)
 }
