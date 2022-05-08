@@ -4,10 +4,22 @@ mod from_git_dir_file {
     use std::io::Write;
     use std::path::{Path, PathBuf};
 
+    #[cfg(not(windows))]
     #[test]
-    fn absolute_path() -> crate::Result {
+    fn absolute_path_unix() -> crate::Result {
         let (path, _) = write_and_read(b"gitdir: /absolute/path/.git")?;
         assert_eq!(path, Path::new("/absolute/path/.git"));
+        Ok(())
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn absolute_path_windows() -> crate::Result {
+        let (path, _) = write_and_read(b"gitdir: C:/absolute/path/.git")?;
+        assert_eq!(path, Path::new("C:/absolute/path/.git"));
+
+        let (path, _) = write_and_read(b"gitdir: C:\\absolute\\path\\.git")?;
+        assert_eq!(path, Path::new("C:\\absolute\\path\\.git"));
         Ok(())
     }
 
