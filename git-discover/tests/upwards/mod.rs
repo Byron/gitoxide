@@ -103,7 +103,7 @@ fn from_dir_with_dot_dot() -> crate::Result {
         working_dir.canonicalize()?,
         "a relative path that climbs above the test repo should yield the gitoxide repo"
     );
-    assert_eq!(trust, expected_trust());
+    assert_eq!(trust, git_sec::Trust::Full);
     Ok(())
 }
 
