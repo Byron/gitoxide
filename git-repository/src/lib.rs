@@ -215,6 +215,17 @@ impl Kind {
     }
 }
 
+impl From<git_discover::repository::Kind> for Kind {
+    fn from(v: git_discover::repository::Kind) -> Self {
+        match v {
+            git_discover::repository::Kind::Bare => Kind::Bare,
+            git_discover::repository::Kind::WorkTree { linked_git_dir } => Kind::WorkTree {
+                is_linked: linked_git_dir.is_some(),
+            },
+        }
+    }
+}
+
 /// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, discover::Error> {
     ThreadSafeRepository::discover(directory).map(Into::into)

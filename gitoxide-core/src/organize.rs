@@ -41,13 +41,13 @@ where
 
         if path.is_dir() {
             if path.join("HEAD").is_file() && path.join("config").is_file() {
-                git::discover::is_git(path).ok()
+                git::discover::is_git(path).ok().map(Into::into)
             } else {
                 None
             }
         } else {
             // git files are always worktrees
-            Some(git_repository::Kind::WorkTree)
+            Some(git_repository::Kind::WorkTree { is_linked: true })
         }
     }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
