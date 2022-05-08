@@ -210,6 +210,12 @@ fn newline_events_are_merged() {
 
 #[test]
 fn error() {
+    let input = "[a_b]\n c=d";
+    assert_eq!(
+        parse_from_str(input).unwrap_err().to_string(),
+        "Got an unexpected token on line 1 while trying to parse a section header: '[a_b]\n c=d'",
+        "underscores in section names aren't allowed and will be rejected by git"
+    );
     let input = "[core] a=b\n 4a=3";
     assert_eq!(
         parse_from_str(input).unwrap_err().to_string(),

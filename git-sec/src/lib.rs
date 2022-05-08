@@ -1,9 +1,11 @@
 #![deny(unsafe_code, rust_2018_idioms, missing_docs)]
 //! A shared trust model for `gitoxide` crates.
 
-use std::fmt::{Debug, Display, Formatter};
-use std::marker::PhantomData;
-use std::ops::Deref;
+use std::{
+    fmt::{Debug, Display, Formatter},
+    marker::PhantomData,
+    ops::Deref,
+};
 
 /// A way to specify how 'safe' we feel about a resource, typically about a git repository.
 #[derive(Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Debug, Hash)]
@@ -75,8 +77,9 @@ pub mod trust {
 
 ///
 pub mod permission {
-    use crate::Access;
     use std::fmt::{Debug, Display};
+
+    use crate::Access;
 
     /// A marker trait to signal tags for permissions.
     pub trait Tag: Debug + Clone {}

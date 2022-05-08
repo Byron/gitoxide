@@ -1,8 +1,9 @@
 mod ignore {
+    use std::io::Read;
+
     use bstr::{BStr, ByteSlice};
     use git_attributes::{Ignore, Match, MatchGroup};
     use git_glob::pattern::Case;
-    use std::io::Read;
 
     struct Expectations<'a> {
         lines: bstr::Lines<'a>,

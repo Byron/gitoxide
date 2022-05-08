@@ -1,5 +1,4 @@
-use crate::bstr::BString;
-use crate::permission::EnvVarResourcePermission;
+use crate::{bstr::BString, permission::EnvVarResourcePermission};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -47,8 +46,7 @@ pub(crate) struct Cache {
 }
 
 mod cache {
-    use std::convert::TryFrom;
-    use std::path::PathBuf;
+    use std::{convert::TryFrom, path::PathBuf};
 
     use git_config::{
         file::GitConfig,
@@ -56,8 +54,7 @@ mod cache {
     };
 
     use super::{Cache, Error};
-    use crate::bstr::ByteSlice;
-    use crate::permission::EnvVarResourcePermission;
+    use crate::{bstr::ByteSlice, permission::EnvVarResourcePermission};
 
     impl Cache {
         pub fn new(

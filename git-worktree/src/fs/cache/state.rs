@@ -1,9 +1,10 @@
-use crate::fs::cache::State;
-use crate::fs::PathOidMapping;
+use std::path::Path;
+
 use bstr::{BStr, BString, ByteSlice};
 use git_glob::pattern::Case;
 use git_hash::oid;
-use std::path::Path;
+
+use crate::fs::{cache::State, PathOidMapping};
 
 type AttributeMatchGroup = git_attributes::MatchGroup<git_attributes::Attributes>;
 type IgnoreMatchGroup = git_attributes::MatchGroup<git_attributes::Ignore>;

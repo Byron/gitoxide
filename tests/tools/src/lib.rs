@@ -1,8 +1,8 @@
-use std::io::Read;
-use std::time::Duration;
 use std::{
     collections::BTreeMap,
+    io::Read,
     path::{Path, PathBuf},
+    time::Duration,
 };
 
 pub use bstr;

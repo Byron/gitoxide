@@ -51,7 +51,7 @@ mod impl_ {
         use windows::{
             core::{Error, PCWSTR},
             Win32::{
-                Foundation::{ERROR_SUCCESS, HANDLE, PSID},
+                Foundation::{HANDLE, PSID},
                 Security::{
                     Authorization::{GetNamedSecurityInfoW, SE_FILE_OBJECT},
                     EqualSid, GetTokenInformation, TokenOwner, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
@@ -84,7 +84,7 @@ mod impl_ {
             );
 
             // Workaround for https://github.com/microsoft/win32metadata/issues/884
-            if result == ERROR_SUCCESS.0 {
+            if result.is_ok() {
                 let mut token = HANDLE::default();
                 OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token).ok()?;
 

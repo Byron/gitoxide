@@ -31,7 +31,7 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools"}
-serial_test = "0.5.1"
+serial_test = "0.6.0"
 serde_derive = "1.0"
 criterion = "0.3"
 tempfile = "3.2.0"

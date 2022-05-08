@@ -1,9 +1,10 @@
-use super::Cache;
-use crate::fs;
-use crate::fs::PathOidMapping;
+use std::path::{Path, PathBuf};
+
 use bstr::{BStr, ByteSlice};
 use git_hash::oid;
-use std::path::{Path, PathBuf};
+
+use super::Cache;
+use crate::{fs, fs::PathOidMapping};
 
 #[derive(Clone)]
 pub enum State {

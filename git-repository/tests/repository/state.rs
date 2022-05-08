@@ -1,5 +1,6 @@
-use crate::{named_repo, Result};
 use git_repository as git;
+
+use crate::{named_repo, Result};
 
 #[test]
 fn apply_mailbox() -> Result {

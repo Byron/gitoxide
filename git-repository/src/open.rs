@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
-use crate::Permissions;
 use git_features::threading::OwnShared;
 use git_sec::Trust;
+
+use crate::Permissions;
 
 /// A way to configure the usage of replacement objects, see `git replace`.
 pub enum ReplacementObjects {

@@ -25,7 +25,7 @@ thiserror = { version = "1.0.26", optional = true }
 libc = "0.2.123"
 
 [target.'cfg(windows)'.dependencies]
-windows = { version = "0.35.0", features = [ "alloc",
+windows = { version = "0.36.0", features = [ "alloc",
     "Win32_Foundation",
     "Win32_Security_Authorization",
     "Win32_Storage_FileSystem",

@@ -117,13 +117,12 @@ mod create_directory {
 
 #[allow(unused)]
 mod ignore_and_attributes {
-    use bstr::{BStr, ByteSlice};
     use std::path::Path;
 
+    use bstr::{BStr, ByteSlice};
     use git_glob::pattern::Case;
     use git_index::entry::Mode;
-    use git_odb::pack::bundle::write::Options;
-    use git_odb::FindExt;
+    use git_odb::{pack::bundle::write::Options, FindExt};
     use git_testtools::hex_to_id;
     use git_worktree::fs;
     use tempfile::{tempdir, TempDir};

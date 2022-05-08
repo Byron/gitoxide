@@ -1,6 +1,6 @@
+use git_sec::{permission::Resource, Access, Trust};
+
 use crate::permission::EnvVarResourcePermission;
-use git_sec::permission::Resource;
-use git_sec::{Access, Trust};
 
 /// Permissions associated with various resources of a git repository
 pub struct Permissions {

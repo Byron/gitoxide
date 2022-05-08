@@ -181,8 +181,9 @@ mod tests {
     type Result = std::result::Result<(), Box<dyn std::error::Error>>;
 
     mod encode_message {
-        use super::*;
         use bstr::ByteSlice;
+
+        use super::*;
 
         #[test]
         fn from_url() -> super::Result {
@@ -193,8 +194,9 @@ mod tests {
         }
 
         mod invalid {
-            use super::*;
             use std::io;
+
+            use super::*;
 
             #[test]
             fn contains_null() {

@@ -1,9 +1,9 @@
-use bstr::ByteSlice;
 use std::{
     fmt::{Debug, Display, Formatter},
     panic::catch_unwind,
 };
 
+use bstr::ByteSlice;
 use git_glob::{pattern::Case, wildmatch, Pattern};
 
 #[test]

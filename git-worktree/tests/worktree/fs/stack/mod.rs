@@ -1,5 +1,6 @@
-use git_worktree::fs::Stack;
 use std::path::{Path, PathBuf};
+
+use git_worktree::fs::Stack;
 
 #[derive(Debug, Default, Eq, PartialEq)]
 struct Record {

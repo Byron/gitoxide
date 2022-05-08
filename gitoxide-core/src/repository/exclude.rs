@@ -1,13 +1,15 @@
-use anyhow::{bail, Context};
 use std::io;
 
-use crate::OutputFormat;
+use anyhow::{bail, Context};
 use git_repository as git;
 use git_repository::prelude::FindExt;
 
+use crate::OutputFormat;
+
 pub mod query {
-    use crate::OutputFormat;
     use std::ffi::OsString;
+
+    use crate::OutputFormat;
 
     pub struct Options {
         pub format: OutputFormat,

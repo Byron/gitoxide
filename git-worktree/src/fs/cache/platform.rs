@@ -1,9 +1,15 @@
-use crate::fs;
-use crate::fs::cache::{Platform, State};
-use crate::fs::PathOidMapping;
+use std::path::Path;
+
 use bstr::ByteSlice;
 use git_hash::oid;
-use std::path::Path;
+
+use crate::{
+    fs,
+    fs::{
+        cache::{Platform, State},
+        PathOidMapping,
+    },
+};
 
 impl<'a, 'paths> Platform<'a, 'paths> {
     /// The full path to `relative` will be returned for use on the file system.

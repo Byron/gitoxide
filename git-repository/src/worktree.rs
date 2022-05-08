@@ -1,6 +1,7 @@
-use crate::Repository;
 #[cfg(all(feature = "unstable", feature = "git-worktree"))]
 pub use git_worktree::*;
+
+use crate::Repository;
 
 ///
 #[cfg(feature = "git-index")]

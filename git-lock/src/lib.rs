@@ -17,9 +17,8 @@
 
 use std::path::PathBuf;
 
-use git_tempfile::handle::{Closed, Writable};
-
 pub use git_tempfile as tempfile;
+use git_tempfile::handle::{Closed, Writable};
 
 const DOT_LOCK_SUFFIX: &str = ".lock";
 

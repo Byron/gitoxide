@@ -14,12 +14,17 @@ name: Minimum Supported Rust Version
 jobs:
   rustfmt:
     name: cargo check MSRV
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - windows-2019
+          - ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.54.0"
+          toolchain: "1.59.0" # dictated by `windows` crates effectively
           override: true
       - run: make check-msrv-on-ci

@@ -1,6 +1,8 @@
-use crate::Spec;
-use bstr::{BStr, ByteSlice, ByteVec};
 use std::ffi::OsStr;
+
+use bstr::{BStr, ByteSlice, ByteVec};
+
+use crate::Spec;
 
 impl std::convert::TryFrom<&OsStr> for Spec {
     type Error = crate::Utf8Error;
