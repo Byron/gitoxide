@@ -8,6 +8,15 @@ fn from_bare_git_dir() -> crate::Result {
     let (path, trust) = git_discover::upwards(&dir)?;
     assert_eq!(path.as_ref(), dir, "the bare .git dir is directly returned");
     assert_eq!(path.kind(), Kind::Bare);
+    #[cfg(windows)]
+    {
+        if is_ci::cached() {
+            assert_eq!(trust, git_sec::Trust::Reduced);
+        } else {
+            assert_eq!(trust, git_sec::Trust::Full);
+        }
+    }
+    #[cfg(not(windows))]
     assert_eq!(trust, git_sec::Trust::Full);
     Ok(())
 }

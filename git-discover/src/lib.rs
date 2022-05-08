@@ -94,6 +94,9 @@ pub mod is_git {
         #[error("Expected a refs directory at '{}'", .missing.display())]
         MissingRefsDirectory { missing: PathBuf },
     }
+
+    /// Options for [`crate::is_git()`].
+    pub struct Options {}
 }
 
 mod is;
