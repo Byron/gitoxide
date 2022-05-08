@@ -502,12 +502,9 @@ pub mod init {
             use git_sec::trust::DefaultForLevel;
             let path = crate::create::into(directory.as_ref(), kind)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-            ThreadSafeRepository::open_from_paths(
-                git_dir,
-                worktree_dir,
-                crate::open::Options::default_for_level(git_sec::Trust::Full),
-            )
-            .map_err(Into::into)
+            let options = crate::open::Options::default_for_level(git_sec::Trust::Full);
+            let overrides = options.overrides().map_err(crate::open::Error::from)?;
+            ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options, overrides).map_err(Into::into)
         }
     }
 }
@@ -575,7 +572,9 @@ pub mod discover {
         ) -> Result<Self, Error> {
             let (path, trust) = git_discover::upwards_opts(directory, options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-            Self::open_from_paths(git_dir, worktree_dir, trust_map.into_value_by_level(trust)).map_err(Into::into)
+            let options = trust_map.into_value_by_level(trust);
+            let overrides = options.overrides().map_err(crate::open::Error::from)?;
+            Self::open_from_paths(git_dir, worktree_dir, options, overrides).map_err(Into::into)
         }
     }
 }
