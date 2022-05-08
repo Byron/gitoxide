@@ -47,8 +47,10 @@ impl crate::Repository {
 
     /// Return the kind of repository, either bare or one with a work tree.
     pub fn kind(&self) -> crate::Kind {
-        match self.work_tree {
-            Some(_) => crate::Kind::WorkTree,
+        match self.worktree() {
+            Some(wt) => crate::Kind::WorkTree {
+                is_linked: !wt.is_main(),
+            },
             None => crate::Kind::Bare,
         }
     }

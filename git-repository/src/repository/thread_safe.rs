@@ -5,7 +5,9 @@ mod access {
         /// Return the kind of repository, either bare or one with a work tree.
         pub fn kind(&self) -> Kind {
             match self.work_tree {
-                Some(_) => Kind::WorkTree,
+                Some(_) => Kind::WorkTree {
+                    is_linked: crate::worktree::id(self.git_dir(), self.common_dir.is_some()).is_some(),
+                },
                 None => Kind::Bare,
             }
         }

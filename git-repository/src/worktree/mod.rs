@@ -44,12 +44,18 @@ impl<'repo> crate::Worktree<'repo> {
 
     /// Return the ID of the repository worktree, if it is a linked worktree, or `None` if it's a linked worktree.
     pub fn id(&self) -> Option<&BStr> {
-        let candidate =
-            git_path::os_str_into_bstr(self.parent.git_dir().file_name().expect("at least one directory level"))
-                .expect("no illformed UTF-8");
-        let maybe_worktrees = self.parent.git_dir().parent()?;
-        (self.parent.common_dir.is_some() && maybe_worktrees.file_name()?.to_str()? == "worktrees").then(|| candidate)
+        id(self.parent.git_dir(), self.parent.common_dir.is_some())
     }
+}
+
+pub(crate) fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&BStr> {
+    if !has_common_dir {
+        return None;
+    }
+    let candidate = git_path::os_str_into_bstr(git_dir.file_name().expect("at least one directory level"))
+        .expect("no illformed UTF-8");
+    let maybe_worktrees = git_dir.parent()?;
+    (maybe_worktrees.file_name()?.to_str()? == "worktrees").then(|| candidate)
 }
 
 ///
