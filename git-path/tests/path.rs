@@ -2,7 +2,10 @@ mod convert {
     use bstr::ByteSlice;
     use git_path::{real_path, to_unix_separators, to_windows_separators, RealPathError};
     use std::fs::create_dir_all;
+    #[cfg(not(target_os = "windows"))]
     use std::os::unix::fs;
+    #[cfg(target_os = "windows")]
+    use std::os::windows::fs;
     use std::path::{Path, PathBuf};
     use tempfile::{tempdir, tempdir_in};
 
@@ -136,6 +139,9 @@ mod convert {
     }
 
     fn create_symlink(link: &Path, link_dest: &Path) {
+        #[cfg(not(target_os = "windows"))]
         fs::symlink(link_dest, &link).unwrap();
+        #[cfg(target_os = "windows")]
+        fs::symlink_file(link_dest, &link).unwrap();
     }
 }
