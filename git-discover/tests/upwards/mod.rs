@@ -2,22 +2,28 @@ use std::path::PathBuf;
 
 use git_discover::repository::Kind;
 
+fn expected_trust() -> git_sec::Trust {
+    #[cfg(not(windows))]
+    {
+        git_sec::Trust::Full
+    }
+    #[cfg(windows)]
+    {
+        if is_ci::cached() {
+            git_sec::Trust::Reduced
+        } else {
+            git_sec::Trust::Full
+        }
+    }
+}
+
 #[test]
 fn from_bare_git_dir() -> crate::Result {
     let dir = repo_path()?.join("bare.git");
     let (path, trust) = git_discover::upwards(&dir)?;
     assert_eq!(path.as_ref(), dir, "the bare .git dir is directly returned");
     assert_eq!(path.kind(), Kind::Bare);
-    #[cfg(windows)]
-    {
-        if is_ci::cached() {
-            assert_eq!(trust, git_sec::Trust::Reduced);
-        } else {
-            assert_eq!(trust, git_sec::Trust::Full);
-        }
-    }
-    #[cfg(not(windows))]
-    assert_eq!(trust, git_sec::Trust::Full);
+    assert_eq!(trust, expected_trust());
     Ok(())
 }
 
@@ -32,7 +38,7 @@ fn from_inside_bare_git_dir() -> crate::Result {
         "the bare .git dir is found while traversing upwards"
     );
     assert_eq!(path.kind(), Kind::Bare);
-    assert_eq!(trust, git_sec::Trust::Full);
+    assert_eq!(trust, expected_trust());
     Ok(())
 }
 
@@ -46,7 +52,7 @@ fn from_git_dir() -> crate::Result {
         dir,
         "the .git dir is directly returned if valid"
     );
-    assert_eq!(trust, git_sec::Trust::Full);
+    assert_eq!(trust, expected_trust());
     Ok(())
 }
 
@@ -56,7 +62,7 @@ fn from_working_dir() -> crate::Result {
     let (path, trust) = git_discover::upwards(&dir)?;
     assert_eq!(path.as_ref(), dir, "a working tree dir yields the git dir");
     assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
-    assert_eq!(trust, git_sec::Trust::Full);
+    assert_eq!(trust, expected_trust());
     Ok(())
 }
 
@@ -67,7 +73,7 @@ fn from_nested_dir() -> crate::Result {
     let (path, trust) = git_discover::upwards(&dir)?;
     assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(path.as_ref(), working_dir, "a working tree dir yields the git dir");
-    assert_eq!(trust, git_sec::Trust::Full);
+    assert_eq!(trust, expected_trust());
     Ok(())
 }
 
@@ -97,7 +103,7 @@ fn from_dir_with_dot_dot() -> crate::Result {
         working_dir.canonicalize()?,
         "a relative path that climbs above the test repo should yield the gitoxide repo"
     );
-    assert_eq!(trust, git_sec::Trust::Full);
+    assert_eq!(trust, expected_trust());
     Ok(())
 }
 
@@ -108,7 +114,7 @@ fn from_nested_dir_inside_a_git_dir() -> crate::Result {
     let (path, trust) = git_discover::upwards(&dir)?;
     assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(path.as_ref(), working_dir, "we find .git directories on the way");
-    assert_eq!(trust, git_sec::Trust::Full);
+    assert_eq!(trust, expected_trust());
     Ok(())
 }
 
@@ -118,7 +124,7 @@ fn from_existing_worktree() {
     let top_level_repo = repo_path().unwrap();
     let (path, trust) = git_discover::upwards(top_level_repo.join("worktrees").join("a")).unwrap();
 
-    assert_eq!(trust, git_sec::Trust::Full);
+    assert_eq!(trust, expected_trust());
     let (git_dir, worktree) = path.into_repository_and_work_tree_directories();
     assert_ne!(
         git_dir.strip_prefix(&top_level_repo),
