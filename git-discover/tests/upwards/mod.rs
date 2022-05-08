@@ -82,17 +82,16 @@ fn from_dir_with_dot_dot() -> crate::Result {
     let dir = working_dir.join("some/very/deeply/nested/subdir/../../../../../..");
     let (path, trust) = git_discover::upwards(&dir)?;
     assert_eq!(path.kind(), Kind::WorkTree);
-    if !(cfg!(windows) && is_ci::cached()) {
-        // On CI on windows we get a cursor like this with a question mark so our prefix check won't work.
-        // We recover, but that means this assertion will fail.
-        // &cursor = "\\\\?\\D:\\a\\gitoxide\\gitoxide\\.git"
-        // &cwd = "D:\\a\\gitoxide\\gitoxide\\git-repository"
-        assert_eq!(
-            path.as_ref(),
-            std::path::Path::new(".."),
-            "there is only the minimal amount of relative path components to see this worktree"
-        );
-    }
+    // On CI on windows we get a cursor like this with a question mark so our prefix check won't work.
+    // We recover, but that means this assertion will fail.
+    // &cursor = "\\\\?\\D:\\a\\gitoxide\\gitoxide\\.git"
+    // &cwd = "D:\\a\\gitoxide\\gitoxide\\git-repository"
+    #[cfg(not(windows))]
+    assert_eq!(
+        path.as_ref(),
+        std::path::Path::new(".."),
+        "there is only the minimal amount of relative path components to see this worktree"
+    );
     assert_ne!(
         path.as_ref().canonicalize()?,
         working_dir.canonicalize()?,
