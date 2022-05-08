@@ -420,7 +420,7 @@ pub mod discover {
         /// The `.git` directory whether given or computed is used for trust checks.
         ///
         /// Note that this will read various `GIT_*` environment variables to check for overrides.
-        // TODO: tests
+        // TODO: tests, with hooks
         pub fn open_with_overrides_opts(
             _directory: impl Into<PathBuf>,
             _trust_map: git_sec::trust::Mapping<crate::open::Options>,
