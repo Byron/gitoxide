@@ -121,6 +121,9 @@ impl Options {
             .unwrap_or_default())
     }
     /// If set, apply common git-prefixed environment variables which affect repository instantiation.
+    ///
+    /// **Security Note**: The options used are still the ones passed and adequate for the non-overridden `git_dir`, so
+    /// environment variables should only be picked up if attackers can't affect the environment a process starts in.
     pub fn apply_git_environment(mut self) -> Self {
         self.apply_git_environment = true;
         self
@@ -159,7 +162,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 object_store_slots: Default::default(),
                 replacement_objects: Default::default(),
                 permissions: Permissions::all(),
-                apply_git_environment: true,
+                apply_git_environment: false,
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage

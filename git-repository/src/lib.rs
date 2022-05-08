@@ -200,22 +200,22 @@ pub mod tag;
 pub type Kind = git_discover::repository::Kind;
 
 /// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
-pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, discover::Error> {
+pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, discover::Error> {
     ThreadSafeRepository::discover(directory).map(Into::into)
 }
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
-pub fn init(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, init::Error> {
+pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
     ThreadSafeRepository::init(directory, Kind::WorkTree).map(Into::into)
 }
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
-pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, init::Error> {
+pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
     ThreadSafeRepository::init(directory, Kind::Bare).map(Into::into)
 }
 
 /// See [ThreadSafeRepository::open()], but returns a [`Repository`] instead.
-pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repository, open::Error> {
+pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<Repository, open::Error> {
     ThreadSafeRepository::open(directory).map(Into::into)
 }
 
@@ -349,7 +349,7 @@ pub mod create {
 
         match kind {
             crate::Kind::Bare => {
-                if std::fs::read_dir(&dot_git)
+                if fs::read_dir(&dot_git)
                     .map_err(|err| Error::IoOpen {
                         source: err,
                         path: dot_git.clone(),
@@ -493,7 +493,7 @@ pub mod init {
         Open(#[from] crate::open::Error),
     }
 
-    impl crate::ThreadSafeRepository {
+    impl ThreadSafeRepository {
         /// Create a repository with work-tree within `directory`, creating intermediate directories as needed.
         ///
         /// Fails without action if there is already a `.git` repository inside of `directory`, but
@@ -570,7 +570,7 @@ pub mod discover {
             options: upwards::Options,
             trust_map: git_sec::trust::Mapping<crate::open::Options>,
         ) -> Result<Self, Error> {
-            let (path, trust) = git_discover::upwards_opts(directory, options)?;
+            let (path, trust) = upwards_opts(directory, options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
             let options = trust_map.into_value_by_level(trust);
             let overrides = options.overrides().map_err(crate::open::Error::from)?;
