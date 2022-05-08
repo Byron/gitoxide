@@ -1,5 +1,5 @@
 use bstr::{BStr, BString};
-use std::path::Component::{CurDir, Normal, ParentDir, RootDir};
+use std::path::Component::{CurDir, Normal, ParentDir, Prefix, RootDir};
 use std::{
     borrow::Cow,
     ffi::OsStr,
@@ -219,7 +219,13 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
         return Err(RealPathError::EmptyPath);
     }
 
+    #[cfg(not(target_os = "windows"))]
     let mut real_path = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
+
+    #[cfg(target_os = "windows")]
+    if let Some(Prefix(p)) = path.components().next() {
+        real_path = PathBuf::from(p.as_os_str());
+    }
 
     if path.is_relative() {
         real_path.push(cwd);
@@ -234,7 +240,7 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
         match input_path.next() {
             None => Ok(real_path),
             Some(part) => match part {
-                RootDir | CurDir => traverse(input_path, num_symlinks, max_symlinks, real_path),
+                Prefix(_) | RootDir | CurDir => traverse(input_path, num_symlinks, max_symlinks, real_path),
                 ParentDir => {
                     let parent_path = PathBuf::from(real_path.parent().ok_or(RealPathError::MissingParent {
                         path: real_path.to_string_lossy().into(),
@@ -265,7 +271,6 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
                         traverse(input_path, num_symlinks, max_symlinks, real_path)
                     }
                 }
-                _ => todo!(),
             },
         }
     }
