@@ -67,11 +67,10 @@ pub struct Options {
     object_store_slots: git_odb::store::init::Slots,
     replacement_objects: ReplacementObjects,
     permissions: Permissions,
-    /// If true, apply `GIT_` prefixed environment variables which affect repository instantiation.
-    apply_git_environment: bool,
 }
 
 #[derive(Default, Clone)]
+#[allow(dead_code)]
 pub(crate) struct EnvironmentOverrides {
     /// The path to the main .git repository and typically discovered by reading `commondir` files.
     ///
@@ -89,6 +88,7 @@ pub(crate) struct EnvironmentOverrides {
 
 impl EnvironmentOverrides {
     // TODO: tests
+    #[allow(dead_code)]
     fn from_env(
         git_prefix: crate::permission::env_var::Resource,
     ) -> Result<Self, crate::permission::env_var::resource::Error> {
@@ -113,21 +113,6 @@ impl EnvironmentOverrides {
 }
 
 impl Options {
-    pub(crate) fn overrides(&self) -> Result<EnvironmentOverrides, crate::permission::env_var::resource::Error> {
-        Ok(self
-            .apply_git_environment
-            .then(|| EnvironmentOverrides::from_env(self.permissions.env.with_git_prefix.clone()))
-            .transpose()?
-            .unwrap_or_default())
-    }
-    /// If set, apply common git-prefixed environment variables which affect repository instantiation.
-    ///
-    /// **Security Note**: The options used are still the ones passed and adequate for the non-overridden `git_dir`, so
-    /// environment variables should only be picked up if attackers can't affect the environment a process starts in.
-    pub fn apply_git_environment(mut self) -> Self {
-        self.apply_git_environment = true;
-        self
-    }
     /// Set the amount of slots to use for the object database. It's a value that doesn't need changes on the client, typically,
     /// but should be controlled on the server.
     pub fn object_store_slots(mut self, slots: git_odb::store::init::Slots) -> Self {
@@ -162,13 +147,11 @@ impl git_sec::trust::DefaultForLevel for Options {
                 object_store_slots: Default::default(),
                 replacement_objects: Default::default(),
                 permissions: Permissions::all(),
-                apply_git_environment: false,
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
                 replacement_objects: ReplacementObjects::Disable, // don't be tricked into seeing manufactured objects
                 permissions: Default::default(),
-                apply_git_environment: false,
             },
         }
     }
@@ -199,38 +182,32 @@ impl crate::ThreadSafeRepository {
     /// Open a git repository at the given `path`, possibly expanding it to `path/.git` if `path` is a work tree dir, and use
     /// `options` for fine-grained control.
     pub fn open_opts(path: impl Into<std::path::PathBuf>, options: Options) -> Result<Self, Error> {
-        let overrides = options.overrides()?;
-        let (path, kind) = match overrides.git_dir.as_deref() {
-            Some(git_dir) => git_discover::is_git(git_dir).map(|kind| (git_dir.to_owned(), kind))?,
-            None => {
-                let path = path.into();
-                match git_discover::is_git(&path) {
-                    Ok(kind) => (path, kind),
-                    Err(_) => {
-                        let git_dir = path.join(".git");
-                        git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?
-                    }
+        let (path, kind) = {
+            let path = path.into();
+            match git_discover::is_git(&path) {
+                Ok(kind) => (path, kind),
+                Err(_) => {
+                    let git_dir = path.join(".git");
+                    git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?
                 }
             }
         };
         let (git_dir, worktree_dir) =
             git_discover::repository::Path::from_dot_git_dir(path, kind).into_repository_and_work_tree_directories();
-        crate::ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options, overrides)
+        crate::ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
     }
 
     pub(crate) fn open_from_paths(
         git_dir: PathBuf,
-        worktree_dir: Option<PathBuf>,
+        mut worktree_dir: Option<PathBuf>,
         Options {
             object_store_slots,
             replacement_objects,
-            apply_git_environment: _,
             permissions: Permissions {
                 git_dir: git_dir_perm,
                 env,
             },
         }: Options,
-        overrides: EnvironmentOverrides,
     ) -> Result<Self, Error> {
         if *git_dir_perm != git_sec::ReadWrite::all() {
             // TODO: respect `save.directory`, which needs more support from git-config to do properly.
@@ -240,13 +217,7 @@ impl crate::ThreadSafeRepository {
         //       This would be something read in later as have to first check for extensions. Also this means
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
         //       as it may have its own configuration. That's fine actually.
-        let git_dir = overrides.git_dir.unwrap_or(git_dir);
-        let mut worktree_dir = overrides.worktree_dir.map(|wt| git_dir.join(wt)).or(worktree_dir);
-        let common_dir = overrides
-            .common_dir
-            .map(|common| Ok(git_dir.join(common)))
-            .or_else(|| git_discover::path::from_plain_file(git_dir.join("commondir")))
-            .transpose()?;
+        let common_dir = git_discover::path::from_plain_file(git_dir.join("commondir")).transpose()?;
         let common_dir_ref = common_dir
             .as_deref()
             .map(|cmn| Cow::Owned(git_dir.join(cmn)))
@@ -302,7 +273,6 @@ impl crate::ThreadSafeRepository {
         let linked_worktree_options = Options {
             object_store_slots,
             replacement_objects,
-            apply_git_environment: false,
             permissions: Permissions {
                 env,
                 git_dir: git_dir_perm,
