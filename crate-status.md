@@ -243,6 +243,8 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 * [x] check if a git directory is a git repository
 * [x] find a git repository by searching upward
 * [ ] handle linked worktrees
+* [ ] a way to handle `safe.directory`
+     - note that it's less critical to support it as `gitoxide` allows access but prevents untrusted configuration to become effective.
 
 ### git-date
 * [ ] parse git dates
@@ -261,6 +263,10 @@ Provide base-implementations for dealing with smudge and clean filters as well a
 ### git-sec
 
 Provides a trust model to share across gitoxide crates. It helps configuring how to interact with external processes, among other things.
+
+* **integrations**
+   * [x] git-config
+   * [x] git-repository
 
 ### git-rebase
 * [ ] obtain rebase status

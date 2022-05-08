@@ -40,7 +40,7 @@ fn from_inside_bare_git_dir() -> crate::Result {
 fn from_git_dir() -> crate::Result {
     let dir = repo_path()?.join(".git");
     let (path, trust) = git_discover::upwards(&dir)?;
-    assert_eq!(path.kind(), Kind::WorkTree);
+    assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(
         path.into_repository_and_work_tree_directories().0,
         dir,
@@ -55,7 +55,7 @@ fn from_working_dir() -> crate::Result {
     let dir = repo_path()?;
     let (path, trust) = git_discover::upwards(&dir)?;
     assert_eq!(path.as_ref(), dir, "a working tree dir yields the git dir");
-    assert_eq!(path.kind(), Kind::WorkTree);
+    assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(trust, git_sec::Trust::Full);
     Ok(())
 }
@@ -65,7 +65,7 @@ fn from_nested_dir() -> crate::Result {
     let working_dir = repo_path()?;
     let dir = working_dir.join("some/very/deeply/nested/subdir");
     let (path, trust) = git_discover::upwards(&dir)?;
-    assert_eq!(path.kind(), Kind::WorkTree);
+    assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(path.as_ref(), working_dir, "a working tree dir yields the git dir");
     assert_eq!(trust, git_sec::Trust::Full);
     Ok(())
@@ -81,7 +81,7 @@ fn from_dir_with_dot_dot() -> crate::Result {
     let working_dir = repo_path()?;
     let dir = working_dir.join("some/very/deeply/nested/subdir/../../../../../..");
     let (path, trust) = git_discover::upwards(&dir)?;
-    assert_eq!(path.kind(), Kind::WorkTree);
+    assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     // On CI on windows we get a cursor like this with a question mark so our prefix check won't work.
     // We recover, but that means this assertion will fail.
     // &cursor = "\\\\?\\D:\\a\\gitoxide\\gitoxide\\.git"
@@ -106,10 +106,30 @@ fn from_nested_dir_inside_a_git_dir() -> crate::Result {
     let working_dir = repo_path()?;
     let dir = working_dir.join(".git").join("objects");
     let (path, trust) = git_discover::upwards(&dir)?;
-    assert_eq!(path.kind(), Kind::WorkTree);
+    assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
     assert_eq!(path.as_ref(), working_dir, "we find .git directories on the way");
     assert_eq!(trust, git_sec::Trust::Full);
     Ok(())
+}
+
+#[test]
+#[ignore]
+fn from_existing_worktree() {
+    let top_level_repo = repo_path().unwrap();
+    let (path, trust) = git_discover::upwards(top_level_repo.join("worktrees").join("a")).unwrap();
+
+    assert_eq!(trust, git_sec::Trust::Full);
+    let (git_dir, worktree) = path.into_repository_and_work_tree_directories();
+    assert_ne!(
+        git_dir.strip_prefix(&top_level_repo),
+        Ok(std::path::Path::new(".git")),
+        "we don't skip over worktrees"
+    );
+    let worktree = worktree.expect("linked worktree is set");
+    assert_eq!(
+        worktree.strip_prefix(top_level_repo),
+        Ok(std::path::Path::new("worktrees/a"))
+    )
 }
 
 fn repo_path() -> crate::Result<PathBuf> {

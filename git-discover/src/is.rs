@@ -11,9 +11,11 @@ pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
 /// What constitutes a valid git repository, returning the guessed repository kind
 /// purely based on the presence of files. Note that the git-config ultimately decides what's bare.
 ///
+/// Returns the Kind of git directory that was passed, possibly alongside the supporting private worktree git dir
+///
 /// * [ ] git files
 /// * [x] a valid head
-/// * [ ] git common directory
+/// * [ ] git common directory (and overrides?)
 /// * [x] an objects directory
 /// * [x] a refs directory
 // TODO: allow configuring common dirs at least
@@ -54,6 +56,6 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
     Ok(if bare(git_dir) {
         crate::repository::Kind::Bare
     } else {
-        crate::repository::Kind::WorkTree
+        crate::repository::Kind::WorkTree { linked_git_dir: None }
     })
 }

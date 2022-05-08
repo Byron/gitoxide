@@ -46,6 +46,7 @@ pub(crate) mod function {
         path::{Component, Path},
     };
 
+    use crate::is_git;
     use git_sec::Trust;
 
     use super::{Error, Options};
@@ -82,10 +83,10 @@ pub(crate) mod function {
                 if *append_dot_git {
                     cursor.push(".git");
                 }
-                if let Ok(kind) = crate::is::git(&cursor) {
+                if let Ok(kind) = is_git(&cursor) {
                     match filter_by_trust(&cursor)? {
                         Some(trust) => {
-                            // TODO: test this more
+                            // TODO: test this more, it definitely doesn't find the shortest path to a directory
                             let path = if is_canonicalized {
                                 match std::env::current_dir() {
                                     Ok(cwd) => cwd
