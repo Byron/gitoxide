@@ -101,7 +101,7 @@ pub(crate) mod function {
                                                     .collect()
                                             })
                                         })
-                                        .unwrap_or_else(|| cursor),
+                                        .unwrap_or(cursor),
                                     Err(_) => cursor,
                                 }
                             } else {
