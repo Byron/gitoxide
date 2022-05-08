@@ -76,14 +76,11 @@ pub(crate) mod function {
             Ok((trust >= required_trust).then(|| (trust)))
         };
 
-        let mut cursor = dir.clone();
+        let mut cursor = dir.clone().into_owned();
         'outer: loop {
             for append_dot_git in &[false, true] {
                 if *append_dot_git {
-                    cursor = cursor.into_owned().into();
-                    if let Cow::Owned(p) = &mut cursor {
-                        p.push(".git");
-                    }
+                    cursor.push(".git");
                 }
                 if let Ok(kind) = crate::is::git(&cursor) {
                     match filter_by_trust(&cursor)? {
@@ -103,32 +100,29 @@ pub(crate) mod function {
                                                     .collect()
                                             })
                                         })
-                                        .unwrap_or_else(|| cursor.into_owned()),
-                                    Err(_) => cursor.into_owned(),
+                                        .unwrap_or_else(|| cursor),
+                                    Err(_) => cursor,
                                 }
                             } else {
-                                cursor.into_owned()
+                                cursor
                             };
                             break 'outer Ok((crate::repository::Path::from_dot_git_dir(path, kind), trust));
                         }
                         None => {
                             break 'outer Err(Error::NoTrustedGitRepository {
                                 path: dir.into_owned(),
-                                candidate: cursor.into_owned(),
+                                candidate: cursor,
                                 required: required_trust,
                             })
                         }
                     }
                 }
                 if *append_dot_git {
-                    if let Cow::Owned(p) = &mut cursor {
-                        p.pop();
-                    }
+                    cursor.pop();
                 }
             }
-            match cursor.parent() {
-                Some(parent) => cursor = parent.to_owned().into(),
-                None => break Err(Error::NoGitRepository { path: dir.into_owned() }),
+            if !cursor.pop() {
+                break Err(Error::NoGitRepository { path: dir.into_owned() });
             }
         }
     }
