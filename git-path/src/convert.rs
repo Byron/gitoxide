@@ -1,3 +1,4 @@
+use std::iter::FromIterator;
 use std::{
     borrow::Cow,
     ffi::OsStr,
@@ -195,4 +196,25 @@ pub fn to_unix_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
 // TODO: use https://lib.rs/crates/path-slash to handle escapes
 pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr> {
     replace(path, b'/', b'\\')
+}
+
+/// Resolve relative components virtually without accessing the file system, e.g. turn `a/./b/c/.././..` into `a`,
+/// without keeping intermediate `..` and `/a/../b/..` becomes `/`.
+/// Note that the root of the path will be untouched.
+pub fn absolutize_components<'a>(path: impl Into<Cow<'a, Path>>) -> Cow<'a, Path> {
+    use std::path::Component::ParentDir;
+    let path = path.into();
+    if !path.components().skip(1).any(|c| matches!(c, ParentDir)) {
+        return path;
+    }
+    let mut components = path.components();
+    let mut path = PathBuf::from_iter(components.next());
+    while let Some(component) = components.next() {
+        if let ParentDir = component {
+            path.pop();
+        } else {
+            path.push(component)
+        }
+    }
+    path.into()
 }
