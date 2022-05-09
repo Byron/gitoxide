@@ -41,10 +41,7 @@ impl Default for Options {
 }
 
 pub(crate) mod function {
-    use std::{
-        borrow::Cow,
-        path::{Component, Path},
-    };
+    use std::path::Path;
 
     use crate::is_git;
     use git_sec::Trust;
@@ -64,12 +61,11 @@ pub(crate) mod function {
         // us the parent directory. (`git_discover::parent` just strips off the last
         // path component, which means it will not do what you expect when
         // working with paths paths that contain '..'.)
-        let directory = directory.as_ref();
-        let dir = maybe_canonicalize(directory).map_err(|_| Error::InaccessibleDirectory { path: directory.into() })?;
-        let is_canonicalized = dir.as_ref() != directory;
+        let dir = git_path::absolutize_components(directory.as_ref());
         if !dir.is_dir() {
             return Err(Error::InaccessibleDirectory { path: dir.into_owned() });
         }
+        let mut is_canonicalized = false;
 
         let filter_by_trust = |x: &std::path::Path| -> Result<Option<git_sec::Trust>, Error> {
             let trust =
@@ -123,7 +119,23 @@ pub(crate) mod function {
                 }
             }
             if !cursor.pop() {
-                break Err(Error::NoGitRepository { path: dir.into_owned() });
+                if is_canonicalized
+                    || matches!(
+                        cursor.components().next(),
+                        Some(std::path::Component::RootDir) | Some(std::path::Component::Prefix(_))
+                    )
+                {
+                    break Err(Error::NoGitRepository { path: dir.into_owned() });
+                } else {
+                    is_canonicalized = true;
+                    cursor = if cursor.as_os_str().is_empty() {
+                        std::env::current_dir()
+                    } else {
+                        cursor.canonicalize()
+                    }
+                    .map_err(|_| Error::InaccessibleDirectory { path: cursor })?
+                    .into();
+                }
             }
         }
     }
@@ -134,53 +146,5 @@ pub(crate) mod function {
     /// Fail if no valid-looking git repository could be found.
     pub fn discover(directory: impl AsRef<Path>) -> Result<(crate::repository::Path, Trust), Error> {
         discover_opts(directory, Default::default())
-    }
-
-    fn maybe_canonicalize(path: &Path) -> std::io::Result<Cow<'_, Path>> {
-        let ends_with_relative_component = path
-            .components()
-            .last()
-            .map_or(true, |c| matches!(c, Component::CurDir | Component::ParentDir));
-        if ends_with_relative_component {
-            path.canonicalize().map(Into::into)
-        } else {
-            Ok(path.into())
-        }
-    }
-
-    #[cfg(test)]
-    mod maybe_canonicalize {
-        use super::*;
-
-        fn relative_component_count(path: impl AsRef<Path>) -> usize {
-            path.as_ref()
-                .components()
-                .filter(|c| matches!(c, Component::CurDir | Component::ParentDir))
-                .count()
-        }
-
-        #[test]
-        fn empty_paths_are_invalid() {
-            assert!(
-                maybe_canonicalize(std::path::Path::new("")).is_err(),
-                "empty paths are not equivalent to '.' but are non-existing"
-            );
-        }
-
-        #[test]
-        fn paths_starting_with_dot_but_end_with_normal_path_are_not_canonicalized() {
-            assert_eq!(
-                relative_component_count(maybe_canonicalize(&std::path::Path::new(".").join("hello")).unwrap()),
-                1,
-            );
-        }
-
-        #[test]
-        fn paths_ending_with_non_normal_component_are_canonicalized() {
-            assert_eq!(
-                relative_component_count(maybe_canonicalize(&std::path::Path::new(".").join(".")).unwrap()),
-                0,
-            );
-        }
     }
 }
