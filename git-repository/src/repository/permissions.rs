@@ -22,6 +22,8 @@ pub struct Environment {
     pub xdg_config_home: permission::env_var::Resource,
     /// Control the way resources pointed to by the home directory (similar to `xdg_config_home`) may be used.
     pub home: permission::env_var::Resource,
+    /// Control if resources pointed to by `GIT_*` prefixed environment variables can be used.
+    pub git_prefix: permission::env_var::Resource,
 }
 
 impl Permissions {
@@ -33,6 +35,7 @@ impl Permissions {
             env: Environment {
                 xdg_config_home: Access::resource(git_sec::Permission::Allow),
                 home: Access::resource(git_sec::Permission::Allow),
+                git_prefix: Access::resource(git_sec::Permission::Allow),
             },
         }
     }
@@ -48,6 +51,7 @@ impl Permissions {
             env: Environment {
                 xdg_config_home: Access::resource(git_sec::Permission::Allow),
                 home: Access::resource(git_sec::Permission::Allow),
+                git_prefix: Access::resource(git_sec::Permission::Allow),
             },
         }
     }
@@ -60,6 +64,7 @@ impl Permissions {
             env: Environment {
                 xdg_config_home: Access::resource(git_sec::Permission::Allow),
                 home: Access::resource(git_sec::Permission::Allow),
+                git_prefix: Access::resource(git_sec::Permission::Allow),
             },
         }
     }

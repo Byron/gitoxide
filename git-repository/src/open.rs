@@ -184,8 +184,8 @@ impl crate::ThreadSafeRepository {
         crate::ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
     }
 
-    /// Try to open a git repository in `fallback_directory` (can be worktree or `.git` directory) only if there are no overrides from
-    /// git environment variables.
+    /// Try to open a git repository in `fallback_directory` (can be worktree or `.git` directory) only if there is no override
+    /// from of the `gitdir` using git environment variables.
     ///
     /// Use the `trust_map` to apply options depending in the trust level for `directory` or the directory it's overridden with.
     /// The `.git` directory whether given or computed is used for trust checks.
@@ -195,10 +195,9 @@ impl crate::ThreadSafeRepository {
     // TODO: tests, with hooks
     pub fn open_with_environment_overrides(
         fallback_directory: impl Into<PathBuf>,
-        git_prefix: crate::permission::env_var::Resource,
         trust_map: git_sec::trust::Mapping<crate::open::Options>,
     ) -> Result<Self, Error> {
-        let overrides = EnvironmentOverrides::from_env(git_prefix)?;
+        let overrides = EnvironmentOverrides::from_env(git_sec::Access::resource(git_sec::Permission::Allow))?;
         let (path, path_kind): (PathBuf, _) = match overrides.git_dir {
             Some(git_dir) => git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?,
             None => {
