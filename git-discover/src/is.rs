@@ -28,8 +28,8 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
                     missing: common_dir.clone(),
                 })?
                 .map_err(|_| crate::is_git::Error::MissingCommonDir { missing: common_dir })?;
-            let commondir = private_git_dir.join(common_dir);
-            (Cow::Owned(private_git_dir), Cow::Owned(commondir), true)
+            let common_dir = private_git_dir.join(common_dir);
+            (Cow::Owned(private_git_dir), Cow::Owned(common_dir), true)
         }
         // TODO: use ::IsDirectory as well when stabilized, but it's permission denied on windows
         #[cfg(not(windows))]
