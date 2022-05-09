@@ -119,6 +119,17 @@ fn from_nested_dir_inside_a_git_dir() -> crate::Result {
 }
 
 #[test]
+fn from_non_existing_worktree() {
+    let top_level_repo = repo_path().unwrap();
+    let (path, _trust) = git_discover::upwards(top_level_repo.join("worktrees/b-private-dir-deleted")).unwrap();
+    assert_eq!(path, git_discover::repository::Path::WorkTree(top_level_repo.clone()));
+
+    let (path, _trust) =
+        git_discover::upwards(top_level_repo.join("worktrees/from-bare/d-private-dir-deleted")).unwrap();
+    assert_eq!(path, git_discover::repository::Path::WorkTree(top_level_repo));
+}
+
+#[test]
 fn from_existing_worktree() {
     let top_level_repo = repo_path().unwrap();
     for (discover_path, expected_worktree_path, expected_git_dir) in [

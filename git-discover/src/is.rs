@@ -16,9 +16,9 @@ pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
 ///
 /// Note that `.git` files are followed to a valid git directory, which then requires
 ///
-/// * [x] a valid head
-/// * [x] an objects directory
-/// * [x] a refs directory
+/// * a valid head
+/// * an objects directory
+/// * a refs directory
 pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::is_git::Error> {
     let (dot_git, common_dir, git_dir_is_linked_worktree) = match crate::path::from_gitdir_file(git_dir.as_ref()) {
         Ok(private_git_dir) => {

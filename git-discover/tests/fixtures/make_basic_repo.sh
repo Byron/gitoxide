@@ -15,10 +15,10 @@ mkdir -p some/very/deeply/nested/subdir
 git clone --bare --shared . bare.git
 
 git worktree add worktrees/a
-git worktree add worktrees/b-deleted
-rm -Rf worktrees/b-deleted
+git worktree add worktrees/b-private-dir-deleted
+rm -R .git/worktrees/b-private-dir-deleted
 
 cd bare.git
 git worktree add ../worktrees/from-bare/c
-git worktree add ../worktrees/from-bare/d-deleted
-rm -Rf -v ../worktrees/from-bare/d-deleted
+git worktree add ../worktrees/from-bare/d-private-dir-deleted
+rm -R -v ./worktrees/d-private-dir-deleted
