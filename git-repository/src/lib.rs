@@ -377,7 +377,7 @@ pub mod state {
 
 ///
 pub mod discover {
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
 
     use crate::ThreadSafeRepository;
 
@@ -411,21 +411,6 @@ pub mod discover {
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
             let options = trust_map.into_value_by_level(trust);
             Self::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
-        }
-
-        /// Try to open a git repository in `directory` (can be worktree or `.git` directory), but read overrides from
-        /// git environment variables.
-        ///
-        /// Use the `trust_map` to apply options depending in the trust level for `directory` or the directory it's overrideen with.
-        /// The `.git` directory whether given or computed is used for trust checks.
-        ///
-        /// Note that this will read various `GIT_*` environment variables to check for overrides.
-        // TODO: tests, with hooks
-        pub fn open_with_overrides_opts(
-            _directory: impl Into<PathBuf>,
-            _trust_map: git_sec::trust::Mapping<crate::open::Options>,
-        ) -> Result<Self, Error> {
-            todo!()
         }
     }
 }

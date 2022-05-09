@@ -72,10 +72,6 @@ pub struct Options {
 #[derive(Default, Clone)]
 #[allow(dead_code)]
 pub(crate) struct EnvironmentOverrides {
-    /// The path to the main .git repository and typically discovered by reading `commondir` files.
-    ///
-    /// If set, it will be used ignoring a possibly existing `commondir` file.
-    common_dir: Option<PathBuf>,
     /// An override of the worktree typically from the environment, and overrides even worktree dirs set as parameter.
     ///
     /// This emulates the way git handles this override.
@@ -88,14 +84,9 @@ pub(crate) struct EnvironmentOverrides {
 
 impl EnvironmentOverrides {
     // TODO: tests
-    #[allow(dead_code)]
     fn from_env(
         git_prefix: crate::permission::env_var::Resource,
     ) -> Result<Self, crate::permission::env_var::resource::Error> {
-        let mut common_dir = None;
-        if let Some(path) = std::env::var_os("GIT_COMMON_DIR") {
-            common_dir = git_prefix.check(PathBuf::from(path))?;
-        }
         let mut worktree_dir = None;
         if let Some(path) = std::env::var_os("GIT_WORK_TREE") {
             worktree_dir = git_prefix.check(PathBuf::from(path))?;
@@ -104,11 +95,7 @@ impl EnvironmentOverrides {
         if let Some(path) = std::env::var_os("GIT_DIR") {
             git_dir = git_prefix.check(PathBuf::from(path))?;
         }
-        Ok(EnvironmentOverrides {
-            common_dir,
-            worktree_dir,
-            git_dir,
-        })
+        Ok(EnvironmentOverrides { worktree_dir, git_dir })
     }
 }
 
@@ -194,6 +181,38 @@ impl crate::ThreadSafeRepository {
         };
         let (git_dir, worktree_dir) =
             git_discover::repository::Path::from_dot_git_dir(path, kind).into_repository_and_work_tree_directories();
+        crate::ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
+    }
+
+    /// Try to open a git repository in `fallback_directory` (can be worktree or `.git` directory) only if there are no overrides from
+    /// git environment variables.
+    ///
+    /// Use the `trust_map` to apply options depending in the trust level for `directory` or the directory it's overridden with.
+    /// The `.git` directory whether given or computed is used for trust checks.
+    ///
+    /// Note that this will read various `GIT_*` environment variables to check for overrides, and is probably most useful when implementing
+    /// custom hooks.
+    // TODO: tests, with hooks
+    pub fn open_with_environment_overrides(
+        fallback_directory: impl Into<PathBuf>,
+        git_prefix: crate::permission::env_var::Resource,
+        trust_map: git_sec::trust::Mapping<crate::open::Options>,
+    ) -> Result<Self, Error> {
+        let overrides = EnvironmentOverrides::from_env(git_prefix)?;
+        let (path, path_kind): (PathBuf, _) = match overrides.git_dir {
+            Some(git_dir) => git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?,
+            None => {
+                let fallback_directory = fallback_directory.into();
+                git_discover::is_git(&fallback_directory).map(|kind| (fallback_directory, kind))?
+            }
+        };
+
+        let (git_dir, worktree_dir) = git_discover::repository::Path::from_dot_git_dir(path, path_kind)
+            .into_repository_and_work_tree_directories();
+        let worktree_dir = worktree_dir.or(overrides.worktree_dir);
+
+        let trust = git_sec::Trust::from_path_ownership(&git_dir)?;
+        let options = trust_map.into_value_by_level(trust);
         crate::ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
     }
 
