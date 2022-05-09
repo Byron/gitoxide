@@ -121,20 +121,36 @@ fn from_nested_dir_inside_a_git_dir() -> crate::Result {
 #[test]
 fn from_existing_worktree() {
     let top_level_repo = repo_path().unwrap();
-    let (path, trust) = git_discover::upwards(top_level_repo.join("worktrees").join("a")).unwrap();
+    for (discover_path, expected_worktree_path, expected_git_dir) in [
+        (top_level_repo.join("worktrees/a"), "worktrees/a", ".git/worktrees/a"),
+        (
+            top_level_repo.join("worktrees/from-bare/c"),
+            "worktrees/from-bare/c",
+            "bare.git/worktrees/c",
+        ),
+    ] {
+        let (path, trust) = git_discover::upwards(discover_path).unwrap();
+        assert!(matches!(path, git_discover::repository::Path::LinkedWorkTree { .. }));
 
-    assert_eq!(trust, expected_trust());
-    let (git_dir, worktree) = path.into_repository_and_work_tree_directories();
-    assert_ne!(
-        git_dir.strip_prefix(&top_level_repo),
-        Ok(std::path::Path::new(".git")),
-        "we don't skip over worktrees"
-    );
-    let worktree = worktree.expect("linked worktree is set");
-    assert_eq!(
-        worktree.strip_prefix(top_level_repo),
-        Ok(std::path::Path::new("worktrees/a"))
-    )
+        assert_eq!(trust, expected_trust());
+        let (git_dir, worktree) = path.into_repository_and_work_tree_directories();
+        assert_eq!(
+            git_dir.strip_prefix(top_level_repo.canonicalize().unwrap()),
+            Ok(std::path::Path::new(expected_git_dir)),
+            "we don't skip over worktrees and discover their git dir (gitdir is absolute in file)"
+        );
+        let worktree = worktree.expect("linked worktree is set");
+        assert_eq!(
+            worktree.strip_prefix(&top_level_repo),
+            Ok(std::path::Path::new(expected_worktree_path)),
+            "the worktree path is the .git file's directory"
+        );
+
+        assert!(
+            git_discover::is_git(&git_dir).is_err(),
+            "we aren't able to detect git directories from private worktrees and that's by design"
+        );
+    }
 }
 
 fn repo_path() -> crate::Result<PathBuf> {

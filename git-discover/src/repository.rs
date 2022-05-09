@@ -37,13 +37,22 @@ mod path {
         /// Instantiate a new path from `dir` which is expected to be the `.git` directory, with `kind` indicating
         /// whether it's a bare repository or not.
         pub fn from_dot_git_dir(dir: impl Into<PathBuf>, kind: Kind) -> Self {
-            let dir = dir.into();
+            let mut dir = dir.into();
             match kind {
-                Kind::WorkTree { linked_git_dir: _ } => Path::WorkTree(if dir == std::path::Path::new(".git") {
-                    PathBuf::from(".")
-                } else {
-                    dir.parent().expect("this is a sub-directory").to_owned()
-                }),
+                Kind::WorkTree { linked_git_dir } => match linked_git_dir {
+                    Some(git_dir) => Path::LinkedWorkTree {
+                        git_dir,
+                        work_dir: {
+                            dir.pop(); // ".git" portion
+                            dir
+                        },
+                    },
+                    None => {
+                        dir.pop(); // ".git" suffix
+                        let work_dir = dir.as_os_str().is_empty().then(|| PathBuf::from(".")).unwrap_or(dir);
+                        Path::WorkTree(work_dir)
+                    }
+                },
                 Kind::Bare => Path::Repository(dir),
             }
         }
