@@ -31,8 +31,13 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
             let commondir = private_git_dir.join(common_dir);
             (Cow::Owned(private_git_dir), Cow::Owned(commondir), true)
         }
-        // TODO: use ::IsDirectory as well when stabilized
+        // TODO: use ::IsDirectory as well when stabilized, but it's permission denied on windows
+        #[cfg(not(windows))]
         Err(crate::path::from_gitdir_file::Error::Io(err)) if err.raw_os_error() == Some(21) => {
+            (Cow::Borrowed(git_dir.as_ref()), Cow::Borrowed(git_dir.as_ref()), false)
+        }
+        #[cfg(windows)]
+        Err(crate::path::from_gitdir_file::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {
             (Cow::Borrowed(git_dir.as_ref()), Cow::Borrowed(git_dir.as_ref()), false)
         }
         Err(err) => return Err(err.into()),
