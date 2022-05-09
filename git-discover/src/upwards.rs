@@ -61,7 +61,9 @@ pub(crate) mod function {
         // us the parent directory. (`git_discover::parent` just strips off the last
         // path component, which means it will not do what you expect when
         // working with paths paths that contain '..'.)
-        let dir = git_path::absolutize_components(directory.as_ref());
+        let dir = git_path::absolutize_components(directory.as_ref()).map_err(|_| Error::InaccessibleDirectory {
+            path: directory.as_ref().into(),
+        })?;
         if !dir.is_dir() {
             return Err(Error::InaccessibleDirectory { path: dir.into_owned() });
         }
