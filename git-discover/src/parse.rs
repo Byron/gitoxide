@@ -5,7 +5,7 @@ use std::path::PathBuf;
 pub mod gitdir {
     use bstr::BString;
 
-    /// The error returned by [`parse::git_dir()`].
+    /// The error returned by [`parse::gitdir()`][super::gitdir()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

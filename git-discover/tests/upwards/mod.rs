@@ -134,9 +134,16 @@ fn from_existing_worktree() {
 
         assert_eq!(trust, expected_trust());
         let (git_dir, worktree) = path.into_repository_and_work_tree_directories();
+        #[cfg(not(windows))]
         assert_eq!(
             git_dir.strip_prefix(top_level_repo.canonicalize().unwrap()),
             Ok(std::path::Path::new(expected_git_dir)),
+            "we don't skip over worktrees and discover their git dir (gitdir is absolute in file)"
+        );
+        #[cfg(windows)]
+        assert_eq!(
+            git_dir.canonicalize().unwrap(),
+            top_level_repo.join(expected_git_dir).canonicalize().unwrap(),
             "we don't skip over worktrees and discover their git dir (gitdir is absolute in file)"
         );
         let worktree = worktree.expect("linked worktree is set");
