@@ -209,7 +209,7 @@ pub fn absolutize_components<'a>(path: impl Into<Cow<'a, Path>>) -> std::io::Res
     }
     let mut components = path.components();
     let mut path = PathBuf::from_iter(components.next());
-    while let Some(component) = components.next() {
+    for component in components {
         if let ParentDir = component {
             if !path.pop() && path.as_os_str().is_empty() {
                 path = std::env::current_dir()?;

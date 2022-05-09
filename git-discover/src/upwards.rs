@@ -135,8 +135,7 @@ pub(crate) mod function {
                     } else {
                         cursor.canonicalize()
                     }
-                    .map_err(|_| Error::InaccessibleDirectory { path: cursor })?
-                    .into();
+                    .map_err(|_| Error::InaccessibleDirectory { path: cursor })?;
                 }
             }
         }
