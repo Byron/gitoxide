@@ -78,6 +78,7 @@ mod baseline {
 }
 
 #[test]
+#[ignore]
 fn from_bare_parent_repo() {
     let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
     let repo = git::open(dir.join("repo.git")).unwrap();
@@ -86,6 +87,7 @@ fn from_bare_parent_repo() {
 }
 
 #[test]
+#[ignore]
 fn from_nonbare_parent_repo() {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_worktree_repo.sh").unwrap();
     let repo = git::open(dir.join("repo")).unwrap();
@@ -126,7 +128,7 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
         assert!(!worktree.is_locked());
         assert!(worktree.is_main());
     }
-    // TODO: compare main_repo() ;
+    assert_eq!(main_repo.main_repo().unwrap(), main_repo, "main repo stays main repo");
 
     let actual = main_repo.worktrees().unwrap();
     assert_eq!(actual.len(), baseline.len());
@@ -171,12 +173,15 @@ fn run_assertions(main_repo: git::Repository, should_be_bare: bool) {
             );
             actual.into_repo_with_possibly_inaccessible_worktree().unwrap()
         };
-        let worktree = repo.worktree().expect("linked worktrees have at least a path");
+        let worktree = repo.worktree().expect("linked worktrees have at least a base path");
         assert!(!worktree.is_main());
         assert_eq!(worktree.lock_reason(), proxy_lock_reason);
         assert_eq!(worktree.is_locked(), proxy_is_locked);
         assert_eq!(worktree.id(), Some(proxy_id.as_ref()));
-
-        dbg!(expected);
+        assert_eq!(
+            repo.main_repo().unwrap(),
+            main_repo,
+            "main repo from worktree repo is the actual main repo"
+        );
     }
 }

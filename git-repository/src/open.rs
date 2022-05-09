@@ -307,7 +307,7 @@ impl crate::ThreadSafeRepository {
                     use_multi_pack_index: config.use_multi_pack_index,
                 },
             )?),
-            common_dir,
+            common_dir: common_dir.map(|cd| git_dir.join(cd)),
             refs,
             work_tree: worktree_dir,
             config,

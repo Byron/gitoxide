@@ -126,7 +126,7 @@ pub struct Repository {
     pub objects: crate::OdbHandle,
 
     pub(crate) work_tree: Option<PathBuf>,
-    /// The path to the common directory if this is a linked worktree repository or it is otherwise set.
+    /// The path to the resolved common directory if this is a linked worktree repository or it is otherwise set.
     pub(crate) common_dir: Option<PathBuf>,
     /// A free-list of re-usable object backing buffers
     pub(crate) bufs: RefCell<Vec<Vec<u8>>>,
