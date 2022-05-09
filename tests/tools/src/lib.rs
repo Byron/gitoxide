@@ -144,11 +144,11 @@ pub fn scripted_fixture_repo_read_only_with_args(
     let archive_file_path = fixture_path(
         Path::new("generated-archives").join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
     );
-    let script_result_directory = fixture_path(
-        Path::new("generated-do-not-edit")
-            .join(script_basename)
-            .join(format!("{}", script_identity)),
-    );
+    let script_result_directory = fixture_path(Path::new("generated-do-not-edit").join(script_basename).join(format!(
+        "{}-{}",
+        script_identity,
+        family_name()
+    )));
 
     let _marker = git_lock::Marker::acquire_to_hold_resource(
         script_basename,
@@ -252,7 +252,6 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     if is_excluded_in_git {
         return Ok(());
     }
-    // if EXCLUDE_LUT.borrow().as_ref().map(|cache| cache.at_entry())
     std::fs::create_dir_all(archive.parent().expect("archive is a file"))?;
 
     let meta_dir = populate_meta_dir(source_dir, script_identity)?;
@@ -290,7 +289,7 @@ fn populate_meta_dir(destination_dir: &Path, script_identity: u32) -> std::io::R
     std::fs::create_dir_all(&meta_dir)?;
     std::fs::write(
         meta_dir.join(META_IDENTITY),
-        format!("{}-{}", script_identity, if cfg!(windows) { "windows" } else { "unix" }).as_bytes(),
+        format!("{}-{}", script_identity, family_name()).as_bytes(),
     )?;
     std::fs::write(
         meta_dir.join(META_GIT_VERSION),
@@ -369,5 +368,13 @@ pub fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
     };
     VerboseError {
         errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),
+    }
+}
+
+fn family_name() -> &'static str {
+    if cfg!(windows) {
+        "windows"
+    } else {
+        "unix"
     }
 }
