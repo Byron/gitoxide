@@ -23,7 +23,9 @@ impl std::fmt::Debug for crate::Repository {
 
 impl PartialEq<crate::Repository> for crate::Repository {
     fn eq(&self, other: &crate::Repository) -> bool {
-        self.git_dir() == other.git_dir() && self.work_tree == other.work_tree
+        self.git_dir().canonicalize().ok() == other.git_dir().canonicalize().ok()
+            && self.work_tree.as_deref().and_then(|wt| wt.canonicalize().ok())
+                == other.work_tree.as_deref().and_then(|wt| wt.canonicalize().ok())
     }
 }
 
