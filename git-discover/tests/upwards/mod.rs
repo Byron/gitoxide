@@ -119,7 +119,6 @@ fn from_nested_dir_inside_a_git_dir() -> crate::Result {
 }
 
 #[test]
-#[ignore]
 fn from_existing_worktree() {
     let top_level_repo = repo_path().unwrap();
     let (path, trust) = git_discover::upwards(top_level_repo.join("worktrees").join("a")).unwrap();

@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{ffi::OsStr, path::Path};
 
 /// Returns true if the given `git_dir` seems to be a bare repository.
@@ -13,14 +14,29 @@ pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
 ///
 /// Returns the Kind of git directory that was passed, possibly alongside the supporting private worktree git dir
 ///
-/// * [ ] git files
+/// Note that `.git` files are followed to a valid git directory, which then requires
+///
 /// * [x] a valid head
-/// * [ ] git common directory (and overrides?)
 /// * [x] an objects directory
 /// * [x] a refs directory
-// TODO: allow configuring common dirs at least
 pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::is_git::Error> {
-    let dot_git = git_dir.as_ref();
+    let (dot_git, common_dir, git_dir_is_linked_worktree) = match crate::path::from_gitdir_file(git_dir.as_ref()) {
+        Ok(private_git_dir) => {
+            let common_dir = private_git_dir.join("commondir");
+            let common_dir = crate::path::from_plain_file(&common_dir)
+                .ok_or_else(|| crate::is_git::Error::MissingCommonDir {
+                    missing: common_dir.clone(),
+                })?
+                .map_err(|_| crate::is_git::Error::MissingCommonDir { missing: common_dir })?;
+            let commondir = private_git_dir.join(common_dir);
+            (Cow::Owned(private_git_dir), Cow::Owned(commondir), true)
+        }
+        // TODO: use ::IsDirectory as well when stabilized
+        Err(crate::path::from_gitdir_file::Error::Io(err)) if err.raw_os_error() == Some(21) => {
+            (Cow::Borrowed(git_dir.as_ref()), Cow::Borrowed(git_dir.as_ref()), false)
+        }
+        Err(err) => return Err(err.into()),
+    };
 
     {
         // We expect to be able to parse any ref-hash, so we shouldn't have to know the repos hash here.
@@ -28,7 +44,7 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
         // In other words, it's important not to fail on detached heads here because we guessed the hash kind wrongly.
         let object_hash_should_not_matter_here = git_hash::Kind::Sha1;
         let refs = git_ref::file::Store::at(
-            &dot_git,
+            dot_git.as_ref(),
             git_ref::store::WriteReflog::Normal,
             object_hash_should_not_matter_here,
         );
@@ -41,19 +57,23 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
     }
 
     {
-        let objects_path = dot_git.join("objects");
+        let objects_path = common_dir.join("objects");
         if !objects_path.is_dir() {
             return Err(crate::is_git::Error::MissingObjectsDirectory { missing: objects_path });
         }
     }
     {
-        let refs_path = dot_git.join("refs");
+        let refs_path = common_dir.join("refs");
         if !refs_path.is_dir() {
             return Err(crate::is_git::Error::MissingRefsDirectory { missing: refs_path });
         }
     }
 
-    Ok(if bare(git_dir) {
+    Ok(if git_dir_is_linked_worktree {
+        crate::repository::Kind::WorkTree {
+            linked_git_dir: Some(dot_git.into_owned()),
+        }
+    } else if bare(git_dir) {
         crate::repository::Kind::Bare
     } else {
         crate::repository::Kind::WorkTree { linked_git_dir: None }

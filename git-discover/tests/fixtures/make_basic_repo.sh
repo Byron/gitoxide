@@ -16,7 +16,6 @@ git clone --bare --shared . bare.git
 
 git worktree add worktrees/a
 git worktree add worktrees/b-deleted
-
 rm -Rf worktrees/b-deleted
 
 cd bare.git
