@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
 use git_sec::Trust;
@@ -307,23 +307,12 @@ impl crate::ThreadSafeRepository {
                     use_multi_pack_index: config.use_multi_pack_index,
                 },
             )?),
-            common_dir: common_dir.map(|cd| join_commondir(&git_dir, &cd)),
+            common_dir: common_dir.map(|cd| git_dir.join(cd)),
             refs,
             work_tree: worktree_dir,
             config,
             linked_worktree_options,
         })
-    }
-}
-
-fn join_commondir(git_dir: &Path, commondir: &Path) -> PathBuf {
-    if commondir == Path::new("../..") {
-        let mut p = git_dir.to_owned();
-        p.pop();
-        p.pop();
-        p
-    } else {
-        git_dir.join(commondir)
     }
 }
 
