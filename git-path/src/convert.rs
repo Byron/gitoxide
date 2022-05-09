@@ -200,21 +200,28 @@ pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr
 
 /// Resolve relative components virtually without accessing the file system, e.g. turn `a/./b/c/.././..` into `a`,
 /// without keeping intermediate `..` and `/a/../b/..` becomes `/`.
-/// Note that the root of the path will be untouched.
-pub fn absolutize_components<'a>(path: impl Into<Cow<'a, Path>>) -> Cow<'a, Path> {
+/// Note that we might access the current working directory if we run out of path components.
+pub fn absolutize_components<'a>(path: impl Into<Cow<'a, Path>>) -> std::io::Result<Cow<'a, Path>> {
     use std::path::Component::ParentDir;
     let path = path.into();
-    if !path.components().skip(1).any(|c| matches!(c, ParentDir)) {
-        return path;
+    if !path.components().any(|c| matches!(c, ParentDir)) {
+        return Ok(path);
     }
     let mut components = path.components();
     let mut path = PathBuf::from_iter(components.next());
     while let Some(component) = components.next() {
         if let ParentDir = component {
-            path.pop();
+            if !path.pop() && path.as_os_str().is_empty() {
+                path = std::env::current_dir()?;
+                path.pop();
+            }
         } else {
             path.push(component)
         }
     }
-    path.into()
+    Ok(if path.as_os_str().is_empty() {
+        PathBuf::from(".").into()
+    } else {
+        path.into()
+    })
 }

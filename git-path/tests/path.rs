@@ -32,8 +32,22 @@ mod convert {
         fn no_change_if_there_are_no_trailing_relative_components() {
             for input in ["./a/b/c/d", "/absolute/path", "C:\\hello\\world"] {
                 let path = p(input);
-                assert_eq!(absolutize_components(path), path);
+                assert_eq!(absolutize_components(path).unwrap(), path);
             }
+        }
+
+        #[test]
+        fn special_cases_around_cwd() {
+            assert_eq!(
+                absolutize_components(p("a/..")).unwrap(),
+                p("."),
+                "empty paths are never returned as they are invalid"
+            );
+            assert_eq!(
+                absolutize_components(p("a/../..")).unwrap(),
+                std::env::current_dir().unwrap().parent().unwrap(),
+                "it automatically extends the poppable items by using the current working dir"
+            );
         }
 
         #[test]
@@ -41,6 +55,9 @@ mod convert {
             for (input, expected) in [
                 ("./a/b/./c/../d/..", "./a/b"),
                 ("/a/b/c/.././../.", "/a"),
+                ("./a/..", "."),
+                ("a/..", "."),
+                ("./a/b/../../..", "."),
                 ("/a/b/../../..", "/"),
                 ("/a/./b/c/.././../.", "/a"),
                 ("/a/././c/.././../.", "/"),
@@ -51,7 +68,7 @@ mod convert {
             ] {
                 let path = p(input);
                 assert_eq!(
-                    absolutize_components(path),
+                    absolutize_components(path).unwrap(),
                     Cow::Borrowed(p(expected)),
                     "'{}' got an unexpected result",
                     input
