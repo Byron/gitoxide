@@ -31,7 +31,7 @@ impl Permissions {
     /// thus refusing all operations in it.
     pub fn strict() -> Self {
         Permissions {
-            git_dir: Access::resource(git_sec::ReadWrite::empty()),
+            git_dir: Access::resource(git_sec::ReadWrite::READ),
             env: Environment {
                 xdg_config_home: Access::resource(git_sec::Permission::Allow),
                 home: Access::resource(git_sec::Permission::Allow),

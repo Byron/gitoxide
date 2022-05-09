@@ -168,6 +168,8 @@ impl crate::ThreadSafeRepository {
 
     /// Open a git repository at the given `path`, possibly expanding it to `path/.git` if `path` is a work tree dir, and use
     /// `options` for fine-grained control.
+    ///
+    /// Note that you should use [`crate::discover()`] if security should be adjusted by ownership.
     pub fn open_opts(path: impl Into<std::path::PathBuf>, options: Options) -> Result<Self, Error> {
         let (path, kind) = {
             let path = path.into();
@@ -195,7 +197,7 @@ impl crate::ThreadSafeRepository {
     // TODO: tests, with hooks
     pub fn open_with_environment_overrides(
         fallback_directory: impl Into<PathBuf>,
-        trust_map: git_sec::trust::Mapping<crate::open::Options>,
+        trust_map: git_sec::trust::Mapping<Options>,
     ) -> Result<Self, Error> {
         let overrides = EnvironmentOverrides::from_env(git_sec::Access::resource(git_sec::Permission::Allow))?;
         let (path, path_kind): (PathBuf, _) = match overrides.git_dir {
