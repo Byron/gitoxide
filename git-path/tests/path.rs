@@ -19,8 +19,8 @@ mod convert {
         assert_eq!(to_windows_separators(b"/a/b//".as_bstr()).as_bstr(), "\\a\\b\\\\");
     }
 
-    mod absolutize_trailing_components {
-        use git_path::absolutize_components;
+    mod absolutize {
+        use git_path::absolutize;
         use std::borrow::Cow;
         use std::path::Path;
 
@@ -32,20 +32,21 @@ mod convert {
         fn no_change_if_there_are_no_trailing_relative_components() {
             for input in ["./a/b/c/d", "/absolute/path", "C:\\hello\\world"] {
                 let path = p(input);
-                assert_eq!(absolutize_components(path).unwrap(), path);
+                assert_eq!(absolutize(path, None::<&Path>), path);
             }
         }
 
         #[test]
         fn special_cases_around_cwd() {
+            let cwd = std::env::current_dir().unwrap();
             assert_eq!(
-                absolutize_components(p("a/..")).unwrap(),
+                absolutize(p("a/.."), None::<&Path>),
                 p("."),
                 "empty paths are never returned as they are invalid"
             );
             assert_eq!(
-                absolutize_components(p("a/../..")).unwrap(),
-                std::env::current_dir().unwrap().parent().unwrap(),
+                absolutize(p("a/../.."), Some(&cwd)),
+                cwd.parent().unwrap(),
                 "it automatically extends the poppable items by using the current working dir"
             );
         }
@@ -68,7 +69,7 @@ mod convert {
             ] {
                 let path = p(input);
                 assert_eq!(
-                    absolutize_components(path).unwrap(),
+                    absolutize(path, None::<&Path>),
                     Cow::Borrowed(p(expected)),
                     "'{}' got an unexpected result",
                     input
