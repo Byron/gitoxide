@@ -231,6 +231,7 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
     #[cfg(target_os = "windows")]
     if let Some(Prefix(p)) = path.components().next() {
         real_path.push(p.as_os_str());
+        real_path.push("\\");
     }
 
     if path.is_relative() {
