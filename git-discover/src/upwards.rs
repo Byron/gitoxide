@@ -41,7 +41,7 @@ impl Default for Options {
 }
 
 pub(crate) mod function {
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
 
     use crate::is_git;
     use git_sec::Trust;
@@ -61,7 +61,8 @@ pub(crate) mod function {
         // us the parent directory. (`git_discover::parent` just strips off the last
         // path component, which means it will not do what you expect when
         // working with paths paths that contain '..'.)
-        let dir = git_path::absolutize(directory.as_ref(), std::env::current_dir().ok());
+        let cwd = std::env::current_dir().ok();
+        let dir = git_path::absolutize(directory.as_ref(), cwd.as_deref());
         if !dir.is_dir() {
             return Err(Error::InaccessibleDirectory { path: dir.into_owned() });
         }
@@ -84,22 +85,7 @@ pub(crate) mod function {
                         Some(trust) => {
                             // TODO: test this more, it definitely doesn't find the shortest path to a directory
                             let path = if is_canonicalized {
-                                match std::env::current_dir() {
-                                    Ok(cwd) => cwd
-                                        .strip_prefix(&cursor.parent().expect(".git appended"))
-                                        .ok()
-                                        .and_then(|p| {
-                                            let short_path_components = p.components().count();
-                                            (short_path_components < cursor.components().count()).then(|| {
-                                                std::iter::repeat("..")
-                                                    .take(short_path_components)
-                                                    .chain(Some(".git"))
-                                                    .collect()
-                                            })
-                                        })
-                                        .unwrap_or(cursor),
-                                    Err(_) => cursor,
-                                }
+                                shorten_path_with_cwd(cursor, cwd)
                             } else {
                                 cursor
                             };
@@ -129,13 +115,46 @@ pub(crate) mod function {
                 } else {
                     is_canonicalized = true;
                     cursor = if cursor.as_os_str().is_empty() {
-                        std::env::current_dir()
+                        cwd.clone()
                     } else {
-                        cursor.canonicalize()
+                        cursor.canonicalize().ok()
                     }
-                    .map_err(|_| Error::InaccessibleDirectory { path: cursor })?;
+                    .ok_or_else(|| Error::InaccessibleDirectory { path: cursor })?;
                 }
             }
+        }
+    }
+
+    fn shorten_path_with_cwd(cursor: PathBuf, cwd: Option<PathBuf>) -> PathBuf {
+        if let Some(cwd) = cwd {
+            debug_assert_eq!(cursor.file_name().and_then(|f| f.to_str()), Some(".git"));
+            let parent = cursor.parent().expect(".git appended");
+            cwd.strip_prefix(parent)
+                .ok()
+                .and_then(|path_relative_to_cwd| {
+                    let relative_path_components = path_relative_to_cwd.components().count();
+                    let current_component_len = cursor.components().map(|c| comp_len(c)).sum::<usize>();
+                    (relative_path_components * "..".len() < current_component_len).then(|| {
+                        std::iter::repeat("..")
+                            .take(relative_path_components)
+                            .chain(Some(".git"))
+                            .collect()
+                    })
+                })
+                .unwrap_or(cursor)
+        } else {
+            cursor
+        }
+    }
+
+    fn comp_len(c: std::path::Component<'_>) -> usize {
+        use std::path::Component::*;
+        match c {
+            Prefix(p) => p.as_os_str().len(),
+            CurDir => 1,
+            ParentDir => 2,
+            Normal(p) => p.len(),
+            RootDir => 1,
         }
     }
 
