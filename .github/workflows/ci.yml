@@ -52,7 +52,7 @@ jobs:
           tool: nextest
           version: 0.9
       - name: "Test (nextest)"
-        run: cargo nextest run --all
+        run: cargo nextest run --all --no-fail-fast
       - name: "Install prerequisites"
         run: vcpkg install  zlib:x64-windows-static-md
         if: startsWith(matrix.os, 'windows')

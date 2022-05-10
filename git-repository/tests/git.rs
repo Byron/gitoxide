@@ -29,7 +29,6 @@ fn basic_rw_repo() -> crate::Result<(Repository, tempfile::TempDir)> {
 }
 
 mod commit;
-mod discover;
 mod id;
 mod init;
 mod object;

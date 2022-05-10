@@ -24,7 +24,7 @@ impl<'a, 'paths> Platform<'a, 'paths> {
     /// If the cache was configured without exclude patterns.
     pub fn is_excluded(&self) -> bool {
         self.matching_exclude_pattern()
-            .map_or(false, |m| m.pattern.is_negative())
+            .map_or(false, |m| !m.pattern.is_negative())
     }
 
     /// Check all exclude patterns to see if the currently set path matches any of them.

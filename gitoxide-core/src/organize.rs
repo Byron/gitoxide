@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::pack::receive::git;
 use git_config::file::GitConfig;
 use git_repository::{objs::bstr::ByteSlice, progress, Progress};
 
@@ -40,17 +41,17 @@ where
 
         if path.is_dir() {
             if path.join("HEAD").is_file() && path.join("config").is_file() {
-                git_repository::path::is::git(path).ok()
+                git::discover::is_git(path).ok().map(Into::into)
             } else {
                 None
             }
         } else {
             // git files are always worktrees
-            Some(git_repository::Kind::WorkTree)
+            Some(git_repository::Kind::WorkTree { is_linked: true })
         }
     }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
-        if git_repository::path::is::bare(&git_dir) {
+        if git::discover::is_bare(&git_dir) {
             git_dir
         } else {
             git_dir.parent().expect("git is never in the root").to_owned()

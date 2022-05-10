@@ -24,22 +24,22 @@ pub enum Error {
 
 const GIT_DIR_NAME: &str = ".git";
 
-const TPL_INFO_EXCLUDE: &[u8] = include_bytes!("../assets/baseline-init/info/exclude");
-const TPL_HOOKS_APPLYPATCH_MSG: &[u8] = include_bytes!("../assets/baseline-init/hooks/applypatch-msg.sample");
-const TPL_HOOKS_COMMIT_MSG: &[u8] = include_bytes!("../assets/baseline-init/hooks/commit-msg.sample");
-const TPL_HOOKS_FSMONITOR_WATCHMAN: &[u8] = include_bytes!("../assets/baseline-init/hooks/fsmonitor-watchman.sample");
-const TPL_HOOKS_POST_UPDATE: &[u8] = include_bytes!("../assets/baseline-init/hooks/post-update.sample");
-const TPL_HOOKS_PRE_APPLYPATCH: &[u8] = include_bytes!("../assets/baseline-init/hooks/pre-applypatch.sample");
-const TPL_HOOKS_PRE_COMMIT: &[u8] = include_bytes!("../assets/baseline-init/hooks/pre-commit.sample");
-const TPL_HOOKS_PRE_MERGE_COMMIT: &[u8] = include_bytes!("../assets/baseline-init/hooks/pre-merge-commit.sample");
-const TPL_HOOKS_PRE_PUSH: &[u8] = include_bytes!("../assets/baseline-init/hooks/pre-push.sample");
-const TPL_HOOKS_PRE_REBASE: &[u8] = include_bytes!("../assets/baseline-init/hooks/pre-rebase.sample");
-const TPL_HOOKS_PRE_RECEIVE: &[u8] = include_bytes!("../assets/baseline-init/hooks/pre-receive.sample");
-const TPL_HOOKS_PREPARE_COMMIT_MSG: &[u8] = include_bytes!("../assets/baseline-init/hooks/prepare-commit-msg.sample");
-const TPL_HOOKS_UPDATE: &[u8] = include_bytes!("../assets/baseline-init/hooks/update.sample");
-const TPL_CONFIG: &[u8] = include_bytes!("../assets/baseline-init/config");
-const TPL_DESCRIPTION: &[u8] = include_bytes!("../assets/baseline-init/description");
-const TPL_HEAD: &[u8] = include_bytes!("../assets/baseline-init/HEAD");
+const TPL_INFO_EXCLUDE: &[u8] = include_bytes!("assets/baseline-init/info/exclude");
+const TPL_HOOKS_APPLYPATCH_MSG: &[u8] = include_bytes!("assets/baseline-init/hooks/applypatch-msg.sample");
+const TPL_HOOKS_COMMIT_MSG: &[u8] = include_bytes!("assets/baseline-init/hooks/commit-msg.sample");
+const TPL_HOOKS_FSMONITOR_WATCHMAN: &[u8] = include_bytes!("assets/baseline-init/hooks/fsmonitor-watchman.sample");
+const TPL_HOOKS_POST_UPDATE: &[u8] = include_bytes!("assets/baseline-init/hooks/post-update.sample");
+const TPL_HOOKS_PRE_APPLYPATCH: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-applypatch.sample");
+const TPL_HOOKS_PRE_COMMIT: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-commit.sample");
+const TPL_HOOKS_PRE_MERGE_COMMIT: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-merge-commit.sample");
+const TPL_HOOKS_PRE_PUSH: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-push.sample");
+const TPL_HOOKS_PRE_REBASE: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-rebase.sample");
+const TPL_HOOKS_PRE_RECEIVE: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-receive.sample");
+const TPL_HOOKS_PREPARE_COMMIT_MSG: &[u8] = include_bytes!("assets/baseline-init/hooks/prepare-commit-msg.sample");
+const TPL_HOOKS_UPDATE: &[u8] = include_bytes!("assets/baseline-init/hooks/update.sample");
+const TPL_CONFIG: &[u8] = include_bytes!("assets/baseline-init/config");
+const TPL_DESCRIPTION: &[u8] = include_bytes!("assets/baseline-init/description");
+const TPL_HEAD: &[u8] = include_bytes!("assets/baseline-init/HEAD");
 
 struct PathCursor<'a>(&'a mut PathBuf);
 
@@ -98,32 +98,35 @@ fn create_dir(p: &Path) -> Result<(), Error> {
     })
 }
 
+/// Options for use in [`into()`];
+pub struct Options {
+    /// If true, the repository will be a bare repository without a worktree.
+    pub bare: bool,
+}
+
 /// Create a new `.git` repository of `kind` within the possibly non-existing `directory`
 /// and return its path.
-pub fn into(directory: impl Into<PathBuf>, kind: crate::Kind) -> Result<crate::Path, Error> {
+pub fn into(directory: impl Into<PathBuf>, Options { bare }: Options) -> Result<git_discover::repository::Path, Error> {
     let mut dot_git = directory.into();
 
-    match kind {
-        crate::Kind::Bare => {
-            if std::fs::read_dir(&dot_git)
-                .map_err(|err| Error::IoOpen {
-                    source: err,
-                    path: dot_git.clone(),
-                })?
-                .count()
-                != 0
-            {
-                return Err(Error::DirectoryNotEmpty { path: dot_git });
-            }
+    if bare {
+        if fs::read_dir(&dot_git)
+            .map_err(|err| Error::IoOpen {
+                source: err,
+                path: dot_git.clone(),
+            })?
+            .count()
+            != 0
+        {
+            return Err(Error::DirectoryNotEmpty { path: dot_git });
         }
-        crate::Kind::WorkTree => {
-            dot_git.push(GIT_DIR_NAME);
+    } else {
+        dot_git.push(GIT_DIR_NAME);
 
-            if dot_git.is_dir() {
-                return Err(Error::DirectoryExists { path: dot_git });
-            }
+        if dot_git.is_dir() {
+            return Err(Error::DirectoryExists { path: dot_git });
         }
-    }
+    };
     create_dir(&dot_git)?;
 
     {
@@ -170,13 +173,7 @@ pub fn into(directory: impl Into<PathBuf>, kind: crate::Kind) -> Result<crate::P
     ] {
         if *filename == "config" {
             write_file(
-                &tpl.replace(
-                    "{bare-value}",
-                    match kind {
-                        crate::Kind::Bare => "true",
-                        crate::Kind::WorkTree => "false",
-                    },
-                ),
+                &tpl.replace("{bare-value}", if bare { "true" } else { "false" }),
                 PathCursor(&mut dot_git).at(filename),
             )?;
         } else {
@@ -184,5 +181,9 @@ pub fn into(directory: impl Into<PathBuf>, kind: crate::Kind) -> Result<crate::P
         }
     }
 
-    Ok(crate::Path::from_dot_git_dir(dot_git, kind))
+    Ok(git_discover::repository::Path::from_dot_git_dir(
+        dot_git,
+        bare.then(|| git_discover::repository::Kind::Bare)
+            .unwrap_or(git_discover::repository::Kind::WorkTree { linked_git_dir: None }),
+    ))
 }

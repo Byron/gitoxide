@@ -143,7 +143,7 @@ mod access {
             (&state.path_backing[self.path.clone()]).as_bstr()
         }
 
-        pub fn path_in<'backing>(&self, backing: &'backing crate::PathStorage) -> &'backing BStr {
+        pub fn path_in<'backing>(&self, backing: &'backing crate::PathStorageRef) -> &'backing BStr {
             (backing[self.path.clone()]).as_bstr()
         }
 

@@ -34,7 +34,6 @@ pub fn query(
 
     let worktree = repo
         .worktree()
-        .current()
         .with_context(|| "Cannot check excludes without a current worktree")?;
     let index = worktree.open_index()?;
     let mut cache = worktree.excludes(

@@ -9,7 +9,6 @@ pub struct Worktree<'repo> {
     #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub(crate) parent: &'repo Repository,
     /// The root path of the checkout.
-    #[allow(dead_code)]
     pub(crate) path: &'repo std::path::Path,
 }
 
@@ -127,10 +126,14 @@ pub struct Repository {
     pub objects: crate::OdbHandle,
 
     pub(crate) work_tree: Option<PathBuf>,
+    /// The path to the resolved common directory if this is a linked worktree repository or it is otherwise set.
+    pub(crate) common_dir: Option<PathBuf>,
     /// A free-list of re-usable object backing buffers
     pub(crate) bufs: RefCell<Vec<Vec<u8>>>,
     /// A pre-assembled selection of often-accessed configuration values for quick access.
     pub(crate) config: crate::config::Cache,
+    /// options obtained when instantiating this repository for use when following linked worktrees.
+    pub(crate) linked_worktree_options: crate::open::Options,
 }
 
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
@@ -150,8 +153,12 @@ pub struct ThreadSafeRepository {
     pub(crate) objects: git_features::threading::OwnShared<git_odb::Store>,
     /// The path to the worktree at which to find checked out files
     pub work_tree: Option<PathBuf>,
+    /// The path to the common directory if this is a linked worktree repository or it is otherwise set.
+    pub common_dir: Option<PathBuf>,
     // TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
     //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
     //       packs are refreshed. This would be `git_config::fs::Config` when ready.
     pub(crate) config: crate::config::Cache,
+    /// options obtained when instantiating this repository for use when following linked worktrees.
+    pub(crate) linked_worktree_options: crate::open::Options,
 }

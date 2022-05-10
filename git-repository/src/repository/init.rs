@@ -5,11 +5,14 @@ impl crate::Repository {
         refs: crate::RefStore,
         objects: crate::OdbHandle,
         work_tree: Option<std::path::PathBuf>,
+        common_dir: Option<std::path::PathBuf>,
         config: crate::config::Cache,
+        linked_worktree_options: crate::open::Options,
     ) -> Self {
         crate::Repository {
             bufs: RefCell::new(Vec::with_capacity(4)),
             work_tree,
+            common_dir,
             objects: {
                 #[cfg(feature = "max-performance")]
                 {
@@ -22,6 +25,7 @@ impl crate::Repository {
             },
             refs,
             config,
+            linked_worktree_options,
         }
     }
 
