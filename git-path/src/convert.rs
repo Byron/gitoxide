@@ -225,14 +225,7 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
 
     let mut real_path = PathBuf::new();
 
-    #[cfg(not(target_os = "windows"))]
-    real_path.push(std::path::MAIN_SEPARATOR.to_string());
-
-    #[cfg(target_os = "windows")]
-    if let Some(Prefix(p)) = path.components().next() {
-        real_path.push(p.as_os_str());
-        real_path.push("\\");
-    }
+    add_root(&mut real_path);
 
     if path.is_relative() {
         real_path.push(cwd);
@@ -247,7 +240,11 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
         match input_path.next() {
             None => Ok(real_path),
             Some(part) => match part {
-                Prefix(_) | RootDir | CurDir => traverse(input_path, num_symlinks, max_symlinks, real_path),
+                RootDir | Prefix(_) => {
+                    real_path.push(part);
+                    traverse(input_path, num_symlinks, max_symlinks, real_path)
+                }
+                CurDir => traverse(input_path, num_symlinks, max_symlinks, real_path),
                 ParentDir => {
                     let parent_path = PathBuf::from(real_path.parent().ok_or(RealPathError::MissingParent {
                         path: real_path.to_string_lossy().into(),
@@ -285,12 +282,22 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
     traverse(path.components(), 0, max_symlinks, real_path)
 }
 
+fn add_root(real_path: &mut PathBuf) {
+    #[cfg(not(target_os = "windows"))]
+    real_path.push(std::path::MAIN_SEPARATOR.to_string());
+
+    #[cfg(target_os = "windows")]
+    if let Some(Prefix(p)) = path.components().next() {
+        real_path.push(p.as_os_str());
+        real_path.push(std::path::MAIN_SEPARATOR.to_string());
+    }
+}
+
 /// Resolve relative components virtually without accessing the file system, e.g. turn `a/./b/c/.././..` into `a`,
 /// without keeping intermediate `..` and `/a/../b/..` becomes `/`.
 /// Note that we might access the `current_dir` if we run out of path components to pop off. If unset, we continue
 /// which might lead to an invalid/uninteded path.
 pub fn absolutize<'a>(path: impl Into<Cow<'a, Path>>, mut current_dir: Option<impl Into<PathBuf>>) -> Cow<'a, Path> {
-    use std::path::Component::ParentDir;
     let path = path.into();
     if !path.components().any(|c| matches!(c, ParentDir)) {
         return path;

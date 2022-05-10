@@ -157,12 +157,12 @@ mod convert {
 
         // enum Component.Prefix
 
-        let tmp_dir_in = TempDirIn::new("/tmp/a/b/s");
-        let p = tmp_dir_in.path;
-        assert!(p.exists());
-        assert_eq!(p, Path::new("/tmp/a/b/s"));
-        drop(tmp_dir_in);
-        assert!(!p.exists());
+        let mut pb = PathBuf::from("/tmp");
+        pb.push(std::path::MAIN_SEPARATOR.to_string());
+
+        for c in PathBuf::from("/a/b/c").components() {
+            dbg!(c);
+        }
 
         // pass iterator input_path.components() instead of input_path
         // have real_path mut and not return it
