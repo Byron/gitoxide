@@ -62,7 +62,7 @@ mod convert {
         #[cfg(not(target_os = "windows"))]
         let tmp_dir = TempDirIn::new("/private/tmp/t");
         #[cfg(target_os = "windows")]
-        let tmp_dir = TempDirIn::new("%localappdata%\\Temp\\t");
+        let tmp_dir = TempDirIn::new("C:\\Users\\AppData\\Local\\Temp\\t");
 
         let empty_path = Path::new("");
         assert!(
