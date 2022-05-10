@@ -119,7 +119,7 @@ pub(crate) mod function {
                     } else {
                         cursor.canonicalize().ok()
                     }
-                    .ok_or_else(|| Error::InaccessibleDirectory { path: cursor })?;
+                    .ok_or(Error::InaccessibleDirectory { path: cursor })?;
                 }
             }
         }
@@ -133,7 +133,7 @@ pub(crate) mod function {
                 .ok()
                 .and_then(|path_relative_to_cwd| {
                     let relative_path_components = path_relative_to_cwd.components().count();
-                    let current_component_len = cursor.components().map(|c| comp_len(c)).sum::<usize>();
+                    let current_component_len = cursor.components().map(comp_len).sum::<usize>();
                     (relative_path_components * "..".len() < current_component_len).then(|| {
                         std::iter::repeat("..")
                             .take(relative_path_components)
