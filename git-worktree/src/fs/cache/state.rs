@@ -81,6 +81,7 @@ impl Ignore {
         case: Case,
     ) -> Option<git_attributes::Match<'_, ()>> {
         let groups = self.match_groups();
+        let mut dir_match = None;
         if let Some((source, mapping)) = self
             .matched_directory_patterns_stack
             .iter()
@@ -92,20 +93,23 @@ impl Ignore {
             })
             .next()
         {
-            if !mapping.pattern.is_negative() {
-                return git_attributes::Match {
-                    pattern: &mapping.pattern,
-                    value: &mapping.value,
-                    sequence_number: mapping.sequence_number,
-                    source,
-                }
-                .into();
+            let match_ = git_attributes::Match {
+                pattern: &mapping.pattern,
+                value: &mapping.value,
+                sequence_number: mapping.sequence_number,
+                source,
+            };
+            if mapping.pattern.is_negative() {
+                dir_match = Some(match_);
+            } else {
+                return match_.into();
             }
         }
         groups
             .iter()
             .rev()
             .find_map(|group| group.pattern_matching_relative_path(relative_path.as_ref(), is_dir, case))
+            .or(dir_match)
     }
 
     /// Like `matching_exclude_pattern()` but without checking if the current directory is excluded.

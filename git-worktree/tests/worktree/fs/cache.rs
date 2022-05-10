@@ -210,6 +210,9 @@ mod ignore_and_attributes {
                         );
                     }
                 }
+                (Some(actual), None) if actual.pattern.is_negative() => {
+                    // OK: we provide negative patterns that matched on paths if there was no other match, while git doesn't.
+                }
                 (actual, expected) => {
                     panic!(
                         "actual {:?} didn't match {:?} at '{}'",
