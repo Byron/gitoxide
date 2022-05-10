@@ -225,7 +225,7 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
 
     let mut real_path = PathBuf::new();
 
-    add_root(&mut real_path);
+    // add_root(&mut real_path);
 
     if path.is_relative() {
         real_path.push(cwd);
@@ -280,17 +280,6 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
     }
 
     traverse(path.components(), 0, max_symlinks, real_path)
-}
-
-fn add_root(real_path: &mut PathBuf) {
-    #[cfg(not(target_os = "windows"))]
-    real_path.push(std::path::MAIN_SEPARATOR.to_string());
-
-    #[cfg(target_os = "windows")]
-    if let Some(Prefix(p)) = path.components().next() {
-        real_path.push(p.as_os_str());
-        real_path.push(std::path::MAIN_SEPARATOR.to_string());
-    }
 }
 
 /// Resolve relative components virtually without accessing the file system, e.g. turn `a/./b/c/.././..` into `a`,

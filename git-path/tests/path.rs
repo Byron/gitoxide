@@ -55,7 +55,6 @@ mod convert {
     }
 
     #[test]
-    #[ignore]
     fn real_path_tests() {
         let cwd = tempdir().unwrap();
         let cwd = cwd.path();
