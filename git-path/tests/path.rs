@@ -105,7 +105,10 @@ mod convert {
             "dot dot goes to parent path component"
         );
 
+        #[cfg(not(target_os = "windows"))]
         let absolute_path = Path::new("/c/d/.git");
+        #[cfg(target_os = "windows")]
+        let absolute_path = Path::new("C:\\c\\d\\.git");
         assert_eq!(
             real_path(absolute_path, cwd, 8).unwrap(),
             absolute_path,
