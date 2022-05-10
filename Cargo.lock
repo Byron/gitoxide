@@ -1196,6 +1196,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-discover"
+version = "0.1.0"
+dependencies = [
+ "bstr",
+ "git-hash",
+ "git-path",
+ "git-ref",
+ "git-sec",
+ "git-testtools",
+ "is_ci",
+ "thiserror",
+]
+
+[[package]]
 name = "git-features"
 version = "0.20.0"
 dependencies = [
@@ -1465,6 +1479,7 @@ dependencies = [
  "git-config",
  "git-credentials",
  "git-diff",
+ "git-discover",
  "git-features",
  "git-glob",
  "git-hash",
@@ -1546,8 +1561,11 @@ dependencies = [
  "bstr",
  "crc",
  "fs_extra",
+ "git-attributes",
+ "git-discover",
  "git-hash",
  "git-lock",
+ "git-worktree",
  "io-close",
  "is_ci",
  "nom",

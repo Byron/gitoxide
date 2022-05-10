@@ -237,6 +237,14 @@ Check out the [performance discussion][git-traverse-performance] as well.
 A mechanism to associate metadata with any object, and keep revisions of it using git itself.
 
 * [ ] CRUD for git notes
+* 
+### git-discover
+
+* [x] check if a git directory is a git repository
+* [x] find a git repository by searching upward
+* [x] handle linked worktrees
+* [ ] a way to handle `safe.directory`
+     - note that it's less critical to support it as `gitoxide` allows access but prevents untrusted configuration to become effective.
 
 ### git-date
 * [ ] parse git dates
@@ -256,6 +264,10 @@ Provide base-implementations for dealing with smudge and clean filters as well a
 
 Provides a trust model to share across gitoxide crates. It helps configuring how to interact with external processes, among other things.
 
+* **integrations**
+   * [x] git-config
+   * [x] git-repository
+
 ### git-rebase
 * [ ] obtain rebase status
 * [ ] drive a rebase operation
@@ -274,7 +286,7 @@ Make it the best-performing implementation and the most convenient one.
 * [x] a type for pattern matching of paths and non-paths, optionally case-insensitively.
 
 ### git-worktree
-* handle the working tree/checkout
+* handle the working **tree/checkout**
   - [x] checkout an index of files, executables and symlinks just as fast as git
      - [x] forbid symlinks in directories
      - [ ] handle submodules
@@ -290,8 +302,8 @@ Make it the best-performing implementation and the most convenient one.
      - [ ] `ident`
      - [ ] filter processes
      - [ ] single-invocation clean/smudge filters
-* manage multiple worktrees
-* deal with exclude specifications, like .gitignore and other exclude files.
+* [x] access to all .gitignore/exclude information 
+* [ ] access to all attributes information
  
 ### git-revision
 * find specifications for revisions (like `git name-rev`)
@@ -437,7 +449,10 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [ ] run transaction hooks and handle special repository states like quarantine
     * [ ] support for different backends like `files` and `reftable`
   * **worktrees**
-    * [ ] open a repository with worktrees
+    * [x] open a repository with worktrees and interact with them
+    * [ ] proper handling of worktree related refs
+    * [ ] create, move and remove
+    * [ ] read per-worktree config if `extensions.worktreeConfig` is enabled.
   * [ ] remotes with push and pull
   * [x] mailmap   
   * [x] object replacements (`git replace`)
@@ -475,6 +490,9 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [ ] special handling of `FETCH_HEAD` and `MERGE_HEAD`
     * [x] iterate refs with optional prefix
     * [ ] [worktree support]
+        * [ ] support multiple bases and classify refs to know which one to use
+        * [ ] special support for ref iteration to not accidentally (see iterator setup)
+        * [ ] potentially special support for iteration to support listing worktree refs for bisect/rewritten,… from the main worktree
     * ~~symbolic ref support, using symbolic links~~
         * This is a legacy feature which is not in use anymore.
     * **transactions** 

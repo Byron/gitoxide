@@ -21,6 +21,7 @@ echo "in root: gitoxide CLI"
 (enter git-pathspec && indent cargo diet -n --package-size-limit 5KB)
 (enter git-path && indent cargo diet -n --package-size-limit 10KB)
 (enter git-attributes && indent cargo diet -n --package-size-limit 10KB)
+(enter git-discover && indent cargo diet -n --package-size-limit 8KB)
 (enter git-index && indent cargo diet -n --package-size-limit 30KB)
 (enter git-worktree && indent cargo diet -n --package-size-limit 25KB)
 (enter git-quote && indent cargo diet -n --package-size-limit 5KB)

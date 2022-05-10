@@ -18,6 +18,12 @@ mod find {
     #[test]
     fn find_and_try_find_with_and_without_object_cache() -> crate::Result {
         let mut repo = crate::basic_repo()?;
+
+        assert_eq!(
+            repo.worktrees()?.len(),
+            0,
+            "it's OK to query linked worktrees in a repo without worktrees"
+        );
         for round in 1..=2 {
             match round {
                 1 => repo.object_cache_size(None),

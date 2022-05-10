@@ -33,7 +33,7 @@ mod non_bare {
     fn init_into_empty_directory_creates_a_dot_git_dir() -> crate::Result {
         let tmp = tempfile::tempdir()?;
         let repo = git_repository::init(tmp.path())?;
-        assert_eq!(repo.kind(), git_repository::Kind::WorkTree);
+        assert_eq!(repo.kind(), git_repository::Kind::WorkTree { is_linked: false });
         assert_eq!(repo.work_dir(), Some(tmp.path()), "there is a work tree by default");
         assert_eq!(
             repo.git_dir(),

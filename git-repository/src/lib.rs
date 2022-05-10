@@ -88,6 +88,7 @@
 //! * [`url`]
 //! * [`actor`]
 //! * [`bstr`][bstr]
+//! * [`mod@discover`]
 //! * [`index`]
 //! * [`glob`]
 //! * [`path`]
@@ -119,8 +120,6 @@
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
 #![deny(missing_docs, unsafe_code, rust_2018_idioms)]
-
-use std::path::PathBuf;
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
@@ -183,15 +182,6 @@ pub type OdbHandle = git_odb::Handle;
 /// A way to access git configuration
 pub(crate) type Config = OwnShared<git_config::file::GitConfig<'static>>;
 
-/// A repository path which either points to a work tree or the `.git` repository itself.
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum Path {
-    /// The currently checked out or nascent work tree of a git repository
-    WorkTree(PathBuf),
-    /// The git repository itself
-    Repository(PathBuf),
-}
-
 ///
 mod types;
 pub use types::{
@@ -206,13 +196,16 @@ pub mod reference;
 mod repository;
 pub mod tag;
 
-/// The kind of `Repository`
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+/// The kind of repository path.
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {
     /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
     Bare,
     /// A `git` repository along with a checked out files in a work tree.
-    WorkTree,
+    WorkTree {
+        /// If true, this is the git dir associated with this _linked_ worktree, otherwise it is a repository with _main_ worktree.
+        is_linked: bool,
+    },
 }
 
 impl Kind {
@@ -222,34 +215,60 @@ impl Kind {
     }
 }
 
+impl From<git_discover::repository::Kind> for Kind {
+    fn from(v: git_discover::repository::Kind) -> Self {
+        match v {
+            git_discover::repository::Kind::Bare => Kind::Bare,
+            git_discover::repository::Kind::WorkTree { linked_git_dir } => Kind::WorkTree {
+                is_linked: linked_git_dir.is_some(),
+            },
+        }
+    }
+}
+
 /// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
-pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, discover::Error> {
+pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, discover::Error> {
     ThreadSafeRepository::discover(directory).map(Into::into)
 }
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
-pub fn init(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, init::Error> {
-    ThreadSafeRepository::init(directory, Kind::WorkTree).map(Into::into)
+pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
+    ThreadSafeRepository::init(directory, crate::create::Options { bare: false }).map(Into::into)
 }
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
-pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<crate::Repository, init::Error> {
-    ThreadSafeRepository::init(directory, Kind::Bare).map(Into::into)
+pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
+    ThreadSafeRepository::init(directory, crate::create::Options { bare: true }).map(Into::into)
 }
 
 /// See [ThreadSafeRepository::open()], but returns a [`Repository`] instead.
-pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<crate::Repository, open::Error> {
+pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<Repository, open::Error> {
     ThreadSafeRepository::open(directory).map(Into::into)
 }
 
 ///
 pub mod permission {
-    use git_sec::{permission::Resource, Access};
+    ///
+    pub mod env_var {
+        use git_sec::{permission, Access};
 
-    /// A permission to control access to the resource pointed to an environment variable.
-    pub type EnvVarResourcePermission = Access<Resource, git_sec::Permission>;
+        /// A permission to control access to the resource pointed to an environment variable.
+        pub type Resource = Access<permission::Resource, git_sec::Permission>;
+        ///
+        pub mod resource {
+            ///
+            pub type Error = git_sec::permission::Error<std::path::PathBuf, git_sec::Permission>;
+        }
+    }
+}
+///
+pub mod permissions {
+    pub use crate::repository::permissions::Environment;
 }
 pub use repository::permissions::Permissions;
+
+///
+pub mod create;
 
 ///
 pub mod open;
@@ -259,7 +278,7 @@ mod config;
 
 ///
 pub mod mailmap {
-    #[cfg(all(feature = "unstable", feature = "git-worktree"))]
+    #[cfg(all(feature = "unstable", feature = "git-mailmap"))]
     pub use git_mailmap::*;
 
     ///
@@ -307,26 +326,22 @@ pub mod init {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Init(#[from] crate::path::create::Error),
+        Init(#[from] crate::create::Error),
         #[error(transparent)]
         Open(#[from] crate::open::Error),
     }
 
-    impl crate::ThreadSafeRepository {
+    impl ThreadSafeRepository {
         /// Create a repository with work-tree within `directory`, creating intermediate directories as needed.
         ///
         /// Fails without action if there is already a `.git` repository inside of `directory`, but
         /// won't mind if the `directory` otherwise is non-empty.
-        pub fn init(directory: impl AsRef<Path>, kind: crate::Kind) -> Result<Self, Error> {
+        pub fn init(directory: impl AsRef<Path>, options: crate::create::Options) -> Result<Self, Error> {
             use git_sec::trust::DefaultForLevel;
-            let path = crate::path::create::into(directory.as_ref(), kind)?;
+            let path = crate::create::into(directory.as_ref(), options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-            ThreadSafeRepository::open_from_paths(
-                git_dir,
-                worktree_dir,
-                crate::open::Options::default_for_level(git_sec::Trust::Full),
-            )
-            .map_err(Into::into)
+            let options = crate::open::Options::default_for_level(git_sec::Trust::Full);
+            ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
         }
     }
 }
@@ -364,14 +379,16 @@ pub mod state {
 pub mod discover {
     use std::path::Path;
 
-    use crate::{path, ThreadSafeRepository};
+    use crate::ThreadSafeRepository;
+
+    pub use git_discover::*;
 
     /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Discover(#[from] path::discover::Error),
+        Discover(#[from] upwards::Error),
         #[error(transparent)]
         Open(#[from] crate::open::Error),
     }
@@ -387,12 +404,13 @@ pub mod discover {
         /// for instantiations.
         pub fn discover_opts(
             directory: impl AsRef<Path>,
-            options: crate::path::discover::Options,
+            options: upwards::Options,
             trust_map: git_sec::trust::Mapping<crate::open::Options>,
         ) -> Result<Self, Error> {
-            let (path, trust) = path::discover_opts(directory, options)?;
+            let (path, trust) = upwards_opts(directory, options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-            Self::open_from_paths(git_dir, worktree_dir, trust_map.into_value_by_level(trust)).map_err(Into::into)
+            let options = trust_map.into_value_by_level(trust);
+            Self::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
         }
     }
 }

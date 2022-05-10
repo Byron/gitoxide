@@ -1,4 +1,4 @@
-use crate::{bstr::BString, permission::EnvVarResourcePermission};
+use crate::{bstr::BString, permission};
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -38,10 +38,10 @@ pub(crate) struct Cache {
     pub excludes_file: Option<std::path::PathBuf>,
     /// Define how we can use values obtained with `xdg_config(…)` and its `XDG_CONFIG_HOME` variable.
     #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
-    xdg_config_home_env: EnvVarResourcePermission,
+    xdg_config_home_env: permission::env_var::Resource,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.
     #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
-    home_env: EnvVarResourcePermission,
+    home_env: permission::env_var::Resource,
     // TODO: make core.precomposeUnicode available as well.
 }
 
@@ -54,13 +54,14 @@ mod cache {
     };
 
     use super::{Cache, Error};
-    use crate::{bstr::ByteSlice, permission::EnvVarResourcePermission};
+    use crate::bstr::ByteSlice;
+    use crate::permission;
 
     impl Cache {
         pub fn new(
             git_dir: &std::path::Path,
-            xdg_config_home_env: EnvVarResourcePermission,
-            home_env: EnvVarResourcePermission,
+            xdg_config_home_env: permission::env_var::Resource,
+            home_env: permission::env_var::Resource,
             git_install_dir: Option<&std::path::Path>,
         ) -> Result<Self, Error> {
             let config = GitConfig::open(git_dir.join("config"))?;

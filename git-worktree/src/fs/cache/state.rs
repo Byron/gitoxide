@@ -81,6 +81,7 @@ impl Ignore {
         case: Case,
     ) -> Option<git_attributes::Match<'_, ()>> {
         let groups = self.match_groups();
+        let mut dir_match = None;
         if let Some((source, mapping)) = self
             .matched_directory_patterns_stack
             .iter()
@@ -92,20 +93,29 @@ impl Ignore {
             })
             .next()
         {
-            if !mapping.pattern.is_negative() {
-                return git_attributes::Match {
-                    pattern: &mapping.pattern,
-                    value: &mapping.value,
-                    sequence_number: mapping.sequence_number,
-                    source,
-                }
-                .into();
+            let match_ = git_attributes::Match {
+                pattern: &mapping.pattern,
+                value: &mapping.value,
+                sequence_number: mapping.sequence_number,
+                source,
+            };
+            if mapping.pattern.is_negative() {
+                dir_match = Some(match_);
+            } else {
+                // Note that returning here is wrong if this pattern _was_ preceeded by a negative pattern that
+                // didn't match the directory, but would match now.
+                // Git does it similarly so we do too even though it's incorrect.
+                // To fix this, one would probably keep track of whether there was a preceeding negative pattern, and
+                // if so we check the path in full and only use the dir match if there was no match, similar to the negative
+                // case above whose fix fortunately won't change the overall result.
+                return match_.into();
             }
         }
         groups
             .iter()
             .rev()
             .find_map(|group| group.pattern_matching_relative_path(relative_path.as_ref(), is_dir, case))
+            .or(dir_match)
     }
 
     /// Like `matching_exclude_pattern()` but without checking if the current directory is excluded.
@@ -221,7 +231,7 @@ impl State {
     pub fn build_attribute_list<'paths>(
         &self,
         index: &git_index::State,
-        paths: &'paths git_index::PathStorage,
+        paths: &'paths git_index::PathStorageRef,
         case: Case,
     ) -> Vec<PathOidMapping<'paths>> {
         let a1_backing;

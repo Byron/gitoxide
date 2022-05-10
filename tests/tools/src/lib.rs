@@ -1,3 +1,4 @@
+use std::convert::Infallible;
 use std::{
     collections::BTreeMap,
     io::Read,
@@ -16,6 +17,33 @@ pub use tempfile;
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
+static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache<'static>>>> = Lazy::new(|| {
+    let cache = (|| {
+        let (repo_path, _) = git_discover::upwards(Path::new(".")).ok()?;
+        let (git_dir, work_tree) = repo_path.into_repository_and_work_tree_directories();
+        let work_tree = work_tree?.canonicalize().ok()?;
+
+        let mut buf = Vec::with_capacity(512);
+        let case = git_worktree::fs::Capabilities::probe(&work_tree)
+            .ignore_case
+            .then(|| git_attributes::glob::pattern::Case::Fold)
+            .unwrap_or_default();
+        let state = git_worktree::fs::cache::State::IgnoreStack(git_worktree::fs::cache::state::Ignore::new(
+            Default::default(),
+            git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(git_dir, None, &mut buf).ok()?,
+            None,
+            case,
+        ));
+        Some(git_worktree::fs::Cache::new(
+            work_tree,
+            state,
+            case,
+            buf,
+            Default::default(),
+        ))
+    })();
+    Mutex::new(cache)
+});
 
 pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::process::ExitStatus> {
     std::process::Command::new("git")
@@ -116,11 +144,11 @@ pub fn scripted_fixture_repo_read_only_with_args(
     let archive_file_path = fixture_path(
         Path::new("generated-archives").join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
     );
-    let script_result_directory = fixture_path(
-        Path::new("generated-do-not-edit")
-            .join(script_basename)
-            .join(format!("{}", script_identity)),
-    );
+    let script_result_directory = fixture_path(Path::new("generated-do-not-edit").join(script_basename).join(format!(
+        "{}-{}",
+        script_identity,
+        family_name()
+    )));
 
     let _marker = git_lock::Marker::acquire_to_hold_resource(
         script_basename,
@@ -203,6 +231,27 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     if is_ci::cached() {
         return Ok(());
     }
+    let is_excluded_in_git = {
+        let mut lut = EXCLUDE_LUT.lock();
+        lut.as_mut()
+            .and_then(|cache| {
+                let archive = std::env::current_dir().ok()?.join(archive);
+                let relative_path = archive.strip_prefix(cache.base()).ok()?;
+                cache
+                    .at_path(
+                        relative_path,
+                        Some(false),
+                        |_oid, _buf| -> std::result::Result<_, Infallible> { unreachable!("") },
+                    )
+                    .ok()?
+                    .is_excluded()
+                    .into()
+            })
+            .unwrap_or(false)
+    };
+    if is_excluded_in_git {
+        return Ok(());
+    }
     std::fs::create_dir_all(archive.parent().expect("archive is a file"))?;
 
     let meta_dir = populate_meta_dir(source_dir, script_identity)?;
@@ -240,7 +289,7 @@ fn populate_meta_dir(destination_dir: &Path, script_identity: u32) -> std::io::R
     std::fs::create_dir_all(&meta_dir)?;
     std::fs::write(
         meta_dir.join(META_IDENTITY),
-        format!("{}-{}", script_identity, if cfg!(windows) { "windows" } else { "unix" }).as_bytes(),
+        format!("{}-{}", script_identity, family_name()).as_bytes(),
     )?;
     std::fs::write(
         meta_dir.join(META_GIT_VERSION),
@@ -319,5 +368,13 @@ pub fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
     };
     VerboseError {
         errors: err.errors.into_iter().map(|(i, v)| (i.as_bstr(), v)).collect(),
+    }
+}
+
+fn family_name() -> &'static str {
+    if cfg!(windows) {
+        "windows"
+    } else {
+        "unix"
     }
 }
