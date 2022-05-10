@@ -1,4 +1,3 @@
-
 use std::path::Component::{CurDir, Normal, ParentDir, Prefix, RootDir};
 
 use std::iter::FromIterator;
@@ -283,6 +282,7 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
     }
 
     traverse(path.components(), 0, max_symlinks, real_path)
+}
 
 /// Resolve relative components virtually without accessing the file system, e.g. turn `a/./b/c/.././..` into `a`,
 /// without keeping intermediate `..` and `/a/../b/..` becomes `/`.
@@ -313,5 +313,4 @@ pub fn absolutize<'a>(path: impl Into<Cow<'a, Path>>, mut current_dir: Option<im
     } else {
         path.into()
     }
-
 }

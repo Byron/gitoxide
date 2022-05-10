@@ -54,7 +54,6 @@ mod convert {
         assert_eq!(to_windows_separators(b"/a/b//".as_bstr()).as_bstr(), "\\a\\b\\\\");
     }
 
-
     #[test]
     fn real_path_tests() {
         let cwd = tempdir().unwrap();
@@ -172,6 +171,7 @@ mod convert {
         fs::symlink(link_dest, &link).unwrap();
         #[cfg(target_os = "windows")]
         fs::symlink_file(link_dest, &link).unwrap();
+    }
 
     mod absolutize {
         use git_path::absolutize;
@@ -230,6 +230,5 @@ mod convert {
                 );
             }
         }
-
     }
 }
