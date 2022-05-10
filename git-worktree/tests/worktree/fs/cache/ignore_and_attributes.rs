@@ -34,12 +34,61 @@ impl<'a> Iterator for IgnoreExpectations<'a> {
 }
 
 #[test]
+fn special_exclude_cases_we_handle_differently() {
+    let dir = git_testtools::scripted_fixture_repo_read_only("make_special_exclude_case.sh").unwrap();
+    let git_dir = dir.join(".git");
+
+    let mut buf = Vec::new();
+    let case = git_glob::pattern::Case::Sensitive;
+    let state = git_worktree::fs::cache::State::for_add(
+        Default::default(),
+        git_worktree::fs::cache::state::Ignore::new(
+            Default::default(),
+            git_attributes::MatchGroup::from_git_dir(&git_dir, None, &mut buf).unwrap(),
+            None,
+            case,
+        ),
+    );
+    let mut cache = fs::Cache::new(&dir, state, case, buf, Default::default());
+    let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline")).unwrap();
+    let expectations = IgnoreExpectations {
+        lines: baseline.lines(),
+    };
+    for (relative_entry, source_and_line) in expectations {
+        let (source, line, pattern) = source_and_line.expect("every value is matched");
+        assert_eq!(
+            pattern, "tld/",
+            "each entry matches on the main directory exclude, ignoring negations entirely"
+        );
+        assert_eq!(line, 2);
+        assert_eq!(source, ".gitignore");
+
+        let relative_path = git_path::from_byte_slice(relative_entry);
+        let is_dir = dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
+
+        let platform = cache
+            .at_entry(relative_entry, is_dir, |oid, buf| {
+                Err(std::io::Error::new(std::io::ErrorKind::Other, "unreachable"))
+            })
+            .unwrap();
+        let match_ = platform.matching_exclude_pattern().expect("match all values");
+        let is_excluded = platform.is_excluded();
+
+        match relative_entry.as_ref() {
+            b"tld" | b"tld/" | b"tld/file" | b"tld/sd" | b"tld/sd/" => {
+                assert_eq!(match_.pattern.to_string(), "tld/");
+            }
+            _ => unreachable!(),
+        }
+    }
+}
+
+#[test]
 fn check_against_baseline() -> crate::Result {
     let dir = git_testtools::scripted_fixture_repo_read_only("make_ignore_and_attributes_setup.sh")?;
     let worktree_dir = dir.join("repo");
     let git_dir = worktree_dir.join(".git");
     let mut buf = Vec::new();
-    let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline"))?;
     let user_exclude_path = dir.join("user.exclude");
     assert!(user_exclude_path.is_file());
 
@@ -66,9 +115,11 @@ fn check_against_baseline() -> crate::Result {
     );
     let mut cache = fs::Cache::new(&worktree_dir, state, case, buf, attribute_files_in_index);
 
-    for (relative_entry, source_and_line) in (IgnoreExpectations {
+    let baseline = std::fs::read(git_dir.parent().unwrap().join("git-check-ignore.baseline"))?;
+    let expectations = IgnoreExpectations {
         lines: baseline.lines(),
-    }) {
+    };
+    for (relative_entry, source_and_line) in expectations {
         let relative_path = git_path::from_byte_slice(relative_entry);
         let is_dir = worktree_dir.join(&relative_path).metadata().ok().map(|m| m.is_dir());
 
