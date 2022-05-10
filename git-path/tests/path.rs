@@ -1,13 +1,41 @@
 mod convert {
     use bstr::ByteSlice;
     use git_path::{real_path, to_unix_separators, to_windows_separators, RealPathError};
-    use std::fs::create_dir_all;
+    use std::fs::{create_dir_all, remove_dir_all};
+    use std::ops::Deref;
     #[cfg(not(target_os = "windows"))]
     use std::os::unix::fs;
     #[cfg(target_os = "windows")]
     use std::os::windows::fs;
     use std::path::{Path, PathBuf};
     use tempfile::{tempdir, tempdir_in};
+
+    struct TempDirIn<'a> {
+        pub path: &'a Path,
+    }
+
+    impl<'a> TempDirIn<'a> {
+        fn new(path: &'a str) -> Self {
+            let path = Path::new(path);
+            create_dir_all(path).unwrap();
+            tempdir_in(path).unwrap();
+            Self { path }
+        }
+    }
+
+    impl Deref for TempDirIn<'_> {
+        type Target = Path;
+
+        fn deref(&self) -> &Self::Target {
+            self.path
+        }
+    }
+
+    impl Drop for TempDirIn<'_> {
+        fn drop(&mut self) {
+            remove_dir_all(&self.path).unwrap();
+        }
+    }
 
     #[test]
     fn assure_unix_separators() {
@@ -27,12 +55,14 @@ mod convert {
     }
 
     #[test]
-    #[ignore]
     fn real_path_tests() {
         let cwd = tempdir().unwrap();
         let cwd = cwd.path();
-        let tmp_dir = tempdir_in("/private/tmp").unwrap();
-        let tmp_dir = tmp_dir.path();
+
+        #[cfg(not(target_os = "windows"))]
+        let tmp_dir = TempDirIn::new("/private/tmp/t");
+        #[cfg(target_os = "windows")]
+        let tmp_dir = TempDirIn::new("%localappdata%\\Temp\\t");
 
         let empty_path = Path::new("");
         assert!(
@@ -124,15 +154,12 @@ mod convert {
 
         // enum Component.Prefix
 
-        let a = PathBuf::from("a");
-        let mut a = a.components();
-        let _ = a.next();
-
-        let mut pb = PathBuf::new();
-        pb.push(a.collect::<PathBuf>());
-
-        assert_eq!(pb, PathBuf::new());
-        assert_eq!(pb.components().next(), None);
+        let tmp_dir_in = TempDirIn::new("/tmp/a/b/s");
+        let p = tmp_dir_in.path;
+        assert!(p.exists());
+        assert_eq!(p, Path::new("/tmp/a/b/s"));
+        drop(tmp_dir_in);
+        assert!(!p.exists());
 
         // pass iterator input_path.components() instead of input_path
         // have real_path mut and not return it
