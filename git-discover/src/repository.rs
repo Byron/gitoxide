@@ -41,10 +41,7 @@ mod path {
                 if !matches!(dir.components().rev().next(), Some(std::path::Component::ParentDir)) {
                     dir
                 } else {
-                    git_path::absolutize_components(&dir)
-                        .ok()
-                        .map(|d| d.into_owned())
-                        .unwrap_or(dir)
+                    git_path::absolutize(&dir, std::env::current_dir().ok()).into_owned()
                 }
             }
 
