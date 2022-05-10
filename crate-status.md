@@ -242,7 +242,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 
 * [x] check if a git directory is a git repository
 * [x] find a git repository by searching upward
-* [ ] handle linked worktrees
+* [x] handle linked worktrees
 * [ ] a way to handle `safe.directory`
      - note that it's less critical to support it as `gitoxide` allows access but prevents untrusted configuration to become effective.
 
@@ -286,7 +286,7 @@ Make it the best-performing implementation and the most convenient one.
 * [x] a type for pattern matching of paths and non-paths, optionally case-insensitively.
 
 ### git-worktree
-* handle the working tree/checkout
+* handle the working **tree/checkout**
   - [x] checkout an index of files, executables and symlinks just as fast as git
      - [x] forbid symlinks in directories
      - [ ] handle submodules
@@ -302,8 +302,8 @@ Make it the best-performing implementation and the most convenient one.
      - [ ] `ident`
      - [ ] filter processes
      - [ ] single-invocation clean/smudge filters
-* manage multiple worktrees
-* deal with exclude specifications, like .gitignore and other exclude files.
+* [x] access to all .gitignore/exclude information 
+* [ ] access to all attributes information
  
 ### git-revision
 * find specifications for revisions (like `git name-rev`)
@@ -449,7 +449,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [ ] run transaction hooks and handle special repository states like quarantine
     * [ ] support for different backends like `files` and `reftable`
   * **worktrees**
-    * [ ] open a repository with worktrees and interact with them
+    * [x] open a repository with worktrees and interact with them
+    * [ ] proper handling of worktree related refs
     * [ ] create, move and remove
     * [ ] read per-worktree config if `extensions.worktreeConfig` is enabled.
   * [ ] remotes with push and pull
