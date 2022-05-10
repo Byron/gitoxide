@@ -59,10 +59,12 @@ mod convert {
         let cwd = tempdir().unwrap();
         let cwd = cwd.path();
 
-        #[cfg(not(target_os = "windows"))]
+        #[cfg(target_os = "macos")]
         let tmp_dir = TempDirIn::new("/private/tmp/t");
         #[cfg(target_os = "windows")]
         let tmp_dir = TempDirIn::new("C:\\Users\\AppData\\Local\\Temp\\t");
+        #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+        let tmp_dir = TempDirIn::new("/tmp/t");
 
         let empty_path = Path::new("");
         assert!(

@@ -225,8 +225,6 @@ pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, R
 
     let mut real_path = PathBuf::new();
 
-    // add_root(&mut real_path);
-
     if path.is_relative() {
         real_path.push(cwd);
     }
