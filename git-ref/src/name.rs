@@ -82,39 +82,24 @@ impl<'a> FullNameRef<'a> {
             }
         }
 
-        if self.0.starts_with(Category::Note.prefix()) {
-            Some((
-                Category::Note,
-                self.0
-                    .strip_prefix(b"refs/")
-                    .expect("we checked for refs/notes above")
-                    .as_bstr(),
-            ))
-        } else if self.0.starts_with(Category::Bisect.prefix()) {
-            Some((
-                Category::Bisect,
-                self.0
-                    .strip_prefix(b"refs/")
-                    .expect("we checked for refs/bisect above")
-                    .as_bstr(),
-            ))
-        } else if self.0.starts_with(Category::Rewritten.prefix()) {
-            Some((
-                Category::Rewritten,
-                self.0
-                    .strip_prefix(b"refs/")
-                    .expect("we checked for refs/rewritten above")
-                    .as_bstr(),
-            ))
-        } else if self.0.starts_with(Category::WorktreePrivate.prefix()) {
-            Some((
-                Category::WorktreePrivate,
-                self.0
-                    .strip_prefix(b"refs/")
-                    .expect("we checked for refs/worktree above")
-                    .as_bstr(),
-            ))
-        } else if is_pseudo_ref(self.0.as_bstr()) {
+        for category in &[
+            Category::Note,
+            Category::Bisect,
+            Category::WorktreePrivate,
+            Category::Rewritten,
+        ] {
+            if self.0.starts_with(category.prefix().as_ref()) {
+                return Some((
+                    *category,
+                    self.0
+                        .strip_prefix(b"refs/")
+                        .expect("we checked for refs/* above")
+                        .as_bstr(),
+                ));
+            }
+        }
+
+        if is_pseudo_ref(self.0.as_bstr()) {
             Some((Category::PseudoRef, self.0.as_bstr()))
         } else if let Some(shortened) = self.0.strip_prefix(Category::MainPseudoRef.prefix().as_ref()) {
             is_pseudo_ref(shortened).then(|| (Category::MainPseudoRef, shortened.as_bstr()))
