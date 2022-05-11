@@ -85,6 +85,7 @@ fn assorted() {
     }
 
     {
+        // TODO: turn into its own testcase
         let cwd = tempdir().unwrap();
         let tmp_dir = CanonicalizedTempDir::new();
         let link_destination = tmp_dir.join("p").join("q");
@@ -102,6 +103,7 @@ fn assorted() {
     }
 
     {
+        // TODO: turn into its own testcase
         // TODO: can be changed to assure relative symlinks are indeed relative to the symlink location,
         //       and not to the cwd?
         let cwd = tempdir().unwrap();
@@ -118,6 +120,7 @@ fn assorted() {
     }
 
     {
+        // TODO: turn into its own testcase
         let cwd = tempdir().unwrap();
         let link_name = "x_link";
         create_symlink(
