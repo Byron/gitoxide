@@ -54,19 +54,13 @@ pub(crate) mod function {
                         }
                         let mut link_destination = std::fs::read_link(real_path.as_path())?;
                         if link_destination.is_absolute() {
-                            real_path.clear(); // TODO: test justifying this line and the one below
-                            real_path.extend(link_destination.components());
-
-                            link_destination.extend(components);
-                            path_backing = link_destination;
-                            components = path_backing.components();
+                            real_path.clear(); // TODO: test justifying this line
                         } else {
                             assert!(real_path.pop(), "we just pushed a component");
-
-                            link_destination.extend(components);
-                            path_backing = link_destination;
-                            components = path_backing.components();
                         }
+                        link_destination.extend(components);
+                        path_backing = link_destination;
+                        components = path_backing.components();
                     }
                 }
             }

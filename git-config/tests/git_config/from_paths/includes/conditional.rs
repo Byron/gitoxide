@@ -166,7 +166,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = Path::new("/a/b/c/d/.git");
-        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
         assert_eq!(
             config.string("core", None, "i"),
             Some(cow_str("case-i-match")),
@@ -176,7 +176,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = Path::new("/a/b/c/d/.git");
-        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
         assert_eq!(
             config.integer("core", None, "c"),
             Some(Ok(1)),

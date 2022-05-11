@@ -125,7 +125,7 @@ fn assorted() {
         let link_name = "x_link";
         create_symlink(
             &cwd.path().join(link_name),
-            &Path::new("link destination does not exist"),
+            Path::new("link destination does not exist"),
         );
         let relative_path_with_symlink = Path::new(link_name).join(".git");
         assert!(
