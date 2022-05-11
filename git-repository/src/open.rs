@@ -236,11 +236,12 @@ impl crate::ThreadSafeRepository {
         //       This would be something read in later as have to first check for extensions. Also this means
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
         //       as it may have its own configuration. That's fine actually.
-        let common_dir = git_discover::path::from_plain_file(git_dir.join("commondir")).transpose()?;
-        let common_dir = common_dir.map(|cd| git_dir.join(cd));
-        let common_dir_ref = common_dir.as_deref().unwrap_or_else(|| &git_dir);
+        let common_dir = git_discover::path::from_plain_file(git_dir.join("commondir"))
+            .transpose()?
+            .map(|cd| git_dir.join(cd));
+        let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
         let config = crate::config::Cache::new(
-            &common_dir_ref,
+            common_dir_ref,
             env.xdg_config_home.clone(),
             env.home.clone(),
             crate::path::install_dir().ok().as_deref(),
@@ -310,7 +311,7 @@ impl crate::ThreadSafeRepository {
                     use_multi_pack_index: config.use_multi_pack_index,
                 },
             )?),
-            common_dir: common_dir,
+            common_dir,
             refs,
             work_tree: worktree_dir,
             config,
