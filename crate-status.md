@@ -492,9 +492,9 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [ ] special handling of `FETCH_HEAD` and `MERGE_HEAD`
     * [x] iterate refs with optional prefix
     * [ ] [worktree support]
-        * [ ] support multiple bases and classify refs to know which one to use
-        * [ ] special support for ref iteration to not accidentally (see iterator setup)
-        * [ ] potentially special support for iteration to support listing worktree refs for bisect/rewritten,… from the main worktree
+        * [ ] support multiple bases and classify refs to know which base to use when building a ref path
+        * [ ] support for ref iteration merging common and private refs seamlessly.
+        * [ ] refuse to pack worktree-private refs
     * ~~symbolic ref support, using symbolic links~~
         * This is a legacy feature which is not in use anymore.
     * **transactions** 
