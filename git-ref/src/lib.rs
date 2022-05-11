@@ -62,23 +62,23 @@ pub mod store {
 
     /// A thread-local handle for interacting with a [`Store`][crate::Store] to find and iterate references.
     #[derive(Clone)]
-    pub struct Handle {
+    #[allow(dead_code)]
+    pub(crate) struct Handle {
         /// A way to access shared state with the requirement that interior mutability doesn't leak or is incorporated into error types
         /// if it could. The latter can't happen if references to said internal aren't ever returned.
         state: handle::State,
     }
 
+    #[allow(dead_code)]
     pub(crate) enum State {
         Loose { store: file::Store },
     }
 
-    #[path = "general/mod.rs"]
     pub(crate) mod general;
 
     ///
     #[path = "general/handle/mod.rs"]
     mod handle;
-
     pub use handle::find;
 
     use crate::file;
@@ -86,7 +86,8 @@ pub mod store {
 
 /// The git reference store.
 /// TODO: Figure out if handles are needed at all, which depends on the ref-table implementation.
-pub struct Store {
+#[allow(dead_code)]
+pub(crate) struct Store {
     inner: store::State,
 }
 
