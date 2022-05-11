@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
@@ -194,7 +193,7 @@ impl crate::ThreadSafeRepository {
     ///
     /// Note that this will read various `GIT_*` environment variables to check for overrides, and is probably most useful when implementing
     /// custom hooks.
-    // TODO: tests, with hooks
+    // TODO: tests, with hooks, GIT_QUARANTINE for ref-log and transaction control (needs git-sec support to remove write access in git-ref)
     pub fn open_with_environment_overrides(
         fallback_directory: impl Into<PathBuf>,
         trust_map: git_sec::trust::Mapping<Options>,
@@ -238,10 +237,8 @@ impl crate::ThreadSafeRepository {
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
         //       as it may have its own configuration. That's fine actually.
         let common_dir = git_discover::path::from_plain_file(git_dir.join("commondir")).transpose()?;
-        let common_dir_ref = common_dir
-            .as_deref()
-            .map(|cmn| Cow::Owned(git_dir.join(cmn)))
-            .unwrap_or_else(|| Cow::Borrowed(&git_dir));
+        let common_dir = common_dir.map(|cd| git_dir.join(cd));
+        let common_dir_ref = common_dir.as_deref().unwrap_or_else(|| &git_dir);
         let config = crate::config::Cache::new(
             &common_dir_ref,
             env.xdg_config_home.clone(),
@@ -259,15 +256,19 @@ impl crate::ThreadSafeRepository {
             None => {}
         }
 
-        let refs = crate::RefStore::at(
-            &git_dir,
-            if worktree_dir.is_none() {
+        let refs = {
+            let reflog = if worktree_dir.is_none() {
                 git_ref::store::WriteReflog::Disable
             } else {
                 git_ref::store::WriteReflog::Normal
-            },
-            config.object_hash,
-        );
+            };
+            match &common_dir {
+                Some(common_dir) => {
+                    crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, config.object_hash)
+                }
+                None => crate::RefStore::at(&git_dir, reflog, config.object_hash),
+            }
+        };
 
         let replacements = replacement_objects
             .clone()
@@ -309,7 +310,7 @@ impl crate::ThreadSafeRepository {
                     use_multi_pack_index: config.use_multi_pack_index,
                 },
             )?),
-            common_dir: common_dir.map(|cd| git_dir.join(cd)),
+            common_dir: common_dir,
             refs,
             work_tree: worktree_dir,
             config,
