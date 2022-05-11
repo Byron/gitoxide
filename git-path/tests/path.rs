@@ -1,6 +1,6 @@
 mod convert {
     use bstr::ByteSlice;
-    use git_path::{realpath, to_unix_separators, to_windows_separators, RealPathError};
+    use git_path::{realpath, realpath::Error, to_unix_separators, to_windows_separators};
     use std::fs::create_dir_all;
     use std::ops::Deref;
     use std::path::{Path, PathBuf};
@@ -51,7 +51,7 @@ mod convert {
         let tmp_dir = CanonicalizedTempDir::new();
         let empty_path = Path::new("");
         assert!(
-            matches!(realpath(empty_path, cwd, 8).err().unwrap(), RealPathError::EmptyPath),
+            matches!(realpath(empty_path, cwd, 8).err().unwrap(), Error::EmptyPath),
             "Empty path is error"
         );
 
@@ -129,7 +129,7 @@ mod convert {
         assert!(
             matches!(
                 realpath(relative_path_with_symlink.as_path(), cwd, 0).err().unwrap(),
-                RealPathError::MaxSymlinksExceeded { max_symlinks: 0 }
+                Error::MaxSymlinksExceeded { max_symlinks: 0 }
             ),
             "max num of symlinks is exceeded"
         );
