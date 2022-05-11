@@ -43,7 +43,7 @@ impl<'a> FullNameRef<'a> {
     pub fn shorten(&self) -> &'a BStr {
         self.category_and_short_name()
             .map(|(_, short)| short)
-            .unwrap_or(self.0.as_bstr())
+            .unwrap_or_else(|| self.0.as_bstr())
     }
 
     /// Classify this name, or return `None` if it's unclassified.
