@@ -1,39 +1,28 @@
 mod convert {
     use bstr::ByteSlice;
     use git_path::{real_path, to_unix_separators, to_windows_separators, RealPathError};
-    use std::fs::{create_dir_all, remove_dir_all};
+    use std::fs::create_dir_all;
     use std::ops::Deref;
-    #[cfg(not(target_os = "windows"))]
-    use std::os::unix::fs;
-    #[cfg(target_os = "windows")]
-    use std::os::windows::fs;
     use std::path::{Path, PathBuf};
     use tempfile::{tempdir, tempdir_in};
 
-    struct TempDirIn<'a> {
-        pub path: &'a Path,
+    struct CanonicalizedTempDir {
+        pub dir: tempfile::TempDir,
     }
 
-    impl<'a> TempDirIn<'a> {
-        fn new(path: &'a str) -> Self {
-            let path = Path::new(path);
-            create_dir_all(path).unwrap();
-            tempdir_in(path).unwrap();
-            Self { path }
+    impl CanonicalizedTempDir {
+        fn new() -> Self {
+            let path = std::env::temp_dir().canonicalize().unwrap();
+            let dir = tempdir_in(path).unwrap();
+            Self { dir }
         }
     }
 
-    impl Deref for TempDirIn<'_> {
+    impl Deref for CanonicalizedTempDir {
         type Target = Path;
 
         fn deref(&self) -> &Self::Target {
-            self.path
-        }
-    }
-
-    impl Drop for TempDirIn<'_> {
-        fn drop(&mut self) {
-            remove_dir_all(&self.path).unwrap();
+            self.dir.path()
         }
     }
 
@@ -59,13 +48,7 @@ mod convert {
         let cwd = tempdir().unwrap();
         let cwd = cwd.path();
 
-        #[cfg(target_os = "macos")]
-        let tmp_dir = TempDirIn::new("/private/tmp/t");
-        #[cfg(target_os = "windows")]
-        let tmp_dir = TempDirIn::new("C:\\Users\\AppData\\Local\\Temp\\t");
-        #[cfg(not(any(target_os = "macos", target_os = "windows")))]
-        let tmp_dir = TempDirIn::new("/tmp/t");
-
+        let tmp_dir = CanonicalizedTempDir::new();
         let empty_path = Path::new("");
         assert!(
             matches!(real_path(empty_path, cwd, 8).err().unwrap(), RealPathError::EmptyPath),
@@ -173,9 +156,9 @@ mod convert {
 
     fn create_symlink(link: &Path, link_dest: &Path) {
         #[cfg(not(target_os = "windows"))]
-        fs::symlink(link_dest, &link).unwrap();
+        std::os::unix::fs::symlink(link_dest, &link).unwrap();
         #[cfg(target_os = "windows")]
-        fs::symlink_file(link_dest, &link).unwrap();
+        std::os::windows::fs::symlink_file(link_dest, &link).unwrap();
     }
 
     mod absolutize {
