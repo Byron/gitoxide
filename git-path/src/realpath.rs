@@ -31,57 +31,43 @@ pub(crate) mod function {
             real_path.push(cwd);
         }
 
-        fn traverse(
-            mut input_path: std::path::Components<'_>,
-            mut num_symlinks: u8,
-            max_symlinks: u8,
-            real_path: &mut PathBuf,
-        ) -> Result<(), Error> {
-            match input_path.next() {
-                None => Ok(()),
-                Some(part) => match part {
-                    RootDir | Prefix(_) => {
-                        real_path.push(part);
-                        traverse(input_path, num_symlinks, max_symlinks, real_path)
+        let mut num_symlinks = 0;
+        let mut path_backing: PathBuf;
+        let mut components = path.components();
+        while let Some(component) = components.next() {
+            match component {
+                part @ RootDir | part @ Prefix(_) => real_path.push(part),
+                CurDir => {}
+                ParentDir => {
+                    if !real_path.pop() {
+                        return Err(Error::MissingParent {
+                            path: real_path.clone(),
+                        });
                     }
-                    CurDir => traverse(input_path, num_symlinks, max_symlinks, real_path),
-                    ParentDir => {
-                        if !real_path.pop() {
-                            return Err(Error::MissingParent {
-                                path: real_path.clone(),
-                            });
+                }
+                Normal(part) => {
+                    real_path.push(part);
+                    if real_path.is_symlink() {
+                        num_symlinks += 1;
+                        if num_symlinks > max_symlinks {
+                            return Err(Error::MaxSymlinksExceeded { max_symlinks });
                         }
-                        traverse(input_path, num_symlinks, max_symlinks, real_path)
-                    }
-                    Normal(part) => {
-                        real_path.push(part);
-                        if real_path.is_symlink() {
-                            num_symlinks += 1;
-                            if num_symlinks > max_symlinks {
-                                return Err(Error::MaxSymlinksExceeded { max_symlinks });
-                            }
-                            let mut resolved_symlink = std::fs::read_link(real_path.as_path())?;
-                            if resolved_symlink.is_absolute() {
-                                *real_path = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
-                            } else {
-                                *real_path = real_path
-                                    .parent()
-                                    .ok_or_else(|| Error::MissingParent {
-                                        path: real_path.clone(),
-                                    })?
-                                    .into();
-                            }
-                            resolved_symlink.push(input_path.collect::<PathBuf>());
-                            traverse(resolved_symlink.components(), num_symlinks, max_symlinks, real_path)
+                        let mut link_destination = std::fs::read_link(real_path.as_path())?;
+                        if link_destination.is_absolute() {
+                            real_path = link_destination.clone();
+                            link_destination.extend(components);
+                            path_backing = link_destination;
+                            components = path_backing.components();
                         } else {
-                            traverse(input_path, num_symlinks, max_symlinks, real_path)
+                            assert!(real_path.pop(), "we just pushed a component");
+                            link_destination.extend(components);
+                            path_backing = link_destination;
+                            components = path_backing.components();
                         }
                     }
-                },
+                }
             }
         }
-
-        traverse(path.components(), 0, max_symlinks, &mut real_path)?;
         Ok(real_path)
     }
 }
