@@ -46,14 +46,12 @@ pub(crate) mod function {
                     }
                     CurDir => traverse(input_path, num_symlinks, max_symlinks, real_path),
                     ParentDir => {
-                        let mut parent_path =
-                            PathBuf::from(real_path.parent().ok_or_else(|| Error::MissingParent {
+                        if !real_path.pop() {
+                            return Err(Error::MissingParent {
                                 path: real_path.clone(),
-                            })?);
-                        let new_path = std::mem::take(real_path);
-                        traverse(input_path, num_symlinks, max_symlinks, &mut parent_path)?;
-                        *real_path = new_path.join(parent_path);
-                        Ok(())
+                            });
+                        }
+                        traverse(input_path, num_symlinks, max_symlinks, real_path)
                     }
                     Normal(part) => {
                         real_path.push(part);
