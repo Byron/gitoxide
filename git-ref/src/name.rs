@@ -22,6 +22,7 @@ impl Category {
             Category::Note => b"refs/notes/".as_bstr(),
             Category::MainPseudoRef => b"main-worktree/".as_bstr(),
             Category::PseudoRef => b"".as_bstr(),
+            Category::LinkedPseudoRef => b"worktrees/".as_bstr(),
         }
     }
 }
@@ -77,6 +78,13 @@ impl<'a> FullNameRef<'a> {
             Some((Category::PseudoRef, self.0.as_bstr()))
         } else if let Some(shortened) = self.0.strip_prefix(Category::MainPseudoRef.prefix().as_ref()) {
             is_pseudo_ref(shortened).then(|| (Category::MainPseudoRef, shortened.as_bstr()))
+        } else if let Some(shortened_with_worktree_name) =
+            self.0.strip_prefix(Category::LinkedPseudoRef.prefix().as_ref())
+        {
+            let shortened = shortened_with_worktree_name
+                .find_byte(b'/')
+                .map(|pos| shortened_with_worktree_name[pos + 1..].as_bstr())?;
+            is_pseudo_ref(shortened).then(|| (Category::LinkedPseudoRef, shortened.as_bstr()))
         } else {
             None
         }

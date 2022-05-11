@@ -134,12 +134,12 @@ pub enum Category {
     Note,
     /// Something outside of `ref/` in the current worktree, typically `HEAD`.
     PseudoRef,
-    /// A `PseudoRef`, but referenced so that it will always refer to the main worktree, by
+    /// A `PseudoRef`, but referenced so that it will always refer to the main worktree by
     /// prefixing it with `main-worktree/`.
     MainPseudoRef,
-    // REF_TYPE_PER_WORKTREE,	  /* refs inside refs/ but not shared       */
-    // REF_TYPE_OTHER_PSEUDOREF, /* pseudo refs from other worktrees       */
-    // REF_TYPE_NORMAL,	  /* normal/shared refs inside refs/        */
+    /// A `PseudoRef` in another _linked_ worktree, never in the main one, like `worktrees/<id>/HEAD`.
+    LinkedPseudoRef, // REF_TYPE_PER_WORKTREE,	  /* refs inside refs/ but not shared       */
+                     // REF_TYPE_NORMAL,	  /* normal/shared refs inside refs/        */
 }
 
 /// Denotes a ref target, equivalent to [`Kind`], but with mutable data.

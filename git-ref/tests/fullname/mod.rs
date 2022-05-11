@@ -18,6 +18,8 @@ fn shorten_and_category() {
         ("FETCH_HEAD", "FETCH_HEAD", Category::PseudoRef),
         ("main-worktree/HEAD", "HEAD", Category::MainPseudoRef),
         ("main-worktree/FETCH_HEAD", "FETCH_HEAD", Category::MainPseudoRef),
+        ("worktrees/name/HEAD", "HEAD", Category::LinkedPseudoRef),
+        ("worktrees/name/FETCH_HEAD", "FETCH_HEAD", Category::LinkedPseudoRef),
     ] {
         let name: git_ref::FullName = input.try_into().unwrap();
         let category = Some(category);
@@ -31,7 +33,12 @@ fn shorten_and_category() {
         assert_eq!(name.to_ref().category(), category);
     }
 
-    for special in ["hello/world", "main-worktree/head", "main-worktree/refs/heads/main"] {
+    for special in [
+        "hello/world",
+        "main-worktree/head",
+        "main-worktree/refs/heads/main",
+        "worktrees/name/refs/heads/main",
+    ] {
         let name: git_ref::FullName = special.try_into().unwrap();
         assert_eq!(
             name.shorten(),
