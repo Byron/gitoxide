@@ -10,6 +10,9 @@ struct CanonicalizedTempDir {
 
 impl CanonicalizedTempDir {
     fn new() -> Self {
+        #[cfg(windows)]
+        let canonicalized_tempdir = std::env::temp_dir();
+        #[cfg(not(windows))]
         let canonicalized_tempdir = std::env::temp_dir().canonicalize().unwrap();
         let dir = tempdir_in(canonicalized_tempdir).unwrap();
         Self { dir }
