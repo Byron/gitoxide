@@ -35,10 +35,10 @@ pub(crate) mod function {
             mut input_path: std::path::Components<'_>,
             mut num_symlinks: u8,
             max_symlinks: u8,
-            mut real_path: PathBuf,
-        ) -> Result<PathBuf, Error> {
+            real_path: &mut PathBuf,
+        ) -> Result<(), Error> {
             match input_path.next() {
-                None => Ok(real_path),
+                None => Ok(()),
                 Some(part) => match part {
                     RootDir | Prefix(_) => {
                         real_path.push(part);
@@ -46,10 +46,14 @@ pub(crate) mod function {
                     }
                     CurDir => traverse(input_path, num_symlinks, max_symlinks, real_path),
                     ParentDir => {
-                        let parent_path = PathBuf::from(real_path.parent().ok_or_else(|| Error::MissingParent {
-                            path: real_path.clone(),
-                        })?);
-                        Ok(real_path.join(traverse(input_path, num_symlinks, max_symlinks, parent_path)?))
+                        let mut parent_path =
+                            PathBuf::from(real_path.parent().ok_or_else(|| Error::MissingParent {
+                                path: real_path.clone(),
+                            })?);
+                        let new_path = std::mem::take(real_path);
+                        traverse(input_path, num_symlinks, max_symlinks, &mut parent_path)?;
+                        *real_path = new_path.join(parent_path);
+                        Ok(())
                     }
                     Normal(part) => {
                         real_path.push(part);
@@ -60,9 +64,9 @@ pub(crate) mod function {
                             }
                             let mut resolved_symlink = std::fs::read_link(real_path.as_path())?;
                             if resolved_symlink.is_absolute() {
-                                real_path = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
+                                *real_path = PathBuf::from(std::path::MAIN_SEPARATOR.to_string());
                             } else {
-                                real_path = real_path
+                                *real_path = real_path
                                     .parent()
                                     .ok_or_else(|| Error::MissingParent {
                                         path: real_path.clone(),
@@ -79,6 +83,7 @@ pub(crate) mod function {
             }
         }
 
-        traverse(path.components(), 0, max_symlinks, real_path)
+        traverse(path.components(), 0, max_symlinks, &mut real_path)?;
+        Ok(real_path)
     }
 }
