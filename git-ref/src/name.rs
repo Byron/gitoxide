@@ -23,7 +23,23 @@ impl Category {
             Category::MainPseudoRef => b"main-worktree/".as_bstr(),
             Category::PseudoRef => b"".as_bstr(),
             Category::LinkedPseudoRef => b"worktrees/".as_bstr(),
+            Category::Bisect => b"refs/bisect/".as_bstr(),
+            Category::Rewritten => b"refs/rewritten/".as_bstr(),
+            Category::WorktreePrivate => b"refs/worktree/".as_bstr(),
         }
+    }
+
+    /// Returns true if the category is private to their worktrees.
+    pub fn is_worktree_private(&self) -> bool {
+        matches!(
+            self,
+            Category::MainPseudoRef
+                | Category::PseudoRef
+                | Category::LinkedPseudoRef
+                | Category::WorktreePrivate
+                | Category::Rewritten
+                | Category::Bisect
+        )
     }
 }
 
@@ -72,6 +88,30 @@ impl<'a> FullNameRef<'a> {
                 self.0
                     .strip_prefix(b"refs/")
                     .expect("we checked for refs/notes above")
+                    .as_bstr(),
+            ))
+        } else if self.0.starts_with(Category::Bisect.prefix()) {
+            Some((
+                Category::Bisect,
+                self.0
+                    .strip_prefix(b"refs/")
+                    .expect("we checked for refs/bisect above")
+                    .as_bstr(),
+            ))
+        } else if self.0.starts_with(Category::Rewritten.prefix()) {
+            Some((
+                Category::Rewritten,
+                self.0
+                    .strip_prefix(b"refs/")
+                    .expect("we checked for refs/rewritten above")
+                    .as_bstr(),
+            ))
+        } else if self.0.starts_with(Category::WorktreePrivate.prefix()) {
+            Some((
+                Category::WorktreePrivate,
+                self.0
+                    .strip_prefix(b"refs/")
+                    .expect("we checked for refs/worktree above")
                     .as_bstr(),
             ))
         } else if is_pseudo_ref(self.0.as_bstr()) {

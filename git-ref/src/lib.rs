@@ -138,8 +138,14 @@ pub enum Category {
     /// prefixing it with `main-worktree/`.
     MainPseudoRef,
     /// A `PseudoRef` in another _linked_ worktree, never in the main one, like `worktrees/<id>/HEAD`.
-    LinkedPseudoRef, // REF_TYPE_PER_WORKTREE,	  /* refs inside refs/ but not shared       */
-                     // REF_TYPE_NORMAL,	  /* normal/shared refs inside refs/        */
+    LinkedPseudoRef,
+    /// A ref that is private to each worktree (_linked_ or _main_), with `refs/bisect/` prefix
+    Bisect,
+    /// A ref that is private to each worktree (_linked_ or _main_), with `refs/rewritten/` prefix
+    Rewritten,
+    /// A ref that is private to each worktree (_linked_ or _main_), with `refs/worktree/` prefix
+    WorktreePrivate,
+    // REF_TYPE_NORMAL,	  /* normal/shared refs inside refs/        */
 }
 
 /// Denotes a ref target, equivalent to [`Kind`], but with mutable data.
