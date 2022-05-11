@@ -16,7 +16,9 @@ pub struct Store {
     /// The location at which loose references can be found as per conventions of a typical git repository.
     ///
     /// Typical base paths are `.git` repository folders.
-    base: PathBuf,
+    git_dir: PathBuf,
+    /// Possibly the common directory at which to find shared references. Only set if this `Store` is for a work tree.
+    common_dir: Option<PathBuf>,
     /// The kind of hash to assume in a couple of situations. Note that currently we are able to read any valid hash from files
     /// which might want to change one day.
     object_hash: git_hash::Kind,
@@ -37,9 +39,18 @@ mod access {
     use crate::file;
 
     impl file::Store {
-        /// Return the root at which all references are loaded.
-        pub fn base(&self) -> &Path {
-            &self.base
+        /// Return the `.git` directory at which all references are loaded.
+        ///
+        /// For worktrees, this is the linked work-tree private ref location,
+        /// then [`common_dir()`][file::Store::common_dir()] is `Some(parent_git_dir)`.
+        pub fn git_dir(&self) -> &Path {
+            &self.git_dir
+        }
+
+        /// If this is a linked work tree, there will be `Some(git_dir)` pointing to the parent repository,
+        /// while [`git_dir()`][file::Store::git_dir()] points to the location holding linked work-tree private references.
+        pub fn common_dir(&self) -> Option<&Path> {
+            self.common_dir.as_deref()
         }
     }
 }

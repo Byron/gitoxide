@@ -95,7 +95,7 @@ impl ReferenceExt for Reference {
                     while let Some(next) = cursor.follow_packed(store, packed) {
                         let next = next?;
                         if seen.contains(&next.name) {
-                            return Err(peel::to_id::Error::Cycle(store.base.join(cursor.name.to_path())));
+                            return Err(peel::to_id::Error::Cycle(store.git_dir.join(cursor.name.to_path())));
                         }
                         *cursor = next;
                         seen.insert(cursor.name.clone());

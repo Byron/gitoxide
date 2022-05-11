@@ -156,7 +156,7 @@ impl file::Store {
         match self.namespace.as_ref() {
             Some(namespace) => self.iter_prefixed_unvalidated(namespace.to_path(), (None, None), packed),
             None => Ok(LooseThenPacked {
-                base: &self.base,
+                base: &self.git_dir,
                 packed: match packed {
                     Some(packed) => Some(
                         packed
@@ -168,7 +168,7 @@ impl file::Store {
                 },
                 loose: loose::iter::SortedLoosePaths::at_root_with_filename_prefix(
                     self.refs_dir(),
-                    self.base.to_owned(),
+                    self.git_dir.to_owned(),
                     None,
                 )
                 .peekable(),
@@ -188,12 +188,12 @@ impl file::Store {
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         match self.namespace.as_ref() {
             None => {
-                let (root, remainder) = self.validate_prefix(&self.base, prefix.as_ref())?;
+                let (root, remainder) = self.validate_prefix(&self.git_dir, prefix.as_ref())?;
                 self.iter_prefixed_unvalidated(prefix, (root.into(), remainder), packed)
             }
             Some(namespace) => {
                 let prefix = namespace.to_owned().into_namespaced_prefix(prefix);
-                let (root, remainder) = self.validate_prefix(&self.base, &prefix)?;
+                let (root, remainder) = self.validate_prefix(&self.git_dir, &prefix)?;
                 self.iter_prefixed_unvalidated(prefix, (root.into(), remainder), packed)
             }
         }
@@ -207,7 +207,7 @@ impl file::Store {
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         let packed_prefix = path_to_name(prefix.as_ref());
         Ok(LooseThenPacked {
-            base: &self.base,
+            base: &self.git_dir,
             packed: match packed {
                 Some(packed) => Some(
                     packed
@@ -220,8 +220,8 @@ impl file::Store {
             loose: loose::iter::SortedLoosePaths::at_root_with_filename_prefix(
                 loose_root_and_filename_prefix
                     .0
-                    .unwrap_or_else(|| self.base.join(prefix)),
-                self.base.to_owned(),
+                    .unwrap_or_else(|| self.git_dir.join(prefix)),
+                self.git_dir.to_owned(),
                 loose_root_and_filename_prefix.1,
             )
             .peekable(),

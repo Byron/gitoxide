@@ -55,7 +55,7 @@ impl<'s> Transaction<'s> {
                 let lock = git_lock::Marker::acquire_to_hold_resource(
                     store.reference_path(relative_path),
                     lock_fail_mode,
-                    Some(store.base.to_owned()),
+                    Some(store.git_dir.to_owned()),
                 )
                 .map_err(|err| Error::LockAcquire {
                     err,
@@ -100,7 +100,7 @@ impl<'s> Transaction<'s> {
                 let mut lock = git_lock::File::acquire_to_update_resource(
                     store.reference_path(relative_path),
                     lock_fail_mode,
-                    Some(store.base.to_owned()),
+                    Some(store.git_dir.to_owned()),
                 )
                 .map_err(|err| Error::LockAcquire {
                     err,

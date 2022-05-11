@@ -22,7 +22,7 @@ fn reflock(store: &file::Store, full_name: &str) -> Result<git_lock::Marker> {
     git_lock::Marker::acquire_to_hold_resource(
         store.reference_path(full_name.to_path()),
         Fail::Immediately,
-        Some(store.base.clone()),
+        Some(store.git_dir.clone()),
     )
     .map_err(Into::into)
 }

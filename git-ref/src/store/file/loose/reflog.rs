@@ -175,7 +175,7 @@ pub mod create_or_update {
         fn reflock_resource_full_name(&self, reflock: &git_lock::Marker) -> PathBuf {
             reflock
                 .resource_path()
-                .strip_prefix(&self.base)
+                .strip_prefix(&self.git_dir)
                 .expect("lock must be held within this store")
                 .to_owned()
         }
@@ -184,7 +184,7 @@ pub mod create_or_update {
             self.reflog_path_inner(
                 reflock
                     .resource_path()
-                    .strip_prefix(&self.base)
+                    .strip_prefix(&self.git_dir)
                     .expect("lock must be held within this store"),
             )
         }
@@ -196,7 +196,7 @@ pub mod create_or_update {
 
         /// Returns the base paths for all reflogs
         pub(in crate::store_impl::file) fn reflog_root(&self) -> PathBuf {
-            self.base.join("logs")
+            self.git_dir.join("logs")
         }
     }
 

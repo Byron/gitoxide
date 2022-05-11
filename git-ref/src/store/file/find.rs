@@ -171,8 +171,8 @@ impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
     pub(crate) fn reference_path(&self, name: &Path) -> PathBuf {
         match &self.namespace {
-            None => self.base.join(name),
-            Some(namespace) => self.base.join(namespace.to_path()).join(name),
+            None => self.git_dir.join(name),
+            Some(namespace) => self.git_dir.join(namespace.to_path()).join(name),
         }
     }
 
