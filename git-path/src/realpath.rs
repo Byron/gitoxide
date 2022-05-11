@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 /// the error returned by [`realpath()`][super::realpath()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -8,8 +10,8 @@ pub enum Error {
     ReadLink(#[from] std::io::Error),
     #[error("Empty is not a valid path")]
     EmptyPath,
-    #[error("Parent component of {} does not exist", .path)]
-    MissingParent { path: String },
+    #[error("Parent component of {} does not exist", .path.display())]
+    MissingParent { path: PathBuf },
 }
 
 pub(crate) mod function {
@@ -18,15 +20,13 @@ pub(crate) mod function {
     use std::path::{Path, PathBuf};
 
     /// TODO
-    pub fn realpath(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, Error> {
-        // TODO add test
-
+    pub fn realpath(path: impl AsRef<Path>, cwd: impl AsRef<Path>, max_symlinks: u8) -> Result<PathBuf, Error> {
+        let path = path.as_ref();
         if path.as_os_str().is_empty() {
             return Err(Error::EmptyPath);
         }
 
         let mut real_path = PathBuf::new();
-
         if path.is_relative() {
             real_path.push(cwd);
         }
@@ -46,8 +46,8 @@ pub(crate) mod function {
                     }
                     CurDir => traverse(input_path, num_symlinks, max_symlinks, real_path),
                     ParentDir => {
-                        let parent_path = PathBuf::from(real_path.parent().ok_or(Error::MissingParent {
-                            path: real_path.to_string_lossy().into(),
+                        let parent_path = PathBuf::from(real_path.parent().ok_or_else(|| Error::MissingParent {
+                            path: real_path.clone(),
                         })?);
                         Ok(real_path.join(traverse(input_path, num_symlinks, max_symlinks, parent_path)?))
                     }
@@ -64,8 +64,8 @@ pub(crate) mod function {
                             } else {
                                 real_path = real_path
                                     .parent()
-                                    .ok_or(Error::MissingParent {
-                                        path: real_path.to_string_lossy().into(),
+                                    .ok_or_else(|| Error::MissingParent {
+                                        path: real_path.clone(),
                                     })?
                                     .into();
                             }

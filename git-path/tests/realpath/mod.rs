@@ -10,8 +10,8 @@ struct CanonicalizedTempDir {
 
 impl CanonicalizedTempDir {
     fn new() -> Self {
-        let path = std::env::temp_dir().canonicalize().unwrap();
-        let dir = tempdir_in(path).unwrap();
+        let canonicalized_tempdir = std::env::temp_dir().canonicalize().unwrap();
+        let dir = tempdir_in(canonicalized_tempdir).unwrap();
         Self { dir }
     }
 }
@@ -32,100 +32,114 @@ fn create_symlink(link: &Path, link_dest: &Path) {
 }
 
 #[test]
-fn real_path_tests() {
+fn assorted() {
     let cwd = tempdir().unwrap();
     let cwd = cwd.path();
+    let symlinks_disabled = 0;
 
-    let tmp_dir = CanonicalizedTempDir::new();
-    let empty_path = Path::new("");
     assert!(
-        matches!(realpath(empty_path, cwd, 8).err().unwrap(), Error::EmptyPath),
-        "Empty path is error"
+        matches!(realpath("", cwd, symlinks_disabled), Err(Error::EmptyPath)),
+        "Empty path is not allowed"
     );
 
-    let relative_path = Path::new("b/.git");
     assert_eq!(
-        realpath(relative_path, cwd, 8).unwrap(),
+        realpath("b/.git", cwd, symlinks_disabled).unwrap(),
         cwd.join("b").join(".git"),
         "relative paths are prefixed with current dir"
     );
 
-    let relative_path = Path::new("b//.git");
     assert_eq!(
-        realpath(relative_path, cwd, 8).unwrap(),
+        realpath("b//.git", cwd, symlinks_disabled).unwrap(),
         cwd.join("b").join(".git"),
         "empty path components are ignored"
     );
 
-    let dot_path = Path::new("./tmp/.git");
     assert_eq!(
-        realpath(dot_path, cwd, 8).unwrap(),
+        realpath("./tmp/.git", cwd, symlinks_disabled).unwrap(),
         cwd.join("tmp").join(".git"),
         "path starting with dot is relative and is prefixed with current dir"
     );
 
-    let dot_path_with_dot_in_the_middle = Path::new("./tmp/a/./.git");
     assert_eq!(
-        realpath(dot_path_with_dot_in_the_middle, cwd, 8).unwrap(),
+        realpath("./tmp/a/./.git", cwd, symlinks_disabled).unwrap(),
         cwd.join("tmp").join("a").join(".git"),
-        "dot in middle path components is ignored"
+        "all ./ path components are ignored unless they the one at the beginning of the path"
     );
 
-    let dot_dot_path = Path::new("./b/../tmp/.git");
     assert_eq!(
-        realpath(dot_dot_path, cwd, 8).unwrap(),
+        realpath("./b/../tmp/.git", cwd, symlinks_disabled).unwrap(),
         cwd.join("tmp").join(".git"),
         "dot dot goes to parent path component"
     );
 
-    #[cfg(not(target_os = "windows"))]
-    let absolute_path = Path::new("/c/d/.git");
-    #[cfg(target_os = "windows")]
-    let absolute_path = Path::new("C:\\c\\d\\.git");
-    assert_eq!(
-        realpath(absolute_path, cwd, 8).unwrap(),
-        absolute_path,
-        "absolute path without symlinks is resolved to itself, unchanged"
-    );
+    {
+        #[cfg(not(target_os = "windows"))]
+        let absolute_path = Path::new("/c/d/.git");
+        #[cfg(target_os = "windows")]
+        let absolute_path = Path::new("C:\\c\\d\\.git");
+        assert_eq!(
+            realpath(absolute_path, cwd, symlinks_disabled).unwrap(),
+            absolute_path,
+            "absolute path without symlinks has nothing to resolve and remains unchanged"
+        );
+    }
 
-    let link_destination = tmp_dir.join("p").join("q");
-    let link = "tmp_p_q_link";
-    let root_dir = cwd.join("a").join("b");
-    create_dir_all(&root_dir).unwrap();
-    create_symlink(root_dir.join(link).as_path(), &link_destination);
-    let absolute_path_with_symlink = root_dir.join(link).join(".git");
-    assert_eq!(
-        realpath(absolute_path_with_symlink.as_path(), cwd, 8).unwrap(),
-        link_destination.join(".git"),
-        "symlink to absolute path gets expanded"
-    );
+    {
+        let cwd = tempdir().unwrap();
+        let tmp_dir = CanonicalizedTempDir::new();
+        let link_destination = tmp_dir.join("p").join("q");
+        let link_name = "tmp_p_q_link";
+        let root_dir = cwd.path().join("a").join("b");
+        create_dir_all(&root_dir).unwrap();
+        let link_path = root_dir.join(link_name);
+        create_symlink(&link_path, &link_destination);
+        let max_symlinks = 8;
+        assert_eq!(
+            realpath(link_path.join(".git"), cwd, max_symlinks).unwrap(),
+            link_destination.join(".git"),
+            "symlink with absolute path gets expanded"
+        );
+    }
 
-    let link_destination = PathBuf::from("p").join("q");
-    let link = "pq_link";
-    create_symlink(cwd.join(link).as_path(), &link_destination);
-    let relative_path_with_symlink = PathBuf::from(link).join(".git");
-    assert_eq!(
-        realpath(relative_path_with_symlink.as_path(), cwd, 8).unwrap(),
-        cwd.join("p").join("q").join(".git"),
-        "symlink to relative path gets expanded"
-    );
+    {
+        // TODO: can be changed to assure relative symlinks are indeed relative to the symlink location,
+        //       and not to the cwd?
+        let cwd = tempdir().unwrap();
+        let link_destination = Path::new("p").join("q");
+        let link_name = "pq_link";
+        create_symlink(&cwd.path().join(link_name), &link_destination);
+        let relative_path_with_symlink = Path::new(link_name).join(".git");
+        let max_symlinks = 8;
+        assert_eq!(
+            realpath(relative_path_with_symlink, cwd.path(), max_symlinks).unwrap(),
+            cwd.path().join("p").join("q").join(".git"),
+            "symlink to relative path gets expanded into absolute path"
+        );
+    }
 
-    let link_destination = PathBuf::from("x");
-    let link = "x_link";
-    create_symlink(cwd.join(link).as_path(), &link_destination);
-    let relative_path_with_symlink = PathBuf::from(link).join(".git");
-    assert!(
-        matches!(
-            realpath(relative_path_with_symlink.as_path(), cwd, 0).err().unwrap(),
-            Error::MaxSymlinksExceeded { max_symlinks: 0 }
-        ),
-        "max num of symlinks is exceeded"
-    );
+    {
+        let cwd = tempdir().unwrap();
+        let link_name = "x_link";
+        create_symlink(
+            &cwd.path().join(link_name),
+            &Path::new("link destination does not exist"),
+        );
+        let relative_path_with_symlink = Path::new(link_name).join(".git");
+        assert!(
+            matches!(
+                realpath(&relative_path_with_symlink, &cwd, 0),
+                Err(Error::MaxSymlinksExceeded { max_symlinks: 0 })
+            ),
+            "symlink processing is disabled if the value is zero"
+        );
+    }
+
+    // TODO: a test with a symlink cycle to assure cycle checking works.
 }
 
 #[test]
 #[ignore]
-fn test_prefix_component() {
+fn prefix_component() {
     // todo!()
 
     // enum Component.Prefix
