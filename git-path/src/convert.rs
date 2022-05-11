@@ -216,7 +216,7 @@ pub enum RealPathError {
 }
 
 /// TODO
-pub fn real_path(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, RealPathError> {
+pub fn realpath(path: &Path, cwd: &Path, max_symlinks: u8) -> Result<PathBuf, RealPathError> {
     // TODO add test
 
     if path.as_os_str().is_empty() {

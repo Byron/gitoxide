@@ -1,6 +1,6 @@
 mod convert {
     use bstr::ByteSlice;
-    use git_path::{real_path, to_unix_separators, to_windows_separators, RealPathError};
+    use git_path::{realpath, to_unix_separators, to_windows_separators, RealPathError};
     use std::fs::create_dir_all;
     use std::ops::Deref;
     use std::path::{Path, PathBuf};
@@ -51,41 +51,41 @@ mod convert {
         let tmp_dir = CanonicalizedTempDir::new();
         let empty_path = Path::new("");
         assert!(
-            matches!(real_path(empty_path, cwd, 8).err().unwrap(), RealPathError::EmptyPath),
+            matches!(realpath(empty_path, cwd, 8).err().unwrap(), RealPathError::EmptyPath),
             "Empty path is error"
         );
 
         let relative_path = Path::new("b/.git");
         assert_eq!(
-            real_path(relative_path, cwd, 8).unwrap(),
+            realpath(relative_path, cwd, 8).unwrap(),
             cwd.join("b").join(".git"),
             "relative paths are prefixed with current dir"
         );
 
         let relative_path = Path::new("b//.git");
         assert_eq!(
-            real_path(relative_path, cwd, 8).unwrap(),
+            realpath(relative_path, cwd, 8).unwrap(),
             cwd.join("b").join(".git"),
             "empty path components are ignored"
         );
 
         let dot_path = Path::new("./tmp/.git");
         assert_eq!(
-            real_path(dot_path, cwd, 8).unwrap(),
+            realpath(dot_path, cwd, 8).unwrap(),
             cwd.join("tmp").join(".git"),
             "path starting with dot is relative and is prefixed with current dir"
         );
 
         let dot_path_with_dot_in_the_middle = Path::new("./tmp/a/./.git");
         assert_eq!(
-            real_path(dot_path_with_dot_in_the_middle, cwd, 8).unwrap(),
+            realpath(dot_path_with_dot_in_the_middle, cwd, 8).unwrap(),
             cwd.join("tmp").join("a").join(".git"),
             "dot in middle path components is ignored"
         );
 
         let dot_dot_path = Path::new("./b/../tmp/.git");
         assert_eq!(
-            real_path(dot_dot_path, cwd, 8).unwrap(),
+            realpath(dot_dot_path, cwd, 8).unwrap(),
             cwd.join("tmp").join(".git"),
             "dot dot goes to parent path component"
         );
@@ -95,7 +95,7 @@ mod convert {
         #[cfg(target_os = "windows")]
         let absolute_path = Path::new("C:\\c\\d\\.git");
         assert_eq!(
-            real_path(absolute_path, cwd, 8).unwrap(),
+            realpath(absolute_path, cwd, 8).unwrap(),
             absolute_path,
             "absolute path without symlinks is resolved to itself, unchanged"
         );
@@ -107,7 +107,7 @@ mod convert {
         create_symlink(root_dir.join(link).as_path(), &link_destination);
         let absolute_path_with_symlink = root_dir.join(link).join(".git");
         assert_eq!(
-            real_path(absolute_path_with_symlink.as_path(), cwd, 8).unwrap(),
+            realpath(absolute_path_with_symlink.as_path(), cwd, 8).unwrap(),
             link_destination.join(".git"),
             "symlink to absolute path gets expanded"
         );
@@ -117,7 +117,7 @@ mod convert {
         create_symlink(cwd.join(link).as_path(), &link_destination);
         let relative_path_with_symlink = PathBuf::from(link).join(".git");
         assert_eq!(
-            real_path(relative_path_with_symlink.as_path(), cwd, 8).unwrap(),
+            realpath(relative_path_with_symlink.as_path(), cwd, 8).unwrap(),
             cwd.join("p").join("q").join(".git"),
             "symlink to relative path gets expanded"
         );
@@ -128,7 +128,7 @@ mod convert {
         let relative_path_with_symlink = PathBuf::from(link).join(".git");
         assert!(
             matches!(
-                real_path(relative_path_with_symlink.as_path(), cwd, 0).err().unwrap(),
+                realpath(relative_path_with_symlink.as_path(), cwd, 0).err().unwrap(),
                 RealPathError::MaxSymlinksExceeded { max_symlinks: 0 }
             ),
             "max num of symlinks is exceeded"
