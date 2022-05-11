@@ -12,14 +12,16 @@ use crate::{Category, FullNameRef, PartialNameRef};
 pub type Error = git_validate::reference::name::Error;
 
 impl Category {
-    /// Return the prefix that would contain all references of our kind.
-    pub fn prefix(&self) -> &BStr {
-        match self {
+    /// Return the prefix that would contain all references of our kind, or `None` if the reference would
+    /// be directly inside of the [`git_dir()`][crate::file::Store::git_dir()].
+    pub fn prefix(&self) -> Option<&BStr> {
+        Some(match self {
             Category::Tag => b"refs/tags/".as_bstr(),
             Category::LocalBranch => b"refs/heads/".as_bstr(),
             Category::RemoteBranch => b"refs/remotes/".as_bstr(),
             Category::Note => b"refs/notes/".as_bstr(),
-        }
+            Category::PseudoRef => return None,
+        })
     }
 }
 
@@ -56,12 +58,12 @@ impl<'a> FullNameRef<'a> {
     /// the shortened name is returned as well.
     pub fn category_and_short_name(&self) -> Option<(Category, &'a BStr)> {
         for category in &[Category::Tag, Category::LocalBranch, Category::RemoteBranch] {
-            if let Some(shortened) = self.0.strip_prefix(category.prefix().as_ref()) {
+            if let Some(shortened) = self.0.strip_prefix(category.prefix().expect("prefixed").as_ref()) {
                 return Some((*category, shortened.as_bstr()));
             }
         }
 
-        if self.0.starts_with(Category::Note.prefix()) {
+        if self.0.starts_with(Category::Note.prefix().expect("prefixed")) {
             Some((
                 Category::Note,
                 self.0
@@ -69,6 +71,8 @@ impl<'a> FullNameRef<'a> {
                     .expect("we checked for refs/notes above")
                     .as_bstr(),
             ))
+        } else if !self.0.contains(&b'/') {
+            Some((Category::PseudoRef, self.0.as_bstr()))
         } else {
             None
         }

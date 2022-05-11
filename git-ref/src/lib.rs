@@ -132,6 +132,12 @@ pub enum Category {
     RemoteBranch,
     /// A tag in `refs/notes`
     Note,
+    /// Something outside of `ref/` in the current worktree.
+    PseudoRef,
+    // REF_TYPE_PER_WORKTREE,	  /* refs inside refs/ but not shared       */
+    // REF_TYPE_MAIN_PSEUDOREF,  /* pseudo refs from the main worktree     */
+    // REF_TYPE_OTHER_PSEUDOREF, /* pseudo refs from other worktrees       */
+    // REF_TYPE_NORMAL,	  /* normal/shared refs inside refs/        */
     // NOTE: when adding something here, add it to `kind()` and `strip_prefix()` too.
 }
 

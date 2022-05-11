@@ -14,6 +14,8 @@ fn shorten_and_category() {
         ("refs/heads/main", "main", Category::LocalBranch),
         ("refs/remotes/origin/main", "origin/main", Category::RemoteBranch),
         ("refs/notes/note-name", "notes/note-name", Category::Note),
+        ("HEAD", "HEAD", Category::PseudoRef),
+        ("FETCH_HEAD", "FETCH_HEAD", Category::PseudoRef),
     ] {
         let name: git_ref::FullName = input.try_into().unwrap();
         let category = Some(category);
@@ -27,7 +29,7 @@ fn shorten_and_category() {
         assert_eq!(name.to_ref().category(), category);
     }
 
-    let special = "HEAD";
+    let special = "hello/world";
     let name: git_ref::FullName = special.try_into().unwrap();
     assert_eq!(
         name.shorten(),
