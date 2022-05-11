@@ -50,3 +50,7 @@ mod convert;
 mod spec;
 
 pub use convert::*;
+
+///
+pub mod realpath;
+pub use realpath::function::realpath;
