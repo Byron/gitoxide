@@ -113,9 +113,9 @@ impl file::Store {
         let add_refs_prefix = matches!(transform, Transform::EnforceRefsPrefix);
         let full_name = partial_name.construct_full_name_ref(add_refs_prefix, inbetween, path_buf);
 
-        let content_buf = self.ref_contents2(full_name).map_err(|err| Error::ReadFileContents {
+        let content_buf = self.ref_contents(full_name).map_err(|err| Error::ReadFileContents {
             err,
-            path: self.reference_path2(full_name),
+            path: self.reference_path(full_name),
         })?;
 
         match content_buf {
@@ -178,7 +178,7 @@ impl file::Store {
     }
 
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
-    pub(crate) fn reference_path2(&self, name: FullNameRef<'_>) -> PathBuf {
+    pub(crate) fn reference_path(&self, name: FullNameRef<'_>) -> PathBuf {
         let base = self.base_for_name(name);
         let relative_path = git_path::to_native_path_on_windows(name.as_bstr());
         match &self.namespace {
@@ -187,16 +187,9 @@ impl file::Store {
         }
     }
 
-    /// Implements the logic required to transform a fully qualified refname into a filesystem path
-    pub(crate) fn reference_path(&self, name: &Path) -> PathBuf {
-        match &self.namespace {
-            None => self.git_dir.join(name),
-            Some(namespace) => self.git_dir.join(namespace.to_path()).join(name),
-        }
-    }
     /// Read the file contents with a verified full reference path and return it in the given vector if possible.
-    pub(crate) fn ref_contents2(&self, name: FullNameRef<'_>) -> io::Result<Option<Vec<u8>>> {
-        let ref_path = self.reference_path2(name);
+    pub(crate) fn ref_contents(&self, name: FullNameRef<'_>) -> io::Result<Option<Vec<u8>>> {
+        let ref_path = self.reference_path(name);
 
         match std::fs::File::open(&ref_path) {
             Ok(mut file) => {
@@ -205,25 +198,6 @@ impl file::Store {
                     return if ref_path.is_dir() { Ok(None) } else { Err(err) };
                 }
                 Ok(buf.into())
-            }
-            Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
-            #[cfg(target_os = "windows")]
-            Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => Ok(None),
-            Err(err) => Err(err),
-        }
-    }
-
-    /// Read the file contents with a verified full reference path and return it in the given vector if possible.
-    pub(crate) fn ref_contents(&self, relative_path: &Path) -> io::Result<Option<Vec<u8>>> {
-        let mut buf = Vec::new();
-        let ref_path = self.reference_path(relative_path);
-
-        match std::fs::File::open(&ref_path) {
-            Ok(mut file) => {
-                if let Err(err) = file.read_to_end(&mut buf) {
-                    return if ref_path.is_dir() { Ok(None) } else { Err(err) };
-                }
-                Ok(Some(buf))
             }
             Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
             #[cfg(target_os = "windows")]
