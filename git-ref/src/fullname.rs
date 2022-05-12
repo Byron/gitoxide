@@ -64,8 +64,8 @@ impl std::fmt::Display for FullName {
 
 impl FullName {
     /// Interpret this fully qualified reference name as partial name.
-    pub fn to_partial(&self) -> crate::PartialNameRef<'_> {
-        crate::PartialNameRef(self.0.as_bstr().into())
+    pub fn to_partial(&self) -> crate::PartialNameCow<'_> {
+        crate::PartialNameCow(self.0.as_bstr().into())
     }
 
     /// Interpret this fully qualified reference as shared full name

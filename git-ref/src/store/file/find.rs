@@ -12,7 +12,7 @@ use crate::{
         file::{loose, path_to_name},
         packed,
     },
-    FullName, PartialNameRef, Reference,
+    FullName, PartialNameCow, Reference,
 };
 
 enum Transform {
@@ -34,7 +34,7 @@ impl file::Store {
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
     pub fn try_find<'a, Name, E>(&self, partial: Name) -> Result<Option<Reference>, Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<PartialNameCow<'a>, Error = E>,
         Error: From<E>,
     {
         let packed = self.assure_packed_refs_uptodate()?;
@@ -48,7 +48,7 @@ impl file::Store {
     /// `HEAD` is always a loose reference.
     pub fn try_find_loose<'a, Name, E>(&self, partial: Name) -> Result<Option<loose::Reference>, Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<PartialNameCow<'a>, Error = E>,
         Error: From<E>,
     {
         self.find_one_with_verified_input(partial.try_into()?, None)
@@ -62,7 +62,7 @@ impl file::Store {
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<PartialNameCow<'a>, Error = E>,
         Error: From<E>,
     {
         self.find_one_with_verified_input(partial.try_into()?, packed)
@@ -70,7 +70,7 @@ impl file::Store {
 
     pub(crate) fn find_one_with_verified_input(
         &self,
-        partial_name: PartialNameRef<'_>,
+        partial_name: PartialNameCow<'_>,
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error> {
         if !partial_name.as_bstr().contains(&b'/') && partial_name.as_bstr().iter().all(|c| c.is_ascii_uppercase()) {
@@ -99,7 +99,7 @@ impl file::Store {
     fn find_inner(
         &self,
         inbetween: &str,
-        partial_name: &PartialNameRef<'_>,
+        partial_name: &PartialNameCow<'_>,
         packed: Option<&packed::Buffer>,
         transform: Transform,
     ) -> Result<Option<Reference>, Error> {
@@ -131,7 +131,7 @@ impl file::Store {
                             None => relative_path,
                             Some(namespace) => namespace.to_owned().into_namespaced_prefix(relative_path),
                         });
-                        let full_name = PartialNameRef(full_name.into_owned().into());
+                        let full_name = PartialNameCow(full_name.into_owned().into());
                         if let Some(packed_ref) = packed.try_find(full_name)? {
                             let mut res: Reference = packed_ref.into();
                             if let Some(namespace) = &self.namespace {
@@ -201,14 +201,14 @@ pub mod existing {
             file::{find, loose},
             packed,
         },
-        PartialNameRef, Reference,
+        PartialNameCow, Reference,
     };
 
     impl file::Store {
         /// Similar to [`file::Store::try_find()`] but a non-existing ref is treated as error.
         pub fn find<'a, Name, E>(&self, partial: Name) -> Result<Reference, Error>
         where
-            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            Name: TryInto<PartialNameCow<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
             let packed = self.assure_packed_refs_uptodate().map_err(find::Error::PackedOpen)?;
@@ -222,7 +222,7 @@ pub mod existing {
             packed: Option<&packed::Buffer>,
         ) -> Result<Reference, Error>
         where
-            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            Name: TryInto<PartialNameCow<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
             self.find_existing_inner(partial, packed)
@@ -231,7 +231,7 @@ pub mod existing {
         /// Similar to [`file::Store::find()`] won't handle packed-refs.
         pub fn find_loose<'a, Name, E>(&self, partial: Name) -> Result<loose::Reference, Error>
         where
-            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            Name: TryInto<PartialNameCow<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
             self.find_existing_inner(partial, None)
@@ -245,7 +245,7 @@ pub mod existing {
             packed: Option<&packed::Buffer>,
         ) -> Result<Reference, Error>
         where
-            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            Name: TryInto<PartialNameCow<'a>, Error = E>,
             crate::name::Error: From<E>,
         {
             let path = partial

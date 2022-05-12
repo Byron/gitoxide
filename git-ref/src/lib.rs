@@ -101,7 +101,7 @@ pub struct FullName(pub(crate) BString);
 pub struct FullNameRef<'a>(&'a BStr);
 /// A validated complete and fully qualified reference name, safe to use for all operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct PartialNameRef<'a>(Cow<'a, BStr>);
+pub struct PartialNameCow<'a>(Cow<'a, BStr>);
 
 /// A validated complete and fully qualified reference name, safe to use for all operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

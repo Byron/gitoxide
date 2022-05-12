@@ -2,14 +2,14 @@ use std::{borrow::Cow, convert::TryInto};
 
 use git_object::bstr::{BStr, BString, ByteSlice};
 
-use crate::{store_impl::packed, PartialNameRef};
+use crate::{store_impl::packed, PartialNameCow};
 
 /// packed-refs specific functionality
 impl packed::Buffer {
     /// Find a reference with the given `name` and return it.
     pub fn try_find<'a, Name, E>(&self, name: Name) -> Result<Option<packed::Reference<'_>>, Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<PartialNameCow<'a>, Error = E>,
         Error: From<E>,
     {
         let name = name.try_into()?;
@@ -54,7 +54,7 @@ impl packed::Buffer {
     /// Find a reference with the given `name` and return it.
     pub fn find<'a, Name, E>(&self, name: Name) -> Result<packed::Reference<'_>, existing::Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<PartialNameCow<'a>, Error = E>,
         Error: From<E>,
     {
         match self.try_find(name) {

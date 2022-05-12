@@ -2,7 +2,7 @@ use git_object::bstr::BString;
 
 use crate::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog, Target},
-    PartialNameRef,
+    PartialNameCow,
 };
 
 /// An extension trait to perform commonly used operations on edits across different ref stores.
@@ -18,7 +18,7 @@ where
     /// Note no action is performed if deref isn't specified.
     fn extend_with_splits_of_symbolic_refs(
         &mut self,
-        find: impl FnMut(PartialNameRef<'_>) -> Option<Target>,
+        find: impl FnMut(PartialNameCow<'_>) -> Option<Target>,
         make_entry: impl FnMut(usize, RefEdit) -> T,
     ) -> Result<(), std::io::Error>;
 
@@ -27,7 +27,7 @@ where
     /// Users call this to assure derefs are honored and duplicate checks are done.
     fn pre_process(
         &mut self,
-        find: impl FnMut(PartialNameRef<'_>) -> Option<Target>,
+        find: impl FnMut(PartialNameCow<'_>) -> Option<Target>,
         make_entry: impl FnMut(usize, RefEdit) -> T,
     ) -> Result<(), std::io::Error> {
         self.extend_with_splits_of_symbolic_refs(find, make_entry)?;
@@ -55,7 +55,7 @@ where
 
     fn extend_with_splits_of_symbolic_refs(
         &mut self,
-        mut find: impl FnMut(PartialNameRef<'_>) -> Option<Target>,
+        mut find: impl FnMut(PartialNameCow<'_>) -> Option<Target>,
         mut make_entry: impl FnMut(usize, RefEdit) -> E,
     ) -> Result<(), std::io::Error> {
         let mut new_edits = Vec::new();

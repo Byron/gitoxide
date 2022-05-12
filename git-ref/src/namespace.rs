@@ -5,7 +5,7 @@ use std::{
 
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
-use crate::{Namespace, PartialNameRef};
+use crate::{Namespace, PartialNameCow};
 
 impl Namespace {
     /// Dissolve ourselves into the interior representation
@@ -32,7 +32,7 @@ impl Namespace {
 /// For more information, consult the [git namespace documentation](https://git-scm.com/docs/gitnamespaces).
 pub fn expand<'a, Name, E>(namespace: Name) -> Result<Namespace, git_validate::refname::Error>
 where
-    Name: TryInto<PartialNameRef<'a>, Error = E>,
+    Name: TryInto<PartialNameCow<'a>, Error = E>,
     git_validate::refname::Error: From<E>,
 {
     let namespace = namespace.try_into()?.0;

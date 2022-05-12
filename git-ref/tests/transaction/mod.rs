@@ -4,7 +4,7 @@ mod refedit_ext {
     use git_object::bstr::{BString, ByteSlice};
     use git_ref::{
         transaction::{Change, PreviousValue, RefEdit, RefEditsExt, RefLog},
-        PartialNameRef, Target,
+        PartialNameCow, Target,
     };
 
     #[derive(Default)]
@@ -25,7 +25,7 @@ mod refedit_ext {
                 },
             }
         }
-        fn find_existing(&self, name: PartialNameRef<'_>) -> Option<Target> {
+        fn find_existing(&self, name: PartialNameCow<'_>) -> Option<Target> {
             self.targets.borrow_mut().remove(name.as_bstr())
         }
     }
@@ -100,7 +100,7 @@ mod refedit_ext {
 
         use git_ref::{
             transaction::{Change, LogChange, PreviousValue, RefEdit, RefEditsExt, RefLog},
-            FullNameRef, PartialNameRef, Target,
+            FullNameRef, PartialNameCow, Target,
         };
         use git_testtools::hex_to_id;
 
@@ -178,7 +178,7 @@ mod refedit_ext {
                 next_item: Cell<bool>,
             }
             impl Cycler {
-                fn find_existing(&self, _name: PartialNameRef<'_>) -> Option<Target> {
+                fn find_existing(&self, _name: PartialNameCow<'_>) -> Option<Target> {
                     let item: bool = self.next_item.get();
                     self.next_item.set(!item);
                     Some(Target::Symbolic(
