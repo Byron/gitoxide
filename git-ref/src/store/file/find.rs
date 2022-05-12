@@ -90,7 +90,7 @@ impl file::Store {
         }
         self.find_inner(
             "remotes",
-            &partial_name.join("HEAD").expect("HEAD is valid name"),
+            &partial_name.join("HEAD").expect("HEAD is valid name").to_ref(),
             None,
             Transform::EnforceRefsPrefix,
         )
