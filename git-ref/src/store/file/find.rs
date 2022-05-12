@@ -37,9 +37,8 @@ impl file::Store {
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
-        let path = partial.try_into()?;
         let packed = self.assure_packed_refs_uptodate()?;
-        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.as_deref())
+        self.find_one_with_verified_input(partial.try_into()?, packed.as_deref())
     }
 
     /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
@@ -52,8 +51,7 @@ impl file::Store {
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
-        let path = partial.try_into()?;
-        self.find_one_with_verified_input(path.to_partial_path().as_ref(), None)
+        self.find_one_with_verified_input(partial.try_into()?, None)
             .map(|r| r.map(|r| r.try_into().expect("only loose refs are found without pack")))
     }
 
@@ -67,28 +65,22 @@ impl file::Store {
         Name: TryInto<PartialNameRef<'a>, Error = E>,
         Error: From<E>,
     {
-        let path = partial.try_into()?;
-        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed)
+        self.find_one_with_verified_input(partial.try_into()?, packed)
     }
 
     pub(crate) fn find_one_with_verified_input(
         &self,
-        partial_path: &Path,
+        partial_name: PartialNameRef<'_>,
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error> {
-        let is_all_uppercase = partial_path
-            .to_string_lossy()
-            .as_ref()
-            .chars()
-            .all(|c| c.is_ascii_uppercase());
-        if partial_path.components().nth(1).is_none() && is_all_uppercase {
-            if let Some(r) = self.find_inner("", partial_path, None, Transform::None)? {
+        if !partial_name.as_bstr().contains(&b'/') && partial_name.as_bstr().iter().all(|c| c.is_ascii_uppercase()) {
+            if let Some(r) = self.find_inner("", &partial_name, None, Transform::None)? {
                 return Ok(Some(r));
             }
         }
 
         for inbetween in &["", "tags", "heads", "remotes"] {
-            match self.find_inner(*inbetween, partial_path, packed, Transform::EnforceRefsPrefix) {
+            match self.find_inner(*inbetween, &partial_name, packed, Transform::EnforceRefsPrefix) {
                 Ok(Some(r)) => return Ok(Some(r)),
                 Ok(None) => {
                     continue;
@@ -98,7 +90,7 @@ impl file::Store {
         }
         self.find_inner(
             "remotes",
-            &partial_path.join("HEAD"),
+            &partial_name.join("HEAD").expect("HEAD is valid name"),
             None,
             Transform::EnforceRefsPrefix,
         )
@@ -107,10 +99,11 @@ impl file::Store {
     fn find_inner(
         &self,
         inbetween: &str,
-        partial_path: &Path,
+        partial_name: &PartialNameRef<'_>,
         packed: Option<&packed::Buffer>,
         transform: Transform,
     ) -> Result<Option<Reference>, Error> {
+        let partial_path = partial_name.to_partial_path();
         let (base, is_definitely_full_path) = match transform {
             Transform::EnforceRefsPrefix => (
                 if partial_path.starts_with("refs") {
@@ -258,7 +251,8 @@ pub mod existing {
             let path = partial
                 .try_into()
                 .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
-            match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed) {
+            // TODO: remove unnecessary clone, by making `path` a proper ref.
+            match self.find_one_with_verified_input(path.clone(), packed) {
                 Ok(Some(r)) => Ok(r),
                 Ok(None) => Err(Error::NotFound(path.to_partial_path().to_owned())),
                 Err(err) => Err(err.into()),

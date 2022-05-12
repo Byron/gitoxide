@@ -139,7 +139,7 @@ impl<'a> PartialNameRef<'a> {
     }
 
     /// Append the `component` to ourselves and validate the newly created partial path.
-    pub fn join(self, component: impl AsRef<[u8]>) -> Result<Self, crate::name::Error> {
+    pub fn join(self, component: impl AsRef<[u8]>) -> Result<Self, Error> {
         let mut b = self.0.into_owned();
         b.push_byte(b'/');
         b.extend(component.as_ref());
