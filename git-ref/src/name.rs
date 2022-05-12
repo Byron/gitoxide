@@ -137,13 +137,8 @@ impl<'a> PartialNameRef<'a> {
     pub fn as_bstr(&'a self) -> &'a BStr {
         self.0.as_ref()
     }
-}
 
-impl PartialNameRef<'static> {
     /// Append the `component` to ourselves and validate the newly created partial path.
-    ///
-    /// Note that this method is meant to have an owned starting point as this is considered
-    /// the typical usecase.
     pub fn join(self, component: impl AsRef<[u8]>) -> Result<Self, crate::name::Error> {
         let mut b = self.0.into_owned();
         b.push_byte(b'/');

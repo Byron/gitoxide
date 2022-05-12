@@ -73,22 +73,22 @@ impl file::Store {
 
     pub(crate) fn find_one_with_verified_input(
         &self,
-        relative_path: &Path,
+        partial_path: &Path,
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error> {
-        let is_all_uppercase = relative_path
+        let is_all_uppercase = partial_path
             .to_string_lossy()
             .as_ref()
             .chars()
             .all(|c| c.is_ascii_uppercase());
-        if relative_path.components().nth(1).is_none() && is_all_uppercase {
-            if let Some(r) = self.find_inner("", relative_path, None, Transform::None)? {
+        if partial_path.components().nth(1).is_none() && is_all_uppercase {
+            if let Some(r) = self.find_inner("", partial_path, None, Transform::None)? {
                 return Ok(Some(r));
             }
         }
 
         for inbetween in &["", "tags", "heads", "remotes"] {
-            match self.find_inner(*inbetween, relative_path, packed, Transform::EnforceRefsPrefix) {
+            match self.find_inner(*inbetween, partial_path, packed, Transform::EnforceRefsPrefix) {
                 Ok(Some(r)) => return Ok(Some(r)),
                 Ok(None) => {
                     continue;
@@ -98,7 +98,7 @@ impl file::Store {
         }
         self.find_inner(
             "remotes",
-            &relative_path.join("HEAD"),
+            &partial_path.join("HEAD"),
             None,
             Transform::EnforceRefsPrefix,
         )
@@ -107,13 +107,13 @@ impl file::Store {
     fn find_inner(
         &self,
         inbetween: &str,
-        relative_path: &Path,
+        partial_path: &Path,
         packed: Option<&packed::Buffer>,
         transform: Transform,
     ) -> Result<Option<Reference>, Error> {
         let (base, is_definitely_full_path) = match transform {
             Transform::EnforceRefsPrefix => (
-                if relative_path.starts_with("refs") {
+                if partial_path.starts_with("refs") {
                     PathBuf::new()
                 } else {
                     PathBuf::from("refs")
@@ -122,7 +122,7 @@ impl file::Store {
             ),
             Transform::None => (PathBuf::new(), false),
         };
-        let relative_path = base.join(inbetween).join(relative_path);
+        let relative_path = base.join(inbetween).join(partial_path);
 
         let path_to_open = git_path::to_native_path_on_windows(git_path::into_bstr(&relative_path));
         let contents = match self
