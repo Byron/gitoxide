@@ -6,6 +6,7 @@ use std::{
 
 pub use error::Error;
 
+use crate::name::is_pseudo_ref;
 use crate::{
     file,
     store_impl::{
@@ -73,7 +74,7 @@ impl file::Store {
         partial_name: PartialNameCow<'_>,
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error> {
-        if !partial_name.as_bstr().contains(&b'/') && partial_name.as_bstr().iter().all(|c| c.is_ascii_uppercase()) {
+        if is_pseudo_ref(partial_name.as_bstr()) {
             if let Some(r) = self.find_inner("", &partial_name, None, Transform::None)? {
                 return Ok(Some(r));
             }

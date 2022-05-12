@@ -74,11 +74,6 @@ impl<'a> FullNameRef<'a> {
     /// the shortened name is returned as well.
     pub fn category_and_short_name(&self) -> Option<(Category, &'a BStr)> {
         let name = self.0.as_bstr();
-        fn is_pseudo_ref<'a>(name: impl Into<&'a BStr>) -> bool {
-            name.into()
-                .bytes()
-                .all(|b| b.is_ascii_uppercase() || b == b'_' || b == b'-')
-        }
         for category in &[Category::Tag, Category::LocalBranch, Category::RemoteBranch] {
             if let Some(shortened) = name.strip_prefix(category.prefix().as_ref()) {
                 return Some((*category, shortened.as_bstr()));
@@ -236,4 +231,11 @@ impl TryFrom<BString> for PartialNameCow<'static> {
         git_validate::reference::name_partial(v.as_ref())?;
         Ok(PartialNameCow(v.into()))
     }
+}
+
+/// Note that this method is disagreeing with git_validate as it allows dashes '-' for some reason.
+/// Since partial names cannot be created with dashes inside we adjusted this as it's probably unintended or git creates pseudo-refs
+/// which wouldn't pass its safety checks.
+pub(crate) fn is_pseudo_ref<'a>(name: impl Into<&'a BStr>) -> bool {
+    name.into().bytes().all(|b| b.is_ascii_uppercase() || b == b'_')
 }
