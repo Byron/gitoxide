@@ -5,7 +5,7 @@ use git_hash::ObjectId;
 use git_lock as lock;
 use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
-    FullName, PartialNameRef, Target,
+    FullName, PartialNameCow, Target,
 };
 
 use crate::{bstr::BString, ext::ReferenceExt, reference, Reference};
@@ -70,7 +70,7 @@ impl crate::Repository {
         namespace: Name,
     ) -> Result<Option<git_ref::Namespace>, git_validate::refname::Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<PartialNameCow<'a>, Error = E>,
         git_validate::refname::Error: From<E>,
     {
         let namespace = git_ref::namespace::expand(namespace)?;
@@ -221,7 +221,7 @@ impl crate::Repository {
     /// without that being considered an error.
     pub fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_>, reference::find::existing::Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<PartialNameCow<'a>, Error = E>,
         git_ref::file::find::Error: From<E>,
     {
         self.try_find_reference(name)?
@@ -245,7 +245,7 @@ impl crate::Repository {
     /// If the reference is expected to exist, use [`find_reference()`][crate::Repository::find_reference()].
     pub fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_>>, reference::find::Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<PartialNameCow<'a>, Error = E>,
         git_ref::file::find::Error: From<E>,
     {
         let state = self;
