@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::convert::TryFrom;
 
 use quick_error::quick_error;
 
@@ -74,10 +75,59 @@ impl Prefix {
                 Ordering::Equal
             })
     }
+}
 
-    /// Create an instance from the given hexadecimal prefix, e.g. `35e77c16` would yield a `Prefix` with `hex_len()` = 8.
-    pub fn from_hex(_hex: &str) -> Self {
-        todo!("Prefix::from_hex()")
+quick_error! {
+    /// The error returned by [TryFrom<&str>::try_from()][super::TryFrom<&str>::try_from()].
+    #[derive(Debug, PartialEq)]
+    #[allow(missing_docs)]
+    pub enum HexError {
+        TooShort { hex_len: usize } {
+            display("The minimum hex length of a short object id is 4, got {}", hex_len)
+        }
+        TooLong { hex_len: usize } {
+            display("An id cannot be larger than {} chars in hex, but {} was requested", crate::Kind::longest().len_in_hex(), hex_len)
+        }
+        Invalid { c: char, index: usize } {
+            display("Invalid character {} at position {}", c, index)
+        }
+    }
+}
+
+/// Create an instance from the given hexadecimal prefix, e.g. `35e77c16` would yield a `Prefix`
+/// with `hex_len()` = 8.
+impl TryFrom<&str> for Prefix {
+    type Error = HexError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        use hex::FromHex;
+        let hex_len = value.len();
+
+        // validate
+        if hex_len > crate::Kind::longest().len_in_hex() {
+            return Err(HexError::TooLong { hex_len });
+        } else if hex_len < 4 {
+            return Err(HexError::TooShort { hex_len });
+        };
+
+        // prepare
+        let src = if value.len() % 2 == 0 {
+            Vec::from_hex(value)
+        } else {
+            Vec::from_hex(format!("{}0", value))
+        }
+        .map_err(|e| match e {
+            hex::FromHexError::InvalidHexCharacter { c, index } => Self::Error::Invalid { c, index },
+            hex::FromHexError::OddLength | hex::FromHexError::InvalidStringLength => panic!("This is already checked"),
+        })?;
+        let copy_len = src.len();
+
+        // patch an ObjectId
+        let mut bytes = ObjectId::null(crate::Kind::Sha1);
+        let dst = bytes.as_mut_slice();
+        dst[..copy_len].copy_from_slice(&src);
+
+        Ok(Prefix { bytes, hex_len })
     }
 }
 
