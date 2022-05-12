@@ -81,7 +81,7 @@ impl file::Store {
             .as_ref()
             .chars()
             .all(|c| c.is_ascii_uppercase());
-        if relative_path.components().count() == 1 && is_all_uppercase {
+        if relative_path.components().nth(1).is_none() && is_all_uppercase {
             if let Some(r) = self.find_inner("", relative_path, None, Transform::None)? {
                 return Ok(Some(r));
             }
