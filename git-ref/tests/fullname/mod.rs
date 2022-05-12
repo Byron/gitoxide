@@ -18,6 +18,18 @@ fn shorten_and_category() {
         ("FETCH_HEAD", "FETCH_HEAD", Category::PseudoRef, true),
         ("main-worktree/HEAD", "HEAD", Category::MainPseudoRef, true),
         ("main-worktree/FETCH_HEAD", "FETCH_HEAD", Category::MainPseudoRef, true),
+        (
+            "main-worktree/refs/heads/main",
+            "refs/heads/main",
+            Category::MainRef,
+            false,
+        ),
+        (
+            "main-worktree/refs/notes/note",
+            "refs/notes/note",
+            Category::MainRef,
+            false,
+        ),
         ("worktrees/name/HEAD", "HEAD", Category::LinkedPseudoRef, true),
         (
             "worktrees/name/FETCH_HEAD",
@@ -50,9 +62,6 @@ fn shorten_and_category() {
     for special in [
         "hello/world",
         "main-worktree/head",
-        "main-worktree/refs/heads/main",
-        "main-worktree/refs/bisect/good",
-        "main-worktree/refs/worktree/private",
         "worktrees/name/refs/heads/main",
         "worktrees/name/refs/bisect/good",
         "worktrees/name/refs/worktree/private",

@@ -21,6 +21,7 @@ impl Category {
             Category::RemoteBranch => b"refs/remotes/".as_bstr(),
             Category::Note => b"refs/notes/".as_bstr(),
             Category::MainPseudoRef => b"main-worktree/".as_bstr(),
+            Category::MainRef => b"main-worktree/refs/".as_bstr(),
             Category::PseudoRef => b"".as_bstr(),
             Category::LinkedPseudoRef => b"worktrees/".as_bstr(),
             Category::Bisect => b"refs/bisect/".as_bstr(),
@@ -29,7 +30,7 @@ impl Category {
         }
     }
 
-    /// Returns true if the category is private to their worktrees.
+    /// Returns true if the category is private to their worktrees, and never shared with other worktrees.
     pub fn is_worktree_private(&self) -> bool {
         matches!(
             self,
@@ -71,13 +72,14 @@ impl<'a> FullNameRef<'a> {
     /// Classify this name, or return `None` if it's unclassified. If `Some`,
     /// the shortened name is returned as well.
     pub fn category_and_short_name(&self) -> Option<(Category, &'a BStr)> {
+        let name = self.0.as_bstr();
         fn is_pseudo_ref<'a>(name: impl Into<&'a BStr>) -> bool {
             name.into()
                 .bytes()
                 .all(|b| b.is_ascii_uppercase() || b == b'_' || b == b'-')
         }
         for category in &[Category::Tag, Category::LocalBranch, Category::RemoteBranch] {
-            if let Some(shortened) = self.0.strip_prefix(category.prefix().as_ref()) {
+            if let Some(shortened) = name.strip_prefix(category.prefix().as_ref()) {
                 return Some((*category, shortened.as_bstr()));
             }
         }
@@ -88,23 +90,26 @@ impl<'a> FullNameRef<'a> {
             Category::WorktreePrivate,
             Category::Rewritten,
         ] {
-            if self.0.starts_with(category.prefix().as_ref()) {
+            if name.starts_with(category.prefix().as_ref()) {
                 return Some((
                     *category,
-                    self.0
-                        .strip_prefix(b"refs/")
+                    name.strip_prefix(b"refs/")
                         .expect("we checked for refs/* above")
                         .as_bstr(),
                 ));
             }
         }
 
-        if is_pseudo_ref(self.0.as_bstr()) {
-            Some((Category::PseudoRef, self.0.as_bstr()))
-        } else if let Some(shortened) = self.0.strip_prefix(Category::MainPseudoRef.prefix().as_ref()) {
-            is_pseudo_ref(shortened).then(|| (Category::MainPseudoRef, shortened.as_bstr()))
+        if is_pseudo_ref(name) {
+            Some((Category::PseudoRef, name))
+        } else if let Some(shortened) = name.strip_prefix(Category::MainPseudoRef.prefix().as_ref()) {
+            if shortened.starts_with_str("refs/") {
+                (Category::MainRef, shortened.as_bstr()).into()
+            } else {
+                is_pseudo_ref(shortened).then(|| (Category::MainPseudoRef, shortened.as_bstr()))
+            }
         } else if let Some(shortened_with_worktree_name) =
-            self.0.strip_prefix(Category::LinkedPseudoRef.prefix().as_ref())
+            name.strip_prefix(Category::LinkedPseudoRef.prefix().as_ref())
         {
             let shortened = shortened_with_worktree_name
                 .find_byte(b'/')
