@@ -72,9 +72,8 @@ impl file::Store {
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error> {
         let mut buf = BString::default();
-        let mut buf2 = Vec::default();
         if is_pseudo_ref(partial_name.as_bstr()) {
-            if let Some(r) = self.find_inner("", &partial_name, None, Transform::None, &mut buf, &mut buf2)? {
+            if let Some(r) = self.find_inner("", &partial_name, None, Transform::None, &mut buf)? {
                 return Ok(Some(r));
             }
         }
@@ -86,7 +85,6 @@ impl file::Store {
                 packed,
                 Transform::EnforceRefsPrefix,
                 &mut buf,
-                &mut buf2,
             ) {
                 Ok(Some(r)) => return Ok(Some(r)),
                 Ok(None) => {
@@ -101,7 +99,6 @@ impl file::Store {
             None,
             Transform::EnforceRefsPrefix,
             &mut buf,
-            &mut buf2,
         )
     }
 
@@ -112,56 +109,54 @@ impl file::Store {
         packed: Option<&packed::Buffer>,
         transform: Transform,
         path_buf: &mut BString,
-        content_buf: &mut Vec<u8>,
     ) -> Result<Option<Reference>, Error> {
         let add_refs_prefix = matches!(transform, Transform::EnforceRefsPrefix);
         let full_name = partial_name.construct_full_name_ref(add_refs_prefix, inbetween, path_buf);
 
-        let did_read_file = self
-            .ref_contents2(full_name, content_buf)
-            .map_err(|err| Error::ReadFileContents {
-                err,
-                path: self.reference_path2(full_name),
-            })?;
+        let content_buf = self.ref_contents2(full_name).map_err(|err| Error::ReadFileContents {
+            err,
+            path: self.reference_path2(full_name),
+        })?;
 
-        if !did_read_file {
-            if add_refs_prefix {
-                if let Some(packed) = packed {
-                    let full_name = match &self.namespace {
-                        Some(namespace) => PartialNameCow(
-                            namespace
-                                .to_owned()
-                                .into_namespaced_prefix_bstr(full_name.as_bstr())
-                                .into(),
-                        ),
-                        None => full_name.into(),
-                    };
-                    if let Some(packed_ref) = packed.try_find(full_name)? {
-                        let mut res: Reference = packed_ref.into();
-                        if let Some(namespace) = &self.namespace {
-                            res.strip_namespace(namespace);
-                        }
-                        return Ok(Some(res));
-                    };
-                }
-            }
-            return Ok(None);
-        }
-
-        Ok(Some(
-            loose::Reference::try_from_path(full_name.to_owned(), content_buf)
-                .map(Into::into)
-                .map(|mut r: Reference| {
-                    if let Some(namespace) = &self.namespace {
-                        r.strip_namespace(namespace);
+        match content_buf {
+            None => {
+                if add_refs_prefix {
+                    if let Some(packed) = packed {
+                        let full_name = match &self.namespace {
+                            Some(namespace) => PartialNameCow(
+                                namespace
+                                    .to_owned()
+                                    .into_namespaced_prefix_bstr(full_name.as_bstr())
+                                    .into(),
+                            ),
+                            None => full_name.into(),
+                        };
+                        if let Some(packed_ref) = packed.try_find(full_name)? {
+                            let mut res: Reference = packed_ref.into();
+                            if let Some(namespace) = &self.namespace {
+                                res.strip_namespace(namespace);
+                            }
+                            return Ok(Some(res));
+                        };
                     }
-                    r
-                })
-                .map_err(|err| Error::ReferenceCreation {
-                    err,
-                    relative_path: full_name.to_path().to_owned(),
-                })?,
-        ))
+                }
+                return Ok(None);
+            }
+            Some(content) => Ok(Some(
+                loose::Reference::try_from_path(full_name.to_owned(), &content)
+                    .map(Into::into)
+                    .map(|mut r: Reference| {
+                        if let Some(namespace) = &self.namespace {
+                            r.strip_namespace(namespace);
+                        }
+                        r
+                    })
+                    .map_err(|err| Error::ReferenceCreation {
+                        err,
+                        relative_path: full_name.to_path().to_owned(),
+                    })?,
+            )),
+        }
     }
 }
 
@@ -200,20 +195,20 @@ impl file::Store {
         }
     }
     /// Read the file contents with a verified full reference path and return it in the given vector if possible.
-    pub(crate) fn ref_contents2(&self, name: FullNameRef<'_>, buf: &mut Vec<u8>) -> io::Result<bool> {
+    pub(crate) fn ref_contents2(&self, name: FullNameRef<'_>) -> io::Result<Option<Vec<u8>>> {
         let ref_path = self.reference_path2(name);
-        buf.clear();
 
         match std::fs::File::open(&ref_path) {
             Ok(mut file) => {
-                if let Err(err) = file.read_to_end(buf) {
-                    return if ref_path.is_dir() { Ok(false) } else { Err(err) };
+                let mut buf = Vec::with_capacity(128);
+                if let Err(err) = file.read_to_end(&mut buf) {
+                    return if ref_path.is_dir() { Ok(None) } else { Err(err) };
                 }
-                Ok(true)
+                Ok(buf.into())
             }
-            Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(false),
+            Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
             #[cfg(target_os = "windows")]
-            Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => Ok(false),
+            Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => Ok(None),
             Err(err) => Err(err),
         }
     }
