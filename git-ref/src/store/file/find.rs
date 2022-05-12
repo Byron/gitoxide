@@ -140,7 +140,7 @@ impl file::Store {
                         };
                     }
                 }
-                return Ok(None);
+                Ok(None)
             }
             Some(content) => Ok(Some(
                 loose::Reference::try_from_path(full_name.to_owned(), &content)
