@@ -37,6 +37,24 @@ fn shorten_and_category() {
             Category::LinkedPseudoRef,
             true,
         ),
+        (
+            "worktrees/name/refs/heads/main",
+            "refs/heads/main",
+            Category::LinkedRef,
+            false,
+        ),
+        (
+            "worktrees/name/refs/notes/note",
+            "refs/notes/note",
+            Category::LinkedRef,
+            false,
+        ),
+        (
+            "worktrees/name/refs/heads/main",
+            "refs/heads/main",
+            Category::LinkedRef,
+            false,
+        ),
         ("refs/bisect/good", "bisect/good", Category::Bisect, true),
         ("refs/rewritten/123456", "rewritten/123456", Category::Rewritten, true),
         (
@@ -59,13 +77,7 @@ fn shorten_and_category() {
         assert_eq!(name.to_ref().category(), category);
     }
 
-    for special in [
-        "hello/world",
-        "main-worktree/head",
-        "worktrees/name/refs/heads/main",
-        "worktrees/name/refs/bisect/good",
-        "worktrees/name/refs/worktree/private",
-    ] {
+    for special in ["hello/world", "main-worktree/head"] {
         let name: git_ref::FullName = special.try_into().unwrap();
         assert_eq!(
             name.shorten(),

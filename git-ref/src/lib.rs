@@ -141,6 +141,8 @@ pub enum Category {
     MainRef,
     /// A `PseudoRef` in another _linked_ worktree, never in the main one, like `worktrees/<id>/HEAD`.
     LinkedPseudoRef,
+    /// Any reference that is prefixed with `worktrees/<id>/refs/`.
+    LinkedRef,
     /// A ref that is private to each worktree (_linked_ or _main_), with `refs/bisect/` prefix
     Bisect,
     /// A ref that is private to each worktree (_linked_ or _main_), with `refs/rewritten/` prefix

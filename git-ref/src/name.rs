@@ -24,6 +24,7 @@ impl Category {
             Category::MainRef => b"main-worktree/refs/".as_bstr(),
             Category::PseudoRef => b"".as_bstr(),
             Category::LinkedPseudoRef => b"worktrees/".as_bstr(),
+            Category::LinkedRef => b"worktrees/".as_bstr(),
             Category::Bisect => b"refs/bisect/".as_bstr(),
             Category::Rewritten => b"refs/rewritten/".as_bstr(),
             Category::WorktreePrivate => b"refs/worktree/".as_bstr(),
@@ -114,7 +115,11 @@ impl<'a> FullNameRef<'a> {
             let shortened = shortened_with_worktree_name
                 .find_byte(b'/')
                 .map(|pos| shortened_with_worktree_name[pos + 1..].as_bstr())?;
-            is_pseudo_ref(shortened).then(|| (Category::LinkedPseudoRef, shortened.as_bstr()))
+            if shortened.starts_with_str("refs/") {
+                (Category::LinkedRef, shortened.as_bstr()).into()
+            } else {
+                is_pseudo_ref(shortened).then(|| (Category::LinkedPseudoRef, shortened.as_bstr()))
+            }
         } else {
             None
         }
