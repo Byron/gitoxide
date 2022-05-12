@@ -1,8 +1,4 @@
-use std::{
-    convert::{Infallible, TryFrom},
-    ffi::OsStr,
-    path::Path,
-};
+use std::{convert::TryFrom, ffi::OsStr, path::Path};
 
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
@@ -124,12 +120,12 @@ impl<'a> FullNameRef<'a> {
 impl<'a> PartialNameCow<'a> {
     pub(crate) fn construct_full_name_ref<'buf>(
         &self,
-        force_refs_prefix: bool,
+        add_refs_prefix: bool,
         inbetween: &str,
         buf: &'buf mut BString,
     ) -> FullNameRef<'buf> {
         buf.clear();
-        if force_refs_prefix {
+        if add_refs_prefix && !self.0.starts_with_str("refs/") {
             buf.push_str("refs/");
         }
         if !inbetween.is_empty() {
@@ -171,11 +167,9 @@ impl<'a> TryFrom<&'a BStr> for FullNameRef<'a> {
     }
 }
 
-impl<'a> TryFrom<FullNameRef<'a>> for PartialNameCow<'a> {
-    type Error = Infallible;
-
-    fn try_from(v: FullNameRef<'a>) -> Result<Self, Self::Error> {
-        Ok(PartialNameCow(v.0.into()))
+impl<'a> From<FullNameRef<'a>> for PartialNameCow<'a> {
+    fn from(v: FullNameRef<'a>) -> Self {
+        PartialNameCow(v.0.into())
     }
 }
 

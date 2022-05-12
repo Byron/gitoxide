@@ -9,11 +9,8 @@ pub use error::Error;
 use crate::name::is_pseudo_ref;
 use crate::{
     file,
-    store_impl::{
-        file::{loose, path_to_name},
-        packed,
-    },
-    BString, FullName, FullNameRef, PartialNameCow, Reference,
+    store_impl::{file::loose, packed},
+    BString, FullNameRef, PartialNameCow, Reference,
 };
 
 enum Transform {
@@ -113,38 +110,26 @@ impl file::Store {
         transform: Transform,
         buf: &mut BString,
     ) -> Result<Option<Reference>, Error> {
-        let partial_path = partial_name.to_partial_path();
         let add_refs_prefix = matches!(transform, Transform::EnforceRefsPrefix);
         let full_name = partial_name.construct_full_name_ref(add_refs_prefix, inbetween, buf);
 
-        let (base, is_definitely_full_path) = match transform {
-            Transform::EnforceRefsPrefix => (
-                if partial_path.starts_with("refs") {
-                    PathBuf::new()
-                } else {
-                    PathBuf::from("refs")
-                },
-                true,
-            ),
-            Transform::None => (PathBuf::new(), false),
-        };
-        let relative_path = base.join(inbetween).join(partial_path);
-
-        let path_to_open = git_path::to_native_path_on_windows(git_path::into_bstr(&relative_path));
-        let contents = match self
-            .ref_contents(&path_to_open)
-            .map_err(|err| Error::ReadFileContents {
-                err,
-                path: path_to_open.into_owned(),
-            })? {
+        let file_content = self.ref_contents2(full_name).map_err(|err| Error::ReadFileContents {
+            err,
+            path: self.reference_path2(full_name),
+        })?;
+        let contents = match file_content {
             None => {
-                if is_definitely_full_path {
+                if add_refs_prefix {
                     if let Some(packed) = packed {
-                        let full_name = path_to_name(match &self.namespace {
-                            None => relative_path,
-                            Some(namespace) => namespace.to_owned().into_namespaced_prefix(relative_path),
-                        });
-                        let full_name = PartialNameCow(full_name.into_owned().into());
+                        let full_name = match &self.namespace {
+                            Some(namespace) => PartialNameCow(
+                                namespace
+                                    .to_owned()
+                                    .into_namespaced_prefix_bstr(full_name.as_bstr())
+                                    .into(),
+                            ),
+                            None => full_name.into(),
+                        };
                         if let Some(packed_ref) = packed.try_find(full_name)? {
                             let mut res: Reference = packed_ref.into();
                             if let Some(namespace) = &self.namespace {
@@ -158,9 +143,8 @@ impl file::Store {
             }
             Some(c) => c,
         };
-        Ok(Some({
-            let full_name = path_to_name(&relative_path);
-            loose::Reference::try_from_path(FullName(full_name.into_owned()), &contents)
+        Ok(Some(
+            loose::Reference::try_from_path(full_name.to_owned(), &contents)
                 .map(Into::into)
                 .map(|mut r: Reference| {
                     if let Some(namespace) = &self.namespace {
@@ -168,8 +152,11 @@ impl file::Store {
                     }
                     r
                 })
-                .map_err(|err| Error::ReferenceCreation { err, relative_path })?
-        }))
+                .map_err(|err| Error::ReferenceCreation {
+                    err,
+                    relative_path: full_name.to_path().to_owned(),
+                })?,
+        ))
     }
 }
 
@@ -193,9 +180,10 @@ impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
     pub(crate) fn reference_path2(&self, name: FullNameRef<'_>) -> PathBuf {
         let base = self.base_for_name(name);
+        let relative_path = git_path::to_native_path_on_windows(name.as_bstr());
         match &self.namespace {
-            None => base.join(name.to_path()),
-            Some(namespace) => base.join(namespace.to_path()).join(name.to_path()),
+            None => base.join(relative_path),
+            Some(namespace) => base.join(namespace.to_path()).join(relative_path),
         }
     }
 
