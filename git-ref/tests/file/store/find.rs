@@ -75,10 +75,10 @@ mod existing {
         store.find_loose(name.to_partial_name_from_bstring())?;
         store.find_loose(name.to_full_name().to_partial())?;
         store.find_loose(&name)?;
-        store.find_loose(PartialNameCow::try_from(name.remote)?.join(name.branch)?.to_ref())?;
-        store.find_loose(PartialNameCow::try_from("origin")?.join("main")?.to_ref())?;
-        store.find_loose(PartialNameCow::try_from("origin")?.join(String::from("main"))?.to_ref())?;
-        store.find_loose(PartialNameCow::try_from("origin")?.join("main")?.to_ref())?;
+        store.find_loose(PartialNameCow::try_from(name.remote)?.join(name.branch)?)?;
+        store.find_loose(PartialNameCow::try_from("origin")?.join("main")?)?;
+        store.find_loose(PartialNameCow::try_from("origin")?.join(String::from("main"))?)?;
+        store.find_loose(PartialNameCow::try_from("origin")?.join("main")?)?;
 
         Ok(())
     }

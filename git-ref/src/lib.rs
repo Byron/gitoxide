@@ -103,10 +103,6 @@ pub struct FullNameRef<'a>(&'a BStr);
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct PartialNameCow<'a>(Cow<'a, BStr>);
 
-/// A validated complete and fully qualified reference name, safe to use for all operations.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct PartialName(BString);
-
 /// A _validated_ prefix for references to act as a namespace.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Namespace(BString);

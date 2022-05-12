@@ -90,7 +90,7 @@ impl file::Store {
         }
         self.find_inner(
             "remotes",
-            &partial_name.join("HEAD").expect("HEAD is valid name").to_ref(),
+            &partial_name.join("HEAD").expect("HEAD is valid name"),
             None,
             Transform::EnforceRefsPrefix,
         )
@@ -251,7 +251,6 @@ pub mod existing {
             let path = partial
                 .try_into()
                 .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
-            // TODO: remove unnecessary clone, by making `path` a proper ref.
             match self.find_one_with_verified_input(path.clone(), packed) {
                 Ok(Some(r)) => Ok(r),
                 Ok(None) => Err(Error::NotFound(path.to_partial_path().to_owned())),

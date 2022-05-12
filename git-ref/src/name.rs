@@ -6,7 +6,7 @@ use std::{
 
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
-use crate::{Category, FullNameRef, PartialName, PartialNameCow};
+use crate::{Category, FullNameRef, PartialNameCow};
 
 /// The error used in the [`PartialNameRef`][super::PartialNameRef]::try_from(…) implementations.
 pub type Error = git_validate::reference::name::Error;
@@ -126,13 +126,6 @@ impl<'a> FullNameRef<'a> {
     }
 }
 
-impl PartialName {
-    /// Interpret this fully qualified reference as shared partial name
-    pub fn to_ref(&self) -> PartialNameCow<'_> {
-        PartialNameCow(self.0.as_bstr().into())
-    }
-}
-
 impl<'a> PartialNameCow<'a> {
     /// Convert this name into the relative path possibly identifying the reference location.
     /// Note that it may be only a partial path though.
@@ -146,12 +139,12 @@ impl<'a> PartialNameCow<'a> {
     }
 
     /// Append the `component` to ourselves and validate the newly created partial path.
-    pub fn join(self, component: impl AsRef<[u8]>) -> Result<PartialName, Error> {
+    pub fn join(self, component: impl AsRef<[u8]>) -> Result<PartialNameCow<'static>, Error> {
         let mut b = self.0.into_owned();
         b.push_byte(b'/');
         b.extend(component.as_ref());
         git_validate::reference::name_partial(b.as_ref())?;
-        Ok(crate::PartialName(b))
+        Ok(PartialNameCow(b.into()))
     }
 }
 
