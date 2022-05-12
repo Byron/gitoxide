@@ -1,8 +1,8 @@
-use std::{borrow::Cow, convert::TryInto};
+use std::convert::TryInto;
 
 use git_object::bstr::{BStr, BString, ByteSlice};
 
-use crate::{store_impl::packed, PartialNameCow};
+use crate::{store_impl::packed, FullNameRef, PartialNameCow};
 
 /// packed-refs specific functionality
 impl packed::Buffer {
@@ -13,23 +13,15 @@ impl packed::Buffer {
         Error: From<E>,
     {
         let name = name.try_into()?;
+        let mut buf = BString::default();
         for inbetween in &["", "tags", "heads", "remotes"] {
             let (name, was_absolute) = if name.0.starts_with_str(b"refs/") {
-                (Cow::Borrowed(name.0.as_ref()), true)
+                (FullNameRef(name.as_bstr()), true)
             } else {
-                let mut full_name: BString = format!(
-                    "refs/{}",
-                    if inbetween.is_empty() {
-                        "".to_string()
-                    } else {
-                        format!("{}/", inbetween)
-                    }
-                )
-                .into();
-                full_name.extend_from_slice(name.0.as_ref());
-                (Cow::Owned(full_name), false)
+                let full_name = name.construct_full_name_ref(true, inbetween, &mut buf);
+                (full_name, false)
             };
-            match self.binary_search_by(name.as_ref()) {
+            match self.binary_search_by(name.as_bstr()) {
                 Ok(line_start) => {
                     return Ok(Some(
                         packed::decode::reference::<()>(&self.as_ref()[line_start..])
