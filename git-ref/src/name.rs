@@ -122,6 +122,26 @@ impl<'a> FullNameRef<'a> {
 }
 
 impl<'a> PartialNameCow<'a> {
+    pub(crate) fn construct_full_name_ref<'buf>(
+        &self,
+        force_refs_prefix: bool,
+        inbetween: &str,
+        buf: &'buf mut BString,
+    ) -> FullNameRef<'buf> {
+        buf.clear();
+        if force_refs_prefix {
+            buf.push_str("refs/");
+        }
+        if !inbetween.is_empty() {
+            buf.push_str(inbetween);
+            buf.push_byte(b'/');
+        }
+        buf.extend_from_slice(&self.0);
+        FullNameRef(buf.as_bstr())
+    }
+}
+
+impl<'a> PartialNameCow<'a> {
     /// Convert this name into the relative path possibly identifying the reference location.
     /// Note that it may be only a partial path though.
     pub fn to_partial_path(&'a self) -> &'a Path {
