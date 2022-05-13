@@ -20,18 +20,9 @@ impl packed::Buffer {
         for inbetween in &["", "tags", "heads", "remotes"] {
             let (name, was_absolute) = if name.looks_like_full_name() {
                 let name = FullNameRef(name.as_bstr());
-                let name = match name.category_and_short_name() {
-                    Some((c, sn)) => {
-                        use crate::Category::*;
-                        match c {
-                            MainRef => FullNameRef(sn),
-                            Tag | RemoteBranch | LocalBranch | Bisect | Rewritten | Note => name,
-                            MainPseudoRef | PseudoRef | LinkedPseudoRef | LinkedRef | WorktreePrivate => {
-                                return Ok(None)
-                            }
-                        }
-                    }
-                    None => name,
+                let name = match transform_full_name_for_lookup(name) {
+                    None => return Ok(None),
+                    Some(name) => name,
                 };
                 (name, true)
             } else {
@@ -162,5 +153,19 @@ pub mod existing {
                 display("The reference did not exist even though that was expected")
             }
         }
+    }
+}
+
+pub(crate) fn transform_full_name_for_lookup(name: FullNameRef<'_>) -> Option<FullNameRef<'_>> {
+    match name.category_and_short_name() {
+        Some((c, sn)) => {
+            use crate::Category::*;
+            Some(match c {
+                MainRef => FullNameRef(sn),
+                Tag | RemoteBranch | LocalBranch | Bisect | Rewritten | Note => name,
+                MainPseudoRef | PseudoRef | LinkedPseudoRef | LinkedRef | WorktreePrivate => return None,
+            })
+        }
+        None => Some(name),
     }
 }
