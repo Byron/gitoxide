@@ -42,7 +42,7 @@ impl file::Store {
 
     /// Return the path at which packed-refs would usually be stored
     pub fn packed_refs_path(&self) -> PathBuf {
-        self.git_dir.join("packed-refs")
+        self.packed_refs_dir().join("packed-refs")
     }
 }
 

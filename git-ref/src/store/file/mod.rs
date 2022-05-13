@@ -52,6 +52,11 @@ mod access {
         pub fn common_dir(&self) -> Option<&Path> {
             self.common_dir.as_deref()
         }
+
+        /// The directory in which the packed references file would be placed.
+        pub fn packed_refs_dir(&self) -> &Path {
+            self.common_dir.as_deref().unwrap_or(&self.git_dir)
+        }
     }
 }
 
