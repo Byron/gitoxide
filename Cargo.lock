@@ -1403,6 +1403,11 @@ dependencies = [
 [[package]]
 name = "git-pathspec"
 version = "0.0.0"
+dependencies = [
+ "bitflags",
+ "bstr",
+ "git-glob",
+]
 
 [[package]]
 name = "git-protocol"

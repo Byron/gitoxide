@@ -1,11 +1,21 @@
 #![forbid(unsafe_code, rust_2018_idioms)]
 
-pub struct Pathlist {}
+use bitflags::bitflags;
+pub use parse::Pattern;
 
-pub fn matches(_buf: &[u8]) -> Pathlist {
-    todo!()
+mod parse;
+
+bitflags! {
+    pub struct MagicSignature: u32 {
+        const TOP = 1 << 0;
+        const LITERAL = 1 << 1;
+        const ICASE = 1 << 2;
+        const GLOB = 1 << 3;
+        const ATTR = 1 << 4;
+        const EXCLUDE = 1 << 5;
+    }
 }
 
-pub fn parse(_buf: &[u8]) -> () {
-    todo!()
+pub fn parse(input: &[u8]) -> Pattern {
+    Pattern::from_bytes(input)
 }
