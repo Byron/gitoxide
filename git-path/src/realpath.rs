@@ -40,9 +40,7 @@ pub(crate) mod function {
                 CurDir => {}
                 ParentDir => {
                     if !real_path.pop() {
-                        return Err(Error::MissingParent {
-                            path: real_path.clone(),
-                        });
+                        return Err(Error::MissingParent { path: real_path });
                     }
                 }
                 Normal(part) => {
