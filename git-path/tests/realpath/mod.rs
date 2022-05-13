@@ -86,8 +86,6 @@ fn assorted() {
             "absolute path without symlinks has nothing to resolve and remains unchanged"
         );
     }
-
-    // TODO: a test with a symlink cycle to assure cycle checking works.
 }
 
 #[test]
@@ -160,7 +158,3 @@ fn symlink_processing_is_disabled_if_the_value_is_zero() {
         "symlink processing is disabled if the value is zero"
     );
 }
-
-#[test]
-#[ignore]
-fn ttest() {}
