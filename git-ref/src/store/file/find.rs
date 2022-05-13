@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{
     convert::TryInto,
     io::{self, Read},
@@ -9,7 +10,7 @@ pub use error::Error;
 use crate::{
     file,
     store_impl::{file::loose, packed},
-    BStr, BString, FullNameRef, PartialNameCow, Reference,
+    BString, FullNameRef, PartialNameCow, Reference,
 };
 
 enum Transform {
@@ -161,8 +162,9 @@ impl file::Store {
 }
 
 impl file::Store {
-    pub(crate) fn base_dir_and_rela_path_for_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, &'a BStr) {
-        self.common_dir
+    pub(crate) fn base_dir_and_rela_path_for_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, Cow<'a, Path>) {
+        let (base, relative_path) = self
+            .common_dir
             .as_deref()
             .and_then(|commondir| {
                 name.category_and_short_name().and_then(|(c, sn)| {
@@ -174,13 +176,14 @@ impl file::Store {
                     })
                 })
             })
-            .unwrap_or((self.git_dir.as_path(), name.as_bstr()))
+            .unwrap_or((self.git_dir.as_path(), name.as_bstr()));
+        let relative_path = git_path::to_native_path_on_windows(relative_path);
+        (base, relative_path)
     }
 
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
     pub(crate) fn reference_path(&self, name: FullNameRef<'_>) -> PathBuf {
         let (base, relative_path) = self.base_dir_and_rela_path_for_name(name);
-        let relative_path = git_path::to_native_path_on_windows(relative_path);
         match &self.namespace {
             None => base.join(relative_path),
             Some(namespace) => base.join(namespace.to_path()).join(relative_path),
