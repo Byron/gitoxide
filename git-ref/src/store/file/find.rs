@@ -162,7 +162,7 @@ impl file::Store {
 }
 
 impl file::Store {
-    pub(crate) fn base_dir_and_rela_path_for_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, Cow<'a, Path>) {
+    fn base_dir_and_rela_path_for_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, Cow<'a, Path>) {
         let (base, relative_path) = self
             .common_dir
             .as_deref()
@@ -192,11 +192,8 @@ impl file::Store {
 
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
     pub(crate) fn reference_path(&self, name: FullNameRef<'_>) -> PathBuf {
-        let (base, relative_path) = self.base_dir_and_rela_path_for_name(name);
-        match &self.namespace {
-            None => base.join(relative_path),
-            Some(namespace) => base.join(namespace.to_path()).join(relative_path),
-        }
+        let (base, relative_path) = self.reference_path_with_base(name);
+        base.join(relative_path)
     }
 
     /// Read the file contents with a verified full reference path and return it in the given vector if possible.
