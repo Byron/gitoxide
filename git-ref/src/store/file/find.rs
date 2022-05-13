@@ -6,7 +6,6 @@ use std::{
 
 pub use error::Error;
 
-use crate::name::is_pseudo_ref;
 use crate::{
     file,
     store_impl::{file::loose, packed},
@@ -72,7 +71,7 @@ impl file::Store {
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error> {
         let mut buf = BString::default();
-        if is_pseudo_ref(partial_name.as_bstr()) {
+        if partial_name.looks_like_full_name() {
             if let Some(r) = self.find_inner("", &partial_name, None, Transform::None, &mut buf)? {
                 return Ok(Some(r));
             }
@@ -122,16 +121,15 @@ impl file::Store {
             None => {
                 if add_refs_prefix {
                     if let Some(packed) = packed {
+                        let full_name_backing;
                         let full_name = match &self.namespace {
-                            Some(namespace) => PartialNameCow(
-                                namespace
-                                    .to_owned()
-                                    .into_namespaced_prefix_bstr(full_name.as_bstr())
-                                    .into(),
-                            ),
-                            None => full_name.into(),
+                            Some(namespace) => {
+                                full_name_backing = namespace.to_owned().into_namespaced_name(full_name);
+                                full_name_backing.to_ref()
+                            }
+                            None => full_name,
                         };
-                        if let Some(packed_ref) = packed.try_find(full_name)? {
+                        if let Some(packed_ref) = packed.try_find_full_name(full_name)? {
                             let mut res: Reference = packed_ref.into();
                             if let Some(namespace) = &self.namespace {
                                 res.strip_namespace(namespace);

@@ -118,6 +118,13 @@ impl<'a> FullNameRef<'a> {
 }
 
 impl<'a> PartialNameCow<'a> {
+    pub(crate) fn looks_like_full_name(&self) -> bool {
+        let name = self.0.as_bstr();
+        is_pseudo_ref(name)
+            || name.starts_with_str("refs/")
+            || name.starts_with(Category::MainPseudoRef.prefix())
+            || name.starts_with(Category::LinkedPseudoRef.prefix())
+    }
     pub(crate) fn construct_full_name_ref<'buf>(
         &self,
         add_refs_prefix: bool,
@@ -125,7 +132,7 @@ impl<'a> PartialNameCow<'a> {
         buf: &'buf mut BString,
     ) -> FullNameRef<'buf> {
         buf.clear();
-        if add_refs_prefix && !self.0.starts_with_str("refs/") {
+        if add_refs_prefix && !self.looks_like_full_name() {
             buf.push_str("refs/");
         }
         if !inbetween.is_empty() {

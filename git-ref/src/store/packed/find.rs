@@ -7,6 +7,9 @@ use crate::{store_impl::packed, FullNameRef, PartialNameCow};
 /// packed-refs specific functionality
 impl packed::Buffer {
     /// Find a reference with the given `name` and return it.
+    ///
+    /// Note that it will look it up verbatim and does not deal with namespaces or special prefixes like
+    /// `main-worktree/` or `worktrees/<name>/`, as this is left to the caller.
     pub fn try_find<'a, Name, E>(&self, name: Name) -> Result<Option<packed::Reference<'_>>, Error>
     where
         Name: TryInto<PartialNameCow<'a>, Error = E>,
@@ -15,32 +18,38 @@ impl packed::Buffer {
         let name = name.try_into()?;
         let mut buf = BString::default();
         for inbetween in &["", "tags", "heads", "remotes"] {
-            let (name, was_absolute) = if name.0.starts_with_str(b"refs/") {
+            let (name, was_absolute) = if name.looks_like_full_name() {
                 (FullNameRef(name.as_bstr()), true)
             } else {
                 let full_name = name.construct_full_name_ref(true, inbetween, &mut buf);
                 (full_name, false)
             };
-            match self.binary_search_by(name.as_bstr()) {
-                Ok(line_start) => {
-                    return Ok(Some(
-                        packed::decode::reference::<()>(&self.as_ref()[line_start..])
-                            .map_err(|_| Error::Parse)?
-                            .1,
-                    ))
-                }
-                Err((parse_failure, _)) => {
-                    if parse_failure {
-                        return Err(Error::Parse);
-                    } else if was_absolute {
-                        return Ok(None);
-                    } else {
-                        continue;
-                    }
-                }
+            match self.try_find_full_name(name)? {
+                Some(r) => return Ok(Some(r)),
+                None if was_absolute => return Ok(None),
+                None => continue,
             }
         }
         Ok(None)
+    }
+
+    pub(crate) fn try_find_full_name(&self, name: FullNameRef<'_>) -> Result<Option<packed::Reference<'_>>, Error> {
+        match self.binary_search_by(name.as_bstr()) {
+            Ok(line_start) => {
+                return Ok(Some(
+                    packed::decode::reference::<()>(&self.as_ref()[line_start..])
+                        .map_err(|_| Error::Parse)?
+                        .1,
+                ))
+            }
+            Err((parse_failure, _)) => {
+                if parse_failure {
+                    return Err(Error::Parse);
+                } else {
+                    return Ok(None);
+                }
+            }
+        }
     }
 
     /// Find a reference with the given `name` and return it.

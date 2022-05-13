@@ -5,7 +5,7 @@ use std::{
 
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
-use crate::{Namespace, PartialNameCow};
+use crate::{FullName, FullNameRef, Namespace, PartialNameCow};
 
 impl Namespace {
     /// Dissolve ourselves into the interior representation
@@ -21,13 +21,15 @@ impl Namespace {
         git_path::from_byte_slice(&self.0)
     }
     /// Append the given `prefix` to this namespace so it becomes usable for prefixed iteration.
-    pub fn into_namespaced_prefix(self, prefix: impl AsRef<Path>) -> PathBuf {
-        let relative_path = self.into_namespaced_prefix_bstr(git_path::into_bstr(prefix.as_ref()).as_ref());
-        git_path::to_native_path_on_windows(relative_path).into_owned()
+    pub fn into_namespaced_prefix(mut self, prefix: impl AsRef<Path>) -> PathBuf {
+        let path = prefix.as_ref();
+        let prefix = git_path::into_bstr(path);
+        self.0.push_str(prefix.as_ref());
+        git_path::to_native_path_on_windows(self.0).into_owned()
     }
-    pub(crate) fn into_namespaced_prefix_bstr(mut self, prefix: &BStr) -> BString {
-        self.0.push_str(prefix);
-        self.0
+    pub(crate) fn into_namespaced_name(mut self, name: FullNameRef<'_>) -> FullName {
+        self.0.push_str(name.as_bstr());
+        FullName(self.0)
     }
 }
 
