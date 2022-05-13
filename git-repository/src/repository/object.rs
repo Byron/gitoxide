@@ -1,6 +1,7 @@
 use std::convert::TryInto;
 
 use git_hash::{oid, ObjectId};
+use git_object::bstr::BString;
 use git_odb::{Find, FindExt};
 use git_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
@@ -15,7 +16,9 @@ impl crate::Repository {
     /// Parse a revision specification and turn it into the full id to the object it describes, similar to `git rev-parse`.
     /// NOTE that currently this only parses full hex names.
     pub fn rev_parse(&self, spec: impl AsRef<str>) -> Result<crate::Id<'_>, crate::rev_parse::Error> {
-        Ok(git_hash::ObjectId::from_hex(spec.as_ref().as_bytes())?.attach(self))
+        let input = BString::from(spec.as_ref());
+        let obj_id = git_revision::parser::rev_parse(self, input.as_ref());
+        Ok(obj_id?.attach(self))
     }
 
     /// Find the object with `id` in the object database or return an error if it could not be found.
