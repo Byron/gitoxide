@@ -5,6 +5,8 @@ use quick_error::quick_error;
 
 use crate::{oid, ObjectId, Prefix};
 
+const MIN_HEX_LEN: usize = 4;
+
 quick_error! {
     /// The error returned by [Prefix::try_from_id()][super::Prefix::try_from_id()].
     #[derive(Debug)]
@@ -28,7 +30,7 @@ pub mod from_hex {
         #[allow(missing_docs)]
         pub enum Error {
             TooShort { hex_len: usize } {
-                display("The minimum hex length of a short object id is 4, got {}", hex_len)
+                display("The minimum hex length of a short object id is {}, got {}", super::MIN_HEX_LEN, hex_len)
             }
             TooLong { hex_len: usize } {
                 display("An id cannot be larger than {} chars in hex, but {} was requested", crate::Kind::longest().len_in_hex(), hex_len)
@@ -52,7 +54,7 @@ impl Prefix {
                 object_kind: id.kind(),
                 hex_len,
             })
-        } else if hex_len < 4 {
+        } else if hex_len < MIN_HEX_LEN {
             Err(Error::TooShort { hex_len })
         } else {
             let mut prefix = ObjectId::null(id.kind());
@@ -102,14 +104,12 @@ impl Prefix {
         use hex::FromHex;
         let hex_len = value.len();
 
-        // validate
         if hex_len > crate::Kind::longest().len_in_hex() {
             return Err(from_hex::Error::TooLong { hex_len });
-        } else if hex_len < 4 {
+        } else if hex_len < MIN_HEX_LEN {
             return Err(from_hex::Error::TooShort { hex_len });
         };
 
-        // prepare
         let src = if value.len() % 2 == 0 {
             Vec::from_hex(value)
         } else {
@@ -119,11 +119,10 @@ impl Prefix {
             hex::FromHexError::InvalidHexCharacter { c, index } => from_hex::Error::Invalid { c, index },
             hex::FromHexError::OddLength | hex::FromHexError::InvalidStringLength => panic!("This is already checked"),
         })?;
-        let copy_len = src.len();
 
-        // patch an ObjectId
         let mut bytes = ObjectId::null(crate::Kind::Sha1);
         let dst = bytes.as_mut_slice();
+        let copy_len = src.len();
         dst[..copy_len].copy_from_slice(&src);
 
         Ok(Prefix { bytes, hex_len })
