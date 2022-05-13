@@ -10,7 +10,7 @@ use crate::name::is_pseudo_ref;
 use crate::{
     file,
     store_impl::{file::loose, packed},
-    BString, FullNameRef, PartialNameCow, Reference,
+    BStr, BString, FullNameRef, PartialNameCow, Reference,
 };
 
 enum Transform {
@@ -161,26 +161,26 @@ impl file::Store {
 }
 
 impl file::Store {
-    fn base_for_name(&self, name: FullNameRef<'_>) -> &Path {
+    fn base_dir_and_rela_path_for_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, &'a BStr) {
         self.common_dir
             .as_deref()
             .and_then(|commondir| {
-                name.category().map(|c| {
+                name.category_and_short_name().and_then(|(c, sn)| {
                     use crate::Category::*;
-                    match c {
-                        Tag | LocalBranch | RemoteBranch | Note | MainRef | MainPseudoRef | LinkedRef
-                        | LinkedPseudoRef => commondir,
-                        PseudoRef | Bisect | Rewritten | WorktreePrivate => self.git_dir.as_path(),
-                    }
+                    Some(match c {
+                        Tag | LocalBranch | RemoteBranch | Note => (commondir, name.as_bstr()),
+                        MainRef | MainPseudoRef | LinkedRef | LinkedPseudoRef => (commondir, sn),
+                        PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
+                    })
                 })
             })
-            .unwrap_or(self.git_dir.as_path())
+            .unwrap_or((self.git_dir.as_path(), name.as_bstr()))
     }
 
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
     pub(crate) fn reference_path(&self, name: FullNameRef<'_>) -> PathBuf {
-        let base = self.base_for_name(name);
-        let relative_path = git_path::to_native_path_on_windows(name.as_bstr());
+        let (base, relative_path) = self.base_dir_and_rela_path_for_name(name);
+        let relative_path = git_path::to_native_path_on_windows(relative_path);
         match &self.namespace {
             None => base.join(relative_path),
             Some(namespace) => base.join(namespace.to_path()).join(relative_path),
