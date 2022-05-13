@@ -161,7 +161,7 @@ impl file::Store {
 }
 
 impl file::Store {
-    fn base_dir_and_rela_path_for_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, &'a BStr) {
+    pub(crate) fn base_dir_and_rela_path_for_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, &'a BStr) {
         self.common_dir
             .as_deref()
             .and_then(|commondir| {

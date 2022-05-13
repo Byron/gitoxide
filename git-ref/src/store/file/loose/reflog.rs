@@ -84,6 +84,7 @@ impl file::Store {
 
 ///
 pub mod create_or_update {
+    use std::borrow::Cow;
     use std::{
         io::Write,
         path::{Path, PathBuf},
@@ -173,30 +174,31 @@ pub mod create_or_update {
         }
 
         fn reflock_resource_full_name(&self, reflock: &git_lock::Marker) -> PathBuf {
-            reflock
-                .resource_path()
+            let resource_path = reflock.resource_path();
+            resource_path
                 .strip_prefix(&self.git_dir)
+                .ok()
+                .or_else(|| self.common_dir().and_then(|cd| resource_path.strip_prefix(cd).ok()))
                 .expect("lock must be held within this store")
-                .to_owned()
+                .into()
         }
 
         fn reflock_resource_to_log_path(&self, reflock: &git_lock::Marker) -> PathBuf {
-            self.reflog_path_inner(
-                reflock
-                    .resource_path()
-                    .strip_prefix(&self.git_dir)
-                    .expect("lock must be held within this store"),
-            )
+            self.reflog_path_inner(&self.reflock_resource_full_name(reflock))
         }
 
         /// Returns the base and a full path (including the base) to the reflog for a ref of the given `full_name`
         pub(in crate::store_impl::file::loose::reflog) fn reflog_path_inner(&self, full_name: &Path) -> PathBuf {
-            self.reflog_root().join(full_name)
+            self.git_dir.join("logs").join(full_name)
         }
 
         /// Returns the base paths for all reflogs
-        pub(in crate::store_impl::file) fn reflog_root(&self) -> PathBuf {
-            self.git_dir.join("logs")
+        pub(in crate::store_impl::file) fn reflog_base_and_relative_path<'a>(
+            &self,
+            name: FullNameRef<'a>,
+        ) -> (PathBuf, Cow<'a, Path>) {
+            let (base, rela_path) = self.base_dir_and_rela_path_for_name(name);
+            (base.join("logs"), git_path::to_native_path_on_windows(rela_path))
         }
     }
 
@@ -227,6 +229,7 @@ pub mod create_or_update {
             }
         }
     }
+    use crate::FullNameRef;
     pub use error::Error;
 }
 

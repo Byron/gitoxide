@@ -96,14 +96,14 @@ impl<'s> Transaction<'s> {
             }
         }
 
-        let reflog_root = self.store.reflog_root();
         for change in updates.iter_mut() {
+            let (reflog_root, relative_name) = self.store.reflog_base_and_relative_path(change.update.name.to_ref());
             match &change.update.change {
                 Change::Update { .. } => {}
                 Change::Delete { .. } => {
                     // Reflog deletion happens first in case it fails a ref without log is less terrible than
                     // a log without a reference.
-                    let reflog_path = self.store.reflog_path(change.update.name.to_ref());
+                    let reflog_path = reflog_root.join(relative_name);
                     if let Err(err) = std::fs::remove_file(&reflog_path) {
                         if err.kind() != std::io::ErrorKind::NotFound {
                             return Err(Error::DeleteReflog {
