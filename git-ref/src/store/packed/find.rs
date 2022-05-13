@@ -19,7 +19,21 @@ impl packed::Buffer {
         let mut buf = BString::default();
         for inbetween in &["", "tags", "heads", "remotes"] {
             let (name, was_absolute) = if name.looks_like_full_name() {
-                (FullNameRef(name.as_bstr()), true)
+                let name = FullNameRef(name.as_bstr());
+                let name = match name.category_and_short_name() {
+                    Some((c, sn)) => {
+                        use crate::Category::*;
+                        match c {
+                            MainRef => FullNameRef(sn),
+                            Tag | RemoteBranch | LocalBranch | Bisect | Rewritten | Note => name,
+                            MainPseudoRef | PseudoRef | LinkedPseudoRef | LinkedRef | WorktreePrivate => {
+                                return Ok(None)
+                            }
+                        }
+                    }
+                    None => name,
+                };
+                (name, true)
             } else {
                 let full_name = name.construct_full_name_ref(true, inbetween, &mut buf);
                 (full_name, false)
