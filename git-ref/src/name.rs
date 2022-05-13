@@ -4,7 +4,7 @@ use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
 use crate::{Category, FullNameRef, PartialNameCow};
 
-/// The error used in the [`PartialNameRef`][super::PartialNameRef]::try_from(…) implementations.
+/// The error used in the [`PartialNameCow`][super::PartialNameCow]::try_from(…) implementations.
 pub type Error = git_validate::reference::name::Error;
 
 impl Category {
