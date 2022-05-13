@@ -49,9 +49,9 @@ impl packed::Buffer {
             }
             Err((parse_failure, _)) => {
                 if parse_failure {
-                    return Err(Error::Parse);
+                    Err(Error::Parse)
                 } else {
-                    return Ok(None);
+                    Ok(None)
                 }
             }
         }
