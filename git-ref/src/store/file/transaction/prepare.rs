@@ -51,11 +51,11 @@ impl<'s> Transaction<'s> {
             });
         let lock = match &mut change.update.change {
             Change::Delete { expected, .. } => {
-                let (base, relative_path) = store.base_dir_and_rela_path_for_name(change.update.name.to_ref());
+                let (base, relative_path) = store.reference_path_with_base(change.update.name.to_ref());
                 let lock = git_lock::Marker::acquire_to_hold_resource(
                     base.join(relative_path),
                     lock_fail_mode,
-                    Some(base.to_owned()),
+                    Some(base.into_owned()),
                 )
                 .map_err(|err| Error::LockAcquire {
                     err,
@@ -97,11 +97,11 @@ impl<'s> Transaction<'s> {
                 lock
             }
             Change::Update { expected, new, .. } => {
-                let (base, relative_path) = store.base_dir_and_rela_path_for_name(change.update.name.to_ref());
+                let (base, relative_path) = store.reference_path_with_base(change.update.name.to_ref());
                 let mut lock = git_lock::File::acquire_to_update_resource(
                     base.join(relative_path),
                     lock_fail_mode,
-                    Some(base.to_owned()),
+                    Some(base.into_owned()),
                 )
                 .map_err(|err| Error::LockAcquire {
                     err,

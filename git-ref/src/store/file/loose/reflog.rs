@@ -200,7 +200,7 @@ pub mod create_or_update {
             &self,
             name: FullNameRef<'a>,
         ) -> (PathBuf, Cow<'a, Path>) {
-            let (base, rela_path) = self.base_dir_and_rela_path_for_name(name);
+            let (base, rela_path) = self.reference_path_with_base(name);
             (base.join("logs"), rela_path)
         }
     }
