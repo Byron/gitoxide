@@ -123,7 +123,7 @@ impl Prefix {
             hex::FromHexError::OddLength | hex::FromHexError::InvalidStringLength => panic!("This is already checked"),
         })?;
 
-        let mut bytes = ObjectId::null(crate::Kind::Sha1);
+        let mut bytes = ObjectId::null(crate::Kind::from_hex_len(value.len()).expect("hex-len is already checked"));
         let dst = bytes.as_mut_slice();
         let copy_len = src.len();
         dst[..copy_len].copy_from_slice(&src);
