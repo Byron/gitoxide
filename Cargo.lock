@@ -1445,6 +1445,7 @@ name = "git-ref"
 version = "0.12.1"
 dependencies = [
  "git-actor",
+ "git-discover",
  "git-features",
  "git-hash",
  "git-lock",

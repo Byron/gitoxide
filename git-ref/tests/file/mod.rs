@@ -35,3 +35,4 @@ mod log;
 mod reference;
 mod store;
 mod transaction;
+mod worktree;
