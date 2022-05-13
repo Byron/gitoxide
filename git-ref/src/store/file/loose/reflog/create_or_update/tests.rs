@@ -39,18 +39,6 @@ fn reflog_lines(store: &file::Store, name: &str, buf: &mut Vec<u8>) -> Result<Ve
 const WRITE_MODES: &[WriteReflog] = &[WriteReflog::Normal, WriteReflog::Disable];
 
 #[test]
-fn reflock_resource_to_log_path() -> Result {
-    let (_keep, store) = empty_store(WriteReflog::Normal)?;
-    for name in &["HEAD", "refs/heads/main"] {
-        assert_eq!(
-            store.reflock_resource_to_log_path(&reflock(&store, name).unwrap()),
-            store.reflog_path_inner(Path::new(name))
-        );
-    }
-    Ok(())
-}
-
-#[test]
 fn should_autocreate_is_unaffected_by_writemode() -> Result {
     let (_keep, store) = empty_store(WriteReflog::Disable)?;
     for should_create_name in &["HEAD", "refs/heads/main", "refs/remotes/any", "refs/notes/any"] {
@@ -125,7 +113,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
         // create onto existing directory
         let full_name = "refs/heads/other";
         let lock = reflock(&store, full_name)?;
-        let reflog_path = store.reflog_path_inner(Path::new(full_name));
+        let reflog_path = store.reflog_path(full_name.try_into().expect("valid"));
         let directory_in_place_of_reflog = reflog_path.join("empty-a").join("empty-b");
         std::fs::create_dir_all(&directory_in_place_of_reflog)?;
 

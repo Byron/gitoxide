@@ -78,7 +78,8 @@ impl file::Store {
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into its log name
     pub(crate) fn reflog_path(&self, name: FullNameRef<'_>) -> PathBuf {
-        self.reflog_path_inner(name.to_path())
+        let (base, rela_path) = self.reflog_base_and_relative_path(name);
+        base.join(rela_path)
     }
 }
 
@@ -105,12 +106,13 @@ pub mod create_or_update {
             message: &BStr,
             force_create_reflog: bool,
         ) -> Result<(), Error> {
-            let full_name = self.reflock_resource_full_name(lock);
+            let (base, full_name) = self.reflock_resource_base_and_full_name(lock);
             match self.write_reflog {
                 WriteReflog::Normal => {
                     let mut options = std::fs::OpenOptions::new();
                     options.append(true).read(false);
-                    let log_path = self.reflock_resource_to_log_path(lock);
+                    let full_name_argument = &full_name;
+                    let log_path = base.join("logs").join(full_name_argument);
 
                     if force_create_reflog || self.should_autocreate_reflog(&full_name) {
                         let parent_dir = log_path.parent().expect("always with parent directory");
@@ -173,23 +175,24 @@ pub mod create_or_update {
                 || full_name == Path::new("HEAD")
         }
 
-        fn reflock_resource_full_name(&self, reflock: &git_lock::Marker) -> PathBuf {
+        /// `reflock` is the lock on the reference itself, which also serves as lock for the reflog.
+        fn reflock_resource_base_and_full_name(&self, reflock: &git_lock::Marker) -> (&Path, PathBuf) {
             let resource_path = reflock.resource_path();
-            resource_path
+            let (base, relative_path) = resource_path
                 .strip_prefix(&self.git_dir)
                 .ok()
-                .or_else(|| self.common_dir().and_then(|cd| resource_path.strip_prefix(cd).ok()))
-                .expect("lock must be held within this store")
-                .into()
+                .map(|p| (self.git_dir.as_path(), p))
+                .or_else(|| {
+                    self.common_dir()
+                        .and_then(|cd| resource_path.strip_prefix(cd).ok().map(|p| (cd, p)))
+                })
+                .expect("lock must be held within this store");
+            (base, relative_path.into())
         }
 
         fn reflock_resource_to_log_path(&self, reflock: &git_lock::Marker) -> PathBuf {
-            self.reflog_path_inner(&self.reflock_resource_full_name(reflock))
-        }
-
-        /// Returns the base and a full path (including the base) to the reflog for a ref of the given `full_name`
-        pub(in crate::store_impl::file::loose::reflog) fn reflog_path_inner(&self, full_name: &Path) -> PathBuf {
-            self.git_dir.join("logs").join(full_name)
+            let (base, relative_path) = self.reflock_resource_base_and_full_name(reflock);
+            base.join("logs").join(relative_path)
         }
 
         /// Returns the base paths for all reflogs
