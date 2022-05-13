@@ -113,7 +113,10 @@ impl Prefix {
         let src = if value.len() % 2 == 0 {
             Vec::from_hex(value)
         } else {
-            Vec::from_hex(format!("{}0", value))
+            let mut buf = [0u8; crate::Kind::longest().len_in_hex()];
+            buf[..value.len()].copy_from_slice(value.as_bytes());
+            buf[value.len()] = b'0';
+            Vec::from_hex(&buf[..value.len() + 1])
         }
         .map_err(|e| match e {
             hex::FromHexError::InvalidHexCharacter { c, index } => from_hex::Error::Invalid { c, index },
