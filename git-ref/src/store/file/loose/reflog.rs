@@ -204,7 +204,7 @@ pub mod create_or_update {
             let is_reflog = true;
             let (base, name) = self.to_base_dir_and_relative_name(name, is_reflog);
             (
-                base.join("logs").into(),
+                base.join("logs"),
                 match &self.namespace {
                     None => git_path::to_native_path_on_windows(name.as_bstr()),
                     Some(namespace) => git_path::to_native_path_on_windows(

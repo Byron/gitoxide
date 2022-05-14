@@ -198,7 +198,7 @@ impl file::Store {
     pub(crate) fn reference_path_with_base<'b>(&self, name: FullNameRef<'b>) -> (Cow<'_, Path>, Cow<'b, Path>) {
         let (base, name) = self.to_base_dir_and_relative_name(name, false);
         (
-            base.into(),
+            base,
             match &self.namespace {
                 None => git_path::to_native_path_on_windows(name.as_bstr()),
                 Some(namespace) => {
