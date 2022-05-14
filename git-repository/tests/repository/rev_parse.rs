@@ -1,4 +1,6 @@
 fn test_repo() -> crate::Repository {
+    // TODO: use git_testtools::scripted_fixture_repo_read_only to create a well-known fixture to work on, never assume
+    //       anything the user has or hasn't on their local clone. Shallow clones will break this, for instance, which happens on CI.
     let cwd = std::env::current_dir().expect("CWD");
     git_repository::discover(cwd).expect("Repository")
 }
@@ -7,6 +9,7 @@ mod simple {
     use crate::repository::rev_parse::test_repo;
 
     #[test]
+    #[ignore]
     fn full() {
         let repo = test_repo();
         let expected = "e058bdabf8449b6a6fdff851e3929137d9b71568";
@@ -19,6 +22,7 @@ mod simple {
     }
 
     #[test]
+    #[ignore]
     fn short() {
         let repo = test_repo();
         let expected = "e058bdabf8449b6a6fdff851e3929137d9b71568";
@@ -31,6 +35,7 @@ mod simple {
     }
 
     #[test]
+    #[ignore]
     fn head() {
         let repo = test_repo();
         let expected = repo.head_id().expect("Current repo has a HEAD");
@@ -39,6 +44,7 @@ mod simple {
     }
 
     #[test]
+    #[ignore]
     fn at_sign() {
         let repo = test_repo();
         let expected = repo.head_id().expect("Current repo has a HEAD");
@@ -47,6 +53,7 @@ mod simple {
     }
 
     #[test]
+    #[ignore]
     fn main() {
         let repo = test_repo();
         repo.rev_parse("main").expect("Resolved main branch");
@@ -57,6 +64,7 @@ mod advanced {
     use crate::repository::rev_parse::test_repo;
 
     #[test]
+    #[ignore]
     fn at_previous() {
         let repo = test_repo();
         let input = "@~";
@@ -77,6 +85,7 @@ mod advanced {
     }
 
     #[test]
+    #[ignore]
     fn head_previous() {
         let repo = test_repo();
         let input = "HEAD~";
@@ -97,6 +106,7 @@ mod advanced {
     }
 
     #[test]
+    #[ignore]
     fn at_first_parent() {
         let repo = test_repo();
         let input = "@^";
@@ -117,6 +127,7 @@ mod advanced {
     }
 
     #[test]
+    #[ignore]
     fn head_first_parent() {
         let repo = test_repo();
         let input = "HEAD^";
@@ -137,6 +148,7 @@ mod advanced {
     }
 
     #[test]
+    #[ignore]
     fn branch_previous() {
         let repo = test_repo();
         let input = "main^";
