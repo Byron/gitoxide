@@ -173,14 +173,12 @@ pub fn scripted_fixture_repo_read_only_with_args(
             Err(err) => {
                 if err.kind() != std::io::ErrorKind::NotFound {
                     eprintln!("failed to extract '{}': {}", archive_file_path.display(), err);
-                } else {
-                    if !is_excluded(&archive_file_path) {
-                        eprintln!(
-                            "Archive at '{}' not found, creating fixture using script '{}'",
-                            archive_file_path.display(),
-                            script_location.display()
-                        );
-                    }
+                } else if !is_excluded(&archive_file_path) {
+                    eprintln!(
+                        "Archive at '{}' not found, creating fixture using script '{}'",
+                        archive_file_path.display(),
+                        script_location.display()
+                    );
                 }
                 let script_absolute_path = std::env::current_dir()?.join(script_path);
                 let output = std::process::Command::new("bash")
