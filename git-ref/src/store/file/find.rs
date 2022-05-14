@@ -163,17 +163,15 @@ impl file::Store {
 
 impl file::Store {
     fn base_dir_and_rela_path_for_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, Cow<'a, Path>) {
-        let (base, relative_path) = self
-            .common_dir
-            .as_deref()
-            .and_then(|commondir| {
-                name.category_and_short_name().and_then(|(c, sn)| {
-                    use crate::Category::*;
-                    Some(match c {
-                        Tag | LocalBranch | RemoteBranch | Note => (commondir, name.as_bstr()),
-                        MainRef | MainPseudoRef | LinkedRef | LinkedPseudoRef => (commondir, sn),
-                        PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
-                    })
+        let commondir = self.common_dir_resolved();
+        let (base, relative_path) = name
+            .category_and_short_name()
+            .and_then(|(c, sn)| {
+                use crate::Category::*;
+                Some(match c {
+                    Tag | LocalBranch | RemoteBranch | Note => (commondir, name.as_bstr()),
+                    MainRef | MainPseudoRef | LinkedRef | LinkedPseudoRef => (commondir, sn),
+                    PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
                 })
             })
             .unwrap_or((self.git_dir.as_path(), name.as_bstr()));

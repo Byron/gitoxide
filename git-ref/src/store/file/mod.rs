@@ -53,8 +53,11 @@ mod access {
             self.common_dir.as_deref()
         }
 
-        /// The directory in which the packed references file would be placed.
-        pub fn packed_refs_dir(&self) -> &Path {
+        /// Similar to [`common_dir()`][file::Store::common_dir()], but it will produce either the common-dir, or the git-dir if the former
+        /// isn't present.
+        ///
+        /// This is also the directory in which the packed references file would be placed.
+        pub fn common_dir_resolved(&self) -> &Path {
             self.common_dir.as_deref().unwrap_or(&self.git_dir)
         }
     }
