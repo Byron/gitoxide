@@ -159,35 +159,38 @@ impl file::Store {
 }
 
 impl file::Store {
-    fn base_dir_and_rela_path_for_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, Cow<'a, Path>) {
+    fn to_base_dir_and_relative_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, FullNameRef<'a>) {
         let commondir = self.common_dir_resolved();
-        let (base, relative_path) = name
-            .category_and_short_name()
+        name.category_and_short_name()
             .and_then(|(c, sn)| {
                 use crate::Category::*;
+                let sn = FullNameRef(sn);
                 Some(match c {
-                    LinkedPseudoRef | Tag | LocalBranch | RemoteBranch | Note => (commondir, name.as_bstr()),
+                    LinkedPseudoRef | Tag | LocalBranch | RemoteBranch | Note => (commondir, name),
                     MainRef | MainPseudoRef => (commondir, sn),
-                    LinkedRef => FullNameRef(sn)
+                    LinkedRef => sn
                         .category()
                         .map_or(false, |cat| cat.is_worktree_private())
-                        .then(|| (commondir, name.as_bstr()))
+                        .then(|| (commondir, name))
                         .unwrap_or((commondir, sn)),
                     PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
                 })
             })
-            .unwrap_or((self.git_dir.as_path(), name.as_bstr()));
-        let relative_path = git_path::to_native_path_on_windows(relative_path);
-        (base, relative_path)
+            .unwrap_or((self.git_dir.as_path(), name))
     }
 
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
     pub(crate) fn reference_path_with_base<'b>(&self, name: FullNameRef<'b>) -> (Cow<'_, Path>, Cow<'b, Path>) {
-        let (base, relative_path) = self.base_dir_and_rela_path_for_name(name);
-        match &self.namespace {
-            None => (base.into(), relative_path),
-            Some(namespace) => (base.join(namespace.to_path()).into(), relative_path),
-        }
+        let (base, name) = self.to_base_dir_and_relative_name(name);
+        (
+            base.into(),
+            match &self.namespace {
+                None => git_path::to_native_path_on_windows(name.as_bstr()),
+                Some(namespace) => {
+                    git_path::to_native_path_on_windows(namespace.to_owned().into_namespaced_name(name).into_inner())
+                }
+            },
+        )
     }
 
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
