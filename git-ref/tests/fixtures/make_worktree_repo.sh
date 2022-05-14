@@ -30,11 +30,20 @@ echo "ref: refs/loop-a" > .git/refs/loop-b
 git tag t1
 git tag -m "tag object" dt1
 
-git worktree add ../w1 HEAD~1
 git bisect start && git bisect bad HEAD
 
+git worktree add ../w-detached HEAD~1
+(
+  cd ../w-detached
+  git bisect start
+  git bisect bad main-worktree/HEAD
+)
+
+git worktree add ../w1
 (
   cd ../w1
+  git reset --hard HEAD~1
+
   git bisect start
   git bisect bad main-worktree/HEAD
 )

@@ -169,9 +169,9 @@ impl file::Store {
             .and_then(|(c, sn)| {
                 use crate::Category::*;
                 Some(match c {
-                    Tag | LocalBranch | RemoteBranch | Note => (commondir, name.as_bstr()),
-                    MainRef | MainPseudoRef | LinkedRef | LinkedPseudoRef => (commondir, sn),
-                    PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
+                    Tag | LocalBranch | RemoteBranch | Note | LinkedRef => (commondir, name.as_bstr()),
+                    MainRef | MainPseudoRef => (commondir, sn),
+                    LinkedPseudoRef | PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
                 })
             })
             .unwrap_or((self.git_dir.as_path(), name.as_bstr()));

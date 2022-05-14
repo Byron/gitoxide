@@ -66,13 +66,26 @@ fn main() {
         let (store, odb) = main_store(packed).unwrap();
         let peel = into_peel(&store, odb);
 
+        let head_id = peel(store.find("HEAD").unwrap());
         assert_eq!(
-            peel(store.find("HEAD").unwrap()),
-            peel(store.find("main-worktree/HEAD").unwrap())
+            head_id,
+            peel(store.find("main-worktree/HEAD").unwrap()),
+            "main-worktree prefix in pseudorefs from main worktree just works"
         );
         assert_eq!(
             peel(store.find("main").unwrap()),
-            peel(store.find("main-worktree/refs/heads/main").unwrap())
+            peel(store.find("main-worktree/refs/heads/main").unwrap()),
+            "main-worktree prefix in pseudorefs from main worktree just works"
+        );
+
+        let w1_main_id = peel(store.find("w1").unwrap());
+        assert_ne!(w1_main_id, head_id, "w1 is checked out at previous commit");
+
+        let w1_head_id = peel(store.find("worktrees/w1/HEAD").unwrap());
+        assert_eq!(w1_head_id, w1_main_id, "worktree head points to the branch");
+        assert_ne!(
+            w1_head_id, head_id,
+            "access from main to worktree with respective prefix"
         );
     }
 }
