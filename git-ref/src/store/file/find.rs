@@ -112,7 +112,6 @@ impl file::Store {
     ) -> Result<Option<Reference>, Error> {
         let add_refs_prefix = matches!(transform, Transform::EnforceRefsPrefix);
         let full_name = partial_name.construct_full_name_ref(add_refs_prefix, inbetween, path_buf);
-
         let content_buf = self.ref_contents(full_name).map_err(|err| Error::ReadFileContents {
             err,
             path: self.reference_path(full_name),
@@ -120,25 +119,23 @@ impl file::Store {
 
         match content_buf {
             None => {
-                if add_refs_prefix {
-                    if let Some(packed) = packed {
-                        if let Some(full_name) = packed::find::transform_full_name_for_lookup(full_name) {
-                            let full_name_backing;
-                            let full_name = match &self.namespace {
-                                Some(namespace) => {
-                                    full_name_backing = namespace.to_owned().into_namespaced_name(full_name);
-                                    full_name_backing.to_ref()
-                                }
-                                None => full_name,
-                            };
-                            if let Some(packed_ref) = packed.try_find_full_name(full_name)? {
-                                let mut res: Reference = packed_ref.into();
-                                if let Some(namespace) = &self.namespace {
-                                    res.strip_namespace(namespace);
-                                }
-                                return Ok(Some(res));
-                            };
-                        }
+                if let Some(packed) = packed {
+                    if let Some(full_name) = packed::find::transform_full_name_for_lookup(full_name) {
+                        let full_name_backing;
+                        let full_name = match &self.namespace {
+                            Some(namespace) => {
+                                full_name_backing = namespace.to_owned().into_namespaced_name(full_name);
+                                full_name_backing.to_ref()
+                            }
+                            None => full_name,
+                        };
+                        if let Some(packed_ref) = packed.try_find_full_name(full_name)? {
+                            let mut res: Reference = packed_ref.into();
+                            if let Some(namespace) = &self.namespace {
+                                res.strip_namespace(namespace);
+                            }
+                            return Ok(Some(res));
+                        };
                     }
                 }
                 Ok(None)
@@ -169,9 +166,9 @@ impl file::Store {
             .and_then(|(c, sn)| {
                 use crate::Category::*;
                 Some(match c {
-                    Tag | LocalBranch | RemoteBranch | Note | LinkedRef => (commondir, name.as_bstr()),
-                    MainRef | MainPseudoRef => (commondir, sn),
-                    LinkedPseudoRef | PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
+                    LinkedPseudoRef | Tag | LocalBranch | RemoteBranch | Note => (commondir, name.as_bstr()),
+                    LinkedRef | MainRef | MainPseudoRef => (commondir, sn),
+                    PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
                 })
             })
             .unwrap_or((self.git_dir.as_path(), name.as_bstr()));

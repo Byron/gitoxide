@@ -20,9 +20,9 @@ fn main_store(packed: bool) -> crate::Result<(git_ref::file::Store, git_odb::Han
     ))
 }
 
-fn worktree_store(packed: bool) -> crate::Result<(git_ref::file::Store, git_odb::Handle)> {
+fn worktree_store(packed: bool, worktree_name: &str) -> crate::Result<(git_ref::file::Store, git_odb::Handle)> {
     let dir = dir(packed)?;
-    let (git_dir, _work_tree) = git_discover::upwards(dir.join("w1"))?
+    let (git_dir, _work_tree) = git_discover::upwards(dir.join(worktree_name))?
         .0
         .into_repository_and_work_tree_directories();
     let common_dir = git_dir.join("../..");
@@ -51,11 +51,31 @@ fn into_peel(
 #[test]
 fn linked() {
     for packed in [false, true] {
-        let (store, odb) = worktree_store(packed).unwrap();
+        let (store, odb) = worktree_store(packed, "w1").unwrap();
         let peel = into_peel(&store, odb);
+
+        let w1_head_id = peel(store.find("HEAD").unwrap());
         assert_ne!(
-            peel(store.find("HEAD").unwrap()),
-            peel(store.find("main-worktree/HEAD").unwrap())
+            w1_head_id,
+            peel(store.find("main-worktree/HEAD").unwrap()),
+            "access to main worktree from linked worktree"
+        );
+        assert_eq!(
+            w1_head_id,
+            peel(store.find("worktrees/w1/HEAD").unwrap()),
+            "access ourselves with worktrees prefix works (HEAD)"
+        );
+
+        assert_eq!(
+            w1_head_id,
+            peel(store.find("worktrees/w1/refs/heads/w1").unwrap()),
+            "access ourselves with worktrees prefix works (branch)"
+        );
+
+        assert_eq!(
+            w1_head_id,
+            peel(store.find("worktrees/w-detached/HEAD").unwrap()),
+            "both worktrees are at the same ID"
         );
     }
 }
@@ -83,6 +103,16 @@ fn main() {
 
         let w1_head_id = peel(store.find("worktrees/w1/HEAD").unwrap());
         assert_eq!(w1_head_id, w1_main_id, "worktree head points to the branch");
+        assert_eq!(
+            w1_head_id,
+            peel(store.find("worktrees/w1/refs/heads/w1").unwrap()),
+            "worktree branch can be accessed with refs notation too (git doesnt do this right now, but it's documented)"
+        );
+        assert_eq!(
+            peel(store.find("worktrees/w-detached/HEAD").unwrap()),
+            w1_main_id,
+            "both worktrees are in the same location"
+        );
         assert_ne!(
             w1_head_id, head_id,
             "access from main to worktree with respective prefix"

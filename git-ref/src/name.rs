@@ -120,10 +120,10 @@ impl<'a> FullNameRef<'a> {
 impl<'a> PartialNameCow<'a> {
     pub(crate) fn looks_like_full_name(&self) -> bool {
         let name = self.0.as_bstr();
-        is_pseudo_ref(name)
-            || name.starts_with_str("refs/")
+        name.starts_with_str("refs/")
             || name.starts_with(Category::MainPseudoRef.prefix())
             || name.starts_with(Category::LinkedPseudoRef.prefix())
+            || is_pseudo_ref(name)
     }
     pub(crate) fn construct_full_name_ref<'buf>(
         &self,
