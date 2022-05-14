@@ -177,6 +177,7 @@ pub mod create_or_update {
 
         /// `reflock` is the lock on the reference itself, which also serves as lock for the reflog.
         fn reflock_resource_base_and_full_name(&self, reflock: &git_lock::Marker) -> (&Path, PathBuf) {
+            // TODO: fix this - it won't work if the worktree isn't our own.
             let resource_path = reflock.resource_path();
             let (base, relative_path) = resource_path
                 .strip_prefix(&self.git_dir)

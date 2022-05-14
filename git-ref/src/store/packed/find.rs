@@ -161,9 +161,9 @@ pub(crate) fn transform_full_name_for_lookup(name: FullNameRef<'_>) -> Option<Fu
         Some((c, sn)) => {
             use crate::Category::*;
             Some(match c {
-                MainRef | LinkedRef => FullNameRef(sn),
+                MainRef | LinkedRef { .. } => FullNameRef(sn),
                 Tag | RemoteBranch | LocalBranch | Bisect | Rewritten | Note => name,
-                MainPseudoRef | PseudoRef | LinkedPseudoRef | WorktreePrivate => return None,
+                MainPseudoRef | PseudoRef | LinkedPseudoRef { .. } | WorktreePrivate => return None,
             })
         }
         None => Some(name),

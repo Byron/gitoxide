@@ -129,7 +129,7 @@ pub enum Kind {
 ///
 /// This translates into a prefix containing all references of a given category.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum Category {
+pub enum Category<'a> {
     /// A tag in `refs/tags`
     Tag,
     /// A branch in `refs/heads`
@@ -146,9 +146,15 @@ pub enum Category {
     /// Any reference that is prefixed with `main-worktree/refs/`
     MainRef,
     /// A `PseudoRef` in another _linked_ worktree, never in the main one, like `worktrees/<id>/HEAD`.
-    LinkedPseudoRef,
+    LinkedPseudoRef {
+        /// The name of the worktree.
+        name: &'a BStr,
+    },
     /// Any reference that is prefixed with `worktrees/<id>/refs/`.
-    LinkedRef,
+    LinkedRef {
+        /// The name of the worktree.
+        name: &'a BStr,
+    },
     /// A ref that is private to each worktree (_linked_ or _main_), with `refs/bisect/` prefix
     Bisect,
     /// A ref that is private to each worktree (_linked_ or _main_), with `refs/rewritten/` prefix

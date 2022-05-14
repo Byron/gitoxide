@@ -166,9 +166,9 @@ impl file::Store {
                 use crate::Category::*;
                 let sn = FullNameRef(sn);
                 Some(match c {
-                    LinkedPseudoRef | Tag | LocalBranch | RemoteBranch | Note => (commondir, name),
+                    LinkedPseudoRef { name: _ } | Tag | LocalBranch | RemoteBranch | Note => (commondir, name),
                     MainRef | MainPseudoRef => (commondir, sn),
-                    LinkedRef => sn
+                    LinkedRef { name: _ } => sn
                         .category()
                         .map_or(false, |cat| cat.is_worktree_private())
                         .then(|| (commondir, name))

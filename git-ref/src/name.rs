@@ -7,7 +7,7 @@ use crate::{Category, FullNameRef, PartialNameCow};
 /// The error used in the [`PartialNameCow`][super::PartialNameCow]::try_from(…) implementations.
 pub type Error = git_validate::reference::name::Error;
 
-impl Category {
+impl<'a> Category<'a> {
     /// Return the prefix that would contain all references of our kind, or an empty string if the reference would
     /// be directly inside of the [`git_dir()`][crate::file::Store::git_dir()].
     pub fn prefix(&self) -> &BStr {
@@ -19,8 +19,8 @@ impl Category {
             Category::MainPseudoRef => b"main-worktree/".as_bstr(),
             Category::MainRef => b"main-worktree/refs/".as_bstr(),
             Category::PseudoRef => b"".as_bstr(),
-            Category::LinkedPseudoRef => b"worktrees/".as_bstr(),
-            Category::LinkedRef => b"worktrees/".as_bstr(),
+            Category::LinkedPseudoRef { .. } => b"worktrees/".as_bstr(),
+            Category::LinkedRef { .. } => b"worktrees/".as_bstr(),
             Category::Bisect => b"refs/bisect/".as_bstr(),
             Category::Rewritten => b"refs/rewritten/".as_bstr(),
             Category::WorktreePrivate => b"refs/worktree/".as_bstr(),
@@ -33,7 +33,7 @@ impl Category {
             self,
             Category::MainPseudoRef
                 | Category::PseudoRef
-                | Category::LinkedPseudoRef
+                | Category::LinkedPseudoRef { .. }
                 | Category::WorktreePrivate
                 | Category::Rewritten
                 | Category::Bisect
@@ -62,13 +62,13 @@ impl<'a> FullNameRef<'a> {
     }
 
     /// Classify this name, or return `None` if it's unclassified.
-    pub fn category(&self) -> Option<Category> {
+    pub fn category(&self) -> Option<Category<'a>> {
         self.category_and_short_name().map(|(cat, _)| cat)
     }
 
     /// Classify this name, or return `None` if it's unclassified. If `Some`,
     /// the shortened name is returned as well.
-    pub fn category_and_short_name(&self) -> Option<(Category, &'a BStr)> {
+    pub fn category_and_short_name(&self) -> Option<(Category<'a>, &'a BStr)> {
         let name = self.0.as_bstr();
         for category in &[Category::Tag, Category::LocalBranch, Category::RemoteBranch] {
             if let Some(shortened) = name.strip_prefix(category.prefix().as_ref()) {
@@ -101,15 +101,18 @@ impl<'a> FullNameRef<'a> {
                 is_pseudo_ref(shortened).then(|| (Category::MainPseudoRef, shortened.as_bstr()))
             }
         } else if let Some(shortened_with_worktree_name) =
-            name.strip_prefix(Category::LinkedPseudoRef.prefix().as_ref())
+            name.strip_prefix(Category::LinkedPseudoRef { name: "".into() }.prefix().as_ref())
         {
-            let shortened = shortened_with_worktree_name
-                .find_byte(b'/')
-                .map(|pos| shortened_with_worktree_name[pos + 1..].as_bstr())?;
+            let (name, shortened) = shortened_with_worktree_name.find_byte(b'/').map(|pos| {
+                (
+                    shortened_with_worktree_name[..pos].as_bstr(),
+                    shortened_with_worktree_name[pos + 1..].as_bstr(),
+                )
+            })?;
             if shortened.starts_with_str("refs/") {
-                (Category::LinkedRef, shortened.as_bstr()).into()
+                (Category::LinkedRef { name }, shortened.as_bstr()).into()
             } else {
-                is_pseudo_ref(shortened).then(|| (Category::LinkedPseudoRef, shortened.as_bstr()))
+                is_pseudo_ref(shortened).then(|| (Category::LinkedPseudoRef { name }, shortened.as_bstr()))
             }
         } else {
             None
@@ -122,7 +125,7 @@ impl<'a> PartialNameCow<'a> {
         let name = self.0.as_bstr();
         name.starts_with_str("refs/")
             || name.starts_with(Category::MainPseudoRef.prefix())
-            || name.starts_with(Category::LinkedPseudoRef.prefix())
+            || name.starts_with(Category::LinkedPseudoRef { name: "".into() }.prefix())
             || is_pseudo_ref(name)
     }
     pub(crate) fn construct_full_name_ref<'buf>(
