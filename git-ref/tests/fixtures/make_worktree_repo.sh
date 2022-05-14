@@ -7,6 +7,8 @@ git init -q
 git checkout -q -b main
 git commit -q --allow-empty -m c1
 git commit -q --allow-empty -m c2
+git commit -q --allow-empty -m c3
+git commit -q --allow-empty -m c4
 git branch dt1
 git branch d1
 
@@ -36,16 +38,16 @@ git worktree add ../w-detached HEAD~1
 (
   cd ../w-detached
   git bisect start
-  git bisect bad main-worktree/HEAD
+  git bisect bad HEAD
 )
 
 git worktree add ../w1
 (
   cd ../w1
-  git reset --hard HEAD~1
+  git reset --hard HEAD~2
 
   git bisect start
-  git bisect bad main-worktree/HEAD
+  git bisect bad HEAD
 )
 
 if [ "${1:-}"  = "packed" ]; then

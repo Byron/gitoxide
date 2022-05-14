@@ -55,10 +55,22 @@ fn linked() {
         let peel = into_peel(&store, odb);
 
         let w1_head_id = peel(store.find("HEAD").unwrap());
-        assert_ne!(
+        let head_id = peel(store.find("main-worktree/HEAD").unwrap());
+        assert_ne!(w1_head_id, head_id, "access to main worktree from linked worktree");
+        assert_eq!(
+            head_id,
+            peel(store.find("main-worktree/refs/bisect/bad").unwrap()),
+            "main worktree private branch is accessible and points to its head"
+        );
+        assert_eq!(
+            peel(store.find("refs/bisect/bad").unwrap()),
             w1_head_id,
-            peel(store.find("main-worktree/HEAD").unwrap()),
-            "access to main worktree from linked worktree"
+            "this worktrees bisect branch points to its head"
+        );
+        assert_eq!(
+            peel(store.find("worktrees/w-detached/refs/bisect/bad").unwrap()),
+            peel(store.find("worktrees/w-detached/HEAD").unwrap()),
+            "the detached worktree's bisect branch points to its head"
         );
         assert_eq!(
             w1_head_id,
@@ -72,10 +84,10 @@ fn linked() {
             "access ourselves with worktrees prefix works (branch)"
         );
 
-        assert_eq!(
+        assert_ne!(
             w1_head_id,
             peel(store.find("worktrees/w-detached/HEAD").unwrap()),
-            "both worktrees are at the same ID"
+            "both point to different ids"
         );
     }
 }
@@ -97,6 +109,11 @@ fn main() {
             peel(store.find("main-worktree/refs/heads/main").unwrap()),
             "main-worktree prefix in pseudorefs from main worktree just works"
         );
+        assert_eq!(
+            peel(store.find("refs/bisect/bad").unwrap()),
+            head_id,
+            "bisect is worktree-private"
+        );
 
         let w1_main_id = peel(store.find("w1").unwrap());
         assert_ne!(w1_main_id, head_id, "w1 is checked out at previous commit");
@@ -104,14 +121,21 @@ fn main() {
         let w1_head_id = peel(store.find("worktrees/w1/HEAD").unwrap());
         assert_eq!(w1_head_id, w1_main_id, "worktree head points to the branch");
         assert_eq!(
+            peel(store.find("worktrees/w1/refs/bisect/bad").unwrap()),
+            w1_main_id,
+            "linked worktree bisect points to its head"
+        );
+        assert_eq!(
             w1_head_id,
             peel(store.find("worktrees/w1/refs/heads/w1").unwrap()),
             "worktree branch can be accessed with refs notation too (git doesnt do this right now, but it's documented)"
         );
+        let wd_head_id = peel(store.find("worktrees/w-detached/HEAD").unwrap());
+        assert_ne!(wd_head_id, w1_main_id, "both worktrees are in different locations");
         assert_eq!(
-            peel(store.find("worktrees/w-detached/HEAD").unwrap()),
-            w1_main_id,
-            "both worktrees are in the same location"
+            peel(store.find("worktrees/w-detached/refs/bisect/bad").unwrap()),
+            wd_head_id,
+            "detached worktree bisect is at the same location as its HEAD"
         );
         assert_ne!(
             w1_head_id, head_id,

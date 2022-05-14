@@ -167,7 +167,12 @@ impl file::Store {
                 use crate::Category::*;
                 Some(match c {
                     LinkedPseudoRef | Tag | LocalBranch | RemoteBranch | Note => (commondir, name.as_bstr()),
-                    LinkedRef | MainRef | MainPseudoRef => (commondir, sn),
+                    MainRef | MainPseudoRef => (commondir, sn),
+                    LinkedRef => FullNameRef(sn)
+                        .category()
+                        .map_or(false, |cat| cat.is_worktree_private())
+                        .then(|| (commondir, name.as_bstr()))
+                        .unwrap_or((commondir, sn)),
                     PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
                 })
             })
