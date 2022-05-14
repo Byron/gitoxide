@@ -177,13 +177,13 @@ pub mod create_or_update {
 
         /// `reflock` is the lock on the reference itself, which also serves as lock for the reflog.
         fn reflock_resource_base_and_full_name(&self, reflock: &git_lock::Marker) -> (&Path, PathBuf) {
-            // TODO: fix this - it won't work if the worktree isn't our own.
             let resource_path = reflock.resource_path();
             let (base, relative_path) = resource_path
                 .strip_prefix(&self.git_dir)
                 .ok()
                 .map(|p| (self.git_dir.as_path(), p))
                 .or_else(|| {
+                    // TODO: fix this - it won't work if the worktree isn't our own: parse category for potential worktree name
                     self.common_dir()
                         .and_then(|cd| resource_path.strip_prefix(cd).ok().map(|p| (cd, p)))
                 })
@@ -201,8 +201,17 @@ pub mod create_or_update {
             &self,
             name: FullNameRef<'a>,
         ) -> (PathBuf, Cow<'a, Path>) {
-            let (base, rela_path) = self.reference_path_with_base(name);
-            (base.join("logs"), rela_path)
+            let is_reflog = true;
+            let (base, name) = self.to_base_dir_and_relative_name(name, is_reflog);
+            (
+                base.join("logs").into(),
+                match &self.namespace {
+                    None => git_path::to_native_path_on_windows(name.as_bstr()),
+                    Some(namespace) => git_path::to_native_path_on_windows(
+                        namespace.to_owned().into_namespaced_name(name).into_inner(),
+                    ),
+                },
+            )
         }
     }
 

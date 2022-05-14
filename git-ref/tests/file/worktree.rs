@@ -1,5 +1,7 @@
 use git_odb::Find;
 use git_ref::file::ReferenceExt;
+use git_ref::Reference;
+use std::cmp::Ordering;
 use std::path::PathBuf;
 
 fn dir(packed: bool) -> crate::Result<PathBuf> {
@@ -57,6 +59,11 @@ fn linked() {
         let w1_head_id = peel(store.find("HEAD").unwrap());
         let head_id = peel(store.find("main-worktree/HEAD").unwrap());
         assert_ne!(w1_head_id, head_id, "access to main worktree from linked worktree");
+        assert_reflog(
+            &store,
+            store.find("HEAD").unwrap(),
+            store.find("worktrees/w1/HEAD").unwrap(),
+        );
         assert_eq!(
             head_id,
             peel(store.find("main-worktree/refs/bisect/bad").unwrap()),
@@ -76,6 +83,16 @@ fn linked() {
             w1_head_id,
             peel(store.find("worktrees/w1/HEAD").unwrap()),
             "access ourselves with worktrees prefix works (HEAD)"
+        );
+        assert_reflog(
+            &store,
+            store.find("w1").unwrap(),
+            store.find("main-worktree/refs/heads/w1").unwrap(),
+        );
+        assert_reflog(
+            &store,
+            store.find("w1").unwrap(),
+            store.find("worktrees/w1/refs/heads/w1").unwrap(),
         );
 
         assert_eq!(
@@ -104,10 +121,20 @@ fn main() {
             peel(store.find("main-worktree/HEAD").unwrap()),
             "main-worktree prefix in pseudorefs from main worktree just works"
         );
+        assert_reflog(
+            &store,
+            store.find("HEAD").unwrap(),
+            store.find("main-worktree/HEAD").unwrap(),
+        );
         assert_eq!(
             peel(store.find("main").unwrap()),
             peel(store.find("main-worktree/refs/heads/main").unwrap()),
             "main-worktree prefix in pseudorefs from main worktree just works"
+        );
+        assert_reflog(
+            &store,
+            store.find("main").unwrap(),
+            store.find("main-worktree/refs/heads/main").unwrap(),
         );
         assert_eq!(
             peel(store.find("refs/bisect/bad").unwrap()),
@@ -141,5 +168,25 @@ fn main() {
             w1_head_id, head_id,
             "access from main to worktree with respective prefix"
         );
+    }
+}
+
+fn assert_reflog(store: &git_ref::file::Store, a: Reference, b: Reference) {
+    let mut arl = a.log_iter(store);
+    let arl = arl.all().unwrap();
+    let mut brl = b.log_iter(store);
+    let brl = brl.all().unwrap();
+    match (arl, brl) {
+        (Some(arl), Some(brl)) => {
+            assert_eq!(
+                arl.map(Result::unwrap).cmp(brl.map(Result::unwrap)),
+                Ordering::Equal,
+                "{} and {} should have equal reflogs",
+                a.name,
+                b.name
+            );
+        }
+        (None, None) => {}
+        (arl, brl) => panic!("{} != {} ({} != {})", arl.is_some(), brl.is_some(), a.name, b.name),
     }
 }

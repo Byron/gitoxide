@@ -10,7 +10,7 @@ pub use error::Error;
 use crate::{
     file,
     store_impl::{file::loose, packed},
-    BString, FullNameRef, PartialNameCow, Reference,
+    BStr, BString, FullNameRef, PartialNameCow, Reference,
 };
 
 enum Transform {
@@ -159,29 +159,44 @@ impl file::Store {
 }
 
 impl file::Store {
-    fn to_base_dir_and_relative_name<'a>(&self, name: FullNameRef<'a>) -> (&Path, FullNameRef<'a>) {
+    pub(crate) fn to_base_dir_and_relative_name<'a>(
+        &self,
+        name: FullNameRef<'a>,
+        is_reflog: bool,
+    ) -> (Cow<'_, Path>, FullNameRef<'a>) {
         let commondir = self.common_dir_resolved();
+        let linked_git_dir =
+            |worktree_name: &BStr| commondir.join("worktrees").join(git_path::from_bstr(worktree_name));
         name.category_and_short_name()
             .and_then(|(c, sn)| {
                 use crate::Category::*;
                 let sn = FullNameRef(sn);
                 Some(match c {
-                    LinkedPseudoRef { name: _ } | Tag | LocalBranch | RemoteBranch | Note => (commondir, name),
-                    MainRef | MainPseudoRef => (commondir, sn),
-                    LinkedRef { name: _ } => sn
+                    LinkedPseudoRef { name: worktree_name } => is_reflog
+                        .then(|| (linked_git_dir(worktree_name).into(), sn))
+                        .unwrap_or((commondir.into(), name)),
+                    Tag | LocalBranch | RemoteBranch | Note => (commondir.into(), name),
+                    MainRef | MainPseudoRef => (commondir.into(), sn),
+                    LinkedRef { name: worktree_name } => sn
                         .category()
                         .map_or(false, |cat| cat.is_worktree_private())
-                        .then(|| (commondir, name))
-                        .unwrap_or((commondir, sn)),
+                        .then(|| {
+                            if is_reflog {
+                                (linked_git_dir(worktree_name).into(), sn)
+                            } else {
+                                (commondir.into(), name)
+                            }
+                        })
+                        .unwrap_or((commondir.into(), sn)),
                     PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
                 })
             })
-            .unwrap_or((self.git_dir.as_path(), name))
+            .unwrap_or((self.git_dir.as_path().into(), name))
     }
 
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
     pub(crate) fn reference_path_with_base<'b>(&self, name: FullNameRef<'b>) -> (Cow<'_, Path>, Cow<'b, Path>) {
-        let (base, name) = self.to_base_dir_and_relative_name(name);
+        let (base, name) = self.to_base_dir_and_relative_name(name, false);
         (
             base.into(),
             match &self.namespace {
