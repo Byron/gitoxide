@@ -174,11 +174,13 @@ pub fn scripted_fixture_repo_read_only_with_args(
                 if err.kind() != std::io::ErrorKind::NotFound {
                     eprintln!("failed to extract '{}': {}", archive_file_path.display(), err);
                 } else {
-                    eprintln!(
-                        "Archive at '{}' not found, creating fixture using script '{}'",
-                        archive_file_path.display(),
-                        script_location.display()
-                    );
+                    if !is_excluded(&archive_file_path) {
+                        eprintln!(
+                            "Archive at '{}' not found, creating fixture using script '{}'",
+                            archive_file_path.display(),
+                            script_location.display()
+                        );
+                    }
                 }
                 let script_absolute_path = std::env::current_dir()?.join(script_path);
                 let output = std::process::Command::new("bash")
@@ -231,25 +233,7 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     if is_ci::cached() {
         return Ok(());
     }
-    let is_excluded_in_git = {
-        let mut lut = EXCLUDE_LUT.lock();
-        lut.as_mut()
-            .and_then(|cache| {
-                let archive = std::env::current_dir().ok()?.join(archive);
-                let relative_path = archive.strip_prefix(cache.base()).ok()?;
-                cache
-                    .at_path(
-                        relative_path,
-                        Some(false),
-                        |_oid, _buf| -> std::result::Result<_, Infallible> { unreachable!("") },
-                    )
-                    .ok()?
-                    .is_excluded()
-                    .into()
-            })
-            .unwrap_or(false)
-    };
-    if is_excluded_in_git {
+    if is_excluded(archive) {
         return Ok(());
     }
     std::fs::create_dir_all(archive.parent().expect("archive is a file"))?;
@@ -278,6 +262,25 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     #[cfg(windows)]
     std::fs::remove_dir_all(meta_dir).ok(); // it really can't delete these directories for some reason (even after 10 seconds)
     res
+}
+
+fn is_excluded(archive: &Path) -> bool {
+    let mut lut = EXCLUDE_LUT.lock();
+    lut.as_mut()
+        .and_then(|cache| {
+            let archive = std::env::current_dir().ok()?.join(archive);
+            let relative_path = archive.strip_prefix(cache.base()).ok()?;
+            cache
+                .at_path(
+                    relative_path,
+                    Some(false),
+                    |_oid, _buf| -> std::result::Result<_, Infallible> { unreachable!("") },
+                )
+                .ok()?
+                .is_excluded()
+                .into()
+        })
+        .unwrap_or(false)
 }
 
 const META_DIR_NAME: &str = "__gitoxide_meta__";
