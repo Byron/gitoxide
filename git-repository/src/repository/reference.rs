@@ -161,7 +161,7 @@ impl crate::Repository {
         self.refs
             .transaction()
             .prepare(edits, lock_mode)?
-            .commit(committer)
+            .commit(committer.to_ref())
             .map_err(Into::into)
     }
 
