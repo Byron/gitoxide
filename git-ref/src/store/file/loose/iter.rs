@@ -155,27 +155,26 @@ impl file::Store {
     ///
     /// See [`Store::packed()`][file::Store::open_packed_buffer()] for interacting with packed references.
     pub fn loose_iter(&self) -> std::io::Result<Loose> {
-        let refs = self.refs_dir();
+        let (cd, refs) = self.common_and_refs_dir();
         if !refs.is_dir() {
             return Err(std::io::ErrorKind::NotFound.into());
         }
-        Ok(Loose::at_root(refs, self.git_dir.clone()))
+        Ok(Loose::at_root(refs, cd))
     }
 
     /// Return an iterator over all loose references that start with the given `prefix`.
     ///
     /// Otherwise it's similar to [`loose_iter()`][file::Store::loose_iter()].
     pub fn loose_iter_prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<Loose> {
-        let (root, remainder) = self.validate_prefix(&self.git_dir, prefix.as_ref())?;
-        Ok(Loose::at_root_with_filename_prefix(
-            root,
-            self.git_dir.clone(),
-            remainder,
-        ))
+        let commondir = self.common_dir_resolved();
+        let (root, remainder) = self.validate_prefix(commondir, prefix.as_ref())?;
+        Ok(Loose::at_root_with_filename_prefix(root, commondir, remainder))
     }
 
-    pub(in crate::store_impl::file) fn refs_dir(&self) -> PathBuf {
-        self.git_dir.join("refs")
+    pub(in crate::store_impl::file) fn common_and_refs_dir(&self) -> (&Path, PathBuf) {
+        let commondir = self.common_dir_resolved();
+        let refs = commondir.join("refs");
+        (commondir, refs)
     }
     pub(in crate::store_impl::file) fn validate_prefix(
         &self,
