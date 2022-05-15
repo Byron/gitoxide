@@ -1,8 +1,9 @@
+use std::borrow::Borrow;
 use std::{convert::TryFrom, path::Path};
 
 use git_object::bstr::{BStr, BString, ByteSlice};
 
-use crate::{bstr::ByteVec, FullName, FullNameRef, Namespace};
+use crate::{bstr::ByteVec, FullName, FullNameRef, FullNameRef2, Namespace};
 
 impl TryFrom<&str> for FullName {
     type Error = git_validate::refname::Error;
@@ -135,5 +136,35 @@ impl<'a> FullNameRef<'a> {
     /// full name was `refs/heads/main`.
     pub fn file_name(&self) -> &BStr {
         self.0.rsplitn(2, |b| *b == b'/').next().expect("valid ref").as_bstr()
+    }
+}
+
+impl Borrow<FullNameRef2> for FullName {
+    #[inline]
+    fn borrow(&self) -> &FullNameRef2 {
+        // SAFETY: FullNameRef2 is transparent and equivalent to a &BStr if provided as reference
+        #[allow(unsafe_code)]
+        unsafe {
+            std::mem::transmute(self.0.as_bstr())
+        }
+    }
+}
+
+impl ToOwned for FullNameRef2 {
+    type Owned = FullName;
+
+    fn to_owned(&self) -> Self::Owned {
+        FullName(self.0.to_owned())
+    }
+}
+
+#[cfg(test)]
+mod fullname_tests {
+    use super::*;
+    use std::borrow::Cow;
+
+    #[test]
+    fn cow_works() {
+        let _x: Cow<'_, FullNameRef2> = Cow::Owned(FullName::try_from("HEAD").unwrap());
     }
 }

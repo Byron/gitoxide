@@ -98,6 +98,12 @@ pub struct FullName(pub(crate) BString);
 /// A validated and potentially partial reference name - it can safely be used for common operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub struct FullNameRef<'a>(&'a BStr);
+
+/// A validated and potentially partial reference name - it can safely be used for common operations.
+#[derive(Hash)]
+#[repr(transparent)]
+pub struct FullNameRef2(BStr);
+
 /// A validated complete and fully qualified reference name, safe to use for all operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct PartialNameRef<'a>(Cow<'a, BStr>);
