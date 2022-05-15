@@ -53,6 +53,7 @@ impl<'s> Transaction<'s> {
                                 let do_update = previous.as_ref().map_or(true, |previous| previous != new_oid);
                                 if do_update {
                                     self.store.reflog_create_or_append(
+                                        change.update.name.as_ref(),
                                         &lock,
                                         previous,
                                         new_oid,

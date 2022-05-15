@@ -99,20 +99,20 @@ pub mod create_or_update {
     impl file::Store {
         pub(crate) fn reflog_create_or_append(
             &self,
-            lock: &git_lock::Marker,
+            name: &FullNameRef,
+            _lock: &git_lock::Marker,
             previous_oid: Option<ObjectId>,
             new: &oid,
             committer: &git_actor::Signature,
             message: &BStr,
             force_create_reflog: bool,
         ) -> Result<(), Error> {
-            let (base, full_name) = self.reflock_resource_base_and_full_name(lock);
+            let (reflog_base, full_name) = self.reflog_base_and_relative_path(name);
             match self.write_reflog {
                 WriteReflog::Normal => {
                     let mut options = std::fs::OpenOptions::new();
                     options.append(true).read(false);
-                    let full_name_argument = &full_name;
-                    let log_path = base.join("logs").join(full_name_argument);
+                    let log_path = reflog_base.join(&full_name);
 
                     if force_create_reflog || self.should_autocreate_reflog(&full_name) {
                         let parent_dir = log_path.parent().expect("always with parent directory");
@@ -136,7 +136,7 @@ pub mod create_or_update {
                                     .map(Some)
                                     .map_err(|_| Error::Append {
                                         err,
-                                        reflog_path: self.reflock_resource_to_log_path(lock),
+                                        reflog_path: self.reflog_path(name),
                                     })?
                             } else {
                                 return Err(Error::Append {
@@ -159,7 +159,7 @@ pub mod create_or_update {
                             })
                             .map_err(|err| Error::Append {
                                 err,
-                                reflog_path: self.reflock_resource_to_log_path(lock),
+                                reflog_path: self.reflog_path(name),
                             })?;
                     }
                     Ok(())
@@ -173,27 +173,6 @@ pub mod create_or_update {
                 || full_name.starts_with("refs/remotes/")
                 || full_name.starts_with("refs/notes/")
                 || full_name == Path::new("HEAD")
-        }
-
-        /// `reflock` is the lock on the reference itself, which also serves as lock for the reflog.
-        fn reflock_resource_base_and_full_name(&self, reflock: &git_lock::Marker) -> (&Path, PathBuf) {
-            let resource_path = reflock.resource_path();
-            let (base, relative_path) = resource_path
-                .strip_prefix(&self.git_dir)
-                .ok()
-                .map(|p| (self.git_dir.as_path(), p))
-                .or_else(|| {
-                    // TODO: fix this - it won't work if the worktree isn't our own: parse category for potential worktree name
-                    self.common_dir()
-                        .and_then(|cd| resource_path.strip_prefix(cd).ok().map(|p| (cd, p)))
-                })
-                .expect("lock must be held within this store");
-            (base, relative_path.into())
-        }
-
-        fn reflock_resource_to_log_path(&self, reflock: &git_lock::Marker) -> PathBuf {
-            let (base, relative_path) = self.reflock_resource_base_and_full_name(reflock);
-            base.join("logs").join(relative_path)
         }
 
         /// Returns the base paths for all reflogs

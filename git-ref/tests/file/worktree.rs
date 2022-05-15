@@ -51,7 +51,7 @@ fn into_peel(
 }
 
 #[test]
-fn linked() {
+fn linked_read_only() {
     for packed in [false, true] {
         let (store, odb) = worktree_store(packed, "w1").unwrap();
         let peel = into_peel(&store, odb);
@@ -110,7 +110,7 @@ fn linked() {
 }
 
 #[test]
-fn main() {
+fn main_read_only() {
     for packed in [false, true] {
         let (store, odb) = main_store(packed).unwrap();
         let peel = into_peel(&store, odb);
@@ -170,6 +170,12 @@ fn main() {
         );
     }
 }
+
+#[test]
+fn main_transactions() {}
+
+#[test]
+fn linked_transactions() {}
 
 fn assert_reflog(store: &git_ref::file::Store, a: Reference, b: Reference) {
     let mut arl = a.log_iter(store);
