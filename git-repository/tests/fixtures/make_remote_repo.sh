@@ -5,9 +5,7 @@ git init -q
 
 git checkout -b main
 
-touch f1
-git add f1
-git commit -q -m c1
+git commit --allow-empty -q -m c1
 
 git remote add --fetch remote_repo .
 git branch --set-upstream-to remote_repo/main
