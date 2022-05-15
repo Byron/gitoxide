@@ -3,18 +3,7 @@ use std::path::PathBuf;
 use git_discover::repository::Kind;
 
 fn expected_trust() -> git_sec::Trust {
-    #[cfg(not(windows))]
-    {
-        git_sec::Trust::Full
-    }
-    #[cfg(windows)]
-    {
-        if is_ci::cached() {
-            git_sec::Trust::Reduced
-        } else {
-            git_sec::Trust::Full
-        }
-    }
+    git_sec::Trust::Full
 }
 
 mod ceiling_dirs;

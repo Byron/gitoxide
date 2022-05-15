@@ -51,15 +51,16 @@ mod impl_ {
         use windows::{
             core::{Error, PCWSTR},
             Win32::{
-                Foundation::{HANDLE, PSID},
+                Foundation::{CloseHandle, BOOL, HANDLE, PSID},
                 Security::{
                     Authorization::{GetNamedSecurityInfoW, SE_FILE_OBJECT},
-                    EqualSid, GetTokenInformation, TokenOwner, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR,
-                    TOKEN_OWNER, TOKEN_QUERY,
+                    CheckTokenMembership, EqualSid, GetTokenInformation, IsWellKnownSid, TokenOwner,
+                    WinBuiltinAdministratorsSid, OWNER_SECURITY_INFORMATION, PSECURITY_DESCRIPTOR, TOKEN_OWNER,
+                    TOKEN_QUERY,
                 },
                 System::{
                     Memory::LocalFree,
-                    Threading::{GetCurrentProcess, OpenProcessToken},
+                    Threading::{GetCurrentProcess, GetCurrentThread, OpenProcessToken, OpenThreadToken},
                 },
             },
         };
@@ -67,6 +68,13 @@ mod impl_ {
         let mut err_msg = None;
         let mut is_owned = false;
         let path = path.as_ref();
+
+        // Home is not actually owned by the corresponding user
+        // but it can be considered de-facto owned by the user
+        // Ignore errors here and just do the regular checks below
+        if Some(path) == dirs::home_dir().as_deref() {
+            return Ok(true);
+        }
 
         #[allow(unsafe_code)]
         unsafe {
@@ -86,7 +94,10 @@ mod impl_ {
             // Workaround for https://github.com/microsoft/win32metadata/issues/884
             if result.is_ok() {
                 let mut token = HANDLE::default();
-                OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token).ok()?;
+                // Use the current thread token if possible, otherwise open the process token
+                OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, true, &mut token)
+                    .ok()
+                    .or_else(|_| OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &mut token).ok())?;
 
                 let mut buffer_size = 0;
                 let mut buffer = Vec::<u8>::new();
@@ -106,6 +117,16 @@ mod impl_ {
                         let token_owner = (*token_owner).Owner;
 
                         is_owned = EqualSid(folder_owner, token_owner).as_bool();
+
+                        // Admin-group owned folders are considered owned by the current user, if they are in the admin group
+                        if !is_owned && IsWellKnownSid(token_owner, WinBuiltinAdministratorsSid).as_bool() {
+                            let mut is_member = BOOL::default();
+                            // TODO: re-use the handle
+                            match CheckTokenMembership(HANDLE::default(), token_owner, &mut is_member).ok() {
+                                Err(e) => err_msg = Some(format!("Couldn't check if user is an administrator: {}", e)),
+                                Ok(()) => is_owned = is_member.as_bool(),
+                            }
+                        }
                     } else {
                         err_msg = format!(
                             "Couldn't get actual token information for current process with err: {}",
@@ -120,6 +141,7 @@ mod impl_ {
                     )
                     .into();
                 }
+                CloseHandle(token);
             } else {
                 err_msg = format!(
                     "Couldn't get security information for path '{}' with err {}",
