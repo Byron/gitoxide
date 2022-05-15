@@ -22,6 +22,7 @@ mod find {
     use std::convert::TryInto;
 
     use git_ref as refs;
+    use git_ref::FullNameRef;
     use git_testtools::hex_to_id;
 
     fn repo() -> crate::Result<git_repository::Repository> {
@@ -32,7 +33,8 @@ mod find {
     fn and_peel() -> crate::Result {
         let repo = repo()?;
         let mut packed_tag_ref = repo.try_find_reference("dt1")?.expect("tag to exist");
-        assert_eq!(packed_tag_ref.name(), "refs/tags/dt1".try_into()?);
+        let expected: &FullNameRef = "refs/tags/dt1".try_into()?;
+        assert_eq!(packed_tag_ref.name(), expected);
 
         assert_eq!(
             packed_tag_ref.inner.target,
@@ -50,13 +52,13 @@ mod find {
         );
 
         let mut symbolic_ref = repo.find_reference("multi-link-target1")?;
-        assert_eq!(symbolic_ref.name(), "refs/heads/multi-link-target1".try_into()?);
+
+        let expected: &FullNameRef = "refs/heads/multi-link-target1".try_into()?;
+        assert_eq!(symbolic_ref.name(), expected);
         assert_eq!(symbolic_ref.peel_to_id_in_place()?, the_commit);
-        assert_eq!(
-            symbolic_ref.name(),
-            "refs/remotes/origin/multi-link-target3".try_into()?,
-            "it follows symbolic refs, too"
-        );
+
+        let expected: &FullNameRef = "refs/remotes/origin/multi-link-target3".try_into()?;
+        assert_eq!(symbolic_ref.name(), expected, "it follows symbolic refs, too");
         assert_eq!(symbolic_ref.into_fully_peeled_id()?, the_commit, "idempotency");
         Ok(())
     }

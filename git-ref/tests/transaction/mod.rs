@@ -107,7 +107,7 @@ mod refedit_ext {
         use crate::transaction::refedit_ext::MockStore;
 
         fn find<'a>(edits: &'a [RefEdit], name: &str) -> &'a RefEdit {
-            let name: FullNameRef = name.try_into().unwrap();
+            let name: &FullNameRef = name.try_into().unwrap();
             edits
                 .iter()
                 .find(|e| e.name.as_bstr() == name.as_bstr())

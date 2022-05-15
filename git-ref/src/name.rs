@@ -23,21 +23,31 @@ impl Category {
     }
 }
 
-impl<'a> FullNameRef<'a> {
+impl FullNameRef {
+    pub(crate) fn new_unchecked(v: &BStr) -> &Self {
+        // SAFETY: FullNameRef2 is transparent and equivalent to a &BStr if provided as reference
+        #[allow(unsafe_code)]
+        unsafe {
+            std::mem::transmute(v)
+        }
+    }
+}
+
+impl FullNameRef {
     /// Convert this name into the relative path identifying the reference location.
-    pub fn to_path(self) -> &'a Path {
-        git_path::from_byte_slice(self.0)
+    pub fn to_path(&self) -> &Path {
+        git_path::from_byte_slice(&self.0)
     }
 
     /// Return ourselves as byte string which is a valid refname
-    pub fn as_bstr(&self) -> &'a BStr {
-        self.0
+    pub fn as_bstr(&self) -> &BStr {
+        &self.0
     }
 
     /// Strip well-known prefixes from the name and return it.
     ///
     /// If there is no such prefix, the original name is returned.
-    pub fn shorten(&self) -> &'a BStr {
+    pub fn shorten(&self) -> &BStr {
         let n = self.as_bstr();
         n.strip_prefix(b"refs/tags/")
             .or_else(|| n.strip_prefix(b"refs/heads/"))
@@ -54,7 +64,7 @@ impl<'a> FullNameRef<'a> {
 
     /// Classify this name, or return `None` if it's unclassified. If `Some`,
     /// the shortened name is returned as well.
-    pub fn category_and_short_name(&self) -> Option<(Category, &'a BStr)> {
+    pub fn category_and_short_name(&self) -> Option<(Category, &BStr)> {
         for category in &[Category::Tag, Category::LocalBranch, Category::RemoteBranch] {
             if let Some(shortened) = self.0.strip_prefix(category.prefix().as_ref()) {
                 return Some((*category, shortened.as_bstr()));
@@ -102,18 +112,18 @@ impl PartialNameRef<'static> {
     }
 }
 
-impl<'a> TryFrom<&'a BStr> for FullNameRef<'a> {
+impl<'a> TryFrom<&'a BStr> for &'a FullNameRef {
     type Error = Error;
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
-        Ok(FullNameRef(git_validate::reference::name(v)?))
+        Ok(FullNameRef::new_unchecked(git_validate::reference::name(v)?))
     }
 }
 
-impl<'a> TryFrom<FullNameRef<'a>> for PartialNameRef<'a> {
+impl<'a> TryFrom<&'a FullNameRef> for PartialNameRef<'a> {
     type Error = Infallible;
 
-    fn try_from(v: FullNameRef<'a>) -> Result<Self, Self::Error> {
+    fn try_from(v: &'a FullNameRef) -> Result<Self, Self::Error> {
         Ok(PartialNameRef(v.0.into()))
     }
 }
@@ -138,12 +148,12 @@ impl<'a> TryFrom<&'a BStr> for PartialNameRef<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a str> for FullNameRef<'a> {
+impl<'a> TryFrom<&'a str> for &'a FullNameRef {
     type Error = Error;
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(FullNameRef(git_validate::reference::name(v)?))
+        Ok(FullNameRef::new_unchecked(git_validate::reference::name(v)?))
     }
 }
 
@@ -156,12 +166,12 @@ impl<'a> TryFrom<&'a str> for PartialNameRef<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a String> for FullNameRef<'a> {
+impl<'a> TryFrom<&'a String> for &'a FullNameRef {
     type Error = Error;
 
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(FullNameRef(git_validate::reference::name(v)?))
+        Ok(FullNameRef::new_unchecked(git_validate::reference::name(v)?))
     }
 }
 
