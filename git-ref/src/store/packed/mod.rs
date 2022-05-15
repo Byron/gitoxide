@@ -45,7 +45,7 @@ pub(crate) struct Transaction {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Reference<'a> {
     /// The validated full name of the reference.
-    pub name: FullNameRef<'a>,
+    pub name: &'a FullNameRef,
     /// The target object id of the reference, hex encoded.
     pub target: &'a BStr,
     /// The fully peeled object id, hex encoded, that the ref is ultimately pointing to

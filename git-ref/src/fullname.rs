@@ -3,7 +3,7 @@ use std::{convert::TryFrom, path::Path};
 
 use git_object::bstr::{BStr, BString, ByteSlice};
 
-use crate::{bstr::ByteVec, FullName, FullNameRef, FullNameRef2, Namespace};
+use crate::{bstr::ByteVec, FullName, FullNameRef, Namespace};
 
 impl TryFrom<&str> for FullName {
     type Error = git_validate::refname::Error;
@@ -45,14 +45,14 @@ impl From<FullName> for BString {
     }
 }
 
-impl<'a> From<FullNameRef<'a>> for &'a BStr {
-    fn from(name: FullNameRef<'a>) -> Self {
-        name.0
+impl<'a> From<&'a FullNameRef> for &'a BStr {
+    fn from(name: &'a FullNameRef) -> Self {
+        &name.0
     }
 }
 
-impl<'a> From<crate::FullNameRef<'a>> for FullName {
-    fn from(value: crate::FullNameRef<'a>) -> Self {
+impl<'a> From<&'a FullNameRef> for FullName {
+    fn from(value: &'a FullNameRef) -> Self {
         FullName(value.as_bstr().into())
     }
 }
@@ -70,8 +70,8 @@ impl FullName {
     }
 
     /// Interpret this fully qualified reference as shared full name
-    pub fn to_ref(&self) -> crate::FullNameRef<'_> {
-        crate::FullNameRef(self.0.as_bstr())
+    pub fn to_ref(&self) -> &FullNameRef {
+        self.borrow()
     }
 
     /// Convert this name into the relative path, lossily, identifying the reference location relative to a repository
@@ -126,7 +126,7 @@ impl FullName {
     }
 }
 
-impl<'a> FullNameRef<'a> {
+impl FullNameRef {
     /// Create an owned copy of ourself
     pub fn to_owned(&self) -> FullName {
         FullName(self.0.to_owned())
@@ -139,18 +139,20 @@ impl<'a> FullNameRef<'a> {
     }
 }
 
-impl Borrow<FullNameRef2> for FullName {
+impl Borrow<FullNameRef> for FullName {
     #[inline]
-    fn borrow(&self) -> &FullNameRef2 {
-        // SAFETY: FullNameRef2 is transparent and equivalent to a &BStr if provided as reference
-        #[allow(unsafe_code)]
-        unsafe {
-            std::mem::transmute(self.0.as_bstr())
-        }
+    fn borrow(&self) -> &FullNameRef {
+        FullNameRef::new_unchecked(self.0.as_bstr())
     }
 }
 
-impl ToOwned for FullNameRef2 {
+impl AsRef<FullNameRef> for FullName {
+    fn as_ref(&self) -> &FullNameRef {
+        self.borrow()
+    }
+}
+
+impl ToOwned for FullNameRef {
     type Owned = FullName;
 
     fn to_owned(&self) -> Self::Owned {
@@ -165,6 +167,6 @@ mod fullname_tests {
 
     #[test]
     fn cow_works() {
-        let _x: Cow<'_, FullNameRef2> = Cow::Owned(FullName::try_from("HEAD").unwrap());
+        let _x: Cow<'_, FullNameRef> = Cow::Owned(FullName::try_from("HEAD").unwrap());
     }
 }

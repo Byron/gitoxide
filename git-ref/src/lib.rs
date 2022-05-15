@@ -96,13 +96,9 @@ pub struct Store {
 pub struct FullName(pub(crate) BString);
 
 /// A validated and potentially partial reference name - it can safely be used for common operations.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub struct FullNameRef<'a>(&'a BStr);
-
-/// A validated and potentially partial reference name - it can safely be used for common operations.
-#[derive(Hash)]
+#[derive(Hash, Debug, PartialEq, Eq, Ord, PartialOrd)]
 #[repr(transparent)]
-pub struct FullNameRef2(BStr);
+pub struct FullNameRef(BStr);
 
 /// A validated complete and fully qualified reference name, safe to use for all operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -157,5 +153,5 @@ pub enum TargetRef<'a> {
     /// A ref that points to an object id
     Peeled(&'a oid),
     /// A ref that points to another reference by its validated name, adding a level of indirection.
-    Symbolic(FullNameRef<'a>),
+    Symbolic(&'a FullNameRef),
 }
