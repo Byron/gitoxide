@@ -125,7 +125,7 @@ impl file::Store {
                         let full_name = match &self.namespace {
                             Some(namespace) => {
                                 full_name_backing = namespace.to_owned().into_namespaced_name(full_name);
-                                full_name_backing.to_ref()
+                                full_name_backing.as_ref()
                             }
                             None => full_name,
                         };

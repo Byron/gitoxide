@@ -5,7 +5,7 @@ use git_ref::Category;
 #[test]
 fn file_name() {
     let name: git_ref::FullName = "refs/heads/main".try_into().unwrap();
-    assert_eq!(name.to_ref().file_name(), "main");
+    assert_eq!(name.as_ref().file_name(), "main");
 }
 #[test]
 fn shorten_and_category() {
@@ -72,14 +72,14 @@ fn shorten_and_category() {
         let name: git_ref::FullName = input.try_into().unwrap();
         assert_eq!(category.is_worktree_private(), is_worktree_private);
         let category = Some(category);
-        assert_eq!(name.to_ref().shorten(), expected);
+        assert_eq!(name.as_ref().shorten(), expected);
         assert_eq!(name.shorten(), expected);
         assert_eq!(name.category(), category);
         assert_eq!(
             name.category_and_short_name(),
             category.map(|cat| (cat, expected.into()))
         );
-        assert_eq!(name.to_ref().category(), category);
+        assert_eq!(name.as_ref().category(), category);
     }
 
     for special in ["hello/world", "main-worktree/head"] {

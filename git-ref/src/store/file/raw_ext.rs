@@ -55,14 +55,14 @@ impl ReferenceExt for Reference {
     fn log_iter<'a, 's>(&'a self, store: &'s file::Store) -> log::iter::Platform<'a, 's> {
         log::iter::Platform {
             store,
-            name: self.name.to_ref(),
+            name: self.name.as_ref(),
             buf: Vec::new(),
         }
     }
 
     fn log_exists(&self, store: &file::Store) -> bool {
         store
-            .reflog_exists(self.name.to_ref())
+            .reflog_exists(self.name.as_ref())
             .expect("infallible name conversion")
     }
 
@@ -95,7 +95,7 @@ impl ReferenceExt for Reference {
                     while let Some(next) = cursor.follow_packed(store, packed) {
                         let next = next?;
                         if seen.contains(&next.name) {
-                            return Err(peel::to_id::Error::Cycle(store.reference_path(cursor.name.to_ref())));
+                            return Err(peel::to_id::Error::Cycle(store.reference_path(cursor.name.as_ref())));
                         }
                         *cursor = next;
                         seen.insert(cursor.name.clone());

@@ -69,11 +69,6 @@ impl FullName {
         crate::PartialNameCow(self.0.as_bstr().into())
     }
 
-    /// Interpret this fully qualified reference as shared full name
-    pub fn to_ref(&self) -> &FullNameRef {
-        self.borrow()
-    }
-
     /// Convert this name into the relative path, lossily, identifying the reference location relative to a repository
     pub fn to_path(&self) -> &Path {
         git_path::from_byte_slice(&self.0)
@@ -111,27 +106,22 @@ impl FullName {
     ///
     /// If there is no such prefix, the original name is returned.
     pub fn shorten(&self) -> &BStr {
-        self.to_ref().shorten()
+        self.as_ref().shorten()
     }
 
     /// Classify this name, or return `None` if it's unclassified.
     pub fn category(&self) -> Option<crate::Category<'_>> {
-        self.to_ref().category()
+        self.as_ref().category()
     }
 
     /// Classify this name, or return `None` if it's unclassified. If `Some`,
     /// the shortened name is returned as well.
     pub fn category_and_short_name(&self) -> Option<(crate::Category<'_>, &BStr)> {
-        self.to_ref().category_and_short_name()
+        self.as_ref().category_and_short_name()
     }
 }
 
 impl FullNameRef {
-    /// Create an owned copy of ourself
-    pub fn to_owned(&self) -> FullName {
-        FullName(self.0.to_owned())
-    }
-
     /// Return the file name portion of a full name, for instance `main` if the
     /// full name was `refs/heads/main`.
     pub fn file_name(&self) -> &BStr {
