@@ -440,10 +440,7 @@ fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
         let packed = store.open_packed_buffer()?;
         assert!(packed.is_none(), "it won't make up packed refs");
         for edit in edits {
-            assert!(
-                store.try_find(edit.name.to_partial())?.is_none(),
-                "delete ref cannot be found"
-            );
+            assert!(store.try_find(&edit.name)?.is_none(), "delete ref cannot be found");
         }
     }
     Ok(())

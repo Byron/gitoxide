@@ -1,9 +1,9 @@
 use std::{convert, ffi::OsStr, path::Path};
 
-use crate::{Category, FullNameRef, PartialNameCow, PartialNameRef};
+use crate::{Category, FullNameRef, PartialName, PartialNameRef};
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
-/// The error used in the [`PartialNameCow`][super::PartialNameCow]::try_from(…) implementations.
+/// The error used in the [`PartialNameRef`][super::PartialNameRef]::try_from(…) implementations.
 pub type Error = git_validate::reference::name::Error;
 
 impl<'a> Category<'a> {
@@ -60,86 +60,7 @@ impl PartialNameRef {
     }
 }
 
-impl FullNameRef {
-    /// Convert this name into the relative path identifying the reference location.
-    pub fn to_path(&self) -> &Path {
-        git_path::from_byte_slice(&self.0)
-    }
-
-    /// Return ourselves as byte string which is a valid refname
-    pub fn as_bstr(&self) -> &BStr {
-        &self.0
-    }
-
-    /// Strip well-known prefixes from the name and return it.
-    ///
-    /// If there is no such prefix, the original name is returned.
-    pub fn shorten(&self) -> &BStr {
-        self.category_and_short_name()
-            .map(|(_, short)| short)
-            .unwrap_or_else(|| self.0.as_bstr())
-    }
-
-    /// Classify this name, or return `None` if it's unclassified.
-    pub fn category(&self) -> Option<Category<'_>> {
-        self.category_and_short_name().map(|(cat, _)| cat)
-    }
-
-    /// Classify this name, or return `None` if it's unclassified. If `Some`,
-    /// the shortened name is returned as well.
-    pub fn category_and_short_name(&self) -> Option<(Category<'_>, &BStr)> {
-        let name = self.0.as_bstr();
-        for category in &[Category::Tag, Category::LocalBranch, Category::RemoteBranch] {
-            if let Some(shortened) = name.strip_prefix(category.prefix().as_ref()) {
-                return Some((*category, shortened.as_bstr()));
-            }
-        }
-
-        for category in &[
-            Category::Note,
-            Category::Bisect,
-            Category::WorktreePrivate,
-            Category::Rewritten,
-        ] {
-            if name.starts_with(category.prefix().as_ref()) {
-                return Some((
-                    *category,
-                    name.strip_prefix(b"refs/")
-                        .expect("we checked for refs/* above")
-                        .as_bstr(),
-                ));
-            }
-        }
-
-        if is_pseudo_ref(name) {
-            Some((Category::PseudoRef, name))
-        } else if let Some(shortened) = name.strip_prefix(Category::MainPseudoRef.prefix().as_ref()) {
-            if shortened.starts_with_str("refs/") {
-                (Category::MainRef, shortened.as_bstr()).into()
-            } else {
-                is_pseudo_ref(shortened).then(|| (Category::MainPseudoRef, shortened.as_bstr()))
-            }
-        } else if let Some(shortened_with_worktree_name) =
-            name.strip_prefix(Category::LinkedPseudoRef { name: "".into() }.prefix().as_ref())
-        {
-            let (name, shortened) = shortened_with_worktree_name.find_byte(b'/').map(|pos| {
-                (
-                    shortened_with_worktree_name[..pos].as_bstr(),
-                    shortened_with_worktree_name[pos + 1..].as_bstr(),
-                )
-            })?;
-            if shortened.starts_with_str("refs/") {
-                (Category::LinkedRef { name }, shortened.as_bstr()).into()
-            } else {
-                is_pseudo_ref(shortened).then(|| (Category::LinkedPseudoRef { name }, shortened.as_bstr()))
-            }
-        } else {
-            None
-        }
-    }
-}
-
-impl<'a> PartialNameCow<'a> {
+impl PartialNameRef {
     pub(crate) fn looks_like_full_name(&self) -> bool {
         let name = self.0.as_bstr();
         name.starts_with_str("refs/")
@@ -166,25 +87,27 @@ impl<'a> PartialNameCow<'a> {
     }
 }
 
-impl<'a> PartialNameCow<'a> {
+impl PartialNameRef {
     /// Convert this name into the relative path possibly identifying the reference location.
     /// Note that it may be only a partial path though.
-    pub fn to_partial_path(&'a self) -> &'a Path {
-        git_path::from_byte_slice(self.0.as_ref())
+    pub fn to_partial_path(&self) -> &Path {
+        git_path::from_byte_slice(self.0.as_bstr())
     }
 
     /// Provide the name as binary string which is known to be a valid partial ref name.
-    pub fn as_bstr(&'a self) -> &'a BStr {
-        self.0.as_ref()
+    pub fn as_bstr(&self) -> &BStr {
+        &self.0
     }
 
     /// Append the `component` to ourselves and validate the newly created partial path.
-    pub fn join(self, component: impl AsRef<[u8]>) -> Result<PartialNameCow<'static>, Error> {
-        let mut b = self.0.into_owned();
+    pub fn join(&self, component: impl AsRef<[u8]>) -> Result<PartialName, Error> {
+        // TODO: can we implement this on `Cow` which is how this type is used most of the time anyway?
+        //       Not right now, but it should be possible one day without contortions.
+        let mut b = self.0.to_owned();
         b.push_byte(b'/');
         b.extend(component.as_ref());
         git_validate::reference::name_partial(b.as_ref())?;
-        Ok(PartialNameCow(b.into()))
+        Ok(PartialName(b))
     }
 }
 
@@ -196,21 +119,21 @@ impl<'a> convert::TryFrom<&'a BStr> for &'a FullNameRef {
     }
 }
 
-impl<'a> From<&'a FullNameRef> for PartialNameCow<'a> {
+impl<'a> From<&'a FullNameRef> for &'a PartialNameRef {
     fn from(v: &'a FullNameRef) -> Self {
-        PartialNameCow(v.0.into())
+        PartialNameRef::new_unchecked(v.0.as_bstr())
     }
 }
 
-impl<'a> convert::TryFrom<&'a OsStr> for PartialNameCow<'a> {
+impl<'a> convert::TryFrom<&'a OsStr> for &'a PartialNameRef {
     type Error = Error;
 
     fn try_from(v: &'a OsStr) -> Result<Self, Self::Error> {
         let v = git_path::os_str_into_bstr(v)
             .map_err(|_| Error::Tag(git_validate::tag::name::Error::InvalidByte("<unknown encoding>".into())))?;
-        Ok(PartialNameCow(
-            git_validate::reference::name_partial(v.as_bstr())?.into(),
-        ))
+        Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(
+            v.as_bstr(),
+        )?))
     }
 }
 
@@ -223,11 +146,32 @@ pub trait TryFrom<T>: Sized {
     fn try_from(value: T) -> Result<Self, Self::Error>;
 }
 
+/// Our own duplicate of TryFrom to allow implementing this trait on Cow
+pub trait TryInto<T>: Sized {
+    /// The type returned in the event of a conversion error.
+    type Error;
+
+    /// Performs the conversion.
+    fn try_into(self) -> Result<T, Self::Error>;
+}
+
+impl<T, U> TryInto<U> for T
+where
+    U: TryFrom<T>,
+{
+    type Error = U::Error;
+
+    fn try_into(self) -> Result<U, U::Error> {
+        U::try_from(self)
+    }
+}
+
 mod impls {
     use crate::bstr::ByteSlice;
     use crate::name::{Error, TryFrom};
-    use crate::{BStr, BString, PartialName, PartialNameRef};
+    use crate::{BStr, BString, FullName, FullNameRef, PartialName, PartialNameRef};
     use std::borrow::{Borrow, Cow};
+    use std::convert::Infallible;
     use std::ffi::OsStr;
 
     impl<'a> From<&'a PartialNameRef> for Cow<'a, PartialNameRef> {
@@ -295,6 +239,30 @@ mod impls {
         }
     }
 
+    impl<'a> TryFrom<&'a FullNameRef> for Cow<'a, PartialNameRef> {
+        type Error = Infallible;
+
+        fn try_from(v: &'a FullNameRef) -> Result<Self, Self::Error> {
+            Ok(v.as_partial_name().into())
+        }
+    }
+
+    impl<'a> TryFrom<&'a FullName> for Cow<'a, PartialNameRef> {
+        type Error = Infallible;
+
+        fn try_from(v: &'a FullName) -> Result<Self, Self::Error> {
+            Ok(v.as_ref().as_partial_name().into())
+        }
+    }
+
+    impl<'a> TryFrom<Cow<'a, PartialNameRef>> for Cow<'a, PartialNameRef> {
+        type Error = Infallible;
+
+        fn try_from(v: Cow<'a, PartialNameRef>) -> Result<Self, Self::Error> {
+            Ok(v)
+        }
+    }
+
     impl Borrow<PartialNameRef> for PartialName {
         #[inline]
         fn borrow(&self) -> &PartialNameRef {
@@ -317,11 +285,11 @@ mod impls {
     }
 }
 
-impl<'a> convert::TryFrom<&'a BStr> for PartialNameCow<'a> {
+impl<'a> convert::TryFrom<&'a BStr> for &'a PartialNameRef {
     type Error = Error;
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
-        Ok(PartialNameCow(git_validate::reference::name_partial(v)?.into()))
+        Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?))
     }
 }
 
@@ -334,12 +302,12 @@ impl<'a> convert::TryFrom<&'a str> for &'a FullNameRef {
     }
 }
 
-impl<'a> convert::TryFrom<&'a str> for PartialNameCow<'a> {
+impl<'a> convert::TryFrom<&'a str> for &'a PartialNameRef {
     type Error = Error;
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(PartialNameCow(git_validate::reference::name_partial(v)?.into()))
+        Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?))
     }
 }
 
@@ -352,30 +320,30 @@ impl<'a> convert::TryFrom<&'a String> for &'a FullNameRef {
     }
 }
 
-impl<'a> convert::TryFrom<&'a String> for PartialNameCow<'a> {
+impl<'a> convert::TryFrom<&'a String> for &'a PartialNameRef {
     type Error = Error;
 
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
-        Ok(PartialNameCow(git_validate::reference::name_partial(v)?.into()))
+        Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?))
     }
 }
 
-impl convert::TryFrom<String> for PartialNameCow<'static> {
+impl convert::TryFrom<String> for PartialName {
     type Error = Error;
 
     fn try_from(v: String) -> Result<Self, Self::Error> {
         git_validate::reference::name_partial(v.as_bytes().as_bstr())?;
-        Ok(PartialNameCow(BString::from(v).into()))
+        Ok(PartialName(v.into()))
     }
 }
 
-impl convert::TryFrom<BString> for PartialNameCow<'static> {
+impl convert::TryFrom<BString> for PartialName {
     type Error = Error;
 
     fn try_from(v: BString) -> Result<Self, Self::Error> {
         git_validate::reference::name_partial(v.as_ref())?;
-        Ok(PartialNameCow(v.into()))
+        Ok(PartialName(v))
     }
 }
 

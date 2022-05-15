@@ -1,6 +1,6 @@
-use std::convert::TryInto;
+use std::borrow::Cow;
 
-use crate::{store, PartialNameCow, Reference};
+use crate::{store, PartialNameRef, Reference};
 
 mod error {
     use std::convert::Infallible;
@@ -40,7 +40,7 @@ impl store::Handle {
     /// TODO: actually implement this with handling of the packed buffer.
     pub fn try_find<'a, Name, E>(&self, partial: Name) -> Result<Option<Reference>, Error>
     where
-        Name: TryInto<PartialNameCow<'a>, Error = E>,
+        Name: crate::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
         Error: From<E>,
     {
         let _name = partial.try_into()?;
@@ -75,17 +75,17 @@ mod existing {
         }
     }
 
-    use std::convert::TryInto;
+    use std::borrow::Cow;
 
     pub use error::Error;
 
-    use crate::{store, PartialNameCow, Reference};
+    use crate::{store, PartialNameRef, Reference};
 
     impl store::Handle {
         /// Similar to [`crate::file::Store::find()`] but a non-existing ref is treated as error.
         pub fn find<'a, Name, E>(&self, _partial: Name) -> Result<Reference, Error>
         where
-            Name: TryInto<PartialNameCow<'a>, Error = E>,
+            Name: crate::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
             crate::name::Error: From<E>,
         {
             todo!()

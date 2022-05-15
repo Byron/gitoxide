@@ -1,10 +1,11 @@
 mod refedit_ext {
+    use std::borrow::Cow;
     use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
 
     use git_object::bstr::{BString, ByteSlice};
     use git_ref::{
         transaction::{Change, PreviousValue, RefEdit, RefEditsExt, RefLog},
-        PartialNameCow, Target,
+        PartialNameRef, Target,
     };
 
     #[derive(Default)]
@@ -25,7 +26,7 @@ mod refedit_ext {
                 },
             }
         }
-        fn find_existing(&self, name: PartialNameCow<'_>) -> Option<Target> {
+        fn find_existing(&self, name: Cow<'_, PartialNameRef>) -> Option<Target> {
             self.targets.borrow_mut().remove(name.as_bstr())
         }
     }
@@ -96,11 +97,12 @@ mod refedit_ext {
     }
 
     mod splitting {
+        use std::borrow::Cow;
         use std::{cell::Cell, convert::TryInto};
 
         use git_ref::{
             transaction::{Change, LogChange, PreviousValue, RefEdit, RefEditsExt, RefLog},
-            FullNameRef, PartialNameCow, Target,
+            FullNameRef, PartialNameRef, Target,
         };
         use git_testtools::hex_to_id;
 
@@ -178,7 +180,7 @@ mod refedit_ext {
                 next_item: Cell<bool>,
             }
             impl Cycler {
-                fn find_existing(&self, _name: PartialNameCow<'_>) -> Option<Target> {
+                fn find_existing(&self, _name: Cow<'_, PartialNameRef>) -> Option<Target> {
                     let item: bool = self.next_item.get();
                     self.next_item.set(!item);
                     Some(Target::Symbolic(

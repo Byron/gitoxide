@@ -159,7 +159,7 @@ mod with_namespace {
             );
             assert!(
                 ns_store
-                    .try_find(fullname.clone().prefix_namespace(&ns_two).to_partial())?
+                    .try_find(fullname.clone().prefix_namespace(&ns_two).as_ref())?
                     .is_none(),
                 "it won't find namespaced items by their store-relative name with namespace"
             );

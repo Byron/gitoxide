@@ -159,7 +159,7 @@ impl ReferenceExt for Reference {
             })),
             None => match &self.target {
                 Target::Peeled(_) => None,
-                Target::Symbolic(full_name) => match store.try_find_packed(full_name.to_partial(), packed) {
+                Target::Symbolic(full_name) => match store.try_find_packed(full_name.as_ref(), packed) {
                     Ok(Some(next)) => Some(Ok(next)),
                     Ok(None) => Some(Err(file::find::existing::Error::NotFound(
                         full_name.to_path().to_owned(),

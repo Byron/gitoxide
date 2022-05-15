@@ -49,7 +49,7 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
         if *is_empty {
             let edits = edits?;
             assert!(
-                store.try_find_loose(edits[0].name.to_partial())?.is_some(),
+                store.try_find_loose(edits[0].name.as_ref())?.is_some(),
                 "HEAD was created despite a directory being in the way"
             );
         } else {
@@ -440,7 +440,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "no split was performed"
         );
 
-        let head = store.find_loose(edits[0].name.to_partial())?;
+        let head = store.find_loose(&edits[0].name)?;
         assert_eq!(head.name.as_bstr(), "HEAD");
         assert_eq!(head.kind(), git_ref::Kind::Symbolic);
         assert_eq!(head.target.to_ref().try_name(), Some(referent.as_bytes().as_bstr()));

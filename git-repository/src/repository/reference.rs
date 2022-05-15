@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::convert::TryInto;
 
 use git_actor as actor;
@@ -5,7 +6,7 @@ use git_hash::ObjectId;
 use git_lock as lock;
 use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
-    FullName, PartialNameCow, Target,
+    FullName, PartialNameRef, Target,
 };
 
 use crate::{bstr::BString, ext::ReferenceExt, reference, Reference};
@@ -70,7 +71,7 @@ impl crate::Repository {
         namespace: Name,
     ) -> Result<Option<git_ref::Namespace>, git_validate::refname::Error>
     where
-        Name: TryInto<PartialNameCow<'a>, Error = E>,
+        Name: git_ref::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
         git_validate::refname::Error: From<E>,
     {
         let namespace = git_ref::namespace::expand(namespace)?;
@@ -171,7 +172,7 @@ impl crate::Repository {
     pub fn head(&self) -> Result<crate::Head<'_>, reference::find::existing::Error> {
         let head = self.find_reference("HEAD")?;
         Ok(match head.inner.target {
-            Target::Symbolic(branch) => match self.find_reference(branch.to_partial()) {
+            Target::Symbolic(branch) => match self.find_reference(&branch) {
                 Ok(r) => crate::head::Kind::Symbolic(r.detach()),
                 Err(reference::find::existing::Error::NotFound) => crate::head::Kind::Unborn(branch),
                 Err(err) => return Err(err),
@@ -221,7 +222,7 @@ impl crate::Repository {
     /// without that being considered an error.
     pub fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_>, reference::find::existing::Error>
     where
-        Name: TryInto<PartialNameCow<'a>, Error = E>,
+        Name: git_ref::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
         git_ref::file::find::Error: From<E>,
     {
         self.try_find_reference(name)?
@@ -245,7 +246,7 @@ impl crate::Repository {
     /// If the reference is expected to exist, use [`find_reference()`][crate::Repository::find_reference()].
     pub fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_>>, reference::find::Error>
     where
-        Name: TryInto<PartialNameCow<'a>, Error = E>,
+        Name: git_ref::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
         git_ref::file::find::Error: From<E>,
     {
         let state = self;

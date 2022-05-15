@@ -1,8 +1,9 @@
 use git_object::bstr::BString;
+use std::borrow::Cow;
 
 use crate::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog, Target},
-    PartialNameCow,
+    PartialNameRef,
 };
 
 /// An extension trait to perform commonly used operations on edits across different ref stores.
@@ -18,7 +19,7 @@ where
     /// Note no action is performed if deref isn't specified.
     fn extend_with_splits_of_symbolic_refs(
         &mut self,
-        find: impl FnMut(PartialNameCow<'_>) -> Option<Target>,
+        find: impl FnMut(Cow<'_, PartialNameRef>) -> Option<Target>,
         make_entry: impl FnMut(usize, RefEdit) -> T,
     ) -> Result<(), std::io::Error>;
 
@@ -27,7 +28,7 @@ where
     /// Users call this to assure derefs are honored and duplicate checks are done.
     fn pre_process(
         &mut self,
-        find: impl FnMut(PartialNameCow<'_>) -> Option<Target>,
+        find: impl FnMut(Cow<'_, PartialNameRef>) -> Option<Target>,
         make_entry: impl FnMut(usize, RefEdit) -> T,
     ) -> Result<(), std::io::Error> {
         self.extend_with_splits_of_symbolic_refs(find, make_entry)?;
@@ -55,7 +56,7 @@ where
 
     fn extend_with_splits_of_symbolic_refs(
         &mut self,
-        mut find: impl FnMut(PartialNameCow<'_>) -> Option<Target>,
+        mut find: impl FnMut(Cow<'_, PartialNameRef>) -> Option<Target>,
         mut make_entry: impl FnMut(usize, RefEdit) -> E,
     ) -> Result<(), std::io::Error> {
         let mut new_edits = Vec::new();
@@ -72,7 +73,7 @@ where
                 // In any case, we don't want the following algorithms to try dereffing it and assume they deal with
                 // broken refs gracefully.
                 edit.deref = false;
-                if let Some(Target::Symbolic(referent)) = find(edit.name.to_partial()) {
+                if let Some(Target::Symbolic(referent)) = find(edit.name.as_ref().as_partial_name().into()) {
                     new_edits.push(make_entry(
                         eid,
                         match &mut edit.change {
