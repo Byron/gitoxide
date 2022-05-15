@@ -34,5 +34,5 @@ fn store_writable(name: &str) -> crate::Result<(git_testtools::tempfile::TempDir
 mod log;
 mod reference;
 mod store;
-mod transaction;
+pub(crate) mod transaction;
 mod worktree;

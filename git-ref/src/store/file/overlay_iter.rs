@@ -156,7 +156,7 @@ impl file::Store {
         match self.namespace.as_ref() {
             Some(namespace) => self.iter_prefixed_unvalidated(namespace.to_path(), (None, None), packed),
             None => Ok(LooseThenPacked {
-                base: &self.common_dir_resolved(),
+                base: self.common_dir_resolved(),
                 packed: match packed {
                     Some(packed) => Some(
                         packed
@@ -187,12 +187,12 @@ impl file::Store {
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         match self.namespace.as_ref() {
             None => {
-                let (root, remainder) = self.validate_prefix(&self.common_dir_resolved(), prefix.as_ref())?;
+                let (root, remainder) = self.validate_prefix(self.common_dir_resolved(), prefix.as_ref())?;
                 self.iter_prefixed_unvalidated(prefix, (root.into(), remainder), packed)
             }
             Some(namespace) => {
                 let prefix = namespace.to_owned().into_namespaced_prefix(prefix);
-                let (root, remainder) = self.validate_prefix(&self.common_dir_resolved(), &prefix)?;
+                let (root, remainder) = self.validate_prefix(self.common_dir_resolved(), &prefix)?;
                 self.iter_prefixed_unvalidated(prefix, (root.into(), remainder), packed)
             }
         }

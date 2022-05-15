@@ -97,6 +97,7 @@ pub mod create_or_update {
     use crate::store_impl::{file, file::WriteReflog};
 
     impl file::Store {
+        #[allow(clippy::too_many_arguments)]
         pub(crate) fn reflog_create_or_append(
             &self,
             name: &FullNameRef,

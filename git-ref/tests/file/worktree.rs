@@ -14,12 +14,10 @@ fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile:
             git_testtools::scripted_fixture_repo_writable_with_args(name, args)
                 .map(|tmp| (tmp.path().to_owned(), tmp.into()))
         }
+    } else if writable {
+        git_testtools::scripted_fixture_repo_writable(name).map(|tmp| (tmp.path().to_owned(), tmp.into()))
     } else {
-        if writable {
-            git_testtools::scripted_fixture_repo_writable(name).map(|tmp| (tmp.path().to_owned(), tmp.into()))
-        } else {
-            git_testtools::scripted_fixture_repo_read_only(name).map(|p| (p, None))
-        }
+        git_testtools::scripted_fixture_repo_read_only(name).map(|p| (p, None))
     }
 }
 
@@ -74,9 +72,9 @@ enum Mode {
     Write,
 }
 
-impl Into<bool> for Mode {
-    fn into(self) -> bool {
-        match self {
+impl From<Mode> for bool {
+    fn from(v: Mode) -> Self {
+        match v {
             Mode::Read => false,
             Mode::Write => true,
         }
@@ -84,19 +82,15 @@ impl Into<bool> for Mode {
 }
 
 #[test]
-fn linked_read_only() {
+fn linked_read_only() -> crate::Result {
     for packed in [false, true] {
-        let (store, odb, _tmp) = worktree_store(packed, "w1", Mode::Read).unwrap();
+        let (store, odb, _tmp) = worktree_store(packed, "w1", Mode::Read)?;
         let peel = into_peel(&store, odb);
 
         let w1_head_id = peel(store.find("HEAD").unwrap());
         let head_id = peel(store.find("main-worktree/HEAD").unwrap());
         assert_ne!(w1_head_id, head_id, "access to main worktree from linked worktree");
-        assert_reflog(
-            &store,
-            store.find("HEAD").unwrap(),
-            store.find("worktrees/w1/HEAD").unwrap(),
-        );
+        assert_reflog(&store, store.find("HEAD")?, store.find("worktrees/w1/HEAD")?);
         assert_eq!(
             head_id,
             peel(store.find("main-worktree/refs/bisect/bad").unwrap()),
@@ -117,16 +111,8 @@ fn linked_read_only() {
             peel(store.find("worktrees/w1/HEAD").unwrap()),
             "access ourselves with worktrees prefix works (HEAD)"
         );
-        assert_reflog(
-            &store,
-            store.find("w1").unwrap(),
-            store.find("main-worktree/refs/heads/w1").unwrap(),
-        );
-        assert_reflog(
-            &store,
-            store.find("w1").unwrap(),
-            store.find("worktrees/w1/refs/heads/w1").unwrap(),
-        );
+        assert_reflog(&store, store.find("w1")?, store.find("main-worktree/refs/heads/w1")?);
+        assert_reflog(&store, store.find("w1")?, store.find("worktrees/w1/refs/heads/w1")?);
 
         assert_eq!(
             w1_head_id,
@@ -140,12 +126,13 @@ fn linked_read_only() {
             "both point to different ids"
         );
     }
+    Ok(())
 }
 
 #[test]
-fn main_read_only() {
+fn main_read_only() -> crate::Result {
     for packed in [false, true] {
-        let (store, odb, _tmp) = main_store(packed, Mode::Read).unwrap();
+        let (store, odb, _tmp) = main_store(packed, Mode::Read)?;
         let peel = into_peel(&store, odb);
 
         let head_id = peel(store.find("HEAD").unwrap());
@@ -154,11 +141,7 @@ fn main_read_only() {
             peel(store.find("main-worktree/HEAD").unwrap()),
             "main-worktree prefix in pseudorefs from main worktree just works"
         );
-        assert_reflog(
-            &store,
-            store.find("HEAD").unwrap(),
-            store.find("main-worktree/HEAD").unwrap(),
-        );
+        assert_reflog(&store, store.find("HEAD")?, store.find("main-worktree/HEAD")?);
         assert_eq!(
             peel(store.find("main").unwrap()),
             peel(store.find("main-worktree/refs/heads/main").unwrap()),
@@ -166,8 +149,8 @@ fn main_read_only() {
         );
         assert_reflog(
             &store,
-            store.find("main").unwrap(),
-            store.find("main-worktree/refs/heads/main").unwrap(),
+            store.find("main")?,
+            store.find("main-worktree/refs/heads/main")?,
         );
         assert_eq!(
             peel(store.find("refs/bisect/bad").unwrap()),
@@ -202,15 +185,70 @@ fn main_read_only() {
             "access from main to worktree with respective prefix"
         );
     }
+    Ok(())
 }
 
-#[test]
-#[ignore]
-fn main_transactions() {}
+mod transaction {
+    use crate::file::transaction::prepare_and_commit::committer;
+    use crate::file::worktree::{into_peel, main_store, Mode};
+    use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit};
+    use git_ref::{FullName, Target};
+    use git_testtools::hex_to_id;
+    use std::convert::TryInto;
 
-#[test]
-#[ignore]
-fn linked_transactions() {}
+    #[test]
+    fn main() {
+        for packed in [false, true] {
+            let (store, odb, _tmp) = main_store(packed, Mode::Write).unwrap();
+            let _peel = into_peel(&store, odb);
+            let t = store.transaction();
+            let new_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+            let name: FullName = "main-worktree/refs/heads/new".try_into().unwrap();
+
+            let edits = t
+                .prepare(
+                    Some(RefEdit {
+                        change: Change::Update {
+                            log: LogChange::default(),
+                            expected: PreviousValue::MustNotExist,
+                            new: Target::Peeled(new_id),
+                        },
+                        name,
+                        deref: false,
+                    }),
+                    git_lock::acquire::Fail::Immediately,
+                )
+                .unwrap()
+                .commit(committer().to_ref())
+                .unwrap();
+
+            assert_eq!(edits.len(), 1);
+            let reference = store.find("refs/heads/new").unwrap();
+            let mut buf = Vec::new();
+            assert_eq!(
+                store
+                    .reflog_iter(reference.name.as_ref(), &mut buf)
+                    .unwrap()
+                    .unwrap()
+                    .map(Result::unwrap)
+                    .map(|e| e.new_oid.to_owned().to_string())
+                    .collect::<Vec<_>>(),
+                vec![new_id.to_string()]
+            );
+            assert_eq!(
+                reference.target.id(),
+                new_id,
+                "prefixed refs are written into the correct place"
+            );
+        }
+    }
+
+    #[test]
+    #[ignore]
+    fn linked() {
+        // TODO: this is the interesting part as we must avoid to write worktree private edits into packed refs
+    }
+}
 
 fn assert_reflog(store: &git_ref::file::Store, a: Reference, b: Reference) {
     let mut arl = a.log_iter(store);

@@ -45,7 +45,7 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
                 }),
                 Fail::Immediately,
             )?
-            .commit(&committer());
+            .commit(committer().to_ref());
         if *is_empty {
             let edits = edits?;
             assert!(
@@ -143,7 +143,7 @@ fn the_existing_must_match_constraint_allow_non_existing_references_to_be_create
             }),
             Fail::Immediately,
         )?
-        .commit(&committer())?;
+        .commit(committer().to_ref())?;
 
     assert_eq!(
         edits,
@@ -247,7 +247,7 @@ fn namespaced_updates_or_deletions_are_transparent_and_not_observable() -> crate
             ],
             Fail::Immediately,
         )?
-        .commit(&committer())?;
+        .commit(committer().to_ref())?;
 
     assert_eq!(
         edits,
@@ -296,7 +296,7 @@ fn reference_with_must_exist_constraint_must_exist_already_with_any_value() -> c
             }),
             Fail::Immediately,
         )?
-        .commit(&committer())?;
+        .commit(committer().to_ref())?;
 
     assert_eq!(
         edits,
@@ -341,7 +341,7 @@ fn reference_with_must_not_exist_constraint_may_exist_already_if_the_new_value_m
             }),
             Fail::Immediately,
         )?
-        .commit(&committer())?;
+        .commit(committer().to_ref())?;
 
     assert_eq!(
         edits,
@@ -425,7 +425,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                 }),
                 Fail::Immediately,
             )?
-            .commit(&committer())?;
+            .commit(committer().to_ref())?;
         assert_eq!(
             edits,
             vec![RefEdit {
@@ -473,7 +473,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                 }),
                 Fail::Immediately,
             )?
-            .commit(&committer())?;
+            .commit(committer().to_ref())?;
 
         assert_eq!(
             edits,
@@ -566,7 +566,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
             }),
             Fail::Immediately,
         )?
-        .commit(&committer())?;
+        .commit(committer().to_ref())?;
 
     assert_eq!(edits.len(), 1, "HEAD wasn't update");
     assert_eq!(
@@ -631,7 +631,7 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
             }),
             git_lock::acquire::Fail::Immediately,
         )?
-        .commit(&committer())?;
+        .commit(committer().to_ref())?;
 
     assert_eq!(edits.len(), 1, "only one edit was performed in the loose refs store");
 
@@ -686,7 +686,7 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
                 }),
             git_lock::acquire::Fail::Immediately,
         )?
-        .commit(&committer())?;
+        .commit(committer().to_ref())?;
 
     assert_eq!(
         edits.len(),
@@ -741,7 +741,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
             Ok(Some(git_object::Kind::Commit))
         })))
         .prepare(edits, git_lock::acquire::Fail::Immediately)?
-        .commit(&committer())?;
+        .commit(committer().to_ref())?;
     assert_eq!(
         edits.len(),
         2,
