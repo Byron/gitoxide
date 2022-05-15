@@ -4,26 +4,44 @@ use git_ref::Reference;
 use std::cmp::Ordering;
 use std::path::PathBuf;
 
-fn dir(packed: bool) -> crate::Result<PathBuf> {
+fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile::TempDir>)> {
     let name = "make_worktree_repo.sh";
     if packed {
-        git_testtools::scripted_fixture_repo_read_only_with_args(name, Some("packed"))
+        let args = Some("packed");
+        if writable {
+            git_testtools::scripted_fixture_repo_read_only_with_args(name, args).map(|p| (p, None))
+        } else {
+            git_testtools::scripted_fixture_repo_writable_with_args(name, args)
+                .map(|tmp| (tmp.path().to_owned(), tmp.into()))
+        }
     } else {
-        git_testtools::scripted_fixture_repo_read_only(name)
+        if writable {
+            git_testtools::scripted_fixture_repo_writable(name).map(|tmp| (tmp.path().to_owned(), tmp.into()))
+        } else {
+            git_testtools::scripted_fixture_repo_read_only(name).map(|p| (p, None))
+        }
     }
 }
 
-fn main_store(packed: bool) -> crate::Result<(git_ref::file::Store, git_odb::Handle)> {
-    let dir = dir(packed)?;
+fn main_store(
+    packed: bool,
+    writable: impl Into<bool>,
+) -> crate::Result<(git_ref::file::Store, git_odb::Handle, Option<tempfile::TempDir>)> {
+    let (dir, tmp) = dir(packed, writable.into())?;
     let git_dir = dir.join("repo").join(".git");
     Ok((
         git_ref::file::Store::at(&git_dir, Default::default(), Default::default()),
         git_odb::at(git_dir.join("objects"))?,
+        tmp,
     ))
 }
 
-fn worktree_store(packed: bool, worktree_name: &str) -> crate::Result<(git_ref::file::Store, git_odb::Handle)> {
-    let dir = dir(packed)?;
+fn worktree_store(
+    packed: bool,
+    worktree_name: &str,
+    writable: impl Into<bool>,
+) -> crate::Result<(git_ref::file::Store, git_odb::Handle, Option<tempfile::TempDir>)> {
+    let (dir, tmp) = dir(packed, writable.into())?;
     let (git_dir, _work_tree) = git_discover::upwards(dir.join(worktree_name))?
         .0
         .into_repository_and_work_tree_directories();
@@ -31,6 +49,7 @@ fn worktree_store(packed: bool, worktree_name: &str) -> crate::Result<(git_ref::
     Ok((
         git_ref::file::Store::for_linked_worktree(git_dir, &common_dir, Default::default(), Default::default()),
         git_odb::at(common_dir.join("objects"))?,
+        tmp,
     ))
 }
 
@@ -50,10 +69,24 @@ fn into_peel(
     }
 }
 
+enum Mode {
+    Read,
+    Write,
+}
+
+impl Into<bool> for Mode {
+    fn into(self) -> bool {
+        match self {
+            Mode::Read => false,
+            Mode::Write => true,
+        }
+    }
+}
+
 #[test]
 fn linked_read_only() {
     for packed in [false, true] {
-        let (store, odb) = worktree_store(packed, "w1").unwrap();
+        let (store, odb, _tmp) = worktree_store(packed, "w1", Mode::Read).unwrap();
         let peel = into_peel(&store, odb);
 
         let w1_head_id = peel(store.find("HEAD").unwrap());
@@ -112,7 +145,7 @@ fn linked_read_only() {
 #[test]
 fn main_read_only() {
     for packed in [false, true] {
-        let (store, odb) = main_store(packed).unwrap();
+        let (store, odb, _tmp) = main_store(packed, Mode::Read).unwrap();
         let peel = into_peel(&store, odb);
 
         let head_id = peel(store.find("HEAD").unwrap());
@@ -172,9 +205,11 @@ fn main_read_only() {
 }
 
 #[test]
+#[ignore]
 fn main_transactions() {}
 
 #[test]
+#[ignore]
 fn linked_transactions() {}
 
 fn assert_reflog(store: &git_ref::file::Store, a: Reference, b: Reference) {
