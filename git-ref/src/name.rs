@@ -1,9 +1,7 @@
-use std::borrow::Borrow;
-use std::{convert::TryFrom, ffi::OsStr, path::Path};
+use std::{convert, ffi::OsStr, path::Path};
 
+use crate::{Category, FullNameRef, PartialNameCow, PartialNameRef};
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
-
-use crate::{Category, FullNameRef, PartialName, PartialNameCow, PartialNameRef};
 
 /// The error used in the [`PartialNameCow`][super::PartialNameCow]::try_from(…) implementations.
 pub type Error = git_validate::reference::name::Error;
@@ -190,7 +188,7 @@ impl<'a> PartialNameCow<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a BStr> for &'a FullNameRef {
+impl<'a> convert::TryFrom<&'a BStr> for &'a FullNameRef {
     type Error = Error;
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
@@ -204,7 +202,7 @@ impl<'a> From<&'a FullNameRef> for PartialNameCow<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a OsStr> for PartialNameCow<'a> {
+impl<'a> convert::TryFrom<&'a OsStr> for PartialNameCow<'a> {
     type Error = Error;
 
     fn try_from(v: &'a OsStr) -> Result<Self, Self::Error> {
@@ -216,7 +214,110 @@ impl<'a> TryFrom<&'a OsStr> for PartialNameCow<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a BStr> for PartialNameCow<'a> {
+/// Our own duplicate of TryFrom to allow implementing this trait on Cow
+pub trait TryFrom<T>: Sized {
+    /// The type returned in the event of a conversion error.
+    type Error;
+
+    /// Performs the conversion.
+    fn try_from(value: T) -> Result<Self, Self::Error>;
+}
+
+mod impls {
+    use crate::bstr::ByteSlice;
+    use crate::name::{Error, TryFrom};
+    use crate::{BStr, BString, PartialName, PartialNameRef};
+    use std::borrow::{Borrow, Cow};
+    use std::ffi::OsStr;
+
+    impl<'a> From<&'a PartialNameRef> for Cow<'a, PartialNameRef> {
+        fn from(v: &'a PartialNameRef) -> Self {
+            Cow::Borrowed(v)
+        }
+    }
+    impl From<PartialName> for Cow<'_, PartialNameRef> {
+        fn from(v: PartialName) -> Self {
+            Cow::Owned(v)
+        }
+    }
+
+    impl<'a> TryFrom<&'a OsStr> for Cow<'a, PartialNameRef> {
+        type Error = Error;
+
+        fn try_from(v: &'a OsStr) -> Result<Self, Self::Error> {
+            let v = git_path::os_str_into_bstr(v)
+                .map_err(|_| Error::Tag(git_validate::tag::name::Error::InvalidByte("<unknown encoding>".into())))?;
+            Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v.as_bstr())?).into())
+        }
+    }
+
+    impl<'a> TryFrom<&'a BStr> for Cow<'a, PartialNameRef> {
+        type Error = Error;
+
+        fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
+            Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?).into())
+        }
+    }
+
+    impl<'a> TryFrom<&'a str> for Cow<'a, PartialNameRef> {
+        type Error = Error;
+
+        fn try_from(v: &'a str) -> Result<Self, Self::Error> {
+            let v = v.as_bytes().as_bstr();
+            Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?).into())
+        }
+    }
+
+    impl<'a> TryFrom<&'a String> for Cow<'a, PartialNameRef> {
+        type Error = Error;
+
+        fn try_from(v: &'a String) -> Result<Self, Self::Error> {
+            let v = v.as_bytes().as_bstr();
+            Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?).into())
+        }
+    }
+
+    impl TryFrom<String> for Cow<'static, PartialNameRef> {
+        type Error = Error;
+
+        fn try_from(v: String) -> Result<Self, Self::Error> {
+            git_validate::reference::name_partial(v.as_bytes().as_bstr())?;
+            Ok(PartialName(v.into()).into())
+        }
+    }
+
+    impl TryFrom<BString> for Cow<'static, PartialNameRef> {
+        type Error = Error;
+
+        fn try_from(v: BString) -> Result<Self, Self::Error> {
+            git_validate::reference::name_partial(v.as_ref())?;
+            Ok(PartialName(v).into())
+        }
+    }
+
+    impl Borrow<PartialNameRef> for PartialName {
+        #[inline]
+        fn borrow(&self) -> &PartialNameRef {
+            PartialNameRef::new_unchecked(self.0.as_bstr())
+        }
+    }
+
+    impl AsRef<PartialNameRef> for PartialName {
+        fn as_ref(&self) -> &PartialNameRef {
+            self.borrow()
+        }
+    }
+
+    impl ToOwned for PartialNameRef {
+        type Owned = PartialName;
+
+        fn to_owned(&self) -> Self::Owned {
+            PartialName(self.0.to_owned())
+        }
+    }
+}
+
+impl<'a> convert::TryFrom<&'a BStr> for PartialNameCow<'a> {
     type Error = Error;
 
     fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
@@ -224,7 +325,7 @@ impl<'a> TryFrom<&'a BStr> for PartialNameCow<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a str> for &'a FullNameRef {
+impl<'a> convert::TryFrom<&'a str> for &'a FullNameRef {
     type Error = Error;
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
@@ -233,7 +334,7 @@ impl<'a> TryFrom<&'a str> for &'a FullNameRef {
     }
 }
 
-impl<'a> TryFrom<&'a str> for PartialNameCow<'a> {
+impl<'a> convert::TryFrom<&'a str> for PartialNameCow<'a> {
     type Error = Error;
 
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
@@ -242,7 +343,7 @@ impl<'a> TryFrom<&'a str> for PartialNameCow<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a String> for &'a FullNameRef {
+impl<'a> convert::TryFrom<&'a String> for &'a FullNameRef {
     type Error = Error;
 
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
@@ -251,7 +352,7 @@ impl<'a> TryFrom<&'a String> for &'a FullNameRef {
     }
 }
 
-impl<'a> TryFrom<&'a String> for PartialNameCow<'a> {
+impl<'a> convert::TryFrom<&'a String> for PartialNameCow<'a> {
     type Error = Error;
 
     fn try_from(v: &'a String) -> Result<Self, Self::Error> {
@@ -260,7 +361,7 @@ impl<'a> TryFrom<&'a String> for PartialNameCow<'a> {
     }
 }
 
-impl TryFrom<String> for PartialNameCow<'static> {
+impl convert::TryFrom<String> for PartialNameCow<'static> {
     type Error = Error;
 
     fn try_from(v: String) -> Result<Self, Self::Error> {
@@ -269,33 +370,12 @@ impl TryFrom<String> for PartialNameCow<'static> {
     }
 }
 
-impl TryFrom<BString> for PartialNameCow<'static> {
+impl convert::TryFrom<BString> for PartialNameCow<'static> {
     type Error = Error;
 
     fn try_from(v: BString) -> Result<Self, Self::Error> {
         git_validate::reference::name_partial(v.as_ref())?;
         Ok(PartialNameCow(v.into()))
-    }
-}
-
-impl Borrow<PartialNameRef> for PartialName {
-    #[inline]
-    fn borrow(&self) -> &PartialNameRef {
-        PartialNameRef::new_unchecked(self.0.as_bstr())
-    }
-}
-
-impl AsRef<PartialNameRef> for PartialName {
-    fn as_ref(&self) -> &PartialNameRef {
-        self.borrow()
-    }
-}
-
-impl ToOwned for PartialNameRef {
-    type Owned = PartialName;
-
-    fn to_owned(&self) -> Self::Owned {
-        PartialName(self.0.to_owned())
     }
 }
 
