@@ -9,10 +9,10 @@ fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile:
     if packed {
         let args = Some("packed");
         if writable {
-            git_testtools::scripted_fixture_repo_read_only_with_args(name, args).map(|p| (p, None))
-        } else {
             git_testtools::scripted_fixture_repo_writable_with_args(name, args)
                 .map(|tmp| (tmp.path().to_owned(), tmp.into()))
+        } else {
+            git_testtools::scripted_fixture_repo_read_only_with_args(name, args).map(|p| (p, None))
         }
     } else if writable {
         git_testtools::scripted_fixture_repo_writable(name).map(|tmp| (tmp.path().to_owned(), tmp.into()))
@@ -191,19 +191,27 @@ fn main_read_only() -> crate::Result {
 mod transaction {
     use crate::file::transaction::prepare_and_commit::committer;
     use crate::file::worktree::{into_peel, main_store, Mode};
+    use git_ref::file::transaction::PackedRefs;
     use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit};
     use git_ref::{FullName, Target};
     use git_testtools::hex_to_id;
     use std::convert::TryInto;
 
     #[test]
+    #[ignore]
     fn main() {
         for packed in [false, true] {
             let (store, odb, _tmp) = main_store(packed, Mode::Write).unwrap();
             let _peel = into_peel(&store, odb);
-            let t = store.transaction();
+            let mut t = store.transaction();
             let new_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
             let name: FullName = "main-worktree/refs/heads/new".try_into().unwrap();
+
+            if packed {
+                t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
+                    Ok(Some(git_object::Kind::Commit))
+                })));
+            }
 
             let edits = t
                 .prepare(
@@ -223,13 +231,14 @@ mod transaction {
                 .unwrap();
 
             assert_eq!(edits.len(), 1);
-            let reference = store.find("refs/heads/new").unwrap();
+            let unprefixed_ref_name = "refs/heads/new";
+            let reference = store.find(unprefixed_ref_name).unwrap();
             let mut buf = Vec::new();
             assert_eq!(
                 store
                     .reflog_iter(reference.name.as_ref(), &mut buf)
                     .unwrap()
-                    .unwrap()
+                    .expect("we are writing reflogs")
                     .map(Result::unwrap)
                     .map(|e| e.new_oid.to_owned().to_string())
                     .collect::<Vec<_>>(),
@@ -240,6 +249,20 @@ mod transaction {
                 new_id,
                 "prefixed refs are written into the correct place"
             );
+
+            if packed {
+                let packed_refs = store.cached_packed_buffer().unwrap().expect("packed refs file present");
+                assert_eq!(
+                    packed_refs.find(unprefixed_ref_name).unwrap().object(),
+                    new_id,
+                    "ref can be found without prefix"
+                );
+                assert_eq!(
+                    packed_refs.find(edits[0].name.as_ref()).unwrap().object(),
+                    new_id,
+                    "ref can be found with prefix"
+                );
+            }
         }
     }
 
