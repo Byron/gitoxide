@@ -9,7 +9,7 @@ use crate::{
         },
     },
     transaction::{Change, LogChange, RefEdit, RefEditsExt, RefLog},
-    Reference, Target,
+    FullName, FullNameRef, Reference, Target,
 };
 
 impl<'s> Transaction<'s> {
@@ -223,16 +223,22 @@ impl<'s> Transaction<'s> {
                     } => mode,
                     Change::Delete { log, .. } => log,
                 };
-                // TODO: also filter by privacy - worktree and pseudorefs should never be packed.
                 if log_mode == RefLog::Only {
                     continue;
                 }
+                let name = match possibly_adjust_name_for_prefixes(edit.update.name.as_ref()) {
+                    Some(n) => n,
+                    None => continue,
+                };
                 if let Some(ref mut num_updates) = maybe_updates_for_packed_refs {
                     if let Change::Update {
                         new: Target::Peeled(_), ..
                     } = edit.update.change
                     {
-                        edits_for_packed_transaction.push(edit.update.clone());
+                        edits_for_packed_transaction.push(RefEdit {
+                            name,
+                            ..edit.update.clone()
+                        });
                         *num_updates += 1;
                     }
                     continue;
@@ -243,7 +249,10 @@ impl<'s> Transaction<'s> {
                         ..
                     } => needs_packed_refs_lookups = true,
                     Change::Delete { .. } => {
-                        edits_for_packed_transaction.push(edit.update.clone());
+                        edits_for_packed_transaction.push(RefEdit {
+                            name,
+                            ..edit.update.clone()
+                        });
                     }
                     _ => {
                         needs_packed_refs_lookups = true;
@@ -338,6 +347,11 @@ impl<'s> Transaction<'s> {
         self.updates = Some(updates);
         Ok(self)
     }
+}
+
+fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {
+    // TODO: also filter by privacy - worktree and pseudorefs should never be packed.
+    name.to_owned().into()
 }
 
 mod error {
