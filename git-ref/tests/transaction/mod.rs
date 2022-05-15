@@ -1,5 +1,4 @@
 mod refedit_ext {
-    use std::borrow::Cow;
     use std::{cell::RefCell, collections::BTreeMap, convert::TryInto};
 
     use git_object::bstr::{BString, ByteSlice};
@@ -26,7 +25,7 @@ mod refedit_ext {
                 },
             }
         }
-        fn find_existing(&self, name: Cow<'_, PartialNameRef>) -> Option<Target> {
+        fn find_existing(&self, name: &PartialNameRef) -> Option<Target> {
             self.targets.borrow_mut().remove(name.as_bstr())
         }
     }
@@ -97,7 +96,6 @@ mod refedit_ext {
     }
 
     mod splitting {
-        use std::borrow::Cow;
         use std::{cell::Cell, convert::TryInto};
 
         use git_ref::{
@@ -180,7 +178,7 @@ mod refedit_ext {
                 next_item: Cell<bool>,
             }
             impl Cycler {
-                fn find_existing(&self, _name: Cow<'_, PartialNameRef>) -> Option<Target> {
+                fn find_existing(&self, _name: &PartialNameRef) -> Option<Target> {
                     let item: bool = self.next_item.get();
                     self.next_item.set(!item);
                     Some(Target::Symbolic(

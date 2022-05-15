@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::convert::TryInto;
 
 use git_actor as actor;
@@ -71,7 +70,7 @@ impl crate::Repository {
         namespace: Name,
     ) -> Result<Option<git_ref::Namespace>, git_validate::refname::Error>
     where
-        Name: git_ref::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         git_validate::refname::Error: From<E>,
     {
         let namespace = git_ref::namespace::expand(namespace)?;
@@ -222,7 +221,7 @@ impl crate::Repository {
     /// without that being considered an error.
     pub fn find_reference<'a, Name, E>(&self, name: Name) -> Result<Reference<'_>, reference::find::existing::Error>
     where
-        Name: git_ref::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         git_ref::file::find::Error: From<E>,
     {
         self.try_find_reference(name)?
@@ -246,7 +245,7 @@ impl crate::Repository {
     /// If the reference is expected to exist, use [`find_reference()`][crate::Repository::find_reference()].
     pub fn try_find_reference<'a, Name, E>(&self, name: Name) -> Result<Option<Reference<'_>>, reference::find::Error>
     where
-        Name: git_ref::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         git_ref::file::find::Error: From<E>,
     {
         let state = self;

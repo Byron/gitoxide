@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::convert::TryInto;
 
 use git_object::bstr::{BStr, BString, ByteSlice};
 
@@ -12,7 +12,7 @@ impl packed::Buffer {
     /// `main-worktree/` or `worktrees/<name>/`, as this is left to the caller.
     pub fn try_find<'a, Name, E>(&self, name: Name) -> Result<Option<packed::Reference<'_>>, Error>
     where
-        Name: crate::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         Error: From<E>,
     {
         let name = name.try_into()?;
@@ -60,7 +60,7 @@ impl packed::Buffer {
     /// Find a reference with the given `name` and return it.
     pub fn find<'a, Name, E>(&self, name: Name) -> Result<packed::Reference<'_>, existing::Error>
     where
-        Name: crate::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         Error: From<E>,
     {
         match self.try_find(name) {

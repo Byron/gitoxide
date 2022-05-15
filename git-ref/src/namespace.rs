@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::convert::TryInto;
 use std::path::{Path, PathBuf};
 
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
@@ -36,7 +36,7 @@ impl Namespace {
 /// For more information, consult the [git namespace documentation](https://git-scm.com/docs/gitnamespaces).
 pub fn expand<'a, Name, E>(namespace: Name) -> Result<Namespace, git_validate::refname::Error>
 where
-    Name: crate::name::TryInto<Cow<'a, PartialNameRef>, Error = E>,
+    Name: TryInto<&'a PartialNameRef, Error = E>,
     git_validate::refname::Error: From<E>,
 {
     let namespace = &namespace.try_into()?.0;

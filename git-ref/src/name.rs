@@ -1,6 +1,7 @@
+use std::convert::Infallible;
 use std::{convert, ffi::OsStr, path::Path};
 
-use crate::{Category, FullNameRef, PartialName, PartialNameRef};
+use crate::{Category, FullName, FullNameRef, PartialName, PartialNameRef};
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
 /// The error used in the [`PartialNameRef`][super::PartialNameRef]::try_from(…) implementations.
@@ -137,131 +138,10 @@ impl<'a> convert::TryFrom<&'a OsStr> for &'a PartialNameRef {
     }
 }
 
-/// Our own duplicate of TryFrom to allow implementing this trait on Cow
-pub trait TryFrom<T>: Sized {
-    /// The type returned in the event of a conversion error.
-    type Error;
-
-    /// Performs the conversion.
-    fn try_from(value: T) -> Result<Self, Self::Error>;
-}
-
-/// Our own duplicate of TryFrom to allow implementing this trait on Cow
-pub trait TryInto<T>: Sized {
-    /// The type returned in the event of a conversion error.
-    type Error;
-
-    /// Performs the conversion.
-    fn try_into(self) -> Result<T, Self::Error>;
-}
-
-impl<T, U> TryInto<U> for T
-where
-    U: TryFrom<T>,
-{
-    type Error = U::Error;
-
-    fn try_into(self) -> Result<U, U::Error> {
-        U::try_from(self)
-    }
-}
-
 mod impls {
     use crate::bstr::ByteSlice;
-    use crate::name::{Error, TryFrom};
-    use crate::{BStr, BString, FullName, FullNameRef, PartialName, PartialNameRef};
-    use std::borrow::{Borrow, Cow};
-    use std::convert::Infallible;
-    use std::ffi::OsStr;
-
-    impl<'a> From<&'a PartialNameRef> for Cow<'a, PartialNameRef> {
-        fn from(v: &'a PartialNameRef) -> Self {
-            Cow::Borrowed(v)
-        }
-    }
-    impl From<PartialName> for Cow<'_, PartialNameRef> {
-        fn from(v: PartialName) -> Self {
-            Cow::Owned(v)
-        }
-    }
-
-    impl<'a> TryFrom<&'a OsStr> for Cow<'a, PartialNameRef> {
-        type Error = Error;
-
-        fn try_from(v: &'a OsStr) -> Result<Self, Self::Error> {
-            let v = git_path::os_str_into_bstr(v)
-                .map_err(|_| Error::Tag(git_validate::tag::name::Error::InvalidByte("<unknown encoding>".into())))?;
-            Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v.as_bstr())?).into())
-        }
-    }
-
-    impl<'a> TryFrom<&'a BStr> for Cow<'a, PartialNameRef> {
-        type Error = Error;
-
-        fn try_from(v: &'a BStr) -> Result<Self, Self::Error> {
-            Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?).into())
-        }
-    }
-
-    impl<'a> TryFrom<&'a str> for Cow<'a, PartialNameRef> {
-        type Error = Error;
-
-        fn try_from(v: &'a str) -> Result<Self, Self::Error> {
-            let v = v.as_bytes().as_bstr();
-            Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?).into())
-        }
-    }
-
-    impl<'a> TryFrom<&'a String> for Cow<'a, PartialNameRef> {
-        type Error = Error;
-
-        fn try_from(v: &'a String) -> Result<Self, Self::Error> {
-            let v = v.as_bytes().as_bstr();
-            Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?).into())
-        }
-    }
-
-    impl TryFrom<String> for Cow<'static, PartialNameRef> {
-        type Error = Error;
-
-        fn try_from(v: String) -> Result<Self, Self::Error> {
-            git_validate::reference::name_partial(v.as_bytes().as_bstr())?;
-            Ok(PartialName(v.into()).into())
-        }
-    }
-
-    impl TryFrom<BString> for Cow<'static, PartialNameRef> {
-        type Error = Error;
-
-        fn try_from(v: BString) -> Result<Self, Self::Error> {
-            git_validate::reference::name_partial(v.as_ref())?;
-            Ok(PartialName(v).into())
-        }
-    }
-
-    impl<'a> TryFrom<&'a FullNameRef> for Cow<'a, PartialNameRef> {
-        type Error = Infallible;
-
-        fn try_from(v: &'a FullNameRef) -> Result<Self, Self::Error> {
-            Ok(v.as_partial_name().into())
-        }
-    }
-
-    impl<'a> TryFrom<&'a FullName> for Cow<'a, PartialNameRef> {
-        type Error = Infallible;
-
-        fn try_from(v: &'a FullName) -> Result<Self, Self::Error> {
-            Ok(v.as_ref().as_partial_name().into())
-        }
-    }
-
-    impl<'a> TryFrom<Cow<'a, PartialNameRef>> for Cow<'a, PartialNameRef> {
-        type Error = Infallible;
-
-        fn try_from(v: Cow<'a, PartialNameRef>) -> Result<Self, Self::Error> {
-            Ok(v)
-        }
-    }
+    use crate::{PartialName, PartialNameRef};
+    use std::borrow::Borrow;
 
     impl Borrow<PartialNameRef> for PartialName {
         #[inline]
@@ -308,6 +188,14 @@ impl<'a> convert::TryFrom<&'a str> for &'a PartialNameRef {
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
         Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?))
+    }
+}
+
+impl<'a> convert::TryFrom<&'a FullName> for &'a PartialNameRef {
+    type Error = Infallible;
+
+    fn try_from(v: &'a FullName) -> Result<Self, Self::Error> {
+        Ok(v.as_ref().as_partial_name())
     }
 }
 
