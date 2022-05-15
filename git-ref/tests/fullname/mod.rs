@@ -1,6 +1,14 @@
 use std::convert::TryInto;
 
-use git_ref::Category;
+use git_ref::{Category, FullNameRef, PartialNameRef};
+
+use std::borrow::Cow;
+
+#[test]
+fn cow() {
+    fn _fn(_x: Cow<'_, FullNameRef>) {}
+    fn _pn(_x: Cow<'_, PartialNameRef>) {}
+}
 
 #[test]
 fn file_name() {

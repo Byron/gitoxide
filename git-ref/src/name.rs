@@ -1,8 +1,9 @@
+use std::borrow::Borrow;
 use std::{convert::TryFrom, ffi::OsStr, path::Path};
 
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
-use crate::{Category, FullNameRef, PartialNameCow};
+use crate::{Category, FullNameRef, PartialName, PartialNameCow, PartialNameRef};
 
 /// The error used in the [`PartialNameCow`][super::PartialNameCow]::try_from(…) implementations.
 pub type Error = git_validate::reference::name::Error;
@@ -43,7 +44,17 @@ impl<'a> Category<'a> {
 
 impl FullNameRef {
     pub(crate) fn new_unchecked(v: &BStr) -> &Self {
-        // SAFETY: FullNameRef2 is transparent and equivalent to a &BStr if provided as reference
+        // SAFETY: FullNameRef is transparent and equivalent to a &BStr if provided as reference
+        #[allow(unsafe_code)]
+        unsafe {
+            std::mem::transmute(v)
+        }
+    }
+}
+
+impl PartialNameRef {
+    pub(crate) fn new_unchecked(v: &BStr) -> &Self {
+        // SAFETY: PartialNameRef is transparent and equivalent to a &BStr if provided as reference
         #[allow(unsafe_code)]
         unsafe {
             std::mem::transmute(v)
@@ -264,6 +275,27 @@ impl TryFrom<BString> for PartialNameCow<'static> {
     fn try_from(v: BString) -> Result<Self, Self::Error> {
         git_validate::reference::name_partial(v.as_ref())?;
         Ok(PartialNameCow(v.into()))
+    }
+}
+
+impl Borrow<PartialNameRef> for PartialName {
+    #[inline]
+    fn borrow(&self) -> &PartialNameRef {
+        PartialNameRef::new_unchecked(self.0.as_bstr())
+    }
+}
+
+impl AsRef<PartialNameRef> for PartialName {
+    fn as_ref(&self) -> &PartialNameRef {
+        self.borrow()
+    }
+}
+
+impl ToOwned for PartialNameRef {
+    type Owned = PartialName;
+
+    fn to_owned(&self) -> Self::Owned {
+        PartialName(self.0.to_owned())
     }
 }
 

@@ -149,14 +149,3 @@ impl ToOwned for FullNameRef {
         FullName(self.0.to_owned())
     }
 }
-
-#[cfg(test)]
-mod fullname_tests {
-    use super::*;
-    use std::borrow::Cow;
-
-    #[test]
-    fn cow_works() {
-        let _x: Cow<'_, FullNameRef> = Cow::Owned(FullName::try_from("HEAD").unwrap());
-    }
-}
