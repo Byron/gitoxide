@@ -251,6 +251,7 @@ impl<'event> GitConfig<'event> {
         }
     }
 
+    // TODO put into own module
     pub(crate) fn resolve_includes(
         &mut self,
         config_path: Option<&std::path::Path>,
@@ -262,12 +263,12 @@ impl<'event> GitConfig<'event> {
             target_config_path: Option<&Path>,
             options: from_paths::Options,
         ) -> bool {
+            // TODO may be use match
             if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir:")) {
-                return is_match(&target_config_path, options, git_dir, condition);
+                is_match(&target_config_path, options, git_dir, condition)
             } else if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir/i:")) {
-                return is_match(&target_config_path, options, git_dir, &condition.to_lowercase());
-            }
-            if let Some(branch_name) = options.branch_name {
+                is_match(&target_config_path, options, git_dir, &condition.to_lowercase())
+            } else if let Some(branch_name) = options.branch_name {
                 if let Some((git_ref::Category::LocalBranch, branch_name)) = branch_name.category_and_short_name() {
                     if let Some(condition) = condition.strip_prefix("onbranch:") {
                         let mut condition = Cow::Borrowed(condition);
@@ -282,9 +283,10 @@ impl<'event> GitConfig<'event> {
                         return git_glob::wildmatch(pattern, branch_name, git_glob::wildmatch::Mode::empty());
                     }
                 }
-                return false;
+                false
+            } else {
+                false
             }
-            false
         }
 
         fn is_match(target_config_path: &Option<&Path>, options: Options, git_dir: &Path, condition: &str) -> bool {

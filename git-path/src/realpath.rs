@@ -10,8 +10,8 @@ pub enum Error {
     ReadLink(#[from] std::io::Error),
     #[error("Empty is not a valid path")]
     EmptyPath,
-    #[error("Parent component of {} does not exist", .path.display())]
-    MissingParent { path: PathBuf },
+    #[error("Parent component of {} does not exist, {}", .path.display(), .msg)]
+    MissingParent { path: PathBuf, msg: &'static str },
 }
 
 pub(crate) mod function {
@@ -40,7 +40,10 @@ pub(crate) mod function {
                 CurDir => {}
                 ParentDir => {
                     if !real_path.pop() {
-                        return Err(Error::MissingParent { path: real_path });
+                        return Err(Error::MissingParent {
+                            path: real_path,
+                            msg: "parent path must exist",
+                        });
                     }
                 }
                 Normal(part) => {
@@ -52,9 +55,13 @@ pub(crate) mod function {
                         }
                         let mut link_destination = std::fs::read_link(real_path.as_path())?;
                         if link_destination.is_absolute() {
-                            real_path.clear(); // TODO: test justifying this line
-                        } else {
-                            assert!(real_path.pop(), "we just pushed a component");
+                            // pushing absolute path to real_path resets it to the pushed absolute path
+                            // real_path.clear();
+                        } else if !real_path.pop() {
+                            return Err(Error::MissingParent {
+                                path: real_path,
+                                msg: "we just pushed a component",
+                            });
                         }
                         link_destination.extend(components);
                         path_backing = link_destination;
