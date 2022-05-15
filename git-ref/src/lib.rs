@@ -113,6 +113,7 @@ pub struct PartialNameCow<'a>(Cow<'a, BStr>);
 
 /// A validated complete and fully qualified referenced reference name, safe to use for all operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+#[repr(transparent)]
 pub struct PartialNameRef(BStr);
 
 /// A validated complete and fully qualified owned reference name, safe to use for all operations.

@@ -131,7 +131,7 @@ impl Section {
             }
         }
 
-        let version = crate::git::try_strip_tag_path(segment.head.name.to_ref())
+        let version = crate::git::try_strip_tag_path(segment.head.name.as_ref())
             .map(|tag_name| {
                 let package_name = (!is_top_level_package(&package.manifest_path, repo)).then(|| package.name.as_str());
                 changelog::Version::Semantic(
