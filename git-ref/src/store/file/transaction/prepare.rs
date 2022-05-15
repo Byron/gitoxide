@@ -223,6 +223,7 @@ impl<'s> Transaction<'s> {
                     } => mode,
                     Change::Delete { log, .. } => log,
                 };
+                // TODO: also filter by privacy - worktree and pseudorefs should never be packed.
                 if log_mode == RefLog::Only {
                     continue;
                 }
@@ -237,13 +238,8 @@ impl<'s> Transaction<'s> {
                     continue;
                 }
                 match edit.update.change {
-                    // TODO: use or-pattern here once MRV is big enough (blocked by vergen 1.52)
                     Change::Update {
-                        expected: PreviousValue::ExistingMustMatch(_),
-                        ..
-                    }
-                    | Change::Update {
-                        expected: PreviousValue::MustExistAndMatch(_),
+                        expected: PreviousValue::ExistingMustMatch(_) | PreviousValue::MustExistAndMatch(_),
                         ..
                     } => needs_packed_refs_lookups = true,
                     Change::Delete { .. } => {

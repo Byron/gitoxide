@@ -103,7 +103,7 @@ pub mod create_or_update {
             _lock: &git_lock::Marker,
             previous_oid: Option<ObjectId>,
             new: &oid,
-            committer: &git_actor::Signature,
+            committer: git_actor::SignatureRef<'_>,
             message: &BStr,
             force_create_reflog: bool,
         ) -> Result<(), Error> {
