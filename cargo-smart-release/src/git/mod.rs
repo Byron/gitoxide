@@ -117,10 +117,10 @@ pub fn author() -> anyhow::Result<git_repository::actor::Signature> {
     .to_owned())
 }
 
-pub fn strip_tag_path(name: FullNameRef<'_>) -> &BStr {
+pub fn strip_tag_path(name: &FullNameRef) -> &BStr {
     try_strip_tag_path(name).expect("prefix iteration works")
 }
 
-pub fn try_strip_tag_path(name: FullNameRef<'_>) -> Option<&BStr> {
+pub fn try_strip_tag_path(name: &FullNameRef) -> Option<&BStr> {
     name.as_bstr().strip_prefix(b"refs/tags/").map(|b| b.as_bstr())
 }

@@ -24,7 +24,7 @@ impl<'repo> Reference<'repo> {
     }
 
     /// Return the reference's full name.
-    pub fn name(&self) -> git_ref::FullNameRef<'_> {
+    pub fn name(&self) -> &git_ref::FullNameRef {
         self.inner.name.to_ref()
     }
 
