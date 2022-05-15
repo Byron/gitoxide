@@ -161,16 +161,16 @@ impl file::Store {
 impl file::Store {
     pub(crate) fn to_base_dir_and_relative_name<'a>(
         &self,
-        name: FullNameRef<'a>,
+        name: &'a FullNameRef,
         is_reflog: bool,
-    ) -> (Cow<'_, Path>, FullNameRef<'a>) {
+    ) -> (Cow<'_, Path>, &'a FullNameRef) {
         let commondir = self.common_dir_resolved();
         let linked_git_dir =
             |worktree_name: &BStr| commondir.join("worktrees").join(git_path::from_bstr(worktree_name));
         name.category_and_short_name()
             .and_then(|(c, sn)| {
                 use crate::Category::*;
-                let sn = FullNameRef(sn);
+                let sn = FullNameRef::new_unchecked(sn);
                 Some(match c {
                     LinkedPseudoRef { name: worktree_name } => is_reflog
                         .then(|| (linked_git_dir(worktree_name).into(), sn))
@@ -195,7 +195,7 @@ impl file::Store {
     }
 
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
-    pub(crate) fn reference_path_with_base<'b>(&self, name: FullNameRef<'b>) -> (Cow<'_, Path>, Cow<'b, Path>) {
+    pub(crate) fn reference_path_with_base<'b>(&self, name: &'b FullNameRef) -> (Cow<'_, Path>, Cow<'b, Path>) {
         let (base, name) = self.to_base_dir_and_relative_name(name, false);
         (
             base,
@@ -209,13 +209,13 @@ impl file::Store {
     }
 
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
-    pub(crate) fn reference_path(&self, name: FullNameRef<'_>) -> PathBuf {
+    pub(crate) fn reference_path(&self, name: &FullNameRef) -> PathBuf {
         let (base, relative_path) = self.reference_path_with_base(name);
         base.join(relative_path)
     }
 
     /// Read the file contents with a verified full reference path and return it in the given vector if possible.
-    pub(crate) fn ref_contents(&self, name: FullNameRef<'_>) -> io::Result<Option<Vec<u8>>> {
+    pub(crate) fn ref_contents(&self, name: &FullNameRef) -> io::Result<Option<Vec<u8>>> {
         let ref_path = self.reference_path(name);
 
         match std::fs::File::open(&ref_path) {

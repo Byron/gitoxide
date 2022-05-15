@@ -144,6 +144,16 @@ impl Kind {
         }
     }
 
+    /// Returns the kind of hash that would fit the given `hex_len`, or `None` if there is no fitting hash.
+    /// Note that 0 as `hex_len` fits always yields Sha1.
+    #[inline]
+    pub const fn from_hex_len(hex_len: usize) -> Option<Self> {
+        Some(match hex_len {
+            0..=40 => Kind::Sha1,
+            _ => return None,
+        })
+    }
+
     /// Converts a size in bytes as obtained by `Kind::len_in_bytes()` into the corresponding hash kind, if possible.
     ///
     /// **Panics** if the hash length doesn't match a known hash.

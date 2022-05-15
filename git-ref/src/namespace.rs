@@ -27,7 +27,7 @@ impl Namespace {
         self.0.push_str(prefix.as_ref());
         git_path::to_native_path_on_windows(self.0).into_owned()
     }
-    pub(crate) fn into_namespaced_name(mut self, name: FullNameRef<'_>) -> FullName {
+    pub(crate) fn into_namespaced_name(mut self, name: &FullNameRef) -> FullName {
         self.0.push_str(name.as_bstr());
         FullName(self.0)
     }

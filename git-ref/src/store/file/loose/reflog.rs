@@ -13,7 +13,7 @@ impl file::Store {
     /// If the caller needs to know if it's readable, try to read the log instead with a reverse or forward iterator.
     pub fn reflog_exists<'a, Name, E>(&self, name: Name) -> Result<bool, E>
     where
-        Name: TryInto<FullNameRef<'a>, Error = E>,
+        Name: TryInto<&'a FullNameRef, Error = E>,
         crate::name::Error: From<E>,
     {
         Ok(self.reflog_path(name.try_into()?).is_file())
@@ -29,10 +29,10 @@ impl file::Store {
         buf: &'b mut [u8],
     ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, Error>
     where
-        Name: TryInto<FullNameRef<'a>, Error = E>,
+        Name: TryInto<&'a FullNameRef, Error = E>,
         crate::name::Error: From<E>,
     {
-        let name: FullNameRef<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
+        let name: &FullNameRef = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
         let path = self.reflog_path(name);
         if path.is_dir() {
             return Ok(None);
@@ -54,10 +54,10 @@ impl file::Store {
         buf: &'b mut Vec<u8>,
     ) -> Result<Option<log::iter::Forward<'b>>, Error>
     where
-        Name: TryInto<FullNameRef<'a>, Error = E>,
+        Name: TryInto<&'a FullNameRef, Error = E>,
         crate::name::Error: From<E>,
     {
-        let name: FullNameRef<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
+        let name: &FullNameRef = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
         let path = self.reflog_path(name);
         match std::fs::File::open(&path) {
             Ok(mut file) => {
@@ -77,7 +77,7 @@ impl file::Store {
 
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into its log name
-    pub(crate) fn reflog_path(&self, name: FullNameRef<'_>) -> PathBuf {
+    pub(crate) fn reflog_path(&self, name: &FullNameRef) -> PathBuf {
         let (base, rela_path) = self.reflog_base_and_relative_path(name);
         base.join(rela_path)
     }
@@ -199,7 +199,7 @@ pub mod create_or_update {
         /// Returns the base paths for all reflogs
         pub(in crate::store_impl::file) fn reflog_base_and_relative_path<'a>(
             &self,
-            name: FullNameRef<'a>,
+            name: &'a FullNameRef,
         ) -> (PathBuf, Cow<'a, Path>) {
             let is_reflog = true;
             let (base, name) = self.to_base_dir_and_relative_name(name, is_reflog);

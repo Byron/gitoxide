@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::{convert::TryFrom, path::Path};
 
 use git_object::bstr::{BStr, BString, ByteSlice};
@@ -44,14 +45,14 @@ impl From<FullName> for BString {
     }
 }
 
-impl<'a> From<FullNameRef<'a>> for &'a BStr {
-    fn from(name: FullNameRef<'a>) -> Self {
-        name.0
+impl<'a> From<&'a FullNameRef> for &'a BStr {
+    fn from(name: &'a FullNameRef) -> Self {
+        &name.0
     }
 }
 
-impl<'a> From<crate::FullNameRef<'a>> for FullName {
-    fn from(value: crate::FullNameRef<'a>) -> Self {
+impl<'a> From<&'a FullNameRef> for FullName {
+    fn from(value: &'a FullNameRef) -> Self {
         FullName(value.as_bstr().into())
     }
 }
@@ -69,8 +70,8 @@ impl FullName {
     }
 
     /// Interpret this fully qualified reference as shared full name
-    pub fn to_ref(&self) -> crate::FullNameRef<'_> {
-        crate::FullNameRef(self.0.as_bstr())
+    pub fn to_ref(&self) -> &FullNameRef {
+        self.borrow()
     }
 
     /// Convert this name into the relative path, lossily, identifying the reference location relative to a repository
@@ -125,7 +126,7 @@ impl FullName {
     }
 }
 
-impl<'a> FullNameRef<'a> {
+impl FullNameRef {
     /// Create an owned copy of ourself
     pub fn to_owned(&self) -> FullName {
         FullName(self.0.to_owned())
@@ -135,5 +136,37 @@ impl<'a> FullNameRef<'a> {
     /// full name was `refs/heads/main`.
     pub fn file_name(&self) -> &BStr {
         self.0.rsplitn(2, |b| *b == b'/').next().expect("valid ref").as_bstr()
+    }
+}
+
+impl Borrow<FullNameRef> for FullName {
+    #[inline]
+    fn borrow(&self) -> &FullNameRef {
+        FullNameRef::new_unchecked(self.0.as_bstr())
+    }
+}
+
+impl AsRef<FullNameRef> for FullName {
+    fn as_ref(&self) -> &FullNameRef {
+        self.borrow()
+    }
+}
+
+impl ToOwned for FullNameRef {
+    type Owned = FullName;
+
+    fn to_owned(&self) -> Self::Owned {
+        FullName(self.0.to_owned())
+    }
+}
+
+#[cfg(test)]
+mod fullname_tests {
+    use super::*;
+    use std::borrow::Cow;
+
+    #[test]
+    fn cow_works() {
+        let _x: Cow<'_, FullNameRef> = Cow::Owned(FullName::try_from("HEAD").unwrap());
     }
 }

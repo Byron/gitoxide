@@ -1,8 +1,11 @@
 use std::cmp::Ordering;
+use std::convert::TryFrom;
 
 use quick_error::quick_error;
 
 use crate::{oid, ObjectId, Prefix};
+
+const MIN_HEX_LEN: usize = 4;
 
 quick_error! {
     /// The error returned by [Prefix::try_from_id()][super::Prefix::try_from_id()].
@@ -10,10 +13,31 @@ quick_error! {
     #[allow(missing_docs)]
     pub enum Error {
         TooShort { hex_len: usize } {
-            display("The minimum hex length of a short object id is 4, got {}", hex_len)
+            display("The minimum hex length of a short object id is {}, got {}", MIN_HEX_LEN, hex_len)
         }
         TooLong { object_kind: crate::Kind, hex_len: usize } {
             display("An object of kind {} cannot be larger than {} in hex, but {} was requested", object_kind, object_kind.len_in_hex(), hex_len)
+        }
+    }
+}
+
+///
+pub mod from_hex {
+    use quick_error::quick_error;
+    quick_error! {
+        /// The error returned by [Prefix::from_hex][super::Prefix::from_hex()].
+        #[derive(Debug, PartialEq)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            TooShort { hex_len: usize } {
+                display("The minimum hex length of a short object id is {}, got {}", super::MIN_HEX_LEN, hex_len)
+            }
+            TooLong { hex_len: usize } {
+                display("An id cannot be larger than {} chars in hex, but {} was requested", crate::Kind::longest().len_in_hex(), hex_len)
+            }
+            Invalid { c: char, index: usize } {
+                display("Invalid character {} at position {}", c, index)
+            }
         }
     }
 }
@@ -30,7 +54,7 @@ impl Prefix {
                 object_kind: id.kind(),
                 hex_len,
             })
-        } else if hex_len < 4 {
+        } else if hex_len < MIN_HEX_LEN {
             Err(Error::TooShort { hex_len })
         } else {
             let mut prefix = ObjectId::null(id.kind());
@@ -75,9 +99,46 @@ impl Prefix {
             })
     }
 
-    /// Create an instance from the given hexadecimal prefix, e.g. `35e77c16` would yield a `Prefix` with `hex_len()` = 8.
-    pub fn from_hex(_hex: &str) -> Self {
-        todo!("Prefix::from_hex()")
+    /// Create an instance from the given hexadecimal prefix `value`, e.g. `35e77c16` would yield a `Prefix` with `hex_len()` = 8.
+    pub fn from_hex(value: &str) -> Result<Self, from_hex::Error> {
+        use hex::FromHex;
+        let hex_len = value.len();
+
+        if hex_len > crate::Kind::longest().len_in_hex() {
+            return Err(from_hex::Error::TooLong { hex_len });
+        } else if hex_len < MIN_HEX_LEN {
+            return Err(from_hex::Error::TooShort { hex_len });
+        };
+
+        let src = if value.len() % 2 == 0 {
+            Vec::from_hex(value)
+        } else {
+            let mut buf = [0u8; crate::Kind::longest().len_in_hex()];
+            buf[..value.len()].copy_from_slice(value.as_bytes());
+            buf[value.len()] = b'0';
+            Vec::from_hex(&buf[..value.len() + 1])
+        }
+        .map_err(|e| match e {
+            hex::FromHexError::InvalidHexCharacter { c, index } => from_hex::Error::Invalid { c, index },
+            hex::FromHexError::OddLength | hex::FromHexError::InvalidStringLength => panic!("This is already checked"),
+        })?;
+
+        let mut bytes = ObjectId::null(crate::Kind::from_hex_len(value.len()).expect("hex-len is already checked"));
+        let dst = bytes.as_mut_slice();
+        let copy_len = src.len();
+        dst[..copy_len].copy_from_slice(&src);
+
+        Ok(Prefix { bytes, hex_len })
+    }
+}
+
+/// Create an instance from the given hexadecimal prefix, e.g. `35e77c16` would yield a `Prefix`
+/// with `hex_len()` = 8.
+impl TryFrom<&str> for Prefix {
+    type Error = from_hex::Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Prefix::from_hex(value)
     }
 }
 

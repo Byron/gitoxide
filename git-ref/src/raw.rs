@@ -68,12 +68,12 @@ mod access {
         /// Return the full validated name of the reference, with the given namespace stripped if possible.
         ///
         /// If the reference name wasn't prefixed with `namespace`, `None` is returned instead.
-        pub fn name_without_namespace(&self, namespace: &Namespace) -> Option<FullNameRef<'_>> {
+        pub fn name_without_namespace(&self, namespace: &Namespace) -> Option<&FullNameRef> {
             self.name
                 .0
                 .as_bstr()
                 .strip_prefix(namespace.0.as_bstr().as_ref())
-                .map(|stripped| FullNameRef(stripped.as_bstr()))
+                .map(|stripped| FullNameRef::new_unchecked(stripped.as_bstr()))
         }
 
         /// Strip the given namespace from our name as well as the name, but not the reference we point to.

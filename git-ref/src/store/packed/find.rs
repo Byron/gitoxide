@@ -19,7 +19,7 @@ impl packed::Buffer {
         let mut buf = BString::default();
         for inbetween in &["", "tags", "heads", "remotes"] {
             let (name, was_absolute) = if name.looks_like_full_name() {
-                let name = FullNameRef(name.as_bstr());
+                let name = FullNameRef::new_unchecked(name.as_bstr());
                 let name = match transform_full_name_for_lookup(name) {
                     None => return Ok(None),
                     Some(name) => name,
@@ -38,7 +38,7 @@ impl packed::Buffer {
         Ok(None)
     }
 
-    pub(crate) fn try_find_full_name(&self, name: FullNameRef<'_>) -> Result<Option<packed::Reference<'_>>, Error> {
+    pub(crate) fn try_find_full_name(&self, name: &FullNameRef) -> Result<Option<packed::Reference<'_>>, Error> {
         match self.binary_search_by(name.as_bstr()) {
             Ok(line_start) => {
                 return Ok(Some(
@@ -156,12 +156,12 @@ pub mod existing {
     }
 }
 
-pub(crate) fn transform_full_name_for_lookup(name: FullNameRef<'_>) -> Option<FullNameRef<'_>> {
+pub(crate) fn transform_full_name_for_lookup(name: &FullNameRef) -> Option<&FullNameRef> {
     match name.category_and_short_name() {
         Some((c, sn)) => {
             use crate::Category::*;
             Some(match c {
-                MainRef | LinkedRef { .. } => FullNameRef(sn),
+                MainRef | LinkedRef { .. } => FullNameRef::new_unchecked(sn),
                 Tag | RemoteBranch | LocalBranch | Bisect | Rewritten | Note => name,
                 MainPseudoRef | PseudoRef | LinkedPseudoRef { .. } | WorktreePrivate => return None,
             })
