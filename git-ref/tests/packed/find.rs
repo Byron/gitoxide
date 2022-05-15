@@ -1,4 +1,4 @@
-use std::convert::TryInto;
+use std::convert::{TryFrom, TryInto};
 
 use git_ref::packed;
 use git_testtools::fixture_path;
@@ -8,16 +8,13 @@ use crate::{
     packed::write_packed_refs_with,
 };
 
-// TODO: figure this out
-// #[test]
-// fn a_lock_file_would_not_be_a_valid_partial_name() {
-//     // doesn't really belong here but want to make sure refname validation works as expected.
-//     let err: &PartialNameRef = "heads/hello.lock".try_into().expect_err("this should fail");
-//     assert_eq!(
-//         err.as_bstr().to_string(),
-//         "A reference must be a valid tag name as well"
-//     );
-// }
+#[test]
+fn a_lock_file_would_not_be_a_valid_partial_name() {
+    // doesn't really belong here but want to make sure refname validation works as expected.
+    // let err: &git_ref::PartialNameRef = "heads/hello.lock".try_into().expect_err("this should fail");
+    let err = <&git_ref::PartialNameRef as TryFrom<_>>::try_from("heads/hello.lock").expect_err("this should fail");
+    assert_eq!(err.to_string(), "A reference must be a valid tag name as well");
+}
 
 #[test]
 fn all_iterable_refs_can_be_found() -> crate::Result {
