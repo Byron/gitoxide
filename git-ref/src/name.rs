@@ -99,12 +99,12 @@ impl PartialNameRef {
     pub fn as_bstr(&self) -> &BStr {
         &self.0
     }
+}
 
+impl PartialName {
     /// Append the `component` to ourselves and validate the newly created partial path.
-    pub fn join(&self, component: impl AsRef<[u8]>) -> Result<PartialName, Error> {
-        // TODO: can we implement this on `Cow` which is how this type is used most of the time anyway?
-        //       Not right now, but it should be possible one day without contortions.
-        let mut b = self.0.to_owned();
+    pub fn join(self, component: impl AsRef<[u8]>) -> Result<Self, Error> {
+        let mut b = self.0;
         b.push_byte(b'/');
         b.extend(component.as_ref());
         git_validate::reference::name_partial(b.as_ref())?;
@@ -173,6 +173,14 @@ impl<'a> convert::TryFrom<&'a BStr> for &'a PartialNameRef {
     }
 }
 
+impl<'a> convert::TryFrom<&'a PartialName> for &'a PartialNameRef {
+    type Error = Error;
+
+    fn try_from(v: &'a PartialName) -> Result<Self, Self::Error> {
+        Ok(PartialNameRef::new_unchecked(v.0.as_bstr()))
+    }
+}
+
 impl<'a> convert::TryFrom<&'a str> for &'a FullNameRef {
     type Error = Error;
 
@@ -188,6 +196,15 @@ impl<'a> convert::TryFrom<&'a str> for &'a PartialNameRef {
     fn try_from(v: &'a str) -> Result<Self, Self::Error> {
         let v = v.as_bytes().as_bstr();
         Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(v)?))
+    }
+}
+
+impl<'a> convert::TryFrom<&'a str> for PartialName {
+    type Error = Error;
+
+    fn try_from(v: &'a str) -> Result<Self, Self::Error> {
+        let v = v.as_bytes().as_bstr();
+        Ok(PartialName(git_validate::reference::name_partial(v)?.to_owned()))
     }
 }
 
