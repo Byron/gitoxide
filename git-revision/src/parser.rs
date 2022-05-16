@@ -51,11 +51,10 @@ pub fn rev_parse(repo: &impl Database, input: &BStr) -> Result<ObjectId, Error> 
 
     let (rev_str, nav_str, spec_str) = split_parts(input)?;
 
-    let rev = if rev_str.is_empty() {
-        Err(Error::InvalidRev(rev_str.to_string()))
-    } else if rev_str == *"@" {
+    let at_sign = BString::from("@");
+    let mut cur = if *rev_str == at_sign {
         repo.rev_resolve_head()
-    } else if let Some(r) = repo.rev_resolve_ref(rev_str.as_bstr())? {
+    } else if let Some(r) = repo.rev_resolve_ref(rev_str)? {
         Ok(r)
     } else if rev_str.len() == 40 {
         // The function bellow does not what its named after
@@ -64,70 +63,167 @@ pub fn rev_parse(repo: &impl Database, input: &BStr) -> Result<ObjectId, Error> 
         repo.rev_find_by_prefix(rev_str.as_bstr())
     }?;
 
-    if nav_str.is_empty() && spec_str.is_empty() {
-        Ok(rev)
-    } else if !nav_str.is_empty() && spec_str.is_empty() {
-        Ok(navigate(repo, rev, &nav_str)?)
-    } else {
-        todo!("Applying specials NIY");
+    if let Some(nav) = nav_str {
+        cur = navigate(repo, cur, nav)?;
     }
+
+    if let Some(spec) = spec_str {
+        todo!("Applying specials '{}' NIY", spec);
+    }
+    Ok(cur)
 }
 
-fn split_parts(input: &BStr) -> Result<(BString, BString, BString), Error> {
-    #[derive(Copy, Clone, Debug)]
-    enum State {
-        Rev,
-        Nav,
-        Spec,
-    }
+fn split_parts(input: &BStr) -> Result<(&BStr, Option<&BStr>, Option<&BStr>), Error> {
+    let end = input.len();
 
-    let mut rev = BString::default();
-    let mut nav = BString::default();
-    let mut spec = BString::default();
-
-    let mut state = State::Rev;
-    let mut it = input.bytes().peekable();
-    while let Some(c) = it.next() {
-        let next = match c {
-            b'^' => match it.peek() {
-                Some(b'{') => State::Spec,
-                Some(b'0' | b'1' | b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' | b'^' | b'~') | None => {
-                    State::Nav
+    let name = {
+        let mut rev_end: usize = input.len();
+        for (i, b) in input.bytes().enumerate() {
+            match b {
+                b':' | b'^' | b'~' => {
+                    rev_end = i;
+                    break;
                 }
-                _ => return Err(Error::InvalidNavigation(input.to_string())),
-            },
-            b'~' => State::Nav,
-            _ => state,
-        };
-
-        match (state, next) {
-            // valid transitions
-            (State::Rev, State::Nav | State::Spec) | (State::Nav, State::Spec) => state = next,
-
-            // No transitions
-            (State::Rev, State::Rev) | (State::Nav, State::Nav) | (State::Spec, State::Spec) => {}
-
-            // Invalid
-            (State::Nav | State::Spec, State::Rev) | (State::Spec, State::Nav) => {
-                panic!("Invalid transition {:?} / {:?}", state, next);
+                _ => continue,
             }
         }
-        match (state, next) {
-            // valid transitions
-            (State::Rev, State::Rev) => rev.push(c),
-            (State::Rev | State::Nav, State::Nav) => nav.push(c),
-            (State::Rev | State::Nav | State::Spec, State::Spec) => spec.push(c),
+        if rev_end == 0 {
+            return Err(Error::InvalidRev(input[0..rev_end].to_string()));
+        }
+        &input[0..rev_end]
+    };
 
-            // Invalid
-            (State::Nav | State::Spec, State::Rev) | (State::Spec, State::Nav) => {
-                panic!("Invalid transition {:?} / {:?}", state, next);
+    let nav: Option<&BStr> = if name.len() < end {
+        let rev_end = name.len();
+        let tmp = &input[rev_end..end];
+        let mut nav_end: usize = end;
+        for (i, b) in tmp.bytes().enumerate() {
+            match b {
+                b':' => {
+                    nav_end = rev_end + i;
+                    break;
+                }
+                b'^' => {
+                    if rev_end + i + 1 < end && input[rev_end + i + 1] == b'{' {
+                        nav_end = rev_end + i;
+                        break;
+                    }
+                }
+                b'0' | b'1' | b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' | b'~' => continue,
+                _ => {
+                    nav_end = rev_end + i;
+                    break;
+                }
             }
         }
-    }
-    Ok((rev, nav, spec))
+        if rev_end != nav_end {
+            Some(&input[rev_end..nav_end])
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    let nav_end = if let Some(n) = nav {
+        name.len() + n.len()
+    } else {
+        name.len()
+    };
+
+    let spec = if nav_end < end {
+        Some(&input[nav_end..end])
+    } else {
+        None
+    };
+    Ok((name, nav, spec))
 }
 
-fn navigate(repo: &impl Database, rev: ObjectId, nav_str: &BString) -> Result<ObjectId, Error> {
+#[cfg(test)]
+mod split_parts {
+    use git_object::bstr::BString;
+
+    use super::split_parts;
+
+    #[test]
+    fn head_only() {
+        let input = BString::from("HEAD");
+        let expected = (input.as_ref(), None, None);
+        let actual = split_parts(input.as_ref()).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn head_previous() {
+        let input = BString::from("HEAD~1");
+
+        let name = BString::from("HEAD");
+        let nav = BString::from("~1");
+
+        let expected = (name.as_ref(), Some(nav.as_ref()), None);
+        let actual = split_parts(input.as_ref()).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn at_first_parent() {
+        let input = BString::from("@^");
+
+        let name = BString::from("@");
+        let nav = BString::from("^");
+
+        let expected = (name.as_ref(), Some(nav.as_ref()), None);
+        let actual = split_parts(input.as_ref()).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn branch_first_parent_previous() {
+        let input = BString::from("HEAD~1^1");
+
+        let name = BString::from("HEAD");
+        let nav = BString::from("~1^1");
+
+        let expected = (name.as_ref(), Some(nav.as_ref()), None);
+        let actual = split_parts(input.as_ref()).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn head_commit_type() {
+        let input = BString::from("HEAD^{commit}");
+        let name = BString::from("HEAD");
+        let spec = BString::from("^{commit}");
+
+        let expected = (name.as_ref(), None, Some(spec.as_ref()));
+        let actual = split_parts(input.as_ref()).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn head_regex() {
+        let input = BString::from("HEAD^{/fix nasty bug}");
+        let name = BString::from("HEAD");
+        let spec = BString::from("^{/fix nasty bug}");
+
+        let expected = (name.as_ref(), None, Some(spec.as_ref()));
+        let actual = split_parts(input.as_ref()).unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn head_path() {
+        let input = BString::from("HEAD:README");
+        let name = BString::from("HEAD");
+        let spec = BString::from(":README");
+
+        let expected = (name.as_ref(), None, Some(spec.as_ref()));
+        let actual = split_parts(input.as_ref()).unwrap();
+        assert_eq!(actual, expected);
+    }
+}
+
+fn navigate(repo: &impl Database, rev: ObjectId, nav_str: &BStr) -> Result<ObjectId, Error> {
     let mut cur = rev;
     let mut it = nav_str.chars().peekable();
     while let Some(c) = it.next() {
