@@ -1,17 +1,10 @@
-use crate::MagicSignature;
+use crate::{MagicSignature, Pattern};
 use bstr::BString;
 use std::iter::{FromIterator, Peekable};
 
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct Pattern {
-    pub path: BString,
-    pub signature: Option<MagicSignature>,
-}
-
 impl Pattern {
     pub fn from_bytes(input: &[u8]) -> Self {
-        let mut parser = Parser::new(input);
-        parser.parse()
+        Parser::new(input).parse()
     }
 }
 
@@ -41,12 +34,11 @@ impl<'a> Parser<'a> {
 
                 while let Some(&b) = self.input.peek() {
                     match b {
-                        b':' if !signature.is_empty() => {
-                            self.input.next();
-                            break;
-                        }
                         b':' => {
                             self.input.next();
+                            if !signature.is_empty() {
+                                break;
+                            }
                         }
                         b'/' => {
                             self.input.next();
@@ -64,11 +56,7 @@ impl<'a> Parser<'a> {
                     }
                 }
 
-                if signature.is_empty() {
-                    None
-                } else {
-                    Some(signature)
-                }
+                (!signature.is_empty()).then(|| signature)
             }
             _ => None,
         }

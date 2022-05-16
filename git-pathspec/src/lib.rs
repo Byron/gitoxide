@@ -1,9 +1,15 @@
 #![forbid(unsafe_code, rust_2018_idioms)]
 
 use bitflags::bitflags;
-pub use parse::Pattern;
+use bstr::BString;
 
 mod parse;
+
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct Pattern {
+    pub path: BString,
+    pub signature: Option<MagicSignature>,
+}
 
 bitflags! {
     pub struct MagicSignature: u32 {
