@@ -63,28 +63,28 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_magic_keywords(&mut self) -> MagicSignature {
-        let mut buf: Vec<&u8> = vec![];
-        let mut keywords: Vec<Vec<&u8>> = vec![];
+        let mut buf: Vec<u8> = vec![];
+        let mut keywords: Vec<Vec<u8>> = vec![];
 
         while let Some(b) = self.input.next() {
             match b {
                 b')' => {
                     if !buf.is_empty() {
-                        keywords.push(buf.drain(..).collect());
+                        keywords.push(buf);
                     }
                     break;
                 }
                 b',' => {
                     if !buf.is_empty() {
-                        keywords.push(buf.drain(..).collect());
+                        keywords.push(std::mem::take(&mut buf));
                     }
                 }
                 b' ' => {
-                    // TODO: make this non panicing
+                    // TODO: make this non panicking
                     panic!("space in magic keywords not allowed");
                 }
                 _ => {
-                    buf.push(b);
+                    buf.push(*b);
                 }
             }
         }
