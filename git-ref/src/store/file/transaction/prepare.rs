@@ -357,8 +357,7 @@ fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {
             match c {
                 Bisect | Rewritten | WorktreePrivate | LinkedPseudoRef { .. } | PseudoRef | MainPseudoRef => None,
                 Tag | LocalBranch | RemoteBranch | Note => name.into(),
-                MainRef => sn.into(),
-                LinkedRef { .. } => sn
+                MainRef | LinkedRef { .. } => sn
                     .category()
                     .map_or(false, |cat| !cat.is_worktree_private())
                     .then(|| sn),

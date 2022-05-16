@@ -469,7 +469,7 @@ mod transaction {
                         },
                         RefEdit {
                             change: change_with_id(new_id),
-                            name: "worktrees/w1/refs/heads/shared".try_into().unwrap(),
+                            name: "refs/heads/shared".try_into().unwrap(),
                             deref: false,
                         },
                     ],
@@ -490,7 +490,66 @@ mod transaction {
                     vec![new_id_main.to_string()]
                 );
             }
-            // TODO: this is the interesting part as we must avoid to write worktree private edits into packed refs
+
+            {
+                let reference = store.find(edits[1].name.as_ref()).unwrap();
+                assert_eq!(reference.target.id(), new_id_main);
+                assert!(
+                    !store.reflog_exists(edits[1].name.as_ref()).unwrap(),
+                    "special refs do not write reflogs"
+                );
+            }
+
+            {
+                let reference = store.find(edits[2].name.as_ref()).unwrap();
+                assert_eq!(reference.target.id(), new_id);
+                assert!(
+                    !store.reflog_exists(edits[2].name.as_ref()).unwrap(),
+                    "special worktree refs do not write reflogs"
+                );
+            }
+
+            {
+                let reference = store.find(edits[3].name.as_ref()).unwrap();
+                assert_eq!(reference.target.id(), new_id);
+                assert_eq!(
+                    reflog_for_name(&store, reference.name.as_ref(), &mut buf),
+                    vec![new_id.to_string()],
+                    "private worktree refs do have a changelog"
+                );
+            }
+
+            {
+                let reference = store.find(edits[4].name.as_ref()).unwrap();
+                assert_eq!(reference.target.id(), new_id);
+                assert_eq!(
+                    reflog_for_name(&store, reference.name.as_ref(), &mut buf),
+                    vec![new_id.to_string()],
+                    "shared worktree references have refelogs"
+                );
+            }
+
+            if packed {
+                let packed_refs = store.cached_packed_buffer().unwrap().expect("packed refs file present");
+                assert_eq!(
+                    packed_refs.find(edits[0].name.as_ref()).unwrap().object(),
+                    new_id_main,
+                    "shared refs are packed"
+                );
+
+                for edit in edits.iter().skip(1).take(3) {
+                    assert!(
+                        packed_refs.try_find(edit.name.as_ref()).unwrap().is_none(),
+                        "private refs like these are never packed"
+                    );
+                }
+
+                assert_eq!(
+                    packed_refs.find(edits[4].name.as_ref()).unwrap().object(),
+                    new_id,
+                    "shared refs are packed"
+                );
+            }
         }
     }
 }
