@@ -15,19 +15,19 @@ impl Database for crate::Repository {
     }
 
     fn rev_nth_ancestor(&self, id: ObjectId, n: usize) -> Result<ObjectId, DbError> {
-        let mut ancestors_it = id.attach(&self).ancestors().first_parent_only().all().unwrap();
+        let mut ancestors_it = id.attach(self).ancestors().first_parent_only().all().unwrap();
         ancestors_it.next();
         let ids: Result<Vec<_>, _> = ancestors_it.take(n).into_iter().collect();
         let f = ids.map_err(|e| DbError::InvalidNavigation(format!("{}", e)))?;
         if let Some(last) = f.last() {
             Ok(ObjectId::from(*last))
         } else {
-            Err(DbError::InvalidNavigation(format!("History to short for ")))
+            Err(DbError::InvalidNavigation("History to short for ".to_string()))
         }
     }
 
     fn rev_nth_parent(&self, id: ObjectId, n: usize) -> Result<ObjectId, DbError> {
-        let commit = id.attach(&self).object().unwrap().try_into_commit().unwrap();
+        let commit = id.attach(self).object().unwrap().try_into_commit().unwrap();
         Ok(commit.parent_ids().take(n).last().unwrap().into())
     }
 
