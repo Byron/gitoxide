@@ -341,9 +341,9 @@ mod transaction {
                     new_id_main,
                     "ref can be found with prefix"
                 );
-                for id in 1..=3 {
+                for edit in edits.iter().skip(1).take(3) {
                     assert!(
-                        packed_refs.try_find(edits[id].name.as_ref()).unwrap().is_none(),
+                        packed_refs.try_find(edit.name.as_ref()).unwrap().is_none(),
                         "worktree private refs are never packed"
                     );
                 }
@@ -399,11 +399,11 @@ mod transaction {
         }
     }
 
-    fn reflog_for_name(store: &Store, name: &FullNameRef, mut buf: &mut Vec<u8>) -> Vec<String> {
+    fn reflog_for_name(store: &Store, name: &FullNameRef, buf: &mut Vec<u8>) -> Vec<String> {
         store
-            .reflog_iter(name, &mut buf)
+            .reflog_iter(name, buf)
             .unwrap()
-            .expect(&format!("we are writing reflogs for {}", name.as_bstr()))
+            .unwrap_or_else(|| panic!("we expect to write reflogs for {}", name.as_bstr()))
             .map(Result::unwrap)
             .map(|e| e.new_oid.to_owned().to_string())
             .collect::<Vec<_>>()
