@@ -33,5 +33,5 @@ mod id;
 mod init;
 mod object;
 mod reference;
-mod rev_parse;
 mod repository;
+mod rev_parse;
