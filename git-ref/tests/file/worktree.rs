@@ -198,36 +198,54 @@ mod transaction {
     use git_testtools::hex_to_id;
     use std::convert::TryInto;
 
+    fn change_with_id(id: git_hash::ObjectId) -> Change {
+        Change::Update {
+            log: LogChange::default(),
+            expected: PreviousValue::MustNotExist,
+            new: Target::Peeled(id),
+        }
+    }
+
     #[test]
     fn main() {
         for packed in [false, true] {
             let (store, odb, _tmp) = main_store(packed, Mode::Write).unwrap();
             let _peel = into_peel(&store, odb);
             let mut t = store.transaction();
-            let new_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-            let other_new_id = hex_to_id("22222222222222222262102c6a483440bfda2a03");
+            let new_id_main = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+            let new_id_linked = hex_to_id("22222222222222222262102c6a483440bfda2a03");
             if packed {
                 t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
                     Ok(Some(git_object::Kind::Commit))
                 })));
             }
 
-            let new_peeled_id = |id| Change::Update {
-                log: LogChange::default(),
-                expected: PreviousValue::MustNotExist,
-                new: Target::Peeled(id),
-            };
             let edits = t
                 .prepare(
                     vec![
                         RefEdit {
-                            change: new_peeled_id(new_id),
+                            change: change_with_id(new_id_main),
                             name: "main-worktree/refs/heads/new".try_into().unwrap(),
                             deref: false,
                         },
                         RefEdit {
-                            change: new_peeled_id(other_new_id),
+                            change: change_with_id(new_id_linked),
                             name: "worktrees/w1/refs/worktree/private".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: change_with_id(new_id_linked),
+                            name: "worktrees/w1/refs/bisect/good".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: change_with_id(new_id_main),
+                            name: "refs/bisect/good".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: change_with_id(new_id_linked),
+                            name: "worktrees/w1/refs/heads/shared".try_into().unwrap(),
                             deref: false,
                         },
                     ],
@@ -235,9 +253,8 @@ mod transaction {
                 )
                 .unwrap()
                 .commit(committer().to_ref())
-                .unwrap();
+                .expect("successful commit as even similar resolved names live in different base locations");
 
-            assert_eq!(edits.len(), 2);
             let mut buf = Vec::new();
             let unprefixed_ref_name = "refs/heads/new";
 
@@ -245,11 +262,11 @@ mod transaction {
                 let reference = store.find(unprefixed_ref_name).unwrap();
                 assert_eq!(
                     reflog_for_name(&store, reference.name.as_ref(), &mut buf),
-                    vec![new_id.to_string()]
+                    vec![new_id_main.to_string()]
                 );
                 assert_eq!(
                     reference.target.id(),
-                    new_id,
+                    new_id_main,
                     "prefixed refs are written into the correct place"
                 );
             }
@@ -258,12 +275,52 @@ mod transaction {
                 let reference = store.find(edits[1].name.as_ref()).unwrap();
                 assert_eq!(
                     reference.target.id(),
-                    other_new_id,
+                    new_id_linked,
                     "private worktree refs are written into the correct place"
                 );
                 assert_eq!(
                     reflog_for_name(&store, reference.name.as_ref(), &mut buf),
-                    vec![other_new_id.to_string()]
+                    vec![new_id_linked.to_string()]
+                );
+            }
+
+            {
+                let reference = store.find(edits[2].name.as_ref()).unwrap();
+                assert_eq!(
+                    reference.target.id(),
+                    new_id_linked,
+                    "worktree-private bisect information is in the correct place"
+                );
+                assert!(
+                    !store.reflog_exists(reference.name.as_ref()).unwrap(),
+                    "private special branches don't have a reflog written"
+                );
+            }
+
+            {
+                let reference = store.find(edits[3].name.as_ref()).unwrap();
+                assert_eq!(
+                    reference.target.id(),
+                    new_id_main,
+                    "main-worktree private bisect information is in the correct place"
+                );
+                assert!(
+                    !store.reflog_exists(reference.name.as_ref()).unwrap(),
+                    "private special branches don't have a reflog written"
+                );
+            }
+
+            {
+                let reference = store.find(edits[4].name.as_ref()).unwrap();
+                assert_eq!(
+                    reference.target.id(),
+                    new_id_linked,
+                    "normal refs with worktrees syntax are shared and in the common dir"
+                );
+                assert_eq!(
+                    reflog_for_name(&store, reference.name.as_ref(), &mut buf),
+                    vec![new_id_linked.to_string()],
+                    "they have a reflog as one would expect"
                 );
             }
 
@@ -271,19 +328,69 @@ mod transaction {
                 let packed_refs = store.cached_packed_buffer().unwrap().expect("packed refs file present");
                 assert_eq!(
                     packed_refs.find(unprefixed_ref_name).unwrap().object(),
-                    new_id,
+                    new_id_main,
                     "ref can be found without prefix"
                 );
                 assert_eq!(
                     packed_refs.find(edits[0].name.as_ref()).unwrap().object(),
-                    new_id,
+                    new_id_main,
                     "ref can be found with prefix"
                 );
-                assert!(
-                    packed_refs.try_find(edits[1].name.as_ref()).unwrap().is_none(),
-                    "worktree private refs are never packed"
+                for id in 1..=3 {
+                    assert!(
+                        packed_refs.try_find(edits[id].name.as_ref()).unwrap().is_none(),
+                        "worktree private refs are never packed"
+                    );
+                }
+                assert_eq!(
+                    packed_refs.find(edits[4].name.as_ref()).unwrap().object(),
+                    new_id_linked,
+                    "shared worktree refs accessed by prefix are packed"
+                );
+                assert_eq!(
+                    packed_refs.find("refs/heads/shared").unwrap().object(),
+                    new_id_linked,
+                    "shared worktree refs accessed without prefix are just the same"
                 );
             }
+
+            assert!(matches!(
+                store.transaction().prepare(
+                    vec![
+                        RefEdit {
+                            change: change_with_id(new_id_main),
+                            name: "main-worktree/refs/heads/foo".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: change_with_id(new_id_main),
+                            name: "refs/heads/foo".try_into().unwrap(),
+                            deref: false,
+                        },
+                    ],
+                    git_lock::acquire::Fail::Immediately,
+                ),
+                Err(git_ref::file::transaction::prepare::Error::LockAcquire { .. })
+            ), "prefixed refs resolve to the same name and will fail to be locked (so we don't check for this when doing dupe checking)");
+
+            assert!(matches!(
+                store.transaction().prepare(
+                    vec![
+                        RefEdit {
+                            change: change_with_id(new_id_main),
+                            name: "refs/heads/new-shared".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: change_with_id(new_id_main),
+                            name: "worktrees/w1/refs/heads/new-shared".try_into().unwrap(),
+                            deref: false,
+                        },
+                    ],
+                    git_lock::acquire::Fail::Immediately,
+                ),
+                Err(git_ref::file::transaction::prepare::Error::LockAcquire { .. })
+            ));
         }
     }
 
