@@ -19,7 +19,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse(&mut self) -> Pattern {
+    fn parse(mut self) -> Pattern {
         let signature = self.parse_magic_signature();
         let path = self.parse_path();
 
@@ -63,8 +63,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_magic_keywords(&mut self) -> MagicSignature {
-        let mut buf: Vec<u8> = vec![];
-        let mut keywords: Vec<Vec<u8>> = vec![];
+        let mut buf = Vec::new();
+        let mut keywords = Vec::new();
 
         while let Some(b) = self.input.next() {
             match b {
@@ -92,24 +92,22 @@ impl<'a> Parser<'a> {
         let mut signature = MagicSignature::empty();
 
         for keyword in keywords.into_iter() {
-            let keyword = keyword.iter().map(|&x| x.to_owned()).collect::<Vec<_>>();
-            let keyword = String::from_utf8_lossy(&keyword[..]);
-
-            match &keyword[..] {
-                "top" => signature |= MagicSignature::TOP,
-                "literal" => signature |= MagicSignature::LITERAL,
-                "icase" => signature |= MagicSignature::ICASE,
-                "glob" => signature |= MagicSignature::GLOB,
-                "attr" => signature |= MagicSignature::ATTR,
-                "exclude" => signature |= MagicSignature::EXCLUDE,
-                _ => panic!("Invalid signature: \"{}\"", keyword),
+            signature |= match &keyword[..] {
+                b"top" => MagicSignature::TOP,
+                b"literal" => MagicSignature::LITERAL,
+                b"icase" => MagicSignature::ICASE,
+                b"glob" => MagicSignature::GLOB,
+                b"attr" => MagicSignature::ATTR,
+                b"exclude" => MagicSignature::EXCLUDE,
+                // TODO: make this an error
+                _ => panic!("Invalid signature"),
             }
         }
 
         signature
     }
 
-    fn parse_path(&mut self) -> BString {
-        BString::from_iter(self.input.clone().copied())
+    fn parse_path(self) -> BString {
+        BString::from_iter(self.input.copied())
     }
 }
