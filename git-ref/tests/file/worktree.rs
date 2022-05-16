@@ -1,23 +1,21 @@
 use git_odb::Find;
 use git_ref::file::ReferenceExt;
 use git_ref::Reference;
+use git_testtools::Creation;
 use std::cmp::Ordering;
 use std::path::PathBuf;
 
 fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile::TempDir>)> {
     let name = "make_worktree_repo.sh";
+    let mut args = Vec::new();
     if packed {
-        let args = Some("packed");
-        if writable {
-            git_testtools::scripted_fixture_repo_writable_with_args(name, args)
-                .map(|tmp| (tmp.path().to_owned(), tmp.into()))
-        } else {
-            git_testtools::scripted_fixture_repo_read_only_with_args(name, args).map(|p| (p, None))
-        }
-    } else if writable {
-        git_testtools::scripted_fixture_repo_writable(name).map(|tmp| (tmp.path().to_owned(), tmp.into()))
+        args.push("packed");
+    }
+    if writable {
+        git_testtools::scripted_fixture_repo_writable_with_args(name, args, Creation::ExecuteScript)
+            .map(|tmp| (tmp.path().to_owned(), tmp.into()))
     } else {
-        git_testtools::scripted_fixture_repo_read_only(name).map(|p| (p, None))
+        git_testtools::scripted_fixture_repo_read_only_with_args(name, args).map(|p| (p, None))
     }
 }
 
@@ -25,7 +23,8 @@ fn main_store(
     packed: bool,
     writable: impl Into<bool>,
 ) -> crate::Result<(git_ref::file::Store, git_odb::Handle, Option<tempfile::TempDir>)> {
-    let (dir, tmp) = dir(packed, writable.into())?;
+    let writable = writable.into();
+    let (dir, tmp) = dir(packed, writable)?;
     let git_dir = dir.join("repo").join(".git");
     Ok((
         git_ref::file::Store::at(&git_dir, Default::default(), Default::default()),
@@ -190,11 +189,11 @@ fn main_read_only() -> crate::Result {
 
 mod transaction {
     use crate::file::transaction::prepare_and_commit::committer;
-    use crate::file::worktree::{into_peel, main_store, Mode};
+    use crate::file::worktree::{main_store, worktree_store, Mode};
     use git_ref::file::transaction::PackedRefs;
     use git_ref::file::Store;
     use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit};
-    use git_ref::{FullNameRef, Target};
+    use git_ref::{FullName, FullNameRef, Target};
     use git_testtools::hex_to_id;
     use std::convert::TryInto;
 
@@ -208,12 +207,12 @@ mod transaction {
 
     #[test]
     fn main() {
+        let new_id_main = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+        let new_id_linked = hex_to_id("22222222222222222262102c6a483440bfda2a03");
+
         for packed in [false, true] {
-            let (store, odb, _tmp) = main_store(packed, Mode::Write).unwrap();
-            let _peel = into_peel(&store, odb);
+            let (store, _odb, _tmp) = main_store(packed, Mode::Write).unwrap();
             let mut t = store.transaction();
-            let new_id_main = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-            let new_id_linked = hex_to_id("22222222222222222262102c6a483440bfda2a03");
             if packed {
                 t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
                     Ok(Some(git_object::Kind::Commit))
@@ -257,6 +256,7 @@ mod transaction {
 
             let mut buf = Vec::new();
             let unprefixed_ref_name = "refs/heads/new";
+            let unprefixed_shared_name: FullName = "refs/heads/shared".try_into().unwrap();
 
             {
                 let reference = store.find(unprefixed_ref_name).unwrap();
@@ -318,6 +318,11 @@ mod transaction {
                     "normal refs with worktrees syntax are shared and in the common dir"
                 );
                 assert_eq!(
+                    store.find(unprefixed_shared_name.as_ref()).unwrap().target.id(),
+                    new_id_linked,
+                    "the unprefixed name finds the same ref"
+                );
+                assert_eq!(
                     reflog_for_name(&store, reference.name.as_ref(), &mut buf),
                     vec![new_id_linked.to_string()],
                     "they have a reflog as one would expect"
@@ -348,7 +353,7 @@ mod transaction {
                     "shared worktree refs accessed by prefix are packed"
                 );
                 assert_eq!(
-                    packed_refs.find("refs/heads/shared").unwrap().object(),
+                    packed_refs.find(unprefixed_shared_name.as_ref()).unwrap().object(),
                     new_id_linked,
                     "shared worktree refs accessed without prefix are just the same"
                 );
@@ -405,9 +410,88 @@ mod transaction {
     }
 
     #[test]
-    #[ignore]
     fn linked() {
-        // TODO: this is the interesting part as we must avoid to write worktree private edits into packed refs
+        let new_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
+        let new_id_main = hex_to_id("22222222222222227062102c6a483440bfda2a03");
+        for packed in [false, true] {
+            let (store, _odb, _tmp) = worktree_store(packed, "w1", Mode::Write).unwrap();
+
+            for conflicting_name in ["main-worktree/refs/heads/shared", "worktrees/w1/refs/heads/shared"] {
+                assert!(matches!(
+                    store.transaction().prepare(
+                        vec![
+                            RefEdit {
+                                change: change_with_id(new_id),
+                                name: conflicting_name.try_into().unwrap(),
+                                deref: false,
+                            },
+                            RefEdit {
+                                change: change_with_id(new_id),
+                                name: "refs/heads/shared".try_into().unwrap(),
+                                deref: false,
+                            },
+                        ],
+                        git_lock::acquire::Fail::Immediately,
+                    ),
+                    Err(git_ref::file::transaction::prepare::Error::LockAcquire { .. })
+                ), "prefixed refs resolve to the same name and will fail to be locked (so we don't check for this when doing dupe checking)");
+            }
+
+            let mut t = store.transaction();
+            if packed {
+                t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
+                    Ok(Some(git_object::Kind::Commit))
+                })));
+            }
+
+            let edits = t
+                .prepare(
+                    vec![
+                        RefEdit {
+                            change: change_with_id(new_id_main),
+                            name: "main-worktree/refs/heads/new".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: change_with_id(new_id_main),
+                            name: "main-worktree/refs/bisect/good".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: change_with_id(new_id),
+                            name: "refs/bisect/good".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: change_with_id(new_id),
+                            name: "refs/worktree/private".try_into().unwrap(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: change_with_id(new_id),
+                            name: "worktrees/w1/refs/heads/shared".try_into().unwrap(),
+                            deref: false,
+                        },
+                    ],
+                    git_lock::acquire::Fail::Immediately,
+                )
+                .unwrap()
+                .commit(committer().to_ref())
+                .expect("successful commit as even similar resolved names live in different base locations");
+
+            let mut buf = Vec::new();
+
+            {
+                let unprefixed_name = "refs/heads/new";
+                let reference = store.find(unprefixed_name).unwrap();
+                assert_eq!(reference.target.id(), new_id_main,);
+                assert_eq!(
+                    reflog_for_name(&store, reference.name.as_ref(), &mut buf),
+                    vec![new_id_main.to_string()]
+                );
+            }
+            // TODO: this is the interesting part as we must avoid to write worktree private edits into packed refs
+        }
     }
 }
 
