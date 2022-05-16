@@ -350,8 +350,23 @@ impl<'s> Transaction<'s> {
 }
 
 fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {
-    // TODO: also filter by privacy - worktree and pseudorefs should never be packed.
-    name.to_owned().into()
+    match name.category_and_short_name() {
+        Some((c, sn)) => {
+            use crate::Category::*;
+            let sn = FullNameRef::new_unchecked(sn);
+            match c {
+                Bisect | Rewritten | WorktreePrivate | LinkedPseudoRef { .. } | PseudoRef | MainPseudoRef => None,
+                Tag | LocalBranch | RemoteBranch | Note => name.into(),
+                MainRef => sn.into(),
+                LinkedRef { .. } => sn
+                    .category()
+                    .map_or(false, |cat| !cat.is_worktree_private())
+                    .then(|| sn),
+            }
+            .map(|n| n.to_owned())
+        }
+        None => Some(name.to_owned()), // allow (uncategorized/very special) refs to be packed
+    }
 }
 
 mod error {

@@ -198,7 +198,6 @@ mod transaction {
     use std::convert::TryInto;
 
     #[test]
-    #[ignore]
     fn main() {
         for packed in [false, true] {
             let (store, odb, _tmp) = main_store(packed, Mode::Write).unwrap();
