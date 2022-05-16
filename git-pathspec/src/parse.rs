@@ -8,8 +8,10 @@ impl Pattern {
     }
 }
 
+type ByteIter<'a> = Peekable<core::slice::Iter<'a, u8>>;
+
 struct Parser<'a> {
-    input: Peekable<core::slice::Iter<'a, u8>>,
+    input: ByteIter<'a>,
 }
 
 impl<'a> Parser<'a> {
