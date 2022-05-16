@@ -173,6 +173,7 @@ pub mod create_or_update {
             full_name.starts_with("refs/heads/")
                 || full_name.starts_with("refs/remotes/")
                 || full_name.starts_with("refs/notes/")
+                || full_name.starts_with("refs/worktree/") // NOTE: git does not write reflogs for worktree private refs
                 || full_name == Path::new("HEAD")
         }
 

@@ -192,8 +192,9 @@ mod transaction {
     use crate::file::transaction::prepare_and_commit::committer;
     use crate::file::worktree::{into_peel, main_store, Mode};
     use git_ref::file::transaction::PackedRefs;
+    use git_ref::file::Store;
     use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit};
-    use git_ref::{FullName, Target};
+    use git_ref::{FullNameRef, Target};
     use git_testtools::hex_to_id;
     use std::convert::TryInto;
 
@@ -204,50 +205,67 @@ mod transaction {
             let _peel = into_peel(&store, odb);
             let mut t = store.transaction();
             let new_id = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-            let name: FullName = "main-worktree/refs/heads/new".try_into().unwrap();
-
+            let other_new_id = hex_to_id("22222222222222222262102c6a483440bfda2a03");
             if packed {
                 t = t.packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
                     Ok(Some(git_object::Kind::Commit))
                 })));
             }
 
+            let new_peeled_id = |id| Change::Update {
+                log: LogChange::default(),
+                expected: PreviousValue::MustNotExist,
+                new: Target::Peeled(id),
+            };
             let edits = t
                 .prepare(
-                    Some(RefEdit {
-                        change: Change::Update {
-                            log: LogChange::default(),
-                            expected: PreviousValue::MustNotExist,
-                            new: Target::Peeled(new_id),
+                    vec![
+                        RefEdit {
+                            change: new_peeled_id(new_id),
+                            name: "main-worktree/refs/heads/new".try_into().unwrap(),
+                            deref: false,
                         },
-                        name,
-                        deref: false,
-                    }),
+                        RefEdit {
+                            change: new_peeled_id(other_new_id),
+                            name: "worktrees/w1/refs/worktree/private".try_into().unwrap(),
+                            deref: false,
+                        },
+                    ],
                     git_lock::acquire::Fail::Immediately,
                 )
                 .unwrap()
                 .commit(committer().to_ref())
                 .unwrap();
 
-            assert_eq!(edits.len(), 1);
-            let unprefixed_ref_name = "refs/heads/new";
-            let reference = store.find(unprefixed_ref_name).unwrap();
+            assert_eq!(edits.len(), 2);
             let mut buf = Vec::new();
-            assert_eq!(
-                store
-                    .reflog_iter(reference.name.as_ref(), &mut buf)
-                    .unwrap()
-                    .expect("we are writing reflogs")
-                    .map(Result::unwrap)
-                    .map(|e| e.new_oid.to_owned().to_string())
-                    .collect::<Vec<_>>(),
-                vec![new_id.to_string()]
-            );
-            assert_eq!(
-                reference.target.id(),
-                new_id,
-                "prefixed refs are written into the correct place"
-            );
+            let unprefixed_ref_name = "refs/heads/new";
+
+            {
+                let reference = store.find(unprefixed_ref_name).unwrap();
+                assert_eq!(
+                    reflog_for_name(&store, reference.name.as_ref(), &mut buf),
+                    vec![new_id.to_string()]
+                );
+                assert_eq!(
+                    reference.target.id(),
+                    new_id,
+                    "prefixed refs are written into the correct place"
+                );
+            }
+
+            {
+                let reference = store.find(edits[1].name.as_ref()).unwrap();
+                assert_eq!(
+                    reference.target.id(),
+                    other_new_id,
+                    "private worktree refs are written into the correct place"
+                );
+                assert_eq!(
+                    reflog_for_name(&store, reference.name.as_ref(), &mut buf),
+                    vec![other_new_id.to_string()]
+                );
+            }
 
             if packed {
                 let packed_refs = store.cached_packed_buffer().unwrap().expect("packed refs file present");
@@ -261,8 +279,22 @@ mod transaction {
                     new_id,
                     "ref can be found with prefix"
                 );
+                assert!(
+                    packed_refs.try_find(edits[1].name.as_ref()).unwrap().is_none(),
+                    "worktree private refs are never packed"
+                );
             }
         }
+    }
+
+    fn reflog_for_name(store: &Store, name: &FullNameRef, mut buf: &mut Vec<u8>) -> Vec<String> {
+        store
+            .reflog_iter(name, &mut buf)
+            .unwrap()
+            .expect(&format!("we are writing reflogs for {}", name.as_bstr()))
+            .map(Result::unwrap)
+            .map(|e| e.new_oid.to_owned().to_string())
+            .collect::<Vec<_>>()
     }
 
     #[test]
