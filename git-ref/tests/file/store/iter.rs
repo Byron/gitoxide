@@ -177,6 +177,7 @@ mod with_namespace {
             8,
             "packed refs have no namespace support at all"
         );
+        dbg!(ns_store.git_dir());
         assert_eq!(
             ns_store
                 .loose_iter()?
@@ -184,12 +185,11 @@ mod with_namespace {
                 .map(|r| r.name.into_inner())
                 .collect::<Vec<_>>(),
             [
-                "refs/namespaces/bar/refs/heads/multi-link-target1",
-                "refs/namespaces/bar/refs/multi-link",
-                "refs/namespaces/bar/refs/tags/multi-link-target2",
-                "refs/namespaces/foo/refs/remotes/origin/HEAD"
+                "refs/heads/multi-link-target1",
+                "refs/multi-link",
+                "refs/tags/multi-link-target2",
             ],
-            "loose iterators have no namespace support at all"
+            "loose iterators have namespace support as well"
         );
 
         let ns_one = git_ref::namespace::expand("foo")?;
