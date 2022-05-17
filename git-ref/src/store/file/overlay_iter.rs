@@ -163,26 +163,7 @@ impl file::Store {
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         match self.namespace.as_ref() {
             Some(namespace) => self.iter_prefixed_unvalidated(namespace.to_path().into(), (None, None), packed),
-            None => Ok(LooseThenPacked {
-                git_dir: self.git_dir(),
-                common_dir: self.common_dir(),
-                iter_packed: match packed {
-                    Some(packed) => Some(
-                        packed
-                            .iter()
-                            .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
-                            .peekable(),
-                    ),
-                    None => None,
-                },
-                iter_git_dir: {
-                    let (cd, refs) = self.common_and_refs_dir();
-                    loose::iter::SortedLoosePaths::at_root_with_filename_prefix(refs, cd, None)
-                }
-                .peekable(),
-                buf: Vec::new(),
-                namespace: None,
-            }),
+            None => self.iter_prefixed_unvalidated(None, (None, None), packed),
         }
     }
 
@@ -232,7 +213,7 @@ impl file::Store {
                 git_dir_base.unwrap_or_else(|| {
                     prefix
                         .map(|prefix| self.git_dir().join(prefix))
-                        .unwrap_or(self.git_dir.to_owned())
+                        .unwrap_or(self.git_dir.to_owned().join("refs"))
                 }),
                 self.git_dir(),
                 git_dir_filename_prefix,

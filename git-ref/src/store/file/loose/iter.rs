@@ -97,12 +97,6 @@ impl file::Store {
 }
 
 impl file::Store {
-    pub(in crate::store_impl::file) fn common_and_refs_dir(&self) -> (&Path, PathBuf) {
-        let commondir = self.common_dir_resolved();
-        let refs = commondir.join("refs");
-        (commondir, refs)
-    }
-
     pub(in crate::store_impl::file) fn validate_prefix(
         &self,
         base: &Path,
