@@ -64,7 +64,7 @@ pub fn create_symlink(from: &Path, to: &Path) {
     #[cfg(not(target_os = "windows"))]
     std::os::unix::fs::symlink(to, &from).unwrap();
     #[cfg(target_os = "windows")]
-    std::os::windows::fs::symlink_file(link_dest, &link).unwrap();
+    std::os::windows::fs::symlink_file(to, &from).unwrap();
 }
 
 pub struct CanonicalizedTempDir {
