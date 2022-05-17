@@ -156,7 +156,7 @@ pub mod from_paths {
         /// The location of the .git directory
         pub git_dir: Option<&'a std::path::Path>,
         /// The name of the branch that is currently checked out
-        pub branch_name: Option<git_ref::FullNameRef<'a>>,
+        pub branch_name: Option<&'a git_ref::FullNameRef>,
     }
 
     impl<'a> Default for Options<'a> {
