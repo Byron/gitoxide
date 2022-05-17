@@ -143,7 +143,7 @@ impl Iterator for Loose {
 }
 
 impl file::Store {
-    /// Return an iterator over all loose references, notably not including any packed ones, in file system order.
+    /// Return an iterator over all loose references, notably not including any packed ones, in lexical order.
     /// Each of the references may fail to parse and the iterator will not stop if parsing fails, allowing the caller
     /// to see all files that look like references whether valid or not.
     ///
@@ -170,12 +170,15 @@ impl file::Store {
         let (root, remainder) = self.validate_prefix(commondir, prefix.as_ref())?;
         Ok(Loose::at_root_with_filename_prefix(root, commondir, remainder))
     }
+}
 
+impl file::Store {
     pub(in crate::store_impl::file) fn common_and_refs_dir(&self) -> (&Path, PathBuf) {
         let commondir = self.common_dir_resolved();
         let refs = commondir.join("refs");
         (commondir, refs)
     }
+
     pub(in crate::store_impl::file) fn validate_prefix(
         &self,
         base: &Path,

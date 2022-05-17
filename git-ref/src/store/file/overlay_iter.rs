@@ -16,10 +16,12 @@ use crate::{
 ///
 /// All errors will be returned verbatim, while packed errors are depleted first if loose refs also error.
 pub struct LooseThenPacked<'p, 's> {
-    base: &'s Path,
+    git_dir: &'s Path,
+    #[allow(dead_code)]
+    common_dir: Option<&'s Path>,
     namespace: Option<&'s Namespace>,
-    packed: Option<Peekable<packed::Iter<'p>>>,
-    loose: Peekable<loose::iter::SortedLoosePaths>,
+    iter_packed: Option<Peekable<packed::Iter<'p>>>,
+    iter_git_dir: Peekable<SortedLoosePaths>,
     buf: Vec<u8>,
 }
 
@@ -71,7 +73,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
         loose::Reference::try_from_path(name, &self.buf)
             .map_err(|err| Error::ReferenceCreation {
                 err,
-                relative_path: refpath.strip_prefix(&self.base).expect("base contains path").into(),
+                relative_path: refpath.strip_prefix(&self.git_dir).expect("base contains path").into(),
             })
             .map(Into::into)
             .map(|r| self.strip_namespace(r))
@@ -82,27 +84,33 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
     type Item = Result<Reference, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.packed.as_mut() {
-            Some(packed_iter) => match (self.loose.peek(), packed_iter.peek()) {
+        fn peek_loose(git_dir: &mut Peekable<SortedLoosePaths>) -> Option<&std::io::Result<(PathBuf, FullName)>> {
+            git_dir.peek()
+        }
+        fn next_loose(git_dir: &mut Peekable<SortedLoosePaths>) -> Option<std::io::Result<(PathBuf, FullName)>> {
+            git_dir.next()
+        }
+        match self.iter_packed.as_mut() {
+            Some(packed_iter) => match (peek_loose(&mut self.iter_git_dir), packed_iter.peek()) {
                 (None, None) => None,
                 (None, Some(_)) | (Some(_), Some(Err(_))) => {
                     let res = packed_iter.next().expect("peeked value exists");
                     Some(self.convert_packed(res))
                 }
                 (Some(_), None) | (Some(Err(_)), Some(_)) => {
-                    let res = self.loose.next().expect("peeked value exists");
+                    let res = next_loose(&mut self.iter_git_dir).expect("prior peek");
                     Some(self.convert_loose(res))
                 }
                 (Some(Ok(loose)), Some(Ok(packed))) => {
                     let loose_name = loose.1.as_bstr();
                     match loose_name.cmp(packed.name.as_bstr()) {
                         Ordering::Less => {
-                            let res = self.loose.next().expect("name retrieval configured");
+                            let res = next_loose(&mut self.iter_git_dir).expect("prior peek");
                             Some(self.convert_loose(res))
                         }
                         Ordering::Equal => {
                             drop(packed_iter.next());
-                            let res = self.loose.next().expect("peeked value exists");
+                            let res = next_loose(&mut self.iter_git_dir).expect("prior peek");
                             Some(self.convert_loose(res))
                         }
                         Ordering::Greater => {
@@ -112,7 +120,7 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
                     }
                 }
             },
-            None => self.loose.next().map(|res| self.convert_loose(res)),
+            None => next_loose(&mut self.iter_git_dir).map(|res| self.convert_loose(res)),
         }
     }
 }
@@ -156,8 +164,9 @@ impl file::Store {
         match self.namespace.as_ref() {
             Some(namespace) => self.iter_prefixed_unvalidated(namespace.to_path(), (None, None), packed),
             None => Ok(LooseThenPacked {
-                base: self.common_dir_resolved(),
-                packed: match packed {
+                git_dir: self.git_dir(),
+                common_dir: self.common_dir(),
+                iter_packed: match packed {
                     Some(packed) => Some(
                         packed
                             .iter()
@@ -166,7 +175,7 @@ impl file::Store {
                     ),
                     None => None,
                 },
-                loose: {
+                iter_git_dir: {
                     let (cd, refs) = self.common_and_refs_dir();
                     loose::iter::SortedLoosePaths::at_root_with_filename_prefix(refs, cd, None)
                 }
@@ -201,13 +210,14 @@ impl file::Store {
     fn iter_prefixed_unvalidated<'s, 'p>(
         &'s self,
         prefix: impl AsRef<Path>,
-        loose_root_and_filename_prefix: (Option<PathBuf>, Option<BString>),
+        loose_git_dir_root_and_filename_prefix: (Option<PathBuf>, Option<BString>),
         packed: Option<&'p packed::Buffer>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         let packed_prefix = path_to_name(prefix.as_ref());
         Ok(LooseThenPacked {
-            base: self.common_dir_resolved(),
-            packed: match packed {
+            git_dir: self.git_dir(),
+            common_dir: self.common_dir(),
+            iter_packed: match packed {
                 Some(packed) => Some(
                     packed
                         .iter_prefixed(packed_prefix.into_owned())
@@ -216,12 +226,12 @@ impl file::Store {
                 ),
                 None => None,
             },
-            loose: loose::iter::SortedLoosePaths::at_root_with_filename_prefix(
-                loose_root_and_filename_prefix
+            iter_git_dir: loose::iter::SortedLoosePaths::at_root_with_filename_prefix(
+                loose_git_dir_root_and_filename_prefix
                     .0
-                    .unwrap_or_else(|| self.common_dir_resolved().join(prefix)),
-                self.common_dir_resolved().to_owned(),
-                loose_root_and_filename_prefix.1,
+                    .unwrap_or_else(|| self.git_dir().join(prefix)),
+                self.git_dir().to_owned(),
+                loose_git_dir_root_and_filename_prefix.1,
             )
             .peekable(),
             buf: Vec::new(),
@@ -262,5 +272,6 @@ mod error {
     }
 }
 
+use crate::file::loose::iter::SortedLoosePaths;
 pub use error::Error;
 use git_features::threading::OwnShared;
