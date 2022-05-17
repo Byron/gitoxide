@@ -1,5 +1,6 @@
 use bstr::BStr;
 use bstr::{BString, ByteSlice};
+use git_ref::Category;
 use std::{
     borrow::Cow,
     collections::{HashMap, VecDeque},
@@ -258,34 +259,39 @@ impl<'event> GitConfig<'event> {
         options: from_paths::Options,
     ) -> Result<(), from_paths::Error> {
         // TODO handle new git undocumented feature `hasconfig`
-        fn include_condition_is_true(
+        fn include_condition_match(
             condition: &str,
             target_config_path: Option<&Path>,
             options: from_paths::Options,
-        ) -> bool {
-            // TODO may be use match
-            if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir:")) {
-                is_match(&target_config_path, options, git_dir, condition)
-            } else if let (Some(git_dir), Some(condition)) = (options.git_dir, condition.strip_prefix("gitdir/i:")) {
-                is_match(&target_config_path, options, git_dir, &condition.to_lowercase())
-            } else if let Some(branch_name) = options.branch_name {
-                if let Some((git_ref::Category::LocalBranch, branch_name)) = branch_name.category_and_short_name() {
-                    if let Some(condition) = condition.strip_prefix("onbranch:") {
-                        let mut condition = Cow::Borrowed(condition);
-                        if condition.starts_with('/') {
-                            condition = Cow::Owned(format!("**{}", condition));
-                        }
-                        if condition.ends_with('/') {
-                            condition = Cow::Owned(format!("{}**", condition));
-                        }
-                        let pattern = condition.as_bytes().as_bstr();
-                        dbg!(&branch_name, &pattern);
-                        return git_glob::wildmatch(pattern, branch_name, git_glob::wildmatch::Mode::empty());
+        ) -> Option<()> {
+            let (prefix, condition) = condition.split_once(':')?;
+            match prefix {
+                "gitdir" => is_match(&target_config_path, options, options.git_dir?, condition).then(|| ()),
+                "gitdir/i" => is_match(
+                    &target_config_path,
+                    options,
+                    options.git_dir?,
+                    &condition.to_lowercase(),
+                )
+                .then(|| ()),
+                "onbranch" => {
+                    let branch_name = options.branch_name?;
+                    let (_, branch_name) = branch_name
+                        .category_and_short_name()
+                        .filter(|(cat, _)| *cat == Category::LocalBranch)?;
+
+                    let mut condition = Cow::Borrowed(condition);
+                    if condition.starts_with('/') {
+                        condition = Cow::Owned(format!("**{}", condition));
                     }
+                    if condition.ends_with('/') {
+                        condition = Cow::Owned(format!("{}**", condition));
+                    }
+                    let pattern = condition.as_bytes().as_bstr();
+                    dbg!(&branch_name, &pattern);
+                    git_glob::wildmatch(pattern, branch_name, git_glob::wildmatch::Mode::empty()).then(|| ())
                 }
-                false
-            } else {
-                false
+                _ => None,
             }
         }
 
@@ -359,7 +365,7 @@ impl<'event> GitConfig<'event> {
 
             for (header, body) in get_include_if_sections(target_config) {
                 if let Some(condition) = &header.subsection_name {
-                    if include_condition_is_true(condition, target_config_path, options) {
+                    if include_condition_match(condition, target_config_path, options).is_some() {
                         let paths = body.values(&Key::from("path"));
                         let paths = paths.iter().map(|path| values::Path::from(path.clone()));
                         include_paths.extend(paths);
