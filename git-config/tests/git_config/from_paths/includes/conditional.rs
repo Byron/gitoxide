@@ -10,6 +10,7 @@ use git_ref::FullName;
 use tempfile::tempdir;
 
 #[test]
+#[ignore]
 fn girdir_and_onbranch() {
     let dir = tempdir().unwrap();
 
