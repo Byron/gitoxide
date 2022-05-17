@@ -34,4 +34,3 @@ mod init;
 mod object;
 mod reference;
 mod repository;
-mod rev_parse;

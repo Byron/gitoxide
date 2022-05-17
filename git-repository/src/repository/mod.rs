@@ -58,8 +58,6 @@ mod cache;
 
 mod reference;
 
-mod revision;
-
 mod object;
 
 mod thread_safe;
