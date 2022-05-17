@@ -9,5 +9,7 @@ pub use hash_hasher;
 
 ///
 pub mod describe;
-pub mod parser;
 pub use describe::function::describe;
+
+///
+pub mod spec;
