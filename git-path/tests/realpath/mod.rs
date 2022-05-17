@@ -1,45 +1,6 @@
-use git_path::{realpath, realpath::Error};
-use std::fs::create_dir_all;
-use std::ops::Deref;
+use git_path::{create_symlink, realpath, realpath::Error, CanonicalizedTempDir};
 use std::path::Path;
-use tempfile::{tempdir, tempdir_in};
-
-struct CanonicalizedTempDir {
-    pub dir: tempfile::TempDir,
-}
-
-impl CanonicalizedTempDir {
-    fn new() -> Self {
-        #[cfg(windows)]
-        let canonicalized_tempdir = std::env::temp_dir();
-        #[cfg(not(windows))]
-        let canonicalized_tempdir = std::env::temp_dir().canonicalize().unwrap();
-        let dir = tempdir_in(canonicalized_tempdir).unwrap();
-        Self { dir }
-    }
-}
-
-impl AsRef<Path> for CanonicalizedTempDir {
-    fn as_ref(&self) -> &Path {
-        self
-    }
-}
-
-impl Deref for CanonicalizedTempDir {
-    type Target = Path;
-
-    fn deref(&self) -> &Self::Target {
-        self.dir.path()
-    }
-}
-
-fn create_symlink(from: &Path, to: &Path) {
-    create_dir_all(from.parent().unwrap()).unwrap();
-    #[cfg(not(target_os = "windows"))]
-    std::os::unix::fs::symlink(to, &from).unwrap();
-    #[cfg(target_os = "windows")]
-    std::os::windows::fs::symlink_file(link_dest, &link).unwrap();
-}
+use tempfile::tempdir;
 
 #[test]
 fn assorted() {

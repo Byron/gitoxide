@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use crate::git_config::cow_str;
 use crate::git_config::from_paths::escape_backslashes;
 use git_config::file::{from_paths, GitConfig};
+use git_path::{create_symlink, CanonicalizedTempDir};
 use git_ref::FullName;
 use tempfile::tempdir;
 
@@ -23,6 +24,8 @@ fn girdir_and_onbranch() {
     let relative_dot_git_path = dir.path().join("w");
     let relative_with_backslash_path = dir.path().join("x");
     let branch_path = dir.path().join("branch");
+    let tmp_path = dir.path().join("tmp");
+    let tmp_dir_with_slash = format!("{}/", CanonicalizedTempDir::new().to_str().unwrap());
 
     fs::write(
         config_path.as_path(),
@@ -34,6 +37,7 @@ fn girdir_and_onbranch() {
   b = 1
   c = 1
   i = 1
+  t = 1
 [includeIf "onbranch:/br/"]
   path = {}
 [includeIf "gitdir/i:a/B/c/D/"]
@@ -53,6 +57,8 @@ fn girdir_and_onbranch() {
 [includeIf "gitdir:a/.git"]
   path = {}
 [includeIf "gitdir:/e/x/"]
+  path = {}
+[includeIf "gitdir:{}"]
   path = {}"#,
             escape_backslashes(&branch_path),
             escape_backslashes(&casei_path),
@@ -63,7 +69,9 @@ fn girdir_and_onbranch() {
             escape_backslashes(&home_dot_git_path),
             escape_backslashes(&home_trailing_slash_path),
             escape_backslashes(&relative_dot_git_path2),
-            escape_backslashes(&absolute_path)
+            escape_backslashes(&absolute_path),
+            &tmp_dir_with_slash,
+            escape_backslashes(&tmp_path),
         ),
     )
     .unwrap();
@@ -145,6 +153,14 @@ fn girdir_and_onbranch() {
         "
 [core]
   b = relative-dot-slash-path",
+    )
+    .unwrap();
+
+    fs::write(
+        tmp_path.as_path(),
+        "
+[core]
+  t = absolute-path-with-symlink",
     )
     .unwrap();
 
@@ -246,12 +262,33 @@ fn girdir_and_onbranch() {
 
     {
         let dir = PathBuf::from("/e/x/y/.git");
-        let config = GitConfig::from_paths(Some(config_path), options_with_git_dir(&dir)).unwrap();
+        let config = GitConfig::from_paths(Some(config_path.as_path()), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "b"),
             Some(cow_str("absolute-path")),
             "absolute path pattern is matched with sub path from GIT_DIR"
         );
+    }
+
+    {
+        let symlink_outside_tempdir = CanonicalizedTempDir::new()
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .join("symlink");
+        create_symlink(
+            &symlink_outside_tempdir,
+            &PathBuf::from(&format!("{}.git", tmp_dir_with_slash)),
+        );
+        let dir = PathBuf::from(&symlink_outside_tempdir);
+        let config = GitConfig::from_paths(Some(config_path), options_with_git_dir(&dir)).unwrap();
+        assert_eq!(
+            config.string("core", None, "t"),
+            Some(cow_str("absolute-path-with-symlink")),
+            "absolute path pattern is matched with path from GIT_DIR when it contains symlink"
+        );
+        fs::remove_file(symlink_outside_tempdir.as_path()).unwrap();
     }
 }
 

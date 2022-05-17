@@ -326,15 +326,33 @@ impl<'event> GitConfig<'event> {
                     condition_path.push(b'*');
                     condition_path.push(b'*');
                 }
-                let value = git_path::into_bstr(git_dir);
-                let value = value.replace("\\", "/");
-                let value = value.as_bstr();
-                let condition_path = condition_path.as_bstr();
+
+                let git_dir_value = git_path::into_bstr(git_dir).to_mut().replace("\\", "/");
 
                 println!();
-                dbg!(&condition_path, &value);
-                let result =
-                    git_glob::wildmatch(condition_path, value, git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL);
+                dbg!(&condition_path.as_bstr(), &git_dir_value.as_bstr());
+                let mut result = git_glob::wildmatch(
+                    condition_path.as_bstr(),
+                    git_dir_value.as_bstr(),
+                    git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+                );
+                if !result {
+                    if let Some(target_config_path) = target_config_path {
+                        if let Ok(expanded_git_dir_value) =
+                            git_path::realpath(git_path::from_byte_slice(&git_dir_value), target_config_path, 32)
+                        {
+                            dbg!(
+                                &condition_path.as_bstr(),
+                                &git_path::into_bstr(&expanded_git_dir_value).as_bstr()
+                            );
+                            result = git_glob::wildmatch(
+                                condition_path.as_bstr(),
+                                git_path::into_bstr(expanded_git_dir_value).as_bstr(),
+                                git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+                            );
+                        }
+                    }
+                }
                 dbg!(&result);
                 return result;
             }
