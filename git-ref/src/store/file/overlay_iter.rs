@@ -194,7 +194,7 @@ impl file::Store {
         (git_dir_base, git_dir_filename_prefix): (Option<PathBuf>, Option<BString>),
         packed: Option<&'p packed::Buffer>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
-        let packed_prefix = prefix.map(|p| path_to_name(p));
+        let packed_prefix = prefix.map(path_to_name);
         Ok(LooseThenPacked {
             git_dir: self.git_dir(),
             common_dir: self.common_dir(),
@@ -213,7 +213,7 @@ impl file::Store {
                 git_dir_base.unwrap_or_else(|| {
                     prefix
                         .map(|prefix| self.git_dir().join(prefix))
-                        .unwrap_or(self.git_dir.to_owned().join("refs"))
+                        .unwrap_or_else(|| self.git_dir.to_owned().join("refs"))
                 }),
                 self.git_dir(),
                 git_dir_filename_prefix,
