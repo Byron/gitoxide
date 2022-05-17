@@ -211,8 +211,10 @@ mod writable {
 
     #[test]
     fn main() -> crate::Result {
-        let new_id_main = hex_to_id("134385f6d781b7e97062102c6a483440bfda2a03");
-        let new_id_linked = hex_to_id("22222222222222222262102c6a483440bfda2a03");
+        let new_id_main_str = "11111111111111111162102c6a483440bfda2a03";
+        let new_id_main = hex_to_id(new_id_main_str);
+        let new_id_linked_str = "22222222222222222262102c6a483440bfda2a03";
+        let new_id_linked = hex_to_id(new_id_linked_str);
 
         for packed in [false, true] {
             let (store, _odb, _tmp) = main_store(packed, Mode::Write)?;
@@ -256,6 +258,29 @@ mod writable {
                 )?
                 .commit(committer().to_ref())
                 .expect("successful commit as even similar resolved names live in different base locations");
+
+            assert_eq!(
+                store
+                    .iter()?
+                    .all()?
+                    .map(Result::unwrap)
+                    .map(|r| (r.name.to_string(), r.target.to_string()))
+                    .collect::<Vec<_>>(),
+                [
+                    ("refs/bisect/bad", "9556057aee5abb06912922e9f26c46386a816822"),
+                    ("refs/bisect/good", new_id_main_str),
+                    ("refs/heads/main", "9556057aee5abb06912922e9f26c46386a816822"),
+                    ("refs/heads/new", new_id_main_str),
+                    ("refs/heads/shared", new_id_linked_str),
+                    ("refs/heads/w1", "9902e3c3e8f0c569b4ab295ddf473e6de763e1e7"),
+                    ("refs/tags/dt1", "d3ba65e5e3be5cdd7210da9998307a4762999cc5"),
+                    ("refs/tags/t1", "9556057aee5abb06912922e9f26c46386a816822")
+                ]
+                .iter()
+                .map(|(a, b)| (a.to_string(), b.to_string()))
+                .collect::<Vec<_>>(),
+                "we traverse only refs of the main worktree"
+            );
 
             let mut buf = Vec::new();
             let unprefixed_ref_name = "refs/heads/new";
