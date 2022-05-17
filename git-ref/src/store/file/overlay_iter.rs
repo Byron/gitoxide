@@ -162,7 +162,7 @@ impl file::Store {
         packed: Option<&'p packed::Buffer>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         match self.namespace.as_ref() {
-            Some(namespace) => self.iter_prefixed_unvalidated(namespace.to_path(), (None, None), packed),
+            Some(namespace) => self.iter_prefixed_unvalidated(namespace.to_path().into(), (None, None), packed),
             None => Ok(LooseThenPacked {
                 git_dir: self.git_dir(),
                 common_dir: self.common_dir(),
@@ -197,41 +197,45 @@ impl file::Store {
         match self.namespace.as_ref() {
             None => {
                 let (root, remainder) = self.validate_prefix(self.common_dir_resolved(), prefix.as_ref())?;
-                self.iter_prefixed_unvalidated(prefix, (root.into(), remainder), packed)
+                self.iter_prefixed_unvalidated(prefix.as_ref().into(), (root.into(), remainder), packed)
             }
             Some(namespace) => {
                 let prefix = namespace.to_owned().into_namespaced_prefix(prefix);
                 let (root, remainder) = self.validate_prefix(self.common_dir_resolved(), &prefix)?;
-                self.iter_prefixed_unvalidated(prefix, (root.into(), remainder), packed)
+                self.iter_prefixed_unvalidated(Some(prefix.as_path()), (root.into(), remainder), packed)
             }
         }
     }
 
     fn iter_prefixed_unvalidated<'s, 'p>(
         &'s self,
-        prefix: impl AsRef<Path>,
-        loose_git_dir_root_and_filename_prefix: (Option<PathBuf>, Option<BString>),
+        prefix: Option<&Path>,
+        (git_dir_base, git_dir_filename_prefix): (Option<PathBuf>, Option<BString>),
         packed: Option<&'p packed::Buffer>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
-        let packed_prefix = path_to_name(prefix.as_ref());
+        let packed_prefix = prefix.map(|p| path_to_name(p));
         Ok(LooseThenPacked {
             git_dir: self.git_dir(),
             common_dir: self.common_dir(),
             iter_packed: match packed {
                 Some(packed) => Some(
-                    packed
-                        .iter_prefixed(packed_prefix.into_owned())
-                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
-                        .peekable(),
+                    match packed_prefix {
+                        Some(prefix) => packed.iter_prefixed(prefix.into_owned()),
+                        None => packed.iter(),
+                    }
+                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
+                    .peekable(),
                 ),
                 None => None,
             },
             iter_git_dir: loose::iter::SortedLoosePaths::at_root_with_filename_prefix(
-                loose_git_dir_root_and_filename_prefix
-                    .0
-                    .unwrap_or_else(|| self.git_dir().join(prefix)),
-                self.git_dir().to_owned(),
-                loose_git_dir_root_and_filename_prefix.1,
+                git_dir_base.unwrap_or_else(|| {
+                    prefix
+                        .map(|prefix| self.git_dir().join(prefix))
+                        .unwrap_or(self.git_dir.to_owned())
+                }),
+                self.git_dir(),
+                git_dir_filename_prefix,
             )
             .peekable(),
             buf: Vec::new(),
