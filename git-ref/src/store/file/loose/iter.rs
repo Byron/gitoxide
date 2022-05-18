@@ -14,11 +14,7 @@ pub(in crate::store_impl::file) struct SortedLoosePaths {
 }
 
 impl SortedLoosePaths {
-    pub fn at_root_with_filename_prefix(
-        path: impl AsRef<Path>,
-        base: impl Into<PathBuf>,
-        filename_prefix: Option<BString>,
-    ) -> Self {
+    pub fn at(path: impl AsRef<Path>, base: impl Into<PathBuf>, filename_prefix: Option<BString>) -> Self {
         let file_walk = git_features::fs::walkdir_sorted_new(path).into_iter();
         SortedLoosePaths {
             base: base.into(),
@@ -93,48 +89,5 @@ impl file::Store {
     /// Otherwise it's similar to [`loose_iter()`][file::Store::loose_iter()].
     pub fn loose_iter_prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<LooseThenPacked<'_, '_>> {
         self.iter_prefixed_packed(prefix, None)
-    }
-}
-
-impl file::Store {
-    pub(in crate::store_impl::file) fn validate_prefix(
-        &self,
-        base: &Path,
-        prefix: &Path,
-    ) -> std::io::Result<(PathBuf, Option<BString>)> {
-        if prefix.is_absolute() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "prefix must be a relative path, like 'refs/heads'",
-            ));
-        }
-        use std::path::Component::*;
-        if prefix.components().any(|c| matches!(c, CurDir | ParentDir)) {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "Refusing to handle prefixes with relative path components",
-            ));
-        }
-        let base = base.join(prefix);
-        if base.is_dir() {
-            Ok((base, None))
-        } else {
-            Ok((
-                base.parent().expect("a parent is always there unless empty").to_owned(),
-                base.file_name()
-                    .map(ToOwned::to_owned)
-                    .map(|p| {
-                        git_path::try_into_bstr(PathBuf::from(p))
-                            .map(|p| p.into_owned())
-                            .map_err(|_| {
-                                std::io::Error::new(
-                                    std::io::ErrorKind::InvalidInput,
-                                    "prefix contains ill-formed UTF-8",
-                                )
-                            })
-                    })
-                    .transpose()?,
-            ))
-        }
     }
 }

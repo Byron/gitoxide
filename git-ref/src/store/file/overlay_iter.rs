@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{
     cmp::Ordering,
     io::Read,
@@ -5,11 +6,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::file::loose::iter::SortedLoosePaths;
 use crate::{
     file::{loose, path_to_name},
     store_impl::{file, packed},
     BString, FullName, Namespace, Reference,
 };
+use git_features::threading::OwnShared;
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
 /// equivalent packed references.
@@ -70,17 +73,19 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
                 path: refpath.to_owned(),
             })?;
         loose::Reference::try_from_path(name, &self.buf)
-            .map_err(|err| Error::ReferenceCreation {
-                err,
-                relative_path: refpath
+            .map_err(|err| {
+                let relative_path = refpath
                     .strip_prefix(&self.git_dir)
                     .ok()
                     .or_else(|| {
                         self.common_dir
                             .and_then(|common_dir| refpath.strip_prefix(common_dir).ok())
                     })
-                    .expect("one of our bases contains the path")
-                    .into(),
+                    .expect("one of our bases contains the path");
+                Error::ReferenceCreation {
+                    err,
+                    relative_path: relative_path.into(),
+                }
             })
             .map(Into::into)
             .map(|r| self.strip_namespace(r))
@@ -160,6 +165,109 @@ impl file::Store {
     }
 }
 
+#[derive(Debug)]
+pub(crate) enum IterInfo<'a> {
+    Base {
+        base: &'a Path,
+    },
+    BaseAndIterRoot {
+        base: &'a Path,
+        iter_root: PathBuf,
+        prefix: Cow<'a, Path>,
+    },
+    PrefixAndBase {
+        base: &'a Path,
+        prefix: &'a Path,
+    },
+    ComputedIterationRoot {
+        /// The root to iterate over
+        iter_root: PathBuf,
+        /// The top-level directory as boundary of all references, used to create their short-names after iteration
+        base: &'a Path,
+        /// The original prefix
+        prefix: Cow<'a, Path>,
+        /// The remainder of the prefix that wasn't a valid path
+        remainder: Option<BString>,
+    },
+}
+
+impl<'a> IterInfo<'a> {
+    fn prefix(&self) -> Option<&Path> {
+        match self {
+            IterInfo::Base { .. } => None,
+            IterInfo::PrefixAndBase { prefix, .. } => Some(*prefix),
+            IterInfo::ComputedIterationRoot { prefix, .. } | IterInfo::BaseAndIterRoot { prefix, .. } => {
+                prefix.as_ref().into()
+            }
+        }
+    }
+
+    fn into_iter(self) -> Peekable<SortedLoosePaths> {
+        match self {
+            IterInfo::Base { base } => SortedLoosePaths::at(base.join("refs"), base, None),
+            IterInfo::BaseAndIterRoot {
+                base,
+                iter_root,
+                prefix: _,
+            } => SortedLoosePaths::at(iter_root, base, None),
+            IterInfo::PrefixAndBase { base, prefix } => SortedLoosePaths::at(base.join(prefix), base, None),
+            IterInfo::ComputedIterationRoot {
+                iter_root,
+                base,
+                prefix: _,
+                remainder,
+            } => SortedLoosePaths::at(iter_root, base, remainder),
+        }
+        .peekable()
+    }
+
+    fn from_prefix(base: &'a Path, prefix: Cow<'a, Path>) -> std::io::Result<Self> {
+        if prefix.is_absolute() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "prefix must be a relative path, like 'refs/heads'",
+            ));
+        }
+        use std::path::Component::*;
+        if prefix.components().any(|c| matches!(c, CurDir | ParentDir)) {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Refusing to handle prefixes with relative path components",
+            ));
+        }
+        let iter_root = base.join(prefix.as_ref());
+        if iter_root.is_dir() {
+            Ok(IterInfo::BaseAndIterRoot {
+                base,
+                iter_root,
+                prefix,
+            })
+        } else {
+            let filename_prefix = iter_root
+                .file_name()
+                .map(ToOwned::to_owned)
+                .map(|p| {
+                    git_path::try_into_bstr(PathBuf::from(p))
+                        .map(|p| p.into_owned())
+                        .map_err(|_| {
+                            std::io::Error::new(std::io::ErrorKind::InvalidInput, "prefix contains ill-formed UTF-8")
+                        })
+                })
+                .transpose()?;
+            let iter_root = iter_root
+                .parent()
+                .expect("a parent is always there unless empty")
+                .to_owned();
+            Ok(IterInfo::ComputedIterationRoot {
+                base,
+                prefix,
+                iter_root,
+                remainder: filename_prefix,
+            })
+        }
+    }
+}
+
 impl file::Store {
     /// Return an iterator over all references, loose or `packed`, sorted by their name.
     ///
@@ -169,8 +277,14 @@ impl file::Store {
         packed: Option<&'p packed::Buffer>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         match self.namespace.as_ref() {
-            Some(namespace) => self.iter_prefixed_unvalidated(namespace.to_path().into(), (None, None), packed),
-            None => self.iter_prefixed_unvalidated(None, (None, None), packed),
+            Some(namespace) => self.iter_from_info(
+                IterInfo::PrefixAndBase {
+                    base: self.git_dir(),
+                    prefix: namespace.to_path(),
+                },
+                packed,
+            ),
+            None => self.iter_from_info(IterInfo::Base { base: self.git_dir() }, packed),
         }
     }
 
@@ -184,31 +298,29 @@ impl file::Store {
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         match self.namespace.as_ref() {
             None => {
-                let (root, remainder) = self.validate_prefix(self.common_dir_resolved(), prefix.as_ref())?;
-                self.iter_prefixed_unvalidated(prefix.as_ref().into(), (root.into(), remainder), packed)
+                let info = IterInfo::from_prefix(self.git_dir(), prefix.as_ref().into())?;
+                self.iter_from_info(info, packed)
             }
             Some(namespace) => {
                 let prefix = namespace.to_owned().into_namespaced_prefix(prefix);
-                let (root, remainder) = self.validate_prefix(self.common_dir_resolved(), &prefix)?;
-                self.iter_prefixed_unvalidated(Some(prefix.as_path()), (root.into(), remainder), packed)
+                let info = IterInfo::from_prefix(self.git_dir(), prefix.into())?;
+                self.iter_from_info(info, packed)
             }
         }
     }
 
-    fn iter_prefixed_unvalidated<'s, 'p>(
+    fn iter_from_info<'s, 'p>(
         &'s self,
-        prefix: Option<&Path>,
-        (git_dir_base, git_dir_filename_prefix): (Option<PathBuf>, Option<BString>),
+        git_dir_info: IterInfo<'_>,
         packed: Option<&'p packed::Buffer>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
-        let packed_prefix = prefix.map(path_to_name);
         Ok(LooseThenPacked {
             git_dir: self.git_dir(),
             common_dir: self.common_dir(),
             iter_packed: match packed {
                 Some(packed) => Some(
-                    match packed_prefix {
-                        Some(prefix) => packed.iter_prefixed(prefix.into_owned()),
+                    match git_dir_info.prefix() {
+                        Some(prefix) => packed.iter_prefixed(path_to_name(prefix).into_owned()),
                         None => packed.iter(),
                     }
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
@@ -216,16 +328,7 @@ impl file::Store {
                 ),
                 None => None,
             },
-            iter_git_dir: loose::iter::SortedLoosePaths::at_root_with_filename_prefix(
-                git_dir_base.unwrap_or_else(|| {
-                    prefix
-                        .map(|prefix| self.git_dir().join(prefix))
-                        .unwrap_or_else(|| self.git_dir.to_owned().join("refs"))
-                }),
-                self.git_dir(),
-                git_dir_filename_prefix,
-            )
-            .peekable(),
+            iter_git_dir: git_dir_info.into_iter(),
             buf: Vec::new(),
             namespace: self.namespace.as_ref(),
         })
@@ -263,7 +366,4 @@ mod error {
         }
     }
 }
-
-use crate::file::loose::iter::SortedLoosePaths;
 pub use error::Error;
-use git_features::threading::OwnShared;
