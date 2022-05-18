@@ -143,6 +143,19 @@ fn from_existing_worktree_inside_dot_git() {
 }
 
 #[test]
+fn from_non_existing_worktree_inside_dot_git() {
+    let top_level_repo = repo_path().unwrap();
+    let (path, _trust) = git_discover::upwards(top_level_repo.join(".git/worktrees/c-worktree-deleted")).unwrap();
+    let suffix = std::path::Path::new(top_level_repo.file_name().unwrap())
+        .join("worktrees")
+        .join("c-worktree-deleted");
+    assert!(
+        matches!(path, git_discover::repository::Path::LinkedWorkTree { work_dir, .. } if work_dir.ends_with(suffix)),
+        "it's no problem if work-dirs don't exist - this can be discovered later and a lot of operations are possible anyway."
+    );
+}
+
+#[test]
 fn from_existing_worktree() -> crate::Result {
     let top_level_repo = repo_path()?;
     for (discover_path, expected_worktree_path, expected_git_dir) in [
