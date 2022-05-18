@@ -10,7 +10,6 @@ use git_ref::FullName;
 use tempfile::tempdir;
 
 #[test]
-#[ignore]
 fn girdir_and_onbranch() {
     let dir = tempdir().unwrap();
 
@@ -26,7 +25,11 @@ fn girdir_and_onbranch() {
     let relative_with_backslash_path = dir.path().join("x");
     let branch_path = dir.path().join("branch");
     let tmp_path = dir.path().join("tmp");
-    let tmp_dir_with_slash = format!("{}/", CanonicalizedTempDir::new().to_str().unwrap());
+    let tmp_dir_with_slash = format!(
+        "{}{}",
+        CanonicalizedTempDir::new().to_str().unwrap(),
+        std::path::MAIN_SEPARATOR.to_string()
+    );
 
     fs::write(
         config_path.as_path(),
@@ -298,4 +301,17 @@ fn options_with_git_dir(git_dir: &Path) -> from_paths::Options<'_> {
         git_dir: Some(git_dir),
         ..Default::default()
     }
+}
+
+#[test]
+fn tfn() {
+    let arr = [
+        91, 105, 110, 99, 108, 117, 100, 101, 73, 102, 32, 34, 103, 105, 116, 100, 105, 114, 58, 67, 58, 92, 85, 115,
+        101, 114, 115, 92, 82, 85, 78, 78, 69, 82, 126, 49, 92, 65, 112, 112, 68, 97, 116, 97, 92, 76, 111, 99, 97,
+        108, 92, 84, 101, 109, 112, 92, 46, 116, 109, 112, 48, 115, 70, 55, 80, 90, 47, 34, 93, 10, 32, 32, 112, 97,
+        116, 104, 32, 61, 32, 67, 58, 92, 92, 85, 115, 101, 114, 115, 92, 92, 82, 85, 78, 78, 69, 82, 126, 49, 92, 92,
+        65, 112, 112, 68, 97, 116, 97, 92, 92, 76, 111, 99, 97, 108, 92, 92, 84, 101, 109, 112, 92, 92, 46, 116, 109,
+        112, 116, 115, 72, 87, 99, 108, 92, 92, 116, 109, 112,
+    ];
+    dbg!(String::from_utf8(arr.into()).unwrap());
 }
