@@ -1,3 +1,4 @@
+use bstr::BString;
 use std::convert::TryFrom;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -169,8 +170,8 @@ fn girdir_and_onbranch() {
     .unwrap();
 
     {
-        let branch_name = FullName::try_from("refs/heads/repo/br/one").unwrap();
-        let branch_name = branch_name.to_ref();
+        let branch_name = FullName::try_from(BString::from("refs/heads/repo/br/one")).unwrap();
+        let branch_name = branch_name.as_ref();
         let options = from_paths::Options {
             branch_name: Some(branch_name),
             ..Default::default()
