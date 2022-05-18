@@ -31,6 +31,7 @@ pub struct LooseThenPacked<'p, 's> {
 
 enum Kind {
     GitDir,
+    GitDirConsumeCommonDir,
     CommonDir,
 }
 
@@ -51,6 +52,10 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
 
     fn loose_iter(&mut self, kind: Kind) -> &mut Peekable<SortedLoosePaths> {
         match kind {
+            Kind::GitDirConsumeCommonDir => {
+                drop(self.iter_common_dir.as_mut().map(|iter| iter.next()));
+                &mut self.iter_git_dir
+            }
             Kind::GitDir => &mut self.iter_git_dir,
             Kind::CommonDir => self
                 .iter_common_dir
@@ -117,6 +122,8 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
             while let Some(Ok((_path, name))) = iter.peek() {
                 if name.category().map_or(true, |cat| cat.is_worktree_private()) {
                     iter.next();
+                } else {
+                    break;
                 }
             }
         }
@@ -136,10 +143,7 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
                     (Some(r_gitdir @ Ok((_, git_dir_name))), Some(r_cd @ Ok((_, common_dir_name)))) => {
                         match git_dir_name.cmp(&common_dir_name) {
                             Ordering::Less => Some((r_gitdir, Kind::GitDir)),
-                            Ordering::Equal => {
-                                drop(common_dir.next());
-                                Some((r_gitdir, Kind::GitDir))
-                            }
+                            Ordering::Equal => Some((r_gitdir, Kind::GitDirConsumeCommonDir)),
                             Ordering::Greater => Some((r_cd, Kind::CommonDir)),
                         }
                     }
