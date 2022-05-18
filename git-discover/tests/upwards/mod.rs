@@ -130,8 +130,21 @@ fn from_non_existing_worktree() {
 }
 
 #[test]
-fn from_existing_worktree() {
+fn from_existing_worktree_inside_dot_git() {
     let top_level_repo = repo_path().unwrap();
+    let (path, _trust) = git_discover::upwards(top_level_repo.join(".git/worktrees/a")).unwrap();
+    let suffix = std::path::Path::new(top_level_repo.file_name().unwrap())
+        .join("worktrees")
+        .join("a");
+    assert!(
+        matches!(path, git_discover::repository::Path::LinkedWorkTree { work_dir, .. } if work_dir.ends_with(suffix)),
+        "we can handle to start from within a (somewhat partial) worktree git dir"
+    );
+}
+
+#[test]
+fn from_existing_worktree() -> crate::Result {
+    let top_level_repo = repo_path()?;
     for (discover_path, expected_worktree_path, expected_git_dir) in [
         (top_level_repo.join("worktrees/a"), "worktrees/a", ".git/worktrees/a"),
         (
@@ -140,7 +153,7 @@ fn from_existing_worktree() {
             "bare.git/worktrees/c",
         ),
     ] {
-        let (path, trust) = git_discover::upwards(discover_path).unwrap();
+        let (path, trust) = git_discover::upwards(discover_path)?;
         assert!(matches!(path, git_discover::repository::Path::LinkedWorkTree { .. }));
 
         assert_eq!(trust, expected_trust());
@@ -153,8 +166,8 @@ fn from_existing_worktree() {
         );
         #[cfg(windows)]
         assert_eq!(
-            git_dir.canonicalize().unwrap(),
-            top_level_repo.join(expected_git_dir).canonicalize().unwrap(),
+            git_dir.canonicalize()?,
+            top_level_repo.join(expected_git_dir).canonicalize()?,
             "we don't skip over worktrees and discover their git dir (gitdir is absolute in file)"
         );
         let worktree = worktree.expect("linked worktree is set");
@@ -163,12 +176,8 @@ fn from_existing_worktree() {
             Ok(std::path::Path::new(expected_worktree_path)),
             "the worktree path is the .git file's directory"
         );
-
-        assert!(
-            git_discover::is_git(&git_dir).is_err(),
-            "we aren't able to detect git directories from private worktrees and that's by design"
-        );
     }
+    Ok(())
 }
 
 fn repo_path() -> crate::Result<PathBuf> {
