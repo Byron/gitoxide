@@ -491,10 +491,10 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [x] find single ref by name
     * [ ] special handling of `FETCH_HEAD` and `MERGE_HEAD`
     * [x] iterate refs with optional prefix
-    * [ ] [worktree support]
-        * [ ] support multiple bases and classify refs to know which base to use when building a ref path
-        * [ ] support for ref iteration merging common and private refs seamlessly.
-        * [ ] refuse to pack worktree-private refs
+    * **worktree support**
+        * [x] support multiple bases and classify refs
+        * [x] support for ref iteration merging common and private refs seamlessly.
+        * [x] avoid packing refs which are worktree private
     * ~~symbolic ref support, using symbolic links~~
         * This is a legacy feature which is not in use anymore.
     * **transactions** 
@@ -525,7 +525,6 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 [reftable-impl]: https://github.com/google/reftable
 [reftable-v2]: https://github.com/google/reftable/blob/master/reftable-v2-proposal.md
 [quarantine]: https://github.com/git/git/blob/master/Documentation/git-receive-pack.txt#L223:L223
-[worktree support]: https://github.com/git/git/blob/master/refs/files-backend.c#L163:L182
 
 
 ### git-features
