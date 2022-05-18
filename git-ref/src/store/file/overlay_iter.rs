@@ -24,6 +24,8 @@ pub struct LooseThenPacked<'p, 's> {
     namespace: Option<&'s Namespace>,
     iter_packed: Option<Peekable<packed::Iter<'p>>>,
     iter_git_dir: Peekable<SortedLoosePaths>,
+    #[allow(dead_code)]
+    iter_common_dir: Option<Peekable<SortedLoosePaths>>,
     buf: Vec<u8>,
 }
 
@@ -282,9 +284,17 @@ impl file::Store {
                     base: self.git_dir(),
                     prefix: namespace.to_path(),
                 },
+                self.common_dir().map(|base| IterInfo::PrefixAndBase {
+                    base,
+                    prefix: namespace.to_path(),
+                }),
                 packed,
             ),
-            None => self.iter_from_info(IterInfo::Base { base: self.git_dir() }, packed),
+            None => self.iter_from_info(
+                IterInfo::Base { base: self.git_dir() },
+                self.common_dir().map(|base| IterInfo::Base { base }),
+                packed,
+            ),
         }
     }
 
@@ -298,13 +308,22 @@ impl file::Store {
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         match self.namespace.as_ref() {
             None => {
-                let info = IterInfo::from_prefix(self.git_dir(), prefix.as_ref().into())?;
-                self.iter_from_info(info, packed)
+                let prefix = prefix.as_ref();
+                let git_dir_info = IterInfo::from_prefix(self.git_dir(), prefix.into())?;
+                let common_dir_info = self
+                    .common_dir()
+                    .map(|base| IterInfo::from_prefix(base, prefix.into()))
+                    .transpose()?;
+                self.iter_from_info(git_dir_info, common_dir_info, packed)
             }
             Some(namespace) => {
                 let prefix = namespace.to_owned().into_namespaced_prefix(prefix);
-                let info = IterInfo::from_prefix(self.git_dir(), prefix.into())?;
-                self.iter_from_info(info, packed)
+                let git_dir_info = IterInfo::from_prefix(self.git_dir(), prefix.clone().into())?;
+                let common_dir_info = self
+                    .common_dir()
+                    .map(|base| IterInfo::from_prefix(base, prefix.into()))
+                    .transpose()?;
+                self.iter_from_info(git_dir_info, common_dir_info, packed)
             }
         }
     }
@@ -312,6 +331,7 @@ impl file::Store {
     fn iter_from_info<'s, 'p>(
         &'s self,
         git_dir_info: IterInfo<'_>,
+        common_dir_info: Option<IterInfo<'_>>,
         packed: Option<&'p packed::Buffer>,
     ) -> std::io::Result<LooseThenPacked<'p, 's>> {
         Ok(LooseThenPacked {
@@ -329,6 +349,7 @@ impl file::Store {
                 None => None,
             },
             iter_git_dir: git_dir_info.into_iter(),
+            iter_common_dir: common_dir_info.map(IterInfo::into_iter),
             buf: Vec::new(),
             namespace: self.namespace.as_ref(),
         })
