@@ -29,10 +29,10 @@ pub struct LooseThenPacked<'p, 's> {
     buf: Vec<u8>,
 }
 
-enum Kind {
-    GitDir,
-    GitDirConsumeCommonDir,
-    CommonDir,
+enum IterKind {
+    Git,
+    GitAndConsumeCommon,
+    Common,
 }
 
 /// An intermediate structure to hold shared state alive long enough for iteration to happen.
@@ -50,14 +50,14 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
         r
     }
 
-    fn loose_iter(&mut self, kind: Kind) -> &mut Peekable<SortedLoosePaths> {
+    fn loose_iter(&mut self, kind: IterKind) -> &mut Peekable<SortedLoosePaths> {
         match kind {
-            Kind::GitDirConsumeCommonDir => {
+            IterKind::GitAndConsumeCommon => {
                 drop(self.iter_common_dir.as_mut().map(|iter| iter.next()));
                 &mut self.iter_git_dir
             }
-            Kind::GitDir => &mut self.iter_git_dir,
-            Kind::CommonDir => self
+            IterKind::Git => &mut self.iter_git_dir,
+            IterKind::Common => self
                 .iter_common_dir
                 .as_mut()
                 .expect("caller knows there is a common iter"),
@@ -131,24 +131,24 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
         fn peek_loose<'a>(
             git_dir: &'a mut Peekable<SortedLoosePaths>,
             common_dir: Option<&'a mut Peekable<SortedLoosePaths>>,
-        ) -> Option<(&'a std::io::Result<(PathBuf, FullName)>, Kind)> {
+        ) -> Option<(&'a std::io::Result<(PathBuf, FullName)>, IterKind)> {
             match common_dir {
                 Some(common_dir) => match (git_dir.peek(), {
                     advance_to_non_private(common_dir);
                     common_dir.peek()
                 }) {
                     (None, None) => None,
-                    (None, Some(res)) | (Some(_), Some(res @ Err(_))) => Some((res, Kind::CommonDir)),
-                    (Some(res), None) | (Some(res @ Err(_)), Some(_)) => Some((res, Kind::GitDir)),
+                    (None, Some(res)) | (Some(_), Some(res @ Err(_))) => Some((res, IterKind::Common)),
+                    (Some(res), None) | (Some(res @ Err(_)), Some(_)) => Some((res, IterKind::Git)),
                     (Some(r_gitdir @ Ok((_, git_dir_name))), Some(r_cd @ Ok((_, common_dir_name)))) => {
-                        match git_dir_name.cmp(&common_dir_name) {
-                            Ordering::Less => Some((r_gitdir, Kind::GitDir)),
-                            Ordering::Equal => Some((r_gitdir, Kind::GitDirConsumeCommonDir)),
-                            Ordering::Greater => Some((r_cd, Kind::CommonDir)),
+                        match git_dir_name.cmp(common_dir_name) {
+                            Ordering::Less => Some((r_gitdir, IterKind::Git)),
+                            Ordering::Equal => Some((r_gitdir, IterKind::GitAndConsumeCommon)),
+                            Ordering::Greater => Some((r_cd, IterKind::Common)),
                         }
                     }
                 },
-                None => git_dir.peek().map(|r| (r, Kind::GitDir)),
+                None => git_dir.peek().map(|r| (r, IterKind::Git)),
             }
         }
         match self.iter_packed.as_mut() {
