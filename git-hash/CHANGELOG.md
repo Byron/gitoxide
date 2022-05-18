@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-535411f94dcab7e7d9cab6324ac30a4c70298bb2/> `Prefix::from_hex()`
+ - <csr-id-89f1b27af9acf46744501f4d31cd1298aeff039b/> Implement `TryFrom<&str>` for `Prefix`
+   Currently there is no easy way to create a `struct Prefix` from a hex
+   string. The method `Parser::from_hex()` is NIY.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 46 calendar days.
+ - 46 days passed between releases.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#413](https://github.com/Byron/gitoxide/issues/413)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#413](https://github.com/Byron/gitoxide/issues/413)**
+    - Don't hardcode Sha1 ([`521c894`](https://github.com/Byron/gitoxide/commit/521c894faf8b1875f449c04aa87003066d4c04ff))
+    - refactor ([`85b9f13`](https://github.com/Byron/gitoxide/commit/85b9f13eb29359a34597fb615805d0fa5aac075b))
+    - refactor ([`073d3a1`](https://github.com/Byron/gitoxide/commit/073d3a104725b06279dbfca6d1a35531fa9cb5c5))
+    - `Prefix::from_hex()` ([`535411f`](https://github.com/Byron/gitoxide/commit/535411f94dcab7e7d9cab6324ac30a4c70298bb2))
+ * **Uncategorized**
+    - make fmt ([`e043807`](https://github.com/Byron/gitoxide/commit/e043807abf364ca46d00760e2f281528efe20c75))
+    - Merge branch 'kalkin-improve-prefix' ([`0866e89`](https://github.com/Byron/gitoxide/commit/0866e89ad498f85478dccfabeb3b3f0b75d65442))
+    - Implement `TryFrom<&str>` for `Prefix` ([`89f1b27`](https://github.com/Byron/gitoxide/commit/89f1b27af9acf46744501f4d31cd1298aeff039b))
+    - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
+</details>
+
 ## 0.9.3 (2022-04-02)
 
 ### New Features
@@ -22,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release over the course of 72 calendar days.
+ - 18 commits contributed to the release over the course of 72 calendar days.
  - 72 days passed between releases.
  - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331)
@@ -52,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#331](https://github.com/Byron/gitoxide/issues/331)**
     - Update changelog prior to release ([`1d07934`](https://github.com/Byron/gitoxide/commit/1d079346e789b0acc9a4bdf7577b21c1c37b6106))
  * **Uncategorized**
+    - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))
     - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
     - don't use panicking const fn just yet to not require rust 1.57 ([`d2e2ea0`](https://github.com/Byron/gitoxide/commit/d2e2ea0a9b9c5f756d8b02b4872e6950faa03b3e))
@@ -115,7 +152,6 @@ A automated maintenance release without impact to the public API.
  - <csr-id-53c748d7f438f57e8119cdf04402bfeaa9f2a286/> remove various SHA1 specific hex utilities in favor of unspecific new ones
    - removed `to_sha1_hex()`, use `oid::hex_to_buf()` and
    `oid::hex_to_buf()` instead.
-- remove `ObjectId::write_hex_to()` in favor of `oid::write_hex_to()`
 
 ### New Features
 
@@ -179,7 +215,7 @@ A automated maintenance release without impact to the public API.
 </details>
 
 <csr-unknown>
- oid::null_sha1() replaced with Kind::null() remove ObjectId::from_borrowed_sha1() remove ObjectId::to_sha1_hex_string()Use .to_hex().to_string() instead. SIZE_OF_SHA1_DIGEST is now privateReplace it with your own constant derived from rename Kind::to_hex() to Kind::to_hex_with_len(); add Kind::to_hex()The latter prints the oid in full.<csr-unknown/>
+remove ObjectId::write_hex_to() in favor of oid::write_hex_to()<csr-unknown/>
 
 ## 0.9.0 (2022-01-19)
 

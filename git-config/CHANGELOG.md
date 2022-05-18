@@ -5,6 +5,113 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-7c75eac149c6ecb99c3dd7355d76d8d3e8b59cd0/> `GitConfig::path()` for direct access to paths.
+   Very similar to `string()`, but as path, whose query can never fail.
+ - <csr-id-031bd2f401199a05d6465c0260ceed3cc849c7ac/> add suppport for android
+   Do not interpolate `~user/` on Android (Termux).
+   There is no meaning of it. It is single user system.
+ - <csr-id-dc3dc3b41b5de3ec17429769747bf99bb2bdd03d/> support for `try_value()`, `boolean()` and `string()` access`.
+   Support for a convenient way of knowing if a value does or doesn't exist
+   via `try_value()`, which can only fail if the conversion fails.
+   
+   Lastly, `string()` is a special case which doesn't fail as there is
+   no conversion, and `boolean()` allows to obtain a plain boolean value
+   if it was a valid boolean representation.
+ - <csr-id-13554f8d21beb241e0fbdeb56b8414957cbee28a/> new hierarchical errors for value lookup
+
+### Changed (BREAKING)
+
+ - <csr-id-38dfdcf80f9b7368ccaa10f4b78b2129849848d0/> remove `values::*Error` in favor of `value::parse::Error`.
+   This makes it easier to work with errors in practice, we are either
+   interested in the value that failed to parse to try something else
+   or want a nice user message.
+   
+   Having one decode error type facilitates that.
+ - <csr-id-a98a7a7af69482e9ef63f106184049049939459d/> switch from quickerror to thiserror.
+   This allows for generic types for sources of errors and allows to
+   workaround a limitation with associated type constraints in the MSRV
+   of 1.54.
+   
+   Using thiserror makes this work and brings the crate more closely
+   to the rest of the gitoxide crates (which now prefer thiserror over
+   quickerror).
+ - <csr-id-a86b2541561674df5dbef4120d3e03483cb80117/> remove all `get_` prefixes from methods
+   That way the API is more idiomatic and fits better into the
+   existing `gitoxide` crates.
+ - <csr-id-f9aaac11f0734afbd791132369eb5601bfc7efe9/> use `lookup::Error` and `lookup::existing::Error`
+   Use the newly introduced structured error to replace the 'catch-all'
+   `GitConfigError` while getting closer to naming conventions in other
+   `gitoxide` crates.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 36 commits contributed to the release over the course of 20 calendar days.
+ - 43 days passed between releases.
+ - 8 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 5 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#386](https://github.com/Byron/gitoxide/issues/386), [#404](https://github.com/Byron/gitoxide/issues/404)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - upgrade dependencies ([`b039d39`](https://github.com/Byron/gitoxide/commit/b039d39613bb14d49670c4d8b586f76ffb420d03))
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - Some notes about of 'path' will soon have to be amended with more safety ([`97e53f6`](https://github.com/Byron/gitoxide/commit/97e53f63df2c0262f23af3d7d997f148d23474be))
+    - `GitConfig::path()` for direct access to paths. ([`7c75eac`](https://github.com/Byron/gitoxide/commit/7c75eac149c6ecb99c3dd7355d76d8d3e8b59cd0))
+    - remove `values::*Error` in favor of `value::parse::Error`. ([`38dfdcf`](https://github.com/Byron/gitoxide/commit/38dfdcf80f9b7368ccaa10f4b78b2129849848d0))
+    - A sketch of what can be a general value decode error ([`4612fca`](https://github.com/Byron/gitoxide/commit/4612fca79446c6f92f0e6a4163bc895fc346b30d))
+    - Remove IntegerSuffix error which wasn't ever used ([`732c0fa`](https://github.com/Byron/gitoxide/commit/732c0fa6e1832efcc0de4adc894e820b3bd27b8f))
+    - make fmt ([`5fc5459`](https://github.com/Byron/gitoxide/commit/5fc5459b17b623726f99846c432a70106464e970))
+    - support for `try_value()`, `boolean()` and `string()` access`. ([`dc3dc3b`](https://github.com/Byron/gitoxide/commit/dc3dc3b41b5de3ec17429769747bf99bb2bdd03d))
+    - fix build warnings ([`4496b5a`](https://github.com/Byron/gitoxide/commit/4496b5a26abaf91fd4844e0494aaa1b4cce73628))
+    - switch from quickerror to thiserror. ([`a98a7a7`](https://github.com/Byron/gitoxide/commit/a98a7a7af69482e9ef63f106184049049939459d))
+    - remove all #[inline] attributes ([`8aef1d3`](https://github.com/Byron/gitoxide/commit/8aef1d313dc9d3ac0004e790b6f91ad0c7ac99b0))
+    - remove all `get_` prefixes from methods ([`a86b254`](https://github.com/Byron/gitoxide/commit/a86b2541561674df5dbef4120d3e03483cb80117))
+    - use `lookup::Error` and `lookup::existing::Error` ([`f9aaac1`](https://github.com/Byron/gitoxide/commit/f9aaac11f0734afbd791132369eb5601bfc7efe9))
+    - new hierarchical errors for value lookup ([`13554f8`](https://github.com/Byron/gitoxide/commit/13554f8d21beb241e0fbdeb56b8414957cbee28a))
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - refactor ([`92fe564`](https://github.com/Byron/gitoxide/commit/92fe56486c349a4b08bcefa3e3355c591e281afb))
+    - Remove untested error case in integger parsing ([`2b21a35`](https://github.com/Byron/gitoxide/commit/2b21a35e1ba31caea227515ddebc7608cdcca245))
+    - validate underflow as well ([`83eda34`](https://github.com/Byron/gitoxide/commit/83eda3443a1b64ff7bc672fbfe16e3a69def1c6d))
+    - Case-insensitive integer suffix handling ([`9034bd4`](https://github.com/Byron/gitoxide/commit/9034bd45bba0aa7c6c5691c2e592c389949dd5d6))
+    - refactor tests ([`f943d2a`](https://github.com/Byron/gitoxide/commit/f943d2aeb0773752adbb68d731305586ab2ce686))
+ * **[#386](https://github.com/Byron/gitoxide/issues/386)**
+    - Sketch `Permissions` for git-config ([`8443330`](https://github.com/Byron/gitoxide/commit/8443330b051c109742fe55928e2afd36fc0172fd))
+ * **[#404](https://github.com/Byron/gitoxide/issues/404)**
+    - Add test to clarify underscores in sections headers aren't allowed ([`47079d4`](https://github.com/Byron/gitoxide/commit/47079d470e44b1adf515ae4df2bed945b7e91108))
+ * **Uncategorized**
+    - Merge branch 'basic-worktree-support' ([`e058bda`](https://github.com/Byron/gitoxide/commit/e058bdabf8449b6a6fdff851e3929137d9b71568))
+    - Merge branch 'main' into msrv-for-windows ([`7cb1972`](https://github.com/Byron/gitoxide/commit/7cb19729133325bdfacedf44cdc0500cbcf36684))
+    - Merge branch 'main' into git-sec ([`2fe70f9`](https://github.com/Byron/gitoxide/commit/2fe70f96cfb68e108637ce78f8edda2eb4e2e61a))
+    - thanks clippy ([`5bf6b52`](https://github.com/Byron/gitoxide/commit/5bf6b52cd51bef19079e87230e5ac463f8f881c0))
+    - thanks clippy ([`273895a`](https://github.com/Byron/gitoxide/commit/273895a06ddfff33c6197799d7e63e8382b4b5e3))
+    - add suppport for android ([`031bd2f`](https://github.com/Byron/gitoxide/commit/031bd2f401199a05d6465c0260ceed3cc849c7ac))
+    - Update doc comment. ([`322f825`](https://github.com/Byron/gitoxide/commit/322f82529c1b5fb22406a1392217af5d53dcdac4))
+    - thanks clippy ([`53f27e0`](https://github.com/Byron/gitoxide/commit/53f27e04dd186c32eaa8c03615a58a10938cab8d))
+    - Handle overflow. ([`61c5285`](https://github.com/Byron/gitoxide/commit/61c52853e61a4cbb356cc607f970e150c827d679))
+    - Merge branch 'worktree-stack' ([`e90d3fd`](https://github.com/Byron/gitoxide/commit/e90d3fd0a9764511e6280596f21d3a0494ed7021))
+    - Add doc comment. ([`001862a`](https://github.com/Byron/gitoxide/commit/001862abde9cbb717c83fdf49a6ddf89a4db16e2))
+    - Canonicalize ´git_config::values::Integer` values as simple decimal numbers. ([`03f360a`](https://github.com/Byron/gitoxide/commit/03f360a19d365f614e71948df7e8b0c62d13cff4))
+    - Refactor values tests. ([`ee4ad7e`](https://github.com/Byron/gitoxide/commit/ee4ad7eadd6675959c9759bb43a08159e3e0daa9))
+    - thanks clippy ([`1e2b239`](https://github.com/Byron/gitoxide/commit/1e2b239abee7e8889fe2060c79c00f2e506023e1))
+    - do not treat empty values in sections like multi-line values ([`8b9432c`](https://github.com/Byron/gitoxide/commit/8b9432c22186a290fd05b6272490dad2bccb7f63))
+</details>
+
 ## 0.2.1 (2022-04-05)
 
 ### Features
@@ -16,10 +123,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 2 calendar days.
+ - 9 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#298](https://github.com/Byron/gitoxide/issues/298)
+ - 2 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301)
 
 ### Thanks Clippy
 
@@ -36,7 +143,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#298](https://github.com/Byron/gitoxide/issues/298)**
     - prepare changelog prior to release ([`fc8f52d`](https://github.com/Byron/gitoxide/commit/fc8f52d91c89fdc1130990e4392f151a30d1899c))
     - Support for simple BString powered string values ([`2381c5d`](https://github.com/Byron/gitoxide/commit/2381c5d3b91e3a071c887d9e1e166625977d5830))
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - adapt to changes in git-path ([`cc2d810`](https://github.com/Byron/gitoxide/commit/cc2d81012d107da7a61bf4de5b28342dea5083b7))
+    - make fmt ([`50ff7aa`](https://github.com/Byron/gitoxide/commit/50ff7aa7fa86e5e2a94fb15aab86470532ac3f51))
+    - adapt to all changes in git-path with bstr support ([`f158648`](https://github.com/Byron/gitoxide/commit/f158648aef8ad94d86550ceb2eeb20efb3df7596))
+    - Use `git-path` crate instead of `git_features::path` ([`47e607d`](https://github.com/Byron/gitoxide/commit/47e607dc256a43a3411406c645eb7ff04239dd3a))
  * **Uncategorized**
+    - Release git-config v0.2.1, git-diff v0.15.0, git-traverse v0.14.0, git-pack v0.18.0, git-odb v0.28.0, git-ref v0.12.1, git-revision v0.1.0, git-repository v0.16.0, gitoxide-core v0.14.0, gitoxide v0.12.0, safety bump 6 crates ([`b612021`](https://github.com/Byron/gitoxide/commit/b612021683ba709b693bd48aef3e2e3c2f5b9ead))
     - thanks clippy ([`7887d8b`](https://github.com/Byron/gitoxide/commit/7887d8b5bedc49890bd73beb058a9828aa734729))
     - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
 </details>

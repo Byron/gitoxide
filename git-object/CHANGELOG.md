@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-0d22ab459ce14bc57549270142595d8ebd98ea41/> `TagRefIter::tagger()`.
+   Additionally ergonomics have been improved as the iterator is now
+   `Copy`, similarly to the other iterators.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release over the course of 30 calendar days.
+ - 45 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#389](https://github.com/Byron/gitoxide/issues/389)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#389](https://github.com/Byron/gitoxide/issues/389)**
+    - `TagRefIter::tagger()`. ([`0d22ab4`](https://github.com/Byron/gitoxide/commit/0d22ab459ce14bc57549270142595d8ebd98ea41))
+</details>
+
 ## 0.18.0 (2022-04-03)
 
 ### New Features
@@ -27,7 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release over the course of 73 calendar days.
+ - 18 commits contributed to the release over the course of 73 calendar days.
  - 60 days passed between releases.
  - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#329](https://github.com/Byron/gitoxide/issues/329), [#364](https://github.com/Byron/gitoxide/issues/364)
@@ -55,6 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `CommitRefIter::(author|committer)()`, better usability ([`c51a925`](https://github.com/Byron/gitoxide/commit/c51a9252f8a038bf995d50cdbfc8356362020bbc))
     - `CommitRefIter::parent_ids()` ([`91065cd`](https://github.com/Byron/gitoxide/commit/91065cd790f559f4a661ecd9c2d2f649922682e3))
  * **Uncategorized**
+    - Release git-actor v0.9.0, git-object v0.18.0 ([`ef9242b`](https://github.com/Byron/gitoxide/commit/ef9242bdb35c02afc36af7c59073d78091fbf504))
     - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
     - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - Merge branch 'svetli-n-refactor_git_config_tests' ([`babaa9f`](https://github.com/Byron/gitoxide/commit/babaa9f5725ab8cdf14e0c7e002c2e1de09de103))
@@ -253,6 +281,8 @@ A maintenance release to properly dealing with previously breaking changes in `g
 </details>
 
 ## v0.14.1 (2021-10-15)
+
+<csr-id-899c57927ce4ba2e1b5d8182f9e731c2a9094cba/>
 
 This release greatly improves performance when decoding trees, a critical requirement when building packs
 or generally trying to figure out what changed between commits.
