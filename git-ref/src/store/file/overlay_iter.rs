@@ -98,33 +98,44 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
     type Item = Result<Reference, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        fn peek_loose(git_dir: &mut Peekable<SortedLoosePaths>) -> Option<&std::io::Result<(PathBuf, FullName)>> {
+        fn peek_loose<'a>(
+            git_dir: &'a mut Peekable<SortedLoosePaths>,
+            _common_dir: Option<&'a mut Peekable<SortedLoosePaths>>,
+        ) -> Option<&'a std::io::Result<(PathBuf, FullName)>> {
             git_dir.peek()
         }
-        fn next_loose(git_dir: &mut Peekable<SortedLoosePaths>) -> Option<std::io::Result<(PathBuf, FullName)>> {
+        fn next_loose(
+            git_dir: &mut Peekable<SortedLoosePaths>,
+            _common_dir: Option<&mut Peekable<SortedLoosePaths>>,
+        ) -> Option<std::io::Result<(PathBuf, FullName)>> {
             git_dir.next()
         }
         match self.iter_packed.as_mut() {
-            Some(packed_iter) => match (peek_loose(&mut self.iter_git_dir), packed_iter.peek()) {
+            Some(packed_iter) => match (
+                peek_loose(&mut self.iter_git_dir, self.iter_common_dir.as_mut()),
+                packed_iter.peek(),
+            ) {
                 (None, None) => None,
                 (None, Some(_)) | (Some(_), Some(Err(_))) => {
                     let res = packed_iter.next().expect("peeked value exists");
                     Some(self.convert_packed(res))
                 }
                 (Some(_), None) | (Some(Err(_)), Some(_)) => {
-                    let res = next_loose(&mut self.iter_git_dir).expect("prior peek");
+                    let res = next_loose(&mut self.iter_git_dir, self.iter_common_dir.as_mut()).expect("prior peek");
                     Some(self.convert_loose(res))
                 }
                 (Some(Ok(loose)), Some(Ok(packed))) => {
                     let loose_name = loose.1.as_bstr();
                     match loose_name.cmp(packed.name.as_bstr()) {
                         Ordering::Less => {
-                            let res = next_loose(&mut self.iter_git_dir).expect("prior peek");
+                            let res =
+                                next_loose(&mut self.iter_git_dir, self.iter_common_dir.as_mut()).expect("prior peek");
                             Some(self.convert_loose(res))
                         }
                         Ordering::Equal => {
                             drop(packed_iter.next());
-                            let res = next_loose(&mut self.iter_git_dir).expect("prior peek");
+                            let res =
+                                next_loose(&mut self.iter_git_dir, self.iter_common_dir.as_mut()).expect("prior peek");
                             Some(self.convert_loose(res))
                         }
                         Ordering::Greater => {
@@ -134,7 +145,9 @@ impl<'p, 's> Iterator for LooseThenPacked<'p, 's> {
                     }
                 }
             },
-            None => next_loose(&mut self.iter_git_dir).map(|res| self.convert_loose(res)),
+            None => {
+                next_loose(&mut self.iter_git_dir, self.iter_common_dir.as_mut()).map(|res| self.convert_loose(res))
+            }
         }
     }
 }
