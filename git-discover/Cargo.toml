@@ -15,9 +15,9 @@ doctest = false
 
 [dependencies]
 git-sec = { version = "^0.1.0", path = "../git-sec", features = ["thiserror"] }
-git-path = { version = "^0.1.0", path = "../git-path" }
-git-ref = { version = "^0.12.1", path = "../git-ref" }
-git-hash = { version = "^0.9.3", path = "../git-hash" }
+git-path = { version = "^0.1.1", path = "../git-path" }
+git-ref = { version = "^0.13.0", path = "../git-ref" }
+git-hash = { version = "^0.9.4", path = "../git-hash" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std", "unicode"] }
 thiserror = "1.0.26"

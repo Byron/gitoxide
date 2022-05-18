@@ -5,6 +5,108 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0 (2022-05-18)
+
+A maintenance release without documented changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 72 commits contributed to the release over the course of 24 calendar days.
+ - 45 days passed between releases.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#384](https://github.com/Byron/gitoxide/issues/384)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
+    - status quo test that shows gitoxide has the same limitation as git ([`5f6c2fb`](https://github.com/Byron/gitoxide/commit/5f6c2fb7787e674aa05af6185e665d6a33860f02))
+    - refactor ([`36fa167`](https://github.com/Byron/gitoxide/commit/36fa16761bd59d9c314e29b1b0911608ae409c1f))
+    - improve how directory excludes are handled ([`bea5ea5`](https://github.com/Byron/gitoxide/commit/bea5ea5cb3d304e73260fc1139b8fdc1acc139d7))
+    - Basic prefix support as well the first working version of `exclude query` ([`9cb8385`](https://github.com/Byron/gitoxide/commit/9cb83859f9bb76f38ab5bbd0ae6d6f20a691e9e1))
+    - Adjustments to support lower MSRV ([`16a0973`](https://github.com/Byron/gitoxide/commit/16a09737f0e81654cc7a5bbc9043385528524ca5))
+    - remove `git-dir` for `checkout()` as it's something to be dealt with elsewhere ([`f7996b8`](https://github.com/Byron/gitoxide/commit/f7996b8f6a877275b8725804c558b51732e8b469))
+    - an idea on how to test excludes, but… ([`9c036e8`](https://github.com/Byron/gitoxide/commit/9c036e81b3abcd5dcde2b023459a15cbd281824d))
+    - Make attributes and ignore configuration possible, but… ([`8a75fd7`](https://github.com/Byron/gitoxide/commit/8a75fd745a194786f0da7c1fd660211446ea51f7))
+    - Revert "Turn attribute files into a Cow to support other usecases…" ([`ed7f223`](https://github.com/Byron/gitoxide/commit/ed7f223b1bee688dbd257a59f3317f39bf5eb2cd))
+    - refactor ([`80af734`](https://github.com/Byron/gitoxide/commit/80af734a5ddfd0785ec946a3609887b5d503d03d))
+    - Turn attribute files into a Cow to support other usecases… ([`d0c8407`](https://github.com/Byron/gitoxide/commit/d0c84079bdd4bb7746f47f132868ed4743f5dda0))
+    - make use of new git-glob::Pattern::to_string() feature ([`d29932d`](https://github.com/Byron/gitoxide/commit/d29932dc579f0579990bca1dcfc656ac020be50e))
+    - provide a platform for multiple queries at a dir cache level ([`48be382`](https://github.com/Byron/gitoxide/commit/48be3828ea07124c4d21cb10121780f596116bcb))
+    - Be explicit about the cache-modes that actually happen ([`dc12f88`](https://github.com/Byron/gitoxide/commit/dc12f88a5d2e54e2ff987127bab37e5bd7ce314a))
+    - some tests to check pattern negation ([`2672a25`](https://github.com/Byron/gitoxide/commit/2672a25dae546f85807a7e5ec1939240221a5a14))
+    - refactor ([`5d30018`](https://github.com/Byron/gitoxide/commit/5d300181c0696430c75bec7070da35cb308a1b9a))
+    - refactor ([`fe46078`](https://github.com/Byron/gitoxide/commit/fe46078dd9496744b048165fba548df5c3f76991))
+    - port PathCache over to `Stack` ([`ebfea8d`](https://github.com/Byron/gitoxide/commit/ebfea8d4be1afb3bd47bcffbaf5d705bed2d1ed6))
+    - A sketch for a generalized version of a path stack ([`0d3ba1a`](https://github.com/Byron/gitoxide/commit/0d3ba1a02f076d32334d85f68d99e6b8033844ad))
+    - refactor ([`fe6641c`](https://github.com/Byron/gitoxide/commit/fe6641c86704df67b020510700e9c087fff5a52c))
+    - Test for case-sensitivity as well ([`120675d`](https://github.com/Byron/gitoxide/commit/120675db0508a6bb9d1e0eca45edf3f15632cd2f))
+    - The stack now allows to change a non-dir into a dir ([`6793bab`](https://github.com/Byron/gitoxide/commit/6793bab687bf492da545981e0116322dab4455cb))
+    - Fix inverted logic for matching non-negative pattern in `is_excluded()` ([`6d5784f`](https://github.com/Byron/gitoxide/commit/6d5784fc961c08fda7affffa4601baaea0000b98))
+    - Allow check-ignore style queries with API that doesn't remove trailing slashes ([`e68cd69`](https://github.com/Byron/gitoxide/commit/e68cd692b5230592ca2ca17418d9b9fda9f3e317))
+    - more tests and fixes to assure directory logic in stack works ([`2010ddd`](https://github.com/Byron/gitoxide/commit/2010dddf244335f3967d0debb5d8e0f3ffdac6a7))
+    - improved testing… ([`e191b72`](https://github.com/Byron/gitoxide/commit/e191b7220c5286bb0d0038398810ae344de626d3))
+    - refactor ([`21d4076`](https://github.com/Byron/gitoxide/commit/21d407638285b728d0c64fabf2abe0e1948e9bec))
+    - Don't hardcode case in state::Ignore ([`a6532e7`](https://github.com/Byron/gitoxide/commit/a6532e7fd94757dc5b4b231b63cb2cbcacf1e602))
+    - The first indication that directory-based excludes work ([`e868acc`](https://github.com/Byron/gitoxide/commit/e868acce2e7c3e2501497bf630e3a54f349ad38e))
+    - adapt to all changes in git-path with bstr support ([`f158648`](https://github.com/Byron/gitoxide/commit/f158648aef8ad94d86550ceb2eeb20efb3df7596))
+    - Use `git-path` crate instead of `git_features::path` ([`47e607d`](https://github.com/Byron/gitoxide/commit/47e607dc256a43a3411406c645eb7ff04239dd3a))
+    - adjustments to go along with changes in git-features ([`c55cac6`](https://github.com/Byron/gitoxide/commit/c55cac6a1ada77619bb5723717a5a6d757499fa9))
+    - refactor ([`8345b7c`](https://github.com/Byron/gitoxide/commit/8345b7caa0cc1cd8489e41822eea89da4c539e6d))
+    - customize stack operation to support the notion of directories ([`2659816`](https://github.com/Byron/gitoxide/commit/26598163ce0a029e7eb92d862f899bdaadad3e90))
+    - reorganize types to properly represent worktrees in their various 'states' ([`b46bff5`](https://github.com/Byron/gitoxide/commit/b46bff58e40bb9805af7ee7f96272f0dc19c0ac7))
+    - And finally, we can read ignore files from the index, too ([`910d500`](https://github.com/Byron/gitoxide/commit/910d5000d479939c14e330b6f1a12d50dd57cdd6))
+    - A sketch for worktree state ([`55e17a4`](https://github.com/Byron/gitoxide/commit/55e17a402c70be64609f0ffa98d1eaeee5146439))
+    - wire everything up to have all data where it needs to be, but… ([`34d0d5c`](https://github.com/Byron/gitoxide/commit/34d0d5c5bedae5ed069fd147c19cfb7414b66fb5))
+    - refactor ([`883d78d`](https://github.com/Byron/gitoxide/commit/883d78d3d17cae1b3bdd9801abb3ee6f9452c1a0))
+    - fix MSRV ([`63f0839`](https://github.com/Byron/gitoxide/commit/63f08391af5da3901190797532566758e3dff9e3))
+    - Support for shared attribute file names ([`e4044a4`](https://github.com/Byron/gitoxide/commit/e4044a48c606497e5de0fd711c7a5ce7afc44117))
+    - Use a separate path mapping to enable clone-avoidance ([`e525b5e`](https://github.com/Byron/gitoxide/commit/e525b5e5138ec0050f1ff178b5985cc7ce440b3a))
+    - Fix borrow check issues the fast way, but… ([`514e2f4`](https://github.com/Byron/gitoxide/commit/514e2f424fa4976693393c6d0911b724f94b1c70))
+    - try to keep borrows to path backing alive but… ([`4234b84`](https://github.com/Byron/gitoxide/commit/4234b8497e3819eaae66f4c0462b5fc29509d675))
+    - refactor ([`b14904b`](https://github.com/Byron/gitoxide/commit/b14904b54587f99f8741fa59eda6c2b9db98fff7))
+    - doing things directly works fortunately ([`6f74f85`](https://github.com/Byron/gitoxide/commit/6f74f8516ba73c35b1b327aae491f70f83eefafd))
+    - An attempt to build a lookup table of attribute files, but… ([`9841efb`](https://github.com/Byron/gitoxide/commit/9841efb566748dae6c79c5990c4fd1ecbc468aef))
+    - refactor ([`475aa6a`](https://github.com/Byron/gitoxide/commit/475aa6a3e08f63df627a0988cd16c20494960c79))
+    - Make .gitignore name overridable ([`155bb82`](https://github.com/Byron/gitoxide/commit/155bb820be03d4ac210b6ae4a76ecfb33445271e))
+    - A test to check skip-worktree special case with ignore files ([`dec9f33`](https://github.com/Byron/gitoxide/commit/dec9f332ecd2eaf7bad8ce0f94194d68624d9ac7))
+    - A baseline test that indicates how excludes aren't using data from the index initially ([`e58b771`](https://github.com/Byron/gitoxide/commit/e58b771cd514024e63c1ab7af7c0d0abad00797d))
+    - First primitive ignore pattern test works ([`0424136`](https://github.com/Byron/gitoxide/commit/04241367e8ce99ce6c7583d5dac4955fad3d6542))
+    - refactor to make push/pop with mutable state work; prepare to read .gitignore files ([`8d1000b`](https://github.com/Byron/gitoxide/commit/8d1000b30257675564195202b15dca1ab1538227))
+    - Add baseline test to motivate implementing ignore file stack ([`ce40add`](https://github.com/Byron/gitoxide/commit/ce40add21add518374d9ff6d40fe488e2f29ce6d))
+    - re-export `git-glob` as its `Case` type is part of the public API ([`4b72045`](https://github.com/Byron/gitoxide/commit/4b7204516a7c61162a2940eb66e8a7c64bf78ce7))
+    - Sketch state for handling attributes as well ([`d87d62d`](https://github.com/Byron/gitoxide/commit/d87d62db5cf327397390ec7888c1d1155619ba38))
+ * **[#384](https://github.com/Byron/gitoxide/issues/384)**
+    - prevent line-ending conversions for shell scripts on windows ([`96bb4d4`](https://github.com/Byron/gitoxide/commit/96bb4d460db420e18dfd0f925109c740e971820d))
+    - No need to isolate archives by crate name ([`19d46f3`](https://github.com/Byron/gitoxide/commit/19d46f35440419b9911b6e2bca2cfc975865dce9))
+    - add archive files via git-lfs ([`7202a1c`](https://github.com/Byron/gitoxide/commit/7202a1c4734ad904c026ee3e4e2143c0461d51a2))
+    - Assure we don't pick up unnecessary files during publishing ([`545b2d5`](https://github.com/Byron/gitoxide/commit/545b2d5121ba64efaee7564d5191cec37661efd7))
+    - auto-set commit.gpgsign=false when executing git ([`c23feb6`](https://github.com/Byron/gitoxide/commit/c23feb64ad157180cfba8a11c882b829733ea8f6))
+ * **Uncategorized**
+    - Release git-worktree v0.2.0, git-repository v0.17.0 ([`5845934`](https://github.com/Byron/gitoxide/commit/584593448b560afdd60dbdbdff901d267082765e))
+    - Release git-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, git-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, git-packetline v0.12.5, git-url v0.5.0, git-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, git-worktree v0.2.0, git-repository v0.17.0 ([`349c590`](https://github.com/Byron/gitoxide/commit/349c5904b0dac350838a896759d51576b66880a7))
+    - Release git-hash v0.9.4, git-features v0.21.0, git-actor v0.10.0, git-glob v0.3.0, git-path v0.1.1, git-attributes v0.1.0, git-sec v0.1.0, git-config v0.3.0, git-credentials v0.1.0, git-validate v0.5.4, git-object v0.19.0, git-diff v0.16.0, git-lock v2.1.0, git-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, git-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, git-packetline v0.12.5, git-url v0.5.0, git-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, git-worktree v0.2.0, git-repository v0.17.0, safety bump 20 crates ([`654cf39`](https://github.com/Byron/gitoxide/commit/654cf39c92d5aa4c8d542a6cadf13d4acef6a78e))
+    - make fmt ([`251b6df`](https://github.com/Byron/gitoxide/commit/251b6df5dbdda24b7bdc452085f808f3acef69d8))
+    - fix release build ([`2705679`](https://github.com/Byron/gitoxide/commit/2705679ddf7e5fe12e93ad214c15d5006c073818))
+    - thanks clippy ([`1d365d2`](https://github.com/Byron/gitoxide/commit/1d365d2c6fe19ac8e27c60e3d2596a583a183728))
+    - thanks clippy ([`aeebc5f`](https://github.com/Byron/gitoxide/commit/aeebc5fe743faa7d436b1d0a30d60aafbbaeeb3d))
+    - thanks clippy ([`b199367`](https://github.com/Byron/gitoxide/commit/b1993672f5a7c516611814fd7c5d6bf796419082))
+    - Merge branch 'main' into worktree-stack ([`8674c11`](https://github.com/Byron/gitoxide/commit/8674c11973e5282d087e35a71c70e418b6cc75be))
+    - fix release build ([`f7c1920`](https://github.com/Byron/gitoxide/commit/f7c1920214ebfc38676d1d53cc064b0f3d8ece4e))
+</details>
+
 ## 0.1.0 (2022-04-03)
 
 An initial release with the ability to checkout indices with simple files only.
@@ -13,7 +115,7 @@ An initial release with the ability to checkout indices with simple files only.
 
 <csr-read-only-do-not-edit/>
 
- - 95 commits contributed to the release over the course of 59 calendar days.
+ - 98 commits contributed to the release over the course of 59 calendar days.
  - 84 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#333](https://github.com/Byron/gitoxide/issues/333), [#364](https://github.com/Byron/gitoxide/issues/364), [#366](https://github.com/Byron/gitoxide/issues/366)
@@ -33,6 +135,8 @@ An initial release with the ability to checkout indices with simple files only.
  * **[#298](https://github.com/Byron/gitoxide/issues/298)**
     - Use hash_hasher based hash state for better keys/less collisions ([`814de07`](https://github.com/Byron/gitoxide/commit/814de079f4226f42efa49ad334a348bce67184e4))
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - Sketch state for handling excludes ([`eb525f7`](https://github.com/Byron/gitoxide/commit/eb525f76134a2ffd770848941c976ec456fcc296))
+    - sketch how attribute globals could be used in worktrees ([`97ee03d`](https://github.com/Byron/gitoxide/commit/97ee03d5e4703b583dd5bb741dbf43f310404882))
     - refactor ([`f86eacc`](https://github.com/Byron/gitoxide/commit/f86eacc5cfaf6d88ead4f8dbd65989d32674c213))
     - use io-close instead of close-file - works ([`279461b`](https://github.com/Byron/gitoxide/commit/279461ba1741ace0399127ca9089230082bbf3e0))
     - better error handling on close ([`a28c9b3`](https://github.com/Byron/gitoxide/commit/a28c9b32466a431450a504e313d2e49926e36a98))
@@ -119,6 +223,7 @@ An initial release with the ability to checkout indices with simple files only.
  * **[#366](https://github.com/Byron/gitoxide/issues/366)**
     - the first possibly working version of loading a mailmap with multiple sources ([`98d745e`](https://github.com/Byron/gitoxide/commit/98d745e8080975a91cff1ce75e187258c851d3f4))
  * **Uncategorized**
+    - Release git-diff v0.14.0, git-bitmap v0.1.0, git-index v0.2.0, git-tempfile v2.0.1, git-lock v2.0.0, git-mailmap v0.1.0, git-traverse v0.13.0, git-pack v0.17.0, git-quote v0.2.0, git-odb v0.27.0, git-packetline v0.12.4, git-url v0.4.0, git-transport v0.16.0, git-protocol v0.15.0, git-ref v0.12.0, git-worktree v0.1.0, git-repository v0.15.0, cargo-smart-release v0.9.0, safety bump 5 crates ([`e58dc30`](https://github.com/Byron/gitoxide/commit/e58dc3084cf17a9f618ae3a6554a7323e44428bf))
     - Merge branch 'for-onefetch' ([`8e5cb65`](https://github.com/Byron/gitoxide/commit/8e5cb65da75036a13ed469334e7ae6c527d9fff6))
     - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - make fmt ([`7cf3545`](https://github.com/Byron/gitoxide/commit/7cf354509b545f7e7c99e159b5989ddfbe86273d))

@@ -6,10 +6,12 @@ struct Baseline<'a> {
 }
 
 mod baseline {
-    use super::Baseline;
+    use std::path::{Path, PathBuf};
+
     use git_object::bstr::BStr;
     use git_repository::bstr::{BString, ByteSlice};
-    use std::path::{Path, PathBuf};
+
+    use super::Baseline;
 
     impl<'a> Baseline<'a> {
         pub fn collect(dir: impl AsRef<Path>) -> std::io::Result<Vec<Worktree>> {

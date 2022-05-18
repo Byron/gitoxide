@@ -24,8 +24,8 @@ impl<'repo> Reference<'repo> {
     }
 
     /// Return the reference's full name.
-    pub fn name(&self) -> git_ref::FullNameRef<'_> {
-        self.inner.name.to_ref()
+    pub fn name(&self) -> &git_ref::FullNameRef {
+        self.inner.name.as_ref()
     }
 
     /// Turn this instances into a stand-alone reference.

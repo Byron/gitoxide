@@ -5,6 +5,194 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.17.0 (2022-05-18)
+
+<csr-id-53c06c7e6a3003b34edaab10db1f158e2fb57403/>
+<csr-id-e4f4c4b2c75a63a40a174e3a006ea64ef8d78809/>
+<csr-id-da8059ce26343c8cd275f43c879d98c92f77fa51/>
+
+### New Features
+
+ - <csr-id-45920da7c8c5618c6e7258de08dbd633a637d017/> Add `Repository::head_name()`.
+   A convenient way to obtain the name of a head, if not detached.
+
+### Bug Fixes
+
+ - <csr-id-a1680b44ef568317465d2971da6e0930f9885530/> `Commit::describe()` now returns annnotated tags before lighweight ones and prefers more recent ones as well
+ - <csr-id-99365f221065ebc315ac80940ad72cae253743bc/> Support for in truncated history in git-describe
+   This allows `describe()` to work on shallow clones.
+
+### Other
+
+ - <csr-id-53c06c7e6a3003b34edaab10db1f158e2fb57403/> allow reading information about remote branch
+ - <csr-id-e4f4c4b2c75a63a40a174e3a006ea64ef8d78809/> :discover()` now returns the shortest path.
+   If and only if it canonicalized the source path. That way, users will
+   still get a familiar path. This is due to `parent()` not operating
+   in the file system, which otherwise would be equivalent to `..`,
+   but that's not how we work.
+   
+   Maybe we should overhaul the way this works to use `../` instead
+   and just 'absoluteize' the path later (std::path::absolute()) is
+   on the way for that.
+ - <csr-id-da8059ce26343c8cd275f43c879d98c92f77fa51/> remove unused variant
+
+### Changed (BREAKING)
+
+ - <csr-id-80e8fd4a5944890f43f3d888b7a73bb26351b195/> integrate trust model into repository discovery
+   That way it's possible to ignore repositories which effectively
+   aren't owned by the current user, or to not ignore them (default)
+   but assign tigher permissions to the repository.
+ - <csr-id-2e39b0ede98826e6f85c56fef77ac65a5b7e7ac2/> `path::discover::existing()` -> `path::discover()`
+ - <csr-id-38dfdcf80f9b7368ccaa10f4b78b2129849848d0/> remove `values::*Error` in favor of `value::parse::Error`.
+   This makes it easier to work with errors in practice, we are either
+   interested in the value that failed to parse to try something else
+   or want a nice user message.
+   
+   Having one decode error type facilitates that.
+
+### New Features (BREAKING)
+
+ - <csr-id-32dc1829a5661f66396d109c8d0a8eaae6b1f532/> use `git-credentials` in `git-protocol`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 106 commits contributed to the release over the course of 11 calendar days.
+ - 43 days passed between releases.
+ - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 9 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#382](https://github.com/Byron/gitoxide/issues/382), [#383](https://github.com/Byron/gitoxide/issues/383), [#384](https://github.com/Byron/gitoxide/issues/384), [#386](https://github.com/Byron/gitoxide/issues/386), [#389](https://github.com/Byron/gitoxide/issues/389), [#393](https://github.com/Byron/gitoxide/issues/393)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - upgrade dependencies ([`b039d39`](https://github.com/Byron/gitoxide/commit/b039d39613bb14d49670c4d8b586f76ffb420d03))
+    - adjust msrv to the one required by `windows` crates ([`0f141ca`](https://github.com/Byron/gitoxide/commit/0f141ca5f29ea3f75372a8d030fd8ecfa4f72d10))
+    - Support for in truncated history in git-describe ([`99365f2`](https://github.com/Byron/gitoxide/commit/99365f221065ebc315ac80940ad72cae253743bc))
+    - fix compile warnings ([`9a06fe1`](https://github.com/Byron/gitoxide/commit/9a06fe1b900c2fb9b4466251224a61e26d637271))
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
+    - adapt to changes in git-discover ([`bd281b8`](https://github.com/Byron/gitoxide/commit/bd281b80b2d01088a97bbca96ff1401ae06a70d1))
+    - Adjust permissions mildly to make a little more sense ([`9c05629`](https://github.com/Byron/gitoxide/commit/9c05629d1ca1ad779f1e07f3a3be102f049874df))
+    - Don't have expectations on the path, rather deal with it gracefully ([`3a41d5c`](https://github.com/Byron/gitoxide/commit/3a41d5cd7a6eb9f21c3461d499af4399b8f6e5be))
+    - REMOVE ME: debug info for failing CI test ([`b0b3df4`](https://github.com/Byron/gitoxide/commit/b0b3df4e7fa93dba7f03003160f38036cbb6d80f))
+    - see if this fixes the CI test issue on windows ([`7697f51`](https://github.com/Byron/gitoxide/commit/7697f517ec7c39a15076b1190056882812fe6a12))
+    - rely on `absolutize_components()` ([`e844006`](https://github.com/Byron/gitoxide/commit/e84400660dad6281fe3869ad649470f2adf31979))
+    - :discover()` now returns the shortest path. ([`e4f4c4b`](https://github.com/Byron/gitoxide/commit/e4f4c4b2c75a63a40a174e3a006ea64ef8d78809))
+    - brutally fix path handling of common dirs ([`e120232`](https://github.com/Byron/gitoxide/commit/e120232252875cd3fdacb9b7df90c3db58e7e24e))
+    - Basic prefix support as well the first working version of `exclude query` ([`9cb8385`](https://github.com/Byron/gitoxide/commit/9cb83859f9bb76f38ab5bbd0ae6d6f20a691e9e1))
+    - Assure 'commondir' is actually resolved and not kept relative ([`3de63ff`](https://github.com/Byron/gitoxide/commit/3de63ff789e518cf07a8e1f02c385ae4ce857615))
+    - fix build ([`cb1c80f`](https://github.com/Byron/gitoxide/commit/cb1c80f8343691600797b61c61cba9cef82a59fc))
+    - first working worktree tests for git-repository ([`508cdd2`](https://github.com/Byron/gitoxide/commit/508cdd213ec48aec879ee4ddc3b76b6c851dd3c7))
+    - refactor ([`a89a667`](https://github.com/Byron/gitoxide/commit/a89a66792855fea7d695ec72899da954b8c16f3d))
+    - Permission controlled access to xdg config ([`42a6c8c`](https://github.com/Byron/gitoxide/commit/42a6c8c9d19f9aab0b33537156e2774c61621864))
+    - refactor ([`6d9b2d9`](https://github.com/Byron/gitoxide/commit/6d9b2d9e7a32c825848a1df1fdec2e53b8705662))
+    - A new version of opening a repository while accepting environment overrides ([`9d73424`](https://github.com/Byron/gitoxide/commit/9d7342429d2c4d7e5ef98a51a47d5caaa11297e0))
+    - preliminary access to a fully configured exclusion cache ([`259d015`](https://github.com/Byron/gitoxide/commit/259d015c4c0195fb77d372545d790ea4c4d01b8a))
+    - adjusts to changes in git-ref ([`b362fb5`](https://github.com/Byron/gitoxide/commit/b362fb594546400e6c42688103df438954df7eeb))
+    - basic parsing for git-dir files ([`e11c677`](https://github.com/Byron/gitoxide/commit/e11c67770c301942188f204dbb2cd61880087959))
+    - prepare for refactoring the overrides code ([`238e1b0`](https://github.com/Byron/gitoxide/commit/238e1b013d3f4d67b6384c6123c5ab6ea9f236fa))
+    - refactor ([`a86ed7b`](https://github.com/Byron/gitoxide/commit/a86ed7bc0e10ebed2918f19d2fc3304fbed87df3))
+    - fix build ([`d7dac11`](https://github.com/Byron/gitoxide/commit/d7dac11be455ee99299a8d7dfd412853f0d709f3))
+    - Avoid using `Cow` at all in favor of a simple `&PartialNameref` ([`1bc9a87`](https://github.com/Byron/gitoxide/commit/1bc9a875d2b09b906f40db9e2c031c99e4fd9928))
+    - remove `values::*Error` in favor of `value::parse::Error`. ([`38dfdcf`](https://github.com/Byron/gitoxide/commit/38dfdcf80f9b7368ccaa10f4b78b2129849848d0))
+    - See what it means to use `Cow<PartialNameRef>` ([`2ae129a`](https://github.com/Byron/gitoxide/commit/2ae129ad6183f36179031ea905d8974705e70da8))
+    - Adjust to `git-discovery` to support linked worktrees in `Kind` type ([`2a99b7d`](https://github.com/Byron/gitoxide/commit/2a99b7d32374b4863dee0a0cdf55711686c94001))
+    - refactor ([`807b7f8`](https://github.com/Byron/gitoxide/commit/807b7f826b4e614478aadd36d6361e9970e5d746))
+    - refactor `repositoryKind` adjusted to handle linked worktrees ([`84677cb`](https://github.com/Byron/gitoxide/commit/84677cb09634e1d18ce20850bb7c6c9d63a13818))
+    - A first version of opening index files with proper configuration ([`f11cc44`](https://github.com/Byron/gitoxide/commit/f11cc441f10e4a7c2c09e7aa9f9435c837c5e77a))
+    - adapt to changes in git-ref ([`21109ca`](https://github.com/Byron/gitoxide/commit/21109ca9ab21df0ab45f3be552e83114817e98d0))
+    - Remove IntegerSuffix error which wasn't ever used ([`732c0fa`](https://github.com/Byron/gitoxide/commit/732c0fa6e1832efcc0de4adc894e820b3bd27b8f))
+    - Adjust to improvements to the `git-config` API ([`ffc5dec`](https://github.com/Byron/gitoxide/commit/ffc5dec6b9ed2b2d19d927848006053f73741a27))
+    - Handle potential issue with overrides using documentation ([`feb4eb2`](https://github.com/Byron/gitoxide/commit/feb4eb26b33a5d3824fe98259193bed7961f6fef))
+    - refactor how environment overrides work ([`99d98ec`](https://github.com/Byron/gitoxide/commit/99d98ece1688880f3b0b35bc4f7ab7ddd9289f1f))
+    - docs for git-glob ([`8f4969f`](https://github.com/Byron/gitoxide/commit/8f4969fe7c2e3f3bb38275d5e4ccb08d0bde02bb))
+    - fix build warnings ([`4496b5a`](https://github.com/Byron/gitoxide/commit/4496b5a26abaf91fd4844e0494aaa1b4cce73628))
+    - fix docs ([`3366696`](https://github.com/Byron/gitoxide/commit/3366696af9ec58ebb43ed7d4dde9d2c79ca71d3d))
+    - adjust to changes in git-discover ([`3271979`](https://github.com/Byron/gitoxide/commit/3271979f86bd5fb009a946cb06cd4ce8ea03119c))
+    - fix build ([`cb56f12`](https://github.com/Byron/gitoxide/commit/cb56f12ad83cf2932a068ef4fa0ca5ce4aa73e84))
+    - Adapt to changes in git-config ([`61ea4c4`](https://github.com/Byron/gitoxide/commit/61ea4c4a254bafd3d1f0c18cf1c10cbd66c15a4d))
+    - refactor; add worktree id and determine main status of worktree ([`54be8e3`](https://github.com/Byron/gitoxide/commit/54be8e3da14b92f0c2dad32a969a651ad9ba9eec))
+    - properly handle common-dir on repo open ([`de0cc1b`](https://github.com/Byron/gitoxide/commit/de0cc1bd1a1ccb26fa4fc5f7d8aedb422226b4a1))
+    - first step towards getting repos from worktree proxies ([`60d0433`](https://github.com/Byron/gitoxide/commit/60d0433d8f6dda1e3556a73f85edff1c04d46dff))
+    - refactor ([`7b5fe1d`](https://github.com/Byron/gitoxide/commit/7b5fe1de5332ca8a85741c7c0872130b5ebd31f2))
+    - Keep instantiation options in Repository for worktrees ([`d25c938`](https://github.com/Byron/gitoxide/commit/d25c938e01e2fc8e9dd44724ea5017997d38e945))
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - Use `Integer::to_decimal()` in git-repository ([`8fb95bf`](https://github.com/Byron/gitoxide/commit/8fb95bf62a33ccef3b037162f49e9a72abb0e3d9))
+ * **[#382](https://github.com/Byron/gitoxide/issues/382)**
+    - refactor ([`0010675`](https://github.com/Byron/gitoxide/commit/00106757a2c86e841bcf03ae233d4ff7bfc710dd))
+    - match test structure with crate structure ([`b91e4bd`](https://github.com/Byron/gitoxide/commit/b91e4bd335024d8d4404d263e5f761eced2d15e9))
+    - Simplify state tests ([`fc61c0d`](https://github.com/Byron/gitoxide/commit/fc61c0d4f7cb3cd9073418e4d8edc55cd14f5fb3))
+ * **[#383](https://github.com/Byron/gitoxide/issues/383)**
+    - Use previously unused variable in fixture script ([`cfaf31f`](https://github.com/Byron/gitoxide/commit/cfaf31fc654472acf1aacacb516b58a3295cffcd))
+ * **[#384](https://github.com/Byron/gitoxide/issues/384)**
+    - No need to isolate archives by crate name ([`19d46f3`](https://github.com/Byron/gitoxide/commit/19d46f35440419b9911b6e2bca2cfc975865dce9))
+    - add archive files via git-lfs ([`7202a1c`](https://github.com/Byron/gitoxide/commit/7202a1c4734ad904c026ee3e4e2143c0461d51a2))
+    - auto-set commit.gpgsign=false when executing git ([`c23feb6`](https://github.com/Byron/gitoxide/commit/c23feb64ad157180cfba8a11c882b829733ea8f6))
+ * **[#386](https://github.com/Byron/gitoxide/issues/386)**
+    - integrate trust model into repository discovery ([`80e8fd4`](https://github.com/Byron/gitoxide/commit/80e8fd4a5944890f43f3d888b7a73bb26351b195))
+    - `path::discover::existing()` -> `path::discover()` ([`2e39b0e`](https://github.com/Byron/gitoxide/commit/2e39b0ede98826e6f85c56fef77ac65a5b7e7ac2))
+    - more expressive and fuiture-proof handling of git dir access controls ([`b1d319b`](https://github.com/Byron/gitoxide/commit/b1d319b249fb6c6d4d5197734938836824789053))
+    - A first PoC to show how the permissions model works in practice ([`67d5837`](https://github.com/Byron/gitoxide/commit/67d58372a8352da0197ec2992f120bd000ffe5de))
+    - don't assume repos with work-trees are non-bare; make git-sec manadatory ([`9c4516d`](https://github.com/Byron/gitoxide/commit/9c4516d309fef0c6fa5396e2bc366475182e0690))
+    - use `git-credentials` in `git-protocol` ([`32dc182`](https://github.com/Byron/gitoxide/commit/32dc1829a5661f66396d109c8d0a8eaae6b1f532))
+ * **[#389](https://github.com/Byron/gitoxide/issues/389)**
+    - `Commit::describe()` now returns annnotated tags before lighweight ones and prefers more recent ones as well ([`a1680b4`](https://github.com/Byron/gitoxide/commit/a1680b44ef568317465d2971da6e0930f9885530))
+    - test all cases for the names filter in describe ([`0d9f6c6`](https://github.com/Byron/gitoxide/commit/0d9f6c6687d7b2a4c473daa1115c100ef40369e7))
+    - first crude fix ([`35019f2`](https://github.com/Byron/gitoxide/commit/35019f282ca7f91bef11cacd03117a756a1bd9f2))
+    - reproduce commit-describe name ordering issue ([`6d023e3`](https://github.com/Byron/gitoxide/commit/6d023e3cbed6a24821ab8a1d36084a350a39415b))
+ * **[#393](https://github.com/Byron/gitoxide/issues/393)**
+    - refactor ([`5044576`](https://github.com/Byron/gitoxide/commit/50445760d180d89501516fc7ed780f0d09edb2d9))
+    - Use the name `state()` instead of `in_progress_operation()` ([`e9b92f0`](https://github.com/Byron/gitoxide/commit/e9b92f002eec51e5ccec74d0dbc641aabf6eda9d))
+    - refactor ([`6540869`](https://github.com/Byron/gitoxide/commit/6540869ec1a1492e3338ff2d33074be33890ee8f))
+    - Add `Repository::head_name()`. ([`45920da`](https://github.com/Byron/gitoxide/commit/45920da7c8c5618c6e7258de08dbd633a637d017))
+ * **Uncategorized**
+    - Release git-worktree v0.2.0, git-repository v0.17.0 ([`5845934`](https://github.com/Byron/gitoxide/commit/584593448b560afdd60dbdbdff901d267082765e))
+    - Release git-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, git-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, git-packetline v0.12.5, git-url v0.5.0, git-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, git-worktree v0.2.0, git-repository v0.17.0 ([`349c590`](https://github.com/Byron/gitoxide/commit/349c5904b0dac350838a896759d51576b66880a7))
+    - Release git-hash v0.9.4, git-features v0.21.0, git-actor v0.10.0, git-glob v0.3.0, git-path v0.1.1, git-attributes v0.1.0, git-sec v0.1.0, git-config v0.3.0, git-credentials v0.1.0, git-validate v0.5.4, git-object v0.19.0, git-diff v0.16.0, git-lock v2.1.0, git-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, git-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, git-packetline v0.12.5, git-url v0.5.0, git-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, git-worktree v0.2.0, git-repository v0.17.0, safety bump 20 crates ([`654cf39`](https://github.com/Byron/gitoxide/commit/654cf39c92d5aa4c8d542a6cadf13d4acef6a78e))
+    - make fmt ([`e043807`](https://github.com/Byron/gitoxide/commit/e043807abf364ca46d00760e2f281528efe20c75))
+    - refactor ([`5ab5842`](https://github.com/Byron/gitoxide/commit/5ab58428358938bced45cc348ec76b527bca9be3))
+    - Use a Cow for remote name handling ([`633a30d`](https://github.com/Byron/gitoxide/commit/633a30dc919ef4a16e4382f6f81825ff2deb7f6b))
+    - adjust to changes in git-ref ([`0671586`](https://github.com/Byron/gitoxide/commit/06715861d3a1d236c310d71737ec1d1a5ca6c770))
+    - allow reading information about remote branch ([`53c06c7`](https://github.com/Byron/gitoxide/commit/53c06c7e6a3003b34edaab10db1f158e2fb57403))
+    - Merge branch 'main' into msrv-for-windows ([`7cb1972`](https://github.com/Byron/gitoxide/commit/7cb19729133325bdfacedf44cdc0500cbcf36684))
+    - make fmt ([`251b6df`](https://github.com/Byron/gitoxide/commit/251b6df5dbdda24b7bdc452085f808f3acef69d8))
+    - fix docs ([`5ee2307`](https://github.com/Byron/gitoxide/commit/5ee23070ecfbf73e5897344421a1f1ec2917a3bd))
+    - Merge branch 'main' into repo-status ([`9679d6b`](https://github.com/Byron/gitoxide/commit/9679d6b0e68c28438e22cb65c554d0b31dfaf159))
+    - remove unused variant ([`da8059c`](https://github.com/Byron/gitoxide/commit/da8059ce26343c8cd275f43c879d98c92f77fa51))
+    - Merge branch 'main' into repo-status ([`8122c5c`](https://github.com/Byron/gitoxide/commit/8122c5c8a122e5297832f96c07a6fb1a5df02620))
+    - Merge branch 'main' into git-sec ([`2fe70f9`](https://github.com/Byron/gitoxide/commit/2fe70f96cfb68e108637ce78f8edda2eb4e2e61a))
+    - Clean up the error message and comments. ([`463a705`](https://github.com/Byron/gitoxide/commit/463a705dc23cddf0ba0ec2dc578a618c793b1d9d))
+    - thanks clippy ([`f802a03`](https://github.com/Byron/gitoxide/commit/f802a03dc0b04d12fa360fb570d460ad4e1eb53a))
+    - Print out some human readable text if GNU sed cannot be found. ([`cf19a18`](https://github.com/Byron/gitoxide/commit/cf19a1854091dc5c709dc367ca5f9568dd7e6da8))
+    - Merge branch 'main' into repo-status ([`0eb2372`](https://github.com/Byron/gitoxide/commit/0eb23721dca78f6e6bf864c5c3a3e44df8b419f0))
+    - repo_path -> git_dir ([`53c22ee`](https://github.com/Byron/gitoxide/commit/53c22ee00834ce5912ec28d20026032b063fd2ec))
+    - Let's try not parsing the git version. ([`475e7d1`](https://github.com/Byron/gitoxide/commit/475e7d1ebdd27e3efd4bd7de6e0a1ee9447feb4b))
+    - Take a couple more steps to appease the CI gods. ([`ac3c8c7`](https://github.com/Byron/gitoxide/commit/ac3c8c7397bf5294cbce97e0718bac23588b2ca5))
+    - Fix the GNU sed detection so it works where /usr/bin/sed is GNU. ([`5c162e0`](https://github.com/Byron/gitoxide/commit/5c162e05299256e99abe84213b078652b5c637a0))
+    - Make clippy happier. ([`a5406b5`](https://github.com/Byron/gitoxide/commit/a5406b5c06a9ecb147f5850db001de2782dd283d))
+    - Pass version appropriate rebase flags to git. ([`bb18a13`](https://github.com/Byron/gitoxide/commit/bb18a13cd05ddce3e850760814e4bdc6e35e0f0e))
+    - Add test coverage for RepositoryState::CherryPickSequence… ([`fc281d8`](https://github.com/Byron/gitoxide/commit/fc281d820d130b74c80d8fc139188a4c4b7b7331))
+    - Merge branch 'main' into repo-status ([`4086335`](https://github.com/Byron/gitoxide/commit/40863353a739ec971b49410fbc2ba048b2762732))
+    - Add a few tests for good measure. ([`499c811`](https://github.com/Byron/gitoxide/commit/499c81106d520e3c8ae1aa02e905c8048a054f79))
+    - in_progress_operation now returns an Option ([`172b464`](https://github.com/Byron/gitoxide/commit/172b4640984d23d7adafacd96cf9d88569d29769))
+    - Tweak the naming and comments a bit ([`56038ed`](https://github.com/Byron/gitoxide/commit/56038ed075d6774043651f14abb61550539b5c26))
+    - First pass at Repository::in_progress_state() ([`c2f66e4`](https://github.com/Byron/gitoxide/commit/c2f66e4ea26fb28bde80dc44ea3ea7278c2fd967))
+    - Release git-glob v0.2.0, safety bump 3 crates ([`ab6bed7`](https://github.com/Byron/gitoxide/commit/ab6bed7e2aa19eeb9990441741008c430f373708))
+    - Merge branch 'main' into refs-and-worktrees ([`9cf0c7b`](https://github.com/Byron/gitoxide/commit/9cf0c7bd0cc5419137db5796f3a5b91bdf3dcc94))
+    - Merge branch 'worktree-stack' ([`e90d3fd`](https://github.com/Byron/gitoxide/commit/e90d3fd0a9764511e6280596f21d3a0494ed7021))
+</details>
+
 ## 0.16.0 (2022-04-05)
 
 ### New Features
@@ -23,16 +211,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 19 commits contributed to the release.
+ - 46 commits contributed to the release.
  - 2 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#298](https://github.com/Byron/gitoxide/issues/298)
+ - 3 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#364](https://github.com/Byron/gitoxide/issues/364)
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 8 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -54,13 +242,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Reduce amount of max candidates, add --debug flag ([`c8c13e3`](https://github.com/Byron/gitoxide/commit/c8c13e398671a21e96282547fc0e3bd445627e2f))
     - Use hashed-hasher for an eek of performance ([`324a839`](https://github.com/Byron/gitoxide/commit/324a839e6c72174f08779a97fa12cc313e2afac2))
     - `Commit::describe()` ([`654f4af`](https://github.com/Byron/gitoxide/commit/654f4afb794a370b7cd9d9502ff6d0c3378ec417))
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - sketch `open_index()` on `Worktree`, but… ([`ff76261`](https://github.com/Byron/gitoxide/commit/ff76261f568f6b717a93b1f2dcf5d8e8b63acfca))
+    - refactor ([`71dd056`](https://github.com/Byron/gitoxide/commit/71dd0566cbfa9cbda148145efc78f76557663ae7))
+    - a sketch of basic Worktree support ([`732f6fb`](https://github.com/Byron/gitoxide/commit/732f6fb0aa9cdc843087352b12bed2cd142ed6ec))
+    - obtain the base() path of a private worktree ([`f77d8c8`](https://github.com/Byron/gitoxide/commit/f77d8c8a60f1807f77aafd7b1d71334e9710e2e8))
+    - fix docs ([`1e3acd0`](https://github.com/Byron/gitoxide/commit/1e3acd08b9df9fe0cc36bb6a4d4bac57c365443d))
+    - use `git-discover` crate ([`f5f9a0d`](https://github.com/Byron/gitoxide/commit/f5f9a0d609316b2a64ee665f47faade7d8277315))
+    - refactor ([`00a988e`](https://github.com/Byron/gitoxide/commit/00a988e3c2c964447f675164a6126bf6cb470c6b))
+    - make fmt ([`50ff7aa`](https://github.com/Byron/gitoxide/commit/50ff7aa7fa86e5e2a94fb15aab86470532ac3f51))
+    - Remove `worktree()` platform in favor of the current worktree ([`f2a2c55`](https://github.com/Byron/gitoxide/commit/f2a2c5581eb3dde5ef7352439b564d89e9f76461))
+    - basic worktree iteration ([`992a6ce`](https://github.com/Byron/gitoxide/commit/992a6ce154b97520b0c4679d6c50f4e3cc6e3091))
+    - Use `git-path` crate instead of `git_features::path` ([`47e607d`](https://github.com/Byron/gitoxide/commit/47e607dc256a43a3411406c645eb7ff04239dd3a))
+    - maybe fix failing test on windows ([`8f69af2`](https://github.com/Byron/gitoxide/commit/8f69af2eb48f01e2bbcf7b6483ae06f9b8dea61b))
+    - assure worktree test repositories are regenerated ([`2eed703`](https://github.com/Byron/gitoxide/commit/2eed70392fd06f31f08acf2caa94437e967c7a1f))
+    - Learn to read the common dir ([`e07c453`](https://github.com/Byron/gitoxide/commit/e07c453ea20e29994520dcd6346ac0a28f585813))
+    - A first stab at more control over which worktrees and git-dirs to use ([`83ac263`](https://github.com/Byron/gitoxide/commit/83ac2638dd52e9da9a0dc8a62b4c9669c8eec372))
+    - adapt to changes in git-ref ([`49b0e89`](https://github.com/Byron/gitoxide/commit/49b0e89440ffcc5fa5dc66be45112f9c1f7d9244))
+    - devise a worktree API that can work even if a valid worktree isn't present ([`8d067d1`](https://github.com/Byron/gitoxide/commit/8d067d113acfaf9a3e28ba1a829b07303a80e992))
+    - reorganize types to properly represent worktrees in their various 'states' ([`b46bff5`](https://github.com/Byron/gitoxide/commit/b46bff58e40bb9805af7ee7f96272f0dc19c0ac7))
+    - parse baseline worktree listing ([`aabe8b2`](https://github.com/Byron/gitoxide/commit/aabe8b2edc0753f125dcdea71dd44908d1826a21))
+    - A first test to run against a bare and non-bare repos with worktrees ([`70164d7`](https://github.com/Byron/gitoxide/commit/70164d7252f57bd4b645d8ca694e7458ce4d1a0f))
+    - Instantiate worktree aware versions of file stores ([`0b670dd`](https://github.com/Byron/gitoxide/commit/0b670ddf97b316f0a6c332d999265a3bda7fcdab))
+    - adjust to changes in git-ref ([`3299606`](https://github.com/Byron/gitoxide/commit/32996060c7405be787b8f5b91041e5d6dcd9ffc9))
+ * **[#364](https://github.com/Byron/gitoxide/issues/364)**
+    - some TODOs related to precomposed unicode on MacOS ([`bc246aa`](https://github.com/Byron/gitoxide/commit/bc246aaa81cd7023e8533a006211a800621e8907))
  * **Uncategorized**
+    - Release git-revision v0.1.0, git-repository v0.16.0, gitoxide-core v0.14.0, gitoxide v0.12.0 ([`f041c00`](https://github.com/Byron/gitoxide/commit/f041c00a7df2455ca52fac7b83af1e9f335f5688))
     - Release git-config v0.2.1, git-diff v0.15.0, git-traverse v0.14.0, git-pack v0.18.0, git-odb v0.28.0, git-ref v0.12.1, git-revision v0.1.0, git-repository v0.16.0, gitoxide-core v0.14.0, gitoxide v0.12.0, safety bump 6 crates ([`b612021`](https://github.com/Byron/gitoxide/commit/b612021683ba709b693bd48aef3e2e3c2f5b9ead))
     - thanks clippy ([`7887d8b`](https://github.com/Byron/gitoxide/commit/7887d8b5bedc49890bd73beb058a9828aa734729))
+    - thanks clippy ([`d624f4e`](https://github.com/Byron/gitoxide/commit/d624f4e7fafd821867a41548b49f2cd7f09def8c))
     - thanks clippy ([`0f5a943`](https://github.com/Byron/gitoxide/commit/0f5a9439d6b1716345f0e122c23c1a566fdd3088))
     - thanks clippy ([`9407532`](https://github.com/Byron/gitoxide/commit/9407532b98646d33bb0b947860a6a0022cfbae28))
     - thanks clippy ([`60cb858`](https://github.com/Byron/gitoxide/commit/60cb8589e901981802be11289352510a9d43cd87))
+    - thanks clippy ([`6fb19cf`](https://github.com/Byron/gitoxide/commit/6fb19cfee79a49741dd439ade9c638aa89943f10))
     - thanks clippy ([`f2faa00`](https://github.com/Byron/gitoxide/commit/f2faa001ed2c8e96e25dbd56544320055f8dbe1b))
+    - thanks clippy ([`a7ac64c`](https://github.com/Byron/gitoxide/commit/a7ac64cd801b985790b5717be1a5dc722b2ae3a9))
 </details>
 
 ## 0.15.0 (2022-04-03)

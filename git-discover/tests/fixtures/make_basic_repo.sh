@@ -17,6 +17,8 @@ git clone --bare --shared . bare.git
 git worktree add worktrees/a
 git worktree add worktrees/b-private-dir-deleted
 rm -R .git/worktrees/b-private-dir-deleted
+git worktree add worktrees/c-worktree-deleted
+rm -R worktrees/c-worktree-deleted
 
 cd bare.git
 git worktree add ../worktrees/from-bare/c

@@ -70,6 +70,56 @@ mod prefix {
             ));
         }
     }
+
+    mod try_from {
+        use std::{cmp::Ordering, convert::TryFrom};
+
+        use git_hash::{prefix::from_hex::Error, Prefix};
+        use git_testtools::hex_to_id;
+
+        #[test]
+        fn id_8_chars() {
+            let oid_hex = "abcdefabcdefabcdefabcdefabcdefabcdefabcd";
+            let input = "abcdef";
+
+            let expected = hex_to_id(oid_hex);
+            let actual = Prefix::try_from(input).expect("No errors");
+            assert_eq!(actual.cmp_oid(&expected), Ordering::Equal);
+        }
+
+        #[test]
+        fn id_9_chars() {
+            let oid_hex = "abcdefabcdefabcdefabcdefabcdefabcdefabcd";
+            let input = "abcdefa";
+
+            let expected = hex_to_id(oid_hex);
+            let actual = Prefix::try_from(input).expect("No errors");
+            assert_eq!(actual.cmp_oid(&expected), Ordering::Equal);
+        }
+        #[test]
+        fn id_to_short() {
+            let input = "ab";
+            let expected = Error::TooShort { hex_len: 2 };
+            let actual = Prefix::try_from(input).unwrap_err();
+            assert_eq!(actual, expected);
+        }
+
+        #[test]
+        fn id_to_long() {
+            let input = "abcdefabcdefabcdefabcdefabcdefabcdefabcd123123123123123123";
+            let expected = Error::TooLong { hex_len: 58 };
+            let actual = Prefix::try_from(input).unwrap_err();
+            assert_eq!(actual, expected);
+        }
+
+        #[test]
+        fn invalid_chars() {
+            let input = "abcdfOsd";
+            let expected = Error::Invalid { c: 'O', index: 5 };
+            let actual = Prefix::try_from(input).unwrap_err();
+            assert_eq!(actual, expected);
+        }
+    }
 }
 
 mod short_hex {

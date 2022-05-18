@@ -110,7 +110,7 @@ pub fn crate_ref_segments<'h>(
                 refs.prefixed(PathBuf::from(format!("refs/tags/{}-", prefix)))?
                     .peeled()
                     .filter_map(|r| r.ok().map(|r| r.detach()))
-                    .filter(|r| is_tag_name(prefix, strip_tag_path(r.name.to_ref())))
+                    .filter(|r| is_tag_name(prefix, strip_tag_path(r.name.as_ref())))
                     .map(|r| {
                         let t = r.peeled.expect("already peeled");
                         (t, r)
@@ -120,7 +120,7 @@ pub fn crate_ref_segments<'h>(
                 refs.prefixed("refs/tags")?
                     .peeled()
                     .filter_map(|r| r.ok().map(|r| r.detach()))
-                    .filter(|r| is_tag_version(strip_tag_path(r.name.to_ref())))
+                    .filter(|r| is_tag_version(strip_tag_path(r.name.as_ref())))
                     .map(|r| {
                         let t = r.peeled.expect("already peeled");
                         (t, r)

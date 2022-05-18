@@ -19,8 +19,6 @@ pub enum Error {
 /// Utility type to keep pre-obtained configuration values.
 #[derive(Debug, Clone)]
 pub(crate) struct Cache {
-    // TODO: remove this once resolved is used without a feature dependency
-    #[cfg_attr(not(any(feature = "git-mailmap", feature = "git-index")), allow(dead_code))]
     pub resolved: crate::Config,
     /// The hex-length to assume when shortening object ids. If `None`, it should be computed based on the approximate object count.
     pub hex_len: Option<usize>,
@@ -54,8 +52,7 @@ mod cache {
     };
 
     use super::{Cache, Error};
-    use crate::bstr::ByteSlice;
-    use crate::permission;
+    use crate::{bstr::ByteSlice, permission};
 
     impl Cache {
         pub fn new(

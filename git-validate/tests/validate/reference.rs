@@ -11,6 +11,11 @@ mod name_partial {
         }
 
         mktest!(refs_path, b"refs/heads/main");
+        mktest!(main_worktree_pseudo_ref, b"main-worktree/HEAD");
+        mktest!(main_worktree_ref, b"main-worktree/refs/bisect/good");
+        mktest!(other_worktree_pseudo_ref, b"worktrees/id/HEAD");
+        mktest!(other_worktree_ref, b"worktrees/id/refs/bisect/good");
+        mktest!(worktree_private_ref, b"refs/worktree/private");
         mktest!(refs_path_with_file_extension, b"refs/heads/main.ext");
         mktest!(refs_path_underscores_and_dashes, b"refs/heads/main-2nd_ext");
         mktest!(relative_path, b"etc/foo");
@@ -90,6 +95,11 @@ mod name {
             };
         }
 
+        mktest!(main_worktree_pseudo_ref, b"main-worktree/HEAD");
+        mktest!(main_worktree_ref, b"main-worktree/refs/bisect/good");
+        mktest!(other_worktree_pseudo_ref, b"worktrees/id/HEAD");
+        mktest!(other_worktree_ref, b"worktrees/id/refs/bisect/good");
+        mktest!(worktree_private_ref, b"refs/worktree/private");
         mktest!(refs_path, b"refs/heads/main");
         mktest!(refs_path_with_file_extension, b"refs/heads/main.ext");
         mktest!(refs_path_underscores_and_dashes, b"refs/heads/main-2nd_ext");

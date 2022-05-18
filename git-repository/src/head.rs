@@ -1,4 +1,6 @@
 //!
+use std::convert::TryInto;
+
 use git_hash::ObjectId;
 use git_ref::FullNameRef;
 
@@ -37,17 +39,16 @@ impl Kind {
 
 impl<'repo> Head<'repo> {
     /// Returns the name of this references, always `HEAD`.
-    pub fn name(&self) -> FullNameRef<'static> {
+    pub fn name(&self) -> &'static FullNameRef {
         // TODO: use a statically checked version of this when available.
-        use std::convert::TryFrom;
-        FullNameRef::try_from("HEAD").expect("HEAD is valid")
+        "HEAD".try_into().expect("HEAD is valid")
     }
 
     /// Returns the full reference name of this head if it is not detached, or `None` otherwise.
-    pub fn referent_name(&self) -> Option<FullNameRef<'_>> {
+    pub fn referent_name(&self) -> Option<&FullNameRef> {
         Some(match &self.kind {
-            Kind::Symbolic(r) => r.name.to_ref(),
-            Kind::Unborn(name) => name.to_ref(),
+            Kind::Symbolic(r) => r.name.as_ref(),
+            Kind::Unborn(name) => name.as_ref(),
             Kind::Detached { .. } => return None,
         })
     }
@@ -82,9 +83,7 @@ impl<'repo> Head<'repo> {
 }
 ///
 pub mod log {
-    use std::convert::TryFrom;
-
-    use git_ref::FullNameRef;
+    use std::convert::TryInto;
 
     use crate::Head;
 
@@ -93,7 +92,7 @@ pub mod log {
         pub fn log_iter(&self) -> git_ref::file::log::iter::Platform<'static, '_> {
             git_ref::file::log::iter::Platform {
                 store: &self.repo.refs,
-                name: FullNameRef::try_from("HEAD").expect("HEAD is always valid"),
+                name: "HEAD".try_into().expect("HEAD is always valid"),
                 buf: Vec::new(),
             }
         }

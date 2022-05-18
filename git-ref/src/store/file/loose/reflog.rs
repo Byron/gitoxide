@@ -13,7 +13,7 @@ impl file::Store {
     /// If the caller needs to know if it's readable, try to read the log instead with a reverse or forward iterator.
     pub fn reflog_exists<'a, Name, E>(&self, name: Name) -> Result<bool, E>
     where
-        Name: TryInto<FullNameRef<'a>, Error = E>,
+        Name: TryInto<&'a FullNameRef, Error = E>,
         crate::name::Error: From<E>,
     {
         Ok(self.reflog_path(name.try_into()?).is_file())
@@ -29,10 +29,10 @@ impl file::Store {
         buf: &'b mut [u8],
     ) -> Result<Option<log::iter::Reverse<'b, std::fs::File>>, Error>
     where
-        Name: TryInto<FullNameRef<'a>, Error = E>,
+        Name: TryInto<&'a FullNameRef, Error = E>,
         crate::name::Error: From<E>,
     {
-        let name: FullNameRef<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
+        let name: &FullNameRef = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
         let path = self.reflog_path(name);
         if path.is_dir() {
             return Ok(None);
@@ -54,10 +54,10 @@ impl file::Store {
         buf: &'b mut Vec<u8>,
     ) -> Result<Option<log::iter::Forward<'b>>, Error>
     where
-        Name: TryInto<FullNameRef<'a>, Error = E>,
+        Name: TryInto<&'a FullNameRef, Error = E>,
         crate::name::Error: From<E>,
     {
-        let name: FullNameRef<'_> = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
+        let name: &FullNameRef = name.try_into().map_err(|err| Error::RefnameValidation(err.into()))?;
         let path = self.reflog_path(name);
         match std::fs::File::open(&path) {
             Ok(mut file) => {
@@ -77,14 +77,16 @@ impl file::Store {
 
 impl file::Store {
     /// Implements the logic required to transform a fully qualified refname into its log name
-    pub(crate) fn reflog_path(&self, name: FullNameRef<'_>) -> PathBuf {
-        self.reflog_path_inner(name.to_path())
+    pub(crate) fn reflog_path(&self, name: &FullNameRef) -> PathBuf {
+        let (base, rela_path) = self.reflog_base_and_relative_path(name);
+        base.join(rela_path)
     }
 }
 
 ///
 pub mod create_or_update {
     use std::{
+        borrow::Cow,
         io::Write,
         path::{Path, PathBuf},
     };
@@ -95,21 +97,23 @@ pub mod create_or_update {
     use crate::store_impl::{file, file::WriteReflog};
 
     impl file::Store {
+        #[allow(clippy::too_many_arguments)]
         pub(crate) fn reflog_create_or_append(
             &self,
-            lock: &git_lock::Marker,
+            name: &FullNameRef,
+            _lock: &git_lock::Marker,
             previous_oid: Option<ObjectId>,
             new: &oid,
-            committer: &git_actor::Signature,
+            committer: git_actor::SignatureRef<'_>,
             message: &BStr,
             force_create_reflog: bool,
         ) -> Result<(), Error> {
-            let full_name = self.reflock_resource_full_name(lock);
+            let (reflog_base, full_name) = self.reflog_base_and_relative_path(name);
             match self.write_reflog {
                 WriteReflog::Normal => {
                     let mut options = std::fs::OpenOptions::new();
                     options.append(true).read(false);
-                    let log_path = self.reflock_resource_to_log_path(lock);
+                    let log_path = reflog_base.join(&full_name);
 
                     if force_create_reflog || self.should_autocreate_reflog(&full_name) {
                         let parent_dir = log_path.parent().expect("always with parent directory");
@@ -133,7 +137,7 @@ pub mod create_or_update {
                                     .map(Some)
                                     .map_err(|_| Error::Append {
                                         err,
-                                        reflog_path: self.reflock_resource_to_log_path(lock),
+                                        reflog_path: self.reflog_path(name),
                                     })?
                             } else {
                                 return Err(Error::Append {
@@ -156,7 +160,7 @@ pub mod create_or_update {
                             })
                             .map_err(|err| Error::Append {
                                 err,
-                                reflog_path: self.reflock_resource_to_log_path(lock),
+                                reflog_path: self.reflog_path(name),
                             })?;
                     }
                     Ok(())
@@ -169,34 +173,26 @@ pub mod create_or_update {
             full_name.starts_with("refs/heads/")
                 || full_name.starts_with("refs/remotes/")
                 || full_name.starts_with("refs/notes/")
+                || full_name.starts_with("refs/worktree/") // NOTE: git does not write reflogs for worktree private refs
                 || full_name == Path::new("HEAD")
         }
 
-        fn reflock_resource_full_name(&self, reflock: &git_lock::Marker) -> PathBuf {
-            reflock
-                .resource_path()
-                .strip_prefix(&self.base)
-                .expect("lock must be held within this store")
-                .to_owned()
-        }
-
-        fn reflock_resource_to_log_path(&self, reflock: &git_lock::Marker) -> PathBuf {
-            self.reflog_path_inner(
-                reflock
-                    .resource_path()
-                    .strip_prefix(&self.base)
-                    .expect("lock must be held within this store"),
-            )
-        }
-
-        /// Returns the base and a full path (including the base) to the reflog for a ref of the given `full_name`
-        pub(in crate::store_impl::file::loose::reflog) fn reflog_path_inner(&self, full_name: &Path) -> PathBuf {
-            self.reflog_root().join(full_name)
-        }
-
         /// Returns the base paths for all reflogs
-        pub(in crate::store_impl::file) fn reflog_root(&self) -> PathBuf {
-            self.base.join("logs")
+        pub(in crate::store_impl::file) fn reflog_base_and_relative_path<'a>(
+            &self,
+            name: &'a FullNameRef,
+        ) -> (PathBuf, Cow<'a, Path>) {
+            let is_reflog = true;
+            let (base, name) = self.to_base_dir_and_relative_name(name, is_reflog);
+            (
+                base.join("logs"),
+                match &self.namespace {
+                    None => git_path::to_native_path_on_windows(name.as_bstr()),
+                    Some(namespace) => git_path::to_native_path_on_windows(
+                        namespace.to_owned().into_namespaced_name(name).into_inner(),
+                    ),
+                },
+            )
         }
     }
 
@@ -228,6 +224,8 @@ pub mod create_or_update {
         }
     }
     pub use error::Error;
+
+    use crate::FullNameRef;
 }
 
 mod error {

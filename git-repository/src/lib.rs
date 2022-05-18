@@ -219,6 +219,7 @@ impl From<git_discover::repository::Kind> for Kind {
     fn from(v: git_discover::repository::Kind) -> Self {
         match v {
             git_discover::repository::Kind::Bare => Kind::Bare,
+            git_discover::repository::Kind::WorkTreeGitDir { .. } => Kind::WorkTree { is_linked: true },
             git_discover::repository::Kind::WorkTree { linked_git_dir } => Kind::WorkTree {
                 is_linked: linked_git_dir.is_some(),
             },
@@ -379,9 +380,9 @@ pub mod state {
 pub mod discover {
     use std::path::Path;
 
-    use crate::ThreadSafeRepository;
-
     pub use git_discover::*;
+
+    use crate::ThreadSafeRepository;
 
     /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]
