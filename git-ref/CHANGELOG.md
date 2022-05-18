@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.13.0 (2022-05-18)
 
 ### New Features
 
@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 64 commits contributed to the release over the course of 5 calendar days.
+ - 65 commits contributed to the release over the course of 5 calendar days.
  - 43 days passed between releases.
  - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#384](https://github.com/Byron/gitoxide/issues/384), [#393](https://github.com/Byron/gitoxide/issues/393)
@@ -52,6 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Enforce path conversion on windows gnu, it doesn't seem to like slashes ([`4d55a8f`](https://github.com/Byron/gitoxide/commit/4d55a8f99f2a0b7c0c4ed70a615b7e58b5bee04b))
     - mention that failing path when a ref-file couldn't be read ([`ecb539a`](https://github.com/Byron/gitoxide/commit/ecb539a4c12696ecb4384af2a16c381fb7980d95))
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
     - ref iteration for worktrees. ([`4a5176a`](https://github.com/Byron/gitoxide/commit/4a5176a78b64981ce5612b88c7736b7323aa8cdd))
     - down to one borrowcheck error ([`7571be5`](https://github.com/Byron/gitoxide/commit/7571be5388d766afd88f224a6eab652659d38bfe))
     - possibly a step towards solving this traversal… ([`c64a77f`](https://github.com/Byron/gitoxide/commit/c64a77f09e2d8a1904704aaab4018a66a7e8417b))

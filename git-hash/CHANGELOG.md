@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.4 (2022-05-18)
 
 ### New Features
 
@@ -18,10 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 46 calendar days.
+ - 9 commits contributed to the release over the course of 46 calendar days.
  - 46 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#413](https://github.com/Byron/gitoxide/issues/413)
+ - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#413](https://github.com/Byron/gitoxide/issues/413)
 
 ### Commit Details
 
@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
  * **[#413](https://github.com/Byron/gitoxide/issues/413)**
     - Don't hardcode Sha1 ([`521c894`](https://github.com/Byron/gitoxide/commit/521c894faf8b1875f449c04aa87003066d4c04ff))
     - refactor ([`85b9f13`](https://github.com/Byron/gitoxide/commit/85b9f13eb29359a34597fb615805d0fa5aac075b))
@@ -213,9 +215,6 @@ A automated maintenance release without impact to the public API.
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
 </details>
-
-<csr-unknown>
-remove ObjectId::write_hex_to() in favor of oid::write_hex_to()<csr-unknown/>
 
 ## 0.9.0 (2022-01-19)
 

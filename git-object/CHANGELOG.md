@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.19.0 (2022-05-18)
 
 ### New Features
 
@@ -17,10 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 30 calendar days.
+ - 2 commits contributed to the release over the course of 30 calendar days.
  - 45 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#389](https://github.com/Byron/gitoxide/issues/389)
+ - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#389](https://github.com/Byron/gitoxide/issues/389)
 
 ### Commit Details
 
@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
  * **[#389](https://github.com/Byron/gitoxide/issues/389)**
     - `TagRefIter::tagger()`. ([`0d22ab4`](https://github.com/Byron/gitoxide/commit/0d22ab459ce14bc57549270142595d8ebd98ea41))
 </details>

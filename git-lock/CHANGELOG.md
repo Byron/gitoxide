@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.1.0 (2022-05-18)
 
 ### New Features
 
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 5 calendar days.
+ - 6 commits contributed to the release over the course of 5 calendar days.
  - 45 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#384](https://github.com/Byron/gitoxide/issues/384), [#386](https://github.com/Byron/gitoxide/issues/386)
@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
     - refactor ([`287f47c`](https://github.com/Byron/gitoxide/commit/287f47c17a52be382f0866abaa0db6b33a09f560))
  * **[#384](https://github.com/Byron/gitoxide/issues/384)**
     - export git-tempfile in the root ([`a789490`](https://github.com/Byron/gitoxide/commit/a789490fbbba1f44d79d57c8ba74bf40c600faf2))

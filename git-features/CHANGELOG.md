@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.21.0 (2022-05-18)
 
 ### Changed (BREAKING)
 
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 46 calendar days.
+ - 7 commits contributed to the release over the course of 46 calendar days.
  - 46 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301)
@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#298](https://github.com/Byron/gitoxide/issues/298)**
     - Enforce path conversion on windows gnu, it doesn't seem to like slashes ([`4d55a8f`](https://github.com/Byron/gitoxide/commit/4d55a8f99f2a0b7c0c4ed70a615b7e58b5bee04b))
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
     - remove `path` module in favor of `git-path` crate ([`90611ce`](https://github.com/Byron/gitoxide/commit/90611ce1527618bcc738440bfc1ccc7a45319974))
     - mild refactor of paths module to waste less on unix ([`d078d6e`](https://github.com/Byron/gitoxide/commit/d078d6ee76a80d1dfaf71608c12d8a402bd670d4))
     - refactor ([`8345b7c`](https://github.com/Byron/gitoxide/commit/8345b7caa0cc1cd8489e41822eea89da4c539e6d))

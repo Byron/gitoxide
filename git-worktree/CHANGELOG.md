@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.2.0 (2022-05-18)
 
 A maintenance release without documented changes.
 
@@ -13,7 +13,7 @@ A maintenance release without documented changes.
 
 <csr-read-only-do-not-edit/>
 
- - 68 commits contributed to the release over the course of 24 calendar days.
+ - 69 commits contributed to the release over the course of 24 calendar days.
  - 45 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#384](https://github.com/Byron/gitoxide/issues/384)
@@ -31,6 +31,7 @@ A maintenance release without documented changes.
 <details><summary>view details</summary>
 
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
     - status quo test that shows gitoxide has the same limitation as git ([`5f6c2fb`](https://github.com/Byron/gitoxide/commit/5f6c2fb7787e674aa05af6185e665d6a33860f02))
     - refactor ([`36fa167`](https://github.com/Byron/gitoxide/commit/36fa16761bd59d9c314e29b1b0911608ae409c1f))
     - improve how directory excludes are handled ([`bea5ea5`](https://github.com/Byron/gitoxide/commit/bea5ea5cb3d304e73260fc1139b8fdc1acc139d7))

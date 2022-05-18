@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.17.0 (2022-05-18)
+
+<csr-id-53c06c7e6a3003b34edaab10db1f158e2fb57403/>
+<csr-id-e4f4c4b2c75a63a40a174e3a006ea64ef8d78809/>
+<csr-id-da8059ce26343c8cd275f43c879d98c92f77fa51/>
 
 ### New Features
 
@@ -15,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bug Fixes
 
  - <csr-id-a1680b44ef568317465d2971da6e0930f9885530/> `Commit::describe()` now returns annnotated tags before lighweight ones and prefers more recent ones as well
-
  - <csr-id-99365f221065ebc315ac80940ad72cae253743bc/> Support for in truncated history in git-describe
    This allows `describe()` to work on shallow clones.
 
@@ -55,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 102 commits contributed to the release over the course of 11 calendar days.
+ - 103 commits contributed to the release over the course of 11 calendar days.
  - 43 days passed between releases.
  - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 9 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#382](https://github.com/Byron/gitoxide/issues/382), [#383](https://github.com/Byron/gitoxide/issues/383), [#384](https://github.com/Byron/gitoxide/issues/384), [#386](https://github.com/Byron/gitoxide/issues/386), [#389](https://github.com/Byron/gitoxide/issues/389), [#393](https://github.com/Byron/gitoxide/issues/393)
@@ -78,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Support for in truncated history in git-describe ([`99365f2`](https://github.com/Byron/gitoxide/commit/99365f221065ebc315ac80940ad72cae253743bc))
     - fix compile warnings ([`9a06fe1`](https://github.com/Byron/gitoxide/commit/9a06fe1b900c2fb9b4466251224a61e26d637271))
  * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
     - adapt to changes in git-discover ([`bd281b8`](https://github.com/Byron/gitoxide/commit/bd281b80b2d01088a97bbca96ff1401ae06a70d1))
     - Adjust permissions mildly to make a little more sense ([`9c05629`](https://github.com/Byron/gitoxide/commit/9c05629d1ca1ad779f1e07f3a3be102f049874df))
     - Don't have expectations on the path, rather deal with it gracefully ([`3a41d5c`](https://github.com/Byron/gitoxide/commit/3a41d5cd7a6eb9f21c3461d499af4399b8f6e5be))
