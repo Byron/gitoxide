@@ -20,7 +20,23 @@ pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
 /// * an objects directory
 /// * a refs directory
 pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::is_git::Error> {
-    let (dot_git, common_dir, git_dir_is_linked_worktree) = match crate::path::from_gitdir_file(git_dir.as_ref()) {
+    #[derive(Eq, PartialEq)]
+    enum Kind {
+        MaybeRepo,
+        LinkedWorkTreeDir,
+        WorkTreeGitDir { work_dir: std::path::PathBuf },
+    }
+    #[cfg(not(windows))]
+    fn is_directory(err: &std::io::Error) -> bool {
+        err.raw_os_error() == Some(21)
+    }
+    // TODO: use ::IsDirectory as well when stabilized, but it's permission denied on windows
+    #[cfg(windows)]
+    fn is_directory(err: &std::io::Error) -> bool {
+        err.kind() == std::io::ErrorKind::PermissionDenied
+    }
+    let git_dir = git_dir.as_ref();
+    let (dot_git, common_dir, kind) = match crate::path::from_gitdir_file(git_dir) {
         Ok(private_git_dir) => {
             let common_dir = private_git_dir.join("commondir");
             let common_dir = crate::path::from_plain_file(&common_dir)
@@ -29,16 +45,31 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
                 })?
                 .map_err(|_| crate::is_git::Error::MissingCommonDir { missing: common_dir })?;
             let common_dir = private_git_dir.join(common_dir);
-            (Cow::Owned(private_git_dir), Cow::Owned(common_dir), true)
+            (
+                Cow::Owned(private_git_dir),
+                Cow::Owned(common_dir),
+                Kind::LinkedWorkTreeDir,
+            )
         }
-        // TODO: use ::IsDirectory as well when stabilized, but it's permission denied on windows
-        #[cfg(not(windows))]
-        Err(crate::path::from_gitdir_file::Error::Io(err)) if err.raw_os_error() == Some(21) => {
-            (Cow::Borrowed(git_dir.as_ref()), Cow::Borrowed(git_dir.as_ref()), false)
-        }
-        #[cfg(windows)]
-        Err(crate::path::from_gitdir_file::Error::Io(err)) if err.kind() == std::io::ErrorKind::PermissionDenied => {
-            (Cow::Borrowed(git_dir.as_ref()), Cow::Borrowed(git_dir.as_ref()), false)
+        Err(crate::path::from_gitdir_file::Error::Io(err)) if is_directory(&err) => {
+            let common_dir = git_dir.join("commondir");
+            match crate::path::from_plain_file(common_dir)
+                .and_then(Result::ok)
+                .and_then(|cd| {
+                    crate::path::from_plain_file(git_dir.join("gitdir"))
+                        .and_then(Result::ok)
+                        .map(|worktree_gitfile| (crate::path::without_dot_git_dir(worktree_gitfile), cd))
+                }) {
+                Some((work_dir, common_dir)) => {
+                    let common_dir = git_dir.join(common_dir);
+                    (
+                        Cow::Borrowed(git_dir),
+                        Cow::Owned(common_dir),
+                        Kind::WorkTreeGitDir { work_dir },
+                    )
+                }
+                None => (Cow::Borrowed(git_dir), Cow::Borrowed(git_dir), Kind::MaybeRepo),
+            }
         }
         Err(err) => return Err(err.into()),
     };
@@ -74,13 +105,17 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
         }
     }
 
-    Ok(if git_dir_is_linked_worktree {
-        crate::repository::Kind::WorkTree {
+    Ok(match kind {
+        Kind::LinkedWorkTreeDir => crate::repository::Kind::WorkTree {
             linked_git_dir: Some(dot_git.into_owned()),
+        },
+        Kind::WorkTreeGitDir { work_dir } => crate::repository::Kind::WorkTreeGitDir { work_dir },
+        Kind::MaybeRepo => {
+            if bare(git_dir) {
+                crate::repository::Kind::Bare
+            } else {
+                crate::repository::Kind::WorkTree { linked_git_dir: None }
+            }
         }
-    } else if bare(git_dir) {
-        crate::repository::Kind::Bare
-    } else {
-        crate::repository::Kind::WorkTree { linked_git_dir: None }
     })
 }

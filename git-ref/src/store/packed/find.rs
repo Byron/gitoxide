@@ -1,60 +1,66 @@
-use std::{borrow::Cow, convert::TryInto};
+use std::convert::TryInto;
 
 use git_object::bstr::{BStr, BString, ByteSlice};
 
-use crate::{store_impl::packed, PartialNameRef};
+use crate::{store_impl::packed, FullNameRef, PartialNameRef};
 
 /// packed-refs specific functionality
 impl packed::Buffer {
     /// Find a reference with the given `name` and return it.
+    ///
+    /// Note that it will look it up verbatim and does not deal with namespaces or special prefixes like
+    /// `main-worktree/` or `worktrees/<name>/`, as this is left to the caller.
     pub fn try_find<'a, Name, E>(&self, name: Name) -> Result<Option<packed::Reference<'_>>, Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         Error: From<E>,
     {
         let name = name.try_into()?;
+        let mut buf = BString::default();
         for inbetween in &["", "tags", "heads", "remotes"] {
-            let (name, was_absolute) = if name.0.starts_with_str(b"refs/") {
-                (Cow::Borrowed(name.0.as_ref()), true)
+            let (name, was_absolute) = if name.looks_like_full_name() {
+                let name = FullNameRef::new_unchecked(name.as_bstr());
+                let name = match transform_full_name_for_lookup(name) {
+                    None => return Ok(None),
+                    Some(name) => name,
+                };
+                (name, true)
             } else {
-                let mut full_name: BString = format!(
-                    "refs/{}",
-                    if inbetween.is_empty() {
-                        "".to_string()
-                    } else {
-                        format!("{}/", inbetween)
-                    }
-                )
-                .into();
-                full_name.extend_from_slice(name.0.as_ref());
-                (Cow::Owned(full_name), false)
+                let full_name = name.construct_full_name_ref(true, inbetween, &mut buf);
+                (full_name, false)
             };
-            match self.binary_search_by(name.as_ref()) {
-                Ok(line_start) => {
-                    return Ok(Some(
-                        packed::decode::reference::<()>(&self.as_ref()[line_start..])
-                            .map_err(|_| Error::Parse)?
-                            .1,
-                    ))
-                }
-                Err((parse_failure, _)) => {
-                    if parse_failure {
-                        return Err(Error::Parse);
-                    } else if was_absolute {
-                        return Ok(None);
-                    } else {
-                        continue;
-                    }
-                }
+            match self.try_find_full_name(name)? {
+                Some(r) => return Ok(Some(r)),
+                None if was_absolute => return Ok(None),
+                None => continue,
             }
         }
         Ok(None)
     }
 
+    pub(crate) fn try_find_full_name(&self, name: &FullNameRef) -> Result<Option<packed::Reference<'_>>, Error> {
+        match self.binary_search_by(name.as_bstr()) {
+            Ok(line_start) => {
+                return Ok(Some(
+                    packed::decode::reference::<()>(&self.as_ref()[line_start..])
+                        .map_err(|_| Error::Parse)?
+                        .1,
+                ))
+            }
+            Err((parse_failure, _)) => {
+                if parse_failure {
+                    Err(Error::Parse)
+                } else {
+                    Ok(None)
+                }
+            }
+        }
+    }
+
     /// Find a reference with the given `name` and return it.
     pub fn find<'a, Name, E>(&self, name: Name) -> Result<packed::Reference<'_>, existing::Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         Error: From<E>,
     {
         match self.try_find(name) {
@@ -147,5 +153,19 @@ pub mod existing {
                 display("The reference did not exist even though that was expected")
             }
         }
+    }
+}
+
+pub(crate) fn transform_full_name_for_lookup(name: &FullNameRef) -> Option<&FullNameRef> {
+    match name.category_and_short_name() {
+        Some((c, sn)) => {
+            use crate::Category::*;
+            Some(match c {
+                MainRef | LinkedRef { .. } => FullNameRef::new_unchecked(sn),
+                Tag | RemoteBranch | LocalBranch | Bisect | Rewritten | Note => name,
+                MainPseudoRef | PseudoRef | LinkedPseudoRef { .. } | WorktreePrivate => return None,
+            })
+        }
+        None => Some(name),
     }
 }

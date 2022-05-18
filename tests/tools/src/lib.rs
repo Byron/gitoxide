@@ -45,6 +45,11 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache<'static>>>> = Lazy
     Mutex::new(cache)
 });
 
+pub enum Creation {
+    CopyFromReadOnly,
+    ExecuteScript,
+}
+
 pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::process::ExitStatus> {
     std::process::Command::new("git")
         .current_dir(working_dir)
@@ -80,17 +85,26 @@ pub fn scripted_fixture_repo_read_only(script_name: impl AsRef<Path>) -> Result<
 }
 
 pub fn scripted_fixture_repo_writable(script_name: &str) -> Result<tempfile::TempDir> {
-    scripted_fixture_repo_writable_with_args(script_name, None)
+    scripted_fixture_repo_writable_with_args(script_name, None, Creation::CopyFromReadOnly)
 }
 
 pub fn scripted_fixture_repo_writable_with_args(
     script_name: &str,
     args: impl IntoIterator<Item = &'static str>,
+    mode: Creation,
 ) -> Result<tempfile::TempDir> {
-    let ro_dir = scripted_fixture_repo_read_only_with_args(script_name, args)?;
     let dst = tempfile::TempDir::new()?;
-    copy_recursively_into_existing_dir(&ro_dir, dst.path())?;
-    Ok(dst)
+    Ok(match mode {
+        Creation::CopyFromReadOnly => {
+            let ro_dir = scripted_fixture_repo_read_only_with_args_inner(script_name, args, None)?;
+            copy_recursively_into_existing_dir(&ro_dir, dst.path())?;
+            dst
+        }
+        Creation::ExecuteScript => {
+            scripted_fixture_repo_read_only_with_args_inner(script_name, args, dst.path().into())?;
+            dst
+        }
+    })
 }
 
 pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> std::io::Result<()> {
@@ -110,11 +124,18 @@ pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: im
     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
     Ok(())
 }
-
 /// Returns the directory at which the data is present
 pub fn scripted_fixture_repo_read_only_with_args(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = &'static str>,
+) -> Result<PathBuf> {
+    scripted_fixture_repo_read_only_with_args_inner(script_name, args, None)
+}
+
+fn scripted_fixture_repo_read_only_with_args_inner(
+    script_name: impl AsRef<Path>,
+    args: impl IntoIterator<Item = &'static str>,
+    destination_dir: Option<&Path>,
 ) -> Result<PathBuf> {
     // Assure tempfiles get removed when aborting the test.
     git_lock::tempfile::setup(
@@ -144,11 +165,14 @@ pub fn scripted_fixture_repo_read_only_with_args(
     let archive_file_path = fixture_path(
         Path::new("generated-archives").join(format!("{}.tar.xz", script_basename.to_str().expect("valid UTF-8"))),
     );
-    let script_result_directory = fixture_path(Path::new("generated-do-not-edit").join(script_basename).join(format!(
-        "{}-{}",
-        script_identity,
-        family_name()
-    )));
+    let (force_run, script_result_directory) = destination_dir.map(|d| (true, d.to_owned())).unwrap_or_else(|| {
+        let dir = fixture_path(Path::new("generated-do-not-edit").join(script_basename).join(format!(
+            "{}-{}",
+            script_identity,
+            family_name()
+        )));
+        (false, dir)
+    });
 
     let _marker = git_lock::Marker::acquire_to_hold_resource(
         script_basename,
@@ -156,7 +180,7 @@ pub fn scripted_fixture_repo_read_only_with_args(
         None,
     )?;
     let failure_marker = script_result_directory.join("_invalid_state_due_to_script_failure_");
-    if !script_result_directory.is_dir() || failure_marker.is_file() {
+    if force_run || !script_result_directory.is_dir() || failure_marker.is_file() {
         if failure_marker.is_file() {
             std::fs::remove_dir_all(&script_result_directory)?;
         }
@@ -173,7 +197,7 @@ pub fn scripted_fixture_repo_read_only_with_args(
             Err(err) => {
                 if err.kind() != std::io::ErrorKind::NotFound {
                     eprintln!("failed to extract '{}': {}", archive_file_path.display(), err);
-                } else {
+                } else if !is_excluded(&archive_file_path) {
                     eprintln!(
                         "Archive at '{}' not found, creating fixture using script '{}'",
                         archive_file_path.display(),
@@ -231,25 +255,7 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     if is_ci::cached() {
         return Ok(());
     }
-    let is_excluded_in_git = {
-        let mut lut = EXCLUDE_LUT.lock();
-        lut.as_mut()
-            .and_then(|cache| {
-                let archive = std::env::current_dir().ok()?.join(archive);
-                let relative_path = archive.strip_prefix(cache.base()).ok()?;
-                cache
-                    .at_path(
-                        relative_path,
-                        Some(false),
-                        |_oid, _buf| -> std::result::Result<_, Infallible> { unreachable!("") },
-                    )
-                    .ok()?
-                    .is_excluded()
-                    .into()
-            })
-            .unwrap_or(false)
-    };
-    if is_excluded_in_git {
+    if is_excluded(archive) {
         return Ok(());
     }
     std::fs::create_dir_all(archive.parent().expect("archive is a file"))?;
@@ -278,6 +284,25 @@ fn create_archive_if_not_on_ci(source_dir: &Path, archive: &Path, script_identit
     #[cfg(windows)]
     std::fs::remove_dir_all(meta_dir).ok(); // it really can't delete these directories for some reason (even after 10 seconds)
     res
+}
+
+fn is_excluded(archive: &Path) -> bool {
+    let mut lut = EXCLUDE_LUT.lock();
+    lut.as_mut()
+        .and_then(|cache| {
+            let archive = std::env::current_dir().ok()?.join(archive);
+            let relative_path = archive.strip_prefix(cache.base()).ok()?;
+            cache
+                .at_path(
+                    relative_path,
+                    Some(false),
+                    |_oid, _buf| -> std::result::Result<_, Infallible> { unreachable!("") },
+                )
+                .ok()?
+                .is_excluded()
+                .into()
+        })
+        .unwrap_or(false)
 }
 
 const META_DIR_NAME: &str = "__gitoxide_meta__";
@@ -376,5 +401,11 @@ fn family_name() -> &'static str {
         "windows"
     } else {
         "unix"
+    }
+}
+
+pub fn sleep_forever() -> ! {
+    loop {
+        std::thread::sleep(std::time::Duration::from_secs(u64::MAX))
     }
 }

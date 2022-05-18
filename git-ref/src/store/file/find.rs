@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{
     convert::TryInto,
     io::{self, Read},
@@ -8,11 +9,8 @@ pub use error::Error;
 
 use crate::{
     file,
-    store_impl::{
-        file::{loose, path_to_name},
-        packed,
-    },
-    FullName, PartialNameRef, Reference,
+    store_impl::{file::loose, packed},
+    BStr, BString, FullNameRef, PartialNameRef, Reference,
 };
 
 enum Transform {
@@ -34,12 +32,11 @@ impl file::Store {
     /// [git-lookup-docs]: https://github.com/git/git/blob/5d5b1473453400224ebb126bf3947e0a3276bdf5/Documentation/revisions.txt#L34-L46
     pub fn try_find<'a, Name, E>(&self, partial: Name) -> Result<Option<Reference>, Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         Error: From<E>,
     {
-        let path = partial.try_into()?;
         let packed = self.assure_packed_refs_uptodate()?;
-        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed.as_deref())
+        self.find_one_with_verified_input(partial.try_into()?, packed.as_deref())
     }
 
     /// Similar to [`file::Store::find()`] but a non-existing ref is treated as error.
@@ -49,11 +46,10 @@ impl file::Store {
     /// `HEAD` is always a loose reference.
     pub fn try_find_loose<'a, Name, E>(&self, partial: Name) -> Result<Option<loose::Reference>, Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         Error: From<E>,
     {
-        let path = partial.try_into()?;
-        self.find_one_with_verified_input(path.to_partial_path().as_ref(), None)
+        self.find_one_with_verified_input(partial.try_into()?, None)
             .map(|r| r.map(|r| r.try_into().expect("only loose refs are found without pack")))
     }
 
@@ -64,31 +60,26 @@ impl file::Store {
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         Error: From<E>,
     {
-        let path = partial.try_into()?;
-        self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed)
+        self.find_one_with_verified_input(partial.try_into()?, packed)
     }
 
     pub(crate) fn find_one_with_verified_input(
         &self,
-        relative_path: &Path,
+        partial_name: &PartialNameRef,
         packed: Option<&packed::Buffer>,
     ) -> Result<Option<Reference>, Error> {
-        let is_all_uppercase = relative_path
-            .to_string_lossy()
-            .as_ref()
-            .chars()
-            .all(|c| c.is_ascii_uppercase());
-        if relative_path.components().count() == 1 && is_all_uppercase {
-            if let Some(r) = self.find_inner("", relative_path, None, Transform::None)? {
+        let mut buf = BString::default();
+        if partial_name.looks_like_full_name() {
+            if let Some(r) = self.find_inner("", partial_name, None, Transform::None, &mut buf)? {
                 return Ok(Some(r));
             }
         }
 
         for inbetween in &["", "tags", "heads", "remotes"] {
-            match self.find_inner(*inbetween, relative_path, packed, Transform::EnforceRefsPrefix) {
+            match self.find_inner(*inbetween, partial_name, packed, Transform::EnforceRefsPrefix, &mut buf) {
                 Ok(Some(r)) => return Ok(Some(r)),
                 Ok(None) => {
                     continue;
@@ -98,48 +89,45 @@ impl file::Store {
         }
         self.find_inner(
             "remotes",
-            &relative_path.join("HEAD"),
+            partial_name
+                .to_owned()
+                .join("HEAD")
+                .expect("HEAD is valid name")
+                .as_ref(),
             None,
             Transform::EnforceRefsPrefix,
+            &mut buf,
         )
     }
 
     fn find_inner(
         &self,
         inbetween: &str,
-        relative_path: &Path,
+        partial_name: &PartialNameRef,
         packed: Option<&packed::Buffer>,
         transform: Transform,
+        path_buf: &mut BString,
     ) -> Result<Option<Reference>, Error> {
-        let (base, is_definitely_full_path) = match transform {
-            Transform::EnforceRefsPrefix => (
-                if relative_path.starts_with("refs") {
-                    PathBuf::new()
-                } else {
-                    PathBuf::from("refs")
-                },
-                true,
-            ),
-            Transform::None => (PathBuf::new(), false),
-        };
-        let relative_path = base.join(inbetween).join(relative_path);
+        let add_refs_prefix = matches!(transform, Transform::EnforceRefsPrefix);
+        let full_name = partial_name.construct_full_name_ref(add_refs_prefix, inbetween, path_buf);
+        let content_buf = self.ref_contents(full_name).map_err(|err| Error::ReadFileContents {
+            err,
+            path: self.reference_path(full_name),
+        })?;
 
-        let path_to_open = git_path::to_native_path_on_windows(git_path::into_bstr(&relative_path));
-        let contents = match self
-            .ref_contents(&path_to_open)
-            .map_err(|err| Error::ReadFileContents {
-                err,
-                path: path_to_open.into_owned(),
-            })? {
+        match content_buf {
             None => {
-                if is_definitely_full_path {
-                    if let Some(packed) = packed {
-                        let full_name = path_to_name(match &self.namespace {
-                            None => relative_path,
-                            Some(namespace) => namespace.to_owned().into_namespaced_prefix(relative_path),
-                        });
-                        let full_name = PartialNameRef(full_name.into_owned().into());
-                        if let Some(packed_ref) = packed.try_find(full_name)? {
+                if let Some(packed) = packed {
+                    if let Some(full_name) = packed::find::transform_full_name_for_lookup(full_name) {
+                        let full_name_backing;
+                        let full_name = match &self.namespace {
+                            Some(namespace) => {
+                                full_name_backing = namespace.to_owned().into_namespaced_name(full_name);
+                                full_name_backing.as_ref()
+                            }
+                            None => full_name,
+                        };
+                        if let Some(packed_ref) = packed.try_find_full_name(full_name)? {
                             let mut res: Reference = packed_ref.into();
                             if let Some(namespace) = &self.namespace {
                                 res.strip_namespace(namespace);
@@ -148,45 +136,93 @@ impl file::Store {
                         };
                     }
                 }
-                return Ok(None);
+                Ok(None)
             }
-            Some(c) => c,
-        };
-        Ok(Some({
-            let full_name = path_to_name(&relative_path);
-            loose::Reference::try_from_path(FullName(full_name.into_owned()), &contents)
-                .map(Into::into)
-                .map(|mut r: Reference| {
-                    if let Some(namespace) = &self.namespace {
-                        r.strip_namespace(namespace);
-                    }
-                    r
-                })
-                .map_err(|err| Error::ReferenceCreation { err, relative_path })?
-        }))
+            Some(content) => Ok(Some(
+                loose::Reference::try_from_path(full_name.to_owned(), &content)
+                    .map(Into::into)
+                    .map(|mut r: Reference| {
+                        if let Some(namespace) = &self.namespace {
+                            r.strip_namespace(namespace);
+                        }
+                        r
+                    })
+                    .map_err(|err| Error::ReferenceCreation {
+                        err,
+                        relative_path: full_name.to_path().to_owned(),
+                    })?,
+            )),
+        }
     }
 }
 
 impl file::Store {
+    pub(crate) fn to_base_dir_and_relative_name<'a>(
+        &self,
+        name: &'a FullNameRef,
+        is_reflog: bool,
+    ) -> (Cow<'_, Path>, &'a FullNameRef) {
+        let commondir = self.common_dir_resolved();
+        let linked_git_dir =
+            |worktree_name: &BStr| commondir.join("worktrees").join(git_path::from_bstr(worktree_name));
+        name.category_and_short_name()
+            .and_then(|(c, sn)| {
+                use crate::Category::*;
+                let sn = FullNameRef::new_unchecked(sn);
+                Some(match c {
+                    LinkedPseudoRef { name: worktree_name } => is_reflog
+                        .then(|| (linked_git_dir(worktree_name).into(), sn))
+                        .unwrap_or((commondir.into(), name)),
+                    Tag | LocalBranch | RemoteBranch | Note => (commondir.into(), name),
+                    MainRef | MainPseudoRef => (commondir.into(), sn),
+                    LinkedRef { name: worktree_name } => sn
+                        .category()
+                        .map_or(false, |cat| cat.is_worktree_private())
+                        .then(|| {
+                            if is_reflog {
+                                (linked_git_dir(worktree_name).into(), sn)
+                            } else {
+                                (commondir.into(), name)
+                            }
+                        })
+                        .unwrap_or((commondir.into(), sn)),
+                    PseudoRef | Bisect | Rewritten | WorktreePrivate => return None,
+                })
+            })
+            .unwrap_or((self.git_dir.as_path().into(), name))
+    }
+
     /// Implements the logic required to transform a fully qualified refname into a filesystem path
-    pub(crate) fn reference_path(&self, name: &Path) -> PathBuf {
-        match &self.namespace {
-            None => self.base.join(name),
-            Some(namespace) => self.base.join(namespace.to_path()).join(name),
-        }
+    pub(crate) fn reference_path_with_base<'b>(&self, name: &'b FullNameRef) -> (Cow<'_, Path>, Cow<'b, Path>) {
+        let (base, name) = self.to_base_dir_and_relative_name(name, false);
+        (
+            base,
+            match &self.namespace {
+                None => git_path::to_native_path_on_windows(name.as_bstr()),
+                Some(namespace) => {
+                    git_path::to_native_path_on_windows(namespace.to_owned().into_namespaced_name(name).into_inner())
+                }
+            },
+        )
+    }
+
+    /// Implements the logic required to transform a fully qualified refname into a filesystem path
+    pub(crate) fn reference_path(&self, name: &FullNameRef) -> PathBuf {
+        let (base, relative_path) = self.reference_path_with_base(name);
+        base.join(relative_path)
     }
 
     /// Read the file contents with a verified full reference path and return it in the given vector if possible.
-    pub(crate) fn ref_contents(&self, relative_path: &Path) -> std::io::Result<Option<Vec<u8>>> {
-        let mut buf = Vec::new();
-        let ref_path = self.reference_path(relative_path);
+    pub(crate) fn ref_contents(&self, name: &FullNameRef) -> io::Result<Option<Vec<u8>>> {
+        let ref_path = self.reference_path(name);
 
         match std::fs::File::open(&ref_path) {
             Ok(mut file) => {
+                let mut buf = Vec::with_capacity(128);
                 if let Err(err) = file.read_to_end(&mut buf) {
                     return if ref_path.is_dir() { Ok(None) } else { Err(err) };
                 }
-                Ok(Some(buf))
+                Ok(buf.into())
             }
             Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
             #[cfg(target_os = "windows")]
@@ -215,7 +251,7 @@ pub mod existing {
         /// Similar to [`file::Store::try_find()`] but a non-existing ref is treated as error.
         pub fn find<'a, Name, E>(&self, partial: Name) -> Result<Reference, Error>
         where
-            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            Name: TryInto<&'a PartialNameRef, Error = E>,
             crate::name::Error: From<E>,
         {
             let packed = self.assure_packed_refs_uptodate().map_err(find::Error::PackedOpen)?;
@@ -229,7 +265,7 @@ pub mod existing {
             packed: Option<&packed::Buffer>,
         ) -> Result<Reference, Error>
         where
-            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            Name: TryInto<&'a PartialNameRef, Error = E>,
             crate::name::Error: From<E>,
         {
             self.find_existing_inner(partial, packed)
@@ -238,7 +274,7 @@ pub mod existing {
         /// Similar to [`file::Store::find()`] won't handle packed-refs.
         pub fn find_loose<'a, Name, E>(&self, partial: Name) -> Result<loose::Reference, Error>
         where
-            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            Name: TryInto<&'a PartialNameRef, Error = E>,
             crate::name::Error: From<E>,
         {
             self.find_existing_inner(partial, None)
@@ -252,13 +288,13 @@ pub mod existing {
             packed: Option<&packed::Buffer>,
         ) -> Result<Reference, Error>
         where
-            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            Name: TryInto<&'a PartialNameRef, Error = E>,
             crate::name::Error: From<E>,
         {
             let path = partial
                 .try_into()
                 .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
-            match self.find_one_with_verified_input(path.to_partial_path().as_ref(), packed) {
+            match self.find_one_with_verified_input(path, packed) {
                 Ok(Some(r)) => Ok(r),
                 Ok(None) => Err(Error::NotFound(path.to_partial_path().to_owned())),
                 Err(err) => Err(err.into()),

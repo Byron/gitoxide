@@ -23,6 +23,7 @@ pub use error::Error;
 
 use crate::file;
 
+#[allow(dead_code)]
 impl crate::Store {
     /// Create a new store at the given location, typically the `.git/` directory.
     ///

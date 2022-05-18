@@ -59,6 +59,6 @@ impl crate::Repository {
     ///
     /// Synonymous to [`path()`][crate::Repository::path()].
     pub fn git_dir(&self) -> &std::path::Path {
-        self.refs.base()
+        self.refs.git_dir()
     }
 }

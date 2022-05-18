@@ -58,3 +58,11 @@ pub fn from_gitdir_file(path: impl AsRef<std::path::Path>) -> Result<PathBuf, fr
     }
     Ok(gitdir)
 }
+
+/// Conditionally pop a trailing `.git` dir if present.
+pub fn without_dot_git_dir(mut path: PathBuf) -> PathBuf {
+    if path.file_name().and_then(|n| n.to_str()) == Some(".git") {
+        path.pop();
+    }
+    path
+}

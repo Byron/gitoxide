@@ -1,8 +1,7 @@
 mod existing {
-    use std::convert::{TryFrom, TryInto};
-
-    use git_ref::PartialNameRef;
+    use git_ref::{PartialName, PartialNameRef};
     use git_testtools::hex_to_id;
+    use std::convert::{TryFrom, TryInto};
 
     use crate::file::store_at;
 
@@ -16,7 +15,7 @@ mod existing {
         Ok(())
     }
 
-    /// Gain an understanding how uses might want to call this function, and see what happens
+    // TODO: figure this out
     #[test]
     fn possible_inputs() -> crate::Result {
         let store = crate::file::store()?;
@@ -24,11 +23,11 @@ mod existing {
         store.find_loose(&String::from("dt1"))?; // Owned Strings don't have an impl for PartialName
 
         struct CustomType(String);
-        impl<'a> TryFrom<&'a CustomType> for PartialNameRef<'a> {
+        impl<'a> TryFrom<&'a CustomType> for &'a PartialNameRef {
             type Error = git_ref::name::Error;
 
             fn try_from(value: &'a CustomType) -> Result<Self, Self::Error> {
-                PartialNameRef::try_from(&value.0)
+                value.0.as_str().try_into()
             }
         }
         store.find_loose(&CustomType("dt1".into()))?;
@@ -42,10 +41,10 @@ mod existing {
             fn to_partial_name(&self) -> String {
                 format!("{}/{}", self.remote, self.branch)
             }
-            fn to_partial_name_from_string(&self) -> PartialNameRef<'static> {
+            fn to_partial_name_from_string(&self) -> PartialName {
                 self.to_partial_name().try_into().expect("cannot fail")
             }
-            fn to_partial_name_from_bstring(&self) -> PartialNameRef<'static> {
+            fn to_partial_name_from_bstring(&self) -> PartialName {
                 git_object::bstr::BString::from(self.to_partial_name())
                     .try_into()
                     .expect("cannot fail")
@@ -57,11 +56,11 @@ mod existing {
             }
         }
 
-        impl<'a> TryFrom<&'a CustomName> for PartialNameRef<'static> {
+        impl<'a> TryFrom<&'a CustomName> for PartialName {
             type Error = git_ref::name::Error;
 
             fn try_from(value: &'a CustomName) -> Result<Self, Self::Error> {
-                PartialNameRef::try_from(value.to_partial_name())
+                PartialName::try_from(value.to_partial_name())
             }
         }
 
@@ -70,15 +69,21 @@ mod existing {
             branch: "main",
         };
         store.find_loose(&name.to_partial_name())?;
-        store.find_loose(name.to_partial_name())?;
-        store.find_loose(name.to_partial_name_from_string())?;
-        store.find_loose(name.to_partial_name_from_bstring())?;
-        store.find_loose(name.to_full_name().to_partial())?;
-        store.find_loose(&name)?;
-        store.find_loose(PartialNameRef::try_from(name.remote)?.join(name.branch)?)?;
-        store.find_loose(PartialNameRef::try_from("origin")?.join(String::from("main"))?)?;
-        store.find_loose(PartialNameRef::try_from(String::from("origin"))?.join(String::from("main"))?)?;
-        store.find_loose(PartialNameRef::try_from("origin")?.join(&String::from("main"))?)?;
+        // TODO: this effectively needs a `Cow<'_, PartialNameRef>`, but we are not allowed to implement conversions for it.
+        //       After having been there, I don't want to have a `PartialNameCow(Cow<'_, PartialNameRef)` anymore, nor
+        //       copies of `TryFrom/TryInto` traits in our crate.
+        //       Make it work once we can implement standard traits for Cow<OurType>.
+        // store.find_loose(&name)?;
+        // store.find_loose(name.to_partial_name())?;
+        store.find_loose(&name.to_partial_name_from_string())?;
+        store.find_loose(&name.to_partial_name_from_bstring())?;
+        store.find_loose(&name.to_full_name())?;
+        store.find_loose(name.to_full_name().as_ref())?;
+        store.find_loose(name.to_full_name().as_ref().as_partial_name())?;
+        store.find_loose(&PartialName::try_from(name.remote)?.join(name.branch)?)?;
+        store.find_loose(&PartialName::try_from("origin")?.join("main")?)?;
+        store.find_loose(&PartialName::try_from("origin")?.join(String::from("main"))?)?;
+        store.find_loose(&PartialName::try_from("origin")?.join("main")?)?;
 
         Ok(())
     }
