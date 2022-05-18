@@ -17,7 +17,6 @@ use crate::{
 /// All errors will be returned verbatim, while packed errors are depleted first if loose refs also error.
 pub struct LooseThenPacked<'p, 's> {
     git_dir: &'s Path,
-    #[allow(dead_code)]
     common_dir: Option<&'s Path>,
     namespace: Option<&'s Namespace>,
     iter_packed: Option<Peekable<packed::Iter<'p>>>,
@@ -73,7 +72,15 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
         loose::Reference::try_from_path(name, &self.buf)
             .map_err(|err| Error::ReferenceCreation {
                 err,
-                relative_path: refpath.strip_prefix(&self.git_dir).expect("base contains path").into(),
+                relative_path: refpath
+                    .strip_prefix(&self.git_dir)
+                    .ok()
+                    .or_else(|| {
+                        self.common_dir
+                            .and_then(|common_dir| refpath.strip_prefix(common_dir).ok())
+                    })
+                    .expect("one of our bases contains the path")
+                    .into(),
             })
             .map(Into::into)
             .map(|r| self.strip_namespace(r))
