@@ -61,9 +61,9 @@ fn girdir_and_onbranch() {
   path = {}
 [includeIf "gitdir:a/.git"]
   path = {}
-[includeIf "gitdir:/e/x/"]
-  path = {}
 [includeIf "gitdir:{}"]
+  path = {}
+[includeIf "gitdir:/e/x/"]
   path = {}"#,
             escape_backslashes(&branch_path),
             escape_backslashes(&casei_path),
@@ -74,9 +74,9 @@ fn girdir_and_onbranch() {
             escape_backslashes(&home_dot_git_path),
             escape_backslashes(&home_trailing_slash_path),
             escape_backslashes(&relative_dot_git_path2),
-            escape_backslashes(&absolute_path),
             &tmp_dir_with_slash,
             escape_backslashes(&tmp_path),
+            escape_backslashes(&absolute_path),
         ),
     )
     .unwrap();
