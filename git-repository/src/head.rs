@@ -1,7 +1,8 @@
 //!
+use std::convert::TryInto;
+
 use git_hash::ObjectId;
 use git_ref::FullNameRef;
-use std::convert::TryInto;
 
 use crate::{
     ext::{ObjectIdExt, ReferenceExt},

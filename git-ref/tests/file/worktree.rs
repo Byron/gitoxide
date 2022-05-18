@@ -1,9 +1,8 @@
+use std::{cmp::Ordering, path::PathBuf};
+
 use git_odb::Find;
-use git_ref::file::ReferenceExt;
-use git_ref::Reference;
+use git_ref::{file::ReferenceExt, Reference};
 use git_testtools::Creation;
-use std::cmp::Ordering;
-use std::path::PathBuf;
 
 fn dir(packed: bool, writable: bool) -> crate::Result<(PathBuf, Option<tempfile::TempDir>)> {
     let name = "make_worktree_repo.sh";
@@ -192,14 +191,19 @@ mod read_only {
 }
 
 mod writable {
-    use crate::file::transaction::prepare_and_commit::committer;
-    use crate::file::worktree::{main_store, worktree_store, Mode};
-    use git_ref::file::transaction::PackedRefs;
-    use git_ref::file::Store;
-    use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit};
-    use git_ref::{FullName, FullNameRef, Target};
-    use git_testtools::hex_to_id;
     use std::convert::TryInto;
+
+    use git_ref::{
+        file::{transaction::PackedRefs, Store},
+        transaction::{Change, LogChange, PreviousValue, RefEdit},
+        FullName, FullNameRef, Target,
+    };
+    use git_testtools::hex_to_id;
+
+    use crate::file::{
+        transaction::prepare_and_commit::committer,
+        worktree::{main_store, worktree_store, Mode},
+    };
 
     fn change_with_id(id: git_hash::ObjectId) -> Change {
         Change::Update {

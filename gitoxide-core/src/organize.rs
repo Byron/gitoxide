@@ -3,9 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::pack::receive::git;
 use git_config::file::GitConfig;
 use git_repository::{objs::bstr::ByteSlice, progress, Progress};
+
+use crate::pack::receive::git;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Mode {

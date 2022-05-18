@@ -43,10 +43,10 @@ impl Default for Options {
 pub(crate) mod function {
     use std::path::{Path, PathBuf};
 
-    use crate::is_git;
     use git_sec::Trust;
 
     use super::{Error, Options};
+    use crate::is_git;
 
     /// Find the location of the git repository directly in `directory` or in any of its parent directories and provide
     /// an associated Trust level by looking at the git directory's ownership, and control discovery using `options`.

@@ -1,9 +1,9 @@
-use std::borrow::Cow;
-use std::convert::TryInto;
+use std::{borrow::Cow, convert::TryInto};
 
-use crate::bstr::BStr;
 use git_ref::FullNameRef;
 use git_validate::reference::name::Error as ValidateNameError;
+
+use crate::bstr::BStr;
 
 impl crate::Repository {
     /// Returns a reference to the remote associated with the given `short_branch_name`, typically `main` instead of `refs/heads/main`.

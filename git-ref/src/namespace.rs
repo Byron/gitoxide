@@ -1,5 +1,7 @@
-use std::convert::TryInto;
-use std::path::{Path, PathBuf};
+use std::{
+    convert::TryInto,
+    path::{Path, PathBuf},
+};
 
 use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 

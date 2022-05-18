@@ -1,8 +1,8 @@
-use std::convert::Infallible;
-use std::{convert, ffi::OsStr, path::Path};
+use std::{convert, convert::Infallible, ffi::OsStr, path::Path};
+
+use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
 use crate::{Category, FullName, FullNameRef, PartialName, PartialNameRef};
-use git_object::bstr::{BStr, BString, ByteSlice, ByteVec};
 
 /// The error used in the [`PartialNameRef`][super::PartialNameRef]::try_from(…) implementations.
 pub type Error = git_validate::reference::name::Error;
@@ -139,9 +139,9 @@ impl<'a> convert::TryFrom<&'a OsStr> for &'a PartialNameRef {
 }
 
 mod impls {
-    use crate::bstr::ByteSlice;
-    use crate::{PartialName, PartialNameRef};
     use std::borrow::Borrow;
+
+    use crate::{bstr::ByteSlice, PartialName, PartialNameRef};
 
     impl Borrow<PartialNameRef> for PartialName {
         #[inline]

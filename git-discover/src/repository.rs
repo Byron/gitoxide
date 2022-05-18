@@ -19,9 +19,12 @@ pub enum Path {
 }
 
 mod path {
-    use crate::path::without_dot_git_dir;
-    use crate::repository::{Kind, Path};
     use std::path::PathBuf;
+
+    use crate::{
+        path::without_dot_git_dir,
+        repository::{Kind, Path},
+    };
 
     impl AsRef<std::path::Path> for Path {
         fn as_ref(&self) -> &std::path::Path {

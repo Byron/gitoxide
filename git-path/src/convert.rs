@@ -1,7 +1,7 @@
-use std::iter::FromIterator;
 use std::{
     borrow::Cow,
     ffi::OsStr,
+    iter::FromIterator,
     path::{Path, PathBuf},
 };
 

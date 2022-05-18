@@ -52,8 +52,7 @@ mod cache {
     };
 
     use super::{Cache, Error};
-    use crate::bstr::ByteSlice;
-    use crate::permission;
+    use crate::{bstr::ByteSlice, permission};
 
     impl Cache {
         pub fn new(

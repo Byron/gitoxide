@@ -1,8 +1,6 @@
-use std::convert::TryInto;
+use std::{borrow::Cow, convert::TryInto};
 
 use git_ref::{Category, FullNameRef, PartialNameRef};
-
-use std::borrow::Cow;
 
 #[test]
 fn cow() {

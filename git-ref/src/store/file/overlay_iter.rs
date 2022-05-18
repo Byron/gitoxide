@@ -1,18 +1,18 @@
-use std::borrow::Cow;
 use std::{
+    borrow::Cow,
     cmp::Ordering,
     io::Read,
     iter::Peekable,
     path::{Path, PathBuf},
 };
 
-use crate::file::loose::iter::SortedLoosePaths;
+use git_features::threading::OwnShared;
+
 use crate::{
-    file::{loose, path_to_name},
+    file::{loose, loose::iter::SortedLoosePaths, path_to_name},
     store_impl::{file, packed},
     BString, FullName, Namespace, Reference,
 };
-use git_features::threading::OwnShared;
 
 /// An iterator stepping through sorted input of loose references and packed references, preferring loose refs over otherwise
 /// equivalent packed references.

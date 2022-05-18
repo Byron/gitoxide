@@ -1,5 +1,5 @@
-use std::borrow::Cow;
 use std::{
+    borrow::Cow,
     convert::TryInto,
     io::{self, Read},
     path::{Path, PathBuf},

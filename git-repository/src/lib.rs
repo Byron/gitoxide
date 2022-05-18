@@ -380,9 +380,9 @@ pub mod state {
 pub mod discover {
     use std::path::Path;
 
-    use crate::ThreadSafeRepository;
-
     pub use git_discover::*;
+
+    use crate::ThreadSafeRepository;
 
     /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]

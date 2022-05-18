@@ -85,8 +85,8 @@ impl file::Store {
 
 ///
 pub mod create_or_update {
-    use std::borrow::Cow;
     use std::{
+        borrow::Cow,
         io::Write,
         path::{Path, PathBuf},
     };
@@ -223,8 +223,9 @@ pub mod create_or_update {
             }
         }
     }
-    use crate::FullNameRef;
     pub use error::Error;
+
+    use crate::FullNameRef;
 }
 
 mod error {

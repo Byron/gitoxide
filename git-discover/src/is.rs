@@ -1,5 +1,4 @@
-use std::borrow::Cow;
-use std::{ffi::OsStr, path::Path};
+use std::{borrow::Cow, ffi::OsStr, path::Path};
 
 /// Returns true if the given `git_dir` seems to be a bare repository.
 ///

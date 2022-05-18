@@ -3,8 +3,7 @@ use std::path::{Path, PathBuf};
 use git_features::fs::walkdir::DirEntryIter;
 use git_object::bstr::ByteSlice;
 
-use crate::file::iter::LooseThenPacked;
-use crate::{store_impl::file, BString, FullName};
+use crate::{file::iter::LooseThenPacked, store_impl::file, BString, FullName};
 
 /// An iterator over all valid loose reference paths as seen from a particular base directory.
 pub(in crate::store_impl::file) struct SortedLoosePaths {

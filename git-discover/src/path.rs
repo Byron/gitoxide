@@ -1,5 +1,4 @@
-use std::io::Read;
-use std::path::PathBuf;
+use std::{io::Read, path::PathBuf};
 
 ///
 pub mod from_gitdir_file {

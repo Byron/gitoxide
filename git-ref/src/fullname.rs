@@ -1,10 +1,8 @@
-use std::borrow::Borrow;
-use std::{convert::TryFrom, path::Path};
+use std::{borrow::Borrow, convert::TryFrom, path::Path};
 
 use git_object::bstr::{BStr, BString, ByteSlice};
 
-use crate::name::is_pseudo_ref;
-use crate::{bstr::ByteVec, Category, FullName, FullNameRef, Namespace, PartialNameRef};
+use crate::{bstr::ByteVec, name::is_pseudo_ref, Category, FullName, FullNameRef, Namespace, PartialNameRef};
 
 impl TryFrom<&str> for FullName {
     type Error = git_validate::refname::Error;

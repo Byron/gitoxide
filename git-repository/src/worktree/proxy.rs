@@ -1,7 +1,10 @@
-use crate::bstr::{BStr, BString, ByteSlice};
-use crate::worktree::Proxy;
-use crate::{Repository, ThreadSafeRepository};
 use std::path::{Path, PathBuf};
+
+use crate::{
+    bstr::{BStr, BString, ByteSlice},
+    worktree::Proxy,
+    Repository, ThreadSafeRepository,
+};
 
 #[allow(missing_docs)]
 pub mod into_repo {

@@ -1,5 +1,6 @@
-use bstr::ByteSlice;
 use std::path::PathBuf;
+
+use bstr::ByteSlice;
 
 ///
 pub mod gitdir {
