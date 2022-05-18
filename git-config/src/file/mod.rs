@@ -1,6 +1,6 @@
 //! This module provides a high level wrapper around a single `git-config` file.
 
-mod git_config;
+pub mod git_config;
 mod resolved;
 mod section;
 mod value;
