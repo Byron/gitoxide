@@ -1,9 +1,22 @@
 use crate::{MagicSignature, Pattern};
 use bstr::BString;
+use quick_error::quick_error;
 use std::iter::{FromIterator, Peekable};
 
+quick_error! {
+    #[derive(Debug, Eq, PartialEq)]
+    pub enum Error {
+        InvalidSignature { found_signature: BString } {
+            display("Found {}, which is not a valid signature", found_signature)
+        }
+        WhitespaceInSignature {
+            display("Whitespace in magic keywords are not allowed")
+        }
+    }
+}
+
 impl Pattern {
-    pub fn from_bytes(input: &[u8]) -> Self {
+    pub fn from_bytes(input: &[u8]) -> Result<Self, Error> {
         Parser::new(input).parse()
     }
 }
@@ -21,14 +34,14 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse(mut self) -> Pattern {
-        let signature = self.parse_magic_signature();
+    fn parse(mut self) -> Result<Pattern, Error> {
+        let signature = self.parse_magic_signature()?;
         let path = self.parse_path();
 
-        Pattern { path, signature }
+        Ok(Pattern { path, signature })
     }
 
-    fn parse_magic_signature(&mut self) -> Option<MagicSignature> {
+    fn parse_magic_signature(&mut self) -> Result<Option<MagicSignature>, Error> {
         match self.input.peek() {
             Some(b':') => {
                 self.input.next();
@@ -52,19 +65,19 @@ impl<'a> Parser<'a> {
                         }
                         b'(' => {
                             self.input.next();
-                            signature |= self.parse_magic_keywords();
+                            signature |= self.parse_magic_keywords()?;
                         }
                         _ => break,
                     }
                 }
 
-                (!signature.is_empty()).then(|| signature)
+                (!signature.is_empty()).then(|| signature).map(Result::Ok).transpose()
             }
-            _ => None,
+            _ => Ok(None),
         }
     }
 
-    fn parse_magic_keywords(&mut self) -> MagicSignature {
+    fn parse_magic_keywords(&mut self) -> Result<MagicSignature, Error> {
         let mut buf = Vec::new();
         let mut keywords = Vec::new();
 
@@ -82,8 +95,7 @@ impl<'a> Parser<'a> {
                     }
                 }
                 b' ' => {
-                    // TODO: make this non panicking
-                    panic!("space in magic keywords not allowed");
+                    return Err(Error::WhitespaceInSignature);
                 }
                 _ => {
                     buf.push(*b);
@@ -101,12 +113,15 @@ impl<'a> Parser<'a> {
                 b"glob" => MagicSignature::GLOB,
                 b"attr" => MagicSignature::ATTR,
                 b"exclude" => MagicSignature::EXCLUDE,
-                // TODO: make this an error
-                _ => panic!("Invalid signature"),
+                s => {
+                    return Err(Error::InvalidSignature {
+                        found_signature: BString::from(s),
+                    })
+                }
             }
         }
 
-        signature
+        Ok(signature)
     }
 
     fn parse_path(self) -> BString {

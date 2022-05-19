@@ -16,3 +16,4 @@ doctest = false
 bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 bitflags = "1.3.2"
 git-glob = { version = "^0.2.0", path = "../git-glob" }
+quick-error = "2.0.0"

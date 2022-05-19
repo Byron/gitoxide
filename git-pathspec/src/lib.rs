@@ -3,7 +3,7 @@
 use bitflags::bitflags;
 use bstr::BString;
 
-mod parse;
+pub mod parse;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Pattern {
@@ -22,6 +22,6 @@ bitflags! {
     }
 }
 
-pub fn parse(input: &[u8]) -> Pattern {
+pub fn parse(input: &[u8]) -> Result<Pattern, parse::Error> {
     Pattern::from_bytes(input)
 }

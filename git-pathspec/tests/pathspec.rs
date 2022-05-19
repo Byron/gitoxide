@@ -1,3 +1,4 @@
+use bstr::BString;
 use git_pathspec::{MagicSignature, Pattern};
 
 #[test]
@@ -40,8 +41,29 @@ fn can_parse() {
     ];
 
     for (input, expected) in inputs {
-        let pattern = git_pathspec::parse(input.as_bytes());
+        let pattern = git_pathspec::parse(input.as_bytes()).expect("parsing should not fail");
         assert_eq!(pattern, expected, "while checking input: \"{}\"", input);
+    }
+}
+
+#[test]
+fn should_fail_on_whitespace_or_invalid_keywords() {
+    use git_pathspec::parse::Error;
+    let inputs = vec![
+        (":(top, exclude)some/path", Error::WhitespaceInSignature),
+        (":( )some/path", Error::WhitespaceInSignature),
+        (
+            ":(tp)some/path",
+            Error::InvalidSignature {
+                found_signature: BString::from("tp"),
+            },
+        ),
+    ];
+
+    for (input, expected) in inputs {
+        let output = git_pathspec::parse(input.as_bytes());
+        assert!(output.is_err());
+        assert_eq!(output.unwrap_err(), expected);
     }
 }
 
@@ -50,11 +72,4 @@ fn pat(path: &str, signature: Option<MagicSignature>) -> Pattern {
         path: path.into(),
         signature,
     }
-}
-
-#[test]
-#[ignore]
-fn can_match() {
-    // let buf = b"git-pathspec/tests/pathspec.rs";
-    // git_pathspec::matches(buf);
 }
