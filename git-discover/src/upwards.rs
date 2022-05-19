@@ -86,18 +86,18 @@ pub(crate) mod function {
 
         let max_height = if !ceiling_dirs.is_empty() {
             // Ceiling directory discovery requires us to canonicalize the path
-            is_canonicalized = true;
-            cursor = cursor
-                .canonicalize()
-                .map_err(|_| Error::InaccessibleDirectory { path: cursor })?;
-            Some(find_ceiling_height(&dir, ceiling_dirs))
+            // TODO: this works nonetheless. Is a test missing? Or does 'absolutize()' do the job already?
+            // is_canonicalized = true;
+            // cursor = cursor
+            //     .canonicalize()
+            //     .map_err(|_| Error::InaccessibleDirectory { path: cursor })?;
+            find_ceiling_height(&cursor, ceiling_dirs)
         } else {
             None
         };
 
         let mut current_height = 0;
         'outer: loop {
-            // If we've reached the ceiling, stop looking.
             if max_height.map_or(false, |x| current_height > x) {
                 return Err(Error::NoGitRepositoryWithinCeiling {
                     path: dir.into_owned(),
@@ -156,6 +156,17 @@ pub(crate) mod function {
     }
 
     fn shorten_path_with_cwd(cursor: PathBuf, cwd: Option<PathBuf>) -> PathBuf {
+        fn comp_len(c: std::path::Component<'_>) -> usize {
+            use std::path::Component::*;
+            match c {
+                Prefix(p) => p.as_os_str().len(),
+                CurDir => 1,
+                ParentDir => 2,
+                Normal(p) => p.len(),
+                RootDir => 1,
+            }
+        }
+
         if let Some(cwd) = cwd {
             debug_assert_eq!(cursor.file_name().and_then(|f| f.to_str()), Some(".git"));
             let parent = cursor.parent().expect(".git appended");
@@ -177,21 +188,10 @@ pub(crate) mod function {
         }
     }
 
-    fn comp_len(c: std::path::Component<'_>) -> usize {
-        use std::path::Component::*;
-        match c {
-            Prefix(p) => p.as_os_str().len(),
-            CurDir => 1,
-            ParentDir => 2,
-            Normal(p) => p.len(),
-            RootDir => 1,
-        }
-    }
-
     /// Find the number of components parenting the `base_path` before the first directory in `ceiling_dirs`.
     /// `base_path` needs to be an absolute path. Non-absolute `ceiling_dirs` are discarded if `base_path` is absolute.
     // TODO: Handle this in a verbatim-path-prefix-neutral way on Windows (introduced by `path::canonicalize`).
-    fn find_ceiling_height(base_path: &Path, ceiling_dirs: &[PathBuf]) -> usize {
+    fn find_ceiling_height(base_path: &Path, ceiling_dirs: &[PathBuf]) -> Option<usize> {
         ceiling_dirs
             .iter()
             .filter_map(|ceiling_dir| {
@@ -201,7 +201,6 @@ pub(crate) mod function {
                     .map(|path_relative_to_ceiling| path_relative_to_ceiling.components().count())
             })
             .min()
-            .unwrap_or_else(|| base_path.components().count())
     }
 
     /// Find the location of the git repository directly in `directory` or in any of its parent directories, and provide
