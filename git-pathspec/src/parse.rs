@@ -9,9 +9,9 @@ quick_error! {
         InvalidSignature { found_signature: BString } {
             display("Found {}, which is not a valid signature", found_signature)
         }
-        WhitespaceInSignature {
-            display("Whitespace in magic keywords are not allowed")
-        }
+        // WhitespaceInSignature {
+        //     display("Whitespace in magic keywords are not allowed")
+        // }
     }
 }
 
@@ -94,9 +94,9 @@ impl<'a> Parser<'a> {
                         keywords.push(std::mem::take(&mut buf));
                     }
                 }
-                b' ' => {
-                    return Err(Error::WhitespaceInSignature);
-                }
+                // b' ' => {
+                //     return Err(Error::WhitespaceInSignature);
+                // }
                 _ => {
                     buf.push(*b);
                 }

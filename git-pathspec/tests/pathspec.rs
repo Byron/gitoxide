@@ -50,8 +50,18 @@ fn can_parse() {
 fn should_fail_on_whitespace_or_invalid_keywords() {
     use git_pathspec::parse::Error;
     let inputs = vec![
-        (":(top, exclude)some/path", Error::WhitespaceInSignature),
-        (":( )some/path", Error::WhitespaceInSignature),
+        (
+            ":(top, exclude)some/path",
+            Error::InvalidSignature {
+                found_signature: BString::from(" exclude"),
+            },
+        ),
+        (
+            ":( )some/path",
+            Error::InvalidSignature {
+                found_signature: BString::from(" "),
+            },
+        ),
         (
             ":(tp)some/path",
             Error::InvalidSignature {
