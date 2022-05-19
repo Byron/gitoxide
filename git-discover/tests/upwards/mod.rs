@@ -196,78 +196,84 @@ fn from_existing_worktree() -> crate::Result {
 
 #[test]
 fn ceiling_dirs_basic() -> crate::Result {
-    let working_dir = repo_path()?;
-    let dir = working_dir.join("some/very/deeply/nested/subdir");
-    git_discover::upwards_opts(
+    let work_dir = repo_path()?;
+    let dir = work_dir.join("some/very/deeply/nested/subdir");
+    let (repo_path, _trust) = git_discover::upwards_opts(
         &dir,
         UpwardsOptions {
-            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(&working_dir)]),
+            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(&work_dir)]),
             ..Default::default()
         },
     )
     .expect("ceiling dir should allow us to discover the repo");
+    assert_repo_is_current_workdir(repo_path, &work_dir);
 
     git_discover::upwards_opts(
         &dir,
         UpwardsOptions {
-            ceiling_dirs: Cow::Borrowed(&[Cow::Owned(working_dir.join("some"))]),
+            ceiling_dirs: Cow::Borrowed(&[Cow::Owned(work_dir.join("some"))]),
             ..Default::default()
         },
     )
-    .expect_err("ceiling dir should not allow us to discover the repo");
+    .expect_err("ceiling dir prevents discovery as it ends on level too early");
 
     Ok(())
 }
 
+fn assert_repo_is_current_workdir(path: git_discover::repository::Path, work_dir: &std::path::Path) {
+    assert_eq!(
+        path.into_repository_and_work_tree_directories()
+            .1
+            .expect("work dir")
+            .file_name(),
+        work_dir.file_name()
+    );
+}
+
 #[test]
 fn ceiling_dirs_multi() -> crate::Result {
-    let working_dir = repo_path()?;
-    let dir = working_dir.join("some/very/deeply/nested/subdir");
-    git_discover::upwards_opts(
+    let work_dir = repo_path()?;
+    let dir = work_dir.join("some/very/deeply/nested/subdir");
+    let (repo_path, _trust) = git_discover::upwards_opts(
         &dir,
         UpwardsOptions {
             ceiling_dirs: Cow::Borrowed(&[
-                Cow::Borrowed(&working_dir),
-                Cow::Owned(working_dir.join("some/very/deeply/nested/subd")),
+                Cow::Owned(work_dir.canonicalize()?),
+                Cow::Owned(work_dir.join("some/very/deeply/nested/subdir/too-deep")),
+                Cow::Owned(work_dir.join("some/very/deeply/nested/unrelated-dir")),
+                Cow::Owned(work_dir.join("a/completely/unrelated/dir")),
             ]),
             ..Default::default()
         },
     )
     .expect("ceiling dir should allow us to discover the repo");
+    assert_repo_is_current_workdir(repo_path, &work_dir);
 
     git_discover::upwards_opts(
         &dir,
         UpwardsOptions {
-            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(&working_dir), Cow::Owned(working_dir.join("some"))]),
+            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(&work_dir), Cow::Owned(work_dir.join("some"))]),
             ..Default::default()
         },
     )
-    .expect_err("ceiling dir should not allow us to discover the repo");
+    .expect_err("more restrictive ceiling dirs overrule less restrictive ones");
 
     Ok(())
 }
 
 #[test]
 fn ceiling_dirs_relative() -> crate::Result {
-    let working_dir = repo_path()?;
-    let dir = working_dir.join("some/very/deeply/nested/subdir");
-    git_discover::upwards_opts(
+    let work_dir = repo_path()?;
+    let dir = work_dir.join("some/very/deeply/nested/subdir");
+    let (repo_path, _trust) = git_discover::upwards_opts(
         &dir,
         UpwardsOptions {
-            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(Path::new("./some"))]),
+            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(Path::new("./some")), Cow::Borrowed(Path::new(""))]),
             ..Default::default()
         },
     )
-    .expect("ceiling dir should allow us to discover the repo");
-
-    git_discover::upwards_opts(
-        &dir,
-        UpwardsOptions {
-            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(Path::new(""))]),
-            ..Default::default()
-        },
-    )
-    .expect("ceiling dir should allow us to discover the repo");
+    .expect("the repo can be discovered because the relative ceiling has nothing to do with the repo location");
+    assert_repo_is_current_workdir(repo_path, &work_dir);
 
     Ok(())
 }
