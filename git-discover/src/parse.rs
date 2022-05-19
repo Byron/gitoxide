@@ -17,7 +17,7 @@ pub mod gitdir {
     }
 }
 
-/// Parse typical `git_dir` files as seen in worktrees and submodules.
+/// Parse typical `gitdir` files as seen in worktrees and submodules.
 pub fn gitdir(input: &[u8]) -> Result<PathBuf, gitdir::Error> {
     let path = input
         .strip_prefix(b"gitdir: ")
