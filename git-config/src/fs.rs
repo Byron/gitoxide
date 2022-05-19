@@ -7,8 +7,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::file::{from_paths, GitConfig};
+use crate::file::{from_env, GitConfig};
 use crate::lookup;
+
+use crate::file::git_config::from_paths;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum ConfigSource {
@@ -107,7 +109,7 @@ impl ConfigBuilder {
 
         let env_conf = if self.load_env_conf {
             // TODO: when bringing up the system, make sure options can be passed. Have to review this entire module first though.
-            GitConfig::from_env(from_paths::Options::default()).ok().flatten()
+            from_env(from_paths::Options::default()).ok().flatten()
         } else {
             None
         };
