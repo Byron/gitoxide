@@ -11,7 +11,6 @@ use git_ref::FullName;
 use tempfile::tempdir;
 
 #[test]
-#[ignore]
 fn girdir_and_onbranch() {
     let dir = tempdir().unwrap();
 
@@ -273,12 +272,7 @@ fn girdir_and_onbranch() {
     }
 
     {
-        let symlink_outside_tempdir = CanonicalizedTempDir::new()
-            .parent()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .join("symlink");
+        let symlink_outside_tempdir = CanonicalizedTempDir::new().parent().unwrap().join("symlink");
         create_symlink(
             &symlink_outside_tempdir,
             &PathBuf::from(&format!("{}.git", tmp_dir_with_slash)),
