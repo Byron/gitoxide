@@ -26,7 +26,15 @@ fn girdir_and_onbranch() {
     let relative_with_backslash_path = dir.path().join("x");
     let branch_path = dir.path().join("branch");
     let tmp_path = dir.path().join("tmp");
-    let tmp_dir_with_slash = format!("{}/", CanonicalizedTempDir::new().to_str().unwrap().replace("\\", "/"),);
+    let tmp_dir_m_n_with_slash = format!(
+        "{}/",
+        CanonicalizedTempDir::new()
+            .join("m")
+            .join("n")
+            .to_str()
+            .unwrap()
+            .replace("\\", "/")
+    );
 
     fs::write(
         config_path.as_path(),
@@ -70,7 +78,7 @@ fn girdir_and_onbranch() {
             escape_backslashes(&home_dot_git_path),
             escape_backslashes(&home_trailing_slash_path),
             escape_backslashes(&relative_dot_git_path2),
-            &tmp_dir_with_slash,
+            &tmp_dir_m_n_with_slash,
             escape_backslashes(&tmp_path),
             escape_backslashes(&absolute_path),
         ),
@@ -272,19 +280,19 @@ fn girdir_and_onbranch() {
     }
 
     {
-        let symlink_outside_tempdir = CanonicalizedTempDir::new().parent().unwrap().join("symlink");
+        let symlink_outside_tempdir_m_n = CanonicalizedTempDir::new().join("m").join("symlink");
         create_symlink(
-            &symlink_outside_tempdir,
-            &PathBuf::from(&format!("{}.git", tmp_dir_with_slash)),
+            &symlink_outside_tempdir_m_n,
+            &PathBuf::from(&format!("{}.git", tmp_dir_m_n_with_slash)),
         );
-        let dir = PathBuf::from(&symlink_outside_tempdir);
+        let dir = PathBuf::from(&symlink_outside_tempdir_m_n);
         let config = GitConfig::from_paths(Some(config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "t"),
             Some(cow_str("absolute-path-with-symlink")),
             "absolute path pattern is matched with path from GIT_DIR when it contains symlink"
         );
-        fs::remove_file(symlink_outside_tempdir.as_path()).unwrap();
+        fs::remove_file(symlink_outside_tempdir_m_n.as_path()).unwrap();
     }
 }
 
