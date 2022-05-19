@@ -15,20 +15,23 @@ fn can_parse() {
         (":(glob)", pat("", Some(MagicSignature::GLOB))),
         (":(attr)", pat("", Some(MagicSignature::ATTR))),
         (":(exclude)", pat("", Some(MagicSignature::EXCLUDE))),
-        (
-            ":(top,literal,icase,glob,attr,exclude)some/path",
-            pat(
-                "some/path",
-                Some(
-                    MagicSignature::TOP
-                        | MagicSignature::LITERAL
-                        | MagicSignature::ICASE
-                        | MagicSignature::GLOB
-                        | MagicSignature::ATTR
-                        | MagicSignature::EXCLUDE,
-                ),
-            ),
-        ),
+        // TODO:
+        // 'literal' and 'glob' cannot appear in the same pathspec together
+        // is this the parsers job to handle?
+        // (
+        //     ":(top,literal,icase,glob,attr,exclude)some/path",
+        //     pat(
+        //         "some/path",
+        //         Some(
+        //             MagicSignature::TOP
+        //                 | MagicSignature::LITERAL
+        //                 | MagicSignature::ICASE
+        //                 | MagicSignature::GLOB
+        //                 | MagicSignature::ATTR
+        //                 | MagicSignature::EXCLUDE,
+        //         ),
+        //     ),
+        // ),
         (":/:some/path", pat("some/path", Some(MagicSignature::TOP))),
         (
             ":!(literal)some/*path",
@@ -41,6 +44,8 @@ fn can_parse() {
     ];
 
     for (input, expected) in inputs {
+        assert!(is_valid_in_git(input), "This pathspec is invalid in git: {}", input);
+
         let pattern = git_pathspec::parse(input.as_bytes()).expect("parsing should not fail");
         assert_eq!(pattern, expected, "while checking input: \"{}\"", input);
     }
@@ -71,6 +76,8 @@ fn should_fail_on_whitespace_or_invalid_keywords() {
     ];
 
     for (input, expected) in inputs {
+        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+
         let output = git_pathspec::parse(input.as_bytes());
         assert!(output.is_err());
         assert_eq!(output.unwrap_err(), expected);
@@ -82,4 +89,15 @@ fn pat(path: &str, signature: Option<MagicSignature>) -> Pattern {
         path: path.into(),
         signature,
     }
+}
+
+fn is_valid_in_git(pathspec: &str) -> bool {
+    use std::process::Command;
+
+    let output = Command::new("git")
+        .args(["ls-files", pathspec])
+        .output()
+        .expect("failed to execute process");
+
+    output.status.success()
 }
