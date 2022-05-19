@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 /// the error returned by [`realpath()`][super::realpath()].
 #[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
 pub enum Error {
     #[error("The maximum allowed number {} of symlinks in path is exceeded", .max_symlinks)]
     MaxSymlinksExceeded { max_symlinks: u8 },
