@@ -1,6 +1,7 @@
-use std::path::PathBuf;
+use std::borrow::Cow;
+use std::path::{Path, PathBuf};
 
-use git_discover::repository::Kind;
+use git_discover::{repository::Kind, upwards::Options as UpwardsOptions};
 
 fn expected_trust() -> git_sec::Trust {
     #[cfg(not(windows))]
@@ -190,6 +191,84 @@ fn from_existing_worktree() -> crate::Result {
             "the worktree path is the .git file's directory"
         );
     }
+    Ok(())
+}
+
+#[test]
+fn ceiling_dirs_basic() -> crate::Result {
+    let working_dir = repo_path()?;
+    let dir = working_dir.join("some/very/deeply/nested/subdir");
+    git_discover::upwards_opts(
+        &dir,
+        UpwardsOptions {
+            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(&working_dir)]),
+            ..Default::default()
+        },
+    )
+    .expect("ceiling dir should allow us to discover the repo");
+
+    git_discover::upwards_opts(
+        &dir,
+        UpwardsOptions {
+            ceiling_dirs: Cow::Borrowed(&[Cow::Owned(working_dir.join("some"))]),
+            ..Default::default()
+        },
+    )
+    .expect_err("ceiling dir should not allow us to discover the repo");
+
+    Ok(())
+}
+
+#[test]
+fn ceiling_dirs_multi() -> crate::Result {
+    let working_dir = repo_path()?;
+    let dir = working_dir.join("some/very/deeply/nested/subdir");
+    git_discover::upwards_opts(
+        &dir,
+        UpwardsOptions {
+            ceiling_dirs: Cow::Borrowed(&[
+                Cow::Borrowed(&working_dir),
+                Cow::Owned(working_dir.join("some/very/deeply/nested/subd")),
+            ]),
+            ..Default::default()
+        },
+    )
+    .expect("ceiling dir should allow us to discover the repo");
+
+    git_discover::upwards_opts(
+        &dir,
+        UpwardsOptions {
+            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(&working_dir), Cow::Owned(working_dir.join("some"))]),
+            ..Default::default()
+        },
+    )
+    .expect_err("ceiling dir should not allow us to discover the repo");
+
+    Ok(())
+}
+
+#[test]
+fn ceiling_dirs_relative() -> crate::Result {
+    let working_dir = repo_path()?;
+    let dir = working_dir.join("some/very/deeply/nested/subdir");
+    git_discover::upwards_opts(
+        &dir,
+        UpwardsOptions {
+            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(Path::new("./some"))]),
+            ..Default::default()
+        },
+    )
+    .expect("ceiling dir should allow us to discover the repo");
+
+    git_discover::upwards_opts(
+        &dir,
+        UpwardsOptions {
+            ceiling_dirs: Cow::Borrowed(&[Cow::Borrowed(Path::new(""))]),
+            ..Default::default()
+        },
+    )
+    .expect("ceiling dir should allow us to discover the repo");
+
     Ok(())
 }
 

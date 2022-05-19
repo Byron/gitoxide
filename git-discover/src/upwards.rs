@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::borrow::Cow;
+use std::path::{Path, PathBuf};
 
 /// The error returned by [git_discover::discover()][function::discover()].
 #[derive(Debug, thiserror::Error)]
@@ -24,24 +25,30 @@ pub enum Error {
 
 /// Options to help guide the [discovery][function::discover()] of repositories, along with their options
 /// when instantiated.
-pub struct Options {
+pub struct Options<'a> {
     /// When discovering a repository, assure it has at least this trust level or ignore it otherwise.
     ///
     /// This defaults to [`Reduced`][git_sec::Trust::Reduced] as our default settings are geared towards avoiding abuse.
     /// Set it to `Full` to only see repositories that [are owned by the current user][git_sec::Trust::from_path_ownership()].
     pub required_trust: git_sec::Trust,
+    /// When discovering a repository, ignore any repositories that are located in these directories or any of their parents.
+    pub ceiling_dirs: Cow<'a, [Cow<'a, Path>]>,
 }
 
-impl Default for Options {
+impl Default for Options<'_> {
     fn default() -> Self {
         Options {
             required_trust: git_sec::Trust::Reduced,
+            ceiling_dirs: Cow::Borrowed(&[]),
         }
     }
 }
 
 pub(crate) mod function {
-    use std::path::{Path, PathBuf};
+    use std::{
+        borrow::Cow,
+        path::{Path, PathBuf},
+    };
 
     use git_sec::Trust;
 
@@ -55,7 +62,10 @@ pub(crate) mod function {
     // TODO: tests for trust-based discovery
     pub fn discover_opts(
         directory: impl AsRef<Path>,
-        Options { required_trust }: Options,
+        Options {
+            required_trust,
+            ceiling_dirs,
+        }: Options<'_>,
     ) -> Result<(crate::repository::Path, git_sec::Trust), Error> {
         // Canonicalize the path so that `git_discover::parent` _actually_ gives
         // us the parent directory. (`git_discover::parent` just strips off the last
@@ -75,7 +85,26 @@ pub(crate) mod function {
         };
 
         let mut cursor = dir.clone().into_owned();
+
+        let max_height = if !ceiling_dirs.is_empty() {
+            // Ceiling directory discovery requires us to canonicalize the path
+            is_canonicalized = true;
+            cursor = cursor
+                .canonicalize()
+                .map_err(|_| Error::InaccessibleDirectory { path: cursor })?;
+            Some(find_ceiling_height(&dir, ceiling_dirs.as_ref()))
+        } else {
+            None
+        };
+        let mut current_height = 0;
+
         'outer: loop {
+            // If we've reached the ceiling, stop looking.
+            if max_height.map_or(false, |x| current_height > x) {
+                return Err(Error::NoGitRepository { path: dir.into_owned() });
+            }
+            current_height += 1;
+
             for append_dot_git in &[false, true] {
                 if *append_dot_git {
                     cursor.push(".git");
@@ -156,6 +185,22 @@ pub(crate) mod function {
             Normal(p) => p.len(),
             RootDir => 1,
         }
+    }
+
+    /// Find the number of components parenting the `base_path` before the first directory in `ceiling_dirs`.
+    /// `base_path` needs to be an absolute path. Non-absolute `ceiling_dirs` are discarded if `base_path` is absolute.
+    // TODO: Handle this in a verbatim-path-prefix-neutral way on Windows (introduced by `path::canonicalize`).
+    fn find_ceiling_height(base_path: &Path, ceiling_dirs: &[Cow<'_, Path>]) -> usize {
+        ceiling_dirs
+            .iter()
+            .filter_map(|ceiling_dir| {
+                base_path
+                    .strip_prefix(ceiling_dir)
+                    .ok()
+                    .map(|path_relative_to_ceiling| path_relative_to_ceiling.components().count())
+            })
+            .min()
+            .unwrap_or_else(|| base_path.components().count())
     }
 
     /// Find the location of the git repository directly in `directory` or in any of its parent directories, and provide

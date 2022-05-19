@@ -405,7 +405,7 @@ pub mod discover {
         /// for instantiations.
         pub fn discover_opts(
             directory: impl AsRef<Path>,
-            options: upwards::Options,
+            options: upwards::Options<'_>,
             trust_map: git_sec::trust::Mapping<crate::open::Options>,
         ) -> Result<Self, Error> {
             let (path, trust) = upwards_opts(directory, options)?;
