@@ -196,7 +196,9 @@ fn from_existing_worktree() -> crate::Result {
 mod ceiling_dirs {
     use crate::upwards::repo_path;
     use git_discover::upwards::Options;
-    use std::path::{Path, PathBuf};
+    use std::path::Path;
+    #[cfg(windows)]
+    use std::path::PathBuf;
 
     fn assert_repo_is_current_workdir(path: git_discover::repository::Path, work_dir: &Path) {
         assert_eq!(
@@ -302,12 +304,17 @@ mod ceiling_dirs {
         let (repo_path, _trust) = git_discover::upwards_opts(
             &dir,
             Options {
-                ceiling_dirs: &[base_dir],
+                ceiling_dirs: &[base_dir.clone()],
                 ..Default::default()
             },
         )
         .expect("the repo can be discovered because the relative ceiling has nothing to do with the repo location");
-        assert_repo_is_current_workdir(repo_path, &work_dir);
+
+        assert_ne!(
+            repo_path.as_ref().canonicalize()?,
+            base_dir,
+            "a relative path that climbs above the test repo should yield the gitoxide repo"
+        );
 
         Ok(())
     }
