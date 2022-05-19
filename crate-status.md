@@ -224,6 +224,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
 ### git-path
 * [x] transformations to and from bytes
 * [x] conversions between different platforms
+* [x] virtual canonicalization for more concise paths via `absolutize()`
+* [ ] more flexible canonicalization with symlink resolution for paths which are partially virtual via `realpath()`
 * **spec**
     * [ ] parse
     * [ ] check for match

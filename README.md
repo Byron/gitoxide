@@ -117,6 +117,7 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
   * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
   * [git-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-discover)
+  * [git-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-path)
   * [git-repository](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository)
   * `gitoxide-core`
 * **very early**    
@@ -125,7 +126,6 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
   * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
-  * [git-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-path)
 * **idea**
   * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
   * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)

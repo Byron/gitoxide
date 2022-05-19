@@ -117,12 +117,12 @@ pub fn try_from_bstring(input: impl Into<BString>) -> Result<PathBuf, Utf8Error>
     Ok(p)
 }
 
-/// Similar to [`try_from_bstring()`], but will panic if there is ill-formed UTF-8 in the `input`.
+/// Similar to [`try_from_bstring()`], but will **panic** if there is ill-formed UTF-8 in the `input`.
 pub fn from_bstring(input: impl Into<BString>) -> PathBuf {
     try_from_bstring(input).expect("well-formed UTF-8 on windows")
 }
 
-/// Similar to [`try_from_byte_slice()`], but will panic if there is ill-formed UTF-8 in the `input`.
+/// Similar to [`try_from_byte_slice()`], but will **panic** if there is ill-formed UTF-8 in the `input`.
 pub fn from_byte_slice(input: &[u8]) -> &Path {
     try_from_byte_slice(input).expect("well-formed UTF-8 on windows")
 }
