@@ -4,14 +4,17 @@ use quick_error::quick_error;
 use std::iter::{FromIterator, Peekable};
 
 quick_error! {
-    #[derive(Debug, Eq, PartialEq)]
+    #[derive(Debug)]
     pub enum Error {
         InvalidSignature { found_signature: BString } {
-            display("Found {}, which is not a valid signature", found_signature)
+            display("Found \"{}\", which is not a valid signature", found_signature)
         }
-        // WhitespaceInSignature {
-        //     display("Whitespace in magic keywords are not allowed")
-        // }
+        // TODO: Fix error messages
+        InvalidAttribute(err: git_attributes::parse::Error) {
+            display("{}", err)
+            from()
+            source(err)
+        }
     }
 }
 
@@ -94,9 +97,6 @@ impl<'a> Parser<'a> {
                         keywords.push(std::mem::take(&mut buf));
                     }
                 }
-                // b' ' => {
-                //     return Err(Error::WhitespaceInSignature);
-                // }
                 _ => {
                     buf.push(*b);
                 }
@@ -113,10 +113,16 @@ impl<'a> Parser<'a> {
                 b"glob" => MagicSignature::GLOB,
                 b"attr" => MagicSignature::ATTR,
                 b"exclude" => MagicSignature::EXCLUDE,
+                s if s.starts_with(b"attr:") => git_attributes::parse::Iter::new(s[5..].into(), 0)
+                    .collect::<Result<Vec<_>, _>>()
+                    .map(|v| {
+                        println!("{:?}", v);
+                        MagicSignature::ATTR
+                    })?,
                 s => {
                     return Err(Error::InvalidSignature {
                         found_signature: BString::from(s),
-                    })
+                    });
                 }
             }
         }

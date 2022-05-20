@@ -10,6 +10,7 @@ pub mod parse;
 pub struct Pattern {
     pub path: BString,
     pub signature: Option<MagicSignature>,
+    // pub attributes: Vec<(BString, git_attributes::State)>,
 }
 
 bitflags! {
