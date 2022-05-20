@@ -244,6 +244,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 
 * [x] check if a git directory is a git repository
 * [x] find a git repository by searching upward
+   * [x] define ceilings that should not be surpassed
 * [x] handle linked worktrees
 * [ ] a way to handle `safe.directory`
      - note that it's less critical to support it as `gitoxide` allows access but prevents untrusted configuration to become effective.
@@ -409,6 +410,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 * **plumbing**
   * **Repository**  (_plumbing_)
     * [x] discovery
+       * [ ] support for `GIT_CEILING_DIRECTORIES`
     * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
     * [x] instantiation
     * [ ] a way to handle `.git` files with `gitdir: <path>` in it
