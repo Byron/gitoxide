@@ -22,8 +22,6 @@ pub enum Error {
         #[source]
         err: std::io::Error,
     },
-    #[error("To apply the ceiling directories option the base path needs to be absolute '{}'", .path.display())]
-    DirectoryNotAbsolute { path: PathBuf },
 }
 
 /// Options to help guide the [discovery][function::discover()] of repositories, along with their options
@@ -35,7 +33,6 @@ pub struct Options<'a> {
     /// Set it to `Full` to only see repositories that [are owned by the current user][git_sec::Trust::from_path_ownership()].
     pub required_trust: git_sec::Trust,
     /// When discovering a repository, ignore any repositories that are located in these directories or any of their parents.
-    /// If this is not empty, the base path will need to be an absolute path.
     pub ceiling_dirs: &'a [PathBuf],
 }
 

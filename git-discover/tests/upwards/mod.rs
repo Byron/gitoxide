@@ -196,9 +196,7 @@ fn from_existing_worktree() -> crate::Result {
 mod ceiling_dirs {
     use crate::upwards::repo_path;
     use git_discover::upwards::Options;
-    use std::path::Path;
-    #[cfg(windows)]
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
 
     fn assert_repo_is_current_workdir(path: git_discover::repository::Path, work_dir: &Path) {
         assert_eq!(
@@ -213,12 +211,11 @@ mod ceiling_dirs {
     #[test]
     fn single() -> crate::Result {
         let work_dir = repo_path()?;
-        let base_dir = work_dir.canonicalize()?;
-        let dir = base_dir.join("some/very/deeply/nested/subdir");
+        let dir = work_dir.join("some/very/deeply/nested/subdir");
         let (repo_path, _trust) = git_discover::upwards_opts(
             &dir,
             Options {
-                ceiling_dirs: &[base_dir.clone()],
+                ceiling_dirs: &vec![work_dir.clone()],
                 ..Default::default()
             },
         )
@@ -228,7 +225,7 @@ mod ceiling_dirs {
         let err = git_discover::upwards_opts(
             &dir,
             Options {
-                ceiling_dirs: &[base_dir.join("some")],
+                ceiling_dirs: &vec![work_dir.join("some")],
                 ..Default::default()
             },
         )
@@ -244,16 +241,15 @@ mod ceiling_dirs {
     #[test]
     fn multiple() -> crate::Result {
         let work_dir = repo_path()?;
-        let base_dir = work_dir.canonicalize()?;
-        let dir = base_dir.join("some/very/deeply/nested/subdir");
+        let dir = work_dir.join("some/very/deeply/nested/subdir");
         let (repo_path, _trust) = git_discover::upwards_opts(
             &dir,
             Options {
-                ceiling_dirs: &[
-                    base_dir.clone(),
-                    base_dir.join("some/very/deeply/nested/subdir/too-deep"),
-                    base_dir.join("some/very/deeply/nested/unrelated-dir"),
-                    base_dir.join("a/completely/unrelated/dir"),
+                ceiling_dirs: &vec![
+                    work_dir.canonicalize()?,
+                    work_dir.join("some/very/deeply/nested/subdir/too-deep"),
+                    work_dir.join("some/very/deeply/nested/unrelated-dir"),
+                    work_dir.join("a/completely/unrelated/dir"),
                 ],
                 ..Default::default()
             },
@@ -264,7 +260,7 @@ mod ceiling_dirs {
         let err = git_discover::upwards_opts(
             &dir,
             Options {
-                ceiling_dirs: &[work_dir, base_dir.join("some")],
+                ceiling_dirs: &vec![work_dir.clone(), work_dir.join("some")],
                 ..Default::default()
             },
         )
@@ -281,30 +277,11 @@ mod ceiling_dirs {
     #[test]
     fn special_relative() -> crate::Result {
         let work_dir = repo_path()?;
-        let base_dir = work_dir.canonicalize()?;
-        let dir = base_dir.join("some/very/deeply/nested/subdir");
+        let dir = work_dir.join("some/very/deeply/nested/subdir");
         let (repo_path, _trust) = git_discover::upwards_opts(
             &dir,
             Options {
-                ceiling_dirs: &[Path::new("./some").into(), Path::new("").into()],
-                ..Default::default()
-            },
-        )
-        .expect("the repo can be discovered because the relative ceiling has nothing to do with the repo location");
-        assert_repo_is_current_workdir(repo_path, &work_dir);
-
-        Ok(())
-    }
-
-    #[test]
-    fn special_relative_base() -> crate::Result {
-        let work_dir = repo_path()?;
-        let base_dir = work_dir.canonicalize()?;
-        let dir = base_dir.join("some/very/deeply/nested/subdir/../../../../../..");
-        let (repo_path, _trust) = git_discover::upwards_opts(
-            &dir,
-            Options {
-                ceiling_dirs: &[base_dir.clone()],
+                ceiling_dirs: &vec![Path::new("./some").into(), Path::new("").into()],
                 ..Default::default()
             },
         )
