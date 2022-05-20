@@ -455,11 +455,15 @@ impl<'event> File<'event> {
         Ok(())
     }
 
-    /// Returns the number of values in the config. This ignores any comments.
+    /// Returns the number of values in the config, no matter in which section.
+    ///
     /// For example, a config with multiple empty sections will return 0.
+    /// This ignores any comments.
     #[must_use]
-    pub fn len(&self) -> usize {
-        self.sections.values().fold(0, |acc, section| acc + section.len())
+    pub fn num_values(&self) -> usize {
+        self.sections
+            .values()
+            .fold(0, |acc, section| acc + section.num_values())
     }
 
     /// Returns if there are no entries in the config. This will return true

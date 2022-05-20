@@ -67,7 +67,7 @@ fn single_key_value_pair() {
         Cow::<[u8]>::Borrowed(b"value")
     );
 
-    assert_eq!(config.len(), 1);
+    assert_eq!(config.num_values(), 1);
 }
 
 #[test]
@@ -96,7 +96,7 @@ fn multiple_key_value_pairs() {
         config.raw_value("core", None, "c").unwrap(),
         Cow::<[u8]>::Borrowed(b"c")
     );
-    assert_eq!(config.len(), 3);
+    assert_eq!(config.num_values(), 3);
 }
 
 #[test]
@@ -141,5 +141,5 @@ fn follow_include_paths() {
         config.raw_value("core", None, "key").unwrap(),
         Cow::<[u8]>::Borrowed(b"changed")
     );
-    assert_eq!(config.len(), 5);
+    assert_eq!(config.num_values(), 5);
 }

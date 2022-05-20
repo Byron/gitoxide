@@ -35,7 +35,7 @@ fn single_path() {
         Cow::<[u8]>::Borrowed(b"true")
     );
 
-    assert_eq!(config.len(), 1);
+    assert_eq!(config.num_values(), 1);
 }
 
 #[test]
@@ -60,7 +60,7 @@ fn multiple_paths_single_value() -> crate::Result {
     assert_eq!(config.boolean("core", None, "a"), Some(Ok(false)));
     assert_eq!(config.boolean("core", None, "b"), Some(Ok(true)));
     assert_eq!(config.boolean("core", None, "c"), Some(Ok(true)));
-    assert_eq!(config.len(), 4);
+    assert_eq!(config.num_values(), 4);
 
     Ok(())
 }
@@ -97,7 +97,7 @@ fn multiple_paths_multi_value() -> crate::Result {
         Some(vec![cow_str("d_path"), cow_str("e_path")])
     );
 
-    assert_eq!(config.len(), 5);
+    assert_eq!(config.num_values(), 5);
     Ok(())
 }
 

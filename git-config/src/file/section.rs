@@ -342,9 +342,9 @@ impl<'event> SectionBody<'event> {
         })
     }
 
-    /// Returns the number of entries in the section.
+    /// Returns the number of values in the section.
     #[must_use]
-    pub fn len(&self) -> usize {
+    pub fn num_values(&self) -> usize {
         self.0.iter().filter(|e| matches!(e, Event::Key(_))).count()
     }
 
