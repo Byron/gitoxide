@@ -1,5 +1,8 @@
-use crate::file::from_paths;
+use crate::file::{from_paths, resolve_includes};
 use crate::values::path::interpolate;
+use crate::File;
+use std::borrow::Cow;
+use std::path::PathBuf;
 
 /// Represents the errors that may occur when calling [`File::from_env`][crate::File::from_env()].
 #[derive(Debug, thiserror::Error)]
@@ -19,18 +22,12 @@ pub enum Error {
     FromPathsError(#[from] from_paths::Error),
 }
 
-pub(crate) mod functions {
-    use crate::file::from_env::Error;
-    use crate::file::{from_paths, resolve_includes};
-    use crate::File;
-    use std::borrow::Cow;
-    use std::path::PathBuf;
-
+impl<'a> File<'a> {
     /// Constructs a `git-config` from the default cascading sequence.
     /// This is neither zero-alloc nor zero-copy.
     ///
     /// See <https://git-scm.com/docs/git-config#FILES> for details.
-    pub fn from_env_paths(options: from_paths::Options<'_>) -> Result<File<'_>, from_paths::Error> {
+    pub fn from_env_paths(options: from_paths::Options<'_>) -> Result<File<'static>, from_paths::Error> {
         use std::env;
 
         let mut paths = vec![];

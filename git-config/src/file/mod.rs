@@ -60,7 +60,6 @@ pub(crate) enum LookupTreeNode<'a> {
 }
 
 pub mod from_env;
-pub use from_env::functions::{from_env, from_env_paths};
 
 mod resolve_includes;
 pub(crate) use resolve_includes::resolve_includes;
