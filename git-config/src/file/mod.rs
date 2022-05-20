@@ -16,7 +16,7 @@ pub use self::git_config::*;
 /// Newtype to represent an index into some range. This is to differentiate
 /// between raw usizes when multiple are present.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Clone, Copy)]
-pub(super) struct Index(pub(super) usize);
+pub(crate) struct Index(pub(crate) usize);
 
 impl Add<Size> for Index {
     type Output = Self;
@@ -29,7 +29,7 @@ impl Add<Size> for Index {
 /// Newtype to represent a size. This is to differentiate between raw usizes
 /// when multiple are present.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Clone, Copy)]
-pub(super) struct Size(pub(super) usize);
+pub(crate) struct Size(pub(crate) usize);
 
 impl AddAssign<usize> for Size {
     fn add_assign(&mut self, rhs: usize) {

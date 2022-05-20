@@ -1,9 +1,9 @@
 use std::convert::TryFrom;
 
-use git_config::file::GitConfig;
+use git_config::File;
 
-fn init_config() -> GitConfig<'static> {
-    GitConfig::try_from(
+fn init_config() -> File<'static> {
+    File::try_from(
         r#"[core]
             a=b"100"
         [core]
@@ -109,7 +109,7 @@ fn subsequent_delete_calls_are_noop() {
 
 #[test]
 fn partial_values_are_supported() {
-    let mut git_config = GitConfig::try_from(
+    let mut git_config = File::try_from(
         r#"[core]
             a=b"100"\
 b

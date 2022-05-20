@@ -1,13 +1,13 @@
 use std::convert::TryFrom;
 
-use git_config::file::GitConfig;
+use git_config::File;
 
 #[test]
 fn can_reconstruct_empty_config() {
     let config = r#"
 
     "#;
-    assert_eq!(GitConfig::try_from(config).unwrap().to_string(), config);
+    assert_eq!(File::try_from(config).unwrap().to_string(), config);
 }
 
 #[test]
@@ -33,7 +33,7 @@ fn can_reconstruct_non_empty_config() {
             defaultBranch = master
     "#;
 
-    assert_eq!(GitConfig::try_from(config).unwrap().to_string(), config);
+    assert_eq!(File::try_from(config).unwrap().to_string(), config);
 }
 
 #[test]
@@ -50,7 +50,7 @@ fn can_reconstruct_configs_with_implicits() {
             gpgsign
     "#;
 
-    assert_eq!(GitConfig::try_from(config).unwrap().to_string(), config);
+    assert_eq!(File::try_from(config).unwrap().to_string(), config);
 }
 
 #[test]
@@ -68,5 +68,5 @@ fn can_reconstruct_configs_without_whitespace_in_middle() {
             defaultBranch = master
     "#;
 
-    assert_eq!(GitConfig::try_from(config).unwrap().to_string(), config);
+    assert_eq!(File::try_from(config).unwrap().to_string(), config);
 }

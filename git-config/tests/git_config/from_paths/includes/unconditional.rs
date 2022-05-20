@@ -2,7 +2,8 @@ use std::fs;
 
 use crate::git_config::cow_str;
 use crate::git_config::from_paths::escape_backslashes;
-use git_config::file::{from_paths, GitConfig};
+use git_config::file::from_paths;
+use git_config::File;
 use tempfile::tempdir;
 
 #[test]
@@ -61,7 +62,7 @@ fn multiple() -> crate::Result {
         ),
     )?;
 
-    let config = GitConfig::from_paths(vec![c_path], Default::default())?;
+    let config = File::from_paths(vec![c_path], Default::default())?;
 
     assert_eq!(config.string("core", None, "c"), Some(cow_str("12")));
     assert_eq!(config.integer("core", None, "d"), Some(Ok(41)));
@@ -106,7 +107,7 @@ fn respect_max_depth() -> crate::Result {
             .replace("{}", &max_depth.to_string()),
     )?;
 
-    let config = GitConfig::from_paths(vec![dir.path().join("0")], Default::default())?;
+    let config = File::from_paths(vec![dir.path().join("0")], Default::default())?;
     assert_eq!(config.integers("core", None, "i"), Some(Ok(vec![0, 1, 2, 3, 4])));
 
     // with max_allowed_depth of 1 and 4 levels of includes and error_on_max_depth_exceeded: false, max_allowed_depth is exceeded and the value of level 1 is returned
@@ -116,12 +117,12 @@ fn respect_max_depth() -> crate::Result {
         error_on_max_depth_exceeded: false,
         ..Default::default()
     };
-    let config = GitConfig::from_paths(vec![dir.path().join("0")], options)?;
+    let config = File::from_paths(vec![dir.path().join("0")], options)?;
     assert_eq!(config.integer("core", None, "i"), Some(Ok(1)));
 
     // with default max_allowed_depth of 10 and 4 levels of includes, last level is read
     let options = from_paths::Options::default();
-    let config = GitConfig::from_paths(vec![dir.path().join("0")], options)?;
+    let config = File::from_paths(vec![dir.path().join("0")], options)?;
     assert_eq!(config.integer("core", None, "i"), Some(Ok(4)));
 
     // with max_allowed_depth of 5, the base and 4 levels of includes, last level is read
@@ -129,7 +130,7 @@ fn respect_max_depth() -> crate::Result {
         max_depth: 5,
         ..Default::default()
     };
-    let config = GitConfig::from_paths(vec![dir.path().join("0")], options)?;
+    let config = File::from_paths(vec![dir.path().join("0")], options)?;
     assert_eq!(config.integer("core", None, "i"), Some(Ok(4)));
 
     // with max_allowed_depth of 2 and 4 levels of includes, max_allowed_depth is exceeded and error is returned
@@ -137,7 +138,7 @@ fn respect_max_depth() -> crate::Result {
         max_depth: 2,
         ..Default::default()
     };
-    let config = GitConfig::from_paths(vec![dir.path().join("0")], options);
+    let config = File::from_paths(vec![dir.path().join("0")], options);
     assert!(matches!(
         config.unwrap_err(),
         from_paths::Error::IncludeDepthExceeded { max_depth: 2 }
@@ -149,7 +150,7 @@ fn respect_max_depth() -> crate::Result {
         error_on_max_depth_exceeded: false,
         ..Default::default()
     };
-    let config = GitConfig::from_paths(vec![dir.path().join("0")], options)?;
+    let config = File::from_paths(vec![dir.path().join("0")], options)?;
     assert_eq!(config.integer("core", None, "i"), Some(Ok(2)));
 
     // with max_allowed_depth of 0 and 4 levels of includes, max_allowed_depth is exceeded and error is returned
@@ -157,7 +158,7 @@ fn respect_max_depth() -> crate::Result {
         max_depth: 0,
         ..Default::default()
     };
-    let config = GitConfig::from_paths(vec![dir.path().join("0")], options);
+    let config = File::from_paths(vec![dir.path().join("0")], options);
     assert!(matches!(
         config.unwrap_err(),
         from_paths::Error::IncludeDepthExceeded { max_depth: 0 }
@@ -198,7 +199,7 @@ fn simple() {
     )
     .unwrap();
 
-    let config = GitConfig::from_paths(vec![a_path], Default::default()).unwrap();
+    let config = File::from_paths(vec![a_path], Default::default()).unwrap();
     assert_eq!(config.boolean("core", None, "b"), Some(Ok(false)));
 }
 
@@ -237,7 +238,7 @@ fn cycle_detection() -> crate::Result {
         max_depth: 4,
         ..Default::default()
     };
-    let config = GitConfig::from_paths(vec![a_path.clone()], options);
+    let config = File::from_paths(vec![a_path.clone()], options);
     assert!(matches!(
         config.unwrap_err(),
         from_paths::Error::IncludeDepthExceeded { max_depth: 4 }
@@ -248,7 +249,7 @@ fn cycle_detection() -> crate::Result {
         error_on_max_depth_exceeded: false,
         ..Default::default()
     };
-    let config = GitConfig::from_paths(vec![a_path], options)?;
+    let config = File::from_paths(vec![a_path], options)?;
     assert_eq!(config.integers("core", None, "b"), Some(Ok(vec![0, 1, 0, 1, 0])));
     Ok(())
 }
@@ -292,7 +293,7 @@ fn nested() -> crate::Result {
         ),
     )?;
 
-    let config = GitConfig::from_paths(vec![c_path], Default::default())?;
+    let config = File::from_paths(vec![c_path], Default::default())?;
 
     assert_eq!(config.integer("core", None, "c"), Some(Ok(1)));
     assert_eq!(config.boolean("core", None, "b"), Some(Ok(true)));

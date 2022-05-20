@@ -34,7 +34,7 @@ pub struct MutableValue<'borrow, 'lookup, 'event> {
 }
 
 impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
-    pub(super) const fn new(
+    pub(crate) const fn new(
         section: MutableSection<'borrow, 'event>,
         key: Key<'lookup>,
         index: Index,
@@ -89,13 +89,13 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
 
 /// Internal data structure for [`MutableMultiValue`]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub(super) struct EntryData {
+pub(crate) struct EntryData {
     section_id: SectionId,
     offset_index: usize,
 }
 
 impl EntryData {
-    pub(super) const fn new(section_id: SectionId, offset_index: usize) -> Self {
+    pub(crate) const fn new(section_id: SectionId, offset_index: usize) -> Self {
         Self {
             section_id,
             offset_index,
@@ -128,7 +128,7 @@ pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
 }
 
 impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
-    pub(super) fn new(
+    pub(crate) fn new(
         section: &'borrow mut HashMap<SectionId, SectionBody<'event>>,
         key: Key<'lookup>,
         indices_and_sizes: Vec<EntryData>,

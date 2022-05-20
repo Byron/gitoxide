@@ -54,102 +54,92 @@
 #[cfg(feature = "serde")]
 extern crate serde_crate as serde;
 
-pub mod lookup {
-
-    /// The error when looking up a value.
-    #[derive(Debug, thiserror::Error)]
-    pub enum Error<E> {
-        #[error(transparent)]
-        ValueMissing(#[from] crate::lookup::existing::Error),
-        #[error(transparent)]
-        FailedConversion(E),
-    }
-
-    pub mod existing {
-        /// The error when looking up a value that doesn't exist.
-        #[derive(Debug, thiserror::Error)]
-        pub enum Error {
-            #[error("The requested section does not exist")]
-            SectionMissing,
-            #[error("The requested subsection does not exist")]
-            SubSectionMissing,
-            #[error("The key does not exist in the requested section")]
-            KeyMissing,
-        }
-    }
-}
-
 pub mod file;
 pub mod fs;
+pub mod lookup;
 pub mod parser;
-pub mod values;
+mod permissions;
 /// The future home of the `values` module (TODO).
-pub mod value {
-    pub mod parse {
-        use bstr::BString;
+pub mod value;
+pub mod values;
+mod types {
+    use crate::file::{LookupTreeNode, SectionBody, SectionId};
+    use crate::parser::{ParsedSectionHeader, SectionHeaderName};
+    use std::collections::{HashMap, VecDeque};
 
-        /// The error returned when creating `Integer` from byte string.
-        #[derive(Debug, thiserror::Error, Eq, PartialEq)]
-        #[allow(missing_docs)]
-        #[error("Could not decode '{}': {}", .input, .message)]
-        pub struct Error {
-            pub message: &'static str,
-            pub input: BString,
-            #[source]
-            pub utf8_err: Option<std::str::Utf8Error>,
-        }
-
-        impl Error {
-            pub(crate) fn new(message: &'static str, input: impl Into<BString>) -> Self {
-                Error {
-                    message,
-                    input: input.into(),
-                    utf8_err: None,
-                }
-            }
-
-            pub(crate) fn with_err(mut self, err: std::str::Utf8Error) -> Self {
-                self.utf8_err = Some(err);
-                self
-            }
-        }
+    /// High level `git-config` reader and writer.
+    ///
+    /// This is the full-featured implementation that can deserialize, serialize,
+    /// and edit `git-config` files without loss of whitespace or comments. As a
+    /// result, it's lot more complex than it's read-only variant,
+    /// [`ResolvedGitConfig`] that exposes a [`HashMap`]-like interface. Users that
+    /// only need to read `git-config` files should use that instead.
+    ///
+    /// Internally, this uses various acceleration data structures to improve
+    /// performance of the typical usage behavior of many lookups and relatively
+    /// fewer insertions.
+    ///
+    /// # Multivar behavior
+    ///
+    /// `git` is flexible enough to allow users to set a key multiple times in
+    /// any number of identically named sections. When this is the case, the key
+    /// is known as a "multivar". In this case, `raw_value` follows the
+    /// "last one wins" approach that `git-config` internally uses for multivar
+    /// resolution.
+    ///
+    /// Concretely, the following config has a multivar, `a`, with the values
+    /// of `b`, `c`, and `d`, while `e` is a single variable with the value
+    /// `f g h`.
+    ///
+    /// ```text
+    /// [core]
+    ///     a = b
+    ///     a = c
+    /// [core]
+    ///     a = d
+    ///     e = f g h
+    /// ```
+    ///
+    /// Calling methods that fetch or set only one value (such as [`raw_value`])
+    /// key `a` with the above config will fetch `d` or replace `d`, since the last
+    /// valid config key/value pair is `a = d`:
+    ///
+    /// ```
+    /// # use std::borrow::Cow;
+    /// # use std::convert::TryFrom;
+    /// # let git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// assert_eq!(git_config.raw_value("core", None, "a").unwrap(), Cow::Borrowed("d".as_bytes()));
+    /// ```
+    ///
+    /// Consider the `multi` variants of the methods instead, if you want to work
+    /// with all values instead.
+    ///
+    /// [`ResolvedGitConfig`]: crate::file::ResolvedGitConfig
+    /// [`raw_value`]: Self::raw_value
+    #[derive(PartialEq, Eq, Clone, Debug, Default)]
+    pub struct File<'event> {
+        /// The list of events that occur before an actual section. Since a
+        /// `git-config` file prohibits global values, this vec is limited to only
+        /// comment, newline, and whitespace events.
+        pub(crate) frontmatter_events: SectionBody<'event>,
+        /// Section name and subsection name to section id lookup tree. This is
+        /// effectively a n-tree (opposed to a binary tree) that can have a height
+        /// of at most three (including an implicit root node).
+        pub(crate) section_lookup_tree: HashMap<SectionHeaderName<'event>, Vec<LookupTreeNode<'event>>>,
+        /// SectionId to section mapping. The value of this HashMap contains actual
+        /// events.
+        ///
+        /// This indirection with the SectionId as the key is critical to flexibly
+        /// supporting `git-config` sections, as duplicated keys are permitted.
+        pub(crate) sections: HashMap<SectionId, SectionBody<'event>>,
+        pub(crate) section_headers: HashMap<SectionId, ParsedSectionHeader<'event>>,
+        /// Internal monotonically increasing counter for section ids.
+        pub(crate) section_id_counter: usize,
+        /// Section order for output ordering.
+        pub(crate) section_order: VecDeque<SectionId>,
     }
 }
-
-mod permissions {
-    use crate::Permissions;
-
-    impl Permissions {
-        /// Allow everything which usually relates to a fully trusted environment
-        pub fn all() -> Self {
-            use git_sec::Permission::*;
-            Permissions {
-                system: Allow,
-                global: Allow,
-                user: Allow,
-                repository: Allow,
-                worktree: Allow,
-                env: Allow,
-                includes: Allow,
-            }
-        }
-
-        /// If in doubt, this configuration can be used to safely load configuration from sources which is usually trusted,
-        /// that is system and user configuration. Do load any configuration that isn't trusted as it's now owned by the current user.
-        pub fn secure() -> Self {
-            use git_sec::Permission::*;
-            Permissions {
-                system: Allow,
-                global: Allow,
-                user: Allow,
-                repository: Deny,
-                worktree: Deny,
-                env: Allow,
-                includes: Deny,
-            }
-        }
-    }
-}
+pub use types::File;
 
 /// Configure security relevant options when loading a git configuration.
 #[derive(Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Debug, Hash)]

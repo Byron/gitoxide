@@ -5,7 +5,8 @@ use std::path::{Path, PathBuf};
 
 use crate::git_config::cow_str;
 use crate::git_config::from_paths::escape_backslashes;
-use git_config::file::{from_paths, GitConfig};
+use git_config::file::from_paths;
+use git_config::File;
 use git_path::{create_symlink, CanonicalizedTempDir};
 use git_ref::FullName;
 use tempfile::tempdir;
@@ -181,7 +182,7 @@ fn girdir_and_onbranch() {
             ..Default::default()
         };
 
-        let config = GitConfig::from_paths(Some(&config_path), options).unwrap();
+        let config = File::from_paths(Some(&config_path), options).unwrap();
         assert_eq!(
             config.string("core", None, "x"),
             Some(cow_str("branch-override")),
@@ -191,7 +192,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = Path::new("/a/b/c/d/.git");
-        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
         assert_eq!(
             config.string("core", None, "i"),
             Some(cow_str("case-i-match")),
@@ -201,7 +202,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = Path::new("/a/b/c/d/.git");
-        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
         assert_eq!(
             config.integer("core", None, "c"),
             Some(Ok(1)),
@@ -211,7 +212,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = config_path.parent().unwrap().join("p").join("q").join(".git");
-        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "b"),
             Some(cow_str("relative-dot-slash-path")),
@@ -221,7 +222,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = config_path.join("z").join("y").join("b").join(".git");
-        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "a"),
             Some(cow_str("relative-path")),
@@ -231,7 +232,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = PathBuf::from("C:\\w\\.git".to_string());
-        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "a"),
             Some(cow_str("relative-dot-git")),
@@ -241,7 +242,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = dirs::home_dir().unwrap().join(".git");
-        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.strings("core", None, "b"),
             Some(vec![cow_str("1"), cow_str("home-dot-git")]),
@@ -251,7 +252,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = dirs::home_dir().unwrap().join("c").join("d").join(".git");
-        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "b"),
             Some(cow_str("home-trailing-slash")),
@@ -261,7 +262,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = dir.path().join("x").join("a").join(".git");
-        let config = GitConfig::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "b"),
             Some(cow_str("relative-dot-git-2")), // TODO: figure out what's the difference to the non -2 version
@@ -271,7 +272,7 @@ fn girdir_and_onbranch() {
 
     {
         let dir = PathBuf::from("/e/x/y/.git");
-        let config = GitConfig::from_paths(Some(config_path.as_path()), options_with_git_dir(&dir)).unwrap();
+        let config = File::from_paths(Some(config_path.as_path()), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "b"),
             Some(cow_str("absolute-path")),
@@ -286,7 +287,7 @@ fn girdir_and_onbranch() {
             &PathBuf::from(&format!("{}.git", tmp_dir_m_n_with_slash)),
         );
         let dir = PathBuf::from(&symlink_outside_tempdir_m_n);
-        let config = GitConfig::from_paths(Some(config_path), options_with_git_dir(&dir)).unwrap();
+        let config = File::from_paths(Some(config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "t"),
             Some(cow_str("absolute-path-with-symlink")),

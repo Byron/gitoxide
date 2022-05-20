@@ -1,8 +1,8 @@
 pub(crate) mod function {
     use crate::file::git_config::from_paths;
-    use crate::file::{GitConfig, SectionBody};
+    use crate::file::SectionBody;
     use crate::parser::{Key, ParsedSectionHeader};
-    use crate::values;
+    use crate::{values, File};
     use bstr::{BString, ByteSlice};
     use git_ref::Category;
     use std::borrow::Cow;
@@ -12,7 +12,7 @@ pub(crate) mod function {
     const DOT: &[u8] = b".";
 
     pub fn resolve_includes(
-        conf: &mut GitConfig,
+        conf: &mut File,
         config_path: Option<&std::path::Path>,
         options: from_paths::Options,
     ) -> Result<(), from_paths::Error> {
@@ -20,7 +20,7 @@ pub(crate) mod function {
     }
 
     fn resolve_includes_recursive(
-        target_config: &mut GitConfig,
+        target_config: &mut File,
         target_config_path: Option<&Path>,
         depth: u8,
         options: from_paths::Options,
@@ -61,7 +61,7 @@ pub(crate) mod function {
 
         dbg!(&paths_to_include);
         for config_path in paths_to_include {
-            let mut include_config = GitConfig::open(&config_path)?;
+            let mut include_config = File::open(&config_path)?;
             resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
             target_config.append(include_config);
         }
@@ -172,7 +172,7 @@ pub(crate) mod function {
     }
 
     fn get_include_if_sections<'a>(
-        target_config: &'a GitConfig<'_>,
+        target_config: &'a File<'_>,
     ) -> Vec<(&'a ParsedSectionHeader<'a>, &'a SectionBody<'a>)> {
         // TODO can we have same values in section_headers.values()?
         // ADD test

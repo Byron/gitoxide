@@ -21,7 +21,8 @@ pub enum Error {
 
 pub mod functions {
     use crate::file::from_env::Error;
-    use crate::file::{from_paths, resolve_includes, GitConfig};
+    use crate::file::{from_paths, resolve_includes};
+    use crate::File;
     use std::borrow::Cow;
     use std::path::PathBuf;
 
@@ -29,7 +30,7 @@ pub mod functions {
     /// This is neither zero-alloc nor zero-copy.
     ///
     /// See <https://git-scm.com/docs/git-config#FILES> for details.
-    pub fn from_env_paths(options: from_paths::Options) -> Result<GitConfig, from_paths::Error> {
+    pub fn from_env_paths(options: from_paths::Options) -> Result<File, from_paths::Error> {
         use std::env;
 
         let mut paths = vec![];
@@ -64,7 +65,7 @@ pub mod functions {
             paths.push(PathBuf::from(git_dir).join("config"));
         }
 
-        GitConfig::from_paths(paths, options)
+        File::from_paths(paths, options)
     }
 
     /// Generates a config from the environment variables. This is neither
@@ -77,14 +78,14 @@ pub mod functions {
     /// there was an invalid key value pair.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_env(options: from_paths::Options) -> Result<Option<GitConfig>, Error> {
+    pub fn from_env(options: from_paths::Options) -> Result<Option<File>, Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
             Ok(v) => v.parse().map_err(|_| Error::ParseError { input: v })?,
             Err(_) => return Ok(None),
         };
 
-        let mut config = GitConfig::new();
+        let mut config = File::new();
         for i in 0..count {
             let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| Error::InvalidKeyId { key_id: i })?;
             let value = env::var_os(format!("GIT_CONFIG_VALUE_{}", i)).ok_or(Error::InvalidValueId { value_id: i })?;

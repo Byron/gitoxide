@@ -141,7 +141,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
 // Internal methods that may require exact indices for faster operations.
 impl<'borrow, 'event> MutableSection<'borrow, 'event> {
-    pub(super) fn new(section: &'borrow mut SectionBody<'event>) -> Self {
+    pub(crate) fn new(section: &'borrow mut SectionBody<'event>) -> Self {
         Self {
             section,
             implicit_newline: true,
@@ -149,7 +149,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         }
     }
 
-    pub(super) fn get<'key>(
+    pub(crate) fn get<'key>(
         &self,
         key: &Key<'key>,
         start: Index,
@@ -187,11 +187,11 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
             .ok_or(lookup::existing::Error::KeyMissing)
     }
 
-    pub(super) fn delete(&mut self, start: Index, end: Index) {
+    pub(crate) fn delete(&mut self, start: Index, end: Index) {
         self.section.0.drain(start.0..=end.0);
     }
 
-    pub(super) fn set_internal(&mut self, index: Index, key: Key<'event>, value: Vec<u8>) {
+    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: Vec<u8>) {
         self.section.0.insert(index.0, Event::Value(Cow::Owned(value)));
         self.section.0.insert(index.0, Event::KeyValueSeparator);
         self.section.0.insert(index.0, Event::Key(key));
@@ -212,16 +212,16 @@ impl<'event> Deref for MutableSection<'_, 'event> {
 pub struct SectionBody<'event>(Vec<Event<'event>>);
 
 impl<'event> SectionBody<'event> {
-    pub(super) fn as_ref(&self) -> &[Event<'_>] {
+    pub(crate) fn as_ref(&self) -> &[Event<'_>] {
         &self.0
     }
 
-    pub(super) fn as_mut(&mut self) -> &mut Vec<Event<'event>> {
+    pub(crate) fn as_mut(&mut self) -> &mut Vec<Event<'event>> {
         &mut self.0
     }
 
     /// Constructs a new empty section body.
-    pub(super) fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 

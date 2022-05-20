@@ -1,13 +1,13 @@
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
 use git_config::{
-    file::GitConfig,
     values::{Boolean, Bytes, TrueVariant},
+    File,
 };
 
 #[test]
 fn single_section() -> Result<(), Box<dyn Error>> {
-    let config = GitConfig::try_from("[core]\na=b\nc").unwrap();
+    let config = File::try_from("[core]\na=b\nc").unwrap();
     let first_value: Bytes = config.value("core", None, "a")?;
     let second_value: Boolean = config.value("core", None, "c")?;
 
@@ -35,7 +35,7 @@ fn sections_by_name() {
         fetch = +refs/heads/*:refs/remotes/origin/*
     "#;
 
-    let config = GitConfig::try_from(config).unwrap();
+    let config = File::try_from(config).unwrap();
     let value = config.value::<Bytes>("remote", Some("origin"), "url").unwrap();
     assert_eq!(
         value,

@@ -1,10 +1,10 @@
 use std::{borrow::Cow, convert::TryFrom};
 
-use git_config::file::GitConfig;
+use git_config::File;
 use git_testtools::fixture_path;
 
-fn init_config() -> GitConfig<'static> {
-    GitConfig::open(fixture_path("multi-core.txt")).unwrap()
+fn init_config() -> File<'static> {
+    File::open(fixture_path("multi-core.txt")).unwrap()
 }
 
 #[test]
@@ -84,7 +84,7 @@ fn delete_all() {
 
 #[test]
 fn partial_values_are_supported() {
-    let mut git_config = GitConfig::try_from(
+    let mut git_config = File::try_from(
         r#"[core]
             a=b\
 "100"

@@ -1,10 +1,11 @@
 use std::{borrow::Cow, collections::HashMap, convert::TryFrom, path::Path};
 
-use super::{GitConfig, SectionId};
+use super::SectionId;
 use crate::{
     file::LookupTreeNode,
     parser,
     parser::{Key, SectionHeaderName},
+    File,
 };
 
 enum ResolvedTreeNode<'event> {
@@ -32,14 +33,14 @@ impl ResolvedGitConfig<'static> {
     /// This returns an error if an IO error occurs, or if the file is not a
     /// valid `git-config` file.
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, parser::ParserOrIoError<'static>> {
-        GitConfig::open(path.as_ref()).map(Self::from)
+        File::open(path.as_ref()).map(Self::from)
     }
 }
 
 impl<'data> ResolvedGitConfig<'data> {
     /// Resolves a given [`GitConfig`].
     #[must_use]
-    pub fn from_config(config: GitConfig<'data>) -> Self {
+    pub fn from_config(config: File<'data>) -> Self {
         // Map a <SectionId, SectionBody> into <SectionId, HashMap<Key, Cow<[u8]>>>.
         let sections: HashMap<_, _> = config
             .sections
@@ -111,8 +112,8 @@ impl TryFrom<&Path> for ResolvedGitConfig<'static> {
     }
 }
 
-impl<'data> From<GitConfig<'data>> for ResolvedGitConfig<'data> {
-    fn from(config: GitConfig<'data>) -> Self {
+impl<'data> From<File<'data>> for ResolvedGitConfig<'data> {
+    fn from(config: File<'data>) -> Self {
         Self::from_config(config)
     }
 }

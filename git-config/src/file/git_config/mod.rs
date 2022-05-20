@@ -5,13 +5,7 @@ pub use from_env::functions::*;
 pub use resolve_includes::function::resolve_includes;
 
 use bstr::BStr;
-use std::{
-    borrow::Cow,
-    collections::{HashMap, VecDeque},
-    convert::TryFrom,
-    fmt::Display,
-    path::Path,
-};
+use std::{borrow::Cow, collections::HashMap, convert::TryFrom, fmt::Display, path::Path};
 
 use crate::{
     file::{
@@ -24,7 +18,7 @@ use crate::{
         parse_from_bytes, parse_from_path, parse_from_str, Error, Event, Key, ParsedSectionHeader, Parser,
         SectionHeaderName,
     },
-    value, values,
+    value, values, File,
 };
 
 /// The section ID is a monotonically increasing ID used to refer to sections.
@@ -39,92 +33,19 @@ use crate::{
 /// words, it's possible that a section may have an ID of 3 but the next section
 /// has an ID of 5.
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
-pub(super) struct SectionId(usize);
+pub(crate) struct SectionId(usize);
 
 /// Internal data structure for the section id lookup tree used by
 /// [`GitConfig`]. Note that order in Vec matters as it represents the order
 /// of section ids with the matched section and name, and is used for precedence
 /// management.
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub(super) enum LookupTreeNode<'a> {
+pub(crate) enum LookupTreeNode<'a> {
     Terminal(Vec<SectionId>),
     NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
 }
 
-/// High level `git-config` reader and writer.
-///
-/// This is the full-featured implementation that can deserialize, serialize,
-/// and edit `git-config` files without loss of whitespace or comments. As a
-/// result, it's lot more complex than it's read-only variant,
-/// [`ResolvedGitConfig`] that exposes a [`HashMap`]-like interface. Users that
-/// only need to read `git-config` files should use that instead.
-///
-/// Internally, this uses various acceleration data structures to improve
-/// performance of the typical usage behavior of many lookups and relatively
-/// fewer insertions.
-///
-/// # Multivar behavior
-///
-/// `git` is flexible enough to allow users to set a key multiple times in
-/// any number of identically named sections. When this is the case, the key
-/// is known as a "multivar". In this case, `raw_value` follows the
-/// "last one wins" approach that `git-config` internally uses for multivar
-/// resolution.
-///
-/// Concretely, the following config has a multivar, `a`, with the values
-/// of `b`, `c`, and `d`, while `e` is a single variable with the value
-/// `f g h`.
-///
-/// ```text
-/// [core]
-///     a = b
-///     a = c
-/// [core]
-///     a = d
-///     e = f g h
-/// ```
-///
-/// Calling methods that fetch or set only one value (such as [`raw_value`])
-/// key `a` with the above config will fetch `d` or replace `d`, since the last
-/// valid config key/value pair is `a = d`:
-///
-/// ```
-/// # use git_config::file::GitConfig;
-/// # use std::borrow::Cow;
-/// # use std::convert::TryFrom;
-/// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-/// assert_eq!(git_config.raw_value("core", None, "a").unwrap(), Cow::Borrowed("d".as_bytes()));
-/// ```
-///
-/// Consider the `multi` variants of the methods instead, if you want to work
-/// with all values instead.
-///
-/// [`ResolvedGitConfig`]: crate::file::ResolvedGitConfig
-/// [`raw_value`]: Self::raw_value
-#[derive(PartialEq, Eq, Clone, Debug, Default)]
-pub struct GitConfig<'event> {
-    /// The list of events that occur before an actual section. Since a
-    /// `git-config` file prohibits global values, this vec is limited to only
-    /// comment, newline, and whitespace events.
-    frontmatter_events: SectionBody<'event>,
-    /// Section name and subsection name to section id lookup tree. This is
-    /// effectively a n-tree (opposed to a binary tree) that can have a height
-    /// of at most three (including an implicit root node).
-    pub(super) section_lookup_tree: HashMap<SectionHeaderName<'event>, Vec<LookupTreeNode<'event>>>,
-    /// SectionId to section mapping. The value of this HashMap contains actual
-    /// events.
-    ///
-    /// This indirection with the SectionId as the key is critical to flexibly
-    /// supporting `git-config` sections, as duplicated keys are permitted.
-    pub(super) sections: HashMap<SectionId, SectionBody<'event>>,
-    section_headers: HashMap<SectionId, ParsedSectionHeader<'event>>,
-    /// Internal monotonically increasing counter for section ids.
-    section_id_counter: usize,
-    /// Section order for output ordering.
-    section_order: VecDeque<SectionId>,
-}
-
-impl<'event> GitConfig<'event> {
+impl<'event> File<'event> {
     /// Constructs an empty `git-config` file.
     #[must_use]
     pub fn new() -> Self {
@@ -194,7 +115,7 @@ impl<'event> GitConfig<'event> {
     /// # Examples
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use git_config::values::{Integer, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
@@ -203,7 +124,7 @@ impl<'event> GitConfig<'event> {
     ///         a = 10k
     ///         c
     /// "#;
-    /// let git_config = GitConfig::try_from(config)?;
+    /// let git_config = git_config::File::try_from(config)?;
     /// // You can either use the turbofish to determine the type...
     /// let a_value = git_config.value::<Integer>("core", None, "a")?;
     /// // ... or explicitly declare the type to avoid the turbofish
@@ -311,7 +232,7 @@ impl<'event> GitConfig<'event> {
     /// # Examples
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use git_config::values::{Integer, Bytes, Boolean, TrueVariant};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
@@ -323,7 +244,7 @@ impl<'event> GitConfig<'event> {
     ///         a
     ///         a = false
     /// "#;
-    /// let git_config = GitConfig::try_from(config).unwrap();
+    /// let git_config = git_config::File::try_from(config).unwrap();
     /// // You can either use the turbofish to determine the type...
     /// let a_value = git_config.multi_value::<Boolean>("core", None, "a")?;
     /// assert_eq!(
@@ -415,7 +336,7 @@ impl<'event> GitConfig<'event> {
     /// Calling this method will yield all sections:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use git_config::values::{Integer, Boolean, TrueVariant};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
@@ -427,7 +348,7 @@ impl<'event> GitConfig<'event> {
     ///     [core "apple"]
     ///         e = f
     /// "#;
-    /// let git_config = GitConfig::try_from(config).unwrap();
+    /// let git_config = git_config::File::try_from(config).unwrap();
     /// assert_eq!(git_config.sections_by_name("core").len(), 3);
     /// ```
     #[must_use]
@@ -459,7 +380,7 @@ impl<'event> GitConfig<'event> {
     /// Calling this method will yield all section bodies and their header:
     ///
     /// ```rust
-    /// use git_config::file::{GitConfig};
+    /// use git_config::File;
     /// use git_config::parser::Key;
     /// use std::borrow::Cow;
     /// use std::convert::TryFrom;
@@ -471,7 +392,7 @@ impl<'event> GitConfig<'event> {
     /// [url "ssh://git@bitbucket.org"]
     ///    insteadOf = https://bitbucket.org/
     /// "#;
-    /// let config = GitConfig::try_from(input).unwrap();
+    /// let config = git_config::File::try_from(input).unwrap();
     /// let url = config.sections_by_name_with_header("url");
     /// assert_eq!(url.len(), 2);
     ///
@@ -518,9 +439,9 @@ impl<'event> GitConfig<'event> {
     /// Creating a new empty section:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use std::convert::TryFrom;
-    /// let mut git_config = GitConfig::new();
+    /// let mut git_config = git_config::File::new();
     /// let _section = git_config.new_section("hello", Some("world".into()));
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n");
     /// ```
@@ -528,9 +449,9 @@ impl<'event> GitConfig<'event> {
     /// Creating a new empty section and adding values to it:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use std::convert::TryFrom;
-    /// let mut git_config = GitConfig::new();
+    /// let mut git_config = git_config::File::new();
     /// let mut section = git_config.new_section("hello", Some("world".into()));
     /// section.push("a".into(), "b".as_bytes().into());
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n");
@@ -556,9 +477,9 @@ impl<'event> GitConfig<'event> {
     /// Creating and removing a section:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use std::convert::TryFrom;
-    /// let mut git_config = GitConfig::try_from(
+    /// let mut git_config = git_config::File::try_from(
     /// r#"[hello "world"]
     ///     some-value = 4
     /// "#).unwrap();
@@ -570,9 +491,9 @@ impl<'event> GitConfig<'event> {
     /// Precedence example for removing sections with the same name:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use std::convert::TryFrom;
-    /// let mut git_config = GitConfig::try_from(
+    /// let mut git_config = git_config::File::try_from(
     /// r#"[hello "world"]
     ///     some-value = 4
     /// [hello "world"]
@@ -675,7 +596,7 @@ impl<'event> GitConfig<'event> {
 ///
 /// These functions are the raw value API. Instead of returning Rust structures,
 /// these functions return bytes which may or may not be owned.
-impl<'event> GitConfig<'event> {
+impl<'event> File<'event> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
@@ -800,10 +721,10 @@ impl<'event> GitConfig<'event> {
     /// Attempting to get all values of `a` yields the following:
     ///
     /// ```
-    /// # use git_config::file::GitConfig;
+    /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
-    /// # let git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// # let git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
     ///     git_config.raw_multi_value("core", None, "a").unwrap(),
     ///     vec![
@@ -895,10 +816,10 @@ impl<'event> GitConfig<'event> {
     /// Attempting to get all values of `a` yields the following:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
-    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
     ///     git_config.raw_multi_value("core", None, "a")?,
     ///     vec![
@@ -1002,10 +923,10 @@ impl<'event> GitConfig<'event> {
     /// Setting a new value to the key `core.a` will yield the following:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
-    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// git_config.set_raw_value("core", None, "a", vec![b'e'])?;
     /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::Borrowed(b"e"));
     /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -1054,10 +975,10 @@ impl<'event> GitConfig<'event> {
     /// Setting an equal number of values:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
-    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values: Vec<Cow<'_, [u8]>> = vec![
     ///     Cow::Borrowed(b"x"),
     ///     Cow::Borrowed(b"y"),
@@ -1074,10 +995,10 @@ impl<'event> GitConfig<'event> {
     /// Setting less than the number of present values sets the first ones found:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
-    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values: Vec<Cow<'_, [u8]>> = vec![
     ///     Cow::Borrowed(b"x"),
     ///     Cow::Borrowed(b"y"),
@@ -1092,10 +1013,10 @@ impl<'event> GitConfig<'event> {
     /// Setting more than the number of present values discards the rest:
     ///
     /// ```
-    /// # use git_config::file::{GitConfig};
+    /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
-    /// # let mut git_config = GitConfig::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
+    /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values: Vec<Cow<'_, [u8]>> = vec![
     ///     Cow::Borrowed(b"x"),
     ///     Cow::Borrowed(b"y"),
@@ -1125,7 +1046,7 @@ impl<'event> GitConfig<'event> {
 }
 
 /// Private helper functions
-impl<'event> GitConfig<'event> {
+impl<'event> File<'event> {
     /// Adds a new section to the config file.
     fn push_section_internal(
         &mut self,
@@ -1229,43 +1150,43 @@ impl<'event> GitConfig<'event> {
     }
 }
 
-impl<'a> TryFrom<&'a str> for GitConfig<'a> {
+impl<'a> TryFrom<&'a str> for File<'a> {
     type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided string into a
     /// [`GitConfig`]. See [`parse_from_str`] for more information.
     ///
     /// [`parse_from_str`]: crate::parser::parse_from_str
-    fn try_from(s: &'a str) -> Result<GitConfig<'a>, Self::Error> {
+    fn try_from(s: &'a str) -> Result<File<'a>, Self::Error> {
         parse_from_str(s).map(Self::from)
     }
 }
 
-impl<'a> TryFrom<&'a [u8]> for GitConfig<'a> {
+impl<'a> TryFrom<&'a [u8]> for File<'a> {
     type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
     //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
-    fn try_from(value: &'a [u8]) -> Result<GitConfig<'a>, Self::Error> {
-        parse_from_bytes(value).map(GitConfig::from)
+    fn try_from(value: &'a [u8]) -> Result<File<'a>, Self::Error> {
+        parse_from_bytes(value).map(File::from)
     }
 }
 
-impl<'a> TryFrom<&'a Vec<u8>> for GitConfig<'a> {
+impl<'a> TryFrom<&'a Vec<u8>> for File<'a> {
     type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
     //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
-    fn try_from(value: &'a Vec<u8>) -> Result<GitConfig<'a>, Self::Error> {
-        parse_from_bytes(value).map(GitConfig::from)
+    fn try_from(value: &'a Vec<u8>) -> Result<File<'a>, Self::Error> {
+        parse_from_bytes(value).map(File::from)
     }
 }
 
-impl<'a> From<Parser<'a>> for GitConfig<'a> {
+impl<'a> From<Parser<'a>> for File<'a> {
     fn from(parser: Parser<'a>) -> Self {
         let mut new_self = Self::default();
 
@@ -1308,14 +1229,14 @@ impl<'a> From<Parser<'a>> for GitConfig<'a> {
     }
 }
 
-impl From<GitConfig<'_>> for Vec<u8> {
-    fn from(c: GitConfig) -> Self {
+impl From<File<'_>> for Vec<u8> {
+    fn from(c: File) -> Self {
         c.into()
     }
 }
 
-impl From<&GitConfig<'_>> for Vec<u8> {
-    fn from(config: &GitConfig) -> Self {
+impl From<&File<'_>> for Vec<u8> {
+    fn from(config: &File) -> Self {
         let mut value = Self::new();
 
         for events in config.frontmatter_events.as_ref() {
@@ -1345,7 +1266,7 @@ impl From<&GitConfig<'_>> for Vec<u8> {
     }
 }
 
-impl Display for GitConfig<'_> {
+impl Display for File<'_> {
     /// Note that this is a best-effort attempt at printing a `GitConfig`. If
     /// there are non UTF-8 values in your config, this will _NOT_ render as
     /// read.
@@ -1367,7 +1288,7 @@ impl Display for GitConfig<'_> {
 
 #[cfg(test)]
 mod from_parser {
-    use super::{Cow, Event, GitConfig, HashMap, LookupTreeNode, SectionBody, SectionId, TryFrom};
+    use super::{Cow, Event, File, HashMap, LookupTreeNode, SectionBody, SectionId, TryFrom};
     use crate::{
         parser::SectionHeaderName,
         test_util::{name_event, newline_event, section_header, value_event},
@@ -1375,7 +1296,7 @@ mod from_parser {
 
     #[test]
     fn parse_empty() {
-        let config = GitConfig::try_from("").unwrap();
+        let config = File::try_from("").unwrap();
         assert!(config.section_headers.is_empty());
         assert_eq!(config.section_id_counter, 0);
         assert!(config.section_lookup_tree.is_empty());
@@ -1385,7 +1306,7 @@ mod from_parser {
 
     #[test]
     fn parse_single_section() {
-        let mut config = GitConfig::try_from("[core]\na=b\nc=d").unwrap();
+        let mut config = File::try_from("[core]\na=b\nc=d").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
             map.insert(SectionId(0), section_header("core", None));
@@ -1425,7 +1346,7 @@ mod from_parser {
 
     #[test]
     fn parse_single_subsection() {
-        let mut config = GitConfig::try_from("[core.sub]\na=b\nc=d").unwrap();
+        let mut config = File::try_from("[core.sub]\na=b\nc=d").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
             map.insert(SectionId(0), section_header("core", (".", "sub")));
@@ -1467,7 +1388,7 @@ mod from_parser {
 
     #[test]
     fn parse_multiple_sections() {
-        let mut config = GitConfig::try_from("[core]\na=b\nc=d\n[other]e=f").unwrap();
+        let mut config = File::try_from("[core]\na=b\nc=d\n[other]e=f").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
             map.insert(SectionId(0), section_header("core", None));
@@ -1517,7 +1438,7 @@ mod from_parser {
 
     #[test]
     fn parse_multiple_duplicate_sections() {
-        let mut config = GitConfig::try_from("[core]\na=b\nc=d\n[core]e=f").unwrap();
+        let mut config = File::try_from("[core]\na=b\nc=d\n[core]e=f").unwrap();
         let expected_separators = {
             let mut map = HashMap::new();
             map.insert(SectionId(0), section_header("core", None));
