@@ -102,7 +102,7 @@ impl<'a> File<'a> {
         &mut self,
         section_name: &'lookup str,
         subsection_name: impl Into<Option<&'lookup str>>,
-    ) -> Option<SectionBody> {
+    ) -> Option<SectionBody<'_>> {
         let id = self
             .section_ids_by_name_and_subname(section_name, subsection_name.into())
             .ok()?

@@ -11,18 +11,18 @@ use std::path::{Path, PathBuf};
 const DOT: &[u8] = b".";
 
 pub(crate) fn resolve_includes(
-    conf: &mut File,
+    conf: &mut File<'_>,
     config_path: Option<&std::path::Path>,
-    options: from_paths::Options,
+    options: from_paths::Options<'_>,
 ) -> Result<(), from_paths::Error> {
     resolve_includes_recursive(conf, config_path, 0, options)
 }
 
 fn resolve_includes_recursive(
-    target_config: &mut File,
+    target_config: &mut File<'_>,
     target_config_path: Option<&Path>,
     depth: u8,
-    options: from_paths::Options,
+    options: from_paths::Options<'_>,
 ) -> Result<(), from_paths::Error> {
     if depth == options.max_depth {
         return if options.error_on_max_depth_exceeded {
@@ -37,7 +37,7 @@ fn resolve_includes_recursive(
     let mut paths_to_include = Vec::new();
 
     let mut include_paths = target_config
-        .multi_value::<values::Path>("include", None, "path")
+        .multi_value::<values::Path<'_>>("include", None, "path")
         .unwrap_or_default();
 
     for (header, body) in get_include_if_sections(target_config) {
@@ -70,7 +70,7 @@ fn resolve_includes_recursive(
 fn include_condition_match(
     condition: &str,
     target_config_path: Option<&Path>,
-    options: from_paths::Options,
+    options: from_paths::Options<'_>,
 ) -> Option<()> {
     let (prefix, condition) = condition.split_once(':')?;
     match prefix {
@@ -103,7 +103,12 @@ fn include_condition_match(
     }
 }
 
-fn is_match(target_config_path: &Option<&Path>, options: from_paths::Options, git_dir: &Path, condition: &str) -> bool {
+fn is_match(
+    target_config_path: &Option<&Path>,
+    options: from_paths::Options<'_>,
+    git_dir: &Path,
+    condition: &str,
+) -> bool {
     if condition.contains('\\') {
         return false;
     }
@@ -184,9 +189,9 @@ fn get_include_if_sections<'a>(target_config: &'a File<'_>) -> Vec<(&'a ParsedSe
 }
 
 fn resolve(
-    path: values::Path,
+    path: values::Path<'_>,
     target_config_path: Option<&Path>,
-    options: from_paths::Options,
+    options: from_paths::Options<'_>,
 ) -> Result<PathBuf, from_paths::Error> {
     let path = path.interpolate(options.git_install_dir)?;
     let path: PathBuf = if path.is_relative() {

@@ -30,7 +30,7 @@ pub(crate) mod functions {
     /// This is neither zero-alloc nor zero-copy.
     ///
     /// See <https://git-scm.com/docs/git-config#FILES> for details.
-    pub fn from_env_paths(options: from_paths::Options) -> Result<File, from_paths::Error> {
+    pub fn from_env_paths(options: from_paths::Options<'_>) -> Result<File<'_>, from_paths::Error> {
         use std::env;
 
         let mut paths = vec![];
@@ -78,7 +78,7 @@ pub(crate) mod functions {
     /// there was an invalid key value pair.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_env(options: from_paths::Options) -> Result<Option<File>, Error> {
+    pub fn from_env(options: from_paths::Options<'_>) -> Result<Option<File<'_>>, Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
             Ok(v) => v.parse().map_err(|_| Error::ParseError { input: v })?,

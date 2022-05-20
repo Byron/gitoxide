@@ -31,7 +31,7 @@ impl<'a> File<'a> {
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
     pub fn from_paths(
         paths: impl IntoIterator<Item = impl AsRef<Path>>,
-        options: from_paths::Options,
+        options: from_paths::Options<'_>,
     ) -> Result<Self, from_paths::Error> {
         let mut target = Self::new();
         for path in paths {

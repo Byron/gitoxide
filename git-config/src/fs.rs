@@ -27,7 +27,7 @@ pub enum ConfigSource {
 
     Repository,
     // Worktree(&'a Path),
-    /// Config values parsed from the environment.
+    /// Config<'_> values parsed from the environment.
     Env,
     Cli,
 }
@@ -95,7 +95,7 @@ impl ConfigBuilder {
 
     /// Builds a config, ignoring any failed configuration files.
     #[must_use]
-    pub fn build(&self) -> Config {
+    pub fn build(&self) -> Config<'_> {
         let system_conf = if self.no_system { None } else { todo!() };
 
         let global_conf = {
@@ -132,25 +132,25 @@ impl ConfigBuilder {
     /// does not exist. This is only recommended when you have a very controlled
     /// system state. Otherwise, this will likely fail more often than you'd
     /// like.
-    pub fn try_build(&self) -> Result<Config, ()> {
+    pub fn try_build(&self) -> Result<Config<'_>, ()> {
         todo!()
     }
 }
 
-pub struct Config<'config> {
-    system_conf: Option<File<'config>>,
-    global_conf: Option<File<'config>>,
-    user_conf: Option<File<'config>>,
-    repository_conf: Option<File<'config>>,
-    worktree_conf: Option<File<'config>>,
-    env_conf: Option<File<'config>>,
-    cli_conf: Option<File<'config>>,
+pub struct Config<'a> {
+    system_conf: Option<File<'a>>,
+    global_conf: Option<File<'a>>,
+    user_conf: Option<File<'a>>,
+    repository_conf: Option<File<'a>>,
+    worktree_conf: Option<File<'a>>,
+    env_conf: Option<File<'a>>,
+    cli_conf: Option<File<'a>>,
 }
 
-impl<'config> Config<'config> {
+impl<'a> Config<'a> {
     #[must_use]
-    pub fn value<T: TryFrom<Cow<'config, [u8]>>>(
-        &'config self,
+    pub fn value<T: TryFrom<Cow<'a, [u8]>>>(
+        &'a self,
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
@@ -159,8 +159,8 @@ impl<'config> Config<'config> {
             .map(|(value, _)| value)
     }
 
-    fn value_with_source<T: TryFrom<Cow<'config, [u8]>>>(
-        &'config self,
+    fn value_with_source<T: TryFrom<Cow<'a, [u8]>>>(
+        &'a self,
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
@@ -178,8 +178,8 @@ impl<'config> Config<'config> {
         None
     }
 
-    pub fn try_value<'lookup, T: TryFrom<Cow<'config, [u8]>>>(
-        &'config self,
+    pub fn try_value<'lookup, T: TryFrom<Cow<'a, [u8]>>>(
+        &'a self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
@@ -192,8 +192,8 @@ impl<'config> Config<'config> {
     /// if the key was not found. On a successful parse, the value will be
     /// returned as well as the source location. This respects the priority of
     /// the various configuration files.
-    pub fn try_value_with_source<'lookup, T: TryFrom<Cow<'config, [u8]>>>(
-        &'config self,
+    pub fn try_value_with_source<'lookup, T: TryFrom<Cow<'a, [u8]>>>(
+        &'a self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
@@ -210,7 +210,7 @@ impl<'config> Config<'config> {
     }
 
     /// Returns a mapping from [`File`] to [`ConfigSource`]
-    const fn mapping(&self) -> [(&Option<File>, ConfigSource); 6] {
+    const fn mapping(&self) -> [(&Option<File<'_>>, ConfigSource); 6] {
         [
             (&self.cli_conf, ConfigSource::Cli),
             (&self.env_conf, ConfigSource::Env),
@@ -223,11 +223,11 @@ impl<'config> Config<'config> {
 }
 
 /// Lower-level interface for directly accessing a
-impl<'config> Config<'config> {
+impl<'a> Config<'a> {
     /// Retrieves the underlying [`File`] object, if one was found during
     /// initialization.
     #[must_use]
-    pub fn config(&self, source: ConfigSource) -> Option<&File<'config>> {
+    pub fn config(&self, source: ConfigSource) -> Option<&File<'a>> {
         match source {
             ConfigSource::System => self.system_conf.as_ref(),
             ConfigSource::Global => self.global_conf.as_ref(),
@@ -241,7 +241,7 @@ impl<'config> Config<'config> {
     /// Retrieves the underlying [`File`] object as a mutable reference,
     /// if one was found during initialization.
     #[must_use]
-    pub fn config_mut(&mut self, source: ConfigSource) -> Option<&mut File<'config>> {
+    pub fn config_mut(&mut self, source: ConfigSource) -> Option<&mut File<'a>> {
         match source {
             ConfigSource::System => self.system_conf.as_mut(),
             ConfigSource::Global => self.global_conf.as_mut(),

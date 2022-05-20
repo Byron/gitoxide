@@ -46,7 +46,7 @@ impl<'data> ResolvedGitConfig<'data> {
             .sections
             .into_iter()
             .map(|(key, section_body)| {
-                let mut mapping: HashMap<Key, Cow<[u8]>> = HashMap::new();
+                let mut mapping: HashMap<Key<'_>, Cow<'_, [u8]>> = HashMap::new();
                 for (key, value) in section_body {
                     mapping.insert(key, value);
                 }
@@ -69,7 +69,7 @@ impl<'data> ResolvedGitConfig<'data> {
             (section_name, node)
         });
 
-        let mut resolved: HashMap<_, HashMap<Key, Cow<[u8]>>> = HashMap::new();
+        let mut resolved: HashMap<_, HashMap<Key<'_>, Cow<'_, [u8]>>> = HashMap::new();
 
         for (section_name, node) in section_name_to_node {
             for node in node {

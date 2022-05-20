@@ -41,7 +41,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
     /// Removes all events until a key value pair is removed. This will also
     /// remove the whitespace preceding the key value pair, if any is found.
-    pub fn pop(&mut self) -> Option<(Key, Cow<'event, [u8]>)> {
+    pub fn pop(&mut self) -> Option<(Key<'_>, Cow<'event, [u8]>)> {
         let mut values = vec![];
         // events are popped in reverse order
         while let Some(e) = self.section.0.pop() {
@@ -59,7 +59,13 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
                     return Some((
                         k,
-                        normalize_vec(values.into_iter().rev().flat_map(|v: Cow<[u8]>| v.to_vec()).collect()),
+                        normalize_vec(
+                            values
+                                .into_iter()
+                                .rev()
+                                .flat_map(|v: Cow<'_, [u8]>| v.to_vec())
+                                .collect(),
+                        ),
                     ));
                 }
                 Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => values.push(v),
@@ -232,7 +238,7 @@ impl<'event> SectionBody<'event> {
     // function.
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
-    pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
+    pub fn value(&self, key: &Key<'_>) -> Option<Cow<'event, [u8]>> {
         let range = self.value_range_by_key(key);
         if range.is_empty() {
             return None;
@@ -269,7 +275,7 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the key was not found, or if the conversion failed.
-    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<T, lookup::Error<T::Error>> {
+    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key<'_>) -> Result<T, lookup::Error<T::Error>> {
         T::try_from(self.value(key).ok_or(lookup::existing::Error::KeyMissing)?)
             .map_err(lookup::Error::FailedConversion)
     }
@@ -277,7 +283,7 @@ impl<'event> SectionBody<'event> {
     /// Retrieves all values that have the provided key name. This may return
     /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
-    pub fn values(&self, key: &Key) -> Vec<Cow<'event, [u8]>> {
+    pub fn values(&self, key: &Key<'_>) -> Vec<Cow<'event, [u8]>> {
         let mut values = vec![];
         let mut found_key = false;
         let mut partial_value = None;
@@ -317,7 +323,7 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the conversion failed.
-    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<Vec<T>, lookup::Error<T::Error>> {
+    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key<'_>) -> Result<Vec<T>, lookup::Error<T::Error>> {
         self.values(key)
             .into_iter()
             .map(T::try_from)
@@ -334,7 +340,7 @@ impl<'event> SectionBody<'event> {
 
     /// Checks if the section contains the provided key.
     #[must_use]
-    pub fn contains_key(&self, key: &Key) -> bool {
+    pub fn contains_key(&self, key: &Key<'_>) -> bool {
         self.0.iter().any(|e| {
             matches!(e,
                 Event::Key(k) if k == key

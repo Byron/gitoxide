@@ -85,13 +85,13 @@ impl<'a> From<Parser<'a>> for File<'a> {
 }
 
 impl From<File<'_>> for Vec<u8> {
-    fn from(c: File) -> Self {
+    fn from(c: File<'_>) -> Self {
         c.into()
     }
 }
 
 impl From<&File<'_>> for Vec<u8> {
-    fn from(config: &File) -> Self {
+    fn from(config: &File<'_>) -> Self {
         let mut value = Self::new();
 
         for events in config.frontmatter_events.as_ref() {

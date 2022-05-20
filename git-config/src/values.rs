@@ -444,7 +444,7 @@ impl Display for Boolean<'_> {
 }
 
 impl From<Boolean<'_>> for bool {
-    fn from(b: Boolean) -> Self {
+    fn from(b: Boolean<'_>) -> Self {
         match b {
             Boolean::True(_) => true,
             Boolean::False(_) => false,
@@ -453,7 +453,7 @@ impl From<Boolean<'_>> for bool {
 }
 
 impl<'a, 'b: 'a> From<&'b Boolean<'a>> for &'a [u8] {
-    fn from(b: &'b Boolean) -> Self {
+    fn from(b: &'b Boolean<'_>) -> Self {
         match b {
             Boolean::True(t) => t.into(),
             Boolean::False(f) => f.as_bytes(),
@@ -462,13 +462,13 @@ impl<'a, 'b: 'a> From<&'b Boolean<'a>> for &'a [u8] {
 }
 
 impl From<Boolean<'_>> for Vec<u8> {
-    fn from(b: Boolean) -> Self {
+    fn from(b: Boolean<'_>) -> Self {
         b.into()
     }
 }
 
 impl From<&Boolean<'_>> for Vec<u8> {
-    fn from(b: &Boolean) -> Self {
+    fn from(b: &Boolean<'_>) -> Self {
         b.to_string().into_bytes()
     }
 }

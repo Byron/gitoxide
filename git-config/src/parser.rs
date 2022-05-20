@@ -130,13 +130,13 @@ impl Display for Event<'_> {
 }
 
 impl From<Event<'_>> for Vec<u8> {
-    fn from(event: Event) -> Self {
+    fn from(event: Event<'_>) -> Self {
         event.into()
     }
 }
 
 impl From<&Event<'_>> for Vec<u8> {
-    fn from(event: &Event) -> Self {
+    fn from(event: &Event<'_>) -> Self {
         match event {
             Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.to_vec(),
             Event::Comment(e) => e.into(),
@@ -350,19 +350,19 @@ impl Display for ParsedSectionHeader<'_> {
 }
 
 impl From<ParsedSectionHeader<'_>> for Vec<u8> {
-    fn from(header: ParsedSectionHeader) -> Self {
+    fn from(header: ParsedSectionHeader<'_>) -> Self {
         header.into()
     }
 }
 
 impl From<&ParsedSectionHeader<'_>> for Vec<u8> {
-    fn from(header: &ParsedSectionHeader) -> Self {
+    fn from(header: &ParsedSectionHeader<'_>) -> Self {
         header.to_string().into_bytes()
     }
 }
 
 impl<'a> From<ParsedSectionHeader<'a>> for Event<'a> {
-    fn from(header: ParsedSectionHeader) -> Event {
+    fn from(header: ParsedSectionHeader<'_>) -> Event<'_> {
         Event::SectionHeader(header)
     }
 }
@@ -415,13 +415,13 @@ impl Display for ParsedComment<'_> {
 }
 
 impl From<ParsedComment<'_>> for Vec<u8> {
-    fn from(c: ParsedComment) -> Self {
+    fn from(c: ParsedComment<'_>) -> Self {
         c.into()
     }
 }
 
 impl From<&ParsedComment<'_>> for Vec<u8> {
-    fn from(c: &ParsedComment) -> Self {
+    fn from(c: &ParsedComment<'_>) -> Self {
         let mut values = vec![c.comment_tag as u8];
         values.extend(c.comment.iter());
         values
@@ -890,7 +890,7 @@ pub fn parse_from_path<P: AsRef<Path>>(path: P) -> Result<Parser<'static>, Parse
 /// Returns an error if the string provided is not a valid `git-config`.
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
-pub fn parse_from_str(input: &str) -> Result<Parser, Error> {
+pub fn parse_from_str(input: &str) -> Result<Parser<'_>, Error<'_>> {
     parse_from_bytes(input.as_bytes())
 }
 
@@ -905,7 +905,7 @@ pub fn parse_from_str(input: &str) -> Result<Parser, Error> {
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 #[allow(clippy::shadow_unrelated)]
-pub fn parse_from_bytes(input: &[u8]) -> Result<Parser, Error> {
+pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error<'_>> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
@@ -1030,7 +1030,7 @@ pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'st
     Ok(Parser { frontmatter, sections })
 }
 
-fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment> {
+fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment<'_>> {
     let (i, comment_tag) = one_of(";#")(i)?;
     let (i, comment) = take_till(|c| c == b'\n')(i)?;
     Ok((
@@ -1098,7 +1098,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (
     ))
 }
 
-fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
+fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader<'_>> {
     let (i, _) = char('[')(i)?;
     // No spaces must be between section name and section start
     let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
