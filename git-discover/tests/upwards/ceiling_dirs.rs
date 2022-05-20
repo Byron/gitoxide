@@ -119,12 +119,11 @@ fn ceiling_dirs_are_not_processed_differently_than_the_git_dir_candidate() -> cr
 #[test]
 fn no_matching_ceiling_dirs_errors_by_default() -> crate::Result {
     let relative_work_dir = repo_path()?;
-    let absolute_ceiling_dir = relative_work_dir.canonicalize()?;
     let dir = relative_work_dir.join("some");
     let res = git_discover::upwards_opts(
         &dir,
         Options {
-            ceiling_dirs: &[absolute_ceiling_dir],
+            ceiling_dirs: &["/something/somewhere".into()],
             ..Default::default()
         },
     );
@@ -133,5 +132,33 @@ fn no_matching_ceiling_dirs_errors_by_default() -> crate::Result {
         matches!(res, Err(git_discover::upwards::Error::NoMatchingCeilingDir)),
         "the canonicalized ceiling dir doesn't have the same root as the git dir candidate, and can never match."
     );
+    Ok(())
+}
+
+#[test]
+fn ceilings_are_adjusted_to_match_search_dir() -> crate::Result {
+    let relative_work_dir = repo_path()?;
+    let absolute_ceiling_dir = relative_work_dir.canonicalize()?;
+    let dir = relative_work_dir.join("some");
+    assert!(dir.is_relative());
+    let (repo_path, _trust) = git_discover::upwards_opts(
+        &dir,
+        Options {
+            ceiling_dirs: &[absolute_ceiling_dir],
+            ..Default::default()
+        },
+    )?;
+    assert_repo_is_current_workdir(repo_path, &relative_work_dir);
+
+    assert!(relative_work_dir.is_relative());
+    let absolute_dir = relative_work_dir.join("some").canonicalize()?;
+    let (repo_path, _trust) = git_discover::upwards_opts(
+        absolute_dir,
+        Options {
+            ceiling_dirs: &[relative_work_dir.clone()],
+            ..Default::default()
+        },
+    )?;
+    assert_repo_is_current_workdir(repo_path, &relative_work_dir);
     Ok(())
 }

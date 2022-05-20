@@ -200,8 +200,17 @@ pub(crate) mod function {
         ceiling_dirs
             .iter()
             .filter_map(|ceiling_dir| {
+                let mut ceiling_dir = git_path::absolutize(ceiling_dir, cwd);
+                match (search_dir.is_absolute(), ceiling_dir.is_absolute()) {
+                    (true, false) => ceiling_dir = cwd?.join(ceiling_dir.as_ref()).into(),
+                    (false, true) => {
+                        let stripped = ceiling_dir.as_ref().strip_prefix(cwd?).ok()?.to_owned();
+                        ceiling_dir = stripped.into();
+                    }
+                    (false, false) | (true, true) => {}
+                }
                 search_dir
-                    .strip_prefix(git_path::absolutize(ceiling_dir, cwd))
+                    .strip_prefix(ceiling_dir.as_ref())
                     .ok()
                     .map(|path_relative_to_ceiling| path_relative_to_ceiling.components().count())
             })
