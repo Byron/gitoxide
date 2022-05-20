@@ -67,9 +67,9 @@ pub(crate) mod function {
             required_trust,
             ceiling_dirs,
         }: Options<'_>,
-    ) -> Result<(crate::repository::Path, git_sec::Trust), Error> {
-        // Canonicalize the path so that `git_discover::parent` _actually_ gives
-        // us the parent directory. (`git_discover::parent` just strips off the last
+    ) -> Result<(crate::repository::Path, Trust), Error> {
+        // Absolutize the path so that `Path::parent()` _actually_ gives
+        // us the parent directory. (`Path::parent` just strips off the last
         // path component, which means it will not do what you expect when
         // working with paths paths that contain '..'.)
         let cwd = std::env::current_dir().ok();
@@ -77,29 +77,27 @@ pub(crate) mod function {
         if !dir.is_dir() {
             return Err(Error::InaccessibleDirectory { path: dir.into_owned() });
         }
-        let mut is_canonicalized = false;
+        let mut dir_made_absolute = cwd.as_deref().map_or(false, |cwd| {
+            cwd.strip_prefix(dir.as_ref())
+                .or_else(|_| dir.as_ref().strip_prefix(cwd))
+                .is_ok()
+        });
 
-        let filter_by_trust = |x: &std::path::Path| -> Result<Option<git_sec::Trust>, Error> {
-            let trust =
-                git_sec::Trust::from_path_ownership(x).map_err(|err| Error::CheckTrust { path: x.into(), err })?;
+        let filter_by_trust = |x: &Path| -> Result<Option<Trust>, Error> {
+            let trust = Trust::from_path_ownership(x).map_err(|err| Error::CheckTrust { path: x.into(), err })?;
             Ok((trust >= required_trust).then(|| (trust)))
         };
-
-        let mut cursor = dir.clone().into_owned();
 
         let max_height = if !ceiling_dirs.is_empty() {
             if !dir.is_absolute() {
                 return Err(Error::DirectoryNotAbsolute { path: dir.into_owned() });
             }
-            // Because the initial directory must be absolute, we assume that is has been canonicalized
-            // Because `canonicalize` might not have been run on this path, it might not be the most canonical form of this path.
-            is_canonicalized = true;
-
             find_ceiling_height(&dir, ceiling_dirs)
         } else {
             None
         };
 
+        let mut cursor = dir.clone().into_owned();
         let mut current_height = 0;
         'outer: loop {
             if max_height.map_or(false, |x| current_height > x) {
@@ -118,7 +116,7 @@ pub(crate) mod function {
                     match filter_by_trust(&cursor)? {
                         Some(trust) => {
                             // TODO: test this more, it definitely doesn't find the shortest path to a directory
-                            let path = if is_canonicalized {
+                            let path = if dir_made_absolute {
                                 shorten_path_with_cwd(cursor, cwd)
                             } else {
                                 cursor
@@ -139,7 +137,7 @@ pub(crate) mod function {
                 }
             }
             if !cursor.pop() {
-                if is_canonicalized
+                if dir_made_absolute
                     || matches!(
                         cursor.components().next(),
                         Some(std::path::Component::RootDir) | Some(std::path::Component::Prefix(_))
@@ -147,7 +145,7 @@ pub(crate) mod function {
                 {
                     break Err(Error::NoGitRepository { path: dir.into_owned() });
                 } else {
-                    is_canonicalized = true;
+                    dir_made_absolute = true;
                     cursor = if cursor.as_os_str().is_empty() {
                         cwd.clone()
                     } else {
@@ -195,11 +193,11 @@ pub(crate) mod function {
     /// Find the number of components parenting the `base_path` before the first directory in `ceiling_dirs`.
     /// `base_path` needs to be an absolute path. Non-absolute `ceiling_dirs` are discarded if `base_path` is absolute.
     // TODO: Handle this in a verbatim-path-prefix-neutral way on Windows (introduced by `path::canonicalize`).
-    fn find_ceiling_height(base_path: &Path, ceiling_dirs: &[PathBuf]) -> Option<usize> {
+    fn find_ceiling_height(potential_git_dir: &Path, ceiling_dirs: &[PathBuf]) -> Option<usize> {
         ceiling_dirs
             .iter()
             .filter_map(|ceiling_dir| {
-                base_path
+                potential_git_dir
                     .strip_prefix(ceiling_dir)
                     .ok()
                     .map(|path_relative_to_ceiling| path_relative_to_ceiling.components().count())

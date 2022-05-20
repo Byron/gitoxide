@@ -340,19 +340,18 @@ mod ceiling_dirs {
         Ok(())
     }
 
-    #[cfg(windows)]
-    fn strip_prefix(path: PathBuf) -> PathBuf {
-        path.to_str()
-            .expect("path needs to be valid unicode to strip verbatim paths prefixes")
-            .strip_prefix(r"\\?\")
-            .map(PathBuf::from)
-            .unwrap_or(path)
-    }
-
     #[test]
     #[cfg(windows)]
-    #[should_panic]
     fn verbatim_prefix_win() {
+        #[cfg(windows)]
+        fn strip_prefix(path: PathBuf) -> PathBuf {
+            path.to_str()
+                .expect("path needs to be valid unicode to strip verbatim paths prefixes")
+                .strip_prefix(r"\\?\")
+                .map(PathBuf::from)
+                .unwrap_or(path)
+        }
+
         let work_dir = repo_path().expect("repo path to be created successfully");
         let base_dir = work_dir.canonicalize().expect("repo path to exist");
         let repo_path_no_prefix = strip_prefix(base_dir.clone());
