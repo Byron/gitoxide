@@ -1,9 +1,3 @@
-pub mod from_env;
-pub mod from_paths;
-mod resolve_includes;
-pub use from_env::functions::*;
-pub use resolve_includes::function::resolve_includes;
-
 use std::{borrow::Cow, collections::HashMap};
 
 /// The section ID is a monotonically increasing ID used to refer to sections.
@@ -29,6 +23,14 @@ pub(crate) enum LookupTreeNode<'a> {
     Terminal(Vec<SectionId>),
     NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
 }
+
+pub mod from_env;
+pub use from_env::functions::{from_env, from_env_paths};
+
+mod resolve_includes;
+pub(crate) use resolve_includes::resolve_includes;
+
+pub mod from_paths;
 
 mod access;
 mod impls;

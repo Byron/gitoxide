@@ -1,9 +1,12 @@
-use super::{Cow, File, HashMap, LookupTreeNode, SectionBody, SectionId, TryFrom};
+use super::{Cow, HashMap, LookupTreeNode, SectionId};
+use crate::file::SectionBody;
 use crate::parser::Event;
 use crate::{
     parser::SectionHeaderName,
     test_util::{name_event, newline_event, section_header, value_event},
+    File,
 };
+use std::convert::TryFrom;
 
 #[test]
 fn parse_empty() {

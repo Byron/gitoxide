@@ -19,7 +19,7 @@ pub enum Error {
     FromPathsError(#[from] from_paths::Error),
 }
 
-pub mod functions {
+pub(crate) mod functions {
     use crate::file::from_env::Error;
     use crate::file::{from_paths, resolve_includes};
     use crate::File;
