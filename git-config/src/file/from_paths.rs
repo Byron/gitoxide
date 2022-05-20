@@ -1,6 +1,6 @@
 use crate::{parser, values::path::interpolate};
 
-/// The error returned by [`GitConfig::from_paths()`][super::GitConfig::from_paths()] and [`GitConfig::from_env_paths()`][super::GitConfig::from_env_paths()].
+/// The error returned by [`File::from_paths()`][crate::File::from_paths()] and [`File::from_env_paths()`][crate::File::from_env_paths()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -14,7 +14,7 @@ pub enum Error {
     MissingConfigPath,
 }
 
-/// Options when loading git config using [`GitConfig::from_paths()`][super::GitConfig::from_paths()].
+/// Options when loading git config using [`File::from_paths()`][crate::File::from_paths()].
 #[derive(Clone, Copy)]
 pub struct Options<'a> {
     /// The location where gitoxide or git is installed

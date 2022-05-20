@@ -1,5 +1,5 @@
 //! This module handles parsing a `git-config` file. Generally speaking, you
-//! want to use a higher abstraction such as [`GitConfig`] unless you have some
+//! want to use a higher abstraction such as [`File`] unless you have some
 //! explicit reason to work with events instead.
 //!
 //! The general workflow for interacting with this is to use one of the
@@ -7,7 +7,7 @@
 //! which can be converted into an [`Event`] iterator. The [`Parser`] also has
 //! additional methods for accessing leading comments or events by section.
 //!
-//! [`GitConfig`]: crate::file::GitConfig
+//! [`File`]: crate::File
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, hash::Hash, io::Read, iter::FusedIterator, path::Path};
 
@@ -30,11 +30,11 @@ use nom::{
 /// borrowed `Cow` variants.
 ///
 /// The `Cow` smart pointer is used here for ease of inserting events in a
-/// middle of an Event iterator. This is used, for example, in the [`GitConfig`]
+/// middle of an Event iterator. This is used, for example, in the [`File`]
 /// struct when adding values.
 ///
 /// [`Cow`]: std::borrow::Cow
-/// [`GitConfig`]: crate::file::GitConfig
+/// [`File`]: crate::File
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Event<'a> {
     /// A comment with a comment tag and the comment itself. Note that the
@@ -578,7 +578,7 @@ impl Display for ParserNode {
 /// A zero-copy `git-config` file parser.
 ///
 /// This is parser exposes low-level syntactic events from a `git-config` file.
-/// Generally speaking, you'll want to use [`GitConfig`] as it wraps
+/// Generally speaking, you'll want to use [`File`] as it wraps
 /// around the parser to provide a higher-level abstraction to a `git-config`
 /// file, including querying, modifying, and updating values.
 ///
@@ -778,7 +778,7 @@ impl Display for ParserNode {
 /// # ]);
 /// ```
 ///
-/// [`GitConfig`]: crate::file::GitConfig
+/// [`File`]: crate::File
 /// [`.ini` file format]: https://en.wikipedia.org/wiki/INI_file
 /// [`git`'s documentation]: https://git-scm.com/docs/git-config#_configuration_file
 /// [`FromStr`]: std::str::FromStr

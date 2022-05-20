@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git_config::file::File;
+use git_config::File;
 use git_repository::{objs::bstr::ByteSlice, progress, Progress};
 
 use crate::pack::receive::git;

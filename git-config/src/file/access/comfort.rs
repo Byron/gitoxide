@@ -5,7 +5,7 @@ use std::convert::TryFrom;
 
 /// Comfortable API for accessing values
 impl<'a> File<'a> {
-    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the string wasn't found.
+    /// Like [`value()`][File::value()], but returning an `Option` if the string wasn't found.
     ///
     /// As strings perform no conversions, this will never fail.
     pub fn string(&'a self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Cow<'a, BStr>> {
@@ -14,7 +14,7 @@ impl<'a> File<'a> {
             .map(|v| values::String::from(v).value)
     }
 
-    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the path wasn't found.
+    /// Like [`value()`][File::value()], but returning an `Option` if the path wasn't found.
     ///
     /// Note that this path is not vetted and should only point to resources which can't be used
     /// to pose a security risk.
@@ -29,7 +29,7 @@ impl<'a> File<'a> {
             .map(values::Path::from)
     }
 
-    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the boolean wasn't found.
+    /// Like [`value()`][File::value()], but returning an `Option` if the boolean wasn't found.
     pub fn boolean(
         &'a self,
         section_name: &str,
@@ -41,7 +41,7 @@ impl<'a> File<'a> {
             .map(|v| values::Boolean::try_from(v).map(|b| b.to_bool()))
     }
 
-    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the integer wasn't found.
+    /// Like [`value()`][File::value()], but returning an `Option` if the integer wasn't found.
     pub fn integer(
         &'a self,
         section_name: &str,
@@ -55,14 +55,14 @@ impl<'a> File<'a> {
         }))
     }
 
-    /// Similar to [`multi_value(…)`][GitConfig::multi_value()] but returning strings if at least one of them was found.
+    /// Similar to [`multi_value(…)`][File::multi_value()] but returning strings if at least one of them was found.
     pub fn strings(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Vec<Cow<'_, BStr>>> {
         self.raw_multi_value(section_name, subsection_name, key)
             .ok()
             .map(|values| values.into_iter().map(|v| values::String::from(v).value).collect())
     }
 
-    /// Similar to [`multi_value(…)`][GitConfig::multi_value()] but returning integers if at least one of them was found
+    /// Similar to [`multi_value(…)`][File::multi_value()] but returning integers if at least one of them was found
     /// and if none of them overflows.
     pub fn integers(
         &self,

@@ -8,7 +8,7 @@ impl<'a> TryFrom<&'a str> for File<'a> {
     type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided string into a
-    /// [`GitConfig`]. See [`parse_from_str`] for more information.
+    /// [`File`]. See [`parse_from_str`] for more information.
     ///
     /// [`parse_from_str`]: crate::parser::parse_from_str
     fn try_from(s: &'a str) -> Result<File<'a>, Self::Error> {
@@ -20,7 +20,7 @@ impl<'a> TryFrom<&'a [u8]> for File<'a> {
     type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
-    //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
+    //// a [`File`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
     fn try_from(value: &'a [u8]) -> Result<File<'a>, Self::Error> {
@@ -32,7 +32,7 @@ impl<'a> TryFrom<&'a Vec<u8>> for File<'a> {
     type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
-    //// a [`GitConfig`]. See [`parse_from_bytes`] for more information.
+    //// a [`File`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
     fn try_from(value: &'a Vec<u8>) -> Result<File<'a>, Self::Error> {

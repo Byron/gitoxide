@@ -209,7 +209,7 @@ impl<'config> Config<'config> {
         Ok(None)
     }
 
-    /// Returns a mapping from [`GitConfig`] to [`ConfigSource`]
+    /// Returns a mapping from [`File`] to [`ConfigSource`]
     const fn mapping(&self) -> [(&Option<File>, ConfigSource); 6] {
         [
             (&self.cli_conf, ConfigSource::Cli),
@@ -224,7 +224,7 @@ impl<'config> Config<'config> {
 
 /// Lower-level interface for directly accessing a
 impl<'config> Config<'config> {
-    /// Retrieves the underlying [`GitConfig`] object, if one was found during
+    /// Retrieves the underlying [`File`] object, if one was found during
     /// initialization.
     #[must_use]
     pub fn config(&self, source: ConfigSource) -> Option<&File<'config>> {
@@ -238,7 +238,7 @@ impl<'config> Config<'config> {
         }
     }
 
-    /// Retrieves the underlying [`GitConfig`] object as a mutable reference,
+    /// Retrieves the underlying [`File`] object as a mutable reference,
     /// if one was found during initialization.
     #[must_use]
     pub fn config_mut(&mut self, source: ConfigSource) -> Option<&mut File<'config>> {

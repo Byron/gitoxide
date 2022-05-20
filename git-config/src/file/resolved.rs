@@ -16,7 +16,7 @@ enum ResolvedTreeNode<'event> {
 /// A `git-config` that resolves entries on creation, providing a
 /// [`HashMap`]-like interface for users.
 ///
-/// This does not provide the same guarantees as [`GitConfig`]; namely, it does
+/// This does not provide the same guarantees as [`File`]; namely, it does
 /// not remember comments nor whitespace. Additionally, values are normalized
 /// upon creation, so it's not possible to retrieve the original value.
 #[allow(clippy::module_name_repetitions)]
@@ -38,7 +38,7 @@ impl ResolvedGitConfig<'static> {
 }
 
 impl<'data> ResolvedGitConfig<'data> {
-    /// Resolves a given [`GitConfig`].
+    /// Resolves a given [`File`].
     #[must_use]
     pub fn from_config(config: File<'data>) -> Self {
         // Map a <SectionId, SectionBody> into <SectionId, HashMap<Key, Cow<[u8]>>>.

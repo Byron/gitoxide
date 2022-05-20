@@ -53,7 +53,7 @@ impl<'a> File<'a> {
         T::try_from(self.raw_value(section_name, subsection_name, key)?).map_err(lookup::Error::FailedConversion)
     }
 
-    /// Like [`value()`][GitConfig::value()], but returning an `Option` if the value wasn't found.
+    /// Like [`value()`][File::value()], but returning an `Option` if the value wasn't found.
     pub fn try_value<T: TryFrom<Cow<'a, [u8]>>>(
         &'a self,
         section_name: &str,

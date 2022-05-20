@@ -1,7 +1,7 @@
 use crate::file::from_paths;
 use crate::values::path::interpolate;
 
-/// Represents the errors that may occur when calling [`GitConfig::from_env`][crate::file::GitConfig::from_env()].
+/// Represents the errors that may occur when calling [`File::from_env`][crate::File::from_env()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

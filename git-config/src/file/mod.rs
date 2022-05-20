@@ -50,7 +50,7 @@ impl AddAssign<usize> for Size {
 pub(crate) struct SectionId(pub(crate) usize);
 
 /// Internal data structure for the section id lookup tree used by
-/// [`GitConfig`]. Note that order in Vec matters as it represents the order
+/// [`File`]. Note that order in Vec matters as it represents the order
 /// of section ids with the matched section and name, and is used for precedence
 /// management.
 #[derive(PartialEq, Eq, Clone, Debug)]
