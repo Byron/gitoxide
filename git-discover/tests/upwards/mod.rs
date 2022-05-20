@@ -17,6 +17,8 @@ fn expected_trust() -> git_sec::Trust {
     }
 }
 
+mod ceiling_dirs;
+
 #[test]
 fn from_bare_git_dir() -> crate::Result {
     let dir = repo_path()?.join("bare.git");
@@ -192,8 +194,6 @@ fn from_existing_worktree() -> crate::Result {
     }
     Ok(())
 }
-
-mod ceiling_dirs;
 
 fn repo_path() -> crate::Result<PathBuf> {
     git_testtools::scripted_fixture_repo_read_only("make_basic_repo.sh")

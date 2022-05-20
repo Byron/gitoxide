@@ -13,7 +13,7 @@ fn assert_repo_is_current_workdir(path: git_discover::repository::Path, work_dir
 }
 
 #[test]
-fn single() -> crate::Result {
+fn git_dir_candidate_within_ceiling_allows_discovery() -> crate::Result {
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
     let (repo_path, _trust) = git_discover::upwards_opts(
@@ -26,14 +26,22 @@ fn single() -> crate::Result {
     .expect("ceiling dir should allow us to discover the repo");
     assert_repo_is_current_workdir(repo_path, &work_dir);
 
+    Ok(())
+}
+
+#[test]
+fn ceiling_dir_limits_are_respected_and_prevent_discovery() -> crate::Result {
+    let work_dir = repo_path()?;
+    let dir = work_dir.join("some/very/deeply/nested/subdir");
+
     let err = git_discover::upwards_opts(
         &dir,
         Options {
-            ceiling_dirs: &vec![work_dir.join("some")],
+            ceiling_dirs: &vec![work_dir.join("some/../some")],
             ..Default::default()
         },
     )
-    .expect_err("ceiling dir prevents discovery as it ends on level too early");
+    .expect_err("ceiling dir prevents discovery as it ends on level too early, and they are also absolutized");
     assert!(matches!(
         err,
         git_discover::upwards::Error::NoGitRepositoryWithinCeiling { ceiling_height: 5, .. }
@@ -43,7 +51,7 @@ fn single() -> crate::Result {
 }
 
 #[test]
-fn multiple() -> crate::Result {
+fn no_matching_ceiling_dir_error_can_be_suppressed() -> crate::Result {
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir");
     let (repo_path, _trust) = git_discover::upwards_opts(
@@ -62,6 +70,13 @@ fn multiple() -> crate::Result {
     .expect("ceiling dir should allow us to discover the repo");
     assert_repo_is_current_workdir(repo_path, &work_dir);
 
+    Ok(())
+}
+
+#[test]
+fn more_restrictive_ceiling_dirs_overrule_less_restrictive_ones() -> crate::Result {
+    let work_dir = repo_path()?;
+    let dir = work_dir.join("some/very/deeply/nested/subdir");
     let err = git_discover::upwards_opts(
         &dir,
         Options {
@@ -78,9 +93,8 @@ fn multiple() -> crate::Result {
     Ok(())
 }
 
-// these are special because all of our base paths are relative unless canonicalized.
 #[test]
-fn special_relative() -> crate::Result {
+fn ceiling_dirs_are_not_processed_differently_than_the_git_dir_candidate() -> crate::Result {
     let work_dir = repo_path()?;
     let dir = work_dir.join("some/very/deeply/nested/subdir/../../../../../..");
     let (repo_path, _trust) = git_discover::upwards_opts(
@@ -91,7 +105,7 @@ fn special_relative() -> crate::Result {
             ..Default::default()
         },
     )
-    .expect("the repo can be discovered because the relative ceiling has nothing to do with the repo location");
+    .expect("the repo can be discovered because the relative ceiling doesn't _look_ like it has something to do with the git dir candidate");
 
     assert_ne!(
         &repo_path.as_ref().canonicalize()?,
@@ -103,7 +117,7 @@ fn special_relative() -> crate::Result {
 }
 
 #[test]
-fn no_root_base() -> crate::Result {
+fn no_matching_ceiling_dirs_errors_by_default() -> crate::Result {
     let relative_work_dir = repo_path()?;
     let absolute_ceiling_dir = relative_work_dir.canonicalize()?;
     let dir = relative_work_dir.join("some");
@@ -115,33 +129,9 @@ fn no_root_base() -> crate::Result {
         },
     );
 
-    assert!(matches!(res, Err(git_discover::upwards::Error::NoMatchingCeilingDir)));
+    assert!(
+        matches!(res, Err(git_discover::upwards::Error::NoMatchingCeilingDir)),
+        "the canonicalized ceiling dir doesn't have the same root as the git dir candidate, and can never match."
+    );
     Ok(())
-}
-
-#[test]
-#[cfg(windows)]
-fn verbatim_prefix_win() {
-    #[cfg(windows)]
-    fn strip_prefix(path: std::path::PathBuf) -> std::path::PathBuf {
-        path.to_str()
-            .expect("path needs to be valid unicode to strip verbatim paths prefixes")
-            .strip_prefix(r"\\?\")
-            .map(ToOwned::to_owned)
-            .unwrap_or(path)
-    }
-
-    let work_dir = repo_path().expect("repo path to be created successfully");
-    let base_dir = work_dir.canonicalize().expect("repo path to exist");
-    let repo_path_no_prefix = strip_prefix(base_dir.clone());
-
-    let dir = base_dir.join(r"some");
-    git_discover::upwards_opts(
-        &dir,
-        Options {
-            ceiling_dirs: &[repo_path_no_prefix.join(r"some")],
-            ..Default::default()
-        },
-    )
-    .expect_err("ceiling dir prevents discovery even if the ceiling is not a verbatim path");
 }

@@ -92,7 +92,7 @@ pub(crate) mod function {
         };
 
         let max_height = if !ceiling_dirs.is_empty() {
-            let max_height = find_ceiling_height(&dir, ceiling_dirs);
+            let max_height = find_ceiling_height(&dir, ceiling_dirs, cwd.as_deref());
             if max_height.is_none() && match_ceiling_dir_or_error {
                 return Err(Error::NoMatchingCeilingDir);
             }
@@ -194,15 +194,14 @@ pub(crate) mod function {
         }
     }
 
-    /// Find the number of components parenting the `base_path` before the first directory in `ceiling_dirs`.
-    /// `base_path` needs to be an absolute path. Non-absolute `ceiling_dirs` are discarded if `base_path` is absolute.
-    // TODO: Handle this in a verbatim-path-prefix-neutral way on Windows (introduced by `path::canonicalize`).
-    fn find_ceiling_height(potential_git_dir: &Path, ceiling_dirs: &[PathBuf]) -> Option<usize> {
+    /// Find the number of components parenting the `search_dir` before the first directory in `ceiling_dirs`.
+    /// `search_dir` needs to be absolutized, and we absolutize every ceiling as well.
+    fn find_ceiling_height(search_dir: &Path, ceiling_dirs: &[PathBuf], cwd: Option<&Path>) -> Option<usize> {
         ceiling_dirs
             .iter()
             .filter_map(|ceiling_dir| {
-                potential_git_dir
-                    .strip_prefix(ceiling_dir)
+                search_dir
+                    .strip_prefix(git_path::absolutize(ceiling_dir, cwd))
                     .ok()
                     .map(|path_relative_to_ceiling| path_relative_to_ceiling.components().count())
             })
