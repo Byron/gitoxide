@@ -180,7 +180,7 @@ pub type RefStore = git_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
 pub type OdbHandle = git_odb::Handle;
 /// A way to access git configuration
-pub(crate) type Config = OwnShared<git_config::file::GitConfig<'static>>;
+pub(crate) type Config = OwnShared<git_config::File<'static>>;
 
 ///
 mod types;

@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+#![deny(rust_2018_idioms)]
 // #![warn(missing_docs)]
 // #![warn(clippy::pedantic, clippy::nursery)]
 
@@ -14,7 +15,7 @@
 //!
 //! | Offering      | Description                                         | Zero-copy?        |
 //! | ------------- | --------------------------------------------------- | ----------------- |
-//! | [`GitConfig`] | Accelerated wrapper for reading and writing values. | On some reads[^1] |
+//! | [`File`] | Accelerated wrapper for reading and writing values. | On some reads[^1] |
 //! | [`Parser`]    | Syntactic event emitter for `git-config` files.     | Yes               |
 //! | [`values`]    | Wrappers for `git-config` value types.              | Yes               |
 //!
@@ -42,7 +43,7 @@
 //!
 //! [`git-config` files]: https://git-scm.com/docs/git-config#_configuration_file
 //! [INI file format]: https://en.wikipedia.org/wiki/INI_file
-//! [`GitConfig`]: crate::file::GitConfig
+//! [`File`]: crate::File
 //! [`Parser`]: crate::parser::Parser
 //! [`values`]: crate::values
 //! [`nom`]: https://github.com/Geal/nom
@@ -54,102 +55,17 @@
 #[cfg(feature = "serde")]
 extern crate serde_crate as serde;
 
-pub mod lookup {
-
-    /// The error when looking up a value.
-    #[derive(Debug, thiserror::Error)]
-    pub enum Error<E> {
-        #[error(transparent)]
-        ValueMissing(#[from] crate::lookup::existing::Error),
-        #[error(transparent)]
-        FailedConversion(E),
-    }
-
-    pub mod existing {
-        /// The error when looking up a value that doesn't exist.
-        #[derive(Debug, thiserror::Error)]
-        pub enum Error {
-            #[error("The requested section does not exist")]
-            SectionMissing,
-            #[error("The requested subsection does not exist")]
-            SubSectionMissing,
-            #[error("The key does not exist in the requested section")]
-            KeyMissing,
-        }
-    }
-}
-
 pub mod file;
 pub mod fs;
+pub mod lookup;
 pub mod parser;
-pub mod values;
+mod permissions;
 /// The future home of the `values` module (TODO).
-pub mod value {
-    pub mod parse {
-        use bstr::BString;
+pub mod value;
+pub mod values;
 
-        /// The error returned when creating `Integer` from byte string.
-        #[derive(Debug, thiserror::Error, Eq, PartialEq)]
-        #[allow(missing_docs)]
-        #[error("Could not decode '{}': {}", .input, .message)]
-        pub struct Error {
-            pub message: &'static str,
-            pub input: BString,
-            #[source]
-            pub utf8_err: Option<std::str::Utf8Error>,
-        }
-
-        impl Error {
-            pub(crate) fn new(message: &'static str, input: impl Into<BString>) -> Self {
-                Error {
-                    message,
-                    input: input.into(),
-                    utf8_err: None,
-                }
-            }
-
-            pub(crate) fn with_err(mut self, err: std::str::Utf8Error) -> Self {
-                self.utf8_err = Some(err);
-                self
-            }
-        }
-    }
-}
-
-mod permissions {
-    use crate::Permissions;
-
-    impl Permissions {
-        /// Allow everything which usually relates to a fully trusted environment
-        pub fn all() -> Self {
-            use git_sec::Permission::*;
-            Permissions {
-                system: Allow,
-                global: Allow,
-                user: Allow,
-                repository: Allow,
-                worktree: Allow,
-                env: Allow,
-                includes: Allow,
-            }
-        }
-
-        /// If in doubt, this configuration can be used to safely load configuration from sources which is usually trusted,
-        /// that is system and user configuration. Do load any configuration that isn't trusted as it's now owned by the current user.
-        pub fn secure() -> Self {
-            use git_sec::Permission::*;
-            Permissions {
-                system: Allow,
-                global: Allow,
-                user: Allow,
-                repository: Deny,
-                worktree: Deny,
-                env: Allow,
-                includes: Deny,
-            }
-        }
-    }
-}
+mod types;
+pub use types::File;
 
 /// Configure security relevant options when loading a git configuration.
 #[derive(Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Debug, Hash)]

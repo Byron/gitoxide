@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git_config::file::GitConfig;
+use git_config::File;
 use git_repository::{objs::bstr::ByteSlice, progress, Progress};
 
 use crate::pack::receive::git;
@@ -118,7 +118,7 @@ where
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
     let non_bare = repo.join(".git").join("config");
-    let config = GitConfig::open(non_bare.as_path()).or_else(|_| GitConfig::open(repo.join("config").as_path()))?;
+    let config = File::open(non_bare.as_path()).or_else(|_| File::open(repo.join("config").as_path()))?;
     Ok(config.value("remote", Some("origin"), "url").ok())
 }
 

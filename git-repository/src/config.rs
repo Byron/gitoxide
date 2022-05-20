@@ -47,8 +47,8 @@ mod cache {
     use std::{convert::TryFrom, path::PathBuf};
 
     use git_config::{
-        file::GitConfig,
         values::{Boolean, Integer},
+        File,
     };
 
     use super::{Cache, Error};
@@ -61,7 +61,7 @@ mod cache {
             home_env: permission::env_var::Resource,
             git_install_dir: Option<&std::path::Path>,
         ) -> Result<Self, Error> {
-            let config = GitConfig::open(git_dir.join("config"))?;
+            let config = File::open(git_dir.join("config"))?;
 
             let is_bare = config_bool(&config, "core.bare", false)?;
             let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
@@ -150,7 +150,7 @@ mod cache {
         }
     }
 
-    fn config_bool(config: &GitConfig<'_>, key: &str, default: bool) -> Result<bool, Error> {
+    fn config_bool(config: &File<'_>, key: &str, default: bool) -> Result<bool, Error> {
         let (section, key) = key.split_once('.').expect("valid section.key format");
         config
             .boolean(section, None, key)

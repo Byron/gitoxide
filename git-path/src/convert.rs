@@ -204,6 +204,7 @@ pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr
 /// which might lead to an invalid/uninteded path.
 pub fn absolutize<'a>(path: impl Into<Cow<'a, Path>>, mut current_dir: Option<impl Into<PathBuf>>) -> Cow<'a, Path> {
     use std::path::Component::ParentDir;
+
     let path = path.into();
     if !path.components().any(|c| matches!(c, ParentDir)) {
         return path;

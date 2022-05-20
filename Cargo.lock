@@ -1142,8 +1142,11 @@ dependencies = [
  "criterion",
  "dirs",
  "git-features",
+ "git-glob",
  "git-path",
+ "git-ref",
  "git-sec",
+ "git-testtools",
  "memchr",
  "nom",
  "pwd",
@@ -1398,6 +1401,8 @@ name = "git-path"
 version = "0.1.1"
 dependencies = [
  "bstr",
+ "tempfile",
+ "thiserror",
 ]
 
 [[package]]

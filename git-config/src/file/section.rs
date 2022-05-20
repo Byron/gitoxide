@@ -41,7 +41,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
     /// Removes all events until a key value pair is removed. This will also
     /// remove the whitespace preceding the key value pair, if any is found.
-    pub fn pop(&mut self) -> Option<(Key, Cow<'event, [u8]>)> {
+    pub fn pop(&mut self) -> Option<(Key<'_>, Cow<'event, [u8]>)> {
         let mut values = vec![];
         // events are popped in reverse order
         while let Some(e) = self.section.0.pop() {
@@ -59,7 +59,13 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
                     return Some((
                         k,
-                        normalize_vec(values.into_iter().rev().flat_map(|v: Cow<[u8]>| v.to_vec()).collect()),
+                        normalize_vec(
+                            values
+                                .into_iter()
+                                .rev()
+                                .flat_map(|v: Cow<'_, [u8]>| v.to_vec())
+                                .collect(),
+                        ),
                     ));
                 }
                 Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => values.push(v),
@@ -141,7 +147,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
 // Internal methods that may require exact indices for faster operations.
 impl<'borrow, 'event> MutableSection<'borrow, 'event> {
-    pub(super) fn new(section: &'borrow mut SectionBody<'event>) -> Self {
+    pub(crate) fn new(section: &'borrow mut SectionBody<'event>) -> Self {
         Self {
             section,
             implicit_newline: true,
@@ -149,7 +155,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         }
     }
 
-    pub(super) fn get<'key>(
+    pub(crate) fn get<'key>(
         &self,
         key: &Key<'key>,
         start: Index,
@@ -187,11 +193,11 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
             .ok_or(lookup::existing::Error::KeyMissing)
     }
 
-    pub(super) fn delete(&mut self, start: Index, end: Index) {
+    pub(crate) fn delete(&mut self, start: Index, end: Index) {
         self.section.0.drain(start.0..=end.0);
     }
 
-    pub(super) fn set_internal(&mut self, index: Index, key: Key<'event>, value: Vec<u8>) {
+    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: Vec<u8>) {
         self.section.0.insert(index.0, Event::Value(Cow::Owned(value)));
         self.section.0.insert(index.0, Event::KeyValueSeparator);
         self.section.0.insert(index.0, Event::Key(key));
@@ -212,16 +218,16 @@ impl<'event> Deref for MutableSection<'_, 'event> {
 pub struct SectionBody<'event>(Vec<Event<'event>>);
 
 impl<'event> SectionBody<'event> {
-    pub(super) fn as_ref(&self) -> &[Event<'_>] {
+    pub(crate) fn as_ref(&self) -> &[Event<'_>] {
         &self.0
     }
 
-    pub(super) fn as_mut(&mut self) -> &mut Vec<Event<'event>> {
+    pub(crate) fn as_mut(&mut self) -> &mut Vec<Event<'event>> {
         &mut self.0
     }
 
     /// Constructs a new empty section body.
-    pub(super) fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self::default()
     }
 
@@ -232,7 +238,7 @@ impl<'event> SectionBody<'event> {
     // function.
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
-    pub fn value(&self, key: &Key) -> Option<Cow<'event, [u8]>> {
+    pub fn value(&self, key: &Key<'_>) -> Option<Cow<'event, [u8]>> {
         let range = self.value_range_by_key(key);
         if range.is_empty() {
             return None;
@@ -269,7 +275,7 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the key was not found, or if the conversion failed.
-    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<T, lookup::Error<T::Error>> {
+    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key<'_>) -> Result<T, lookup::Error<T::Error>> {
         T::try_from(self.value(key).ok_or(lookup::existing::Error::KeyMissing)?)
             .map_err(lookup::Error::FailedConversion)
     }
@@ -277,7 +283,7 @@ impl<'event> SectionBody<'event> {
     /// Retrieves all values that have the provided key name. This may return
     /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
-    pub fn values(&self, key: &Key) -> Vec<Cow<'event, [u8]>> {
+    pub fn values(&self, key: &Key<'_>) -> Vec<Cow<'event, [u8]>> {
         let mut values = vec![];
         let mut found_key = false;
         let mut partial_value = None;
@@ -317,7 +323,7 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the conversion failed.
-    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key) -> Result<Vec<T>, lookup::Error<T::Error>> {
+    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key<'_>) -> Result<Vec<T>, lookup::Error<T::Error>> {
         self.values(key)
             .into_iter()
             .map(T::try_from)
@@ -334,7 +340,7 @@ impl<'event> SectionBody<'event> {
 
     /// Checks if the section contains the provided key.
     #[must_use]
-    pub fn contains_key(&self, key: &Key) -> bool {
+    pub fn contains_key(&self, key: &Key<'_>) -> bool {
         self.0.iter().any(|e| {
             matches!(e,
                 Event::Key(k) if k == key
@@ -342,9 +348,9 @@ impl<'event> SectionBody<'event> {
         })
     }
 
-    /// Returns the number of entries in the section.
+    /// Returns the number of values in the section.
     #[must_use]
-    pub fn len(&self) -> usize {
+    pub fn num_values(&self) -> usize {
         self.0.iter().filter(|e| matches!(e, Event::Key(_))).count()
     }
 

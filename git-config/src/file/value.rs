@@ -6,9 +6,8 @@ use std::{
 
 use crate::{
     file::{
-        git_config::SectionId,
         section::{MutableSection, SectionBody},
-        Index, Size,
+        Index, SectionId, Size,
     },
     lookup,
     parser::{Event, Key},
@@ -16,14 +15,14 @@ use crate::{
 };
 
 /// An intermediate representation of a mutable value obtained from
-/// [`GitConfig`].
+/// [`File`].
 ///
 /// This holds a mutable reference to the underlying data structure of
-/// [`GitConfig`], and thus guarantees through Rust's borrower checker that
-/// multiple mutable references to [`GitConfig`] cannot be owned at the same
+/// [`File`], and thus guarantees through Rust's borrower checker that
+/// multiple mutable references to [`File`] cannot be owned at the same
 /// time.
 ///
-/// [`GitConfig`]: super::GitConfig
+/// [`File`]: crate::File
 #[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct MutableValue<'borrow, 'lookup, 'event> {
@@ -34,7 +33,7 @@ pub struct MutableValue<'borrow, 'lookup, 'event> {
 }
 
 impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
-    pub(super) const fn new(
+    pub(crate) const fn new(
         section: MutableSection<'borrow, 'event>,
         key: Key<'lookup>,
         index: Index,
@@ -89,13 +88,13 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
 
 /// Internal data structure for [`MutableMultiValue`]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub(super) struct EntryData {
+pub(crate) struct EntryData {
     section_id: SectionId,
     offset_index: usize,
 }
 
 impl EntryData {
-    pub(super) const fn new(section_id: SectionId, offset_index: usize) -> Self {
+    pub(crate) const fn new(section_id: SectionId, offset_index: usize) -> Self {
         Self {
             section_id,
             offset_index,
@@ -104,14 +103,14 @@ impl EntryData {
 }
 
 /// An intermediate representation of a mutable multivar obtained from
-/// [`GitConfig`].
+/// [`File`].
 ///
 /// This holds a mutable reference to the underlying data structure of
-/// [`GitConfig`], and thus guarantees through Rust's borrower checker that
-/// multiple mutable references to [`GitConfig`] cannot be owned at the same
+/// [`File`], and thus guarantees through Rust's borrower checker that
+/// multiple mutable references to [`File`] cannot be owned at the same
 /// time.
 ///
-/// [`GitConfig`]: super::GitConfig
+/// [`File`]: crate::File
 #[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Debug)]
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
@@ -128,7 +127,7 @@ pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
 }
 
 impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
-    pub(super) fn new(
+    pub(crate) fn new(
         section: &'borrow mut HashMap<SectionId, SectionBody<'event>>,
         key: Key<'lookup>,
         indices_and_sizes: Vec<EntryData>,
@@ -305,11 +304,11 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
 
     /// Sets all values in this multivar to the provided one without owning the
     /// provided input. Note that this requires `input` to last longer than
-    /// [`GitConfig`]. Consider using [`Self::set_owned_values_all`] or
+    /// [`File`]. Consider using [`Self::set_owned_values_all`] or
     /// [`Self::set_str_all`] unless you have a strict performance or memory
     /// need for a more ergonomic interface.
     ///
-    /// [`GitConfig`]: super::GitConfig
+    /// [`File`]: crate::File
     pub fn set_values_all<'a: 'event>(&mut self, input: &'a [u8]) {
         for EntryData {
             section_id,
