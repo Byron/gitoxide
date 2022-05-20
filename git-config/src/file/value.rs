@@ -6,9 +6,8 @@ use std::{
 
 use crate::{
     file::{
-        git_config::SectionId,
         section::{MutableSection, SectionBody},
-        Index, Size,
+        Index, SectionId, Size,
     },
     lookup,
     parser::{Event, Key},

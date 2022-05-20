@@ -10,7 +10,7 @@ use std::{
 use crate::file::from_env;
 use crate::{lookup, File};
 
-use crate::file::git_config::from_paths;
+use crate::file::from_paths;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum ConfigSource {

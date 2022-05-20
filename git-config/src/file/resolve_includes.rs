@@ -1,4 +1,4 @@
-use crate::file::git_config::from_paths;
+use crate::file::from_paths;
 use crate::file::SectionBody;
 use crate::parser::{Key, ParsedSectionHeader};
 use crate::{values, File};
