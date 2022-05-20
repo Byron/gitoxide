@@ -34,7 +34,7 @@ fn girdir_and_onbranch() {
             .join("n")
             .to_str()
             .unwrap()
-            .replace("\\", "/")
+            .replace('\\', "/")
     );
 
     fs::write(
