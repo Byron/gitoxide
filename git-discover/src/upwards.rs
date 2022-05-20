@@ -10,6 +10,8 @@ pub enum Error {
     NoGitRepository { path: PathBuf },
     #[error("Could find a git repository in '{}' or in any of its parents within ceiling height of {}", .path.display(), .ceiling_height)]
     NoGitRepositoryWithinCeiling { path: PathBuf, ceiling_height: usize },
+    #[error("None of the passed ceiling directories prefixed the git-dir candidate, making them ineffective.")]
+    NoMatchingCeilingDir,
     #[error("Could find a trusted git repository in '{}' or in any of its parents, candidate at '{}' discarded", .path.display(), .candidate.display())]
     NoTrustedGitRepository {
         path: PathBuf,
@@ -34,6 +36,8 @@ pub struct Options<'a> {
     pub required_trust: git_sec::Trust,
     /// When discovering a repository, ignore any repositories that are located in these directories or any of their parents.
     pub ceiling_dirs: &'a [PathBuf],
+    /// If true, and `ceiling_dirs` is not empty, we expect at least one ceiling directory to match or else there will be an error.
+    pub match_ceiling_dir_or_error: bool,
 }
 
 impl Default for Options<'_> {
@@ -41,6 +45,7 @@ impl Default for Options<'_> {
         Options {
             required_trust: git_sec::Trust::Reduced,
             ceiling_dirs: &[],
+            match_ceiling_dir_or_error: true,
         }
     }
 }
@@ -63,6 +68,7 @@ pub(crate) mod function {
         Options {
             required_trust,
             ceiling_dirs,
+            match_ceiling_dir_or_error,
         }: Options<'_>,
     ) -> Result<(crate::repository::Path, Trust), Error> {
         // Absolutize the path so that `Path::parent()` _actually_ gives
@@ -86,10 +92,11 @@ pub(crate) mod function {
         };
 
         let max_height = if !ceiling_dirs.is_empty() {
-            if !dir.is_absolute() {
-                return Err(Error::DirectoryNotAbsolute { path: dir.into_owned() });
+            let max_height = find_ceiling_height(&dir, ceiling_dirs);
+            if max_height.is_none() && match_ceiling_dir_or_error {
+                return Err(Error::NoMatchingCeilingDir);
             }
-            find_ceiling_height(&dir, ceiling_dirs)
+            max_height
         } else {
             None
         };
