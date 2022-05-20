@@ -19,7 +19,7 @@ fn git_dir_candidate_within_ceiling_allows_discovery() -> crate::Result {
     let (repo_path, _trust) = git_discover::upwards_opts(
         &dir,
         Options {
-            ceiling_dirs: &vec![work_dir.clone()],
+            ceiling_dirs: &[work_dir.clone()],
             ..Default::default()
         },
     )
@@ -37,7 +37,7 @@ fn ceiling_dir_limits_are_respected_and_prevent_discovery() -> crate::Result {
     let err = git_discover::upwards_opts(
         &dir,
         Options {
-            ceiling_dirs: &vec![work_dir.join("some/../some")],
+            ceiling_dirs: &[work_dir.join("some/../some")],
             ..Default::default()
         },
     )
@@ -58,7 +58,7 @@ fn no_matching_ceiling_dir_error_can_be_suppressed() -> crate::Result {
         &dir,
         Options {
             match_ceiling_dir_or_error: false,
-            ceiling_dirs: &vec![
+            ceiling_dirs: &[
                 work_dir.canonicalize()?,
                 work_dir.join("some/very/deeply/nested/subdir/too-deep"),
                 work_dir.join("some/very/deeply/nested/unrelated-dir"),
@@ -80,7 +80,7 @@ fn more_restrictive_ceiling_dirs_overrule_less_restrictive_ones() -> crate::Resu
     let err = git_discover::upwards_opts(
         &dir,
         Options {
-            ceiling_dirs: &vec![work_dir.clone(), work_dir.join("some")],
+            ceiling_dirs: &[work_dir.clone(), work_dir.join("some")],
             ..Default::default()
         },
     )
@@ -101,7 +101,7 @@ fn ceiling_dirs_are_not_processed_differently_than_the_git_dir_candidate() -> cr
         &dir,
         Options {
             match_ceiling_dir_or_error: false,
-            ceiling_dirs: &vec![Path::new("./some").into()],
+            ceiling_dirs: &[Path::new("./some").into()],
             ..Default::default()
         },
     )
