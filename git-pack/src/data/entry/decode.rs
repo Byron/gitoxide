@@ -67,6 +67,7 @@ impl data::Entry {
                 let mut buf = git_hash::Kind::buf();
                 let hash = &mut buf[..hash_len];
                 r.read_exact(hash)?;
+                #[allow(clippy::redundant_slicing)]
                 let delta = RefDelta {
                     base_id: git_hash::ObjectId::from(&hash[..]),
                 };

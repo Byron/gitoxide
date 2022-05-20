@@ -17,6 +17,8 @@ fn expected_trust() -> git_sec::Trust {
     }
 }
 
+mod ceiling_dirs;
+
 #[test]
 fn from_bare_git_dir() -> crate::Result {
     let dir = repo_path()?.join("bare.git");
