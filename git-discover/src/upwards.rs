@@ -139,14 +139,12 @@ pub(crate) mod function {
                     cursor.as_ref()
                 }
                 .metadata()
-                .map_err(|_| Error::InaccessibleDirectory {
-                    path: cursor.to_path_buf(),
-                })?;
+                .map_err(|_| Error::InaccessibleDirectory { path: cursor.clone() })?;
 
                 if device_id(&metadata) != initial_device {
                     return Err(Error::NoGitRepositoryWithinFs {
                         path: dir.into_owned(),
-                        limit: cursor.to_path_buf(),
+                        limit: cursor.clone(),
                     });
                 }
             }
