@@ -195,6 +195,66 @@ fn from_existing_worktree() -> crate::Result {
     Ok(())
 }
 
+#[cfg(target_os = "macos")]
+#[test]
+fn cross_fs() -> crate::Result {
+    use git_discover::upwards::Options;
+    use std::os::unix::fs::symlink;
+    use std::process::Command;
+
+    let top_level_repo = git_testtools::scripted_fixture_repo_writable("make_basic_repo.sh")?;
+
+    // Create an empty dmg file
+    let dmg_location = tempfile::tempdir()?;
+    let dmg_file = dmg_location.path().join("temp.dmg");
+    Command::new("hdiutil")
+        .args(&["create", "-size", "1m"])
+        .arg(&dmg_file)
+        .status()?;
+
+    // Mount dmg file into temporary location
+    let mount_point = tempfile::tempdir()?;
+    Command::new("hdiutil")
+        .args(&["attach", "-nobrowse", "-mountpoint"])
+        .arg(mount_point.path())
+        .arg(&dmg_file)
+        .status()?;
+
+    // Symlink the mount point into the repo
+    symlink(mount_point.path(), top_level_repo.path().join("remote"))?;
+
+    // Disovery tests
+    let res = git_discover::upwards(top_level_repo.path().join("remote"))
+        .expect_err("the cross-fs option should prevent us from discovering the repo");
+    assert!(matches!(
+        res,
+        git_discover::upwards::Error::NoGitRepositoryWithinFs { .. }
+    ));
+
+    let (repo_path, _trust) = git_discover::upwards_opts(
+        &top_level_repo.path().join("remote"),
+        Options {
+            cross_fs: true,
+            ..Default::default()
+        },
+    )
+    .expect("the cross-fs option should allow us to discover the repo");
+
+    assert_eq!(
+        repo_path
+            .into_repository_and_work_tree_directories()
+            .1
+            .expect("work dir")
+            .file_name(),
+        top_level_repo.path().file_name()
+    );
+
+    // Cleanup
+    Command::new("hdiutil").arg("detach").arg(mount_point.path()).status()?;
+
+    Ok(())
+}
+
 fn repo_path() -> crate::Result<PathBuf> {
     git_testtools::scripted_fixture_repo_read_only("make_basic_repo.sh")
 }

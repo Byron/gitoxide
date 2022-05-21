@@ -10,6 +10,8 @@ pub enum Error {
     NoGitRepository { path: PathBuf },
     #[error("Could find a git repository in '{}' or in any of its parents within ceiling height of {}", .path.display(), .ceiling_height)]
     NoGitRepositoryWithinCeiling { path: PathBuf, ceiling_height: usize },
+    #[error("Could find a git repository in '{}' or in any of its parents within device limits below '{}'", .path.display(), .limit.display())]
+    NoGitRepositoryWithinFs { path: PathBuf, limit: PathBuf },
     #[error("None of the passed ceiling directories prefixed the git-dir candidate, making them ineffective.")]
     NoMatchingCeilingDir,
     #[error("Could find a trusted git repository in '{}' or in any of its parents, candidate at '{}' discarded", .path.display(), .candidate.display())]
@@ -38,6 +40,11 @@ pub struct Options<'a> {
     pub ceiling_dirs: &'a [PathBuf],
     /// If true, and `ceiling_dirs` is not empty, we expect at least one ceiling directory to match or else there will be an error.
     pub match_ceiling_dir_or_error: bool,
+    /// if `true` avoid crossing filesystem boundaries.
+    /// Only supported on Unix-like systems.
+    // TODO: test on Linux
+    // TODO: Handle WASI once https://github.com/rust-lang/rust/issues/71213 is resolved
+    pub cross_fs: bool,
 }
 
 impl Default for Options<'_> {
@@ -46,11 +53,14 @@ impl Default for Options<'_> {
             required_trust: git_sec::Trust::Reduced,
             ceiling_dirs: &[],
             match_ceiling_dir_or_error: true,
+            cross_fs: false,
         }
     }
 }
 
 pub(crate) mod function {
+    #[cfg(unix)]
+    use std::fs;
     use std::path::{Path, PathBuf};
 
     use git_sec::Trust;
@@ -63,12 +73,14 @@ pub(crate) mod function {
     ///
     /// Fail if no valid-looking git repository could be found.
     // TODO: tests for trust-based discovery
+    #[cfg_attr(not(unix), allow(unused_variables))]
     pub fn discover_opts(
         directory: impl AsRef<Path>,
         Options {
             required_trust,
             ceiling_dirs,
             match_ceiling_dir_or_error,
+            cross_fs,
         }: Options<'_>,
     ) -> Result<(crate::repository::Path, Trust), Error> {
         // Absolutize the path so that `Path::parent()` _actually_ gives
@@ -77,7 +89,11 @@ pub(crate) mod function {
         // working with paths paths that contain '..'.)
         let cwd = std::env::current_dir().ok();
         let dir = git_path::absolutize(directory.as_ref(), cwd.as_deref());
-        if !dir.is_dir() {
+        let dir_metadata = dir.metadata().map_err(|_| Error::InaccessibleDirectory {
+            path: dir.to_path_buf(),
+        })?;
+
+        if !dir_metadata.is_dir() {
             return Err(Error::InaccessibleDirectory { path: dir.into_owned() });
         }
         let mut dir_made_absolute = cwd.as_deref().map_or(false, |cwd| {
@@ -101,6 +117,9 @@ pub(crate) mod function {
             None
         };
 
+        #[cfg(unix)]
+        let initial_device = device_id(&dir_metadata);
+
         let mut cursor = dir.clone().into_owned();
         let mut current_height = 0;
         'outer: loop {
@@ -111,6 +130,20 @@ pub(crate) mod function {
                 });
             }
             current_height += 1;
+
+            #[cfg(unix)]
+            if current_height != 0 && !cross_fs {
+                let metadata = cursor.metadata().map_err(|_| Error::InaccessibleDirectory {
+                    path: cursor.to_path_buf(),
+                })?;
+
+                if device_id(&metadata) != initial_device {
+                    return Err(Error::NoGitRepositoryWithinFs {
+                        path: dir.into_owned(),
+                        limit: cursor.to_path_buf(),
+                    });
+                }
+            }
 
             for append_dot_git in &[false, true] {
                 if *append_dot_git {
@@ -215,6 +248,20 @@ pub(crate) mod function {
                     .map(|path_relative_to_ceiling| path_relative_to_ceiling.components().count())
             })
             .min()
+    }
+
+    #[cfg(target_os = "linux")]
+    /// Returns the device ID of the directory.
+    fn device_id(m: &fs::Metadata) -> u64 {
+        use std::os::linux::fs::MetadataExt;
+        m.st_dev()
+    }
+
+    #[cfg(all(unix, not(target_os = "linux")))]
+    /// Returns the device ID of the directory.
+    fn device_id(m: &fs::Metadata) -> u64 {
+        use std::os::unix::fs::MetadataExt;
+        m.dev()
     }
 
     /// Find the location of the git repository directly in `directory` or in any of its parent directories, and provide
