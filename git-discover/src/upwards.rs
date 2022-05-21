@@ -133,7 +133,13 @@ pub(crate) mod function {
 
             #[cfg(unix)]
             if current_height != 0 && !cross_fs {
-                let metadata = cursor.metadata().map_err(|_| Error::InaccessibleDirectory {
+                let metadata = if cursor.as_os_str().is_empty() {
+                    Path::new(".")
+                } else {
+                    cursor.as_ref()
+                }
+                .metadata()
+                .map_err(|_| Error::InaccessibleDirectory {
                     path: cursor.to_path_buf(),
                 })?;
 
