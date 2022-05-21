@@ -25,6 +25,6 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.59.0" # dictated by `windows` crates effectively
+          toolchain: "1.59.0" # dictated by `windows` crates effectively, IMPORTANT: adjust etc/msrv-badge.svg as well
           override: true
       - run: make check-msrv-on-ci

@@ -1,5 +1,6 @@
 [![Rust](https://github.com/Byron/gitoxide/workflows/Rust/badge.svg)](https://github.com/Byron/gitoxide/actions)
 [![Crates.io](https://img.shields.io/crates/v/gitoxide.svg)](https://crates.io/crates/gitoxide)
+<img src="etc/msrv-badge.svg">
 
 **gix** is a command-line interface (*CLI*) to access git repositories. It's written to optimize the
 _user-experience_, and perform as _good or better than the canonical implementation_.
