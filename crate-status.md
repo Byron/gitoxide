@@ -225,7 +225,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] transformations to and from bytes
 * [x] conversions between different platforms
 * [x] virtual canonicalization for more concise paths via `absolutize()`
-* [ ] more flexible canonicalization with symlink resolution for paths which are partially virtual via `realpath()`
+* [x] more flexible canonicalization with symlink resolution for paths which are partially virtual via `realpath()`
 * **spec**
     * [ ] parse
     * [ ] check for match
@@ -245,6 +245,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 * [x] check if a git directory is a git repository
 * [x] find a git repository by searching upward
    * [x] define ceilings that should not be surpassed
+   * [x] prevent crossing file-systems (non-windows only)
 * [x] handle linked worktrees
 * [ ] a way to handle `safe.directory`
      - note that it's less critical to support it as `gitoxide` allows access but prevents untrusted configuration to become effective.
@@ -391,8 +392,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [x] color
         * [x] path (incl. resolution)
         * [x] include
-        * [ ] includeIf
-          * [ ] `gitdir`,  `gitdir/i`, `onbranch`
+        * **includeIf**
+          * [x] `gitdir`,  `gitdir/i`, `onbranch`
           * [ ] `hasconfig`
 * [x] write
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
