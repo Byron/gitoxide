@@ -25,3 +25,7 @@ thiserror = "1.0.26"
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
 is_ci = "1.1.1"
+
+[target.'cfg(target_os = "macos")'.dev-dependencies]
+defer = "0.1.0"
+tempfile = "3.2.0"

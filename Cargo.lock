@@ -827,6 +827,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "defer"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "647605a6345d5e89c3950a36a638c56478af9b414c55c6f2477c73b115f9acde"
+
+[[package]]
 name = "diff"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1200,12 +1206,14 @@ name = "git-discover"
 version = "0.1.1"
 dependencies = [
  "bstr",
+ "defer",
  "git-hash",
  "git-path",
  "git-ref",
  "git-sec",
  "git-testtools",
  "is_ci",
+ "tempfile",
  "thiserror",
 ]
 
