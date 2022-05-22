@@ -204,35 +204,40 @@ fn cross_fs() -> crate::Result {
 
     let top_level_repo = git_testtools::scripted_fixture_repo_writable("make_basic_repo.sh")?;
 
-    // Create an empty dmg file
-    let dmg_location = tempfile::tempdir()?;
-    let dmg_file = dmg_location.path().join("temp.dmg");
-    Command::new("hdiutil")
-        .args(&["create", "-size", "1m"])
-        .arg(&dmg_file)
-        .status()?;
-
-    // Mount dmg file into temporary location
-    let mount_point = tempfile::tempdir()?;
-    Command::new("hdiutil")
-        .args(&["attach", "-nobrowse", "-mountpoint"])
-        .arg(mount_point.path())
-        .arg(&dmg_file)
-        .status()?;
-
-    // Ensure that the mount point is always cleaned up
-    let defer_detach = defer::defer(|| {
+    let _cleanup = {
+        // Create an empty dmg file
+        let dmg_location = tempfile::tempdir()?;
+        let dmg_file = dmg_location.path().join("temp.dmg");
         Command::new("hdiutil")
-            .arg("detach")
+            .args(&["create", "-size", "1m"])
+            .arg(&dmg_file)
+            .status()?;
+
+        // Mount dmg file into temporary location
+        let mount_point = tempfile::tempdir()?;
+        Command::new("hdiutil")
+            .args(&["attach", "-nobrowse", "-mountpoint"])
             .arg(mount_point.path())
-            .status()
-            .expect("detach temporary test dmg filesystem successfully");
-    });
+            .arg(&dmg_file)
+            .status()?;
 
-    // Symlink the mount point into the repo
-    symlink(mount_point.path(), top_level_repo.path().join("remote"))?;
+        // Ensure that the mount point is always cleaned up
+        let cleanup = defer::defer({
+            let arg = mount_point.path().to_owned();
+            move || {
+                Command::new("hdiutil")
+                    .arg("detach")
+                    .arg(arg)
+                    .status()
+                    .expect("detach temporary test dmg filesystem successfully");
+            }
+        });
 
-    // Disovery tests
+        // Symlink the mount point into the repo
+        symlink(mount_point.path(), top_level_repo.path().join("remote"))?;
+        cleanup
+    };
+
     let res = git_discover::upwards(top_level_repo.path().join("remote"))
         .expect_err("the cross-fs option should prevent us from discovering the repo");
     assert!(matches!(
@@ -257,9 +262,6 @@ fn cross_fs() -> crate::Result {
             .file_name(),
         top_level_repo.path().file_name()
     );
-
-    // Cleanup
-    drop(defer_detach);
 
     Ok(())
 }
