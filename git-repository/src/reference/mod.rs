@@ -34,6 +34,12 @@ impl<'repo> Reference<'repo> {
     }
 }
 
+impl<'repo> std::fmt::Debug for Reference<'repo> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.inner, f)
+    }
+}
+
 impl<'repo> Reference<'repo> {
     pub(crate) fn from_ref(reference: git_ref::Reference, repo: &'repo crate::Repository) -> Self {
         Reference { inner: reference, repo }
