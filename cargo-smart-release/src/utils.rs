@@ -52,7 +52,11 @@ pub fn is_pre_release_version(semver: &Version) -> bool {
 
 pub fn is_top_level_package(manifest_path: &Utf8Path, repo: &git::Repository) -> bool {
     manifest_path
-        .strip_prefix(repo.work_dir().as_ref().expect("repo with working tree"))
+        .strip_prefix(
+            std::env::current_dir()
+                .expect("cwd")
+                .join(repo.work_dir().as_ref().expect("repo with working tree")),
+        )
         .map_or(false, |p| p.components().count() == 1)
 }
 
