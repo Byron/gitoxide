@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.10.1 (2022-05-23)
+
+### Bug Fixes
+
+ - <csr-id-33a2bd6bd3faf597f020924e42082a714d3253b9/> Correctly determine top-level crate name.
+   Previously it was possible to think the crate is part of a multi-crate
+   worktree even though it wasn't, causing changelogs to not pick up their
+   history as it would look for different tag names.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 1 calendar day.
+ - 1 day passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Correctly determine top-level crate name. ([`33a2bd6`](https://github.com/Byron/gitoxide/commit/33a2bd6bd3faf597f020924e42082a714d3253b9))
+    - Merge branch 'davidkna-discover-x-fs' ([`9abaeda`](https://github.com/Byron/gitoxide/commit/9abaeda2d22e2dbb1db1632c6eb637f1458d06e1))
+</details>
+
 ## 0.10.0 (2022-05-21)
 
 ### Bug Fixes
@@ -19,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 46 calendar days.
+ - 13 commits contributed to the release over the course of 46 calendar days.
  - 48 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#422](https://github.com/Byron/gitoxide/issues/422)
@@ -37,6 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#422](https://github.com/Byron/gitoxide/issues/422)**
     - Don't assume crates are non-breaking just because they are in the user selection. ([`fcaa635`](https://github.com/Byron/gitoxide/commit/fcaa6353297fd1d4cb30ca3a873f76efb62e45e1))
  * **Uncategorized**
+    - Release git-path v0.1.2, git-sec v0.1.1, git-config v0.4.0, git-discover v0.1.1, git-pack v0.19.1, git-repository v0.18.0, cargo-smart-release v0.10.0, safety bump 2 crates ([`ceb6dff`](https://github.com/Byron/gitoxide/commit/ceb6dff13362a2b4318a551893217c1d11643b9f))
     - adjust to changes in git-ref ([`0671586`](https://github.com/Byron/gitoxide/commit/06715861d3a1d236c310d71737ec1d1a5ca6c770))
     - adjust test expectations to match improved parsing in git-conventional ([`42abfed`](https://github.com/Byron/gitoxide/commit/42abfed32b2aa677b53f78f0b2756780aa61d2d4))
     - Release git-glob v0.2.0, safety bump 3 crates ([`ab6bed7`](https://github.com/Byron/gitoxide/commit/ab6bed7e2aa19eeb9990441741008c430f373708))

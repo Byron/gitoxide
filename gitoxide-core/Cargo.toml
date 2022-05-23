@@ -38,7 +38,7 @@ local-time-support = ["git-repository/local-time-support"]
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
-git-repository = { version = "^0.18.0", path = "../git-repository", default-features = false, features = ["local", "unstable"]} # TODO: eventually 'unstable' shouldn't be needed anymore
+git-repository = { version = "^0.18.1", path = "../git-repository", default-features = false, features = ["local", "unstable"]} # TODO: eventually 'unstable' shouldn't be needed anymore
 git-pack-for-configuration-only = { package = "git-pack", version = "^0.19.1", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
 git-commitgraph = { version = "^0.8.0", path = "../git-commitgraph" }
 git-config = { version = "^0.4.0", path = "../git-config" }

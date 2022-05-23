@@ -5,7 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.18.1 (2022-05-23)
+
+### New Features
+
+ - <csr-id-c78baecbb37fd92a0a86231810c9e35e9a4c21cd/> `Debug` for `Reference`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 1 calendar day.
+ - 1 day passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - `Debug` for `Reference`. ([`c78baec`](https://github.com/Byron/gitoxide/commit/c78baecbb37fd92a0a86231810c9e35e9a4c21cd))
+    - Merge branch 'davidkna-discover-x-fs' ([`9abaeda`](https://github.com/Byron/gitoxide/commit/9abaeda2d22e2dbb1db1632c6eb637f1458d06e1))
+</details>
+
 ## 0.18.0 (2022-05-21)
+
+<csr-id-e63e722791a7795cd99048bed834459595c60abc/>
 
 ### Other
 
@@ -15,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 2 calendar days.
+ - 5 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -27,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-path v0.1.2, git-sec v0.1.1, git-config v0.4.0, git-discover v0.1.1, git-pack v0.19.1, git-repository v0.18.0, cargo-smart-release v0.10.0, safety bump 2 crates ([`ceb6dff`](https://github.com/Byron/gitoxide/commit/ceb6dff13362a2b4318a551893217c1d11643b9f))
     - Merge branch 'svetli-n-git_includeif' ([`cf24fbe`](https://github.com/Byron/gitoxide/commit/cf24fbe4b62d67b06138243d470dcc1805ebd55b))
     - refactor ([`07e0f5e`](https://github.com/Byron/gitoxide/commit/07e0f5e91b3c41614b9182cf9716120fe41ddf40))
     - add ceiling_dirs option to upwards discovery ([`e63e722`](https://github.com/Byron/gitoxide/commit/e63e722791a7795cd99048bed834459595c60abc))
@@ -845,6 +874,10 @@ A maintenance release to properly dealing with previously breaking changes in `g
 <csr-id-4fe4786797d240a59d29dbf2c6310490a381c8b6/>
 <csr-id-debe0094826f83839f907523715def929133fd58/>
 <csr-id-56e39fac54bfa3871c42bbf76a9f7c49486b85be/>
+<csr-id-293bfc0278c5983c0beaec93253fb51f00d81156/>
+<csr-id-650241251a420602f74037babfc24c9f64df78d8/>
+<csr-id-2b4a61589a7cba3f7600710e21304e731ae3b36a/>
+<csr-id-8b82f7d44c7eb63b7922ddc31ada9cefdce776b0/>
 
 ### New Features
 

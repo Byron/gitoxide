@@ -355,7 +355,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1203,7 +1203,7 @@ dependencies = [
 
 [[package]]
 name = "git-discover"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bstr",
  "defer",
@@ -1406,7 +1406,7 @@ dependencies = [
 
 [[package]]
 name = "git-path"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "bstr",
  "tempfile",
@@ -1477,7 +1477,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "anyhow",
  "byte-unit",
