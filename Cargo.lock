@@ -1536,6 +1536,8 @@ name = "git-sec"
 version = "0.1.1"
 dependencies = [
  "bitflags",
+ "dirs",
+ "git-path",
  "libc",
  "serde",
  "tempfile",

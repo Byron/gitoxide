@@ -7,3 +7,11 @@ fn is_path_owned_by_current_user() -> crate::Result {
     assert!(git_sec::identity::is_path_owned_by_current_user(dir.path())?);
     Ok(())
 }
+
+#[test]
+#[cfg(windows)]
+fn windows_home() -> crate::Result {
+    let home = dirs::home_dir().expect("home dir is available");
+    assert!(git_sec::identity::is_path_owned_by_current_user(home)?);
+    Ok(())
+}

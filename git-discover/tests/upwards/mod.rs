@@ -3,17 +3,10 @@ use std::path::PathBuf;
 use git_discover::repository::Kind;
 
 fn expected_trust() -> git_sec::Trust {
-    #[cfg(not(windows))]
-    {
+    if std::env::var_os("GITOXIDE_TEST_EXPECT_REDUCED_TRUST").is_some() {
+        git_sec::Trust::Reduced
+    } else {
         git_sec::Trust::Full
-    }
-    #[cfg(windows)]
-    {
-        if is_ci::cached() {
-            git_sec::Trust::Reduced
-        } else {
-            git_sec::Trust::Full
-        }
     }
 }
 
@@ -105,7 +98,7 @@ fn from_dir_with_dot_dot() -> crate::Result {
         working_dir.canonicalize()?,
         "a relative path that climbs above the test repo should yield the gitoxide repo"
     );
-    assert_eq!(trust, git_sec::Trust::Full);
+    assert_eq!(trust, expected_trust());
     Ok(())
 }
 

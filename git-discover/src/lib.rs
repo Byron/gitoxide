@@ -28,9 +28,6 @@ pub mod is_git {
         #[error(transparent)]
         GitFile(#[from] crate::path::from_gitdir_file::Error),
     }
-
-    /// Options for [`crate::is_git()`].
-    pub struct Options {}
 }
 
 mod is;
