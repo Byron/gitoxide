@@ -3,7 +3,11 @@ use std::path::PathBuf;
 use git_discover::repository::Kind;
 
 fn expected_trust() -> git_sec::Trust {
-    git_sec::Trust::Full
+    if std::env::var_os("GITOXIDE_TEST_EXPECT_REDUCED_TRUST").is_some() {
+        git_sec::Trust::Reduced
+    } else {
+        git_sec::Trust::Full
+    }
 }
 
 mod ceiling_dirs;
