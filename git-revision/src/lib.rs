@@ -10,3 +10,6 @@ pub use hash_hasher;
 ///
 pub mod describe;
 pub use describe::function::describe;
+
+///
+pub mod spec;
