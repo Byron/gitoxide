@@ -3,10 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use git::{objs::bstr::ByteSlice, progress, Progress};
 use git_config::File;
-use git_repository::{objs::bstr::ByteSlice, progress, Progress};
-
-use crate::pack::receive::git;
+use git_repository as git;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum Mode {
@@ -20,21 +19,16 @@ impl Default for Mode {
     }
 }
 
-enum RepoKind {
-    Bare,
-    WorkingTree,
-}
-
 fn find_git_repository_workdirs<P: Progress>(
     root: impl AsRef<Path>,
     mut progress: P,
     debug: bool,
-) -> impl Iterator<Item = (PathBuf, RepoKind)>
+) -> impl Iterator<Item = (PathBuf, git::Kind)>
 where
     <P as Progress>::SubProgress: Sync,
 {
     progress.init(None, progress::count("filesystem items"));
-    fn is_repository(path: &Path) -> Option<git_repository::Kind> {
+    fn is_repository(path: &Path) -> Option<git::Kind> {
         // Can be git dir or worktree checkout (file)
         if path.file_name() != Some(OsStr::new(".git")) {
             return None;
@@ -48,7 +42,7 @@ where
             }
         } else {
             // git files are always worktrees
-            Some(git_repository::Kind::WorkTree { is_linked: true })
+            Some(git::Kind::WorkTree { is_linked: true })
         }
     }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
@@ -61,8 +55,7 @@ where
 
     #[derive(Debug, Default)]
     struct State {
-        is_repo: bool,
-        is_bare: bool,
+        kind: Option<git::Kind>,
     }
 
     let walk = jwalk::WalkDirGeneric::<((), State)>::new(root)
@@ -87,7 +80,7 @@ where
             let path = entry.path();
             if let Some(kind) = is_repository(&path) {
                 let is_bare = kind.is_bare();
-                entry.client_state = State { is_repo: true, is_bare };
+                entry.client_state = State { kind: kind.into() };
                 entry.read_children_path = None;
 
                 found_any_repo = true;
@@ -97,23 +90,13 @@ where
         // Only return paths which are repositories are further participating in the traversal
         // Don't let bare repositories cause siblings to be pruned.
         if found_any_repo && !found_bare_repo {
-            siblings.retain(|e| e.as_ref().map(|e| e.client_state.is_repo).unwrap_or(false));
+            siblings.retain(|e| e.as_ref().map(|e| e.client_state.kind.is_some()).unwrap_or(false));
         }
     })
     .into_iter()
     .inspect(move |_| progress.inc())
     .filter_map(Result::ok)
-    .filter(|e| e.client_state.is_repo)
-    .map(|e| {
-        (
-            into_workdir(e.path()),
-            if e.client_state.is_bare {
-                RepoKind::Bare
-            } else {
-                RepoKind::WorkingTree
-            },
-        )
-    })
+    .filter_map(|mut e| e.client_state.kind.take().map(|kind| (into_workdir(e.path()), kind)))
 }
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
@@ -124,11 +107,14 @@ fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
 
 fn handle(
     mode: Mode,
-    kind: RepoKind,
+    kind: git::Kind,
     git_workdir: &Path,
     canonicalized_destination: &Path,
     progress: &mut impl Progress,
 ) -> anyhow::Result<()> {
+    if let git::Kind::WorkTree { is_linked: true } = kind {
+        return Ok(());
+    }
     fn to_relative(path: PathBuf) -> PathBuf {
         path.components()
             .skip_while(|c| c == &std::path::Component::RootDir)
@@ -191,8 +177,8 @@ fn handle(
         .join(to_relative({
             let mut path = git_url::expand_path(None, url.path.as_bstr())?;
             match kind {
-                RepoKind::Bare => path,
-                RepoKind::WorkingTree => {
+                git::Kind::Bare => path,
+                git::Kind::WorkTree { .. } => {
                     if let Some(ext) = path.extension() {
                         if ext == "git" {
                             path.set_extension("");
