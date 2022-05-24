@@ -28,13 +28,14 @@ enum RepoKind {
 fn find_git_repository_workdirs<P: Progress>(
     root: impl AsRef<Path>,
     mut progress: P,
+    kind: discover::Kind,
     debug: bool,
 ) -> impl Iterator<Item = (PathBuf, RepoKind)>
 where
     <P as Progress>::SubProgress: Sync,
 {
     progress.init(None, progress::count("filesystem items"));
-    fn is_repository(path: &Path) -> Option<git_repository::Kind> {
+    fn is_repository(path: &Path, kind: discover::Kind) -> Option<git_repository::Kind> {
         // Can be git dir or worktree checkout (file)
         if path.file_name() != Some(OsStr::new(".git")) {
             return None;
@@ -48,7 +49,8 @@ where
             }
         } else {
             // git files are always worktrees
-            Some(git_repository::Kind::WorkTree { is_linked: true })
+            matches!(kind, discover::Kind::WorktreesAndRepositories)
+                .then(|| git_repository::Kind::WorkTree { is_linked: true })
         }
     }
     fn into_workdir(git_dir: PathBuf) -> PathBuf {
@@ -85,7 +87,7 @@ where
         let mut found_bare_repo = false;
         for entry in siblings.iter_mut().flatten() {
             let path = entry.path();
-            if let Some(kind) = is_repository(&path) {
+            if let Some(kind) = is_repository(&path, kind) {
                 let is_bare = kind.is_bare();
                 entry.client_state = State { is_repo: true, is_bare };
                 entry.read_children_path = None;
@@ -223,6 +225,16 @@ fn handle(
     Ok(())
 }
 
+///
+pub mod discover {
+    /// The kinds of items to discover.
+    #[derive(Debug, Copy, Clone)]
+    pub enum Kind {
+        Repositories,
+        WorktreesAndRepositories,
+    }
+}
+
 /// Find all working directories in the given `source_dir` and print them to `out` while providing `progress`.
 pub fn discover<P: Progress>(
     source_dir: impl AsRef<Path>,
@@ -233,9 +245,12 @@ pub fn discover<P: Progress>(
 where
     <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
 {
-    for (git_workdir, _kind) in
-        find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories"), debug)
-    {
+    for (git_workdir, _kind) in find_git_repository_workdirs(
+        source_dir,
+        progress.add_child("Searching repositories"),
+        discover::Kind::WorktreesAndRepositories,
+        debug,
+    ) {
         writeln!(&mut out, "{}", git_workdir.display())?;
     }
     Ok(())
@@ -252,9 +267,12 @@ where
 {
     let mut num_errors = 0usize;
     let destination = destination.as_ref().canonicalize()?;
-    for (path_to_move, kind) in
-        find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories"), false)
-    {
+    for (path_to_move, kind) in find_git_repository_workdirs(
+        source_dir,
+        progress.add_child("Searching repositories"),
+        discover::Kind::Repositories,
+        false,
+    ) {
         if let Err(err) = handle(mode, kind, &path_to_move, &destination, &mut progress) {
             progress.fail(format!(
                 "Error when handling directory {:?}: {}",
