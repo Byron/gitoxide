@@ -29,21 +29,21 @@ mod parse {
         }
     }
 
-    fn b(s: &str) -> &BStr {
-        s.into()
+    fn parse(spec: &str) -> Recorder {
+        let mut rec = Recorder::default();
+        spec::parse(spec.into(), &mut rec).unwrap();
+        rec
     }
 
     #[test]
-    fn at_alone_is_shortcut_for_head() {
-        let mut rec = Recorder::default();
-        spec::parse(b("@"), &mut rec).unwrap();
+    fn at_by_iteself_is_shortcut_for_head() {
+        let rec = parse("@");
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
     }
 
     #[test]
-    fn refname() {
-        let mut rec = Recorder::default();
-        spec::parse(b("HEAD"), &mut rec).unwrap();
+    fn refname_head() {
+        let rec = parse("HEAD");
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
     }
 }
