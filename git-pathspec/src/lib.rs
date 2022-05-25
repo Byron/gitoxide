@@ -5,11 +5,14 @@ use bstr::BString;
 
 pub mod parse;
 
-/// The output of a pathspec parsing operaion. It can be used to matched against a path.
+/// The output of a pathspec parsing operaion. It can be used to matche against a path / multiple paths.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Pattern {
+    /// The path part of a pathspec.
     pub path: BString,
+    /// All magig sigantures that were included in the pathspec.
     pub signature: Option<MagicSignature>,
+    // All attributes that were included in the `ATTR` part of the pathspec, if present.
     // pub attributes: Vec<(BString, git_attributes::State)>,
 }
 
