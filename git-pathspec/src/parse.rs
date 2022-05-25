@@ -93,17 +93,17 @@ fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, Vec<(BString, State)>
             b"glob" => MagicSignature::GLOB,
             b"attr" => MagicSignature::ATTR,
             b"exclude" => MagicSignature::EXCLUDE,
-            s if s.starts_with(b"attr:") => Iter::new(s[5..].into(), 0)
-                .map(|res| res.map(|(attr, state)| (BString::from(attr), State::from(state))))
-                .collect::<Result<Vec<_>, _>>()
-                .map(|v| {
-                    attributes = v;
-                    MagicSignature::ATTR
-                })?,
             s => {
-                return Err(Error::InvalidSignature {
-                    found_signature: BString::from(s),
-                });
+                if let Some(attrs) = s.strip_prefix(b"attr:") {
+                    attributes = Iter::new(attrs.into(), 0)
+                        .map(|res| res.map(|(attr, state)| (attr.into(), state.into())))
+                        .collect::<Result<Vec<_>, _>>()?;
+                    MagicSignature::ATTR
+                } else {
+                    return Err(Error::InvalidSignature {
+                        found_signature: BString::from(s),
+                    });
+                }
             }
         }
     }
