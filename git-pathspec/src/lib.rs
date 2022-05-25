@@ -4,6 +4,7 @@ use bitflags::bitflags;
 use bstr::BString;
 
 pub mod parse;
+pub mod parse_functional;
 
 /// The output of a pathspec parsing operaion. It can be used to matche against a path / multiple paths.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -35,5 +36,5 @@ bitflags! {
 
 /// Parse a git-style pathspec into a `Pattern`
 pub fn parse(input: &[u8]) -> Result<Pattern, parse::Error> {
-    Pattern::from_bytes(input)
+    Pattern::from_bytes_functional(input)
 }

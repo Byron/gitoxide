@@ -9,6 +9,9 @@ quick_error! {
         InvalidSignature { found_signature: BString } {
             display("Found \"{}\", which is not a valid signature", found_signature)
         }
+        MissingClosingParenthesis  { pathspec: BString } {
+            display("Missing ')' at the end of pathspec magic in '{}'", pathspec)
+        }
         // TODO: Fix error messages
         InvalidAttribute(err: git_attributes::parse::Error) {
             display("{}", err)

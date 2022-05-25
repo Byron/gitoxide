@@ -117,6 +117,12 @@ fn should_fail_on_whitespace_or_invalid_keywords() {
                 attribute: BString::from("+someAttr"),
             }),
         ),
+        (
+            ":(top",
+            Error::MissingClosingParenthesis {
+                pathspec: BString::from(":(top"),
+            },
+        ),
     ];
 
     for (input, _expected) in inputs {
