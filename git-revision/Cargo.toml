@@ -19,6 +19,7 @@ serde1 = [ "serde", "git-hash/serde1", "git-object/serde1" ]
 [dependencies]
 git-hash = { version = "^0.9.4", path = "../git-hash" }
 git-object = { version = "^0.19.0", path = "../git-object" }
+
 hash_hasher = "2.0.3"
 thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
