@@ -38,17 +38,24 @@ impl<'a> Parser<'a> {
     }
 
     fn parse(mut self) -> Result<Pattern, Error> {
-        let signature = self.parse_magic_signature()?;
+        let (signature, attributes) = self.parse_magic_signature()?;
         let path = self.parse_path();
 
-        Ok(Pattern { path, signature })
+        Ok(Pattern {
+            path,
+            signature,
+            attributes,
+        })
     }
 
-    fn parse_magic_signature(&mut self) -> Result<Option<MagicSignature>, Error> {
+    fn parse_magic_signature(
+        &mut self,
+    ) -> Result<(Option<MagicSignature>, Vec<(BString, git_attributes::State)>), Error> {
         match self.input.peek() {
             Some(b':') => {
                 self.input.next();
                 let mut signature = MagicSignature::empty();
+                let mut attributes = Vec::new();
 
                 while let Some(&b) = self.input.peek() {
                     match b {
@@ -68,21 +75,28 @@ impl<'a> Parser<'a> {
                         }
                         b'(' => {
                             self.input.next();
-                            signature |= self.parse_magic_keywords()?;
+                            let (signatures, attrs) = self.parse_magic_keywords()?;
+                            signature |= signatures;
+                            attributes = attrs;
                         }
                         _ => break,
                     }
                 }
 
-                (!signature.is_empty()).then(|| signature).map(Result::Ok).transpose()
+                (!signature.is_empty())
+                    .then(|| signature)
+                    .map(Result::Ok)
+                    .transpose()
+                    .map(|x| (x, attributes))
             }
-            _ => Ok(None),
+            _ => Ok((None, Vec::new())),
         }
     }
 
-    fn parse_magic_keywords(&mut self) -> Result<MagicSignature, Error> {
+    fn parse_magic_keywords(&mut self) -> Result<(MagicSignature, Vec<(BString, git_attributes::State)>), Error> {
         let mut buf = Vec::new();
         let mut keywords = Vec::new();
+        let mut attributes = Vec::new();
 
         while let Some(b) = self.input.next() {
             match b {
@@ -114,9 +128,10 @@ impl<'a> Parser<'a> {
                 b"attr" => MagicSignature::ATTR,
                 b"exclude" => MagicSignature::EXCLUDE,
                 s if s.starts_with(b"attr:") => git_attributes::parse::Iter::new(s[5..].into(), 0)
+                    .map(|res| res.map(|(attr, state)| (BString::from(attr), git_attributes::State::from(state))))
                     .collect::<Result<Vec<_>, _>>()
                     .map(|v| {
-                        println!("{:?}", v);
+                        attributes = v;
                         MagicSignature::ATTR
                     })?,
                 s => {
@@ -127,7 +142,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ok(signature)
+        Ok((signature, attributes))
     }
 
     fn parse_path(self) -> BString {

@@ -12,8 +12,8 @@ pub struct Pattern {
     pub path: BString,
     /// All magig sigantures that were included in the pathspec.
     pub signature: Option<MagicSignature>,
-    // All attributes that were included in the `ATTR` part of the pathspec, if present.
-    // pub attributes: Vec<(BString, git_attributes::State)>,
+    /// All attributes that were included in the `ATTR` part of the pathspec, if present.
+    pub attributes: Vec<(BString, git_attributes::State)>,
 }
 
 bitflags! {
