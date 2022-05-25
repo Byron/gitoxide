@@ -54,11 +54,6 @@ pub mod parse {
         use crate::spec::parse::{Delegate, Error};
         use bstr::{BStr, ByteSlice};
 
-        fn next(i: &BStr) -> (u8, &BStr) {
-            let b = i[0];
-            (b, i[1..].as_bstr()).into()
-        }
-
         pub fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
             if let Some(rest) = input.strip_prefix(b"@").or_else(|| input.strip_prefix(b"HEAD")) {
                 delegate.resolve_ref("HEAD".into()).ok_or(Error::Delegate)?;
@@ -93,6 +88,11 @@ pub mod parse {
                 .strip_prefix(b"...")
                 .map(|rest| (rest, spec::Kind::MergeBase))
                 .or_else(|| input.strip_prefix(b"..").map(|rest| (rest, spec::Kind::Range)))
+        }
+
+        fn next(i: &BStr) -> (u8, &BStr) {
+            let b = i[0];
+            (b, i[1..].as_bstr())
         }
     }
 }
