@@ -5,17 +5,19 @@ mod parse {
     #[derive(Default, Debug)]
     struct Recorder {
         resolve_ref_input: Option<BString>,
+        resolve_ref_input2: Option<BString>,
         kind: Option<spec::Kind>,
         calls: usize,
     }
     impl spec::parse::Delegate for Recorder {
         fn resolve_ref(&mut self, input: &BStr) -> Option<()> {
-            assert!(
-                self.resolve_ref_input.is_none(),
-                "called resolve_ref twice with '{}'",
-                input
-            );
-            self.resolve_ref_input = input.to_owned().into();
+            if self.resolve_ref_input.is_none() {
+                self.resolve_ref_input = input.to_owned().into();
+            } else if self.resolve_ref_input2.is_none() {
+                self.resolve_ref_input2 = input.to_owned().into();
+            } else {
+                panic!("called resolve_ref more than twice with '{}'", input);
+            }
             self.calls += 1;
             Some(())
         }
@@ -83,6 +85,22 @@ mod parse {
         let rec = parse("HEAD...");
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+    }
+
+    #[test]
+    fn middle_dot_dot_dot_is_merge_base() {
+        let rec = parse("HEAD...@");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        assert_eq!(rec.resolve_ref_input2.unwrap(), "HEAD");
+    }
+
+    #[test]
+    fn middle_dot_dot_is_range() {
+        let rec = parse("@..HEAD");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        assert_eq!(rec.resolve_ref_input2.unwrap(), "HEAD");
     }
 
     #[test]

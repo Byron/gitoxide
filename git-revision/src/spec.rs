@@ -74,6 +74,7 @@ pub mod parse {
                 delegate.kind(kind);
                 input = rest.as_bstr();
             }
+            input = revision(input, delegate)?;
 
             assert!(
                 input.is_empty(),
