@@ -32,7 +32,9 @@ pub mod parse {
     /// - **Navigation** - where to go once from the initial revision.
     /// - **range** - to learn if the specification is for a single or multiple references.
     pub trait Delegate {
-        fn resolve_ref(&mut self, input: &BStr) -> Option<()>;
+        /// Resolve `name` as reference which might not be a valid reference name. The name may be partial like `main` or full like
+        /// `refs/heads/main` solely depending on the users input.
+        fn resolve_ref(&mut self, name: &BStr) -> Option<()>;
         fn find_by_prefix(&mut self, input: &BStr) -> Option<()>;
 
         fn nth_ancestor(&mut self, n: usize) -> Option<()>;
