@@ -65,7 +65,6 @@ mod parse {
     }
 
     #[test]
-    #[ignore]
     fn leading_caret_is_range_kind() {
         let rec = parse("^HEAD");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);

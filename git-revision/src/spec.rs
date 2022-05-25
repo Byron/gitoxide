@@ -51,9 +51,19 @@ pub mod parse {
 
     pub(crate) mod function {
         use crate::spec::parse::{Delegate, Error};
-        use bstr::BStr;
+        use bstr::{BStr, ByteSlice};
 
-        pub fn parse(input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
+        fn next(i: &BStr) -> (u8, &BStr) {
+            let b = i[0];
+            (b, i[1..].as_bstr()).into()
+        }
+
+        pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
+            if let Some(b'^') = input.get(0) {
+                input = next(input).1;
+                delegate.kind(crate::spec::Kind::Range);
+            }
+
             if input == "@" || input == "HEAD" {
                 return delegate.resolve_ref("HEAD".into()).ok_or(Error::Delegate);
             }
