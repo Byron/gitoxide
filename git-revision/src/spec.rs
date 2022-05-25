@@ -50,6 +50,7 @@ pub mod parse {
     }
 
     pub(crate) mod function {
+        use crate::spec;
         use crate::spec::parse::{Delegate, Error};
         use bstr::{BStr, ByteSlice};
 
@@ -58,17 +59,40 @@ pub mod parse {
             (b, i[1..].as_bstr()).into()
         }
 
+        pub fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
+            if let Some(rest) = input.strip_prefix(b"@").or_else(|| input.strip_prefix(b"HEAD")) {
+                delegate.resolve_ref("HEAD".into()).ok_or(Error::Delegate)?;
+                input = rest.as_bstr();
+            }
+            Ok(input)
+        }
+
         pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
             if let Some(b'^') = input.get(0) {
                 input = next(input).1;
-                delegate.kind(crate::spec::Kind::Range);
+                delegate.kind(spec::Kind::Range);
             }
 
-            if input == "@" || input == "HEAD" {
-                return delegate.resolve_ref("HEAD".into()).ok_or(Error::Delegate);
+            input = revision(input, delegate)?;
+            if let Some((rest, kind)) = try_range(input) {
+                // TODO: protect against double-kind calls, invalid for git
+                delegate.kind(kind);
+                input = rest.as_bstr();
             }
 
-            todo!("")
+            assert!(
+                input.is_empty(),
+                "BUG: we must parse all of our input or fail gracefully: {:?}",
+                input
+            );
+            Ok(())
+        }
+
+        fn try_range(input: &BStr) -> Option<(&[u8], spec::Kind)> {
+            input
+                .strip_prefix(b"...")
+                .map(|rest| (rest, spec::Kind::MergeBase))
+                .or_else(|| input.strip_prefix(b"..").map(|rest| (rest, spec::Kind::Range)))
         }
     }
 }
