@@ -19,8 +19,6 @@ pub enum Error {
 /// Utility type to keep pre-obtained configuration values.
 #[derive(Debug, Clone)]
 pub(crate) struct Cache {
-    // TODO: remove this once resolved is used without a feature dependency
-    #[cfg_attr(not(any(feature = "git-mailmap", feature = "git-index")), allow(dead_code))]
     pub resolved: crate::Config,
     /// The hex-length to assume when shortening object ids. If `None`, it should be computed based on the approximate object count.
     pub hex_len: Option<usize>,
@@ -49,13 +47,12 @@ mod cache {
     use std::{convert::TryFrom, path::PathBuf};
 
     use git_config::{
-        file::GitConfig,
         values::{Boolean, Integer},
+        File,
     };
 
     use super::{Cache, Error};
-    use crate::bstr::ByteSlice;
-    use crate::permission;
+    use crate::{bstr::ByteSlice, permission};
 
     impl Cache {
         pub fn new(
@@ -64,7 +61,7 @@ mod cache {
             home_env: permission::env_var::Resource,
             git_install_dir: Option<&std::path::Path>,
         ) -> Result<Self, Error> {
-            let config = GitConfig::open(git_dir.join("config"))?;
+            let config = File::open(git_dir.join("config"))?;
 
             let is_bare = config_bool(&config, "core.bare", false)?;
             let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
@@ -153,7 +150,7 @@ mod cache {
         }
     }
 
-    fn config_bool(config: &GitConfig<'_>, key: &str, default: bool) -> Result<bool, Error> {
+    fn config_bool(config: &File<'_>, key: &str, default: bool) -> Result<bool, Error> {
         let (section, key) = key.split_once('.').expect("valid section.key format");
         config
             .boolean(section, None, key)

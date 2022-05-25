@@ -1,5 +1,4 @@
-use std::cmp::Ordering;
-use std::convert::TryFrom;
+use std::{cmp::Ordering, convert::TryFrom};
 
 use quick_error::quick_error;
 

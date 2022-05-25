@@ -1,4 +1,11 @@
-#![forbid(unsafe_code, rust_2018_idioms, missing_docs)]
+#![forbid(unsafe_code, rust_2018_idioms)]
+//! This crate contains an assortment of utilities to deal with paths and their conversions.
+//!
+//! Generally `git` treats paths as bytes, but inherently assumes non-illformed UTF-8 as encoding on windows. Internally, it expects
+//! slashes to be used as path separators and paths in files must have slashes, with conversions being performed on windows accordingly.
+//!
+//! <details>
+//!
 //! ### Research
 //!
 //! * **windows**
@@ -39,6 +46,7 @@
 //! Even though the error only exists on older windows versions, we will represent it in the type system through fallible function calls.
 //! Callers may `.expect()` on the result to indicate they don't wish to handle this special and rare case. Note that servers should not
 //! ever get into a code-path which does panic though.
+//! </details>
 
 /// A dummy type to represent path specs and help finding all spots that take path specs once it is implemented.
 
@@ -50,3 +58,54 @@ mod convert;
 mod spec;
 
 pub use convert::*;
+use std::fs::create_dir_all;
+use std::ops::Deref;
+use std::path::Path;
+use tempfile::tempdir_in;
+
+///
+pub mod realpath;
+pub use realpath::function::realpath;
+
+pub fn create_symlink(from: &Path, to: &Path) {
+    create_dir_all(from.parent().unwrap()).unwrap();
+    #[cfg(not(target_os = "windows"))]
+    std::os::unix::fs::symlink(to, &from).unwrap();
+    #[cfg(target_os = "windows")]
+    std::os::windows::fs::symlink_file(to, &from).unwrap();
+}
+
+pub struct CanonicalizedTempDir {
+    pub dir: tempfile::TempDir,
+}
+
+impl CanonicalizedTempDir {
+    pub fn new() -> Self {
+        #[cfg(windows)]
+        let canonicalized_tempdir = std::env::temp_dir();
+        #[cfg(not(windows))]
+        let canonicalized_tempdir = std::env::temp_dir().canonicalize().unwrap();
+        let dir = tempdir_in(canonicalized_tempdir).unwrap();
+        Self { dir }
+    }
+}
+
+impl Default for CanonicalizedTempDir {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AsRef<Path> for CanonicalizedTempDir {
+    fn as_ref(&self) -> &Path {
+        self
+    }
+}
+
+impl Deref for CanonicalizedTempDir {
+    type Target = Path;
+
+    fn deref(&self) -> &Self::Target {
+        self.dir.path()
+    }
+}

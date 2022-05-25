@@ -23,7 +23,7 @@ impl<'s> Transaction<'s> {
     ///   along with empty parent directories
     ///
     /// Note that transactions will be prepared automatically as needed.
-    pub fn commit(self, committer: &git_actor::Signature) -> Result<Vec<RefEdit>, Error> {
+    pub fn commit(self, committer: git_actor::SignatureRef<'_>) -> Result<Vec<RefEdit>, Error> {
         let mut updates = self.updates.expect("BUG: must call prepare before commit");
         let delete_loose_refs = matches!(
             self.packed_refs,
@@ -53,6 +53,7 @@ impl<'s> Transaction<'s> {
                                 let do_update = previous.as_ref().map_or(true, |previous| previous != new_oid);
                                 if do_update {
                                     self.store.reflog_create_or_append(
+                                        change.update.name.as_ref(),
                                         &lock,
                                         previous,
                                         new_oid,
@@ -96,14 +97,14 @@ impl<'s> Transaction<'s> {
             }
         }
 
-        let reflog_root = self.store.reflog_root();
         for change in updates.iter_mut() {
+            let (reflog_root, relative_name) = self.store.reflog_base_and_relative_path(change.update.name.as_ref());
             match &change.update.change {
                 Change::Update { .. } => {}
                 Change::Delete { .. } => {
                     // Reflog deletion happens first in case it fails a ref without log is less terrible than
                     // a log without a reference.
-                    let reflog_path = self.store.reflog_path(change.update.name.to_ref());
+                    let reflog_path = reflog_root.join(relative_name);
                     if let Err(err) = std::fs::remove_file(&reflog_path) {
                         if err.kind() != std::io::ErrorKind::NotFound {
                             return Err(Error::DeleteReflog {
@@ -139,7 +140,7 @@ impl<'s> Transaction<'s> {
             };
             if take_lock_and_delete {
                 let lock = change.lock.take().expect("lock must still be present in delete mode");
-                let reference_path = self.store.reference_path(change.update.name.to_path());
+                let reference_path = self.store.reference_path(change.update.name.as_ref());
                 if let Err(err) = std::fs::remove_file(reference_path) {
                     if err.kind() != std::io::ErrorKind::NotFound {
                         return Err(Error::DeleteReference {

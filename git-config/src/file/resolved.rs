@@ -1,10 +1,11 @@
 use std::{borrow::Cow, collections::HashMap, convert::TryFrom, path::Path};
 
-use super::{GitConfig, SectionId};
+use super::SectionId;
 use crate::{
     file::LookupTreeNode,
     parser,
     parser::{Key, SectionHeaderName},
+    File,
 };
 
 enum ResolvedTreeNode<'event> {
@@ -15,7 +16,7 @@ enum ResolvedTreeNode<'event> {
 /// A `git-config` that resolves entries on creation, providing a
 /// [`HashMap`]-like interface for users.
 ///
-/// This does not provide the same guarantees as [`GitConfig`]; namely, it does
+/// This does not provide the same guarantees as [`File`]; namely, it does
 /// not remember comments nor whitespace. Additionally, values are normalized
 /// upon creation, so it's not possible to retrieve the original value.
 #[allow(clippy::module_name_repetitions)]
@@ -32,20 +33,20 @@ impl ResolvedGitConfig<'static> {
     /// This returns an error if an IO error occurs, or if the file is not a
     /// valid `git-config` file.
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, parser::ParserOrIoError<'static>> {
-        GitConfig::open(path.as_ref()).map(Self::from)
+        File::open(path.as_ref()).map(Self::from)
     }
 }
 
 impl<'data> ResolvedGitConfig<'data> {
-    /// Resolves a given [`GitConfig`].
+    /// Resolves a given [`File`].
     #[must_use]
-    pub fn from_config(config: GitConfig<'data>) -> Self {
+    pub fn from_config(config: File<'data>) -> Self {
         // Map a <SectionId, SectionBody> into <SectionId, HashMap<Key, Cow<[u8]>>>.
         let sections: HashMap<_, _> = config
             .sections
             .into_iter()
             .map(|(key, section_body)| {
-                let mut mapping: HashMap<Key, Cow<[u8]>> = HashMap::new();
+                let mut mapping: HashMap<Key<'_>, Cow<'_, [u8]>> = HashMap::new();
                 for (key, value) in section_body {
                     mapping.insert(key, value);
                 }
@@ -68,7 +69,7 @@ impl<'data> ResolvedGitConfig<'data> {
             (section_name, node)
         });
 
-        let mut resolved: HashMap<_, HashMap<Key, Cow<[u8]>>> = HashMap::new();
+        let mut resolved: HashMap<_, HashMap<Key<'_>, Cow<'_, [u8]>>> = HashMap::new();
 
         for (section_name, node) in section_name_to_node {
             for node in node {
@@ -111,8 +112,8 @@ impl TryFrom<&Path> for ResolvedGitConfig<'static> {
     }
 }
 
-impl<'data> From<GitConfig<'data>> for ResolvedGitConfig<'data> {
-    fn from(config: GitConfig<'data>) -> Self {
+impl<'data> From<File<'data>> for ResolvedGitConfig<'data> {
+    fn from(config: File<'data>) -> Self {
         Self::from_config(config)
     }
 }

@@ -1,7 +1,11 @@
-use crate::bstr::{BStr, BString};
-use crate::Repository;
-pub use git_worktree::*;
 use std::path::PathBuf;
+
+pub use git_worktree::*;
+
+use crate::{
+    bstr::{BStr, BString},
+    Repository,
+};
 
 /// A stand-in to a worktree as result of a worktree iteration.
 ///

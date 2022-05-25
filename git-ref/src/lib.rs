@@ -60,25 +60,31 @@ pub mod store {
         Disable,
     }
 
+    impl Default for WriteReflog {
+        fn default() -> Self {
+            WriteReflog::Normal
+        }
+    }
+
     /// A thread-local handle for interacting with a [`Store`][crate::Store] to find and iterate references.
     #[derive(Clone)]
-    pub struct Handle {
+    #[allow(dead_code)]
+    pub(crate) struct Handle {
         /// A way to access shared state with the requirement that interior mutability doesn't leak or is incorporated into error types
         /// if it could. The latter can't happen if references to said internal aren't ever returned.
         state: handle::State,
     }
 
+    #[allow(dead_code)]
     pub(crate) enum State {
         Loose { store: file::Store },
     }
 
-    #[path = "general/mod.rs"]
     pub(crate) mod general;
 
     ///
     #[path = "general/handle/mod.rs"]
     mod handle;
-
     pub use handle::find;
 
     use crate::file;
@@ -86,7 +92,8 @@ pub mod store {
 
 /// The git reference store.
 /// TODO: Figure out if handles are needed at all, which depends on the ref-table implementation.
-pub struct Store {
+#[allow(dead_code)]
+pub(crate) struct Store {
     inner: store::State,
 }
 
@@ -96,11 +103,22 @@ pub struct Store {
 pub struct FullName(pub(crate) BString);
 
 /// A validated and potentially partial reference name - it can safely be used for common operations.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub struct FullNameRef<'a>(&'a BStr);
+#[derive(Hash, Debug, PartialEq, Eq, Ord, PartialOrd)]
+#[repr(transparent)]
+pub struct FullNameRef(BStr);
+
 /// A validated complete and fully qualified reference name, safe to use for all operations.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct PartialNameRef<'a>(Cow<'a, BStr>);
+pub struct PartialNameCow<'a>(Cow<'a, BStr>);
+
+/// A validated complete and fully qualified referenced reference name, safe to use for all operations.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+#[repr(transparent)]
+pub struct PartialNameRef(BStr);
+
+/// A validated complete and fully qualified owned reference name, safe to use for all operations.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+pub struct PartialName(BString);
 
 /// A _validated_ prefix for references to act as a namespace.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -122,7 +140,7 @@ pub enum Kind {
 ///
 /// This translates into a prefix containing all references of a given category.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum Category {
+pub enum Category<'a> {
     /// A tag in `refs/tags`
     Tag,
     /// A branch in `refs/heads`
@@ -131,7 +149,30 @@ pub enum Category {
     RemoteBranch,
     /// A tag in `refs/notes`
     Note,
-    // NOTE: when adding something here, add it to `kind()` and `strip_prefix()` too.
+    /// Something outside of `ref/` in the current worktree, typically `HEAD`.
+    PseudoRef,
+    /// A `PseudoRef`, but referenced so that it will always refer to the main worktree by
+    /// prefixing it with `main-worktree/`.
+    MainPseudoRef,
+    /// Any reference that is prefixed with `main-worktree/refs/`
+    MainRef,
+    /// A `PseudoRef` in another _linked_ worktree, never in the main one, like `worktrees/<id>/HEAD`.
+    LinkedPseudoRef {
+        /// The name of the worktree.
+        name: &'a BStr,
+    },
+    /// Any reference that is prefixed with `worktrees/<id>/refs/`.
+    LinkedRef {
+        /// The name of the worktree.
+        name: &'a BStr,
+    },
+    /// A ref that is private to each worktree (_linked_ or _main_), with `refs/bisect/` prefix
+    Bisect,
+    /// A ref that is private to each worktree (_linked_ or _main_), with `refs/rewritten/` prefix
+    Rewritten,
+    /// A ref that is private to each worktree (_linked_ or _main_), with `refs/worktree/` prefix
+    WorktreePrivate,
+    // REF_TYPE_NORMAL,	  /* normal/shared refs inside refs/        */
 }
 
 /// Denotes a ref target, equivalent to [`Kind`], but with mutable data.
@@ -151,5 +192,5 @@ pub enum TargetRef<'a> {
     /// A ref that points to an object id
     Peeled(&'a oid),
     /// A ref that points to another reference by its validated name, adding a level of indirection.
-    Symbolic(FullNameRef<'a>),
+    Symbolic(&'a FullNameRef),
 }

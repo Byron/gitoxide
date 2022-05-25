@@ -1,7 +1,7 @@
-use std::iter::FromIterator;
 use std::{
     borrow::Cow,
     ffi::OsStr,
+    iter::FromIterator,
     path::{Path, PathBuf},
 };
 
@@ -117,12 +117,12 @@ pub fn try_from_bstring(input: impl Into<BString>) -> Result<PathBuf, Utf8Error>
     Ok(p)
 }
 
-/// Similar to [`try_from_bstring()`], but will panic if there is ill-formed UTF-8 in the `input`.
+/// Similar to [`try_from_bstring()`], but will **panic** if there is ill-formed UTF-8 in the `input`.
 pub fn from_bstring(input: impl Into<BString>) -> PathBuf {
     try_from_bstring(input).expect("well-formed UTF-8 on windows")
 }
 
-/// Similar to [`try_from_byte_slice()`], but will panic if there is ill-formed UTF-8 in the `input`.
+/// Similar to [`try_from_byte_slice()`], but will **panic** if there is ill-formed UTF-8 in the `input`.
 pub fn from_byte_slice(input: &[u8]) -> &Path {
     try_from_byte_slice(input).expect("well-formed UTF-8 on windows")
 }
@@ -204,6 +204,7 @@ pub fn to_windows_separators<'a>(path: impl Into<Cow<'a, BStr>>) -> Cow<'a, BStr
 /// which might lead to an invalid/uninteded path.
 pub fn absolutize<'a>(path: impl Into<Cow<'a, Path>>, mut current_dir: Option<impl Into<PathBuf>>) -> Cow<'a, Path> {
     use std::path::Component::ParentDir;
+
     let path = path.into();
     if !path.components().any(|c| matches!(c, ParentDir)) {
         return path;

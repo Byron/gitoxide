@@ -1,8 +1,10 @@
 mod from_git_dir_file {
-    use git_testtools::tempfile;
-    use git_testtools::tempfile::NamedTempFile;
-    use std::io::Write;
-    use std::path::{Path, PathBuf};
+    use std::{
+        io::Write,
+        path::{Path, PathBuf},
+    };
+
+    use git_testtools::{tempfile, tempfile::NamedTempFile};
 
     #[cfg(not(windows))]
     #[test]

@@ -25,7 +25,7 @@ mod refedit_ext {
                 },
             }
         }
-        fn find_existing(&self, name: PartialNameRef<'_>) -> Option<Target> {
+        fn find_existing(&self, name: &PartialNameRef) -> Option<Target> {
             self.targets.borrow_mut().remove(name.as_bstr())
         }
     }
@@ -107,7 +107,7 @@ mod refedit_ext {
         use crate::transaction::refedit_ext::MockStore;
 
         fn find<'a>(edits: &'a [RefEdit], name: &str) -> &'a RefEdit {
-            let name: FullNameRef = name.try_into().unwrap();
+            let name: &FullNameRef = name.try_into().unwrap();
             edits
                 .iter()
                 .find(|e| e.name.as_bstr() == name.as_bstr())
@@ -178,7 +178,7 @@ mod refedit_ext {
                 next_item: Cell<bool>,
             }
             impl Cycler {
-                fn find_existing(&self, _name: PartialNameRef<'_>) -> Option<Target> {
+                fn find_existing(&self, _name: &PartialNameRef) -> Option<Target> {
                     let item: bool = self.next_item.get();
                     self.next_item.set(!item);
                     Some(Target::Symbolic(

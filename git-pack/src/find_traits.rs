@@ -25,7 +25,7 @@ pub trait Find {
         &self,
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
-    ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
         self.try_find_cached(id, buffer, &mut crate::cache::Never)
     }
 
@@ -40,14 +40,13 @@ pub trait Find {
         id: impl AsRef<git_hash::oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl crate::cache::DecodeEntry,
-    ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error>;
+    ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error>;
 
     /// Find the packs location where an object with `id` can be found in the database, or `None` if there is no pack
     /// holding the object.
     ///
     /// _Note_ that this is always None if the object isn't packed.
-    fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>)
-        -> Option<crate::data::entry::Location>;
+    fn location_by_oid(&self, id: impl AsRef<git_hash::oid>, buf: &mut Vec<u8>) -> Option<data::entry::Location>;
 
     /// Obtain a vector of all offsets, in index order, along with their object id.
     fn pack_offsets_and_oid(&self, pack_id: u32) -> Option<Vec<(data::Offset, git_hash::ObjectId)>>;
@@ -61,7 +60,7 @@ pub trait Find {
     ///
     /// Custom implementations might be interested in providing their own meta-data with `object`,
     /// which currently isn't possible as the `Locate` trait requires GATs to work like that.
-    fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry>;
+    fn entry_by_location(&self, location: &data::entry::Location) -> Option<find::Entry>;
 }
 
 mod ext {
@@ -161,7 +160,7 @@ mod find_impls {
 
     use git_hash::oid;
 
-    use crate::{data, data::entry::Location, find};
+    use crate::{data, find};
 
     impl<T> crate::Find for &T
     where
@@ -178,11 +177,11 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
             (*self).try_find_cached(id, buffer, pack_cache)
         }
 
-        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<crate::data::entry::Location> {
+        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<data::entry::Location> {
             (*self).location_by_oid(id, buf)
         }
 
@@ -190,7 +189,7 @@ mod find_impls {
             (*self).pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<crate::find::Entry> {
+        fn entry_by_location(&self, location: &data::entry::Location) -> Option<find::Entry> {
             (*self).entry_by_location(location)
         }
     }
@@ -210,11 +209,11 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
             self.deref().try_find_cached(id, buffer, pack_cache)
         }
 
-        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
+        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<data::entry::Location> {
             self.deref().location_by_oid(id, buf)
         }
 
@@ -222,7 +221,7 @@ mod find_impls {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, object: &crate::data::entry::Location) -> Option<find::Entry> {
+        fn entry_by_location(&self, object: &data::entry::Location) -> Option<find::Entry> {
             self.deref().entry_by_location(object)
         }
     }
@@ -242,11 +241,11 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
             self.deref().try_find_cached(id, buffer, pack_cache)
         }
 
-        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
+        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<data::entry::Location> {
             self.deref().location_by_oid(id, buf)
         }
 
@@ -254,7 +253,7 @@ mod find_impls {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry> {
+        fn entry_by_location(&self, location: &data::entry::Location) -> Option<find::Entry> {
             self.deref().entry_by_location(location)
         }
     }
@@ -274,11 +273,11 @@ mod find_impls {
             id: impl AsRef<oid>,
             buffer: &'a mut Vec<u8>,
             pack_cache: &mut impl crate::cache::DecodeEntry,
-        ) -> Result<Option<(git_object::Data<'a>, Option<crate::data::entry::Location>)>, Self::Error> {
+        ) -> Result<Option<(git_object::Data<'a>, Option<data::entry::Location>)>, Self::Error> {
             self.deref().try_find_cached(id, buffer, pack_cache)
         }
 
-        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<Location> {
+        fn location_by_oid(&self, id: impl AsRef<oid>, buf: &mut Vec<u8>) -> Option<data::entry::Location> {
             self.deref().location_by_oid(id, buf)
         }
 
@@ -286,7 +285,7 @@ mod find_impls {
             self.deref().pack_offsets_and_oid(pack_id)
         }
 
-        fn entry_by_location(&self, location: &crate::data::entry::Location) -> Option<find::Entry> {
+        fn entry_by_location(&self, location: &data::entry::Location) -> Option<find::Entry> {
             self.deref().entry_by_location(location)
         }
     }

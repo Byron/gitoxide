@@ -5,21 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.12.1 (2022-04-05)
+## 0.13.0 (2022-05-18)
 
 ### New Features
 
- - <csr-id-ecd60d7a75d4aef7c37cd0b28b57a8aea1166858/> add `FullName(Ref)::category_and_shortname()`
-   It's a combination of `shorten()` and `category()` for convenience.
+ - <csr-id-4a5176a78b64981ce5612b88c7736b7323aa8cdd/> ref iteration for worktrees.
+   It merges the iteration result of private worktree refs along with
+   all shared common references references.
+
+### Changed (BREAKING)
+
+ - <csr-id-3d6299f47f41397c1c72035a86b94d1c263b5b98/> `Transaction::commit(…)` takes `git-actor::SignatureRef` instead of `…::Signature`.
+   This makes the API more versatile and corrects a shortcoming that was
+   caused by `SignatureRef` previously being unable to serialize itself.
+ - <csr-id-f1dbb6bd4534527b6f1f2aba2a562dd4e64cf55d/> remove `FullName::to_ref()` in favor of `•::as_ref()`.
+   This became possible now that `FullNameRef` is a proper ref, not just
+   ref-like.
+
+### New Features (BREAKING)
+
+ - <csr-id-0ace957c595c8a38afb7de1462cdc73b617d2a76/> Turn `FullNameRef` into an actual reference type.
+   That way `Cow<'_, FullNameRef>` works as expected.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 2 calendar days.
- - 2 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#364](https://github.com/Byron/gitoxide/issues/364)
+ - 67 commits contributed to the release over the course of 5 calendar days.
+ - 43 days passed between releases.
+ - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 4 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#384](https://github.com/Byron/gitoxide/issues/384), [#393](https://github.com/Byron/gitoxide/issues/393)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -27,9 +48,178 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
+ * **[#298](https://github.com/Byron/gitoxide/issues/298)**
+    - Enforce path conversion on windows gnu, it doesn't seem to like slashes ([`4d55a8f`](https://github.com/Byron/gitoxide/commit/4d55a8f99f2a0b7c0c4ed70a615b7e58b5bee04b))
+    - mention that failing path when a ref-file couldn't be read ([`ecb539a`](https://github.com/Byron/gitoxide/commit/ecb539a4c12696ecb4384af2a16c381fb7980d95))
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
+    - ref iteration for worktrees. ([`4a5176a`](https://github.com/Byron/gitoxide/commit/4a5176a78b64981ce5612b88c7736b7323aa8cdd))
+    - down to one borrowcheck error ([`7571be5`](https://github.com/Byron/gitoxide/commit/7571be5388d766afd88f224a6eab652659d38bfe))
+    - possibly a step towards solving this traversal… ([`c64a77f`](https://github.com/Byron/gitoxide/commit/c64a77f09e2d8a1904704aaab4018a66a7e8417b))
+    - prepare for dual-iteration ([`200384c`](https://github.com/Byron/gitoxide/commit/200384c4efbfb7438d192c7060b594f01df6b189))
+    - make a common-dir iterator available ([`78658c7`](https://github.com/Byron/gitoxide/commit/78658c75c02fc9fc1b31fe2e24dd19ec16a8d477))
+    - refactor ([`5521391`](https://github.com/Byron/gitoxide/commit/5521391d8b2369ffa5f78617b97793276480a96b))
+    - try all prefixes when producing a relative path for error purposes ([`8cf0302`](https://github.com/Byron/gitoxide/commit/8cf0302bc75aed6e78adf7b855b0a28f2fa15616))
+    - restore previous non-namespace test ([`ba17b40`](https://github.com/Byron/gitoxide/commit/ba17b40d7e22f1607ee7d8d206a136d307289591))
+    - refactor ([`1b3a6da`](https://github.com/Byron/gitoxide/commit/1b3a6dacd55894f12dfa58ae5726f3b231dbe165))
+    - refactor ([`7777f7e`](https://github.com/Byron/gitoxide/commit/7777f7e62e54d80e183d6bfc831950ca9c40e40d))
+    - represent loose iteration in terms of the overlay iterator ([`ad37a64`](https://github.com/Byron/gitoxide/commit/ad37a64550e9e14bbdb88c04d2f1a367af01ca62))
+    - start preparing for multi-loose ref iteration, but… ([`014459b`](https://github.com/Byron/gitoxide/commit/014459bf200204f69fc63481cd4e50caf70f21da))
+    - validate traversal of main repository refs in presence of worktrees ([`f067286`](https://github.com/Byron/gitoxide/commit/f06728662834b89449cc4ec379a80ab778544e3b))
+    - refactor ([`c2ac110`](https://github.com/Byron/gitoxide/commit/c2ac1107e840cf64d9ac33bc66d2a56586e0d06a))
+    - simplify worktree test to not include superfluous refs ([`c46d838`](https://github.com/Byron/gitoxide/commit/c46d8383db0c6c2c57a3bf0544520d8dc05adf5d))
+    - Assure proper handling of transactions in linked worktrees ([`07dc555`](https://github.com/Byron/gitoxide/commit/07dc5558cb872112d7c47494390b3e0db110edb6))
+    - Humble beginnings of transaction testing within worktrees ([`6f52606`](https://github.com/Byron/gitoxide/commit/6f52606c395eee0b3cc98c11c84a17dd2636295d))
+    - many more tests around transactions and prefix handling ([`8f3a4b5`](https://github.com/Byron/gitoxide/commit/8f3a4b5587f37c1a9894b13617133c50bd3d2a1d))
+    - assure that private worktree refs have their reflogs written ([`96efbb1`](https://github.com/Byron/gitoxide/commit/96efbb10ab6c50606bc7fbacb9fdace77b5859e9))
+    - Properly adjust names for prefixed refs for use in packed-refs and filter them ([`797af14`](https://github.com/Byron/gitoxide/commit/797af14a44d1208848253ad27c6d4ec8e4e45831))
+    - prepare for filtering soon to be packed refs by name ([`3cea2ad`](https://github.com/Byron/gitoxide/commit/3cea2ad03de875a1613580eeac1b5aeca9934ef0))
+    - uncover issue naming of refs written to packed-refs ([`1acf875`](https://github.com/Byron/gitoxide/commit/1acf87531fb41ebc7b6200417b05cbd9cfc58313))
+    - a first test of main worktree transactions incl. changelog ([`9c5ab38`](https://github.com/Byron/gitoxide/commit/9c5ab38a1fbe45c95b6073949ddec4c3f42e9dbe))
+    - adjusts to changes in git-ref ([`b362fb5`](https://github.com/Byron/gitoxide/commit/b362fb594546400e6c42688103df438954df7eeb))
+    - `Transaction::commit(…)` takes `git-actor::SignatureRef` instead of `…::Signature`. ([`3d6299f`](https://github.com/Byron/gitoxide/commit/3d6299f47f41397c1c72035a86b94d1c263b5b98))
+    - first rough step towards support iteration ([`b987575`](https://github.com/Byron/gitoxide/commit/b98757562527b703740e96086204577287351e81))
+    - prepare for tests that can write into our test repositories ([`096ee5f`](https://github.com/Byron/gitoxide/commit/096ee5fc9b226b26b808d9aa14dc3c53e125b356))
+    - improve reflog base generation in transactions so it could possibly work ([`d69b56e`](https://github.com/Byron/gitoxide/commit/d69b56e7f0104a0d8981777f1d3947b8a6a0b39e))
+    - Improve conversions as much as possible ([`befe949`](https://github.com/Byron/gitoxide/commit/befe949b40d6201d35e4622725f5ad3c6d0315d4))
+    - validate that owned values indeed can't be passed anymore ([`c78008e`](https://github.com/Byron/gitoxide/commit/c78008e4d8b7cc68c2c04d344ec3388fe42d9d9f))
+    - Avoid using `Cow` at all in favor of a simple `&PartialNameref` ([`1bc9a87`](https://github.com/Byron/gitoxide/commit/1bc9a875d2b09b906f40db9e2c031c99e4fd9928))
+    - This didn't get better, but probably will stay that way ([`7da239f`](https://github.com/Byron/gitoxide/commit/7da239fb0ee42fd5148fa6524e5bfecf51d19cee))
+    - See what it means to use `Cow<PartialNameRef>` ([`2ae129a`](https://github.com/Byron/gitoxide/commit/2ae129ad6183f36179031ea905d8974705e70da8))
+    - All custom TryFrom implementations for Cow<PartialNameRef> ([`15afec1`](https://github.com/Byron/gitoxide/commit/15afec1efbc01fbb52af8f88720c874e6aa2d2b1))
+    - Cow support for PartialNameRef ([`3e470da`](https://github.com/Byron/gitoxide/commit/3e470da2d26f9b2c6bec9b28a9a108b8c032f007))
+    - adapt to changes in git-ref ([`21109ca`](https://github.com/Byron/gitoxide/commit/21109ca9ab21df0ab45f3be552e83114817e98d0))
+    - remove `FullName::to_ref()` in favor of `•::as_ref()`. ([`f1dbb6b`](https://github.com/Byron/gitoxide/commit/f1dbb6bd4534527b6f1f2aba2a562dd4e64cf55d))
+    - reflog handling for worktree/ ref-names ([`77877e0`](https://github.com/Byron/gitoxide/commit/77877e09de324c7c32f5a170e853760f7b192aa4))
+    - parse the worktree name as part of the cateogry ([`7666034`](https://github.com/Byron/gitoxide/commit/7666034a9b998eef7a2edaff0a8e6904babb5a13))
+    - refactor ([`cebf736`](https://github.com/Byron/gitoxide/commit/cebf73655c887d57bbe597938cfa376fac96b44c))
+    - more fixes for worktree ref handling ([`1aa546d`](https://github.com/Byron/gitoxide/commit/1aa546dea7f1aa8f6baf348f4398aa100fbd18a2))
+    - better packed refs lookup for worktree refs ([`2b6982e`](https://github.com/Byron/gitoxide/commit/2b6982e89db0f2229bdafa314eadbfb7ee637195))
+    - fix bugs with name resolution ([`3031f99`](https://github.com/Byron/gitoxide/commit/3031f996fdc2312f847da82f251f0a3f7875d40a))
+    - Assure `main-worktree` is also resolved in the main worktree ([`bc3c05e`](https://github.com/Byron/gitoxide/commit/bc3c05e811b25be93294bebae96a0bba0afcf0f9))
+    - assure nobody can bypass the namespace anymore ([`0079ab6`](https://github.com/Byron/gitoxide/commit/0079ab61c8f2818632949ed227e7251dd37a2a33))
+    - frame for tests in worktree and main repositories ([`b12884a`](https://github.com/Byron/gitoxide/commit/b12884ad9596805521fe8c556c48d78669dd7ea5))
+    - Assure namespaces are respected when calculating bases ([`4aac3c2`](https://github.com/Byron/gitoxide/commit/4aac3c248ed46963166defa46e80740d135906ed))
+    - fix docs ([`e189914`](https://github.com/Byron/gitoxide/commit/e1899143f12c16360998ac27bce326343254a638))
+ * **[#384](https://github.com/Byron/gitoxide/issues/384)**
+    - No need to isolate archives by crate name ([`19d46f3`](https://github.com/Byron/gitoxide/commit/19d46f35440419b9911b6e2bca2cfc975865dce9))
+    - add archive files via git-lfs ([`7202a1c`](https://github.com/Byron/gitoxide/commit/7202a1c4734ad904c026ee3e4e2143c0461d51a2))
+    - auto-set commit.gpgsign=false when executing git ([`c23feb6`](https://github.com/Byron/gitoxide/commit/c23feb64ad157180cfba8a11c882b829733ea8f6))
+ * **[#393](https://github.com/Byron/gitoxide/issues/393)**
+    - Add support for disabling archive usage ([`624ad2e`](https://github.com/Byron/gitoxide/commit/624ad2ef42172556efe942129f6f46dd627250d5))
+ * **Uncategorized**
+    - fix git-ref dependencies ([`633e571`](https://github.com/Byron/gitoxide/commit/633e571da33767072176ebb2e44caf6d85975982))
+    - Release git-hash v0.9.4, git-features v0.21.0, git-actor v0.10.0, git-glob v0.3.0, git-path v0.1.1, git-attributes v0.1.0, git-sec v0.1.0, git-config v0.3.0, git-credentials v0.1.0, git-validate v0.5.4, git-object v0.19.0, git-diff v0.16.0, git-lock v2.1.0, git-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, git-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, git-packetline v0.12.5, git-url v0.5.0, git-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, git-worktree v0.2.0, git-repository v0.17.0, safety bump 20 crates ([`654cf39`](https://github.com/Byron/gitoxide/commit/654cf39c92d5aa4c8d542a6cadf13d4acef6a78e))
+    - make fmt ([`e043807`](https://github.com/Byron/gitoxide/commit/e043807abf364ca46d00760e2f281528efe20c75))
+    - thanks clippy ([`4cff7a8`](https://github.com/Byron/gitoxide/commit/4cff7a82ea3e924a8eba58cf45061b5afc5b250f))
+    - Turn `FullNameRef` into an actual reference type. ([`0ace957`](https://github.com/Byron/gitoxide/commit/0ace957c595c8a38afb7de1462cdc73b617d2a76))
+    - A sketch to show how Cow<FullNameRef> could work ([`c6b2705`](https://github.com/Byron/gitoxide/commit/c6b27058884b23cd3ee35ddc3aa2aaf69012cbff))
+    - thanks clippy ([`a20d282`](https://github.com/Byron/gitoxide/commit/a20d282d608d1f8145951ac3ad26de583a60513c))
+    - thanks clippy ([`c208912`](https://github.com/Byron/gitoxide/commit/c20891281f8222db68d0888a47f14822a03efac9))
+    - Merge branch 'main' into refs-and-worktrees ([`9cf0c7b`](https://github.com/Byron/gitoxide/commit/9cf0c7bd0cc5419137db5796f3a5b91bdf3dcc94))
+    - thanks clippy ([`61d6d93`](https://github.com/Byron/gitoxide/commit/61d6d93262cf2f1d13037542e4107ff558ea7c2c))
+    - Merge branch 'mzr-fix_empty_values' ([`09c8628`](https://github.com/Byron/gitoxide/commit/09c8628d68ab82d234921b5c6cf80cda4d21802e))
+    - fix clippy - many false positives this time ([`099bd5b`](https://github.com/Byron/gitoxide/commit/099bd5b86fb80b26a73863b80ad60a0394458b6d))
+</details>
+
+## 0.12.1 (2022-04-05)
+
+### Changed (BREAKING)
+
+ - <csr-id-1611c3ddff6c930deaa4c2440383f5684c029b28/> rename `PartialNameRef` to `PartialNameCow`
+   Because this is what it is, which also implies that it's not `Copy`
+   anymore which a `Ref` would definitely be.
+   
+   The reason we need this to be a `Cow` is to support passing ownership.
+ - <csr-id-8a92ec9834b6d5aa3057c5509f6c13b6a6cd6e1b/> remove `Store` from public API
+   It is unclear if ref-tables, which are the reason for it to exist in
+   the first place, will fit into the concept as they might not support
+   worktrees. It's entirely unclear how this works.
+   
+   Maybe there can be a non-worktree version of the store with work-trees
+   only being supported by the file based ref database, and ref-tables
+   remaining a server-side feature.
+ - <csr-id-2becffc85ff6225522fe38482739fb1406ae1060/> rename `file::Store::base()` to `git_dir()`.
+   That way it is clearer what it actually is especially in presence
+   of the newly added `file::Store::common_dir()` method.
+   
+   That way, work-trees can eventually be properly supported.
+
+### New Features
+
+ - <csr-id-ecd60d7a75d4aef7c37cd0b28b57a8aea1166858/> add `FullName(Ref)::category_and_shortname()`
+   It's a combination of `shorten()` and `category()` for convenience.
+ - <csr-id-9cccce35e527cdda58e01b03cd335a527418cf14/> `Category::LinkedRef`
+   With it one can access all refs as advertised.
+ - <csr-id-eada5dfdd4981dbb032e8f155e3829eb5d1f380f/> `Category::MainRef`
+   With it it will be possible to compute all paths correctly and actually
+   perform certain operations as documented.
+ - <csr-id-0304b7fad3ae5e3ac1fea71e30658474a770184b/> `Category::(WorktreePrivate|Bisect|Rewritten)`
+ - <csr-id-612a2dbf7f70a8eb44b7278fccd4f1589749968a/> `Category::LinkedPseudoRef`
+ - <csr-id-613b5844e74535d391339bd8e7c106e18257b917/> Add `Category::MainPseudoRef`
+ - <csr-id-6ccfea97d30dbfa013e1633c77c5a26ab5cbaf8f/> `Category::PseudoRef`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 44 commits contributed to the release over the course of 2 calendar days.
+ - 2 days passed between releases.
+ - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#364](https://github.com/Byron/gitoxide/issues/364)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - transactions fully rely on proper base ([`d3a12e3`](https://github.com/Byron/gitoxide/commit/d3a12e31c8eae9209489d35b4b2e5d4835e85bde))
+    - packed-refs now use correct common dir ([`dd7be18`](https://github.com/Byron/gitoxide/commit/dd7be189ea1d5c15385a7eee54368b2b2510ed2d))
+    - reflog paths are now computed according to their ref name ([`c4d2493`](https://github.com/Byron/gitoxide/commit/c4d2493dc5f3e0d2c7fca71ae672af167b8ff1a5))
+    - refactor ([`e93c222`](https://github.com/Byron/gitoxide/commit/e93c222c947f57d9df523372613265d6286f64ce))
+    - first draft of fixture  setup for worktrees ([`a25b0bc`](https://github.com/Byron/gitoxide/commit/a25b0bccfa001273057089fecca637c2d1fc591a))
+    - use suitable full names for store based packed-refs lookup too ([`d25b3ca`](https://github.com/Byron/gitoxide/commit/d25b3ca01450c308e08e060c3959aaca09b9415f))
+    - packed-refs can now possibly transform names for lookup correctly ([`6478736`](https://github.com/Byron/gitoxide/commit/6478736b5a2f86fd369a40f55b3697089e4ee93b))
+    - Offer a way to search packed refs by full name only ([`ae57e27`](https://github.com/Byron/gitoxide/commit/ae57e2766c4594b8336b36d4cfecb3c41d83e391))
+    - adapt to changes in git-path ([`cc2d810`](https://github.com/Byron/gitoxide/commit/cc2d81012d107da7a61bf4de5b28342dea5083b7))
+    - Also build what should be a valid path for loose-ref lookup ([`37deca5`](https://github.com/Byron/gitoxide/commit/37deca572eeeada79bfcbb4f815d50d4d5be2dc7))
+    - refactor ([`19d53fb`](https://github.com/Byron/gitoxide/commit/19d53fb1b8c13ca13d2111a840de1b6ef91780ec))
+    - make fmt ([`50ff7aa`](https://github.com/Byron/gitoxide/commit/50ff7aa7fa86e5e2a94fb15aab86470532ac3f51))
+    - adapt to all changes in git-path with bstr support ([`f158648`](https://github.com/Byron/gitoxide/commit/f158648aef8ad94d86550ceb2eeb20efb3df7596))
+    - refactor ([`32b8fde`](https://github.com/Byron/gitoxide/commit/32b8fde5f8941d3799d461e1d258f6627c064891))
+    - refactor ([`09eb432`](https://github.com/Byron/gitoxide/commit/09eb432f21e6999ed565437aba1d3550fe33ed8d))
+    - Use `git-path` crate instead of `git_features::path` ([`47e607d`](https://github.com/Byron/gitoxide/commit/47e607dc256a43a3411406c645eb7ff04239dd3a))
+    - refactor ([`f83910f`](https://github.com/Byron/gitoxide/commit/f83910fe56b07b8dfabedeeaefd02070c15dd6f3))
+    - Loose ref lookup uses categories for refanames ([`61b449c`](https://github.com/Byron/gitoxide/commit/61b449ce8bf0d281839ba333af0dc33bf18556a1))
+    - prepare for switch to category based base-path lookup ([`14c6f48`](https://github.com/Byron/gitoxide/commit/14c6f48d28d6f2e0a0dd778ec8205d04c731aeb2))
+    - Unify pseudo-ref check for find reference ([`8c52fe4`](https://github.com/Byron/gitoxide/commit/8c52fe42ead34de18de3b649ca91bc5616da5e57))
+    - adjustments to go along with changes in git-features ([`c55cac6`](https://github.com/Byron/gitoxide/commit/c55cac6a1ada77619bb5723717a5a6d757499fa9))
+    - Admit that we need PartialPathCow and can't work around it ([`202bafc`](https://github.com/Byron/gitoxide/commit/202bafcaeb122f9d61b0ad4855e1aaf90c69107c))
+    - rename `PartialNameRef` to `PartialNameCow` ([`1611c3d`](https://github.com/Byron/gitoxide/commit/1611c3ddff6c930deaa4c2440383f5684c029b28))
+    - refactor ([`4e26e62`](https://github.com/Byron/gitoxide/commit/4e26e62f62bffbc5744650d173061a8270e1cd68))
+    - refactor ([`a611224`](https://github.com/Byron/gitoxide/commit/a6112249689438058724d859a87f0a4a64ed02e4))
+    - refactor ([`467d583`](https://github.com/Byron/gitoxide/commit/467d5839af2098911bf5551b6dfa6db0a2b20300))
+    - refactor ([`3574a4e`](https://github.com/Byron/gitoxide/commit/3574a4eaee78dc41c22d85af47cfd27b2c7c2303))
+    - `Category::LinkedRef` ([`9cccce3`](https://github.com/Byron/gitoxide/commit/9cccce35e527cdda58e01b03cd335a527418cf14))
+    - `Category::MainRef` ([`eada5df`](https://github.com/Byron/gitoxide/commit/eada5dfdd4981dbb032e8f155e3829eb5d1f380f))
+    - `Category::(WorktreePrivate|Bisect|Rewritten)` ([`0304b7f`](https://github.com/Byron/gitoxide/commit/0304b7fad3ae5e3ac1fea71e30658474a770184b))
+    - `Category::LinkedPseudoRef` ([`612a2db`](https://github.com/Byron/gitoxide/commit/612a2dbf7f70a8eb44b7278fccd4f1589749968a))
+    - Add `Category::MainPseudoRef` ([`613b584`](https://github.com/Byron/gitoxide/commit/613b5844e74535d391339bd8e7c106e18257b917))
+    - `Category::PseudoRef` ([`6ccfea9`](https://github.com/Byron/gitoxide/commit/6ccfea97d30dbfa013e1633c77c5a26ab5cbaf8f))
+    - remove `Store` from public API ([`8a92ec9`](https://github.com/Byron/gitoxide/commit/8a92ec9834b6d5aa3057c5509f6c13b6a6cd6e1b))
+    - rename `file::Store::base()` to `git_dir()`. ([`2becffc`](https://github.com/Byron/gitoxide/commit/2becffc85ff6225522fe38482739fb1406ae1060))
  * **[#364](https://github.com/Byron/gitoxide/issues/364)**
     - add `FullName(Ref)::category_and_shortname()` ([`ecd60d7`](https://github.com/Byron/gitoxide/commit/ecd60d7a75d4aef7c37cd0b28b57a8aea1166858))
  * **Uncategorized**
+    - Release git-config v0.2.1, git-diff v0.15.0, git-traverse v0.14.0, git-pack v0.18.0, git-odb v0.28.0, git-ref v0.12.1, git-revision v0.1.0, git-repository v0.16.0, gitoxide-core v0.14.0, gitoxide v0.12.0, safety bump 6 crates ([`b612021`](https://github.com/Byron/gitoxide/commit/b612021683ba709b693bd48aef3e2e3c2f5b9ead))
+    - thanks clippy ([`6291015`](https://github.com/Byron/gitoxide/commit/6291015df786eaebb2339629adc4685ffb555d01))
+    - thanks clippy ([`22ee920`](https://github.com/Byron/gitoxide/commit/22ee920fc93b88ed6d035915e9cab2d7501c92b9))
+    - refactor ([`6149978`](https://github.com/Byron/gitoxide/commit/61499786b9b0743d949d5a54639c54d76c4d2a44))
+    - thanks clippy ([`405d94d`](https://github.com/Byron/gitoxide/commit/405d94d8eb1ca07568bae5c51a7efd43dc9e2808))
+    - fix clippy - many false positives this time ([`045e6fa`](https://github.com/Byron/gitoxide/commit/045e6fae17077555c3e115992905c8046f2c5d0b))
+    - thanks clippy ([`a7ac64c`](https://github.com/Byron/gitoxide/commit/a7ac64cd801b985790b5717be1a5dc722b2ae3a9))
     - refactor ([`2abedb8`](https://github.com/Byron/gitoxide/commit/2abedb851ba383f502c0c9f9f9a3a26349c1664d))
 </details>
 

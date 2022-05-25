@@ -40,7 +40,7 @@ impl store::Handle {
     /// TODO: actually implement this with handling of the packed buffer.
     pub fn try_find<'a, Name, E>(&self, partial: Name) -> Result<Option<Reference>, Error>
     where
-        Name: TryInto<PartialNameRef<'a>, Error = E>,
+        Name: TryInto<&'a PartialNameRef, Error = E>,
         Error: From<E>,
     {
         let _name = partial.try_into()?;
@@ -85,7 +85,7 @@ mod existing {
         /// Similar to [`crate::file::Store::find()`] but a non-existing ref is treated as error.
         pub fn find<'a, Name, E>(&self, _partial: Name) -> Result<Reference, Error>
         where
-            Name: TryInto<PartialNameRef<'a>, Error = E>,
+            Name: TryInto<&'a PartialNameRef, Error = E>,
             crate::name::Error: From<E>,
         {
             todo!()

@@ -2,7 +2,7 @@
 name = "git-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.20.0"
+version = "0.21.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 edition = "2018"
@@ -84,7 +84,7 @@ required-features = ["io-pipe"]
 [dependencies]
 #! ### Optional Dependencies
 
-git-hash = { version = "^0.9.3", path = "../git-hash" }
+git-hash = { version = "^0.9.4", path = "../git-hash" }
 
 
 

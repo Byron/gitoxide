@@ -1,0 +1,5 @@
+[core]
+    a=b"100"
+    [core]
+        a=d
+        a=f

@@ -1,5 +1,5 @@
 //! This module handles parsing a `git-config` file. Generally speaking, you
-//! want to use a higher abstraction such as [`GitConfig`] unless you have some
+//! want to use a higher abstraction such as [`File`] unless you have some
 //! explicit reason to work with events instead.
 //!
 //! The general workflow for interacting with this is to use one of the
@@ -7,7 +7,7 @@
 //! which can be converted into an [`Event`] iterator. The [`Parser`] also has
 //! additional methods for accessing leading comments or events by section.
 //!
-//! [`GitConfig`]: crate::file::GitConfig
+//! [`File`]: crate::File
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, hash::Hash, io::Read, iter::FusedIterator, path::Path};
 
@@ -30,11 +30,11 @@ use nom::{
 /// borrowed `Cow` variants.
 ///
 /// The `Cow` smart pointer is used here for ease of inserting events in a
-/// middle of an Event iterator. This is used, for example, in the [`GitConfig`]
+/// middle of an Event iterator. This is used, for example, in the [`File`]
 /// struct when adding values.
 ///
 /// [`Cow`]: std::borrow::Cow
-/// [`GitConfig`]: crate::file::GitConfig
+/// [`File`]: crate::File
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Event<'a> {
     /// A comment with a comment tag and the comment itself. Note that the
@@ -130,13 +130,13 @@ impl Display for Event<'_> {
 }
 
 impl From<Event<'_>> for Vec<u8> {
-    fn from(event: Event) -> Self {
+    fn from(event: Event<'_>) -> Self {
         event.into()
     }
 }
 
 impl From<&Event<'_>> for Vec<u8> {
-    fn from(event: &Event) -> Self {
+    fn from(event: &Event<'_>) -> Self {
         match event {
             Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.to_vec(),
             Event::Comment(e) => e.into(),
@@ -350,19 +350,19 @@ impl Display for ParsedSectionHeader<'_> {
 }
 
 impl From<ParsedSectionHeader<'_>> for Vec<u8> {
-    fn from(header: ParsedSectionHeader) -> Self {
+    fn from(header: ParsedSectionHeader<'_>) -> Self {
         header.into()
     }
 }
 
 impl From<&ParsedSectionHeader<'_>> for Vec<u8> {
-    fn from(header: &ParsedSectionHeader) -> Self {
+    fn from(header: &ParsedSectionHeader<'_>) -> Self {
         header.to_string().into_bytes()
     }
 }
 
 impl<'a> From<ParsedSectionHeader<'a>> for Event<'a> {
-    fn from(header: ParsedSectionHeader) -> Event {
+    fn from(header: ParsedSectionHeader<'_>) -> Event<'_> {
         Event::SectionHeader(header)
     }
 }
@@ -415,13 +415,13 @@ impl Display for ParsedComment<'_> {
 }
 
 impl From<ParsedComment<'_>> for Vec<u8> {
-    fn from(c: ParsedComment) -> Self {
+    fn from(c: ParsedComment<'_>) -> Self {
         c.into()
     }
 }
 
 impl From<&ParsedComment<'_>> for Vec<u8> {
-    fn from(c: &ParsedComment) -> Self {
+    fn from(c: &ParsedComment<'_>) -> Self {
         let mut values = vec![c.comment_tag as u8];
         values.extend(c.comment.iter());
         values
@@ -578,7 +578,7 @@ impl Display for ParserNode {
 /// A zero-copy `git-config` file parser.
 ///
 /// This is parser exposes low-level syntactic events from a `git-config` file.
-/// Generally speaking, you'll want to use [`GitConfig`] as it wraps
+/// Generally speaking, you'll want to use [`File`] as it wraps
 /// around the parser to provide a higher-level abstraction to a `git-config`
 /// file, including querying, modifying, and updating values.
 ///
@@ -778,7 +778,7 @@ impl Display for ParserNode {
 /// # ]);
 /// ```
 ///
-/// [`GitConfig`]: crate::file::GitConfig
+/// [`File`]: crate::File
 /// [`.ini` file format]: https://en.wikipedia.org/wiki/INI_file
 /// [`git`'s documentation]: https://git-scm.com/docs/git-config#_configuration_file
 /// [`FromStr`]: std::str::FromStr
@@ -890,7 +890,7 @@ pub fn parse_from_path<P: AsRef<Path>>(path: P) -> Result<Parser<'static>, Parse
 /// Returns an error if the string provided is not a valid `git-config`.
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
-pub fn parse_from_str(input: &str) -> Result<Parser, Error> {
+pub fn parse_from_str(input: &str) -> Result<Parser<'_>, Error<'_>> {
     parse_from_bytes(input.as_bytes())
 }
 
@@ -905,7 +905,7 @@ pub fn parse_from_str(input: &str) -> Result<Parser, Error> {
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 #[allow(clippy::shadow_unrelated)]
-pub fn parse_from_bytes(input: &[u8]) -> Result<Parser, Error> {
+pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error<'_>> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
@@ -1030,7 +1030,7 @@ pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'st
     Ok(Parser { frontmatter, sections })
 }
 
-fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment> {
+fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment<'_>> {
     let (i, comment_tag) = one_of(";#")(i)?;
     let (i, comment) = take_till(|c| c == b'\n')(i)?;
     Ok((
@@ -1098,7 +1098,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (
     ))
 }
 
-fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader> {
+fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader<'_>> {
     let (i, _) = char('[')(i)?;
     // No spaces must be between section name and section start
     let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;

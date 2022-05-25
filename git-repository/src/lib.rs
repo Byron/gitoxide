@@ -180,7 +180,7 @@ pub type RefStore = git_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
 pub type OdbHandle = git_odb::Handle;
 /// A way to access git configuration
-pub(crate) type Config = OwnShared<git_config::file::GitConfig<'static>>;
+pub(crate) type Config = OwnShared<git_config::File<'static>>;
 
 ///
 mod types;
@@ -219,6 +219,7 @@ impl From<git_discover::repository::Kind> for Kind {
     fn from(v: git_discover::repository::Kind) -> Self {
         match v {
             git_discover::repository::Kind::Bare => Kind::Bare,
+            git_discover::repository::Kind::WorkTreeGitDir { .. } => Kind::WorkTree { is_linked: true },
             git_discover::repository::Kind::WorkTree { linked_git_dir } => Kind::WorkTree {
                 is_linked: linked_git_dir.is_some(),
             },
@@ -379,9 +380,9 @@ pub mod state {
 pub mod discover {
     use std::path::Path;
 
-    use crate::ThreadSafeRepository;
-
     pub use git_discover::*;
+
+    use crate::ThreadSafeRepository;
 
     /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]
@@ -404,7 +405,7 @@ pub mod discover {
         /// for instantiations.
         pub fn discover_opts(
             directory: impl AsRef<Path>,
-            options: upwards::Options,
+            options: upwards::Options<'_>,
             trust_map: git_sec::trust::Mapping<crate::open::Options>,
         ) -> Result<Self, Error> {
             let (path, trust) = upwards_opts(directory, options)?;

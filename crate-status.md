@@ -224,6 +224,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
 ### git-path
 * [x] transformations to and from bytes
 * [x] conversions between different platforms
+* [x] virtual canonicalization for more concise paths via `absolutize()`
+* [x] more flexible canonicalization with symlink resolution for paths which are partially virtual via `realpath()`
 * **spec**
     * [ ] parse
     * [ ] check for match
@@ -242,6 +244,8 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 
 * [x] check if a git directory is a git repository
 * [x] find a git repository by searching upward
+   * [x] define ceilings that should not be surpassed
+   * [x] prevent crossing file-systems (non-windows only)
 * [x] handle linked worktrees
 * [ ] a way to handle `safe.directory`
      - note that it's less critical to support it as `gitoxide` allows access but prevents untrusted configuration to become effective.
@@ -388,8 +392,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [x] color
         * [x] path (incl. resolution)
         * [x] include
-        * [ ] includeIf
-          * [ ] `gitdir`,  `gitdir/i`, `onbranch`
+        * **includeIf**
+          * [x] `gitdir`,  `gitdir/i`, `onbranch`
           * [ ] `hasconfig`
 * [x] write
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
@@ -401,68 +405,67 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 
 * [x] utilities for applications to make long running operations interruptible gracefully and to support timeouts in servers.
 * [ ] handle `core.repositoryFormatVersion` and extensions
-* [x] discovery
-  * [ ] option to not cross file systems
-  * [ ] handle git-common-dir
-* **plumbing**
-  * **Repository**  (_plumbing_)
+* [x] support for unicode-precomposition of command-line arguments (needs explicit use in parent application)
+* **Repository**  
     * [x] discovery
-    * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
+        * [x] option to not cross file systems (default)
+        * [x] handle git-common-dir
+        * [ ] support for `GIT_CEILING_DIRECTORIES` environment variable
+        * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
+    * [ ] rev-parse
     * [x] instantiation
-    * [ ] a way to handle `.git` files with `gitdir: <path>` in it
-    * [ ] handle `gitdir` and `commondir` files
-  * [x] access to refs and objects
-  * traverse 
+    * [x] access to refs and objects
+    * **traverse** 
       * [x] commit graphs
       * [ ] make [git-notes](https://git-scm.com/docs/git-notes) accessible
       * [x] tree entries
-  * diffs/changes
-     * [x] tree with tree
-     * [ ] tree with index
-     * [ ] index with working tree
-  * [x] initialize
-      * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
-  * [ ] All mutations are multi-process safe and this is tested and configurable (i.e. abort or wait if lock is encountered)
-* support for unicode-precomposition of command-line arguments (needs explicit use in parent application)
-* **Easy** (_porcelain_)
-  * **Id**
-    * [x] short hashes with detection of ambiguity.
-       * [ ] solve the [birthday paradox](https://git-scm.com/docs/git-describe#_examples) and make default hex-len depend on the amount of objects.
-  * **objects**
-    * [x] lookup
-    * [x] peel to object kind
-    * **trees**
-      * [x] lookup path
-  * **references**
-      * [x] peel to end
-  * [ ] [Signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
-  * [ ] clone
-      * [ ] shallow
-      * [ ] namespaces support
-  * [ ] sparse checkout support
-  * [ ] `git describe` like functionality
-  * [ ] execute hooks
-  * [ ] .gitignore handling
-  * [ ] checkout/stage conversions clean + smudge as in .gitattributes
-  * [ ] rev-parsing and ref history
-  * **refs**
-    * [ ] run transaction hooks and handle special repository states like quarantine
-    * [ ] support for different backends like `files` and `reftable`
-  * **worktrees**
-    * [x] open a repository with worktrees and interact with them
-    * [ ] proper handling of worktree related refs
-    * [ ] create, move and remove
-    * [ ] read per-worktree config if `extensions.worktreeConfig` is enabled.
-  * [ ] remotes with push and pull
-  * [x] mailmap   
-  * [x] object replacements (`git replace`)
-  * [ ] configuration
-  * [ ] merging
-  * [ ] stashing
-  * [ ] Use _Commit Graph_ to speed up certain queries
-* [ ] subtree
-* [ ] interactive rebase status/manipulation
-* submodules
+    * **diffs/changes**
+        * [x] tree with tree
+        * [ ] tree with index
+        * [ ] index with working tree
+    * [x] initialize
+        * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
+    * **Id**
+        * [x] short hashes with detection of ambiguity.
+    * **Commit**
+        * [x] `describe()` like functionality
+        * [x] create new commit
+    * **Objects**
+        * [x] lookup
+        * [x] peel to object kind
+        * [ ] create [signed commits and tags](https://github.com/Byron/gitoxide/issues/12)
+      * **trees**
+        * [x] lookup path
+    * **references**
+        * [x] peel to end
+        * [x] ref-log access
+    * [ ] clone
+        * [ ] shallow
+        * [ ] namespaces support
+    * [ ] sparse checkout support
+    * [ ] execute hooks
+    * [ ] .gitignore handling
+    * [ ] checkout/stage conversions clean + smudge as in .gitattributes
+    * **refs**
+        * [ ] run transaction hooks and handle special repository states like quarantine
+        * [ ] support for different backends like `files` and `reftable`
+    * **worktrees**
+        * [x] open a repository with worktrees
+           * [x] read locked state
+           * [ ] obtain 'prunable' information
+        * [x] proper handling of worktree related refs
+        * [ ] create, move, remove, and repair
+        * [ ] read per-worktree config if `extensions.worktreeConfig` is enabled.
+    * [ ] remotes with push and pull
+    * [x] mailmap   
+    * [x] object replacements (`git replace`)
+    * [ ] configuration
+    * [ ] merging
+    * [ ] stashing
+    * [ ] Use _Commit Graph_ to speed up certain queries
+    * [ ] subtree
+    * [ ] interactive rebase status/manipulation
+    * submodules
 * [ ] API documentation
     * [ ] Some examples
 
@@ -479,7 +482,6 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 
 ### git-ref
 * [ ] Prepare code for arrival of longer hashes like Sha256. It's part of the [V2 proposal][reftable-v2] but should work for loose refs as well.
-* [ ] **revparse** - obtain an object ID from short or long hashes, reference names or reference log [or more][revparse].
 * **Stores**
   * [ ] disable transactions during [quarantine]
   * [x] namespaces
@@ -489,10 +491,10 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [x] find single ref by name
     * [ ] special handling of `FETCH_HEAD` and `MERGE_HEAD`
     * [x] iterate refs with optional prefix
-    * [ ] [worktree support]
-        * [ ] support multiple bases and classify refs to know which one to use
-        * [ ] special support for ref iteration to not accidentally (see iterator setup)
-        * [ ] potentially special support for iteration to support listing worktree refs for bisect/rewritten,… from the main worktree
+    * **worktree support**
+        * [x] support multiple bases and classify refs
+        * [x] support for ref iteration merging common and private refs seamlessly.
+        * [x] avoid packing refs which are worktree private
     * ~~symbolic ref support, using symbolic links~~
         * This is a legacy feature which is not in use anymore.
     * **transactions** 
@@ -518,12 +520,10 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
 * [x] API documentation
     * [ ] Some examples
 
-[revparse]: https://git-scm.com/docs/git-rev-parse#Documentation/git-rev-parse.txt-emem
 [reftable-spec]: https://github.com/eclipse/jgit/blob/master/Documentation/technical/reftable.md
 [reftable-impl]: https://github.com/google/reftable
 [reftable-v2]: https://github.com/google/reftable/blob/master/reftable-v2-proposal.md
 [quarantine]: https://github.com/git/git/blob/master/Documentation/git-receive-pack.txt#L223:L223
-[worktree support]: https://github.com/git/git/blob/master/refs/files-backend.c#L163:L182
 
 
 ### git-features

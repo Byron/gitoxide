@@ -72,12 +72,9 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let mut num_crates = 0;
     for (idx, package) in crates.iter().enumerate() {
         num_crates += 1;
-        let (
-            crate::changelog::init::Outcome {
-                log, mut lock, state, ..
-            },
-            _package,
-        ) = ChangeLog::for_crate_by_name_with_write_lock(package, &history, &ctx, generator_segments)?;
+        let crate::changelog::init::Outcome {
+            log, mut lock, state, ..
+        } = ChangeLog::for_package_with_write_lock(package, &history, &ctx, generator_segments)?;
         log::info!(
             "{} write {} sections to {} ({})",
             will(dry_run),

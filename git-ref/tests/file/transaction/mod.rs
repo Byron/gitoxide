@@ -1,4 +1,4 @@
-mod prepare_and_commit {
+pub(crate) mod prepare_and_commit {
     use git_actor::{Sign, Time};
     use git_hash::ObjectId;
     use git_object::bstr::BString;
@@ -20,7 +20,7 @@ mod prepare_and_commit {
         Ok((dir, store))
     }
 
-    fn committer() -> git_actor::Signature {
+    pub(crate) fn committer() -> git_actor::Signature {
         git_actor::Signature {
             name: "committer".into(),
             email: "committer@example.com".into(),
