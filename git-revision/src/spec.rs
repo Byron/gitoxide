@@ -18,7 +18,7 @@ impl Default for Kind {
 
 pub mod parse {
     #![allow(missing_docs)]
-    use git_object::bstr::BStr;
+    use bstr::BStr;
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
@@ -49,11 +49,9 @@ pub mod parse {
 
     pub(crate) mod function {
         use crate::spec::parse::{Delegate, Error};
-        use git_object::bstr::BStr;
+        use bstr::BStr;
 
         pub fn parse(input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
-            // TODO: don't hardcode these cases, see how git does it. This remains
-            //       just an example.
             if input == "@" || input == "HEAD" {
                 return delegate.resolve_ref("HEAD".into()).ok_or(Error::Delegate);
             }

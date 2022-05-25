@@ -1304,6 +1304,7 @@ dependencies = [
 name = "git-revision"
 version = "0.2.0"
 dependencies = [
+ "bstr",
  "git-hash",
  "git-object",
  "git-repository",

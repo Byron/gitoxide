@@ -3,7 +3,7 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-use git_object::bstr::BStr;
+use bstr::BStr;
 
 /// The positive result produced by [describe()][function::describe()].
 #[derive(Debug, Clone)]
@@ -150,8 +150,9 @@ pub(crate) mod function {
         iter::FromIterator,
     };
 
+    use bstr::BStr;
     use git_hash::oid;
-    use git_object::{bstr::BStr, CommitRefIter};
+    use git_object::CommitRefIter;
     use hash_hasher::HashBuildHasher;
 
     use super::{Error, Outcome};
