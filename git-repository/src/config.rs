@@ -61,7 +61,7 @@ mod cache {
             home_env: permission::env_var::Resource,
             git_install_dir: Option<&std::path::Path>,
         ) -> Result<Self, Error> {
-            let config = File::open(git_dir.join("config"))?;
+            let config = File::at(git_dir.join("config"))?;
 
             let is_bare = config_bool(&config, "core.bare", false)?;
             let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;

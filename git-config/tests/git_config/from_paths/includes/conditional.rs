@@ -12,20 +12,222 @@ use git_ref::FullName;
 use tempfile::tempdir;
 
 #[test]
-fn girdir_and_onbranch() {
+fn include_and_includeif() {
+    let dir = tempdir().unwrap();
+    let config_path = dir.path().join("p");
+    let first_include_path = dir.path().join("first-incl");
+    let second_include_path = dir.path().join("second-incl");
+    let include_if_path = dir.path().join("incl-if");
+    fs::write(
+        first_include_path.as_path(),
+        "
+[core]
+  a = first-incl-path",
+    )
+    .unwrap();
+
+    fs::write(
+        second_include_path.as_path(),
+        "
+[core]
+  b = second-incl-path",
+    )
+    .unwrap();
+
+    fs::write(
+        include_if_path.as_path(),
+        "
+[core]
+  b = incl-if-path",
+    )
+    .unwrap();
+
+    fs::write(
+        config_path.as_path(),
+        format!(
+            r#"
+[core]
+  a = 1
+  b = 1
+[include]
+  path = {}
+[includeIf "gitdir:/"]
+  path = {}
+[include]
+  path = {}"#,
+            escape_backslashes(&first_include_path),
+            escape_backslashes(&include_if_path),
+            escape_backslashes(&second_include_path),
+        ),
+    )
+    .unwrap();
+
+    let dir = config_path.join(".git");
+    let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+
+    // assert_eq!(
+    //     config.string("core", None, "a"),
+    //     Some(cow_str("first-incl-path")),
+    //     "first include is matched correctly"
+    // );
+    // assert_eq!(
+    //     config.string("core", None, "b"),
+    //     Some(cow_str("second-incl-path")),
+    //     "second include is matched after incl-if"
+    // );
+}
+
+#[test]
+fn pattern_is_current_dir() {
+    let dir = tempdir().unwrap();
+    let config_path = dir.path().join("a");
+    let relative_dot_slash_path = dir.path().join("g");
+    fs::write(
+        relative_dot_slash_path.as_path(),
+        "
+[core]
+  b = relative-dot-slash-path",
+    )
+    .unwrap();
+
+    fs::write(
+        config_path.as_path(),
+        format!(
+            r#"
+[core]
+  x = 1
+[includeIf "gitdir:./"]
+  path = {}"#,
+            escape_backslashes(&relative_dot_slash_path),
+        ),
+    )
+    .unwrap();
+
+    {
+        let dir = config_path.parent().unwrap().join("p").join("q").join(".git");
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        assert_eq!(
+            config.string("core", None, "b"),
+            Some(cow_str("relative-dot-slash-path")),
+            "relative path pattern is matched correctly"
+        );
+    }
+}
+
+#[test]
+fn onbranch_tests() {
+    let dir = tempdir().unwrap();
+    let config_path = dir.path().join("a");
+    let hierarchy_branch_path = dir.path().join("hierarchy_branch");
+    let branch_path = dir.path().join("branch");
+    let another_branch_path = dir.path().join("anohter_branch");
+    fs::write(
+        branch_path.as_path(),
+        "
+[core]
+  x = branch-override",
+    )
+    .unwrap();
+
+    fs::write(
+        another_branch_path.as_path(),
+        "
+[core]
+  z = another-branch-override",
+    )
+    .unwrap();
+
+    fs::write(
+        hierarchy_branch_path.as_path(),
+        "
+[core]
+  y = hierarchy-branch-override",
+    )
+    .unwrap();
+
+    fs::write(
+        config_path.as_path(),
+        format!(
+            r#"
+[core]
+  x = 1
+  y = 1
+  z = 1
+[includeIf "onbranch:foo*"]
+ path = {}
+[includeIf "onbranch:br/"]
+  path = {}
+[includeIf "onbranch:foo*"]
+ path = {}"#,
+            escape_backslashes(&branch_path),
+            escape_backslashes(&hierarchy_branch_path),
+            escape_backslashes(&another_branch_path),
+        ),
+    )
+    .unwrap();
+
+    {
+        let branch_name = FullName::try_from(BString::from("refs/heads/foobar")).unwrap();
+        let branch_name = branch_name.as_ref();
+        let options = from_paths::Options {
+            branch_name: Some(branch_name),
+            ..Default::default()
+        };
+
+        let config = File::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.string("core", None, "x"),
+            Some(cow_str("branch-override")),
+            "branch name match"
+        );
+    }
+
+    {
+        let branch_name = FullName::try_from(BString::from("refs/heads/foo/bar")).unwrap();
+        let branch_name = branch_name.as_ref();
+        let options = from_paths::Options {
+            branch_name: Some(branch_name),
+            ..Default::default()
+        };
+
+        let config = File::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.string("core", None, "z"),
+            Some(cow_str("1")),
+            "branch name match"
+        );
+    }
+
+    {
+        let branch_name = FullName::try_from(BString::from("refs/heads/br/one")).unwrap();
+        let branch_name = branch_name.as_ref();
+        let options = from_paths::Options {
+            branch_name: Some(branch_name),
+            ..Default::default()
+        };
+
+        let config = File::from_paths(Some(&config_path), options).unwrap();
+        assert_eq!(
+            config.string("core", None, "y"),
+            Some(cow_str("hierarchy-branch-override")),
+            "hierarchy branch name match"
+        );
+    }
+}
+
+#[test]
+fn gitdir_tests() {
     let dir = tempdir().unwrap();
 
     let config_path = dir.path().join("a");
     let absolute_path = dir.path().join("b");
     let home_dot_git_path = dir.path().join("c");
-    let home_trailing_slash_path = dir.path().join("c_slash");
+    let foo_trailing_slash_path = dir.path().join("foo_slash");
     let relative_dot_git_path2 = dir.path().join("d");
     let relative_path = dir.path().join("e");
     let casei_path = dir.path().join("i");
-    let relative_dot_slash_path = dir.path().join("g");
     let relative_dot_git_path = dir.path().join("w");
     let relative_with_backslash_path = dir.path().join("x");
-    let branch_path = dir.path().join("branch");
     let tmp_path = dir.path().join("tmp");
     let tmp_dir_m_n_with_slash = format!(
         "{}/",
@@ -48,49 +250,35 @@ fn girdir_and_onbranch() {
   c = 1
   i = 1
   t = 1
-[includeIf "onbranch:/br/"]
-  path = {}
 [includeIf "gitdir/i:a/B/c/D/"]
   path = {}
 [includeIf "gitdir:c\\d"]
   path = {}
-[includeIf "gitdir:./p/"]
-  path = {}
-[includeIf "gitdir:z/y/"]
+[includeIf "gitdir:foo/bar"]
   path = {}
 [includeIf "gitdir:w/.git"]
   path = {}
-[includeIf "gitdir:~/.git"]
+[includeIf "gitdir:~/"]
   path = {}
-[includeIf "gitdir:~/c/"]
+[includeIf "gitdir:foo/"]
   path = {}
-[includeIf "gitdir:a/.git"]
+[includeIf "gitdir:stan?ard/glo*ng/[xwz]ildcards/.git"]
   path = {}
 [includeIf "gitdir:{}"]
   path = {}
 [includeIf "gitdir:/e/x/"]
   path = {}"#,
-            escape_backslashes(&branch_path),
             escape_backslashes(&casei_path),
             escape_backslashes(&relative_with_backslash_path),
-            escape_backslashes(&relative_dot_slash_path),
             escape_backslashes(&relative_path),
             escape_backslashes(&relative_dot_git_path),
             escape_backslashes(&home_dot_git_path),
-            escape_backslashes(&home_trailing_slash_path),
+            escape_backslashes(&foo_trailing_slash_path),
             escape_backslashes(&relative_dot_git_path2),
             &tmp_dir_m_n_with_slash,
             escape_backslashes(&tmp_path),
             escape_backslashes(&absolute_path),
         ),
-    )
-    .unwrap();
-
-    fs::write(
-        branch_path.as_path(),
-        "
-[core]
-  x = branch-override",
     )
     .unwrap();
 
@@ -151,18 +339,10 @@ fn girdir_and_onbranch() {
     .unwrap();
 
     fs::write(
-        home_trailing_slash_path.as_path(),
+        foo_trailing_slash_path.as_path(),
         "
 [core]
-  b = home-trailing-slash",
-    )
-    .unwrap();
-
-    fs::write(
-        relative_dot_slash_path.as_path(),
-        "
-[core]
-  b = relative-dot-slash-path",
+  b = foo-trailing-slash",
     )
     .unwrap();
 
@@ -173,22 +353,6 @@ fn girdir_and_onbranch() {
   t = absolute-path-with-symlink",
     )
     .unwrap();
-
-    {
-        let branch_name = FullName::try_from(BString::from("refs/heads/repo/br/one")).unwrap();
-        let branch_name = branch_name.as_ref();
-        let options = from_paths::Options {
-            branch_name: Some(branch_name),
-            ..Default::default()
-        };
-
-        let config = File::from_paths(Some(&config_path), options).unwrap();
-        assert_eq!(
-            config.string("core", None, "x"),
-            Some(cow_str("branch-override")),
-            "branch name match"
-        );
-    }
 
     {
         let dir = Path::new("/a/b/c/d/.git");
@@ -211,17 +375,7 @@ fn girdir_and_onbranch() {
     }
 
     {
-        let dir = config_path.parent().unwrap().join("p").join("q").join(".git");
-        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
-        assert_eq!(
-            config.string("core", None, "b"),
-            Some(cow_str("relative-dot-slash-path")),
-            "relative path pattern is matched correctly"
-        );
-    }
-
-    {
-        let dir = config_path.join("z").join("y").join("b").join(".git");
+        let dir = config_path.join("foo").join("bar");
         let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "a"),
@@ -251,17 +405,22 @@ fn girdir_and_onbranch() {
     }
 
     {
-        let dir = dirs::home_dir().unwrap().join("c").join("d").join(".git");
+        let dir = config_path.join("foo").join(".git");
         let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "b"),
-            Some(cow_str("home-trailing-slash")),
+            Some(cow_str("foo-trailing-slash")),
             "path with trailing slash is matched"
         );
     }
 
     {
-        let dir = dir.path().join("x").join("a").join(".git");
+        let dir = dir
+            .path()
+            .join("standard")
+            .join("globbing")
+            .join("wildcards")
+            .join(".git");
         let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "b"),
@@ -271,11 +430,11 @@ fn girdir_and_onbranch() {
     }
 
     {
-        let dir = PathBuf::from("/e/x/y/.git");
+        let dir = dirs::home_dir().unwrap().join(".git");
         let config = File::from_paths(Some(config_path.as_path()), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "b"),
-            Some(cow_str("absolute-path")),
+            Some(cow_str("home-dot-git")),
             "absolute path pattern is matched with sub path from GIT_DIR"
         );
     }

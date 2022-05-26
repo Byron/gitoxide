@@ -4,7 +4,7 @@ use git_config::File;
 use git_testtools::fixture_path;
 
 fn init_config() -> File<'static> {
-    File::open(fixture_path("multi-core.txt")).unwrap()
+    File::at(fixture_path("multi-core.txt")).unwrap()
 }
 
 #[test]

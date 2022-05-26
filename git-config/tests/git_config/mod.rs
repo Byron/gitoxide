@@ -11,7 +11,7 @@ mod open {
 
     #[test]
     fn parse_config_with_windows_line_endings_successfully() {
-        File::open(fixture_path("repo-config.crlf")).unwrap();
+        File::at(fixture_path("repo-config.crlf")).unwrap();
     }
 }
 

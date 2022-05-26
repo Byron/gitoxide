@@ -16,7 +16,7 @@ impl<'a> File<'a> {
     ///
     /// Returns an error if there was an IO error or if the file wasn't a valid
     /// git-config file.
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, parser::ParserOrIoError<'static>> {
+    pub fn at<P: AsRef<Path>>(path: P) -> Result<Self, parser::ParserOrIoError<'static>> {
         parse_from_path(path).map(Self::from)
     }
 
@@ -36,7 +36,7 @@ impl<'a> File<'a> {
         let mut target = Self::new();
         for path in paths {
             let path = path.as_ref();
-            let mut config = Self::open(path)?;
+            let mut config = Self::at(path)?;
             resolve_includes(&mut config, Some(path), options)?;
             target.append(config);
         }
