@@ -66,54 +66,63 @@ mod parse {
         assert_eq!(rec.resolve_ref_input.unwrap(), spec);
     }
 
-    #[test]
-    fn leading_caret_is_range_kind() {
-        let rec = parse("^HEAD");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+    mod revision {
+        use crate::spec::parse::parse;
+
+        #[test]
+        fn at_by_iteself_is_shortcut_for_head() {
+            let rec = parse("@");
+            assert!(rec.kind.is_none());
+            assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        }
+
+        #[test]
+        fn refname_head() {
+            let rec = parse("HEAD");
+            assert!(rec.kind.is_none());
+            assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        }
     }
 
-    #[test]
-    fn trailing_dot_dot_is_range() {
-        let rec = parse("HEAD..");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
-    }
+    mod range {
+        use crate::spec::parse::parse;
+        use git_revision::spec;
 
-    #[test]
-    fn trailing_dot_dot_dot_is_merge_base() {
-        let rec = parse("HEAD...");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
-    }
+        #[test]
+        fn leading_caret_is_range_kind() {
+            let rec = parse("^HEAD");
+            assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+            assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        }
 
-    #[test]
-    fn middle_dot_dot_dot_is_merge_base() {
-        let rec = parse("HEAD...@");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
-        assert_eq!(rec.resolve_ref_input2.unwrap(), "HEAD");
-    }
+        #[test]
+        fn trailing_dot_dot_is_range() {
+            let rec = parse("HEAD..");
+            assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+            assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        }
 
-    #[test]
-    fn middle_dot_dot_is_range() {
-        let rec = parse("@..HEAD");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
-        assert_eq!(rec.resolve_ref_input2.unwrap(), "HEAD");
-    }
+        #[test]
+        fn trailing_dot_dot_dot_is_merge_base() {
+            let rec = parse("HEAD...");
+            assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+            assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        }
 
-    #[test]
-    fn at_by_iteself_is_shortcut_for_head() {
-        let rec = parse("@");
-        assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
-    }
+        #[test]
+        fn middle_dot_dot_dot_is_merge_base() {
+            let rec = parse("HEAD...@");
+            assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+            assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+            assert_eq!(rec.resolve_ref_input2.unwrap(), "HEAD");
+        }
 
-    #[test]
-    fn refname_head() {
-        let rec = parse("HEAD");
-        assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        #[test]
+        fn middle_dot_dot_is_range() {
+            let rec = parse("@..HEAD");
+            assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+            assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+            assert_eq!(rec.resolve_ref_input2.unwrap(), "HEAD");
+        }
     }
 }
