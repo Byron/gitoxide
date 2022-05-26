@@ -65,16 +65,16 @@ fn include_and_includeif() {
     let dir = config_path.join(".git");
     let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
 
-    // assert_eq!(
-    //     config.string("core", None, "a"),
-    //     Some(cow_str("first-incl-path")),
-    //     "first include is matched correctly"
-    // );
-    // assert_eq!(
-    //     config.string("core", None, "b"),
-    //     Some(cow_str("second-incl-path")),
-    //     "second include is matched after incl-if"
-    // );
+    assert_eq!(
+        config.string("core", None, "a"),
+        Some(cow_str("first-incl-path")),
+        "first include is matched correctly"
+    );
+    assert_eq!(
+        config.string("core", None, "b"),
+        Some(cow_str("second-incl-path")),
+        "second include is matched after incl-if"
+    );
 }
 
 #[test]

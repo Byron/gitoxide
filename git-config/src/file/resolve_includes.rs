@@ -1,11 +1,9 @@
 use crate::file::from_paths;
-use crate::file::SectionBody;
-use crate::parser::{Key, ParsedSectionHeader};
+use crate::parser::Key;
 use crate::{values, File};
 use bstr::{BString, ByteSlice};
 use git_ref::Category;
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 // TODO adjust tst structure to mirror the new code structure
@@ -38,17 +36,36 @@ fn resolve_includes_recursive(
 
     let mut paths_to_include = Vec::new();
 
-    // TODO include and includeId needs to be handled in 1 loop
-    // Add test to discover the problem and fix
+    let mut incl_section_ids = Vec::new();
+    for name in ["include", "includeIf"] {
+        for id in target_config.section_ids_by_name(name).unwrap_or_default() {
+            incl_section_ids.push((
+                id,
+                target_config
+                    .section_order
+                    .binary_search(&id)
+                    .expect("section id is read from config"),
+            ));
+        }
+    }
+    incl_section_ids.sort_by(|a, b| a.1.cmp(&b.1));
 
-    let mut include_paths = target_config
-        .multi_value::<values::Path<'_>>("include", None, "path")
-        .unwrap_or_default();
-
-    for (header, body) in get_include_if_sections(target_config) {
-        //  TODO for near future the parser enforces valid utf-8
-        if let Some(condition) = &header.subsection_name {
-            if include_condition_match(condition, target_config_path, options).is_some() {
+    let mut include_paths = Vec::new();
+    for (id, _) in incl_section_ids {
+        let mut add_path = false;
+        if let Some(header) = target_config.section_headers.get(&id) {
+            if header.name.0 == "include" && header.subsection_name.is_none() {
+                add_path = true;
+            } else if header.name.0 == "includeIf" {
+                if let Some(condition) = &header.subsection_name {
+                    if include_condition_match(condition, target_config_path, options).is_some() {
+                        add_path = true;
+                    }
+                }
+            }
+        }
+        if add_path {
+            if let Some(body) = target_config.sections.get(&id) {
                 let paths = body.values(&Key::from("path"));
                 let paths = paths.iter().map(|path| values::Path::from(path.clone()));
                 include_paths.extend(paths);
@@ -169,24 +186,6 @@ fn is_match(
         return result;
     }
     false
-}
-
-fn get_include_if_sections<'a>(target_config: &'a File<'_>) -> Vec<(&'a ParsedSectionHeader<'a>, &'a SectionBody<'a>)> {
-    // TODO can we have same values in section_headers.values()?
-    // ADD test
-    let section_headers_to_id: HashMap<_, _> = target_config
-        .section_headers
-        .values()
-        .zip(target_config.section_headers.keys())
-        .collect();
-    let mut include_if_sections = target_config.sections_by_name_with_header("includeIf");
-    include_if_sections.sort_by(|a, b| {
-        section_headers_to_id
-            .get(a.0)
-            .expect("section_id exists")
-            .cmp(section_headers_to_id.get(b.0).expect("section_id exists"))
-    });
-    include_if_sections
 }
 
 fn resolve(
