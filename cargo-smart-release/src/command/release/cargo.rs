@@ -8,6 +8,7 @@ use crate::utils::will;
 
 pub(in crate::command::release_impl) fn publish_crate(
     publishee: &Package,
+    prevent_default_members: bool,
     Options {
         skip_publish,
         dry_run,
@@ -38,6 +39,9 @@ pub(in crate::command::release_impl) fn publish_crate(
             c.arg("--dry-run");
         }
         c.arg("--manifest-path").arg(&publishee.manifest_path);
+        if prevent_default_members {
+            c.arg("--package").arg(&publishee.name);
+        }
         if verbose {
             log::trace!("{} run {:?}", will(!cargo_must_run), c);
         }
