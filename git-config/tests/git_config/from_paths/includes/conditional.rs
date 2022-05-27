@@ -12,7 +12,7 @@ use git_ref::FullName;
 use tempfile::tempdir;
 
 #[test]
-fn include_and_includeif() {
+fn include_and_includeif_correct_inclusion_order() {
     let dir = tempdir().unwrap();
     let config_path = dir.path().join("p");
     let first_include_path = dir.path().join("first-incl");
@@ -223,7 +223,7 @@ fn gitdir_tests() {
     let absolute_path = dir.path().join("b");
     let home_dot_git_path = dir.path().join("c");
     let foo_trailing_slash_path = dir.path().join("foo_slash");
-    let relative_dot_git_path2 = dir.path().join("d");
+    let wildcards_path = dir.path().join("d");
     let relative_path = dir.path().join("e");
     let casei_path = dir.path().join("i");
     let relative_dot_git_path = dir.path().join("w");
@@ -274,7 +274,7 @@ fn gitdir_tests() {
             escape_backslashes(&relative_dot_git_path),
             escape_backslashes(&home_dot_git_path),
             escape_backslashes(&foo_trailing_slash_path),
-            escape_backslashes(&relative_dot_git_path2),
+            escape_backslashes(&wildcards_path),
             &tmp_dir_m_n_with_slash,
             escape_backslashes(&tmp_path),
             escape_backslashes(&absolute_path),
@@ -315,10 +315,10 @@ fn gitdir_tests() {
     .unwrap();
 
     fs::write(
-        relative_dot_git_path2.as_path(),
+        wildcards_path.as_path(),
         "
 [core]
-  b = relative-dot-git-2",
+  b = standard-globbing-wildcards",
     )
     .unwrap();
 
@@ -370,7 +370,7 @@ fn gitdir_tests() {
         assert_eq!(
             config.integer("core", None, "c"),
             Some(Ok(1)),
-            "patterns with backslashes do not match"
+            "relative with backslash do not match"
         );
     }
 
@@ -424,8 +424,8 @@ fn gitdir_tests() {
         let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
         assert_eq!(
             config.string("core", None, "b"),
-            Some(cow_str("relative-dot-git-2")), // TODO: figure out what's the difference to the non -2 version
-            "** is prepended so paths ending with the pattern are matched"
+            Some(cow_str("standard-globbing-wildcards")),
+            "standard globbing wildcards works"
         );
     }
 

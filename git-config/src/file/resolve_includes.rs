@@ -43,8 +43,9 @@ fn resolve_includes_recursive(
                 id,
                 target_config
                     .section_order
-                    .binary_search(&id)
-                    .expect("section id is read from config"),
+                    .iter()
+                    .position(|&e| e == id)
+                    .expect("section id is from config"),
             ));
         }
     }
@@ -128,7 +129,6 @@ fn is_match(
     git_dir: &Path,
     condition: &str,
 ) -> bool {
-    // TODO is there a test?
     if condition.contains('\\') {
         return false;
     }
