@@ -259,6 +259,21 @@ fn cross_fs() -> crate::Result {
     Ok(())
 }
 
+#[test]
+fn do_not_shorten_absolute_paths() -> crate::Result {
+    let top_level_repo = repo_path()?.canonicalize().expect("repo path exists");
+    let (repo_path, _trust) = git_discover::upwards(top_level_repo).expect("we can discover the repo");
+
+    match repo_path {
+        git_discover::repository::Path::WorkTree(work_dir) => {
+            assert!(work_dir.is_absolute());
+        }
+        _ => panic!("expected worktree path"),
+    };
+
+    Ok(())
+}
+
 fn repo_path() -> crate::Result<PathBuf> {
     git_testtools::scripted_fixture_repo_read_only("make_basic_repo.sh")
 }
