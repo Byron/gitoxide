@@ -6,8 +6,6 @@ use git_ref::Category;
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 
-// TODO adjust tst structure to mirror the new code structure
-
 const DOT: &[u8] = b".";
 
 pub(crate) fn resolve_includes(

@@ -1,7 +1,7 @@
 use std::fs;
 
-use crate::git_config::cow_str;
-use crate::git_config::from_paths::escape_backslashes;
+use crate::file::cow_str;
+use crate::file::from_paths::escape_backslashes;
 use git_config::file::from_paths;
 use git_config::File;
 use tempfile::tempdir;
