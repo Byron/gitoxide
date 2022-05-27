@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.3 (2022-05-27)
 
 A maintenance release without user-facing changes.
 
@@ -13,10 +13,10 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 3 calendar days.
+ - 4 commits contributed to the release over the course of 3 calendar days.
  - 3 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#426](https://github.com/Byron/gitoxide/issues/426)
+ - 2 unique issues were worked on: [#426](https://github.com/Byron/gitoxide/issues/426), [#429](https://github.com/Byron/gitoxide/issues/429)
 
 ### Commit Details
 
@@ -27,11 +27,15 @@ A maintenance release without user-facing changes.
  * **[#426](https://github.com/Byron/gitoxide/issues/426)**
     - allow tests to deal with shared drives by adjusting trust expectation ([`85ab096`](https://github.com/Byron/gitoxide/commit/85ab0964a1a35556a5efe392576c9b028e601c6c))
     - cleanup ([`e029eb4`](https://github.com/Byron/gitoxide/commit/e029eb4589942e06a53bc0f6ed472d1d33c4a7e6))
+ * **[#429](https://github.com/Byron/gitoxide/issues/429)**
+    - Adjust changelogs prior to release ([`7397805`](https://github.com/Byron/gitoxide/commit/7397805fd032a752d6c2f2c2c28ac11ddecc7193))
  * **Uncategorized**
     - Merge branch 'davidkna-admin-sec' ([`3d0e2c2`](https://github.com/Byron/gitoxide/commit/3d0e2c2d4ebdbe3dff01846aac3375128353a2e1))
 </details>
 
 ## 0.1.2 (2022-05-23)
+
+<csr-id-136eb37b00c9e7ba0fd0bc2a75dee2ac1b06516d/>
 
 ### Features
 
