@@ -1,3 +1,8 @@
+use bstr::{ByteSlice, ByteVec};
+use git_config::values::Boolean as GitBoolean;
+use std::borrow::Cow;
+use std::convert::TryFrom;
+use std::env;
 use std::path::PathBuf;
 
 /// The error returned by [git_discover::discover()][function::discover()].
@@ -30,14 +35,14 @@ pub enum Error {
 
 /// Options to help guide the [discovery][function::discover()] of repositories, along with their options
 /// when instantiated.
-pub struct Options<'a> {
+pub struct Options {
     /// When discovering a repository, assure it has at least this trust level or ignore it otherwise.
     ///
     /// This defaults to [`Reduced`][git_sec::Trust::Reduced] as our default settings are geared towards avoiding abuse.
     /// Set it to `Full` to only see repositories that [are owned by the current user][git_sec::Trust::from_path_ownership()].
     pub required_trust: git_sec::Trust,
     /// When discovering a repository, ignore any repositories that are located in these directories or any of their parents.
-    pub ceiling_dirs: &'a [PathBuf],
+    pub ceiling_dirs: Vec<PathBuf>,
     /// If true, and `ceiling_dirs` is not empty, we expect at least one ceiling directory to match or else there will be an error.
     pub match_ceiling_dir_or_error: bool,
     /// if `true` avoid crossing filesystem boundaries.
@@ -47,15 +52,72 @@ pub struct Options<'a> {
     pub cross_fs: bool,
 }
 
-impl Default for Options<'_> {
+impl Default for Options {
     fn default() -> Self {
         Options {
             required_trust: git_sec::Trust::Reduced,
-            ceiling_dirs: &[],
+            ceiling_dirs: vec![],
             match_ceiling_dir_or_error: true,
             cross_fs: false,
         }
     }
+}
+
+impl Options {
+    /// Loads discovery options overrides from the environment.
+    /// The environment variables are:
+    /// - `GIT_CEILING_DIRECTORIES` for `ceiling_dirs`
+    /// - `GIT_DISCOVERY_ACROSS_FILESYSTEM` for `cross_fs`
+    // TODO: test
+    pub fn load_env_overrides(&mut self) {
+        if let Some(ceiling_dirs) = get_env_bytes("GIT_CEILING_DIRECTORIES") {
+            self.ceiling_dirs = parse_ceiling_dirs(&ceiling_dirs);
+        }
+
+        if let Some(cross_fs) = get_env_bytes("GIT_DISCOVERY_ACROSS_FILESYSTEM") {
+            if let Ok(b) = GitBoolean::try_from(cross_fs) {
+                self.cross_fs = b.to_bool();
+            }
+        }
+    }
+}
+
+/// Gets the values of an environment variable as bytes.
+fn get_env_bytes(name: &str) -> Option<Vec<u8>> {
+    env::var_os(name).and_then(|c| Vec::from_os_string(c).ok())
+}
+
+/// Parse a byte-string of :-separated paths into a Vector of PathBufs
+/// Non-absolute paths are discarded.
+/// To match git, all paths are normalized, until an empty path is encountered.
+pub fn parse_ceiling_dirs(ceiling_dirs: &[u8]) -> Vec<PathBuf> {
+    let mut should_normalize = true;
+    let mut result = Vec::new();
+    for ceiling_dir in ceiling_dirs.split_str(":") {
+        if ceiling_dir.is_empty() {
+            should_normalize = false;
+            continue;
+        }
+
+        // Paths that are invalid unicode can't be handled
+        let mut dir = match ceiling_dir.to_path() {
+            Ok(dir) => Cow::Borrowed(dir),
+            Err(_) => continue,
+        };
+
+        // Only absolute paths are allowed
+        if dir.is_relative() {
+            continue;
+        }
+
+        if should_normalize {
+            if let Ok(normalized) = git_path::realpath(&dir, "", 32) {
+                dir = Cow::Owned(normalized);
+            }
+        }
+        result.push(dir.into_owned());
+    }
+    result
 }
 
 pub(crate) mod function {
@@ -81,7 +143,7 @@ pub(crate) mod function {
             ceiling_dirs,
             match_ceiling_dir_or_error,
             cross_fs,
-        }: Options<'_>,
+        }: Options,
     ) -> Result<(crate::repository::Path, Trust), Error> {
         // Absolutize the path so that `Path::parent()` _actually_ gives
         // us the parent directory. (`Path::parent` just strips off the last
@@ -108,7 +170,7 @@ pub(crate) mod function {
         };
 
         let max_height = if !ceiling_dirs.is_empty() {
-            let max_height = find_ceiling_height(&dir, ceiling_dirs, cwd.as_deref());
+            let max_height = find_ceiling_height(&dir, &ceiling_dirs, cwd.as_deref());
             if max_height.is_none() && match_ceiling_dir_or_error {
                 return Err(Error::NoMatchingCeilingDir);
             }

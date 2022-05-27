@@ -405,13 +405,37 @@ pub mod discover {
         /// for instantiations.
         pub fn discover_opts(
             directory: impl AsRef<Path>,
-            options: upwards::Options<'_>,
+            options: upwards::Options,
             trust_map: git_sec::trust::Mapping<crate::open::Options>,
         ) -> Result<Self, Error> {
             let (path, trust) = upwards_opts(directory, options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
             let options = trust_map.into_value_by_level(trust);
             Self::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
+        }
+
+        /// Try to open a git repository directly from the environment.
+        /// If that fails, discover upwards from `directory` until one is found,
+        /// while applying discovery options from the environment.
+        pub fn discover_with_environment_overrides(directory: impl AsRef<Path>) -> Result<Self, Error> {
+            Self::discover_with_environment_overrides_opts(directory, Default::default(), Default::default())
+        }
+
+        /// Try to open a git repository directly from the environment.
+        /// If that fails, discover upwards from `directory` until one is found,
+        /// while applying `options` with overrides from the environment.
+        ///
+        /// Then use the `trust_map` to determine which of our own repository options to use.
+        pub fn discover_with_environment_overrides_opts(
+            directory: impl AsRef<Path>,
+            mut options: upwards::Options,
+            trust_map: git_sec::trust::Mapping<crate::open::Options>,
+        ) -> Result<Self, Error> {
+            if std::env::var_os("GIT_DIR").is_some() {
+                return Self::open_with_environment_overrides(directory.as_ref(), trust_map).map_err(Error::Open);
+            }
+            options.load_env_overrides();
+            Self::discover_opts(directory, options, trust_map)
         }
     }
 }

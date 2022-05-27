@@ -1207,6 +1207,7 @@ version = "0.1.3"
 dependencies = [
  "bstr",
  "defer",
+ "git-config",
  "git-hash",
  "git-path",
  "git-ref",

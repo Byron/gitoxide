@@ -19,7 +19,7 @@ fn git_dir_candidate_within_ceiling_allows_discovery() -> crate::Result {
     let (repo_path, _trust) = git_discover::upwards_opts(
         &dir,
         Options {
-            ceiling_dirs: &[work_dir.clone()],
+            ceiling_dirs: vec![work_dir.clone()],
             ..Default::default()
         },
     )
@@ -37,7 +37,7 @@ fn ceiling_dir_limits_are_respected_and_prevent_discovery() -> crate::Result {
     let err = git_discover::upwards_opts(
         &dir,
         Options {
-            ceiling_dirs: &[work_dir.join("some/../some")],
+            ceiling_dirs: vec![work_dir.join("some/../some")],
             ..Default::default()
         },
     )
@@ -58,7 +58,7 @@ fn no_matching_ceiling_dir_error_can_be_suppressed() -> crate::Result {
         &dir,
         Options {
             match_ceiling_dir_or_error: false,
-            ceiling_dirs: &[
+            ceiling_dirs: vec![
                 work_dir.canonicalize()?,
                 work_dir.join("some/very/deeply/nested/subdir/too-deep"),
                 work_dir.join("some/very/deeply/nested/unrelated-dir"),
@@ -80,7 +80,7 @@ fn more_restrictive_ceiling_dirs_overrule_less_restrictive_ones() -> crate::Resu
     let err = git_discover::upwards_opts(
         &dir,
         Options {
-            ceiling_dirs: &[work_dir.clone(), work_dir.join("some")],
+            ceiling_dirs: vec![work_dir.clone(), work_dir.join("some")],
             ..Default::default()
         },
     )
@@ -101,7 +101,7 @@ fn ceiling_dirs_are_not_processed_differently_than_the_git_dir_candidate() -> cr
         &dir,
         Options {
             match_ceiling_dir_or_error: false,
-            ceiling_dirs: &[Path::new("./some").into()],
+            ceiling_dirs: vec![Path::new("./some").into()],
             ..Default::default()
         },
     )
@@ -123,7 +123,7 @@ fn no_matching_ceiling_dirs_errors_by_default() -> crate::Result {
     let res = git_discover::upwards_opts(
         &dir,
         Options {
-            ceiling_dirs: &["/something/somewhere".into()],
+            ceiling_dirs: vec!["/something/somewhere".into()],
             ..Default::default()
         },
     );
@@ -145,7 +145,7 @@ fn ceilings_are_adjusted_to_match_search_dir() -> crate::Result {
     let (repo_path, _trust) = git_discover::upwards_opts(
         &dir,
         Options {
-            ceiling_dirs: &[absolute_ceiling_dir],
+            ceiling_dirs: vec![absolute_ceiling_dir],
             ..Default::default()
         },
     )?;
@@ -156,10 +156,41 @@ fn ceilings_are_adjusted_to_match_search_dir() -> crate::Result {
     let (repo_path, _trust) = git_discover::upwards_opts(
         absolute_dir,
         Options {
-            ceiling_dirs: &[relative_work_dir.clone()],
+            ceiling_dirs: vec![relative_work_dir.clone()],
             ..Default::default()
         },
     )?;
     assert_repo_is_current_workdir(repo_path, &relative_work_dir);
     Ok(())
+}
+
+#[test]
+#[cfg(unix)]
+fn parse_from_env() -> std::io::Result<()> {
+    use std::fs;
+    use std::os::unix::fs::symlink;
+
+    // Setup filesystem
+    let dir = tempfile::tempdir().expect("success creating temp dir");
+    let direct_path = dir.path().join("direct");
+    let symlink_path = dir.path().join("symlink");
+    fs::create_dir(&direct_path)?;
+    symlink(&direct_path, &symlink_path)?;
+
+    // Parse & build ceiling dirs string
+    let symlink_str = symlink_path.to_str().expect("symlink path is valid utf8");
+    let ceiling_dir_string = format!("{}:relative::{}", symlink_str, symlink_str);
+    let ceiling_dirs = git_discover::upwards::parse_ceiling_dirs(ceiling_dir_string.as_bytes());
+
+    // Relative path is discarded
+    assert_eq!(ceiling_dirs.len(), 2);
+    // Symlinks are resolved
+    assert_eq!(
+        ceiling_dirs[0],
+        symlink_path.canonicalize().expect("symlink path exists")
+    );
+    // Symlink are not resolved after empty item
+    assert_eq!(ceiling_dirs[1], symlink_path);
+
+    dir.close()
 }
