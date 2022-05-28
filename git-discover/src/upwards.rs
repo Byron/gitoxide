@@ -1,7 +1,5 @@
 use bstr::{ByteSlice, ByteVec};
-use git_config::values::Boolean as GitBoolean;
 use std::borrow::Cow;
-use std::convert::TryFrom;
 use std::env;
 use std::path::PathBuf;
 
@@ -68,23 +66,16 @@ impl Options {
     ///
     /// The environment variables are:
     /// - `GIT_CEILING_DIRECTORIES` for `ceiling_dirs`
-    /// - `GIT_DISCOVERY_ACROSS_FILESYSTEM` for `cross_fs`
+    ///
+    /// Note that `GIT_DISCOVERY_ACROSS_FILESYSTEM` for `cross_fs` is **not** read,
+    /// as it requires parsing of `git-config` style boolean values.
     // TODO: test
-    pub fn apply_environment(&mut self) {
-        /// Gets the values of an environment variable as bytes.
-        fn get_env_bytes(name: &str) -> Option<Vec<u8>> {
-            env::var_os(name).and_then(|c| Vec::from_os_string(c).ok())
-        }
-
-        if let Some(ceiling_dirs) = get_env_bytes("GIT_CEILING_DIRECTORIES") {
+    pub fn apply_environment(mut self) -> Self {
+        let name = "GIT_CEILING_DIRECTORIES";
+        if let Some(ceiling_dirs) = env::var_os(name).and_then(|c| Vec::from_os_string(c).ok()) {
             self.ceiling_dirs = parse_ceiling_dirs(&ceiling_dirs);
         }
-
-        if let Some(cross_fs) = get_env_bytes("GIT_DISCOVERY_ACROSS_FILESYSTEM") {
-            if let Ok(b) = GitBoolean::try_from(cross_fs) {
-                self.cross_fs = b.to_bool();
-            }
-        }
+        self
     }
 }
 

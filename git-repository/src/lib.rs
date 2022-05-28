@@ -423,18 +423,37 @@ pub mod discover {
 
         /// Try to open a git repository directly from the environment, which reads `GIT_DIR`
         /// if it is set. If unset, discover upwards from `directory` until one is found,
-        /// while applying `options` with overrides from the environment.
+        /// while applying `options` with overrides from the environment which includes:
         ///
-        /// Then use the `trust_map` to determine which of our own repository options to use.
+        /// - `GIT_DISCOVERY_ACROSS_FILESYSTEM`
+        /// - `GIT_CEILING_DIRECTORIES`
+        ///
+        /// Finally, use the `trust_map` to determine which of our own repository options to use
+        /// based on the trust level of the effective repository directory.
         pub fn discover_with_environment_overrides_opts(
             directory: impl AsRef<Path>,
             mut options: upwards::Options,
             trust_map: git_sec::trust::Mapping<crate::open::Options>,
         ) -> Result<Self, Error> {
+            fn apply_additional_environment(mut opts: upwards::Options) -> upwards::Options {
+                use crate::bstr::ByteVec;
+                use std::convert::TryFrom;
+
+                if let Some(cross_fs) =
+                    std::env::var_os("GIT_DISCOVERY_ACROSS_FILESYSTEM").and_then(|v| Vec::from_os_string(v).ok())
+                {
+                    if let Ok(b) = git_config::values::Boolean::try_from(cross_fs) {
+                        opts.cross_fs = b.to_bool();
+                    }
+                }
+                opts
+            }
+
             if std::env::var_os("GIT_DIR").is_some() {
                 return Self::open_with_environment_overrides(directory.as_ref(), trust_map).map_err(Error::Open);
             }
-            options.apply_environment();
+
+            options = apply_additional_environment(options.apply_environment());
             Self::discover_opts(directory, options, trust_map)
         }
     }
