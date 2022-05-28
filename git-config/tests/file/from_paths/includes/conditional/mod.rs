@@ -129,6 +129,7 @@ fn gitdir() {
     let relative_dot_git_path = dir.path().join("w");
     let relative_with_backslash_path = dir.path().join("x");
     let tmp_path = dir.path().join("tmp");
+    let dot_dot_path = dir.path().join("dot_dot");
     let tmp_dir_m_n_with_slash = format!(
         "{}/",
         CanonicalizedTempDir::new()
@@ -144,17 +145,20 @@ fn gitdir() {
         format!(
             r#"
 [core]
-  x = 1
   a = 1
   b = 1
   c = 1
+  d = 1
   i = 1
   t = 1
+  x = 1
 [includeIf "gitdir/i:a/B/c/D/"]
   path = {}
 [includeIf "gitdir:c\\d/"]
   path = {}
 [includeIf "gitdir:foo/bar"]
+  path = {}
+[includeIf "gitdir:.."]
   path = {}
 [includeIf "gitdir:w/.git"]
   path = {}
@@ -171,6 +175,7 @@ fn gitdir() {
             escape_backslashes(&casei_path),
             escape_backslashes(&relative_with_backslash_path),
             escape_backslashes(&relative_path),
+            escape_backslashes(&dot_dot_path),
             escape_backslashes(&relative_dot_git_path),
             escape_backslashes(&home_dot_git_path),
             escape_backslashes(&foo_trailing_slash_path),
@@ -231,6 +236,14 @@ fn gitdir() {
     .unwrap();
 
     fs::write(
+        dot_dot_path.as_path(),
+        "
+[core]
+  d = dot-dot-path",
+    )
+    .unwrap();
+
+    fs::write(
         relative_dot_git_path.as_path(),
         "
 [core]
@@ -281,6 +294,16 @@ fn gitdir() {
             config.string("core", None, "a"),
             Some(cow_str("relative-path")),
             "the pattern is prefixed and suffixed with ** to match GIT_DIR containing it in the middle"
+        );
+    }
+
+    {
+        let dir = dot_dot_path.parent().unwrap();
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        assert_eq!(
+            config.string("core", None, "d"),
+            Some(cow_str("dot-dot-path")),
+            ".. path is included"
         );
     }
 

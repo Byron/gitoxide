@@ -94,7 +94,7 @@ fn include_condition_match(
     let (prefix, condition) = condition.split_once(':')?;
     match prefix {
         "gitdir" => gitdir_matches(target_config_path, options, condition, false),
-        "gitdir/i" => gitdir_matches(target_config_path, options, &condition, true),
+        "gitdir/i" => gitdir_matches(target_config_path, options, condition, true),
         "onbranch" => {
             let branch_name = options.branch_name?;
             let (_, branch_name) = branch_name
@@ -123,6 +123,7 @@ fn gitdir_matches(
     ignore_case: bool,
 ) -> Option<()> {
     const DOT: &[u8] = b".";
+    const DOT_DOT: &[u8] = b"..";
 
     let git_dir = git_path::to_unix_separators(git_path::into_bstr(options.git_dir?));
     if condition_path.contains('\\') {
@@ -134,13 +135,18 @@ fn gitdir_matches(
         git_path::to_unix_separators(git_path::into_bstr(path)).into_owned()
     };
 
-    let is_relative = pattern_path.starts_with(DOT);
-    if is_relative {
+    if pattern_path.starts_with(DOT) {
         if let Some(parent_path) = target_config_path.and_then(|p| p.parent()) {
             let parent_dir = git_path::to_unix_separators(git_path::into_bstr(parent_path));
-            pattern_path = bstr::concat(&[&parent_dir, &pattern_path[DOT.len()..]]).into();
+            let skip = if pattern_path.starts_with(DOT_DOT) {
+                DOT_DOT
+            } else {
+                DOT
+            };
+            pattern_path = bstr::concat(&[&parent_dir, &pattern_path[skip.len()..]]).into();
         }
     }
+
     if ["~/", "./", "/"]
         .iter()
         .all(|prefix| !pattern_path.starts_with(prefix.as_bytes()))
