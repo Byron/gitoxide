@@ -107,6 +107,7 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features io-pipe \
 			   && cargo check --features crc32 \
 			   && cargo check --features zlib \
+			   && cargo check --features zlib,zlib-ng \
 			   && cargo check --features zlib,zlib-ng-compat \
 			   && cargo check --features zlib-stock \
 			   && cargo check --features zlib,zlib-stock \
