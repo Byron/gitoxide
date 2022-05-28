@@ -65,7 +65,7 @@ use tempfile::tempdir_in;
 
 ///
 pub mod realpath;
-pub use realpath::function::realpath;
+pub use realpath::function::{realpath, realpath_opts};
 
 pub fn create_symlink(from: &Path, to: &Path) {
     create_dir_all(from.parent().unwrap()).unwrap();

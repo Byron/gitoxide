@@ -1,3 +1,6 @@
+use bstr::{ByteSlice, ByteVec};
+use std::borrow::Cow;
+use std::env;
 use std::path::PathBuf;
 
 /// The error returned by [git_discover::discover()][function::discover()].
@@ -30,14 +33,14 @@ pub enum Error {
 
 /// Options to help guide the [discovery][function::discover()] of repositories, along with their options
 /// when instantiated.
-pub struct Options<'a> {
+pub struct Options {
     /// When discovering a repository, assure it has at least this trust level or ignore it otherwise.
     ///
     /// This defaults to [`Reduced`][git_sec::Trust::Reduced] as our default settings are geared towards avoiding abuse.
     /// Set it to `Full` to only see repositories that [are owned by the current user][git_sec::Trust::from_path_ownership()].
     pub required_trust: git_sec::Trust,
     /// When discovering a repository, ignore any repositories that are located in these directories or any of their parents.
-    pub ceiling_dirs: &'a [PathBuf],
+    pub ceiling_dirs: Vec<PathBuf>,
     /// If true, and `ceiling_dirs` is not empty, we expect at least one ceiling directory to match or else there will be an error.
     pub match_ceiling_dir_or_error: bool,
     /// if `true` avoid crossing filesystem boundaries.
@@ -47,14 +50,102 @@ pub struct Options<'a> {
     pub cross_fs: bool,
 }
 
-impl Default for Options<'_> {
+impl Default for Options {
     fn default() -> Self {
         Options {
             required_trust: git_sec::Trust::Reduced,
-            ceiling_dirs: &[],
+            ceiling_dirs: vec![],
             match_ceiling_dir_or_error: true,
             cross_fs: false,
         }
+    }
+}
+
+impl Options {
+    /// Loads discovery options overrides from the environment.
+    ///
+    /// The environment variables are:
+    /// - `GIT_CEILING_DIRECTORIES` for `ceiling_dirs`
+    ///
+    /// Note that `GIT_DISCOVERY_ACROSS_FILESYSTEM` for `cross_fs` is **not** read,
+    /// as it requires parsing of `git-config` style boolean values.
+    // TODO: test
+    pub fn apply_environment(mut self) -> Self {
+        let name = "GIT_CEILING_DIRECTORIES";
+        if let Some(ceiling_dirs) = env::var_os(name).and_then(|c| Vec::from_os_string(c).ok()) {
+            self.ceiling_dirs = parse_ceiling_dirs(&ceiling_dirs);
+        }
+        self
+    }
+}
+
+/// Parse a byte-string of `:`-separated paths into `Vec<PathBuf>`.
+/// Non-absolute paths are discarded.
+/// To match git, all paths are normalized, until an empty path is encountered.
+fn parse_ceiling_dirs(ceiling_dirs: &[u8]) -> Vec<PathBuf> {
+    let mut should_normalize = true;
+    let mut result = Vec::new();
+    for ceiling_dir in ceiling_dirs.split_str(":") {
+        if ceiling_dir.is_empty() {
+            should_normalize = false;
+            continue;
+        }
+
+        // Paths that are invalid unicode can't be handled
+        let mut dir = match ceiling_dir.to_path() {
+            Ok(dir) => Cow::Borrowed(dir),
+            Err(_) => continue,
+        };
+
+        // Only absolute paths are allowed
+        if dir.is_relative() {
+            continue;
+        }
+
+        if should_normalize {
+            if let Ok(normalized) = git_path::realpath(&dir, "") {
+                dir = Cow::Owned(normalized);
+            }
+        }
+        result.push(dir.into_owned());
+    }
+    result
+}
+
+#[cfg(test)]
+mod parse_ceiling_dirs {
+    use super::*;
+
+    #[test]
+    #[cfg(unix)]
+    fn from_environment_format() -> std::io::Result<()> {
+        use std::fs;
+        use std::os::unix::fs::symlink;
+
+        // Setup filesystem
+        let dir = tempfile::tempdir().expect("success creating temp dir");
+        let direct_path = dir.path().join("direct");
+        let symlink_path = dir.path().join("symlink");
+        fs::create_dir(&direct_path)?;
+        symlink(&direct_path, &symlink_path)?;
+
+        // Parse & build ceiling dirs string
+        let symlink_str = symlink_path.to_str().expect("symlink path is valid utf8");
+        let ceiling_dir_string = format!("{}:relative::{}", symlink_str, symlink_str);
+        let ceiling_dirs = parse_ceiling_dirs(ceiling_dir_string.as_bytes());
+
+        assert_eq!(ceiling_dirs.len(), 2, "Relative path is discarded");
+        assert_eq!(
+            ceiling_dirs[0],
+            symlink_path.canonicalize().expect("symlink path exists"),
+            "Symlinks are resolved"
+        );
+        assert_eq!(
+            ceiling_dirs[1], symlink_path,
+            "Symlink are not resolved after empty item"
+        );
+
+        dir.close()
     }
 }
 
@@ -81,7 +172,7 @@ pub(crate) mod function {
             ceiling_dirs,
             match_ceiling_dir_or_error,
             cross_fs,
-        }: Options<'_>,
+        }: Options,
     ) -> Result<(crate::repository::Path, Trust), Error> {
         // Absolutize the path so that `Path::parent()` _actually_ gives
         // us the parent directory. (`Path::parent` just strips off the last
@@ -96,11 +187,12 @@ pub(crate) mod function {
         if !dir_metadata.is_dir() {
             return Err(Error::InaccessibleDirectory { path: dir.into_owned() });
         }
-        let mut dir_made_absolute = cwd.as_deref().map_or(false, |cwd| {
-            cwd.strip_prefix(dir.as_ref())
-                .or_else(|_| dir.as_ref().strip_prefix(cwd))
-                .is_ok()
-        });
+        let mut dir_made_absolute = !directory.as_ref().is_absolute()
+            && cwd.as_deref().map_or(false, |cwd| {
+                cwd.strip_prefix(dir.as_ref())
+                    .or_else(|_| dir.as_ref().strip_prefix(cwd))
+                    .is_ok()
+            });
 
         let filter_by_trust = |x: &Path| -> Result<Option<Trust>, Error> {
             let trust = Trust::from_path_ownership(x).map_err(|err| Error::CheckTrust { path: x.into(), err })?;
@@ -108,7 +200,7 @@ pub(crate) mod function {
         };
 
         let max_height = if !ceiling_dirs.is_empty() {
-            let max_height = find_ceiling_height(&dir, ceiling_dirs, cwd.as_deref());
+            let max_height = find_ceiling_height(&dir, &ceiling_dirs, cwd.as_deref());
             if max_height.is_none() && match_ceiling_dir_or_error {
                 return Err(Error::NoMatchingCeilingDir);
             }
@@ -245,7 +337,7 @@ pub(crate) mod function {
                         ceiling_dir = stripped.into();
                     }
                     (false, false) | (true, true) => {}
-                }
+                };
                 search_dir
                     .strip_prefix(ceiling_dir.as_ref())
                     .ok()

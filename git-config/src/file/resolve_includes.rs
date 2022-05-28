@@ -161,7 +161,7 @@ fn gitdir_matches(
         return Some(());
     }
 
-    let expanded_git_dir = git_path::realpath(git_path::from_byte_slice(&git_dir), target_config_path?, 32).ok()?;
+    let expanded_git_dir = git_path::realpath(git_path::from_byte_slice(&git_dir), target_config_path?).ok()?;
     let expanded_git_dir = git_path::to_unix_separators(git_path::into_bstr(expanded_git_dir));
     git_glob::wildmatch(
         pattern_path.as_bstr(),
