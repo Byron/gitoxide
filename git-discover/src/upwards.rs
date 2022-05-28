@@ -65,11 +65,12 @@ impl Default for Options {
 
 impl Options {
     /// Loads discovery options overrides from the environment.
+    ///
     /// The environment variables are:
     /// - `GIT_CEILING_DIRECTORIES` for `ceiling_dirs`
     /// - `GIT_DISCOVERY_ACROSS_FILESYSTEM` for `cross_fs`
     // TODO: test
-    pub fn load_env_overrides(&mut self) {
+    pub fn apply_environment(&mut self) {
         /// Gets the values of an environment variable as bytes.
         fn get_env_bytes(name: &str) -> Option<Vec<u8>> {
             env::var_os(name).and_then(|c| Vec::from_os_string(c).ok())

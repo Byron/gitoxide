@@ -82,17 +82,14 @@ pub(crate) struct EnvironmentOverrides {
 }
 
 impl EnvironmentOverrides {
-    // TODO: tests
-    fn from_env(
-        git_prefix: crate::permission::env_var::Resource,
-    ) -> Result<Self, crate::permission::env_var::resource::Error> {
+    fn from_env() -> Result<Self, crate::permission::env_var::resource::Error> {
         let mut worktree_dir = None;
         if let Some(path) = std::env::var_os("GIT_WORK_TREE") {
-            worktree_dir = git_prefix.check(PathBuf::from(path))?;
+            worktree_dir = PathBuf::from(path).into();
         }
         let mut git_dir = None;
         if let Some(path) = std::env::var_os("GIT_DIR") {
-            git_dir = git_prefix.check(PathBuf::from(path))?;
+            git_dir = PathBuf::from(path).into();
         }
         Ok(EnvironmentOverrides { worktree_dir, git_dir })
     }
@@ -198,7 +195,7 @@ impl crate::ThreadSafeRepository {
         fallback_directory: impl Into<PathBuf>,
         trust_map: git_sec::trust::Mapping<Options>,
     ) -> Result<Self, Error> {
-        let overrides = EnvironmentOverrides::from_env(git_sec::Access::resource(git_sec::Permission::Allow))?;
+        let overrides = EnvironmentOverrides::from_env()?;
         let (path, path_kind): (PathBuf, _) = match overrides.git_dir {
             Some(git_dir) => git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?,
             None => {

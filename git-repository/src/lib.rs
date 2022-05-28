@@ -421,8 +421,8 @@ pub mod discover {
             Self::discover_with_environment_overrides_opts(directory, Default::default(), Default::default())
         }
 
-        /// Try to open a git repository directly from the environment.
-        /// If that fails, discover upwards from `directory` until one is found,
+        /// Try to open a git repository directly from the environment, which reads `GIT_DIR`
+        /// if it is set. If unset, discover upwards from `directory` until one is found,
         /// while applying `options` with overrides from the environment.
         ///
         /// Then use the `trust_map` to determine which of our own repository options to use.
@@ -434,7 +434,7 @@ pub mod discover {
             if std::env::var_os("GIT_DIR").is_some() {
                 return Self::open_with_environment_overrides(directory.as_ref(), trust_map).map_err(Error::Open);
             }
-            options.load_env_overrides();
+            options.apply_environment();
             Self::discover_opts(directory, options, trust_map)
         }
     }
