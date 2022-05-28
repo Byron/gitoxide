@@ -152,7 +152,7 @@ fn gitdir() {
   t = 1
 [includeIf "gitdir/i:a/B/c/D/"]
   path = {}
-[includeIf "gitdir:c\\d"]
+[includeIf "gitdir:c\\d/"]
   path = {}
 [includeIf "gitdir:foo/bar"]
   path = {}
@@ -265,7 +265,7 @@ fn gitdir() {
     }
 
     {
-        let dir = Path::new("/a/b/c/d/.git");
+        let dir = Path::new("/c//d/.git");
         let config = File::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
         assert_eq!(
             config.integer("core", None, "c"),
