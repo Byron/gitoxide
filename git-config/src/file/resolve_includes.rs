@@ -95,8 +95,8 @@ fn include_condition_match(
 ) -> Option<()> {
     let (prefix, condition) = condition.split_once(':')?;
     match prefix {
-        "gitdir" => is_match(target_config_path, options, options.git_dir?, condition).then(|| ()),
-        "gitdir/i" => is_match(target_config_path, options, options.git_dir?, &condition.to_lowercase()).then(|| ()),
+        "gitdir" => gitdir_matches(target_config_path, options, condition),
+        "gitdir/i" => gitdir_matches(target_config_path, options, &condition.to_lowercase()),
         "onbranch" => {
             let branch_name = options.branch_name?;
             let (_, branch_name) = branch_name
@@ -118,14 +118,10 @@ fn include_condition_match(
     }
 }
 
-fn is_match(
-    target_config_path: Option<&Path>,
-    options: from_paths::Options<'_>,
-    git_dir: &Path,
-    condition: &str,
-) -> bool {
+fn gitdir_matches(target_config_path: Option<&Path>, options: from_paths::Options<'_>, condition: &str) -> Option<()> {
+    let git_dir = options.git_dir?;
     if condition.contains('\\') {
-        return false;
+        return None;
     }
     let condition_path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
     if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir) {
@@ -173,9 +169,11 @@ fn is_match(
                 }
             }
         }
-        return result;
+
+        result.then(|| ())
+    } else {
+        None
     }
-    false
 }
 
 fn resolve(
