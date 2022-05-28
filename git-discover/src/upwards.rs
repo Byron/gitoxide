@@ -142,15 +142,16 @@ mod parse_ceiling_dirs_tests {
         let ceiling_dir_string = format!("{}:relative::{}", symlink_str, symlink_str);
         let ceiling_dirs = parse_ceiling_dirs(ceiling_dir_string.as_bytes());
 
-        // Relative path is discarded
-        assert_eq!(ceiling_dirs.len(), 2);
-        // Symlinks are resolved
+        assert_eq!(ceiling_dirs.len(), 2, "Relative path is discarded");
         assert_eq!(
             ceiling_dirs[0],
-            symlink_path.canonicalize().expect("symlink path exists")
+            symlink_path.canonicalize().expect("symlink path exists"),
+            "Symlinks are resolved"
         );
-        // Symlink are not resolved after empty item
-        assert_eq!(ceiling_dirs[1], symlink_path);
+        assert_eq!(
+            ceiling_dirs[1], symlink_path,
+            "Symlink are not resolved after empty item"
+        );
 
         dir.close()
     }
@@ -344,7 +345,7 @@ pub(crate) mod function {
                         ceiling_dir = stripped.into();
                     }
                     (false, false) | (true, true) => {}
-                }
+                };
                 search_dir
                     .strip_prefix(ceiling_dir.as_ref())
                     .ok()
