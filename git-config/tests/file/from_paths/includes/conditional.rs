@@ -49,7 +49,7 @@ fn include_and_includeif_correct_inclusion_order() {
 [core]
 [include]
   path = {}
-[includeIf "gitdir:/"]
+[includeIf "gitdir:p/"]
   path = {}
 [include]
   path = {}"#,
