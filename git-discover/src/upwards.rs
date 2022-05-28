@@ -194,11 +194,12 @@ pub(crate) mod function {
         if !dir_metadata.is_dir() {
             return Err(Error::InaccessibleDirectory { path: dir.into_owned() });
         }
-        let mut dir_made_absolute = cwd.as_deref().map_or(false, |cwd| {
-            cwd.strip_prefix(dir.as_ref())
-                .or_else(|_| dir.as_ref().strip_prefix(cwd))
-                .is_ok()
-        });
+        let mut dir_made_absolute = !directory.as_ref().is_absolute()
+            && cwd.as_deref().map_or(false, |cwd| {
+                cwd.strip_prefix(dir.as_ref())
+                    .or_else(|_| dir.as_ref().strip_prefix(cwd))
+                    .is_ok()
+            });
 
         let filter_by_trust = |x: &Path| -> Result<Option<Trust>, Error> {
             let trust = Trust::from_path_ownership(x).map_err(|err| Error::CheckTrust { path: x.into(), err })?;
@@ -255,7 +256,7 @@ pub(crate) mod function {
                     match filter_by_trust(&cursor)? {
                         Some(trust) => {
                             // TODO: test this more, it definitely doesn't find the shortest path to a directory
-                            let path = if dir_made_absolute && !directory.as_ref().is_absolute() {
+                            let path = if dir_made_absolute {
                                 shorten_path_with_cwd(cursor, cwd)
                             } else {
                                 cursor
