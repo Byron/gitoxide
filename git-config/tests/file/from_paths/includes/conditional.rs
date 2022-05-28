@@ -22,7 +22,7 @@ fn include_and_includeif_correct_inclusion_order() {
         first_include_path.as_path(),
         "
 [core]
-  a = first-incl-path",
+  b = first-incl-path",
     )
     .unwrap();
 
@@ -47,8 +47,6 @@ fn include_and_includeif_correct_inclusion_order() {
         format!(
             r#"
 [core]
-  a = 1
-  b = 1
 [include]
   path = {}
 [includeIf "gitdir:/"]
@@ -66,14 +64,18 @@ fn include_and_includeif_correct_inclusion_order() {
     let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
 
     assert_eq!(
-        config.string("core", None, "a"),
-        Some(cow_str("first-incl-path")),
-        "first include is matched correctly"
+        config.strings("core", None, "b"),
+        Some(vec![
+            cow_str("first-incl-path"),
+            cow_str("incl-if-path"),
+            cow_str("second-incl-path")
+        ]),
+        "first include is matched correctly",
     );
     assert_eq!(
         config.string("core", None, "b"),
         Some(cow_str("second-incl-path")),
-        "second include is matched after incl-if"
+        "second include is matched after incl-if",
     );
 }
 
