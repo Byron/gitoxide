@@ -136,7 +136,7 @@ fn gitdir_matches(
     let is_relative = pattern_path.starts_with(DOT);
     if is_relative {
         if let Some(parent_path) = target_config_path.and_then(|p| p.parent()) {
-            let parent_dir = git_path::into_bstr(parent_path);
+            let parent_dir = git_path::to_unix_separators(git_path::into_bstr(parent_path));
             pattern_path = bstr::concat(&[&parent_dir, &pattern_path[DOT.len()..]]).into();
         }
     }
