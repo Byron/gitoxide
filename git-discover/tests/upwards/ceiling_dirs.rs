@@ -163,34 +163,3 @@ fn ceilings_are_adjusted_to_match_search_dir() -> crate::Result {
     assert_repo_is_current_workdir(repo_path, &relative_work_dir);
     Ok(())
 }
-
-#[test]
-#[cfg(unix)]
-fn parse_from_env() -> std::io::Result<()> {
-    use std::fs;
-    use std::os::unix::fs::symlink;
-
-    // Setup filesystem
-    let dir = tempfile::tempdir().expect("success creating temp dir");
-    let direct_path = dir.path().join("direct");
-    let symlink_path = dir.path().join("symlink");
-    fs::create_dir(&direct_path)?;
-    symlink(&direct_path, &symlink_path)?;
-
-    // Parse & build ceiling dirs string
-    let symlink_str = symlink_path.to_str().expect("symlink path is valid utf8");
-    let ceiling_dir_string = format!("{}:relative::{}", symlink_str, symlink_str);
-    let ceiling_dirs = git_discover::upwards::parse_ceiling_dirs(ceiling_dir_string.as_bytes());
-
-    // Relative path is discarded
-    assert_eq!(ceiling_dirs.len(), 2);
-    // Symlinks are resolved
-    assert_eq!(
-        ceiling_dirs[0],
-        symlink_path.canonicalize().expect("symlink path exists")
-    );
-    // Symlink are not resolved after empty item
-    assert_eq!(ceiling_dirs[1], symlink_path);
-
-    dir.close()
-}

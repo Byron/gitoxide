@@ -70,6 +70,11 @@ impl Options {
     /// - `GIT_DISCOVERY_ACROSS_FILESYSTEM` for `cross_fs`
     // TODO: test
     pub fn load_env_overrides(&mut self) {
+        /// Gets the values of an environment variable as bytes.
+        fn get_env_bytes(name: &str) -> Option<Vec<u8>> {
+            env::var_os(name).and_then(|c| Vec::from_os_string(c).ok())
+        }
+
         if let Some(ceiling_dirs) = get_env_bytes("GIT_CEILING_DIRECTORIES") {
             self.ceiling_dirs = parse_ceiling_dirs(&ceiling_dirs);
         }
@@ -82,15 +87,10 @@ impl Options {
     }
 }
 
-/// Gets the values of an environment variable as bytes.
-fn get_env_bytes(name: &str) -> Option<Vec<u8>> {
-    env::var_os(name).and_then(|c| Vec::from_os_string(c).ok())
-}
-
-/// Parse a byte-string of :-separated paths into a Vector of PathBufs
+/// Parse a byte-string of `:`-separated paths into `Vec<PathBuf>`.
 /// Non-absolute paths are discarded.
 /// To match git, all paths are normalized, until an empty path is encountered.
-pub fn parse_ceiling_dirs(ceiling_dirs: &[u8]) -> Vec<PathBuf> {
+fn parse_ceiling_dirs(ceiling_dirs: &[u8]) -> Vec<PathBuf> {
     let mut should_normalize = true;
     let mut result = Vec::new();
     for ceiling_dir in ceiling_dirs.split_str(":") {
@@ -118,6 +118,42 @@ pub fn parse_ceiling_dirs(ceiling_dirs: &[u8]) -> Vec<PathBuf> {
         result.push(dir.into_owned());
     }
     result
+}
+
+#[cfg(test)]
+mod parse_ceiling_dirs_tests {
+    use super::*;
+
+    #[test]
+    #[cfg(unix)]
+    fn from_env() -> std::io::Result<()> {
+        use std::fs;
+        use std::os::unix::fs::symlink;
+
+        // Setup filesystem
+        let dir = tempfile::tempdir().expect("success creating temp dir");
+        let direct_path = dir.path().join("direct");
+        let symlink_path = dir.path().join("symlink");
+        fs::create_dir(&direct_path)?;
+        symlink(&direct_path, &symlink_path)?;
+
+        // Parse & build ceiling dirs string
+        let symlink_str = symlink_path.to_str().expect("symlink path is valid utf8");
+        let ceiling_dir_string = format!("{}:relative::{}", symlink_str, symlink_str);
+        let ceiling_dirs = parse_ceiling_dirs(ceiling_dir_string.as_bytes());
+
+        // Relative path is discarded
+        assert_eq!(ceiling_dirs.len(), 2);
+        // Symlinks are resolved
+        assert_eq!(
+            ceiling_dirs[0],
+            symlink_path.canonicalize().expect("symlink path exists")
+        );
+        // Symlink are not resolved after empty item
+        assert_eq!(ceiling_dirs[1], symlink_path);
+
+        dir.close()
+    }
 }
 
 pub(crate) mod function {
