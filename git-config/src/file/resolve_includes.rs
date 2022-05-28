@@ -1,4 +1,4 @@
-use crate::file::from_paths;
+use crate::file::{from_paths, SectionId};
 use crate::parser::Key;
 use crate::{values, File};
 use bstr::{BString, ByteSlice};
@@ -51,23 +51,15 @@ fn resolve_includes_recursive(
 
     let mut include_paths = Vec::new();
     for (id, _) in incl_section_ids {
-        let mut add_path = false;
         if let Some(header) = target_config.section_headers.get(&id) {
             if header.name.0 == "include" && header.subsection_name.is_none() {
-                add_path = true;
+                extract_include_path(target_config, &mut include_paths, id)
             } else if header.name.0 == "includeIf" {
                 if let Some(condition) = &header.subsection_name {
                     if include_condition_match(condition, target_config_path, options).is_some() {
-                        add_path = true;
+                        extract_include_path(target_config, &mut include_paths, id)
                     }
                 }
-            }
-        }
-        if add_path {
-            if let Some(body) = target_config.sections.get(&id) {
-                let paths = body.values(&Key::from("path"));
-                let paths = paths.iter().map(|path| values::Path::from(path.clone()));
-                include_paths.extend(paths);
             }
         }
     }
@@ -80,13 +72,20 @@ fn resolve_includes_recursive(
         }
     }
 
-    dbg!(&paths_to_include);
     for config_path in paths_to_include {
         let mut include_config = File::at(&config_path)?;
         resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
         target_config.append(include_config);
     }
     Ok(())
+}
+
+fn extract_include_path<'a>(target_config: &mut File<'a>, include_paths: &mut Vec<values::Path<'a>>, id: SectionId) {
+    if let Some(body) = target_config.sections.get(&id) {
+        let paths = body.values(&Key::from("path"));
+        let paths = paths.iter().map(|path| values::Path::from(path.clone()));
+        include_paths.extend(paths);
+    }
 }
 
 fn include_condition_match(
@@ -112,9 +111,7 @@ fn include_condition_match(
                 condition = Cow::Owned(format!("{}**", condition));
             }
             let pattern = condition.as_bytes().as_bstr();
-            dbg!(&branch_name, &pattern);
             let result = git_glob::wildmatch(pattern, branch_name, git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL);
-            dbg!(&result);
             result.then(|| ())
         }
         _ => None,
@@ -134,7 +131,6 @@ fn is_match(
     if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir) {
         let mut condition_path = git_path::to_unix_separators(git_path::into_bstr(condition_path)).into_owned();
 
-        dbg!(&target_config_path);
         if condition_path.starts_with(DOT) {
             if let Some(parent_dir_path) = target_config_path {
                 if let Some(parent_path) = parent_dir_path.parent() {
@@ -158,8 +154,6 @@ fn is_match(
 
         let git_dir_value = git_path::into_bstr(git_dir).to_mut().replace("\\", "/");
 
-        println!();
-        dbg!(&condition_path.as_bstr(), &git_dir_value.as_bstr());
         let mut result = git_glob::wildmatch(
             condition_path.as_bstr(),
             git_dir_value.as_bstr(),
@@ -171,7 +165,6 @@ fn is_match(
                     git_path::realpath(git_path::from_byte_slice(&git_dir_value), target_config_path, 32)
                 {
                     let git_dir_value = git_path::into_bstr(expanded_git_dir_value).replace("\\", "/");
-                    dbg!(&condition_path.as_bstr(), git_dir_value.as_bstr(),);
                     result = git_glob::wildmatch(
                         condition_path.as_bstr(),
                         git_dir_value.as_bstr(),
@@ -180,7 +173,6 @@ fn is_match(
                 }
             }
         }
-        dbg!(&result);
         return result;
     }
     false
