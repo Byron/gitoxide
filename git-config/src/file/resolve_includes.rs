@@ -1,12 +1,10 @@
 use crate::file::{from_paths, SectionId};
 use crate::parser::Key;
 use crate::{values, File};
-use bstr::{BString, ByteSlice};
+use bstr::{BString, ByteSlice, ByteVec};
 use git_ref::Category;
 use std::borrow::Cow;
 use std::path::{Path, PathBuf};
-
-const DOT: &[u8] = b".";
 
 pub(crate) fn resolve_includes(
     conf: &mut File<'_>,
@@ -118,62 +116,59 @@ fn include_condition_match(
     }
 }
 
-fn gitdir_matches(target_config_path: Option<&Path>, options: from_paths::Options<'_>, condition: &str) -> Option<()> {
-    let git_dir = options.git_dir?;
-    if condition.contains('\\') {
+fn gitdir_matches(
+    target_config_path: Option<&Path>,
+    options: from_paths::Options<'_>,
+    condition_path: &str,
+) -> Option<()> {
+    const DOT: &[u8] = b".";
+
+    let git_dir = git_path::to_unix_separators(git_path::into_bstr(options.git_dir?));
+    if condition_path.contains('\\') {
         return None;
     }
-    let condition_path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
-    if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir) {
-        let mut condition_path = git_path::to_unix_separators(git_path::into_bstr(condition_path)).into_owned();
+    let mut pattern_path = {
+        let cow = Cow::Borrowed(condition_path.as_bytes());
+        let path = values::Path::from(cow).interpolate(options.git_install_dir).ok()?;
+        git_path::to_unix_separators(git_path::into_bstr(path)).into_owned()
+    };
 
-        if condition_path.starts_with(DOT) {
-            if let Some(parent_dir_path) = target_config_path {
-                if let Some(parent_path) = parent_dir_path.parent() {
-                    let parent_dir = git_path::into_bstr(parent_path);
-                    let v = bstr::concat(&[parent_dir.as_bstr(), condition_path[DOT.len()..].as_bstr()]);
-                    condition_path = git_path::to_unix_separators(Cow::Owned(v.into())).into_owned();
-                }
-            }
+    let is_relative = pattern_path.starts_with(DOT);
+    if is_relative {
+        if let Some(parent_path) = target_config_path.and_then(|p| p.parent()) {
+            let parent_dir = git_path::into_bstr(parent_path);
+            let v = bstr::concat(&[parent_dir.as_bstr(), pattern_path[DOT.len()..].as_bstr()]);
+            pattern_path = git_path::to_unix_separators(Cow::Owned(v.into())).into_owned();
         }
-        if !["~/", "./", "/"]
-            .iter()
-            .any(|&str| condition_path.starts_with(str.as_bytes()))
-        {
-            let v = bstr::concat(&["**/".as_bytes().as_bstr(), condition_path.as_bstr()]);
-            condition_path = BString::from(v);
-        }
-        if condition_path.ends_with(b"/") {
-            condition_path.push(b'*');
-            condition_path.push(b'*');
-        }
-
-        let git_dir_value = git_path::into_bstr(git_dir).to_mut().replace("\\", "/");
-
-        let mut result = git_glob::wildmatch(
-            condition_path.as_bstr(),
-            git_dir_value.as_bstr(),
-            git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
-        );
-        if !result {
-            if let Some(target_config_path) = target_config_path {
-                if let Ok(expanded_git_dir_value) =
-                    git_path::realpath(git_path::from_byte_slice(&git_dir_value), target_config_path, 32)
-                {
-                    let git_dir_value = git_path::into_bstr(expanded_git_dir_value).replace("\\", "/");
-                    result = git_glob::wildmatch(
-                        condition_path.as_bstr(),
-                        git_dir_value.as_bstr(),
-                        git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
-                    );
-                }
-            }
-        }
-
-        result.then(|| ())
-    } else {
-        None
     }
+    if !["~/", "./", "/"]
+        .iter()
+        .any(|prefix| pattern_path.starts_with(prefix.as_bytes()))
+    {
+        let v = bstr::concat(&["**/".as_bytes().as_bstr(), pattern_path.as_bstr()]);
+        pattern_path = BString::from(v);
+    }
+    if pattern_path.ends_with(b"/") {
+        pattern_path.push_str("**");
+    }
+
+    let is_match = git_glob::wildmatch(
+        pattern_path.as_bstr(),
+        git_dir.as_bstr(),
+        git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+    );
+    if is_match {
+        return Some(());
+    }
+
+    let expanded_git_dir = git_path::realpath(git_path::from_byte_slice(&git_dir), target_config_path?, 32).ok()?;
+    let expanded_git_dir = git_path::to_unix_separators(git_path::into_bstr(expanded_git_dir));
+    git_glob::wildmatch(
+        pattern_path.as_bstr(),
+        expanded_git_dir.as_bstr(),
+        git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+    )
+    .then(|| ())
 }
 
 fn resolve(
