@@ -255,7 +255,7 @@ fn gitdir() {
     .unwrap();
 
     {
-        let dir = Path::new("/a/b/c/d/.git");
+        let dir = Path::new("/A/b/C/d/.git");
         let config = File::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
         assert_eq!(
             config.string("core", None, "i"),

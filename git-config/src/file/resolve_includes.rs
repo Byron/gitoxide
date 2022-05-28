@@ -93,8 +93,8 @@ fn include_condition_match(
 ) -> Option<()> {
     let (prefix, condition) = condition.split_once(':')?;
     match prefix {
-        "gitdir" => gitdir_matches(target_config_path, options, condition),
-        "gitdir/i" => gitdir_matches(target_config_path, options, &condition.to_lowercase()),
+        "gitdir" => gitdir_matches(target_config_path, options, condition, false),
+        "gitdir/i" => gitdir_matches(target_config_path, options, &condition, true),
         "onbranch" => {
             let branch_name = options.branch_name?;
             let (_, branch_name) = branch_name
@@ -120,6 +120,7 @@ fn gitdir_matches(
     target_config_path: Option<&Path>,
     options: from_paths::Options<'_>,
     condition_path: &str,
+    ignore_case: bool,
 ) -> Option<()> {
     const DOT: &[u8] = b".";
 
@@ -151,23 +152,19 @@ fn gitdir_matches(
         pattern_path.push_str("**");
     }
 
-    let is_match = git_glob::wildmatch(
-        pattern_path.as_bstr(),
-        git_dir.as_bstr(),
-        git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
-    );
+    let mut match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL;
+    if ignore_case {
+        match_mode |= git_glob::wildmatch::Mode::IGNORE_CASE;
+    }
+
+    let is_match = git_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
     if is_match {
         return Some(());
     }
 
     let expanded_git_dir = git_path::realpath(git_path::from_byte_slice(&git_dir), target_config_path?).ok()?;
     let expanded_git_dir = git_path::to_unix_separators(git_path::into_bstr(expanded_git_dir));
-    git_glob::wildmatch(
-        pattern_path.as_bstr(),
-        expanded_git_dir.as_bstr(),
-        git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
-    )
-    .then(|| ())
+    git_glob::wildmatch(pattern_path.as_bstr(), expanded_git_dir.as_bstr(), match_mode).then(|| ())
 }
 
 fn resolve(
