@@ -18,7 +18,7 @@ test = true
 default = ["max-performance", "one-stop-shop"]
 
 # enable when https://github.com/RustCrypto/asm-hashes/issues/17 is fixed
-# max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-features/fast-sha1", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
+# max-performance = ["git-features/parallel", "git-features/zlib-ng", "git-features/fast-sha1", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
 
 #! ### Mutually Exclusive Client
 #! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
@@ -43,8 +43,7 @@ one-stop-shop = [ "local", "local-time-support" ]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-transport/serde1", "git-ref/serde1", "git-odb/serde1", "git-index/serde1", "git-mailmap/serde1", "git-attributes/serde1"]
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
-## **Note** that
-max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
+max-performance = ["git-features/parallel", "git-features/zlib-ng", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
 ## Functions dealing with time may include the local timezone offset, not just UTC with the offset being zero.
 local-time-support = ["git-actor/local-time-support"]
 ## Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.

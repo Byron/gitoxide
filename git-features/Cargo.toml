@@ -32,14 +32,19 @@ crc32 = ["crc32fast"]
 #! ### Mutually Exclusive ZLIB
 
 ## Enable the usage of zlib related utilities to compress or decompress data.
-## By default it uses a pure rust implementation which is slower than the **zlib-ng-compat** version, but might be relevant if you prefer a pure-rust build
-## and reduced performance is acceptable. Note that a competitive Zlib implementation is critical to `gitoxide's` object database performance.
-## Additional backends are supported, each of which overriding the default Rust backend.
+## The base `zlib` feature uses the `flate2` Rust crate; the other mutually exclusive features select the `flate2 backend.
+## Note that a competitive Zlib implementation is critical to `gitoxide's` object database performance.
+## Enabling this without enabling one of the other features below will use a low-performance pure-Rust backend.
 zlib = ["flate2", "flate2/rust_backend", "quick-error"]
-## Use a C-based backend which can compress and decompress significantly faster.
-zlib-ng-compat = ["flate2/zlib-ng-compat"]
-## available for completeness even though it's the default - it may be chosen for more specific feature flag names, instead of a bare `zlib`.
-zlib-rust-backend = ["flate2/rust_backend"]
+## Use the C-based zlib-ng backend, which can compress and decompress significantly faster.
+zlib-ng = ["zlib", "flate2/zlib-ng"]
+## Use zlib-ng via its zlib-compat API. Useful if you already need zlib for C
+## code elsewhere in your dependencies. Otherwise, use zlib-ng.
+zlib-ng-compat = ["zlib", "flate2/zlib-ng-compat"]
+## Pure Rust backend, available for completeness even though it's the default
+## if neither of the above options are set. Low performance, but pure Rust, so it
+## may build in environments where other backends don't.
+zlib-rust-backend = ["zlib", "flate2/rust_backend"]
 
 #! ### Mutually Exclusive SHA1
 ## A fast SHA1 implementation is critical to `gitoxide's` object database performance
@@ -111,7 +116,7 @@ prodash = { version = "19.0.0", optional = true, default-features = false, featu
 bytes = { version = "1.0.0", optional = true }
 
 # zlib module
-flate2 = { version = "1.0.17", optional = true, default-features = false }
+flate2 = { version = "1.0.24", optional = true, default-features = false }
 quick-error = { version = "2.0.0", optional = true }
 
 ## make the `time` module available with access to the local time as configured by the system.
