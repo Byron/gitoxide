@@ -137,15 +137,14 @@ fn gitdir_matches(
     if is_relative {
         if let Some(parent_path) = target_config_path.and_then(|p| p.parent()) {
             let parent_dir = git_path::into_bstr(parent_path);
-            let v = bstr::concat(&[parent_dir.as_bstr(), pattern_path[DOT.len()..].as_bstr()]);
-            pattern_path = git_path::to_unix_separators(Cow::Owned(v.into())).into_owned();
+            pattern_path = bstr::concat(&[&parent_dir, &pattern_path[DOT.len()..]]).into();
         }
     }
-    if !["~/", "./", "/"]
+    if ["~/", "./", "/"]
         .iter()
-        .any(|prefix| pattern_path.starts_with(prefix.as_bytes()))
+        .all(|prefix| !pattern_path.starts_with(prefix.as_bytes()))
     {
-        let v = bstr::concat(&["**/".as_bytes().as_bstr(), pattern_path.as_bstr()]);
+        let v = bstr::concat(&[&b"**/"[..], &pattern_path]);
         pattern_path = BString::from(v);
     }
     if pattern_path.ends_with(b"/") {
