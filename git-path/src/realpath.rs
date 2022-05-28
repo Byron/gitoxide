@@ -18,8 +18,16 @@ pub(crate) mod function {
     use std::path::Component::{CurDir, Normal, ParentDir, Prefix, RootDir};
     use std::path::{Path, PathBuf};
 
-    /// TODO
-    pub fn realpath(path: impl AsRef<Path>, cwd: impl AsRef<Path>, max_symlinks: u8) -> Result<PathBuf, Error> {
+    // TODO
+    #[allow(missing_docs)]
+    pub fn realpath(path: impl AsRef<Path>, cwd: impl AsRef<Path>) -> Result<PathBuf, Error> {
+        let git_default = 32;
+        realpath_opts(path, cwd, git_default)
+    }
+
+    // TODO
+    #[allow(missing_docs)]
+    pub fn realpath_opts(path: impl AsRef<Path>, cwd: impl AsRef<Path>, max_symlinks: u8) -> Result<PathBuf, Error> {
         let path = path.as_ref();
         if path.as_os_str().is_empty() {
             return Err(Error::EmptyPath);

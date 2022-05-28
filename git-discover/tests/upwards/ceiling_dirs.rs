@@ -139,7 +139,7 @@ fn no_matching_ceiling_dirs_errors_by_default() -> crate::Result {
 fn ceilings_are_adjusted_to_match_search_dir() -> crate::Result {
     let relative_work_dir = repo_path()?;
     let cwd = std::env::current_dir()?;
-    let absolute_ceiling_dir = git_path::realpath(&relative_work_dir, &cwd, 8)?;
+    let absolute_ceiling_dir = git_path::realpath_opts(&relative_work_dir, &cwd, 8)?;
     let dir = relative_work_dir.join("some");
     assert!(dir.is_relative());
     let (repo_path, _trust) = git_discover::upwards_opts(
@@ -152,7 +152,7 @@ fn ceilings_are_adjusted_to_match_search_dir() -> crate::Result {
     assert_repo_is_current_workdir(repo_path, &relative_work_dir);
 
     assert!(relative_work_dir.is_relative());
-    let absolute_dir = git_path::realpath(relative_work_dir.join("some"), cwd, 8)?;
+    let absolute_dir = git_path::realpath_opts(relative_work_dir.join("some"), cwd, 8)?;
     let (repo_path, _trust) = git_discover::upwards_opts(
         absolute_dir,
         Options {

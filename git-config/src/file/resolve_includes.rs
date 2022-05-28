@@ -152,7 +152,7 @@ fn is_match(
         if !result {
             if let Some(target_config_path) = target_config_path {
                 if let Ok(expanded_git_dir_value) =
-                    git_path::realpath(git_path::from_byte_slice(&git_dir_value), target_config_path, 32)
+                    git_path::realpath(git_path::from_byte_slice(&git_dir_value), target_config_path)
                 {
                     let git_dir_value = git_path::into_bstr(expanded_git_dir_value).replace("\\", "/");
                     dbg!(&condition_path.as_bstr(), git_dir_value.as_bstr(),);

@@ -60,7 +60,7 @@ impl ReplacementObjects {
     }
 }
 
-/// The options used in [`Repository::open_opts
+/// The options used in [`Repository::open_opts`]
 #[derive(Default, Clone)]
 pub struct Options {
     object_store_slots: git_odb::store::init::Slots,
