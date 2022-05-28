@@ -42,11 +42,12 @@ pub mod parse {
 
         /// Set the kind of the specification, which happens only once if it happens at all.
         /// In case this method isn't called, assume `Single`.
+        /// Reject a kind by returning `None` to stop the parsing.
         ///
         /// Note that ranges don't necessarily assure that a second specification will be parsed.
         /// If `^rev` is given, this method is called with [`spec::Kind::Range`][crate::spec::Kind::Range]
         /// and no second specification is provided.
-        fn kind(&mut self, kind: crate::spec::Kind);
+        fn kind(&mut self, kind: crate::spec::Kind) -> Option<()>;
     }
 
     pub(crate) mod function {
@@ -65,13 +66,13 @@ pub mod parse {
         pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
             if let Some(b'^') = input.get(0) {
                 input = next(input).1;
-                delegate.kind(spec::Kind::Range);
+                delegate.kind(spec::Kind::Range).ok_or(Error::Delegate)?;
             }
 
             input = revision(input, delegate)?;
             if let Some((rest, kind)) = try_range(input) {
                 // TODO: protect against double-kind calls, invalid for git
-                delegate.kind(kind);
+                delegate.kind(kind).ok_or(Error::Delegate)?;
                 input = rest.as_bstr();
             }
             input = revision(input, delegate)?;

@@ -2,11 +2,26 @@ use git_object::bstr::{BStr, BString};
 use git_revision::spec;
 
 #[derive(Default, Debug)]
+struct Options {
+    reject_kind: bool,
+}
+
+#[derive(Default, Debug)]
 struct Recorder {
     resolve_ref_input: Option<BString>,
     resolve_ref_input2: Option<BString>,
     kind: Option<spec::Kind>,
     calls: usize,
+    opts: Options,
+}
+
+impl Recorder {
+    fn with(options: Options) -> Self {
+        Recorder {
+            opts: options,
+            ..Default::default()
+        }
+    }
 }
 
 impl spec::parse::Delegate for Recorder {
@@ -34,16 +49,24 @@ impl spec::parse::Delegate for Recorder {
         todo!()
     }
 
-    fn kind(&mut self, kind: spec::Kind) {
+    fn kind(&mut self, kind: spec::Kind) -> Option<()> {
+        if self.opts.reject_kind {
+            return None;
+        }
         self.calls += 1;
         self.kind = Some(kind);
+        Some(())
     }
 }
 
 fn parse(spec: &str) -> Recorder {
-    let mut rec = Recorder::default();
-    spec::parse(spec.into(), &mut rec).unwrap();
-    rec
+    try_parse_opts(spec, Options::default()).unwrap()
+}
+
+fn try_parse_opts(spec: &str, options: Options) -> Result<Recorder, spec::parse::Error> {
+    let mut rec = Recorder::with(options);
+    spec::parse(spec.into(), &mut rec)?;
+    Ok(rec)
 }
 
 #[test]
@@ -85,8 +108,17 @@ mod revision {
 }
 
 mod range {
-    use crate::spec::parse::parse;
+    use crate::spec::parse::{parse, try_parse_opts, Options};
     use git_revision::spec;
+
+    #[test]
+    fn delegate_can_refuse_spec_kinds() {
+        let err = try_parse_opts("^HEAD", Options { reject_kind: true }).unwrap_err();
+        assert!(
+            matches!(err, spec::parse::Error::Delegate),
+            "Delegates can refuse spec kind changes to abort parsing early"
+        );
+    }
 
     #[test]
     fn leading_caret_is_range_kind() {
