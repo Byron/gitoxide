@@ -27,7 +27,7 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 unicode-bom = "1.1.4"
 quick-error = "2.0.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
-compact_str = "0.3.2"
+compact_str = "0.4"
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools"}

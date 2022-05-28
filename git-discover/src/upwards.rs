@@ -255,7 +255,7 @@ pub(crate) mod function {
                     match filter_by_trust(&cursor)? {
                         Some(trust) => {
                             // TODO: test this more, it definitely doesn't find the shortest path to a directory
-                            let path = if dir_made_absolute {
+                            let path = if dir_made_absolute && !directory.as_ref().is_absolute() {
                                 shorten_path_with_cwd(cursor, cwd)
                             } else {
                                 cursor
