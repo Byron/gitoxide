@@ -7,6 +7,70 @@ use std::convert::TryFrom;
 use std::fs;
 use tempfile::tempdir;
 
+enum Value {
+    Base,
+    OverrideByInclude,
+}
+
+fn assert_section_value(condition: &str, branch_name: &str, expect: Value) {
+    let dir = tempdir().unwrap();
+    let root_config = dir.path().join("root.config");
+    let included_config = dir.path().join("include.config");
+
+    fs::write(
+        &root_config,
+        format!(
+            r#"
+[section]
+value = base-value
+
+[includeIf "onbranch:{}"]
+path = {}"#,
+            condition,
+            escape_backslashes(&included_config),
+        ),
+    )
+    .unwrap();
+
+    fs::write(
+        included_config,
+        format!(
+            r#"
+[section]
+value = branch-override
+"#
+        ),
+    )
+    .unwrap();
+
+    let branch_name = FullName::try_from(BString::from(branch_name)).unwrap();
+    let branch_name = branch_name.as_ref();
+    let options = from_paths::Options {
+        branch_name: Some(branch_name),
+        ..Default::default()
+    };
+
+    let config = git_config::File::from_paths(Some(&root_config), options).unwrap();
+    assert_eq!(
+        config.string("section", None, "value"),
+        Some(cow_str(match expect {
+            Value::OverrideByInclude => "branch-override",
+            Value::Base => "base-value",
+        })),
+        "{}",
+        match expect {
+            Value::Base => "the base value should not be overridden as the branch does not match",
+            Value::OverrideByInclude =>
+                "the base value is overridden by an included file because the condition matches",
+        }
+    );
+}
+
+#[test]
+fn literal_branch_names_match() {
+    assert_section_value("literal-match", "refs/heads/literal-match", Value::OverrideByInclude);
+}
+
 #[test]
 fn mixed() {
     let dir = tempdir().unwrap();
