@@ -299,7 +299,7 @@ fn gitdir() {
 
     {
         let dir = dot_dot_path.parent().unwrap();
-        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        let config = File::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
         assert_eq!(
             config.string("core", None, "d"),
             Some(cow_str("dot-dot-path")),

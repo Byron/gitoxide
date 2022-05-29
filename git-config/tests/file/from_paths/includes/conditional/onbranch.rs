@@ -51,12 +51,10 @@ path = {}"#,
 
     fs::write(
         included_config,
-        format!(
-            r#"
+        r#"
 [section]
 value = branch-override-by-include
-"#
-        ),
+"#,
     )
     .unwrap();
 
