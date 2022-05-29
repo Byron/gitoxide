@@ -416,6 +416,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [ ] support for `GIT_CEILING_DIRECTORIES` environment variable
         * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
     * [ ] rev-parse
+        - **unsupported**
+            * regex 
     * [x] instantiation
     * [x] access to refs and objects
     * **traverse** 

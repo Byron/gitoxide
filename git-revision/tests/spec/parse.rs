@@ -105,6 +105,14 @@ mod revision {
         assert!(rec.kind.is_none());
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
     }
+
+    #[test]
+    #[ignore]
+    fn refname_with_head_prefix() {
+        let rec = parse("HEADfake");
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.resolve_ref_input.unwrap(), "HEADfake");
+    }
 }
 
 mod range {
