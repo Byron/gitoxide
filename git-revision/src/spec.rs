@@ -65,25 +65,24 @@ pub mod parse {
 
         fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
             let mut cursor = input;
-            let mut sep = None;
-            while let Some((pos, b)) = cursor.bytes().enumerate().find(|(_, b)| b"@~^:.".contains(b)) {
-                if b != b'.' || cursor.get(pos + 1) == Some(&b'.') {
-                    sep = Some((pos, b));
+            let mut sep_pos = None;
+            while let Some(pos) = cursor.find_byteset(b"@~^:.") {
+                if cursor[pos] != b'.' || cursor.get(pos + 1) == Some(&b'.') {
+                    sep_pos = Some(pos);
                     break;
                 }
                 cursor = &input[pos + 1..];
             }
 
-            let name = &input[..sep.map(|(pos, _)| pos).unwrap_or_else(|| input.len())].as_bstr();
-            if name.is_empty() && sep.map(|(_, b)| b) == Some(b'@') {
+            let name = &input[..sep_pos.unwrap_or_else(|| input.len())].as_bstr();
+            let sep = sep_pos.map(|pos| cursor[pos]);
+            if name.is_empty() && sep == Some(b'@') {
                 delegate.resolve_ref("HEAD".into()).ok_or(Error::Delegate)?;
             } else {
                 delegate.resolve_ref(name).ok_or(Error::Delegate)?;
             }
 
-            let past_sep = input[sep.map(|(pos, _)| pos + 1).unwrap_or(input.len())..].as_bstr();
-            let sep_pos = sep.map(|(pos, _)| pos);
-            let sep = sep.map(|(_, b)| b);
+            let past_sep = input[sep_pos.map(|pos| pos + 1).unwrap_or(input.len())..].as_bstr();
             input = match sep {
                 Some(b'@') => {
                     match parse_parens(past_sep).ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
