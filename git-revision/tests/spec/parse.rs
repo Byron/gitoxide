@@ -91,10 +91,12 @@ fn try_parse_opts(spec: &str, options: Options) -> Result<Recorder, spec::parse:
 fn empty_specs_are_valid() {
     // they should of course be invalid for the delegate. CLIs may pre-process the input as well if they wish
     // but git itself doesn't do that.
-    for spec in ["", " ", "\n\t"] {
+    for spec in [" ", "\n\t"] {
         let rec = parse(spec);
         assert_eq!(rec.calls, 1);
     }
+    let rec = parse("");
+    assert_eq!(rec.calls, 0, "but we do not bother to call the delegate with nothing");
 }
 
 #[test]
@@ -227,7 +229,7 @@ mod range {
         .unwrap_err();
         assert!(
             matches!(err, spec::parse::Error::Delegate),
-            "Delegates can refuse spec kind changes to abort parsing early"
+            "Delegates can refuse spec kind changes to abort parsing early in case they want single-specs only"
         );
     }
 
@@ -236,6 +238,8 @@ mod range {
         let rec = parse("^HEAD");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.calls, 2);
     }
 
     #[test]
@@ -243,6 +247,8 @@ mod range {
         let rec = parse("HEAD..");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.calls, 2);
     }
 
     #[test]
@@ -250,6 +256,8 @@ mod range {
         let rec = parse("HEAD...");
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.calls, 2);
     }
 
     #[test]
@@ -258,6 +266,13 @@ mod range {
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
         assert_eq!(rec.resolve_ref_input2.unwrap(), "HEAD");
+        assert_eq!(rec.calls, 3);
+
+        let rec = parse("r1...abcd");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.resolve_ref_input.unwrap(), "r1");
+        assert_eq!(rec.prefix, prefix("abcd").into());
+        assert_eq!(rec.calls, 3);
     }
 
     #[test]
@@ -266,5 +281,28 @@ mod range {
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
         assert_eq!(rec.resolve_ref_input2.unwrap(), "HEAD");
+        assert_eq!(rec.calls, 3);
+
+        let rec = parse("r1..r2");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.resolve_ref_input.unwrap(), "r1");
+        assert_eq!(rec.resolve_ref_input2.unwrap(), "r2");
+        assert_eq!(rec.calls, 3);
+
+        let rec = parse("abcd..1234");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.prefix, prefix("abcd").into());
+        assert_eq!(rec.prefix2, prefix("1234").into());
+        assert_eq!(rec.calls, 3);
+
+        let rec = parse("r1..abcd");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.resolve_ref_input.unwrap(), "r1");
+        assert_eq!(rec.prefix, prefix("abcd").into());
+        assert_eq!(rec.calls, 3);
+    }
+
+    fn prefix(hex: &str) -> git_hash::Prefix {
+        git_hash::Prefix::from_hex(hex).unwrap()
     }
 }

@@ -68,20 +68,20 @@ pub mod parse {
             let mut cursor = input;
             let mut sep_pos = None;
             let mut consecutive_hex_chars = Some(0);
-            while let Some((pos, b)) = cursor
-                .iter()
-                .inspect(|b| {
-                    if let Some(pos) = consecutive_hex_chars.as_mut() {
+            while let Some((pos, b)) = cursor.iter().enumerate().find(|(_, b)| {
+                if b"@~^:.".contains(b) {
+                    true
+                } else {
+                    if let Some(num) = consecutive_hex_chars.as_mut() {
                         if b.is_ascii_hexdigit() {
-                            *pos += 1;
+                            *num += 1;
                         } else {
                             consecutive_hex_chars = None;
                         }
                     }
-                })
-                .enumerate()
-                .find(|(_, b)| b"@~^:.".contains(b))
-            {
+                    false
+                }
+            }) {
                 if *b != b'.' || cursor.get(pos + 1) == Some(&b'.') {
                     sep_pos = Some(pos);
                     break;
@@ -101,7 +101,7 @@ pub mod parse {
                             .and_then(|prefix| delegate.set_prefix(prefix))
                     })
                     .flatten()
-                    .or_else(|| delegate.set_ref(name))
+                    .or_else(|| name.is_empty().then(|| ()).or_else(|| delegate.set_ref(name)))
                     .ok_or(Error::Delegate)?;
             }
 
