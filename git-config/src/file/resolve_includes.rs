@@ -115,9 +115,12 @@ fn include_condition_match(
             if condition.ends_with('/') {
                 condition = Cow::Owned(format!("{}**", condition));
             }
-            let pattern = condition.as_bytes().as_bstr();
-            let result = git_glob::wildmatch(pattern, branch_name, git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL);
-            result.then(|| ())
+            git_glob::wildmatch(
+                condition.as_ref().into(),
+                branch_name,
+                git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+            )
+            .then(|| ())
         }
         _ => None,
     }
