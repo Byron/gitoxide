@@ -38,8 +38,9 @@ pub mod parse {
     pub trait Delegate {
         /// Resolve `name` as reference which might not be a valid reference name. The name may be partial like `main` or full like
         /// `refs/heads/main` solely depending on the users input.
-        fn resolve_ref(&mut self, name: &BStr) -> Option<()>;
-        fn find_by_prefix(&mut self, input: &BStr) -> Option<()>;
+        /// Symbolic referenced should be followed till their object, but objects must not yet be peeled.
+        fn set_ref(&mut self, name: &BStr) -> Option<()>;
+        fn set_prefix(&mut self, prefix: git_hash::Prefix) -> Option<()>;
 
         fn nth_ancestor(&mut self, n: usize) -> Option<()>;
         fn nth_parent(&mut self, n: usize) -> Option<()>;
@@ -66,8 +67,22 @@ pub mod parse {
         fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
             let mut cursor = input;
             let mut sep_pos = None;
-            while let Some(pos) = cursor.find_byteset(b"@~^:.") {
-                if cursor[pos] != b'.' || cursor.get(pos + 1) == Some(&b'.') {
+            let mut consecutive_hex_chars = Some(0);
+            while let Some((pos, b)) = cursor
+                .iter()
+                .inspect(|b| {
+                    if let Some(pos) = consecutive_hex_chars.as_mut() {
+                        if b.is_ascii_hexdigit() {
+                            *pos += 1;
+                        } else {
+                            consecutive_hex_chars = None;
+                        }
+                    }
+                })
+                .enumerate()
+                .find(|(_, b)| b"@~^:.".contains(b))
+            {
+                if *b != b'.' || cursor.get(pos + 1) == Some(&b'.') {
                     sep_pos = Some(pos);
                     break;
                 }
@@ -77,10 +92,17 @@ pub mod parse {
             let name = &input[..sep_pos.unwrap_or(input.len())].as_bstr();
             let sep = sep_pos.map(|pos| cursor[pos]);
             if name.is_empty() && sep == Some(b'@') {
-                delegate.resolve_ref("HEAD".into()).ok_or(Error::Delegate)?;
+                delegate.set_ref("HEAD".into()).ok_or(Error::Delegate)?;
             } else {
-                // TODO: try different approaches.
-                delegate.resolve_ref(name).ok_or(Error::Delegate)?;
+                if consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN {
+                    git_hash::Prefix::from_hex(name.to_str().expect("hexadecimal only"))
+                        .ok()
+                        .and_then(|prefix| delegate.set_prefix(prefix))
+                        .or_else(|| delegate.set_ref(name))
+                } else {
+                    delegate.set_ref(name)
+                }
+                .ok_or(Error::Delegate)?;
             }
 
             let past_sep = input[sep_pos.map(|pos| pos + 1).unwrap_or(input.len())..].as_bstr();

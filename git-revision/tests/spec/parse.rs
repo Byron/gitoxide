@@ -4,12 +4,15 @@ use git_revision::spec;
 #[derive(Default, Debug)]
 struct Options {
     reject_kind: bool,
+    reject_prefix: bool,
 }
 
 #[derive(Default, Debug)]
 struct Recorder {
     resolve_ref_input: Option<BString>,
     resolve_ref_input2: Option<BString>,
+    prefix: Option<git_hash::Prefix>,
+    prefix2: Option<git_hash::Prefix>,
     kind: Option<spec::Kind>,
     calls: usize,
     opts: Options,
@@ -25,7 +28,7 @@ impl Recorder {
 }
 
 impl spec::parse::Delegate for Recorder {
-    fn resolve_ref(&mut self, input: &BStr) -> Option<()> {
+    fn set_ref(&mut self, input: &BStr) -> Option<()> {
         if self.resolve_ref_input.is_none() {
             self.resolve_ref_input = input.to_owned().into();
         } else if self.resolve_ref_input2.is_none() {
@@ -37,8 +40,19 @@ impl spec::parse::Delegate for Recorder {
         Some(())
     }
 
-    fn find_by_prefix(&mut self, _input: &BStr) -> Option<()> {
-        todo!()
+    fn set_prefix(&mut self, input: git_hash::Prefix) -> Option<()> {
+        self.calls += 1;
+        if self.opts.reject_prefix {
+            return None;
+        }
+        if self.prefix.is_none() {
+            self.prefix = input.into();
+        } else if self.prefix2.is_none() {
+            self.prefix2 = input.into();
+        } else {
+            panic!("called find_by_prefix more than twice with '{}'", input);
+        }
+        Some(())
     }
 
     fn nth_ancestor(&mut self, _n: usize) -> Option<()> {
@@ -50,10 +64,10 @@ impl spec::parse::Delegate for Recorder {
     }
 
     fn kind(&mut self, kind: spec::Kind) -> Option<()> {
+        self.calls += 1;
         if self.opts.reject_kind {
             return None;
         }
-        self.calls += 1;
         self.kind = Some(kind);
         Some(())
     }
@@ -92,8 +106,69 @@ fn all_characters_are_taken_verbatim_which_includes_whitespace() {
 }
 
 mod revision {
-    use crate::spec::parse::{parse, try_parse};
+    use crate::spec::parse::{parse, try_parse, try_parse_opts, Options};
     use git_revision::spec;
+
+    #[test]
+    fn short_hash_likes_are_considered_prefixes() {
+        let rec = parse("abCD");
+        assert!(rec.kind.is_none());
+        assert_eq!(
+            rec.resolve_ref_input, None,
+            "references are not resolved if prefix lookups succeed"
+        );
+        assert_eq!(rec.prefix, Some(git_hash::Prefix::from_hex("abcd").unwrap()));
+        assert_eq!(rec.calls, 1);
+
+        let rec = parse("gabcd123");
+        assert!(rec.kind.is_none());
+        assert_eq!(
+            rec.resolve_ref_input.unwrap(),
+            "gabcd123",
+            "ref lookups are performed if it doesn't look like a hex sha"
+        );
+        assert_eq!(
+            rec.prefix, None,
+            "prefix lookups are not attempted at all (and they are impossible even)"
+        );
+        assert_eq!(rec.calls, 1);
+    }
+
+    #[test]
+    fn unresolvable_hash_likes_are_resolved_as_refs() {
+        let rec = try_parse_opts(
+            "abCD",
+            Options {
+                reject_prefix: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.resolve_ref_input.unwrap(), "abCD");
+        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.calls, 2);
+    }
+
+    #[test]
+    fn hash_likes_that_are_too_long_are_resolved_as_refs() {
+        let spec = "abcd123456789abcd123456789abcd123456789abcd123456789abcd123456789abcd123456789abcd123456789";
+        let rec = try_parse_opts(
+            spec,
+            Options {
+                reject_prefix: true,
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.resolve_ref_input.unwrap(), spec);
+        assert_eq!(rec.prefix, None);
+        assert_eq!(
+            rec.calls, 1,
+            "we can't create a prefix from it, hence only ref resolution is attempted"
+        );
+    }
 
     #[test]
     fn at_by_iteself_is_shortcut_for_head() {
@@ -142,7 +217,14 @@ mod range {
 
     #[test]
     fn delegate_can_refuse_spec_kinds() {
-        let err = try_parse_opts("^HEAD", Options { reject_kind: true }).unwrap_err();
+        let err = try_parse_opts(
+            "^HEAD",
+            Options {
+                reject_kind: true,
+                ..Default::default()
+            },
+        )
+        .unwrap_err();
         assert!(
             matches!(err, spec::parse::Error::Delegate),
             "Delegates can refuse spec kind changes to abort parsing early"
