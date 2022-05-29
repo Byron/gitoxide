@@ -93,8 +93,18 @@ fn include_condition_match(
 ) -> Option<()> {
     let (prefix, condition) = condition.split_once(':')?;
     match prefix {
-        "gitdir" => gitdir_matches(target_config_path, options, condition, false),
-        "gitdir/i" => gitdir_matches(target_config_path, options, condition, true),
+        "gitdir" => gitdir_matches(
+            condition,
+            target_config_path,
+            options,
+            git_glob::wildmatch::Mode::empty(),
+        ),
+        "gitdir/i" => gitdir_matches(
+            condition,
+            target_config_path,
+            options,
+            git_glob::wildmatch::Mode::IGNORE_CASE,
+        ),
         "onbranch" => {
             let branch_name = options.branch_name?;
             let (_, branch_name) = branch_name
@@ -117,21 +127,25 @@ fn include_condition_match(
 }
 
 fn gitdir_matches(
-    target_config_path: Option<&Path>,
-    options: from_paths::Options<'_>,
     condition_path: &str,
-    ignore_case: bool,
+    target_config_path: Option<&Path>,
+    from_paths::Options {
+        git_install_dir,
+        git_dir,
+        ..
+    }: from_paths::Options<'_>,
+    wildmatch_mode: git_glob::wildmatch::Mode,
 ) -> Option<()> {
     const DOT: &[u8] = b".";
     const DOT_DOT: &[u8] = b"..";
 
-    let git_dir = git_path::to_unix_separators(git_path::into_bstr(options.git_dir?));
+    let git_dir = git_path::to_unix_separators(git_path::into_bstr(git_dir?));
     if condition_path.contains('\\') {
         return None;
     }
     let mut pattern_path = {
         let cow = Cow::Borrowed(condition_path.as_bytes());
-        let path = values::Path::from(cow).interpolate(options.git_install_dir).ok()?;
+        let path = values::Path::from(cow).interpolate(git_install_dir).ok()?;
         git_path::to_unix_separators(git_path::into_bstr(path)).into_owned()
     };
 
@@ -158,11 +172,7 @@ fn gitdir_matches(
         pattern_path.push_str("**");
     }
 
-    let mut match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL;
-    if ignore_case {
-        match_mode |= git_glob::wildmatch::Mode::IGNORE_CASE;
-    }
-
+    let match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL | wildmatch_mode;
     let is_match = git_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
     if is_match {
         return Some(());
