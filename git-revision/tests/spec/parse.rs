@@ -90,13 +90,20 @@ fn all_characters_are_taken_verbatim_which_includes_whitespace() {
 }
 
 mod revision {
-    use crate::spec::parse::parse;
+    use crate::spec::parse::{parse, try_parse_opts};
 
     #[test]
     fn at_by_iteself_is_shortcut_for_head() {
         let rec = parse("@");
         assert!(rec.kind.is_none());
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+    }
+
+    #[test]
+    #[ignore]
+    fn lonely_at_after_ref_is_invalid() {
+        let _err = try_parse_opts("HEAD@", Default::default()).unwrap_err();
+        // TODO: assertion
     }
 
     #[test]
@@ -112,6 +119,14 @@ mod revision {
         let rec = parse("HEADfake");
         assert!(rec.kind.is_none());
         assert_eq!(rec.resolve_ref_input.unwrap(), "HEADfake");
+    }
+
+    #[test]
+    #[ignore]
+    fn full_head_ref_name() {
+        let rec = parse("refs/heads/main");
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.resolve_ref_input.unwrap(), "refs/heads/main");
     }
 }
 

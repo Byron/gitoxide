@@ -18,10 +18,12 @@ impl Default for Kind {
 
 pub mod parse {
     #![allow(missing_docs)]
-    use bstr::BStr;
+    use bstr::{BStr, BString};
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
+        #[error("A portion of the input could not be parsed: {:?}", .input)]
+        UnconsumedInput { input: BString },
         #[error("The delegate didn't indicate success - check delegate for more information")]
         Delegate,
     }
@@ -77,12 +79,11 @@ pub mod parse {
             }
             input = revision(input, delegate)?;
 
-            assert!(
-                input.is_empty(),
-                "BUG: we must parse all of our input or fail gracefully: {:?}",
-                input
-            );
-            Ok(())
+            if input.is_empty() {
+                Ok(())
+            } else {
+                Err(Error::UnconsumedInput { input: input.into() })
+            }
         }
 
         fn try_range(input: &BStr) -> Option<(&[u8], spec::Kind)> {
