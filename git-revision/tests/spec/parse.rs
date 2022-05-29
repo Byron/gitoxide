@@ -63,6 +63,10 @@ fn parse(spec: &str) -> Recorder {
     try_parse_opts(spec, Options::default()).unwrap()
 }
 
+fn try_parse(spec: &str) -> Result<Recorder, spec::parse::Error> {
+    try_parse_opts(spec, Default::default())
+}
+
 fn try_parse_opts(spec: &str, options: Options) -> Result<Recorder, spec::parse::Error> {
     let mut rec = Recorder::with(options);
     spec::parse(spec.into(), &mut rec)?;
@@ -70,18 +74,16 @@ fn try_parse_opts(spec: &str, options: Options) -> Result<Recorder, spec::parse:
 }
 
 #[test]
-#[ignore]
 fn empty_specs_are_valid() {
     // they should of course be invalid for the delegate. CLIs may pre-process the input as well if they wish
     // but git itself doesn't do that.
     for spec in ["", " ", "\n\t"] {
         let rec = parse(spec);
-        assert_eq!(rec.calls, 0);
+        assert_eq!(rec.calls, 1);
     }
 }
 
 #[test]
-#[ignore]
 fn all_characters_are_taken_verbatim_which_includes_whitespace() {
     let spec = "  HEAD \n";
     let rec = parse(spec);
@@ -90,7 +92,8 @@ fn all_characters_are_taken_verbatim_which_includes_whitespace() {
 }
 
 mod revision {
-    use crate::spec::parse::{parse, try_parse_opts};
+    use crate::spec::parse::{parse, try_parse};
+    use git_revision::spec;
 
     #[test]
     fn at_by_iteself_is_shortcut_for_head() {
@@ -100,10 +103,15 @@ mod revision {
     }
 
     #[test]
-    #[ignore]
+    fn multiple_ats_are_invalid_but_may_cause_callbacks() {
+        let err = try_parse("@@").unwrap_err();
+        assert!(matches!(err, spec::parse::Error::UnconsumedInput {input} if input == "@"));
+    }
+
+    #[test]
     fn lonely_at_after_ref_is_invalid() {
-        let _err = try_parse_opts("HEAD@", Default::default()).unwrap_err();
-        // TODO: assertion
+        let err = try_parse("HEAD@").unwrap_err();
+        assert!(matches!(err, spec::parse::Error::AtNeedsCurlyBrackets {input} if input == ""));
     }
 
     #[test]
@@ -114,7 +122,6 @@ mod revision {
     }
 
     #[test]
-    #[ignore]
     fn refname_with_head_prefix() {
         let rec = parse("HEADfake");
         assert!(rec.kind.is_none());
@@ -122,7 +129,6 @@ mod revision {
     }
 
     #[test]
-    #[ignore]
     fn full_head_ref_name() {
         let rec = parse("refs/heads/main");
         assert!(rec.kind.is_none());

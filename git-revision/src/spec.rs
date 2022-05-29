@@ -22,6 +22,8 @@ pub mod parse {
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
+        #[error("The @ character is either standing alone or followed by `{{<content>}}`, got {:?}", .input)]
+        AtNeedsCurlyBrackets { input: BString },
         #[error("A portion of the input could not be parsed: {:?}", .input)]
         UnconsumedInput { input: BString },
         #[error("The delegate didn't indicate success - check delegate for more information")]
@@ -57,11 +59,46 @@ pub mod parse {
         use crate::spec::parse::{Delegate, Error};
         use bstr::{BStr, ByteSlice};
 
-        pub fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
-            if let Some(rest) = input.strip_prefix(b"@").or_else(|| input.strip_prefix(b"HEAD")) {
-                delegate.resolve_ref("HEAD".into()).ok_or(Error::Delegate)?;
-                input = rest.as_bstr();
+        fn parse_parens(_input: &[u8]) -> Option<(&BStr, &BStr)> {
+            None
+        }
+
+        fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
+            let mut cursor = input;
+            let mut sep = None;
+            while let Some((pos, b)) = cursor.bytes().enumerate().find(|(_, b)| b"@~^:.".contains(b)) {
+                if b != b'.' || cursor.get(pos + 1) == Some(&b'.') {
+                    sep = Some((pos, b));
+                    break;
+                }
+                cursor = &input[pos + 1..];
             }
+
+            let name = &input[..sep.map(|(pos, _)| pos).unwrap_or_else(|| input.len())].as_bstr();
+            if name.is_empty() && sep.map(|(_, b)| b) == Some(b'@') {
+                delegate.resolve_ref("HEAD".into()).ok_or(Error::Delegate)?;
+            } else {
+                delegate.resolve_ref(name).ok_or(Error::Delegate)?;
+            }
+
+            let past_sep = input[sep.map(|(pos, _)| pos + 1).unwrap_or(input.len())..].as_bstr();
+            let sep_pos = sep.map(|(pos, _)| pos);
+            let sep = sep.map(|(_, b)| b);
+            input = match sep {
+                Some(b'@') => {
+                    match parse_parens(past_sep).ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
+                        Ok((_spec, rest)) => rest,
+                        Err(_) if name.is_empty() => past_sep,
+                        Err(err) => return Err(err),
+                    }
+                }
+                Some(b'~') => todo!("~"),
+                Some(b'^') => todo!("^"),
+                Some(b':') => todo!(":"),
+                Some(b'.') => input[sep_pos.unwrap_or(input.len())..].as_bstr(),
+                None => past_sep,
+                Some(unknown) => unreachable!("BUG: found unknown separation character {:?}", unknown),
+            };
             Ok(input)
         }
 
@@ -75,9 +112,8 @@ pub mod parse {
             if let Some((rest, kind)) = try_range(input) {
                 // TODO: protect against double-kind calls, invalid for git
                 delegate.kind(kind).ok_or(Error::Delegate)?;
-                input = rest.as_bstr();
+                input = revision(rest.as_bstr(), delegate)?;
             }
-            input = revision(input, delegate)?;
 
             if input.is_empty() {
                 Ok(())
