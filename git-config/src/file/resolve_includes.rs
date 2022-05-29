@@ -112,9 +112,6 @@ fn include_condition_match(
                 .filter(|(cat, _)| *cat == Category::LocalBranch)?;
 
             let mut condition = Cow::Borrowed(condition);
-            if condition.starts_with('/') {
-                condition = Cow::Owned(format!("**{}", condition));
-            }
             if condition.ends_with('/') {
                 condition = Cow::Owned(format!("{}**", condition));
             }

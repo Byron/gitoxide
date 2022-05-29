@@ -13,6 +13,10 @@ enum Value {
 }
 
 fn assert_section_value(condition: &str, branch_name: &str, expect: Value) {
+    assert_section_value_msg(condition, branch_name, expect, None)
+}
+
+fn assert_section_value_msg(condition: &str, branch_name: &str, expect: Value, message: Option<&str>) {
     let dir = tempdir().unwrap();
     let root_config = dir.path().join("root.config");
     let included_config = dir.path().join("include.config");
@@ -37,7 +41,7 @@ path = {}"#,
         format!(
             r#"
 [section]
-value = branch-override
+value = branch-override-by-include
 "#
         ),
     )
@@ -54,21 +58,59 @@ value = branch-override
     assert_eq!(
         config.string("section", None, "value"),
         Some(cow_str(match expect {
-            Value::OverrideByInclude => "branch-override",
+            Value::OverrideByInclude => "branch-override-by-include",
             Value::Base => "base-value",
         })),
-        "{}",
+        "{}, info: {:?}",
         match expect {
             Value::Base => "the base value should not be overridden as the branch does not match",
             Value::OverrideByInclude =>
                 "the base value is overridden by an included file because the condition matches",
-        }
+        },
+        message
     );
 }
 
 #[test]
 fn literal_branch_names_match() {
     assert_section_value("literal-match", "refs/heads/literal-match", Value::OverrideByInclude);
+}
+
+#[test]
+fn full_ref_names_do_not_match() {
+    assert_section_value("refs/heads/simple", "refs/heads/simple", Value::Base);
+}
+
+#[test]
+fn non_branches_never_match() {
+    assert_section_value("good", "refs/bisect/good", Value::Base);
+}
+
+#[test]
+fn patterns_ending_with_slash_match_subdirectories_recursively() {
+    assert_section_value("feature/b/", "refs/heads/feature/b/start", Value::OverrideByInclude);
+    assert_section_value("feature/", "refs/heads/feature/b/start", Value::OverrideByInclude);
+    assert_section_value_msg(
+        "feature/b/start",
+        "refs/heads/feature/b/start",
+        Value::OverrideByInclude,
+        "just for good measure, we would expect branch paths to work as well".into(),
+    );
+}
+
+#[test]
+fn simple_globs_do_not_cross_component_boundary() {
+    assert_section_value(
+        "feature/*/start",
+        "refs/heads/feature/a/start",
+        Value::OverrideByInclude,
+    );
+    assert_section_value_msg(
+        "feature/*/start",
+        "refs/heads/feature/a/b/start",
+        Value::Base,
+        "path matching would never match 'a/b' as it cannot cross /".into(),
+    );
 }
 
 #[test]
