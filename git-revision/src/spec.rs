@@ -59,7 +59,7 @@ pub mod parse {
         use crate::spec::parse::{Delegate, Error};
         use bstr::{BStr, ByteSlice};
 
-        fn parse_parens(_input: &[u8]) -> Option<(&BStr, &BStr)> {
+        fn parens(_input: &[u8]) -> Option<(&BStr, &BStr)> {
             None
         }
 
@@ -74,18 +74,19 @@ pub mod parse {
                 cursor = &input[pos + 1..];
             }
 
-            let name = &input[..sep_pos.unwrap_or_else(|| input.len())].as_bstr();
+            let name = &input[..sep_pos.unwrap_or(input.len())].as_bstr();
             let sep = sep_pos.map(|pos| cursor[pos]);
             if name.is_empty() && sep == Some(b'@') {
                 delegate.resolve_ref("HEAD".into()).ok_or(Error::Delegate)?;
             } else {
+                // TODO: try different approaches.
                 delegate.resolve_ref(name).ok_or(Error::Delegate)?;
             }
 
             let past_sep = input[sep_pos.map(|pos| pos + 1).unwrap_or(input.len())..].as_bstr();
             input = match sep {
                 Some(b'@') => {
-                    match parse_parens(past_sep).ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
+                    match parens(past_sep).ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
                         Ok((_spec, rest)) => rest,
                         Err(_) if name.is_empty() => past_sep,
                         Err(err) => return Err(err),
