@@ -1421,7 +1421,7 @@ dependencies = [
  "bstr",
  "git-attributes",
  "git-glob",
- "quick-error",
+ "thiserror",
 ]
 
 [[package]]

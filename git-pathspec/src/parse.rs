@@ -1,25 +1,18 @@
 use bstr::{BString, ByteSlice};
 use git_attributes::{parse::Iter, State};
-use quick_error::quick_error;
 
 use crate::{MagicSignature, Pattern};
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        InvalidSignature { found_signature: BString } {
-            display("Found \"{}\", which is not a valid signature", found_signature)
-        }
-        MissingClosingParenthesis  { pathspec: BString } {
-            display("Missing ')' at the end of pathspec magic in '{}'", pathspec)
-        }
-        // TODO: Fix error messages
-        InvalidAttribute(err: git_attributes::parse::Error) {
-            display("{}", err)
-            from()
-            source(err)
-        }
-    }
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Found \"{}\", which is not a valid signature", found_signature)]
+    InvalidSignature { found_signature: BString },
+
+    #[error("Missing ')' at the end of pathspec magic in '{}'", pathspec)]
+    MissingClosingParenthesis { pathspec: BString },
+
+    #[error("Attribute has non-ascii characters or starts with '-': {}", attribute)]
+    InvalidAttribute { attribute: BString },
 }
 
 impl Pattern {
@@ -97,7 +90,14 @@ fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, Vec<(BString, State)>
                 if let Some(attrs) = s.strip_prefix(b"attr:") {
                     attributes = Iter::new(attrs.into(), 0)
                         .map(|res| res.map(|(attr, state)| (attr.into(), state.into())))
-                        .collect::<Result<Vec<_>, _>>()?;
+                        .collect::<Result<Vec<_>, _>>()
+                        .map_err(|e| match e {
+                            git_attributes::parse::Error::AttributeName {
+                                line_number: _,
+                                attribute,
+                            } => Error::InvalidAttribute { attribute },
+                            _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
+                        })?;
                     MagicSignature::ATTR
                 } else {
                     return Err(Error::InvalidSignature {

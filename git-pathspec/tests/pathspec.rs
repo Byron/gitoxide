@@ -112,10 +112,9 @@ fn should_fail_on_whitespace_or_invalid_keywords() {
         ),
         (
             ":(attr:+someAttr)some/path",
-            Error::InvalidAttribute(git_attributes::parse::Error::AttributeName {
-                line_number: 0,
+            Error::InvalidAttribute {
                 attribute: BString::from("+someAttr"),
-            }),
+            },
         ),
         (
             ":(top",
