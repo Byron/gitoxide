@@ -94,15 +94,15 @@ pub mod parse {
             if name.is_empty() && sep == Some(b'@') {
                 delegate.set_ref("HEAD".into()).ok_or(Error::Delegate)?;
             } else {
-                if consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN {
-                    git_hash::Prefix::from_hex(name.to_str().expect("hexadecimal only"))
-                        .ok()
-                        .and_then(|prefix| delegate.set_prefix(prefix))
-                        .or_else(|| delegate.set_ref(name))
-                } else {
-                    delegate.set_ref(name)
-                }
-                .ok_or(Error::Delegate)?;
+                (consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN)
+                    .then(|| {
+                        git_hash::Prefix::from_hex(name.to_str().expect("hexadecimal only"))
+                            .ok()
+                            .and_then(|prefix| delegate.set_prefix(prefix))
+                    })
+                    .flatten()
+                    .or_else(|| delegate.set_ref(name))
+                    .ok_or(Error::Delegate)?;
             }
 
             let past_sep = input[sep_pos.map(|pos| pos + 1).unwrap_or(input.len())..].as_bstr();
