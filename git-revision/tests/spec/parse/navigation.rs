@@ -30,6 +30,58 @@ mod at_symbol {
     }
 
     #[test]
+    fn reflog_by_date_for_current_branch() {
+        let rec = parse("@{1979-02-26 18:30:00}");
+
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.find_ref[0], None,);
+        assert_eq!(
+            rec.prefix[0], None,
+            "neither ref nor prefixes are set, straight to navigation"
+        );
+        assert_eq!(rec.current_branch_reflog_entry[0], Some("42 +0030".to_string()));
+        assert_eq!(rec.calls, 1);
+    }
+
+    #[test]
+    fn reflog_by_date_with_date_parse_failure() {
+        let err = try_parse("@{foo}").unwrap_err();
+        assert!(matches!(err, spec::parse::Error::Time {input} if input == "foo"));
+    }
+
+    #[test]
+    fn reflog_by_date_for_hash_is_invalid() {
+        for (spec, full_name) in [
+            ("1234@{1979-02-26 18:30:00}", "1234"),
+            ("abcd-dirty@{1979-02-26 18:30:00}", "abcd-dirty"),
+            ("v1.2.3-0-g1234@{1979-02-26 18:30:00}", "v1.2.3-0-g1234"),
+        ] {
+            let err = try_parse(spec).unwrap_err();
+            assert!(matches!(err, spec::parse::Error::ReflogLookupNeedsRefName {name} if name == full_name));
+        }
+    }
+
+    #[test]
+    fn reflog_by_date_for_given_ref_name() {
+        for (spec, expected_ref) in [
+            ("main@{1979-02-26 18:30:00}", "main"),
+            ("refs/heads/other@{1979-02-26 18:30:00}", "refs/heads/other"),
+            (
+                "refs/worktree/feature/a@{1979-02-26 18:30:00}",
+                "refs/worktree/feature/a",
+            ),
+        ] {
+            let rec = parse(spec);
+
+            assert!(rec.kind.is_none());
+            assert_eq!(rec.get_ref(0), expected_ref);
+            assert_eq!(rec.prefix[0], None,);
+            assert_eq!(rec.current_branch_reflog_entry[0], Some("42 +0030".to_string()));
+            assert_eq!(rec.calls, 2, "first the ref, then the reflog entry");
+        }
+    }
+
+    #[test]
     fn reflog_by_entry_for_given_ref_name() {
         for (spec, expected_ref, expected_entry) in [
             ("main@{0}", "main", 0),
@@ -54,7 +106,7 @@ mod at_symbol {
             ("v1.2.3-0-g1234@{2}", "v1.2.3-0-g1234"),
         ] {
             let err = try_parse(spec).unwrap_err();
-            assert!(matches!(err, spec::parse::Error::ReflogEntryNeedsRefName {name} if name == full_name));
+            assert!(matches!(err, spec::parse::Error::ReflogLookupNeedsRefName {name} if name == full_name));
         }
     }
 

@@ -5,10 +5,12 @@ use bstr::BString;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Could not parse time {:?} for revlog lookup.", .input)]
+    Time { input: BString },
     #[error("Sibling branches like 'upstream' or 'push' require a branch name with remote configuration, got {:?}", .name)]
     SiblingBranchNeedsBranchName { name: BString },
     #[error("Reflog entries require a ref name, got {:?}", .name)]
-    ReflogEntryNeedsRefName { name: BString },
+    ReflogLookupNeedsRefName { name: BString },
     #[error("A reference name must be followed by positive numbers in '@{{n}}', got {:?}", .nav)]
     RefnameNeedsPositiveReflogEntries { nav: BString },
     #[error("Negative zeroes are invalid: {:?} - remove the '-'", .input)]
@@ -248,7 +250,7 @@ pub(crate) mod function {
                                     ))
                                     .ok_or(Error::Delegate)?;
                             } else {
-                                return Err(Error::ReflogEntryNeedsRefName { name: (*name).into() });
+                                return Err(Error::ReflogLookupNeedsRefName { name: (*name).into() });
                             }
                         } else if let Some(kind) = SiblingBranch::parse(nav) {
                             if has_ref_or_implied_name {
@@ -256,8 +258,13 @@ pub(crate) mod function {
                             } else {
                                 Err(Error::SiblingBranchNeedsBranchName { name: (*name).into() })
                             }?
+                        } else if has_ref_or_implied_name {
+                            let time = git_date::parse(nav).ok_or_else(|| Error::Time { input: nav.into() })?;
+                            delegate
+                                .reflog(delegate::ReflogLookup::Date(time))
+                                .ok_or(Error::Delegate)?;
                         } else {
-                            todo!("try to interpret nav as non-number")
+                            return Err(Error::ReflogLookupNeedsRefName { name: (*name).into() });
                         }
                         rest
                     }
