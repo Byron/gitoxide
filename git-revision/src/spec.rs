@@ -18,7 +18,7 @@ impl Default for Kind {
 
 pub mod parse {
     #![allow(missing_docs)]
-    use bstr::{BStr, BString};
+    use bstr::BString;
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
@@ -30,30 +30,47 @@ pub mod parse {
         Delegate,
     }
 
-    /// A delegate to be informed about parse events, with methods split into three categories.
     ///
-    /// - **Revisions** - which revision to use as starting point for…
-    /// - **Navigation** - where to go once from the initial revision.
-    /// - **range** - to learn if the specification is for a single or multiple references.
-    pub trait Delegate {
-        /// Resolve `name` as reference which might not be a valid reference name. The name may be partial like `main` or full like
-        /// `refs/heads/main` solely depending on the users input.
-        /// Symbolic referenced should be followed till their object, but objects must not yet be peeled.
-        fn set_ref(&mut self, name: &BStr) -> Option<()>;
-        fn set_prefix(&mut self, prefix: git_hash::Prefix) -> Option<()>;
+    pub mod delegate {
+        use bstr::BStr;
 
-        fn nth_ancestor(&mut self, n: usize) -> Option<()>;
-        fn nth_parent(&mut self, n: usize) -> Option<()>;
+        /// Usually the first methods to call when parsing a rev-spec to set an anchor.
+        /// Methods can be called multiple time to either try input or to parse another rev-spec that is part of a range.
+        pub trait Anchor {
+            /// Resolve `name` as reference which might not be a valid reference name. The name may be partial like `main` or full like
+            /// `refs/heads/main` solely depending on the users input.
+            /// Symbolic referenced should be followed till their object, but objects must not yet be peeled.
+            fn find_ref(&mut self, name: &BStr) -> Option<()>;
+            /// An object prefix to disambiguate, returning `None` if it is ambiguous or wasn't found at all.
+            fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix) -> Option<()>;
+        }
 
-        /// Set the kind of the specification, which happens only once if it happens at all.
-        /// In case this method isn't called, assume `Single`.
-        /// Reject a kind by returning `None` to stop the parsing.
-        ///
-        /// Note that ranges don't necessarily assure that a second specification will be parsed.
-        /// If `^rev` is given, this method is called with [`spec::Kind::Range`][crate::spec::Kind::Range]
-        /// and no second specification is provided.
-        fn kind(&mut self, kind: crate::spec::Kind) -> Option<()>;
+        /// Combine one or more specs into a range of multiple.
+        pub trait Kind {
+            /// Set the kind of the spec, which happens only once if it happens at all.
+            /// In case this method isn't called, assume `Single`.
+            /// Reject a kind by returning `None` to stop the parsing.
+            ///
+            /// Note that ranges don't necessarily assure that a second specification will be parsed.
+            /// If `^rev` is given, this method is called with [`spec::Kind::Range`][crate::spec::Kind::Range]
+            /// and no second specification is provided.
+            fn kind(&mut self, kind: crate::spec::Kind) -> Option<()>;
+        }
+
+        /// Once an anchor is set one can adjust it using navigation methods.
+        pub trait Navigation {
+            fn nth_ancestor(&mut self, n: usize) -> Option<()>;
+            fn nth_parent(&mut self, n: usize) -> Option<()>;
+        }
     }
+
+    /// A delegate to be informed about parse events, with methods split into categories.
+    ///
+    /// - **Anchors** - which revision to use as starting point for…
+    /// - **Navigation** - where to go once from the initial revision
+    /// - **Range** - to learn if the specification is for a single or multiple references, and how to combine them.
+    pub trait Delegate: delegate::Anchor + delegate::Navigation + delegate::Kind {}
+    impl<T> Delegate for T where T: delegate::Anchor + delegate::Navigation + delegate::Kind {}
 
     pub(crate) mod function {
         use crate::spec;
@@ -63,7 +80,7 @@ pub mod parse {
         fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr) -> Option<()> {
             git_hash::Prefix::from_hex(hex_name.to_str().expect("hexadecimal only"))
                 .ok()
-                .and_then(|prefix| delegate.set_prefix(prefix))
+                .and_then(|prefix| delegate.disambiguate_prefix(prefix))
         }
 
         fn long_describe_prefix(name: &BStr) -> Option<&BStr> {
@@ -119,7 +136,7 @@ pub mod parse {
             let name = &input[..sep_pos.unwrap_or(input.len())].as_bstr();
             let sep = sep_pos.map(|pos| cursor[pos]);
             if name.is_empty() && sep == Some(b'@') {
-                delegate.set_ref("HEAD".into()).ok_or(Error::Delegate)?;
+                delegate.find_ref("HEAD".into()).ok_or(Error::Delegate)?;
             } else {
                 (consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN)
                     .then(|| try_set_prefix(delegate, name))
@@ -128,7 +145,7 @@ pub mod parse {
                         let prefix = long_describe_prefix(name).or_else(|| short_describe_prefix(name))?;
                         try_set_prefix(delegate, prefix)
                     })
-                    .or_else(|| name.is_empty().then(|| ()).or_else(|| delegate.set_ref(name)))
+                    .or_else(|| name.is_empty().then(|| ()).or_else(|| delegate.find_ref(name)))
                     .ok_or(Error::Delegate)?;
             }
 

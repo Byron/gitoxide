@@ -27,8 +27,8 @@ impl Recorder {
     }
 }
 
-impl spec::parse::Delegate for Recorder {
-    fn set_ref(&mut self, input: &BStr) -> Option<()> {
+impl spec::parse::delegate::Anchor for Recorder {
+    fn find_ref(&mut self, input: &BStr) -> Option<()> {
         if self.resolve_ref_input.is_none() {
             self.resolve_ref_input = input.to_owned().into();
         } else if self.resolve_ref_input2.is_none() {
@@ -40,7 +40,7 @@ impl spec::parse::Delegate for Recorder {
         Some(())
     }
 
-    fn set_prefix(&mut self, input: git_hash::Prefix) -> Option<()> {
+    fn disambiguate_prefix(&mut self, input: git_hash::Prefix) -> Option<()> {
         self.calls += 1;
         if self.opts.reject_prefix {
             return None;
@@ -54,7 +54,9 @@ impl spec::parse::Delegate for Recorder {
         }
         Some(())
     }
+}
 
+impl spec::parse::delegate::Navigation for Recorder {
     fn nth_ancestor(&mut self, _n: usize) -> Option<()> {
         todo!()
     }
@@ -62,7 +64,9 @@ impl spec::parse::Delegate for Recorder {
     fn nth_parent(&mut self, _n: usize) -> Option<()> {
         todo!()
     }
+}
 
+impl spec::parse::delegate::Kind for Recorder {
     fn kind(&mut self, kind: spec::Kind) -> Option<()> {
         self.calls += 1;
         if self.opts.reject_kind {
