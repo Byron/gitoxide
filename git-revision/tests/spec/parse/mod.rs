@@ -108,5 +108,5 @@ fn all_characters_are_taken_verbatim_which_includes_whitespace() {
 }
 
 mod anchor;
+mod kind;
 mod navigation;
-mod range;

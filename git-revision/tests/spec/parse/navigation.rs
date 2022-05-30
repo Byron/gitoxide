@@ -8,3 +8,5 @@ fn braces_must_be_closed() {
         assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == unclosed_spec[1..]))
     }
 }
+
+mod at {}
