@@ -18,10 +18,13 @@ impl Default for Kind {
 
 pub mod parse {
     #![allow(missing_docs)]
+    use crate::spec;
     use bstr::BString;
 
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
+        #[error("Cannot set spec kind more than once. Previous value was {:?}, now it is {:?}", .prev_kind, .kind)]
+        KindSetTwice { prev_kind: spec::Kind, kind: spec::Kind },
         #[error("The @ character is either standing alone or followed by `{{<content>}}`, got {:?}", .input)]
         AtNeedsCurlyBrackets { input: BString },
         #[error("A portion of the input could not be parsed: {:?}", .input)]
@@ -169,14 +172,18 @@ pub mod parse {
         }
 
         pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
+            let mut prev_kind = None;
             if let Some(b'^') = input.get(0) {
                 input = next(input).1;
                 delegate.kind(spec::Kind::Range).ok_or(Error::Delegate)?;
+                prev_kind = spec::Kind::Range.into();
             }
 
             input = revision(input, delegate)?;
             if let Some((rest, kind)) = try_range(input) {
-                // TODO: protect against double-kind calls, invalid for git
+                if let Some(prev_kind) = prev_kind {
+                    return Err(Error::KindSetTwice { prev_kind, kind });
+                }
                 delegate.kind(kind).ok_or(Error::Delegate)?;
                 input = revision(rest.as_bstr(), delegate)?;
             }

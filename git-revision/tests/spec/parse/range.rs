@@ -1,5 +1,13 @@
-use crate::spec::parse::{parse, try_parse_opts, Options};
+use crate::spec::parse::{parse, try_parse, try_parse_opts, Options};
 use git_revision::spec;
+
+#[test]
+fn cannot_declare_ranges_multiple_times() {
+    for invalid_spec in ["^HEAD..", "^HEAD..."] {
+        let err = try_parse(invalid_spec).unwrap_err();
+        assert!(matches!(err, spec::parse::Error::KindSetTwice { .. }));
+    }
+}
 
 #[test]
 fn delegate_can_refuse_spec_kinds() {

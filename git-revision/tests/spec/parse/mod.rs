@@ -72,7 +72,11 @@ impl spec::parse::delegate::Kind for Recorder {
         if self.opts.reject_kind {
             return None;
         }
-        self.kind = Some(kind);
+        if self.kind.is_none() {
+            self.kind = Some(kind);
+        } else {
+            panic!("called kind more than once with '{:?}'", kind);
+        }
         Some(())
     }
 }
