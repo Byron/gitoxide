@@ -66,17 +66,44 @@ fn full_describe_ouptput_with_dirty_suffix_is_recognized() {
 }
 
 #[test]
-fn partial_describe_ouptput_with_dirty_suffix_is_not_specifically_recognized() {
+fn partial_describe_ouptput_with_dirty_suffix_is_recognized() {
     let spec = "abcdef1-dirty";
     let rec = parse(spec);
     assert!(rec.kind.is_none());
+    assert_eq!(rec.resolve_ref_input, None,);
     assert_eq!(
-        rec.resolve_ref_input.unwrap(),
-        spec,
-        "for all we know this could be a reference"
+        rec.prefix,
+        Some(git_hash::Prefix::from_hex("abcdef1").unwrap()),
+        "git does not see this as prefix anymore, we do"
     );
-    assert_eq!(rec.prefix, None, "git does not see this as prefix anymore");
     assert_eq!(rec.calls, 1);
+}
+
+#[test]
+fn partial_describe_ouptput_lookalikes_are_never_considered() {
+    let spec = "abcdef1-dirty-laundry";
+    let rec = parse(spec);
+    assert!(rec.kind.is_none());
+    assert_eq!(rec.resolve_ref_input.unwrap(), spec);
+    assert_eq!(rec.prefix, None,);
+    assert_eq!(rec.calls, 1, "we don't even try the prefix");
+}
+
+#[test]
+fn partial_describe_ouptput_with_dirty_suffix_lookalikes_are_treated_as_refs() {
+    let spec = "abcdef1-dirty";
+    let rec = try_parse_opts(
+        spec,
+        Options {
+            reject_prefix: true,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    assert!(rec.kind.is_none());
+    assert_eq!(rec.resolve_ref_input.unwrap(), spec);
+    assert_eq!(rec.prefix, None,);
+    assert_eq!(rec.calls, 2);
 }
 
 #[test]

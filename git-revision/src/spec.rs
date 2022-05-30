@@ -66,7 +66,7 @@ pub mod parse {
                 .and_then(|prefix| delegate.set_prefix(prefix))
         }
 
-        fn describe_prefix(name: &BStr) -> Option<&BStr> {
+        fn long_describe_prefix(name: &BStr) -> Option<&BStr> {
             let mut iter = name.rsplit(|b| *b == b'-');
             let candidate = iter.by_ref().find_map(|substr| {
                 if substr.get(0)? != &b'g' {
@@ -76,6 +76,15 @@ pub mod parse {
                 rest.iter().all(|b| b.is_ascii_hexdigit()).then(|| rest.as_bstr())
             });
             iter.any(|token| !token.is_empty()).then(|| candidate).flatten()
+        }
+
+        fn short_describe_prefix(name: &BStr) -> Option<&BStr> {
+            let mut iter = name.split(|b| *b == b'-');
+            let candidate = iter
+                .next()
+                .map(|prefix| prefix.iter().all(|b| b.is_ascii_hexdigit()).then(|| prefix.as_bstr()))
+                .flatten();
+            (iter.count() == 1).then(|| candidate).flatten()
         }
 
         // TODO: impl
@@ -116,7 +125,11 @@ pub mod parse {
                 (consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN)
                     .then(|| try_set_prefix(delegate, name))
                     .flatten()
-                    .or_else(|| describe_prefix(name).and_then(|prefix| try_set_prefix(delegate, prefix)))
+                    .or_else(|| {
+                        long_describe_prefix(name)
+                            .or_else(|| short_describe_prefix(name))
+                            .and_then(|prefix| try_set_prefix(delegate, prefix))
+                    })
                     .or_else(|| name.is_empty().then(|| ()).or_else(|| delegate.set_ref(name)))
                     .ok_or(Error::Delegate)?;
             }
