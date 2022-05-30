@@ -203,6 +203,14 @@ mod refnames {
     }
 
     #[test]
+    fn refname_tag() {
+        let spec = "v1.2.3.4-beta.1";
+        let rec = parse(spec);
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.resolve_ref_input.unwrap(), spec);
+    }
+
+    #[test]
     fn refname_with_head_prefix() {
         let rec = parse("HEADfake");
         assert!(rec.kind.is_none());

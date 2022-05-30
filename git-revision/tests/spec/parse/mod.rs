@@ -14,6 +14,9 @@ struct Recorder {
     prefix: Option<git_hash::Prefix>,
     prefix2: Option<git_hash::Prefix>,
     kind: Option<spec::Kind>,
+
+    current_reflog_entry: Option<usize>,
+    current_reflog_entry2: Option<usize>,
     calls: usize,
     opts: Options,
 }
@@ -56,7 +59,19 @@ impl spec::parse::delegate::Anchor for Recorder {
     }
 }
 
-impl spec::parse::delegate::Navigation for Recorder {}
+impl spec::parse::delegate::Navigation for Recorder {
+    fn current_branch_reflog(&mut self, entry: usize) -> Option<()> {
+        self.calls += 1;
+        if self.current_reflog_entry.is_none() {
+            self.current_reflog_entry = Some(entry);
+        } else if self.current_reflog_entry2.is_none() {
+            self.current_reflog_entry2 = Some(entry);
+        } else {
+            panic!("called current_branch_reflog more than twice with '{}'", entry);
+        }
+        Some(())
+    }
+}
 
 impl spec::parse::delegate::Kind for Recorder {
     fn kind(&mut self, kind: spec::Kind) -> Option<()> {

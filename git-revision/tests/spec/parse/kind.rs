@@ -98,6 +98,13 @@ mod range {
         assert_eq!(rec.prefix, prefix("abcd").into());
         assert_eq!(rec.prefix2, prefix("1234").into());
         assert_eq!(rec.calls, 3);
+
+        let rec = parse("v1.2-42-g1234..abcd-dirty");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.resolve_ref_input, None);
+        assert_eq!(rec.prefix, prefix("1234").into());
+        assert_eq!(rec.prefix2, prefix("abcd").into());
+        assert_eq!(rec.calls, 3);
     }
 }
 
@@ -129,11 +136,11 @@ mod mergebase {
         assert_eq!(rec.prefix, prefix("abcd").into());
         assert_eq!(rec.calls, 3);
 
-        let rec = parse("abcd-dirty...smart-release-42-g1234-dirty");
+        let rec = parse("v1.2.3-beta.1-42-g1234-dirty...abcd-dirty");
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
         assert_eq!(rec.resolve_ref_input, None);
-        assert_eq!(rec.prefix, prefix("abcd").into());
-        assert_eq!(rec.prefix2, prefix("1234").into());
+        assert_eq!(rec.prefix, prefix("1234").into());
+        assert_eq!(rec.prefix2, prefix("abcd").into());
         assert_eq!(rec.calls, 3);
     }
 }

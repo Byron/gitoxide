@@ -48,7 +48,11 @@ pub mod delegate {
     }
 
     /// Once an anchor is set one can adjust it using navigation methods.
-    pub trait Navigation {}
+    pub trait Navigation {
+        /// Lookup the reflog of the current branch, which is what `HEAD` dereferences to, and _not_ `HEAD` itself.
+        /// If there is no such reflog entry, return `None`.
+        fn current_branch_reflog(&mut self, entry: usize) -> Option<()>;
+    }
 }
 
 /// A delegate to be informed about parse events, with methods split into categories.
@@ -64,6 +68,8 @@ pub(crate) mod function {
     use crate::spec;
     use crate::spec::parse::{Delegate, Error};
     use bstr::{BStr, ByteSlice};
+    use std::convert::TryInto;
+    use std::str::FromStr;
 
     fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr) -> Option<()> {
         git_hash::Prefix::from_hex(hex_name.to_str().expect("hexadecimal only"))
@@ -102,33 +108,37 @@ pub(crate) mod function {
     }
 
     fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
-        let mut cursor = input;
         let mut sep_pos = None;
         let mut consecutive_hex_chars = Some(0);
-        while let Some((pos, b)) = cursor.iter().enumerate().find(|(_, b)| {
-            if b"@~^:.".contains(b) {
-                true
-            } else {
-                if let Some(num) = consecutive_hex_chars.as_mut() {
-                    if b.is_ascii_hexdigit() {
-                        *num += 1;
-                    } else {
-                        consecutive_hex_chars = None;
+        {
+            let mut cursor = input;
+            let mut ofs = 0;
+            while let Some((pos, b)) = cursor.iter().enumerate().find(|(_, b)| {
+                if b"@~^:.".contains(b) {
+                    true
+                } else {
+                    if let Some(num) = consecutive_hex_chars.as_mut() {
+                        if b.is_ascii_hexdigit() {
+                            *num += 1;
+                        } else {
+                            consecutive_hex_chars = None;
+                        }
                     }
+                    false
                 }
-                false
+            }) {
+                if *b != b'.' || cursor.get(pos + 1) == Some(&b'.') {
+                    sep_pos = Some(ofs + pos);
+                    break;
+                }
+                ofs += pos + 1;
+                cursor = &cursor[pos + 1..];
             }
-        }) {
-            if *b != b'.' || cursor.get(pos + 1) == Some(&b'.') {
-                sep_pos = Some(pos);
-                break;
-            }
-            cursor = &cursor[pos + 1..];
         }
 
         let name = &input[..sep_pos.unwrap_or(input.len())].as_bstr();
-        let sep = sep_pos.map(|pos| cursor[pos]);
-        if name.is_empty() && sep == Some(b'@') {
+        let sep = sep_pos.map(|pos| input[pos]);
+        if name.is_empty() && sep == Some(b'@') && sep_pos.and_then(|pos| input.get(pos + 1)) != Some(&b'{') {
             delegate.find_ref("HEAD".into()).ok_or(Error::Delegate)?;
         } else {
             (consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN)
@@ -146,7 +156,20 @@ pub(crate) mod function {
         input = match sep {
             Some(b'@') => {
                 match parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
-                    Ok((_nav, rest)) => rest,
+                    Ok((nav, rest)) => {
+                        if let Some(n) = nav.to_str().ok().and_then(|n| <isize as FromStr>::from_str(n).ok()) {
+                            if name.is_empty() && n > -1 {
+                                delegate
+                                    .current_branch_reflog(n.try_into().expect("non-negative isize fits usize"))
+                                    .ok_or(Error::Delegate)?;
+                            } else {
+                                todo!("call correct number-handler")
+                            }
+                        } else {
+                            todo!("try to interpret nav as non-number")
+                        }
+                        rest
+                    }
                     Err(_) if name.is_empty() => past_sep,
                     Err(err) => return Err(err),
                 }
@@ -156,7 +179,7 @@ pub(crate) mod function {
             Some(b':') => todo!(":"),
             Some(b'.') => input[sep_pos.unwrap_or(input.len())..].as_bstr(),
             None => past_sep,
-            Some(unknown) => unreachable!("BUG: found unknown separation character {:?}", unknown),
+            Some(unknown) => unreachable!("BUG: found unknown separation character {:?}", unknown as char),
         };
         Ok(input)
     }
