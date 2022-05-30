@@ -9,11 +9,10 @@
 #![deny(rust_2018_idioms, missing_docs)]
 use bstr::{BStr, BString};
 
+pub use git_date::{time::Sign, Time};
+
 ///
 pub mod signature;
-mod time;
-
-const SPACE: &[u8; 1] = b" ";
 
 /// A mutable signature is created by an actor at a certain time.
 ///
@@ -41,26 +40,5 @@ pub struct SignatureRef<'a> {
     /// The actor's email.
     pub email: &'a BStr,
     /// The time stamp at which the signature was performed.
-    pub time: Time,
-}
-
-/// Indicates if a number is positive or negative for use in [`Time`].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[allow(missing_docs)]
-pub enum Sign {
-    Plus,
-    Minus,
-}
-
-/// A timestamp with timezone.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Time {
-    /// time in seconds since epoch.
-    pub seconds_since_unix_epoch: u32,
-    /// time offset in seconds, may be negative to match the `sign` field.
-    pub offset_in_seconds: i32,
-    /// the sign of `offset`, used to encode `-0000` which would otherwise loose sign information.
-    pub sign: Sign,
+    pub time: git_date::Time,
 }

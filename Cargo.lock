@@ -879,6 +879,7 @@ dependencies = [
  "bstr",
  "btoi",
  "document-features",
+ "git-date",
  "git-features",
  "git-testtools",
  "itoa 1.0.2",
