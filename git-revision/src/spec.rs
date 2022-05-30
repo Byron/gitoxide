@@ -82,8 +82,7 @@ pub mod parse {
             let mut iter = name.split(|b| *b == b'-');
             let candidate = iter
                 .next()
-                .map(|prefix| prefix.iter().all(|b| b.is_ascii_hexdigit()).then(|| prefix.as_bstr()))
-                .flatten();
+                .and_then(|prefix| prefix.iter().all(|b| b.is_ascii_hexdigit()).then(|| prefix.as_bstr()));
             (iter.count() == 1).then(|| candidate).flatten()
         }
 
