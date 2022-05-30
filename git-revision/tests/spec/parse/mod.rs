@@ -15,7 +15,7 @@ struct Recorder {
     prefix: [Option<git_hash::Prefix>; 2],
 
     // navigation
-    current_branch_reflog_entry: [Option<usize>; 2],
+    current_branch_reflog_entry: [Option<String>; 2],
     nth_checked_out_branch: [Option<usize>; 2],
     sibling_branch: [Option<String>; 2],
 
@@ -49,7 +49,7 @@ fn set_val<T: std::fmt::Debug>(fn_name: &str, store: &mut [Option<T>; 2], val: T
     panic!("called {}() more than twice with '{:?}'", fn_name, val);
 }
 
-impl spec::parse::delegate::Anchor for Recorder {
+impl delegate::Anchor for Recorder {
     fn find_ref(&mut self, input: &BStr) -> Option<()> {
         self.calls += 1;
         set_val("find_ref", &mut self.find_ref, input.into())
@@ -64,10 +64,21 @@ impl spec::parse::delegate::Anchor for Recorder {
     }
 }
 
-impl spec::parse::delegate::Navigation for Recorder {
-    fn reflog(&mut self, entry: usize) -> Option<()> {
+impl delegate::Navigation for Recorder {
+    fn reflog(&mut self, entry: delegate::ReflogLookup) -> Option<()> {
         self.calls += 1;
-        set_val("current_branch_reflog", &mut self.current_branch_reflog_entry, entry)
+        set_val(
+            "current_branch_reflog",
+            &mut self.current_branch_reflog_entry,
+            match entry {
+                delegate::ReflogLookup::Entry(no) => no.to_string(),
+                delegate::ReflogLookup::Date(time) => {
+                    let mut buf = Vec::new();
+                    time.write_to(&mut buf).unwrap();
+                    BString::from(buf).to_string()
+                }
+            },
+        )
     }
 
     fn nth_checked_out_branch(&mut self, branch: usize) -> Option<()> {
@@ -82,7 +93,7 @@ impl spec::parse::delegate::Navigation for Recorder {
     }
 }
 
-impl spec::parse::delegate::Kind for Recorder {
+impl delegate::Kind for Recorder {
     fn kind(&mut self, kind: spec::Kind) -> Option<()> {
         self.calls += 1;
         if self.opts.reject_kind {

@@ -60,7 +60,7 @@ pub mod delegate {
         /// Lookup the reflog of the previously set reference, or dereference `HEAD` to its reference
         /// to obtain the ref name (as opposed to `HEAD` itself).
         /// If there is no such reflog entry, return `None`.
-        fn reflog(&mut self, entry: usize) -> Option<()>;
+        fn reflog(&mut self, query: ReflogLookup) -> Option<()>;
 
         /// When looking at `HEAD`, `branch_no` is the non-null checkout in the path, e.g. `1` means the last branch checked out,
         /// `2` is the one before that.
@@ -73,6 +73,14 @@ pub mod delegate {
         /// of `refs/heads/`.
         /// Note that the caller isn't aware if the previously set reference is a branch or not.
         fn sibling_branch(&mut self, kind: SiblingBranch) -> Option<()>;
+    }
+
+    /// A lookup into the reflog of a reference.
+    #[derive(Debug, Copy, Clone)]
+    pub enum ReflogLookup {
+        /// Lookup by entry, where `0` is the most recent entry, and `1` is the older one behind `0`.
+        Entry(usize),
+        Date(git_date::Time),
     }
 
     /// The kind of sibling branch to obtain.
@@ -109,7 +117,7 @@ impl<T> Delegate for T where T: delegate::Anchor + delegate::Navigation + delega
 pub(crate) mod function {
     use crate::spec;
     use crate::spec::parse::delegate::SiblingBranch;
-    use crate::spec::parse::{Delegate, Error};
+    use crate::spec::parse::{delegate, Delegate, Error};
     use bstr::{BStr, ByteSlice};
     use std::convert::TryInto;
     use std::str::FromStr;
@@ -235,7 +243,9 @@ pub(crate) mod function {
                                 }
                             } else if has_ref_or_implied_name {
                                 delegate
-                                    .reflog(n.try_into().expect("non-negative isize fits usize"))
+                                    .reflog(delegate::ReflogLookup::Entry(
+                                        n.try_into().expect("non-negative isize fits usize"),
+                                    ))
                                     .ok_or(Error::Delegate)?;
                             } else {
                                 return Err(Error::ReflogEntryNeedsRefName { name: (*name).into() });

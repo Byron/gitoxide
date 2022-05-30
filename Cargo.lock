@@ -1313,6 +1313,7 @@ name = "git-revision"
 version = "0.2.0"
 dependencies = [
  "bstr",
+ "git-date",
  "git-hash",
  "git-object",
  "git-repository",

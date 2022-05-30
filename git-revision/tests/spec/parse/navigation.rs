@@ -14,7 +14,7 @@ mod at_symbol {
     use git_revision::spec;
 
     #[test]
-    fn reflog_for_current_branch() {
+    fn reflog_by_entry_for_current_branch() {
         for (spec, expected_entry) in [("@{0}", 0), ("@{42}", 42), ("@{00100}", 100)] {
             let rec = parse(spec);
 
@@ -24,13 +24,13 @@ mod at_symbol {
                 rec.prefix[0], None,
                 "neither ref nor prefixes are set, straight to navigation"
             );
-            assert_eq!(rec.current_branch_reflog_entry[0], Some(expected_entry));
+            assert_eq!(rec.current_branch_reflog_entry[0], Some(expected_entry.to_string()));
             assert_eq!(rec.calls, 1);
         }
     }
 
     #[test]
-    fn reflog_for_given_ref_name() {
+    fn reflog_by_entry_for_given_ref_name() {
         for (spec, expected_ref, expected_entry) in [
             ("main@{0}", "main", 0),
             ("refs/heads/other@{42}", "refs/heads/other", 42),
@@ -41,13 +41,13 @@ mod at_symbol {
             assert!(rec.kind.is_none());
             assert_eq!(rec.get_ref(0), expected_ref);
             assert_eq!(rec.prefix[0], None,);
-            assert_eq!(rec.current_branch_reflog_entry[0], Some(expected_entry));
+            assert_eq!(rec.current_branch_reflog_entry[0], Some(expected_entry.to_string()));
             assert_eq!(rec.calls, 2, "first the ref, then the reflog entry");
         }
     }
 
     #[test]
-    fn reflog_for_hash_is_invalid() {
+    fn reflog_by_entry_for_hash_is_invalid() {
         for (spec, full_name) in [
             ("1234@{0}", "1234"),
             ("abcd-dirty@{1}", "abcd-dirty"),
