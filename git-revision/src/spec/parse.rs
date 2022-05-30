@@ -5,6 +5,10 @@ use bstr::BString;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Reflog entries require a ref name, got {:?}", .name)]
+    ReflogEntryNeedsRefName { name: BString },
+    #[error("A reference name must be followed by positive numbers in '@{{n}}', got {:?}", .nav)]
+    RefnameNeedsPositiveReflogEntries { nav: BString },
     #[error("Negative zeroes are invalid: {:?} - remove the '-'", .input)]
     NegativeZero { input: BString },
     #[error("The opening brace in {:?} was not matched", .input)]
@@ -51,9 +55,10 @@ pub mod delegate {
 
     /// Once an anchor is set one can adjust it using navigation methods.
     pub trait Navigation {
-        /// Lookup the reflog of the current branch, which is what `HEAD` dereferences to, and _not_ `HEAD` itself.
+        /// Lookup the reflog of the previously set reference, or dereference `HEAD` to its symbolic reference
+        /// to obtain the ref name (as opposed to `HEAD` itself).
         /// If there is no such reflog entry, return `None`.
-        fn current_branch_reflog(&mut self, entry: usize) -> Option<()>;
+        fn reflog(&mut self, entry: usize) -> Option<()>;
 
         /// When looking at `HEAD`, `branch_no` is the non-null checkout in the path, e.g. `1` means the last branch checked out,
         /// `2` is the one before that.
@@ -160,6 +165,7 @@ pub(crate) mod function {
 
         let name = &input[..sep_pos.unwrap_or(input.len())].as_bstr();
         let sep = sep_pos.map(|pos| input[pos]);
+        let mut has_ref = false;
         if name.is_empty() && sep == Some(b'@') && sep_pos.and_then(|pos| input.get(pos + 1)) != Some(&b'{') {
             delegate.find_ref("HEAD".into()).ok_or(Error::Delegate)?;
         } else {
@@ -170,7 +176,13 @@ pub(crate) mod function {
                     let prefix = long_describe_prefix(name).or_else(|| short_describe_prefix(name))?;
                     try_set_prefix(delegate, prefix)
                 })
-                .or_else(|| name.is_empty().then(|| ()).or_else(|| delegate.find_ref(name)))
+                .or_else(|| {
+                    name.is_empty().then(|| ()).or_else(|| {
+                        let res = delegate.find_ref(name)?;
+                        has_ref = true;
+                        res.into()
+                    })
+                })
                 .ok_or(Error::Delegate)?;
         }
 
@@ -180,21 +192,22 @@ pub(crate) mod function {
                 match parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
                     Ok((nav, rest)) => {
                         if let Some(n) = try_parse::<isize>(nav)? {
-                            match n {
-                                n if name.is_empty() => {
-                                    if n < 0 {
-                                        delegate
-                                            .nth_checked_out_branch(
-                                                n.abs().try_into().expect("non-negative isize fits usize"),
-                                            )
-                                            .ok_or(Error::Delegate)?;
-                                    } else {
-                                        delegate
-                                            .current_branch_reflog(n.try_into().expect("non-negative isize fits usize"))
-                                            .ok_or(Error::Delegate)?;
-                                    }
+                            if n < 0 {
+                                if name.is_empty() {
+                                    delegate
+                                        .nth_checked_out_branch(
+                                            n.abs().try_into().expect("non-negative isize fits usize"),
+                                        )
+                                        .ok_or(Error::Delegate)?;
+                                } else {
+                                    return Err(Error::RefnameNeedsPositiveReflogEntries { nav: nav.into() });
                                 }
-                                _ => todo!("call correct number-handler"),
+                            } else if has_ref || name.is_empty() {
+                                delegate
+                                    .reflog(n.try_into().expect("non-negative isize fits usize"))
+                                    .ok_or(Error::Delegate)?;
+                            } else {
+                                return Err(Error::ReflogEntryNeedsRefName { name: (*name).into() });
                             }
                         } else {
                             todo!("try to interpret nav as non-number")

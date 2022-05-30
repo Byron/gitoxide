@@ -9,12 +9,12 @@ fn braces_must_be_closed() {
     }
 }
 
-mod at {
+mod at_symbol {
     use crate::spec::parse::{parse, try_parse};
     use git_revision::spec;
 
     #[test]
-    fn reflog_current_branch() {
+    fn reflog_for_current_branch() {
         for (spec, expected_entry) in [("@{0}", 0), ("@{42}", 42), ("@{00100}", 100)] {
             let rec = parse(spec);
 
@@ -27,6 +27,44 @@ mod at {
             assert_eq!(rec.current_branch_reflog_entry[0], Some(expected_entry));
             assert_eq!(rec.calls, 1);
         }
+    }
+
+    #[test]
+    fn reflog_for_given_ref_name() {
+        for (spec, expected_ref, expected_entry) in [
+            ("main@{0}", "main", 0),
+            ("refs/heads/other@{42}", "refs/heads/other", 42),
+            ("refs/worktree/feature/a@{00100}", "refs/worktree/feature/a", 100),
+        ] {
+            let rec = parse(spec);
+
+            assert!(rec.kind.is_none());
+            assert_eq!(rec.get_ref(0), expected_ref);
+            assert_eq!(rec.prefix[0], None,);
+            assert_eq!(rec.current_branch_reflog_entry[0], Some(expected_entry));
+            assert_eq!(rec.calls, 2, "first the ref, then the reflog entry");
+        }
+    }
+
+    #[test]
+    fn reflog_for_hash_is_invalid() {
+        for (spec, full_name) in [
+            ("1234@{0}", "1234"),
+            ("abcd-dirty@{1}", "abcd-dirty"),
+            ("v1.2.3-0-g1234@{2}", "v1.2.3-0-g1234"),
+        ] {
+            let err = try_parse(spec).unwrap_err();
+            assert!(matches!(err, spec::parse::Error::ReflogEntryNeedsRefName {name} if name == full_name));
+        }
+    }
+
+    #[test]
+    fn nth_checked_out_branch_for_refname_is_invalid() {
+        let err = try_parse("r1@{-1}").unwrap_err();
+        assert!(
+            matches!(err, spec::parse::Error::RefnameNeedsPositiveReflogEntries {nav} if nav == "-1"),
+            "its undefined how to handle negative numbers and specified ref names"
+        );
     }
 
     #[test]
@@ -43,11 +81,23 @@ mod at {
             assert_eq!(rec.nth_checked_out_branch[0], Some(expected_branch));
             assert_eq!(rec.calls, 1);
         }
+    }
 
+    #[test]
+    fn numbers_within_braces_cannot_be_negative_zero() {
         let err = try_parse("@{-0}").unwrap_err();
         assert!(
             matches!(err, spec::parse::Error::NegativeZero {input} if input == "-0"),
             "negative zero is not accepted, even though it could easily be defaulted to 0 which is a valid value"
+        );
+    }
+
+    #[test]
+    fn numbers_within_braces_can_be_positive_zero() {
+        assert_eq!(
+            parse("@{+0}"),
+            parse("@{0}"),
+            "+ prefixes are allowed though and the same as without it"
         );
     }
 }

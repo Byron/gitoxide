@@ -2,13 +2,13 @@ use git_object::bstr::{BStr, BString};
 use git_revision::spec;
 use std::fmt::Display;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Eq, PartialEq, Ord, PartialOrd)]
 struct Options {
     reject_kind: bool,
     reject_prefix: bool,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Eq, PartialEq, Ord, PartialOrd)]
 struct Recorder {
     // anchors
     find_ref: [Option<BString>; 2],
@@ -64,7 +64,7 @@ impl spec::parse::delegate::Anchor for Recorder {
 }
 
 impl spec::parse::delegate::Navigation for Recorder {
-    fn current_branch_reflog(&mut self, entry: usize) -> Option<()> {
+    fn reflog(&mut self, entry: usize) -> Option<()> {
         self.calls += 1;
         set_val("current_branch_reflog", &mut self.current_branch_reflog_entry, entry)
     }
