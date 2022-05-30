@@ -125,9 +125,8 @@ pub mod parse {
                     .then(|| try_set_prefix(delegate, name))
                     .flatten()
                     .or_else(|| {
-                        long_describe_prefix(name)
-                            .or_else(|| short_describe_prefix(name))
-                            .and_then(|prefix| try_set_prefix(delegate, prefix))
+                        let prefix = long_describe_prefix(name).or_else(|| short_describe_prefix(name))?;
+                        try_set_prefix(delegate, prefix)
                     })
                     .or_else(|| name.is_empty().then(|| ()).or_else(|| delegate.set_ref(name)))
                     .ok_or(Error::Delegate)?;
