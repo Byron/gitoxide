@@ -32,6 +32,24 @@ fn leading_caret_is_range_kind() {
     assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
     assert_eq!(rec.prefix, None);
     assert_eq!(rec.calls, 2);
+
+    let rec = parse("^abcd");
+    assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+    assert_eq!(rec.resolve_ref_input, None);
+    assert_eq!(rec.prefix, prefix("abcd").into());
+    assert_eq!(rec.calls, 2);
+
+    let rec = parse("^r1");
+    assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+    assert_eq!(rec.resolve_ref_input.unwrap(), "r1");
+    assert_eq!(rec.prefix, None);
+    assert_eq!(rec.calls, 2);
+
+    let rec = parse("^hello-0-gabcd-dirty");
+    assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+    assert_eq!(rec.resolve_ref_input, None);
+    assert_eq!(rec.prefix, prefix("abcd").into());
+    assert_eq!(rec.calls, 2);
 }
 
 #[test]
@@ -65,6 +83,13 @@ fn middle_dot_dot_dot_is_merge_base() {
     assert_eq!(rec.resolve_ref_input.unwrap(), "r1");
     assert_eq!(rec.prefix, prefix("abcd").into());
     assert_eq!(rec.calls, 3);
+
+    let rec = parse("abcd-dirty...smart-release-42-g1234-dirty");
+    assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+    assert_eq!(rec.resolve_ref_input, None);
+    assert_eq!(rec.prefix, prefix("abcd").into());
+    assert_eq!(rec.prefix2, prefix("1234").into());
+    assert_eq!(rec.calls, 3);
 }
 
 #[test]
@@ -91,6 +116,13 @@ fn middle_dot_dot_is_range() {
     assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
     assert_eq!(rec.resolve_ref_input.unwrap(), "r1");
     assert_eq!(rec.prefix, prefix("abcd").into());
+    assert_eq!(rec.calls, 3);
+
+    let rec = parse("abcd-dirty..v1.2-42-g1234");
+    assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+    assert_eq!(rec.resolve_ref_input, None);
+    assert_eq!(rec.prefix, prefix("abcd").into());
+    assert_eq!(rec.prefix2, prefix("1234").into());
     assert_eq!(rec.calls, 3);
 }
 
