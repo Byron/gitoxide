@@ -1,6 +1,6 @@
 use git_object::bstr::{BStr, BString};
 use git_revision::spec;
-use std::fmt::Display;
+use git_revision::spec::parse::delegate;
 
 #[derive(Default, Debug, Eq, PartialEq, Ord, PartialOrd)]
 struct Options {
@@ -17,6 +17,7 @@ struct Recorder {
     // navigation
     current_branch_reflog_entry: [Option<usize>; 2],
     nth_checked_out_branch: [Option<usize>; 2],
+    sibling_branch: [Option<String>; 2],
 
     // range
     kind: Option<spec::Kind>,
@@ -38,14 +39,14 @@ impl Recorder {
     }
 }
 
-fn set_val<T: Display>(fn_name: &str, store: &mut [Option<T>; 2], val: T) -> Option<()> {
+fn set_val<T: std::fmt::Debug>(fn_name: &str, store: &mut [Option<T>; 2], val: T) -> Option<()> {
     for entry in store.iter_mut() {
         if entry.is_none() {
             *entry = Some(val);
             return Some(());
         }
     }
-    panic!("called {}() more than twice with '{}'", fn_name, val);
+    panic!("called {}() more than twice with '{:?}'", fn_name, val);
 }
 
 impl spec::parse::delegate::Anchor for Recorder {
@@ -73,6 +74,11 @@ impl spec::parse::delegate::Navigation for Recorder {
         assert_ne!(branch, 0);
         self.calls += 1;
         set_val("nth_checked_out_branch", &mut self.nth_checked_out_branch, branch)
+    }
+
+    fn sibling_branch(&mut self, kind: delegate::SiblingBranch) -> Option<()> {
+        self.calls += 1;
+        set_val("sibling_branch", &mut self.sibling_branch, format!("{:?}", kind))
     }
 }
 

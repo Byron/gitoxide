@@ -5,6 +5,8 @@ use bstr::BString;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Sibling branches like 'upstream' or 'push' require a branch name with remote configuration, got {:?}", .name)]
+    SiblingBranchNeedsBranchName { name: BString },
     #[error("Reflog entries require a ref name, got {:?}", .name)]
     ReflogEntryNeedsRefName { name: BString },
     #[error("A reference name must be followed by positive numbers in '@{{n}}', got {:?}", .nav)]
@@ -55,7 +57,7 @@ pub mod delegate {
 
     /// Once an anchor is set one can adjust it using navigation methods.
     pub trait Navigation {
-        /// Lookup the reflog of the previously set reference, or dereference `HEAD` to its symbolic reference
+        /// Lookup the reflog of the previously set reference, or dereference `HEAD` to its reference
         /// to obtain the ref name (as opposed to `HEAD` itself).
         /// If there is no such reflog entry, return `None`.
         fn reflog(&mut self, entry: usize) -> Option<()>;
@@ -64,6 +66,34 @@ pub mod delegate {
         /// `2` is the one before that.
         /// Return `None` if there is no branch as the checkout history (via the reflog) isn't long enough.
         fn nth_checked_out_branch(&mut self, branch_no: usize) -> Option<()>;
+
+        /// Lookup the previously set branch or dereference `HEAD` to its reference to use its name to lookup the sibling branch of `kind`
+        /// in the configuration (typically in `refs/remotes/…`). The sibling branches are always local tracking branches.
+        /// Return `None` of no such configuration exists and no sibling could be found, which is also the case for all reference outside
+        /// of `refs/heads/`.
+        /// Note that the caller isn't aware if the previously set reference is a branch or not.
+        fn sibling_branch(&mut self, kind: SiblingBranch) -> Option<()>;
+    }
+
+    /// The kind of sibling branch to obtain.
+    #[derive(Debug, Copy, Clone)]
+    pub enum SiblingBranch {
+        /// The upstream branch as configured in `branch.<name>.remote` or `branch.<name>.merge`.
+        Upstream,
+        Push,
+    }
+
+    impl SiblingBranch {
+        /// Parse `input` as branch representation, if possible.
+        pub fn from_str(input: &BStr) -> Option<Self> {
+            if input.eq_ignore_ascii_case(b"u") || input.eq_ignore_ascii_case(b"upstream") {
+                SiblingBranch::Upstream.into()
+            } else if input.eq_ignore_ascii_case(b"push") {
+                SiblingBranch::Push.into()
+            } else {
+                None
+            }
+        }
     }
 }
 
@@ -78,6 +108,7 @@ impl<T> Delegate for T where T: delegate::Anchor + delegate::Navigation + delega
 
 pub(crate) mod function {
     use crate::spec;
+    use crate::spec::parse::delegate::SiblingBranch;
     use crate::spec::parse::{Delegate, Error};
     use bstr::{BStr, ByteSlice};
     use std::convert::TryInto;
@@ -165,7 +196,7 @@ pub(crate) mod function {
 
         let name = &input[..sep_pos.unwrap_or(input.len())].as_bstr();
         let sep = sep_pos.map(|pos| input[pos]);
-        let mut has_ref = false;
+        let mut has_ref_or_implied_name = name.is_empty();
         if name.is_empty() && sep == Some(b'@') && sep_pos.and_then(|pos| input.get(pos + 1)) != Some(&b'{') {
             delegate.find_ref("HEAD".into()).ok_or(Error::Delegate)?;
         } else {
@@ -179,7 +210,7 @@ pub(crate) mod function {
                 .or_else(|| {
                     name.is_empty().then(|| ()).or_else(|| {
                         let res = delegate.find_ref(name)?;
-                        has_ref = true;
+                        has_ref_or_implied_name = true;
                         res.into()
                     })
                 })
@@ -202,13 +233,19 @@ pub(crate) mod function {
                                 } else {
                                     return Err(Error::RefnameNeedsPositiveReflogEntries { nav: nav.into() });
                                 }
-                            } else if has_ref || name.is_empty() {
+                            } else if has_ref_or_implied_name {
                                 delegate
                                     .reflog(n.try_into().expect("non-negative isize fits usize"))
                                     .ok_or(Error::Delegate)?;
                             } else {
                                 return Err(Error::ReflogEntryNeedsRefName { name: (*name).into() });
                             }
+                        } else if let Some(kind) = SiblingBranch::from_str(nav) {
+                            if has_ref_or_implied_name {
+                                delegate.sibling_branch(kind).ok_or(Error::Delegate)
+                            } else {
+                                Err(Error::SiblingBranchNeedsBranchName { name: (*name).into() })
+                            }?
                         } else {
                             todo!("try to interpret nav as non-number")
                         }

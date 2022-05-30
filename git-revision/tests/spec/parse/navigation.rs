@@ -59,6 +59,52 @@ mod at_symbol {
     }
 
     #[test]
+    fn sibling_branch_current_branch() {
+        for (spec, kind_name) in [("@{u}", "Upstream"), ("@{push}", "Push"), ("@{UPSTREAM}", "Upstream")] {
+            let rec = parse(spec);
+
+            assert!(rec.kind.is_none());
+            assert_eq!(rec.find_ref[0], None);
+            assert_eq!(rec.prefix[0], None, "neither ref nor prefix are explicitly set");
+            assert_eq!(rec.sibling_branch[0].as_deref(), Some(kind_name));
+            assert_eq!(rec.calls, 1);
+        }
+    }
+
+    #[test]
+    fn sibling_branch_for_branch_name() {
+        for (spec, ref_name, kind_name) in [
+            ("r1@{U}", "r1", "Upstream"),
+            ("refs/heads/main@{Push}", "refs/heads/main", "Push"),
+            ("refs/worktree/private@{UpStreaM}", "refs/worktree/private", "Upstream"),
+        ] {
+            let rec = parse(spec);
+
+            assert!(rec.kind.is_none());
+            assert_eq!(rec.get_ref(0), ref_name,);
+            assert_eq!(rec.prefix[0], None, "neither ref nor prefix are explicitly set");
+            assert_eq!(
+                rec.sibling_branch[0].as_deref(),
+                Some(kind_name),
+                "note that we do not know if something is a branch or not and make the call even if it would not be allowed. Configuration decides"
+            );
+            assert_eq!(rec.calls, 2);
+        }
+    }
+
+    #[test]
+    fn sibling_branch_for_hash_is_invalid() {
+        for (spec, full_name) in [
+            ("1234@{u}", "1234"),
+            ("abcd-dirty@{push}", "abcd-dirty"),
+            ("v1.2.3-0-g1234@{upstream}", "v1.2.3-0-g1234"),
+        ] {
+            let err = try_parse(spec).unwrap_err();
+            assert!(matches!(err, spec::parse::Error::SiblingBranchNeedsBranchName {name} if name == full_name));
+        }
+    }
+
+    #[test]
     fn nth_checked_out_branch_for_refname_is_invalid() {
         let err = try_parse("r1@{-1}").unwrap_err();
         assert!(
