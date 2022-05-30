@@ -5,6 +5,8 @@ use bstr::BString;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("The opening brace in {:?} was not matched", .input)]
+    UnclosedBracePair { input: BString },
     #[error("Cannot set spec kind more than once. Previous value was {:?}, now it is {:?}", .prev_kind, .kind)]
     KindSetTwice { prev_kind: spec::Kind, kind: spec::Kind },
     #[error("The @ character is either standing alone or followed by `{{<content>}}`, got {:?}", .input)]
@@ -91,9 +93,14 @@ pub(crate) mod function {
         (iter.count() == 1).then(|| candidate).flatten()
     }
 
-    // TODO: impl
-    fn parens(_input: &[u8]) -> Option<(&BStr, &BStr)> {
-        None
+    fn parens(input: &[u8]) -> Result<Option<(&BStr, &BStr)>, Error> {
+        if input.get(0) != Some(&b'{') {
+            return Ok(None);
+        }
+        let pos = input
+            .find_byte(b'}')
+            .ok_or_else(|| Error::UnclosedBracePair { input: input.into() })?;
+        Ok(Some((input[1..pos].as_bstr(), input[pos + 1..].as_bstr())))
     }
 
     fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
@@ -140,8 +147,8 @@ pub(crate) mod function {
         let past_sep = input[sep_pos.map(|pos| pos + 1).unwrap_or(input.len())..].as_bstr();
         input = match sep {
             Some(b'@') => {
-                match parens(past_sep).ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
-                    Ok((_spec, rest)) => rest,
+                match parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
+                    Ok((_nav, rest)) => rest,
                     Err(_) if name.is_empty() => past_sep,
                     Err(err) => return Err(err),
                 }

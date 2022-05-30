@@ -115,6 +115,6 @@ fn all_characters_are_taken_verbatim_which_includes_whitespace() {
     assert_eq!(rec.resolve_ref_input.unwrap(), spec);
 }
 
-mod revision;
-
+mod anchor;
+mod navigation;
 mod range;
