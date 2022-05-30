@@ -23,8 +23,9 @@ pub mod delegate {
 
     /// Usually the first methods to call when parsing a rev-spec to set an anchor.
     /// Methods can be called multiple time to either try input or to parse another rev-spec that is part of a range.
-    /// In one case they will not be called at all: `@{[-]n}` indicates the current branch (what `HEAD` dereferences to),
-    /// without ever naming it.
+    ///
+    /// In one case they will not be called at all, e.g. `@{[-]n}` indicates the current branch (what `HEAD` dereferences to),
+    /// without ever naming it, and so does `@{upstream}` or `@{<date>}`.
     pub trait Anchor {
         /// Resolve `name` as reference which might not be a valid reference name. The name may be partial like `main` or full like
         /// `refs/heads/main` solely depending on the users input.
@@ -47,10 +48,7 @@ pub mod delegate {
     }
 
     /// Once an anchor is set one can adjust it using navigation methods.
-    pub trait Navigation {
-        fn nth_ancestor(&mut self, n: usize) -> Option<()>;
-        fn nth_parent(&mut self, n: usize) -> Option<()>;
-    }
+    pub trait Navigation {}
 }
 
 /// A delegate to be informed about parse events, with methods split into categories.

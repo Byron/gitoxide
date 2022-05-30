@@ -56,15 +56,7 @@ impl spec::parse::delegate::Anchor for Recorder {
     }
 }
 
-impl spec::parse::delegate::Navigation for Recorder {
-    fn nth_ancestor(&mut self, _n: usize) -> Option<()> {
-        todo!()
-    }
-
-    fn nth_parent(&mut self, _n: usize) -> Option<()> {
-        todo!()
-    }
-}
+impl spec::parse::delegate::Navigation for Recorder {}
 
 impl spec::parse::delegate::Kind for Recorder {
     fn kind(&mut self, kind: spec::Kind) -> Option<()> {
