@@ -16,6 +16,7 @@ struct Recorder {
 
     // navigation
     current_branch_reflog_entry: [Option<usize>; 2],
+    nth_checked_out_branch: [Option<usize>; 2],
 
     // range
     kind: Option<spec::Kind>,
@@ -66,6 +67,12 @@ impl spec::parse::delegate::Navigation for Recorder {
     fn current_branch_reflog(&mut self, entry: usize) -> Option<()> {
         self.calls += 1;
         set_val("current_branch_reflog", &mut self.current_branch_reflog_entry, entry)
+    }
+
+    fn nth_checked_out_branch(&mut self, branch: usize) -> Option<()> {
+        assert_ne!(branch, 0);
+        self.calls += 1;
+        set_val("nth_checked_out_branch", &mut self.nth_checked_out_branch, branch)
     }
 }
 

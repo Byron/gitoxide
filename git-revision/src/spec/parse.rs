@@ -5,6 +5,8 @@ use bstr::BString;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Negative zeroes are invalid: {:?} - remove the '-'", .input)]
+    NegativeZero { input: BString },
     #[error("The opening brace in {:?} was not matched", .input)]
     UnclosedBracePair { input: BString },
     #[error("Cannot set spec kind more than once. Previous value was {:?}, now it is {:?}", .prev_kind, .kind)]
@@ -52,6 +54,11 @@ pub mod delegate {
         /// Lookup the reflog of the current branch, which is what `HEAD` dereferences to, and _not_ `HEAD` itself.
         /// If there is no such reflog entry, return `None`.
         fn current_branch_reflog(&mut self, entry: usize) -> Option<()>;
+
+        /// When looking at `HEAD`, `branch_no` is the non-null checkout in the path, e.g. `1` means the last branch checked out,
+        /// `2` is the one before that.
+        /// Return `None` if there is no branch as the checkout history (via the reflog) isn't long enough.
+        fn nth_checked_out_branch(&mut self, branch_no: usize) -> Option<()>;
     }
 }
 
@@ -107,9 +114,19 @@ pub(crate) mod function {
         Ok(Some((input[1..pos].as_bstr(), input[pos + 1..].as_bstr())))
     }
 
-    fn try_parse<T: FromStr>(n: &BStr) -> Option<T> {
-        let n = n.to_str().ok()?;
-        n.parse().ok()
+    fn try_parse<T: FromStr + PartialEq + Default>(input: &BStr) -> Result<Option<T>, Error> {
+        input
+            .to_str()
+            .ok()
+            .and_then(|n| {
+                n.parse().ok().map(|n| {
+                    if n == T::default() && input[0] == b'-' {
+                        return Err(Error::NegativeZero { input: input.into() });
+                    };
+                    Ok(n)
+                })
+            })
+            .transpose()
     }
 
     fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
@@ -162,13 +179,22 @@ pub(crate) mod function {
             Some(b'@') => {
                 match parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
                     Ok((nav, rest)) => {
-                        if let Some(n) = try_parse::<isize>(nav) {
-                            if name.is_empty() && n > -1 {
-                                delegate
-                                    .current_branch_reflog(n.try_into().expect("non-negative isize fits usize"))
-                                    .ok_or(Error::Delegate)?;
-                            } else {
-                                todo!("call correct number-handler")
+                        if let Some(n) = try_parse::<isize>(nav)? {
+                            match n {
+                                n if name.is_empty() => {
+                                    if n < 0 {
+                                        delegate
+                                            .nth_checked_out_branch(
+                                                n.abs().try_into().expect("non-negative isize fits usize"),
+                                            )
+                                            .ok_or(Error::Delegate)?;
+                                    } else {
+                                        delegate
+                                            .current_branch_reflog(n.try_into().expect("non-negative isize fits usize"))
+                                            .ok_or(Error::Delegate)?;
+                                    }
+                                }
+                                _ => todo!("call correct number-handler"),
                             }
                         } else {
                             todo!("try to interpret nav as non-number")
