@@ -85,7 +85,7 @@ pub mod delegate {
 
     impl SiblingBranch {
         /// Parse `input` as branch representation, if possible.
-        pub fn from_str(input: &BStr) -> Option<Self> {
+        pub fn parse(input: &BStr) -> Option<Self> {
             if input.eq_ignore_ascii_case(b"u") || input.eq_ignore_ascii_case(b"upstream") {
                 SiblingBranch::Upstream.into()
             } else if input.eq_ignore_ascii_case(b"push") {
@@ -240,7 +240,7 @@ pub(crate) mod function {
                             } else {
                                 return Err(Error::ReflogEntryNeedsRefName { name: (*name).into() });
                             }
-                        } else if let Some(kind) = SiblingBranch::from_str(nav) {
+                        } else if let Some(kind) = SiblingBranch::parse(nav) {
                             if has_ref_or_implied_name {
                                 delegate.sibling_branch(kind).ok_or(Error::Delegate)
                             } else {
