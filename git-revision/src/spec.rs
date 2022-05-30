@@ -86,7 +86,7 @@ pub mod parse {
                     sep_pos = Some(pos);
                     break;
                 }
-                cursor = &input[pos + 1..];
+                cursor = &cursor[pos + 1..];
             }
 
             let name = &input[..sep_pos.unwrap_or(input.len())].as_bstr();

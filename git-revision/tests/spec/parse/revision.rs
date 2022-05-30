@@ -2,6 +2,62 @@ use crate::spec::parse::{parse, try_parse, try_parse_opts, Options};
 use git_revision::spec;
 
 #[test]
+#[ignore]
+fn full_describe_ouptput_parses_hash_portion_as_prefix() {
+    let rec = parse("cargo-smart-release--679-g3bee7fb");
+    assert!(rec.kind.is_none());
+    assert_eq!(
+        rec.resolve_ref_input, None,
+        "references are not resolved in describe output"
+    );
+    assert_eq!(rec.prefix, Some(git_hash::Prefix::from_hex("3bee7fb").unwrap()));
+    assert_eq!(rec.calls, 1);
+}
+
+#[test]
+#[ignore]
+fn any_hash_without_suffix_and_prefix_g_is_assumed_to_be_describe_output() {
+    let spec = "foo-bar-gabcdef1";
+    let rec = parse(spec);
+    assert!(rec.kind.is_none());
+    assert_eq!(rec.resolve_ref_input, None);
+    assert_eq!(
+        rec.prefix,
+        Some(git_hash::Prefix::from_hex("abcdef1").unwrap()),
+        "git does not parse very precisely here"
+    );
+    assert_eq!(rec.calls, 1);
+}
+
+#[test]
+fn full_describe_ouptput_with_dirty_suffix_is_not_specifically_recognized() {
+    let spec = "cargo-smart-release-679-g3bee7fb-dirty";
+    let rec = parse(spec);
+    assert!(rec.kind.is_none());
+    assert_eq!(
+        rec.resolve_ref_input.unwrap(),
+        spec,
+        "for all we know this could be a reference"
+    );
+    assert_eq!(rec.prefix, None, "git does not see this as prefix anymore");
+    assert_eq!(rec.calls, 1);
+}
+
+#[test]
+fn partial_describe_ouptput_with_dirty_suffix_is_not_specifically_recognized() {
+    let spec = "abcdef1-dirty";
+    let rec = parse(spec);
+    assert!(rec.kind.is_none());
+    assert_eq!(
+        rec.resolve_ref_input.unwrap(),
+        spec,
+        "for all we know this could be a reference"
+    );
+    assert_eq!(rec.prefix, None, "git does not see this as prefix anymore");
+    assert_eq!(rec.calls, 1);
+}
+
+#[test]
 fn short_hash_likes_are_considered_prefixes() {
     let rec = parse("abCD");
     assert!(rec.kind.is_none());
