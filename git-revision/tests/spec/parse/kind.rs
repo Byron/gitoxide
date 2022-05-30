@@ -34,26 +34,26 @@ mod range {
     fn leading_caret() {
         let rec = parse("^HEAD");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
-        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 2);
 
         let rec = parse("^abcd");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input, None);
-        assert_eq!(rec.prefix, prefix("abcd").into());
+        assert_eq!(rec.find_ref[0], None);
+        assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 2);
 
         let rec = parse("^r1");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "r1");
-        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.get_ref(0), "r1");
+        assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 2);
 
         let rec = parse("^hello-0-gabcd-dirty");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input, None);
-        assert_eq!(rec.prefix, prefix("abcd").into());
+        assert_eq!(rec.find_ref[0], None);
+        assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 2);
     }
 
@@ -61,8 +61,8 @@ mod range {
     fn trailing_dot_dot() {
         let rec = parse("HEAD..");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
-        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 2);
     }
 
@@ -70,40 +70,40 @@ mod range {
     fn middle_dot_dot() {
         let rec = parse("@..HEAD");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
-        assert_eq!(rec.resolve_ref_input2.unwrap(), "HEAD");
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.get_ref(1), "HEAD");
         assert_eq!(rec.calls, 3);
 
         let rec = parse("r1..r2");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "r1");
-        assert_eq!(rec.resolve_ref_input2.unwrap(), "r2");
+        assert_eq!(rec.get_ref(0), "r1");
+        assert_eq!(rec.get_ref(1), "r2");
         assert_eq!(rec.calls, 3);
 
         let rec = parse("abcd..1234");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.prefix, prefix("abcd").into());
-        assert_eq!(rec.prefix2, prefix("1234").into());
+        assert_eq!(rec.prefix[0], prefix("abcd").into());
+        assert_eq!(rec.prefix[1], prefix("1234").into());
         assert_eq!(rec.calls, 3);
 
         let rec = parse("r1..abcd");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "r1");
-        assert_eq!(rec.prefix, prefix("abcd").into());
+        assert_eq!(rec.get_ref(0), "r1");
+        assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 3);
 
         let rec = parse("abcd-dirty..v1.2-42-g1234");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input, None);
-        assert_eq!(rec.prefix, prefix("abcd").into());
-        assert_eq!(rec.prefix2, prefix("1234").into());
+        assert_eq!(rec.find_ref[0], None);
+        assert_eq!(rec.prefix[0], prefix("abcd").into());
+        assert_eq!(rec.prefix[1], prefix("1234").into());
         assert_eq!(rec.calls, 3);
 
         let rec = parse("v1.2-42-g1234..abcd-dirty");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.resolve_ref_input, None);
-        assert_eq!(rec.prefix, prefix("1234").into());
-        assert_eq!(rec.prefix2, prefix("abcd").into());
+        assert_eq!(rec.find_ref[0], None);
+        assert_eq!(rec.prefix[0], prefix("1234").into());
+        assert_eq!(rec.prefix[1], prefix("abcd").into());
         assert_eq!(rec.calls, 3);
     }
 }
@@ -117,8 +117,8 @@ mod mergebase {
     fn trailing_dot_dot_dot() {
         let rec = parse("HEAD...");
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
-        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 2);
     }
 
@@ -126,21 +126,21 @@ mod mergebase {
     fn middle_dot_dot_dot() {
         let rec = parse("HEAD...@");
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
-        assert_eq!(rec.resolve_ref_input2.unwrap(), "HEAD");
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.get_ref(1), "HEAD");
         assert_eq!(rec.calls, 3);
 
         let rec = parse("r1...abcd");
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
-        assert_eq!(rec.resolve_ref_input.unwrap(), "r1");
-        assert_eq!(rec.prefix, prefix("abcd").into());
+        assert_eq!(rec.get_ref(0), "r1");
+        assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 3);
 
         let rec = parse("v1.2.3-beta.1-42-g1234-dirty...abcd-dirty");
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
-        assert_eq!(rec.resolve_ref_input, None);
-        assert_eq!(rec.prefix, prefix("1234").into());
-        assert_eq!(rec.prefix2, prefix("abcd").into());
+        assert_eq!(rec.find_ref[0], None);
+        assert_eq!(rec.prefix[0], prefix("1234").into());
+        assert_eq!(rec.prefix[1], prefix("abcd").into());
         assert_eq!(rec.calls, 3);
     }
 }

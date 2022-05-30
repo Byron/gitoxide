@@ -107,6 +107,11 @@ pub(crate) mod function {
         Ok(Some((input[1..pos].as_bstr(), input[pos + 1..].as_bstr())))
     }
 
+    fn try_parse<T: FromStr>(n: &BStr) -> Option<T> {
+        let n = n.to_str().ok()?;
+        n.parse().ok()
+    }
+
     fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
         let mut sep_pos = None;
         let mut consecutive_hex_chars = Some(0);
@@ -157,7 +162,7 @@ pub(crate) mod function {
             Some(b'@') => {
                 match parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
                     Ok((nav, rest)) => {
-                        if let Some(n) = nav.to_str().ok().and_then(|n| <isize as FromStr>::from_str(n).ok()) {
+                        if let Some(n) = try_parse::<isize>(nav) {
                             if name.is_empty() && n > -1 {
                                 delegate
                                     .current_branch_reflog(n.try_into().expect("non-negative isize fits usize"))

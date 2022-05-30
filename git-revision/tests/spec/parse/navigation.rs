@@ -18,12 +18,12 @@ mod at {
             let rec = parse(spec);
 
             assert!(rec.kind.is_none());
-            assert_eq!(rec.resolve_ref_input, None,);
+            assert_eq!(rec.find_ref[0], None,);
             assert_eq!(
-                rec.prefix, None,
+                rec.prefix[0], None,
                 "neither ref nor prefixes are set, straight ot navigation"
             );
-            assert_eq!(rec.current_reflog_entry, Some(expected_entry));
+            assert_eq!(rec.current_branch_reflog_entry[0], Some(expected_entry));
             assert_eq!(rec.calls, 1);
         }
     }

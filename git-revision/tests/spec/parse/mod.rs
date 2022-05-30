@@ -1,5 +1,6 @@
 use git_object::bstr::{BStr, BString};
 use git_revision::spec;
+use std::fmt::Display;
 
 #[derive(Default, Debug)]
 struct Options {
@@ -9,14 +10,16 @@ struct Options {
 
 #[derive(Default, Debug)]
 struct Recorder {
-    resolve_ref_input: Option<BString>,
-    resolve_ref_input2: Option<BString>,
-    prefix: Option<git_hash::Prefix>,
-    prefix2: Option<git_hash::Prefix>,
+    // anchors
+    find_ref: [Option<BString>; 2],
+    prefix: [Option<git_hash::Prefix>; 2],
+
+    // navigation
+    current_branch_reflog_entry: [Option<usize>; 2],
+
+    // range
     kind: Option<spec::Kind>,
 
-    current_reflog_entry: Option<usize>,
-    current_reflog_entry2: Option<usize>,
     calls: usize,
     opts: Options,
 }
@@ -28,19 +31,26 @@ impl Recorder {
             ..Default::default()
         }
     }
+
+    fn get_ref(&self, idx: usize) -> &BStr {
+        self.find_ref[idx].as_ref().map(|b| b.as_ref()).unwrap()
+    }
+}
+
+fn set_val<T: Display>(fn_name: &str, store: &mut [Option<T>; 2], val: T) -> Option<()> {
+    for entry in store.iter_mut() {
+        if entry.is_none() {
+            *entry = Some(val);
+            return Some(());
+        }
+    }
+    panic!("called {}() more than twice with '{}'", fn_name, val);
 }
 
 impl spec::parse::delegate::Anchor for Recorder {
     fn find_ref(&mut self, input: &BStr) -> Option<()> {
-        if self.resolve_ref_input.is_none() {
-            self.resolve_ref_input = input.to_owned().into();
-        } else if self.resolve_ref_input2.is_none() {
-            self.resolve_ref_input2 = input.to_owned().into();
-        } else {
-            panic!("called resolve_ref more than twice with '{}'", input);
-        }
         self.calls += 1;
-        Some(())
+        set_val("find_ref", &mut self.find_ref, input.into())
     }
 
     fn disambiguate_prefix(&mut self, input: git_hash::Prefix) -> Option<()> {
@@ -48,28 +58,14 @@ impl spec::parse::delegate::Anchor for Recorder {
         if self.opts.reject_prefix {
             return None;
         }
-        if self.prefix.is_none() {
-            self.prefix = input.into();
-        } else if self.prefix2.is_none() {
-            self.prefix2 = input.into();
-        } else {
-            panic!("called find_by_prefix more than twice with '{}'", input);
-        }
-        Some(())
+        set_val("disambiguate_prefix", &mut self.prefix, input)
     }
 }
 
 impl spec::parse::delegate::Navigation for Recorder {
     fn current_branch_reflog(&mut self, entry: usize) -> Option<()> {
         self.calls += 1;
-        if self.current_reflog_entry.is_none() {
-            self.current_reflog_entry = Some(entry);
-        } else if self.current_reflog_entry2.is_none() {
-            self.current_reflog_entry2 = Some(entry);
-        } else {
-            panic!("called current_branch_reflog more than twice with '{}'", entry);
-        }
-        Some(())
+        set_val("current_branch_reflog", &mut self.current_branch_reflog_entry, entry)
     }
 }
 
@@ -119,7 +115,7 @@ fn all_characters_are_taken_verbatim_which_includes_whitespace() {
     let spec = "  HEAD \n";
     let rec = parse(spec);
     assert!(rec.kind.is_none());
-    assert_eq!(rec.resolve_ref_input.unwrap(), spec);
+    assert_eq!(rec.get_ref(0), spec);
 }
 
 mod anchor;

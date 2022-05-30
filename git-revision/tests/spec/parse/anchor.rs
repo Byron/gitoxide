@@ -5,11 +5,8 @@ mod describe {
     fn full_format_parses_hash_portion_as_prefix() {
         let rec = parse("cargo-smart-release-679-g3bee7fb");
         assert!(rec.kind.is_none());
-        assert_eq!(
-            rec.resolve_ref_input, None,
-            "references are not resolved in describe output"
-        );
-        assert_eq!(rec.prefix, Some(git_hash::Prefix::from_hex("3bee7fb").unwrap()));
+        assert_eq!(rec.find_ref[0], None, "references are not resolved in describe output");
+        assert_eq!(rec.prefix[0], Some(git_hash::Prefix::from_hex("3bee7fb").unwrap()));
         assert_eq!(rec.calls, 1);
     }
 
@@ -25,8 +22,8 @@ mod describe {
         )
         .unwrap();
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), spec);
-        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.get_ref(0), spec);
+        assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 2, "call prefix, then call ref");
     }
 
@@ -35,9 +32,9 @@ mod describe {
         let spec = "foo--bar-gabcdef1";
         let rec = parse(spec);
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input, None);
+        assert_eq!(rec.find_ref[0], None);
         assert_eq!(
-            rec.prefix,
+            rec.prefix[0],
             Some(git_hash::Prefix::from_hex("abcdef1").unwrap()),
             "git does not parse very precisely here"
         );
@@ -47,11 +44,11 @@ mod describe {
             let rec = parse(invalid_describe);
             assert!(rec.kind.is_none());
             assert_eq!(
-                rec.resolve_ref_input.unwrap(),
+                rec.get_ref(0),
                 invalid_describe,
                 "we don't consider this a prefix from a describe block"
             );
-            assert_eq!(rec.prefix, None);
+            assert_eq!(rec.prefix[0], None);
             assert_eq!(rec.calls, 1);
         }
     }
@@ -60,8 +57,8 @@ mod describe {
     fn full_format_with_dirty_suffix_is_recognized() {
         let rec = parse("cargo-smart-release-679-g3bee7fb-dirty");
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input, None, "git does not see this as prefix, we do");
-        assert_eq!(rec.prefix, Some(git_hash::Prefix::from_hex("3bee7fb").unwrap()),);
+        assert_eq!(rec.find_ref[0], None, "git does not see this as prefix, we do");
+        assert_eq!(rec.prefix[0], Some(git_hash::Prefix::from_hex("3bee7fb").unwrap()),);
         assert_eq!(rec.calls, 1);
     }
 
@@ -70,9 +67,9 @@ mod describe {
         let spec = "abcdef1-dirty";
         let rec = parse(spec);
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input, None,);
+        assert_eq!(rec.find_ref[0], None,);
         assert_eq!(
-            rec.prefix,
+            rec.prefix[0],
             Some(git_hash::Prefix::from_hex("abcdef1").unwrap()),
             "git does not see this as prefix anymore, we do"
         );
@@ -84,8 +81,8 @@ mod describe {
         let spec = "abcdef1-dirty-laundry";
         let rec = parse(spec);
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), spec);
-        assert_eq!(rec.prefix, None,);
+        assert_eq!(rec.get_ref(0), spec);
+        assert_eq!(rec.prefix[0], None,);
         assert_eq!(rec.calls, 1, "we don't even try the prefix");
     }
 
@@ -101,8 +98,8 @@ mod describe {
         )
         .unwrap();
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), spec);
-        assert_eq!(rec.prefix, None,);
+        assert_eq!(rec.get_ref(0), spec);
+        assert_eq!(rec.prefix[0], None,);
         assert_eq!(rec.calls, 2);
     }
 }
@@ -115,21 +112,21 @@ mod hash {
         let rec = parse("abCD");
         assert!(rec.kind.is_none());
         assert_eq!(
-            rec.resolve_ref_input, None,
+            rec.find_ref[0], None,
             "references are not resolved if prefix lookups succeed"
         );
-        assert_eq!(rec.prefix, Some(git_hash::Prefix::from_hex("abcd").unwrap()));
+        assert_eq!(rec.prefix[0], Some(git_hash::Prefix::from_hex("abcd").unwrap()));
         assert_eq!(rec.calls, 1);
 
         let rec = parse("gabcd123");
         assert!(rec.kind.is_none());
         assert_eq!(
-            rec.resolve_ref_input.unwrap(),
+            rec.get_ref(0),
             "gabcd123",
             "ref lookups are performed if it doesn't look like a hex sha"
         );
         assert_eq!(
-            rec.prefix, None,
+            rec.prefix[0], None,
             "prefix lookups are not attempted at all (and they are impossible even)"
         );
         assert_eq!(rec.calls, 1);
@@ -146,8 +143,8 @@ mod hash {
         )
         .unwrap();
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), "abCD");
-        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.get_ref(0), "abCD");
+        assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 2);
     }
 
@@ -163,8 +160,8 @@ mod hash {
         )
         .unwrap();
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), spec);
-        assert_eq!(rec.prefix, None);
+        assert_eq!(rec.get_ref(0), spec);
+        assert_eq!(rec.prefix[0], None);
         assert_eq!(
             rec.calls, 1,
             "we can't create a prefix from it, hence only ref resolution is attempted"
@@ -180,7 +177,7 @@ mod refnames {
     fn at_by_iteself_is_shortcut_for_head() {
         let rec = parse("@");
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        assert_eq!(rec.get_ref(0), "HEAD");
     }
 
     #[test]
@@ -199,7 +196,7 @@ mod refnames {
     fn refname_head() {
         let rec = parse("HEAD");
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEAD");
+        assert_eq!(rec.get_ref(0), "HEAD");
     }
 
     #[test]
@@ -207,20 +204,20 @@ mod refnames {
         let spec = "v1.2.3.4-beta.1";
         let rec = parse(spec);
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), spec);
+        assert_eq!(rec.get_ref(0), spec);
     }
 
     #[test]
     fn refname_with_head_prefix() {
         let rec = parse("HEADfake");
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), "HEADfake");
+        assert_eq!(rec.get_ref(0), "HEADfake");
     }
 
     #[test]
     fn full_head_ref_name() {
         let rec = parse("refs/heads/main");
         assert!(rec.kind.is_none());
-        assert_eq!(rec.resolve_ref_input.unwrap(), "refs/heads/main");
+        assert_eq!(rec.get_ref(0), "refs/heads/main");
     }
 }
