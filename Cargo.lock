@@ -970,6 +970,13 @@ dependencies = [
 [[package]]
 name = "git-date"
 version = "0.0.0"
+dependencies = [
+ "bstr",
+ "document-features",
+ "git-testtools",
+ "itoa 1.0.2",
+ "serde",
+]
 
 [[package]]
 name = "git-diff"

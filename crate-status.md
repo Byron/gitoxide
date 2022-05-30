@@ -252,6 +252,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 
 ### git-date
 * [ ] parse git dates
+* [ ] serialize `Time`
  
 ### git-credentials
 * [x] launch git credentials helpers with a given action
