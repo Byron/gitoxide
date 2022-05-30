@@ -60,6 +60,25 @@ pub mod parse {
         use crate::spec::parse::{Delegate, Error};
         use bstr::{BStr, ByteSlice};
 
+        fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr) -> Option<()> {
+            git_hash::Prefix::from_hex(hex_name.to_str().expect("hexadecimal only"))
+                .ok()
+                .and_then(|prefix| delegate.set_prefix(prefix))
+        }
+
+        fn describe_prefix(name: &BStr) -> Option<&BStr> {
+            let mut iter = name.rsplit(|b| *b == b'-');
+            let candidate = iter.by_ref().find_map(|substr| {
+                if substr.get(0)? != &b'g' {
+                    return None;
+                };
+                let rest = substr.get(1..)?;
+                rest.iter().all(|b| b.is_ascii_hexdigit()).then(|| rest.as_bstr())
+            });
+            iter.any(|token| !token.is_empty()).then(|| candidate).flatten()
+        }
+
+        // TODO: impl
         fn parens(_input: &[u8]) -> Option<(&BStr, &BStr)> {
             None
         }
@@ -95,12 +114,9 @@ pub mod parse {
                 delegate.set_ref("HEAD".into()).ok_or(Error::Delegate)?;
             } else {
                 (consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN)
-                    .then(|| {
-                        git_hash::Prefix::from_hex(name.to_str().expect("hexadecimal only"))
-                            .ok()
-                            .and_then(|prefix| delegate.set_prefix(prefix))
-                    })
+                    .then(|| try_set_prefix(delegate, name))
                     .flatten()
+                    .or_else(|| describe_prefix(name).and_then(|prefix| try_set_prefix(delegate, prefix)))
                     .or_else(|| name.is_empty().then(|| ()).or_else(|| delegate.set_ref(name)))
                     .ok_or(Error::Delegate)?;
             }
