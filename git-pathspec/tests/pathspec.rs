@@ -1,5 +1,6 @@
 use bstr::BString;
 use git_attributes::State;
+use git_pathspec::parse::Error;
 use git_pathspec::{MagicSignature, Pattern};
 
 #[test]
@@ -89,49 +90,44 @@ fn can_parse() {
 }
 
 #[test]
-fn should_fail_on_whitespace_or_invalid_keywords() {
-    use git_pathspec::parse::Error;
-    let inputs = vec![
-        (
-            ":(top, exclude)some/path",
-            Error::InvalidSignature {
-                found_signature: BString::from(" exclude"),
-            },
-        ),
-        (
-            ":( )some/path",
-            Error::InvalidSignature {
-                found_signature: BString::from(" "),
-            },
-        ),
-        (
-            ":(tp)some/path",
-            Error::InvalidSignature {
-                found_signature: BString::from("tp"),
-            },
-        ),
-        (
-            ":(attr:+someAttr)some/path",
-            Error::InvalidAttribute {
-                attribute: BString::from("+someAttr"),
-            },
-        ),
-        (
-            ":(top",
-            Error::MissingClosingParenthesis {
-                pathspec: BString::from(":(top"),
-            },
-        ),
-    ];
+fn should_fail_on_invalid_keywords() {
+    let inputs = vec![":( )some/path", ":(tp)some/path", ":(top, exclude)some/path"];
 
-    for (input, _expected) in inputs {
+    for input in inputs {
         assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
 
         let output = git_pathspec::parse(input.as_bytes());
         assert!(output.is_err());
+        assert!(matches!(output.unwrap_err(), Error::InvalidKeyword { .. }));
+    }
+}
 
-        // TODO: Find a way to do this without `Eq` trait
-        // assert_eq!(output.unwrap_err()., expected);
+#[test]
+fn should_fail_on_invalid_attributes() {
+    let inputs = vec![
+        ":(attr:+invalidAttr)some/path",
+        ":(attr:validAttr +invalidAttr)some/path",
+    ];
+
+    for input in inputs {
+        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+
+        let output = git_pathspec::parse(input.as_bytes());
+        assert!(output.is_err());
+        assert!(matches!(output.unwrap_err(), Error::InvalidAttribute { .. }));
+    }
+}
+
+#[test]
+fn should_fail_on_missing_parentheses() {
+    let inputs = vec![":(top"];
+
+    for input in inputs {
+        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+
+        let output = git_pathspec::parse(input.as_bytes());
+        assert!(output.is_err());
+        assert!(matches!(output.unwrap_err(), Error::MissingClosingParenthesis { .. }));
     }
 }
 

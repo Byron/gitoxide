@@ -5,8 +5,8 @@ use crate::{MagicSignature, Pattern};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("Found \"{}\", which is not a valid signature", found_signature)]
-    InvalidSignature { found_signature: BString },
+    #[error("Found \"{}\", which is not a valid keyword", found_keyword)]
+    InvalidKeyword { found_keyword: BString },
 
     #[error("Missing ')' at the end of pathspec magic in '{}'", pathspec)]
     MissingClosingParenthesis { pathspec: BString },
@@ -100,8 +100,8 @@ fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, Vec<(BString, State)>
                         })?;
                     MagicSignature::ATTR
                 } else {
-                    return Err(Error::InvalidSignature {
-                        found_signature: BString::from(s),
+                    return Err(Error::InvalidKeyword {
+                        found_keyword: BString::from(s),
                     });
                 }
             }
