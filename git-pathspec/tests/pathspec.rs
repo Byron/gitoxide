@@ -1,4 +1,3 @@
-use bstr::BString;
 use git_attributes::State;
 use git_pathspec::parse::Error;
 use git_pathspec::{MagicSignature, Pattern};
@@ -6,33 +5,33 @@ use git_pathspec::{MagicSignature, Pattern};
 #[test]
 fn can_parse() {
     let inputs = vec![
-        ("some/path", pat("some/path", None, vec![])),
-        ("some/*.path", pat("some/*.path", None, vec![])),
-        (":/", pat("", Some(MagicSignature::TOP), vec![])),
-        (":^", pat("", Some(MagicSignature::EXCLUDE), vec![])),
-        (":!", pat("", Some(MagicSignature::EXCLUDE), vec![])),
-        (":(top)", pat("", Some(MagicSignature::TOP), vec![])),
-        (":(literal)", pat("", Some(MagicSignature::LITERAL), vec![])),
-        (":(icase)", pat("", Some(MagicSignature::ICASE), vec![])),
-        (":(glob)", pat("", Some(MagicSignature::GLOB), vec![])),
-        (":(attr)", pat("", Some(MagicSignature::ATTR), vec![])),
+        ("some/path", pat("some/path", MagicSignature::empty(), vec![])),
+        ("some/*.path", pat("some/*.path", MagicSignature::empty(), vec![])),
+        (":/", pat("", MagicSignature::TOP, vec![])),
+        (":^", pat("", MagicSignature::EXCLUDE, vec![])),
+        (":!", pat("", MagicSignature::EXCLUDE, vec![])),
+        (":(top)", pat("", MagicSignature::TOP, vec![])),
+        (":(literal)", pat("", MagicSignature::LITERAL, vec![])),
+        (":(icase)", pat("", MagicSignature::ICASE, vec![])),
+        (":(glob)", pat("", MagicSignature::GLOB, vec![])),
+        (":(attr)", pat("", MagicSignature::ATTR, vec![])),
         (
             ":(attr:someAttr)",
-            pat("", Some(MagicSignature::ATTR), vec![("someAttr", State::Set)]),
+            pat("", MagicSignature::ATTR, vec![("someAttr", State::Set)]),
         ),
         (
             ":(attr:!someAttr)",
-            pat("", Some(MagicSignature::ATTR), vec![("someAttr", State::Unspecified)]),
+            pat("", MagicSignature::ATTR, vec![("someAttr", State::Unspecified)]),
         ),
         (
             ":(attr:-someAttr)",
-            pat("", Some(MagicSignature::ATTR), vec![("someAttr", State::Unset)]),
+            pat("", MagicSignature::ATTR, vec![("someAttr", State::Unset)]),
         ),
         (
             ":(attr:someAttr=value)",
             pat(
                 "",
-                Some(MagicSignature::ATTR),
+                MagicSignature::ATTR,
                 vec![("someAttr", State::Value("value".into()))],
             ),
         ),
@@ -40,11 +39,11 @@ fn can_parse() {
             ":(attr:someAttr anotherAttr)",
             pat(
                 "",
-                Some(MagicSignature::ATTR),
+                MagicSignature::ATTR,
                 vec![("someAttr", State::Set), ("anotherAttr", State::Set)],
             ),
         ),
-        (":(exclude)", pat("", Some(MagicSignature::EXCLUDE), vec![])),
+        (":(exclude)", pat("", MagicSignature::EXCLUDE, vec![])),
         // TODO:
         // 'literal' and 'glob' cannot appear in the same pathspec together
         // is this the parsers job to handle?
@@ -63,22 +62,15 @@ fn can_parse() {
         //         vec![]
         //     ),
         // ),
-        (":/:some/path", pat("some/path", Some(MagicSignature::TOP), vec![])),
+        (":/:some/path", pat("some/path", MagicSignature::TOP, vec![])),
         (
             ":!(literal)some/*path",
-            pat(
-                "some/*path",
-                Some(MagicSignature::EXCLUDE | MagicSignature::LITERAL),
-                vec![],
-            ),
+            pat("some/*path", MagicSignature::EXCLUDE | MagicSignature::LITERAL, vec![]),
         ),
-        (":", pat("", None, vec![])),
-        (":()", pat("", None, vec![])),
-        (":::::", pat("", None, vec![])),
-        (
-            ":!/!/:",
-            pat("", Some(MagicSignature::TOP | MagicSignature::EXCLUDE), vec![]),
-        ),
+        (":", pat("", MagicSignature::empty(), vec![])),
+        (":()", pat("", MagicSignature::empty(), vec![])),
+        (":::::", pat("", MagicSignature::empty(), vec![])),
+        (":!/!/:", pat("", MagicSignature::TOP | MagicSignature::EXCLUDE, vec![])),
     ];
 
     for (input, expected) in inputs {
@@ -131,7 +123,7 @@ fn should_fail_on_missing_parentheses() {
     }
 }
 
-fn pat(path: &str, signature: Option<MagicSignature>, attributes: Vec<(&str, State)>) -> Pattern {
+fn pat(path: &str, signature: MagicSignature, attributes: Vec<(&str, State)>) -> Pattern {
     Pattern {
         path: path.into(),
         signature,

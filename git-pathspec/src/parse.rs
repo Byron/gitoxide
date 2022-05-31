@@ -19,7 +19,7 @@ impl Pattern {
     pub fn empty() -> Self {
         Pattern {
             path: BString::default(),
-            signature: None,
+            signature: MagicSignature::empty(),
             attributes: Vec::new(),
         }
     }
@@ -64,7 +64,7 @@ impl Pattern {
 
         Ok(Pattern {
             path: BString::from(&input[cursor..]),
-            signature: (!signature.is_empty()).then(|| signature),
+            signature,
             attributes,
         })
     }

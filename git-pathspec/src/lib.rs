@@ -11,7 +11,7 @@ pub struct Pattern {
     /// The path part of a pathspec.
     pub path: BString,
     /// All magic signatures that were included in the pathspec.
-    pub signature: Option<MagicSignature>,
+    pub signature: MagicSignature,
     /// All attributes that were included in the `ATTR` part of the pathspec, if present.
     pub attributes: Vec<(BString, git_attributes::State)>,
 }
