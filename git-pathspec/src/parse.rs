@@ -5,6 +5,9 @@ use crate::{MagicSignature, Pattern};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+    #[error("Empty string is not a valid pathspec")]
+    EmptyString,
+
     #[error("Found \"{}\", which is not a valid keyword", found_keyword)]
     InvalidKeyword { found_keyword: BString },
 
@@ -26,7 +29,7 @@ impl Pattern {
 
     pub fn from_bytes(input: &[u8]) -> Result<Self, Error> {
         if input.is_empty() {
-            return Ok(Pattern::empty());
+            return Err(Error::EmptyString);
         }
 
         let mut cursor = 0;
@@ -34,14 +37,11 @@ impl Pattern {
         let mut attributes = Vec::new();
 
         if input.first() == Some(&b':') {
+            cursor += 1;
             while let Some(&b) = input.get(cursor) {
                 cursor += 1;
                 match b {
-                    b':' => {
-                        if !signature.is_empty() {
-                            break;
-                        }
-                    }
+                    b':' => break,
                     b'/' => signature |= MagicSignature::TOP,
                     b'^' | b'!' => signature |= MagicSignature::EXCLUDE,
                     b'(' => {
