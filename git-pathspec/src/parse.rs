@@ -1,7 +1,7 @@
 use bstr::{BString, ByteSlice};
 use git_attributes::{parse::Iter, State};
 
-use crate::{MagicSignature, Pattern};
+use crate::{MagicSignature, Pattern, SearchMode};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -16,6 +16,9 @@ pub enum Error {
 
     #[error("Attribute has non-ascii characters or starts with '-': {}", attribute)]
     InvalidAttribute { attribute: BString },
+
+    #[error("'literal' and 'globl' keywords can not be used together in the same pathspec")]
+    IncompatibleSearchmodes,
 }
 
 impl Pattern {
@@ -23,6 +26,7 @@ impl Pattern {
         Pattern {
             path: BString::default(),
             signature: MagicSignature::empty(),
+            searchmode: SearchMode::Default,
             attributes: Vec::new(),
         }
     }
@@ -34,6 +38,7 @@ impl Pattern {
 
         let mut cursor = 0;
         let mut signature = MagicSignature::empty();
+        let mut searchmode = SearchMode::Default;
         let mut attributes = Vec::new();
 
         if input.first() == Some(&b':') {
@@ -48,10 +53,11 @@ impl Pattern {
                         let end = input.find(")").ok_or(Error::MissingClosingParenthesis {
                             pathspec: BString::from(input),
                         })?;
-                        let (signatures, attrs) = parse_keywords(&input[cursor..end])?;
+                        let (sig, sm, attrs) = parse_keywords(&input[cursor..end])?;
 
                         cursor = end + 1;
-                        signature |= signatures;
+                        signature |= sig;
+                        searchmode = sm;
                         attributes = attrs;
                     }
                     _ => {
@@ -65,27 +71,35 @@ impl Pattern {
         Ok(Pattern {
             path: BString::from(&input[cursor..]),
             signature,
+            searchmode,
             attributes,
         })
     }
 }
 
-fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, Vec<(BString, State)>), Error> {
+fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, SearchMode, Vec<(BString, State)>), Error> {
     let mut signature = MagicSignature::empty();
+    let mut searchmode = SearchMode::Default;
     let mut attributes = Vec::new();
 
     if input.is_empty() {
-        return Ok((signature, attributes));
+        return Ok((signature, searchmode, attributes));
     }
 
     for keyword in input.split(|&c| c == b',') {
-        signature |= match keyword {
-            b"top" => MagicSignature::TOP,
-            b"literal" => MagicSignature::LITERAL,
-            b"icase" => MagicSignature::ICASE,
-            b"glob" => MagicSignature::GLOB,
-            b"attr" => MagicSignature::ATTR,
-            b"exclude" => MagicSignature::EXCLUDE,
+        match keyword {
+            b"top" => signature |= MagicSignature::TOP,
+            b"icase" => signature |= MagicSignature::ICASE,
+            b"exclude" => signature |= MagicSignature::EXCLUDE,
+            b"attr" => signature |= MagicSignature::ATTR,
+            b"literal" => match searchmode {
+                SearchMode::Default => searchmode = SearchMode::Literal,
+                _ => return Err(Error::IncompatibleSearchmodes),
+            },
+            b"glob" => match searchmode {
+                SearchMode::Default => searchmode = SearchMode::Glob,
+                _ => return Err(Error::IncompatibleSearchmodes),
+            },
             s => {
                 if let Some(attrs) = s.strip_prefix(b"attr:") {
                     attributes = Iter::new(attrs.into(), 0)
@@ -98,7 +112,7 @@ fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, Vec<(BString, State)>
                             } => Error::InvalidAttribute { attribute },
                             _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
                         })?;
-                    MagicSignature::ATTR
+                    signature |= MagicSignature::ATTR
                 } else {
                     return Err(Error::InvalidKeyword {
                         found_keyword: BString::from(s),
@@ -108,5 +122,5 @@ fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, Vec<(BString, State)>
         }
     }
 
-    Ok((signature, attributes))
+    Ok((signature, searchmode, attributes))
 }
