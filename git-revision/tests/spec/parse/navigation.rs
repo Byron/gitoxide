@@ -10,7 +10,26 @@ mod caret_symbol {
         assert!(rec.kind.is_none());
         assert_eq!(rec.get_ref(0), "HEAD",);
         assert_eq!(rec.prefix[0], None);
-        assert_eq!(rec.traversal[0], Some(Traversal::NthParent(1)));
+        assert_eq!(rec.traversal[0], Traversal::NthParent(1));
+        assert_eq!(rec.calls, 2);
+    }
+
+    #[test]
+    #[ignore]
+    fn multiple_calls_stack() {
+        let rec = parse("@^^^10");
+
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.get_ref(0), "HEAD",);
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(
+            rec.traversal,
+            vec![
+                Traversal::NthParent(1),
+                Traversal::NthParent(1),
+                Traversal::NthParent(10)
+            ]
+        );
         assert_eq!(rec.calls, 2);
     }
 
@@ -21,10 +40,10 @@ mod caret_symbol {
         assert!(rec.kind.is_none());
         assert_eq!(rec.get_ref(0), "HEAD",);
         assert_eq!(rec.prefix[0], None);
-        assert_eq!(rec.traversal[0], None, "traversals by parent are never zero");
+        assert_eq!(rec.traversal.len(), 0, "traversals by parent are never zero");
         assert_eq!(
             rec.peel_to[0],
-            Some(PeelTo::ObjectKind(git_object::Kind::Commit)),
+            PeelTo::ObjectKind(git_object::Kind::Commit),
             "instead 0 serves as shortcut"
         );
         assert_eq!(rec.calls, 2);
@@ -54,7 +73,7 @@ mod caret_symbol {
 
             assert!(rec.kind.is_none());
             assert!(rec.find_ref[0].as_ref().is_some() || rec.prefix[0].is_some());
-            assert_eq!(rec.traversal[0], Some(Traversal::NthParent(expected_parent)));
+            assert_eq!(rec.traversal[0], Traversal::NthParent(expected_parent));
             assert_eq!(rec.calls, 2);
         }
     }
