@@ -43,7 +43,7 @@ pub mod delegate {
     pub trait Revision {
         /// Resolve `name` as reference which might not be a valid reference name. The name may be partial like `main` or full like
         /// `refs/heads/main` solely depending on the users input.
-        /// Symbolic referenced should be followed till their object, but objects must not yet be peeled.
+        /// Symbolic referenced should be followed till their object, but objects **must not yet** be peeled.
         fn find_ref(&mut self, name: &BStr) -> Option<()>;
 
         /// An object prefix to disambiguate, returning `None` if it is ambiguous or wasn't found at all.
@@ -84,6 +84,9 @@ pub mod delegate {
     pub trait Navigate {
         /// Adjust the current revision to traverse the graph according to `kind`.
         fn traverse(&mut self, kind: Traversal) -> Option<()>;
+
+        /// Peel the current object until it reached `kind` or `None` if the chain does not contain such object.
+        fn peel_until(&mut self, kind: PeelTo) -> Option<()>;
     }
 
     /// A lookup into the reflog of a reference.
@@ -100,6 +103,13 @@ pub mod delegate {
         /// Select the given parent commit of the currently selected commit, start at `1` for the first parent.
         /// The value will never be `0`.
         NthParent(usize),
+    }
+
+    /// Define where a tag object should be peeled to.
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+    pub enum PeelTo {
+        /// An object of the given kind.
+        ObjectKind(git_object::Kind),
     }
 
     /// The kind of sibling branch to obtain.
@@ -292,9 +302,12 @@ pub(crate) mod function {
             Some(b'~') => todo!("~"),
             Some(b'^') => {
                 if let Some((number, rest)) = try_parse_usize(past_sep)? {
-                    delegate
-                        .traverse(delegate::Traversal::NthParent(number))
-                        .ok_or(Error::Delegate)?;
+                    if number == 0 {
+                        delegate.peel_until(delegate::PeelTo::ObjectKind(git_object::Kind::Commit))
+                    } else {
+                        delegate.traverse(delegate::Traversal::NthParent(number))
+                    }
+                    .ok_or(Error::Delegate)?;
                     rest
                 } else if let Some((_kind, _rest)) = parens(past_sep)? {
                     todo!("try ^{{…}}")

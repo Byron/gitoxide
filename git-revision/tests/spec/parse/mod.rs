@@ -19,6 +19,7 @@ struct Recorder {
 
     // navigation
     traversal: [Option<delegate::Traversal>; 2],
+    peel_to: [Option<delegate::PeelTo>; 2],
 
     // range
     kind: Option<spec::Kind>,
@@ -96,6 +97,11 @@ impl delegate::Navigate for Recorder {
     fn traverse(&mut self, kind: delegate::Traversal) -> Option<()> {
         self.calls += 1;
         set_val("traverse", &mut self.traversal, kind)
+    }
+
+    fn peel_until(&mut self, kind: delegate::PeelTo) -> Option<()> {
+        self.calls += 1;
+        set_val("peel_until", &mut self.peel_to, kind)
     }
 }
 
