@@ -13,11 +13,12 @@ struct Recorder {
     // anchors
     find_ref: [Option<BString>; 2],
     prefix: [Option<git_hash::Prefix>; 2],
-
-    // navigation
     current_branch_reflog_entry: [Option<String>; 2],
     nth_checked_out_branch: [Option<usize>; 2],
     sibling_branch: [Option<String>; 2],
+
+    // navigation
+    traversal: [Option<delegate::Traversal>; 2],
 
     // range
     kind: Option<spec::Kind>,
@@ -49,7 +50,7 @@ fn set_val<T: std::fmt::Debug>(fn_name: &str, store: &mut [Option<T>; 2], val: T
     panic!("called {}() more than twice with '{:?}'", fn_name, val);
 }
 
-impl delegate::Anchor for Recorder {
+impl delegate::Revision for Recorder {
     fn find_ref(&mut self, input: &BStr) -> Option<()> {
         self.calls += 1;
         set_val("find_ref", &mut self.find_ref, input.into())
@@ -62,9 +63,7 @@ impl delegate::Anchor for Recorder {
         }
         set_val("disambiguate_prefix", &mut self.prefix, input)
     }
-}
 
-impl delegate::Navigation for Recorder {
     fn reflog(&mut self, entry: delegate::ReflogLookup) -> Option<()> {
         self.calls += 1;
         set_val(
@@ -90,6 +89,13 @@ impl delegate::Navigation for Recorder {
     fn sibling_branch(&mut self, kind: delegate::SiblingBranch) -> Option<()> {
         self.calls += 1;
         set_val("sibling_branch", &mut self.sibling_branch, format!("{:?}", kind))
+    }
+}
+
+impl delegate::Navigate for Recorder {
+    fn traverse(&mut self, kind: delegate::Traversal) -> Option<()> {
+        self.calls += 1;
+        set_val("traverse", &mut self.traversal, kind)
     }
 }
 
