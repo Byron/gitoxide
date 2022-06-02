@@ -13,6 +13,8 @@ pub enum Error {
     ReflogLookupNeedsRefName { name: BString },
     #[error("A reference name must be followed by positive numbers in '@{{n}}', got {:?}", .nav)]
     RefnameNeedsPositiveReflogEntries { nav: BString },
+    #[error("Negative or explicitly positive numbers are invalid here: {:?}", .input)]
+    SignedNumber { input: BString },
     #[error("Negative zeroes are invalid: {:?} - remove the '-'", .input)]
     NegativeZero { input: BString },
     #[error("The opening brace in {:?} was not matched", .input)]
@@ -220,10 +222,15 @@ pub(crate) mod function {
         }
 
         let name = &input[..sep_pos.unwrap_or(input.len())].as_bstr();
-        let sep = sep_pos.map(|pos| input[pos]);
+        let mut sep = sep_pos.map(|pos| input[pos]);
         let mut has_ref_or_implied_name = name.is_empty();
         if name.is_empty() && sep == Some(b'@') && sep_pos.and_then(|pos| input.get(pos + 1)) != Some(&b'{') {
             delegate.find_ref("HEAD".into()).ok_or(Error::Delegate)?;
+            sep_pos = sep_pos.map(|pos| pos + 1);
+            sep = match sep_pos.and_then(|pos| input.get(pos).copied()) {
+                None => return Ok("".into()),
+                Some(pos) => Some(pos),
+            };
         } else {
             (consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN)
                 .then(|| try_set_prefix(delegate, name))
@@ -245,56 +252,78 @@ pub(crate) mod function {
         let past_sep = input[sep_pos.map(|pos| pos + 1).unwrap_or(input.len())..].as_bstr();
         input = match sep {
             Some(b'@') => {
-                match parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets { input: past_sep.into() }) {
-                    Ok((nav, rest)) => {
-                        if let Some(n) = try_parse::<isize>(nav)? {
-                            if n < 0 {
-                                if name.is_empty() {
-                                    delegate
-                                        .nth_checked_out_branch(
-                                            n.abs().try_into().expect("non-negative isize fits usize"),
-                                        )
-                                        .ok_or(Error::Delegate)?;
-                                } else {
-                                    return Err(Error::RefnameNeedsPositiveReflogEntries { nav: nav.into() });
-                                }
-                            } else if has_ref_or_implied_name {
-                                delegate
-                                    .reflog(delegate::ReflogLookup::Entry(
-                                        n.try_into().expect("non-negative isize fits usize"),
-                                    ))
-                                    .ok_or(Error::Delegate)?;
-                            } else {
-                                return Err(Error::ReflogLookupNeedsRefName { name: (*name).into() });
-                            }
-                        } else if let Some(kind) = SiblingBranch::parse(nav) {
-                            if has_ref_or_implied_name {
-                                delegate.sibling_branch(kind).ok_or(Error::Delegate)
-                            } else {
-                                Err(Error::SiblingBranchNeedsBranchName { name: (*name).into() })
-                            }?
-                        } else if has_ref_or_implied_name {
-                            let time = git_date::parse(nav).ok_or_else(|| Error::Time { input: nav.into() })?;
+                let (nav, rest) = parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets {
+                    input: input[sep_pos.unwrap_or(input.len())..].into(),
+                })?;
+                if let Some(n) = try_parse::<isize>(nav)? {
+                    if n < 0 {
+                        if name.is_empty() {
                             delegate
-                                .reflog(delegate::ReflogLookup::Date(time))
+                                .nth_checked_out_branch(n.abs().try_into().expect("non-negative isize fits usize"))
                                 .ok_or(Error::Delegate)?;
                         } else {
-                            return Err(Error::ReflogLookupNeedsRefName { name: (*name).into() });
+                            return Err(Error::RefnameNeedsPositiveReflogEntries { nav: nav.into() });
                         }
-                        rest
+                    } else if has_ref_or_implied_name {
+                        delegate
+                            .reflog(delegate::ReflogLookup::Entry(
+                                n.try_into().expect("non-negative isize fits usize"),
+                            ))
+                            .ok_or(Error::Delegate)?;
+                    } else {
+                        return Err(Error::ReflogLookupNeedsRefName { name: (*name).into() });
                     }
-                    Err(_) if name.is_empty() => past_sep,
-                    Err(err) => return Err(err),
+                } else if let Some(kind) = SiblingBranch::parse(nav) {
+                    if has_ref_or_implied_name {
+                        delegate.sibling_branch(kind).ok_or(Error::Delegate)
+                    } else {
+                        Err(Error::SiblingBranchNeedsBranchName { name: (*name).into() })
+                    }?
+                } else if has_ref_or_implied_name {
+                    let time = git_date::parse(nav).ok_or_else(|| Error::Time { input: nav.into() })?;
+                    delegate
+                        .reflog(delegate::ReflogLookup::Date(time))
+                        .ok_or(Error::Delegate)?;
+                } else {
+                    return Err(Error::ReflogLookupNeedsRefName { name: (*name).into() });
                 }
+                rest
             }
             Some(b'~') => todo!("~"),
-            Some(b'^') => todo!("^"),
+            Some(b'^') => {
+                if let Some((number, rest)) = try_parse_usize(past_sep)? {
+                    delegate
+                        .traverse(delegate::Traversal::NthParent(number))
+                        .ok_or(Error::Delegate)?;
+                    rest
+                } else if let Some((_kind, _rest)) = parens(past_sep)? {
+                    todo!("try ^{{…}}")
+                } else {
+                    delegate
+                        .traverse(delegate::Traversal::NthParent(1))
+                        .ok_or(Error::Delegate)?;
+                    past_sep
+                }
+            }
             Some(b':') => todo!(":"),
             Some(b'.') => input[sep_pos.unwrap_or(input.len())..].as_bstr(),
             None => past_sep,
             Some(unknown) => unreachable!("BUG: found unknown separation character {:?}", unknown as char),
         };
         Ok(input)
+    }
+
+    fn try_parse_usize(input: &BStr) -> Result<Option<(usize, &BStr)>, Error> {
+        let mut bytes = input.iter().peekable();
+        if bytes.peek().filter(|&&&b| b == b'-' || b == b'+').is_some() {
+            return Err(Error::SignedNumber { input: input.into() });
+        }
+        let num_digits = bytes.take_while(|b| b.is_ascii_digit()).count();
+        if num_digits == 0 {
+            return Ok(None);
+        }
+        let number = try_parse(&input[..num_digits])?.expect("parse number if only digits");
+        Ok(Some((number, input[num_digits..].as_bstr())))
     }
 
     pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {

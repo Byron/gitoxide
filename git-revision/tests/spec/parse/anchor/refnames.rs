@@ -11,13 +11,13 @@ fn at_by_iteself_is_shortcut_for_head() {
 #[test]
 fn multiple_ats_are_invalid_but_may_cause_callbacks() {
     let err = try_parse("@@").unwrap_err();
-    assert!(matches!(err, spec::parse::Error::UnconsumedInput {input} if input == "@"));
+    assert!(matches!(err, spec::parse::Error::AtNeedsCurlyBrackets {input} if input == "@"));
 }
 
 #[test]
 fn lonely_at_after_ref_is_invalid() {
     let err = try_parse("HEAD@").unwrap_err();
-    assert!(matches!(err, spec::parse::Error::AtNeedsCurlyBrackets {input} if input == ""));
+    assert!(matches!(err, spec::parse::Error::AtNeedsCurlyBrackets {input} if input == "@"));
 }
 
 #[test]

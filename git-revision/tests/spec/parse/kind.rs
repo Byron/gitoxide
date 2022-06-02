@@ -130,6 +130,12 @@ mod mergebase {
         assert_eq!(rec.get_ref(1), "HEAD");
         assert_eq!(rec.calls, 3);
 
+        let rec = parse("@...HEAD");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.get_ref(1), "HEAD");
+        assert_eq!(rec.calls, 3);
+
         let rec = parse("r1...abcd");
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
         assert_eq!(rec.get_ref(0), "r1");
