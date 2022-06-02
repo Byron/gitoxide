@@ -18,15 +18,6 @@ pub enum Error {
 }
 
 impl Pattern {
-    pub fn empty() -> Self {
-        Pattern {
-            path: BString::default(),
-            signature: MagicSignature::empty(),
-            searchmode: SearchMode::Default,
-            attributes: Vec::new(),
-        }
-    }
-
     pub fn from_bytes(input: &[u8]) -> Result<Self, Error> {
         if input.is_empty() {
             return Err(Error::EmptyString);
@@ -34,7 +25,7 @@ impl Pattern {
 
         let mut cursor = 0;
         let mut signature = MagicSignature::empty();
-        let mut searchmode = SearchMode::Default;
+        let mut search_mode = SearchMode::ShellGlob;
         let mut attributes = Vec::new();
 
         if input.first() == Some(&b':') {
@@ -53,7 +44,7 @@ impl Pattern {
 
                         cursor = end + 1;
                         signature |= sig;
-                        searchmode = sm;
+                        search_mode = sm;
                         attributes = attrs;
                     }
                     _ => {
@@ -67,7 +58,7 @@ impl Pattern {
         Ok(Pattern {
             path: BString::from(&input[cursor..]),
             signature,
-            searchmode,
+            searchmode: search_mode,
             attributes,
         })
     }
@@ -75,11 +66,12 @@ impl Pattern {
 
 fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, SearchMode, Vec<(BString, State)>), Error> {
     let mut signature = MagicSignature::empty();
-    let mut searchmode = SearchMode::Default;
+    let mut search_mode = SearchMode::ShellGlob;
+    debug_assert_eq!(search_mode, SearchMode::default());
     let mut attributes = Vec::new();
 
     if input.is_empty() {
-        return Ok((signature, searchmode, attributes));
+        return Ok((signature, search_mode, attributes));
     }
 
     for keyword in input.split(|&c| c == b',') {
@@ -88,35 +80,32 @@ fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, SearchMode, Vec<(BStr
             b"icase" => signature |= MagicSignature::ICASE,
             b"exclude" => signature |= MagicSignature::EXCLUDE,
             b"attr" => signature |= MagicSignature::ATTR,
-            b"literal" => match searchmode {
-                SearchMode::Default => searchmode = SearchMode::Literal,
+            b"literal" => match search_mode {
+                SearchMode::ShellGlob => search_mode = SearchMode::Literal,
                 _ => return Err(Error::IncompatibleSearchModes),
             },
-            b"glob" => match searchmode {
-                SearchMode::Default => searchmode = SearchMode::Glob,
+            b"glob" => match search_mode {
+                SearchMode::ShellGlob => search_mode = SearchMode::PathAwareGlob,
                 _ => return Err(Error::IncompatibleSearchModes),
             },
             s => {
-                if let Some(attrs) = s.strip_prefix(b"attr:") {
-                    attributes = Iter::new(attrs.into(), 0)
-                        .map(|res| res.map(|(attr, state)| (attr.into(), state.into())))
-                        .collect::<Result<Vec<_>, _>>()
-                        .map_err(|e| match e {
-                            git_attributes::parse::Error::AttributeName {
-                                line_number: _,
-                                attribute,
-                            } => Error::InvalidAttribute { attribute },
-                            _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
-                        })?;
-                    signature |= MagicSignature::ATTR
-                } else {
-                    return Err(Error::InvalidKeyword {
-                        found_keyword: BString::from(s),
-                    });
-                }
+                let attrs = s.strip_prefix(b"attr:").ok_or_else(|| Error::InvalidKeyword {
+                    found_keyword: BString::from(s),
+                })?;
+                attributes = Iter::new(attrs.into(), 0)
+                    .map(|res| res.map(|(attr, state)| (attr.into(), state.into())))
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|e| match e {
+                        git_attributes::parse::Error::AttributeName {
+                            line_number: _,
+                            attribute,
+                        } => Error::InvalidAttribute { attribute },
+                        _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
+                    })?;
+                signature |= MagicSignature::ATTR
             }
         }
     }
 
-    Ok((signature, searchmode, attributes))
+    Ok((signature, search_mode, attributes))
 }

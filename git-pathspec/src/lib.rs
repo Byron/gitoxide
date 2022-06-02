@@ -33,12 +33,20 @@ bitflags! {
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum SearchMode {
-    /// Default search mode
-    Default,
-    /// Special characters in the pattern, like '*' or '?', are treated literally
+    /// Expand special characters like `*` similar to how the shell would do it.
+    ///
+    /// See [`PathAwareGlob`][SearchMode::PathAwareGlob] for the alternative.
+    ShellGlob,
+    /// Special characters in the pattern, like `*` or `?`, are treated literally
     Literal,
-    /// A single '*' will not match a '/' in the pattern, but a '**' will
-    Glob,
+    /// A single `*` will not match a `/` in the pattern, but a `**` will
+    PathAwareGlob,
+}
+
+impl Default for SearchMode {
+    fn default() -> Self {
+        SearchMode::ShellGlob
+    }
 }
 
 /// Parse a git-style pathspec into a `Pattern`

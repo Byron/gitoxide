@@ -7,6 +7,23 @@ mod succeed {
     use git_pathspec::{MagicSignature, SearchMode};
 
     #[test]
+    #[ignore]
+    fn repeated_matcher_keywords() {
+        let input = vec![
+            (
+                ":(glob,glob)",
+                pat("", MagicSignature::empty(), SearchMode::PathAwareGlob, vec![]),
+            ),
+            (
+                ":(literal,literal)",
+                pat("", MagicSignature::empty(), SearchMode::Literal, vec![]),
+            ),
+        ];
+
+        check_valid_inputs(input);
+    }
+
+    #[test]
     fn empty_signatures() {
         let inputs = vec![
             ("some/path", pat_with_path("some/path")),
@@ -55,7 +72,10 @@ mod succeed {
                 ":(literal)",
                 pat("", MagicSignature::empty(), SearchMode::Literal, vec![]),
             ),
-            (":(glob)", pat("", MagicSignature::empty(), SearchMode::Glob, vec![])),
+            (
+                ":(glob)",
+                pat("", MagicSignature::empty(), SearchMode::PathAwareGlob, vec![]),
+            ),
             (
                 ":(top,exclude)",
                 pat_with_path_and_sig("", MagicSignature::TOP | MagicSignature::EXCLUDE),
@@ -74,7 +94,7 @@ mod succeed {
             ),
             (
                 ":(top,glob,icase,attr,exclude)some/path",
-                pat("some/path", MagicSignature::all(), SearchMode::Glob, vec![]),
+                pat("some/path", MagicSignature::all(), SearchMode::PathAwareGlob, vec![]),
             ),
         ];
 
@@ -89,7 +109,7 @@ mod succeed {
                 pat(
                     "",
                     MagicSignature::ATTR,
-                    SearchMode::Default,
+                    SearchMode::ShellGlob,
                     vec![("someAttr", State::Set)],
                 ),
             ),
@@ -98,7 +118,7 @@ mod succeed {
                 pat(
                     "",
                     MagicSignature::ATTR,
-                    SearchMode::Default,
+                    SearchMode::ShellGlob,
                     vec![("someAttr", State::Unspecified)],
                 ),
             ),
@@ -107,7 +127,7 @@ mod succeed {
                 pat(
                     "",
                     MagicSignature::ATTR,
-                    SearchMode::Default,
+                    SearchMode::ShellGlob,
                     vec![("someAttr", State::Unset)],
                 ),
             ),
@@ -116,7 +136,7 @@ mod succeed {
                 pat(
                     "",
                     MagicSignature::ATTR,
-                    SearchMode::Default,
+                    SearchMode::ShellGlob,
                     vec![("someAttr", State::Value("value".into()))],
                 ),
             ),
@@ -125,7 +145,7 @@ mod succeed {
                 pat(
                     "",
                     MagicSignature::ATTR,
-                    SearchMode::Default,
+                    SearchMode::ShellGlob,
                     vec![("someAttr", State::Set), ("anotherAttr", State::Set)],
                 ),
             ),
@@ -221,7 +241,7 @@ fn pat_with_path(path: &str) -> Pattern {
 }
 
 fn pat_with_path_and_sig(path: &str, signature: MagicSignature) -> Pattern {
-    pat(path, signature, SearchMode::Default, vec![])
+    pat(path, signature, SearchMode::ShellGlob, vec![])
 }
 
 fn pat(path: &str, signature: MagicSignature, searchmode: SearchMode, attributes: Vec<(&str, State)>) -> Pattern {
