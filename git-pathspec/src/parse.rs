@@ -7,18 +7,14 @@ use crate::{MagicSignature, Pattern, SearchMode};
 pub enum Error {
     #[error("Empty string is not a valid pathspec")]
     EmptyString,
-
-    #[error("Found \"{}\", which is not a valid keyword", found_keyword)]
+    #[error("Found {:?}, which is not a valid keyword", found_keyword)]
     InvalidKeyword { found_keyword: BString },
-
-    #[error("Missing ')' at the end of pathspec magic in '{}'", pathspec)]
+    #[error("Missing ')' at the end of pathspec magic in {:?}", pathspec)]
     MissingClosingParenthesis { pathspec: BString },
-
-    #[error("Attribute has non-ascii characters or starts with '-': {}", attribute)]
+    #[error("Attribute has non-ascii characters or starts with '-': {:?}", attribute)]
     InvalidAttribute { attribute: BString },
-
-    #[error("'literal' and 'globl' keywords can not be used together in the same pathspec")]
-    IncompatibleSearchmodes,
+    #[error("'literal' and 'glob' keywords cannot be used together in the same pathspec")]
+    IncompatibleSearchModes,
 }
 
 impl Pattern {
@@ -94,11 +90,11 @@ fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, SearchMode, Vec<(BStr
             b"attr" => signature |= MagicSignature::ATTR,
             b"literal" => match searchmode {
                 SearchMode::Default => searchmode = SearchMode::Literal,
-                _ => return Err(Error::IncompatibleSearchmodes),
+                _ => return Err(Error::IncompatibleSearchModes),
             },
             b"glob" => match searchmode {
                 SearchMode::Default => searchmode = SearchMode::Glob,
-                _ => return Err(Error::IncompatibleSearchmodes),
+                _ => return Err(Error::IncompatibleSearchModes),
             },
             s => {
                 if let Some(attrs) = s.strip_prefix(b"attr:") {
