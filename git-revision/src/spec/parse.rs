@@ -259,9 +259,9 @@ pub(crate) mod function {
                 .ok_or(Error::Delegate)?;
         }
 
-        let past_sep = input[sep_pos.map(|pos| pos + 1).unwrap_or(input.len())..].as_bstr();
-        input = match sep {
-            Some(b'@') => {
+        input = {
+            if let Some(b'@') = sep {
+                let past_sep = input[sep_pos.map(|pos| pos + 1).unwrap_or(input.len())..].as_bstr();
                 let (nav, rest) = parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets {
                     input: input[sep_pos.unwrap_or(input.len())..].into(),
                 })?;
@@ -298,31 +298,50 @@ pub(crate) mod function {
                     return Err(Error::ReflogLookupNeedsRefName { name: (*name).into() });
                 }
                 rest
+            } else {
+                input[sep_pos.unwrap_or(input.len())..].as_bstr()
             }
-            Some(b'~') => todo!("~"),
-            Some(b'^') => {
-                if let Some((number, rest)) = try_parse_usize(past_sep)? {
-                    if number == 0 {
-                        delegate.peel_until(delegate::PeelTo::ObjectKind(git_object::Kind::Commit))
-                    } else {
-                        delegate.traverse(delegate::Traversal::NthParent(number))
-                    }
-                    .ok_or(Error::Delegate)?;
-                    rest
-                } else if let Some((_kind, _rest)) = parens(past_sep)? {
-                    todo!("try ^{{…}}")
-                } else {
-                    delegate
-                        .traverse(delegate::Traversal::NthParent(1))
-                        .ok_or(Error::Delegate)?;
-                    past_sep
-                }
-            }
-            Some(b':') => todo!(":"),
-            Some(b'.') => input[sep_pos.unwrap_or(input.len())..].as_bstr(),
-            None => past_sep,
-            Some(unknown) => unreachable!("BUG: found unknown separation character {:?}", unknown as char),
         };
+
+        navigate(input, delegate)
+    }
+
+    fn navigate<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
+        let mut iter = input.iter().enumerate();
+        while let Some((idx, b)) = iter.next() {
+            match *b {
+                b'~' => todo!("~"),
+                b'^' => {
+                    let past_sep = input.get(idx + 1..);
+                    if let Some((number, rest)) = past_sep
+                        .and_then(|past_sep| try_parse_usize(past_sep.as_bstr()).transpose())
+                        .transpose()?
+                    {
+                        if number == 0 {
+                            delegate.peel_until(delegate::PeelTo::ObjectKind(git_object::Kind::Commit))
+                        } else {
+                            delegate.traverse(delegate::Traversal::NthParent(number))
+                        }
+                        .ok_or(Error::Delegate)?;
+                        input = rest;
+                        iter = input.iter().enumerate();
+                    } else if let Some((_kind, _rest)) =
+                        past_sep.and_then(|past_sep| parens(past_sep).transpose()).transpose()?
+                    {
+                        todo!("try ^{{…}}")
+                    } else {
+                        delegate
+                            .traverse(delegate::Traversal::NthParent(1))
+                            .ok_or(Error::Delegate)?;
+                        input = input[idx + 1..].as_bstr();
+                        iter = input.iter().enumerate();
+                    }
+                }
+                b':' => todo!(":"),
+                b'.' => return Ok(input[idx..].as_bstr()),
+                unknown => todo!("handle this as generic error {:?}", unknown as char),
+            }
+        }
         Ok(input)
     }
 
