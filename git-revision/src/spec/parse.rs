@@ -336,7 +336,7 @@ pub(crate) mod function {
                     }
                 }
                 b':' => todo!(":"),
-                b'.' | _ => return Ok(input[cursor - 1..].as_bstr()),
+                _ => return Ok(input[cursor - 1..].as_bstr()),
             }
         }
         Ok("".into())
