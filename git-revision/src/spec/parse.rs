@@ -306,14 +306,15 @@ pub(crate) mod function {
         navigate(input, delegate)
     }
 
-    fn navigate<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
-        let mut iter = input.iter().enumerate();
-        while let Some((idx, b)) = iter.next() {
+    fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
+        let mut cursor = 0;
+        while let Some(b) = input.get(cursor) {
+            cursor += 1;
             match *b {
                 b'~' => todo!("~"),
                 b'^' => {
-                    let past_sep = input.get(idx + 1..);
-                    if let Some((number, rest)) = past_sep
+                    let past_sep = input.get(cursor..);
+                    if let Some((number, consumed)) = past_sep
                         .and_then(|past_sep| try_parse_usize(past_sep.as_bstr()).transpose())
                         .transpose()?
                     {
@@ -323,8 +324,7 @@ pub(crate) mod function {
                             delegate.traverse(delegate::Traversal::NthParent(number))
                         }
                         .ok_or(Error::Delegate)?;
-                        input = rest;
-                        iter = input.iter().enumerate();
+                        cursor += consumed;
                     } else if let Some((_kind, _rest)) =
                         past_sep.and_then(|past_sep| parens(past_sep).transpose()).transpose()?
                     {
@@ -333,19 +333,16 @@ pub(crate) mod function {
                         delegate
                             .traverse(delegate::Traversal::NthParent(1))
                             .ok_or(Error::Delegate)?;
-                        input = input[idx + 1..].as_bstr();
-                        iter = input.iter().enumerate();
                     }
                 }
                 b':' => todo!(":"),
-                b'.' => return Ok(input[idx..].as_bstr()),
-                unknown => todo!("handle this as generic error {:?}", unknown as char),
+                b'.' | _ => return Ok(input[cursor - 1..].as_bstr()),
             }
         }
-        Ok(input)
+        Ok("".into())
     }
 
-    fn try_parse_usize(input: &BStr) -> Result<Option<(usize, &BStr)>, Error> {
+    fn try_parse_usize(input: &BStr) -> Result<Option<(usize, usize)>, Error> {
         let mut bytes = input.iter().peekable();
         if bytes.peek().filter(|&&&b| b == b'-' || b == b'+').is_some() {
             return Err(Error::SignedNumber { input: input.into() });
@@ -355,7 +352,7 @@ pub(crate) mod function {
             return Ok(None);
         }
         let number = try_parse(&input[..num_digits])?.expect("parse number if only digits");
-        Ok(Some((number, input[num_digits..].as_bstr())))
+        Ok(Some((number, num_digits)))
     }
 
     pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {

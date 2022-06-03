@@ -15,7 +15,6 @@ mod caret_symbol {
     }
 
     #[test]
-    #[ignore]
     fn multiple_calls_stack() {
         let rec = parse("@^^^10");
 
@@ -30,7 +29,7 @@ mod caret_symbol {
                 Traversal::NthParent(10)
             ]
         );
-        assert_eq!(rec.calls, 2);
+        assert_eq!(rec.calls, 4);
     }
 
     #[test]
