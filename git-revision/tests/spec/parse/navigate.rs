@@ -16,7 +16,7 @@ mod caret_symbol {
 
     #[test]
     fn multiple_calls_stack() {
-        let rec = parse("@^^^10");
+        let rec = parse("@^^^10^0");
 
         assert!(rec.kind.is_none());
         assert_eq!(rec.get_ref(0), "HEAD",);
@@ -29,7 +29,8 @@ mod caret_symbol {
                 Traversal::NthParent(10)
             ]
         );
-        assert_eq!(rec.calls, 4);
+        assert_eq!(rec.peel_to, vec![PeelTo::ObjectKind(git_object::Kind::Commit)]);
+        assert_eq!(rec.calls, 5);
     }
 
     #[test]
@@ -41,8 +42,8 @@ mod caret_symbol {
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.traversal.len(), 0, "traversals by parent are never zero");
         assert_eq!(
-            rec.peel_to[0],
-            PeelTo::ObjectKind(git_object::Kind::Commit),
+            rec.peel_to,
+            vec![PeelTo::ObjectKind(git_object::Kind::Commit)],
             "instead 0 serves as shortcut"
         );
         assert_eq!(rec.calls, 2);
@@ -72,7 +73,7 @@ mod caret_symbol {
 
             assert!(rec.kind.is_none());
             assert!(rec.find_ref[0].as_ref().is_some() || rec.prefix[0].is_some());
-            assert_eq!(rec.traversal[0], Traversal::NthParent(expected_parent));
+            assert_eq!(rec.traversal, vec![Traversal::NthParent(expected_parent)]);
             assert_eq!(rec.calls, 2);
         }
     }
