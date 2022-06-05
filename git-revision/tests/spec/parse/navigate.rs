@@ -16,7 +16,7 @@ mod caret_symbol {
 
     #[test]
     fn multiple_calls_stack() {
-        let rec = parse("@^^^10^0");
+        let rec = parse("@^^^10^0^{tag}^020");
 
         assert!(rec.kind.is_none());
         assert_eq!(rec.get_ref(0), "HEAD",);
@@ -26,11 +26,18 @@ mod caret_symbol {
             vec![
                 Traversal::NthParent(1),
                 Traversal::NthParent(1),
-                Traversal::NthParent(10)
+                Traversal::NthParent(10),
+                Traversal::NthParent(20),
             ]
         );
-        assert_eq!(rec.peel_to, vec![PeelTo::ObjectKind(git_object::Kind::Commit)]);
-        assert_eq!(rec.calls, 5);
+        assert_eq!(
+            rec.peel_to,
+            vec![
+                PeelTo::ObjectKind(git_object::Kind::Commit),
+                PeelTo::ObjectKind(git_object::Kind::Tag)
+            ]
+        );
+        assert_eq!(rec.calls, 7);
     }
 
     #[test]
@@ -63,7 +70,7 @@ mod caret_symbol {
 
     #[test]
     fn explicit_parent_number() {
-        for (spec, expected_parent) in [
+        for (spec, expected) in [
             ("HEAD^1", 1),
             ("abcd^10", 10),
             ("v1.3.4^123", 123),
@@ -73,8 +80,38 @@ mod caret_symbol {
 
             assert!(rec.kind.is_none());
             assert!(rec.find_ref[0].as_ref().is_some() || rec.prefix[0].is_some());
-            assert_eq!(rec.traversal, vec![Traversal::NthParent(expected_parent)]);
+            assert_eq!(rec.traversal, vec![Traversal::NthParent(expected)]);
             assert_eq!(rec.calls, 2);
         }
+    }
+
+    #[test]
+    fn peel_to_object_type() {
+        for (spec, expected) in [
+            ("HEAD^{commit}", PeelTo::ObjectKind(git_object::Kind::Commit)),
+            ("abcd^{tree}", PeelTo::ObjectKind(git_object::Kind::Tree)),
+            ("v1.3.4^{blob}", PeelTo::ObjectKind(git_object::Kind::Blob)),
+            ("v1.3.4-12-g1234^{tag}", PeelTo::ObjectKind(git_object::Kind::Tag)),
+            ("v1.3.4-12-g1234^{object}", PeelTo::ExistingObject),
+        ] {
+            let rec = parse(spec);
+
+            assert!(rec.kind.is_none());
+            assert!(rec.find_ref[0].as_ref().is_some() || rec.prefix[0].is_some());
+            assert_eq!(rec.peel_to, vec![expected]);
+            assert_eq!(rec.calls, 2);
+        }
+    }
+
+    #[test]
+    fn invalid_object_type() {
+        let err = try_parse("@^{invalid}").unwrap_err();
+        assert!(matches!(err, spec::parse::Error::InvalidObject {input} if input == "invalid"));
+
+        let err = try_parse("@^{Commit}").unwrap_err();
+        assert!(
+            matches!(err, spec::parse::Error::InvalidObject {input} if input == "Commit"),
+            "these types are case sensitive"
+        );
     }
 }

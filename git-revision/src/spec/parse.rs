@@ -5,6 +5,8 @@ use bstr::BString;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Cannot peel to {:?} - unknown target.", .input)]
+    InvalidObject { input: BString },
     #[error("Could not parse time {:?} for revlog lookup.", .input)]
     Time { input: BString },
     #[error("Sibling branches like 'upstream' or 'push' require a branch name with remote configuration, got {:?}", .name)]
@@ -110,6 +112,10 @@ pub mod delegate {
     pub enum PeelTo {
         /// An object of the given kind.
         ObjectKind(git_object::Kind),
+        /// Ensure the object at hand exists, without imposing any restrictions to its type.
+        ExistingObject,
+        /// Follow an annotated tag directly to its object without imposing a type restriction.
+        TagObject,
     }
 
     /// The kind of sibling branch to obtain.
@@ -117,6 +123,7 @@ pub mod delegate {
     pub enum SiblingBranch {
         /// The upstream branch as configured in `branch.<name>.remote` or `branch.<name>.merge`.
         Upstream,
+        /// The upstream branch to which we would push.
         Push,
     }
 
@@ -325,10 +332,19 @@ pub(crate) mod function {
                         }
                         .ok_or(Error::Delegate)?;
                         cursor += consumed;
-                    } else if let Some((_kind, _rest)) =
+                    } else if let Some((kind, _rest)) =
                         past_sep.and_then(|past_sep| parens(past_sep).transpose()).transpose()?
                     {
-                        todo!("try ^{{…}}")
+                        let target = match kind.as_ref() {
+                            b"commit" => delegate::PeelTo::ObjectKind(git_object::Kind::Commit),
+                            b"tag" => delegate::PeelTo::ObjectKind(git_object::Kind::Tag),
+                            b"tree" => delegate::PeelTo::ObjectKind(git_object::Kind::Tree),
+                            b"blob" => delegate::PeelTo::ObjectKind(git_object::Kind::Blob),
+                            b"object" => delegate::PeelTo::ExistingObject,
+                            invalid => return Err(Error::InvalidObject { input: invalid.into() }),
+                        };
+                        delegate.peel_until(target).ok_or(Error::Delegate)?;
+                        cursor += 1 + kind.len() + 1;
                     } else {
                         delegate
                             .traverse(delegate::Traversal::NthParent(1))
