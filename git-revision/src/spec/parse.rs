@@ -114,8 +114,8 @@ pub mod delegate {
         ObjectKind(git_object::Kind),
         /// Ensure the object at hand exists, without imposing any restrictions to its type.
         ExistingObject,
-        /// Follow an annotated tag directly to its object without imposing a type restriction.
-        TagObject,
+        /// Follow an annotated tag object recursively until an object is found.
+        RecursiveTagObject,
     }
 
     /// The kind of sibling branch to obtain.
@@ -341,6 +341,7 @@ pub(crate) mod function {
                             b"tree" => delegate::PeelTo::ObjectKind(git_object::Kind::Tree),
                             b"blob" => delegate::PeelTo::ObjectKind(git_object::Kind::Blob),
                             b"object" => delegate::PeelTo::ExistingObject,
+                            b"" => delegate::PeelTo::RecursiveTagObject,
                             invalid => return Err(Error::InvalidObject { input: invalid.into() }),
                         };
                         delegate.peel_until(target).ok_or(Error::Delegate)?;

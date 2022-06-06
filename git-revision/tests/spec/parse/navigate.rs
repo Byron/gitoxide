@@ -104,6 +104,16 @@ mod caret_symbol {
     }
 
     #[test]
+    fn empty_braces_deref_a_tag() {
+        let rec = parse("v1.2^{}");
+
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.get_ref(0), "v1.2");
+        assert_eq!(rec.peel_to, vec![PeelTo::RecursiveTagObject]);
+        assert_eq!(rec.calls, 2);
+    }
+
+    #[test]
     fn invalid_object_type() {
         let err = try_parse("@^{invalid}").unwrap_err();
         assert!(matches!(err, spec::parse::Error::InvalidObject {input} if input == "invalid"));
