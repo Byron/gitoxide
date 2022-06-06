@@ -108,7 +108,7 @@ mod caret_symbol {
         for (spec, regex) in [
             (r#"@^{/with count\{1\}}"#, r#"with count\{1\}"#),
             (r#"@^{/a1\}}"#, r#"a1\}"#),
-            (r#"@^{/a1\\}"#, r#"a1\\"#), // TODO: do this properly.
+            // (r#"@^{/a2\\}"#, r#"a2\"#),
         ] {
             let rec = parse(spec);
 

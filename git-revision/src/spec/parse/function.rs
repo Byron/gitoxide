@@ -1,7 +1,7 @@
 use crate::spec;
 use crate::spec::parse::delegate::SiblingBranch;
 use crate::spec::parse::{delegate, Delegate, Error};
-use bstr::{BStr, ByteSlice};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::convert::TryInto;
 use std::str::FromStr;
 
@@ -56,12 +56,13 @@ fn short_describe_prefix(name: &BStr) -> Option<&BStr> {
     (iter.count() == 1).then(|| candidate).flatten()
 }
 
-fn parens(input: &[u8]) -> Result<Option<(&BStr, &BStr)>, Error> {
+fn parens(input: &[u8]) -> Result<Option<(std::borrow::Cow<'_, BStr>, &BStr)>, Error> {
     if input.get(0) != Some(&b'{') {
         return Ok(None);
     }
     let mut open_braces = 0;
     let mut ignore_next = false;
+    let mut skip_list = Vec::new();
     for (idx, b) in input.iter().enumerate() {
         match *b {
             b'{' => {
@@ -81,6 +82,7 @@ fn parens(input: &[u8]) -> Result<Option<(&BStr, &BStr)>, Error> {
             b'\\' => {
                 if ignore_next {
                     ignore_next = false;
+                    skip_list.push(idx);
                 } else {
                     ignore_next = true;
                 }
@@ -88,7 +90,18 @@ fn parens(input: &[u8]) -> Result<Option<(&BStr, &BStr)>, Error> {
             _ => ignore_next = false,
         }
         if open_braces == 0 {
-            return Ok(Some((input[1..idx].as_bstr(), input[idx + 1..].as_bstr())));
+            let inner: std::borrow::Cow<'_, _> = if skip_list.is_empty() {
+                input[1..idx].as_bstr().into()
+            } else {
+                let mut from = 1;
+                let mut buf = BString::default();
+                for next in skip_list.into_iter() {
+                    buf.push_str(&input[from..next]);
+                    from = next + 1;
+                }
+                buf.into()
+            };
+            return Ok(Some((inner, input[idx + 1..].as_bstr())));
         }
     }
     Err(Error::UnclosedBracePair { input: input.into() })
@@ -172,6 +185,7 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
             let (nav, rest) = parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets {
                 input: input[sep_pos.unwrap_or(input.len())..].into(),
             })?;
+            let nav = nav.as_ref();
             if let Some(n) = try_parse::<isize>(nav)? {
                 if n < 0 {
                     if name.is_empty() {
@@ -236,7 +250,7 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                     past_sep.and_then(|past_sep| parens(past_sep).transpose()).transpose()?
                 {
                     cursor += 1 + kind.len() + 1;
-                    let target = match kind.as_ref() {
+                    let target = match kind.as_ref().as_ref() {
                         b"commit" => delegate::PeelTo::ObjectKind(git_object::Kind::Commit),
                         b"tag" => delegate::PeelTo::ObjectKind(git_object::Kind::Tag),
                         b"tree" => delegate::PeelTo::ObjectKind(git_object::Kind::Tree),
