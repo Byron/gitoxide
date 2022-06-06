@@ -113,7 +113,9 @@ mod caret_symbol {
                 "v1.3.4-12-g1234^{/!!leading exclamation mark}",
                 ("!leading exclamation mark", false),
             ),
-            // ("v1.3.4-12-g1234^{with count{1}}", ("with count{1}", false)),
+            ("v1.3.4-12-g1234^{/with count{1}}", ("with count{1}", false)),
+            (r#"@^{/with count\{1\}}"#, (r#"with count\{1\}"#, false)),
+            (r#"@^{/a1\}}"#, (r#"a1\}"#, false)),
         ] {
             let rec = parse(spec);
 
@@ -144,6 +146,15 @@ mod caret_symbol {
             matches!(err, spec::parse::Error::InvalidObject {input} if input == "Commit"),
             "these types are case sensitive"
         );
+    }
+
+    #[test]
+    fn incomplete_escaped_braces_in_regex_are_invalid() {
+        let err = try_parse(r#"@^{/a\{1}}"#).unwrap_err();
+        assert!(matches!(err, spec::parse::Error::UnconsumedInput {input} if input == "}"));
+
+        let err = try_parse(r#"@^{/a{1\}}"#).unwrap_err();
+        assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == r#"{/a{1\}}"#));
     }
 
     #[test]

@@ -60,10 +60,32 @@ fn parens(input: &[u8]) -> Result<Option<(&BStr, &BStr)>, Error> {
     if input.get(0) != Some(&b'{') {
         return Ok(None);
     }
-    let pos = input
-        .find_byte(b'}')
-        .ok_or_else(|| Error::UnclosedBracePair { input: input.into() })?;
-    Ok(Some((input[1..pos].as_bstr(), input[pos + 1..].as_bstr())))
+    let mut open_braces = 0;
+    let mut ignore_next = false;
+    for (idx, b) in input.iter().enumerate() {
+        match *b {
+            b'{' => {
+                if ignore_next {
+                    ignore_next = false;
+                } else {
+                    open_braces += 1
+                }
+            }
+            b'}' => {
+                if ignore_next {
+                    ignore_next = false;
+                } else {
+                    open_braces -= 1
+                }
+            }
+            b'\\' => ignore_next = true,
+            _ => ignore_next = false,
+        }
+        if open_braces == 0 {
+            return Ok(Some((input[1..idx].as_bstr(), input[idx + 1..].as_bstr())));
+        }
+    }
+    return Err(Error::UnclosedBracePair { input: input.into() });
 }
 
 fn try_parse<T: FromStr + PartialEq + Default>(input: &BStr) -> Result<Option<T>, Error> {
