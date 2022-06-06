@@ -104,7 +104,6 @@ mod caret_symbol {
     }
 
     #[test]
-    #[ignore]
     fn regex_with_revision_starting_point() {
         for (spec, (regex, negated)) in [
             ("HEAD^{/simple}", ("simple", false)),
@@ -114,7 +113,7 @@ mod caret_symbol {
                 "v1.3.4-12-g1234^{/!!leading exclamation mark}",
                 ("!leading exclamation mark", false),
             ),
-            ("v1.3.4-12-g1234^{with count{1}}", ("with count{1}", false)),
+            // ("v1.3.4-12-g1234^{with count{1}}", ("with count{1}", false)),
         ] {
             let rec = parse(spec);
 
@@ -146,6 +145,10 @@ mod caret_symbol {
             "these types are case sensitive"
         );
     }
+
+    #[test]
+    #[ignore]
+    fn regex_with_empty_exclamation_mark_prefix_is_invalid() {}
 
     #[test]
     #[ignore]

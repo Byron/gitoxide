@@ -207,6 +207,7 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                 } else if let Some((kind, _rest)) =
                     past_sep.and_then(|past_sep| parens(past_sep).transpose()).transpose()?
                 {
+                    cursor += 1 + kind.len() + 1;
                     let target = match kind.as_ref() {
                         b"commit" => delegate::PeelTo::ObjectKind(git_object::Kind::Commit),
                         b"tag" => delegate::PeelTo::ObjectKind(git_object::Kind::Tag),
@@ -214,10 +215,19 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                         b"blob" => delegate::PeelTo::ObjectKind(git_object::Kind::Blob),
                         b"object" => delegate::PeelTo::ExistingObject,
                         b"" => delegate::PeelTo::RecursiveTagObject,
+                        regex if regex.starts_with(b"/") => {
+                            let (regex, negated) = match regex.strip_prefix(b"/!") {
+                                Some(regex) if regex.get(0) == Some(&b'!') => (regex.as_bstr(), false),
+                                Some(regex) if regex.get(0) == Some(&b'-') => (regex[1..].as_bstr(), true),
+                                Some(_regex) => todo!(),
+                                None => (regex[1..].as_bstr(), false),
+                            };
+                            delegate.find(regex, negated).ok_or(Error::Delegate)?;
+                            continue;
+                        }
                         invalid => return Err(Error::InvalidObject { input: invalid.into() }),
                     };
                     delegate.peel_until(target).ok_or(Error::Delegate)?;
-                    cursor += 1 + kind.len() + 1;
                 } else {
                     delegate
                         .traverse(delegate::Traversal::NthParent(1))
