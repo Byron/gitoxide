@@ -5,6 +5,31 @@ use bstr::{BStr, ByteSlice};
 use std::convert::TryInto;
 use std::str::FromStr;
 
+pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
+    let mut prev_kind = None;
+    if let Some(b'^') = input.get(0) {
+        input = next(input).1;
+        delegate.kind(spec::Kind::Range).ok_or(Error::Delegate)?;
+        prev_kind = spec::Kind::Range.into();
+    }
+
+    input = revision(input, delegate)?;
+    if let Some((rest, kind)) = try_range(input) {
+        if let Some(prev_kind) = prev_kind {
+            return Err(Error::KindSetTwice { prev_kind, kind });
+        }
+        delegate.kind(kind).ok_or(Error::Delegate)?;
+        input = revision(rest.as_bstr(), delegate)?;
+    }
+
+    if input.is_empty() {
+        delegate.done();
+        Ok(())
+    } else {
+        Err(Error::UnconsumedInput { input: input.into() })
+    }
+}
+
 fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr) -> Option<()> {
     git_hash::Prefix::from_hex(hex_name.to_str().expect("hexadecimal only"))
         .ok()
@@ -217,30 +242,6 @@ fn try_parse_usize(input: &BStr) -> Result<Option<(usize, usize)>, Error> {
     }
     let number = try_parse(&input[..num_digits])?.expect("parse number if only digits");
     Ok(Some((number, num_digits)))
-}
-
-pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
-    let mut prev_kind = None;
-    if let Some(b'^') = input.get(0) {
-        input = next(input).1;
-        delegate.kind(spec::Kind::Range).ok_or(Error::Delegate)?;
-        prev_kind = spec::Kind::Range.into();
-    }
-
-    input = revision(input, delegate)?;
-    if let Some((rest, kind)) = try_range(input) {
-        if let Some(prev_kind) = prev_kind {
-            return Err(Error::KindSetTwice { prev_kind, kind });
-        }
-        delegate.kind(kind).ok_or(Error::Delegate)?;
-        input = revision(rest.as_bstr(), delegate)?;
-    }
-
-    if input.is_empty() {
-        Ok(())
-    } else {
-        Err(Error::UnconsumedInput { input: input.into() })
-    }
 }
 
 fn try_range(input: &BStr) -> Option<(&[u8], spec::Kind)> {

@@ -1,6 +1,6 @@
 use git_object::bstr::{BStr, BString};
 use git_revision::spec;
-use git_revision::spec::parse::delegate;
+use git_revision::spec::parse::{delegate, Delegate};
 
 #[derive(Default, Debug, Eq, PartialEq, Ord, PartialOrd)]
 struct Options {
@@ -26,6 +26,7 @@ struct Recorder {
 
     calls: usize,
     opts: Options,
+    done_called: bool,
 }
 
 impl Recorder {
@@ -122,6 +123,12 @@ impl delegate::Kind for Recorder {
     }
 }
 
+impl Delegate for Recorder {
+    fn done(&mut self) {
+        self.done_called = true;
+    }
+}
+
 fn parse(spec: &str) -> Recorder {
     try_parse_opts(spec, Options::default()).unwrap()
 }
@@ -146,6 +153,7 @@ fn empty_specs_are_valid() {
     }
     let rec = parse("");
     assert_eq!(rec.calls, 0, "but we do not bother to call the delegate with nothing");
+    assert!(rec.done_called);
 }
 
 #[test]
