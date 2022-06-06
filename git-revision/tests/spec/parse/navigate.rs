@@ -158,18 +158,27 @@ mod caret_symbol {
     }
 
     #[test]
-    #[ignore]
-    fn regex_with_empty_exclamation_mark_prefix_is_invalid() {}
+    fn regex_with_empty_exclamation_mark_prefix_is_invalid() {
+        let err = try_parse(r#"@^{/!hello}"#).unwrap_err();
+        assert!(matches!(err, spec::parse::Error::UnspecifiedRegexModifier {regex} if regex == "/!hello"));
+    }
+
+    #[test]
+    fn empty_top_revision_regex_are_skipped_as_they_match_everything() {
+        let rec = parse("@^{/}");
+
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert!(
+            rec.patterns.is_empty(),
+            "The delegate won't be called with empty regexes"
+        );
+        assert_eq!(rec.calls, 1);
+    }
 
     #[test]
     #[ignore]
     fn empty_top_level_regex_are_invalid() {
         // git also can't do it, finds nothing instead. It could be the youngest commit in theory, but isn't.
-    }
-
-    #[test]
-    #[ignore]
-    fn regex_resolution_is_skipped_if_empty_and_if_revision_is_set() {
-        // because they always match
     }
 }

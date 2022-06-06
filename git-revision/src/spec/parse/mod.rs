@@ -5,6 +5,8 @@ use bstr::BString;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Need one character after '/!', typically '-', but got {:?}", .regex)]
+    UnspecifiedRegexModifier { regex: BString },
     #[error("Cannot peel to {:?} - unknown target.", .input)]
     InvalidObject { input: BString },
     #[error("Could not parse time {:?} for revlog lookup.", .input)]

@@ -241,10 +241,12 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                             let (regex, negated) = match regex.strip_prefix(b"/!") {
                                 Some(regex) if regex.get(0) == Some(&b'!') => (regex.as_bstr(), false),
                                 Some(regex) if regex.get(0) == Some(&b'-') => (regex[1..].as_bstr(), true),
-                                Some(_regex) => todo!(),
+                                Some(_regex) => return Err(Error::UnspecifiedRegexModifier { regex: regex.into() }),
                                 None => (regex[1..].as_bstr(), false),
                             };
-                            delegate.find(regex, negated).ok_or(Error::Delegate)?;
+                            if !regex.is_empty() {
+                                delegate.find(regex, negated).ok_or(Error::Delegate)?;
+                            }
                             continue;
                         }
                         invalid => return Err(Error::InvalidObject { input: invalid.into() }),
