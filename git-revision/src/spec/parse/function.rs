@@ -56,7 +56,7 @@ fn short_describe_prefix(name: &BStr) -> Option<&BStr> {
     (iter.count() == 1).then(|| candidate).flatten()
 }
 
-fn parens(input: &[u8]) -> Result<Option<(std::borrow::Cow<'_, BStr>, &BStr)>, Error> {
+fn parens(input: &[u8]) -> Result<Option<(std::borrow::Cow<'_, BStr>, &BStr, usize)>, Error> {
     if input.get(0) != Some(&b'{') {
         return Ok(None);
     }
@@ -99,9 +99,12 @@ fn parens(input: &[u8]) -> Result<Option<(std::borrow::Cow<'_, BStr>, &BStr)>, E
                     buf.push_str(&input[from..next]);
                     from = next + 1;
                 }
+                if let Some(rest) = input.get(from..idx) {
+                    buf.push_str(rest);
+                }
                 buf.into()
             };
-            return Ok(Some((inner, input[idx + 1..].as_bstr())));
+            return Ok(Some((inner, input[idx + 1..].as_bstr(), idx + 1)));
         }
     }
     Err(Error::UnclosedBracePair { input: input.into() })
@@ -182,7 +185,7 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
     input = {
         if let Some(b'@') = sep {
             let past_sep = input[sep_pos.map(|pos| pos + 1).unwrap_or(input.len())..].as_bstr();
-            let (nav, rest) = parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets {
+            let (nav, rest, _consumed) = parens(past_sep)?.ok_or_else(|| Error::AtNeedsCurlyBrackets {
                 input: input[sep_pos.unwrap_or(input.len())..].into(),
             })?;
             let nav = nav.as_ref();
@@ -246,10 +249,10 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                     }
                     .ok_or(Error::Delegate)?;
                     cursor += consumed;
-                } else if let Some((kind, _rest)) =
+                } else if let Some((kind, _rest, consumed)) =
                     past_sep.and_then(|past_sep| parens(past_sep).transpose()).transpose()?
                 {
-                    cursor += 1 + kind.len() + 1;
+                    cursor += consumed;
                     let target = match kind.as_ref().as_ref() {
                         b"commit" => delegate::PeelTo::ObjectKind(git_object::Kind::Commit),
                         b"tag" => delegate::PeelTo::ObjectKind(git_object::Kind::Tag),

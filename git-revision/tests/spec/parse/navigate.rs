@@ -108,7 +108,12 @@ mod caret_symbol {
         for (spec, regex) in [
             (r#"@^{/with count\{1\}}"#, r#"with count\{1\}"#),
             (r#"@^{/a1\}}"#, r#"a1\}"#),
-            // (r#"@^{/a2\\}"#, r#"a2\"#),
+            (r#"@^{/a2\\}"#, r#"a2\"#),
+            (r#"@^{/a\\b\\c}"#, r#"a\b\c"#),
+            (r#"@^{/a\\b\\hello}"#, r#"a\b\hello"#),
+            (r#"@^{/a\\b\\{\\}}"#, r#"a\b\{\}"#),
+            (r#"@^{/a\\b\{\}}"#, r#"a\b\{\}"#),
+            (r#"@^{/c\\b{b{a}b}}"#, r#"c\b{b{a}b}"#),
         ] {
             let rec = parse(spec);
 
