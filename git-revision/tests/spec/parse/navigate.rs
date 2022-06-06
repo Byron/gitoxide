@@ -104,6 +104,22 @@ mod caret_symbol {
     }
 
     #[test]
+    fn backslashes_can_be_used_for_escaping_within_regexes() {
+        for (spec, regex) in [
+            (r#"@^{/with count\{1\}}"#, r#"with count\{1\}"#),
+            (r#"@^{/a1\}}"#, r#"a1\}"#),
+            (r#"@^{/a1\\}"#, r#"a1\\"#), // TODO: do this properly.
+        ] {
+            let rec = parse(spec);
+
+            assert!(rec.kind.is_none());
+            assert!(rec.find_ref[0].as_ref().is_some() || rec.prefix[0].is_some());
+            assert_eq!(rec.patterns, vec![(regex.into(), false)]);
+            assert_eq!(rec.calls, 2);
+        }
+    }
+
+    #[test]
     fn regex_with_revision_starting_point() {
         for (spec, (regex, negated)) in [
             ("HEAD^{/simple}", ("simple", false)),
@@ -114,8 +130,6 @@ mod caret_symbol {
                 ("!leading exclamation mark", false),
             ),
             ("v1.3.4-12-g1234^{/with count{1}}", ("with count{1}", false)),
-            (r#"@^{/with count\{1\}}"#, (r#"with count\{1\}"#, false)),
-            (r#"@^{/a1\}}"#, (r#"a1\}"#, false)),
         ] {
             let rec = parse(spec);
 

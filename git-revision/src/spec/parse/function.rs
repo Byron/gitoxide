@@ -78,7 +78,13 @@ fn parens(input: &[u8]) -> Result<Option<(&BStr, &BStr)>, Error> {
                     open_braces -= 1
                 }
             }
-            b'\\' => ignore_next = true,
+            b'\\' => {
+                if ignore_next {
+                    ignore_next = false;
+                } else {
+                    ignore_next = true;
+                }
+            }
             _ => ignore_next = false,
         }
         if open_braces == 0 {
