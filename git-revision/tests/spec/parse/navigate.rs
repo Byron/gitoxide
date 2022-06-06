@@ -104,6 +104,28 @@ mod caret_symbol {
     }
 
     #[test]
+    #[ignore]
+    fn regex_with_revision_starting_point() {
+        for (spec, (regex, negated)) in [
+            ("HEAD^{/simple}", ("simple", false)),
+            ("abcd^{/!-negated}", ("negated", true)),
+            ("v1.3.4^{/^from start}", ("^from start", false)),
+            (
+                "v1.3.4-12-g1234^{/!!leading exclamation mark}",
+                ("!leading exclamation mark", false),
+            ),
+            ("v1.3.4-12-g1234^{with count{1}}", ("with count{1}", false)),
+        ] {
+            let rec = parse(spec);
+
+            assert!(rec.kind.is_none());
+            assert!(rec.find_ref[0].as_ref().is_some() || rec.prefix[0].is_some());
+            assert_eq!(rec.patterns, vec![(regex.into(), negated)]);
+            assert_eq!(rec.calls, 2);
+        }
+    }
+
+    #[test]
     fn empty_braces_deref_a_tag() {
         let rec = parse("v1.2^{}");
 

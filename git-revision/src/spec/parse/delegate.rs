@@ -55,21 +55,13 @@ pub trait Navigate {
     /// Peel the current object until it reached `kind` or `None` if the chain does not contain such object.
     fn peel_until(&mut self, kind: PeelTo) -> Option<()>;
 
-    /// Find the first revision/commit whose message matches the given `regex` (which is never empty), using `mode`
+    /// Find the first revision/commit whose message matches the given `regex` (which is never empty).
     /// to see how it should be matched.
     /// If `negated` is `true`, the first non-match will be a match.
     ///
-    /// If no revision is known, find the _youngest_ matching commit from _any_ reference, including `HEAD`.
-    fn find(&mut self, regex: &BStr, mode: RegexMatchMode, negated: bool) -> Option<()>;
-}
-
-/// Define how a regular expressions should be matched.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum RegexMatchMode {
-    /// Match `regex` in any part of the commit message.
-    Anywhere,
-    /// The message should start with the given `string`.
-    FroStart,
+    /// If no revision is known yet, find the _youngest_ matching commit from _any_ reference, including `HEAD`.
+    /// Otherwise, only find commits reachable from the set revision.
+    fn find(&mut self, regex: &BStr, negated: bool) -> Option<()>;
 }
 
 /// A lookup into the reflog of a reference.
