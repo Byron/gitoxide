@@ -56,7 +56,8 @@ fn short_describe_prefix(name: &BStr) -> Option<&BStr> {
     (iter.count() == 1).then(|| candidate).flatten()
 }
 
-fn parens(input: &[u8]) -> Result<Option<(std::borrow::Cow<'_, BStr>, &BStr, usize)>, Error> {
+type InsideParensRestConsumed<'a> = (std::borrow::Cow<'a, BStr>, &'a BStr, usize);
+fn parens(input: &[u8]) -> Result<Option<InsideParensRestConsumed<'_>>, Error> {
     if input.get(0) != Some(&b'{') {
         return Ok(None);
     }
