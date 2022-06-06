@@ -20,6 +20,7 @@ struct Recorder {
     // navigation
     traversal: Vec<delegate::Traversal>,
     peel_to: Vec<delegate::PeelTo>,
+    patterns: Vec<(BString, delegate::RegexMatchMode, bool)>,
 
     // range
     kind: Option<spec::Kind>,
@@ -104,6 +105,12 @@ impl delegate::Navigate for Recorder {
     fn peel_until(&mut self, kind: delegate::PeelTo) -> Option<()> {
         self.calls += 1;
         self.peel_to.push(kind);
+        Some(())
+    }
+
+    fn find(&mut self, regex: &BStr, mode: delegate::RegexMatchMode, negated: bool) -> Option<()> {
+        self.calls += 1;
+        self.patterns.push((regex.into(), mode, negated));
         Some(())
     }
 }

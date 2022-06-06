@@ -124,4 +124,16 @@ mod caret_symbol {
             "these types are case sensitive"
         );
     }
+
+    #[test]
+    #[ignore]
+    fn empty_top_level_regex_are_invalid() {
+        // git also can't do it, finds nothing instead. It could be the youngest commit in theory, but isn't.
+    }
+
+    #[test]
+    #[ignore]
+    fn regex_resolution_is_skipped_if_empty_and_if_revision_is_set() {
+        // because they always match
+    }
 }
