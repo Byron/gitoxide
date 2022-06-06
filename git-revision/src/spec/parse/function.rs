@@ -85,7 +85,7 @@ fn parens(input: &[u8]) -> Result<Option<(&BStr, &BStr)>, Error> {
             return Ok(Some((input[1..idx].as_bstr(), input[idx + 1..].as_bstr())));
         }
     }
-    return Err(Error::UnclosedBracePair { input: input.into() });
+    Err(Error::UnclosedBracePair { input: input.into() })
 }
 
 fn try_parse<T: FromStr + PartialEq + Default>(input: &BStr) -> Result<Option<T>, Error> {
