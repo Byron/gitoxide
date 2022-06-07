@@ -104,22 +104,56 @@ mod caret_symbol {
     }
 
     #[test]
-    fn backslashes_can_be_used_for_escaping_within_regexes() {
-        for (spec, regex) in [
-            (r#"@^{/with count\{1\}}"#, r#"with count\{1\}"#),
-            (r#"@^{/a1\}}"#, r#"a1\}"#),
-            (r#"@^{/a2\\}"#, r#"a2\"#),
-            (r#"@^{/a\\b\\c}"#, r#"a\b\c"#),
-            (r#"@^{/a\\b\\hello}"#, r#"a\b\hello"#),
-            (r#"@^{/a\\b\\{\\}}"#, r#"a\b\{\}"#),
-            (r#"@^{/a\\b\{\}}"#, r#"a\b\{\}"#),
-            (r#"@^{/c\\b{b{a}b}}"#, r#"c\b{b{a}b}"#),
+    fn regex_backslash_rules() {
+        for (spec, regex, msg) in [
+            (
+                r#"@^{/with count{1}}"#,
+                r#"with count{1}"#,
+                "matching inner parens do not need escaping",
+            ),
+            (
+                r#"@^{/with count\{1\}}"#,
+                r#"with count{1}"#,
+                "escaped parens are entirely ignored",
+            ),
+            (r#"@^{/1\}}"#, r#"1}"#, "unmatched closing parens need to be escaped"),
+            (r#"@^{/2\{}"#, r#"2{"#, "unmatched opening parens need to be escaped"),
+            (
+                r#"@^{/3{\{}}"#,
+                r#"3{{}"#,
+                "unmatched nested opening parens need to be escaped",
+            ),
+            (
+                r#"@^{/4{\}}}"#,
+                r#"4{}}"#,
+                "unmatched nested closing parens need to be escaped",
+            ),
+            (
+                r#"@^{/a\b\c}"#,
+                r#"a\b\c"#,
+                "single backslashes do not need to be escaped",
+            ),
+            (
+                r#"@^{/a\b\c\\}"#,
+                r#"a\b\c\"#,
+                "single backslashes do not need to be escaped, trailing",
+            ),
+            (
+                r#"@^{/a\\b\\c\\}"#,
+                r#"a\b\c\"#,
+                "backslashes can be escaped nonetheless, trailing",
+            ),
+            (
+                r#"@^{/5\\{}}"#,
+                r#"5\{}"#,
+                "backslashes in front of parens must be escaped or they would unbalance the brace pair",
+            ),
         ] {
-            let rec = parse(spec);
+            let rec = try_parse(spec).expect(msg);
 
             assert!(rec.kind.is_none());
             assert!(rec.find_ref[0].as_ref().is_some() || rec.prefix[0].is_some());
-            assert_eq!(rec.patterns, vec![(regex.into(), false)]);
+            assert_eq!(rec.patterns, vec![(regex.into(), false)], "{}", msg);
             assert_eq!(rec.calls, 2);
         }
     }
@@ -180,6 +214,15 @@ mod caret_symbol {
     fn regex_with_empty_exclamation_mark_prefix_is_invalid() {
         let err = try_parse(r#"@^{/!hello}"#).unwrap_err();
         assert!(matches!(err, spec::parse::Error::UnspecifiedRegexModifier {regex} if regex == "/!hello"));
+    }
+
+    #[test]
+    fn bad_escapes_can_cause_brace_mismatch() {
+        let err = try_parse(r#"@^{\}"#).unwrap_err();
+        assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == r#"{\}"#));
+
+        let err = try_parse(r#"@^{{\}}"#).unwrap_err();
+        assert!(matches!(err, spec::parse::Error::UnclosedBracePair {input} if input == r#"{{\}}"#));
     }
 
     #[test]

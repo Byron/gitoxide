@@ -81,14 +81,20 @@ fn parens(input: &[u8]) -> Result<Option<InsideParensRestConsumed<'_>>, Error> {
                 }
             }
             b'\\' => {
+                skip_list.push(idx);
                 if ignore_next {
+                    skip_list.pop();
                     ignore_next = false;
-                    skip_list.push(idx);
                 } else {
                     ignore_next = true;
                 }
             }
-            _ => ignore_next = false,
+            _ => {
+                if ignore_next {
+                    skip_list.pop();
+                };
+                ignore_next = false
+            }
         }
         if open_braces == 0 {
             let inner: std::borrow::Cow<'_, _> = if skip_list.is_empty() {
