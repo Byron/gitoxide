@@ -807,17 +807,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e25ea47919b1560c4e3b7fe0aaab9becf5b84a10325ddf7db0f0ba5e1026499"
 
 [[package]]
-name = "diffing"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "git-features",
- "git-repository",
- "git2",
- "rayon",
-]
-
-[[package]]
 name = "digest"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2092,17 +2081,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "object-access"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "git-repository",
- "git2",
- "parking_lot 0.12.1",
- "rayon",
-]
-
-[[package]]
 name = "once_cell"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2846,17 +2824,6 @@ dependencies = [
  "combine",
  "indexmap",
  "itertools",
-]
-
-[[package]]
-name = "traversal"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "dashmap",
- "git-repository",
- "git2",
- "rayon",
 ]
 
 [[package]]
