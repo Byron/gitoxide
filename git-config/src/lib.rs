@@ -1,5 +1,4 @@
-#![forbid(unsafe_code)]
-#![deny(rust_2018_idioms)]
+#![deny(unsafe_code, rust_2018_idioms)]
 // #![warn(missing_docs)]
 // #![warn(clippy::pedantic, clippy::nursery)]
 
