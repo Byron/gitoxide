@@ -7,13 +7,13 @@ always:
 ##@ Publishing & Versioning
 
 try-publish-all: ## Dry-run publish all crates in the currently set version if they are not published yet.
-	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release gitoxide
+	(cd cargo-smart-release && cargo build --bin cargo-smart-release) && cargo-smart-release/target/debug/cargo-smart-release smart-release gitoxide
 
 try-bump-minor-version: ## Show how updating the minor version of PACKAGE=<name> would look like.
-	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release --update-crates-index --bump minor --no-dependencies --no-publish --no-tag --no-push -v $(PACKAGE)
+	(cd cargo-smart-release && cargo build --bin cargo-smart-release) && cargo-smart-release/target/debug/cargo-smart-release smart-release --update-crates-index --bump minor --no-dependencies --no-publish --no-tag --no-push -v $(PACKAGE)
 
 bump-minor-version: ## Similar to try-bump-minor-version, but actually performs the operation on PACKAGE=<name>
-	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release --update-crates-index --bump minor --no-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE) --execute
+	(cd cargo-smart-release && cargo build --bin cargo-smart-release) && cargo-smart-release/target/debug/cargo-smart-release smart-release --update-crates-index --bump minor --no-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE) --execute
 
 ##@ Release Builds
 
@@ -188,8 +188,8 @@ journey-tests-async: always ## run journey tests (lean-async)
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) async
 
 journey-tests-smart-release:
-	cargo build --package cargo-smart-release
-	cd cargo-smart-release && ./tests/journey.sh ../target/debug/cargo-smart-release
+	cd cargo-smart-release && cargo build
+	cd cargo-smart-release && ./tests/journey.sh target/debug/cargo-smart-release
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests
