@@ -242,7 +242,19 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
     while let Some(b) = input.get(cursor) {
         cursor += 1;
         match *b {
-            b'~' => todo!("~"),
+            b'~' => {
+                let (number, consumed) = input
+                    .get(cursor..)
+                    .and_then(|past_sep| try_parse_usize(past_sep.as_bstr()).transpose())
+                    .transpose()?
+                    .unwrap_or((1, 0));
+                if number != 0 {
+                    delegate
+                        .traverse(delegate::Traversal::NthAncestor(number))
+                        .ok_or(Error::Delegate)?;
+                }
+                cursor += consumed;
+            }
             b'^' => {
                 let past_sep = input.get(cursor..);
                 if let Some((number, consumed)) = past_sep
