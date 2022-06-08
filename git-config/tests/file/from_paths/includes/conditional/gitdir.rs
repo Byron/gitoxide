@@ -3,10 +3,17 @@ use crate::file::from_paths::escape_backslashes;
 use crate::file::from_paths::includes::conditional::options_with_git_dir;
 use bstr::BString;
 use git_config::File;
+use serial_test::serial;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use tempfile::tempdir;
+use tempfile::{tempdir, tempdir_in, TempDir};
+
+#[derive(Eq, PartialEq)]
+enum ConfigLocation {
+    Repo,
+    User,
+}
 
 enum Value {
     Original,
@@ -15,30 +22,42 @@ enum Value {
 
 struct Options<'a> {
     condition: &'a str,
-    git_dir_suffix: &'a str,
+    git_dir: &'a Path,
     expected: Value,
+    config_location: ConfigLocation,
+}
+
+impl Default for Options<'_> {
+    fn default() -> Self {
+        Self {
+            condition: "",
+            git_dir: Path::new(""),
+            expected: Value::Override,
+            config_location: ConfigLocation::Repo,
+        }
+    }
 }
 
 fn assert_section_value(
     Options {
         condition,
-        git_dir_suffix,
+        git_dir,
         expected,
+        config_location,
     }: Options,
 ) {
-    let dir = tempdir().unwrap();
-    let dir = dir.path().join(git_dir_suffix);
-    fs::create_dir_all(dir.as_path()).unwrap();
-    dbg!(&dir);
+    dbg!(git_dir);
 
-    let real_git_dir = dir.join(".git");
-    let git_config = real_git_dir.join("config");
+    write_config(condition, git_dir, &config_location);
 
-    write_config(condition, dir.as_path(), real_git_dir.as_path());
+    git_assert_eq(&expected, git_dir, &config_location);
 
-    git_assert_eq(&expected, real_git_dir.as_path());
+    let mut paths = vec![git_dir.join("config")];
+    if config_location == ConfigLocation::User {
+        paths.push(git_dir.parent().unwrap().parent().unwrap().join(".gitconfig"));
+    }
 
-    let config = File::from_paths(Some(git_config), options_with_git_dir(real_git_dir.as_path())).unwrap();
+    let config = File::from_paths(paths, options_with_git_dir(git_dir)).unwrap();
 
     assert_eq!(
         config.string("section", None, "value"),
@@ -46,17 +65,25 @@ fn assert_section_value(
             Value::Original => "base-value",
             Value::Override => "override-value",
         })),
-        "relative path pattern is matched correctly"
+        "gitoxide assert equals",
     );
 }
 
-fn write_config(condition: &str, dir: &Path, real_git_dir: &Path) {
-    let include_path = write_override_config(dir);
-    write_main_config(condition, dir, include_path.as_path(), real_git_dir);
+fn git_dir(root_dir: &TempDir, git_dir_suffix: &str) -> Box<Path> {
+    let git_dir = root_dir.path().join(git_dir_suffix).join(".git");
+    let git_dir = git_dir.as_path();
+    fs::create_dir_all(git_dir).unwrap();
+    git_dir.into()
 }
 
-fn write_override_config(dir: &Path) -> PathBuf {
-    let include_path = dir.join("include.path");
+fn write_config(condition: &str, git_dir: &Path, overwrite_config_location: &ConfigLocation) {
+    let override_config_dir_file = write_override_config(git_dir.parent().unwrap());
+    write_main_config(condition, override_config_dir_file, git_dir, overwrite_config_location);
+}
+
+fn write_override_config(root_path: &Path) -> PathBuf {
+    let include_path = root_path.join("include.path");
+    fs::create_dir_all(root_path).unwrap();
     fs::write(
         include_path.as_path(),
         "
@@ -67,81 +94,155 @@ fn write_override_config(dir: &Path) -> PathBuf {
     include_path
 }
 
-fn git_assert_eq(expected: &Value, git_dirrr: &Path) {
+fn git_assert_eq(expected: &Value, git_dir: &Path, overwrite_config_location: &ConfigLocation) {
     let output = Command::new("git")
         .args(["config", "--get", "section.value"])
-        .env_clear()
-        .env("GIT_DIR", git_dirrr)
+        .env(
+            "HOME",
+            match overwrite_config_location {
+                ConfigLocation::User => git_dir
+                    .parent()
+                    .unwrap()
+                    .parent()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+                ConfigLocation::Repo => std::env::var("HOME").unwrap(),
+            },
+        )
+        .current_dir(git_dir)
         .output()
         .unwrap();
 
-    assert_eq!(output.stderr, Vec::new());
+    dbg!(&git_dir);
+    assert_eq!(output.stderr.len(), 0);
+    let git_output = BString::from(output.stdout.strip_suffix(b"\n").unwrap());
     assert_eq!(
-        BString::from(output.stdout.strip_suffix(b"\n").unwrap()),
+        git_output,
         match expected {
             Value::Original => "base-value",
             Value::Override => "override-value",
-        }
+        },
+        "git assert equals"
     );
 }
 
-fn write_main_config(condition: &str, dir: &Path, include_path: &Path, git_dirrr: &Path) {
+fn write_main_config(
+    condition: &str,
+    override_config_dir_file: PathBuf,
+    git_dir: &Path,
+    overwrite_config_location: &ConfigLocation,
+) {
+    let repo_dir = git_dir.parent().unwrap();
     Command::new("git")
-        .args(["init", dir.to_str().unwrap()])
+        .args(["init", repo_dir.to_str().unwrap()])
         .output()
         .unwrap();
 
-    Command::new("git")
-        .args(["config", "section.value", "base-value"])
-        .env_clear()
-        .env("GIT_DIR", git_dirrr)
-        .output()
-        .unwrap();
+    if overwrite_config_location == &ConfigLocation::Repo {
+        dbg!(Command::new("git")
+            .args(["config", "section.value", "base-value"])
+            .output()
+            .unwrap());
+    }
 
-    Command::new("git")
+    dbg!(Command::new("git")
         .args([
             "config",
-            &format!("includeIf.gitdir:{}.path", condition),
-            &escape_backslashes(include_path),
+            match overwrite_config_location {
+                ConfigLocation::User => "--global",
+                ConfigLocation::Repo => "--local",
+            },
+            &format!("includeIf.{}.path", condition),
+            &escape_backslashes(override_config_dir_file.as_path()),
         ])
-        .env_clear()
-        .env("GIT_DIR", git_dirrr)
+        .current_dir(git_dir)
+        .env(
+            "HOME",
+            match overwrite_config_location {
+                ConfigLocation::User => git_dir
+                    .parent()
+                    .unwrap()
+                    .parent()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string(),
+                ConfigLocation::Repo => std::env::var("HOME").unwrap(),
+            }
+        )
         .output()
+        .unwrap());
+
+    dbg!(&git_dir);
+}
+
+#[test]
+#[serial]
+fn relative_path_with_trailing_slash() {
+    assert_section_value(Options {
+        condition: "gitdir:foo/",
+        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        ..Default::default()
+    });
+}
+
+#[test]
+#[serial]
+fn tilde_expansion() {
+    let tmp_dir = tempdir_in(std::env::var("HOME").unwrap()).unwrap();
+    let root = tmp_dir
+        .path()
+        .components()
+        .last()
+        .unwrap()
+        .as_os_str()
+        .to_str()
         .unwrap();
-}
 
-#[test]
-fn dot_slash_match() {
     assert_section_value(Options {
-        condition: "./",
-        git_dir_suffix: ".git",
-        expected: Value::Override,
+        condition: &format!("gitdir:~/{}/foo/", root),
+        git_dir: &git_dir(&tmp_dir, "foo"),
+        ..Default::default()
     });
 }
 
 #[test]
-fn relative_path_with_backslash_do_not_match() {
+#[serial]
+fn star_star_prefix_and_suffix() {
     assert_section_value(Options {
-        condition: "c\\\\d/",
-        git_dir_suffix: "c//d/.git",
-        expected: Value::Original,
+        condition: "gitdir:**/foo/**",
+        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        ..Default::default()
     });
 }
 
 #[test]
-fn relative_path_match() {
+#[serial]
+fn dot_path() {
     assert_section_value(Options {
-        condition: "foo/bar/.git",
-        git_dir_suffix: "foo/bar",
-        expected: Value::Override,
+        condition: "gitdir:./foo/.git",
+        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        config_location: ConfigLocation::User,
+        ..Default::default()
     });
 }
 
 #[test]
-fn dot_dot_path_match() {
+#[serial]
+fn case_insensitive() {
     assert_section_value(Options {
-        condition: "..",
-        git_dir_suffix: ".",
-        expected: Value::Override,
+        condition: "gitdir/i:FOO/",
+        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        ..Default::default()
+    });
+}
+
+#[test]
+#[serial]
+fn star_star_in_the_middle() {
+    assert_section_value(Options {
+        condition: "gitdir:**/foo/**/bar/**",
+        git_dir: &git_dir(&tempdir().unwrap(), "foo/bar"),
+        ..Default::default()
     });
 }

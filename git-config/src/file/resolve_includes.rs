@@ -149,7 +149,6 @@ fn gitdir_matches(
         git_path::to_unix_separators(git_path::into_bstr(path)).into_owned()
     };
 
-    dbg!(&target_config_path);
     if pattern_path.starts_with(DOT) {
         if let Some(parent_path) = target_config_path.and_then(|p| p.parent()) {
             let parent_dir = git_path::to_unix_separators(git_path::into_bstr(parent_path));
@@ -173,7 +172,6 @@ fn gitdir_matches(
         pattern_path.push_str("**");
     }
 
-    dbg!(&pattern_path.as_bstr(), &git_dir.as_bstr());
     let match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL | wildmatch_mode;
     let is_match = git_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
     if is_match {
