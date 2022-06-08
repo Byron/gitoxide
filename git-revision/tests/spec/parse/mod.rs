@@ -27,7 +27,7 @@ struct Recorder {
 
     calls: usize,
     opts: Options,
-    done_called: bool,
+    done: bool,
 }
 
 impl Recorder {
@@ -132,7 +132,7 @@ impl delegate::Kind for Recorder {
 
 impl Delegate for Recorder {
     fn done(&mut self) {
-        self.done_called = true;
+        self.done = true;
     }
 }
 
@@ -160,7 +160,7 @@ fn empty_specs_are_valid() {
     }
     let rec = parse("");
     assert_eq!(rec.calls, 0, "but we do not bother to call the delegate with nothing");
-    assert!(rec.done_called);
+    assert!(rec.done);
 }
 
 #[test]

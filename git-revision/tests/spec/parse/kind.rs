@@ -29,6 +29,7 @@ mod range {
     use crate::spec::parse::kind::prefix;
     use crate::spec::parse::parse;
     use git_revision::spec;
+    use git_revision::spec::parse::delegate::Traversal;
 
     #[test]
     fn leading_caret() {
@@ -105,6 +106,24 @@ mod range {
         assert_eq!(rec.prefix[0], prefix("1234").into());
         assert_eq!(rec.prefix[1], prefix("abcd").into());
         assert_eq!(rec.calls, 3);
+
+        let rec = parse("v1.2.4@{1}~~^10..r1@{2}~10^2");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.get_ref(0), "v1.2.4");
+        assert_eq!(rec.get_ref(1), "r1");
+        assert_eq!(&rec.prefix, &[None, None]);
+        assert_eq!(
+            rec.traversal,
+            vec![
+                Traversal::NthAncestor(1),
+                Traversal::NthAncestor(1),
+                Traversal::NthParent(10),
+                Traversal::NthAncestor(10),
+                Traversal::NthParent(2)
+            ]
+        );
+        assert_eq!(rec.calls, 10);
+        assert!(rec.done);
     }
 }
 
@@ -112,6 +131,7 @@ mod mergebase {
     use crate::spec::parse::kind::prefix;
     use crate::spec::parse::parse;
     use git_revision::spec;
+    use git_revision::spec::parse::delegate::Traversal;
 
     #[test]
     fn trailing_dot_dot_dot() {
@@ -148,6 +168,24 @@ mod mergebase {
         assert_eq!(rec.prefix[0], prefix("1234").into());
         assert_eq!(rec.prefix[1], prefix("abcd").into());
         assert_eq!(rec.calls, 3);
+
+        let rec = parse("r1@{1}~~^10...@{2}~10^2");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.get_ref(0), "r1");
+        assert_eq!(rec.find_ref[1], None, "HEAD is implied");
+        assert_eq!(&rec.prefix, &[None, None]);
+        assert_eq!(
+            rec.traversal,
+            vec![
+                Traversal::NthAncestor(1),
+                Traversal::NthAncestor(1),
+                Traversal::NthParent(10),
+                Traversal::NthAncestor(10),
+                Traversal::NthParent(2)
+            ]
+        );
+        assert_eq!(rec.calls, 9);
+        assert!(rec.done);
     }
 }
 
