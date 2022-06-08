@@ -3,6 +3,7 @@ use crate::file::from_paths::escape_backslashes;
 use crate::file::from_paths::includes::conditional::options_with_git_dir;
 use bstr::BString;
 use git_config::File;
+use git_path::create_symlink;
 use serial_test::serial;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -46,8 +47,6 @@ fn assert_section_value(
         config_location,
     }: Options,
 ) {
-    dbg!(git_dir);
-
     write_config(condition, git_dir, &config_location);
 
     git_assert_eq(&expected, git_dir, &config_location);
@@ -110,11 +109,11 @@ fn git_assert_eq(expected: &Value, git_dir: &Path, overwrite_config_location: &C
                 ConfigLocation::Repo => std::env::var("HOME").unwrap(),
             },
         )
+        .env("GIT_DIR", git_dir.to_str().unwrap())
         .current_dir(git_dir)
         .output()
         .unwrap();
 
-    dbg!(&git_dir);
     assert_eq!(output.stderr.len(), 0);
     let git_output = BString::from(output.stdout.strip_suffix(b"\n").unwrap());
     assert_eq!(
@@ -140,13 +139,13 @@ fn write_main_config(
         .unwrap();
 
     if overwrite_config_location == &ConfigLocation::Repo {
-        dbg!(Command::new("git")
+        Command::new("git")
             .args(["config", "section.value", "base-value"])
             .output()
-            .unwrap());
+            .unwrap();
     }
 
-    dbg!(Command::new("git")
+    Command::new("git")
         .args([
             "config",
             match overwrite_config_location {
@@ -168,12 +167,10 @@ fn write_main_config(
                     .to_string_lossy()
                     .to_string(),
                 ConfigLocation::Repo => std::env::var("HOME").unwrap(),
-            }
+            },
         )
         .output()
-        .unwrap());
-
-    dbg!(&git_dir);
+        .unwrap();
 }
 
 #[test]
@@ -243,6 +240,83 @@ fn star_star_in_the_middle() {
     assert_section_value(Options {
         condition: "gitdir:**/foo/**/bar/**",
         git_dir: &git_dir(&tempdir().unwrap(), "foo/bar"),
+        ..Default::default()
+    });
+}
+
+#[test]
+#[serial]
+fn tilde_expansion_with_symlink() {
+    let tmp_dir = tempdir_in(std::env::var("HOME").unwrap()).unwrap();
+    let root = tmp_dir
+        .path()
+        .components()
+        .last()
+        .unwrap()
+        .as_os_str()
+        .to_str()
+        .unwrap();
+
+    git_dir(&tmp_dir, "foo");
+    create_symlink(
+        tmp_dir.path().join("bar").as_path(),
+        tmp_dir.path().join("foo").as_path(),
+    );
+
+    assert_section_value(Options {
+        condition: &format!("gitdir:~/{}/bar/", root),
+        git_dir: tmp_dir.path().join("bar").join(".git").as_path(),
+        ..Default::default()
+    });
+}
+
+#[test]
+#[serial]
+fn dot_path_with_symlink() {
+    let tmp_dir = tempdir_in(std::env::var("HOME").unwrap()).unwrap();
+    git_dir(&tmp_dir, "foo");
+    create_symlink(
+        tmp_dir.path().join("bar").as_path(),
+        tmp_dir.path().join("foo").as_path(),
+    );
+    assert_section_value(Options {
+        condition: "gitdir:./bar/.git",
+        git_dir: tmp_dir.path().join("bar").join(".git").as_path(),
+        config_location: ConfigLocation::User,
+        ..Default::default()
+    });
+}
+
+#[test]
+#[serial]
+fn dot_path_matching_symlink() {
+    let tmp_dir = tempdir_in(std::env::var("HOME").unwrap()).unwrap();
+    git_dir(&tmp_dir, "foo");
+    create_symlink(
+        tmp_dir.path().join("bar").as_path(),
+        tmp_dir.path().join("foo").as_path(),
+    );
+    assert_section_value(Options {
+        condition: "gitdir:bar/",
+        git_dir: tmp_dir.path().join("bar").join(".git").as_path(),
+        config_location: ConfigLocation::User,
+        ..Default::default()
+    });
+}
+
+#[test]
+#[serial]
+fn dot_path_matching_symlink_with_icase() {
+    let tmp_dir = tempdir_in(std::env::var("HOME").unwrap()).unwrap();
+    git_dir(&tmp_dir, "foo");
+    create_symlink(
+        tmp_dir.path().join("bar").as_path(),
+        tmp_dir.path().join("foo").as_path(),
+    );
+    assert_section_value(Options {
+        condition: "gitdir/i:BAR/",
+        git_dir: tmp_dir.path().join("bar").join(".git").as_path(),
+        config_location: ConfigLocation::User,
         ..Default::default()
     });
 }
