@@ -141,6 +141,7 @@ fn write_main_config(
     if overwrite_config_location == &ConfigLocation::Repo {
         Command::new("git")
             .args(["config", "section.value", "base-value"])
+            .env("GIT_DIR", git_dir)
             .output()
             .unwrap();
     }
@@ -215,6 +216,17 @@ fn star_star_prefix_and_suffix() {
 
 #[test]
 #[serial]
+fn dot_path_slash() {
+    assert_section_value(Options {
+        condition: "gitdir:./",
+        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        config_location: ConfigLocation::User,
+        ..Default::default()
+    });
+}
+
+#[test]
+#[serial]
 fn dot_path() {
     assert_section_value(Options {
         condition: "gitdir:./foo/.git",
@@ -230,6 +242,18 @@ fn case_insensitive() {
     assert_section_value(Options {
         condition: "gitdir/i:FOO/",
         git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        ..Default::default()
+    });
+}
+
+#[test]
+#[serial]
+#[ignore]
+fn pattern_with_backslash() {
+    assert_section_value(Options {
+        condition: "gitdir:\\foo/",
+        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        expected: Value::Original,
         ..Default::default()
     });
 }
