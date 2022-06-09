@@ -275,6 +275,7 @@ fn star_star_in_the_middle() {
 
 #[test]
 #[serial]
+#[ignore]
 fn tilde_expansion_with_symlink() {
     let tmp_dir = tempdir_in(home()).unwrap();
     let root = tmp_dir
@@ -301,6 +302,7 @@ fn tilde_expansion_with_symlink() {
 
 #[test]
 #[serial]
+#[ignore]
 fn dot_path_with_symlink() {
     let tmp_dir = tempdir_in(home()).unwrap();
     git_dir(&tmp_dir, "foo");
@@ -318,6 +320,7 @@ fn dot_path_with_symlink() {
 
 #[test]
 #[serial]
+#[ignore]
 fn dot_path_matching_symlink() {
     let tmp_dir = tempdir_in(home()).unwrap();
     git_dir(&tmp_dir, "foo");
@@ -335,6 +338,7 @@ fn dot_path_matching_symlink() {
 
 #[test]
 #[serial]
+#[ignore]
 fn dot_path_matching_symlink_with_icase() {
     let tmp_dir = tempdir_in(home()).unwrap();
     git_dir(&tmp_dir, "foo");
