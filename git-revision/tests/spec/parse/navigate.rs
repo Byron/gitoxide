@@ -1,3 +1,54 @@
+mod colon_symbol {
+    use crate::spec::parse::{parse, PeelToOwned as PeelTo};
+    use git_revision::spec::parse::delegate::Traversal;
+
+    #[test]
+    #[ignore]
+    fn paths_consume_all_remaining_input_as_they_refer_to_blobs() {
+        let rec = parse("@:../relative/path...@^^~~");
+
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.traversal.len(), 0);
+        assert_eq!(rec.peel_to, vec![PeelTo::Path("../relative/path...@^^~~".into())]);
+        assert_eq!(rec.calls, 2);
+
+        let rec = parse("@:absolute/path^{object}");
+        assert_eq!(
+            rec.peel_to,
+            vec![PeelTo::Path("absolute/path^{object}".into())],
+            "this includes useful navigation like object-existence, a shortcoming git shares, proper implementation needs escaping as well."
+        );
+
+        let rec = parse("@:absolute/path^{tree}");
+        assert_eq!(
+            rec.peel_to,
+            vec![PeelTo::Path("absolute/path^{object}".into())],
+            "this includes useful navigation like assertion of trees/blobs, we may make this possible in future but for now are as open as git"
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn paths_have_to_be_last_but_stack_with_other_navigation() {
+        let rec = parse("HEAD@{1}~10^2^{commit}:README.md");
+
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.current_branch_reflog_entry[0], Some("1".to_string()));
+        assert_eq!(rec.traversal, vec![Traversal::NthAncestor(10), Traversal::NthParent(2)]);
+        assert_eq!(
+            rec.peel_to,
+            vec![
+                PeelTo::ObjectKind(git_object::Kind::Commit),
+                PeelTo::Path("README.md".into())
+            ]
+        );
+        assert_eq!(rec.calls, 6);
+    }
+}
+
 mod tilde_symbol {
     use crate::spec::parse::parse;
     use git_revision::spec::parse::delegate::Traversal;
@@ -44,9 +95,10 @@ mod tilde_symbol {
 }
 
 mod caret_symbol {
+    use crate::spec::parse::PeelToOwned as PeelTo;
     use crate::spec::parse::{parse, try_parse};
     use git_revision::spec;
-    use git_revision::spec::parse::delegate::{PeelTo, Traversal};
+    use git_revision::spec::parse::delegate::Traversal;
 
     #[test]
     fn single_is_first_parent() {

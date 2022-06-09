@@ -19,7 +19,7 @@ struct Recorder {
 
     // navigation
     traversal: Vec<delegate::Traversal>,
-    peel_to: Vec<delegate::PeelTo>,
+    peel_to: Vec<PeelToOwned>,
     patterns: Vec<(BString, bool)>,
 
     // range
@@ -28,6 +28,14 @@ struct Recorder {
     calls: usize,
     opts: Options,
     done: bool,
+}
+
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum PeelToOwned {
+    ObjectKind(git_object::Kind),
+    ExistingObject,
+    RecursiveTagObject,
+    Path(BString),
 }
 
 impl Recorder {
@@ -104,7 +112,12 @@ impl delegate::Navigate for Recorder {
 
     fn peel_until(&mut self, kind: delegate::PeelTo) -> Option<()> {
         self.calls += 1;
-        self.peel_to.push(kind);
+        self.peel_to.push(match kind {
+            delegate::PeelTo::ObjectKind(kind) => PeelToOwned::ObjectKind(kind),
+            delegate::PeelTo::ExistingObject => PeelToOwned::ExistingObject,
+            delegate::PeelTo::Path(path) => PeelToOwned::Path(path.into()),
+            delegate::PeelTo::RecursiveTagObject => PeelToOwned::RecursiveTagObject,
+        });
         Some(())
     }
 

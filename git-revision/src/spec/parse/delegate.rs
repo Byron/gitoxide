@@ -53,7 +53,7 @@ pub trait Navigate {
     fn traverse(&mut self, kind: Traversal) -> Option<()>;
 
     /// Peel the current object until it reached `kind` or `None` if the chain does not contain such object.
-    fn peel_until(&mut self, kind: PeelTo) -> Option<()>;
+    fn peel_until(&mut self, kind: PeelTo<'_>) -> Option<()>;
 
     /// Find the first revision/commit whose message matches the given `regex` (which is never empty).
     /// to see how it should be matched.
@@ -85,13 +85,18 @@ pub enum Traversal {
 
 /// Define where a tag object should be peeled to.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-pub enum PeelTo {
+pub enum PeelTo<'a> {
     /// An object of the given kind.
     ObjectKind(git_object::Kind),
     /// Ensure the object at hand exists, without imposing any restrictions to its type.
     ExistingObject,
     /// Follow an annotated tag object recursively until an object is found.
     RecursiveTagObject,
+    /// The path to drill into as seen relative to the current tree-ish.
+    ///
+    /// Note that the path can be relative, and `./` and `../` prefixes are seen as relative to the current
+    /// working directory
+    Path(&'a BStr),
 }
 
 /// The kind of sibling branch to obtain.
