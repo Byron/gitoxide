@@ -95,7 +95,10 @@ pub enum PeelTo<'a> {
     /// The path to drill into as seen relative to the current tree-ish.
     ///
     /// Note that the path can be relative, and `./` and `../` prefixes are seen as relative to the current
-    /// working directory
+    /// working directory.
+    ///
+    /// The path may be empty, which makes it refer to the tree at the current revision, similar to `^{tree}`.
+    /// Note that paths like `../` are valid and refer to a tree as seen relative to the current working directory.
     Path(&'a BStr),
 }
 

@@ -3,7 +3,6 @@ mod colon_symbol {
     use git_revision::spec::parse::delegate::Traversal;
 
     #[test]
-    #[ignore]
     fn paths_consume_all_remaining_input_as_they_refer_to_blobs() {
         let rec = parse("@:../relative/path...@^^~~");
 
@@ -24,13 +23,22 @@ mod colon_symbol {
         let rec = parse("@:absolute/path^{tree}");
         assert_eq!(
             rec.peel_to,
-            vec![PeelTo::Path("absolute/path^{object}".into())],
+            vec![PeelTo::Path("absolute/path^{tree}".into())],
             "this includes useful navigation like assertion of trees/blobs, we may make this possible in future but for now are as open as git"
         );
     }
 
     #[test]
-    #[ignore]
+    fn empty_paths_refer_to_the_root_tree() {
+        let rec = parse("@:");
+
+        assert!(rec.kind.is_none());
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.peel_to, vec![PeelTo::Path("".into())]);
+        assert_eq!(rec.calls, 2);
+    }
+
+    #[test]
     fn paths_have_to_be_last_but_stack_with_other_navigation() {
         let rec = parse("HEAD@{1}~10^2^{commit}:README.md");
 

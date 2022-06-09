@@ -300,7 +300,12 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                         .ok_or(Error::Delegate)?;
                 }
             }
-            b':' => todo!(":"),
+            b':' => {
+                delegate
+                    .peel_until(delegate::PeelTo::Path(input[cursor..].as_bstr()))
+                    .ok_or(Error::Delegate)?;
+                return Ok("".into());
+            }
             _ => return Ok(input[cursor - 1..].as_bstr()),
         }
     }
