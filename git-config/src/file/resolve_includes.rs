@@ -172,6 +172,7 @@ fn gitdir_matches(
         pattern_path.push_str("**");
     }
 
+    dbg!(pattern_path.as_bstr(), git_dir.as_bstr());
     let match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL | wildmatch_mode;
     let is_match = git_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
     if is_match {
