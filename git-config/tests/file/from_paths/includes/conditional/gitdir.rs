@@ -106,7 +106,7 @@ fn git_assert_eq(expected: &Value, git_dir: &Path, overwrite_config_location: &C
                     .unwrap()
                     .to_string_lossy()
                     .to_string(),
-                ConfigLocation::Repo => std::env::var("HOME").unwrap(),
+                ConfigLocation::Repo => home(),
             },
         )
         .env("GIT_DIR", git_dir.to_str().unwrap())
@@ -167,11 +167,15 @@ fn write_main_config(
                     .unwrap()
                     .to_string_lossy()
                     .to_string(),
-                ConfigLocation::Repo => std::env::var("HOME").unwrap(),
+                ConfigLocation::Repo => home(),
             },
         )
         .output()
         .unwrap();
+}
+
+fn home() -> String {
+    std::env::var("HOME").or(std::env::var("USERPROFILE")).unwrap()
 }
 
 #[test]
@@ -187,7 +191,7 @@ fn relative_path_with_trailing_slash() {
 #[test]
 #[serial]
 fn tilde_expansion() {
-    let tmp_dir = tempdir_in(std::env::var("HOME").unwrap()).unwrap();
+    let tmp_dir = tempdir_in(home()).unwrap();
     let root = tmp_dir
         .path()
         .components()
@@ -271,7 +275,7 @@ fn star_star_in_the_middle() {
 #[test]
 #[serial]
 fn tilde_expansion_with_symlink() {
-    let tmp_dir = tempdir_in(std::env::var("HOME").unwrap()).unwrap();
+    let tmp_dir = tempdir_in(home()).unwrap();
     let root = tmp_dir
         .path()
         .components()
@@ -297,7 +301,7 @@ fn tilde_expansion_with_symlink() {
 #[test]
 #[serial]
 fn dot_path_with_symlink() {
-    let tmp_dir = tempdir_in(std::env::var("HOME").unwrap()).unwrap();
+    let tmp_dir = tempdir_in(home()).unwrap();
     git_dir(&tmp_dir, "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
@@ -314,7 +318,7 @@ fn dot_path_with_symlink() {
 #[test]
 #[serial]
 fn dot_path_matching_symlink() {
-    let tmp_dir = tempdir_in(std::env::var("HOME").unwrap()).unwrap();
+    let tmp_dir = tempdir_in(home()).unwrap();
     git_dir(&tmp_dir, "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
@@ -331,7 +335,7 @@ fn dot_path_matching_symlink() {
 #[test]
 #[serial]
 fn dot_path_matching_symlink_with_icase() {
-    let tmp_dir = tempdir_in(std::env::var("HOME").unwrap()).unwrap();
+    let tmp_dir = tempdir_in(home()).unwrap();
     git_dir(&tmp_dir, "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
