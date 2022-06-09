@@ -8,8 +8,8 @@ use git_config::File;
 use git_path::{create_symlink, CanonicalizedTempDir};
 use tempfile::tempdir;
 
-mod onbranch;
 mod gitdir;
+mod onbranch;
 
 #[test]
 fn include_and_includeif_correct_inclusion_order() {
