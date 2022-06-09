@@ -2,6 +2,7 @@ use crate::file::cow_str;
 use crate::file::from_paths::escape_backslashes;
 use crate::file::from_paths::includes::conditional::options_with_git_dir;
 use bstr::BString;
+use dirs::home_dir;
 use git_config::File;
 use git_path::create_symlink;
 use serial_test::serial;
@@ -175,7 +176,7 @@ fn write_main_config(
 }
 
 fn home() -> String {
-    std::env::var("HOME").or(std::env::var("USERPROFILE")).unwrap()
+    home_dir().unwrap().to_string_lossy().into()
 }
 
 #[test]
