@@ -5,6 +5,12 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::convert::TryInto;
 use std::str::FromStr;
 
+/// Parse a git [`revspec`](https://git-scm.com/docs/git-rev-parse#_specifying_revisions) and call `delegate` for each token
+/// successfully parsed.
+///
+/// Note that the `delegate` is expected to maintain enough state to lookup revisions properly.
+/// Returns `Ok(())` if all of `input` was consumed, or the error if either the `revspec` syntax was incorrect or
+/// the `delegate` failed to perform the request.
 pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
     let mut prev_kind = None;
     if let Some(b'^') = input.get(0) {

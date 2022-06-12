@@ -1,9 +1,9 @@
-#![allow(missing_docs)]
-
 use crate::spec;
 use bstr::BString;
 
+/// The error returned by [`spec::parse()`][crate::spec::parse()].
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("':' needs to be followed by either '/' and regex or the path to lookup in the HEAD tree.")]
     MissingColonSuffix,

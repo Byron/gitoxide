@@ -78,6 +78,7 @@ pub trait Navigate {
 pub enum ReflogLookup {
     /// Lookup by entry, where `0` is the most recent entry, and `1` is the older one behind `0`.
     Entry(usize),
+    /// Lookup the reflog at the given time and find the closest matching entry.
     Date(git_date::Time),
 }
 
