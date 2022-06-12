@@ -133,6 +133,20 @@ fn try_parse<T: FromStr + PartialEq + Default>(input: &BStr) -> Result<Option<T>
 }
 
 fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
+    fn consume_all(res: Option<()>) -> Result<&'static BStr, Error> {
+        res.ok_or(Error::Delegate).map(|_| "".into())
+    }
+    match input.as_ref() {
+        [b':'] => return Err(Error::MissingColonSuffix),
+        [b':', b'/'] => return Err(Error::EmptyTopLevelRegex),
+        [b':', b'/', _regex @ ..] => todo!("regex"),
+        [b':', b'0', b':', path @ ..] => return consume_all(delegate.index_lookup(path.as_bstr(), 0)),
+        [b':', b'1', b':', path @ ..] => return consume_all(delegate.index_lookup(path.as_bstr(), 1)),
+        [b':', b'2', b':', path @ ..] => return consume_all(delegate.index_lookup(path.as_bstr(), 2)),
+        [b':', path @ ..] => return consume_all(delegate.index_lookup(path.as_bstr(), 0)),
+        _ => {}
+    };
+
     let mut sep_pos = None;
     let mut consecutive_hex_chars = Some(0);
     {

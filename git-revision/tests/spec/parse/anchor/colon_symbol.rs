@@ -17,15 +17,14 @@ fn regex_parsing_ignores_ranges_as_opposed_to_git() {
 }
 
 #[test]
-#[ignore]
 fn index_lookups_ignores_ranges_as_opposed_to_git() {
     for spec in [":a..b", ":a...b"] {
         let rec = parse(spec);
 
         assert!(rec.kind.is_none());
         assert_eq!(
-            rec.patterns,
-            vec![(spec[1..].into(), false)],
+            rec.index_lookups,
+            vec![(spec[1..].into(), 0)],
             "git parses ranges but it's never useful as these specs only ever produce blob ids"
         );
     }
@@ -56,7 +55,6 @@ fn various_forms_of_regex() {
 }
 
 #[test]
-#[ignore]
 fn various_valid_index_lookups_by_path() {
     for spec in [
         ":path",
@@ -77,7 +75,6 @@ fn various_valid_index_lookups_by_path() {
 }
 
 #[test]
-#[ignore]
 fn various_valid_index_lookups_by_path_and_stage() {
     for (spec, path, stage) in [
         (":0:path", "path", 0),
@@ -96,7 +93,6 @@ fn various_valid_index_lookups_by_path_and_stage() {
 }
 
 #[test]
-#[ignore]
 fn empty_top_level_regex_are_invalid() {
     let err = try_parse(":/").unwrap_err();
     assert!(
@@ -106,7 +102,6 @@ fn empty_top_level_regex_are_invalid() {
 }
 
 #[test]
-#[ignore]
 fn needs_suffix() {
     let err = try_parse(":").unwrap_err();
     assert!(
@@ -116,7 +111,6 @@ fn needs_suffix() {
 }
 
 #[test]
-#[ignore]
 fn invalid_index_stage_is_part_of_path() {
     for spec in [":4:file", ":5:file", ":01:file", ":10:file"] {
         let rec = parse(spec);
