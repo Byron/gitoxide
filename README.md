@@ -62,6 +62,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
          * [x] **entries** - display all object ids in the object database
       * **mailmap**
           * [x] **entries** - display all entries of the aggregated mailmap git would use for substitution
+      * **revision**
+          * [ ] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
     * **index**
       * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
       * [x] **verify** - check the index for consistency
