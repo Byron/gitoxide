@@ -1,4 +1,4 @@
-pub(in crate) mod logiter;
+pub(crate) mod logiter;
 
 ///
 pub mod decode;

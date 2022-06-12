@@ -1,5 +1,6 @@
-use crate::spec;
 use bstr::BString;
+
+use crate::spec;
 
 /// The error returned by [`spec::parse()`][crate::spec::parse()].
 #[derive(Debug, thiserror::Error)]

@@ -191,9 +191,9 @@ fn from_existing_worktree() -> crate::Result {
 #[cfg(target_os = "macos")]
 #[test]
 fn cross_fs() -> crate::Result {
+    use std::{os::unix::fs::symlink, process::Command};
+
     use git_discover::upwards::Options;
-    use std::os::unix::fs::symlink;
-    use std::process::Command;
 
     let top_level_repo = git_testtools::scripted_fixture_repo_writable("make_basic_repo.sh")?;
 

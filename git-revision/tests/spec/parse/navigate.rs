@@ -1,6 +1,7 @@
 mod colon_symbol {
-    use crate::spec::parse::{parse, PeelToOwned as PeelTo};
     use git_revision::spec::parse::delegate::Traversal;
+
+    use crate::spec::parse::{parse, PeelToOwned as PeelTo};
 
     #[test]
     fn paths_consume_all_remaining_input_as_they_refer_to_blobs() {
@@ -58,8 +59,9 @@ mod colon_symbol {
 }
 
 mod tilde_symbol {
-    use crate::spec::parse::parse;
     use git_revision::spec::parse::delegate::Traversal;
+
+    use crate::spec::parse::parse;
 
     #[test]
     fn single_is_first_ancestor() {
@@ -103,10 +105,9 @@ mod tilde_symbol {
 }
 
 mod caret_symbol {
-    use crate::spec::parse::PeelToOwned as PeelTo;
-    use crate::spec::parse::{parse, try_parse};
-    use git_revision::spec;
-    use git_revision::spec::parse::delegate::Traversal;
+    use git_revision::{spec, spec::parse::delegate::Traversal};
+
+    use crate::spec::parse::{parse, try_parse, PeelToOwned as PeelTo};
 
     #[test]
     fn single_is_first_parent() {

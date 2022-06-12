@@ -436,8 +436,9 @@ pub mod discover {
             trust_map: git_sec::trust::Mapping<crate::open::Options>,
         ) -> Result<Self, Error> {
             fn apply_additional_environment(mut opts: upwards::Options) -> upwards::Options {
-                use crate::bstr::ByteVec;
                 use std::convert::TryFrom;
+
+                use crate::bstr::ByteVec;
 
                 if let Some(cross_fs) =
                     std::env::var_os("GIT_DISCOVERY_ACROSS_FILESYSTEM").and_then(|v| Vec::from_os_string(v).ok())

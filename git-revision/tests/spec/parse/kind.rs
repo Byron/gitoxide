@@ -1,5 +1,6 @@
-use crate::spec::parse::{try_parse, try_parse_opts, Options};
 use git_revision::spec;
+
+use crate::spec::parse::{try_parse, try_parse_opts, Options};
 
 #[test]
 fn cannot_declare_ranges_multiple_times() {
@@ -26,10 +27,9 @@ fn delegate_can_refuse_spec_kinds() {
 }
 
 mod range {
-    use crate::spec::parse::kind::prefix;
-    use crate::spec::parse::parse;
-    use git_revision::spec;
-    use git_revision::spec::parse::delegate::Traversal;
+    use git_revision::{spec, spec::parse::delegate::Traversal};
+
+    use crate::spec::parse::{kind::prefix, parse};
 
     #[test]
     fn leading_caret() {
@@ -128,10 +128,9 @@ mod range {
 }
 
 mod mergebase {
-    use crate::spec::parse::kind::prefix;
-    use crate::spec::parse::parse;
-    use git_revision::spec;
-    use git_revision::spec::parse::delegate::Traversal;
+    use git_revision::{spec, spec::parse::delegate::Traversal};
+
+    use crate::spec::parse::{kind::prefix, parse};
 
     #[test]
     fn trailing_dot_dot_dot() {

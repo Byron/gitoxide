@@ -1,5 +1,6 @@
-use crate::spec::parse::{parse, try_parse};
 use git_revision::spec;
+
+use crate::spec::parse::{parse, try_parse};
 
 #[test]
 fn at_by_iteself_is_shortcut_for_head() {

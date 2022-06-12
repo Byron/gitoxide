@@ -8,7 +8,6 @@
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 use bstr::{BStr, BString};
-
 pub use git_date::{time::Sign, Time};
 
 ///

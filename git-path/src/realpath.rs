@@ -14,9 +14,12 @@ pub enum Error {
 }
 
 pub(crate) mod function {
+    use std::path::{
+        Component::{CurDir, Normal, ParentDir, Prefix, RootDir},
+        Path, PathBuf,
+    };
+
     use super::Error;
-    use std::path::Component::{CurDir, Normal, ParentDir, Prefix, RootDir};
-    use std::path::{Path, PathBuf};
 
     // TODO
     #[allow(missing_docs)]

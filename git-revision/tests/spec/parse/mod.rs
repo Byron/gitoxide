@@ -1,6 +1,8 @@
 use git_object::bstr::{BStr, BString};
-use git_revision::spec;
-use git_revision::spec::parse::{delegate, Delegate};
+use git_revision::{
+    spec,
+    spec::parse::{delegate, Delegate},
+};
 
 #[derive(Default, Debug, Eq, PartialEq, Ord, PartialOrd)]
 struct Options {

@@ -1,9 +1,11 @@
-use crate::spec;
-use crate::spec::parse::delegate::SiblingBranch;
-use crate::spec::parse::{delegate, Delegate, Error};
+use std::{convert::TryInto, str::FromStr};
+
 use bstr::{BStr, BString, ByteSlice, ByteVec};
-use std::convert::TryInto;
-use std::str::FromStr;
+
+use crate::{
+    spec,
+    spec::parse::{delegate, delegate::SiblingBranch, Delegate, Error},
+};
 
 /// Parse a git [`revspec`](https://git-scm.com/docs/git-rev-parse#_specifying_revisions) and call `delegate` for each token
 /// successfully parsed.

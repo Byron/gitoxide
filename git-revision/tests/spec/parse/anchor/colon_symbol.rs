@@ -1,5 +1,6 @@
-use crate::spec::parse::{parse, try_parse};
 use git_revision::spec;
+
+use crate::spec::parse::{parse, try_parse};
 
 #[test]
 fn regex_parsing_ignores_ranges_as_opposed_to_git() {

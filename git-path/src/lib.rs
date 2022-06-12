@@ -57,10 +57,9 @@ pub struct Spec(bstr::BString);
 mod convert;
 mod spec;
 
+use std::{fs::create_dir_all, ops::Deref, path::Path};
+
 pub use convert::*;
-use std::fs::create_dir_all;
-use std::ops::Deref;
-use std::path::Path;
 use tempfile::tempdir_in;
 
 ///
