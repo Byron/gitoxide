@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_actor::{Sign, Time};
+use git_date::{time::Sign, Time};
 
 #[test]
 fn write_to() -> Result<(), Box<dyn std::error::Error>> {

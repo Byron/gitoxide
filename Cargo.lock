@@ -879,6 +879,7 @@ dependencies = [
  "bstr",
  "btoi",
  "document-features",
+ "git-date",
  "git-features",
  "git-testtools",
  "itoa 1.0.2",
@@ -970,6 +971,13 @@ dependencies = [
 [[package]]
 name = "git-date"
 version = "0.0.0"
+dependencies = [
+ "bstr",
+ "document-features",
+ "git-testtools",
+ "itoa 1.0.2",
+ "serde",
+]
 
 [[package]]
 name = "git-diff"
@@ -1304,6 +1312,8 @@ dependencies = [
 name = "git-revision"
 version = "0.2.0"
 dependencies = [
+ "bstr",
+ "git-date",
  "git-hash",
  "git-object",
  "git-repository",
