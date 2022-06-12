@@ -2,7 +2,6 @@ use crate::spec::parse::{parse, try_parse};
 use git_revision::spec;
 
 #[test]
-#[ignore]
 fn regex_parsing_ignores_ranges_as_opposed_to_git() {
     for spec in [":/a..b", ":/a...b"] {
         let rec = parse(spec);
@@ -31,7 +30,6 @@ fn index_lookups_ignores_ranges_as_opposed_to_git() {
 }
 
 #[test]
-#[ignore]
 fn various_forms_of_regex() {
     for (spec, (regex, negated)) in [
         (":/simple", ("simple", false)),
@@ -50,6 +48,16 @@ fn various_forms_of_regex() {
         assert_eq!(rec.find_ref[0], None);
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.patterns, vec![(regex.into(), negated)]);
+        assert_eq!(rec.calls, 1);
+    }
+}
+
+#[test]
+fn regex_do_not_get_any_backslash_processing() {
+    for (spec, regex) in [(r#":/{"#, "{"), (r#":/\{\}"#, r#"\{\}"#), (r#":/\\\\\}"#, r#"\\\\\}"#)] {
+        let rec = parse(spec);
+
+        assert_eq!(rec.patterns, vec![(regex.into(), false)]);
         assert_eq!(rec.calls, 1);
     }
 }
@@ -99,6 +107,12 @@ fn empty_top_level_regex_are_invalid() {
         matches!(err, spec::parse::Error::EmptyTopLevelRegex),
         "git also can't do it, finds nothing instead. It could be the youngest commit in theory, but isn't"
     )
+}
+
+#[test]
+fn regex_with_empty_exclamation_mark_prefix_is_invalid() {
+    let err = try_parse(r#":/!hello"#).unwrap_err();
+    assert!(matches!(err, spec::parse::Error::UnspecifiedRegexModifier {regex} if regex == "!hello"));
 }
 
 #[test]

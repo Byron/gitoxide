@@ -139,7 +139,11 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
     match input.as_ref() {
         [b':'] => return Err(Error::MissingColonSuffix),
         [b':', b'/'] => return Err(Error::EmptyTopLevelRegex),
-        [b':', b'/', _regex @ ..] => todo!("regex"),
+        [b':', b'/', regex @ ..] => {
+            let (regex, negated) = parse_regex_prefix(regex.as_bstr())?;
+            assert!(!regex.is_empty(), "This is handled earlier");
+            return consume_all(delegate.find(regex, negated));
+        }
         [b':', b'0', b':', path @ ..] => return consume_all(delegate.index_lookup(path.as_bstr(), 0)),
         [b':', b'1', b':', path @ ..] => return consume_all(delegate.index_lookup(path.as_bstr(), 1)),
         [b':', b'2', b':', path @ ..] => return consume_all(delegate.index_lookup(path.as_bstr(), 2)),
@@ -294,12 +298,7 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                         b"object" => delegate::PeelTo::ExistingObject,
                         b"" => delegate::PeelTo::RecursiveTagObject,
                         regex if regex.starts_with(b"/") => {
-                            let (regex, negated) = match regex.strip_prefix(b"/!") {
-                                Some(regex) if regex.get(0) == Some(&b'!') => (regex.as_bstr(), false),
-                                Some(regex) if regex.get(0) == Some(&b'-') => (regex[1..].as_bstr(), true),
-                                Some(_regex) => return Err(Error::UnspecifiedRegexModifier { regex: regex.into() }),
-                                None => (regex[1..].as_bstr(), false),
-                            };
+                            let (regex, negated) = parse_regex_prefix(regex[1..].as_bstr())?;
                             if !regex.is_empty() {
                                 delegate.find(regex, negated).ok_or(Error::Delegate)?;
                             }
@@ -324,6 +323,15 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
         }
     }
     Ok("".into())
+}
+
+fn parse_regex_prefix(regex: &BStr) -> Result<(&BStr, bool), Error> {
+    Ok(match regex.strip_prefix(b"!") {
+        Some(regex) if regex.get(0) == Some(&b'!') => (regex.as_bstr(), false),
+        Some(regex) if regex.get(0) == Some(&b'-') => (regex[1..].as_bstr(), true),
+        Some(_regex) => return Err(Error::UnspecifiedRegexModifier { regex: regex.into() }),
+        None => (regex, false),
+    })
 }
 
 fn try_parse_usize(input: &BStr) -> Result<Option<(usize, usize)>, Error> {

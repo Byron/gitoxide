@@ -318,7 +318,7 @@ mod caret_symbol {
     #[test]
     fn regex_with_empty_exclamation_mark_prefix_is_invalid() {
         let err = try_parse(r#"@^{/!hello}"#).unwrap_err();
-        assert!(matches!(err, spec::parse::Error::UnspecifiedRegexModifier {regex} if regex == "/!hello"));
+        assert!(matches!(err, spec::parse::Error::UnspecifiedRegexModifier {regex} if regex == "!hello"));
     }
 
     #[test]
