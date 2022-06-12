@@ -5,6 +5,10 @@ use bstr::BString;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("':' needs to be followed by either '/' and regex or the path to lookup in the HEAD tree.")]
+    MissingColonSuffix,
+    #[error("':/' must be followed by a regular expression.")]
+    EmptyTopLevelRegex,
     #[error("Need one character after '/!', typically '-', but got {:?}", .regex)]
     UnspecifiedRegexModifier { regex: BString },
     #[error("Cannot peel to {:?} - unknown target.", .input)]

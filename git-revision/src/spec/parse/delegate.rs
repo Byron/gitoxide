@@ -62,6 +62,15 @@ pub trait Navigate {
     /// If no revision is known yet, find the _youngest_ matching commit from _any_ reference, including `HEAD`.
     /// Otherwise, only find commits reachable from the set revision.
     fn find(&mut self, regex: &BStr, negated: bool) -> Option<()>;
+
+    /// Look up the given `path` at the given `stage` in the index returning its blob id,
+    /// or return `None` if it doesn't exist at this `stage`.
+    /// Note that this implies no revision is needed and no anchor is set yet.
+    ///
+    /// * `stage` ranges from 0 to 2, with 0 being the base, 1 being ours, 2 being theirs.
+    /// * `path` without prefix is relative to the root of the repository, while prefixes like `./` and `../` make it
+    ///    relative to the current working directory.
+    fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()>;
 }
 
 /// A lookup into the reflog of a reference.

@@ -16,6 +16,7 @@ struct Recorder {
     current_branch_reflog_entry: [Option<String>; 2],
     nth_checked_out_branch: [Option<usize>; 2],
     sibling_branch: [Option<String>; 2],
+    index_lookups: Vec<(BString, u8)>,
 
     // navigation
     traversal: Vec<delegate::Traversal>,
@@ -124,6 +125,12 @@ impl delegate::Navigate for Recorder {
     fn find(&mut self, regex: &BStr, negated: bool) -> Option<()> {
         self.calls += 1;
         self.patterns.push((regex.into(), negated));
+        Some(())
+    }
+
+    fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()> {
+        self.calls += 1;
+        self.index_lookups.push((path.into(), stage));
         Some(())
     }
 }

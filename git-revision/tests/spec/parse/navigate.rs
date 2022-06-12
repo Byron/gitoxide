@@ -264,7 +264,7 @@ mod caret_symbol {
     }
 
     #[test]
-    fn regex_with_revision_starting_point() {
+    fn regex_with_revision_starting_point_and_negation() {
         for (spec, (regex, negated)) in [
             ("HEAD^{/simple}", ("simple", false)),
             ("abcd^{/!-negated}", ("negated", true)),
