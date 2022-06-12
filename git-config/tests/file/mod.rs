@@ -1,5 +1,6 @@
-use bstr::{BStr, ByteSlice};
 use std::borrow::Cow;
+
+use bstr::{BStr, ByteSlice};
 
 pub fn cow_str(s: &str) -> Cow<'_, BStr> {
     Cow::Borrowed(s.as_bytes().as_bstr())

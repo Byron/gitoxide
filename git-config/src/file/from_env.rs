@@ -1,8 +1,10 @@
-use crate::file::{from_paths, resolve_includes};
-use crate::values::path::interpolate;
-use crate::File;
-use std::borrow::Cow;
-use std::path::PathBuf;
+use std::{borrow::Cow, path::PathBuf};
+
+use crate::{
+    file::{from_paths, resolve_includes},
+    values::path::interpolate,
+    File,
+};
 
 /// Represents the errors that may occur when calling [`File::from_env`][crate::File::from_env()].
 #[derive(Debug, thiserror::Error)]

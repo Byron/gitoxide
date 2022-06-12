@@ -1,8 +1,10 @@
-use crate::file::SectionBody;
-use crate::parser::{parse_from_bytes, parse_from_str, Error, Event, Parser};
-use crate::File;
-use std::convert::TryFrom;
-use std::fmt::Display;
+use std::{convert::TryFrom, fmt::Display};
+
+use crate::{
+    file::SectionBody,
+    parser::{parse_from_bytes, parse_from_str, Error, Event, Parser},
+    File,
+};
 
 impl<'a> TryFrom<&'a str> for File<'a> {
     type Error = Error<'a>;

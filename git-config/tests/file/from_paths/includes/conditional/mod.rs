@@ -1,12 +1,13 @@
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
-use crate::file::cow_str;
-use crate::file::from_paths::escape_backslashes;
-use git_config::file::from_paths;
-use git_config::File;
+use git_config::{file::from_paths, File};
 use git_path::{create_symlink, CanonicalizedTempDir};
 use tempfile::tempdir;
+
+use crate::file::{cow_str, from_paths::escape_backslashes};
 
 mod gitdir;
 mod onbranch;

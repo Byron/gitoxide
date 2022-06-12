@@ -1,15 +1,20 @@
-use crate::file::cow_str;
-use crate::file::from_paths::escape_backslashes;
-use crate::file::from_paths::includes::conditional::options_with_git_dir;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+};
+
 use bstr::BString;
 use dirs::home_dir;
 use git_config::File;
 use git_path::create_symlink;
 use serial_test::serial;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::process::Command;
 use tempfile::{tempdir, tempdir_in, TempDir};
+
+use crate::file::{
+    cow_str,
+    from_paths::{escape_backslashes, includes::conditional::options_with_git_dir},
+};
 
 #[derive(Eq, PartialEq)]
 enum ConfigLocation {

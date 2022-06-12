@@ -1,11 +1,11 @@
-use crate::file::cow_str;
-use crate::file::from_paths::escape_backslashes;
+use std::{convert::TryFrom, fs};
+
 use bstr::BString;
 use git_config::file::from_paths;
 use git_ref::FullName;
-use std::convert::TryFrom;
-use std::fs;
 use tempfile::tempdir;
+
+use crate::file::{cow_str, from_paths::escape_backslashes};
 
 enum Value {
     Base,

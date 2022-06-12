@@ -1,7 +1,8 @@
-use crate::{value, values, File};
+use std::{borrow::Cow, convert::TryFrom};
+
 use bstr::BStr;
-use std::borrow::Cow;
-use std::convert::TryFrom;
+
+use crate::{value, values, File};
 
 /// Comfortable API for accessing values
 impl<'a> File<'a> {

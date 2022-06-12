@@ -7,10 +7,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::file::from_env;
-use crate::{lookup, File};
-
-use crate::file::from_paths;
+use crate::{
+    file::{from_env, from_paths},
+    lookup, File,
+};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum ConfigSource {

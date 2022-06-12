@@ -1,8 +1,6 @@
-use crate::file::SectionBody;
-use crate::parser::ParsedSectionHeader;
-use crate::{lookup, File};
-use std::borrow::Cow;
-use std::convert::TryFrom;
+use std::{borrow::Cow, convert::TryFrom};
+
+use crate::{file::SectionBody, lookup, parser::ParsedSectionHeader, File};
 
 /// Read-only low-level access methods.
 impl<'a> File<'a> {

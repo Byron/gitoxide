@@ -1,7 +1,11 @@
-use crate::file::{from_paths, resolve_includes};
-use crate::parser::parse_from_path;
-use crate::{parser, File};
 use std::path::Path;
+
+use crate::{
+    file::{from_paths, resolve_includes},
+    parser,
+    parser::parse_from_path,
+    File,
+};
 
 impl<'a> File<'a> {
     /// Constructs an empty `git-config` file.

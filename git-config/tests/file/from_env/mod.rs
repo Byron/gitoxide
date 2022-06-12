@@ -1,7 +1,9 @@
 use std::{borrow::Cow, env, fs};
 
-use git_config::file::{from_env, from_paths, from_paths::Options};
-use git_config::File;
+use git_config::{
+    file::{from_env, from_paths, from_paths::Options},
+    File,
+};
 use serial_test::serial;
 use tempfile::tempdir;
 

@@ -1,13 +1,9 @@
-use std::{borrow::Cow, convert::TryFrom, error::Error};
+use std::{borrow::Cow, convert::TryFrom, error::Error, path::PathBuf};
 
 use git_config::{
-    values::{Boolean, Bytes, TrueVariant},
+    values::{Boolean, Bytes, TrueVariant, *},
     File,
 };
-
-use std::path::PathBuf;
-
-use git_config::values::*;
 
 /// Asserts we can cast into all variants of our type
 #[test]

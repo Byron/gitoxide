@@ -1,8 +1,9 @@
 use std::{borrow::Cow, fs, io};
 
-use crate::file::cow_str;
 use git_config::{file::from_paths::Error, parser::ParserOrIoError, File};
 use tempfile::tempdir;
+
+use crate::file::cow_str;
 
 /// Escapes backslash when writing a path as string so that it is a valid windows path
 fn escape_backslashes(path: &std::path::Path) -> String {

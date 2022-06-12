@@ -2,10 +2,11 @@
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
-use crate::value;
 use bstr::{BStr, BString};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
+
+use crate::value;
 
 /// Removes quotes, if any, from the provided inputs. This assumes the input
 /// contains a even number of unescaped quotes, and will unescape escaped

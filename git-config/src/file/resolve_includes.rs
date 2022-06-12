@@ -1,10 +1,16 @@
-use crate::file::{from_paths, SectionId};
-use crate::parser::Key;
-use crate::{values, File};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
+
 use bstr::{BString, ByteSlice, ByteVec};
 use git_ref::Category;
-use std::borrow::Cow;
-use std::path::{Path, PathBuf};
+
+use crate::{
+    file::{from_paths, SectionId},
+    parser::Key,
+    values, File,
+};
 
 pub(crate) fn resolve_includes(
     conf: &mut File<'_>,

@@ -1,7 +1,11 @@
-use crate::file::{MutableSection, SectionBody};
-use crate::parser::{ParsedSectionHeader, SectionHeaderName};
-use crate::{lookup, File};
 use std::borrow::Cow;
+
+use crate::{
+    file::{MutableSection, SectionBody},
+    lookup,
+    parser::{ParsedSectionHeader, SectionHeaderName},
+    File,
+};
 
 /// Mutating low-level access methods.
 impl<'a> File<'a> {

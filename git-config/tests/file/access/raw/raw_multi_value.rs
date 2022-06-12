@@ -1,7 +1,6 @@
 use std::{borrow::Cow, convert::TryFrom};
 
-use git_config::lookup;
-use git_config::File;
+use git_config::{lookup, File};
 
 #[test]
 fn single_value_is_identical_to_single_value_query() {

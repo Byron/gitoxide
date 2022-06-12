@@ -1,8 +1,11 @@
-use crate::file::{EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size};
-use crate::parser::{Event, Key};
-use crate::{lookup, File};
-use std::borrow::Cow;
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
+
+use crate::{
+    file::{EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size},
+    lookup,
+    parser::{Event, Key},
+    File,
+};
 
 /// # Raw value API
 ///
