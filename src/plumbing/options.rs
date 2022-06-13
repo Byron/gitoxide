@@ -343,7 +343,7 @@ pub mod repo {
     }
 
     #[derive(Debug, clap::Subcommand)]
-    #[clap(alias = "repo")]
+    #[clap(visible_alias = "repo")]
     pub enum Subcommands {
         /// Verify the integrity of the entire repository
         Verify {
@@ -375,6 +375,20 @@ pub mod repo {
             #[clap(subcommand)]
             cmd: exclude::Subcommands,
         },
+        /// Query and obtain information about revisions.
+        Revision {
+            #[clap(subcommand)]
+            cmd: revision::Subcommands,
+        },
+    }
+
+    pub mod revision {
+        #[derive(Debug, clap::Subcommand)]
+        #[clap(visible_alias = "rev")]
+        pub enum Subcommands {
+            /// Provide the revision specification like `@~1` to explain.
+            Explain { spec: std::ffi::OsString },
+        }
     }
 
     pub mod exclude {

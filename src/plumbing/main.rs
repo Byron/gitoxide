@@ -160,6 +160,9 @@ pub fn main() -> Result<()> {
             use git_repository as git;
             let repository = git::ThreadSafeRepository::discover(repository)?;
             match cmd {
+                repo::Subcommands::Revision { cmd } => match cmd {
+                    repo::revision::Subcommands::Explain { spec: _ } => todo!("describe spec"),
+                },
                 repo::Subcommands::Commit { cmd } => match cmd {
                     repo::commit::Subcommands::Describe {
                         annotated_tags,
