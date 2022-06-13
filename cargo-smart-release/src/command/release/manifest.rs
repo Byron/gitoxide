@@ -518,7 +518,7 @@ fn set_version_and_update_package_dependency(
             doc["package"]["version"] = toml_edit::value(new_version);
         }
     }
-    for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
+    for dep_table in find_dependency_tables(&mut doc) {
         for (name_to_find, new_version) in crates.iter().map(|(p, nv)| (&p.name, nv)) {
             for name_to_find in package_to_update
                 .dependencies
@@ -526,11 +526,9 @@ fn set_version_and_update_package_dependency(
                 .filter(|dep| &dep.name == name_to_find)
                 .map(|dep| dep.rename.as_ref().unwrap_or(&dep.name))
             {
-                if let Some(current_version_req) = doc
-                    .as_table_mut()
-                    .get_mut(dep_type)
-                    .and_then(|deps| deps.as_table_mut())
-                    .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
+                if let Some(current_version_req) = dep_table
+                    .get_mut(name_to_find)
+                    .and_then(|name| name.as_inline_table_mut())
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
                     let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;
@@ -553,7 +551,7 @@ fn set_version_and_update_package_dependency(
                                 "Pending '{}' {}manifest {} update: '{} = \"{}\"' (from {})",
                                 package_to_update.name,
                                 if force_update { "conservative " } else { "" },
-                                dep_type,
+                                "TBD: get dependency name/type",
                                 name_to_find,
                                 new_version,
                                 current_version_req.to_string()
@@ -569,6 +567,66 @@ fn set_version_and_update_package_dependency(
     out.write_all(new_manifest.as_bytes())?;
 
     Ok(manifest != new_manifest)
+}
+
+// Direct copy from [cargo release](https://github.com/crate-ci/cargo-release/blob/9633353ad5a57dbdca9a9ed6a70c1cf78fc5a51f/src/cargo.rs#L235:L263).
+// The licenses are compatible.
+fn find_dependency_tables<'r>(
+    root: &'r mut toml_edit::Table,
+) -> impl Iterator<Item = &mut dyn toml_edit::TableLike> + 'r {
+    const DEP_TABLES: &[&str] = &["dependencies", "dev-dependencies", "build-dependencies"];
+
+    root.iter_mut().flat_map(|(k, v)| {
+        if DEP_TABLES.contains(&k.get()) {
+            v.as_table_like_mut().into_iter().collect::<Vec<_>>()
+        } else if k == "target" {
+            v.as_table_like_mut()
+                .unwrap()
+                .iter_mut()
+                .flat_map(|(_, v)| {
+                    v.as_table_like_mut().into_iter().flat_map(|v| {
+                        v.iter_mut().filter_map(|(k, v)| {
+                            if DEP_TABLES.contains(&k.get()) {
+                                v.as_table_like_mut()
+                            } else {
+                                None
+                            }
+                        })
+                    })
+                })
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        }
+    })
+}
+
+// Direct copy from [cargo release](https://github.com/crate-ci/cargo-release/blob/9633353ad5a57dbdca9a9ed6a70c1cf78fc5a51f/src/cargo.rs#L265:L283).
+// The licenses are compatible.
+// With adjustments.
+fn _set_version(dep_item: &mut toml_edit::Item, name: &str, mut version: &str) -> bool {
+    /// Check if a toml item representing a version starts with a caret.
+    fn version_item_uses_caret(version: &toml_edit::Item) -> bool {
+        version.as_str().map(|s| s.starts_with('^')).unwrap_or(false)
+    }
+
+    if let Some(table_like) = dep_item.as_table_like_mut() {
+        if let Some(version_value) = table_like.get_mut("version") {
+            // Preserve the presence or lack of an explicit caret.
+            if version.starts_with('^') && !version_item_uses_caret(version_value) {
+                version = &version[1..];
+            }
+
+            *version_value = toml_edit::value(version);
+            true
+        } else {
+            log::debug!("Not updating path-only dependency on {}", name);
+            false
+        }
+    } else {
+        log::debug!("Not updating version-only dependency on {}", name);
+        false
+    }
 }
 
 fn req_as_version(req: &VersionReq) -> Option<Version> {
