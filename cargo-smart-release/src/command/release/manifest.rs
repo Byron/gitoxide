@@ -590,20 +590,17 @@ fn find_dependency_tables<'r>(
                 .iter_mut()
                 .flat_map(|(target, v)| {
                     let target_name = target.get().to_string();
-                    v.as_table_like_mut().into_iter().flat_map({
-                        let target_name = target_name.clone();
-                        move |v| {
-                            v.iter_mut().filter_map({
-                                let target_name = target_name.clone();
-                                move |(k, v)| match DEP_TABLES.iter().find(|dtn| *dtn == &k.get()) {
-                                    Some(dtn) => v.as_table_like_mut().map({
-                                        let target_name = target_name.clone();
-                                        move |t| (t, format!("{} ({})", dtn, target_name).into())
-                                    }),
-                                    None => None,
-                                }
-                            })
-                        }
+                    v.as_table_like_mut().into_iter().flat_map(move |v| {
+                        v.iter_mut().filter_map({
+                            let target_name = target_name.clone();
+                            move |(k, v)| match DEP_TABLES.iter().find(|dtn| *dtn == &k.get()) {
+                                Some(dtn) => v.as_table_like_mut().map({
+                                    let target_name = target_name.clone();
+                                    move |t| (t, format!("{} ({})", dtn, target_name).into())
+                                }),
+                                None => None,
+                            }
+                        })
                     })
                 })
                 .collect::<Vec<_>>(),
