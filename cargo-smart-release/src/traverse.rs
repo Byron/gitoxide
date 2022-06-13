@@ -128,11 +128,21 @@ pub mod dependency {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Dependency<'meta> {
     pub package: &'meta Package,
     pub kind: dependency::Kind,
     pub mode: dependency::Mode,
+}
+
+impl<'a> std::fmt::Debug for Dependency<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut dbg = f.debug_struct("Dependency");
+        dbg.field("package", &self.package.id.repr);
+        dbg.field("kind", &self.kind);
+        dbg.field("mode", &self.mode);
+        dbg.finish()
+    }
 }
 
 pub struct Options {
