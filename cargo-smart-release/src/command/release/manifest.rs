@@ -518,7 +518,7 @@ fn set_version_and_update_package_dependency(
             doc["package"]["version"] = toml_edit::value(new_version);
         }
     }
-    for dep_table in find_dependency_tables(&mut doc) {
+    for (dep_table, dep_type) in find_dependency_tables(&mut doc) {
         for (name_to_find, new_version) in crates.iter().map(|(p, nv)| (&p.name, nv)) {
             for name_to_find in package_to_update
                 .dependencies
@@ -551,7 +551,7 @@ fn set_version_and_update_package_dependency(
                                 "Pending '{}' {}manifest {} update: '{} = \"{}\"' (from {})",
                                 package_to_update.name,
                                 if force_update { "conservative " } else { "" },
-                                "TBD: get dependency name/type",
+                                dep_type,
                                 name_to_find,
                                 new_version,
                                 current_version_req.to_string()
@@ -569,64 +569,46 @@ fn set_version_and_update_package_dependency(
     Ok(manifest != new_manifest)
 }
 
-// Direct copy from [cargo release](https://github.com/crate-ci/cargo-release/blob/9633353ad5a57dbdca9a9ed6a70c1cf78fc5a51f/src/cargo.rs#L235:L263).
-// The licenses are compatible.
-fn find_dependency_tables<'r>(
-    root: &'r mut toml_edit::Table,
-) -> impl Iterator<Item = &mut dyn toml_edit::TableLike> + 'r {
-    const DEP_TABLES: &[&str] = &["dependencies", "dev-dependencies", "build-dependencies"];
-
-    root.iter_mut().flat_map(|(k, v)| {
-        if DEP_TABLES.contains(&k.get()) {
-            v.as_table_like_mut().into_iter().collect::<Vec<_>>()
-        } else if k == "target" {
-            v.as_table_like_mut()
-                .unwrap()
-                .iter_mut()
-                .flat_map(|(_, v)| {
-                    v.as_table_like_mut().into_iter().flat_map(|v| {
-                        v.iter_mut().filter_map(|(k, v)| {
-                            if DEP_TABLES.contains(&k.get()) {
-                                v.as_table_like_mut()
-                            } else {
-                                None
-                            }
-                        })
-                    })
-                })
-                .collect::<Vec<_>>()
-        } else {
-            Vec::new()
-        }
-    })
-}
-
-// Direct copy from [cargo release](https://github.com/crate-ci/cargo-release/blob/9633353ad5a57dbdca9a9ed6a70c1cf78fc5a51f/src/cargo.rs#L265:L283).
+// Originally copied from [cargo release](https://github.com/crate-ci/cargo-release/blob/9633353ad5a57dbdca9a9ed6a70c1cf78fc5a51f/src/cargo.rs#L235:L263).
 // The licenses are compatible.
 // With adjustments.
-fn _set_version(dep_item: &mut toml_edit::Item, name: &str, mut version: &str) -> bool {
-    /// Check if a toml item representing a version starts with a caret.
-    fn version_item_uses_caret(version: &toml_edit::Item) -> bool {
-        version.as_str().map(|s| s.starts_with('^')).unwrap_or(false)
-    }
+fn find_dependency_tables<'r>(
+    root: &'r mut toml_edit::Table,
+) -> impl Iterator<Item = (&mut dyn toml_edit::TableLike, Cow<'_, str>)> + 'r {
+    const DEP_TABLES: &[&str] = &["dependencies", "dev-dependencies", "build-dependencies"];
 
-    if let Some(table_like) = dep_item.as_table_like_mut() {
-        if let Some(version_value) = table_like.get_mut("version") {
-            // Preserve the presence or lack of an explicit caret.
-            if version.starts_with('^') && !version_item_uses_caret(version_value) {
-                version = &version[1..];
-            }
-
-            *version_value = toml_edit::value(version);
-            true
-        } else {
-            log::debug!("Not updating path-only dependency on {}", name);
-            false
-        }
-    } else {
-        log::debug!("Not updating version-only dependency on {}", name);
-        false
-    }
+    root.iter_mut()
+        .flat_map(|(k, v)| match DEP_TABLES.iter().find(|dtn| *dtn == &k.get()) {
+            Some(dtn) => v
+                .as_table_like_mut()
+                .into_iter()
+                .map(|t| (t, (*dtn).into()))
+                .collect::<Vec<_>>(),
+            None if k == "target" => v
+                .as_table_like_mut()
+                .expect("pre-checked toml format")
+                .iter_mut()
+                .flat_map(|(target, v)| {
+                    let target_name = target.get().to_string();
+                    v.as_table_like_mut().into_iter().flat_map({
+                        let target_name = target_name.clone();
+                        move |v| {
+                            v.iter_mut().filter_map({
+                                let target_name = target_name.clone();
+                                move |(k, v)| match DEP_TABLES.iter().find(|dtn| *dtn == &k.get()) {
+                                    Some(dtn) => v.as_table_like_mut().map({
+                                        let target_name = target_name.clone();
+                                        move |t| (t, format!("{} ({})", dtn, target_name).into())
+                                    }),
+                                    None => None,
+                                }
+                            })
+                        }
+                    })
+                })
+                .collect::<Vec<_>>(),
+            None => Vec::new(),
+        })
 }
 
 fn req_as_version(req: &VersionReq) -> Option<Version> {
