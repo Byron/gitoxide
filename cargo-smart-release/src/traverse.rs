@@ -119,9 +119,7 @@ pub mod dependency {
                 | Mode::NotForPublishing {
                     adjustment: Some(ManifestAdjustment::Version(adjustment)),
                     ..
-                } => Some(match adjustment {
-                    VersionAdjustment::Breakage { bump, .. } | VersionAdjustment::Changed { bump, .. } => bump,
-                }),
+                } => Some(adjustment.bump()),
                 _ => None,
             }
         }
