@@ -65,7 +65,7 @@ clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --no-default-features --features lean-async --tests
 
 check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
-	cd git-repository && cargo +1.54.0 check --package git-repository --no-default-features --features async-network-client,unstable,local-time-support,max-performance
+	cd git-repository && cargo check --package git-repository --no-default-features --features async-network-client,unstable,local-time-support,max-performance
 
 check-win: ## see that windows compiles, provided the x86_64-pc-windows-msvc target and cargo-xwin are present.
 	cargo xwin build --target x86_64-pc-windows-msvc  --no-default-features --features small

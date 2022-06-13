@@ -168,16 +168,17 @@ members = [
     "git-tui",
     "git-tix",
 
+    "cargo-smart-release",
+
+    "experiments/object-access",
+    "experiments/diffing",
+    "experiments/traversal",
+
     "tests/tools",
 ]
 exclude = ["cargo-smart-release/tests/fixtures/tri-depth-workspace/a",
            "cargo-smart-release/tests/fixtures/tri-depth-workspace/b",
-           "cargo-smart-release/tests/fixtures/tri-depth-workspace/c",
-           "cargo-smart-release",
-           "experiments/object-access",
-           "experiments/diffing",
-           "experiments/traversal",
-]
+           "cargo-smart-release/tests/fixtures/tri-depth-workspace/c"]
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]
