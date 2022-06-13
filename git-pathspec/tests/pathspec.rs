@@ -7,7 +7,6 @@ mod succeed {
     use git_pathspec::{MagicSignature, SearchMode};
 
     #[test]
-    #[ignore]
     fn repeated_matcher_keywords() {
         let input = vec![
             (
@@ -17,6 +16,22 @@ mod succeed {
             (
                 ":(literal,literal)",
                 pat("", MagicSignature::empty(), SearchMode::Literal, vec![]),
+            ),
+            (
+                ":(top,top)",
+                pat("", MagicSignature::TOP, SearchMode::ShellGlob, vec![]),
+            ),
+            (
+                ":(icase,icase)",
+                pat("", MagicSignature::ICASE, SearchMode::ShellGlob, vec![]),
+            ),
+            (
+                ":(attr,attr)",
+                pat("", MagicSignature::ATTR, SearchMode::ShellGlob, vec![]),
+            ),
+            (
+                ":!^(exclude,exclude)",
+                pat("", MagicSignature::EXCLUDE, SearchMode::ShellGlob, vec![]),
             ),
         ];
 
@@ -193,6 +208,7 @@ mod fail {
         let inputs = vec![
             ":(attr:+invalidAttr)some/path",
             ":(attr:validAttr +invalidAttr)some/path",
+            ":(attr:+invalidAttr,attr:valid)some/path",
         ];
 
         for input in inputs {
@@ -224,6 +240,17 @@ mod fail {
         let output = git_pathspec::parse(input.as_bytes());
         assert!(output.is_err());
         assert!(matches!(output.unwrap_err(), Error::IncompatibleSearchModes));
+    }
+
+    #[test]
+    fn multiple_attribute_specifications() {
+        let input = ":(attr:one,attr:two)some/path";
+
+        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+
+        let output = git_pathspec::parse(input.as_bytes());
+        assert!(output.is_err());
+        assert!(matches!(output.unwrap_err(), Error::MultipleAttributeSpecifications));
     }
 }
 

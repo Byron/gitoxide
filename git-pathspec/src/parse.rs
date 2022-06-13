@@ -15,6 +15,8 @@ pub enum Error {
     InvalidAttribute { attribute: BString },
     #[error("'literal' and 'glob' keywords cannot be used together in the same pathspec")]
     IncompatibleSearchModes,
+    #[error("Only one attribute specification is allowed in the same pathspec")]
+    MultipleAttributeSpecifications,
 }
 
 impl Pattern {
@@ -83,17 +85,20 @@ fn parse_keywords(input: &[u8]) -> Result<Pattern, Error> {
             b"exclude" => p.signature |= MagicSignature::EXCLUDE,
             b"attr" => p.signature |= MagicSignature::ATTR,
             b"literal" => match p.search_mode {
-                SearchMode::ShellGlob => p.search_mode = SearchMode::Literal,
-                _ => return Err(Error::IncompatibleSearchModes),
+                SearchMode::PathAwareGlob => return Err(Error::IncompatibleSearchModes),
+                _ => p.search_mode = SearchMode::Literal,
             },
             b"glob" => match p.search_mode {
-                SearchMode::ShellGlob => p.search_mode = SearchMode::PathAwareGlob,
-                _ => return Err(Error::IncompatibleSearchModes),
+                SearchMode::Literal => return Err(Error::IncompatibleSearchModes),
+                _ => p.search_mode = SearchMode::PathAwareGlob,
             },
             s => {
                 let attrs = s.strip_prefix(b"attr:").ok_or_else(|| Error::InvalidKeyword {
                     found_keyword: BString::from(s),
                 })?;
+                if p.attributes.len() > 0 {
+                    return Err(Error::MultipleAttributeSpecifications);
+                }
                 p.attributes = Iter::new(attrs.into(), 0)
                     .map(|res| res.map(|(attr, state)| (attr.into(), state.into())))
                     .collect::<Result<Vec<_>, _>>()
