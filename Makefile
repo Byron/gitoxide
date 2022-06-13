@@ -189,8 +189,8 @@ journey-tests-async: always ## run journey tests (lean-async)
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) async
 
 journey-tests-smart-release:
-	cd cargo-smart-release && cargo build
-	cd cargo-smart-release && ./tests/journey.sh target/debug/cargo-smart-release
+	cargo build --bin cargo-smart-release --package cargo-smart-release
+	cd cargo-smart-release && ./tests/journey.sh ../target/debug/cargo-smart-release
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
 	watchexec $(MAKE) journey-tests
