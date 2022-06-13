@@ -244,11 +244,11 @@ fn pat_with_path_and_sig(path: &str, signature: MagicSignature) -> Pattern {
     pat(path, signature, SearchMode::ShellGlob, vec![])
 }
 
-fn pat(path: &str, signature: MagicSignature, searchmode: SearchMode, attributes: Vec<(&str, State)>) -> Pattern {
+fn pat(path: &str, signature: MagicSignature, search_mode: SearchMode, attributes: Vec<(&str, State)>) -> Pattern {
     Pattern {
         path: path.into(),
         signature,
-        searchmode,
+        search_mode,
         attributes: attributes
             .into_iter()
             .map(|(attr, state)| (attr.into(), state))

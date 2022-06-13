@@ -13,7 +13,7 @@ pub struct Pattern {
     /// All magic signatures that were included in the pathspec.
     pub signature: MagicSignature,
     /// The search mode of the pathspec.
-    pub searchmode: SearchMode,
+    pub search_mode: SearchMode,
     /// All attributes that were included in the `ATTR` part of the pathspec, if present.
     pub attributes: Vec<(BString, git_attributes::State)>,
 }

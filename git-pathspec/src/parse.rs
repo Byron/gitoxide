@@ -1,5 +1,5 @@
 use bstr::{BString, ByteSlice};
-use git_attributes::{parse::Iter, State};
+use git_attributes::parse::Iter;
 
 use crate::{MagicSignature, Pattern, SearchMode};
 
@@ -23,29 +23,31 @@ impl Pattern {
             return Err(Error::EmptyString);
         }
 
+        let mut p = Pattern {
+            path: BString::default(),
+            signature: MagicSignature::empty(),
+            search_mode: SearchMode::ShellGlob,
+            attributes: Vec::new(),
+        };
         let mut cursor = 0;
-        let mut signature = MagicSignature::empty();
-        let mut search_mode = SearchMode::ShellGlob;
-        let mut attributes = Vec::new();
-
         if input.first() == Some(&b':') {
             cursor += 1;
             while let Some(&b) = input.get(cursor) {
                 cursor += 1;
                 match b {
                     b':' => break,
-                    b'/' => signature |= MagicSignature::TOP,
-                    b'^' | b'!' => signature |= MagicSignature::EXCLUDE,
+                    b'/' => p.signature |= MagicSignature::TOP,
+                    b'^' | b'!' => p.signature |= MagicSignature::EXCLUDE,
                     b'(' => {
                         let end = input.find(")").ok_or(Error::MissingClosingParenthesis {
                             pathspec: BString::from(input),
                         })?;
-                        let (sig, sm, attrs) = parse_keywords(&input[cursor..end])?;
+                        let pat = parse_keywords(&input[cursor..end])?;
 
                         cursor = end + 1;
-                        signature |= sig;
-                        search_mode = sm;
-                        attributes = attrs;
+                        p.search_mode = pat.search_mode;
+                        p.attributes = pat.attributes;
+                        p.signature |= pat.signature;
                     }
                     _ => {
                         cursor -= 1;
@@ -55,44 +57,44 @@ impl Pattern {
             }
         }
 
-        Ok(Pattern {
-            path: BString::from(&input[cursor..]),
-            signature,
-            searchmode: search_mode,
-            attributes,
-        })
+        p.path = BString::from(&input[cursor..]);
+        Ok(p)
     }
 }
 
-fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, SearchMode, Vec<(BString, State)>), Error> {
-    let mut signature = MagicSignature::empty();
-    let mut search_mode = SearchMode::ShellGlob;
-    debug_assert_eq!(search_mode, SearchMode::default());
-    let mut attributes = Vec::new();
+fn parse_keywords(input: &[u8]) -> Result<Pattern, Error> {
+    let mut p = Pattern {
+        path: BString::default(),
+        signature: MagicSignature::empty(),
+        search_mode: SearchMode::ShellGlob,
+        attributes: Vec::new(),
+    };
+
+    debug_assert_eq!(p.search_mode, SearchMode::default());
 
     if input.is_empty() {
-        return Ok((signature, search_mode, attributes));
+        return Ok(p);
     }
 
     for keyword in input.split(|&c| c == b',') {
         match keyword {
-            b"top" => signature |= MagicSignature::TOP,
-            b"icase" => signature |= MagicSignature::ICASE,
-            b"exclude" => signature |= MagicSignature::EXCLUDE,
-            b"attr" => signature |= MagicSignature::ATTR,
-            b"literal" => match search_mode {
-                SearchMode::ShellGlob => search_mode = SearchMode::Literal,
+            b"top" => p.signature |= MagicSignature::TOP,
+            b"icase" => p.signature |= MagicSignature::ICASE,
+            b"exclude" => p.signature |= MagicSignature::EXCLUDE,
+            b"attr" => p.signature |= MagicSignature::ATTR,
+            b"literal" => match p.search_mode {
+                SearchMode::ShellGlob => p.search_mode = SearchMode::Literal,
                 _ => return Err(Error::IncompatibleSearchModes),
             },
-            b"glob" => match search_mode {
-                SearchMode::ShellGlob => search_mode = SearchMode::PathAwareGlob,
+            b"glob" => match p.search_mode {
+                SearchMode::ShellGlob => p.search_mode = SearchMode::PathAwareGlob,
                 _ => return Err(Error::IncompatibleSearchModes),
             },
             s => {
                 let attrs = s.strip_prefix(b"attr:").ok_or_else(|| Error::InvalidKeyword {
                     found_keyword: BString::from(s),
                 })?;
-                attributes = Iter::new(attrs.into(), 0)
+                p.attributes = Iter::new(attrs.into(), 0)
                     .map(|res| res.map(|(attr, state)| (attr.into(), state.into())))
                     .collect::<Result<Vec<_>, _>>()
                     .map_err(|e| match e {
@@ -102,10 +104,10 @@ fn parse_keywords(input: &[u8]) -> Result<(MagicSignature, SearchMode, Vec<(BStr
                         } => Error::InvalidAttribute { attribute },
                         _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
                     })?;
-                signature |= MagicSignature::ATTR
+                p.signature |= MagicSignature::ATTR
             }
         }
     }
 
-    Ok((signature, search_mode, attributes))
+    Ok(p)
 }
