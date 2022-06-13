@@ -11,7 +11,7 @@ publish = false
 
 [dependencies]
 anyhow = "1"
-git-repository = { path = "../../git-repository", version = "^0.18.1", features = ["unstable"] }
+git-repository = { path = "../../git-repository", version = "^0.19", features = ["unstable"] }
 git2 = "0.14"
 rayon = "1.5.0"
 parking_lot = { version = "0.12.0", default-features = false }
