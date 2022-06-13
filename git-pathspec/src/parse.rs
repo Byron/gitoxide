@@ -96,7 +96,7 @@ fn parse_keywords(input: &[u8]) -> Result<Pattern, Error> {
                 let attrs = s.strip_prefix(b"attr:").ok_or_else(|| Error::InvalidKeyword {
                     found_keyword: BString::from(s),
                 })?;
-                if p.attributes.len() > 0 {
+                if !p.attributes.is_empty() {
                     return Err(Error::MultipleAttributeSpecifications);
                 }
                 p.attributes = Iter::new(attrs.into(), 0)
