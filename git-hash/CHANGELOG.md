@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.5 (2022-06-13)
 
 ### New Features
 
@@ -17,8 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 5 calendar days.
- - 24 days passed between releases.
+ - 2 commits contributed to the release over the course of 5 calendar days.
+ - 25 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
 
@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  * **[#427](https://github.com/Byron/gitoxide/issues/427)**
     - expose `Prefix::MIN_HEX_LEN`. ([`652f228`](https://github.com/Byron/gitoxide/commit/652f228bb7ec880856d4e6ee1c171b0b85a735e2))
+ * **Uncategorized**
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
 </details>
 
 ## 0.9.4 (2022-05-18)

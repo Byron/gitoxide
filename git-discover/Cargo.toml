@@ -1,6 +1,6 @@
 [package]
 name = "git-discover"
-version = "0.1.3"
+version = "0.2.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Discover git repositories and check if a directory is a git repository"
@@ -14,10 +14,10 @@ doctest = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-sec = { version = "^0.1.2", path = "../git-sec", features = ["thiserror"] }
-git-path = { version = "^0.1.3", path = "../git-path" }
-git-ref = { version = "^0.13.0", path = "../git-ref" }
-git-hash = { version = "^0.9.4", path = "../git-hash" }
+git-sec = { version = "^0.2.0", path = "../git-sec", features = ["thiserror"] }
+git-path = { version = "^0.2.0", path = "../git-path" }
+git-ref = { version = "^0.14.0", path = "../git-ref" }
+git-hash = { version = "^0.9.5", path = "../git-hash" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std", "unicode"] }
 thiserror = "1.0.26"

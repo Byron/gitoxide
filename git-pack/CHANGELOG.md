@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.20.0 (2022-06-13)
 
 A maintenance release without user-facing changes.
 
@@ -13,8 +13,8 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 21 calendar days.
- - 21 days passed between releases.
+ - 2 commits contributed to the release over the course of 22 calendar days.
+ - 22 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
     - Merge branch 'davidkna-discover-x-fs' ([`9abaeda`](https://github.com/Byron/gitoxide/commit/9abaeda2d22e2dbb1db1632c6eb637f1458d06e1))
 </details>
 

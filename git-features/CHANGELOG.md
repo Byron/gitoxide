@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.21.1 (2022-06-13)
 
 A maintenance release without user-facing changes.
 
@@ -13,8 +13,8 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 5 calendar days.
- - 24 days passed between releases.
+ - 2 commits contributed to the release over the course of 6 calendar days.
+ - 25 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
     - Assure we used most recent version of crossbeam-utils ([`033f0d3`](https://github.com/Byron/gitoxide/commit/033f0d3e0015b7eead6408c775d2101eb413ffbf))
 </details>
 
@@ -228,6 +229,8 @@ A maintenance release thanks to upgrade to `prodash` 18.
 </details>
 
 ## 0.19.0 (2022-01-19)
+
+<csr-id-361892ca15aa648802f6701ab6a5a30aedde3449/>
 
 ### Chore
 

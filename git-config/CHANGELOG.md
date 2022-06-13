@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.5.0 (2022-06-13)
 
 ### New Features (BREAKING)
 
@@ -16,8 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 21 calendar days.
- - 21 days passed between releases.
+ - 7 commits contributed to the release over the course of 22 calendar days.
+ - 22 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#436](https://github.com/Byron/gitoxide/issues/436)
 
@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#436](https://github.com/Byron/gitoxide/issues/436)**
     - Remove outdated examples ([`cb9529e`](https://github.com/Byron/gitoxide/commit/cb9529e18b222b9fd9f8c1bb0dba8038a6ea1d4b))
  * **Uncategorized**
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
     - remove `pwd` crate dependency in favor of using libc directly ([`4adfa11`](https://github.com/Byron/gitoxide/commit/4adfa11d70cf78bed541fa59707e8a5082dda245))
     - Drop non-existent config paths before parsing ([`475d6fa`](https://github.com/Byron/gitoxide/commit/475d6fab2467ad0499db7df2d4c99f74e43682fc))
     - Merge branch 'main' into davidkna-envopen ([`bc0abc6`](https://github.com/Byron/gitoxide/commit/bc0abc643d3329f885f250b6880560dec861150f))

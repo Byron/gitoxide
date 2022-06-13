@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.10.1 (2022-06-13)
 
 A maintenance release without user-facing changes.
 
@@ -13,8 +13,8 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 5 calendar days.
- - 24 days passed between releases.
+ - 3 commits contributed to the release over the course of 5 calendar days.
+ - 25 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
 
@@ -27,6 +27,7 @@ A maintenance release without user-facing changes.
  * **[#427](https://github.com/Byron/gitoxide/issues/427)**
     - Replace `Time` with `git-date::Time`. ([`59b3ff8`](https://github.com/Byron/gitoxide/commit/59b3ff8a7e028962917cf3b2930b5b7e5156c302))
  * **Uncategorized**
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
     - make fmt ([`c665aef`](https://github.com/Byron/gitoxide/commit/c665aef4270c5ee54da89ee015cc0affd6337608))
 </details>
 

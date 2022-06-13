@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.14.0 (2022-06-13)
 
 A maintenance release without user-facing changes.
 
@@ -13,8 +13,8 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
- - 24 days passed between releases.
+ - 2 commits contributed to the release.
+ - 25 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
     - make fmt ([`c665aef`](https://github.com/Byron/gitoxide/commit/c665aef4270c5ee54da89ee015cc0affd6337608))
 </details>
 
@@ -641,6 +642,8 @@ A maintenance release to properly dealing with previously breaking changes in `g
 ## v0.8.0 (2021-10-15)
 
 <csr-id-4ed4b2da50557aff540685441f4b5c7d5e582977/>
+<csr-id-293bfc0278c5983c0beaec93253fb51f00d81156/>
+<csr-id-90e6128727932f917c485f411e623fc6a9c2ad4d/>
 
 This release contains no functional changes, but is considered breaking for safety reasons 
 as `git-traverse` is signalling a breaking change.

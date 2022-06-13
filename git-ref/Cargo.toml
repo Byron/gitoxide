@@ -1,6 +1,6 @@
 [package]
 name = "git-ref"
-version = "0.13.0"
+version = "0.14.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate to handle git references"
@@ -25,12 +25,12 @@ required-features = ["internal-testing-git-features-parallel"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-features = { version = "^0.21.0", path = "../git-features", features = ["walkdir"]}
-git-path = { version = "^0.1.1", path = "../git-path" }
-git-hash = { version = "^0.9.4", path = "../git-hash" }
+git-features = { version = "^0.21.1", path = "../git-features", features = ["walkdir"]}
+git-path = { version = "^0.2.0", path = "../git-path" }
+git-hash = { version = "^0.9.5", path = "../git-hash" }
 git-object = { version = "^0.19.0", path = "../git-object" }
 git-validate = { version = "^0.5.4", path = "../git-validate" }
-git-actor = { version = "^0.10.0", path = "../git-actor" }
+git-actor = { version = "^0.10.1", path = "../git-actor" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 

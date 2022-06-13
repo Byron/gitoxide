@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.2.0 (2022-06-13)
 
 A maintenance release without user-facing changes.
 
@@ -13,8 +13,8 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release over the course of 15 calendar days.
- - 24 days passed between releases.
+ - 2 commits contributed to the release over the course of 16 calendar days.
+ - 25 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -25,6 +25,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
     - branch start, upgrade to compact_str v0.4 ([`b2f56d5`](https://github.com/Byron/gitoxide/commit/b2f56d5a279dae745d9c2c80ebe599c00e72c0d7))
 </details>
 
