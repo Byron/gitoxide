@@ -10,6 +10,16 @@ use git::revision::{
 use git_repository as git;
 use std::ffi::OsString;
 
+pub fn explain(_repo: git::Repository, spec: OsString, mut out: impl std::io::Write) -> anyhow::Result<()> {
+    let mut explain = Explain::new(&mut out);
+    let spec = git::path::os_str_into_bstr(&spec)?;
+    git::revision::spec::parse(spec, &mut explain)?;
+    if let Some(err) = explain.err {
+        bail!(err);
+    }
+    Ok(())
+}
+
 struct Explain<'a> {
     out: &'a mut dyn std::io::Write,
     call: usize,
@@ -60,7 +70,11 @@ impl<'a> delegate::Revision for Explain<'a> {
     fn reflog(&mut self, query: ReflogLookup) -> Option<()> {
         self.prefix()?;
         self.has_implicit_anchor = true;
-        let ref_name: &BStr = self.ref_name.as_ref().map(|n| n.as_ref()).unwrap_or("HEAD".into());
+        let ref_name: &BStr = self
+            .ref_name
+            .as_ref()
+            .map(|n| n.as_ref())
+            .unwrap_or_else(|| "HEAD".into());
         match query {
             ReflogLookup::Entry(no) => {
                 writeln!(self.out, "Find entry {} in reflog of '{}' reference", no, ref_name).ok()
@@ -88,10 +102,14 @@ impl<'a> delegate::Revision for Explain<'a> {
     fn sibling_branch(&mut self, kind: SiblingBranch) -> Option<()> {
         self.prefix()?;
         self.has_implicit_anchor = true;
-        let ref_name: &BStr = self.ref_name.as_ref().map(|n| n.as_ref()).unwrap_or("HEAD".into());
+        let ref_name: &BStr = self
+            .ref_name
+            .as_ref()
+            .map(|n| n.as_ref())
+            .unwrap_or_else(|| "HEAD".into());
         let ref_info = match self.ref_name.as_ref() {
             Some(ref_name) => format!("'{}'", ref_name),
-            None => format!("behind 'HEAD'"),
+            None => "behind 'HEAD'".into(),
         };
         writeln!(
             self.out,
@@ -184,7 +202,17 @@ impl<'a> delegate::Navigate for Explain<'a> {
 impl<'a> delegate::Kind for Explain<'a> {
     fn kind(&mut self, kind: spec::Kind) -> Option<()> {
         self.prefix()?;
-        todo!()
+        self.call = 0;
+        writeln!(
+            self.out,
+            "Set revision specification to {} mode",
+            match kind {
+                spec::Kind::Range => "range",
+                spec::Kind::MergeBase => "merge-base",
+                spec::Kind::Single => unreachable!("BUG: 'single' mode is implied but cannot be set explicitly"),
+            }
+        )
+        .ok()
     }
 }
 
@@ -194,14 +222,4 @@ impl<'a> Delegate for Explain<'a> {
             self.err = Some("Incomplete specification lacks its anchor, like a reference or object name".into())
         }
     }
-}
-
-pub fn explain(_repo: git::Repository, spec: OsString, mut out: impl std::io::Write) -> anyhow::Result<()> {
-    let mut explain = Explain::new(&mut out);
-    let spec = git::path::os_str_into_bstr(&spec)?;
-    git::revision::spec::parse(spec, &mut explain)?;
-    if let Some(err) = explain.err {
-        bail!(err);
-    }
-    Ok(())
 }
