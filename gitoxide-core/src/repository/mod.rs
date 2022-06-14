@@ -12,6 +12,8 @@ pub mod tree;
 
 pub mod commit;
 
+pub mod revision;
+
 pub mod verify;
 
 pub mod odb;
