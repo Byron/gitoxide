@@ -167,9 +167,7 @@ pub fn main() -> Result<()> {
                         progress,
                         progress_keep_open,
                         None,
-                        move |_progress, out, err| {
-                            core::repository::revision::explain(repository.into(), spec, out, err)
-                        },
+                        move |_progress, out, _err| core::repository::revision::explain(repository.into(), spec, out),
                     ),
                 },
                 repo::Subcommands::Commit { cmd } => match cmd {
