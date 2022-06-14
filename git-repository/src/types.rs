@@ -162,3 +162,14 @@ pub struct ThreadSafeRepository {
     /// options obtained when instantiating this repository for use when following linked worktrees.
     pub(crate) linked_worktree_options: crate::open::Options,
 }
+
+/// The specification of a revision as parsed from a revision specification like `HEAD@{1}` or `v1.2.3...main`.
+///
+/// See the [official git documentation](https://git-scm.com/docs/git-rev-parse#_specifying_revisions) for reference on how
+/// to specify revisions and revision ranges.
+pub struct RevSpec<'repo> {
+    pub(crate) from: Option<git_hash::ObjectId>,
+    pub(crate) to: Option<git_hash::ObjectId>,
+    pub(crate) kind: Option<git_revision::spec::Kind>,
+    pub(crate) repo: &'repo Repository,
+}
