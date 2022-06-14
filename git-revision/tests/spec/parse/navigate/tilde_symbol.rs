@@ -1,6 +1,13 @@
+use git_revision::spec;
 use git_revision::spec::parse::delegate::Traversal;
 
-use crate::spec::parse::parse;
+use crate::spec::parse::{parse, try_parse};
+
+#[test]
+fn without_anchor_is_invalid() {
+    let err = try_parse("~").unwrap_err();
+    assert!(matches!(err, spec::parse::Error::MissingTildeAnchor))
+}
 
 #[test]
 fn single_is_first_ancestor() {

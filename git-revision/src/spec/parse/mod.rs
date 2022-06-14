@@ -6,6 +6,8 @@ use crate::spec;
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("'~' needs to follow an anchor, like '@~'.")]
+    MissingTildeAnchor,
     #[error("':' needs to be followed by either '/' and regex or the path to lookup in the HEAD tree.")]
     MissingColonSuffix,
     #[error("':/' must be followed by a regular expression.")]

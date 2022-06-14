@@ -256,6 +256,9 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
             }
             rest
         } else {
+            if sep_pos == Some(0) && sep == Some(b'~') {
+                return Err(Error::MissingTildeAnchor);
+            }
             input[sep_pos.unwrap_or(input.len())..].as_bstr()
         }
     };
