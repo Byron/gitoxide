@@ -5,7 +5,7 @@ use bstr::BString;
 
 pub mod parse;
 
-/// The output of a pathspec parsing operaion. It can be used to matche against a path / multiple paths.
+/// The output of a pathspec parsing operation. It can be used to match against a path / multiple paths.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Pattern {
     /// The path part of a pathspec.
@@ -49,7 +49,7 @@ impl Default for SearchMode {
     }
 }
 
-/// Parse a git-style pathspec into a `Pattern`
+/// Parse a git-style pathspec into a [`Pattern`][Pattern].`
 pub fn parse(input: &[u8]) -> Result<Pattern, parse::Error> {
     Pattern::from_bytes(input)
 }

@@ -168,6 +168,39 @@ mod succeed {
 
         check_valid_inputs(inputs)
     }
+
+    #[test]
+    #[ignore]
+    fn attributes_with_escaped_values() {
+        let inputs = vec![(
+            r":(attr:value=one\,two\,three)",
+            pat(
+                "",
+                MagicSignature::ATTR,
+                SearchMode::ShellGlob,
+                vec![("value", State::Value("one,two,three".into()))],
+            ),
+        )];
+
+        check_valid_inputs(inputs)
+    }
+
+    #[test]
+    #[ignore]
+    // TODO: Needs research - what does 'prefix:' do
+    fn prefix() {
+        let inputs = vec![(
+            r":(prefix:)",
+            pat(
+                "",
+                MagicSignature::ATTR,
+                SearchMode::ShellGlob,
+                vec![("value", State::Value("one,two,three".into()))],
+            ),
+        )];
+
+        check_valid_inputs(inputs)
+    }
 }
 
 mod fail {
@@ -182,7 +215,21 @@ mod fail {
 
         let output = git_pathspec::parse(input.as_bytes());
         assert!(output.is_err());
-        assert!(matches!(output.unwrap_err(), Error::EmptyString { .. }));
+        assert!(matches!(output.unwrap_err(), Error::EmptyString));
+    }
+
+    #[test]
+    #[ignore]
+    fn invalid_short_signatures() {
+        let inputs = vec![":=()"];
+
+        inputs.into_iter().for_each(|input| {
+            assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+
+            let output = git_pathspec::parse(input.as_bytes());
+            assert!(output.is_err());
+            // assert!(matches!(output.unwrap_err(), Error::InvalidShortSignature { .. }));
+        });
     }
 
     #[test]
@@ -209,6 +256,7 @@ mod fail {
             ":(attr:+invalidAttr)some/path",
             ":(attr:validAttr +invalidAttr)some/path",
             ":(attr:+invalidAttr,attr:valid)some/path",
+            ":(attr:inva\\lid)some/path",
         ];
 
         for input in inputs {
@@ -218,6 +266,17 @@ mod fail {
             assert!(output.is_err());
             assert!(matches!(output.unwrap_err(), Error::InvalidAttribute { .. }));
         }
+    }
+
+    #[test]
+    fn empty_attribute() {
+        let input = ":(attr:)";
+
+        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+
+        let output = git_pathspec::parse(input.as_bytes());
+        assert!(output.is_err());
+        assert!(matches!(output.unwrap_err(), Error::EmptyAttribute));
     }
 
     #[test]

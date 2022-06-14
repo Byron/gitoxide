@@ -13,6 +13,8 @@ pub enum Error {
     MissingClosingParenthesis { pathspec: BString },
     #[error("Attribute has non-ascii characters or starts with '-': {:?}", attribute)]
     InvalidAttribute { attribute: BString },
+    #[error("Attribute specification cannot be empty")]
+    EmptyAttribute,
     #[error("'literal' and 'glob' keywords cannot be used together in the same pathspec")]
     IncompatibleSearchModes,
     #[error("Only one attribute specification is allowed in the same pathspec")]
@@ -96,6 +98,9 @@ fn parse_keywords(input: &[u8]) -> Result<Pattern, Error> {
                 let attrs = s.strip_prefix(b"attr:").ok_or_else(|| Error::InvalidKeyword {
                     found_keyword: BString::from(s),
                 })?;
+                if attrs.is_empty() {
+                    return Err(Error::EmptyAttribute);
+                }
                 if !p.attributes.is_empty() {
                     return Err(Error::MultipleAttributeSpecifications);
                 }
