@@ -1,5 +1,6 @@
 #![allow(unused_variables)]
 
+use anyhow::bail;
 use git::bstr::{BStr, BString, ByteSlice};
 use git::revision::spec::parse::{delegate, Delegate};
 use git::revision::{
@@ -14,6 +15,8 @@ struct Explain<'a> {
     call: usize,
     ref_name: Option<BString>,
     oid_prefix: Option<git::hash::Prefix>,
+    has_implicit_anchor: bool,
+    err: Option<String>,
 }
 
 impl<'a> Explain<'a> {
@@ -23,17 +26,28 @@ impl<'a> Explain<'a> {
             call: 0,
             ref_name: None,
             oid_prefix: None,
+            has_implicit_anchor: false,
+            err: None,
         }
     }
     fn prefix(&mut self) -> Option<()> {
         self.call += 1;
         write!(self.out, "{:02}. ", self.call).ok()
     }
+    fn revision_name(&self) -> BString {
+        self.ref_name.clone().unwrap_or_else(|| {
+            self.oid_prefix
+                .expect("parser must have set some object value")
+                .to_string()
+                .into()
+        })
+    }
 }
 
 impl<'a> delegate::Revision for Explain<'a> {
     fn find_ref(&mut self, name: &BStr) -> Option<()> {
         self.prefix()?;
+        self.ref_name = Some(name.into());
         writeln!(self.out, "Lookup the '{}' reference", name).ok()
     }
 
@@ -45,6 +59,7 @@ impl<'a> delegate::Revision for Explain<'a> {
 
     fn reflog(&mut self, query: ReflogLookup) -> Option<()> {
         self.prefix()?;
+        self.has_implicit_anchor = true;
         let ref_name: &BStr = self.ref_name.as_ref().map(|n| n.as_ref()).unwrap_or("HEAD".into());
         match query {
             ReflogLookup::Entry(no) => {
@@ -66,11 +81,13 @@ impl<'a> delegate::Revision for Explain<'a> {
 
     fn nth_checked_out_branch(&mut self, branch_no: usize) -> Option<()> {
         self.prefix()?;
+        self.has_implicit_anchor = true;
         writeln!(self.out, "Find the {}th checked-out branch of 'HEAD'", branch_no).ok()
     }
 
     fn sibling_branch(&mut self, kind: SiblingBranch) -> Option<()> {
         self.prefix()?;
+        self.has_implicit_anchor = true;
         let ref_name: &BStr = self.ref_name.as_ref().map(|n| n.as_ref()).unwrap_or("HEAD".into());
         let ref_info = match self.ref_name.as_ref() {
             Some(ref_name) => format!("'{}'", ref_name),
@@ -119,11 +136,19 @@ impl<'a> delegate::Kind for Explain<'a> {
 }
 
 impl<'a> Delegate for Explain<'a> {
-    fn done(&mut self) {}
+    fn done(&mut self) {
+        if !self.has_implicit_anchor && self.ref_name.is_none() && self.oid_prefix.is_none() {
+            self.err = Some("Incomplete specification lacks its anchor, like a reference or object name".into())
+        }
+    }
 }
 
 pub fn explain(_repo: git::Repository, spec: OsString, mut out: impl std::io::Write) -> anyhow::Result<()> {
     let mut explain = Explain::new(&mut out);
     let spec = git::path::os_str_into_bstr(&spec)?;
-    git::revision::spec::parse(spec, &mut explain).map_err(anyhow::Error::from)
+    git::revision::spec::parse(spec, &mut explain)?;
+    if let Some(err) = explain.err {
+        bail!(err);
+    }
+    Ok(())
 }
