@@ -1,5 +1,3 @@
-#![allow(unused_variables)]
-
 use anyhow::bail;
 use git::bstr::{BStr, BString, ByteSlice};
 use git::revision::spec::parse::{delegate, Delegate};
@@ -102,11 +100,6 @@ impl<'a> delegate::Revision for Explain<'a> {
     fn sibling_branch(&mut self, kind: SiblingBranch) -> Option<()> {
         self.prefix()?;
         self.has_implicit_anchor = true;
-        let ref_name: &BStr = self
-            .ref_name
-            .as_ref()
-            .map(|n| n.as_ref())
-            .unwrap_or_else(|| "HEAD".into());
         let ref_info = match self.ref_name.as_ref() {
             Some(ref_name) => format!("'{}'", ref_name),
             None => "behind 'HEAD'".into(),
