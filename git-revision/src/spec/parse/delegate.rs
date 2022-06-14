@@ -60,7 +60,7 @@ pub trait Navigate {
     /// If `negated` is `true`, the first non-match will be a match.
     ///
     /// If no revision is known yet, find the _youngest_ matching commit from _any_ reference, including `HEAD`.
-    /// Otherwise, only find commits reachable from the set revision.
+    /// Otherwise, only find commits reachable from the currently set revision.
     fn find(&mut self, regex: &BStr, negated: bool) -> Option<()>;
 
     /// Look up the given `path` at the given `stage` in the index returning its blob id,

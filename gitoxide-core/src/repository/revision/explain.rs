@@ -109,22 +109,75 @@ impl<'a> delegate::Revision for Explain<'a> {
 impl<'a> delegate::Navigate for Explain<'a> {
     fn traverse(&mut self, kind: Traversal) -> Option<()> {
         self.prefix()?;
-        todo!()
+        let name = self.revision_name();
+        writeln!(
+            self.out,
+            "{}",
+            match kind {
+                Traversal::NthAncestor(no) => format!("Traverse to the {}th ancestor of revision named '{}'", no, name),
+                Traversal::NthParent(no) => format!("Select the {}th parent of revision named '{}'", no, name),
+            }
+        )
+        .ok()
     }
 
     fn peel_until(&mut self, kind: PeelTo<'_>) -> Option<()> {
         self.prefix()?;
-        todo!()
+        writeln!(
+            self.out,
+            "{}",
+            match kind {
+                PeelTo::ExistingObject => "Assure the current object exists".to_string(),
+                PeelTo::RecursiveTagObject => "Follow the current annotated tag until an object is found".into(),
+                PeelTo::ObjectKind(kind) => format!("Peel the current object until it is a {}", kind),
+                PeelTo::Path(path) => format!("Lookup the object at '{}' from the current tree-ish", path),
+            }
+        )
+        .ok()
     }
 
     fn find(&mut self, regex: &BStr, negated: bool) -> Option<()> {
         self.prefix()?;
-        todo!()
+        self.has_implicit_anchor = true;
+        let negate_text = if negated { "does not match" } else { "matches" };
+        writeln!(
+            self.out,
+            "{}",
+            match self
+                .ref_name
+                .as_ref()
+                .map(|n| n.to_string())
+                .or_else(|| self.oid_prefix.map(|p| p.to_string()))
+            {
+                Some(obj_name) => format!(
+                    "Follow the ancestry of revision '{}' until a commit message {} regex '{}'",
+                    obj_name, negate_text, regex
+                ),
+                None => format!(
+                    "Find the most recent commit from any reference including 'HEAD' that {} regex '{}'",
+                    negate_text, regex
+                ),
+            }
+        )
+        .ok()
     }
 
     fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()> {
         self.prefix()?;
-        todo!()
+        self.has_implicit_anchor = true;
+        writeln!(
+            self.out,
+            "Lookup the index at path '{}' stage {} ({})",
+            path,
+            stage,
+            match stage {
+                0 => "base",
+                1 => "ours",
+                2 => "theirs",
+                _ => unreachable!("BUG: parser assures of that"),
+            }
+        )
+        .ok()
     }
 }
 
