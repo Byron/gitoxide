@@ -68,6 +68,15 @@ mod range {
     }
 
     #[test]
+    fn leading_dot_dot() {
+        let rec = parse("..HEAD");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.calls, 2);
+    }
+
+    #[test]
     fn middle_dot_dot() {
         let rec = parse("@..HEAD");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
@@ -135,6 +144,15 @@ mod mergebase {
     #[test]
     fn trailing_dot_dot_dot() {
         let rec = parse("HEAD...");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.calls, 2);
+    }
+
+    #[test]
+    fn leading_dot_dot_dot() {
+        let rec = parse("...HEAD");
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.prefix[0], None);
