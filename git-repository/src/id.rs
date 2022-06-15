@@ -42,8 +42,8 @@ impl<'repo> Id<'repo> {
         self.repo
             .objects
             .disambiguate_prefix(prefix)
-            .map_err(crate::object::find::existing::OdbError::Find)?
-            .ok_or(crate::object::find::existing::OdbError::NotFound { oid: self.inner })
+            .map_err(find::existing::OdbError::Find)?
+            .ok_or(find::existing::OdbError::NotFound { oid: self.inner })
     }
 }
 

@@ -1,11 +1,14 @@
 #![allow(missing_docs)]
-use crate::{Id, RevSpec};
+use crate::ext::ReferenceExt;
+use crate::{Id, Reference, RevSpec};
 
 ///
 pub mod parse {
-
+    use crate::bstr::{BStr, ByteSlice};
     use crate::Repository;
     use crate::RevSpec;
+    use git_revision::spec::parse;
+    use git_revision::spec::parse::delegate::{self, PeelTo, ReflogLookup, SiblingBranch, Traversal};
 
     /// The error returned by [`crate::Repository::rev_parse()`].
     #[derive(Debug, thiserror::Error)]
@@ -14,18 +17,174 @@ pub mod parse {
         #[error(transparent)]
         IdFromHex(#[from] git_hash::decode::Error),
         #[error(transparent)]
-        Find(#[from] crate::object::find::existing::OdbError),
+        FindReference(#[from] git_ref::file::find::existing::Error),
+        #[error(transparent)]
+        FindObject(#[from] crate::object::find::existing::OdbError),
+        #[error(transparent)]
+        Parse(#[from] git_revision::spec::parse::Error),
+        #[error("An object prefixed {} could not be found", .prefix)]
+        PrefixNotFound { prefix: git_hash::Prefix },
+        #[error("Found more than one object prefixed with {}", .prefix)]
+        AmbiguousPrefix { prefix: git_hash::Prefix },
+        #[error("{}", .combined_message)]
+        Multi { combined_message: String },
     }
 
     impl<'repo> RevSpec<'repo> {
-        pub fn from_bytes(_spec: impl AsRef<[u8]>, _repo: &Repository) -> Result<Self, Error> {
+        pub fn from_bstr(spec: impl AsRef<BStr>, repo: &Repository) -> Result<Self, Error> {
+            let mut delegate = Delegate {
+                refs: Default::default(),
+                objs: Default::default(),
+                ref_idx: 0,
+                obj_idx: 0,
+                kind: None,
+                err: Vec::new(),
+                repo,
+            };
+            match git_revision::spec::parse(spec.as_ref().as_bstr(), &mut delegate) {
+                Err(git_revision::spec::parse::Error::Delegate) => {
+                    assert!(
+                        !delegate.err.is_empty(),
+                        "BUG: must have recorded at least one err if a delegate error was reported"
+                    );
+                    if delegate.err.len() == 1 {
+                        return Err(delegate.err.remove(0));
+                    }
+                    // TODO: is there a way to not degenerate the error easily?
+                    return Err(Error::Multi {
+                        combined_message: delegate
+                            .err
+                            .iter()
+                            .map(|err| err.to_string())
+                            .collect::<Vec<_>>()
+                            .join("\n"),
+                    });
+                }
+                Err(err) => return Err(err.into()),
+                Ok(()) => {}
+            };
             todo!()
+        }
+    }
+
+    #[allow(dead_code)]
+    struct Delegate<'repo> {
+        refs: [Option<git_ref::Reference>; 2],
+        objs: [Option<git_hash::ObjectId>; 2],
+
+        ref_idx: usize,
+        obj_idx: usize,
+
+        kind: Option<git_revision::spec::Kind>,
+        repo: &'repo Repository,
+        err: Vec<Error>,
+    }
+
+    impl<'repo> parse::Delegate for Delegate<'repo> {
+        fn done(&mut self) {
+            todo!()
+        }
+    }
+
+    impl<'repo> delegate::Revision for Delegate<'repo> {
+        fn find_ref(&mut self, name: &BStr) -> Option<()> {
+            match self.repo.refs.find(name) {
+                Ok(r) => {
+                    assert!(self.refs[self.ref_idx].is_none(), "BUG: cannot set the same ref twice");
+                    self.refs[self.ref_idx] = Some(r);
+                    Some(())
+                }
+                Err(err) => {
+                    self.err.push(err.into());
+                    None
+                }
+            }
+        }
+
+        fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix) -> Option<()> {
+            match self
+                .repo
+                .objects
+                .lookup_prefix(prefix)
+                .map_err(crate::object::find::existing::OdbError::Find)
+            {
+                Err(err) => {
+                    self.err.push(err.into());
+                    None
+                }
+                Ok(None) => {
+                    self.err.push(Error::PrefixNotFound { prefix });
+                    None
+                }
+                Ok(Some(Err(()))) => {
+                    self.err.push(Error::AmbiguousPrefix { prefix });
+                    None
+                }
+                Ok(Some(Ok(id))) => {
+                    assert!(
+                        self.objs[self.obj_idx].is_none(),
+                        "BUG: cannot set the same prefix twice"
+                    );
+                    self.objs[self.obj_idx] = Some(id);
+                    Some(())
+                }
+            }
+        }
+
+        fn reflog(&mut self, _query: ReflogLookup) -> Option<()> {
+            todo!()
+        }
+
+        fn nth_checked_out_branch(&mut self, _branch_no: usize) -> Option<()> {
+            todo!()
+        }
+
+        fn sibling_branch(&mut self, _kind: SiblingBranch) -> Option<()> {
+            todo!()
+        }
+    }
+
+    impl<'repo> delegate::Navigate for Delegate<'repo> {
+        fn traverse(&mut self, _kind: Traversal) -> Option<()> {
+            todo!()
+        }
+
+        fn peel_until(&mut self, _kind: PeelTo<'_>) -> Option<()> {
+            todo!()
+        }
+
+        fn find(&mut self, _regex: &BStr, _negated: bool) -> Option<()> {
+            todo!()
+        }
+
+        fn index_lookup(&mut self, _path: &BStr, _stage: u8) -> Option<()> {
+            todo!()
+        }
+    }
+
+    impl<'repo> delegate::Kind for Delegate<'repo> {
+        fn kind(&mut self, _kind: git_revision::spec::Kind) -> Option<()> {
+            todo!("kind, deal with ^ and .. and ... correctly")
         }
     }
 }
 
 /// Access
 impl<'repo> RevSpec<'repo> {
+    /// Some revision specifications leave information about reference names which are returned as `(from-ref, to-ref)` here, e.g.
+    /// `HEAD@{-1}..main` might be (`refs/heads/previous-branch`, `refs/heads/main`).
+    ///
+    /// Note that no reference name is known when revisions are specified by prefix as with `v1.2.3-10-gabcd1234`.
+    // TODO: tests
+    pub fn into_names(self) -> (Option<Reference<'repo>>, Option<Reference<'repo>>) {
+        // TODO: assure we can set the reference also when it is only implied, like with `@{1}`.
+        let repo = self.repo;
+        (
+            self.from_ref.map(|r| r.attach(repo)),
+            self.to_ref.map(|r| r.attach(repo)),
+        )
+    }
+
     /// The object from which to start a range, or the only revision as specified by e.g. `@` or `HEAD`.
     ///
     /// Note that this can be `None` for ranges like e.g. `^HEAD`, `..@`, `...v1.0` or similar.

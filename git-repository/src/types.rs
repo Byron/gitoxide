@@ -167,8 +167,11 @@ pub struct ThreadSafeRepository {
 ///
 /// See the [official git documentation](https://git-scm.com/docs/git-rev-parse#_specifying_revisions) for reference on how
 /// to specify revisions and revision ranges.
+#[derive(Clone, Debug)]
 pub struct RevSpec<'repo> {
+    pub(crate) from_ref: Option<git_ref::Reference>,
     pub(crate) from: Option<git_hash::ObjectId>,
+    pub(crate) to_ref: Option<git_ref::Reference>,
     pub(crate) to: Option<git_hash::ObjectId>,
     pub(crate) kind: Option<git_revision::spec::Kind>,
     pub(crate) repo: &'repo Repository,

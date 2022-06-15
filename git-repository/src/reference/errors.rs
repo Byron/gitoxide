@@ -66,7 +66,7 @@ pub mod find {
         pub enum Error {
             #[error(transparent)]
             Find(#[from] crate::reference::find::Error),
-            #[error("The reference did not exist even though that was expected")]
+            #[error("The reference did not exist")]
             NotFound,
         }
     }
