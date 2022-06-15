@@ -7,7 +7,7 @@ function baseline() {
   local spec=${1:?first argument is the spec to test}
   {
     echo "$spec"
-    git rev-parse "$spec" &>/dev/null && echo 0 || echo $?
+    git rev-parse -q --verify "$spec" 2>/dev/null || echo $?
   }>> "$ROOT/baseline.git"
 }
 

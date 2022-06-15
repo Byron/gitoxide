@@ -6,17 +6,22 @@ mod from_bytes {
     use git_testtools::hex_to_id;
     use once_cell::sync::Lazy;
     use std::collections::HashMap;
+    use std::str::FromStr;
 
     const FIXTURE_NAME: &str = "make_rev_spec_parse_repos.sh";
-    static BASELINE: Lazy<HashMap<BString, u8>> = Lazy::new(|| {
+    static BASELINE: Lazy<HashMap<BString, Option<git::ObjectId>>> = Lazy::new(|| {
         let mut m = HashMap::new();
         let base = git_testtools::scripted_fixture_repo_read_only(FIXTURE_NAME).unwrap();
         let baseline = std::fs::read(base.join("baseline.git")).unwrap();
         let mut lines = baseline.lines();
         while let Some(spec) = lines.next() {
-            let exit_code: u8 = lines.next().expect("exit code").to_str().unwrap().parse().unwrap();
+            let exit_code_or_hash = lines.next().expect("exit code or single hash").to_str().unwrap();
+            let possibly_hash = match u8::from_str(exit_code_or_hash) {
+                Ok(_) => None,
+                Err(_) => Some(git::ObjectId::from_str(exit_code_or_hash).unwrap()),
+            };
             assert_eq!(
-                m.insert(spec.into(), exit_code),
+                m.insert(spec.into(), possibly_hash),
                 None,
                 "Duplicate spec '{}' cannot be handled",
                 spec.as_bstr()
@@ -27,7 +32,7 @@ mod from_bytes {
 
     fn parse_spec<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
         let res = RevSpec::from_bstr(spec, repo);
-        let expected = res.is_ok().then(|| 0).unwrap_or(128);
+        let expected = res.as_ref().ok().and_then(|rs| rs.from().map(|id| id.into()));
         let spec: BString = spec.into();
         assert_eq!(
             BASELINE.get(&spec),
