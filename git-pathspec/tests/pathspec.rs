@@ -60,6 +60,7 @@ mod succeed {
             ("some/ path", pat_with_path("some/ path")),
             ("some/path ", pat_with_path("some/path ")),
             (": some/path", pat_with_path(" some/path")),
+            (": !some/path", pat_with_path(" !some/path")),
             (
                 ":! some/path",
                 pat_with_path_and_sig(" some/path", MagicSignature::EXCLUDE),
@@ -288,7 +289,12 @@ mod fail {
             ":(attr:+invalidAttr)some/path",
             ":(attr:validAttr +invalidAttr)some/path",
             ":(attr:+invalidAttr,attr:valid)some/path",
-            ":(attr:inva\\lid)some/path",
+            r":(attr:inva\lid)some/path",
+            //TODO: handle these case
+            // r":(attr:v=invalid\ valid)some/path",
+            // r":(attr:v=invalid\ )some/path",
+            // r":(attr:v=invalid\)some/path",
+            // r":(attr:v=invalid\#)some/path",
         ];
 
         for input in inputs {
