@@ -1,10 +1,12 @@
 #![allow(missing_docs)]
 use crate::ext::ReferenceExt;
-use crate::{Id, Reference, RevSpec};
+use crate::types::RevSpecDetached;
+use crate::{Id, Reference, Repository, RevSpec};
 
 ///
 pub mod parse {
     use crate::bstr::{BStr, ByteSlice};
+    use crate::types::RevSpecDetached;
     use crate::Repository;
     use crate::RevSpec;
     use git_revision::spec::parse;
@@ -61,11 +63,13 @@ pub mod parse {
                 }
                 Err(err) => return Err(err.into()),
                 Ok(()) => RevSpec {
-                    from_ref: delegate.refs[0].take(),
-                    from: delegate.objs[0],
-                    to_ref: delegate.refs[1].take(),
-                    to: delegate.objs[1],
-                    kind: delegate.kind,
+                    inner: RevSpecDetached {
+                        from_ref: delegate.refs[0].take(),
+                        from: delegate.objs[0],
+                        to_ref: delegate.refs[1].take(),
+                        to: delegate.objs[1],
+                        kind: delegate.kind,
+                    },
                     repo,
                 },
             };
@@ -209,7 +213,9 @@ mod impls {
 
     impl<'repo> PartialEq for RevSpec<'repo> {
         fn eq(&self, other: &Self) -> bool {
-            self.kind == other.kind && self.from == other.from && self.to == other.to
+            self.inner.kind == other.inner.kind
+                && self.inner.from == other.inner.from
+                && self.inner.to == other.inner.to
         }
     }
 
@@ -221,11 +227,13 @@ impl<'repo> RevSpec<'repo> {
     /// Create a single specification which points to `id`.
     pub fn from_id(id: Id<'repo>) -> Self {
         RevSpec {
-            from_ref: None,
-            from: Some(id.inner),
-            to: None,
-            to_ref: None,
-            kind: None,
+            inner: RevSpecDetached {
+                from_ref: None,
+                from: Some(id.inner),
+                to: None,
+                to_ref: None,
+                kind: None,
+            },
             repo: id.repo,
         }
     }
@@ -233,6 +241,11 @@ impl<'repo> RevSpec<'repo> {
 
 /// Access
 impl<'repo> RevSpec<'repo> {
+    /// Detach the `Repository` from this instance, leaving only plain data that can be moved freely and serialized.
+    pub fn detach(self) -> RevSpecDetached {
+        self.inner
+    }
+
     /// Some revision specifications leave information about reference names which are returned as `(from-ref, to-ref)` here, e.g.
     /// `HEAD@{-1}..main` might be (`refs/heads/previous-branch`, `refs/heads/main`).
     ///
@@ -241,9 +254,10 @@ impl<'repo> RevSpec<'repo> {
     pub fn into_names(self) -> (Option<Reference<'repo>>, Option<Reference<'repo>>) {
         // TODO: assure we can set the reference also when it is only implied, like with `@{1}`.
         let repo = self.repo;
+        let this = self.inner;
         (
-            self.from_ref.map(|r| r.attach(repo)),
-            self.to_ref.map(|r| r.attach(repo)),
+            this.from_ref.map(|r| r.attach(repo)),
+            this.to_ref.map(|r| r.attach(repo)),
         )
     }
 
@@ -251,18 +265,19 @@ impl<'repo> RevSpec<'repo> {
     ///
     /// Note that this can be `None` for ranges like e.g. `^HEAD`, `..@`, `...v1.0` or similar.
     pub fn from(&self) -> Option<Id<'repo>> {
-        self.from.map(|id| Id::from_id(id, self.repo))
+        self.inner.from.map(|id| Id::from_id(id, self.repo))
     }
     /// The object at which the range ends, as in e.g. `...HEAD` or `...feature`.
     ///
     /// Note that this can be `None` in case of single revisions like `HEAD@{1}` or `HEAD...`.
     pub fn to(&self) -> Option<Id<'repo>> {
-        self.to.map(|id| Id::from_id(id, self.repo))
+        self.inner.to.map(|id| Id::from_id(id, self.repo))
     }
 
     /// Return the single object represented by this instance, or `None` if it is a range of any kind.
     pub fn single(&self) -> Option<Id<'repo>> {
-        self.from
+        self.inner
+            .from
             .and_then(|id| matches!(self.kind(), git_revision::spec::Kind::Single).then(|| Id::from_id(id, self.repo)))
     }
 
@@ -273,6 +288,62 @@ impl<'repo> RevSpec<'repo> {
     /// is indeed not a single revision.
     // TODO: test
     pub fn range(&self) -> Option<(git_revision::spec::Kind, Id<'repo>, Id<'repo>)> {
+        (!matches!(self.kind(), git_revision::spec::Kind::Single)).then(|| {
+            (
+                self.kind(),
+                self.from().or_else(|| self.to()).expect("at least one id is set"),
+                self.to().or_else(|| self.from()).expect("at least one id is set"),
+            )
+        })
+    }
+
+    pub fn kind(&self) -> git_revision::spec::Kind {
+        self.inner.kind.unwrap_or(git_revision::spec::Kind::Single)
+    }
+}
+
+/// Access
+impl RevSpecDetached {
+    /// Attach `repo` to ourselves for more convenient types.
+    pub fn attach(self, repo: &Repository) -> RevSpec<'_> {
+        RevSpec { inner: self, repo }
+    }
+    /// Some revision specifications leave information about reference names which are returned as `(from-ref, to-ref)` here, e.g.
+    /// `HEAD@{-1}..main` might be (`refs/heads/previous-branch`, `refs/heads/main`).
+    ///
+    /// Note that no reference name is known when revisions are specified by prefix as with `v1.2.3-10-gabcd1234`.
+    // TODO: tests
+    pub fn into_names(self) -> (Option<git_ref::Reference>, Option<git_ref::Reference>) {
+        // TODO: assure we can set the reference also when it is only implied, like with `@{1}`.
+        (self.from_ref, self.to_ref)
+    }
+
+    /// The object from which to start a range, or the only revision as specified by e.g. `@` or `HEAD`.
+    ///
+    /// Note that this can be `None` for ranges like e.g. `^HEAD`, `..@`, `...v1.0` or similar.
+    pub fn from(&self) -> Option<git_hash::ObjectId> {
+        self.from
+    }
+    /// The object at which the range ends, as in e.g. `...HEAD` or `...feature`.
+    ///
+    /// Note that this can be `None` in case of single revisions like `HEAD@{1}` or `HEAD...`.
+    pub fn to(&self) -> Option<git_hash::ObjectId> {
+        self.to
+    }
+
+    /// Return the single object represented by this instance, or `None` if it is a range of any kind.
+    pub fn single(&self) -> Option<git_hash::ObjectId> {
+        self.from
+            .and_then(|id| matches!(self.kind(), git_revision::spec::Kind::Single).then(|| id))
+    }
+
+    /// Return `(kind being merge-base or range, from-id, to-id)` if our `kind` is not describing a single revision.
+    ///
+    /// Note that `...HEAD` is equivalent to `HEAD...HEAD` and `HEAD..` is equivalent to `HEAD..HEAD`. If this is not desirable,
+    /// access [`from()`][RevSpec::from()] and [`to()`][RevSpec::to()] individually after validating that [`kind()`][RevSpec::kind()]
+    /// is indeed not a single revision.
+    // TODO: test
+    pub fn range(&self) -> Option<(git_revision::spec::Kind, git_hash::ObjectId, git_hash::ObjectId)> {
         (!matches!(self.kind(), git_revision::spec::Kind::Single)).then(|| {
             (
                 self.kind(),

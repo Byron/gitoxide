@@ -169,10 +169,17 @@ pub struct ThreadSafeRepository {
 /// to specify revisions and revision ranges.
 #[derive(Clone, Debug)]
 pub struct RevSpec<'repo> {
+    pub(crate) inner: RevSpecDetached,
+    pub(crate) repo: &'repo Repository,
+}
+
+/// A revision specification without any bindings to a repository, useful for serialization or movement over thread boundaries.
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct RevSpecDetached {
     pub(crate) from_ref: Option<git_ref::Reference>,
     pub(crate) from: Option<git_hash::ObjectId>,
     pub(crate) to_ref: Option<git_ref::Reference>,
     pub(crate) to: Option<git_hash::ObjectId>,
     pub(crate) kind: Option<git_revision::spec::Kind>,
-    pub(crate) repo: &'repo Repository,
 }
