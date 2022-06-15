@@ -102,30 +102,12 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
         return Ok(p);
     }
 
-    let mut keywords = Vec::new();
-    let mut i = 0;
-    let mut last = 0;
-    loop {
-        if let Some(&b) = input.get(i + 1) {
-            if b == b',' && input[i] != b'\\' {
-                i += 1;
-                keywords.push(&input[last..i]);
-                last = i + 1;
-            }
-        } else {
-            keywords.push(&input[last..]);
-            break;
-        }
-
-        i += 1;
-    }
-
-    for keyword in keywords {
+    for keyword in split_on_non_escaped_char(input, b',') {
         match keyword {
+            b"attr" => continue,
             b"top" => p.signature |= MagicSignature::TOP,
             b"icase" => p.signature |= MagicSignature::ICASE,
             b"exclude" => p.signature |= MagicSignature::EXCLUDE,
-            b"attr" => {}
             b"literal" => match p.search_mode {
                 SearchMode::PathAwareGlob => return Err(Error::IncompatibleSearchModes),
                 _ => p.search_mode = SearchMode::Literal,
@@ -153,6 +135,27 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
     }
 
     Ok(p)
+}
+
+fn split_on_non_escaped_char(input: &[u8], split_char: u8) -> Vec<&[u8]> {
+    let mut keywords = Vec::new();
+    let mut i = 0;
+    let mut last = 0;
+    loop {
+        if let Some(&b) = input.get(i + 1) {
+            if b == split_char && input[i] != b'\\' {
+                i += 1;
+                keywords.push(&input[last..i]);
+                last = i + 1;
+            }
+        } else {
+            keywords.push(&input[last..]);
+            break;
+        }
+
+        i += 1;
+    }
+    keywords
 }
 
 fn parse_attributes(input: &[u8]) -> Result<Vec<(BString, git_attributes::State)>, Error> {
