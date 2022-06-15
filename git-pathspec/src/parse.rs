@@ -108,7 +108,7 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
             b"top" => p.signature |= MagicSignature::TOP,
             b"icase" => p.signature |= MagicSignature::ICASE,
             b"exclude" => p.signature |= MagicSignature::EXCLUDE,
-            b"attr" => p.signature |= MagicSignature::ATTR,
+            b"attr" => {}
             b"literal" => match p.search_mode {
                 SearchMode::PathAwareGlob => return Err(Error::IncompatibleSearchModes),
                 _ => p.search_mode = SearchMode::Literal,
@@ -122,7 +122,6 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
                     return Err(Error::MultipleAttributeSpecifications);
                 }
                 p.attributes = parse_attributes(keyword.strip_prefix(b"attr:").unwrap())?;
-                p.signature |= MagicSignature::ATTR
             }
             _ if keyword.starts_with(b"prefix:") => {
                 //TODO: prefix

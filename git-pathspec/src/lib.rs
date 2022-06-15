@@ -24,10 +24,8 @@ bitflags! {
         const TOP = 1 << 0;
         /// Matches patterns in case insensitive mode
         const ICASE = 1 << 1;
-        /// Specifies a list of attribute requirements that the matches should meet
-        const ATTR = 1 << 2;
         /// Excludes the matching patterns from the previous results
-        const EXCLUDE = 1 << 3;
+        const EXCLUDE = 1 << 2;
     }
 }
 

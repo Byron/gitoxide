@@ -27,7 +27,7 @@ mod succeed {
             ),
             (
                 ":(attr,attr)",
-                pat("", MagicSignature::ATTR, SearchMode::ShellGlob, vec![]),
+                pat("", MagicSignature::empty(), SearchMode::ShellGlob, vec![]),
             ),
             (
                 ":!^(exclude,exclude)",
@@ -101,7 +101,7 @@ mod succeed {
         let inputs = vec![
             (":(top)", pat_with_path_and_sig("", MagicSignature::TOP)),
             (":(icase)", pat_with_path_and_sig("", MagicSignature::ICASE)),
-            (":(attr)", pat_with_path_and_sig("", MagicSignature::ATTR)),
+            (":(attr)", pat_with_path("")),
             (":(exclude)", pat_with_path_and_sig("", MagicSignature::EXCLUDE)),
             (
                 ":(literal)",
@@ -143,7 +143,7 @@ mod succeed {
                 ":(attr:someAttr)",
                 pat(
                     "",
-                    MagicSignature::ATTR,
+                    MagicSignature::empty(),
                     SearchMode::ShellGlob,
                     vec![("someAttr", State::Set)],
                 ),
@@ -152,7 +152,7 @@ mod succeed {
                 ":(attr:!someAttr)",
                 pat(
                     "",
-                    MagicSignature::ATTR,
+                    MagicSignature::empty(),
                     SearchMode::ShellGlob,
                     vec![("someAttr", State::Unspecified)],
                 ),
@@ -161,7 +161,7 @@ mod succeed {
                 ":(attr:-someAttr)",
                 pat(
                     "",
-                    MagicSignature::ATTR,
+                    MagicSignature::empty(),
                     SearchMode::ShellGlob,
                     vec![("someAttr", State::Unset)],
                 ),
@@ -170,7 +170,7 @@ mod succeed {
                 ":(attr:someAttr=value)",
                 pat(
                     "",
-                    MagicSignature::ATTR,
+                    MagicSignature::empty(),
                     SearchMode::ShellGlob,
                     vec![("someAttr", State::Value("value".into()))],
                 ),
@@ -179,7 +179,7 @@ mod succeed {
                 ":(attr:someAttr anotherAttr)",
                 pat(
                     "",
-                    MagicSignature::ATTR,
+                    MagicSignature::empty(),
                     SearchMode::ShellGlob,
                     vec![("someAttr", State::Set), ("anotherAttr", State::Set)],
                 ),
@@ -196,7 +196,7 @@ mod succeed {
             r":(attr:value=one\,two\,three)",
             pat(
                 "",
-                MagicSignature::ATTR,
+                MagicSignature::empty(),
                 SearchMode::ShellGlob,
                 vec![("value", State::Value("one,two,three".into()))],
             ),
@@ -213,7 +213,7 @@ mod succeed {
             r":(prefix:)",
             pat(
                 "",
-                MagicSignature::ATTR,
+                MagicSignature::empty(),
                 SearchMode::ShellGlob,
                 vec![("value", State::Value("one,two,three".into()))],
             ),
