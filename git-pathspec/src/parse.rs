@@ -102,6 +102,7 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
         return Ok(p);
     }
 
+    // TODO: only split on unescaped b',' values
     for keyword in input.split(|&c| c == b',') {
         match keyword {
             b"top" => p.signature |= MagicSignature::TOP,
@@ -116,30 +117,39 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
                 SearchMode::Literal => return Err(Error::IncompatibleSearchModes),
                 _ => p.search_mode = SearchMode::PathAwareGlob,
             },
-            s => {
-                let attrs = s.strip_prefix(b"attr:").ok_or_else(|| Error::InvalidKeyword {
-                    found_keyword: BString::from(s),
-                })?;
-                if attrs.is_empty() {
-                    return Err(Error::EmptyAttribute);
-                }
+            _ if keyword.starts_with(b"attr:") => {
                 if !p.attributes.is_empty() {
                     return Err(Error::MultipleAttributeSpecifications);
                 }
-                p.attributes = Iter::new(attrs.into(), 0)
-                    .map(|res| res.map(|(attr, state)| (attr.into(), state.into())))
-                    .collect::<Result<Vec<_>, _>>()
-                    .map_err(|e| match e {
-                        git_attributes::parse::Error::AttributeName {
-                            line_number: _,
-                            attribute,
-                        } => Error::InvalidAttribute { attribute },
-                        _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
-                    })?;
+                p.attributes = parse_attributes(keyword.strip_prefix(b"attr:").unwrap())?;
                 p.signature |= MagicSignature::ATTR
+            }
+            _ if keyword.starts_with(b"prefix:") => {
+                //TODO: prefix
+            }
+            _ => {
+                return Err(Error::InvalidKeyword {
+                    found_keyword: BString::from(keyword),
+                });
             }
         }
     }
 
     Ok(p)
+}
+
+fn parse_attributes(attrs: &[u8]) -> Result<Vec<(BString, git_attributes::State)>, Error> {
+    if attrs.is_empty() {
+        return Err(Error::EmptyAttribute);
+    }
+    Iter::new(attrs.into(), 0)
+        .map(|res| res.map(|(attr, state)| (attr.into(), state.into())))
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| match e {
+            git_attributes::parse::Error::AttributeName {
+                line_number: _,
+                attribute,
+            } => Error::InvalidAttribute { attribute },
+            _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
+        })
 }
