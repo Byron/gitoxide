@@ -52,9 +52,11 @@ serde1 = [  "serde",
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
 ## **Note** that
 
-# enable when https://github.com/RustCrypto/asm-hashes/issues/17 is fixed
-# max-performance = ["git-features/fast-sha1", "git-features/parallel", "git-features/zlib-ng-compat", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
-max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
+max-performance = [ "git-features/fast-sha1",
+                    "git-features/parallel",
+                    "git-features/zlib-ng-compat",
+                    "git-pack/pack-cache-lru-static",
+                    "git-pack/pack-cache-lru-dynamic"]
 ## Functions dealing with time may include the local timezone offset, not just UTC with the offset being zero.
 local-time-support = ["git-actor/local-time-support"]
 ## Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.

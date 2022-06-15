@@ -29,9 +29,10 @@ jobs:
           - win-msvc
           - macos
         include:
-        - os: windows-2019
-          build: win-gnu
-          rust: nightly-x86_64-gnu
+        # see if gnu has specific issues, msvc is the one that should work first.
+#        - os: windows-2019
+#          build: win-gnu
+#          rust: stable-x86_64-gnu
         - os: windows-2019
           build: win-msvc
           rust: nightly

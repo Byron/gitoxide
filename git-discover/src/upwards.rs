@@ -113,11 +113,11 @@ fn parse_ceiling_dirs(ceiling_dirs: &[u8]) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod parse_ceiling_dirs {
-    use super::*;
 
     #[test]
     #[cfg(unix)]
     fn from_environment_format() -> std::io::Result<()> {
+        use super::*;
         use std::{fs, os::unix::fs::symlink};
 
         // Setup filesystem
