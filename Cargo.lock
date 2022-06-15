@@ -1457,6 +1457,7 @@ dependencies = [
  "git-worktree",
  "is_ci",
  "log",
+ "once_cell",
  "signal-hook",
  "tempfile",
  "thiserror",

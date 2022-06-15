@@ -1,14 +1,43 @@
 mod from_bytes {
+    use git_ref::bstr::{BString, ByteSlice};
     use git_repository as git;
     use git_repository::RevSpec;
+    use once_cell::sync::Lazy;
+    use std::collections::HashMap;
+
+    const FIXTURE_NAME: &str = "make_rev_spec_parse_repos.sh";
+    static BASELINE: Lazy<HashMap<BString, u8>> = Lazy::new(|| {
+        let mut m = HashMap::new();
+        let base = git_testtools::scripted_fixture_repo_read_only(FIXTURE_NAME).unwrap();
+        let baseline = std::fs::read(base.join("baseline.git")).unwrap();
+        let mut lines = baseline.lines();
+        while let Some(spec) = lines.next() {
+            let exit_code: u8 = lines.next().expect("exit code").to_str().unwrap().parse().unwrap();
+            assert_eq!(
+                m.insert(spec.into(), exit_code),
+                None,
+                "Duplicate spec '{}' cannot be handled",
+                spec.as_bstr()
+            );
+        }
+        m
+    });
 
     fn parse_spec<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
-        RevSpec::from_bstr(spec, &repo)
+        let res = RevSpec::from_bstr(spec, repo);
+        let expected = res.is_ok().then(|| 0).unwrap_or(128);
+        let spec: BString = spec.into();
+        assert_eq!(
+            BASELINE.get(&spec),
+            Some(&expected),
+            "git baseline boiled down to success or failure must match our outcome"
+        );
+        res
     }
 
     fn repo(name: &str) -> crate::Result<git::Repository> {
-        let repo_path = git_testtools::scripted_fixture_repo_read_only("make_rev_spec_parse_repos.sh")?;
-        Ok(git::open(repo_path.join(name))?)
+        let base = git_testtools::scripted_fixture_repo_read_only(FIXTURE_NAME)?;
+        Ok(git::open(base.join(name))?)
     }
 
     mod ambiguous {
