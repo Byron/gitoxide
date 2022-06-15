@@ -306,7 +306,7 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                         b"tag" => delegate::PeelTo::ObjectKind(git_object::Kind::Tag),
                         b"tree" => delegate::PeelTo::ObjectKind(git_object::Kind::Tree),
                         b"blob" => delegate::PeelTo::ObjectKind(git_object::Kind::Blob),
-                        b"object" => delegate::PeelTo::ExistingObject,
+                        b"object" => delegate::PeelTo::ValidObject,
                         b"" => delegate::PeelTo::RecursiveTagObject,
                         regex if regex.starts_with(b"/") => {
                             let (regex, negated) = parse_regex_prefix(regex[1..].as_bstr())?;

@@ -98,8 +98,10 @@ pub enum Traversal {
 pub enum PeelTo<'a> {
     /// An object of the given kind.
     ObjectKind(git_object::Kind),
-    /// Ensure the object at hand exists, without imposing any restrictions to its type.
-    ExistingObject,
+    /// Ensure the object at hand exists and is valid (actually without peeling it),
+    /// without imposing any restrictions to its type.
+    /// The object needs to be looked up to assure that it is valid, but it doesn't need to be decoded.
+    ValidObject,
     /// Follow an annotated tag object recursively until an object is found.
     RecursiveTagObject,
     /// The path to drill into as seen relative to the current tree-ish.

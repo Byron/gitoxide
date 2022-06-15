@@ -37,6 +37,7 @@ git init --bare blob.bad
 
   echo 1bbfctrkc | git hash-object -t bad -w --stdin --literally
   baseline "e328"
+  baseline "e328^{object}"
 )
 
 

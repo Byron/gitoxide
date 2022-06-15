@@ -35,8 +35,7 @@ pub mod parse {
             let mut delegate = Delegate {
                 refs: Default::default(),
                 objs: Default::default(),
-                ref_idx: 0,
-                obj_idx: 0,
+                idx: 0,
                 kind: None,
                 err: Vec::new(),
                 repo,
@@ -79,8 +78,7 @@ pub mod parse {
         refs: [Option<git_ref::Reference>; 2],
         objs: [Option<git_hash::ObjectId>; 2],
 
-        ref_idx: usize,
-        obj_idx: usize,
+        idx: usize,
 
         kind: Option<git_revision::spec::Kind>,
         repo: &'repo Repository,
@@ -89,6 +87,16 @@ pub mod parse {
 
     impl<'repo> parse::Delegate for Delegate<'repo> {
         fn done(&mut self) {
+            self.follow_refs_to_objects_if_needed();
+            assert!(
+                self.err.is_empty(),
+                "BUG: cannot have errors and still arrive here - delegate must return None after registering an error"
+            )
+        }
+    }
+
+    impl<'repo> Delegate<'repo> {
+        fn follow_refs_to_objects_if_needed(&mut self) -> Option<()> {
             assert_eq!(self.refs.len(), self.objs.len());
             for (r, obj) in self.refs.iter().zip(self.objs.iter_mut()) {
                 match (r, obj) {
@@ -99,6 +107,7 @@ pub mod parse {
                     _ => {}
                 }
             }
+            Some(())
         }
     }
 
@@ -106,8 +115,8 @@ pub mod parse {
         fn find_ref(&mut self, name: &BStr) -> Option<()> {
             match self.repo.refs.find(name) {
                 Ok(r) => {
-                    assert!(self.refs[self.ref_idx].is_none(), "BUG: cannot set the same ref twice");
-                    self.refs[self.ref_idx] = Some(r);
+                    assert!(self.refs[self.idx].is_none(), "BUG: cannot set the same ref twice");
+                    self.refs[self.idx] = Some(r);
                     Some(())
                 }
                 Err(err) => {
@@ -137,11 +146,8 @@ pub mod parse {
                     None
                 }
                 Ok(Some(Ok(id))) => {
-                    assert!(
-                        self.objs[self.obj_idx].is_none(),
-                        "BUG: cannot set the same prefix twice"
-                    );
-                    self.objs[self.obj_idx] = Some(id);
+                    assert!(self.objs[self.idx].is_none(), "BUG: cannot set the same prefix twice");
+                    self.objs[self.idx] = Some(id);
                     Some(())
                 }
             }
@@ -165,8 +171,21 @@ pub mod parse {
             todo!()
         }
 
-        fn peel_until(&mut self, _kind: PeelTo<'_>) -> Option<()> {
-            todo!()
+        fn peel_until(&mut self, kind: PeelTo<'_>) -> Option<()> {
+            self.follow_refs_to_objects_if_needed()?;
+
+            match kind {
+                PeelTo::ValidObject => {
+                    if let Err(err) = self.repo.find_object(self.objs[self.idx]?) {
+                        self.err.push(err.into());
+                        return None;
+                    }
+                }
+                PeelTo::ObjectKind(_kind) => todo!("peel to kind"),
+                PeelTo::Path(_path) => todo!("lookup path"),
+                PeelTo::RecursiveTagObject => todo!("recursive tag object"),
+            }
+            Some(())
         }
 
         fn find(&mut self, _regex: &BStr, _negated: bool) -> Option<()> {

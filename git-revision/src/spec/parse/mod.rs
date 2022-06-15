@@ -52,7 +52,7 @@ pub trait Delegate: delegate::Revision + delegate::Navigate + delegate::Kind {
     /// Called at the end of a successful parsing operation.
     /// It can be used as a marker to finalize internal data structures.
     ///
-    /// Note that it will not be called if there is inconsumed input.
+    /// Note that it will not be called if there is unconsumed input.
     fn done(&mut self);
 }
 

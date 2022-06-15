@@ -117,7 +117,7 @@ impl delegate::Navigate for Recorder {
         self.calls += 1;
         self.peel_to.push(match kind {
             delegate::PeelTo::ObjectKind(kind) => PeelToOwned::ObjectKind(kind),
-            delegate::PeelTo::ExistingObject => PeelToOwned::ExistingObject,
+            delegate::PeelTo::ValidObject => PeelToOwned::ExistingObject,
             delegate::PeelTo::Path(path) => PeelToOwned::Path(path.into()),
             delegate::PeelTo::RecursiveTagObject => PeelToOwned::RecursiveTagObject,
         });

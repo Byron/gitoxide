@@ -138,7 +138,7 @@ impl<'a> delegate::Navigate for Explain<'a> {
             self.out,
             "{}",
             match kind {
-                PeelTo::ExistingObject => "Assure the current object exists".to_string(),
+                PeelTo::ValidObject => "Assure the current object exists".to_string(),
                 PeelTo::RecursiveTagObject => "Follow the current annotated tag until an object is found".into(),
                 PeelTo::ObjectKind(kind) => format!("Peel the current object until it is a {}", kind),
                 PeelTo::Path(path) => format!("Lookup the object at '{}' from the current tree-ish", path),
