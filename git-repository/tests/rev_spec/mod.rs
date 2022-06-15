@@ -38,7 +38,7 @@ mod from_bytes {
             &actual,
             BASELINE
                 .get(&spec)
-                .expect(&format!("'{}' revspec not found in git baseline", spec)),
+                .unwrap_or_else(|| panic!("'{}' revspec not found in git baseline", spec)),
             "{}: git baseline boiled down to success or failure must match our outcome",
             spec
         );

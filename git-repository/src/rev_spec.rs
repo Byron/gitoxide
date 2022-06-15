@@ -103,12 +103,11 @@ pub mod parse {
         fn follow_refs_to_objects_if_needed(&mut self) -> Option<()> {
             assert_eq!(self.refs.len(), self.objs.len());
             for (r, obj) in self.refs.iter().zip(self.objs.iter_mut()) {
-                match (r, obj) {
-                    (_ref_opt @ Some(ref_), obj_opt @ None) => match ref_.target.try_id() {
+                if let (_ref_opt @ Some(ref_), obj_opt @ None) = (r, obj) {
+                    match ref_.target.try_id() {
                         Some(id) => *obj_opt = Some(id.into()),
                         None => todo!("follow ref to get direct target object"),
-                    },
-                    _ => {}
+                    }
                 }
             }
             Some(())
