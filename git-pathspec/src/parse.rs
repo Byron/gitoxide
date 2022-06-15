@@ -39,10 +39,10 @@ impl Pattern {
         let mut cursor = 0;
         if input.first() == Some(&b':') {
             cursor += 1;
-            p.signature |= parse_short_keywords(&input, &mut cursor)?;
+            p.signature |= parse_short_keywords(input, &mut cursor)?;
             if let Some(b'(') = input.get(cursor) {
                 cursor += 1;
-                let pat = parse_long_keywords(&input, &mut cursor)?;
+                let pat = parse_long_keywords(input, &mut cursor)?;
                 p.search_mode = pat.search_mode;
                 p.attributes = pat.attributes;
                 p.signature |= pat.signature;
@@ -78,7 +78,7 @@ fn parse_short_keywords(input: &[u8], cursor: &mut usize) -> Result<MagicSignatu
         }
     }
 
-    return Ok(signature);
+    Ok(signature)
 }
 
 fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Error> {
@@ -118,10 +118,11 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
                 _ => p.search_mode = SearchMode::PathAwareGlob,
             },
             _ if keyword.starts_with(b"attr:") => {
-                if !p.attributes.is_empty() {
+                if p.attributes.is_empty() {
+                    p.attributes = parse_attributes(keyword.strip_prefix(b"attr:").unwrap())?;
+                } else {
                     return Err(Error::MultipleAttributeSpecifications);
                 }
-                p.attributes = parse_attributes(keyword.strip_prefix(b"attr:").unwrap())?;
             }
             _ if keyword.starts_with(b"prefix:") => {
                 //TODO: prefix
