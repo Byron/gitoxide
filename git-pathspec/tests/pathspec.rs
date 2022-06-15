@@ -41,11 +41,13 @@ mod succeed {
     #[test]
     fn empty_signatures() {
         let inputs = vec![
+            (".", pat_with_path(".")),
             ("some/path", pat_with_path("some/path")),
             (":some/path", pat_with_path("some/path")),
             (":()some/path", pat_with_path("some/path")),
             ("::some/path", pat_with_path("some/path")),
             (":::some/path", pat_with_path(":some/path")),
+            (":():some/path", pat_with_path(":some/path")),
         ];
 
         check_valid_inputs(inputs)
@@ -68,8 +70,8 @@ mod succeed {
                 pat_with_path_and_sig("some/path", MagicSignature::TOP | MagicSignature::EXCLUDE),
             ),
             (
-                ":!/^/:",
-                pat_with_path_and_sig("", MagicSignature::TOP | MagicSignature::EXCLUDE),
+                ":!/^/:some/path",
+                pat_with_path_and_sig("some/path", MagicSignature::TOP | MagicSignature::EXCLUDE),
             ),
         ];
 
@@ -219,16 +221,18 @@ mod fail {
     }
 
     #[test]
-    #[ignore]
     fn invalid_short_signatures() {
-        let inputs = vec![":=()"];
+        let inputs = vec![
+            ":\"()", ":#()", ":%()", ":&()", ":'()", ":,()", ":-()", ":;()", ":<()", ":=()", ":>()", ":@()", ":_()",
+            ":`()", ":~()",
+        ];
 
         inputs.into_iter().for_each(|input| {
             assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
 
             let output = git_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
-            // assert!(matches!(output.unwrap_err(), Error::InvalidShortSignature { .. }));
+            assert!(matches!(output.unwrap_err(), Error::Unimplemented { .. }));
         });
     }
 

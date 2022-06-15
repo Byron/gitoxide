@@ -9,6 +9,8 @@ pub enum Error {
     EmptyString,
     #[error("Found {:?}, which is not a valid keyword", found_keyword)]
     InvalidKeyword { found_keyword: BString },
+    #[error("Unimplemented pathspec magic {:?}", found_short_keyword)]
+    Unimplemented { found_short_keyword: BString },
     #[error("Missing ')' at the end of pathspec magic in {:?}", pathspec)]
     MissingClosingParenthesis { pathspec: BString },
     #[error("Attribute has non-ascii characters or starts with '-': {:?}", attribute)]
@@ -33,31 +35,17 @@ impl Pattern {
             search_mode: SearchMode::ShellGlob,
             attributes: Vec::new(),
         };
+
         let mut cursor = 0;
         if input.first() == Some(&b':') {
             cursor += 1;
-            while let Some(&b) = input.get(cursor) {
+            p.signature |= parse_short_keywords(&input, &mut cursor)?;
+            if let Some(b'(') = input.get(cursor) {
                 cursor += 1;
-                match b {
-                    b':' => break,
-                    b'/' => p.signature |= MagicSignature::TOP,
-                    b'^' | b'!' => p.signature |= MagicSignature::EXCLUDE,
-                    b'(' => {
-                        let end = input.find(")").ok_or(Error::MissingClosingParenthesis {
-                            pathspec: BString::from(input),
-                        })?;
-                        let pat = parse_keywords(&input[cursor..end])?;
-
-                        cursor = end + 1;
-                        p.search_mode = pat.search_mode;
-                        p.attributes = pat.attributes;
-                        p.signature |= pat.signature;
-                    }
-                    _ => {
-                        cursor -= 1;
-                        break;
-                    }
-                }
+                let pat = parse_long_keywords(&input, &mut cursor)?;
+                p.search_mode = pat.search_mode;
+                p.attributes = pat.attributes;
+                p.signature |= pat.signature;
             }
         }
 
@@ -66,7 +54,41 @@ impl Pattern {
     }
 }
 
-fn parse_keywords(input: &[u8]) -> Result<Pattern, Error> {
+fn parse_short_keywords(input: &[u8], cursor: &mut usize) -> Result<MagicSignature, Error> {
+    let unimplemented_chars = vec![
+        b'"', b'#', b'%', b'&', b'\'', b',', b'-', b';', b'<', b'=', b'>', b'@', b'_', b'`', b'~',
+    ];
+    let mut signature = MagicSignature::empty();
+
+    while let Some(&b) = input.get(*cursor) {
+        *cursor += 1;
+        signature |= match b {
+            b'/' => MagicSignature::TOP,
+            b'^' | b'!' => MagicSignature::EXCLUDE,
+            b':' => break,
+            _ if unimplemented_chars.contains(&b) => {
+                return Err(Error::Unimplemented {
+                    found_short_keyword: vec![b].into(),
+                });
+            }
+            _ => {
+                *cursor -= 1;
+                break;
+            }
+        }
+    }
+
+    return Ok(signature);
+}
+
+fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Error> {
+    let end = input.find(")").ok_or(Error::MissingClosingParenthesis {
+        pathspec: BString::from(input),
+    })?;
+
+    let input = &input[*cursor..end];
+    *cursor = end + 1;
+
     let mut p = Pattern {
         path: BString::default(),
         signature: MagicSignature::empty(),
