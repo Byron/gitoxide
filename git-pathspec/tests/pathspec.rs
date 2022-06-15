@@ -54,6 +54,24 @@ mod succeed {
     }
 
     #[test]
+    fn whitespace_in_pathspec() {
+        let inputs = vec![
+            (" some/path", pat_with_path(" some/path")),
+            ("some/ path", pat_with_path("some/ path")),
+            ("some/path ", pat_with_path("some/path ")),
+            (": some/path", pat_with_path(" some/path")),
+            (
+                ":! some/path",
+                pat_with_path_and_sig(" some/path", MagicSignature::EXCLUDE),
+            ),
+            (": :some/path", pat_with_path(" :some/path")),
+            (": ()some/path", pat_with_path(" ()some/path")),
+        ];
+
+        check_valid_inputs(inputs)
+    }
+
+    #[test]
     fn short_signatures() {
         let inputs = vec![
             (":/some/path", pat_with_path_and_sig("some/path", MagicSignature::TOP)),
