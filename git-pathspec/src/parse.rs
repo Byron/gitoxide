@@ -102,8 +102,25 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
         return Ok(p);
     }
 
-    // TODO: only split on unescaped b',' values
-    for keyword in input.split(|&c| c == b',') {
+    let mut keywords = Vec::new();
+    let mut i = 0;
+    let mut last = 0;
+    loop {
+        if let Some(&b) = input.get(i + 1) {
+            if b == b',' && input[i] != b'\\' {
+                i += 1;
+                keywords.push(&input[last..i]);
+                last = i + 1;
+            }
+        } else {
+            keywords.push(&input[last..]);
+            break;
+        }
+
+        i += 1;
+    }
+
+    for keyword in keywords {
         match keyword {
             b"top" => p.signature |= MagicSignature::TOP,
             b"icase" => p.signature |= MagicSignature::ICASE,
@@ -119,13 +136,13 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
             },
             _ if keyword.starts_with(b"attr:") => {
                 if p.attributes.is_empty() {
-                    p.attributes = parse_attributes(keyword.strip_prefix(b"attr:").unwrap())?;
+                    p.attributes = parse_attributes(&keyword[5..])?;
                 } else {
                     return Err(Error::MultipleAttributeSpecifications);
                 }
             }
             _ if keyword.starts_with(b"prefix:") => {
-                //TODO: prefix
+                // TODO: Needs research - what does 'prefix:' do
             }
             _ => {
                 return Err(Error::InvalidKeyword {
@@ -138,11 +155,11 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
     Ok(p)
 }
 
-fn parse_attributes(attrs: &[u8]) -> Result<Vec<(BString, git_attributes::State)>, Error> {
-    if attrs.is_empty() {
+fn parse_attributes(input: &[u8]) -> Result<Vec<(BString, git_attributes::State)>, Error> {
+    if input.is_empty() {
         return Err(Error::EmptyAttribute);
     }
-    Iter::new(attrs.into(), 0)
+    Iter::new(input.into(), 0)
         .map(|res| res.map(|(attr, state)| (attr.into(), state.into())))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| match e {

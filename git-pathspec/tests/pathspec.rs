@@ -189,25 +189,35 @@ mod succeed {
         check_valid_inputs(inputs)
     }
 
+    // TODO: unescape attribute values?
     #[test]
-    #[ignore]
     fn attributes_with_escaped_values() {
-        let inputs = vec![(
-            r":(attr:value=one\,two\,three)",
-            pat(
-                "",
-                MagicSignature::empty(),
-                SearchMode::ShellGlob,
-                vec![("value", State::Value("one,two,three".into()))],
+        let inputs = vec![
+            (
+                r":(attr:v=one\-)",
+                pat(
+                    "",
+                    MagicSignature::empty(),
+                    SearchMode::ShellGlob,
+                    vec![("v", State::Value(r"one\-".into()))],
+                ),
             ),
-        )];
+            (
+                r":(attr:v=one\,two\,three)",
+                pat(
+                    "",
+                    MagicSignature::empty(),
+                    SearchMode::ShellGlob,
+                    vec![("v", State::Value(r"one\,two\,three".into()))],
+                ),
+            ),
+        ];
 
         check_valid_inputs(inputs)
     }
 
     #[test]
     #[ignore]
-    // TODO: Needs research - what does 'prefix:' do
     fn prefix() {
         let inputs = vec![(
             r":(prefix:)",
