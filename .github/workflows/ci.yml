@@ -24,16 +24,27 @@ jobs:
   test-fast:
     strategy:
       matrix:
-        os:
-          - windows-2019
-          - macos-latest
+        build:
+          - win-gnu
+          - win-msvc
+          - macos
+        include:
+        - os: windows-2019
+          build: win-gnu
+          rust: nightly-x86_64-gnu
+        - os: windows-2019
+          build: win-msvc
+          rust: nightly
+        - os: macos-latest
+          build: macos
+          rust: stable
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
         with:
           profile: default
-          toolchain: stable
+          toolchain: ${{ matrix.rust }}
           override: true
       - uses: Swatinem/rust-cache@v1
       - name: Setup dependencies (macos)
