@@ -8,7 +8,7 @@ use git::revision::{
 use git_repository as git;
 use std::ffi::OsString;
 
-pub fn explain(_repo: git::Repository, spec: OsString, mut out: impl std::io::Write) -> anyhow::Result<()> {
+pub fn explain(spec: OsString, mut out: impl std::io::Write) -> anyhow::Result<()> {
     let mut explain = Explain::new(&mut out);
     let spec = git::path::os_str_into_bstr(&spec)?;
     git::revision::spec::parse(spec, &mut explain)?;

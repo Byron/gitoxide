@@ -161,13 +161,28 @@ pub fn main() -> Result<()> {
             let repository = git::ThreadSafeRepository::discover(repository)?;
             match cmd {
                 repo::Subcommands::Revision { cmd } => match cmd {
-                    repo::revision::Subcommands::Explain { spec } => prepare_and_run(
-                        "repository-commit-describe",
+                    repo::revision::Subcommands::Parse { spec } => prepare_and_run(
+                        "repository-revision-parse",
                         verbose,
                         progress,
                         progress_keep_open,
                         None,
-                        move |_progress, out, _err| core::repository::revision::explain(repository.into(), spec, out),
+                        move |_progress, out, _err| {
+                            core::repository::revision::parse(
+                                repository.into(),
+                                spec,
+                                out,
+                                core::repository::revision::parse::Options { format },
+                            )
+                        },
+                    ),
+                    repo::revision::Subcommands::Explain { spec } => prepare_and_run(
+                        "repository-revision-explain",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        None,
+                        move |_progress, out, _err| core::repository::revision::explain(spec, out),
                     ),
                 },
                 repo::Subcommands::Commit { cmd } => match cmd {

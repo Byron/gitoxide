@@ -1458,6 +1458,7 @@ dependencies = [
  "is_ci",
  "log",
  "once_cell",
+ "serde",
  "signal-hook",
  "tempfile",
  "thiserror",

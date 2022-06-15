@@ -388,6 +388,9 @@ pub mod repo {
         pub enum Subcommands {
             /// Provide the revision specification like `@~1` to explain.
             Explain { spec: std::ffi::OsString },
+            /// Try to resolve the given revspec and print the object names.
+            #[clap(visible_alias = "query")]
+            Parse { spec: std::ffi::OsString },
         }
     }
 
