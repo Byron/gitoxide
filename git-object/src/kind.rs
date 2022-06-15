@@ -10,7 +10,7 @@ quick_error! {
     #[allow(missing_docs)]
     pub enum Error {
         InvalidObjectKind(kind: crate::BString) {
-            display("Unknown object kind: {:?}", std::str::from_utf8(kind))
+            display("Unknown object kind: {:?}", kind)
         }
     }
 }

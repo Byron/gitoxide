@@ -351,7 +351,11 @@ pub mod decode {
             InvalidHeader(s: &'static str) {
                 display("{}", s)
             }
-            ObjectHeader(err: super::kind::Error) { from() }
+            ObjectHeader(err: super::kind::Error) {
+                display("The object header contained an unknown object kind.")
+                from()
+                source(err)
+            }
         }
     }
 
