@@ -29,7 +29,7 @@ jobs:
           - win-msvc
           - macos
         include:
-        # see if gnu has specific issues, msvc is the one that should work first.
+          # For some reason, the gnu-version has flaky tests when running it with nextest. Reproduces locally, can probably be fixed.
 #        - os: windows-2019
 #          build: win-gnu
 #          rust: stable-x86_64-gnu
