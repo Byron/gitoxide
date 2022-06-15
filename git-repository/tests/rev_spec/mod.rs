@@ -1,7 +1,9 @@
 mod from_bytes {
     use git_ref::bstr::{BString, ByteSlice};
     use git_repository as git;
+    use git_repository::prelude::ObjectIdExt;
     use git_repository::RevSpec;
+    use git_testtools::hex_to_id;
     use once_cell::sync::Lazy;
     use std::collections::HashMap;
 
@@ -70,11 +72,12 @@ mod from_bytes {
     }
 
     #[test]
-    #[ignore]
     fn bad_objects_are_valid_as_they_are_not_queried() {
         let repo = repo("blob.bad").unwrap();
+        let spec = parse_spec("e328", &repo).unwrap();
         assert_eq!(
-            parse_spec("e328", &repo).unwrap_err().to_string(),
+            spec,
+            RevSpec::from_id(hex_to_id("e32851d29feb48953c6f40b2e06d630a3c49608a").attach(&repo)),
             "we are able to return objects even though they are 'bad' when trying to decode them, like git",
         );
     }

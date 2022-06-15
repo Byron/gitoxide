@@ -31,7 +31,7 @@ pub mod parse {
     }
 
     impl<'repo> RevSpec<'repo> {
-        pub fn from_bstr(spec: impl AsRef<BStr>, repo: &Repository) -> Result<Self, Error> {
+        pub fn from_bstr(spec: impl AsRef<BStr>, repo: &'repo Repository) -> Result<Self, Error> {
             let mut delegate = Delegate {
                 refs: Default::default(),
                 objs: Default::default(),
@@ -41,7 +41,7 @@ pub mod parse {
                 err: Vec::new(),
                 repo,
             };
-            match git_revision::spec::parse(spec.as_ref().as_bstr(), &mut delegate) {
+            let spec = match git_revision::spec::parse(spec.as_ref().as_bstr(), &mut delegate) {
                 Err(git_revision::spec::parse::Error::Delegate) => {
                     assert!(
                         !delegate.err.is_empty(),
@@ -61,9 +61,16 @@ pub mod parse {
                     });
                 }
                 Err(err) => return Err(err.into()),
-                Ok(()) => {}
+                Ok(()) => RevSpec {
+                    from_ref: delegate.refs[0].take(),
+                    from: delegate.objs[0],
+                    to_ref: delegate.refs[1].take(),
+                    to: delegate.objs[1],
+                    kind: delegate.kind,
+                    repo,
+                },
             };
-            todo!()
+            Ok(spec)
         }
     }
 
@@ -82,7 +89,16 @@ pub mod parse {
 
     impl<'repo> parse::Delegate for Delegate<'repo> {
         fn done(&mut self) {
-            todo!()
+            assert_eq!(self.refs.len(), self.objs.len());
+            for (r, obj) in self.refs.iter().zip(self.objs.iter_mut()) {
+                match (r, obj) {
+                    (_ref_opt @ Some(ref_), obj_opt @ None) => match ref_.target.try_id() {
+                        Some(id) => *obj_opt = Some(id.into()),
+                        None => todo!("follow ref to get direct target object"),
+                    },
+                    _ => {}
+                }
+            }
         }
     }
 
@@ -165,6 +181,33 @@ pub mod parse {
     impl<'repo> delegate::Kind for Delegate<'repo> {
         fn kind(&mut self, _kind: git_revision::spec::Kind) -> Option<()> {
             todo!("kind, deal with ^ and .. and ... correctly")
+        }
+    }
+}
+
+mod impls {
+    use crate::RevSpec;
+
+    impl<'repo> PartialEq for RevSpec<'repo> {
+        fn eq(&self, other: &Self) -> bool {
+            self.kind == other.kind && self.from == other.from && self.to == other.to
+        }
+    }
+
+    impl<'repo> Eq for RevSpec<'repo> {}
+}
+
+/// Initialization
+impl<'repo> RevSpec<'repo> {
+    /// Create a single specification which points to `id`.
+    pub fn from_id(id: Id<'repo>) -> Self {
+        RevSpec {
+            from_ref: None,
+            from: Some(id.inner),
+            to: None,
+            to_ref: None,
+            kind: None,
+            repo: id.repo,
         }
     }
 }
