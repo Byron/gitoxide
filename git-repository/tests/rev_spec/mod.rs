@@ -81,18 +81,33 @@ mod from_bytes {
 
     #[test]
     fn bad_objects_are_valid_until_they_are_actually_read_from_the_odb() {
-        let repo = repo("blob.bad").unwrap();
-        let spec = parse_spec("e328", &repo).unwrap();
-        assert_eq!(
-            spec,
-            RevSpec::from_id(hex_to_id("e32851d29feb48953c6f40b2e06d630a3c49608a").attach(&repo)),
-            "we are able to return objects even though they are 'bad' when trying to decode them, like git",
-        );
-        assert_eq!(
-            format!("{:?}", parse_spec("e328^{object}", &repo).unwrap_err()),
-            r#"FindObject(Find(Loose(Decode(ObjectHeader(InvalidObjectKind("bad"))))))"#,
-            "Now we enforce the object to exist and be valid, as ultimately it wants to match with a certain type"
-        );
+        {
+            let repo = repo("blob.bad").unwrap();
+            let spec = parse_spec("e328", &repo).unwrap();
+            assert_eq!(
+                spec,
+                RevSpec::from_id(hex_to_id("e32851d29feb48953c6f40b2e06d630a3c49608a").attach(&repo)),
+                "we are able to return objects even though they are 'bad' when trying to decode them, like git",
+            );
+            assert_eq!(
+                format!("{:?}", parse_spec("e328^{object}", &repo).unwrap_err()),
+                r#"FindObject(Find(Loose(Decode(ObjectHeader(InvalidObjectKind("bad"))))))"#,
+                "Now we enforce the object to exist and be valid, as ultimately it wants to match with a certain type"
+            );
+        }
+
+        {
+            let repo = repo("blob.corrupt").unwrap();
+            let spec = parse_spec("cafe", &repo).unwrap();
+            assert_eq!(
+                spec,
+                RevSpec::from_id(hex_to_id("cafea31147e840161a1860c50af999917ae1536b").attach(&repo))
+            );
+            assert_eq!(
+                &format!("{:?}", parse_spec("cafe^{object}", &repo).unwrap_err())[..80],
+                r#"FindObject(Find(Loose(DecompressFile { source: Inflate(DecompressError(General {"#
+            );
+        }
     }
 
     #[test]

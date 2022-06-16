@@ -40,5 +40,22 @@ git init --bare blob.bad
   baseline "e328^{object}"
 )
 
+function oid_to_path() {
+  local basename=${1#??}
+  echo "${1%$basename}/$basename"
+}
+
+git init --bare blob.corrupt
+(
+  cd blob.corrupt
+  # Both have the prefix "cafe"
+  oid=$(echo bmwsjxzi | git hash-object -w --stdin)
+  oidf=objects/$(oid_to_path "$oid")
+  chmod 755 $oidf
+  echo broken >$oidf
+
+  baseline "cafe"
+  baseline "cafe^{object}"
+)
 
 
