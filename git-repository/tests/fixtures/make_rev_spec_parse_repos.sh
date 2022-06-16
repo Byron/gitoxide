@@ -11,7 +11,7 @@ function baseline() {
   }>> "$ROOT/baseline.git"
 }
 
-# based on https://github.com/git/git/blob/8168d5e9c23ed44ae3d604f392320d66556453c9/t/t1512-rev-parse-disambiguation.sh#L38
+# The contents of this file is based on https://github.com/git/git/blob/8168d5e9c23ed44ae3d604f392320d66556453c9/t/t1512-rev-parse-disambiguation.sh#L38
 git init --bare blob.prefix
 (
   cd blob.prefix
@@ -31,6 +31,7 @@ git init --bare blob.bad
 (
   cd blob.bad
   # Both have the prefix "bad0"
+  # Maybe one day we have a test to see how disambiguation reporting deals with this.
   echo xyzfaowcoh | git hash-object -t bad -w --stdin --literally
   echo xyzhjpyvwl | git hash-object -t bad -w --stdin --literally
   baseline "bad0"
@@ -48,14 +49,35 @@ function oid_to_path() {
 git init --bare blob.corrupt
 (
   cd blob.corrupt
-  # Both have the prefix "cafe"
+  # Both have the prefix "cafe".
+  # Maybe one day we have a test to see how disambiguation reporting deals with this.
+  echo bnkxmdwz | git hash-object -w --stdin
   oid=$(echo bmwsjxzi | git hash-object -w --stdin)
   oidf=objects/$(oid_to_path "$oid")
   chmod 755 $oidf
   echo broken >$oidf
 
-  baseline "cafe"
-  baseline "cafe^{object}"
+  baseline "cafea"
+  baseline "cafea^{object}"
 )
 
+# This function writes out its parameters, one per line
+function write_lines () {
+  	printf "%s\n" "$@"
+}
 
+git init ambiguous_blob_and_tree
+(
+  cd ambiguous_blob_and_tree
+  (
+    write_lines 0 1 2 3 4 5 6 7 8 9
+    echo
+    echo b1rwzyc3
+  ) >a0blgqsjc
+  # create one blob 0000000000b36
+  git add a0blgqsjc
+  # create one tree 0000000000cdc
+  git write-tree
+
+  baseline "0000000000"
+)

@@ -60,7 +60,8 @@ mod from_bytes {
                 let repo = repo("blob.prefix").unwrap();
                 assert_eq!(
                     parse_spec("dead", &repo).unwrap_err().to_string(),
-                    "Found more than one object prefixed with dead\nThe ref partially named 'dead' could not be found"
+                    "Found more than one object prefixed with dead\nThe ref partially named 'dead' could not be found",
+                    "our messages aren't yet as good for ambiguous objects as we don't provide additional information"
                 );
                 assert_eq!(
                     parse_spec("beef", &repo).unwrap_err().to_string(),
@@ -73,9 +74,20 @@ mod from_bytes {
                 assert_eq!(
                     parse_spec("bad0", &repo).unwrap_err().to_string(),
                     "Found more than one object prefixed with bad0\nThe ref partially named 'bad0' could not be found",
-                    "git is able to also detect that the object has an invalid type, but we are not because the type doesn't matter here"
+                    "git is able to also detect that the object has an invalid type because it tries to provide additional context, we don't"
                 );
             }
+        }
+
+        #[test]
+        fn blob_and_tree_can_be_disambiguated_by_type_some_day() {
+            let repo = repo("ambiguous_blob_and_tree").unwrap();
+            assert_eq!(
+                    parse_spec("0000000000", &repo).unwrap_err().to_string(),
+                    "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
+                    concat!("in theory one could disambiguate with 0000000000^{{tree}} (which works in git) or 0000000000^{{blob}} which doesn't work for some reason.",
+                            "but to do that we would have to know the list of object candidates and a lot more logic which right now we don't.")
+                );
         }
     }
 
@@ -98,13 +110,13 @@ mod from_bytes {
 
         {
             let repo = repo("blob.corrupt").unwrap();
-            let spec = parse_spec("cafe", &repo).unwrap();
+            let spec = parse_spec("cafea", &repo).unwrap();
             assert_eq!(
                 spec,
                 RevSpec::from_id(hex_to_id("cafea31147e840161a1860c50af999917ae1536b").attach(&repo))
             );
             assert_eq!(
-                &format!("{:?}", parse_spec("cafe^{object}", &repo).unwrap_err())[..80],
+                &format!("{:?}", parse_spec("cafea^{object}", &repo).unwrap_err())[..80],
                 r#"FindObject(Find(Loose(DecompressFile { source: Inflate(DecompressError(General {"#
             );
         }
