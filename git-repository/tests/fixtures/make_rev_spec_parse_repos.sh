@@ -80,4 +80,6 @@ git init ambiguous_blob_and_tree
   git write-tree
 
   baseline "0000000000"
+  baseline "0000000000cdc:a0blgqsjc" # unambiguous by nature
+  baseline "0000000000:a0blgqsjc"    # would be ambiguous, but only trees can have this syntax
 )

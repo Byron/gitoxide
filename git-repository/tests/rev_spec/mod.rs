@@ -30,6 +30,13 @@ mod from_bytes {
         map
     });
 
+    fn parse_spec_no_baseline<'a>(
+        spec: &str,
+        repo: &'a git::Repository,
+    ) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
+        RevSpec::from_bstr(spec, repo)
+    }
+
     fn parse_spec<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
         let res = RevSpec::from_bstr(spec, repo);
         let actual = res.as_ref().ok().and_then(|rs| rs.from().map(|id| id.detach()));
@@ -52,7 +59,7 @@ mod from_bytes {
 
     mod ambiguous {
         use super::repo;
-        use crate::rev_spec::from_bytes::parse_spec;
+        use crate::rev_spec::from_bytes::{parse_spec, parse_spec_no_baseline};
 
         #[test]
         fn prefix() {
@@ -88,6 +95,16 @@ mod from_bytes {
                     concat!("in theory one could disambiguate with 0000000000^{{tree}} (which works in git) or 0000000000^{{blob}} which doesn't work for some reason.",
                             "but to do that we would have to know the list of object candidates and a lot more logic which right now we don't.")
                 );
+        }
+
+        #[test]
+        fn trees_can_be_disambiguated_by_blob_access_some_day() {
+            let repo = repo("ambiguous_blob_and_tree").unwrap();
+            assert_eq!(
+                parse_spec_no_baseline("0000000000:a0blgqsjc", &repo).unwrap_err().to_string(),
+                "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
+                "git can do this, but we can't just yet. It requires to deal with multiple candidates and try to apply transformations to them, discarding ones that don't work"
+            );
         }
     }
 
