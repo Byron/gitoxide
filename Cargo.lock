@@ -1463,6 +1463,7 @@ dependencies = [
  "tempfile",
  "thiserror",
  "unicode-normalization",
+ "walkdir",
 ]
 
 [[package]]

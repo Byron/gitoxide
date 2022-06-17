@@ -1,14 +1,13 @@
 #!/bin/bash
 set -eu -o pipefail
 
-ROOT="$PWD"
 
 function baseline() {
   local spec=${1:?first argument is the spec to test}
   {
     echo "$spec"
     git rev-parse -q --verify "$spec" 2>/dev/null || echo $?
-  }>> "$ROOT/baseline.git"
+  }>> baseline.git
 }
 
 # The contents of this file is based on https://github.com/git/git/blob/8168d5e9c23ed44ae3d604f392320d66556453c9/t/t1512-rev-parse-disambiguation.sh#L38
@@ -78,17 +77,18 @@ function tick () {
   export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
 }
 
+GIT_AUTHOR_EMAIL=author@example.com
+GIT_AUTHOR_NAME='A U Thor'
+GIT_AUTHOR_DATE='1112354055 +0200'
+TEST_COMMITTER_LOCALNAME=committer
+TEST_COMMITTER_DOMAIN=example.com
+GIT_COMMITTER_EMAIL=committer@example.com
+GIT_COMMITTER_NAME='C O Mitter'
+GIT_COMMITTER_DATE='1112354055 +0200'
+
+
 git init ambiguous_blob_tree_commit
 (
-  GIT_AUTHOR_EMAIL=author@example.com
-  GIT_AUTHOR_NAME='A U Thor'
-  GIT_AUTHOR_DATE='1112354055 +0200'
-  TEST_COMMITTER_LOCALNAME=committer
-  TEST_COMMITTER_DOMAIN=example.com
-  GIT_COMMITTER_EMAIL=committer@example.com
-  GIT_COMMITTER_NAME='C O Mitter'
-  GIT_COMMITTER_DATE='1112354055 +0200'
-
   tick
   cd ambiguous_blob_tree_commit
   (
@@ -146,61 +146,91 @@ EOF
   baseline "...000000000"
   baseline "000000000..."
 
-  baseline "v1.0.0-0-g0000000000e4f"  # unambiguous commit
-  baseline "v1.0.0-0-g0000000000"     # ambiguous commit, but we know we need a commit here. The tag doesn't matter.
+  cd ..
+  git clone ambiguous_blob_tree_commit ambiguous_commits
+  cd ambiguous_commits;
 
   # create one tag 0000000000f8f (making the previous baseline tests ambiguous, but it could be unambiguous since they point to the same commit)
   git tag -a -m j7cp83um v1.0.0
-  
-    # commit 0000000000043
-    git mv a0blgqsjc d12cr3h8t
-    echo h62xsjeu >>d12cr3h8t
-    git add d12cr3h8t
 
-    tick
-    git commit -m czy8f73t
+  baseline "0000000000^{tag}"         # git can't do this yet
+  baseline "v1.0.0-0-g0000000000e4f"  # unambiguous commit
+  baseline "v1.0.0-0-g0000000000"     # ambiguous commit, but we know we need a commit here. The tag doesn't matter.
 
-    # commit 00000000008ec
-    git mv d12cr3h8t j000jmpzn
-    echo j08bekfvt >>j000jmpzn
-    git add j000jmpzn
 
-    tick
-    git commit -m ioiley5o
+  # commit 0000000000043
+  git mv a0blgqsjc d12cr3h8t
+  echo h62xsjeu >>d12cr3h8t
+  git add d12cr3h8t
 
-    # commit 0000000005b0
-    git checkout v1.0.0^0
-    git mv a0blgqsjc f5518nwu
+  tick
+  git commit -m czy8f73t
 
-    write_lines h62xsjeu j08bekfvt kg7xflhm >>f5518nwu
-    git add f5518nwu
+  # commit 00000000008ec
+  git mv d12cr3h8t j000jmpzn
+  echo j08bekfvt >>j000jmpzn
+  git add j000jmpzn
 
-    tick
-    git commit -m b3wettvi
-    side=$(git rev-parse HEAD)
+  tick
+  git commit -m ioiley5o
 
-    # commit 000000000066
-    git checkout main
+  # commit 0000000005b0
+  git checkout v1.0.0^0
+  git mv a0blgqsjc f5518nwu
 
-    # If you use recursive, merge will fail and you will need to
-    # clean up a0blgqsjc as well.  If you use resolve, merge will
-    # succeed.
-    git merge --no-commit -s recursive $side || true
-    git rm -f f5518nwu j000jmpzn
+  write_lines h62xsjeu j08bekfvt kg7xflhm >>f5518nwu
+  git add f5518nwu
 
-    git rm -f a0blgqsjc
-    (
-      git cat-file blob $side:f5518nwu
-      echo j3l0i9s6
-    ) >ab2gs879
-    git add ab2gs879
+  tick
+  git commit -m b3wettvi
+  side=$(git rev-parse HEAD)
 
-    tick
-    git commit -m ad2uee
+  # commit 000000000066
+  git checkout main
 
-    baseline "v1.0.0-0-g000000000" # git doesn't take advantage of the generation
-    baseline "v1.0.0-2-g000000000" # ^
-    baseline "v1.0.0-4-g000000000" # ^
+  # If you use recursive, merge will fail and you will need to
+  # clean up a0blgqsjc as well.  If you use resolve, merge will
+  # succeed.
+  git merge --no-commit -s recursive $side || true
+  git rm -f f5518nwu j000jmpzn
 
-    baseline "v1.0.0-1-g000000000" # This should legitimately fail (currently git accidentally fails) as there are two commits at gen 1 with this prefix.
+  git rm -f a0blgqsjc
+  (
+    git cat-file blob $side:f5518nwu
+    echo j3l0i9s6
+  ) >ab2gs879
+  git add ab2gs879
+
+  tick
+  git commit -m ad2uee
+
+  baseline "0000000000f^{tree}"  # there is a tag, tree and blob with this prefix, and tags can also be trees thus this is ambiguous if the tree is different
+  baseline "00000000^{commit}"   # this fails as there are many commits with this prefix now
+
+  baseline "v1.0.0-0-g000000000" # git doesn't take advantage of the generation and anchor reference yet
+  baseline "v1.0.0-2-g000000000" # ^
+  baseline "v1.0.0-4-g000000000" # ^
+
+  baseline "v1.0.0-1-g000000000" # This should legitimately fail (currently git accidentally fails) as there are two commits at gen 1 with this prefix.
+
+  baseline "000000000..000000000"  # only one commit is present with this prefix and we prefer these in ranges
+  baseline "..000000000"
+  baseline "000000000.."
+
+  baseline "000000000...000000000" # only one commit is present with this prefix and we prefer these in ranges
+  baseline "...000000000"
+  baseline "000000000..."
+
 )
+
+git clone ambiguous_commits duplicate_ambiguous_objects
+
+(
+  cd duplicate_ambiguous_objects
+  git rev-parse --disambiguate=000000000 >expect
+  git pack-objects .git/objects/pack/pack <expect
+  git rev-parse --disambiguate=000000000 >actual
+  diff actual expect # git deduplicates the same objects even though they are in the loose and packed odb
+)
+
+
