@@ -13,19 +13,26 @@ mod from_bytes {
         let mut map = HashMap::new();
         let base = git_testtools::scripted_fixture_repo_read_only(FIXTURE_NAME).unwrap();
         let baseline = std::fs::read(base.join("baseline.git")).unwrap();
-        let mut lines = baseline.lines();
+        let mut lines = baseline.lines().peekable();
         while let Some(spec) = lines.next() {
             let exit_code_or_hash = lines.next().expect("exit code or single hash").to_str().unwrap();
-            let possibly_hash = match u8::from_str(exit_code_or_hash) {
-                Ok(_) => None,
-                Err(_) => Some(git::ObjectId::from_str(exit_code_or_hash).unwrap()),
+            let hash = match u8::from_str(exit_code_or_hash) {
+                Ok(_exit_code) => {
+                    map.insert(spec.into(), None);
+                    continue;
+                    // assert_eq!(
+                    //     map.insert(spec.into(), None),
+                    //     None,
+                    //     "Duplicate spec '{}' cannot be handled",
+                    //     spec.as_bstr()
+                    // );
+                }
+                Err(_) => match git::ObjectId::from_str(exit_code_or_hash) {
+                    Ok(hash) => hash,
+                    Err(_) => break, // for now bail out, we can't parse multi-line results yet
+                },
             };
-            assert_eq!(
-                map.insert(spec.into(), possibly_hash),
-                None,
-                "Duplicate spec '{}' cannot be handled",
-                spec.as_bstr()
-            );
+            map.insert(spec.into(), Some(hash));
         }
         map
     });
@@ -88,7 +95,7 @@ mod from_bytes {
 
         #[test]
         fn blob_and_tree_can_be_disambiguated_by_type_some_day() {
-            let repo = repo("ambiguous_blob_and_tree").unwrap();
+            let repo = repo("ambiguous_blob_tree_commit").unwrap();
             assert_eq!(
                     parse_spec("0000000000", &repo).unwrap_err().to_string(),
                     "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
@@ -99,12 +106,24 @@ mod from_bytes {
 
         #[test]
         fn trees_can_be_disambiguated_by_blob_access_some_day() {
-            let repo = repo("ambiguous_blob_and_tree").unwrap();
+            let repo = repo("ambiguous_blob_tree_commit").unwrap();
             assert_eq!(
                 parse_spec_no_baseline("0000000000:a0blgqsjc", &repo).unwrap_err().to_string(),
                 "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
                 "git can do this, but we can't just yet. It requires to deal with multiple candidates and try to apply transformations to them, discarding ones that don't work"
             );
+        }
+
+        #[test]
+        fn commits_can_be_disambiguated_with_commit_specific_transformations_one_day() {
+            let repo = repo("ambiguous_blob_tree_commit").unwrap();
+            for spec in ["0000000000^0", "0000000000^{commit}"] {
+                assert_eq!(
+                    parse_spec_no_baseline(spec, &repo).unwrap_err().to_string(),
+                    "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
+                    "git can do this, but we can't just yet"
+                );
+            }
         }
     }
 
@@ -140,7 +159,7 @@ mod from_bytes {
     #[test]
     #[ignore]
     fn access_blob_through_tree() {
-        let repo = repo("ambiguous_blob_and_tree").unwrap();
+        let repo = repo("ambiguous_blob_tree_commit").unwrap();
         assert_eq!(
             parse_spec("0000000000cdc:a0blgqsjc", &repo).unwrap(),
             RevSpec::from_id(hex_to_id("0000000000b36b6aa7ea4b75318ed078f55505c3").attach(&repo))

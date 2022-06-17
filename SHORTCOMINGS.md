@@ -9,7 +9,8 @@ This file is for tracking features that are less well implemented or less powerf
 - cannot disambiguate objects using their **object type** like `000000^{blob}`
     - See [this test](https://github.com/Byron/gitoxide/blob/9d2e1eb3defc3ddd7ade7fe2bdd26d8a21afe55f/git-repository/tests/rev_spec/mod.rs#L83) 
       which mentions the current behaviour.
-    - **Reason**: during testing we noticed that git doesn't seem to be able to disambiguate consistently, i.e. `000000^{blob}` doesn't work even though it should, and `000000^{tree}` does work. It's also not very well tested, so seems quite niche.
+    - There are more tests around the same behaviour, check for `parse_spec_no_baseline(…)` to see where we fall short. Note that git can't disambiguate
+      consistently either, so eventually I would expect to get ahead.
 
 ### git-protocol
 * **fetches using protocol V1 and stateful connections, i.e. ssh, git, file, may hang**
