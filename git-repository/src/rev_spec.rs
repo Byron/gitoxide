@@ -129,7 +129,7 @@ pub mod parse {
             }
         }
 
-        fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix) -> Option<()> {
+        fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix, _must_be_commit: bool) -> Option<()> {
             match self
                 .repo
                 .objects

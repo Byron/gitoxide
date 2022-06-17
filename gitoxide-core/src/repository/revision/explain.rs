@@ -59,10 +59,16 @@ impl<'a> delegate::Revision for Explain<'a> {
         writeln!(self.out, "Lookup the '{}' reference", name).ok()
     }
 
-    fn disambiguate_prefix(&mut self, prefix: git::hash::Prefix) -> Option<()> {
+    fn disambiguate_prefix(&mut self, prefix: git::hash::Prefix, must_be_commit: bool) -> Option<()> {
         self.prefix()?;
         self.oid_prefix = Some(prefix);
-        writeln!(self.out, "Disambiguate the '{}' object name", prefix).ok()
+        writeln!(
+            self.out,
+            "Disambiguate the '{}' object name ({})",
+            prefix,
+            must_be_commit.then(|| "commit").unwrap_or("any object")
+        )
+        .ok()
     }
 
     fn reflog(&mut self, query: ReflogLookup) -> Option<()> {

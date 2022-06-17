@@ -14,7 +14,10 @@ pub trait Revision {
     fn find_ref(&mut self, name: &BStr) -> Option<()>;
 
     /// An object prefix to disambiguate, returning `None` if it is ambiguous or wasn't found at all.
-    fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix) -> Option<()>;
+    ///
+    /// If `must_be_commit` is true, this can be used to disambiguate multiple candidates knowing that we are only
+    /// interested in a commit.
+    fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix, must_be_comit: bool) -> Option<()>;
 
     /// Lookup the reflog of the previously set reference, or dereference `HEAD` to its reference
     /// to obtain the ref name (as opposed to `HEAD` itself).

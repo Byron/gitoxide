@@ -38,10 +38,10 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
     }
 }
 
-fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr) -> Option<()> {
+fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr, must_be_commit: bool) -> Option<()> {
     git_hash::Prefix::from_hex(hex_name.to_str().expect("hexadecimal only"))
         .ok()
-        .and_then(|prefix| delegate.disambiguate_prefix(prefix))
+        .and_then(|prefix| delegate.disambiguate_prefix(prefix, must_be_commit))
 }
 
 fn long_describe_prefix(name: &BStr) -> Option<&BStr> {
@@ -199,11 +199,11 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
         };
     } else {
         (consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN)
-            .then(|| try_set_prefix(delegate, name))
+            .then(|| try_set_prefix(delegate, name, false))
             .flatten()
             .or_else(|| {
                 let prefix = long_describe_prefix(name).or_else(|| short_describe_prefix(name))?;
-                try_set_prefix(delegate, prefix)
+                try_set_prefix(delegate, prefix, true)
             })
             .or_else(|| {
                 name.is_empty().then(|| ()).or_else(|| {
