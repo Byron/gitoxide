@@ -67,14 +67,14 @@ function write_lines () {
 }
 
 function tick () {
-  if test -z "${test_tick+set}"
+  if test -z "${tick+set}"
   then
-    test_tick=1112911993
+    tick=1112911993
   else
-    test_tick=$(($test_tick + 60))
+    tick=$(($tick + 60))
   fi
-  GIT_COMMITTER_DATE="$test_tick -0700"
-  GIT_AUTHOR_DATE="$test_tick -0700"
+  GIT_COMMITTER_DATE="$tick -0700"
+  GIT_AUTHOR_DATE="$tick -0700"
   export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
 }
 
@@ -151,4 +151,56 @@ EOF
 
   # create one tag 0000000000f8f (making the previous baseline tests ambiguous, but it could be unambiguous since they point to the same commit)
   git tag -a -m j7cp83um v1.0.0
+  
+    # commit 0000000000043
+    git mv a0blgqsjc d12cr3h8t
+    echo h62xsjeu >>d12cr3h8t
+    git add d12cr3h8t
+
+    tick
+    git commit -m czy8f73t
+
+    # commit 00000000008ec
+    git mv d12cr3h8t j000jmpzn
+    echo j08bekfvt >>j000jmpzn
+    git add j000jmpzn
+
+    tick
+    git commit -m ioiley5o
+
+    # commit 0000000005b0
+    git checkout v1.0.0^0
+    git mv a0blgqsjc f5518nwu
+
+    write_lines h62xsjeu j08bekfvt kg7xflhm >>f5518nwu
+    git add f5518nwu
+
+    tick
+    git commit -m b3wettvi
+    side=$(git rev-parse HEAD)
+
+    # commit 000000000066
+    git checkout main
+
+    # If you use recursive, merge will fail and you will need to
+    # clean up a0blgqsjc as well.  If you use resolve, merge will
+    # succeed.
+    git merge --no-commit -s recursive $side || true
+    git rm -f f5518nwu j000jmpzn
+
+    git rm -f a0blgqsjc
+    (
+      git cat-file blob $side:f5518nwu
+      echo j3l0i9s6
+    ) >ab2gs879
+    git add ab2gs879
+
+    tick
+    git commit -m ad2uee
+
+    baseline "v1.0.0-0-g000000000" # git doesn't take advantage of the generation
+    baseline "v1.0.0-2-g000000000" # ^
+    baseline "v1.0.0-4-g000000000" # ^
+
+    baseline "v1.0.0-1-g000000000" # This should legitimately fail (currently git accidentally fails) as there are two commits at gen 1 with this prefix.
 )
