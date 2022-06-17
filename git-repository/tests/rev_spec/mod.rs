@@ -17,11 +17,11 @@ mod from_bytes {
             .max_depth(2)
             .follow_links(false)
             .into_iter()
-            .filter_map(|e| e.ok().map(|e| (e.file_name() == "baseline.git").then(|| e)).flatten())
+            .filter_map(|e| e.ok().and_then(|e| (e.file_name() == "baseline.git").then(|| e)))
         {
             let map = baseline_map
                 .entry(baseline_entry.path().parent().expect("file in directory").into())
-                .or_insert(HashMap::default());
+                .or_insert_with(HashMap::default);
             let baseline = std::fs::read(baseline_entry.path()).unwrap();
             let mut lines = baseline.lines().peekable();
             while let Some(spec) = lines.next() {
@@ -62,7 +62,7 @@ mod from_bytes {
         assert_eq!(
             &actual,
             BASELINE
-                .get(repo.work_dir().unwrap_or(repo.git_dir()))
+                .get(repo.work_dir().unwrap_or_else(|| repo.git_dir()))
                 .unwrap_or_else(|| panic!("No baseline for {:?}", repo))
                 .get(&spec)
                 .unwrap_or_else(|| panic!("'{}' revspec not found in git baseline", spec)),
