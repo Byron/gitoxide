@@ -54,8 +54,29 @@ fn long_describe_prefix(name: &BStr) -> Option<(&BStr, PrefixHint<'_>)> {
         let rest = substr.get(1..)?;
         rest.iter().all(|b| b.is_ascii_hexdigit()).then(|| rest.as_bstr())
     })?;
-    iter.any(|token| !token.is_empty())
-        .then(|| (candidate, PrefixHint::MustBeCommit))
+
+    let candidate = iter.clone().any(|token| !token.is_empty()).then(|| candidate);
+    let hint = iter
+        .next()
+        .and_then(|gen| gen.to_str().ok().and_then(|gen| usize::from_str(gen).ok()))
+        .and_then(|generation| {
+            iter.next().map(|token| {
+                let last_token_len = token.len();
+                let first_token_ptr = iter.last().map(|token| token.as_ptr()).unwrap_or(token.as_ptr());
+                // SAFETY: both pointers are definitely part of the same object
+                #[allow(unsafe_code)]
+                let prior_tokens_len: usize = unsafe { token.as_ptr().offset_from(first_token_ptr) }
+                    .try_into()
+                    .expect("positive value");
+                PrefixHint::DescribeAnchor {
+                    ref_name: name[..prior_tokens_len + last_token_len].as_bstr(),
+                    generation,
+                }
+            })
+        })
+        .unwrap_or(PrefixHint::MustBeCommit);
+
+    candidate.map(|c| (c, hint))
 }
 
 fn short_describe_prefix(name: &BStr) -> Option<&BStr> {

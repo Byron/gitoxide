@@ -1,12 +1,32 @@
 use crate::spec::parse::{parse, try_parse_opts, Options, PrefixHintOwned};
 
+fn anchor_hint() -> Option<PrefixHintOwned> {
+    Some(PrefixHintOwned::DescribeAnchor {
+        ref_name: "cargo-smart-release".into(),
+        generation: 679,
+    })
+}
+
 #[test]
 fn full_format_parses_hash_portion_as_prefix() {
     let rec = parse("cargo-smart-release-679-g3bee7fb");
     assert!(rec.kind.is_none());
     assert_eq!(rec.find_ref[0], None, "references are not resolved in describe output");
     assert_eq!(rec.prefix[0], Some(git_hash::Prefix::from_hex("3bee7fb").unwrap()));
-    assert_eq!(rec.prefix_hint[0], Some(PrefixHintOwned::MustBeCommit));
+    assert_eq!(rec.prefix_hint[0], anchor_hint());
+    assert_eq!(rec.calls, 1);
+
+    let rec = parse("v1.0-0-g3bee7fb");
+    assert!(rec.kind.is_none());
+    assert_eq!(rec.find_ref[0], None, "references are not resolved in describe output");
+    assert_eq!(rec.prefix[0], Some(git_hash::Prefix::from_hex("3bee7fb").unwrap()));
+    assert_eq!(
+        rec.prefix_hint[0],
+        Some(PrefixHintOwned::DescribeAnchor {
+            ref_name: "v1.0".into(),
+            generation: 0,
+        })
+    );
     assert_eq!(rec.calls, 1);
 }
 
@@ -62,7 +82,7 @@ fn full_format_with_dirty_suffix_is_recognized() {
     assert!(rec.kind.is_none());
     assert_eq!(rec.find_ref[0], None, "git does not see this as prefix, we do");
     assert_eq!(rec.prefix[0], Some(git_hash::Prefix::from_hex("3bee7fb").unwrap()),);
-    assert_eq!(rec.prefix_hint[0], Some(PrefixHintOwned::MustBeCommit));
+    assert_eq!(rec.prefix_hint[0], anchor_hint());
     assert_eq!(rec.calls, 1);
 }
 
