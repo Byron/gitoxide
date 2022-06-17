@@ -80,6 +80,9 @@ mod from_bytes {
     mod ambiguous {
         use super::repo;
         use crate::rev_spec::from_bytes::{parse_spec, parse_spec_no_baseline};
+        use git_repository::prelude::ObjectIdExt;
+        use git_repository::RevSpec;
+        use git_testtools::hex_to_id;
 
         #[test]
         fn prefix() {
@@ -153,9 +156,47 @@ mod from_bytes {
         fn duplicates_are_deduplicated_across_all_odb_types_on_day() {
             let repo = repo("duplicate_ambiguous_objects").unwrap();
             assert_eq!(
-                parse_spec("0000000000", &repo).unwrap_err().to_string(),
+                parse_spec_no_baseline("0000000000", &repo).unwrap_err().to_string(),
                 "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
                 "One day we want to see 16 objects here, and not 32 just because they exist in the loose and the packed odb"
+            );
+        }
+
+        #[test]
+        fn ambiguous_40hex_refs_are_ignored_and_we_prefer_the_object_of_the_same_name() {
+            let repo = repo("ambiguous_refs").unwrap();
+            assert_eq!(
+                parse_spec("0000000000e4f9fbd19cf1e932319e5ad0d1d00b", &repo).unwrap(),
+                RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
+                "git shows an advisory here and ignores the ref, which makes it easy to just ignore it too. We are unable to show anything though, maybe traces?"
+            );
+        }
+
+        #[test]
+        #[ignore]
+        fn ambiguous_short_refs_are_dereferenced() {
+            let repo = repo("ambiguous_refs").unwrap();
+            assert_eq!(
+                parse_spec("0000000000e", &repo).unwrap(),
+                RevSpec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
+                "git shows a warning here and we show nothing. Could traces be used?"
+            );
+        }
+
+        #[test]
+        #[ignore]
+        fn disambiguation_hints_can_be_provided_to_choose_one() {
+            let repo = repo("ambiguous_commits_disambiguation_config").unwrap();
+            assert_eq!(
+                parse_spec("0000000000f", &repo).unwrap(),
+                RevSpec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&repo)),
+                "we read the 'core.disambiguate' value and apply it to auto-disambiguate"
+            );
+
+            assert_eq!(
+                parse_spec("0000000000f^{tree}", &repo).unwrap_err().to_string(),
+                "Found more than one object prefixed with 0000000000f\nThe ref partially named '0000000000f' could not be found",
+                "spec overrides overrule the configuration value, which makes this particular object ambiguous between tree and tag"
             );
         }
     }

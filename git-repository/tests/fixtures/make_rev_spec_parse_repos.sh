@@ -224,13 +224,37 @@ EOF
 )
 
 git clone ambiguous_commits duplicate_ambiguous_objects
-
 (
   cd duplicate_ambiguous_objects
   git rev-parse --disambiguate=000000000 >expect
   git pack-objects .git/objects/pack/pack <expect
   git rev-parse --disambiguate=000000000 >actual
   diff actual expect # git deduplicates the same objects even though they are in the loose and packed odb
+)
+
+git clone ambiguous_blob_tree_commit ambiguous_refs
+(
+    cd ambiguous_refs
+  	TREE=$(git mktree </dev/null)
+  	REF=$(git rev-parse HEAD)
+  	VAL=$(git commit-tree $TREE </dev/null)
+  	git update-ref refs/heads/$REF $VAL
+
+  	baseline "$REF" # there is a ref and an object with the same name
+
+    TREE=$(git mktree </dev/null)
+    REF=$(git rev-parse --short HEAD)
+    VAL=$(git commit-tree $TREE </dev/null)
+    git update-ref refs/heads/$REF $VAL
+
+  	baseline "$REF" # there is a ref and an object with the same name
+)
+
+git clone ambiguous_commits ambiguous_commits_disambiguation_config
+(
+    cd ambiguous_commits_disambiguation_config
+    git config core.disambiguate committish
+    baseline "0000000000f"
 )
 
 
