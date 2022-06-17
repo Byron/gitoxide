@@ -9,7 +9,7 @@ fn short_hex_literals_are_considered_prefixes() {
         "references are not resolved if prefix lookups succeed"
     );
     assert_eq!(rec.prefix[0], Some(git_hash::Prefix::from_hex("abcd").unwrap()));
-    assert_eq!(rec.prefix_needs_commit[0], Some(false));
+    assert_eq!(rec.prefix_hint[0], None);
     assert_eq!(rec.calls, 1);
 
     let rec = parse("gabcd123");
@@ -23,7 +23,7 @@ fn short_hex_literals_are_considered_prefixes() {
         rec.prefix[0], None,
         "prefix lookups are not attempted at all (and they are impossible even)"
     );
-    assert_eq!(rec.prefix_needs_commit[0], None);
+    assert_eq!(rec.prefix_hint[0], None);
     assert_eq!(rec.calls, 1);
 }
 
@@ -40,7 +40,7 @@ fn unresolvable_hex_literals_are_resolved_as_refs() {
     assert!(rec.kind.is_none());
     assert_eq!(rec.get_ref(0), "abCD");
     assert_eq!(rec.prefix[0], None);
-    assert_eq!(rec.prefix_needs_commit[0], None);
+    assert_eq!(rec.prefix_hint[0], None);
     assert_eq!(rec.calls, 2);
 }
 
@@ -58,7 +58,7 @@ fn hex_literals_that_are_too_long_are_resolved_as_refs() {
     assert!(rec.kind.is_none());
     assert_eq!(rec.get_ref(0), spec);
     assert_eq!(rec.prefix[0], None);
-    assert_eq!(rec.prefix_needs_commit[0], None);
+    assert_eq!(rec.prefix_hint[0], None);
     assert_eq!(
         rec.calls, 1,
         "we can't create a prefix from it, hence only ref resolution is attempted"

@@ -15,7 +15,7 @@ struct Recorder {
     // anchors
     find_ref: [Option<BString>; 2],
     prefix: [Option<git_hash::Prefix>; 2],
-    prefix_needs_commit: [Option<bool>; 2],
+    prefix_hint: [Option<PrefixHintOwned>; 2],
     current_branch_reflog_entry: [Option<String>; 2],
     nth_checked_out_branch: [Option<usize>; 2],
     sibling_branch: [Option<String>; 2],
@@ -40,6 +40,12 @@ pub enum PeelToOwned {
     ExistingObject,
     RecursiveTagObject,
     Path(BString),
+}
+
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum PrefixHintOwned {
+    MustBeCommit,
+    DescribeAnchor { ref_name: BString, generation: usize },
 }
 
 impl Recorder {
@@ -71,13 +77,26 @@ impl delegate::Revision for Recorder {
         set_val("find_ref", &mut self.find_ref, input.into())
     }
 
-    fn disambiguate_prefix(&mut self, input: git_hash::Prefix, must_be_commit: bool) -> Option<()> {
+    fn disambiguate_prefix(&mut self, input: git_hash::Prefix, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
         self.calls += 1;
         if self.opts.reject_prefix {
             return None;
         }
         set_val("disambiguate_prefix", &mut self.prefix, input)?;
-        set_val("disambiguate_prefix", &mut self.prefix_needs_commit, must_be_commit)
+        if let Some(hint) = hint {
+            set_val(
+                "disambiguate_prefix",
+                &mut self.prefix_hint,
+                match hint {
+                    delegate::PrefixHint::DescribeAnchor { ref_name, generation } => PrefixHintOwned::DescribeAnchor {
+                        ref_name: ref_name.into(),
+                        generation,
+                    },
+                    delegate::PrefixHint::MustBeCommit => PrefixHintOwned::MustBeCommit,
+                },
+            )?;
+        }
+        Some(())
     }
 
     fn reflog(&mut self, entry: delegate::ReflogLookup) -> Option<()> {

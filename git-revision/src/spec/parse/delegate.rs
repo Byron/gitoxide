@@ -15,9 +15,8 @@ pub trait Revision {
 
     /// An object prefix to disambiguate, returning `None` if it is ambiguous or wasn't found at all.
     ///
-    /// If `must_be_commit` is true, this can be used to disambiguate multiple candidates knowing that we are only
-    /// interested in a commit.
-    fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix, must_be_comit: bool) -> Option<()>;
+    /// If `hint` is set, it should be used to disambiguate multiple objects with the same prefix.
+    fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix, hint: Option<PrefixHint<'_>>) -> Option<()>;
 
     /// Lookup the reflog of the previously set reference, or dereference `HEAD` to its reference
     /// to obtain the ref name (as opposed to `HEAD` itself).
@@ -74,6 +73,21 @@ pub trait Navigate {
     /// * `path` without prefix is relative to the root of the repository, while prefixes like `./` and `../` make it
     ///    relative to the current working directory.
     fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()>;
+}
+
+/// A hint to make disambiguation when looking up prefixes possible.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum PrefixHint<'a> {
+    /// The prefix must be a commit.
+    MustBeCommit,
+    /// The prefix refers to a commit, anchored to a ref and a revision generation in its future.
+    DescribeAnchor {
+        /// The name of the reference, like `v1.2.3` or `main`.
+        ref_name: &'a BStr,
+        /// The future generation of the commit we look for, with 0 meaning the commit is referenced by
+        /// `ref_name` directly.
+        generation: usize,
+    },
 }
 
 /// A lookup into the reflog of a reference.

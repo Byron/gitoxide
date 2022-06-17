@@ -2,6 +2,7 @@ use std::{convert::TryInto, str::FromStr};
 
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 
+use crate::spec::parse::delegate::PrefixHint;
 use crate::{
     spec,
     spec::parse::{delegate, delegate::SiblingBranch, Delegate, Error},
@@ -38,13 +39,13 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
     }
 }
 
-fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr, must_be_commit: bool) -> Option<()> {
+fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr, hint: Option<PrefixHint<'_>>) -> Option<()> {
     git_hash::Prefix::from_hex(hex_name.to_str().expect("hexadecimal only"))
         .ok()
-        .and_then(|prefix| delegate.disambiguate_prefix(prefix, must_be_commit))
+        .and_then(|prefix| delegate.disambiguate_prefix(prefix, hint))
 }
 
-fn long_describe_prefix(name: &BStr) -> Option<&BStr> {
+fn long_describe_prefix(name: &BStr) -> Option<(&BStr, PrefixHint<'_>)> {
     let mut iter = name.rsplit(|b| *b == b'-');
     let candidate = iter.by_ref().find_map(|substr| {
         if substr.get(0)? != &b'g' {
@@ -52,8 +53,9 @@ fn long_describe_prefix(name: &BStr) -> Option<&BStr> {
         };
         let rest = substr.get(1..)?;
         rest.iter().all(|b| b.is_ascii_hexdigit()).then(|| rest.as_bstr())
-    });
-    iter.any(|token| !token.is_empty()).then(|| candidate).flatten()
+    })?;
+    iter.any(|token| !token.is_empty())
+        .then(|| (candidate, PrefixHint::MustBeCommit))
 }
 
 fn short_describe_prefix(name: &BStr) -> Option<&BStr> {
@@ -199,11 +201,13 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
         };
     } else {
         (consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN)
-            .then(|| try_set_prefix(delegate, name, false))
+            .then(|| try_set_prefix(delegate, name, None))
             .flatten()
             .or_else(|| {
-                let prefix = long_describe_prefix(name).or_else(|| short_describe_prefix(name))?;
-                try_set_prefix(delegate, prefix, true)
+                let (prefix, hint) = long_describe_prefix(name)
+                    .map(|(c, h)| (c, Some(h)))
+                    .or_else(|| short_describe_prefix(name).map(|c| (c, None)))?;
+                try_set_prefix(delegate, prefix, hint)
             })
             .or_else(|| {
                 name.is_empty().then(|| ()).or_else(|| {

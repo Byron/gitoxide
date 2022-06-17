@@ -59,14 +59,21 @@ impl<'a> delegate::Revision for Explain<'a> {
         writeln!(self.out, "Lookup the '{}' reference", name).ok()
     }
 
-    fn disambiguate_prefix(&mut self, prefix: git::hash::Prefix, must_be_commit: bool) -> Option<()> {
+    fn disambiguate_prefix(&mut self, prefix: git::hash::Prefix, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
         self.prefix()?;
         self.oid_prefix = Some(prefix);
         writeln!(
             self.out,
             "Disambiguate the '{}' object name ({})",
             prefix,
-            must_be_commit.then(|| "commit").unwrap_or("any object")
+            match hint {
+                None => "any object".to_string(),
+                Some(delegate::PrefixHint::MustBeCommit) => "commit".into(),
+                Some(delegate::PrefixHint::DescribeAnchor { ref_name, generation }) => format!(
+                    "commit {} generations in future of reference {:?}",
+                    generation, ref_name
+                ),
+            }
         )
         .ok()
     }
