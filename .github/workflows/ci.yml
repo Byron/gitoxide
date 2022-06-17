@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         build:
-          - win-gnu
+#          - win-gnu
           - win-msvc
           - macos
         include:
@@ -40,6 +40,7 @@ jobs:
           build: macos
           rust: stable
     runs-on: ${{ matrix.os }}
+    name: ${{ matrix.build }}
     steps:
       - uses: actions/checkout@v1
       - uses: actions-rs/toolchain@v1
