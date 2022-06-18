@@ -16,6 +16,20 @@ pub mod parse {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error(
+            "The short hash {:?} matched both the reference {} and the object {}",
+            prefix,
+            reference.name,
+            oid
+        )]
+        AmbiguousRefAndObject {
+            /// The prefix to look for.
+            prefix: git_hash::Prefix,
+            /// The reference matching the prefix.
+            reference: git_ref::Reference,
+            /// The object's id that was matching the prefix as well.
+            oid: git_hash::ObjectId,
+        },
         #[error(transparent)]
         IdFromHex(#[from] git_hash::decode::Error),
         #[error(transparent)]
@@ -54,7 +68,7 @@ pub mod parse {
 
     impl Default for RefsHint {
         fn default() -> Self {
-            RefsHint::PreferObject
+            RefsHint::PreferObjectOnFullLengthHexShaUseRefOtherwise
         }
     }
 
@@ -64,17 +78,14 @@ pub mod parse {
     }
 
     impl<'repo> RevSpec<'repo> {
-        pub fn from_bstr(
-            spec: impl AsRef<BStr>,
-            repo: &'repo Repository,
-            Options { refs_hint: _ }: Options,
-        ) -> Result<Self, Error> {
+        pub fn from_bstr(spec: impl AsRef<BStr>, repo: &'repo Repository, opts: Options) -> Result<Self, Error> {
             let mut delegate = Delegate {
                 refs: Default::default(),
                 objs: Default::default(),
                 idx: 0,
                 kind: None,
                 err: Vec::new(),
+                opts,
                 repo,
             };
             let spec = match git_revision::spec::parse(spec.as_ref().as_bstr(), &mut delegate) {
@@ -121,6 +132,7 @@ pub mod parse {
 
         kind: Option<git_revision::spec::Kind>,
         repo: &'repo Repository,
+        opts: Options,
         err: Vec<Error>,
     }
 
@@ -189,6 +201,29 @@ pub mod parse {
                 }
                 Ok(Some(Ok(id))) => {
                     assert!(self.objs[self.idx].is_none(), "BUG: cannot set the same prefix twice");
+                    match self.opts.refs_hint {
+                        RefsHint::PreferObjectOnFullLengthHexShaUseRefOtherwise
+                            if prefix.hex_len() == id.kind().len_in_hex() => {}
+                        RefsHint::PreferObject => {}
+                        hint @ (RefsHint::PreferRef
+                        | RefsHint::PreferObjectOnFullLengthHexShaUseRefOtherwise
+                        | RefsHint::Fail) => {
+                            if let Ok(ref_) = self.repo.refs.find(&prefix.to_string()) {
+                                if hint == RefsHint::Fail {
+                                    self.err.push(Error::AmbiguousRefAndObject {
+                                        prefix,
+                                        reference: ref_,
+                                        oid: id,
+                                    });
+                                    return None;
+                                } else {
+                                    assert!(self.refs[self.idx].is_none(), "BUG: cannot set the same ref twice");
+                                    self.refs[self.idx] = Some(ref_);
+                                    return Some(());
+                                }
+                            }
+                        }
+                    }
                     self.objs[self.idx] = Some(id);
                     Some(())
                 }

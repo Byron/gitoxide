@@ -178,10 +178,10 @@ mod from_bytes {
                 RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
                 "git shows an advisory here and ignores the ref, which makes it easy to just ignore it too. We are unable to show anything though, maybe traces?"
             );
+            // TODO: use different options to get different results.
         }
 
         #[test]
-        #[ignore]
         fn ambiguous_short_refs_are_dereferenced() {
             let repo = repo("ambiguous_refs").unwrap();
             assert_eq!(
@@ -189,6 +189,7 @@ mod from_bytes {
                 RevSpec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
                 "git shows a warning here and we show nothing. Could traces be used?"
             );
+            // TODO: test all other ref hint modes.
         }
 
         #[test]
