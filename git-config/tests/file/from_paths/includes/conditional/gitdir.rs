@@ -74,11 +74,10 @@ fn assert_section_value(
     );
 }
 
-fn git_dir(root_dir: &TempDir, git_dir_suffix: &str) -> Box<Path> {
-    let git_dir = root_dir.path().join(git_dir_suffix).join(".git");
-    let git_dir = git_dir.as_path();
-    fs::create_dir_all(git_dir).unwrap();
-    git_dir.into()
+fn git_dir(root_dir: &Path, git_dir_suffix: &str) -> PathBuf {
+    let git_dir = root_dir.join(git_dir_suffix).join(".git");
+    fs::create_dir_all(&git_dir).unwrap();
+    git_dir
 }
 
 fn write_config(condition: &str, git_dir: &Path, overwrite_config_location: &ConfigLocation) {
@@ -187,9 +186,11 @@ fn home() -> String {
 #[test]
 #[serial]
 fn relative_path_with_trailing_slash() {
+    let temp_dir = tempdir().unwrap();
+    let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(Options {
         condition: "gitdir:foo/",
-        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        git_dir: &git_dir,
         ..Default::default()
     });
 }
@@ -206,10 +207,11 @@ fn tilde_expansion() {
         .as_os_str()
         .to_str()
         .unwrap();
+    let git_dir = git_dir(tmp_dir.path(), "foo");
 
     assert_section_value(Options {
         condition: &format!("gitdir:~/{}/foo/", root),
-        git_dir: &git_dir(&tmp_dir, "foo"),
+        git_dir: &git_dir,
         ..Default::default()
     });
 }
@@ -217,9 +219,11 @@ fn tilde_expansion() {
 #[test]
 #[serial]
 fn star_star_prefix_and_suffix() {
+    let temp_dir = tempdir().unwrap();
+    let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(Options {
         condition: "gitdir:**/foo/**",
-        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        git_dir: &git_dir,
         ..Default::default()
     });
 }
@@ -227,9 +231,11 @@ fn star_star_prefix_and_suffix() {
 #[test]
 #[serial]
 fn dot_path_slash() {
+    let temp_dir = tempdir().unwrap();
+    let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(Options {
         condition: "gitdir:./",
-        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        git_dir: &git_dir,
         config_location: ConfigLocation::User,
         ..Default::default()
     });
@@ -238,9 +244,11 @@ fn dot_path_slash() {
 #[test]
 #[serial]
 fn dot_path() {
+    let temp_dir = tempdir().unwrap();
+    let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(Options {
         condition: "gitdir:./foo/.git",
-        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        git_dir: &git_dir,
         config_location: ConfigLocation::User,
         ..Default::default()
     });
@@ -249,9 +257,11 @@ fn dot_path() {
 #[test]
 #[serial]
 fn case_insensitive() {
+    let temp_dir = tempdir().unwrap();
+    let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(Options {
         condition: "gitdir/i:FOO/",
-        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        git_dir: &git_dir,
         ..Default::default()
     });
 }
@@ -260,9 +270,11 @@ fn case_insensitive() {
 #[serial]
 #[ignore]
 fn pattern_with_backslash() {
+    let temp_dir = tempdir().unwrap();
+    let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(Options {
         condition: "gitdir:\\foo/",
-        git_dir: &git_dir(&tempdir().unwrap(), "foo"),
+        git_dir: &git_dir,
         expected: Value::Original,
         ..Default::default()
     });
@@ -271,9 +283,11 @@ fn pattern_with_backslash() {
 #[test]
 #[serial]
 fn star_star_in_the_middle() {
+    let temp_dir = tempdir().unwrap();
+    let git_dir = git_dir(temp_dir.path(), "foo/bar");
     assert_section_value(Options {
         condition: "gitdir:**/foo/**/bar/**",
-        git_dir: &git_dir(&tempdir().unwrap(), "foo/bar"),
+        git_dir: &git_dir,
         ..Default::default()
     });
 }
@@ -292,7 +306,7 @@ fn tilde_expansion_with_symlink() {
         .to_str()
         .unwrap();
 
-    git_dir(&tmp_dir, "foo");
+    let _ = git_dir(tmp_dir.path(), "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
         tmp_dir.path().join("foo").as_path(),
@@ -310,7 +324,7 @@ fn tilde_expansion_with_symlink() {
 #[cfg(not(target_os = "windows"))]
 fn dot_path_with_symlink() {
     let tmp_dir = tempdir_in(home()).unwrap();
-    git_dir(&tmp_dir, "foo");
+    git_dir(tmp_dir.path(), "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
         tmp_dir.path().join("foo").as_path(),
@@ -328,7 +342,7 @@ fn dot_path_with_symlink() {
 #[cfg(not(target_os = "windows"))]
 fn dot_path_matching_symlink() {
     let tmp_dir = tempdir_in(home()).unwrap();
-    git_dir(&tmp_dir, "foo");
+    git_dir(tmp_dir.path(), "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
         tmp_dir.path().join("foo").as_path(),
@@ -346,7 +360,7 @@ fn dot_path_matching_symlink() {
 #[cfg(not(target_os = "windows"))]
 fn dot_path_matching_symlink_with_icase() {
     let tmp_dir = tempdir_in(home()).unwrap();
-    git_dir(&tmp_dir, "foo");
+    git_dir(tmp_dir.path(), "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
         tmp_dir.path().join("foo").as_path(),
