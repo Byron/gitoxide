@@ -52,7 +52,15 @@ mod from_bytes {
         spec: &str,
         repo: &'a git::Repository,
     ) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
-        RevSpec::from_bstr(spec, repo, Default::default())
+        parse_spec_no_baseline_opts(spec, repo, Default::default())
+    }
+
+    fn parse_spec_no_baseline_opts<'a>(
+        spec: &str,
+        repo: &'a git::Repository,
+        opts: git::rev_spec::parse::Options,
+    ) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
+        RevSpec::from_bstr(spec, repo, opts)
     }
 
     fn parse_spec_opts<'a>(
@@ -87,8 +95,11 @@ mod from_bytes {
 
     mod ambiguous {
         use super::repo;
-        use crate::rev_spec::from_bytes::{parse_spec, parse_spec_no_baseline};
+        use crate::rev_spec::from_bytes::{
+            parse_spec, parse_spec_no_baseline, parse_spec_no_baseline_opts, parse_spec_opts,
+        };
         use git_repository::prelude::ObjectIdExt;
+        use git_repository::rev_spec::parse::{Options, RefsHint};
         use git_repository::RevSpec;
         use git_testtools::hex_to_id;
 
@@ -170,26 +181,77 @@ mod from_bytes {
             );
         }
 
+        fn opts_ref_hint(hint: RefsHint) -> Options {
+            Options { refs_hint: hint }
+        }
+
         #[test]
         fn ambiguous_40hex_refs_are_ignored_and_we_prefer_the_object_of_the_same_name() {
             let repo = repo("ambiguous_refs").unwrap();
+            let spec = "0000000000e4f9fbd19cf1e932319e5ad0d1d00b";
             assert_eq!(
-                parse_spec("0000000000e4f9fbd19cf1e932319e5ad0d1d00b", &repo).unwrap(),
-                RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
+                parse_spec(spec, &repo).unwrap(),
+                RevSpec::from_id(hex_to_id(spec).attach(&repo)),
                 "git shows an advisory here and ignores the ref, which makes it easy to just ignore it too. We are unable to show anything though, maybe traces?"
             );
-            // TODO: use different options to get different results.
+
+            assert_eq!(
+                parse_spec_opts(spec, &repo, opts_ref_hint(RefsHint::PreferObject)).unwrap(),
+                RevSpec::from_id(hex_to_id(spec).attach(&repo)),
+                "preferring objects yields the same result here"
+            );
+
+            assert_eq!(
+                parse_spec_no_baseline_opts(spec, &repo, opts_ref_hint(RefsHint::PreferRef)).unwrap(),
+                RevSpec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
+                "we can prefer refs in any case, too"
+            );
+
+            assert_eq!(
+                parse_spec_no_baseline_opts(
+                    spec,
+                    &repo,
+                    opts_ref_hint(RefsHint::Fail)
+                )
+                .unwrap_err()
+                .to_string(),
+                "The short hash 0000000000e4f9fbd19cf1e932319e5ad0d1d00b matched both the reference refs/heads/0000000000e4f9fbd19cf1e932319e5ad0d1d00b and the object 0000000000e4f9fbd19cf1e932319e5ad0d1d00b"
+            );
         }
 
         #[test]
         fn ambiguous_short_refs_are_dereferenced() {
             let repo = repo("ambiguous_refs").unwrap();
+            let spec = "0000000000e";
             assert_eq!(
-                parse_spec("0000000000e", &repo).unwrap(),
+                parse_spec(spec, &repo).unwrap(),
                 RevSpec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
-                "git shows a warning here and we show nothing. Could traces be used?"
+                "git shows a warning here and we show nothing but have dials to control how to handle these cases"
             );
-            // TODO: test all other ref hint modes.
+
+            assert_eq!(
+                parse_spec_opts(spec, &repo, opts_ref_hint(RefsHint::PreferRef)).unwrap(),
+                RevSpec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
+                "this does the same, but independently of the length of the ref"
+            );
+
+            assert_eq!(
+                parse_spec_no_baseline_opts(spec, &repo, opts_ref_hint(RefsHint::PreferObject)).unwrap(),
+                RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
+                "we can always prefer objects, too"
+            );
+
+            assert_eq!(
+                parse_spec_no_baseline_opts(
+                    spec,
+                    &repo,
+                    opts_ref_hint(RefsHint::Fail)
+                )
+                    .unwrap_err()
+                    .to_string(),
+                "The short hash 0000000000e matched both the reference refs/heads/0000000000e and the object 0000000000e4f9fbd19cf1e932319e5ad0d1d00b",
+                "users who don't want this ambiguity, could fail like this."
+            );
         }
 
         #[test]

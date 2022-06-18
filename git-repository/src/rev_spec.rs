@@ -17,7 +17,7 @@ pub mod parse {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(
-            "The short hash {:?} matched both the reference {} and the object {}",
+            "The short hash {} matched both the reference {} and the object {}",
             prefix,
             reference.name,
             oid
@@ -163,6 +163,9 @@ pub mod parse {
 
     impl<'repo> delegate::Revision for Delegate<'repo> {
         fn find_ref(&mut self, name: &BStr) -> Option<()> {
+            if !self.err.is_empty() && self.refs[self.idx].is_some() {
+                return None;
+            }
             match self.repo.refs.find(name) {
                 Ok(r) => {
                     assert!(self.refs[self.idx].is_none(), "BUG: cannot set the same ref twice");
@@ -209,7 +212,9 @@ pub mod parse {
                         | RefsHint::PreferObjectOnFullLengthHexShaUseRefOtherwise
                         | RefsHint::Fail) => {
                             if let Ok(ref_) = self.repo.refs.find(&prefix.to_string()) {
+                                assert!(self.refs[self.idx].is_none(), "BUG: cannot set the same ref twice");
                                 if hint == RefsHint::Fail {
+                                    self.refs[self.idx] = Some(ref_.clone());
                                     self.err.push(Error::AmbiguousRefAndObject {
                                         prefix,
                                         reference: ref_,
@@ -217,7 +222,6 @@ pub mod parse {
                                     });
                                     return None;
                                 } else {
-                                    assert!(self.refs[self.idx].is_none(), "BUG: cannot set the same ref twice");
                                     self.refs[self.idx] = Some(ref_);
                                     return Some(());
                                 }
