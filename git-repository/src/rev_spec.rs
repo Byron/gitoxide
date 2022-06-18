@@ -127,13 +127,13 @@ pub mod parse {
     struct Delegate<'repo> {
         refs: [Option<git_ref::Reference>; 2],
         objs: [Option<git_hash::ObjectId>; 2],
-
         idx: usize,
-
         kind: Option<git_revision::spec::Kind>,
-        repo: &'repo Repository,
+
         opts: Options,
         err: Vec<Error>,
+
+        repo: &'repo Repository,
     }
 
     impl<'repo> parse::Delegate for Delegate<'repo> {
@@ -206,30 +206,39 @@ pub mod parse {
                     assert!(self.objs[self.idx].is_none(), "BUG: cannot set the same prefix twice");
                     match self.opts.refs_hint {
                         RefsHint::PreferObjectOnFullLengthHexShaUseRefOtherwise
-                            if prefix.hex_len() == id.kind().len_in_hex() => {}
-                        RefsHint::PreferObject => {}
-                        hint @ (RefsHint::PreferRef
+                            if prefix.hex_len() == id.kind().len_in_hex() =>
+                        {
+                            self.objs[self.idx] = Some(id);
+                            Some(())
+                        }
+                        RefsHint::PreferObject => {
+                            self.objs[self.idx] = Some(id);
+                            Some(())
+                        }
+                        RefsHint::PreferRef
                         | RefsHint::PreferObjectOnFullLengthHexShaUseRefOtherwise
-                        | RefsHint::Fail) => {
-                            if let Ok(ref_) = self.repo.refs.find(&prefix.to_string()) {
+                        | RefsHint::Fail => match self.repo.refs.find(&prefix.to_string()) {
+                            Ok(ref_) => {
                                 assert!(self.refs[self.idx].is_none(), "BUG: cannot set the same ref twice");
-                                if hint == RefsHint::Fail {
+                                if self.opts.refs_hint == RefsHint::Fail {
                                     self.refs[self.idx] = Some(ref_.clone());
                                     self.err.push(Error::AmbiguousRefAndObject {
                                         prefix,
                                         reference: ref_,
                                         oid: id,
                                     });
-                                    return None;
+                                    None
                                 } else {
                                     self.refs[self.idx] = Some(ref_);
-                                    return Some(());
+                                    Some(())
                                 }
                             }
-                        }
+                            Err(_) => {
+                                self.objs[self.idx] = Some(id);
+                                Some(())
+                            }
+                        },
                     }
-                    self.objs[self.idx] = Some(id);
-                    Some(())
                 }
             }
         }
