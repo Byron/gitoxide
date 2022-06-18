@@ -17,7 +17,7 @@ pub(crate) mod function {
         Options { format }: Options,
     ) -> anyhow::Result<()> {
         let spec = git::path::os_str_into_bstr(&spec)?;
-        let spec = git::RevSpec::from_bstr(spec.as_ref(), &repo)?.detach();
+        let spec = git::RevSpec::from_bstr(spec.as_ref(), &repo, Default::default())?.detach();
 
         match format {
             OutputFormat::Human => {
