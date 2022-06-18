@@ -36,14 +36,30 @@ struct Options<'a> {
 
 struct EnvOverwrite {
     git_dir: PathBuf,
-    home: PathBuf,
+    repo_dir: PathBuf,
+    home_dir: PathBuf,
 }
 
 impl Default for EnvOverwrite {
     fn default() -> Self {
         Self {
             git_dir: PathBuf::default(),
-            home: home_dir().unwrap(),
+            repo_dir: PathBuf::default(),
+            home_dir: home(),
+        }
+    }
+}
+
+impl EnvOverwrite {
+    fn new(git_dir: PathBuf, home_dir: Option<PathBuf>) -> Self {
+        let repo_dir = git_dir.parent().unwrap().into();
+        Self {
+            git_dir,
+            repo_dir,
+            home_dir: match home_dir {
+                Some(home_dir) => home_dir,
+                None => home(),
+            },
         }
     }
 }
@@ -69,11 +85,11 @@ fn assert_section_value(
 ) {
     write_config(condition, &env, &config_location);
 
-    git_assert_eq(&expected, env.git_dir.as_path(), &config_location);
+    git_assert_eq(&expected, &env);
 
     let mut paths = vec![env.git_dir.join("config")];
     if config_location == ConfigLocation::User {
-        paths.push(env.home.join(".gitconfig"));
+        paths.push(env.home_dir.join(".gitconfig"));
     }
 
     let config = File::from_paths(paths, options_with_git_dir(&env.git_dir)).unwrap();
@@ -95,7 +111,7 @@ fn git_dir(root_dir: &Path, git_dir_suffix: &str) -> PathBuf {
 }
 
 fn write_config(condition: &str, env: &EnvOverwrite, overwrite_config_location: &ConfigLocation) {
-    let override_config_dir_file = write_override_config(env.git_dir.parent().unwrap());
+    let override_config_dir_file = write_override_config(env.repo_dir.as_path());
     write_main_config(condition, override_config_dir_file, env, overwrite_config_location);
 }
 
@@ -112,24 +128,12 @@ fn write_override_config(root_path: &Path) -> PathBuf {
     include_path
 }
 
-fn git_assert_eq(expected: &Value, git_dir: &Path, overwrite_config_location: &ConfigLocation) {
+fn git_assert_eq(expected: &Value, env: &EnvOverwrite) {
     let output = Command::new("git")
         .args(["config", "--get", "section.value"])
-        .env(
-            "HOME",
-            match overwrite_config_location {
-                ConfigLocation::User => git_dir
-                    .parent()
-                    .unwrap()
-                    .parent()
-                    .unwrap()
-                    .to_string_lossy()
-                    .to_string(),
-                ConfigLocation::Repo => home(),
-            },
-        )
-        .env("GIT_DIR", git_dir.to_str().unwrap())
-        .current_dir(git_dir)
+        .env("HOME", env.home_dir.as_path())
+        .env("GIT_DIR", env.git_dir.as_path())
+        .current_dir(env.git_dir.as_path())
         .output()
         .unwrap();
 
@@ -151,9 +155,8 @@ fn write_main_config(
     env: &EnvOverwrite,
     overwrite_config_location: &ConfigLocation,
 ) {
-    let repo_dir = env.git_dir.parent().unwrap();
     Command::new("git")
-        .args(["init", repo_dir.to_str().unwrap()])
+        .args(["init", env.repo_dir.to_str().unwrap()])
         .output()
         .unwrap();
 
@@ -176,13 +179,13 @@ fn write_main_config(
             &escape_backslashes(override_config_dir_file.as_path()),
         ])
         .current_dir(env.git_dir.as_path())
-        .env("HOME", env.home.as_path())
+        .env("HOME", env.home_dir.as_path())
         .output()
         .unwrap();
 }
 
-fn home() -> String {
-    home_dir().unwrap().to_string_lossy().into()
+fn home() -> PathBuf {
+    home_dir().unwrap()
 }
 
 #[test]
@@ -190,13 +193,9 @@ fn home() -> String {
 fn relative_path_with_trailing_slash() {
     let temp_dir = tempdir().unwrap();
     let git_dir = git_dir(temp_dir.path(), "foo");
-    let env = EnvOverwrite {
-        git_dir,
-        ..Default::default()
-    };
     assert_section_value(Options {
         condition: "gitdir:foo/",
-        env,
+        env: EnvOverwrite::new(git_dir, None),
         ..Default::default()
     });
 }
@@ -217,10 +216,7 @@ fn tilde_expansion() {
 
     assert_section_value(Options {
         condition: &format!("gitdir:~/{}/foo/", root),
-        env: EnvOverwrite {
-            git_dir,
-            ..Default::default()
-        },
+        env: EnvOverwrite::new(git_dir, None),
         ..Default::default()
     });
 }
@@ -232,10 +228,7 @@ fn star_star_prefix_and_suffix() {
     let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(Options {
         condition: "gitdir:**/foo/**",
-        env: EnvOverwrite {
-            git_dir,
-            ..Default::default()
-        },
+        env: EnvOverwrite::new(git_dir, None),
         ..Default::default()
     });
 }
@@ -247,10 +240,7 @@ fn dot_path_slash() {
     let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(Options {
         condition: "gitdir:./",
-        env: EnvOverwrite {
-            git_dir,
-            home: temp_dir.path().into(),
-        },
+        env: EnvOverwrite::new(git_dir, Some(temp_dir.path().into())),
         config_location: ConfigLocation::User,
         ..Default::default()
     });
@@ -263,10 +253,7 @@ fn dot_path() {
     let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(Options {
         condition: "gitdir:./foo/.git",
-        env: EnvOverwrite {
-            git_dir,
-            home: temp_dir.path().into(),
-        },
+        env: EnvOverwrite::new(git_dir, Some(temp_dir.path().into())),
         config_location: ConfigLocation::User,
         ..Default::default()
     });
@@ -279,10 +266,7 @@ fn case_insensitive() {
     let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(Options {
         condition: "gitdir/i:FOO/",
-        env: EnvOverwrite {
-            git_dir,
-            ..Default::default()
-        },
+        env: EnvOverwrite::new(git_dir, None),
         ..Default::default()
     });
 }
@@ -311,10 +295,7 @@ fn star_star_in_the_middle() {
     let git_dir = git_dir(temp_dir.path(), "foo/bar");
     assert_section_value(Options {
         condition: "gitdir:**/foo/**/bar/**",
-        env: EnvOverwrite {
-            git_dir,
-            ..Default::default()
-        },
+        env: EnvOverwrite::new(git_dir, None),
         ..Default::default()
     });
 }
@@ -338,13 +319,11 @@ fn tilde_expansion_with_symlink() {
         tmp_dir.path().join("bar").as_path(),
         tmp_dir.path().join("foo").as_path(),
     );
+    let git_dir = tmp_dir.path().join("bar").join(".git");
 
     assert_section_value(Options {
         condition: &format!("gitdir:~/{}/bar/", root),
-        env: EnvOverwrite {
-            git_dir: tmp_dir.path().join("bar").join(".git"),
-            ..Default::default()
-        },
+        env: EnvOverwrite::new(git_dir, None),
         ..Default::default()
     });
 }
@@ -354,17 +333,16 @@ fn tilde_expansion_with_symlink() {
 #[cfg(not(target_os = "windows"))]
 fn dot_path_with_symlink() {
     let tmp_dir = tempdir_in(home()).unwrap();
-    git_dir(tmp_dir.path(), "foo");
+    let _ = git_dir(tmp_dir.path(), "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
         tmp_dir.path().join("foo").as_path(),
     );
+    let git_dir = tmp_dir.path().join("bar").join(".git");
+
     assert_section_value(Options {
         condition: "gitdir:./bar/.git",
-        env: EnvOverwrite {
-            git_dir: tmp_dir.path().join("bar").join(".git"),
-            home: tmp_dir.path().into(),
-        },
+        env: EnvOverwrite::new(git_dir, Some(tmp_dir.path().into())),
         config_location: ConfigLocation::User,
         ..Default::default()
     });
@@ -375,17 +353,16 @@ fn dot_path_with_symlink() {
 #[cfg(not(target_os = "windows"))]
 fn dot_path_matching_symlink() {
     let tmp_dir = tempdir_in(home()).unwrap();
-    git_dir(tmp_dir.path(), "foo");
+    let _ = git_dir(tmp_dir.path(), "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
         tmp_dir.path().join("foo").as_path(),
     );
+    let git_dir = tmp_dir.path().join("bar").join(".git");
+
     assert_section_value(Options {
         condition: "gitdir:bar/",
-        env: EnvOverwrite {
-            git_dir: tmp_dir.path().join("bar").join(".git"),
-            home: tmp_dir.path().into(),
-        },
+        env: EnvOverwrite::new(git_dir, Some(tmp_dir.path().into())),
         config_location: ConfigLocation::User,
         ..Default::default()
     });
@@ -396,17 +373,16 @@ fn dot_path_matching_symlink() {
 #[cfg(not(target_os = "windows"))]
 fn dot_path_matching_symlink_with_icase() {
     let tmp_dir = tempdir_in(home()).unwrap();
-    git_dir(tmp_dir.path(), "foo");
+    let _ = git_dir(tmp_dir.path(), "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
         tmp_dir.path().join("foo").as_path(),
     );
+
+    let git_dir = tmp_dir.path().join("bar").join(".git");
     assert_section_value(Options {
         condition: "gitdir/i:BAR/",
-        env: EnvOverwrite {
-            git_dir: tmp_dir.path().join("bar").join(".git"),
-            home: tmp_dir.path().into(),
-        },
+        env: EnvOverwrite::new(git_dir, Some(tmp_dir.path().into())),
         config_location: ConfigLocation::User,
         ..Default::default()
     });
