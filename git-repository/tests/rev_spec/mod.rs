@@ -52,11 +52,15 @@ mod from_bytes {
         spec: &str,
         repo: &'a git::Repository,
     ) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
-        RevSpec::from_bstr(spec, repo)
+        RevSpec::from_bstr(spec, repo, Default::default())
     }
 
-    fn parse_spec<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
-        let res = RevSpec::from_bstr(spec, repo);
+    fn parse_spec_opts<'a>(
+        spec: &str,
+        repo: &'a git::Repository,
+        opts: git::rev_spec::parse::Options,
+    ) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
+        let res = RevSpec::from_bstr(spec, repo, opts);
         let actual = res.as_ref().ok().and_then(|rs| rs.from().map(|id| id.detach()));
         let spec: BString = spec.into();
         assert_eq!(
@@ -70,6 +74,10 @@ mod from_bytes {
             spec
         );
         res
+    }
+
+    fn parse_spec<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
+        parse_spec_opts(spec, repo, Default::default())
     }
 
     fn repo(name: &str) -> crate::Result<git::Repository> {
