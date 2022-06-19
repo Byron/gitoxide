@@ -1,6 +1,6 @@
 [package]
 name = "git-url"
-version = "0.6.0"
+version = "0.7.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project implementing parsing and serialization of git-url"
@@ -20,7 +20,7 @@ serde1 = ["serde", "bstr/serde1"]
 [dependencies]
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 git-features = { version = "^0.21.1", path = "../git-features" }
-git-path = { version = "^0.2.0", path = "../git-path" }
+git-path = { version = "^0.3.0", path = "../git-path" }
 quick-error = "2.0.0"
 url = "2.1.1"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }

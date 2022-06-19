@@ -310,7 +310,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.10.2"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1035,7 +1035,7 @@ dependencies = [
 
 [[package]]
 name = "git-attributes"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bstr",
  "compact_str",
@@ -1080,7 +1080,7 @@ dependencies = [
 
 [[package]]
 name = "git-config"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bstr",
  "criterion",
@@ -1115,7 +1115,7 @@ dependencies = [
 
 [[package]]
 name = "git-credentials"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bstr",
  "git-sec",
@@ -1148,7 +1148,7 @@ dependencies = [
 
 [[package]]
 name = "git-discover"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bstr",
  "defer",
@@ -1282,7 +1282,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.30.0"
+version = "0.31.0"
 dependencies = [
  "arc-swap",
  "filetime",
@@ -1303,7 +1303,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "bstr",
  "bytesize",
@@ -1351,7 +1351,7 @@ dependencies = [
 
 [[package]]
 name = "git-path"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bstr",
  "tempfile",
@@ -1364,7 +1364,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-protocol"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1400,7 +1400,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-ref"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "git-actor",
  "git-discover",
@@ -1422,7 +1422,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.19.0"
+version = "0.20.0"
 dependencies = [
  "anyhow",
  "byte-unit",
@@ -1480,7 +1480,7 @@ dependencies = [
 
 [[package]]
 name = "git-sec"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bitflags",
  "dirs",
@@ -1540,7 +1540,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-transport"
-version = "0.18.0"
+version = "0.19.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1582,7 +1582,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "bstr",
  "git-features",
@@ -1604,7 +1604,7 @@ dependencies = [
 
 [[package]]
 name = "git-worktree"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bstr",
  "document-features",
