@@ -1,4 +1,4 @@
-#![forbid(unsafe_code, rust_2018_idioms)]
+#![forbid(unsafe_code, rust_2018_idioms, missing_docs)]
 //! This crate contains an assortment of utilities to deal with paths and their conversions.
 //!
 //! Generally `git` treats paths as bytes, but inherently assumes non-illformed UTF-8 as encoding on windows. Internally, it expects
@@ -55,56 +55,10 @@
 pub struct Spec(bstr::BString);
 
 mod convert;
-mod spec;
-
-use std::{fs::create_dir_all, ops::Deref, path::Path};
-
 pub use convert::*;
-use tempfile::tempdir_in;
+
+mod spec;
 
 ///
 pub mod realpath;
 pub use realpath::function::{realpath, realpath_opts};
-
-pub fn create_symlink(from: &Path, to: &Path) {
-    create_dir_all(from.parent().unwrap()).unwrap();
-    #[cfg(not(target_os = "windows"))]
-    std::os::unix::fs::symlink(to, &from).unwrap();
-    #[cfg(target_os = "windows")]
-    std::os::windows::fs::symlink_file(to, &from).unwrap();
-}
-
-pub struct CanonicalizedTempDir {
-    pub dir: tempfile::TempDir,
-}
-
-impl CanonicalizedTempDir {
-    pub fn new() -> Self {
-        #[cfg(windows)]
-        let canonicalized_tempdir = std::env::temp_dir();
-        #[cfg(not(windows))]
-        let canonicalized_tempdir = std::env::temp_dir().canonicalize().unwrap();
-        let dir = tempdir_in(canonicalized_tempdir).unwrap();
-        Self { dir }
-    }
-}
-
-impl Default for CanonicalizedTempDir {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AsRef<Path> for CanonicalizedTempDir {
-    fn as_ref(&self) -> &Path {
-        self
-    }
-}
-
-impl Deref for CanonicalizedTempDir {
-    type Target = Path;
-
-    fn deref(&self) -> &Self::Target {
-        self.dir.path()
-    }
-}

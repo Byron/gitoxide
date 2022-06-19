@@ -1,15 +1,58 @@
 use bstr::BString;
 use std::convert::TryFrom;
 use std::fs;
+use std::fs::create_dir_all;
 use std::path::{Path, PathBuf};
 
 use crate::git_config::cow_str;
 use crate::git_config::from_paths::escape_backslashes;
 use git_config::file::from_paths;
 use git_config::File;
-use git_path::{create_symlink, CanonicalizedTempDir};
 use git_ref::FullName;
-use tempfile::tempdir;
+use tempfile::{tempdir, tempdir_in};
+
+pub struct CanonicalizedTempDir {
+    pub dir: tempfile::TempDir,
+}
+
+pub fn create_symlink(from: &Path, to: &Path) {
+    create_dir_all(from.parent().unwrap()).unwrap();
+    #[cfg(not(target_os = "windows"))]
+    std::os::unix::fs::symlink(to, &from).unwrap();
+    #[cfg(target_os = "windows")]
+    std::os::windows::fs::symlink_file(to, &from).unwrap();
+}
+
+impl CanonicalizedTempDir {
+    pub fn new() -> Self {
+        #[cfg(windows)]
+        let canonicalized_tempdir = std::env::temp_dir();
+        #[cfg(not(windows))]
+        let canonicalized_tempdir = std::env::temp_dir().canonicalize().unwrap();
+        let dir = tempdir_in(canonicalized_tempdir).unwrap();
+        Self { dir }
+    }
+}
+
+impl Default for CanonicalizedTempDir {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AsRef<Path> for CanonicalizedTempDir {
+    fn as_ref(&self) -> &Path {
+        self
+    }
+}
+
+impl std::ops::Deref for CanonicalizedTempDir {
+    type Target = Path;
+
+    fn deref(&self) -> &Self::Target {
+        self.dir.path()
+    }
+}
 
 #[test]
 fn girdir_and_onbranch() {
