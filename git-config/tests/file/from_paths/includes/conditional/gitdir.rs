@@ -9,7 +9,7 @@ fn relative_path_with_trailing_slash() {
 #[test]
 #[serial]
 fn tilde_expansion() {
-    let env = GitEnv::repo_name_with_root_as_home("subdir/worktree");
+    let env = GitEnv::repo_name("subdir/worktree");
     assert_section_value(Condition::new("gitdir:~/subdir/worktree/"), env);
 }
 
@@ -24,7 +24,7 @@ fn star_star_prefix_and_suffix() {
 fn dot_path_slash() {
     assert_section_value(
         Condition::new("gitdir:./").set_user_config_instead_of_repo_config(),
-        GitEnv::repo_name_with_root_as_home("worktree"),
+        GitEnv::repo_name("worktree"),
     );
 }
 
@@ -33,7 +33,7 @@ fn dot_path_slash() {
 fn dot_path() {
     assert_section_value(
         Condition::new("gitdir:./worktree/.git").set_user_config_instead_of_repo_config(),
-        GitEnv::repo_name_with_root_as_home("worktree"),
+        GitEnv::repo_name("worktree"),
     );
 }
 
@@ -66,7 +66,7 @@ fn star_star_in_the_middle() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn tilde_expansion_with_symlink() {
-    let env = git_env_with_symlinked_repo_in_real_home();
+    let env = git_env_with_symlinked_repo();
     assert_section_value(Condition::new("gitdir:~/symlink-worktree/"), env);
 }
 
@@ -74,7 +74,7 @@ fn tilde_expansion_with_symlink() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn dot_path_with_symlink() {
-    let env = git_env_with_symlinked_repo_in_real_home();
+    let env = git_env_with_symlinked_repo();
     assert_section_value(
         Condition::new("gitdir:./symlink-worktree/.git").set_user_config_instead_of_repo_config(),
         env,
@@ -111,11 +111,11 @@ mod util {
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::process::Command;
-    use tempfile::tempdir_in;
 
     #[derive(Debug)]
     pub struct GitEnv {
         tempdir: tempfile::TempDir,
+        root_dir: PathBuf,
         git_dir: PathBuf,
         home_dir: PathBuf,
     }
@@ -157,10 +157,14 @@ mod util {
     }
     impl GitEnv {
         fn new_in(tempdir: tempfile::TempDir, repo_name: impl AsRef<Path>, home: Option<PathBuf>) -> Self {
-            let git_dir = git_dir(tempdir.path(), repo_name);
-            let home_dir = home.unwrap_or_else(|| tempdir.path().into());
+            let root_dir = tempdir.path().canonicalize().unwrap();
+            let git_dir = git_dir(&root_dir, repo_name);
+            let home_dir = home
+                .map(|home| home.canonicalize().unwrap())
+                .unwrap_or_else(|| root_dir.clone());
             Self {
                 tempdir,
+                root_dir,
                 git_dir,
                 home_dir,
             }
@@ -174,16 +178,7 @@ mod util {
     }
 
     impl GitEnv {
-        pub fn repo_in_home(repo_name: impl AsRef<Path>) -> Self {
-            let tempdir = tempdir_in(dirs::home_dir().unwrap()).unwrap();
-            let home = tempdir.path().to_owned().into();
-            Self::new_in(tempdir, repo_name, home)
-        }
         pub fn repo_name(repo_name: impl AsRef<Path>) -> Self {
-            Self::new_in(tempfile::tempdir().unwrap(), repo_name, None)
-        }
-
-        pub fn repo_name_with_root_as_home(repo_name: impl AsRef<Path>) -> Self {
             let tempdir = tempfile::tempdir().unwrap();
             let home = tempdir.path().to_owned();
             Self::new_in(tempdir, repo_name, Some(home))
@@ -202,7 +197,7 @@ mod util {
             &self.home_dir
         }
         pub fn root_dir(&self) -> &Path {
-            self.tempdir.path()
+            &self.root_dir
         }
     }
 
@@ -233,7 +228,12 @@ mod util {
             .output()
             .unwrap();
 
-        assert!(output.status.success(), "{:?}", output);
+        assert!(
+            output.status.success(),
+            "{:?}, {:?} for debugging",
+            output,
+            env.tempdir.into_path()
+        );
         let git_output: BString = output.stdout.trim_end().into();
         assert_eq!(
             git_output,
@@ -241,7 +241,8 @@ mod util {
                 Value::Original => "base-value",
                 Value::Override => "override-value",
             },
-            "git assert equals"
+            "git disagrees with git-config, {:?} for debugging",
+            env.tempdir.into_path()
         );
     }
 
@@ -312,23 +313,14 @@ mod util {
                 Value::Original => "base-value",
                 Value::Override => "override-value",
             })),
-            "git-config disagrees with the expected value",
+            "git-config disagrees with the expected value, {:?} for debugging",
+            env.tempdir.into_path()
         );
         assure_git_agrees(expected, env);
     }
 
     pub fn git_env_with_symlinked_repo() -> GitEnv {
-        let mut env = GitEnv::repo_name_with_root_as_home("worktree");
-        let link_destination = env.root_dir().join("symlink-worktree");
-        create_symlink(&link_destination, env.worktree_dir());
-
-        let git_dir_through_symlink = link_destination.join(".git");
-        env.set_git_dir(git_dir_through_symlink);
-        env
-    }
-
-    pub fn git_env_with_symlinked_repo_in_real_home() -> GitEnv {
-        let mut env = GitEnv::repo_in_home("worktree");
+        let mut env = GitEnv::repo_name("worktree");
         let link_destination = env.root_dir().join("symlink-worktree");
         create_symlink(&link_destination, env.worktree_dir());
 
@@ -337,6 +329,4 @@ mod util {
         env
     }
 }
-use util::{
-    assert_section_value, git_env_with_symlinked_repo, git_env_with_symlinked_repo_in_real_home, Condition, GitEnv,
-};
+use util::{assert_section_value, git_env_with_symlinked_repo, Condition, GitEnv};
