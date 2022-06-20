@@ -138,6 +138,7 @@ fn gitdir_matches(
     from_paths::Options {
         git_install_dir,
         git_dir,
+        home_dir,
         ..
     }: from_paths::Options<'_>,
     wildmatch_mode: git_glob::wildmatch::Mode,
@@ -151,7 +152,7 @@ fn gitdir_matches(
     }
     let mut pattern_path = {
         let cow = Cow::Borrowed(condition_path.as_bytes());
-        let path = values::Path::from(cow).interpolate(git_install_dir).ok()?;
+        let path = values::Path::from(cow).interpolate(git_install_dir, home_dir).ok()?;
         git_path::to_unix_separators(git_path::into_bstr(path)).into_owned()
     };
 
@@ -192,9 +193,13 @@ fn gitdir_matches(
 fn resolve(
     path: values::Path<'_>,
     target_config_path: Option<&Path>,
-    options: from_paths::Options<'_>,
+    from_paths::Options {
+        git_install_dir,
+        home_dir,
+        ..
+    }: from_paths::Options<'_>,
 ) -> Result<PathBuf, from_paths::Error> {
-    let path = path.interpolate(options.git_install_dir)?;
+    let path = path.interpolate(git_install_dir, home_dir)?;
     let path: PathBuf = if path.is_relative() {
         target_config_path
             .ok_or(from_paths::Error::MissingConfigPath)?

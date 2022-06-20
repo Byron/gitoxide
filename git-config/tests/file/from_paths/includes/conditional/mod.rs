@@ -331,8 +331,12 @@ fn various_gitdir() {
     }
 
     {
-        let dir = dirs::home_dir().unwrap().join(".git");
-        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+        let home = std::env::current_dir().unwrap();
+        let config = File::from_paths(
+            Some(&config_path),
+            options_with_git_dir_in_home(&home.join(".git"), &home),
+        )
+        .unwrap();
         assert_eq!(
             config.strings("core", None, "b"),
             Some(vec![cow_str("1"), cow_str("home-dot-git")]),
@@ -366,8 +370,12 @@ fn various_gitdir() {
     }
 
     {
-        let dir = dirs::home_dir().unwrap().join(".git");
-        let config = File::from_paths(Some(config_path.as_path()), options_with_git_dir(&dir)).unwrap();
+        let home = std::env::current_dir().unwrap();
+        let config = File::from_paths(
+            Some(config_path.as_path()),
+            options_with_git_dir_in_home(&home.join(".git"), &home),
+        )
+        .unwrap();
         assert_eq!(
             config.string("core", None, "b"),
             Some(cow_str("home-dot-git")),
@@ -396,6 +404,14 @@ fn various_gitdir() {
 fn options_with_git_dir(git_dir: &Path) -> from_paths::Options<'_> {
     from_paths::Options {
         git_dir: Some(git_dir),
+        ..Default::default()
+    }
+}
+
+fn options_with_git_dir_in_home<'a>(git_dir: &'a Path, home: &'a Path) -> from_paths::Options<'a> {
+    from_paths::Options {
+        git_dir: Some(git_dir),
+        home_dir: Some(home),
         ..Default::default()
     }
 }

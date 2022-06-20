@@ -29,7 +29,7 @@ fn no_interpolation_for_paths_without_tilde_or_prefix() {
 #[test]
 fn empty_path_is_error() {
     assert!(matches!(
-        Path::from(Cow::Borrowed(b(""))).interpolate(None),
+        Path::from(Cow::Borrowed(b(""))).interpolate(None, None),
         Err(interpolate::Error::Missing { what: "path" })
     ));
 }
@@ -45,7 +45,7 @@ fn prefix_substitutes_git_install_dir() {
                 &std::path::PathBuf::from(format!("{}{}{}", git_install_dir, std::path::MAIN_SEPARATOR, expected));
             assert_eq!(
                 &*Path::from(Cow::Borrowed(*val))
-                    .interpolate(Some(std::path::Path::new(git_install_dir)))
+                    .interpolate(std::path::Path::new(git_install_dir).into(), None)
                     .unwrap(),
                 expected,
                 "prefix interpolation keeps separators as they are"
@@ -60,7 +60,7 @@ fn prefix_substitution_skipped_with_dot_slash() {
     let git_install_dir = "/tmp/git";
     assert_eq!(
         Path::from(Cow::Borrowed(b(path)))
-            .interpolate(Some(std::path::Path::new(git_install_dir)))
+            .interpolate(std::path::Path::new(git_install_dir).into(), None)
             .unwrap(),
         std::path::Path::new(path)
     );
@@ -69,13 +69,13 @@ fn prefix_substitution_skipped_with_dot_slash() {
 #[test]
 fn tilde_substitutes_current_user() {
     let path = &b"~/foo/bar"[..];
-    let expected = format!(
-        "{}{}foo/bar",
-        dirs::home_dir().expect("empty home").display(),
-        std::path::MAIN_SEPARATOR
-    );
+    let home = std::env::current_dir().unwrap();
+    let expected = format!("{}{}foo/bar", home.display(), std::path::MAIN_SEPARATOR);
     assert_eq!(
-        Path::from(Cow::Borrowed(path)).interpolate(None).unwrap().as_ref(),
+        Path::from(Cow::Borrowed(path))
+            .interpolate(None, Some(&home))
+            .unwrap()
+            .as_ref(),
         std::path::Path::new(&expected),
         "note that path separators are not turned into slashes as we work with `std::path::Path`"
     );
@@ -101,7 +101,7 @@ fn tilde_with_given_user() {
         let path = format!("{}{}{}", specific_user_home, std::path::MAIN_SEPARATOR, path_suffix);
         let expected = format!("{}{}{}", home, std::path::MAIN_SEPARATOR, path_suffix);
         assert_eq!(
-            Path::from(Cow::Borrowed(b(&path))).interpolate(None).unwrap(),
+            Path::from(Cow::Borrowed(b(&path))).interpolate(None, None).unwrap(),
             std::path::Path::new(&expected),
             "it keeps path separators as is"
         );

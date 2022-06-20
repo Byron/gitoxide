@@ -157,6 +157,27 @@ mod util {
             self
         }
     }
+    impl GitEnv {
+        fn new_in(tempdir: tempfile::TempDir, repo_name: impl AsRef<Path>, home: Option<PathBuf>) -> Self {
+            let git_dir = git_dir(tempdir.path(), repo_name);
+            let worktree_dir = git_dir.parent().unwrap().into();
+            Self {
+                tempdir,
+                git_dir,
+                worktree_dir,
+                home_dir: match home {
+                    Some(home) => home,
+                    None => home_dir().unwrap(),
+                },
+            }
+        }
+
+        fn include_options(&self) -> git_config::file::from_paths::Options {
+            let mut opts = options_with_git_dir(self.git_dir());
+            opts.home_dir = Some(self.home_dir());
+            opts
+        }
+    }
 
     impl GitEnv {
         pub fn repo_in_home(repo_name: impl AsRef<Path>) -> (Self, String) {
@@ -172,20 +193,6 @@ mod util {
             let tempdir = tempfile::tempdir().unwrap();
             let home = tempdir.path().to_owned();
             Self::new_in(tempdir, repo_name, Some(home))
-        }
-
-        fn new_in(tempdir: tempfile::TempDir, repo_name: impl AsRef<Path>, home: Option<PathBuf>) -> Self {
-            let git_dir = git_dir(tempdir.path(), repo_name);
-            let worktree_dir = git_dir.parent().unwrap().into();
-            Self {
-                tempdir,
-                git_dir,
-                worktree_dir,
-                home_dir: match home {
-                    Some(home) => home,
-                    None => home_dir().unwrap(),
-                },
-            }
         }
 
         pub fn git_dir(&self) -> &Path {
@@ -307,7 +314,7 @@ mod util {
             paths.push(env.home_dir().join(".gitconfig"));
         }
 
-        let config = git_config::File::from_paths(paths, options_with_git_dir(&env.git_dir())).unwrap();
+        let config = git_config::File::from_paths(paths, env.include_options()).unwrap();
 
         assert_eq!(
             config.string("section", None, "value"),

@@ -236,8 +236,8 @@ pub mod path {
         /// Interpolates this path into a file system path.
         ///
         /// If this path starts with `~/` or `~user/` or `%(prefix)/`
-        ///  - `~/` is expanded to the value of `$HOME` on unix based systems. On windows, `SHGetKnownFolderPath` is used.
-        /// See also [dirs](https://crates.io/crates/dirs).
+        ///  - `~/` is expanded to the value of `home_dir`. The caller can use the [dirs](https://crates.io/crates/dirs) crate to obtain it.
+        ///    It it is required but not set, an error is produced.
         ///  - `~user/` to the specified user’s home directory, e.g `~alice` might get expanded to `/home/alice` on linux.
         /// The interpolation uses `getpwnam` sys call and is therefore not available on windows. See also [pwd](https://crates.io/crates/pwd).
         ///  - `%(prefix)/` is expanded to the location where gitoxide is installed. This location is not known at compile time and therefore need to be
@@ -247,6 +247,7 @@ pub mod path {
         pub fn interpolate(
             self,
             git_install_dir: Option<&std::path::Path>,
+            home_dir: Option<&std::path::Path>,
         ) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
             if self.is_empty() {
                 return Err(interpolate::Error::Missing { what: "path" });
@@ -268,7 +269,7 @@ pub mod path {
                     })?;
                 Ok(git_install_dir.join(path_without_trailing_slash).into())
             } else if self.starts_with(USER_HOME) {
-                let home_path = dirs::home_dir().ok_or(interpolate::Error::Missing { what: "home dir" })?;
+                let home_path = home_dir.ok_or(interpolate::Error::Missing { what: "home dir" })?;
                 let (_prefix, val) = self.split_at(USER_HOME.len());
                 let val = git_path::try_from_byte_slice(val).map_err(|err| interpolate::Error::Utf8Conversion {
                     what: "path past ~/",

@@ -20,7 +20,6 @@ git-sec = { version = "^0.3.0", path = "../git-sec" }
 git-ref = { version = "^0.15.0", path = "../git-ref" }
 git-glob = { version = "0.3.0", path = "../git-glob" }
 
-dirs = "4"
 nom = { version = "7", default_features = false, features = [ "std" ] }
 memchr = "2"
 serde_crate = { version = "1", package = "serde", optional = true }
@@ -37,6 +36,7 @@ serial_test = "0.7.0"
 serde_derive = "1.0"
 criterion = "0.3"
 tempfile = "3.2.0"
+dirs = "4"
 
 [[bench]]
 name = "large_config_file"

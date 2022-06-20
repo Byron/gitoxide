@@ -1,9 +1,8 @@
-use std::{borrow::Cow, convert::TryFrom, error::Error, path::PathBuf};
-
 use git_config::{
     values::{Boolean, Bytes, TrueVariant, *},
     File,
 };
+use std::{borrow::Cow, convert::TryFrom, error::Error};
 
 /// Asserts we can cast into all variants of our type
 #[test]
@@ -87,12 +86,11 @@ fn get_value_for_all_provided_values() -> crate::Result {
     );
 
     let actual = file.value::<git_config::values::Path>("core", None, "location")?;
-    assert_eq!(
-        &*actual, "~/tmp",
-        "no interpolation occurs when querying a path due to lack of context"
-    );
-    let expected = PathBuf::from(format!("{}/tmp", dirs::home_dir().expect("empty home dir").display()));
-    assert_eq!(actual.interpolate(None).unwrap(), expected);
+    assert_eq!(&*actual, "~/tmp", "no interpolation occurs when querying a path");
+
+    let home = std::env::current_dir()?;
+    let expected = home.join("tmp");
+    assert_eq!(actual.interpolate(None, home.as_path().into()).unwrap(), expected);
 
     let actual = file.path("core", None, "location").expect("present");
     assert_eq!(&*actual, "~/tmp",);
