@@ -66,9 +66,10 @@ mod cache {
             let is_bare = config_bool(&config, "core.bare", false)?;
             let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
             let ignore_case = config_bool(&config, "core.ignorecase", false)?;
+            let home = dirs::home_dir(); // TODO: see if git-sec should be used here
             let excludes_file = config
                 .path("core", None, "excludesFile")
-                .map(|p| p.interpolate(git_install_dir).map(|p| p.into_owned()))
+                .map(|p| p.interpolate(git_install_dir, home.as_deref()).map(|p| p.into_owned()))
                 .transpose()?;
             let repo_format_version = config
                 .value::<Integer>("core", None, "repositoryFormatVersion")
