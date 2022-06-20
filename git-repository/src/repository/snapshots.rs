@@ -97,7 +97,7 @@ impl crate::Repository {
             .ok()
             .and_then(|path| {
                 let install_dir = self.install_dir().ok()?;
-                let home = dirs::home_dir(); // TODO: see if git-sec should be used here
+                let home = self.config.home_dir();
                 match path.interpolate(Some(install_dir.as_path()), home.as_deref()) {
                     Ok(path) => Some(path),
                     Err(e) => {

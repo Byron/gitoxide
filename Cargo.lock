@@ -1084,7 +1084,6 @@ version = "0.6.0"
 dependencies = [
  "bstr",
  "criterion",
- "dirs",
  "git-features",
  "git-glob",
  "git-path",
@@ -1427,7 +1426,6 @@ dependencies = [
  "anyhow",
  "byte-unit",
  "clru",
- "dirs",
  "document-features",
  "git-actor",
  "git-attributes",
