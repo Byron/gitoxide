@@ -58,11 +58,12 @@ fn assorted() {
 
 #[test]
 fn link_cycle_is_detected() {
-    let tmp_dir = CanonicalizedTempDir::new();
+    let tmp_dir = canonicalized_tempdir().unwrap();
+    let dir = tmp_dir.path();
     let link_name = "link";
-    let link_destination = tmp_dir.join(link_name);
-    let link_path = tmp_dir.join(link_name);
-    create_symlink(&link_path, &link_destination);
+    let link_destination = dir.join(link_name);
+    let link_path = dir.join(link_name);
+    create_symlink(&link_path, &link_destination).unwrap();
     let max_symlinks = 8;
 
     assert!(
@@ -76,10 +77,11 @@ fn link_cycle_is_detected() {
 
 #[test]
 fn symlink_with_absolute_path_gets_expanded() {
-    let tmp_dir = CanonicalizedTempDir::new();
-    let link_from = tmp_dir.join("a").join("b").join("tmp_p_q_link");
-    let link_to = tmp_dir.join("p").join("q");
-    create_symlink(&link_from, &link_to);
+    let tmp_dir = canonicalized_tempdir().unwrap();
+    let dir = tmp_dir.path();
+    let link_from = dir.join("a").join("b").join("tmp_p_q_link");
+    let link_to = dir.join("p").join("q");
+    create_symlink(&link_from, &link_to).unwrap();
     let max_symlinks = 8;
     assert_eq!(
         realpath_opts(link_from.join(".git"), tmp_dir, max_symlinks).unwrap(),
@@ -90,21 +92,26 @@ fn symlink_with_absolute_path_gets_expanded() {
 
 #[test]
 fn symlink_to_relative_path_gets_expanded_into_absolute_path() {
-    let cwd = CanonicalizedTempDir::new();
+    let cwd = canonicalized_tempdir().unwrap();
+    let dir = cwd.path();
     let link_name = "pq_link";
-    create_symlink(&cwd.join("r").join(link_name), &Path::new("p").join("q"));
+    create_symlink(&dir.join("r").join(link_name), &Path::new("p").join("q")).unwrap();
     assert_eq!(
-        realpath_opts(Path::new(link_name).join(".git"), cwd.join("r"), 8).unwrap(),
-        cwd.join("r").join("p").join("q").join(".git"),
+        realpath_opts(Path::new(link_name).join(".git"), dir.join("r"), 8).unwrap(),
+        dir.join("r").join("p").join("q").join(".git"),
         "symlink to relative path gets expanded into absolute path"
     );
 }
 
 #[test]
 fn symlink_processing_is_disabled_if_the_value_is_zero() {
-    let cwd = CanonicalizedTempDir::new();
+    let cwd = canonicalized_tempdir().unwrap();
     let link_name = "x_link";
-    create_symlink(&cwd.join(link_name), Path::new("link destination does not exist"));
+    create_symlink(
+        &cwd.path().join(link_name),
+        Path::new("link destination does not exist"),
+    )
+    .unwrap();
     assert!(
         matches!(
             realpath_opts(&Path::new(link_name).join(".git"), &cwd, 0),
@@ -114,39 +121,24 @@ fn symlink_processing_is_disabled_if_the_value_is_zero() {
     );
 }
 
-pub struct CanonicalizedTempDir {
-    pub dir: tempfile::TempDir,
-}
+pub fn create_symlink(from: impl AsRef<Path>, to: impl AsRef<Path>) -> std::io::Result<()> {
+    std::fs::create_dir_all(from.as_ref().parent().unwrap())?;
 
-pub fn create_symlink(from: &Path, to: &Path) {
-    std::fs::create_dir_all(from.parent().unwrap()).unwrap();
     #[cfg(not(target_os = "windows"))]
-    std::os::unix::fs::symlink(to, &from).unwrap();
+    {
+        std::os::unix::fs::symlink(to, from)
+    }
+
     #[cfg(target_os = "windows")]
-    std::os::windows::fs::symlink_file(to, &from).unwrap();
+    std::os::windows::fs::symlink_file(to, from)
 }
 
-impl CanonicalizedTempDir {
-    pub fn new() -> Self {
-        #[cfg(windows)]
-        let canonicalized_tempdir = std::env::temp_dir();
-        #[cfg(not(windows))]
-        let canonicalized_tempdir = std::env::temp_dir().canonicalize().unwrap();
-        let dir = tempfile::tempdir_in(canonicalized_tempdir).unwrap();
-        Self { dir }
-    }
-}
+fn canonicalized_tempdir() -> crate::Result<tempfile::TempDir> {
+    #[cfg(windows)]
+    let canonicalized_tempdir = std::env::temp_dir();
 
-impl AsRef<Path> for CanonicalizedTempDir {
-    fn as_ref(&self) -> &Path {
-        self
-    }
-}
+    #[cfg(not(windows))]
+    let canonicalized_tempdir = std::env::temp_dir().canonicalize()?;
 
-impl std::ops::Deref for CanonicalizedTempDir {
-    type Target = Path;
-
-    fn deref(&self) -> &Self::Target {
-        self.dir.path()
-    }
+    Ok(tempfile::tempdir_in(canonicalized_tempdir)?)
 }
