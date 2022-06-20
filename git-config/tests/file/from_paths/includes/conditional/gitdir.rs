@@ -66,7 +66,7 @@ fn star_star_in_the_middle() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn tilde_expansion_with_symlink() {
-    let env = git_env_with_symlinked_repo();
+    let env = git_env_with_symlinked_repo_in_real_home();
     assert_section_value(Condition::new("gitdir:~/symlink-worktree/"), env);
 }
 
@@ -74,7 +74,7 @@ fn tilde_expansion_with_symlink() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn dot_path_with_symlink() {
-    let env = git_env_with_symlinked_repo();
+    let env = git_env_with_symlinked_repo_in_real_home();
     assert_section_value(
         Condition::new("gitdir:./symlink-worktree/.git").set_user_config_instead_of_repo_config(),
         env,
@@ -117,7 +117,6 @@ mod util {
     pub struct GitEnv {
         tempdir: tempfile::TempDir,
         git_dir: PathBuf,
-        worktree_dir: PathBuf,
         home_dir: PathBuf,
     }
 
@@ -159,12 +158,10 @@ mod util {
     impl GitEnv {
         fn new_in(tempdir: tempfile::TempDir, repo_name: impl AsRef<Path>, home: Option<PathBuf>) -> Self {
             let git_dir = git_dir(tempdir.path(), repo_name);
-            let worktree_dir = git_dir.parent().unwrap().into();
             let home_dir = home.unwrap_or_else(|| tempdir.path().into());
             Self {
                 tempdir,
                 git_dir,
-                worktree_dir,
                 home_dir,
             }
         }
@@ -177,11 +174,10 @@ mod util {
     }
 
     impl GitEnv {
-        pub fn repo_in_home(repo_name: impl AsRef<Path>) -> (Self, String) {
+        pub fn repo_in_home(repo_name: impl AsRef<Path>) -> Self {
             let tempdir = tempdir_in(dirs::home_dir().unwrap()).unwrap();
-            let basename = tempdir.path().file_name().unwrap().to_str().unwrap().into();
             let home = tempdir.path().to_owned().into();
-            (Self::new_in(tempdir, repo_name, home), basename)
+            Self::new_in(tempdir, repo_name, home)
         }
         pub fn repo_name(repo_name: impl AsRef<Path>) -> Self {
             Self::new_in(tempfile::tempdir().unwrap(), repo_name, None)
@@ -200,7 +196,7 @@ mod util {
             self.git_dir = git_dir;
         }
         pub fn worktree_dir(&self) -> &Path {
-            &self.worktree_dir
+            self.git_dir.parent().unwrap()
         }
         pub fn home_dir(&self) -> &Path {
             &self.home_dir
@@ -228,12 +224,12 @@ mod util {
         include_path
     }
 
-    fn assure_git_agrees(expected: Value, env: &GitEnv) {
+    fn assure_git_agrees(expected: Value, env: GitEnv) {
         let output = Command::new("git")
             .args(["config", "--get", "section.value"])
             .env("HOME", env.home_dir())
             .env("GIT_DIR", env.git_dir())
-            .current_dir(env.git_dir())
+            .current_dir(env.worktree_dir())
             .output()
             .unwrap();
 
@@ -280,7 +276,7 @@ mod util {
                 &format!("includeIf.{}.path", condition.as_ref()),
                 &escape_backslashes(override_config_dir_file.as_path()),
             ])
-            .current_dir(env.git_dir())
+            .current_dir(env.worktree_dir())
             .env("HOME", env.home_dir())
             .output()
             .unwrap();
@@ -318,11 +314,21 @@ mod util {
             })),
             "git-config disagrees with the expected value",
         );
-        assure_git_agrees(expected, &env);
+        assure_git_agrees(expected, env);
     }
 
     pub fn git_env_with_symlinked_repo() -> GitEnv {
-        let (mut env, _) = GitEnv::repo_in_home("worktree");
+        let mut env = GitEnv::repo_name_with_root_as_home("worktree");
+        let link_destination = env.root_dir().join("symlink-worktree");
+        create_symlink(&link_destination, env.worktree_dir());
+
+        let git_dir_through_symlink = link_destination.join(".git");
+        env.set_git_dir(git_dir_through_symlink);
+        env
+    }
+
+    pub fn git_env_with_symlinked_repo_in_real_home() -> GitEnv {
+        let mut env = GitEnv::repo_in_home("worktree");
         let link_destination = env.root_dir().join("symlink-worktree");
         create_symlink(&link_destination, env.worktree_dir());
 
@@ -331,4 +337,6 @@ mod util {
         env
     }
 }
-use util::{assert_section_value, git_env_with_symlinked_repo, Condition, GitEnv};
+use util::{
+    assert_section_value, git_env_with_symlinked_repo, git_env_with_symlinked_repo_in_real_home, Condition, GitEnv,
+};
