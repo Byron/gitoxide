@@ -1,5 +1,5 @@
 use serial_test::serial;
-use tempfile::{tempdir, tempdir_in};
+use tempfile::tempdir;
 
 use crate::file::from_paths::includes::conditional::create_symlink;
 
@@ -14,20 +14,12 @@ fn relative_path_with_trailing_slash() {
 #[test]
 #[serial]
 fn tilde_expansion() {
-    let tmp_dir = tempdir_in(home()).unwrap();
-    let root = tmp_dir
-        .path()
-        .components()
-        .last()
-        .unwrap()
-        .as_os_str()
-        .to_str()
-        .unwrap();
+    let (tmp_dir, basename) = tempdir_in_home_and_basename();
     let git_dir = git_dir(tmp_dir.path(), "foo");
 
     assert_section_value(
         GitEnv::new(git_dir, None),
-        Options::new(format!("gitdir:~/{}/foo/", root)),
+        Options::new(format!("gitdir:~/{}/foo/", basename)),
     );
 }
 
@@ -93,15 +85,7 @@ fn star_star_in_the_middle() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn tilde_expansion_with_symlink() {
-    let tmp_dir = tempdir_in(home()).unwrap();
-    let root = tmp_dir
-        .path()
-        .components()
-        .last()
-        .unwrap()
-        .as_os_str()
-        .to_str()
-        .unwrap();
+    let (tmp_dir, basename) = tempdir_in_home_and_basename();
 
     let _ = git_dir(tmp_dir.path(), "foo");
     create_symlink(
@@ -112,7 +96,7 @@ fn tilde_expansion_with_symlink() {
 
     assert_section_value(
         GitEnv::new(git_dir, None),
-        Options::new(format!("gitdir:~/{}/bar/", root)),
+        Options::new(format!("gitdir:~/{}/bar/", basename)),
     );
 }
 
@@ -120,7 +104,7 @@ fn tilde_expansion_with_symlink() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn dot_path_with_symlink() {
-    let tmp_dir = tempdir_in(home()).unwrap();
+    let (tmp_dir, _) = tempdir_in_home_and_basename();
     let _ = git_dir(tmp_dir.path(), "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
@@ -138,7 +122,7 @@ fn dot_path_with_symlink() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn dot_path_matching_symlink() {
-    let tmp_dir = tempdir_in(home()).unwrap();
+    let (tmp_dir, _) = tempdir_in_home_and_basename();
     let _ = git_dir(tmp_dir.path(), "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
@@ -156,7 +140,7 @@ fn dot_path_matching_symlink() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn dot_path_matching_symlink_with_icase() {
-    let tmp_dir = tempdir_in(home()).unwrap();
+    let (tmp_dir, _) = tempdir_in_home_and_basename();
     let _ = git_dir(tmp_dir.path(), "foo");
     create_symlink(
         tmp_dir.path().join("bar").as_path(),
@@ -179,6 +163,7 @@ mod util {
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::process::Command;
+    use tempfile::tempdir_in;
 
     pub struct GitEnv {
         git_dir: PathBuf,
@@ -223,14 +208,14 @@ mod util {
     }
 
     impl GitEnv {
-        pub fn new(git_dir: PathBuf, home_dir: Option<PathBuf>) -> Self {
+        pub fn new(git_dir: PathBuf, home: Option<PathBuf>) -> Self {
             let repo_dir = git_dir.parent().unwrap().into();
             Self {
                 git_dir,
                 repo_dir,
-                home_dir: match home_dir {
-                    Some(home_dir) => home_dir,
-                    None => home(),
+                home_dir: match home {
+                    Some(home) => home,
+                    None => home_dir().unwrap(),
                 },
             }
         }
@@ -244,47 +229,6 @@ mod util {
         pub fn home_dir(&self) -> &Path {
             &self.home_dir
         }
-    }
-
-    pub fn assert_section_value(
-        env: GitEnv,
-        Options {
-            condition,
-            expected,
-            config_location,
-        }: Options,
-    ) {
-        write_config(condition, &env, config_location);
-        git_assert_eq(expected, &env);
-
-        let mut paths = vec![env.git_dir().join("config")];
-        if config_location == ConfigLocation::User {
-            paths.push(env.home_dir().join(".gitconfig"));
-        }
-
-        let config = git_config::File::from_paths(paths, options_with_git_dir(&env.git_dir())).unwrap();
-
-        assert_eq!(
-            config.string("section", None, "value"),
-            Some(cow_str(match expected {
-                Value::Original => "base-value",
-                Value::Override => "override-value",
-            })),
-            "git-config disagrees with the expected value",
-        );
-    }
-
-    pub fn git_dir(root_dir: &Path, git_dir_suffix: &str) -> PathBuf {
-        let git_dir = root_dir.join(git_dir_suffix).join(".git");
-        std::fs::create_dir_all(&git_dir).unwrap();
-        git_dir
-    }
-
-    pub fn temporary_dir_for_git(subdir_name: impl AsRef<Path>) -> (tempfile::TempDir, PathBuf) {
-        let tmp = tempfile::tempdir().unwrap();
-        let git_dir = tmp.path().join(subdir_name).join(".git");
-        std::fs::create_dir_all(&git_dir).unwrap();
-        (tmp, git_dir)
     }
 
     fn write_config(condition: impl AsRef<str>, env: &GitEnv, overwrite_config_location: ConfigLocation) {
@@ -364,8 +308,51 @@ mod util {
         assert!(output.status.success(), "git config set value failed: {:?}", output);
     }
 
-    pub fn home() -> PathBuf {
-        home_dir().unwrap()
+    pub fn tempdir_in_home_and_basename() -> (tempfile::TempDir, String) {
+        let tmp_dir = tempdir_in(home_dir().unwrap()).unwrap();
+        let basename = tmp_dir.path().file_name().unwrap().to_str().unwrap().into();
+        (tmp_dir, basename)
+    }
+
+    pub fn assert_section_value(
+        env: GitEnv,
+        Options {
+            condition,
+            expected,
+            config_location,
+        }: Options,
+    ) {
+        write_config(condition, &env, config_location);
+        git_assert_eq(expected, &env);
+
+        let mut paths = vec![env.git_dir().join("config")];
+        if config_location == ConfigLocation::User {
+            paths.push(env.home_dir().join(".gitconfig"));
+        }
+
+        let config = git_config::File::from_paths(paths, options_with_git_dir(&env.git_dir())).unwrap();
+
+        assert_eq!(
+            config.string("section", None, "value"),
+            Some(cow_str(match expected {
+                Value::Original => "base-value",
+                Value::Override => "override-value",
+            })),
+            "git-config disagrees with the expected value",
+        );
+    }
+
+    pub fn git_dir(root_dir: &Path, git_dir_suffix: &str) -> PathBuf {
+        let git_dir = root_dir.join(git_dir_suffix).join(".git");
+        std::fs::create_dir_all(&git_dir).unwrap();
+        git_dir
+    }
+
+    pub fn temporary_dir_for_git(subdir_name: impl AsRef<Path>) -> (tempfile::TempDir, PathBuf) {
+        let tmp = tempfile::tempdir().unwrap();
+        let git_dir = tmp.path().join(subdir_name).join(".git");
+        std::fs::create_dir_all(&git_dir).unwrap();
+        (tmp, git_dir)
     }
 }
-pub use util::{assert_section_value, git_dir, home, temporary_dir_for_git, ConfigLocation, GitEnv, Options, Value};
+use util::{assert_section_value, git_dir, tempdir_in_home_and_basename, temporary_dir_for_git, GitEnv, Options};
