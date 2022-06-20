@@ -1,7 +1,6 @@
+use std::{borrow::Cow, env, path::PathBuf};
+
 use bstr::{ByteSlice, ByteVec};
-use std::borrow::Cow;
-use std::env;
-use std::path::PathBuf;
 
 /// The error returned by [git_discover::discover()][function::discover()].
 #[derive(Debug, thiserror::Error)]
@@ -119,8 +118,7 @@ mod parse_ceiling_dirs {
     #[test]
     #[cfg(unix)]
     fn from_environment_format() -> std::io::Result<()> {
-        use std::fs;
-        use std::os::unix::fs::symlink;
+        use std::{fs, os::unix::fs::symlink};
 
         // Setup filesystem
         let dir = tempfile::tempdir().expect("success creating temp dir");

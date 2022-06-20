@@ -307,6 +307,14 @@ fn present_and_validate_dependencies(
                             ..
                         })),
                     ..
+                }
+                | dependency::Mode::ToBePublished {
+                    adjustment:
+                        VersionAdjustment::Breakage {
+                            bump,
+                            causing_dependency_names,
+                            ..
+                        },
                 } => Some((dep, bump, causing_dependency_names)),
                 _ => None,
             })

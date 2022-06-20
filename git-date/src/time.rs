@@ -1,6 +1,15 @@
 use std::io;
 
-use crate::{Sign, Time, SPACE};
+use crate::Time;
+
+/// Indicates if a number is positive or negative for use in [`Time`].
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[allow(missing_docs)]
+pub enum Sign {
+    Plus,
+    Minus,
+}
 
 impl From<i32> for Sign {
     fn from(v: i32) -> Self {
@@ -41,7 +50,7 @@ impl Time {
     pub fn write_to(&self, mut out: impl io::Write) -> io::Result<()> {
         let mut itoa = itoa::Buffer::new();
         out.write_all(itoa.format(self.seconds_since_unix_epoch).as_bytes())?;
-        out.write_all(SPACE)?;
+        out.write_all(b" ")?;
         out.write_all(match self.sign {
             Sign::Plus => b"+",
             Sign::Minus => b"-",

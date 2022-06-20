@@ -7,4 +7,3 @@ pub fn fixture(path: &str) -> PathBuf {
 }
 
 mod signature;
-mod time;

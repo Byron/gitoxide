@@ -192,7 +192,23 @@ pub mod path {
     use std::borrow::Cow;
 
     #[cfg(not(any(target_os = "android", target_os = "windows")))]
-    use pwd::Passwd;
+    fn home_for_user(name: &str) -> Option<std::path::PathBuf> {
+        let cname = std::ffi::CString::new(name).ok()?;
+        // SAFETY: calling this in a threaded program that modifies the pw database is not actually safe.
+        //         TODO: use the `*_r` version, but it's much harder to use.
+        #[allow(unsafe_code)]
+        let pwd = unsafe { libc::getpwnam(cname.as_ptr()) };
+        if pwd.is_null() {
+            None
+        } else {
+            use std::os::unix::ffi::OsStrExt;
+            // SAFETY: pw_dir is a cstr and it lives as long as… well, we hope nobody changes the pw database while we are at it
+            //         from another thread. Otherwise it lives long enough.
+            #[allow(unsafe_code)]
+            let cstr = unsafe { std::ffi::CStr::from_ptr((*pwd).pw_dir) };
+            Some(std::ffi::OsStr::from_bytes(cstr.to_bytes()).into())
+        }
+    }
 
     use crate::values::Path;
 
@@ -211,8 +227,6 @@ pub mod path {
             },
             #[error("Ill-formed UTF-8 in username")]
             UsernameConversion(#[from] std::str::Utf8Error),
-            #[error("User home info missing")]
-            PwdFileQuery,
             #[error("User interpolation is not available on this platform")]
             UserInterpolationUnsupported,
         }
@@ -282,10 +296,7 @@ pub mod path {
                 .ok_or(interpolate::Error::Missing { what: "/" })?;
             let (username, path_with_leading_slash) = val.split_at(i);
             let username = std::str::from_utf8(username)?;
-            let home = Passwd::from_name(username)
-                .map_err(|_| interpolate::Error::PwdFileQuery)?
-                .ok_or(interpolate::Error::Missing { what: "pwd user info" })?
-                .dir;
+            let home = home_for_user(username).ok_or(interpolate::Error::Missing { what: "pwd user info" })?;
             let path_past_user_prefix =
                 git_path::try_from_byte_slice(&path_with_leading_slash["/".len()..]).map_err(|err| {
                     interpolate::Error::Utf8Conversion {
@@ -293,7 +304,7 @@ pub mod path {
                         err,
                     }
                 })?;
-            Ok(std::path::PathBuf::from(home).join(path_past_user_prefix).into())
+            Ok(home.join(path_past_user_prefix).into())
         }
     }
 }

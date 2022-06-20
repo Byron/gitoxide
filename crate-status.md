@@ -252,6 +252,7 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
 
 ### git-date
 * [ ] parse git dates
+* [ ] serialize `Time`
  
 ### git-credentials
 * [x] launch git credentials helpers with a given action
@@ -310,8 +311,11 @@ Make it the best-performing implementation and the most convenient one.
 * [ ] access to all attributes information
  
 ### git-revision
-* find specifications for revisions (like `git name-rev`)
-* parse specifications into revisions (like `git rev-parse`)
+* [x] `describe()` (similar to `git name-rev`)
+* parse specifications 
+    * [ ] parsing and navigation
+    * [ ] full date parsing support (depends on `git-date`)
+    * [ ] revision ranges
  
 ### git-submodule
 * CRUD for submodules
@@ -413,6 +417,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [ ] support for `GIT_CEILING_DIRECTORIES` environment variable
         * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
     * [ ] rev-parse
+        - **unsupported**
+            * regex 
     * [x] instantiation
     * [x] access to refs and objects
     * **traverse** 

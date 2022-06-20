@@ -64,6 +64,12 @@ impl<'a> File<'a> {
             paths.push(PathBuf::from(git_dir).join("config"));
         }
 
+        // To support more platforms/configurations:
+        // Drop any possible config locations which aren't present to avoid
+        // `parser::parse_from_path` failing too early with "not found" before
+        // it reaches a path which _does_ exist.
+        let paths = paths.into_iter().filter(|p| p.exists());
+
         File::from_paths(paths, options)
     }
 

@@ -7,10 +7,10 @@ use std::{
 use bstr::BString;
 use dirs::home_dir;
 use git_config::File;
-use git_path::create_symlink;
 use serial_test::serial;
 use tempfile::{tempdir, tempdir_in};
 
+use crate::file::from_paths::includes::conditional::create_symlink;
 use crate::file::{
     cow_str,
     from_paths::{escape_backslashes, includes::conditional::options_with_git_dir},

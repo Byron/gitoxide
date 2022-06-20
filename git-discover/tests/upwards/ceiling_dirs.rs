@@ -1,6 +1,8 @@
-use crate::upwards::repo_path;
-use git_discover::upwards::Options;
 use std::path::Path;
+
+use git_discover::upwards::Options;
+
+use crate::upwards::repo_path;
 
 fn assert_repo_is_current_workdir(path: git_discover::repository::Path, work_dir: &Path) {
     assert_eq!(

@@ -2,6 +2,7 @@
 [INFO ] WOULD auto-bump dependent package 'a' from 0.8.0 to 0.9.0 for publishing
 [INFO ] WOULD auto-bump dependent package 'b' from 0.8.0 to 0.9.0 for publishing, for SAFETY due to breaking package 'a', ignoring computed version 0.8.1
 [INFO ] WOULD auto-bump provided package 'c' from 8.0.0 to 9.0.0 for publishing, for SAFETY due to breaking package 'a', ignoring computed version 8.0.1
+[INFO ] WOULD adjust 2 manifest versions due to breaking change in 'a': 'b' 0.8.0 ➡ 0.9.0, 'c' 8.0.0 ➡ 9.0.0
 [INFO ] WOULD modify existing changelog for 'a'.
 [INFO ] WOULD modify existing changelog for 'b'.
 [INFO ] WOULD create a new changelog for 'c'.

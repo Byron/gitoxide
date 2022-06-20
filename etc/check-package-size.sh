@@ -15,7 +15,6 @@ function indent () {
 }
 
 echo "in root: gitoxide CLI"
-#indent cargo diet -n --package-size-limit 25KB - fails right now because of dotted profile.dev.package
 (enter cargo-smart-release && indent cargo diet -n --package-size-limit 95KB)
 (enter git-actor && indent cargo diet -n --package-size-limit 5KB)
 (enter git-pathspec && indent cargo diet -n --package-size-limit 5KB)
@@ -25,11 +24,11 @@ echo "in root: gitoxide CLI"
 (enter git-index && indent cargo diet -n --package-size-limit 30KB)
 (enter git-worktree && indent cargo diet -n --package-size-limit 30KB)
 (enter git-quote && indent cargo diet -n --package-size-limit 5KB)
-(enter git-revision && indent cargo diet -n --package-size-limit 10KB)
+(enter git-revision && indent cargo diet -n --package-size-limit 20KB)
 (enter git-bitmap && indent cargo diet -n --package-size-limit 5KB)
 (enter git-tempfile && indent cargo diet -n --package-size-limit 25KB)
 (enter git-lock && indent cargo diet -n --package-size-limit 15KB)
-(enter git-config && indent cargo diet -n --package-size-limit 75KB)
+(enter git-config && indent cargo diet -n --package-size-limit 80KB)
 (enter git-hash && indent cargo diet -n --package-size-limit 20KB)
 (enter git-chunk && indent cargo diet -n --package-size-limit 10KB)
 (enter git-rebase && indent cargo diet -n --package-size-limit 5KB)
