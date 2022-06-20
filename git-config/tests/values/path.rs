@@ -85,7 +85,7 @@ fn tilde_substitutes_current_user() {
 #[test]
 fn tilde_with_given_user_is_unsupported_on_windows() {
     assert!(matches!(
-        Path::from(Cow::Borrowed(&b"~baz/foo/bar"[..])).interpolate(None),
+        Path::from(Cow::Borrowed(&b"~baz/foo/bar"[..])).interpolate(None, None),
         Err(interpolate::Error::UserInterpolationUnsupported)
     ));
 }

@@ -9,8 +9,8 @@ fn relative_path_with_trailing_slash() {
 #[test]
 #[serial]
 fn tilde_expansion() {
-    let (env, basename) = GitEnv::repo_in_home("worktree");
-    assert_section_value(Condition::new(format!("gitdir:~/{}/worktree/", basename)), env);
+    let env = GitEnv::repo_name_with_root_as_home("subdir/worktree");
+    assert_section_value(Condition::new("gitdir:~/subdir/worktree/"), env);
 }
 
 #[test]
@@ -66,16 +66,15 @@ fn star_star_in_the_middle() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn tilde_expansion_with_symlink() {
-    let (env, basename) = git_env_with_symlinked_repo();
-    assert_section_value(Condition::new(format!("gitdir:~/{}/symlink-worktree/", basename)), env);
+    let env = git_env_with_symlinked_repo();
+    assert_section_value(Condition::new("gitdir:~/symlink-worktree/"), env);
 }
 
 #[test]
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn dot_path_with_symlink() {
-    let (mut env, _) = git_env_with_symlinked_repo();
-    env.set_home_to_be_root();
+    let env = git_env_with_symlinked_repo();
     assert_section_value(
         Condition::new("gitdir:./symlink-worktree/.git").set_user_config_instead_of_repo_config(),
         env,
@@ -86,7 +85,7 @@ fn dot_path_with_symlink() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn relative_path_matching_symlink() {
-    let (env, _) = git_env_with_symlinked_repo();
+    let env = git_env_with_symlinked_repo();
     assert_section_value(
         Condition::new("gitdir:symlink-worktree/").set_user_config_instead_of_repo_config(),
         env,
@@ -97,7 +96,7 @@ fn relative_path_matching_symlink() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn dot_path_matching_symlink_with_icase() {
-    let (env, _) = git_env_with_symlinked_repo();
+    let env = git_env_with_symlinked_repo();
     assert_section_value(
         Condition::new("gitdir/i:SYMLINK-WORKTREE/").set_user_config_instead_of_repo_config(),
         env,
@@ -109,12 +108,12 @@ mod util {
     use crate::file::from_paths::escape_backslashes;
     use crate::file::from_paths::includes::conditional::{create_symlink, options_with_git_dir};
     use bstr::{BString, ByteSlice};
-    use dirs::home_dir;
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::process::Command;
     use tempfile::tempdir_in;
 
+    #[derive(Debug)]
     pub struct GitEnv {
         tempdir: tempfile::TempDir,
         git_dir: PathBuf,
@@ -161,14 +160,12 @@ mod util {
         fn new_in(tempdir: tempfile::TempDir, repo_name: impl AsRef<Path>, home: Option<PathBuf>) -> Self {
             let git_dir = git_dir(tempdir.path(), repo_name);
             let worktree_dir = git_dir.parent().unwrap().into();
+            let home_dir = home.unwrap_or_else(|| tempdir.path().into());
             Self {
                 tempdir,
                 git_dir,
                 worktree_dir,
-                home_dir: match home {
-                    Some(home) => home,
-                    None => home_dir().unwrap(),
-                },
+                home_dir,
             }
         }
 
@@ -181,9 +178,10 @@ mod util {
 
     impl GitEnv {
         pub fn repo_in_home(repo_name: impl AsRef<Path>) -> (Self, String) {
-            let tempdir = tempdir_in(home_dir().unwrap()).unwrap();
+            let tempdir = tempdir_in(dirs::home_dir().unwrap()).unwrap();
             let basename = tempdir.path().file_name().unwrap().to_str().unwrap().into();
-            (Self::new_in(tempdir, repo_name, None), basename)
+            let home = tempdir.path().to_owned().into();
+            (Self::new_in(tempdir, repo_name, home), basename)
         }
         pub fn repo_name(repo_name: impl AsRef<Path>) -> Self {
             Self::new_in(tempfile::tempdir().unwrap(), repo_name, None)
@@ -200,9 +198,6 @@ mod util {
         }
         pub fn set_git_dir(&mut self, git_dir: PathBuf) {
             self.git_dir = git_dir;
-        }
-        pub fn set_home_to_be_root(&mut self) {
-            self.home_dir = self.tempdir.path().into();
         }
         pub fn worktree_dir(&self) -> &Path {
             &self.worktree_dir
@@ -233,7 +228,7 @@ mod util {
         include_path
     }
 
-    fn git_assert_eq(expected: Value, env: &GitEnv) {
+    fn assure_git_agrees(expected: Value, env: &GitEnv) {
         let output = Command::new("git")
             .args(["config", "--get", "section.value"])
             .env("HOME", env.home_dir())
@@ -307,7 +302,6 @@ mod util {
         env: GitEnv,
     ) {
         write_config(condition, &env, config_location);
-        git_assert_eq(expected, &env);
 
         let mut paths = vec![env.git_dir().join("config")];
         if config_location == ConfigLocation::User {
@@ -324,16 +318,17 @@ mod util {
             })),
             "git-config disagrees with the expected value",
         );
+        assure_git_agrees(expected, &env);
     }
 
-    pub fn git_env_with_symlinked_repo() -> (GitEnv, String) {
-        let (mut env, basename) = GitEnv::repo_in_home("worktree");
+    pub fn git_env_with_symlinked_repo() -> GitEnv {
+        let (mut env, _) = GitEnv::repo_in_home("worktree");
         let link_destination = env.root_dir().join("symlink-worktree");
         create_symlink(&link_destination, env.worktree_dir());
 
         let git_dir_through_symlink = link_destination.join(".git");
         env.set_git_dir(git_dir_through_symlink);
-        (env, basename)
+        env
     }
 }
 use util::{assert_section_value, git_env_with_symlinked_repo, Condition, GitEnv};
