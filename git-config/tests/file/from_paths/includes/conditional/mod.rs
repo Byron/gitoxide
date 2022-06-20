@@ -2,13 +2,10 @@ use std::fs;
 use std::fs::create_dir_all;
 use std::path::{Path, PathBuf};
 
+use crate::file::{cow_str, from_paths::escape_backslashes};
 use git_config::file::from_paths;
 use git_config::File;
 use tempfile::{tempdir, tempdir_in};
-
-pub struct CanonicalizedTempDir {
-    pub dir: tempfile::TempDir,
-}
 
 pub fn create_symlink(from: &Path, to: &Path) {
     create_dir_all(from.parent().unwrap()).unwrap();
@@ -18,38 +15,14 @@ pub fn create_symlink(from: &Path, to: &Path) {
     std::os::windows::fs::symlink_file(to, &from).unwrap();
 }
 
-impl CanonicalizedTempDir {
-    pub fn new() -> Self {
-        #[cfg(windows)]
-        let canonicalized_tempdir = std::env::temp_dir();
-        #[cfg(not(windows))]
-        let canonicalized_tempdir = std::env::temp_dir().canonicalize().unwrap();
-        let dir = tempdir_in(canonicalized_tempdir).unwrap();
-        Self { dir }
-    }
+fn canonicalized_tempdir() -> crate::Result<tempfile::TempDir> {
+    #[cfg(windows)]
+    let canonicalized_tempdir = std::env::temp_dir();
+    #[cfg(not(windows))]
+    let canonicalized_tempdir = std::env::temp_dir().canonicalize()?;
+
+    Ok(tempdir_in(canonicalized_tempdir)?)
 }
-
-impl Default for CanonicalizedTempDir {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AsRef<Path> for CanonicalizedTempDir {
-    fn as_ref(&self) -> &Path {
-        self
-    }
-}
-
-impl std::ops::Deref for CanonicalizedTempDir {
-    type Target = Path;
-
-    fn deref(&self) -> &Self::Target {
-        self.dir.path()
-    }
-}
-
-use crate::file::{cow_str, from_paths::escape_backslashes};
 
 mod gitdir;
 mod onbranch;
@@ -174,14 +147,10 @@ fn gitdir() {
     let relative_with_backslash_path = dir.path().join("x");
     let tmp_path = dir.path().join("tmp");
     let dot_dot_path = dir.path().join("dot_dot");
+    let dir = canonicalized_tempdir().unwrap();
     let tmp_dir_m_n_with_slash = format!(
         "{}/",
-        CanonicalizedTempDir::new()
-            .join("m")
-            .join("n")
-            .to_str()
-            .unwrap()
-            .replace('\\', "/")
+        dir.path().join("m").join("n").to_str().unwrap().replace('\\', "/")
     );
 
     fs::write(
@@ -407,7 +376,8 @@ fn gitdir() {
     }
 
     {
-        let symlink_outside_tempdir_m_n = CanonicalizedTempDir::new().join("m").join("symlink");
+        let dir = canonicalized_tempdir().unwrap();
+        let symlink_outside_tempdir_m_n = dir.path().join("m").join("symlink");
         create_symlink(
             &symlink_outside_tempdir_m_n,
             &PathBuf::from(&format!("{}.git", tmp_dir_m_n_with_slash)),
