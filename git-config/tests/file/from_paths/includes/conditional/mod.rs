@@ -133,7 +133,7 @@ fn pattern_is_current_dir() {
 }
 
 #[test]
-fn gitdir() {
+fn various_gitdir() {
     let dir = tempdir().unwrap();
 
     let config_path = dir.path().join("a");
