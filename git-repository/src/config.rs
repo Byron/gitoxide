@@ -158,6 +158,7 @@ mod cache {
         ///
         /// We never fail for here even if the permission is set to deny as we `git-config` will fail later
         /// if it actually wants to use the home directory - we don't want to fail prematurely.
+        #[cfg(feature = "git-mailmap")]
         pub fn home_dir(&self) -> Option<PathBuf> {
             std::env::var_os("HOME")
                 .map(PathBuf::from)
