@@ -16,65 +16,6 @@ use crate::file::{
     from_paths::{escape_backslashes, includes::conditional::options_with_git_dir},
 };
 
-#[derive(Eq, PartialEq)]
-enum ConfigLocation {
-    Repo,
-    User,
-}
-
-enum Value {
-    Original,
-    Override,
-}
-
-struct Options<'a> {
-    condition: &'a str,
-    env: EnvOverwrite,
-    expected: Value,
-    config_location: ConfigLocation,
-}
-
-struct EnvOverwrite {
-    git_dir: PathBuf,
-    repo_dir: PathBuf,
-    home_dir: PathBuf,
-}
-
-impl Default for EnvOverwrite {
-    fn default() -> Self {
-        Self {
-            git_dir: PathBuf::default(),
-            repo_dir: PathBuf::default(),
-            home_dir: home(),
-        }
-    }
-}
-
-impl EnvOverwrite {
-    fn new(git_dir: PathBuf, home_dir: Option<PathBuf>) -> Self {
-        let repo_dir = git_dir.parent().unwrap().into();
-        Self {
-            git_dir,
-            repo_dir,
-            home_dir: match home_dir {
-                Some(home_dir) => home_dir,
-                None => home(),
-            },
-        }
-    }
-}
-
-impl Default for Options<'_> {
-    fn default() -> Self {
-        Self {
-            condition: "",
-            env: EnvOverwrite::default(),
-            expected: Value::Override,
-            config_location: ConfigLocation::Repo,
-        }
-    }
-}
-
 fn assert_section_value(
     Options {
         condition,
@@ -83,16 +24,15 @@ fn assert_section_value(
         config_location,
     }: Options,
 ) {
-    write_config(condition, &env, &config_location);
+    write_config(condition, &env, config_location);
+    git_assert_eq(expected, &env);
 
-    git_assert_eq(&expected, &env);
-
-    let mut paths = vec![env.git_dir.join("config")];
+    let mut paths = vec![env.git_dir().join("config")];
     if config_location == ConfigLocation::User {
-        paths.push(env.home_dir.join(".gitconfig"));
+        paths.push(env.home_dir().join(".gitconfig"));
     }
 
-    let config = File::from_paths(paths, options_with_git_dir(&env.git_dir)).unwrap();
+    let config = File::from_paths(paths, options_with_git_dir(&env.git_dir())).unwrap();
 
     assert_eq!(
         config.string("section", None, "value"),
@@ -100,7 +40,7 @@ fn assert_section_value(
             Value::Original => "base-value",
             Value::Override => "override-value",
         })),
-        "gitoxide assert equals",
+        "git-config disagrees with the expected value",
     );
 }
 
@@ -110,8 +50,15 @@ fn git_dir(root_dir: &Path, git_dir_suffix: &str) -> PathBuf {
     git_dir
 }
 
-fn write_config(condition: &str, env: &EnvOverwrite, overwrite_config_location: &ConfigLocation) {
-    let override_config_dir_file = write_override_config(env.repo_dir.as_path());
+fn temporary_dir_for_git(subdir_name: impl AsRef<Path>) -> (tempfile::TempDir, PathBuf) {
+    let tmp = tempfile::tempdir().unwrap();
+    let git_dir = tmp.path().join(subdir_name).join(".git");
+    fs::create_dir_all(&git_dir).unwrap();
+    (tmp, git_dir)
+}
+
+fn write_config(condition: &str, env: &EnvOverwrite, overwrite_config_location: ConfigLocation) {
+    let override_config_dir_file = write_override_config(env.repo_dir());
     write_main_config(condition, override_config_dir_file, env, overwrite_config_location);
 }
 
@@ -128,12 +75,12 @@ fn write_override_config(root_path: &Path) -> PathBuf {
     include_path
 }
 
-fn git_assert_eq(expected: &Value, env: &EnvOverwrite) {
+fn git_assert_eq(expected: Value, env: &EnvOverwrite) {
     let output = Command::new("git")
         .args(["config", "--get", "section.value"])
-        .env("HOME", env.home_dir.as_path())
-        .env("GIT_DIR", env.git_dir.as_path())
-        .current_dir(env.git_dir.as_path())
+        .env("HOME", env.home_dir())
+        .env("GIT_DIR", env.git_dir())
+        .current_dir(env.git_dir())
         .output()
         .unwrap();
 
@@ -153,22 +100,24 @@ fn write_main_config(
     condition: &str,
     override_config_dir_file: PathBuf,
     env: &EnvOverwrite,
-    overwrite_config_location: &ConfigLocation,
+    overwrite_config_location: ConfigLocation,
 ) {
-    Command::new("git")
-        .args(["init", env.repo_dir.to_str().unwrap()])
+    let output = Command::new("git")
+        .args(["init", env.repo_dir().to_str().unwrap()])
         .output()
         .unwrap();
+    assert!(output.status.success(), "git init failed: {:?}", output);
 
-    if overwrite_config_location == &ConfigLocation::Repo {
-        Command::new("git")
+    if overwrite_config_location == ConfigLocation::Repo {
+        let output = Command::new("git")
             .args(["config", "section.value", "base-value"])
-            .env("GIT_DIR", env.git_dir.as_path())
+            .env("GIT_DIR", env.git_dir())
             .output()
             .unwrap();
+        assert!(output.status.success(), "git config set value failed: {:?}", output);
     }
 
-    Command::new("git")
+    let output = Command::new("git")
         .args([
             "config",
             match overwrite_config_location {
@@ -178,10 +127,11 @@ fn write_main_config(
             &format!("includeIf.{}.path", condition),
             &escape_backslashes(override_config_dir_file.as_path()),
         ])
-        .current_dir(env.git_dir.as_path())
-        .env("HOME", env.home_dir.as_path())
+        .current_dir(env.git_dir())
+        .env("HOME", env.home_dir())
         .output()
         .unwrap();
+    assert!(output.status.success(), "git config set value failed: {:?}", output);
 }
 
 fn home() -> PathBuf {
@@ -275,14 +225,10 @@ fn case_insensitive() {
 #[serial]
 #[ignore]
 fn pattern_with_backslash() {
-    let temp_dir = tempdir().unwrap();
-    let git_dir = git_dir(temp_dir.path(), "foo");
+    let (_tmp, git_dir) = temporary_dir_for_git("foo");
     assert_section_value(Options {
-        condition: "gitdir:\\foo/",
-        env: EnvOverwrite {
-            git_dir,
-            ..Default::default()
-        },
+        condition: r#"gitdir:\foo/"#,
+        env: EnvOverwrite::new(git_dir, None),
         expected: Value::Original,
         ..Default::default()
     });
@@ -387,3 +333,80 @@ fn dot_path_matching_symlink_with_icase() {
         ..Default::default()
     });
 }
+
+mod types {
+    use crate::file::from_paths::includes::conditional::gitdir::home;
+    use dirs::home_dir;
+    use std::path::{Path, PathBuf};
+
+    pub struct EnvOverwrite {
+        git_dir: PathBuf,
+        repo_dir: PathBuf,
+        home_dir: PathBuf,
+    }
+
+    #[derive(Copy, Clone, Eq, PartialEq)]
+    pub enum ConfigLocation {
+        Repo,
+        User,
+    }
+
+    #[derive(Copy, Clone)]
+    pub enum Value {
+        Original,
+        Override,
+    }
+
+    pub struct Options<'a> {
+        pub condition: &'a str,
+        pub env: EnvOverwrite,
+        pub expected: Value,
+        pub config_location: ConfigLocation,
+    }
+
+    impl Default for EnvOverwrite {
+        fn default() -> Self {
+            Self {
+                git_dir: PathBuf::default(),
+                repo_dir: PathBuf::default(),
+                home_dir: home_dir().unwrap(),
+            }
+        }
+    }
+
+    impl EnvOverwrite {
+        pub fn new(git_dir: PathBuf, home_dir: Option<PathBuf>) -> Self {
+            let repo_dir = git_dir.parent().unwrap().into();
+            Self {
+                git_dir,
+                repo_dir,
+                home_dir: match home_dir {
+                    Some(home_dir) => home_dir,
+                    None => home(),
+                },
+            }
+        }
+
+        pub fn git_dir(&self) -> &Path {
+            &self.git_dir
+        }
+        pub fn repo_dir(&self) -> &Path {
+            &self.repo_dir
+        }
+        pub fn home_dir(&self) -> &Path {
+            &self.home_dir
+        }
+    }
+
+    impl Default for Options<'_> {
+        fn default() -> Self {
+            Self {
+                condition: "",
+                env: EnvOverwrite::default(),
+                expected: Value::Override,
+                config_location: ConfigLocation::Repo,
+            }
+        }
+    }
+}
+pub use types::{ConfigLocation, EnvOverwrite, Options, Value};
