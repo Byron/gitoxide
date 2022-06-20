@@ -1,44 +1,29 @@
 use serial_test::serial;
-use tempfile::tempdir;
-
-use crate::file::from_paths::includes::conditional::create_symlink;
 
 #[test]
 #[serial]
 fn relative_path_with_trailing_slash() {
-    let temp_dir = tempdir().unwrap();
-    let git_dir = git_dir(temp_dir.path(), "foo");
-    assert_section_value(GitEnv::new(git_dir, None), Options::new("gitdir:foo/"));
+    assert_section_value(GitEnv::repo_name("foo"), Options::new("gitdir:foo/"));
 }
 
 #[test]
 #[serial]
 fn tilde_expansion() {
-    let (tmp_dir, basename) = tempdir_in_home_and_basename();
-    let git_dir = git_dir(tmp_dir.path(), "foo");
-
-    assert_section_value(
-        GitEnv::new(git_dir, None),
-        Options::new(format!("gitdir:~/{}/foo/", basename)),
-    );
+    let (env, basename) = GitEnv::repo_in_home_named("foo");
+    assert_section_value(env, Options::new(format!("gitdir:~/{}/foo/", basename)));
 }
 
 #[test]
 #[serial]
 fn star_star_prefix_and_suffix() {
-    let temp_dir = tempdir().unwrap();
-    let git_dir = git_dir(temp_dir.path(), "foo");
-
-    assert_section_value(GitEnv::new(git_dir, None), Options::new("gitdir:**/foo/**"));
+    assert_section_value(GitEnv::repo_name("foo"), Options::new("gitdir:**/foo/**"));
 }
 
 #[test]
 #[serial]
 fn dot_path_slash() {
-    let temp_dir = tempdir().unwrap();
-    let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(
-        GitEnv::new(git_dir, Some(temp_dir.path().into())),
+        GitEnv::repo_name_with_root_as_home("foo"),
         Options::new("gitdir:./").set_user_config_instead_of_repo_config(),
     );
 }
@@ -46,10 +31,8 @@ fn dot_path_slash() {
 #[test]
 #[serial]
 fn dot_path() {
-    let temp_dir = tempdir().unwrap();
-    let git_dir = git_dir(temp_dir.path(), "foo");
     assert_section_value(
-        GitEnv::new(git_dir, Some(temp_dir.path().into())),
+        GitEnv::repo_name_with_root_as_home("foo"),
         Options::new("gitdir:./foo/.git").set_user_config_instead_of_repo_config(),
     );
 }
@@ -57,18 +40,15 @@ fn dot_path() {
 #[test]
 #[serial]
 fn case_insensitive() {
-    let temp_dir = tempdir().unwrap();
-    let git_dir = git_dir(temp_dir.path(), "foo");
-    assert_section_value(GitEnv::new(git_dir, None), Options::new("gitdir/i:FOO/"));
+    assert_section_value(GitEnv::repo_name("foo"), Options::new("gitdir/i:FOO/"));
 }
 
 #[test]
 #[serial]
 #[ignore]
 fn pattern_with_backslash() {
-    let (_tmp, git_dir) = temporary_dir_for_git("foo");
     assert_section_value(
-        GitEnv::new(git_dir, None),
+        GitEnv::repo_name("foo"),
         Options::new(r#"gitdir:\foo/"#).expect_original_value(),
     );
 }
@@ -76,63 +56,43 @@ fn pattern_with_backslash() {
 #[test]
 #[serial]
 fn star_star_in_the_middle() {
-    let temp_dir = tempdir().unwrap();
-    let git_dir = git_dir(temp_dir.path(), "foo/bar");
-    assert_section_value(GitEnv::new(git_dir, None), Options::new("gitdir:**/foo/**/bar/**"));
+    assert_section_value(GitEnv::repo_name("foo/bar"), Options::new("gitdir:**/foo/**/bar/**"));
 }
 
 #[test]
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn tilde_expansion_with_symlink() {
-    let (tmp_dir, basename) = tempdir_in_home_and_basename();
-
-    let _ = git_dir(tmp_dir.path(), "foo");
-    create_symlink(
-        tmp_dir.path().join("bar").as_path(),
-        tmp_dir.path().join("foo").as_path(),
-    );
-    let git_dir = tmp_dir.path().join("bar").join(".git");
-
-    assert_section_value(
-        GitEnv::new(git_dir, None),
-        Options::new(format!("gitdir:~/{}/bar/", basename)),
-    );
+    let (env, basename) = git_env_with_symlinked_repo();
+    assert_section_value(env, Options::new(format!("gitdir:~/{}/symlink-foo/", basename)));
 }
 
 #[test]
 #[serial]
 #[cfg(not(target_os = "windows"))]
+#[ignore]
 fn dot_path_with_symlink() {
-    let (tmp_dir, _) = tempdir_in_home_and_basename();
-    let _ = git_dir(tmp_dir.path(), "foo");
-    create_symlink(
-        tmp_dir.path().join("bar").as_path(),
-        tmp_dir.path().join("foo").as_path(),
-    );
-    let git_dir = tmp_dir.path().join("bar").join(".git");
+    let mut env = GitEnv::repo_name_with_root_as_home("foo");
+    let link_destination = env.root_dir().join("symlink-foo");
+    crate::file::from_paths::includes::conditional::create_symlink(&link_destination, env.worktree_dir());
+
+    let git_dir_through_symlink = link_destination.join(".git");
+    env.set_git_dir(git_dir_through_symlink);
 
     assert_section_value(
-        GitEnv::new(git_dir, Some(tmp_dir.path().into())),
-        Options::new("gitdir:./bar/.git").set_user_config_instead_of_repo_config(),
+        env,
+        Options::new("gitdir:./symlink-foo/.git").set_user_config_instead_of_repo_config(),
     );
 }
 
 #[test]
 #[serial]
 #[cfg(not(target_os = "windows"))]
-fn dot_path_matching_symlink() {
-    let (tmp_dir, _) = tempdir_in_home_and_basename();
-    let _ = git_dir(tmp_dir.path(), "foo");
-    create_symlink(
-        tmp_dir.path().join("bar").as_path(),
-        tmp_dir.path().join("foo").as_path(),
-    );
-    let git_dir = tmp_dir.path().join("bar").join(".git");
-
+fn relative_path_matching_symlink() {
+    let (env, _) = git_env_with_symlinked_repo();
     assert_section_value(
-        GitEnv::new(git_dir, Some(tmp_dir.path().into())),
-        Options::new("gitdir:bar/").set_user_config_instead_of_repo_config(),
+        env,
+        Options::new("gitdir:symlink-foo/").set_user_config_instead_of_repo_config(),
     );
 }
 
@@ -140,25 +100,18 @@ fn dot_path_matching_symlink() {
 #[serial]
 #[cfg(not(target_os = "windows"))]
 fn dot_path_matching_symlink_with_icase() {
-    let (tmp_dir, _) = tempdir_in_home_and_basename();
-    let _ = git_dir(tmp_dir.path(), "foo");
-    create_symlink(
-        tmp_dir.path().join("bar").as_path(),
-        tmp_dir.path().join("foo").as_path(),
-    );
-
-    let git_dir = tmp_dir.path().join("bar").join(".git");
+    let (env, _) = git_env_with_symlinked_repo();
     assert_section_value(
-        GitEnv::new(git_dir, Some(tmp_dir.path().into())),
-        Options::new("gitdir/i:BAR/").set_user_config_instead_of_repo_config(),
+        env,
+        Options::new("gitdir/i:SYMLINK-FOO/").set_user_config_instead_of_repo_config(),
     );
 }
 
 mod util {
     use crate::file::cow_str;
     use crate::file::from_paths::escape_backslashes;
-    use crate::file::from_paths::includes::conditional::options_with_git_dir;
-    use bstr::BString;
+    use crate::file::from_paths::includes::conditional::{create_symlink, options_with_git_dir};
+    use bstr::{BString, ByteSlice};
     use dirs::home_dir;
     use std::fs;
     use std::path::{Path, PathBuf};
@@ -166,8 +119,9 @@ mod util {
     use tempfile::tempdir_in;
 
     pub struct GitEnv {
+        tempdir: tempfile::TempDir,
         git_dir: PathBuf,
-        repo_dir: PathBuf,
+        worktree_dir: PathBuf,
         home_dir: PathBuf,
     }
 
@@ -208,11 +162,28 @@ mod util {
     }
 
     impl GitEnv {
-        pub fn new(git_dir: PathBuf, home: Option<PathBuf>) -> Self {
-            let repo_dir = git_dir.parent().unwrap().into();
+        pub fn repo_in_home_named(repo_name: impl AsRef<Path>) -> (Self, String) {
+            let tempdir = tempdir_in(home_dir().unwrap()).unwrap();
+            let basename = tempdir.path().file_name().unwrap().to_str().unwrap().into();
+            (Self::new_in(tempdir, repo_name, None), basename)
+        }
+        pub fn repo_name(repo_name: impl AsRef<Path>) -> Self {
+            Self::new_in(tempfile::tempdir().unwrap(), repo_name, None)
+        }
+
+        pub fn repo_name_with_root_as_home(repo_name: impl AsRef<Path>) -> Self {
+            let tempdir = tempfile::tempdir().unwrap();
+            let home = tempdir.path().to_owned();
+            Self::new_in(tempdir, repo_name, Some(home))
+        }
+
+        fn new_in(tempdir: tempfile::TempDir, repo_name: impl AsRef<Path>, home: Option<PathBuf>) -> Self {
+            let git_dir = git_dir(tempdir.path(), repo_name);
+            let worktree_dir = git_dir.parent().unwrap().into();
             Self {
+                tempdir,
                 git_dir,
-                repo_dir,
+                worktree_dir,
                 home_dir: match home {
                     Some(home) => home,
                     None => home_dir().unwrap(),
@@ -223,16 +194,22 @@ mod util {
         pub fn git_dir(&self) -> &Path {
             &self.git_dir
         }
-        pub fn repo_dir(&self) -> &Path {
-            &self.repo_dir
+        pub fn set_git_dir(&mut self, git_dir: PathBuf) {
+            self.git_dir = git_dir;
+        }
+        pub fn worktree_dir(&self) -> &Path {
+            &self.worktree_dir
         }
         pub fn home_dir(&self) -> &Path {
             &self.home_dir
         }
+        pub fn root_dir(&self) -> &Path {
+            self.tempdir.path()
+        }
     }
 
     fn write_config(condition: impl AsRef<str>, env: &GitEnv, overwrite_config_location: ConfigLocation) {
-        let override_config_dir_file = write_override_config(env.repo_dir());
+        let override_config_dir_file = write_override_config(env.worktree_dir());
         write_main_config(condition, override_config_dir_file, env, overwrite_config_location);
     }
 
@@ -258,8 +235,8 @@ mod util {
             .output()
             .unwrap();
 
-        assert_eq!(output.stderr.len(), 0);
-        let git_output = BString::from(output.stdout.strip_suffix(b"\n").unwrap());
+        assert!(output.status.success(), "{:?}", output);
+        let git_output: BString = output.stdout.trim_end().into();
         assert_eq!(
             git_output,
             match expected {
@@ -277,7 +254,7 @@ mod util {
         overwrite_config_location: ConfigLocation,
     ) {
         let output = Command::new("git")
-            .args(["init", env.repo_dir().to_str().unwrap()])
+            .args(["init", env.worktree_dir().to_str().unwrap()])
             .output()
             .unwrap();
         assert!(output.status.success(), "git init failed: {:?}", output);
@@ -308,10 +285,10 @@ mod util {
         assert!(output.status.success(), "git config set value failed: {:?}", output);
     }
 
-    pub fn tempdir_in_home_and_basename() -> (tempfile::TempDir, String) {
-        let tmp_dir = tempdir_in(home_dir().unwrap()).unwrap();
-        let basename = tmp_dir.path().file_name().unwrap().to_str().unwrap().into();
-        (tmp_dir, basename)
+    fn git_dir(root_dir: &Path, subdir_name: impl AsRef<Path>) -> PathBuf {
+        let git_dir = root_dir.join(subdir_name).join(".git");
+        std::fs::create_dir_all(&git_dir).unwrap();
+        git_dir
     }
 
     pub fn assert_section_value(
@@ -342,17 +319,14 @@ mod util {
         );
     }
 
-    pub fn git_dir(root_dir: &Path, git_dir_suffix: &str) -> PathBuf {
-        let git_dir = root_dir.join(git_dir_suffix).join(".git");
-        std::fs::create_dir_all(&git_dir).unwrap();
-        git_dir
-    }
+    pub fn git_env_with_symlinked_repo() -> (GitEnv, String) {
+        let (mut env, basename) = GitEnv::repo_in_home_named("foo");
+        let link_destination = env.root_dir().join("symlink-foo");
+        create_symlink(&link_destination, env.worktree_dir());
 
-    pub fn temporary_dir_for_git(subdir_name: impl AsRef<Path>) -> (tempfile::TempDir, PathBuf) {
-        let tmp = tempfile::tempdir().unwrap();
-        let git_dir = tmp.path().join(subdir_name).join(".git");
-        std::fs::create_dir_all(&git_dir).unwrap();
-        (tmp, git_dir)
+        let git_dir_through_symlink = link_destination.join(".git");
+        env.set_git_dir(git_dir_through_symlink);
+        (env, basename)
     }
 }
-use util::{assert_section_value, git_dir, tempdir_in_home_and_basename, temporary_dir_for_git, GitEnv, Options};
+use util::{assert_section_value, git_env_with_symlinked_repo, GitEnv, Options};

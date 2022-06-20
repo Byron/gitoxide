@@ -7,12 +7,12 @@ use git_config::file::from_paths;
 use git_config::File;
 use tempfile::{tempdir, tempdir_in};
 
-pub fn create_symlink(from: &Path, to: &Path) {
-    create_dir_all(from.parent().unwrap()).unwrap();
+pub fn create_symlink(from: impl AsRef<Path>, to: impl AsRef<Path>) {
+    create_dir_all(from.as_ref().parent().unwrap()).unwrap();
     #[cfg(not(target_os = "windows"))]
-    std::os::unix::fs::symlink(to, &from).unwrap();
+    std::os::unix::fs::symlink(to, from).unwrap();
     #[cfg(target_os = "windows")]
-    std::os::windows::fs::symlink_file(to, &from).unwrap();
+    std::os::windows::fs::symlink_file(to, from).unwrap();
 }
 
 fn canonicalized_tempdir() -> crate::Result<tempfile::TempDir> {
