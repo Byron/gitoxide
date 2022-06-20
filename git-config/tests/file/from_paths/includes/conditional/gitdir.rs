@@ -1,26 +1,20 @@
-use serial_test::serial;
-
 #[test]
-#[serial]
 fn relative_path_with_trailing_slash() {
     assert_section_value(Condition::new("gitdir:worktree/"), GitEnv::repo_name("worktree"));
 }
 
 #[test]
-#[serial]
 fn tilde_expansion() {
     let env = GitEnv::repo_name("subdir/worktree");
     assert_section_value(Condition::new("gitdir:~/subdir/worktree/"), env);
 }
 
 #[test]
-#[serial]
 fn star_star_prefix_and_suffix() {
     assert_section_value(Condition::new("gitdir:**/worktree/**"), GitEnv::repo_name("worktree"));
 }
 
 #[test]
-#[serial]
 fn dot_path_slash() {
     assert_section_value(
         Condition::new("gitdir:./").set_user_config_instead_of_repo_config(),
@@ -29,7 +23,6 @@ fn dot_path_slash() {
 }
 
 #[test]
-#[serial]
 fn dot_path() {
     assert_section_value(
         Condition::new("gitdir:./worktree/.git").set_user_config_instead_of_repo_config(),
@@ -38,13 +31,11 @@ fn dot_path() {
 }
 
 #[test]
-#[serial]
 fn case_insensitive() {
     assert_section_value(Condition::new("gitdir/i:WORKTREE/"), GitEnv::repo_name("worktree"));
 }
 
 #[test]
-#[serial]
 #[ignore]
 fn pattern_with_backslash() {
     assert_section_value(
@@ -54,7 +45,6 @@ fn pattern_with_backslash() {
 }
 
 #[test]
-#[serial]
 fn star_star_in_the_middle() {
     assert_section_value(
         Condition::new("gitdir:**/dir/**/worktree/**"),
@@ -63,7 +53,6 @@ fn star_star_in_the_middle() {
 }
 
 #[test]
-#[serial]
 #[cfg(not(target_os = "windows"))]
 fn tilde_expansion_with_symlink() {
     let env = git_env_with_symlinked_repo();
@@ -71,7 +60,6 @@ fn tilde_expansion_with_symlink() {
 }
 
 #[test]
-#[serial]
 #[cfg(not(target_os = "windows"))]
 fn dot_path_with_symlink() {
     let env = git_env_with_symlinked_repo();
@@ -82,7 +70,6 @@ fn dot_path_with_symlink() {
 }
 
 #[test]
-#[serial]
 #[cfg(not(target_os = "windows"))]
 fn relative_path_matching_symlink() {
     let env = git_env_with_symlinked_repo();
@@ -93,7 +80,6 @@ fn relative_path_matching_symlink() {
 }
 
 #[test]
-#[serial]
 #[cfg(not(target_os = "windows"))]
 fn dot_path_matching_symlink_with_icase() {
     let env = git_env_with_symlinked_repo();
