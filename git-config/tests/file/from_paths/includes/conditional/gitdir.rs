@@ -9,7 +9,7 @@ fn relative_path_with_trailing_slash() {
 #[test]
 #[serial]
 fn tilde_expansion() {
-    let (env, basename) = GitEnv::repo_in_home_named("foo");
+    let (env, basename) = GitEnv::repo_in_home("foo");
     assert_section_value(env, Options::new(format!("gitdir:~/{}/foo/", basename)));
 }
 
@@ -70,15 +70,9 @@ fn tilde_expansion_with_symlink() {
 #[test]
 #[serial]
 #[cfg(not(target_os = "windows"))]
-#[ignore]
 fn dot_path_with_symlink() {
-    let mut env = GitEnv::repo_name_with_root_as_home("foo");
-    let link_destination = env.root_dir().join("symlink-foo");
-    crate::file::from_paths::includes::conditional::create_symlink(&link_destination, env.worktree_dir());
-
-    let git_dir_through_symlink = link_destination.join(".git");
-    env.set_git_dir(git_dir_through_symlink);
-
+    let (mut env, _) = git_env_with_symlinked_repo();
+    env.set_home_to_be_root();
     assert_section_value(
         env,
         Options::new("gitdir:./symlink-foo/.git").set_user_config_instead_of_repo_config(),
@@ -162,7 +156,7 @@ mod util {
     }
 
     impl GitEnv {
-        pub fn repo_in_home_named(repo_name: impl AsRef<Path>) -> (Self, String) {
+        pub fn repo_in_home(repo_name: impl AsRef<Path>) -> (Self, String) {
             let tempdir = tempdir_in(home_dir().unwrap()).unwrap();
             let basename = tempdir.path().file_name().unwrap().to_str().unwrap().into();
             (Self::new_in(tempdir, repo_name, None), basename)
@@ -196,6 +190,9 @@ mod util {
         }
         pub fn set_git_dir(&mut self, git_dir: PathBuf) {
             self.git_dir = git_dir;
+        }
+        pub fn set_home_to_be_root(&mut self) {
+            self.home_dir = self.tempdir.path().into();
         }
         pub fn worktree_dir(&self) -> &Path {
             &self.worktree_dir
@@ -300,6 +297,7 @@ mod util {
         }: Options,
     ) {
         write_config(condition, &env, config_location);
+        dbg!(&env.git_dir);
         git_assert_eq(expected, &env);
 
         let mut paths = vec![env.git_dir().join("config")];
@@ -320,7 +318,7 @@ mod util {
     }
 
     pub fn git_env_with_symlinked_repo() -> (GitEnv, String) {
-        let (mut env, basename) = GitEnv::repo_in_home_named("foo");
+        let (mut env, basename) = GitEnv::repo_in_home("foo");
         let link_destination = env.root_dir().join("symlink-foo");
         create_symlink(&link_destination, env.worktree_dir());
 
