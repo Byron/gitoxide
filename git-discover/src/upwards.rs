@@ -280,7 +280,8 @@ pub(crate) mod function {
                     cursor = if cursor.as_os_str().is_empty() {
                         cwd.clone()
                     } else {
-                        cursor.canonicalize().ok()
+                        // TODO: realpath or absolutize? No test runs into this.
+                        Some(git_path::absolutize(&cursor, cwd.as_deref()).into_owned())
                     }
                     .ok_or(Error::InaccessibleDirectory { path: cursor })?;
                 }
