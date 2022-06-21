@@ -32,6 +32,7 @@ libc = "0.2"
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools"}
+git-repository = { path = "../git-repository" }
 serial_test = "0.7.0"
 serde_derive = "1.0"
 criterion = "0.3"

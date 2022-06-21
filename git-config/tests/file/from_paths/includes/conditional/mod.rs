@@ -1,24 +1,10 @@
 use std::fs;
-use std::fs::create_dir_all;
 use std::path::{Path, PathBuf};
 
 use crate::file::{cow_str, from_paths::escape_backslashes};
 use git_config::file::from_paths;
 use git_config::File;
 use tempfile::{tempdir, tempdir_in};
-
-pub fn create_symlink(from: impl AsRef<Path>, to: impl AsRef<Path>) {
-    create_dir_all(from.as_ref().parent().unwrap()).unwrap();
-    #[cfg(not(windows))]
-    std::os::unix::fs::symlink(to, from).unwrap();
-    #[cfg(windows)]
-    std::os::windows::fs::symlink_file(to, from).unwrap();
-}
-
-fn canonicalized_tempdir() -> crate::Result<tempfile::TempDir> {
-    let canonicalized_tempdir = git_path::realpath(std::env::temp_dir(), std::env::current_dir()?)?;
-    Ok(tempdir_in(canonicalized_tempdir)?)
-}
 
 mod gitdir;
 mod onbranch;
@@ -130,6 +116,11 @@ fn pattern_is_current_dir() {
 
 #[test]
 fn various_gitdir() {
+    fn canonicalized_tempdir() -> crate::Result<tempfile::TempDir> {
+        let canonicalized_tempdir = git_path::realpath(std::env::temp_dir(), std::env::current_dir()?)?;
+        Ok(tempdir_in(canonicalized_tempdir)?)
+    }
+
     let dir = tempdir().unwrap();
 
     let config_path = dir.path().join("a");
@@ -410,4 +401,12 @@ fn options_with_git_dir_in_home<'a>(git_dir: &'a Path, home: &'a Path) -> from_p
         home_dir: Some(home),
         ..Default::default()
     }
+}
+
+pub fn create_symlink(from: impl AsRef<Path>, to: impl AsRef<Path>) {
+    std::fs::create_dir_all(from.as_ref().parent().unwrap()).unwrap();
+    #[cfg(not(windows))]
+    std::os::unix::fs::symlink(to, from).unwrap();
+    #[cfg(windows)]
+    std::os::windows::fs::symlink_file(to, from).unwrap();
 }

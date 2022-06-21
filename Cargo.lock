@@ -1088,6 +1088,7 @@ dependencies = [
  "git-glob",
  "git-path",
  "git-ref",
+ "git-repository",
  "git-sec",
  "git-testtools",
  "libc",
