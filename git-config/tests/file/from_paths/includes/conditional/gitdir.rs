@@ -143,11 +143,17 @@ mod util {
     }
     impl GitEnv {
         fn new_in(tempdir: tempfile::TempDir, repo_name: impl AsRef<Path>, home: Option<PathBuf>) -> Self {
+            #[cfg(not(windows))]
             let root_dir = tempdir.path().canonicalize().unwrap();
+            #[cfg(windows)]
+            let root_dir = tempdir.path().to_owned();
             let git_dir = git_dir(&root_dir, repo_name);
+            #[cfg(not(windows))]
             let home_dir = home
                 .map(|home| home.canonicalize().unwrap())
                 .unwrap_or_else(|| root_dir.clone());
+            #[cfg(windows)]
+            let home_dir = home.unwrap_or_else(|| root_dir.clone());
             Self {
                 tempdir,
                 root_dir,
@@ -255,8 +261,10 @@ mod util {
                 .unwrap();
             assert!(
                 output.status.success(),
-                "git config set value failed: {:?}: {:?} for debugging",
+                "git config set value failed: {:?}, git-dir={:?}, cwd={:?}: {:?} for debugging",
                 output,
+                env.git_dir().to_owned(),
+                env.worktree_dir().to_owned(),
                 env.tempdir.into_path()
             );
         }
