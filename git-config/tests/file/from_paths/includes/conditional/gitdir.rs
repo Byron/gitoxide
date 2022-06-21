@@ -1,21 +1,41 @@
 #[test]
-fn relative_path_with_trailing_slash() {
+fn relative_path_with_trailing_slash_matches_like_star_star() {
     assert_section_value(Condition::new("gitdir:worktree/"), GitEnv::repo_name("worktree"));
 }
 
 #[test]
-fn tilde_expansion() {
+fn relative_path_without_trailing_slash_does_not_match() {
+    assert_section_value(
+        Condition::new("gitdir:worktree").expect_original_value(),
+        GitEnv::repo_name("worktree"),
+    );
+}
+
+#[test]
+fn relative_path_without_trailing_slash_and_dot_git_suffix_matches() {
+    assert_section_value(Condition::new("gitdir:worktree/.git"), GitEnv::repo_name("worktree"));
+}
+
+#[test]
+fn tilde_slash_expands_the_current_user_home() {
     let env = GitEnv::repo_name("subdir/worktree");
     assert_section_value(Condition::new("gitdir:~/subdir/worktree/"), env);
 }
 
 #[test]
-fn star_star_prefix_and_suffix() {
+fn tilde_alone_does_not_match_even_if_home_is_git_directory() {
+    let env = GitEnv::repo_in_home();
+    assert_section_value(Condition::new("gitdir:~").expect_original_value(), env);
+}
+
+#[test]
+fn explicit_star_star_prefix_and_suffix_match_zero_or_more_path_components() {
     assert_section_value(Condition::new("gitdir:**/worktree/**"), GitEnv::repo_name("worktree"));
 }
 
 #[test]
-fn dot_path_slash() {
+fn dot_slash_path_is_replaced_with_directory_containing_the_including_config_file() {
+    // TODO: understand this
     assert_section_value(
         Condition::new("gitdir:./").set_user_config_instead_of_repo_config(),
         GitEnv::repo_name("worktree"),
@@ -23,7 +43,47 @@ fn dot_path_slash() {
 }
 
 #[test]
-fn dot_path() {
+#[serial_test::serial]
+#[ignore]
+fn dot_slash_from_environment_causes_error() {
+    use git_config::file::from_paths;
+    // TODO: figure out how to do this, how do we parse sub-keys? Can git do that even?
+    let _env = crate::file::from_env::Env::new()
+        .set("GIT_CONFIG_COUNT", "1")
+        .set("GIT_CONFIG_KEY_0", "includeIf.path")
+        .set("GIT_CONFIG_VALUE_0", "some_git_config");
+
+    let res = git_config::File::from_env(from_paths::Options::default());
+    assert!(matches!(
+        res,
+        Err(git_config::file::from_env::Error::FromPathsError(
+            from_paths::Error::MissingConfigPath
+        ))
+    ));
+}
+
+#[test]
+#[ignore]
+fn dot_dot_slash_prefixes_are_not_special_and_are_not_what_you_want() {
+    assert_section_value(
+        Condition::new("gitdir:../")
+            .set_user_config_instead_of_repo_config()
+            .expect_original_value(),
+        GitEnv::repo_name("worktree"),
+    );
+}
+
+#[test]
+#[ignore]
+fn leading_dots_are_not_special() {
+    assert_section_value(
+        Condition::new("gitdir:.hidden/").expect_original_value(),
+        GitEnv::repo_name(".hidden"),
+    );
+}
+
+#[test]
+fn dot_slash_path_with_dot_git_suffix_matches() {
     assert_section_value(
         Condition::new("gitdir:./worktree/.git").set_user_config_instead_of_repo_config(),
         GitEnv::repo_name("worktree"),
@@ -171,6 +231,10 @@ mod util {
             Self::new_in(tempdir, repo_name, Some(home))
         }
 
+        pub fn repo_in_home() -> Self {
+            Self::repo_name("")
+        }
+
         pub fn git_dir(&self) -> &Path {
             &self.git_dir
         }
@@ -255,7 +319,6 @@ mod util {
         assert!(output.status.success(), "git init failed: {:?}", output);
 
         if overwrite_config_location == ConfigLocation::Repo {
-            // TODO: a test that actually needs this, or remove entirely.
             write_append_config_value(env.git_dir().join("config"), "base-value")?;
         }
 
