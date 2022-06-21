@@ -16,11 +16,7 @@ pub fn create_symlink(from: impl AsRef<Path>, to: impl AsRef<Path>) {
 }
 
 fn canonicalized_tempdir() -> crate::Result<tempfile::TempDir> {
-    #[cfg(windows)]
-    let canonicalized_tempdir = std::env::temp_dir();
-    #[cfg(not(windows))]
-    let canonicalized_tempdir = std::env::temp_dir().canonicalize()?;
-
+    let canonicalized_tempdir = git_path::realpath(std::env::temp_dir(), std::env::current_dir()?)?;
     Ok(tempdir_in(canonicalized_tempdir)?)
 }
 
