@@ -94,7 +94,7 @@ mod util {
     use crate::file::from_paths::escape_backslashes;
     use crate::file::from_paths::includes::conditional::{create_symlink, options_with_git_dir};
     use bstr::{BString, ByteSlice};
-    use std::fs;
+    use std::io::Write;
     use std::path::{Path, PathBuf};
     use std::process::Command;
 
@@ -188,22 +188,32 @@ mod util {
         }
     }
 
-    fn write_config(condition: impl AsRef<str>, env: GitEnv, overwrite_config_location: ConfigLocation) -> GitEnv {
-        let override_config_dir_file = write_override_config(env.worktree_dir());
-        write_main_config(condition, override_config_dir_file, env, overwrite_config_location)
+    fn write_config(
+        condition: impl AsRef<str>,
+        env: GitEnv,
+        overwrite_config_location: ConfigLocation,
+    ) -> crate::Result<GitEnv> {
+        let include_config = write_included_config(&env)?;
+        write_main_config(condition, include_config, env, overwrite_config_location)
     }
 
-    fn write_override_config(root_path: &Path) -> PathBuf {
-        let include_path = root_path.join("include.path");
-        fs::create_dir_all(root_path).unwrap();
-        fs::write(
-            include_path.as_path(),
-            "
+    fn write_included_config(env: &GitEnv) -> crate::Result<PathBuf> {
+        let include_path = env.worktree_dir().join("include.path");
+        write_append_config_value(&include_path, "override-value")?;
+        Ok(include_path)
+    }
+
+    fn write_append_config_value(path: impl AsRef<std::path::Path>, value: &str) -> crate::Result {
+        let mut file = std::fs::OpenOptions::new().append(true).create(true).open(path)?;
+        file.write_all(
+            format!(
+                "
 [section]
-  value = override-value",
-        )
-        .unwrap();
-        include_path
+  value = {value}"
+            )
+            .as_bytes(),
+        )?;
+        Ok(())
     }
 
     fn assure_git_agrees(expected: Value, env: GitEnv) {
@@ -235,57 +245,40 @@ mod util {
 
     fn write_main_config(
         condition: impl AsRef<str>,
-        override_config_dir_file: PathBuf,
+        include_file_path: PathBuf,
         env: GitEnv,
         overwrite_config_location: ConfigLocation,
-    ) -> GitEnv {
+    ) -> crate::Result<GitEnv> {
         let output = Command::new("git")
             .args(["init", env.worktree_dir().to_str().unwrap()])
-            .output()
-            .unwrap();
+            .output()?;
         assert!(output.status.success(), "git init failed: {:?}", output);
 
-        // TODO: rewrite such that we just append these values to the end of a file
-        //       until we can write files ourselves properly.
         if overwrite_config_location == ConfigLocation::Repo {
-            let output = Command::new("git")
-                .args(["config", "section.value", "base-value"])
-                .env("GIT_DIR", env.git_dir())
-                .current_dir(env.worktree_dir())
-                .output()
-                .unwrap();
-            assert!(
-                output.status.success(),
-                "git config set value failed: {:?}, git-dir={:?}, cwd={:?}: {:?} for debugging",
-                output,
-                env.git_dir().to_owned(),
-                env.worktree_dir().to_owned(),
-                env.tempdir.into_path()
-            );
+            // TODO: a test that actually needs this, or remove entirely.
+            write_append_config_value(env.git_dir().join("config"), "base-value")?;
         }
 
-        let output = Command::new("git")
-            .args([
-                "config",
-                match overwrite_config_location {
-                    ConfigLocation::User => "--global",
-                    ConfigLocation::Repo => "--local",
-                },
-                &format!("includeIf.{}.path", condition.as_ref()),
-                &escape_backslashes(override_config_dir_file.as_path()),
-            ])
-            .current_dir(env.worktree_dir())
-            .env("GIT_DIR", env.git_dir())
-            .env("HOME", env.home_dir())
-            .output()
-            .unwrap();
-        assert!(
-            output.status.success(),
-            "git config set value failed: {:?}: {:?} for debugging",
-            output,
-            env.tempdir.into_path()
-        );
-        env
+        let config_file_path = match overwrite_config_location {
+            ConfigLocation::User => env.home_dir().join(".gitconfig"),
+            ConfigLocation::Repo => env.git_dir().join("config"),
+        };
+
+        let condition = condition.as_ref();
+        let include_file_path = escape_backslashes(include_file_path);
+        let mut file = std::fs::OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(config_file_path)?;
+        file.write_all(
+            format!(
+                "
+[includeIf \"{condition}\"]
+  path = {include_file_path}",
+            )
+            .as_bytes(),
+        )?;
+        Ok(env)
     }
 
     fn git_dir(root_dir: &Path, subdir_name: impl AsRef<Path>) -> PathBuf {
@@ -302,7 +295,7 @@ mod util {
         }: Condition,
         mut env: GitEnv,
     ) {
-        env = write_config(condition, env, config_location);
+        env = write_config(condition, env, config_location).unwrap();
 
         let mut paths = vec![env.git_dir().join("config")];
         if config_location == ConfigLocation::User {
