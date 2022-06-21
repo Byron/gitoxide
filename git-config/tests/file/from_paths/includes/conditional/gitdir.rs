@@ -143,17 +143,12 @@ mod util {
     }
     impl GitEnv {
         fn new_in(tempdir: tempfile::TempDir, repo_name: impl AsRef<Path>, home: Option<PathBuf>) -> Self {
-            #[cfg(not(windows))]
-            let root_dir = tempdir.path().canonicalize().unwrap();
-            #[cfg(windows)]
-            let root_dir = tempdir.path().to_owned();
+            let cwd = std::env::current_dir().unwrap();
+            let root_dir = git_path::realpath(tempdir.path(), &cwd).unwrap();
             let git_dir = git_dir(&root_dir, repo_name);
-            #[cfg(not(windows))]
             let home_dir = home
-                .map(|home| home.canonicalize().unwrap())
+                .map(|home| git_path::realpath(home, cwd).unwrap())
                 .unwrap_or_else(|| root_dir.clone());
-            #[cfg(windows)]
-            let home_dir = home.unwrap_or_else(|| root_dir.clone());
             Self {
                 tempdir,
                 root_dir,
