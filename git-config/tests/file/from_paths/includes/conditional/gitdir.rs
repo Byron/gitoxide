@@ -53,14 +53,14 @@ fn star_star_in_the_middle() {
 }
 
 #[test]
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(windows))]
 fn tilde_expansion_with_symlink() {
     let env = git_env_with_symlinked_repo();
     assert_section_value(Condition::new("gitdir:~/symlink-worktree/"), env);
 }
 
 #[test]
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(windows))]
 fn dot_path_with_symlink() {
     let env = git_env_with_symlinked_repo();
     assert_section_value(
@@ -70,7 +70,7 @@ fn dot_path_with_symlink() {
 }
 
 #[test]
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(windows))]
 fn relative_path_matching_symlink() {
     let env = git_env_with_symlinked_repo();
     assert_section_value(
@@ -80,7 +80,7 @@ fn relative_path_matching_symlink() {
 }
 
 #[test]
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(windows))]
 fn dot_path_matching_symlink_with_icase() {
     let env = git_env_with_symlinked_repo();
     assert_section_value(

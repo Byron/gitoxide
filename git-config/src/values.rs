@@ -288,7 +288,7 @@ pub mod path {
             Err(interpolate::Error::UserInterpolationUnsupported)
         }
 
-        #[cfg(not(target_os = "windows"))]
+        #[cfg(not(windows))]
         fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
             let (_prefix, val) = self.split_at("/".len());
             let i = val

@@ -81,7 +81,7 @@ fn tilde_substitutes_current_user() {
     );
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(windows)]
 #[test]
 fn tilde_with_given_user_is_unsupported_on_windows() {
     assert!(matches!(
@@ -90,7 +90,7 @@ fn tilde_with_given_user_is_unsupported_on_windows() {
     ));
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(not(windows))]
 #[test]
 fn tilde_with_given_user() {
     let user = std::env::var("USER").unwrap();

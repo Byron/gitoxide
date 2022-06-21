@@ -225,7 +225,7 @@ impl file::Store {
                 Ok(buf.into())
             }
             Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
-            #[cfg(target_os = "windows")]
+            #[cfg(windows)]
             Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => Ok(None),
             Err(err) => Err(err),
         }

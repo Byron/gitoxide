@@ -9,9 +9,9 @@ use tempfile::{tempdir, tempdir_in};
 
 pub fn create_symlink(from: impl AsRef<Path>, to: impl AsRef<Path>) {
     create_dir_all(from.as_ref().parent().unwrap()).unwrap();
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(not(windows))]
     std::os::unix::fs::symlink(to, from).unwrap();
-    #[cfg(target_os = "windows")]
+    #[cfg(windows)]
     std::os::windows::fs::symlink_file(to, from).unwrap();
 }
 

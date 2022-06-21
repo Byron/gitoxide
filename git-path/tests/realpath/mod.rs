@@ -44,9 +44,9 @@ fn assorted() {
     );
 
     {
-        #[cfg(not(target_os = "windows"))]
+        #[cfg(not(windows))]
         let absolute_path = Path::new("/c/d/.git");
-        #[cfg(target_os = "windows")]
+        #[cfg(windows)]
         let absolute_path = Path::new("C:\\c\\d\\.git");
         assert_eq!(
             realpath_opts(absolute_path, cwd, symlinks_disabled).unwrap(),
@@ -120,9 +120,9 @@ pub struct CanonicalizedTempDir {
 
 pub fn create_symlink(from: &Path, to: &Path) {
     std::fs::create_dir_all(from.parent().unwrap()).unwrap();
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(not(windows))]
     std::os::unix::fs::symlink(to, &from).unwrap();
-    #[cfg(target_os = "windows")]
+    #[cfg(windows)]
     std::os::windows::fs::symlink_file(to, &from).unwrap();
 }
 
