@@ -48,6 +48,7 @@ fn dot_slash_path_is_replaced_with_directory_containing_the_including_config_fil
 fn dot_slash_from_environment_causes_error() {
     use git_config::file::from_paths;
     // TODO: figure out how to do this, how do we parse sub-keys? Can git do that even?
+    //       If git can't do it, we are also not able to and that's fine (currently unreachable!()).
     let _env = crate::file::from_env::Env::new()
         .set("GIT_CONFIG_COUNT", "1")
         .set("GIT_CONFIG_KEY_0", "includeIf.path")
@@ -63,12 +64,11 @@ fn dot_slash_from_environment_causes_error() {
 }
 
 #[test]
-#[ignore]
 fn dot_dot_slash_prefixes_are_not_special_and_are_not_what_you_want() {
     assert_section_value(
         Condition::new("gitdir:../")
             .set_user_config_instead_of_repo_config()
-            .expect_original_value(),
+            .expect_no_value(),
         GitEnv::repo_name("worktree"),
     );
 }
@@ -76,6 +76,7 @@ fn dot_dot_slash_prefixes_are_not_special_and_are_not_what_you_want() {
 #[test]
 #[ignore]
 fn leading_dots_are_not_special() {
+    // TODO: write this test so that it could fail - right now it's naturally correct
     assert_section_value(
         Condition::new("gitdir:.hidden/").expect_original_value(),
         GitEnv::repo_name(".hidden"),
@@ -180,7 +181,7 @@ mod util {
 
     pub struct Condition {
         condition: String,
-        value: Value,
+        value: Option<Value>,
         config_location: ConfigLocation,
     }
 
@@ -188,7 +189,7 @@ mod util {
         pub fn new(condition: impl Into<String>) -> Self {
             Condition {
                 condition: condition.into(),
-                value: Value::Override,
+                value: Value::Override.into(),
                 config_location: ConfigLocation::Repo,
             }
         }
@@ -197,7 +198,12 @@ mod util {
             self
         }
         pub fn expect_original_value(mut self) -> Self {
-            self.value = Value::Original;
+            self.value = Value::Original.into();
+            self
+        }
+
+        pub fn expect_no_value(mut self) -> Self {
+            self.value = None;
             self
         }
     }
@@ -280,7 +286,7 @@ mod util {
         Ok(())
     }
 
-    fn assure_git_agrees(expected: Value, env: GitEnv) {
+    fn assure_git_agrees(expected: Option<Value>, env: GitEnv) {
         let output = Command::new("git")
             .args(["config", "--get", "section.value"])
             .env("HOME", env.home_dir())
@@ -289,8 +295,9 @@ mod util {
             .output()
             .unwrap();
 
-        assert!(
+        assert_eq!(
             output.status.success(),
+            expected.is_some(),
             "{:?}, {:?} for debugging",
             output,
             env.tempdir.into_path()
@@ -299,8 +306,9 @@ mod util {
         assert_eq!(
             git_output,
             match expected {
-                Value::Original => "base-value",
-                Value::Override => "override-value",
+                Some(Value::Original) => "base-value",
+                Some(Value::Override) => "override-value",
+                None => "",
             },
             "git disagrees with git-config, {:?} for debugging",
             env.tempdir.into_path()
@@ -369,10 +377,11 @@ mod util {
 
         assert_eq!(
             config.string("section", None, "value"),
-            Some(cow_str(match expected {
-                Value::Original => "base-value",
-                Value::Override => "override-value",
-            })),
+            match expected {
+                Some(Value::Original) => Some(cow_str("base-value")),
+                Some(Value::Override) => Some(cow_str("override-value")),
+                None => None,
+            },
             "git-config disagrees with the expected value, {:?} for debugging",
             env.tempdir.into_path()
         );

@@ -143,9 +143,6 @@ fn gitdir_matches(
     }: from_paths::Options<'_>,
     wildmatch_mode: git_glob::wildmatch::Mode,
 ) -> Option<()> {
-    const DOT: &[u8] = b".";
-    const DOT_DOT: &[u8] = b"..";
-
     let git_dir = git_path::to_unix_separators(git_path::into_bstr(git_dir?));
     if condition_path.contains('\\') {
         return None;
@@ -156,16 +153,14 @@ fn gitdir_matches(
         git_path::to_unix_separators(git_path::into_bstr(path)).into_owned()
     };
 
-    if pattern_path.starts_with(DOT) {
-        if let Some(parent_path) = target_config_path.and_then(|p| p.parent()) {
-            let parent_dir = git_path::to_unix_separators(git_path::into_bstr(parent_path));
-            let skip = if pattern_path.starts_with(DOT_DOT) {
-                DOT_DOT
-            } else {
-                DOT
-            };
-            pattern_path = bstr::concat(&[&parent_dir, &pattern_path[skip.len()..]]).into();
-        }
+    if let Some(relative_pattern_path) = pattern_path.strip_prefix(b"./") {
+        let parent_dir = target_config_path.and_then(|path| path.parent()).unwrap_or_else(|| {
+            unreachable!("It's impossible to use includeIf from environment variable based configuration")
+        });
+        let mut joined_path = git_path::to_unix_separators(git_path::into_bstr(parent_dir)).into_owned();
+        joined_path.push(b'/');
+        joined_path.extend_from_slice(relative_pattern_path);
+        pattern_path = joined_path;
     }
 
     if ["~/", "./", "/"]

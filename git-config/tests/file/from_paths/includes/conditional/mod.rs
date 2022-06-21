@@ -311,8 +311,8 @@ fn various_gitdir() {
         let config = File::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
         assert_eq!(
             config.string("core", None, "d"),
-            Some(cow_str("dot-dot-path")),
-            ".. path is included"
+            Some(cow_str("1")),
+            ".. is not special and usually not what you want"
         );
     }
 
