@@ -187,9 +187,9 @@ mod util {
         }
     }
 
-    fn write_config(condition: impl AsRef<str>, env: &GitEnv, overwrite_config_location: ConfigLocation) {
+    fn write_config(condition: impl AsRef<str>, env: GitEnv, overwrite_config_location: ConfigLocation) -> GitEnv {
         let override_config_dir_file = write_override_config(env.worktree_dir());
-        write_main_config(condition, override_config_dir_file, env, overwrite_config_location);
+        write_main_config(condition, override_config_dir_file, env, overwrite_config_location)
     }
 
     fn write_override_config(root_path: &Path) -> PathBuf {
@@ -235,22 +235,30 @@ mod util {
     fn write_main_config(
         condition: impl AsRef<str>,
         override_config_dir_file: PathBuf,
-        env: &GitEnv,
+        env: GitEnv,
         overwrite_config_location: ConfigLocation,
-    ) {
+    ) -> GitEnv {
         let output = Command::new("git")
             .args(["init", env.worktree_dir().to_str().unwrap()])
             .output()
             .unwrap();
         assert!(output.status.success(), "git init failed: {:?}", output);
 
+        // TODO: rewrite such that we just append these values to the end of a file
+        //       until we can write files ourselves properly.
         if overwrite_config_location == ConfigLocation::Repo {
             let output = Command::new("git")
                 .args(["config", "section.value", "base-value"])
                 .env("GIT_DIR", env.git_dir())
+                .current_dir(env.worktree_dir())
                 .output()
                 .unwrap();
-            assert!(output.status.success(), "git config set value failed: {:?}", output);
+            assert!(
+                output.status.success(),
+                "git config set value failed: {:?}: {:?} for debugging",
+                output,
+                env.tempdir.into_path()
+            );
         }
 
         let output = Command::new("git")
@@ -264,10 +272,17 @@ mod util {
                 &escape_backslashes(override_config_dir_file.as_path()),
             ])
             .current_dir(env.worktree_dir())
+            .env("GIT_DIR", env.git_dir())
             .env("HOME", env.home_dir())
             .output()
             .unwrap();
-        assert!(output.status.success(), "git config set value failed: {:?}", output);
+        assert!(
+            output.status.success(),
+            "git config set value failed: {:?}: {:?} for debugging",
+            output,
+            env.tempdir.into_path()
+        );
+        env
     }
 
     fn git_dir(root_dir: &Path, subdir_name: impl AsRef<Path>) -> PathBuf {
@@ -282,9 +297,9 @@ mod util {
             value: expected,
             config_location,
         }: Condition,
-        env: GitEnv,
+        mut env: GitEnv,
     ) {
-        write_config(condition, &env, config_location);
+        env = write_config(condition, env, config_location);
 
         let mut paths = vec![env.git_dir().join("config")];
         if config_location == ConfigLocation::User {
