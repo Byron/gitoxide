@@ -1,4 +1,5 @@
 use bstr::{BString, ByteSlice};
+use compact_str::CompactStr;
 
 use crate::{MagicSignature, Pattern, SearchMode};
 
@@ -140,7 +141,6 @@ fn split_on_non_escaped_char(input: &[u8], split_char: u8) -> Vec<&[u8]> {
             keywords.push(&input[last..]);
             break;
         }
-
         i += 1;
     }
     keywords
@@ -153,8 +153,9 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<(BString, git_attributes::State)
 
     let unescaped = input.replace(r"\,", ",");
 
-    git_attributes::parse::Iter::new(unescaped.as_bstr(), 0)
+    let parsed_attrs = git_attributes::parse::Iter::new(unescaped.as_bstr(), 0)
         .map(|res| res.map(|(name, state)| (name.into(), state.into())))
+        // .map(|res| res.map(|(name, state)| unescape_attribute_value((name, state))))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| match e {
             git_attributes::parse::Error::AttributeName {
@@ -162,35 +163,57 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<(BString, git_attributes::State)
                 attribute,
             } => Error::InvalidAttribute { attribute },
             _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
-        })
+        })?;
+
+    for (_, state) in parsed_attrs.iter() {
+        match state {
+            git_attributes::State::Value(v) => _check_attr_value(&v.to_string().into())?,
+            _ => {}
+        }
+    }
+
+    Ok(parsed_attrs)
 }
 
-fn _unescape_attribute_values(attrs: Vec<(BString, git_attributes::State)>) -> Vec<(BString, git_attributes::State)> {
-    attrs
-        .into_iter()
-        .map(|(name, state)| {
-            match &state {
-                git_attributes::State::Value(_v) => {}
-                _ => {}
+fn _unescape_attribute_value((name, state): (BString, git_attributes::State)) -> (BString, git_attributes::State) {
+    match &state {
+        git_attributes::State::Value(v) if v.contains("\\") => {
+            let mut i = 0;
+            let v = BString::from(v.to_string());
+            let mut new_v = CompactStr::default();
+            loop {
+                if let Some(_) = v.get(i + 1) {
+                    if v[i] == b'\\' {
+                        i += 1;
+                        new_v.push(v[i] as char);
+                    } else {
+                        new_v.push(v[i] as char);
+                    }
+                } else {
+                    new_v.push(v[i] as char);
+                    break;
+                }
+                i += 1;
             }
-            (name, state)
-        })
-        .collect::<Vec<_>>()
+            (name, git_attributes::State::Value(new_v))
+        }
+        _ => (name, state),
+    }
 }
 
 fn _check_attr_value(value: &BString) -> Result<(), Error> {
-    if value
-        .bytes()
-        .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_' || b == b',')
-    {
-        // Invalid character in value
+    // the only characters allowed in the PATHSPEC attribute value
+    let is_allowed_char = |c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'_' || c == b',';
+
+    if !value.bytes().all(is_allowed_char) {
+        // TODO: return correct error (invalid character in attribute value)
         return Err(Error::InvalidAttribute {
             attribute: value.clone(),
         });
     }
 
     if value.ends_with(&[b'\\']) {
-        // escape char '\' not allowed as last character
+        // TODO: return correct error (escape char not allowed as last char)
         return Err(Error::InvalidAttribute {
             attribute: value.clone(),
         });

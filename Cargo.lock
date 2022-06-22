@@ -1419,9 +1419,13 @@ version = "0.0.0"
 dependencies = [
  "bitflags",
  "bstr",
+ "compact_str",
  "git-attributes",
  "git-glob",
+ "git-testtools",
+ "once_cell",
  "thiserror",
+ "walkdir",
 ]
 
 [[package]]

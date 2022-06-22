@@ -1,5 +1,30 @@
+use bstr::{BString, ByteSlice};
 use git_attributes::State;
 use git_pathspec::{MagicSignature, Pattern, SearchMode};
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
+
+static BASELINE: Lazy<HashMap<BString, BString>> = Lazy::new(|| {
+    let mut baseline_map = HashMap::new();
+
+    let base = git_testtools::scripted_fixture_repo_read_only("generate_pathspec_baseline.sh").unwrap();
+
+    let dirwalk = walkdir::WalkDir::new(base)
+        .max_depth(1)
+        .follow_links(false)
+        .into_iter()
+        .filter_map(|e| e.ok().and_then(|e| (e.file_name() == "baseline.git").then(|| e)));
+
+    for baseline_entry in dirwalk {
+        let baseline = std::fs::read(baseline_entry.path()).unwrap();
+        let mut lines = baseline.lines();
+        while let Some(spec) = lines.next() {
+            let exit_code = lines.next().unwrap().into();
+            baseline_map.insert(spec.into(), exit_code);
+        }
+    }
+    baseline_map
+});
 
 mod succeed {
     use crate::{
@@ -141,14 +166,14 @@ mod succeed {
     #[test]
     fn attributes_with_escape_chars_in_state_values() {
         let inputs = vec![
-            (
-                r":(attr:v=one\-)",
-                pat_with_attrs(vec![("v", State::Value(r"one\-".into()))]),
-            ),
-            (
-                r":(attr:v=one\_)",
-                pat_with_attrs(vec![("v", State::Value(r"one\_".into()))]),
-            ),
+            // (
+            //     r":(attr:v=one\-)",
+            //     pat_with_attrs(vec![("v", State::Value(r"one-".into()))]),
+            // ),
+            // (
+            //     r":(attr:v=one\_)",
+            //     pat_with_attrs(vec![("v", State::Value(r"one_".into()))]),
+            // ),
             (
                 r":(attr:v=one\,)",
                 pat_with_attrs(vec![("v", State::Value(r"one,".into()))]),
@@ -172,14 +197,18 @@ mod succeed {
 }
 
 mod fail {
-    use crate::is_valid_in_git;
+    use crate::check_against_baseline;
     use git_pathspec::parse::Error;
 
     #[test]
     fn empty_input() {
         let input = "";
 
-        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+        assert!(
+            !check_against_baseline(input),
+            "This pathspec is valid in git: {}",
+            input
+        );
 
         let output = git_pathspec::parse(input.as_bytes());
         assert!(output.is_err());
@@ -194,7 +223,11 @@ mod fail {
         ];
 
         inputs.into_iter().for_each(|input| {
-            assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+            assert!(
+                !check_against_baseline(input),
+                "This pathspec is valid in git: {}",
+                input
+            );
 
             let output = git_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
@@ -212,7 +245,11 @@ mod fail {
         ];
 
         inputs.into_iter().for_each(|input| {
-            assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+            assert!(
+                !check_against_baseline(input),
+                "This pathspec is valid in git: {}",
+                input
+            );
 
             let output = git_pathspec::parse(input.as_bytes());
             assert!(output.is_err());
@@ -227,15 +264,21 @@ mod fail {
             ":(attr:validAttr +invalidAttr)some/path",
             ":(attr:+invalidAttr,attr:valid)some/path",
             r":(attr:inva\lid)some/path",
-            // TODO:
-            // r":(attr:v=invalid\)some/path",
-            // r":(attr:v=invalid\ )some/path",
-            // r":(attr:v=invalid\#)some/path",
-            // r":(attr:v=invalid\ valid)some/path",
+            r":(attr:inva\lid)some/path",
+            // TODO: Fix error values
+            r":(attr:v=inva\\lid)some/path",
+            r":(attr:v=invalid\)some/path",
+            r":(attr:v=invalid\ )some/path",
+            r":(attr:v=invalid\#)some/path",
+            r":(attr:v=invalid\ valid)some/path",
         ];
 
         for input in inputs {
-            assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+            assert!(
+                !check_against_baseline(input),
+                "This pathspec is valid in git: {}",
+                input
+            );
 
             let output = git_pathspec::parse(input.as_bytes());
             assert!(output.is_err(), "This pathspec did not produce an error {}", input);
@@ -247,7 +290,11 @@ mod fail {
     fn empty_attribute_specification() {
         let input = ":(attr:)";
 
-        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+        assert!(
+            !check_against_baseline(input),
+            "This pathspec is valid in git: {}",
+            input
+        );
 
         let output = git_pathspec::parse(input.as_bytes());
         assert!(output.is_err());
@@ -258,7 +305,11 @@ mod fail {
     fn multiple_attribute_specifications() {
         let input = ":(attr:one,attr:two)some/path";
 
-        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+        assert!(
+            !check_against_baseline(input),
+            "This pathspec is valid in git: {}",
+            input
+        );
 
         let output = git_pathspec::parse(input.as_bytes());
         assert!(output.is_err());
@@ -269,7 +320,11 @@ mod fail {
     fn missing_parentheses() {
         let input = ":(top";
 
-        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+        assert!(
+            !check_against_baseline(input),
+            "This pathspec is valid in git: {}",
+            input
+        );
 
         let output = git_pathspec::parse(input.as_bytes());
         assert!(output.is_err());
@@ -280,7 +335,11 @@ mod fail {
     fn glob_and_literal_keywords_present() {
         let input = ":(glob,literal)some/path";
 
-        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+        assert!(
+            !check_against_baseline(input),
+            "This pathspec is valid in git: {}",
+            input
+        );
 
         let output = git_pathspec::parse(input.as_bytes());
         assert!(output.is_err());
@@ -290,7 +349,11 @@ mod fail {
 
 fn check_valid_inputs(inputs: Vec<(&str, Pattern)>) {
     inputs.into_iter().for_each(|(input, expected)| {
-        assert!(is_valid_in_git(input), "This pathspec is invalid in git: {}", input);
+        assert!(
+            check_against_baseline(input),
+            "This pathspec is invalid in git: {}",
+            input
+        );
 
         let pattern = git_pathspec::parse(input.as_bytes()).expect("parsing should not fail");
         assert_eq!(pattern, expected, "while checking input: \"{}\"", input);
@@ -329,14 +392,9 @@ fn pat(path: &str, signature: MagicSignature, search_mode: SearchMode, attribute
     }
 }
 
-// TODO: Cache results instead of running them with each test run
-fn is_valid_in_git(pathspec: &str) -> bool {
-    use std::process::Command;
-
-    let output = Command::new("git")
-        .args(["ls-files", pathspec])
-        .output()
-        .expect("failed to execute process");
-
-    output.status.success()
+fn check_against_baseline(pathspec: &str) -> bool {
+    let base = BASELINE
+        .get(&BString::from(pathspec))
+        .expect(&format!("missing baseline for pathspec: {:?}", pathspec));
+    *base == BString::from("0")
 }
