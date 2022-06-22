@@ -2,37 +2,22 @@ use git_attributes::State;
 use git_pathspec::{MagicSignature, Pattern, SearchMode};
 
 mod succeed {
-    use crate::{check_valid_inputs, pat, pat_with_path, pat_with_path_and_sig};
+    use crate::{
+        check_valid_inputs, pat, pat_with_attrs, pat_with_path, pat_with_path_and_sig, pat_with_search_mode,
+        pat_with_sig,
+    };
     use git_attributes::State;
     use git_pathspec::{MagicSignature, SearchMode};
 
     #[test]
     fn repeated_matcher_keywords() {
         let input = vec![
-            (
-                ":(glob,glob)",
-                pat("", MagicSignature::empty(), SearchMode::PathAwareGlob, vec![]),
-            ),
-            (
-                ":(literal,literal)",
-                pat("", MagicSignature::empty(), SearchMode::Literal, vec![]),
-            ),
-            (
-                ":(top,top)",
-                pat("", MagicSignature::TOP, SearchMode::ShellGlob, vec![]),
-            ),
-            (
-                ":(icase,icase)",
-                pat("", MagicSignature::ICASE, SearchMode::ShellGlob, vec![]),
-            ),
-            (
-                ":(attr,attr)",
-                pat("", MagicSignature::empty(), SearchMode::ShellGlob, vec![]),
-            ),
-            (
-                ":!^(exclude,exclude)",
-                pat("", MagicSignature::EXCLUDE, SearchMode::ShellGlob, vec![]),
-            ),
+            (":(glob,glob)", pat_with_search_mode(SearchMode::PathAwareGlob)),
+            (":(literal,literal)", pat_with_search_mode(SearchMode::Literal)),
+            (":(top,top)", pat_with_sig(MagicSignature::TOP)),
+            (":(icase,icase)", pat_with_sig(MagicSignature::ICASE)),
+            (":(attr,attr)", pat_with_attrs(vec![])),
+            (":!^(exclude,exclude)", pat_with_sig(MagicSignature::EXCLUDE)),
         ];
 
         check_valid_inputs(input);
@@ -61,12 +46,12 @@ mod succeed {
             ("some/path ", pat_with_path("some/path ")),
             (": some/path", pat_with_path(" some/path")),
             (": !some/path", pat_with_path(" !some/path")),
+            (": :some/path", pat_with_path(" :some/path")),
+            (": ()some/path", pat_with_path(" ()some/path")),
             (
                 ":! some/path",
                 pat_with_path_and_sig(" some/path", MagicSignature::EXCLUDE),
             ),
-            (": :some/path", pat_with_path(" :some/path")),
-            (": ()some/path", pat_with_path(" ()some/path")),
         ];
 
         check_valid_inputs(inputs)
@@ -100,21 +85,15 @@ mod succeed {
     #[test]
     fn signatures_and_searchmodes() {
         let inputs = vec![
-            (":(top)", pat_with_path_and_sig("", MagicSignature::TOP)),
-            (":(icase)", pat_with_path_and_sig("", MagicSignature::ICASE)),
+            (":(top)", pat_with_sig(MagicSignature::TOP)),
+            (":(icase)", pat_with_sig(MagicSignature::ICASE)),
             (":(attr)", pat_with_path("")),
-            (":(exclude)", pat_with_path_and_sig("", MagicSignature::EXCLUDE)),
-            (
-                ":(literal)",
-                pat("", MagicSignature::empty(), SearchMode::Literal, vec![]),
-            ),
-            (
-                ":(glob)",
-                pat("", MagicSignature::empty(), SearchMode::PathAwareGlob, vec![]),
-            ),
+            (":(exclude)", pat_with_sig(MagicSignature::EXCLUDE)),
+            (":(literal)", pat_with_search_mode(SearchMode::Literal)),
+            (":(glob)", pat_with_search_mode(SearchMode::PathAwareGlob)),
             (
                 ":(top,exclude)",
-                pat_with_path_and_sig("", MagicSignature::TOP | MagicSignature::EXCLUDE),
+                pat_with_sig(MagicSignature::TOP | MagicSignature::EXCLUDE),
             ),
             (
                 ":(icase,literal)",
@@ -140,77 +119,43 @@ mod succeed {
     #[test]
     fn attributes_in_signature() {
         let inputs = vec![
-            (
-                ":(attr:someAttr)",
-                pat(
-                    "",
-                    MagicSignature::empty(),
-                    SearchMode::ShellGlob,
-                    vec![("someAttr", State::Set)],
-                ),
-            ),
+            (":(attr:someAttr)", pat_with_attrs(vec![("someAttr", State::Set)])),
             (
                 ":(attr:!someAttr)",
-                pat(
-                    "",
-                    MagicSignature::empty(),
-                    SearchMode::ShellGlob,
-                    vec![("someAttr", State::Unspecified)],
-                ),
+                pat_with_attrs(vec![("someAttr", State::Unspecified)]),
             ),
-            (
-                ":(attr:-someAttr)",
-                pat(
-                    "",
-                    MagicSignature::empty(),
-                    SearchMode::ShellGlob,
-                    vec![("someAttr", State::Unset)],
-                ),
-            ),
+            (":(attr:-someAttr)", pat_with_attrs(vec![("someAttr", State::Unset)])),
             (
                 ":(attr:someAttr=value)",
-                pat(
-                    "",
-                    MagicSignature::empty(),
-                    SearchMode::ShellGlob,
-                    vec![("someAttr", State::Value("value".into()))],
-                ),
+                pat_with_attrs(vec![("someAttr", State::Value("value".into()))]),
             ),
             (
                 ":(attr:someAttr anotherAttr)",
-                pat(
-                    "",
-                    MagicSignature::empty(),
-                    SearchMode::ShellGlob,
-                    vec![("someAttr", State::Set), ("anotherAttr", State::Set)],
-                ),
+                pat_with_attrs(vec![("someAttr", State::Set), ("anotherAttr", State::Set)]),
             ),
         ];
 
         check_valid_inputs(inputs)
     }
 
-    // TODO: unescape attribute values?
     #[test]
-    fn attributes_with_escaped_values() {
+    fn attributes_with_escape_chars_in_state_values() {
         let inputs = vec![
             (
                 r":(attr:v=one\-)",
-                pat(
-                    "",
-                    MagicSignature::empty(),
-                    SearchMode::ShellGlob,
-                    vec![("v", State::Value(r"one\-".into()))],
-                ),
+                pat_with_attrs(vec![("v", State::Value(r"one\-".into()))]),
+            ),
+            (
+                r":(attr:v=one\_)",
+                pat_with_attrs(vec![("v", State::Value(r"one\_".into()))]),
+            ),
+            (
+                r":(attr:v=one\,)",
+                pat_with_attrs(vec![("v", State::Value(r"one,".into()))]),
             ),
             (
                 r":(attr:v=one\,two\,three)",
-                pat(
-                    "",
-                    MagicSignature::empty(),
-                    SearchMode::ShellGlob,
-                    vec![("v", State::Value(r"one\,two\,three".into()))],
-                ),
+                pat_with_attrs(vec![("v", State::Value(r"one,two,three".into()))]),
             ),
         ];
 
@@ -220,15 +165,7 @@ mod succeed {
     #[test]
     #[ignore]
     fn prefix() {
-        let inputs = vec![(
-            r":(prefix:)",
-            pat(
-                "",
-                MagicSignature::empty(),
-                SearchMode::ShellGlob,
-                vec![("value", State::Value("one,two,three".into()))],
-            ),
-        )];
+        let inputs = vec![(r":(prefix:)", pat_with_path(""))];
 
         check_valid_inputs(inputs)
     }
@@ -290,24 +227,24 @@ mod fail {
             ":(attr:validAttr +invalidAttr)some/path",
             ":(attr:+invalidAttr,attr:valid)some/path",
             r":(attr:inva\lid)some/path",
-            //TODO: handle these case
-            // r":(attr:v=invalid\ valid)some/path",
-            // r":(attr:v=invalid\ )some/path",
+            // TODO:
             // r":(attr:v=invalid\)some/path",
+            // r":(attr:v=invalid\ )some/path",
             // r":(attr:v=invalid\#)some/path",
+            // r":(attr:v=invalid\ valid)some/path",
         ];
 
         for input in inputs {
             assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
 
             let output = git_pathspec::parse(input.as_bytes());
-            assert!(output.is_err());
+            assert!(output.is_err(), "This pathspec did not produce an error {}", input);
             assert!(matches!(output.unwrap_err(), Error::InvalidAttribute { .. }));
         }
     }
 
     #[test]
-    fn empty_attribute() {
+    fn empty_attribute_specification() {
         let input = ":(attr:)";
 
         assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
@@ -315,6 +252,17 @@ mod fail {
         let output = git_pathspec::parse(input.as_bytes());
         assert!(output.is_err());
         assert!(matches!(output.unwrap_err(), Error::EmptyAttribute));
+    }
+
+    #[test]
+    fn multiple_attribute_specifications() {
+        let input = ":(attr:one,attr:two)some/path";
+
+        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
+
+        let output = git_pathspec::parse(input.as_bytes());
+        assert!(output.is_err());
+        assert!(matches!(output.unwrap_err(), Error::MultipleAttributeSpecifications));
     }
 
     #[test]
@@ -338,17 +286,6 @@ mod fail {
         assert!(output.is_err());
         assert!(matches!(output.unwrap_err(), Error::IncompatibleSearchModes));
     }
-
-    #[test]
-    fn multiple_attribute_specifications() {
-        let input = ":(attr:one,attr:two)some/path";
-
-        assert!(!is_valid_in_git(input), "This pathspec is valid in git: {}", input);
-
-        let output = git_pathspec::parse(input.as_bytes());
-        assert!(output.is_err());
-        assert!(matches!(output.unwrap_err(), Error::MultipleAttributeSpecifications));
-    }
 }
 
 fn check_valid_inputs(inputs: Vec<(&str, Pattern)>) {
@@ -366,6 +303,18 @@ fn pat_with_path(path: &str) -> Pattern {
 
 fn pat_with_path_and_sig(path: &str, signature: MagicSignature) -> Pattern {
     pat(path, signature, SearchMode::ShellGlob, vec![])
+}
+
+fn pat_with_sig(signature: MagicSignature) -> Pattern {
+    pat("", signature, SearchMode::ShellGlob, vec![])
+}
+
+fn pat_with_attrs(attrs: Vec<(&str, State)>) -> Pattern {
+    pat("", MagicSignature::empty(), SearchMode::ShellGlob, attrs)
+}
+
+fn pat_with_search_mode(search_mode: SearchMode) -> Pattern {
+    pat("", MagicSignature::empty(), search_mode, vec![])
 }
 
 fn pat(path: &str, signature: MagicSignature, search_mode: SearchMode, attributes: Vec<(&str, State)>) -> Pattern {

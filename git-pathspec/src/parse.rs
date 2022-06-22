@@ -1,5 +1,4 @@
 use bstr::{BString, ByteSlice};
-use git_attributes::parse::Iter;
 
 use crate::{MagicSignature, Pattern, SearchMode};
 
@@ -10,7 +9,7 @@ pub enum Error {
     #[error("Found {:?}, which is not a valid keyword", found_keyword)]
     InvalidKeyword { found_keyword: BString },
     #[error("Unimplemented pathspec magic {:?}", found_short_keyword)]
-    Unimplemented { found_short_keyword: BString },
+    Unimplemented { found_short_keyword: char },
     #[error("Missing ')' at the end of pathspec magic in {:?}", pathspec)]
     MissingClosingParenthesis { pathspec: BString },
     #[error("Attribute has non-ascii characters or starts with '-': {:?}", attribute)]
@@ -39,13 +38,10 @@ impl Pattern {
         let mut cursor = 0;
         if input.first() == Some(&b':') {
             cursor += 1;
-            p.signature |= parse_short_keywords(input, &mut cursor)?;
+            parse_short_keywords(input, &mut p, &mut cursor)?;
             if let Some(b'(') = input.get(cursor) {
                 cursor += 1;
-                let pat = parse_long_keywords(input, &mut cursor)?;
-                p.search_mode = pat.search_mode;
-                p.attributes = pat.attributes;
-                p.signature |= pat.signature;
+                parse_long_keywords(input, &mut p, &mut cursor)?;
             }
         }
 
@@ -54,21 +50,20 @@ impl Pattern {
     }
 }
 
-fn parse_short_keywords(input: &[u8], cursor: &mut usize) -> Result<MagicSignature, Error> {
+fn parse_short_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Result<(), Error> {
     let unimplemented_chars = vec![
         b'"', b'#', b'%', b'&', b'\'', b',', b'-', b';', b'<', b'=', b'>', b'@', b'_', b'`', b'~',
     ];
-    let mut signature = MagicSignature::empty();
 
     while let Some(&b) = input.get(*cursor) {
         *cursor += 1;
-        signature |= match b {
+        p.signature |= match b {
             b'/' => MagicSignature::TOP,
             b'^' | b'!' => MagicSignature::EXCLUDE,
             b':' => break,
             _ if unimplemented_chars.contains(&b) => {
                 return Err(Error::Unimplemented {
-                    found_short_keyword: vec![b].into(),
+                    found_short_keyword: b.into(),
                 });
             }
             _ => {
@@ -78,10 +73,10 @@ fn parse_short_keywords(input: &[u8], cursor: &mut usize) -> Result<MagicSignatu
         }
     }
 
-    Ok(signature)
+    Ok(())
 }
 
-fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Error> {
+fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Result<(), Error> {
     let end = input.find(")").ok_or(Error::MissingClosingParenthesis {
         pathspec: BString::from(input),
     })?;
@@ -89,17 +84,10 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
     let input = &input[*cursor..end];
     *cursor = end + 1;
 
-    let mut p = Pattern {
-        path: BString::default(),
-        signature: MagicSignature::empty(),
-        search_mode: SearchMode::ShellGlob,
-        attributes: Vec::new(),
-    };
-
     debug_assert_eq!(p.search_mode, SearchMode::default());
 
     if input.is_empty() {
-        return Ok(p);
+        return Ok(());
     }
 
     for keyword in split_on_non_escaped_char(input, b',') {
@@ -134,7 +122,7 @@ fn parse_long_keywords(input: &[u8], cursor: &mut usize) -> Result<Pattern, Erro
         }
     }
 
-    Ok(p)
+    Ok(())
 }
 
 fn split_on_non_escaped_char(input: &[u8], split_char: u8) -> Vec<&[u8]> {
@@ -162,8 +150,11 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<(BString, git_attributes::State)
     if input.is_empty() {
         return Err(Error::EmptyAttribute);
     }
-    Iter::new(input.into(), 0)
-        .map(|res| res.map(|(attr, state)| (attr.into(), state.into())))
+
+    let unescaped = input.replace(r"\,", ",");
+
+    git_attributes::parse::Iter::new(unescaped.as_bstr(), 0)
+        .map(|res| res.map(|(name, state)| (name.into(), state.into())))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| match e {
             git_attributes::parse::Error::AttributeName {
@@ -172,4 +163,38 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<(BString, git_attributes::State)
             } => Error::InvalidAttribute { attribute },
             _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
         })
+}
+
+fn _unescape_attribute_values(attrs: Vec<(BString, git_attributes::State)>) -> Vec<(BString, git_attributes::State)> {
+    attrs
+        .into_iter()
+        .map(|(name, state)| {
+            match &state {
+                git_attributes::State::Value(_v) => {}
+                _ => {}
+            }
+            (name, state)
+        })
+        .collect::<Vec<_>>()
+}
+
+fn _check_attr_value(value: &BString) -> Result<(), Error> {
+    if value
+        .bytes()
+        .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_' || b == b',')
+    {
+        // Invalid character in value
+        return Err(Error::InvalidAttribute {
+            attribute: value.clone(),
+        });
+    }
+
+    if value.ends_with(&[b'\\']) {
+        // escape char '\' not allowed as last character
+        return Err(Error::InvalidAttribute {
+            attribute: value.clone(),
+        });
+    }
+
+    Ok(())
 }
