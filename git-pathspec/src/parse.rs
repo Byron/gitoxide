@@ -39,7 +39,7 @@ impl Pattern {
         let mut cursor = 0;
         if input.first() == Some(&b':') {
             cursor += 1;
-            parse_short_keywords(input, &mut p, &mut cursor)?;
+            p.signature |= parse_short_keywords(input, &mut cursor)?;
             if let Some(b'(') = input.get(cursor) {
                 cursor += 1;
                 parse_long_keywords(input, &mut p, &mut cursor)?;
@@ -51,14 +51,15 @@ impl Pattern {
     }
 }
 
-fn parse_short_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Result<(), Error> {
+fn parse_short_keywords(input: &[u8], cursor: &mut usize) -> Result<MagicSignature, Error> {
     let unimplemented_chars = vec![
         b'"', b'#', b'%', b'&', b'\'', b',', b'-', b';', b'<', b'=', b'>', b'@', b'_', b'`', b'~',
     ];
 
+    let mut signature = MagicSignature::empty();
     while let Some(&b) = input.get(*cursor) {
         *cursor += 1;
-        p.signature |= match b {
+        signature |= match b {
             b'/' => MagicSignature::TOP,
             b'^' | b'!' => MagicSignature::EXCLUDE,
             b':' => break,
@@ -74,7 +75,7 @@ fn parse_short_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Re
         }
     }
 
-    Ok(())
+    Ok(signature)
 }
 
 fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Result<(), Error> {
