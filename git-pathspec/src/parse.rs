@@ -1,4 +1,4 @@
-use bstr::{BString, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
 use compact_str::CompactStr;
 
 use crate::{MagicSignature, Pattern, SearchMode};
@@ -168,7 +168,7 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<(BString, git_attributes::State)
 
     for (_, state) in parsed_attrs.iter() {
         match state {
-            git_attributes::State::Value(v) => _check_attr_value(&v.to_string().into())?,
+            git_attributes::State::Value(v) => _check_attr_value(v.as_str().into())?,
             _ => {}
         }
     }
@@ -202,21 +202,21 @@ fn _unescape_attribute_value((name, state): (BString, git_attributes::State)) ->
     }
 }
 
-fn _check_attr_value(value: &BString) -> Result<(), Error> {
+fn _check_attr_value(value: &BStr) -> Result<(), Error> {
     // the only characters allowed in the PATHSPEC attribute value
     let is_allowed_char = |c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'_' || c == b',';
 
     if !value.bytes().all(is_allowed_char) {
         // TODO: return correct error (invalid character in attribute value)
         return Err(Error::InvalidAttribute {
-            attribute: value.clone(),
+            attribute: value.to_owned(),
         });
     }
 
     if value.ends_with(&[b'\\']) {
         // TODO: return correct error (escape char not allowed as last char)
         return Err(Error::InvalidAttribute {
-            attribute: value.clone(),
+            attribute: value.to_owned(),
         });
     }
 
