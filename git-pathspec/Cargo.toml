@@ -24,4 +24,3 @@ compact_str = "0.3.2"
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
 once_cell = "1.12.0"
-walkdir = "2.3.2"

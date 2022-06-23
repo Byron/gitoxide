@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eu -o pipefail
 
+git init;
+
 function baseline() {
     local pathspec=$1 # first argument is the pathspec to test
 

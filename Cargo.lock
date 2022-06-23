@@ -1425,7 +1425,6 @@ dependencies = [
  "git-testtools",
  "once_cell",
  "thiserror",
- "walkdir",
 ]
 
 [[package]]

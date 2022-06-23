@@ -1,29 +1,25 @@
-use bstr::{BString, ByteSlice};
+use bstr::{BStr, BString, ByteSlice};
 use git_attributes::State;
 use git_pathspec::{MagicSignature, Pattern, SearchMode};
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
-static BASELINE: Lazy<HashMap<BString, BString>> = Lazy::new(|| {
-    let mut baseline_map = HashMap::new();
+pub use git_testtools::Result;
 
+static BASELINE: Lazy<HashMap<BString, usize>> = Lazy::new(|| {
     let base = git_testtools::scripted_fixture_repo_read_only("generate_pathspec_baseline.sh").unwrap();
 
-    let dirwalk = walkdir::WalkDir::new(base)
-        .max_depth(1)
-        .follow_links(false)
-        .into_iter()
-        .filter_map(|e| e.ok().and_then(|e| (e.file_name() == "baseline.git").then(|| e)));
-
-    for baseline_entry in dirwalk {
-        let baseline = std::fs::read(baseline_entry.path()).unwrap();
+    (|| -> Result<_> {
+        let mut map = HashMap::new();
+        let baseline = std::fs::read(base.join("baseline.git"))?;
         let mut lines = baseline.lines();
         while let Some(spec) = lines.next() {
-            let exit_code = lines.next().unwrap().into();
-            baseline_map.insert(spec.into(), exit_code);
+            let exit_code = lines.next().expect("two lines per baseline").to_str()?.parse()?;
+            map.insert(spec.into(), exit_code);
         }
-    }
-    baseline_map
+        Ok(map)
+    })()
+    .unwrap()
 });
 
 mod succeed {
@@ -393,8 +389,9 @@ fn pat(path: &str, signature: MagicSignature, search_mode: SearchMode, attribute
 }
 
 fn check_against_baseline(pathspec: &str) -> bool {
+    let key: &BStr = pathspec.into();
     let base = BASELINE
-        .get(&BString::from(pathspec))
+        .get(key)
         .expect(&format!("missing baseline for pathspec: {:?}", pathspec));
-    *base == BString::from("0")
+    *base == 0
 }
