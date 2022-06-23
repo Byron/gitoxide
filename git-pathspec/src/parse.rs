@@ -7,10 +7,10 @@ use crate::{MagicSignature, Pattern, SearchMode};
 pub enum Error {
     #[error("Empty string is not a valid pathspec")]
     EmptyString,
-    #[error("Found {:?}, which is not a valid keyword", found_keyword)]
-    InvalidKeyword { found_keyword: BString },
-    #[error("Unimplemented pathspec magic {:?}", found_short_keyword)]
-    Unimplemented { found_short_keyword: char },
+    #[error("Found {:?}, which is not a valid keyword", keyword)]
+    InvalidKeyword { keyword: BString },
+    #[error("Unimplemented pathspec magic {:?}", short_keyword)]
+    Unimplemented { short_keyword: char },
     #[error("Missing ')' at the end of pathspec magic in {:?}", pathspec)]
     MissingClosingParenthesis { pathspec: BString },
     #[error("Attribute has non-ascii characters or starts with '-': {:?}", attribute)]
@@ -64,7 +64,7 @@ fn parse_short_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Re
             b':' => break,
             _ if unimplemented_chars.contains(&b) => {
                 return Err(Error::Unimplemented {
-                    found_short_keyword: b.into(),
+                    short_keyword: b.into(),
                 });
             }
             _ => {
@@ -117,7 +117,7 @@ fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Res
             }
             _ => {
                 return Err(Error::InvalidKeyword {
-                    found_keyword: BString::from(keyword),
+                    keyword: BString::from(keyword),
                 });
             }
         }
