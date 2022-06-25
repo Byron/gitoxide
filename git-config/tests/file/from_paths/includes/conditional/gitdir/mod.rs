@@ -1,4 +1,5 @@
 mod util;
+
 use util::{assert_section_value, git_env_with_symlinked_repo, Condition, GitEnv};
 
 #[test]
@@ -105,12 +106,17 @@ fn case_insensitive_matches_any_case() -> crate::Result {
 
 #[test]
 #[ignore]
-fn pattern_with_backslash() -> crate::Result {
-    // TODO: figure out what this is testing
+fn pattern_with_escaped_backslash() -> crate::Result {
     assert_section_value(
-        Condition::new(r#"gitdir:\worktree/"#).expect_original_value(),
+        Condition::new(r#"gitdir:\\work\\tree\\/"#),
         GitEnv::repo_name("worktree")?,
     )
+}
+
+#[test]
+#[ignore]
+fn pattern_with_backslash() -> crate::Result {
+    assert_section_value(Condition::new(r#"gitdir:work\tree/"#), GitEnv::repo_name("worktree")?)
 }
 
 #[test]

@@ -109,9 +109,9 @@ pub fn assert_section_value(
         value: expected,
         config_location,
     }: Condition,
-    mut env: GitEnv,
+    env: GitEnv,
 ) -> crate::Result {
-    env = write_config(condition, env, config_location)?;
+    write_config(condition, &env, config_location)?;
 
     let mut paths = vec![env.git_dir().join("config")];
     if config_location == ConfigLocation::User {
@@ -172,11 +172,7 @@ fn assure_git_agrees(expected: Option<Value>, env: GitEnv) -> crate::Result {
     Ok(())
 }
 
-fn write_config(
-    condition: impl AsRef<str>,
-    env: GitEnv,
-    overwrite_config_location: ConfigLocation,
-) -> crate::Result<GitEnv> {
+fn write_config(condition: impl AsRef<str>, env: &GitEnv, overwrite_config_location: ConfigLocation) -> crate::Result {
     let include_config = write_included_config(&env)?;
     write_main_config(condition, include_config, env, overwrite_config_location)
 }
@@ -203,9 +199,9 @@ value = {value}"
 fn write_main_config(
     condition: impl AsRef<str>,
     include_file_path: PathBuf,
-    env: GitEnv,
+    env: &GitEnv,
     overwrite_config_location: ConfigLocation,
-) -> crate::Result<GitEnv> {
+) -> crate::Result {
     git_repository::init(env.worktree_dir())?;
 
     if overwrite_config_location == ConfigLocation::Repo {
@@ -231,5 +227,5 @@ path = {include_file_path}",
         )
         .as_bytes(),
     )?;
-    Ok(env)
+    Ok(())
 }

@@ -144,13 +144,11 @@ fn gitdir_matches(
     wildmatch_mode: git_glob::wildmatch::Mode,
 ) -> Option<()> {
     let git_dir = git_path::to_unix_separators(git_path::into_bstr(git_dir?));
-    if condition_path.contains('\\') {
-        return None;
-    }
+
     let mut pattern_path = {
         let cow = Cow::Borrowed(condition_path.as_bytes());
         let path = values::Path::from(cow).interpolate(git_install_dir, home_dir).ok()?;
-        git_path::to_unix_separators(git_path::into_bstr(path)).into_owned()
+        git_path::into_bstr(path).into_owned()
     };
 
     if let Some(relative_pattern_path) = pattern_path.strip_prefix(b"./") {
@@ -173,6 +171,8 @@ fn gitdir_matches(
     if pattern_path.ends_with(b"/") {
         pattern_path.push_str("**");
     }
+
+    pattern_path = git_path::to_unix_separators(pattern_path).into_owned();
 
     let match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL | wildmatch_mode;
     let is_match = git_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
