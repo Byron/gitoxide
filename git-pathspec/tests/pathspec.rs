@@ -152,6 +152,21 @@ mod parse {
                     pat_with_attrs(vec![("someAttr", State::Value("value".into()))]),
                 ),
                 (
+                    ":(attr:a=one b=)",
+                    pat_with_attrs(vec![("a", State::Value("one".into())), ("b", State::Value("".into()))]),
+                ),
+                (
+                    ":(attr:a= b=two)",
+                    pat_with_attrs(vec![("a", State::Value("".into())), ("b", State::Value("two".into()))]),
+                ),
+                (
+                    ":(attr:a=one b=two)",
+                    pat_with_attrs(vec![
+                        ("a", State::Value("one".into())),
+                        ("b", State::Value("two".into())),
+                    ]),
+                ),
+                (
                     ":(attr:someAttr anotherAttr)",
                     pat_with_attrs(vec![("someAttr", State::Set), ("anotherAttr", State::Set)]),
                 ),
@@ -163,14 +178,14 @@ mod parse {
         #[test]
         fn attributes_with_escape_chars_in_state_values() {
             let inputs = vec![
-                // (
-                //     r":(attr:v=one\-)",
-                //     pat_with_attrs(vec![("v", State::Value(r"one-".into()))]),
-                // ),
-                // (
-                //     r":(attr:v=one\_)",
-                //     pat_with_attrs(vec![("v", State::Value(r"one_".into()))]),
-                // ),
+                (
+                    r":(attr:v=one\-)",
+                    pat_with_attrs(vec![("v", State::Value(r"one-".into()))]),
+                ),
+                (
+                    r":(attr:v=one\_)",
+                    pat_with_attrs(vec![("v", State::Value(r"one_".into()))]),
+                ),
                 (
                     r":(attr:v=one\,)",
                     pat_with_attrs(vec![("v", State::Value(r"one,".into()))]),
@@ -261,9 +276,26 @@ mod parse {
                 ":(attr:validAttr +invalidAttr)some/path",
                 ":(attr:+invalidAttr,attr:valid)some/path",
                 r":(attr:inva\lid)some/path",
-                r":(attr:inva\lid)some/path",
-                // TODO: Fix error values
+            ];
+
+            for input in inputs {
+                assert!(
+                    !check_against_baseline(input),
+                    "This pathspec is valid in git: {}",
+                    input
+                );
+
+                let output = git_pathspec::parse(input.as_bytes());
+                assert!(output.is_err(), "This pathspec did not produce an error {}", input);
+                assert!(matches!(output.unwrap_err(), Error::InvalidAttribute { .. }));
+            }
+        }
+
+        #[test]
+        fn invalid_attribute_values() {
+            let inputs = vec![
                 r":(attr:v=inva\\lid)some/path",
+                r":(attr:v=invalid\\)some/path",
                 r":(attr:v=invalid\)some/path",
                 r":(attr:v=invalid\ )some/path",
                 r":(attr:v=invalid\#)some/path",
@@ -279,7 +311,7 @@ mod parse {
 
                 let output = git_pathspec::parse(input.as_bytes());
                 assert!(output.is_err(), "This pathspec did not produce an error {}", input);
-                assert!(matches!(output.unwrap_err(), Error::InvalidAttribute { .. }));
+                assert!(matches!(output.unwrap_err(), Error::InvalidAttributeValue { .. }));
             }
         }
 

@@ -67,6 +67,9 @@ baseline ':(attr:someAttr)'
 baseline ':(attr:!someAttr)'
 baseline ':(attr:-someAttr)'
 baseline ':(attr:someAttr=value)'
+baseline ':(attr:a=one b=)'
+baseline ':(attr:a= b=two)'
+baseline ':(attr:a=one b=two)'
 baseline ':(attr:someAttr anotherAttr)'
 
 # attributes_with_escape_chars_in_state_values
@@ -108,7 +111,10 @@ baseline ':(attr:+invalidAttr)some/path'
 baseline ':(attr:validAttr +invalidAttr)some/path'
 baseline ':(attr:+invalidAttr,attr:valid)some/path'
 baseline ':(attr:inva\lid)some/path'
+
+# invalid_attribute_values
 baseline ':(attr:v=inva\\lid)some/path'
+baseline ':(attr:v=invalid\\)some/path'
 baseline ':(attr:v=invalid\)some/path'
 baseline ':(attr:v=invalid\ )some/path'
 baseline ':(attr:v=invalid\#)some/path'
