@@ -1,27 +1,26 @@
-use bstr::{BStr, BString, ByteSlice};
-
 use crate::{MagicSignature, Pattern, SearchMode};
+use bstr::{BStr, BString, ByteSlice};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Empty string is not a valid pathspec")]
     EmptyString,
-    #[error("Found {:?}, which is not a valid keyword", keyword)]
+    #[error("Found {:?} in signature, which is not a valid keyword", keyword)]
     InvalidKeyword { keyword: BString },
-    #[error("Unimplemented pathspec magic {:?}", short_keyword)]
+    #[error("Unimplemented short keyword: {:?}", short_keyword)]
     Unimplemented { short_keyword: char },
-    #[error("Missing ')' at the end of pathspec magic in {:?}", pathspec)]
-    MissingClosingParenthesis { pathspec: BString },
+    #[error("Missing ')' at the end of pathspec signature")]
+    MissingClosingParenthesis,
     #[error("Attribute has non-ascii characters or starts with '-': {:?}", attribute)]
     InvalidAttribute { attribute: BString },
     #[error("Invalid character in attribute value: {:?}", character)]
     InvalidAttributeValue { character: char },
     #[error("Attribute specification cannot be empty")]
     EmptyAttribute,
-    #[error("'literal' and 'glob' keywords cannot be used together in the same pathspec")]
-    IncompatibleSearchModes,
     #[error("Only one attribute specification is allowed in the same pathspec")]
     MultipleAttributeSpecifications,
+    #[error("'literal' and 'glob' keywords cannot be used together in the same pathspec")]
+    IncompatibleSearchModes,
 }
 
 impl Pattern {
@@ -80,9 +79,7 @@ fn parse_short_keywords(input: &[u8], cursor: &mut usize) -> Result<MagicSignatu
 }
 
 fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Result<(), Error> {
-    let end = input.find(")").ok_or(Error::MissingClosingParenthesis {
-        pathspec: BString::from(input),
-    })?;
+    let end = input.find(")").ok_or(Error::MissingClosingParenthesis)?;
 
     let input = &input[*cursor..end];
     *cursor = end + 1;
@@ -132,19 +129,16 @@ fn split_on_non_escaped_char(input: &[u8], split_char: u8) -> Vec<&[u8]> {
     let mut keywords = Vec::new();
     let mut i = 0;
     let mut last = 0;
-    loop {
-        if let Some(&b) = input.get(i + 1) {
-            if b == split_char && input[i] != b'\\' {
-                i += 1;
-                keywords.push(&input[last..i]);
-                last = i + 1;
-            }
+    for window in input.windows(2) {
+        if window[0] != b'\\' && window[1] == split_char {
+            i += 1;
+            keywords.push(&input[last..i]);
+            last = i + 1;
         } else {
-            keywords.push(&input[last..]);
-            break;
+            i += 1;
         }
-        i += 1;
     }
+    keywords.push(&input[last..]);
     keywords
 }
 
@@ -212,13 +206,6 @@ fn unescape_attribute_values(input: &BStr) -> Result<BString, Error> {
 
 fn check_attr_value(value: &BStr) -> Result<(), Error> {
     let is_invalid_char = |&c: &u8| !c.is_ascii_alphanumeric() && c != b'-' && c != b'_' && c != b',';
-
-    // TODO: Do we actually need this case?
-    // if value.ends_with(b"\\") {
-    //     return Err(Error::InvalidAttribute {
-    //         attribute: value.to_owned(),
-    //     });
-    // }
 
     if let Some(c) = value.bytes().find(is_invalid_char) {
         return Err(Error::InvalidAttributeValue { character: c as char });

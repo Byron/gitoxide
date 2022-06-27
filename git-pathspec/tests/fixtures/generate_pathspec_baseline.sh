@@ -70,6 +70,7 @@ baseline ':(attr:someAttr=value)'
 baseline ':(attr:a=one b=)'
 baseline ':(attr:a= b=two)'
 baseline ':(attr:a=one b=two)'
+baseline ':(attr:a=one   b=two)'
 baseline ':(attr:someAttr anotherAttr)'
 
 # attributes_with_escape_chars_in_state_values

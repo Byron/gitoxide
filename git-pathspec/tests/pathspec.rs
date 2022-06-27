@@ -167,6 +167,13 @@ mod parse {
                     ]),
                 ),
                 (
+                    ":(attr:a=one   b=two)",
+                    pat_with_attrs(vec![
+                        ("a", State::Value("one".into())),
+                        ("b", State::Value("two".into())),
+                    ]),
+                ),
+                (
                     ":(attr:someAttr anotherAttr)",
                     pat_with_attrs(vec![("someAttr", State::Set), ("anotherAttr", State::Set)]),
                 ),
@@ -384,7 +391,8 @@ mod parse {
                 input
             );
 
-            let pattern = git_pathspec::parse(input.as_bytes()).expect("parsing should not fail");
+            let pattern = git_pathspec::parse(input.as_bytes())
+                .expect(&format!("parsing should not fail wtih pathspec {}", input));
             assert_eq!(pattern, expected, "while checking input: \"{}\"", input);
         });
     }
