@@ -23,6 +23,7 @@ pub struct Capabilities {
     pub symlink: bool,
 }
 
+/// A stack of path components with the delegation of side-effects as the currently set path changes, component by component.
 #[derive(Clone)]
 pub struct Stack {
     /// The prefix/root for all paths we handle.
