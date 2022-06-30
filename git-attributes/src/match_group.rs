@@ -18,7 +18,7 @@ impl<'a> From<StateRef<'a>> for State {
 }
 
 fn attrs_to_assignments<'a>(
-    attrs: impl Iterator<Item = Result<crate::AttributeNameRef<'a>, crate::parse::Error>>,
+    attrs: impl Iterator<Item = Result<crate::NameRef<'a>, crate::parse::Error>>,
 ) -> Result<Vec<Assignment>, crate::parse::Error> {
     attrs
         .map(|res| {

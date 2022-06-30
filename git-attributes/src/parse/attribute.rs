@@ -1,4 +1,4 @@
-use crate::{AttributeName, AttributeNameRef, State, StateRef};
+use crate::{Name, NameRef, State, StateRef};
 use bstr::{BStr, BString, ByteSlice};
 use std::borrow::Cow;
 
@@ -16,23 +16,11 @@ mod error {
     use bstr::BString;
     #[derive(thiserror::Error, Debug)]
     pub enum Error {
-        #[error(
-            "Line {} has a negative pattern, for literal characters use \\!: {}",
-            line_number,
-            line
-        )]
+        #[error("Line {line_number} has a negative pattern, for literal characters use \\!: {line}")]
         PatternNegation { line_number: usize, line: BString },
-        #[error(
-            "Attribute in line {} has non-ascii characters or starts with '-': {}",
-            line_number,
-            attribute
-        )]
+        #[error("Attribute in line {line_number} has non-ascii characters or starts with '-': {attribute}")]
         AttributeName { line_number: usize, attribute: BString },
-        #[error(
-            "Macro in line {} has non-ascii characters or starts with '-': {}",
-            line_number,
-            macro_name
-        )]
+        #[error("Macro in line {line_number} has non-ascii characters or starts with '-': {macro_name}")]
         MacroName { line_number: usize, macro_name: BString },
         #[error("Could not unquote attributes line")]
         Unquote(#[from] git_quote::ansi_c::undo::Error),
@@ -58,14 +46,14 @@ impl<'a> Iter<'a> {
         }
     }
 
-    fn parse_attr(&self, attr: &'a [u8]) -> Result<AttributeNameRef<'a>, Error> {
+    fn parse_attr(&self, attr: &'a [u8]) -> Result<NameRef<'a>, Error> {
         let mut tokens = attr.splitn(2, |b| *b == b'=');
         let attr = tokens.next().expect("attr itself").as_bstr();
         let possibly_value = tokens.next();
         let (attr, state) = if attr.first() == Some(&b'-') {
-            (&attr[1..], crate::StateRef::Unset)
+            (&attr[1..], StateRef::Unset)
         } else if attr.first() == Some(&b'!') {
-            (&attr[1..], crate::StateRef::Unspecified)
+            (&attr[1..], StateRef::Unspecified)
         } else {
             (
                 attr,
@@ -74,7 +62,7 @@ impl<'a> Iter<'a> {
                     .unwrap_or(crate::StateRef::Set),
             )
         };
-        Ok(AttributeNameRef(check_attr(attr, self.line_no)?, state))
+        Ok(NameRef(check_attr(attr, self.line_no)?, state))
     }
 }
 
@@ -97,7 +85,7 @@ fn check_attr(attr: &BStr, line_number: usize) -> Result<&BStr, Error> {
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = Result<AttributeNameRef<'a>, Error>;
+    type Item = Result<NameRef<'a>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let attr = self.attrs.next().filter(|a| !a.is_empty())?;
@@ -185,20 +173,20 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
 
 const BLANKS: &[u8] = b" \t\r";
 
-impl<'a> From<AttributeNameRef<'a>> for AttributeName {
-    fn from(v: AttributeNameRef<'a>) -> Self {
-        AttributeName(v.0.to_owned(), v.1.into())
+impl<'a> From<NameRef<'a>> for Name {
+    fn from(v: NameRef<'a>) -> Self {
+        Name(v.0.to_owned(), v.1.into())
     }
 }
 
-impl<'a> From<AttributeNameRef<'a>> for (&'a BStr, StateRef<'a>) {
-    fn from(v: AttributeNameRef<'a>) -> Self {
+impl<'a> From<NameRef<'a>> for (&'a BStr, StateRef<'a>) {
+    fn from(v: NameRef<'a>) -> Self {
         (v.0, v.1)
     }
 }
 
-impl From<AttributeName> for (BString, State) {
-    fn from(v: AttributeName) -> Self {
+impl From<Name> for (BString, State) {
+    fn from(v: Name) -> Self {
         (v.0, v.1)
     }
 }

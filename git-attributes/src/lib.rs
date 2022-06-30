@@ -44,11 +44,11 @@ pub enum State {
 
 /// Holds and owns data that represent one validated attribute
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct AttributeName(BString, State);
+pub struct Name(BString, State);
 
 /// Holds validated attribute data as a reference
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
-pub struct AttributeNameRef<'a>(&'a BStr, StateRef<'a>);
+pub struct NameRef<'a>(&'a BStr, StateRef<'a>);
 
 /// Name an attribute and describe it's assigned state.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -98,6 +98,16 @@ pub struct PatternMapping<T> {
     pub pattern: git_glob::Pattern,
     pub value: T,
     pub sequence_number: usize,
+}
+
+mod name {
+    use bstr::BString;
+
+    #[derive(Debug, thiserror::Error)]
+    #[error("Attribute has non-ascii characters or starts with '-': {attribute}")]
+    pub struct Error {
+        pub attribute: BString,
+    }
 }
 
 mod match_group;
