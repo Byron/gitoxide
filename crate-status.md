@@ -85,7 +85,7 @@
     * [x] multi-pack indices
     * [x] perfect scaling with cores
     * [x] support for pack caches, object caches and MRU for best per-thread performance.
-    * [x] prefix/short-id lookup
+    * [x] prefix/short-id lookup, with optional listing of ambiguous objects.
     * [x] object replacements (`git replace`)
 * **sink**
     * [x] write objects and obtain id

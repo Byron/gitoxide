@@ -223,18 +223,19 @@ pub(crate) fn lookup_prefix<'a>(
             Less => upper_bound = mid,
             Equal => match &mut candidates {
                 Some(candidates) => {
-                    if let Some(first_past) = ((0..mid).rev())
+                    let first_past_entry = ((0..mid).rev())
                         .take_while(|prev| prefix.cmp_oid(oid_at_index(*prev)) == Equal)
-                        .last()
-                    {
-                        candidates.extend(first_past..mid);
-                    }
-                    candidates.push(mid);
-                    if let Some(last_future) = ((mid + 1)..num_objects)
+                        .last();
+
+                    let last_future_entry = ((mid + 1)..num_objects)
                         .take_while(|next| prefix.cmp_oid(oid_at_index(*next)) == Equal)
-                        .last()
-                    {
-                        candidates.extend((mid + 1)..=last_future);
+                        .last();
+
+                    match (first_past_entry, last_future_entry) {
+                        (Some(first), Some(last)) => candidates.extend(first..=last),
+                        (Some(first), None) => candidates.extend(first..=mid),
+                        (None, Some(last)) => candidates.extend(mid..=last),
+                        (None, None) => candidates.push(mid),
                     }
 
                     if candidates.len() > 1 {
