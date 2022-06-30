@@ -15,13 +15,13 @@ fn lookup_with_ambiguity() {
         "error code indicates ambiguous result"
     );
 
-    let mut candidates = Vec::new();
+    let mut candidates = 0..=0;
     assert_eq!(
         file.lookup_prefix(prefix, Some(&mut candidates)),
         Some(Err(())),
         "error code is similar to before"
     );
-    assert_eq!(candidates, vec![682, 683], "we receive a list of all duplicates");
+    assert_eq!(candidates, 682..=683, "we receive a list of all duplicates");
 }
 
 #[test]
@@ -29,7 +29,7 @@ fn lookup_prefix() {
     let (file, _path) = multi_index();
 
     for (idx, entry) in file.iter().enumerate() {
-        for mut candidates in [None, Some(Vec::new())] {
+        for mut candidates in [None, Some(0..=0)] {
             let hex_len = (idx % file.object_hash().len_in_hex()).max(5);
             let hex_oid = entry.oid.to_hex_with_len(hex_len).to_string();
             assert_eq!(hex_oid.len(), hex_len);
@@ -41,7 +41,7 @@ fn lookup_prefix() {
             assert_eq!(file.oid_at_index(entry_index), entry.oid);
 
             if let Some(candidates) = candidates {
-                assert_eq!(candidates, vec![entry_index]);
+                assert_eq!(candidates, entry_index..=entry_index);
             }
         }
     }
@@ -53,9 +53,9 @@ fn lookup_missing() {
     let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
     assert!(file.lookup_prefix(prefix, None).is_none());
 
-    let mut candidates = Vec::new();
+    let mut candidates = 0..=0;
     assert!(file.lookup_prefix(prefix, Some(&mut candidates)).is_none());
-    assert!(candidates.is_empty());
+    assert_eq!(candidates, 0..=0);
 }
 
 #[test]

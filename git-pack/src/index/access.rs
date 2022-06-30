@@ -1,4 +1,5 @@
 use std::mem::size_of;
+use std::ops::RangeInclusive;
 
 use crate::{
     data,
@@ -135,7 +136,7 @@ impl index::File {
     pub fn lookup_prefix(
         &self,
         prefix: git_hash::Prefix,
-        candidates: Option<&mut Vec<EntryIndex>>,
+        candidates: Option<&mut RangeInclusive<EntryIndex>>,
     ) -> Option<PrefixLookupResult> {
         lookup_prefix(
             prefix,
@@ -204,7 +205,7 @@ impl index::File {
 
 pub(crate) fn lookup_prefix<'a>(
     prefix: git_hash::Prefix,
-    mut candidates: Option<&mut Vec<EntryIndex>>,
+    candidates: Option<&mut RangeInclusive<EntryIndex>>,
     fan: &[u32; FAN_LEN],
     oid_at_index: impl Fn(EntryIndex) -> &'a git_hash::oid,
     num_objects: u32,
@@ -221,7 +222,7 @@ pub(crate) fn lookup_prefix<'a>(
         use std::cmp::Ordering::*;
         match prefix.cmp_oid(mid_sha) {
             Less => upper_bound = mid,
-            Equal => match &mut candidates {
+            Equal => match candidates {
                 Some(candidates) => {
                     let first_past_entry = ((0..mid).rev())
                         .take_while(|prev| prefix.cmp_oid(oid_at_index(*prev)) == Equal)
@@ -231,14 +232,14 @@ pub(crate) fn lookup_prefix<'a>(
                         .take_while(|next| prefix.cmp_oid(oid_at_index(*next)) == Equal)
                         .last();
 
-                    match (first_past_entry, last_future_entry) {
-                        (Some(first), Some(last)) => candidates.extend(first..=last),
-                        (Some(first), None) => candidates.extend(first..=mid),
-                        (None, Some(last)) => candidates.extend(mid..=last),
-                        (None, None) => candidates.push(mid),
-                    }
+                    *candidates = match (first_past_entry, last_future_entry) {
+                        (Some(first), Some(last)) => first..=last,
+                        (Some(first), None) => first..=mid,
+                        (None, Some(last)) => mid..=last,
+                        (None, None) => mid..=mid,
+                    };
 
-                    if candidates.len() > 1 {
+                    if (candidates.end() - candidates.start()) + 1 > 1 {
                         return Some(Err(()));
                     } else {
                         return Some(Ok(mid));

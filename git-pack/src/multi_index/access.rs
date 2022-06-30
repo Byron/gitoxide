@@ -1,3 +1,4 @@
+use std::ops::RangeInclusive;
 use std::path::{Path, PathBuf};
 
 use crate::{
@@ -80,7 +81,7 @@ impl File {
     pub fn lookup_prefix(
         &self,
         prefix: git_hash::Prefix,
-        candidates: Option<&mut Vec<EntryIndex>>,
+        candidates: Option<&mut RangeInclusive<EntryIndex>>,
     ) -> Option<PrefixLookupResult> {
         crate::index::access::lookup_prefix(
             prefix,
