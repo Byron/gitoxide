@@ -162,7 +162,7 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<git_attributes::AttributeName>, 
 }
 
 fn unescape_attribute_values(input: &BStr) -> Result<BString, Error> {
-    Ok(input
+    let unescaped_tokens = input
         .split(|&c| c == b' ')
         .map(|attr| {
             if attr.contains(&b'=') {
@@ -199,15 +199,14 @@ fn unescape_attribute_values(input: &BStr) -> Result<BString, Error> {
                 Ok(Vec::from(attr))
             }
         })
-        .collect::<Result<Vec<_>, _>>()?
-        .join(&b' ')
-        .into())
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(unescaped_tokens.join(&b' ').into())
 }
 
 fn check_attr_value(value: &BStr) -> Result<(), Error> {
-    let is_invalid_char = |&c: &u8| !c.is_ascii_alphanumeric() && c != b'-' && c != b'_' && c != b',';
+    let is_valid_char = |&c: &u8| c.is_ascii_alphanumeric() || b",-_".contains(&c);
 
-    if let Some(c) = value.bytes().find(is_invalid_char) {
+    if let Some(c) = value.bytes().find(|c| !is_valid_char(c)) {
         return Err(Error::InvalidAttributeValue { character: c as char });
     }
 

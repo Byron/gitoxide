@@ -16,14 +16,26 @@ mod error {
     use bstr::BString;
     #[derive(thiserror::Error, Debug)]
     pub enum Error {
-        #[error("Line {} has a negative pattern, for literal characters use \\!: {}", line_number, line)]
+        #[error(
+            "Line {} has a negative pattern, for literal characters use \\!: {}",
+            line_number,
+            line
+        )]
         PatternNegation { line_number: usize, line: BString },
-        #[error("Attribute in line {} has non-ascii characters or starts with '-': {}", line_number, attribute)]
+        #[error(
+            "Attribute in line {} has non-ascii characters or starts with '-': {}",
+            line_number,
+            attribute
+        )]
         AttributeName { line_number: usize, attribute: BString },
-        #[error("Macro in line {} has non-ascii characters or starts with '-': {}", line_number, macro_name)]
+        #[error(
+            "Macro in line {} has non-ascii characters or starts with '-': {}",
+            line_number,
+            macro_name
+        )]
         MacroName { line_number: usize, macro_name: BString },
         #[error("Could not unquote attributes line")]
-        Unquote(#[from] git_quote::ansi_c::undo::Error)
+        Unquote(#[from] git_quote::ansi_c::undo::Error),
     }
 }
 pub use error::Error;
