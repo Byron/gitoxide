@@ -21,7 +21,7 @@ fn lookup_with_ambiguity() {
         Some(Err(())),
         "error code is similar to before"
     );
-    assert_eq!(candidates, vec![683, 682], "we receive a list of all duplicates");
+    assert_eq!(candidates, vec![682, 683], "we receive a list of all duplicates");
 }
 
 #[test]
