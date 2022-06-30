@@ -14,26 +14,16 @@ pub enum Kind {
 
 mod error {
     use bstr::BString;
-    use quick_error::quick_error;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            PatternNegation { line_number: usize, line: BString } {
-                display("Line {} has a negative pattern, for literal characters use \\!: {}", line_number, line)
-            }
-            AttributeName { line_number: usize, attribute: BString } {
-                display("Attribute in line {} has non-ascii characters or starts with '-': {}", line_number, attribute)
-            }
-            MacroName { line_number: usize, macro_name: BString } {
-                display("Macro in line {} has non-ascii characters or starts with '-': {}", line_number, macro_name)
-            }
-            Unquote(err: git_quote::ansi_c::undo::Error) {
-                display("Could not unquote attributes line")
-                from()
-                source(err)
-            }
-        }
+    #[derive(thiserror::Error, Debug)]
+    pub enum Error {
+        #[error("Line {} has a negative pattern, for literal characters use \\!: {}", line_number, line)]
+        PatternNegation { line_number: usize, line: BString },
+        #[error("Attribute in line {} has non-ascii characters or starts with '-': {}", line_number, attribute)]
+        AttributeName { line_number: usize, attribute: BString },
+        #[error("Macro in line {} has non-ascii characters or starts with '-': {}", line_number, macro_name)]
+        MacroName { line_number: usize, macro_name: BString },
+        #[error("Could not unquote attributes line")]
+        Unquote(#[from] git_quote::ansi_c::undo::Error)
     }
 }
 pub use error::Error;
