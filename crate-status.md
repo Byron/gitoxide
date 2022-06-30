@@ -417,6 +417,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [ ] support for `GIT_CEILING_DIRECTORIES` environment variable
         * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
     * [ ] rev-parse
+        - **deviation**
+            * `@` actually stands for `HEAD`, whereas `git` resolves it to the object pointed to by `HEAD` without making the `HEAD` ref available for lookups.
         - **unsupported**
             * regex 
     * [x] instantiation
