@@ -236,7 +236,11 @@ mod version {
         fn lookup_missing() {
             let file = index::File::at(&fixture_path(INDEX_V2), git_hash::Kind::Sha1).unwrap();
             let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
-            assert!(file.lookup_prefix(prefix).is_none());
+            assert!(file.lookup_prefix(prefix, None).is_none());
+
+            let mut candidates = Default::default();
+            assert!(file.lookup_prefix(prefix, Some(&mut candidates)).is_none());
+            assert!(candidates.is_empty());
         }
     }
 }
