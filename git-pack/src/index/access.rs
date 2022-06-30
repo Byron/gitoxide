@@ -239,11 +239,11 @@ pub(crate) fn lookup_prefix<'a>(
                         (None, None) => mid..mid + 1,
                     };
 
-                    if candidates.len() > 1 {
-                        return Some(Err(()));
+                    return if candidates.len() > 1 {
+                        Some(Err(()))
                     } else {
-                        return Some(Ok(mid));
-                    }
+                        Some(Ok(mid))
+                    };
                 }
                 None => {
                     let next = mid + 1;
