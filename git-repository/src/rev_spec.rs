@@ -184,10 +184,11 @@ pub mod parse {
             prefix: git_hash::Prefix,
             _must_be_commit: Option<delegate::PrefixHint<'_>>,
         ) -> Option<()> {
+            let candidates = None; // TODO: keep track of all candidates.
             match self
                 .repo
                 .objects
-                .lookup_prefix(prefix)
+                .lookup_prefix(prefix, candidates)
                 .map_err(crate::object::find::existing::OdbError::Find)
             {
                 Err(err) => {
