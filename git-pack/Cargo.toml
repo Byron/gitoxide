@@ -63,7 +63,7 @@ git-testtools = { path = "../tests/tools"}
 git-odb = { path = "../git-odb" }
 tempfile = "3.1.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
-common_macros = "0.1.1"
+maplit = "1.0.2"
 
 [package.metadata.docs.rs]
 features = ["document-features"]

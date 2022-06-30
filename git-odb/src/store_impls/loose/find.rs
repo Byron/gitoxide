@@ -42,7 +42,7 @@ impl Store {
     ///
     /// The outer `Result` is to indicate errors during file system traversal.
     ///
-    /// Pass `candidates` to obtain the set of all seen candidates, with the same return value as
+    /// Pass `candidates` to obtain the set of all object ids matching `prefix`, with the same return value as
     /// one would have received if it remained `None`.
     pub fn lookup_prefix(
         &self,

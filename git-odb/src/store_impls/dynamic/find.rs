@@ -142,7 +142,7 @@ where
     ///
     /// Return `Ok(None)` if no object matched the `prefix`.
     ///
-    /// Pass `candidates` to obtain the set of all seen candidates, with the same return value as
+    /// Pass `candidates` to obtain the set of all object ids matching `prefix`, with the same return value as
     /// one would have received if it remained `None`.
     ///
     /// ### Performance Note
@@ -159,23 +159,13 @@ where
         mut candidates: Option<&mut HashSet<git_hash::ObjectId>>,
     ) -> Result<Option<PrefixLookupResult>, Error> {
         let mut candidate: Option<ObjectId> = None;
-        let mut has_duplicates_in_packs = false;
         loop {
             let snapshot = self.snapshot.borrow();
             for index in snapshot.indices.iter() {
-                let lookup_result = index.lookup_prefix(prefix);
-                // TODO: don't check the candidate once there is candidates support in indices, and continue
-                if !check_candidate(lookup_result, &mut candidate) {
-                    if candidates.is_some() {
-                        has_duplicates_in_packs = true;
-                    } else {
-                        return Ok(Some(Err(())));
-                    }
-                } else if let Some(candidates) = &mut candidates {
-                    // TODO: remove this case once candidates are supported
-                    if let Some(candidate) = candidate {
-                        candidates.insert(candidate);
-                    }
+                #[allow(clippy::needless_option_as_deref)] // needed as it's the equivalent of a reborrow.
+                let lookup_result = index.lookup_prefix(prefix, candidates.as_deref_mut());
+                if candidates.is_none() && !check_candidate(lookup_result, &mut candidate) {
+                    return Ok(Some(Err(())));
                 }
             }
 
@@ -193,9 +183,6 @@ where
                     *self.snapshot.borrow_mut() = new_snapshot;
                 }
                 None => {
-                    if has_duplicates_in_packs {
-                        return Ok(Some(Err(())));
-                    }
                     return match &candidates {
                         Some(candidates) => match candidates.len() {
                             0 => Ok(None),

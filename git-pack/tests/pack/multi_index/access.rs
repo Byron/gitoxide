@@ -9,7 +9,19 @@ fn lookup_with_ambiguity() {
     let (file, _path) = multi_index();
     let oid = hex_to_id("cfc33fc40413fb3e30ff6b44d03fd8d071cb633b");
     let prefix = git_hash::Prefix::new(oid, 4).unwrap();
-    assert_eq!(file.lookup_prefix(prefix), Some(Err(())))
+    assert_eq!(
+        file.lookup_prefix(prefix, None),
+        Some(Err(())),
+        "error code indicates ambiguous result"
+    );
+
+    let mut candidates = Vec::new();
+    assert_eq!(
+        file.lookup_prefix(prefix, Some(&mut candidates)),
+        Some(Err(())),
+        "error code is similar to before"
+    );
+    assert_eq!(candidates, vec![683, 682], "we receive a list of all duplicates");
 }
 
 #[test]
@@ -17,15 +29,21 @@ fn lookup_prefix() {
     let (file, _path) = multi_index();
 
     for (idx, entry) in file.iter().enumerate() {
-        let hex_len = (idx % file.object_hash().len_in_hex()).max(5);
-        let hex_oid = entry.oid.to_hex_with_len(hex_len).to_string();
-        assert_eq!(hex_oid.len(), hex_len);
-        let oid_prefix = git_hash::Prefix::new(&entry.oid, hex_len).unwrap();
-        let entry_index = file
-            .lookup_prefix(oid_prefix)
-            .expect("object found")
-            .expect("non-ambiguous");
-        assert_eq!(file.oid_at_index(entry_index), entry.oid);
+        for mut candidates in [None, Some(Vec::new())] {
+            let hex_len = (idx % file.object_hash().len_in_hex()).max(5);
+            let hex_oid = entry.oid.to_hex_with_len(hex_len).to_string();
+            assert_eq!(hex_oid.len(), hex_len);
+            let oid_prefix = git_hash::Prefix::new(&entry.oid, hex_len).unwrap();
+            let entry_index = file
+                .lookup_prefix(oid_prefix, candidates.as_mut())
+                .expect("object found")
+                .expect("non-ambiguous");
+            assert_eq!(file.oid_at_index(entry_index), entry.oid);
+
+            if let Some(candidates) = candidates {
+                assert_eq!(candidates, vec![entry_index]);
+            }
+        }
     }
 }
 
@@ -33,7 +51,11 @@ fn lookup_prefix() {
 fn lookup_missing() {
     let (file, _path) = multi_index();
     let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
-    assert!(file.lookup_prefix(prefix).is_none());
+    assert!(file.lookup_prefix(prefix, None).is_none());
+
+    let mut candidates = Vec::new();
+    assert!(file.lookup_prefix(prefix, Some(&mut candidates)).is_none());
+    assert!(candidates.is_empty());
 }
 
 #[test]

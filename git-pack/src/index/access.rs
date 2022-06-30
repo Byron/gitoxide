@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::mem::size_of;
 
 use crate::{
@@ -128,7 +127,7 @@ impl index::File {
     ///
     /// Finally, if no object matches the index, the return value is `None`.
     ///
-    /// Pass `candidates` to obtain the set of all object ids matching `prefix`, with the same return value as
+    /// Pass `candidates` to obtain the set of entry-indices matching `prefix`, with the same return value as
     /// one would have received if it remained `None`.
     ///
     // NOTE: pretty much the same things as in `index::File::lookup`, change things there
@@ -136,7 +135,7 @@ impl index::File {
     pub fn lookup_prefix(
         &self,
         prefix: git_hash::Prefix,
-        candidates: Option<&mut HashSet<git_hash::ObjectId>>,
+        candidates: Option<&mut Vec<EntryIndex>>,
     ) -> Option<PrefixLookupResult> {
         lookup_prefix(
             prefix,
@@ -205,7 +204,7 @@ impl index::File {
 
 pub(crate) fn lookup_prefix<'a>(
     prefix: git_hash::Prefix,
-    candidates: Option<&mut HashSet<git_hash::ObjectId>>,
+    mut candidates: Option<&mut Vec<EntryIndex>>,
     fan: &[u32; FAN_LEN],
     oid_at_index: impl Fn(EntryIndex) -> &'a git_hash::oid,
     num_objects: u32,
@@ -222,16 +221,41 @@ pub(crate) fn lookup_prefix<'a>(
         use std::cmp::Ordering::*;
         match prefix.cmp_oid(mid_sha) {
             Less => upper_bound = mid,
-            Equal => {
-                let next = mid + 1;
-                if next < num_objects && prefix.cmp_oid(oid_at_index(next)) == Equal {
-                    return Some(Err(()));
+            Equal => match &mut candidates {
+                Some(candidates) => {
+                    candidates.push(mid);
+                    for next in (mid + 1)..num_objects {
+                        if prefix.cmp_oid(oid_at_index(next)) == Equal {
+                            candidates.push(next)
+                        } else {
+                            break;
+                        }
+                    }
+
+                    for prev in (0..mid).rev() {
+                        if prefix.cmp_oid(oid_at_index(prev)) == Equal {
+                            candidates.push(prev)
+                        } else {
+                            break;
+                        }
+                    }
+                    if candidates.len() > 1 {
+                        return Some(Err(()));
+                    } else {
+                        return Some(Ok(mid));
+                    }
                 }
-                if mid != 0 && prefix.cmp_oid(oid_at_index(mid - 1)) == Equal {
-                    return Some(Err(()));
+                None => {
+                    let next = mid + 1;
+                    if next < num_objects && prefix.cmp_oid(oid_at_index(next)) == Equal {
+                        return Some(Err(()));
+                    }
+                    if mid != 0 && prefix.cmp_oid(oid_at_index(mid - 1)) == Equal {
+                        return Some(Err(()));
+                    }
+                    return Some(Ok(mid));
                 }
-                return Some(Ok(mid));
-            }
+            },
             Greater => lower_bound = mid + 1,
         }
     }

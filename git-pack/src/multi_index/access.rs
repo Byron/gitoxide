@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use crate::{
@@ -73,7 +72,7 @@ impl File {
     ///
     /// Finally, if no object matches the index, the return value is `None`.
     ///
-    /// Pass `candidates` to obtain the set of all object ids matching `prefix`, with the same return value as
+    /// Pass `candidates` to obtain the set of entry-indices matching `prefix`, with the same return value as
     /// one would have received if it remained `None`.
     ///
     // NOTE: pretty much the same things as in `index::File::lookup`, change things there
@@ -81,7 +80,7 @@ impl File {
     pub fn lookup_prefix(
         &self,
         prefix: git_hash::Prefix,
-        candidates: Option<&mut HashSet<git_hash::ObjectId>>,
+        candidates: Option<&mut Vec<EntryIndex>>,
     ) -> Option<PrefixLookupResult> {
         crate::index::access::lookup_prefix(
             prefix,
