@@ -86,6 +86,8 @@ mod contains {
 
 mod lookup_prefix {
     use git_testtools::{fixture_path, hex_to_id};
+    use maplit::hashset;
+    use std::collections::HashSet;
 
     use crate::store::loose::ldb;
 
@@ -93,7 +95,14 @@ mod lookup_prefix {
     fn returns_none_for_prefixes_without_any_match() {
         let store = ldb();
         let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
-        assert!(store.lookup_prefix(prefix).unwrap().is_none());
+        assert!(store.lookup_prefix(prefix, None).unwrap().is_none());
+
+        let mut candidates = HashSet::default();
+        assert!(
+            store.lookup_prefix(prefix, Some(&mut candidates)).unwrap().is_none(),
+            "error codes are the same"
+        );
+        assert!(candidates.is_empty());
     }
 
     #[test]
@@ -109,11 +118,24 @@ mod lookup_prefix {
         )
         .unwrap();
         let store = git_odb::loose::Store::at(objects_dir.path(), git_hash::Kind::Sha1);
-        let prefix = git_hash::Prefix::new(hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980"), 4).unwrap();
+        let input_id = hex_to_id("37d4e6c5c48ba0d245164c4e10d5f41140cab980");
+        let prefix = git_hash::Prefix::new(input_id, 4).unwrap();
         assert_eq!(
-            store.lookup_prefix(prefix).unwrap(),
+            store.lookup_prefix(prefix, None).unwrap(),
             Some(Err(())),
             "there are two objects with that prefix"
+        );
+
+        let mut candidates = HashSet::default();
+        assert_eq!(
+            store.lookup_prefix(prefix, Some(&mut candidates)).unwrap(),
+            Some(Err(())),
+            "the error code is the same"
+        );
+        assert_eq!(
+            candidates,
+            hashset! {hex_to_id("37d4ffffffffffffffffffffffffffffffffffff"), input_id},
+            "we get both matching objects"
         );
     }
 
@@ -122,16 +144,21 @@ mod lookup_prefix {
         let store = ldb();
         let hex_lengths = &[4, 7, 40];
         for (index, oid) in store.iter().map(Result::unwrap).enumerate() {
-            let hex_len = hex_lengths[index % hex_lengths.len()];
-            let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
-            assert_eq!(
-                store
-                    .lookup_prefix(prefix)
-                    .unwrap()
-                    .expect("object exists")
-                    .expect("unambiguous"),
-                oid
-            );
+            for mut candidates in [None, Some(HashSet::default())] {
+                let hex_len = hex_lengths[index % hex_lengths.len()];
+                let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
+                assert_eq!(
+                    store
+                        .lookup_prefix(prefix, candidates.as_mut())
+                        .unwrap()
+                        .expect("object exists")
+                        .expect("unambiguous"),
+                    oid
+                );
+                if let Some(candidates) = candidates {
+                    assert_eq!(candidates, hashset! {oid});
+                }
+            }
         }
     }
 }

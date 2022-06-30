@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::{convert::TryInto, ops::Deref};
 
 use git_hash::{oid, ObjectId};
@@ -124,7 +125,7 @@ where
         }
 
         while candidate.hex_len() != max_hex_len {
-            let res = self.lookup_prefix(candidate.to_prefix())?;
+            let res = self.lookup_prefix(candidate.to_prefix(), None)?;
             match res {
                 Some(Ok(_id)) => return Ok(Some(candidate.to_prefix())),
                 Some(Err(())) => {
@@ -141,26 +142,47 @@ where
     ///
     /// Return `Ok(None)` if no object matched the `prefix`.
     ///
+    /// Pass `candidates` to obtain the set of all seen candidates, with the same return value as
+    /// one would have received if it remained `None`.
+    ///
     /// ### Performance Note
     ///
     /// - Unless the handles refresh mode is set to `Never`, each lookup will trigger a refresh of the object databases files
     ///   on disk if the prefix doesn't lead to ambiguous results.
     /// - Since all objects need to be examined to assure non-amiguous return values, after calling this method all indices will
     ///   be loaded.
-    pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Result<Option<PrefixLookupResult>, Error> {
+    /// - If `candidates` is `Some(…)`, the traversal will continue to obtain all candidates, which takes more time
+    ///   as there is no early abort.
+    pub fn lookup_prefix(
+        &self,
+        prefix: git_hash::Prefix,
+        mut candidates: Option<&mut HashSet<git_hash::ObjectId>>,
+    ) -> Result<Option<PrefixLookupResult>, Error> {
         let mut candidate: Option<ObjectId> = None;
+        let mut has_duplicates_in_packs = false;
         loop {
             let snapshot = self.snapshot.borrow();
             for index in snapshot.indices.iter() {
                 let lookup_result = index.lookup_prefix(prefix);
+                // TODO: don't check the candidate once there is candidates support in indices, and continue
                 if !check_candidate(lookup_result, &mut candidate) {
-                    return Ok(Some(Err(())));
+                    if candidates.is_some() {
+                        has_duplicates_in_packs = true;
+                    } else {
+                        return Ok(Some(Err(())));
+                    }
+                } else if let Some(candidates) = &mut candidates {
+                    // TODO: remove this case once candidates are supported
+                    if let Some(candidate) = candidate {
+                        candidates.insert(candidate);
+                    }
                 }
             }
 
             for lodb in snapshot.loose_dbs.iter() {
-                let lookup_result = lodb.lookup_prefix(prefix)?;
-                if !check_candidate(lookup_result, &mut candidate) {
+                #[allow(clippy::needless_option_as_deref)] // needed as it's the equivalent of a reborrow.
+                let lookup_result = lodb.lookup_prefix(prefix, candidates.as_deref_mut())?;
+                if candidates.is_none() && !check_candidate(lookup_result, &mut candidate) {
                     return Ok(Some(Err(())));
                 }
             }
@@ -170,7 +192,19 @@ where
                     drop(snapshot);
                     *self.snapshot.borrow_mut() = new_snapshot;
                 }
-                None => return Ok(candidate.map(Ok)),
+                None => {
+                    if has_duplicates_in_packs {
+                        return Ok(Some(Err(())));
+                    }
+                    return match &candidates {
+                        Some(candidates) => match candidates.len() {
+                            0 => Ok(None),
+                            1 => Ok(candidates.iter().cloned().next().map(Ok)),
+                            _ => Ok(Some(Err(()))),
+                        },
+                        None => Ok(candidate.map(Ok)),
+                    };
+                }
             }
         }
 
