@@ -1,4 +1,4 @@
-use std::ops::RangeInclusive;
+use std::ops::Range;
 use std::path::{Path, PathBuf};
 
 use crate::{
@@ -74,14 +74,14 @@ impl File {
     /// Finally, if no object matches the index, the return value is `None`.
     ///
     /// Pass `candidates` to obtain the set of entry-indices matching `prefix`, with the same return value as
-    /// one would have received if it remained `None`.
+    /// one would have received if it remained `None`. It will be empty if no object matched the `prefix`.
     ///
     // NOTE: pretty much the same things as in `index::File::lookup`, change things there
     //       as well.
     pub fn lookup_prefix(
         &self,
         prefix: git_hash::Prefix,
-        candidates: Option<&mut RangeInclusive<EntryIndex>>,
+        candidates: Option<&mut Range<EntryIndex>>,
     ) -> Option<PrefixLookupResult> {
         crate::index::access::lookup_prefix(
             prefix,

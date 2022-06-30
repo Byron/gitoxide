@@ -33,7 +33,7 @@ mod version {
                 );
             }
             for (entry_index, entry) in file.iter().enumerate() {
-                for mut candidates in [None, Some(0..=0)] {
+                for mut candidates in [None, Some(0..0)] {
                     let index = file.lookup(entry.oid).expect("id present");
                     assert_eq!(entry.oid.as_ref(), file.oid_at_index(index));
                     assert_eq!(entry.pack_offset, file.pack_offset_at_index(index));
@@ -48,7 +48,7 @@ mod version {
                         index
                     );
                     if let Some(candidates) = candidates {
-                        assert_eq!(candidates, index..=index)
+                        assert_eq!(candidates, index..index + 1)
                     }
                 }
             }
@@ -70,7 +70,7 @@ mod version {
                 (b"e800b9c207e17f9b11e321cc1fba5dfe08af4222", Some(29), "last", 40),
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack", 7),
             ] {
-                for mut candidates in [None, Some(0..=0)] {
+                for mut candidates in [None, Some(1..1)] {
                     let id = git_hash::ObjectId::from_hex(id)?;
                     assert_eq!(file.lookup(id), expected, "{}", assertion_message);
                     assert_eq!(
@@ -79,14 +79,14 @@ mod version {
                     );
                     if let Some(candidates) = candidates {
                         match expected {
-                            Some(expected) => assert_eq!(candidates, expected..=expected),
-                            None => assert_eq!(candidates, 0..=0),
+                            Some(expected) => assert_eq!(candidates, expected..expected + 1),
+                            None => assert_eq!(candidates, 0..0),
                         }
                     }
                 }
             }
             for (entry_index, entry) in file.iter().enumerate() {
-                for mut candidates in [None, Some(0..=0)] {
+                for mut candidates in [None, Some(0..0)] {
                     let index = file.lookup(entry.oid).expect("id present");
                     assert_eq!(entry.oid.as_ref(), file.oid_at_index(index));
                     assert_eq!(entry.pack_offset, file.pack_offset_at_index(index));
@@ -101,7 +101,7 @@ mod version {
                         index
                     );
                     if let Some(candidates) = candidates {
-                        assert_eq!(candidates, index..=index);
+                        assert_eq!(candidates, index..index + 1);
                     }
                 }
             }
@@ -238,9 +238,9 @@ mod version {
             let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
             assert!(file.lookup_prefix(prefix, None).is_none());
 
-            let mut candidates = 0..=0;
+            let mut candidates = 1..1;
             assert!(file.lookup_prefix(prefix, Some(&mut candidates)).is_none());
-            assert_eq!(candidates, 0..=0);
+            assert_eq!(candidates, 0..0);
         }
     }
 }

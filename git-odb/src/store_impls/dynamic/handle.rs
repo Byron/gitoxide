@@ -147,7 +147,7 @@ pub(crate) mod index_lookup {
             prefix: git_hash::Prefix,
             candidates: Option<&mut HashSet<git_hash::ObjectId>>,
         ) -> Option<crate::find::PrefixLookupResult> {
-            let mut candidate_entries = candidates.as_ref().map(|_| 0..=0);
+            let mut candidate_entries = candidates.as_ref().map(|_| 0..0);
             let res = match &self.file {
                 handle::SingleOrMultiIndex::Single { index, .. } => {
                     index.lookup_prefix(prefix, candidate_entries.as_mut())
@@ -157,8 +157,7 @@ pub(crate) mod index_lookup {
                 }
             }?;
 
-            if let Some(entries) = candidate_entries {
-                let candidates = candidates.expect("present as we have entries");
+            if let Some((candidates, entries)) = candidates.zip(candidate_entries) {
                 candidates.extend(entries.map(|entry| self.oid_at_index(entry).to_owned()));
             }
             Some(res.map(|entry_index| self.oid_at_index(entry_index).to_owned()))

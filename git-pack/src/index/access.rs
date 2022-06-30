@@ -1,5 +1,5 @@
 use std::mem::size_of;
-use std::ops::RangeInclusive;
+use std::ops::Range;
 
 use crate::{
     data,
@@ -129,14 +129,14 @@ impl index::File {
     /// Finally, if no object matches the index, the return value is `None`.
     ///
     /// Pass `candidates` to obtain the set of entry-indices matching `prefix`, with the same return value as
-    /// one would have received if it remained `None`.
+    /// one would have received if it remained `None`. It will be empty if no object matched the `prefix`.
     ///
     // NOTE: pretty much the same things as in `index::File::lookup`, change things there
     //       as well.
     pub fn lookup_prefix(
         &self,
         prefix: git_hash::Prefix,
-        candidates: Option<&mut RangeInclusive<EntryIndex>>,
+        candidates: Option<&mut Range<EntryIndex>>,
     ) -> Option<PrefixLookupResult> {
         lookup_prefix(
             prefix,
@@ -205,7 +205,7 @@ impl index::File {
 
 pub(crate) fn lookup_prefix<'a>(
     prefix: git_hash::Prefix,
-    candidates: Option<&mut RangeInclusive<EntryIndex>>,
+    candidates: Option<&mut Range<EntryIndex>>,
     fan: &[u32; FAN_LEN],
     oid_at_index: impl Fn(EntryIndex) -> &'a git_hash::oid,
     num_objects: u32,
@@ -233,13 +233,13 @@ pub(crate) fn lookup_prefix<'a>(
                         .last();
 
                     *candidates = match (first_past_entry, last_future_entry) {
-                        (Some(first), Some(last)) => first..=last,
-                        (Some(first), None) => first..=mid,
-                        (None, Some(last)) => mid..=last,
-                        (None, None) => mid..=mid,
+                        (Some(first), Some(last)) => first..last + 1,
+                        (Some(first), None) => first..mid + 1,
+                        (None, Some(last)) => mid..last + 1,
+                        (None, None) => mid..mid + 1,
                     };
 
-                    if (candidates.end() - candidates.start()) + 1 > 1 {
+                    if candidates.len() > 1 {
                         return Some(Err(()));
                     } else {
                         return Some(Ok(mid));
@@ -258,6 +258,10 @@ pub(crate) fn lookup_prefix<'a>(
             },
             Greater => lower_bound = mid + 1,
         }
+    }
+
+    if let Some(candidates) = candidates {
+        *candidates = 0..0;
     }
     None
 }
