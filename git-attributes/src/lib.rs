@@ -42,6 +42,14 @@ pub enum State {
     Unspecified,
 }
 
+/// Holds and owns data that represent one validated attribute
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub struct AttributeName(BString, State);
+
+/// Holds validated attribute data as a reference
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+pub struct AttributeNameRef<'a>(&'a BStr, StateRef<'a>);
+
 /// Name an attribute and describe it's assigned state.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

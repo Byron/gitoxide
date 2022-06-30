@@ -1,12 +1,10 @@
+use crate::{Assignment, MatchGroup, PatternList, PatternMapping, State, StateRef};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::{
     ffi::OsString,
     io::Read,
     path::{Path, PathBuf},
 };
-
-use bstr::{BStr, BString, ByteSlice, ByteVec};
-
-use crate::{Assignment, MatchGroup, PatternList, PatternMapping, State, StateRef};
 
 impl<'a> From<StateRef<'a>> for State {
     fn from(s: StateRef<'a>) -> Self {
@@ -20,13 +18,13 @@ impl<'a> From<StateRef<'a>> for State {
 }
 
 fn attrs_to_assignments<'a>(
-    attrs: impl Iterator<Item = Result<(&'a BStr, StateRef<'a>), crate::parse::Error>>,
+    attrs: impl Iterator<Item = Result<crate::AttributeNameRef<'a>, crate::parse::Error>>,
 ) -> Result<Vec<Assignment>, crate::parse::Error> {
     attrs
         .map(|res| {
-            res.map(|(name, state)| Assignment {
-                name: name.to_str().expect("no illformed unicode").into(),
-                state: state.into(),
+            res.map(|attr| Assignment {
+                name: attr.0.to_str().expect("no illformed unicode").into(),
+                state: attr.1.into(),
             })
         })
         .collect()

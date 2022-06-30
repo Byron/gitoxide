@@ -298,6 +298,8 @@ fn expand(
     input: Result<(parse::Kind, parse::Iter<'_>, usize), parse::Error>,
 ) -> Result<ExpandedAttribute<'_>, parse::Error> {
     let (pattern, attrs, line_no) = input?;
-    let attrs = attrs.collect::<Result<Vec<_>, _>>()?;
+    let attrs = attrs
+        .map(|r| r.map(|attr| attr.into()))
+        .collect::<Result<Vec<_>, _>>()?;
     Ok((pattern, attrs, line_no))
 }

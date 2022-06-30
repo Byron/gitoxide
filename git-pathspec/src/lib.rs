@@ -2,6 +2,7 @@
 
 use bitflags::bitflags;
 use bstr::BString;
+use git_attributes::AttributeName;
 
 pub mod parse;
 
@@ -15,7 +16,7 @@ pub struct Pattern {
     /// The search mode of the pathspec.
     pub search_mode: SearchMode,
     /// All attributes that were included in the `ATTR` part of the pathspec, if present.
-    pub attributes: Vec<(BString, git_attributes::State)>,
+    pub attributes: Vec<AttributeName>,
 }
 
 bitflags! {

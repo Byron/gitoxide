@@ -142,15 +142,15 @@ fn split_on_non_escaped_char(input: &[u8], split_char: u8) -> Vec<&[u8]> {
     keywords
 }
 
-fn parse_attributes(input: &[u8]) -> Result<Vec<(BString, git_attributes::State)>, Error> {
+fn parse_attributes(input: &[u8]) -> Result<Vec<git_attributes::AttributeName>, Error> {
     if input.is_empty() {
         return Err(Error::EmptyAttribute);
     }
 
     let unescaped = unescape_attribute_values(input.into())?;
 
-    Ok(git_attributes::parse::Iter::new(unescaped.as_bstr(), 0)
-        .map(|res| res.map(|(name, state)| (name.into(), state.into())))
+    git_attributes::parse::Iter::new(unescaped.as_bstr(), 0)
+        .map(|res| res.map(|v| v.into()))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| match e {
             git_attributes::parse::Error::AttributeName {
@@ -158,7 +158,7 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<(BString, git_attributes::State)
                 attribute,
             } => Error::InvalidAttribute { attribute },
             _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
-        })?)
+        })
 }
 
 fn unescape_attribute_values(input: &BStr) -> Result<BString, Error> {

@@ -7,6 +7,25 @@ mod parse {
     use once_cell::sync::Lazy;
     use std::collections::HashMap;
 
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    struct PatternForTesting {
+        path: BString,
+        signature: MagicSignature,
+        search_mode: SearchMode,
+        attributes: Vec<(BString, State)>,
+    }
+
+    impl From<Pattern> for PatternForTesting {
+        fn from(p: Pattern) -> Self {
+            PatternForTesting {
+                path: p.path,
+                signature: p.signature,
+                search_mode: p.search_mode,
+                attributes: p.attributes.into_iter().map(|v| v.into()).collect(),
+            }
+        }
+    }
+
     static BASELINE: Lazy<HashMap<BString, usize>> = Lazy::new(|| {
         let base = git_testtools::scripted_fixture_repo_read_only("generate_pathspec_baseline.sh").unwrap();
 
@@ -383,7 +402,7 @@ mod parse {
         }
     }
 
-    fn check_valid_inputs(inputs: Vec<(&str, Pattern)>) {
+    fn check_valid_inputs(inputs: Vec<(&str, PatternForTesting)>) {
         inputs.into_iter().for_each(|(input, expected)| {
             assert!(
                 check_against_baseline(input),
@@ -391,34 +410,40 @@ mod parse {
                 input
             );
 
-            let pattern = git_pathspec::parse(input.as_bytes())
-                .expect(&format!("parsing should not fail wtih pathspec {}", input));
+            let pattern: PatternForTesting = git_pathspec::parse(input.as_bytes())
+                .expect(&format!("parsing should not fail wtih pathspec {}", input))
+                .into();
             assert_eq!(pattern, expected, "while checking input: \"{}\"", input);
         });
     }
 
-    fn pat_with_path(path: &str) -> Pattern {
+    fn pat_with_path(path: &str) -> PatternForTesting {
         pat_with_path_and_sig(path, MagicSignature::empty())
     }
 
-    fn pat_with_path_and_sig(path: &str, signature: MagicSignature) -> Pattern {
+    fn pat_with_path_and_sig(path: &str, signature: MagicSignature) -> PatternForTesting {
         pat(path, signature, SearchMode::ShellGlob, vec![])
     }
 
-    fn pat_with_sig(signature: MagicSignature) -> Pattern {
+    fn pat_with_sig(signature: MagicSignature) -> PatternForTesting {
         pat("", signature, SearchMode::ShellGlob, vec![])
     }
 
-    fn pat_with_attrs(attrs: Vec<(&str, State)>) -> Pattern {
+    fn pat_with_attrs(attrs: Vec<(&str, State)>) -> PatternForTesting {
         pat("", MagicSignature::empty(), SearchMode::ShellGlob, attrs)
     }
 
-    fn pat_with_search_mode(search_mode: SearchMode) -> Pattern {
+    fn pat_with_search_mode(search_mode: SearchMode) -> PatternForTesting {
         pat("", MagicSignature::empty(), search_mode, vec![])
     }
 
-    fn pat(path: &str, signature: MagicSignature, search_mode: SearchMode, attributes: Vec<(&str, State)>) -> Pattern {
-        Pattern {
+    fn pat(
+        path: &str,
+        signature: MagicSignature,
+        search_mode: SearchMode,
+        attributes: Vec<(&str, State)>,
+    ) -> PatternForTesting {
+        PatternForTesting {
             path: path.into(),
             signature,
             search_mode,

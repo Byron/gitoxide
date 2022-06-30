@@ -1,6 +1,6 @@
-use std::borrow::Cow;
-
+use crate::{AttributeName, AttributeNameRef, State, StateRef};
 use bstr::{BStr, BString, ByteSlice};
+use std::borrow::Cow;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -56,7 +56,7 @@ impl<'a> Iter<'a> {
         }
     }
 
-    fn parse_attr(&self, attr: &'a [u8]) -> Result<(&'a BStr, crate::StateRef<'a>), Error> {
+    fn parse_attr(&self, attr: &'a [u8]) -> Result<AttributeNameRef<'a>, Error> {
         let mut tokens = attr.splitn(2, |b| *b == b'=');
         let attr = tokens.next().expect("attr itself").as_bstr();
         let possibly_value = tokens.next();
@@ -72,7 +72,7 @@ impl<'a> Iter<'a> {
                     .unwrap_or(crate::StateRef::Set),
             )
         };
-        Ok((check_attr(attr, self.line_no)?, state))
+        Ok(AttributeNameRef(check_attr(attr, self.line_no)?, state))
     }
 }
 
@@ -95,7 +95,7 @@ fn check_attr(attr: &BStr, line_number: usize) -> Result<&BStr, Error> {
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = Result<(&'a BStr, crate::StateRef<'a>), Error>;
+    type Item = Result<AttributeNameRef<'a>, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let attr = self.attrs.next().filter(|a| !a.is_empty())?;
@@ -182,3 +182,21 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
 }
 
 const BLANKS: &[u8] = b" \t\r";
+
+impl<'a> From<AttributeNameRef<'a>> for AttributeName {
+    fn from(v: AttributeNameRef<'a>) -> Self {
+        AttributeName(v.0.to_owned(), v.1.into())
+    }
+}
+
+impl<'a> From<AttributeNameRef<'a>> for (&'a BStr, StateRef<'a>) {
+    fn from(v: AttributeNameRef<'a>) -> Self {
+        (v.0, v.1)
+    }
+}
+
+impl From<AttributeName> for (BString, State) {
+    fn from(v: AttributeName) -> Self {
+        (v.0, v.1)
+    }
+}
