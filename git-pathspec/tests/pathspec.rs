@@ -411,7 +411,7 @@ mod parse {
             );
 
             let pattern: PatternForTesting = git_pathspec::parse(input.as_bytes())
-                .expect(&format!("parsing should not fail wtih pathspec {}", input))
+                .unwrap_or_else(|_| panic!("parsing should not fail with pathspec {}", input))
                 .into();
             assert_eq!(pattern, expected, "while checking input: \"{}\"", input);
         });
@@ -458,7 +458,7 @@ mod parse {
         let key: &BStr = pathspec.into();
         let base = BASELINE
             .get(key)
-            .expect(&format!("missing baseline for pathspec: {:?}", pathspec));
+            .unwrap_or_else(|| panic!("missing baseline for pathspec: {:?}", pathspec));
         *base == 0
     }
 }
