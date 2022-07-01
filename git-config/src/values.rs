@@ -178,7 +178,7 @@ pub struct String<'a> {
 impl<'a> From<Cow<'a, [u8]>> for String<'a> {
     fn from(c: Cow<'a, [u8]>) -> Self {
         String {
-            value: match c {
+            value: match normalize_cow(c) {
                 Cow::Borrowed(c) => Cow::Borrowed(c.into()),
                 Cow::Owned(c) => Cow::Owned(c.into()),
             },
