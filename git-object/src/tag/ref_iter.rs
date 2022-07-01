@@ -69,7 +69,7 @@ impl<'a> TagRefIter<'a> {
                 let (i, target) = context("object <40 lowercase hex char>", |i| {
                     parse::header_field(i, b"object", parse::hex_hash)
                 })(i)?;
-                *state = State::TargetKind;
+                *state = TargetKind;
                 (
                     i,
                     Token::Target {
@@ -81,18 +81,21 @@ impl<'a> TagRefIter<'a> {
                 let (i, kind) = context("type <object kind>", |i| {
                     parse::header_field(i, b"type", take_while1(is_alphabetic))
                 })(i)?;
-                let kind = crate::Kind::from_bytes(kind).map_err(|_| {
-                    let err = crate::decode::ParseError::from_error_kind(i, nom::error::ErrorKind::MapRes);
-                    nom::Err::Error(err)
+                let kind = Kind::from_bytes(kind).map_err(|_| {
+                    #[allow(clippy::let_unit_value)]
+                    {
+                        let err = crate::decode::ParseError::from_error_kind(i, nom::error::ErrorKind::MapRes);
+                        nom::Err::Error(err)
+                    }
                 })?;
-                *state = State::Name;
+                *state = Name;
                 (i, Token::TargetKind(kind))
             }
             Name => {
                 let (i, tag_version) = context("tag <version>", |i| {
                     parse::header_field(i, b"tag", take_while1(|b| b != NL[0]))
                 })(i)?;
-                *state = State::Tagger;
+                *state = Tagger;
                 (i, Token::Name(tag_version.as_bstr()))
             }
             Tagger => {
@@ -100,7 +103,7 @@ impl<'a> TagRefIter<'a> {
                     "tagger <signature>",
                     opt(|i| parse::header_field(i, b"tagger", parse::signature)),
                 )(i)?;
-                *state = State::Message;
+                *state = Message;
                 (i, Token::Tagger(signature))
             }
             Message => {

@@ -207,9 +207,12 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
             })
             .or_else(|| {
                 name.is_empty().then(|| ()).or_else(|| {
-                    let res = delegate.find_ref(name)?;
-                    has_ref_or_implied_name = true;
-                    res.into()
+                    #[allow(clippy::let_unit_value)]
+                    {
+                        let res = delegate.find_ref(name)?;
+                        has_ref_or_implied_name = true;
+                        res.into()
+                    }
                 })
             })
             .ok_or(Error::Delegate)?;
