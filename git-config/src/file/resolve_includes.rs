@@ -58,7 +58,6 @@ fn resolve_includes_recursive(
         }
     }
 
-    dbg!(&paths_to_include);
     for config_path in paths_to_include {
         let mut include_config = File::open(&config_path)?;
         resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
@@ -96,7 +95,6 @@ fn include_condition_match(
                 condition = Cow::Owned(format!("{}**", condition));
             }
             let pattern = condition.as_bytes().as_bstr();
-            dbg!(&branch_name, &pattern);
             git_glob::wildmatch(pattern, branch_name, git_glob::wildmatch::Mode::empty()).then(|| ())
         }
         _ => None,
@@ -117,7 +115,6 @@ fn is_match(
         let mut condition_path = git_path::into_bstr(condition_path).as_bstr().to_owned();
         condition_path = BString::from(condition_path.replace("\\", "/"));
 
-        dbg!(&target_config_path);
         if condition_path.starts_with(DOT) {
             if let Some(parent_dir_path) = target_config_path {
                 if let Some(parent_path) = parent_dir_path.parent() {
@@ -142,8 +139,6 @@ fn is_match(
 
         let git_dir_value = git_path::into_bstr(git_dir).to_mut().replace("\\", "/");
 
-        println!();
-        dbg!(&condition_path.as_bstr(), &git_dir_value.as_bstr());
         let mut result = git_glob::wildmatch(
             condition_path.as_bstr(),
             git_dir_value.as_bstr(),
@@ -155,7 +150,6 @@ fn is_match(
                     git_path::realpath(git_path::from_byte_slice(&git_dir_value), target_config_path)
                 {
                     let git_dir_value = git_path::into_bstr(expanded_git_dir_value).replace("\\", "/");
-                    dbg!(&condition_path.as_bstr(), git_dir_value.as_bstr(),);
                     result = git_glob::wildmatch(
                         condition_path.as_bstr(),
                         git_dir_value.as_bstr(),
@@ -164,7 +158,6 @@ fn is_match(
                 }
             }
         }
-        dbg!(&result);
         return result;
     }
     false
