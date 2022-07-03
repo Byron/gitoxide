@@ -2,7 +2,6 @@ use crate::file::cow_str;
 use crate::file::from_paths::escape_backslashes;
 use crate::file::from_paths::includes::conditional::{create_symlink, options_with_git_dir};
 use bstr::{BString, ByteSlice};
-use git_repository;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -173,7 +172,7 @@ fn assure_git_agrees(expected: Option<Value>, env: GitEnv) -> crate::Result {
 }
 
 fn write_config(condition: impl AsRef<str>, env: &GitEnv, overwrite_config_location: ConfigLocation) -> crate::Result {
-    let include_config = write_included_config(&env)?;
+    let include_config = write_included_config(env)?;
     write_main_config(condition, include_config, env, overwrite_config_location)
 }
 
