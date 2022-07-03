@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use bstr::BString;
 use git_attributes::Attributes;
 

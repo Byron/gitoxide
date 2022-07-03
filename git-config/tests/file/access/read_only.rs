@@ -16,6 +16,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             color = brightgreen red \
             bold
             other = hello world
+            other-quoted = "hello world"
             location = ~/tmp
     "#;
 
@@ -79,9 +80,19 @@ fn get_value_for_all_provided_values() -> crate::Result {
             value: Cow::Borrowed(b"hello world")
         }
     );
+    assert_eq!(
+        file.value::<String>("core", None, "other-quoted")?,
+        String {
+            value: Cow::Borrowed("hello world".into())
+        }
+    );
 
     assert_eq!(
         file.string("core", None, "other").expect("present").as_ref(),
+        "hello world"
+    );
+    assert_eq!(
+        file.string("core", None, "other-quoted").expect("present").as_ref(),
         "hello world"
     );
 
