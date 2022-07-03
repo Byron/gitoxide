@@ -1,6 +1,9 @@
 //! This module provides a high level wrapper around a single `git-config` file.
-use std::ops::{Add, AddAssign};
-use std::{borrow::Cow, collections::HashMap};
+use std::{
+    borrow::Cow,
+    collections::HashMap,
+    ops::{Add, AddAssign},
+};
 
 mod resolved;
 pub use resolved::*;

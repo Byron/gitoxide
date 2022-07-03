@@ -1,14 +1,16 @@
-use crate::file::from_paths;
-use crate::file::SectionBody;
-use crate::parser::{Key, ParsedSectionHeader};
-use crate::{values, File};
-use bstr::{BString, ByteSlice};
-use git_ref::Category;
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
 
-const DOT: &[u8] = b".";
+use bstr::{BString, ByteSlice, ByteVec};
+use git_ref::Category;
+
+use crate::{
+    file::{from_paths, SectionId},
+    parser::Key,
+    values, File,
+};
 
 pub(crate) fn resolve_includes(
     conf: &mut File<'_>,
@@ -36,16 +38,32 @@ fn resolve_includes_recursive(
 
     let mut paths_to_include = Vec::new();
 
-    let mut include_paths = target_config
-        .multi_value::<values::Path<'_>>("include", None, "path")
-        .unwrap_or_default();
+    let mut incl_section_ids = Vec::new();
+    for name in ["include", "includeIf"] {
+        for id in target_config.section_ids_by_name(name).unwrap_or_default() {
+            incl_section_ids.push((
+                id,
+                target_config
+                    .section_order
+                    .iter()
+                    .position(|&e| e == id)
+                    .expect("section id is from config"),
+            ));
+        }
+    }
+    incl_section_ids.sort_by(|a, b| a.1.cmp(&b.1));
 
-    for (header, body) in get_include_if_sections(target_config) {
-        if let Some(condition) = &header.subsection_name {
-            if include_condition_match(condition, target_config_path, options).is_some() {
-                let paths = body.values(&Key::from("path"));
-                let paths = paths.iter().map(|path| values::Path::from(path.clone()));
-                include_paths.extend(paths);
+    let mut include_paths = Vec::new();
+    for (id, _) in incl_section_ids {
+        if let Some(header) = target_config.section_headers.get(&id) {
+            if header.name.0 == "include" && header.subsection_name.is_none() {
+                extract_include_path(target_config, &mut include_paths, id)
+            } else if header.name.0 == "includeIf" {
+                if let Some(condition) = &header.subsection_name {
+                    if include_condition_match(condition, target_config_path, options).is_some() {
+                        extract_include_path(target_config, &mut include_paths, id)
+                    }
+                }
             }
         }
     }
@@ -58,13 +76,20 @@ fn resolve_includes_recursive(
         }
     }
 
-    dbg!(&paths_to_include);
     for config_path in paths_to_include {
-        let mut include_config = File::open(&config_path)?;
+        let mut include_config = File::at(&config_path)?;
         resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
         target_config.append(include_config);
     }
     Ok(())
+}
+
+fn extract_include_path<'a>(target_config: &mut File<'a>, include_paths: &mut Vec<values::Path<'a>>, id: SectionId) {
+    if let Some(body) = target_config.sections.get(&id) {
+        let paths = body.values(&Key::from("path"));
+        let paths = paths.iter().map(|path| values::Path::from(path.clone()));
+        include_paths.extend(paths);
+    }
 }
 
 fn include_condition_match(
@@ -74,14 +99,18 @@ fn include_condition_match(
 ) -> Option<()> {
     let (prefix, condition) = condition.split_once(':')?;
     match prefix {
-        "gitdir" => is_match(&target_config_path, options, options.git_dir?, condition).then(|| ()),
-        "gitdir/i" => is_match(
-            &target_config_path,
+        "gitdir" => gitdir_matches(
+            condition,
+            target_config_path,
             options,
-            options.git_dir?,
-            &condition.to_lowercase(),
-        )
-        .then(|| ()),
+            git_glob::wildmatch::Mode::empty(),
+        ),
+        "gitdir/i" => gitdir_matches(
+            condition,
+            target_config_path,
+            options,
+            git_glob::wildmatch::Mode::IGNORE_CASE,
+        ),
         "onbranch" => {
             let branch_name = options.branch_name?;
             let (_, branch_name) = branch_name
@@ -89,111 +118,83 @@ fn include_condition_match(
                 .filter(|(cat, _)| *cat == Category::LocalBranch)?;
 
             let mut condition = Cow::Borrowed(condition);
-            if condition.starts_with('/') {
-                condition = Cow::Owned(format!("**{}", condition));
-            }
             if condition.ends_with('/') {
                 condition = Cow::Owned(format!("{}**", condition));
             }
-            let pattern = condition.as_bytes().as_bstr();
-            dbg!(&branch_name, &pattern);
-            git_glob::wildmatch(pattern, branch_name, git_glob::wildmatch::Mode::empty()).then(|| ())
+            git_glob::wildmatch(
+                condition.as_ref().into(),
+                branch_name,
+                git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+            )
+            .then(|| ())
         }
         _ => None,
     }
 }
 
-fn is_match(
-    target_config_path: &Option<&Path>,
-    options: from_paths::Options<'_>,
-    git_dir: &Path,
-    condition: &str,
-) -> bool {
-    if condition.contains('\\') {
-        return false;
+fn gitdir_matches(
+    condition_path: &str,
+    target_config_path: Option<&Path>,
+    from_paths::Options {
+        git_install_dir,
+        git_dir,
+        home_dir,
+        ..
+    }: from_paths::Options<'_>,
+    wildmatch_mode: git_glob::wildmatch::Mode,
+) -> Option<()> {
+    let git_dir = git_path::to_unix_separators(git_path::into_bstr(git_dir?));
+
+    let mut pattern_path = {
+        let cow = Cow::Borrowed(condition_path.as_bytes());
+        let path = values::Path::from(cow).interpolate(git_install_dir, home_dir).ok()?;
+        git_path::into_bstr(path).into_owned()
+    };
+
+    if let Some(relative_pattern_path) = pattern_path.strip_prefix(b"./") {
+        let parent_dir = target_config_path
+            .and_then(|path| path.parent())
+            .unwrap_or_else(|| todo!("an error case for this and maybe even a test - git doesnt support this either"));
+        let mut joined_path = git_path::to_unix_separators(git_path::into_bstr(parent_dir)).into_owned();
+        joined_path.push(b'/');
+        joined_path.extend_from_slice(relative_pattern_path);
+        pattern_path = joined_path;
     }
-    let condition_path = values::Path::from(Cow::Borrowed(condition.as_bytes()));
-    if let Ok(condition_path) = condition_path.interpolate(options.git_install_dir) {
-        let mut condition_path = git_path::into_bstr(condition_path).as_bstr().to_owned();
-        condition_path = BString::from(condition_path.replace("\\", "/"));
 
-        dbg!(&target_config_path);
-        if condition_path.starts_with(DOT) {
-            if let Some(parent_dir_path) = target_config_path {
-                if let Some(parent_path) = parent_dir_path.parent() {
-                    let parent_dir = git_path::into_bstr(parent_path);
-                    let v = bstr::concat(&[parent_dir.as_bstr(), condition_path[DOT.len()..].as_bstr()]);
-                    condition_path = BString::from(v);
-                    condition_path = BString::from(condition_path.replace("\\", "/"));
-                }
-            }
-        }
-        if !["~/", "./", "/"]
-            .iter()
-            .any(|&str| condition_path.starts_with(str.as_bytes()))
-        {
-            let v = bstr::concat(&["**/".as_bytes().as_bstr(), condition_path.as_bstr()]);
-            condition_path = BString::from(v);
-        }
-        if condition_path.ends_with(b"/") {
-            condition_path.push(b'*');
-            condition_path.push(b'*');
-        }
-
-        let git_dir_value = git_path::into_bstr(git_dir).to_mut().replace("\\", "/");
-
-        println!();
-        dbg!(&condition_path.as_bstr(), &git_dir_value.as_bstr());
-        let mut result = git_glob::wildmatch(
-            condition_path.as_bstr(),
-            git_dir_value.as_bstr(),
-            git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
-        );
-        if !result {
-            if let Some(target_config_path) = target_config_path {
-                if let Ok(expanded_git_dir_value) =
-                    git_path::realpath(git_path::from_byte_slice(&git_dir_value), target_config_path, 32)
-                {
-                    let git_dir_value = git_path::into_bstr(expanded_git_dir_value).replace("\\", "/");
-                    dbg!(&condition_path.as_bstr(), git_dir_value.as_bstr(),);
-                    result = git_glob::wildmatch(
-                        condition_path.as_bstr(),
-                        git_dir_value.as_bstr(),
-                        git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
-                    );
-                }
-            }
-        }
-        dbg!(&result);
-        return result;
+    if ["~/", "./", "/"]
+        .iter()
+        .all(|prefix| !pattern_path.starts_with(prefix.as_bytes()))
+    {
+        let v = bstr::concat(&[&b"**/"[..], &pattern_path]);
+        pattern_path = BString::from(v);
     }
-    false
-}
+    if pattern_path.ends_with(b"/") {
+        pattern_path.push_str("**");
+    }
 
-fn get_include_if_sections<'a>(target_config: &'a File<'_>) -> Vec<(&'a ParsedSectionHeader<'a>, &'a SectionBody<'a>)> {
-    // TODO can we have same values in section_headers.values()?
-    // ADD test
-    let section_headers_to_id: HashMap<_, _> = target_config
-        .section_headers
-        .values()
-        .zip(target_config.section_headers.keys())
-        .collect();
-    let mut include_if_sections = target_config.sections_by_name_with_header("includeIf");
-    include_if_sections.sort_by(|a, b| {
-        section_headers_to_id
-            .get(a.0)
-            .expect("section_id exists")
-            .cmp(section_headers_to_id.get(b.0).expect("section_id exists"))
-    });
-    include_if_sections
+    pattern_path = git_path::to_unix_separators(pattern_path).into_owned();
+
+    let match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL | wildmatch_mode;
+    let is_match = git_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
+    if is_match {
+        return Some(());
+    }
+
+    let expanded_git_dir = git_path::realpath(git_path::from_byte_slice(&git_dir), target_config_path?).ok()?;
+    let expanded_git_dir = git_path::to_unix_separators(git_path::into_bstr(expanded_git_dir));
+    git_glob::wildmatch(pattern_path.as_bstr(), expanded_git_dir.as_bstr(), match_mode).then(|| ())
 }
 
 fn resolve(
     path: values::Path<'_>,
     target_config_path: Option<&Path>,
-    options: from_paths::Options<'_>,
+    from_paths::Options {
+        git_install_dir,
+        home_dir,
+        ..
+    }: from_paths::Options<'_>,
 ) -> Result<PathBuf, from_paths::Error> {
-    let path = path.interpolate(options.git_install_dir)?;
+    let path = path.interpolate(git_install_dir, home_dir)?;
     let path: PathBuf = if path.is_relative() {
         target_config_path
             .ok_or(from_paths::Error::MissingConfigPath)?

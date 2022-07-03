@@ -1,6 +1,6 @@
 [package]
 name = "git-sec"
-version = "0.1.1"
+version = "0.3.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project providing a shared trust model"
@@ -26,9 +26,9 @@ thiserror = { version = "1.0.26", optional = true }
 libc = "0.2.123"
 
 [target.'cfg(windows)'.dependencies]
-git-path = { version = "^0.1.2", path = "../git-path" }
+git-path = { version = "^0.3.0", path = "../git-path" }
 dirs = "4"
-windows = { version = "0.36.0", features = [ "alloc",
+windows = { version = "0.37.0", features = [ "alloc",
     "Win32_Foundation",
     "Win32_Security_Authorization",
     "Win32_Storage_FileSystem",

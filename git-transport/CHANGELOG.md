@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.18.0 (2022-06-13)
+
+A maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 1 commit contributed to the release.
+ - 25 days passed between releases.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
+</details>
+
 ## 0.17.0 (2022-05-18)
 
 ### New Features (BREAKING)
@@ -15,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 33 calendar days.
+ - 7 commits contributed to the release over the course of 33 calendar days.
  - 45 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#386](https://github.com/Byron/gitoxide/issues/386)
@@ -32,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - adapt to changes in git-sec ([`c5e2346`](https://github.com/Byron/gitoxide/commit/c5e2346cee53019b1b321e45cf080b210e60bb7a))
     - use `git-credentials` in `git-protocol` ([`32dc182`](https://github.com/Byron/gitoxide/commit/32dc1829a5661f66396d109c8d0a8eaae6b1f532))
  * **Uncategorized**
+    - Release git-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, git-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, git-packetline v0.12.5, git-url v0.5.0, git-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, git-worktree v0.2.0, git-repository v0.17.0 ([`349c590`](https://github.com/Byron/gitoxide/commit/349c5904b0dac350838a896759d51576b66880a7))
     - Release git-hash v0.9.4, git-features v0.21.0, git-actor v0.10.0, git-glob v0.3.0, git-path v0.1.1, git-attributes v0.1.0, git-sec v0.1.0, git-config v0.3.0, git-credentials v0.1.0, git-validate v0.5.4, git-object v0.19.0, git-diff v0.16.0, git-lock v2.1.0, git-ref v0.13.0, git-discover v0.1.0, git-index v0.3.0, git-mailmap v0.2.0, git-traverse v0.15.0, git-pack v0.19.0, git-odb v0.29.0, git-packetline v0.12.5, git-url v0.5.0, git-transport v0.17.0, git-protocol v0.16.0, git-revision v0.2.0, git-worktree v0.2.0, git-repository v0.17.0, safety bump 20 crates ([`654cf39`](https://github.com/Byron/gitoxide/commit/654cf39c92d5aa4c8d542a6cadf13d4acef6a78e))
     - make fmt ([`251b6df`](https://github.com/Byron/gitoxide/commit/251b6df5dbdda24b7bdc452085f808f3acef69d8))
     - Merge branch 'main' into git-sec ([`2fe70f9`](https://github.com/Byron/gitoxide/commit/2fe70f96cfb68e108637ce78f8edda2eb4e2e61a))
@@ -47,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 68 calendar days.
+ - 8 commits contributed to the release over the course of 68 calendar days.
  - 69 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#329](https://github.com/Byron/gitoxide/issues/329)
@@ -67,7 +91,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Release git-hash v0.9.3, git-features v0.20.0, git-config v0.2.0, safety bump 12 crates ([`f0cbb24`](https://github.com/Byron/gitoxide/commit/f0cbb24b2e3d8f028be0e773f9da530da2656257))
     - upgrade document-features ([`c35e62e`](https://github.com/Byron/gitoxide/commit/c35e62e0da9ac1f7dcb863f5f9c69108c728d32e))
     - Merge branch 'AP2008-implement-worktree' ([`f32c669`](https://github.com/Byron/gitoxide/commit/f32c669bc519d59a1f1d90d61cc48a422c86aede))
-    - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - Merge branch 'index-information' ([`025f157`](https://github.com/Byron/gitoxide/commit/025f157de10a509a4b36a9aed41de80487e8c15c))
 </details>
 
@@ -79,7 +102,7 @@ A maintenance release with no relevant changes.
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 41 calendar days.
+ - 10 commits contributed to the release over the course of 41 calendar days.
  - 55 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#279](https://github.com/Byron/gitoxide/issues/279)
@@ -106,6 +129,7 @@ A maintenance release with no relevant changes.
     - Release git-hash v0.9.1, git-features v0.19.1, git-actor v0.8.0, git-config v0.1.10, git-object v0.17.0, git-diff v0.13.0, git-tempfile v1.0.4, git-chunk v0.3.0, git-traverse v0.12.0, git-pack v0.16.0, git-odb v0.26.0, git-packetline v0.12.3, git-url v0.3.5, git-transport v0.15.0, git-protocol v0.14.0, git-ref v0.11.0, git-repository v0.14.0, cargo-smart-release v0.8.0, safety bump 4 crates ([`373cbc8`](https://github.com/Byron/gitoxide/commit/373cbc877f7ad60dac682e57c52a7b90f108ebe3))
     - prepare changelogs for release ([`674ec73`](https://github.com/Byron/gitoxide/commit/674ec73b0816baa2c63b4ef1b40b7a41849c5e95))
     - prepar changelogs for cargo-smart-release release ([`8900d69`](https://github.com/Byron/gitoxide/commit/8900d699226eb0995be70d66249827ce348261df))
+    - Release git-bitmap v0.0.1, git-hash v0.9.0, git-features v0.19.0, git-index v0.1.0, safety bump 9 crates ([`4624725`](https://github.com/Byron/gitoxide/commit/4624725f54a34dd6b35d3632fb3516965922f60a))
     - thanks clippy ([`4ca9e07`](https://github.com/Byron/gitoxide/commit/4ca9e07c7ac062d48d64ad7b516274e32dbc51c6))
 </details>
 
@@ -401,14 +425,14 @@ A maintenance release due to properly dealing with previously breaking changes i
     - [async-client] frame for async connect ([`9ada080`](https://github.com/Byron/gitoxide/commit/9ada0805fc5896f8ef1a31dc821b789b7f0438a6))
     - Prevent selecting mutually exclusive features ([`7f5da18`](https://github.com/Byron/gitoxide/commit/7f5da18c39b84af788ea1366ccca2c8b9d09f755))
     - Merge branch 'dependabot/cargo/crc-2.0.0' ([`683c44d`](https://github.com/Byron/gitoxide/commit/683c44db682d8dbef401286963e84cdca145abc8))
-    - fix docs ([`bca7594`](https://github.com/Byron/gitoxide/commit/bca7594713d623e0f0a4b82b658c26ee9a041eaa))
     - [git-transport] Fix http build ([`3469e99`](https://github.com/Byron/gitoxide/commit/3469e99afeaf354db4020d5a363b05a031894096))
+    - [git-protocol] fetch in sync and async… ([`4776039`](https://github.com/Byron/gitoxide/commit/47760399bffd030c848e0ef6df52a4765d8fb566))
+    - Bump maybe-async from 0.2.4 to 0.2.6 ([`d99a1a8`](https://github.com/Byron/gitoxide/commit/d99a1a815809d22c7384c6ecb1275e39fb911d91))
+    - fix docs ([`bca7594`](https://github.com/Byron/gitoxide/commit/bca7594713d623e0f0a4b82b658c26ee9a041eaa))
     - [git-protocol] fix build ([`4cce648`](https://github.com/Byron/gitoxide/commit/4cce6487d6d514541afee1a9aa92043f186136d3))
     - [git-transport] refactor ([`d09153f`](https://github.com/Byron/gitoxide/commit/d09153f34135609224929f77175f3e0ac04ea12e))
-    - [git-protocol] fetch in sync and async… ([`4776039`](https://github.com/Byron/gitoxide/commit/47760399bffd030c848e0ef6df52a4765d8fb566))
     - [git-transport] Properly implement Transport for Boxed types ([`47b10c9`](https://github.com/Byron/gitoxide/commit/47b10c9b4ccba5a0928819c92eda472bbfda0c50))
     - [git-transport] refactor ([`3b0baee`](https://github.com/Byron/gitoxide/commit/3b0baee6b856b510ea839a1e294e9a99aafaa3ac))
-    - Bump maybe-async from 0.2.4 to 0.2.6 ([`d99a1a8`](https://github.com/Byron/gitoxide/commit/d99a1a815809d22c7384c6ecb1275e39fb911d91))
     - refactor ([`2eefe17`](https://github.com/Byron/gitoxide/commit/2eefe1712131a69298be02e94df8b6ba844afcd9))
     - refactor ([`14c9093`](https://github.com/Byron/gitoxide/commit/14c909341d243ca3dcc42d343aeee65d28045b65))
     - [git-protocol] async capabilities and arguments abstractions ([`aa3eacb`](https://github.com/Byron/gitoxide/commit/aa3eacbd53665d6b76bd9706d801d1189a970261))
@@ -656,7 +680,7 @@ A maintenance release due to properly dealing with previously breaking changes i
 <csr-read-only-do-not-edit/>
 
  - 11 commits contributed to the release over the course of 90 calendar days.
- - 94 days passed between releases.
+ - 92 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -692,8 +716,8 @@ A maintenance release due to properly dealing with previously breaking changes i
 
 <csr-read-only-do-not-edit/>
 
- - 185 commits contributed to the release over the course of 31 calendar days.
- - 64 days passed between releases.
+ - 2 commits contributed to the release.
+ - 2 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -706,6 +730,32 @@ A maintenance release due to properly dealing with previously breaking changes i
  * **Uncategorized**
     - (cargo-release) version 0.2.1 ([`ebf3419`](https://github.com/Byron/gitoxide/commit/ebf341936b22e899de88293ef377b438353d1821))
     - (cargo-release) version 0.6.0 ([`9ef184e`](https://github.com/Byron/gitoxide/commit/9ef184e35712f938fb4f9f6da7390a8777a9284e))
+</details>
+
+## v0.2.0 (2020-09-12)
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 189 commits contributed to the release over the course of 28 calendar days.
+ - 62 days passed between releases.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - (cargo-release) version 0.2.0 ([`779e9d0`](https://github.com/Byron/gitoxide/commit/779e9d0ad67c20fa9cec14359e87774ca2d74ee4))
+    - (cargo-release) version 0.2.0 ([`da830de`](https://github.com/Byron/gitoxide/commit/da830defc9cfa81ce159f6d908da828227760845))
+    - (cargo-release) version 0.5.0 ([`82b7313`](https://github.com/Byron/gitoxide/commit/82b73131b79ec3c42a712dad1c0766a72209d737))
+    - thanks clippy ([`e5d80b1`](https://github.com/Byron/gitoxide/commit/e5d80b19b83dc03d49606b7ccba20ff0c39bc5d9))
+    - [clone] make cloning the linux kernel work ([`e780526`](https://github.com/Byron/gitoxide/commit/e78052649c734f16f4d154edcbf54f4cc4484f5e))
+    - [clone] Assure we don't hang due to unprocessed headers when peeking lines! ([`d9ced27`](https://github.com/Byron/gitoxide/commit/d9ced2711dba702d73b28f0e1b9399cd7eab5183))
     - [clone] none the wiser - it really looks like everything is alright… ([`3b8d613`](https://github.com/Byron/gitoxide/commit/3b8d613c6de349defce9af06d56f73ac2c0d0d25))
     - [clone] reassure ourselves that ERR lines are handled, always ([`925370b`](https://github.com/Byron/gitoxide/commit/925370b3f1d701d3376bdc80a4876e407b54c400))
     - [clone] Response parsing up to (optional) pack ([`24064c7`](https://github.com/Byron/gitoxide/commit/24064c77f2969380fb92ea66109df86e84060324))
@@ -891,36 +941,11 @@ A maintenance release due to properly dealing with previously breaking changes i
     - Allow dual-licensing with Apache 2.0 ([`ea353eb`](https://github.com/Byron/gitoxide/commit/ea353eb02fd4f75508600cc5676107bc7e627f1e))
 </details>
 
-## v0.2.0 (2020-09-12)
-
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 6 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **Uncategorized**
-    - (cargo-release) version 0.2.0 ([`779e9d0`](https://github.com/Byron/gitoxide/commit/779e9d0ad67c20fa9cec14359e87774ca2d74ee4))
-    - (cargo-release) version 0.2.0 ([`da830de`](https://github.com/Byron/gitoxide/commit/da830defc9cfa81ce159f6d908da828227760845))
-    - (cargo-release) version 0.5.0 ([`82b7313`](https://github.com/Byron/gitoxide/commit/82b73131b79ec3c42a712dad1c0766a72209d737))
-    - thanks clippy ([`e5d80b1`](https://github.com/Byron/gitoxide/commit/e5d80b19b83dc03d49606b7ccba20ff0c39bc5d9))
-    - [clone] make cloning the linux kernel work ([`e780526`](https://github.com/Byron/gitoxide/commit/e78052649c734f16f4d154edcbf54f4cc4484f5e))
-    - [clone] Assure we don't hang due to unprocessed headers when peeking lines! ([`d9ced27`](https://github.com/Byron/gitoxide/commit/d9ced2711dba702d73b28f0e1b9399cd7eab5183))
-</details>
-
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 15 times to make code idiomatic. 
 
 ## v0.0.0 (2020-07-12)
 

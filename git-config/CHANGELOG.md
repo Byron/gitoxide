@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.5.0 (2022-06-13)
+
+### New Features (BREAKING)
+
+ - <csr-id-266d4379e9132fd7dd21e6c8fccb36e125069d6e/> Make `realpath()` easier to use by introducing `realpath_opt()`.
+   That way there is consistency about how many symlinks to follow.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 22 calendar days.
+ - 22 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#436](https://github.com/Byron/gitoxide/issues/436)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#436](https://github.com/Byron/gitoxide/issues/436)**
+    - Remove outdated examples ([`cb9529e`](https://github.com/Byron/gitoxide/commit/cb9529e18b222b9fd9f8c1bb0dba8038a6ea1d4b))
+ * **Uncategorized**
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
+    - remove `pwd` crate dependency in favor of using libc directly ([`4adfa11`](https://github.com/Byron/gitoxide/commit/4adfa11d70cf78bed541fa59707e8a5082dda245))
+    - Drop non-existent config paths before parsing ([`475d6fa`](https://github.com/Byron/gitoxide/commit/475d6fab2467ad0499db7df2d4c99f74e43682fc))
+    - Merge branch 'main' into davidkna-envopen ([`bc0abc6`](https://github.com/Byron/gitoxide/commit/bc0abc643d3329f885f250b6880560dec861150f))
+    - Make `realpath()` easier to use by introducing `realpath_opt()`. ([`266d437`](https://github.com/Byron/gitoxide/commit/266d4379e9132fd7dd21e6c8fccb36e125069d6e))
+    - Merge branch 'davidkna-discover-x-fs' ([`9abaeda`](https://github.com/Byron/gitoxide/commit/9abaeda2d22e2dbb1db1632c6eb637f1458d06e1))
+</details>
+
 ## 0.4.0 (2022-05-21)
 
 ### Changed (BREAKING)
@@ -17,7 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 23 commits contributed to the release over the course of 2 calendar days.
+ - 24 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -35,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-path v0.1.2, git-sec v0.1.1, git-config v0.4.0, git-discover v0.1.1, git-pack v0.19.1, git-repository v0.18.0, cargo-smart-release v0.10.0, safety bump 2 crates ([`ceb6dff`](https://github.com/Byron/gitoxide/commit/ceb6dff13362a2b4318a551893217c1d11643b9f))
     - fix benchmark compilation ([`53adcfe`](https://github.com/Byron/gitoxide/commit/53adcfea1942e9dd32a7d84d02a83c9a08408fad))
     - Bring init functions back to `File` type ([`f1f69d8`](https://github.com/Byron/gitoxide/commit/f1f69d8f983e2505990e7ee21cbd7f64ac7ba766))
     - disallow Rust 2018 idioms ([`81aca45`](https://github.com/Byron/gitoxide/commit/81aca458f4b7f6768e14da5719ada772f419f1b5))

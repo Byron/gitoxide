@@ -1,8 +1,10 @@
-use crate::file::{from_paths, resolve_includes};
-use crate::values::path::interpolate;
-use crate::File;
-use std::borrow::Cow;
-use std::path::PathBuf;
+use std::{borrow::Cow, path::PathBuf};
+
+use crate::{
+    file::{from_paths, resolve_includes},
+    values::path::interpolate,
+    File,
+};
 
 /// Represents the errors that may occur when calling [`File::from_env`][crate::File::from_env()].
 #[derive(Debug, thiserror::Error)]
@@ -61,6 +63,12 @@ impl<'a> File<'a> {
         if let Some(git_dir) = env::var_os("GIT_DIR") {
             paths.push(PathBuf::from(git_dir).join("config"));
         }
+
+        // To support more platforms/configurations:
+        // Drop any possible config locations which aren't present to avoid
+        // `parser::parse_from_path` failing too early with "not found" before
+        // it reaches a path which _does_ exist.
+        let paths = paths.into_iter().filter(|p| p.exists());
 
         File::from_paths(paths, options)
     }

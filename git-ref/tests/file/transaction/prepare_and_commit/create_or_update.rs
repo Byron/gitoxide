@@ -57,7 +57,7 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
                 #[cfg_attr(target_os = "windows", allow(unused_variables))]
                 Err(transaction::commit::Error::LockCommit { err, full_name }) => {
                     assert_eq!(full_name, "HEAD");
-                    #[cfg(not(target_os = "windows"))]
+                    #[cfg(not(windows))]
                     assert_eq!(err.to_string(), "Directory not empty");
                 }
                 _ => unreachable!("other errors shouldn't happen here"),

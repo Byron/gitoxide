@@ -518,7 +518,7 @@ fn set_version_and_update_package_dependency(
             doc["package"]["version"] = toml_edit::value(new_version);
         }
     }
-    for dep_type in &["dependencies", "dev-dependencies", "build-dependencies"] {
+    for (dep_table, dep_type) in find_dependency_tables(&mut doc) {
         for (name_to_find, new_version) in crates.iter().map(|(p, nv)| (&p.name, nv)) {
             for name_to_find in package_to_update
                 .dependencies
@@ -526,11 +526,9 @@ fn set_version_and_update_package_dependency(
                 .filter(|dep| &dep.name == name_to_find)
                 .map(|dep| dep.rename.as_ref().unwrap_or(&dep.name))
             {
-                if let Some(current_version_req) = doc
-                    .as_table_mut()
-                    .get_mut(dep_type)
-                    .and_then(|deps| deps.as_table_mut())
-                    .and_then(|deps| deps.get_mut(name_to_find).and_then(|name| name.as_inline_table_mut()))
+                if let Some(current_version_req) = dep_table
+                    .get_mut(name_to_find)
+                    .and_then(|name| name.as_inline_table_mut())
                     .and_then(|name_table| name_table.get_mut("version"))
                 {
                     let version_req = VersionReq::parse(current_version_req.as_str().expect("versions are strings"))?;
@@ -569,6 +567,45 @@ fn set_version_and_update_package_dependency(
     out.write_all(new_manifest.as_bytes())?;
 
     Ok(manifest != new_manifest)
+}
+
+// Originally copied from [cargo release](https://github.com/crate-ci/cargo-release/blob/9633353ad5a57dbdca9a9ed6a70c1cf78fc5a51f/src/cargo.rs#L235:L263).
+// The licenses are compatible.
+// With adjustments.
+fn find_dependency_tables<'r>(
+    root: &'r mut toml_edit::Table,
+) -> impl Iterator<Item = (&mut dyn toml_edit::TableLike, Cow<'_, str>)> + 'r {
+    const DEP_TABLES: &[&str] = &["dependencies", "dev-dependencies", "build-dependencies"];
+
+    root.iter_mut()
+        .flat_map(|(k, v)| match DEP_TABLES.iter().find(|dtn| *dtn == &k.get()) {
+            Some(dtn) => v
+                .as_table_like_mut()
+                .into_iter()
+                .map(|t| (t, (*dtn).into()))
+                .collect::<Vec<_>>(),
+            None if k == "target" => v
+                .as_table_like_mut()
+                .expect("pre-checked toml format")
+                .iter_mut()
+                .flat_map(|(target, v)| {
+                    let target_name = target.get().to_string();
+                    v.as_table_like_mut().into_iter().flat_map(move |v| {
+                        v.iter_mut().filter_map({
+                            let target_name = target_name.clone();
+                            move |(k, v)| match DEP_TABLES.iter().find(|dtn| *dtn == &k.get()) {
+                                Some(dtn) => v.as_table_like_mut().map({
+                                    let target_name = target_name.clone();
+                                    move |t| (t, format!("{} ({})", dtn, target_name).into())
+                                }),
+                                None => None,
+                            }
+                        })
+                    })
+                })
+                .collect::<Vec<_>>(),
+            None => Vec::new(),
+        })
 }
 
 fn req_as_version(req: &VersionReq) -> Option<Version> {

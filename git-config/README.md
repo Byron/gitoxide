@@ -15,27 +15,6 @@ Currently, this is _not_ a binary. While we do intent to have a drop-in
 replacement for the `git config` sub-command, we're currently missing
 system-level abstractions to do so.
 
-## Examples
-
-Reading and writing to a config:
-
-```rust
-use git_config::file::GitConfig;
-use git_config::values::Boolean;
-use std::fs::read_to_string;
-
-let input = r#"
-[core]
-  some-bool = true
-
-[other "internal"]
-  hello = world
-"#;
-let mut config = GitConfig::try_from(input)?;
-let boolean = config.value::<Boolean>("core", None, "some-bool")?;
-config.set_raw_value("other", Some("internal"), "hello", "clippy!".into())?
-```
-
 ## Contributing
 
 Contributions are always welcome!

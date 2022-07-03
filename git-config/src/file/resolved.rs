@@ -33,7 +33,7 @@ impl ResolvedGitConfig<'static> {
     /// This returns an error if an IO error occurs, or if the file is not a
     /// valid `git-config` file.
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, parser::ParserOrIoError<'static>> {
-        File::open(path.as_ref()).map(Self::from)
+        File::at(path.as_ref()).map(Self::from)
     }
 }
 

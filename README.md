@@ -62,6 +62,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
          * [x] **entries** - display all object ids in the object database
       * **mailmap**
           * [x] **entries** - display all entries of the aggregated mailmap git would use for substitution
+      * **revision**
+          * [ ] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
     * **index**
       * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
       * [x] **verify** - check the index for consistency
@@ -125,13 +127,13 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
   * [git-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-worktree)
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
-  * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
+  * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
+  * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
 * **idea**
   * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
   * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)
-  * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
   * [git-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lfs)
   * [git-rebase](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-rebase)
   * [git-sequencer](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sequencer)
@@ -303,6 +305,7 @@ Provide a CLI to for the most basic user journey:
 
 * [ ] `gix tool open-remote` open the URL of the remote, possibly after applying known transformations to go from `ssh` to `https`.
 * [ ] `tix` as example implementation of `tig`, displaying a version of the commit graph, useful for practicing how highly responsive GUIs can be made.
+* [ ] Something like [`git-sizer`](https://github.com/github/git-sizer), but leveraging extreme decompression speeds of indexed packs.
 * [ ] Open up SQL for git using [sqlite virtual tables](https://github.com/rusqlite/rusqlite/blob/master/tests/vtab.rs). Check out gitqlite
   as well. What would an MVP look like? Maybe even something that could ship with gitoxide. See [this go implementation as example](https://github.com/filhodanuvem/gitql).
 * [ ] A truly awesome history rewriter which makes it easy to understand what happened while avoiding all pitfalls. Think BFG, but more awesome, if that's possible.

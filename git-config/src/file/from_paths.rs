@@ -30,6 +30,8 @@ pub struct Options<'a> {
     pub git_dir: Option<&'a std::path::Path>,
     /// The name of the branch that is currently checked out
     pub branch_name: Option<&'a git_ref::FullNameRef>,
+    /// The home directory of the current user.
+    pub home_dir: Option<&'a std::path::Path>,
 }
 
 impl<'a> Default for Options<'a> {
@@ -40,6 +42,7 @@ impl<'a> Default for Options<'a> {
             error_on_max_depth_exceeded: true,
             git_dir: None,
             branch_name: None,
+            home_dir: None,
         }
     }
 }

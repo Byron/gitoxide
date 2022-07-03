@@ -476,7 +476,7 @@ fn headline<'a, E: ParseError<&'a str> + FromExternalError<&'a str, ()>>(i: &'a 
     let hashes = take_while(|c: char| c == '#');
     let greedy_whitespace = |i| take_while(|c: char| c.is_whitespace())(i);
     let take_n_digits = |n: usize| {
-        map_res(take_while_m_n(n, n, |c: char| c.is_digit(10)), |num| {
+        map_res(take_while_m_n(n, n, |c: char| c.is_ascii_digit()), |num| {
             u32::from_str(num).map_err(|_| ())
         })
     };

@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.0 (2022-06-19)
+
+### Bug Fixes (BREAKING)
+
+ - <csr-id-c9933c0b0f51d21dc8244b2acc33d7dc8a33f6ce/> Remove `git-config` test utilities from `git-path`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 6 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Fix git-paths tests; improve error handling. ([`9c00504`](https://github.com/Byron/gitoxide/commit/9c0050451f634a54e610c86199b5d7d393378878))
+    - docs for git-path ([`a520092`](https://github.com/Byron/gitoxide/commit/a52009244c9b1059ebb3d5dd472c25f9c49691f3))
+    - Remove `git-config` test utilities from `git-path`. ([`c9933c0`](https://github.com/Byron/gitoxide/commit/c9933c0b0f51d21dc8244b2acc33d7dc8a33f6ce))
+</details>
+
+## 0.2.0 (2022-06-13)
+
+### New Features (BREAKING)
+
+ - <csr-id-266d4379e9132fd7dd21e6c8fccb36e125069d6e/> Make `realpath()` easier to use by introducing `realpath_opt()`.
+   That way there is consistency about how many symlinks to follow.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 20 calendar days.
+ - 20 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release git-date v0.0.1, git-hash v0.9.5, git-features v0.21.1, git-actor v0.10.1, git-path v0.2.0, git-attributes v0.2.0, git-ref v0.14.0, git-sec v0.2.0, git-config v0.5.0, git-credentials v0.2.0, git-discover v0.2.0, git-pack v0.20.0, git-odb v0.30.0, git-url v0.6.0, git-transport v0.18.0, git-protocol v0.17.0, git-revision v0.2.1, git-worktree v0.3.0, git-repository v0.19.0, safety bump 13 crates ([`a417177`](https://github.com/Byron/gitoxide/commit/a41717712578f590f04a33d27adaa63171f25267))
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
+    - make fmt ([`c665aef`](https://github.com/Byron/gitoxide/commit/c665aef4270c5ee54da89ee015cc0affd6337608))
+    - Merge branch 'main' into davidkna-envopen ([`bc0abc6`](https://github.com/Byron/gitoxide/commit/bc0abc643d3329f885f250b6880560dec861150f))
+    - Make `realpath()` easier to use by introducing `realpath_opt()`. ([`266d437`](https://github.com/Byron/gitoxide/commit/266d4379e9132fd7dd21e6c8fccb36e125069d6e))
+    - Merge branch 'davidkna-admin-sec' ([`3d0e2c2`](https://github.com/Byron/gitoxide/commit/3d0e2c2d4ebdbe3dff01846aac3375128353a2e1))
+</details>
+
 ## 0.1.3 (2022-05-23)
 
 A maintenance release without user-facing changes.
@@ -13,7 +71,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 1 calendar day.
+ - 4 commits contributed to the release over the course of 1 calendar day.
  - 1 day passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -25,6 +83,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-path v0.1.3, git-discover v0.1.2, git-repository v0.18.1, cargo-smart-release v0.10.1 ([`b7399cc`](https://github.com/Byron/gitoxide/commit/b7399cc44ee419355a649a7b0ba7b352cd48b400))
     - prepare for smart-release release ([`2f74cb0`](https://github.com/Byron/gitoxide/commit/2f74cb05e9b2399355af07517fe3c14e4e8724c5))
     - adjust git-path size limits ([`5ac8a3b`](https://github.com/Byron/gitoxide/commit/5ac8a3b58e0f61d4801a6f4dbd011f757208dbac))
     - Merge branch 'davidkna-discover-x-fs' ([`9abaeda`](https://github.com/Byron/gitoxide/commit/9abaeda2d22e2dbb1db1632c6eb637f1458d06e1))

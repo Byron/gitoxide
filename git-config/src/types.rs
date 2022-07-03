@@ -1,6 +1,9 @@
-use crate::file::{LookupTreeNode, SectionBody, SectionId};
-use crate::parser::{ParsedSectionHeader, SectionHeaderName};
 use std::collections::{HashMap, VecDeque};
+
+use crate::{
+    file::{LookupTreeNode, SectionBody, SectionId},
+    parser::{ParsedSectionHeader, SectionHeaderName},
+};
 
 /// High level `git-config` reader and writer.
 ///

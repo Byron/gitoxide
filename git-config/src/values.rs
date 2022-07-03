@@ -2,10 +2,11 @@
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
-use crate::value;
 use bstr::{BStr, BString};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
+
+use crate::value;
 
 /// Removes quotes, if any, from the provided inputs. This assumes the input
 /// contains a even number of unescaped quotes, and will unescape escaped
@@ -178,7 +179,7 @@ pub struct String<'a> {
 impl<'a> From<Cow<'a, [u8]>> for String<'a> {
     fn from(c: Cow<'a, [u8]>) -> Self {
         String {
-            value: match c {
+            value: match normalize_cow(c) {
                 Cow::Borrowed(c) => Cow::Borrowed(c.into()),
                 Cow::Owned(c) => Cow::Owned(c.into()),
             },
@@ -191,7 +192,23 @@ pub mod path {
     use std::borrow::Cow;
 
     #[cfg(not(any(target_os = "android", target_os = "windows")))]
-    use pwd::Passwd;
+    fn home_for_user(name: &str) -> Option<std::path::PathBuf> {
+        let cname = std::ffi::CString::new(name).ok()?;
+        // SAFETY: calling this in a threaded program that modifies the pw database is not actually safe.
+        //         TODO: use the `*_r` version, but it's much harder to use.
+        #[allow(unsafe_code)]
+        let pwd = unsafe { libc::getpwnam(cname.as_ptr()) };
+        if pwd.is_null() {
+            None
+        } else {
+            use std::os::unix::ffi::OsStrExt;
+            // SAFETY: pw_dir is a cstr and it lives as long as… well, we hope nobody changes the pw database while we are at it
+            //         from another thread. Otherwise it lives long enough.
+            #[allow(unsafe_code)]
+            let cstr = unsafe { std::ffi::CStr::from_ptr((*pwd).pw_dir) };
+            Some(std::ffi::OsStr::from_bytes(cstr.to_bytes()).into())
+        }
+    }
 
     use crate::values::Path;
 
@@ -210,8 +227,6 @@ pub mod path {
             },
             #[error("Ill-formed UTF-8 in username")]
             UsernameConversion(#[from] std::str::Utf8Error),
-            #[error("User home info missing")]
-            PwdFileQuery,
             #[error("User interpolation is not available on this platform")]
             UserInterpolationUnsupported,
         }
@@ -221,8 +236,8 @@ pub mod path {
         /// Interpolates this path into a file system path.
         ///
         /// If this path starts with `~/` or `~user/` or `%(prefix)/`
-        ///  - `~/` is expanded to the value of `$HOME` on unix based systems. On windows, `SHGetKnownFolderPath` is used.
-        /// See also [dirs](https://crates.io/crates/dirs).
+        ///  - `~/` is expanded to the value of `home_dir`. The caller can use the [dirs](https://crates.io/crates/dirs) crate to obtain it.
+        ///    It it is required but not set, an error is produced.
         ///  - `~user/` to the specified user’s home directory, e.g `~alice` might get expanded to `/home/alice` on linux.
         /// The interpolation uses `getpwnam` sys call and is therefore not available on windows. See also [pwd](https://crates.io/crates/pwd).
         ///  - `%(prefix)/` is expanded to the location where gitoxide is installed. This location is not known at compile time and therefore need to be
@@ -232,6 +247,7 @@ pub mod path {
         pub fn interpolate(
             self,
             git_install_dir: Option<&std::path::Path>,
+            home_dir: Option<&std::path::Path>,
         ) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
             if self.is_empty() {
                 return Err(interpolate::Error::Missing { what: "path" });
@@ -253,7 +269,7 @@ pub mod path {
                     })?;
                 Ok(git_install_dir.join(path_without_trailing_slash).into())
             } else if self.starts_with(USER_HOME) {
-                let home_path = dirs::home_dir().ok_or(interpolate::Error::Missing { what: "home dir" })?;
+                let home_path = home_dir.ok_or(interpolate::Error::Missing { what: "home dir" })?;
                 let (_prefix, val) = self.split_at(USER_HOME.len());
                 let val = git_path::try_from_byte_slice(val).map_err(|err| interpolate::Error::Utf8Conversion {
                     what: "path past ~/",
@@ -272,7 +288,7 @@ pub mod path {
             Err(interpolate::Error::UserInterpolationUnsupported)
         }
 
-        #[cfg(not(target_os = "windows"))]
+        #[cfg(not(windows))]
         fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
             let (_prefix, val) = self.split_at("/".len());
             let i = val
@@ -281,10 +297,7 @@ pub mod path {
                 .ok_or(interpolate::Error::Missing { what: "/" })?;
             let (username, path_with_leading_slash) = val.split_at(i);
             let username = std::str::from_utf8(username)?;
-            let home = Passwd::from_name(username)
-                .map_err(|_| interpolate::Error::PwdFileQuery)?
-                .ok_or(interpolate::Error::Missing { what: "pwd user info" })?
-                .dir;
+            let home = home_for_user(username).ok_or(interpolate::Error::Missing { what: "pwd user info" })?;
             let path_past_user_prefix =
                 git_path::try_from_byte_slice(&path_with_leading_slash["/".len()..]).map_err(|err| {
                     interpolate::Error::Utf8Conversion {
@@ -292,7 +305,7 @@ pub mod path {
                         err,
                     }
                 })?;
-            Ok(std::path::PathBuf::from(home).join(path_past_user_prefix).into())
+            Ok(home.join(path_past_user_prefix).into())
         }
     }
 }

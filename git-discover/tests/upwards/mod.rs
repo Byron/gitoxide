@@ -83,11 +83,6 @@ fn from_dir_with_dot_dot() -> crate::Result {
     let dir = working_dir.join("some/very/deeply/nested/subdir/../../../../../..");
     let (path, trust) = git_discover::upwards(&dir)?;
     assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
-    // On CI on windows we get a cursor like this with a question mark so our prefix check won't work.
-    // We recover, but that means this assertion will fail.
-    // &cursor = "\\\\?\\D:\\a\\gitoxide\\gitoxide\\.git"
-    // &cwd = "D:\\a\\gitoxide\\gitoxide\\git-repository"
-    #[cfg(not(windows))]
     assert_eq!(
         path.as_ref(),
         std::path::Path::new(".."),
@@ -166,16 +161,9 @@ fn from_existing_worktree() -> crate::Result {
 
         assert_eq!(trust, expected_trust());
         let (git_dir, worktree) = path.into_repository_and_work_tree_directories();
-        #[cfg(not(windows))]
         assert_eq!(
-            git_dir.strip_prefix(top_level_repo.canonicalize().unwrap()),
+            git_dir.strip_prefix(git_path::realpath(&top_level_repo, std::env::current_dir()?).unwrap()),
             Ok(std::path::Path::new(expected_git_dir)),
-            "we don't skip over worktrees and discover their git dir (gitdir is absolute in file)"
-        );
-        #[cfg(windows)]
-        assert_eq!(
-            git_dir.canonicalize()?,
-            top_level_repo.join(expected_git_dir).canonicalize()?,
             "we don't skip over worktrees and discover their git dir (gitdir is absolute in file)"
         );
         let worktree = worktree.expect("linked worktree is set");
@@ -191,9 +179,9 @@ fn from_existing_worktree() -> crate::Result {
 #[cfg(target_os = "macos")]
 #[test]
 fn cross_fs() -> crate::Result {
+    use std::{os::unix::fs::symlink, process::Command};
+
     use git_discover::upwards::Options;
-    use std::os::unix::fs::symlink;
-    use std::process::Command;
 
     let top_level_repo = git_testtools::scripted_fixture_repo_writable("make_basic_repo.sh")?;
 
@@ -255,6 +243,21 @@ fn cross_fs() -> crate::Result {
             .file_name(),
         top_level_repo.path().file_name()
     );
+
+    Ok(())
+}
+
+#[test]
+fn do_not_shorten_absolute_paths() -> crate::Result {
+    let top_level_repo = repo_path()?.canonicalize().expect("repo path exists");
+    let (repo_path, _trust) = git_discover::upwards(top_level_repo).expect("we can discover the repo");
+
+    match repo_path {
+        git_discover::repository::Path::WorkTree(work_dir) => {
+            assert!(work_dir.is_absolute());
+        }
+        _ => panic!("expected worktree path"),
+    };
 
     Ok(())
 }

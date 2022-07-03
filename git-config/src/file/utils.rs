@@ -1,7 +1,11 @@
-use crate::file::{LookupTreeNode, MutableSection, SectionBody, SectionId};
-use crate::parser::{ParsedSectionHeader, SectionHeaderName};
-use crate::{lookup, File};
 use std::collections::HashMap;
+
+use crate::{
+    file::{LookupTreeNode, MutableSection, SectionBody, SectionId},
+    lookup,
+    parser::{ParsedSectionHeader, SectionHeaderName},
+    File,
+};
 
 /// Private helper functions
 impl<'event> File<'event> {

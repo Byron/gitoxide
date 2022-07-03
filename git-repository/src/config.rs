@@ -61,14 +61,19 @@ mod cache {
             home_env: permission::env_var::Resource,
             git_install_dir: Option<&std::path::Path>,
         ) -> Result<Self, Error> {
-            let config = File::open(git_dir.join("config"))?;
+            let home = std::env::var_os("HOME")
+                .map(PathBuf::from)
+                .and_then(|home| home_env.check(home).ok().flatten());
+            // TODO: don't forget to use the canonicalized home for initializing the stacked config.
+            //       like git here: https://github.com/git/git/blob/master/config.c#L208:L208
+            let config = File::at(git_dir.join("config"))?;
 
             let is_bare = config_bool(&config, "core.bare", false)?;
             let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
             let ignore_case = config_bool(&config, "core.ignorecase", false)?;
             let excludes_file = config
                 .path("core", None, "excludesFile")
-                .map(|p| p.interpolate(git_install_dir).map(|p| p.into_owned()))
+                .map(|p| p.interpolate(git_install_dir, home.as_deref()).map(|p| p.into_owned()))
                 .transpose()?;
             let repo_format_version = config
                 .value::<Integer>("core", None, "repositoryFormatVersion")
@@ -147,6 +152,17 @@ mod cache {
                     permission.check(resource).transpose()
                 })
                 .transpose()
+        }
+
+        /// Return the home directory if we are allowed to read it and if it is set in the environment.
+        ///
+        /// We never fail for here even if the permission is set to deny as we `git-config` will fail later
+        /// if it actually wants to use the home directory - we don't want to fail prematurely.
+        #[cfg(feature = "git-mailmap")]
+        pub fn home_dir(&self) -> Option<PathBuf> {
+            std::env::var_os("HOME")
+                .map(PathBuf::from)
+                .and_then(|path| self.home_env.check(path).ok().flatten())
         }
     }
 

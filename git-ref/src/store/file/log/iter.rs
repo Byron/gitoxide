@@ -24,7 +24,7 @@ pub mod decode {
         }
     }
 
-    impl<'a> std::error::Error for Error {}
+    impl std::error::Error for Error {}
 
     impl Error {
         pub(crate) fn new(err: log::line::decode::Error, line: LineNumber) -> Self {

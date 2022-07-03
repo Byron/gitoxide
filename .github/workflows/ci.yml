@@ -4,8 +4,30 @@ on:
   push:
     branches: [ main ]
     tags-ignore: '*'
+    paths:
+      - '.github/**'
+      - 'ci/**'
+      - 'etc/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'cargo-*/**'
+      - 'git*/**'
+      - 'experiments/**'
+      - '*.toml'
+      - Makefile
   pull_request:
     branches: [ main ]
+    paths:
+      - '.github/**'
+      - 'ci/**'
+      - 'etc/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'cargo-*/**'
+      - 'git*/**'
+      - 'experiments/**'
+      - '*.toml'
+      - Makefile
 
 jobs:
   test:
