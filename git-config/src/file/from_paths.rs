@@ -10,8 +10,12 @@ pub enum Error {
     Interpolate(#[from] interpolate::Error),
     #[error("The maximum allowed length {} of the file include chain built by following nested resolve_includes is exceeded", .max_depth)]
     IncludeDepthExceeded { max_depth: u8 },
-    #[error("Include paths from environment variables must not be relative")]
+    #[error("Include paths from environment variables must not be relative as no config file paths exists as root")]
     MissingConfigPath,
+    #[error("The git directory must be provided to support `gitdir:` conditional includes")]
+    MissingGitDir,
+    #[error(transparent)]
+    Realpath(#[from] git_path::realpath::Error),
 }
 
 /// Options when loading git config using [`File::from_paths()`][crate::File::from_paths()].

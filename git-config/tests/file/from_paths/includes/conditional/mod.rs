@@ -394,6 +394,7 @@ fn various_gitdir() {
 fn options_with_git_dir(git_dir: &Path) -> from_paths::Options<'_> {
     from_paths::Options {
         git_dir: Some(git_dir),
+        home_dir: Some(git_dir.parent().unwrap()),
         ..Default::default()
     }
 }
