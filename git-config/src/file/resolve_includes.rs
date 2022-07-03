@@ -152,9 +152,9 @@ fn gitdir_matches(
     };
 
     if let Some(relative_pattern_path) = pattern_path.strip_prefix(b"./") {
-        let parent_dir = target_config_path.and_then(|path| path.parent()).unwrap_or_else(|| {
-            unreachable!("It's impossible to use includeIf from environment variable based configuration")
-        });
+        let parent_dir = target_config_path
+            .and_then(|path| path.parent())
+            .unwrap_or_else(|| todo!("an error case for this and maybe even a test - git doesnt support this either"));
         let mut joined_path = git_path::to_unix_separators(git_path::into_bstr(parent_dir)).into_owned();
         joined_path.push(b'/');
         joined_path.extend_from_slice(relative_pattern_path);

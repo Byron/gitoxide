@@ -116,6 +116,7 @@ fn pattern_is_current_dir() {
 
 #[test]
 fn various_gitdir() {
+    // TODO: check against specific gitdir/onbranch tests which should also support running it against baseline git
     fn canonicalized_tempdir() -> crate::Result<tempfile::TempDir> {
         let canonicalized_tempdir = git_path::realpath(std::env::temp_dir(), std::env::current_dir()?)?;
         Ok(tempdir_in(canonicalized_tempdir)?)
@@ -199,7 +200,7 @@ fn various_gitdir() {
         relative_with_backslash_path.as_path(),
         "
 [core]
-  c = relative with backslash do not match",
+  c = absolute with double-slash do match",
     )
     .unwrap();
 
@@ -281,9 +282,8 @@ fn various_gitdir() {
         let dir = Path::new("/c//d/.git");
         let config = File::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
         assert_eq!(
-            config.integer("core", None, "c"),
-            Some(Ok(1)),
-            "relative with backslash do not match"
+            config.string("core", None, "c"),
+            Some(cow_str("absolute with double-slash do match")),
         );
     }
 

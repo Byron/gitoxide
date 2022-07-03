@@ -51,8 +51,7 @@ fn dot_slash_path_is_replaced_with_directory_containing_the_including_config_fil
 #[ignore]
 fn dot_slash_from_environment_causes_error() {
     use git_config::file::from_paths;
-    // TODO: figure out how to do this, how do we parse sub-keys? Can git do that even?
-    //       If git can't do it, we are also not able to and that's fine (currently unreachable!()).
+    // TODO: figure out how to do this, how do we parse sub-keys? Can git do that even? YES, git can actually!
     let _env = crate::file::from_env::Env::new()
         .set("GIT_CONFIG_COUNT", "1")
         .set("GIT_CONFIG_KEY_0", "includeIf.path")
