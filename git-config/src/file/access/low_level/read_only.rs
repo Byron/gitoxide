@@ -1,3 +1,4 @@
+use bstr::BStr;
 use std::{borrow::Cow, convert::TryFrom};
 
 use crate::{file::SectionBody, lookup, parser::ParsedSectionHeader, File};
@@ -42,7 +43,7 @@ impl<'a> File<'a> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn value<T: TryFrom<Cow<'a, [u8]>>>(
+    pub fn value<T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
         subsection_name: Option<&str>,
@@ -52,7 +53,7 @@ impl<'a> File<'a> {
     }
 
     /// Like [`value()`][File::value()], but returning an `Option` if the value wasn't found.
-    pub fn try_value<T: TryFrom<Cow<'a, [u8]>>>(
+    pub fn try_value<T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
         subsection_name: Option<&str>,
@@ -92,14 +93,14 @@ impl<'a> File<'a> {
     /// assert_eq!(
     ///     a_value,
     ///     vec![
-    ///         Boolean::True(TrueVariant::Explicit(Cow::Borrowed("true"))),
+    ///         Boolean::True(TrueVariant::Explicit(Cow::Borrowed("true".into()))),
     ///         Boolean::True(TrueVariant::Implicit),
-    ///         Boolean::False(Cow::Borrowed("false")),
+    ///         Boolean::False(Cow::Borrowed("false".into())),
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
     /// let c_value: Vec<Bytes> = git_config.multi_value("core", None, "c")?;
-    /// assert_eq!(c_value, vec![Bytes { value: Cow::Borrowed(b"g") }]);
+    /// assert_eq!(c_value, vec![Bytes { value: Cow::Borrowed("g".into()) }]);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
@@ -111,7 +112,7 @@ impl<'a> File<'a> {
     ///
     /// [`values`]: crate::values
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn multi_value<'lookup, T: TryFrom<Cow<'a, [u8]>>>(
+    pub fn multi_value<'lookup, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,

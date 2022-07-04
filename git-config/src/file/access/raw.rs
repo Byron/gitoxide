@@ -1,3 +1,4 @@
+use bstr::{BStr, BString};
 use std::{borrow::Cow, collections::HashMap};
 
 use crate::{
@@ -24,14 +25,14 @@ impl<'a> File<'a> {
     /// section and subsection, or if the section and subsection do not exist.
     pub fn raw_value<'lookup>(
         &self,
-        section_name: &'lookup str,
+        section_name: &'lookup str, // TODO: consider making this BStr, while keeping higher-level APIs as 'str'
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<Cow<'_, [u8]>, lookup::existing::Error> {
+    ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
-        let key = Key(key.into());
+        let key = Key(Cow::<BStr>::Borrowed(key.into()));
         for section_id in self
             .section_ids_by_name_and_subname(section_name, subsection_name)?
             .iter()
@@ -43,7 +44,7 @@ impl<'a> File<'a> {
                 .expect("sections does not have section id from section ids")
                 .value(&key)
             {
-                return Ok(v.to_vec().into());
+                return Ok(v.clone());
             }
         }
 
@@ -67,7 +68,7 @@ impl<'a> File<'a> {
         key: &'lookup str,
     ) -> Result<MutableValue<'_, 'lookup, 'a>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
-        let key = Key(key.into());
+        let key = Key(Cow::<BStr>::Borrowed(key.into()));
 
         for section_id in section_ids.iter().rev() {
             let mut size = Size(0);
@@ -163,16 +164,16 @@ impl<'a> File<'a> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-    ) -> Result<Vec<Cow<'_, [u8]>>, lookup::existing::Error> {
+    ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
         let mut values = vec![];
         for section_id in self.section_ids_by_name_and_subname(section_name, subsection_name)? {
             values.extend(
                 self.sections
                     .get(&section_id)
                     .expect("sections does not have section id from section ids")
-                    .values(&Key(key.into()))
+                    .values(&Key(Cow::<BStr>::Borrowed(key.into())))
                     .iter()
-                    .map(|v| Cow::Owned(v.to_vec())),
+                    .map(|v| v.clone()),
             );
         }
 
@@ -204,13 +205,14 @@ impl<'a> File<'a> {
     /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
+    /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
     ///     git_config.raw_multi_value("core", None, "a")?,
     ///     vec![
-    ///         Cow::Borrowed(b"b"),
-    ///         Cow::Borrowed(b"c"),
-    ///         Cow::Borrowed(b"d")
+    ///         Cow::<BStr>::Borrowed("b".into()),
+    ///         Cow::<BStr>::Borrowed("c".into()),
+    ///         Cow::<BStr>::Borrowed("d".into())
     ///     ]
     /// );
     ///
@@ -219,9 +221,9 @@ impl<'a> File<'a> {
     /// assert_eq!(
     ///     git_config.raw_multi_value("core", None, "a")?,
     ///     vec![
-    ///         Cow::Borrowed(b"g"),
-    ///         Cow::Borrowed(b"g"),
-    ///         Cow::Borrowed(b"g")
+    ///         Cow::<BStr>::Borrowed("g".into()),
+    ///         Cow::<BStr>::Borrowed("g".into()),
+    ///         Cow::<BStr>::Borrowed("g".into())
     ///     ],
     /// );
     /// # Ok::<(), git_config::lookup::existing::Error>(())
@@ -245,7 +247,7 @@ impl<'a> File<'a> {
         key: &'lookup str,
     ) -> Result<MutableMultiValue<'_, 'lookup, 'a>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
-        let key = Key(key.into());
+        let key = Key(Cow::<BStr>::Borrowed(key.into()));
 
         let mut offsets = HashMap::new();
         let mut entries = vec![];
@@ -310,10 +312,11 @@ impl<'a> File<'a> {
     /// ```
     /// # use git_config::File;
     /// # use std::borrow::Cow;
+    /// # use bstr::BStr;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// git_config.set_raw_value("core", None, "a", vec![b'e'])?;
-    /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::Borrowed(b"e"));
+    /// git_config.set_raw_value("core", None, "a", "e".into())?;
+    /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::<BStr>::Borrowed("e".into()));
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
@@ -325,7 +328,7 @@ impl<'a> File<'a> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-        new_value: Vec<u8>,
+        new_value: BString,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_value_mut(section_name, subsection_name, key)
             .map(|mut entry| entry.set_bytes(new_value))
@@ -363,17 +366,18 @@ impl<'a> File<'a> {
     /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
+    /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// let new_values: Vec<Cow<'_, [u8]>> = vec![
-    ///     Cow::Borrowed(b"x"),
-    ///     Cow::Borrowed(b"y"),
-    ///     Cow::Borrowed(b"z"),
+    /// let new_values = vec![
+    ///     Cow::<BStr>::Borrowed("x".into()),
+    ///     Cow::<BStr>::Borrowed("y".into()),
+    ///     Cow::<BStr>::Borrowed("z".into()),
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_multi_value("core", None, "a")?;
-    /// assert!(fetched_config.contains(&Cow::Borrowed(b"x")));
-    /// assert!(fetched_config.contains(&Cow::Borrowed(b"y")));
-    /// assert!(fetched_config.contains(&Cow::Borrowed(b"z")));
+    /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
+    /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
+    /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("z".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///
@@ -383,15 +387,16 @@ impl<'a> File<'a> {
     /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
+    /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// let new_values: Vec<Cow<'_, [u8]>> = vec![
-    ///     Cow::Borrowed(b"x"),
-    ///     Cow::Borrowed(b"y"),
+    /// let new_values = vec![
+    ///     Cow::<BStr>::Borrowed("x".into()),
+    ///     Cow::<BStr>::Borrowed("y".into()),
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_multi_value("core", None, "a")?;
-    /// assert!(fetched_config.contains(&Cow::Borrowed(b"x")));
-    /// assert!(fetched_config.contains(&Cow::Borrowed(b"y")));
+    /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
+    /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///
@@ -401,15 +406,16 @@ impl<'a> File<'a> {
     /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
+    /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// let new_values: Vec<Cow<'_, [u8]>> = vec![
-    ///     Cow::Borrowed(b"x"),
-    ///     Cow::Borrowed(b"y"),
-    ///     Cow::Borrowed(b"z"),
-    ///     Cow::Borrowed(b"discarded"),
+    /// let new_values = vec![
+    ///     Cow::<BStr>::Borrowed("x".into()),
+    ///     Cow::<BStr>::Borrowed("y".into()),
+    ///     Cow::<BStr>::Borrowed("z".into()),
+    ///     Cow::<BStr>::Borrowed("discarded".into()),
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
-    /// assert!(!git_config.raw_multi_value("core", None, "a")?.contains(&Cow::Borrowed(b"discarded")));
+    /// assert!(!git_config.raw_multi_value("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///
@@ -423,7 +429,7 @@ impl<'a> File<'a> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-        new_values: impl Iterator<Item = Cow<'a, [u8]>>,
+        new_values: impl Iterator<Item = Cow<'a, BStr>>,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_multi_value_mut(section_name, subsection_name, key)
             .map(|mut v| v.set_values(new_values))

@@ -380,6 +380,7 @@ pub mod state {
 pub mod discover {
     use std::path::Path;
 
+    use crate::bstr::BString;
     pub use git_discover::*;
 
     use crate::ThreadSafeRepository;
@@ -440,8 +441,8 @@ pub mod discover {
 
                 use crate::bstr::ByteVec;
 
-                if let Some(cross_fs) =
-                    std::env::var_os("GIT_DISCOVERY_ACROSS_FILESYSTEM").and_then(|v| Vec::from_os_string(v).ok())
+                if let Some(cross_fs) = std::env::var_os("GIT_DISCOVERY_ACROSS_FILESYSTEM")
+                    .and_then(|v| Vec::from_os_string(v).ok().map(BString::from))
                 {
                     if let Ok(b) = git_config::values::Boolean::try_from(cross_fs) {
                         opts.cross_fs = b.to_bool();

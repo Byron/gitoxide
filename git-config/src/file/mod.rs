@@ -1,12 +1,10 @@
 //! This module provides a high level wrapper around a single `git-config` file.
+use bstr::BStr;
 use std::{
     borrow::Cow,
     collections::HashMap,
     ops::{Add, AddAssign},
 };
-
-mod resolved;
-pub use resolved::*;
 
 mod section;
 pub use section::*;
@@ -59,7 +57,7 @@ pub(crate) struct SectionId(pub(crate) usize);
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub(crate) enum LookupTreeNode<'a> {
     Terminal(Vec<SectionId>),
-    NonTerminal(HashMap<Cow<'a, str>, Vec<SectionId>>),
+    NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionId>>),
 }
 
 pub mod from_env;

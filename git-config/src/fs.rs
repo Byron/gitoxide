@@ -1,6 +1,7 @@
 #![allow(unused)]
 #![allow(clippy::result_unit_err)]
 
+use bstr::BStr;
 use std::{
     borrow::Cow,
     convert::TryFrom,
@@ -149,7 +150,7 @@ pub struct Config<'a> {
 
 impl<'a> Config<'a> {
     #[must_use]
-    pub fn value<T: TryFrom<Cow<'a, [u8]>>>(
+    pub fn value<T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
         subsection_name: Option<&str>,
@@ -159,7 +160,7 @@ impl<'a> Config<'a> {
             .map(|(value, _)| value)
     }
 
-    fn value_with_source<T: TryFrom<Cow<'a, [u8]>>>(
+    fn value_with_source<T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
         subsection_name: Option<&str>,
@@ -178,7 +179,7 @@ impl<'a> Config<'a> {
         None
     }
 
-    pub fn try_value<'lookup, T: TryFrom<Cow<'a, [u8]>>>(
+    pub fn try_value<'lookup, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
@@ -192,7 +193,7 @@ impl<'a> Config<'a> {
     /// if the key was not found. On a successful parse, the value will be
     /// returned as well as the source location. This respects the priority of
     /// the various configuration files.
-    pub fn try_value_with_source<'lookup, T: TryFrom<Cow<'a, [u8]>>>(
+    pub fn try_value_with_source<'lookup, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,

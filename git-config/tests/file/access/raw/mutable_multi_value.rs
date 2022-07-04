@@ -55,7 +55,7 @@ fn set_value_at_end() {
 fn set_values_all() {
     let mut git_config = init_config();
     let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
-    values.set_owned_values_all(b"Hello");
+    values.set_owned_values_all("Hello");
     assert_eq!(
         git_config.to_string(),
         "[core]\n    a=Hello\n    [core]\n        a=Hello\n        a=Hello"

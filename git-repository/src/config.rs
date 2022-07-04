@@ -81,15 +81,15 @@ mod cache {
             let object_hash = (repo_format_version != 1)
                 .then(|| Ok(git_hash::Kind::Sha1))
                 .or_else(|| {
-                    config
-                        .raw_value("extensions", None, "objectFormat")
-                        .ok()
-                        .map(|format| match format.as_ref() {
-                            b"sha1" => Ok(git_hash::Kind::Sha1),
-                            _ => Err(Error::UnsupportedObjectFormat {
+                    config.string("extensions", None, "objectFormat").map(|format| {
+                        if format.as_ref() == "sha1" {
+                            Ok(git_hash::Kind::Sha1)
+                        } else {
+                            Err(Error::UnsupportedObjectFormat {
                                 name: format.to_vec().into(),
-                            }),
-                        })
+                            })
+                        }
+                    })
                 })
                 .transpose()?
                 .unwrap_or(git_hash::Kind::Sha1);
@@ -100,7 +100,7 @@ mod cache {
                     return Err(Error::EmptyValue { key: "core.abbrev" });
                 }
                 if hex_len_str.as_ref() != "auto" {
-                    let value_bytes = hex_len_str.as_ref().as_ref();
+                    let value_bytes = hex_len_str.as_ref();
                     if let Ok(Boolean::False(_)) = Boolean::try_from(value_bytes) {
                         hex_len = object_hash.len_in_hex().into();
                     } else {

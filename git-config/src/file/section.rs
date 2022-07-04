@@ -1,5 +1,6 @@
+use bstr::{BStr, BString, ByteVec};
 use std::{
-    borrow::{Borrow, Cow},
+    borrow::Cow,
     collections::VecDeque,
     convert::TryFrom,
     iter::FusedIterator,
@@ -10,7 +11,7 @@ use crate::{
     file::Index,
     lookup,
     parser::{Event, Key},
-    values::{normalize_cow, normalize_vec},
+    values::{normalize_bstring, normalize_cow},
 };
 
 /// A opaque type that represents a mutable reference to a section.
@@ -24,24 +25,26 @@ pub struct MutableSection<'borrow, 'event> {
 
 impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     /// Adds an entry to the end of this section.
-    pub fn push(&mut self, key: Key<'event>, value: Cow<'event, [u8]>) {
+    pub fn push(&mut self, key: Key<'event>, value: Cow<'event, BStr>) {
         if self.whitespace > 0 {
-            self.section
-                .0
-                .push(Event::Whitespace(" ".repeat(self.whitespace).into()));
+            self.section.0.push(Event::Whitespace({
+                let mut s = BString::default();
+                s.extend(std::iter::repeat(b' ').take(self.whitespace));
+                s.into()
+            }));
         }
 
         self.section.0.push(Event::Key(key));
         self.section.0.push(Event::KeyValueSeparator);
         self.section.0.push(Event::Value(value));
         if self.implicit_newline {
-            self.section.0.push(Event::Newline("\n".into()));
+            self.section.0.push(Event::Newline(BString::from("\n").into()));
         }
     }
 
     /// Removes all events until a key value pair is removed. This will also
     /// remove the whitespace preceding the key value pair, if any is found.
-    pub fn pop(&mut self) -> Option<(Key<'_>, Cow<'event, [u8]>)> {
+    pub fn pop(&mut self) -> Option<(Key<'_>, Cow<'event, BStr>)> {
         let mut values = vec![];
         // events are popped in reverse order
         while let Some(e) = self.section.0.pop() {
@@ -59,13 +62,13 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
                     return Some((
                         k,
-                        normalize_vec(
-                            values
-                                .into_iter()
-                                .rev()
-                                .flat_map(|v: Cow<'_, [u8]>| v.to_vec())
-                                .collect(),
-                        ),
+                        normalize_bstring({
+                            let mut s = BString::default();
+                            for value in values.into_iter().rev() {
+                                s.push_str(value.as_ref());
+                            }
+                            s
+                        }),
                     ));
                 }
                 Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => values.push(v),
@@ -78,7 +81,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     /// Sets the last key value pair if it exists, or adds the new value.
     /// Returns the previous value if it replaced a value, or None if it adds
     /// the value.
-    pub fn set(&mut self, key: Key<'event>, value: Cow<'event, [u8]>) -> Option<Cow<'event, [u8]>> {
+    pub fn set(&mut self, key: Key<'event>, value: Cow<'event, BStr>) -> Option<Cow<'event, BStr>> {
         let range = self.value_range_by_key(&key);
         if range.is_empty() {
             self.push(key, value);
@@ -91,7 +94,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     }
 
     /// Removes the latest value by key and returns it, if it exists.
-    pub fn remove(&mut self, key: &Key<'event>) -> Option<Cow<'event, [u8]>> {
+    pub fn remove(&mut self, key: &Key<'event>) -> Option<Cow<'event, BStr>> {
         let range = self.value_range_by_key(key);
         if range.is_empty() {
             return None;
@@ -101,17 +104,17 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
     /// Performs the removal, assuming the range is valid. This is used to
     /// avoid duplicating searching for the range in [`Self::set`].
-    fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, [u8]> {
+    fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, BStr> {
         self.section
             .0
             .drain(range)
-            .fold(Cow::<[u8]>::Owned(vec![]), |acc, e| match e {
+            .fold(Cow::Owned(BString::default()), |acc, e| match e {
                 Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
                     // This is fine because we start out with an owned
                     // variant, so we never actually clone the
                     // accumulator.
                     let mut acc = acc.into_owned();
-                    acc.extend(&*v);
+                    acc.extend(&**v);
                     Cow::Owned(acc)
                 }
                 _ => acc,
@@ -121,7 +124,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     /// Adds a new line event. Note that you don't need to call this unless
     /// you've disabled implicit newlines.
     pub fn push_newline(&mut self) {
-        self.section.0.push(Event::Newline("\n".into()));
+        self.section.0.push(Event::Newline(Cow::Borrowed("\n".into())));
     }
 
     /// Enables or disables automatically adding newline events after adding
@@ -160,7 +163,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         key: &Key<'key>,
         start: Index,
         end: Index,
-    ) -> Result<Cow<'_, [u8]>, lookup::existing::Error> {
+    ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
         let mut found_key = false;
         let mut latest_value = None;
         let mut partial_value = None;
@@ -177,11 +180,11 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
                 }
                 Event::ValueNotDone(v) if found_key => {
                     latest_value = None;
-                    partial_value = Some((*v).to_vec());
+                    partial_value = Some(v.as_ref().to_owned());
                 }
                 Event::ValueDone(v) if found_key => {
                     found_key = false;
-                    partial_value.as_mut().unwrap().extend(&**v);
+                    partial_value.as_mut().unwrap().push_str(v.as_ref());
                 }
                 _ => (),
             }
@@ -189,7 +192,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
         latest_value
             .map(normalize_cow)
-            .or_else(|| partial_value.map(normalize_vec))
+            .or_else(|| partial_value.map(normalize_bstring))
             .ok_or(lookup::existing::Error::KeyMissing)
     }
 
@@ -197,7 +200,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         self.section.0.drain(start.0..=end.0);
     }
 
-    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: Vec<u8>) {
+    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: BString) {
         self.section.0.insert(index.0, Event::Value(Cow::Owned(value)));
         self.section.0.insert(index.0, Event::KeyValueSeparator);
         self.section.0.insert(index.0, Event::Key(key));
@@ -238,7 +241,7 @@ impl<'event> SectionBody<'event> {
     // function.
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
-    pub fn value(&self, key: &Key<'_>) -> Option<Cow<'event, [u8]>> {
+    pub fn value(&self, key: &Key<'_>) -> Option<Cow<'event, BStr>> {
         let range = self.value_range_by_key(key);
         if range.is_empty() {
             return None;
@@ -253,20 +256,14 @@ impl<'event> SectionBody<'event> {
             });
         }
 
-        Some(normalize_cow(self.0[range].iter().fold(
-            Cow::<[u8]>::Owned(vec![]),
-            |acc, e| match e {
-                Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
-                    // This is fine because we start out with an owned
-                    // variant, so we never actually clone the
-                    // accumulator.
-                    let mut acc = acc.into_owned();
-                    acc.extend(&**v);
-                    Cow::Owned(acc)
-                }
-                _ => acc,
-            },
-        )))
+        normalize_bstring(self.0[range].iter().fold(BString::default(), |mut acc, e| match e {
+            Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
+                acc.push_str(v.as_ref());
+                acc
+            }
+            _ => acc,
+        }))
+        .into()
     }
 
     /// Retrieves the last matching value in a section with the given key, and
@@ -275,7 +272,7 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the key was not found, or if the conversion failed.
-    pub fn value_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key<'_>) -> Result<T, lookup::Error<T::Error>> {
+    pub fn value_as<T: TryFrom<Cow<'event, BStr>>>(&self, key: &Key<'_>) -> Result<T, lookup::Error<T::Error>> {
         T::try_from(self.value(key).ok_or(lookup::existing::Error::KeyMissing)?)
             .map_err(lookup::Error::FailedConversion)
     }
@@ -283,7 +280,7 @@ impl<'event> SectionBody<'event> {
     /// Retrieves all values that have the provided key name. This may return
     /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
-    pub fn values(&self, key: &Key<'_>) -> Vec<Cow<'event, [u8]>> {
+    pub fn values(&self, key: &Key<'_>) -> Vec<Cow<'event, BStr>> {
         let mut values = vec![];
         let mut found_key = false;
         let mut partial_value = None;
@@ -300,15 +297,15 @@ impl<'event> SectionBody<'event> {
                     partial_value = None;
                 }
                 Event::ValueNotDone(v) if found_key => {
-                    partial_value = Some((*v).to_vec());
+                    partial_value = Some(v.as_ref().to_owned());
                 }
                 Event::ValueDone(v) if found_key => {
                     found_key = false;
                     let mut value = partial_value
                         .take()
                         .expect("ValueDone event called before ValueNotDone");
-                    value.extend(&**v);
-                    values.push(normalize_cow(Cow::Owned(value)));
+                    value.push_str(v.as_ref());
+                    values.push(normalize_bstring(value));
                 }
                 _ => (),
             }
@@ -323,7 +320,7 @@ impl<'event> SectionBody<'event> {
     /// # Errors
     ///
     /// Returns an error if the conversion failed.
-    pub fn values_as<T: TryFrom<Cow<'event, [u8]>>>(&self, key: &Key<'_>) -> Result<Vec<T>, lookup::Error<T::Error>> {
+    pub fn values_as<T: TryFrom<Cow<'event, BStr>>>(&self, key: &Key<'_>) -> Result<Vec<T>, lookup::Error<T::Error>> {
         self.values(key)
             .into_iter()
             .map(T::try_from)
@@ -396,7 +393,7 @@ impl<'event> SectionBody<'event> {
 }
 
 impl<'event> IntoIterator for SectionBody<'event> {
-    type Item = (Key<'event>, Cow<'event, [u8]>);
+    type Item = (Key<'event>, Cow<'event, BStr>);
 
     type IntoIter = SectionBodyIter<'event>;
 
@@ -410,11 +407,11 @@ impl<'event> IntoIterator for SectionBody<'event> {
 pub struct SectionBodyIter<'event>(VecDeque<Event<'event>>);
 
 impl<'event> Iterator for SectionBodyIter<'event> {
-    type Item = (Key<'event>, Cow<'event, [u8]>);
+    type Item = (Key<'event>, Cow<'event, BStr>);
 
     fn next(&mut self) -> Option<Self::Item> {
         let mut key = None;
-        let mut partial_value: Vec<u8> = Vec::new();
+        let mut partial_value = BString::default();
         let mut value = None;
 
         while let Some(event) = self.0.pop_front() {
@@ -424,10 +421,10 @@ impl<'event> Iterator for SectionBodyIter<'event> {
                     value = Some(v);
                     break;
                 }
-                Event::ValueNotDone(v) => partial_value.extend::<&[u8]>(v.borrow()),
+                Event::ValueNotDone(v) => partial_value.push_str(v.as_ref()),
                 Event::ValueDone(v) => {
-                    partial_value.extend::<&[u8]>(v.borrow());
-                    value = Some(Cow::Owned(partial_value));
+                    partial_value.push_str(v.as_ref());
+                    value = Some(partial_value.into());
                     break;
                 }
                 _ => (),

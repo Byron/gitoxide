@@ -1,5 +1,6 @@
-use std::{borrow::Cow, convert::TryFrom};
+use std::convert::TryFrom;
 
+use crate::file::cow_str;
 use git_config::{lookup, File};
 
 #[test]
@@ -16,7 +17,7 @@ fn multi_value_in_section() {
     let config = File::try_from("[core]\na=b\na=c").unwrap();
     assert_eq!(
         config.raw_multi_value("core", None, "a").unwrap(),
-        vec![Cow::Borrowed(b"b"), Cow::Borrowed(b"c")]
+        vec![cow_str("b"), cow_str("c")]
     );
 }
 
@@ -25,7 +26,7 @@ fn multi_value_across_sections() {
     let config = File::try_from("[core]\na=b\na=c\n[core]a=d").unwrap();
     assert_eq!(
         config.raw_multi_value("core", None, "a").unwrap(),
-        vec![Cow::Borrowed(b"b"), Cow::Borrowed(b"c"), Cow::Borrowed(b"d")]
+        vec![cow_str("b"), cow_str("c"), cow_str("d")]
     );
 }
 
@@ -59,13 +60,10 @@ fn key_not_found() {
 #[test]
 fn subsection_must_be_respected() {
     let config = File::try_from("[core]a=b\n[core.a]a=c").unwrap();
-    assert_eq!(
-        config.raw_multi_value("core", None, "a").unwrap(),
-        vec![Cow::Borrowed(b"b")]
-    );
+    assert_eq!(config.raw_multi_value("core", None, "a").unwrap(), vec![cow_str("b")]);
     assert_eq!(
         config.raw_multi_value("core", Some("a"), "a").unwrap(),
-        vec![Cow::Borrowed(b"c")]
+        vec![cow_str("c")]
     );
 }
 
@@ -74,6 +72,6 @@ fn non_relevant_subsection_is_ignored() {
     let config = File::try_from("[core]\na=b\na=c\n[core]a=d\n[core]g=g").unwrap();
     assert_eq!(
         config.raw_multi_value("core", None, "a").unwrap(),
-        vec![Cow::Borrowed(b"b"), Cow::Borrowed(b"c"), Cow::Borrowed(b"d")]
+        vec![cow_str("b"), cow_str("c"), cow_str("d")]
     );
 }

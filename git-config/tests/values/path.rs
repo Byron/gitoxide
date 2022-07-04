@@ -4,6 +4,7 @@ mod interpolate {
 
     use git_config::values::Path as InterpolatingPath;
 
+    use crate::file::cow_str;
     use crate::values::b;
     use git_config::values::path::interpolate::Error;
 
@@ -31,14 +32,11 @@ mod interpolate {
     #[test]
     fn prefix_substitutes_git_install_dir() {
         for git_install_dir in &["/tmp/git", "C:\\git"] {
-            for (val, expected) in &[
-                (&b"%(prefix)/foo/bar"[..], "foo/bar"),
-                (b"%(prefix)/foo\\bar", "foo\\bar"),
-            ] {
+            for (val, expected) in &[("%(prefix)/foo/bar", "foo/bar"), ("%(prefix)/foo\\bar", "foo\\bar")] {
                 let expected =
-                    &std::path::PathBuf::from(format!("{}{}{}", git_install_dir, std::path::MAIN_SEPARATOR, expected));
+                    std::path::PathBuf::from(format!("{}{}{}", git_install_dir, std::path::MAIN_SEPARATOR, expected));
                 assert_eq!(
-                    &*InterpolatingPath::from(Cow::Borrowed(*val))
+                    InterpolatingPath::from(cow_str(val))
                         .interpolate(Path::new(git_install_dir).into(), None)
                         .unwrap(),
                     expected,
@@ -68,11 +66,11 @@ mod interpolate {
 
     #[test]
     fn tilde_slash_substitutes_current_user() {
-        let path = &b"~/foo/bar"[..];
+        let path = "~/foo/bar";
         let home = std::env::current_dir().unwrap();
         let expected = format!("{}{}foo/bar", home.display(), std::path::MAIN_SEPARATOR);
         assert_eq!(
-            InterpolatingPath::from(Cow::Borrowed(path))
+            InterpolatingPath::from(cow_str(path))
                 .interpolate(None, Some(&home))
                 .unwrap()
                 .as_ref(),

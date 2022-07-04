@@ -1,3 +1,4 @@
+use bstr::BStr;
 use std::collections::HashMap;
 
 use crate::{
@@ -71,6 +72,7 @@ impl<'event> File<'event> {
         // `n + 1` checks, while the if and matches will result in the for loop
         // needing `2n` checks.
         if let Some(subsection_name) = subsection_name {
+            let subsection_name: &BStr = subsection_name.into();
             for node in section_ids {
                 if let LookupTreeNode::NonTerminal(subsection_lookup) = node {
                     maybe_ids = subsection_lookup.get(subsection_name);
@@ -118,11 +120,7 @@ impl<'event> File<'event> {
         section_indices.sort();
         for section_index in section_indices {
             let section_header = other.section_headers.remove(&section_index).expect("present");
-            self.push_section(
-                section_header.name.0,
-                section_header.subsection_name,
-                other.sections.remove(&section_index).expect("present"),
-            );
+            self.push_section_internal(section_header, other.sections.remove(&section_index).expect("present"));
         }
     }
 }
