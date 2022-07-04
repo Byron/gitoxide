@@ -5,8 +5,8 @@ use cargo_smart_release::{
     changelog::{section, section::segment::conventional, Section},
     ChangeLog,
 };
+use git_testtools::bstr::ByteSlice;
 use git_testtools::hex_to_id;
-use nom::AsBytes;
 
 use crate::Result;
 
@@ -54,7 +54,7 @@ fn conventional_write_empty_messages() -> Result {
     for link_mode in &[
         changelog::write::Linkables::AsText,
         changelog::write::Linkables::AsLinks {
-            repository_url: git_repository::Url::try_from(b"https://github.com/user/repo.git".as_bytes())?.into(),
+            repository_url: git_repository::Url::try_from(b"https://github.com/user/repo.git".as_bstr())?.into(),
         },
     ] {
         let log = log.clone();
@@ -160,7 +160,7 @@ fn all_section_types_round_trips_lossy() -> Result {
     for link_mode in &[
         changelog::write::Linkables::AsText,
         changelog::write::Linkables::AsLinks {
-            repository_url: git_repository::Url::try_from(b"https://github.com/user/repo".as_bytes())?.into(),
+            repository_url: git_repository::Url::try_from(b"https://github.com/user/repo".as_bstr())?.into(),
         },
     ] {
         // NOTE: we can't run this a second time as the statistical information will be gone (it was never parsed back)

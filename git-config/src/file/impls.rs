@@ -31,15 +31,15 @@ impl<'a> TryFrom<&'a [u8]> for File<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a Vec<u8>> for File<'a> {
+impl<'a> TryFrom<&'a BString> for File<'a> {
     type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
     //// a [`File`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
-    fn try_from(value: &'a Vec<u8>) -> Result<File<'a>, Self::Error> {
-        parse_from_bytes(value).map(File::from)
+    fn try_from(value: &'a BString) -> Result<File<'a>, Self::Error> {
+        parse_from_bytes(value.as_ref()).map(File::from)
     }
 }
 

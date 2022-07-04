@@ -725,10 +725,10 @@ impl TryFrom<&[u8]> for IntegerSuffix {
     }
 }
 
-impl TryFrom<Vec<u8>> for IntegerSuffix {
+impl TryFrom<BString> for IntegerSuffix {
     type Error = ();
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+    fn try_from(value: BString) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
     }
 }

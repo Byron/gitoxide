@@ -106,7 +106,7 @@ pub fn remote_url() -> anyhow::Result<Option<git::Url>> {
     output
         .status
         .success()
-        .then(|| output.stdout.as_slice().try_into().map_err(Into::into))
+        .then(|| output.stdout.as_bstr().try_into().map_err(Into::into))
         .transpose()
 }
 
