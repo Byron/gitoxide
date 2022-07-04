@@ -97,7 +97,7 @@ parking_lot = { version = "0.12.0", default-features = false, optional = true }
 jwalk = { version = "0.6.0", optional = true }
 ## Makes facilities of the `walkdir` crate partially available.
 ## In conjunction with the **parallel** feature, directory walking will be parallel instead behind a compatible interface.
-walkdir = { version = "2.3.1", optional = true } # used when parallel is off
+walkdir = { version = "2.3.2", optional = true } # used when parallel is off
 
 # hashing and 'fast-sha1' feature
 sha1_smol = { version = "1.0.0", optional = true }
