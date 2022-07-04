@@ -149,7 +149,8 @@ fn gitdir_matches(
     }: from_paths::Options<'_>,
     wildmatch_mode: git_glob::wildmatch::Mode,
 ) -> Result<bool, from_paths::Error> {
-    let git_dir = git_path::to_unix_separators(git_path::into_bstr(git_dir.ok_or(from_paths::Error::MissingGitDir)?));
+    let git_dir =
+        git_path::to_unix_separators_on_windows(git_path::into_bstr(git_dir.ok_or(from_paths::Error::MissingGitDir)?));
 
     let mut pattern_path = {
         let cow = Cow::Borrowed(condition_path.as_bytes());
@@ -162,7 +163,7 @@ fn gitdir_matches(
             .ok_or(from_paths::Error::MissingConfigPath)?
             .parent()
             .expect("config path can never be /");
-        let mut joined_path = git_path::to_unix_separators(git_path::into_bstr(parent_dir)).into_owned();
+        let mut joined_path = git_path::to_unix_separators_on_windows(git_path::into_bstr(parent_dir)).into_owned();
         joined_path.push(b'/');
         joined_path.extend_from_slice(relative_pattern_path);
         pattern_path = joined_path;
@@ -179,7 +180,7 @@ fn gitdir_matches(
         pattern_path.push_str("**");
     }
 
-    pattern_path = git_path::to_unix_separators(pattern_path).into_owned();
+    pattern_path = git_path::to_unix_separators_on_windows(pattern_path).into_owned();
 
     let match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL | wildmatch_mode;
     let is_match = git_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
@@ -191,7 +192,7 @@ fn gitdir_matches(
         git_path::from_byte_slice(&git_dir),
         target_config_path.ok_or(from_paths::Error::MissingConfigPath)?,
     )?;
-    let expanded_git_dir = git_path::to_unix_separators(git_path::into_bstr(expanded_git_dir));
+    let expanded_git_dir = git_path::to_unix_separators_on_windows(git_path::into_bstr(expanded_git_dir));
     Ok(git_glob::wildmatch(
         pattern_path.as_bstr(),
         expanded_git_dir.as_bstr(),
