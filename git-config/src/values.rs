@@ -136,37 +136,6 @@ pub fn normalize_bstring(input: impl Into<BString>) -> Cow<'static, BStr> {
     normalize_cow(Cow::Owned(input.into()))
 }
 
-// TODO: remove bytes
-/// Any string value
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Bytes<'a> {
-    /// bytes
-    pub value: Cow<'a, BStr>,
-}
-
-impl<'a> From<&'a BStr> for Bytes<'a> {
-    fn from(s: &'a BStr) -> Self {
-        Self {
-            value: Cow::Borrowed(s),
-        }
-    }
-}
-
-impl From<BString> for Bytes<'_> {
-    fn from(s: BString) -> Self {
-        Self { value: Cow::Owned(s) }
-    }
-}
-
-impl<'a> From<Cow<'a, BStr>> for Bytes<'a> {
-    fn from(c: Cow<'a, BStr>) -> Self {
-        match c {
-            Cow::Borrowed(c) => Self::from(c),
-            Cow::Owned(c) => Self::from(c),
-        }
-    }
-}
-
 /// Any string value
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct String<'a> {
