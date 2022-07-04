@@ -1,3 +1,4 @@
+use bstr::BStr;
 use std::borrow::Cow;
 
 use crate::{
@@ -50,9 +51,10 @@ impl<'a> File<'a> {
     /// ```
     /// # use git_config::File;
     /// # use std::convert::TryFrom;
+    /// # use bstr::ByteSlice;
     /// let mut git_config = git_config::File::new();
     /// let mut section = git_config.new_section("hello", Some("world".into()));
-    /// section.push("a".into(), "b".as_bytes().into());
+    /// section.push("a".into(), b"b".as_bstr().into());
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n");
     /// let _section = git_config.new_section("core", None);
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n[core]\n");
@@ -128,26 +130,15 @@ impl<'a> File<'a> {
         subsection_name: impl Into<Option<Cow<'a, str>>>,
         section: SectionBody<'a>,
     ) -> MutableSection<'_, 'a> {
-        let subsection_name = subsection_name.into();
-        if subsection_name.is_some() {
-            self.push_section_internal(
-                ParsedSectionHeader {
-                    name: SectionHeaderName(section_name.into()),
-                    separator: Some(" ".into()),
-                    subsection_name,
-                },
-                section,
-            )
-        } else {
-            self.push_section_internal(
-                ParsedSectionHeader {
-                    name: SectionHeaderName(section_name.into()),
-                    separator: None,
-                    subsection_name: None,
-                },
-                section,
-            )
-        }
+        let subsection_name = subsection_name.into().map(into_cow_bstr);
+        self.push_section_internal(
+            ParsedSectionHeader {
+                name: SectionHeaderName(into_cow_bstr(section_name.into())),
+                separator: subsection_name.is_some().then(|| Cow::Borrowed(" ".into())),
+                subsection_name,
+            },
+            section,
+        )
     }
 
     /// Renames a section, modifying the last matching section.
@@ -171,8 +162,15 @@ impl<'a> File<'a> {
             .get_mut(id)
             .expect("sections does not have section id from section ids");
         header.name = new_section_name.into();
-        header.subsection_name = new_subsection_name.into();
+        header.subsection_name = new_subsection_name.into().map(into_cow_bstr);
 
         Ok(())
+    }
+}
+
+fn into_cow_bstr(c: Cow<'_, str>) -> Cow<'_, BStr> {
+    match c {
+        Cow::Borrowed(s) => Cow::Borrowed(s.into()),
+        Cow::Owned(s) => Cow::Owned(s.into()),
     }
 }

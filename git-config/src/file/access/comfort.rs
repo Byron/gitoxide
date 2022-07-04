@@ -2,6 +2,7 @@ use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
 
+use crate::values::normalize_cow;
 use crate::{value, values, File};
 
 /// Comfortable API for accessing values
@@ -12,7 +13,7 @@ impl<'a> File<'a> {
     pub fn string(&'a self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Cow<'a, BStr>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
-            .map(|v| values::String::from(v).value)
+            .map(|v| normalize_cow(v))
     }
 
     /// Like [`value()`][File::value()], but returning an `Option` if the path wasn't found.
@@ -60,7 +61,7 @@ impl<'a> File<'a> {
     pub fn strings(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Vec<Cow<'_, BStr>>> {
         self.raw_multi_value(section_name, subsection_name, key)
             .ok()
-            .map(|values| values.into_iter().map(|v| values::String::from(v).value).collect())
+            .map(|values| values.into_iter().map(|v| normalize_cow(v)).collect())
     }
 
     /// Similar to [`multi_value(…)`][File::multi_value()] but returning integers if at least one of them was found

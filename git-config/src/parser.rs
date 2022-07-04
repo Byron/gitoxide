@@ -9,6 +9,7 @@
 //!
 //! [`File`]: crate::File
 
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, hash::Hash, io::Read, iter::FusedIterator, path::Path};
 
 use nom::{
@@ -50,21 +51,21 @@ pub enum Event<'a> {
     /// if an implicit boolean value is used. Note that these values may contain
     /// spaces and any special character. This value is also unprocessed, so it
     /// it may contain double quotes that should be replaced.
-    Value(Cow<'a, [u8]>),
+    Value(Cow<'a, BStr>),
     /// Represents any token used to signify a new line character. On Unix
     /// platforms, this is typically just `\n`, but can be any valid newline
     /// sequence. Multiple newlines (such as `\n\n`) will be merged as a single
     /// newline event.
-    Newline(Cow<'a, str>),
+    Newline(Cow<'a, BStr>),
     /// Any value that isn't completed. This occurs when the value is continued
     /// onto the next line. A Newline event is guaranteed after, followed by
     /// either a ValueDone, a Whitespace, or another ValueNotDone.
-    ValueNotDone(Cow<'a, [u8]>),
+    ValueNotDone(Cow<'a, BStr>),
     /// The last line of a value which was continued onto another line.
-    ValueDone(Cow<'a, [u8]>),
+    ValueDone(Cow<'a, BStr>),
     /// A continuous section of insignificant whitespace. Values with internal
     /// spaces will not be separated by this event.
-    Whitespace(Cow<'a, str>),
+    Whitespace(Cow<'a, BStr>),
     /// This event is emitted when the parser counters a valid `=` character
     /// separating the key and value. This event is necessary as it eliminates
     /// the ambiguity for whitespace events between a key and value event.
@@ -76,7 +77,7 @@ impl Event<'_> {
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
     #[must_use]
-    pub fn to_vec(&self) -> Vec<u8> {
+    pub fn to_bstring(&self) -> BString {
         self.into()
     }
 
@@ -129,21 +130,21 @@ impl Display for Event<'_> {
     }
 }
 
-impl From<Event<'_>> for Vec<u8> {
+impl From<Event<'_>> for BString {
     fn from(event: Event<'_>) -> Self {
         event.into()
     }
 }
 
-impl From<&Event<'_>> for Vec<u8> {
+impl From<&Event<'_>> for BString {
     fn from(event: &Event<'_>) -> Self {
         match event {
-            Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.to_vec(),
+            Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.as_ref().into(),
             Event::Comment(e) => e.into(),
             Event::SectionHeader(e) => e.into(),
-            Event::Key(e) => e.0.as_bytes().to_vec(),
-            Event::Newline(e) | Event::Whitespace(e) => e.as_bytes().to_vec(),
-            Event::KeyValueSeparator => vec![b'='],
+            Event::Key(e) => e.0.as_ref().into(),
+            Event::Newline(e) | Event::Whitespace(e) => e.as_ref().into(),
+            Event::KeyValueSeparator => "=".into(),
         }
     }
 }
@@ -246,12 +247,12 @@ macro_rules! generate_case_insensitive {
 
         impl<'a> From<&'a str> for $name<'a> {
             fn from(s: &'a str) -> Self {
-                Self(Cow::Borrowed(s))
+                Self(Cow::Borrowed(s.into()))
             }
         }
 
-        impl<'a> From<Cow<'a, str>> for $name<'a> {
-            fn from(s: Cow<'a, str>) -> Self {
+        impl<'a> From<Cow<'a, BStr>> for $name<'a> {
+            fn from(s: Cow<'a, BStr>) -> Self {
                 Self(s)
             }
         }
@@ -268,13 +269,13 @@ macro_rules! generate_case_insensitive {
 
 generate_case_insensitive!(
     SectionHeaderName,
-    str,
+    BStr,
     "Wrapper struct for section header names, since section headers are case-insensitive."
 );
 
 generate_case_insensitive!(
     Key,
-    str,
+    BStr,
     "Wrapper struct for key names, since keys are case-insensitive."
 );
 
@@ -292,9 +293,9 @@ pub struct ParsedSectionHeader<'a> {
     /// reconstruction of subsection format is dependent on this value. If this
     /// is all whitespace, then the subsection name needs to be surrounded by
     /// quotes to have perfect reconstruction.
-    pub separator: Option<Cow<'a, str>>,
+    pub separator: Option<Cow<'a, BStr>>,
     /// The subsection name without quotes if any exist.
-    pub subsection_name: Option<Cow<'a, str>>,
+    pub subsection_name: Option<Cow<'a, BStr>>,
 }
 
 impl ParsedSectionHeader<'_> {
@@ -302,7 +303,7 @@ impl ParsedSectionHeader<'_> {
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
     #[must_use]
-    pub fn to_vec(&self) -> Vec<u8> {
+    pub fn to_bstring(&self) -> BString {
         self.into()
     }
 
@@ -338,7 +339,7 @@ impl Display for ParsedSectionHeader<'_> {
             // Separator must be utf-8
             v.fmt(f)?;
             let subsection_name = self.subsection_name.as_ref().unwrap();
-            if v == "." {
+            if v.as_ref() == "." {
                 subsection_name.fmt(f)?;
             } else {
                 write!(f, "\"{}\"", subsection_name)?;
@@ -349,15 +350,15 @@ impl Display for ParsedSectionHeader<'_> {
     }
 }
 
-impl From<ParsedSectionHeader<'_>> for Vec<u8> {
+impl From<ParsedSectionHeader<'_>> for BString {
     fn from(header: ParsedSectionHeader<'_>) -> Self {
         header.into()
     }
 }
 
-impl From<&ParsedSectionHeader<'_>> for Vec<u8> {
+impl From<&ParsedSectionHeader<'_>> for BString {
     fn from(header: &ParsedSectionHeader<'_>) -> Self {
-        header.to_string().into_bytes()
+        header.to_string().into()
     }
 }
 
@@ -371,9 +372,9 @@ impl<'a> From<ParsedSectionHeader<'a>> for Event<'a> {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct ParsedComment<'a> {
     /// The comment marker used. This is either a semicolon or octothorpe.
-    pub comment_tag: char,
+    pub comment_tag: u8,
     /// The parsed comment.
-    pub comment: Cow<'a, [u8]>,
+    pub comment: Cow<'a, BStr>,
 }
 
 impl ParsedComment<'_> {
@@ -395,7 +396,7 @@ impl ParsedComment<'_> {
     pub fn to_owned(&self) -> ParsedComment<'static> {
         ParsedComment {
             comment_tag: self.comment_tag,
-            comment: Cow::Owned(self.comment.to_vec()),
+            comment: Cow::Owned(self.comment.as_ref().into()),
         }
     }
 }
@@ -414,16 +415,16 @@ impl Display for ParsedComment<'_> {
     }
 }
 
-impl From<ParsedComment<'_>> for Vec<u8> {
+impl From<ParsedComment<'_>> for BString {
     fn from(c: ParsedComment<'_>) -> Self {
         c.into()
     }
 }
 
-impl From<&ParsedComment<'_>> for Vec<u8> {
+impl From<&ParsedComment<'_>> for BString {
     fn from(c: &ParsedComment<'_>) -> Self {
-        let mut values = vec![c.comment_tag as u8];
-        values.extend(c.comment.iter());
+        let mut values = BString::from(vec![c.comment_tag]);
+        values.push_str(c.comment.as_ref());
         values
     }
 }
@@ -435,7 +436,7 @@ impl From<&ParsedComment<'_>> for Vec<u8> {
 pub struct Error<'a> {
     line_number: usize,
     last_attempted_parser: ParserNode,
-    parsed_until: Cow<'a, [u8]>,
+    parsed_until: Cow<'a, BStr>,
 }
 
 impl Error<'_> {
@@ -652,20 +653,20 @@ impl Display for ParserNode {
 /// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: SectionHeaderName(Cow::Borrowed("core")),
+/// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf = input";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline(Cow::Borrowed("\n")),
-/// Event::Whitespace(Cow::Borrowed("  ")),
-/// Event::Key(Key(Cow::Borrowed("autocrlf"))),
-/// Event::Whitespace(Cow::Borrowed(" ")),
+/// Event::Newline(Cow::Borrowed("\n".into())),
+/// Event::Whitespace(Cow::Borrowed("  ".into())),
+/// Event::Key(Key(Cow::Borrowed("autocrlf".into()))),
+/// Event::Whitespace(Cow::Borrowed(" ".into())),
 /// Event::KeyValueSeparator,
-/// Event::Whitespace(Cow::Borrowed(" ")),
-/// Event::Value(Cow::Borrowed(b"input")),
+/// Event::Whitespace(Cow::Borrowed(" ".into())),
+/// Event::Value(Cow::Borrowed("input".into())),
 /// # ]);
 /// ```
 ///
@@ -691,17 +692,17 @@ impl Display for ParserNode {
 /// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: SectionHeaderName(Cow::Borrowed("core")),
+/// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline(Cow::Borrowed("\n")),
-/// Event::Whitespace(Cow::Borrowed("  ")),
-/// Event::Key(Key(Cow::Borrowed("autocrlf"))),
-/// Event::Value(Cow::Borrowed(b"")),
+/// Event::Newline(Cow::Borrowed("\n".into())),
+/// Event::Whitespace(Cow::Borrowed("  ".into())),
+/// Event::Key(Key(Cow::Borrowed("autocrlf".into()))),
+/// Event::Value(Cow::Borrowed("".into())),
 /// # ]);
 /// ```
 ///
@@ -725,21 +726,21 @@ impl Display for ParserNode {
 /// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: SectionHeaderName(Cow::Borrowed("core")),
+/// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\nautocrlf=true\"\"\nfilemode=fa\"lse\"";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline(Cow::Borrowed("\n")),
-/// Event::Key(Key(Cow::Borrowed("autocrlf"))),
+/// Event::Newline(Cow::Borrowed("\n".into())),
+/// Event::Key(Key(Cow::Borrowed("autocrlf".into()))),
 /// Event::KeyValueSeparator,
-/// Event::Value(Cow::Borrowed(br#"true"""#)),
-/// Event::Newline(Cow::Borrowed("\n")),
-/// Event::Key(Key(Cow::Borrowed("filemode"))),
+/// Event::Value(Cow::Borrowed(r#"true"""#.into())),
+/// Event::Newline(Cow::Borrowed("\n".into())),
+/// Event::Key(Key(Cow::Borrowed("filemode".into()))),
 /// Event::KeyValueSeparator,
-/// Event::Value(Cow::Borrowed(br#"fa"lse""#)),
+/// Event::Value(Cow::Borrowed(r#"fa"lse""#.into())),
 /// # ]);
 /// ```
 ///
@@ -762,19 +763,19 @@ impl Display for ParserNode {
 /// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
-/// #   name: SectionHeaderName(Cow::Borrowed("some-section")),
+/// #   name: SectionHeaderName(Cow::Borrowed("some-section".into())),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[some-section]\nfile=a\\\n    c";
 /// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
-/// Event::Newline(Cow::Borrowed("\n")),
-/// Event::Key(Key(Cow::Borrowed("file"))),
+/// Event::Newline(Cow::Borrowed("\n".into())),
+/// Event::Key(Key(Cow::Borrowed("file".into()))),
 /// Event::KeyValueSeparator,
-/// Event::ValueNotDone(Cow::Borrowed(b"a")),
-/// Event::Newline(Cow::Borrowed("\n")),
-/// Event::ValueDone(Cow::Borrowed(b"    c")),
+/// Event::ValueNotDone(Cow::Borrowed("a".into())),
+/// Event::Newline(Cow::Borrowed("\n".into())),
+/// Event::ValueDone(Cow::Borrowed("    c".into())),
 /// # ]);
 /// ```
 ///
@@ -936,7 +937,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error<'_>> {
     let (i, sections) = maybe_sections.map_err(|_| Error {
         line_number: newlines,
         last_attempted_parser: node,
-        parsed_until: i.into(),
+        parsed_until: i.as_bstr().into(),
     })?;
 
     let sections = sections
@@ -953,7 +954,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error<'_>> {
         return Err(Error {
             line_number: newlines,
             last_attempted_parser: node,
-            parsed_until: i.into(),
+            parsed_until: i.as_bstr().into(),
         });
     }
 
@@ -980,10 +981,12 @@ pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'st
     let bom = unicode_bom::Bom::from(input);
     let (i, frontmatter) = many0(alt((
         map(comment, Event::Comment),
-        map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
+        map(take_spaces, |whitespace| {
+            Event::Whitespace(Cow::Borrowed(whitespace.as_bstr()))
+        }),
         map(take_newlines, |(newline, counter)| {
             newlines += counter;
-            Event::Newline(Cow::Borrowed(newline))
+            Event::Newline(Cow::Borrowed(newline.as_bstr()))
         }),
     )))(&input[bom.len()..])
     // I don't think this can panic. many0 errors if the child parser returns
@@ -1036,8 +1039,8 @@ fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment<'_>> {
     Ok((
         i,
         ParsedComment {
-            comment_tag,
-            comment: Cow::Borrowed(comment),
+            comment_tag: comment_tag as u8, // TODO: don't use character based nom functions
+            comment: Cow::Borrowed(comment.as_bstr()),
         },
     ))
 }
@@ -1056,7 +1059,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (
         if let Ok((new_i, v)) = take_spaces(i) {
             if old_i != new_i {
                 i = new_i;
-                items.push(Event::Whitespace(Cow::Borrowed(v)));
+                items.push(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
             }
         }
 
@@ -1064,7 +1067,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (
             if old_i != new_i {
                 i = new_i;
                 newlines += new_newlines;
-                items.push(Event::Newline(Cow::Borrowed(v)));
+                items.push(Event::Newline(Cow::Borrowed(v.as_bstr())));
             }
         }
 
@@ -1103,24 +1106,18 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader<'_>> {
     // No spaces must be between section name and section start
     let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
 
-    let name = std::str::from_utf8(name).map_err(|_| {
-        nom::Err::Error(NomError::<&[u8]> {
-            input: i,
-            code: ErrorKind::AlphaNumeric,
-        })
-    })?;
-
+    let name = name.as_bstr();
     if let Ok((i, _)) = char::<_, NomError<&[u8]>>(']')(i) {
         // Either section does not have a subsection or using deprecated
         // subsection syntax at this point.
         let header = match memchr::memrchr(b'.', name.as_bytes()) {
             Some(index) => ParsedSectionHeader {
-                name: SectionHeaderName(Cow::Borrowed(&name[..index])),
-                separator: name.get(index..=index).map(Cow::Borrowed),
-                subsection_name: name.get(index + 1..).map(Cow::Borrowed),
+                name: SectionHeaderName(Cow::Borrowed(name[..index].as_bstr())),
+                separator: name.get(index..=index).map(|s| Cow::Borrowed(s.as_bstr())),
+                subsection_name: name.get(index + 1..).map(|s| Cow::Borrowed(s.as_bstr())),
             },
             None => ParsedSectionHeader {
-                name: SectionHeaderName(Cow::Borrowed(name)),
+                name: SectionHeaderName(Cow::Borrowed(name.as_bstr())),
                 separator: None,
                 subsection_name: None,
             },
@@ -1138,21 +1135,14 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader<'_>> {
         tag("\"]"),
     )(i)?;
 
-    let subsection_name = subsection_name.map(std::str::from_utf8).transpose().map_err(|_| {
-        nom::Err::Error(NomError::<&[u8]> {
-            input: i,
-            code: ErrorKind::AlphaNumeric,
-        })
-    })?;
+    let subsection_name = subsection_name.map(|s| s.as_bstr());
 
     Ok((
         i,
         ParsedSectionHeader {
             name: SectionHeaderName(Cow::Borrowed(name)),
             separator: Some(Cow::Borrowed(whitespace)),
-            // We know that there's some section name here, so if we get an
-            // empty vec here then we actually parsed an empty section name.
-            subsection_name: subsection_name.or(Some("")).map(Cow::Borrowed),
+            subsection_name: Cow::Borrowed(subsection_name.unwrap_or_default()).into(),
         },
     ))
 }
@@ -1180,7 +1170,7 @@ fn section_body<'a, 'b, 'c>(
 
 /// Parses the config name of a config pair. Assumes the input has already been
 /// trimmed of any leading whitespace.
-fn config_name(i: &[u8]) -> IResult<&[u8], &str> {
+fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
     if i.is_empty() {
         return Err(nom::Err::Error(NomError {
             input: i,
@@ -1196,14 +1186,7 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &str> {
     }
 
     let (i, v) = take_while(|c: u8| (c as char).is_alphanumeric() || c == b'-')(i)?;
-    let v = std::str::from_utf8(v).map_err(|_| {
-        nom::Err::Error(NomError::<&[u8]> {
-            input: i,
-            code: ErrorKind::AlphaNumeric,
-        })
-    })?;
-
-    Ok((i, v))
+    Ok((i, v.as_bstr()))
 }
 
 fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'a [u8], ()> {
@@ -1216,7 +1199,7 @@ fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<
         let (i, _) = value_impl(i, events)?;
         Ok((i, ()))
     } else {
-        events.push(Event::Value(Cow::Borrowed(b"")));
+        events.push(Event::Value(Cow::Borrowed("".into())));
         Ok((i, ()))
     }
 }
@@ -1247,10 +1230,8 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
                 // continuation.
                 b'\n' => {
                     partial_value_found = true;
-                    events.push(Event::ValueNotDone(Cow::Borrowed(&i[offset..index - 1])));
-                    events.push(Event::Newline(Cow::Borrowed(
-                        std::str::from_utf8(&i[index..=index]).unwrap(),
-                    )));
+                    events.push(Event::ValueNotDone(Cow::Borrowed(i[offset..index - 1].as_bstr())));
+                    events.push(Event::Newline(Cow::Borrowed(i[index..=index].as_bstr())));
                     offset = index + 1;
                     parsed_index = 0;
                 }
@@ -1285,8 +1266,8 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
             parsed_index = i.len();
         } else {
             // Didn't parse anything at all, newline straight away.
-            events.push(Event::Value(Cow::Owned(Vec::new())));
-            events.push(Event::Newline(Cow::Borrowed("\n")));
+            events.push(Event::Value(Cow::Owned(BString::default())));
+            events.push(Event::Newline(Cow::Borrowed("\n".into())));
             return Ok((&i[1..], ()));
         }
     }
@@ -1319,15 +1300,15 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
     };
 
     if partial_value_found {
-        events.push(Event::ValueDone(Cow::Borrowed(remainder_value)));
+        events.push(Event::ValueDone(Cow::Borrowed(remainder_value.as_bstr())));
     } else {
-        events.push(Event::Value(Cow::Borrowed(remainder_value)));
+        events.push(Event::Value(Cow::Borrowed(remainder_value.as_bstr())));
     }
 
     Ok((i, ()))
 }
 
-fn take_spaces(i: &[u8]) -> IResult<&[u8], &str> {
+fn take_spaces(i: &[u8]) -> IResult<&[u8], &BStr> {
     let (i, v) = take_while(|c| (c as char).is_ascii() && is_space(c))(i)?;
     if v.is_empty() {
         Err(nom::Err::Error(NomError {
@@ -1335,12 +1316,11 @@ fn take_spaces(i: &[u8]) -> IResult<&[u8], &str> {
             code: ErrorKind::Eof,
         }))
     } else {
-        // v is guaranteed to be utf-8
-        Ok((i, std::str::from_utf8(v).unwrap()))
+        Ok((i, v.as_bstr()))
     }
 }
 
-fn take_newlines(i: &[u8]) -> IResult<&[u8], (&str, usize)> {
+fn take_newlines(i: &[u8]) -> IResult<&[u8], (&BStr, usize)> {
     let mut counter = 0;
     let mut consumed_bytes = 0;
     let mut next_must_be_newline = false;
@@ -1370,8 +1350,7 @@ fn take_newlines(i: &[u8]) -> IResult<&[u8], (&str, usize)> {
             code: ErrorKind::Eof,
         }))
     } else {
-        // v is guaranteed to be utf-8
-        Ok((i, (std::str::from_utf8(v).unwrap(), counter)))
+        Ok((i, (v.as_bstr(), counter)))
     }
 }
 
@@ -1484,7 +1463,7 @@ mod config_name {
 
     #[test]
     fn just_name() {
-        assert_eq!(config_name(b"name").unwrap(), fully_consumed("name"));
+        assert_eq!(config_name(b"name").unwrap(), fully_consumed("name".into()));
     }
 
     #[test]

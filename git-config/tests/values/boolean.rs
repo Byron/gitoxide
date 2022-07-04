@@ -1,35 +1,36 @@
 use std::convert::TryFrom;
 
+use crate::file::cow_str;
 use git_config::values::{Boolean, TrueVariant};
 
 use crate::values::b;
 
 #[test]
 fn from_str_false() {
-    assert_eq!(Boolean::try_from(b("no")), Ok(Boolean::False("no".into())));
-    assert_eq!(Boolean::try_from(b("off")), Ok(Boolean::False("off".into())));
-    assert_eq!(Boolean::try_from(b("false")), Ok(Boolean::False("false".into())));
-    assert_eq!(Boolean::try_from(b("zero")), Ok(Boolean::False("zero".into())));
-    assert_eq!(Boolean::try_from(b("\"\"")), Ok(Boolean::False("\"\"".into())));
+    assert_eq!(Boolean::try_from(b("no")), Ok(Boolean::False(cow_str("no"))));
+    assert_eq!(Boolean::try_from(b("off")), Ok(Boolean::False(cow_str("off"))));
+    assert_eq!(Boolean::try_from(b("false")), Ok(Boolean::False(cow_str("false"))));
+    assert_eq!(Boolean::try_from(b("zero")), Ok(Boolean::False(cow_str("zero"))));
+    assert_eq!(Boolean::try_from(b("\"\"")), Ok(Boolean::False(cow_str("\"\""))));
 }
 
 #[test]
 fn from_str_true() {
     assert_eq!(
         Boolean::try_from(b("yes")),
-        Ok(Boolean::True(TrueVariant::Explicit("yes".into())))
+        Ok(Boolean::True(TrueVariant::Explicit(cow_str("yes"))))
     );
     assert_eq!(
         Boolean::try_from(b("on")),
-        Ok(Boolean::True(TrueVariant::Explicit("on".into())))
+        Ok(Boolean::True(TrueVariant::Explicit(cow_str("on"))))
     );
     assert_eq!(
         Boolean::try_from(b("true")),
-        Ok(Boolean::True(TrueVariant::Explicit("true".into())))
+        Ok(Boolean::True(TrueVariant::Explicit(cow_str("true"))))
     );
     assert_eq!(
         Boolean::try_from(b("one")),
-        Ok(Boolean::True(TrueVariant::Explicit("one".into())))
+        Ok(Boolean::True(TrueVariant::Explicit(cow_str("one"))))
     );
 }
 

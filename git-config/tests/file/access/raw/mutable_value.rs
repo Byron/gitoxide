@@ -18,7 +18,7 @@ fn value_is_correct() {
     let mut git_config = init_config();
 
     let value = git_config.raw_value_mut("core", None, "a").unwrap();
-    assert_eq!(&*value.get().unwrap(), b"b100");
+    assert_eq!(&*value.get().unwrap(), "b100");
 }
 
 #[test]
@@ -119,7 +119,7 @@ b
     )
     .unwrap();
     let mut value = git_config.raw_value_mut("core", None, "a").unwrap();
-    assert_eq!(&*value.get().unwrap(), b"b100b");
+    assert_eq!(&*value.get().unwrap(), "b100b");
     value.delete();
     assert_eq!(
         git_config.to_string(),

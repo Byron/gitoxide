@@ -1,3 +1,4 @@
+use bstr::{BString, ByteVec};
 use std::{convert::TryFrom, fmt::Display};
 
 use crate::{
@@ -86,27 +87,27 @@ impl<'a> From<Parser<'a>> for File<'a> {
     }
 }
 
-impl From<File<'_>> for Vec<u8> {
+impl From<File<'_>> for BString {
     fn from(c: File<'_>) -> Self {
         c.into()
     }
 }
 
-impl From<&File<'_>> for Vec<u8> {
+impl From<&File<'_>> for BString {
     fn from(config: &File<'_>) -> Self {
-        let mut value = Self::new();
+        let mut value = BString::default();
 
         for events in config.frontmatter_events.as_ref() {
-            value.extend(events.to_vec());
+            value.push_str(events.to_bstring());
         }
 
         for section_id in &config.section_order {
-            value.extend(
+            value.push_str(
                 config
                     .section_headers
                     .get(section_id)
                     .expect("section_header does not contain section id from section_order")
-                    .to_vec(),
+                    .to_bstring(),
             );
 
             for event in config
@@ -115,7 +116,7 @@ impl From<&File<'_>> for Vec<u8> {
                 .expect("sections does not contain section id from section_order")
                 .as_ref()
             {
-                value.extend(event.to_vec());
+                value.push_str(event.to_bstring());
             }
         }
 

@@ -2,7 +2,7 @@
 
 use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteSlice};
 #[cfg(feature = "serde")]
 use serde::{Serialize, Serializer};
 
@@ -23,7 +23,7 @@ use crate::value;
 /// from the parser, you may want to use this to help with value interpretation.
 ///
 /// Generally speaking, you'll want to use one of the variants of this function,
-/// such as [`normalize_str`] or [`normalize_vec`].
+/// such as [`normalize_bstr`] or [`normalize_bstring`].
 ///
 /// # Examples
 ///
@@ -31,54 +31,58 @@ use crate::value;
 ///
 /// ```
 /// # use std::borrow::Cow;
-/// # use git_config::values::normalize_str;
-/// assert_eq!(normalize_str("hello world"), Cow::Borrowed(b"hello world".as_slice()));
+/// # use bstr::ByteSlice;
+/// # use git_config::values::normalize_bstr;
+/// assert_eq!(normalize_bstr("hello world"), Cow::Borrowed(b"hello world".as_bstr()));
 /// ```
 ///
 /// Fully quoted values are optimized to not need allocations.
 ///
 /// ```
 /// # use std::borrow::Cow;
-/// # use git_config::values::normalize_str;
-/// assert_eq!(normalize_str("\"hello world\""), Cow::Borrowed(b"hello world".as_slice()));
+/// # use bstr::ByteSlice;
+/// # use git_config::values::normalize_bstr;
+/// assert_eq!(normalize_bstr("\"hello world\""), Cow::Borrowed(b"hello world".as_bstr()));
 /// ```
 ///
 /// Quoted values are unwrapped as an owned variant.
 ///
 /// ```
 /// # use std::borrow::Cow;
-/// # use git_config::values::normalize_str;
-/// assert_eq!(normalize_str("hello \"world\""), Cow::<[u8]>::Owned(b"hello world".to_vec()));
+/// # use bstr::{BStr, BString};
+/// # use git_config::values::{normalize_bstr};
+/// assert_eq!(normalize_bstr("hello \"world\""), Cow::<BStr>::Owned(BString::from( "hello world" )));
 /// ```
 ///
 /// Escaped quotes are unescaped.
 ///
 /// ```
 /// # use std::borrow::Cow;
-/// # use git_config::values::normalize_str;
-/// assert_eq!(normalize_str(r#"hello "world\"""#), Cow::<[u8]>::Owned(br#"hello world""#.to_vec()));
+/// # use bstr::{BStr, BString};
+/// # use git_config::values::normalize_bstr;
+/// assert_eq!(normalize_bstr(r#"hello "world\"""#), Cow::<BStr>::Owned(BString::from(r#"hello world""#)));
 /// ```
 ///
 /// [`parser`]: crate::parser::Parser
 #[must_use]
-pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
+pub fn normalize_cow(input: Cow<'_, BStr>) -> Cow<'_, BStr> {
     let size = input.len();
-    if &*input == b"\"\"" {
-        return Cow::Borrowed(&[]);
+    if input.as_ref() == "\"\"" {
+        return Cow::default();
     }
 
     if size >= 3 && input[0] == b'=' && input[size - 1] == b'=' && input[size - 2] != b'\\' {
         match input {
-            Cow::Borrowed(input) => return normalize_bytes(&input[1..size]),
+            Cow::Borrowed(input) => return normalize_bstr(&input[1..size]),
             Cow::Owned(mut input) => {
                 input.pop();
                 input.remove(0);
-                return normalize_vec(input);
+                return normalize_bstring(input);
             }
         }
     }
 
-    let mut owned = vec![];
+    let mut owned = BString::default();
 
     let mut first_index = 0;
     let mut last_index = 0;
@@ -88,10 +92,10 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
             was_escaped = false;
             if *c == b'"' {
                 if first_index == 0 {
-                    owned.extend(&input[last_index..i - 1]);
+                    owned.extend(&*input[last_index..i - 1]);
                     last_index = i;
                 } else {
-                    owned.extend(&input[first_index..i - 1]);
+                    owned.extend(&*input[first_index..i - 1]);
                     first_index = i;
                 }
             }
@@ -102,10 +106,10 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
             was_escaped = true;
         } else if *c == b'"' {
             if first_index == 0 {
-                owned.extend(&input[last_index..i]);
+                owned.extend(&*input[last_index..i]);
                 first_index = i + 1;
             } else {
-                owned.extend(&input[first_index..i]);
+                owned.extend(&*input[first_index..i]);
                 first_index = 0;
                 last_index = i + 1;
             }
@@ -115,27 +119,21 @@ pub fn normalize_cow(input: Cow<'_, [u8]>) -> Cow<'_, [u8]> {
     if last_index == 0 {
         input
     } else {
-        owned.extend(&input[last_index..]);
+        owned.extend(&*input[last_index..]);
         Cow::Owned(owned)
     }
 }
 
 /// `&[u8]` variant of [`normalize_cow`].
 #[must_use]
-pub fn normalize_bytes(input: &[u8]) -> Cow<'_, [u8]> {
-    normalize_cow(Cow::Borrowed(input))
+pub fn normalize_bstr<'a>(input: impl Into<&'a BStr>) -> Cow<'a, BStr> {
+    normalize_cow(Cow::Borrowed(input.into()))
 }
 
 /// `Vec[u8]` variant of [`normalize_cow`].
 #[must_use]
-pub fn normalize_vec(input: Vec<u8>) -> Cow<'static, [u8]> {
-    normalize_cow(Cow::Owned(input))
-}
-
-/// [`str`] variant of [`normalize_cow`].
-#[must_use]
-pub fn normalize_str(input: &str) -> Cow<'_, [u8]> {
-    normalize_bytes(input.as_bytes())
+pub fn normalize_bstring(input: impl Into<BString>) -> Cow<'static, BStr> {
+    normalize_cow(Cow::Owned(input.into()))
 }
 
 // TODO: remove bytes
@@ -143,25 +141,25 @@ pub fn normalize_str(input: &str) -> Cow<'_, [u8]> {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Bytes<'a> {
     /// bytes
-    pub value: Cow<'a, [u8]>,
+    pub value: Cow<'a, BStr>,
 }
 
-impl<'a> From<&'a [u8]> for Bytes<'a> {
-    fn from(s: &'a [u8]) -> Self {
+impl<'a> From<&'a BStr> for Bytes<'a> {
+    fn from(s: &'a BStr) -> Self {
         Self {
             value: Cow::Borrowed(s),
         }
     }
 }
 
-impl From<Vec<u8>> for Bytes<'_> {
-    fn from(s: Vec<u8>) -> Self {
+impl From<BString> for Bytes<'_> {
+    fn from(s: BString) -> Self {
         Self { value: Cow::Owned(s) }
     }
 }
 
-impl<'a> From<Cow<'a, [u8]>> for Bytes<'a> {
-    fn from(c: Cow<'a, [u8]>) -> Self {
+impl<'a> From<Cow<'a, BStr>> for Bytes<'a> {
+    fn from(c: Cow<'a, BStr>) -> Self {
         match c {
             Cow::Borrowed(c) => Self::from(c),
             Cow::Owned(c) => Self::from(c),
@@ -176,13 +174,10 @@ pub struct String<'a> {
     pub value: Cow<'a, BStr>,
 }
 
-impl<'a> From<Cow<'a, [u8]>> for String<'a> {
-    fn from(c: Cow<'a, [u8]>) -> Self {
+impl<'a> From<Cow<'a, BStr>> for String<'a> {
+    fn from(c: Cow<'a, BStr>) -> Self {
         String {
-            value: match normalize_cow(c) {
-                Cow::Borrowed(c) => Cow::Borrowed(c.into()),
-                Cow::Owned(c) => Cow::Owned(c.into()),
-            },
+            value: normalize_cow(c),
         }
     }
 }
@@ -339,8 +334,8 @@ impl<'a> AsRef<BStr> for Path<'a> {
     }
 }
 
-impl<'a> From<Cow<'a, [u8]>> for Path<'a> {
-    fn from(value: Cow<'a, [u8]>) -> Self {
+impl<'a> From<Cow<'a, BStr>> for Path<'a> {
+    fn from(value: Cow<'a, BStr>) -> Self {
         Path {
             value: match value {
                 Cow::Borrowed(v) => Cow::Borrowed(v.into()),
@@ -360,7 +355,7 @@ impl<'a> From<Cow<'a, [u8]>> for Path<'a> {
 #[allow(missing_docs)]
 pub enum Boolean<'a> {
     True(TrueVariant<'a>),
-    False(Cow<'a, str>),
+    False(Cow<'a, BStr>),
 }
 
 impl Boolean<'_> {
@@ -375,15 +370,7 @@ impl Boolean<'_> {
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
     #[must_use]
-    pub fn to_vec(&self) -> Vec<u8> {
-        self.into()
-    }
-
-    /// Generates a byte representation of the value. This should be used when
-    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
-    /// guaranteed.
-    #[must_use]
-    pub fn as_bytes(&self) -> &[u8] {
+    pub fn to_bstring(&self) -> BString {
         self.into()
     }
 }
@@ -395,10 +382,10 @@ fn bool_err(input: impl Into<BString>) -> value::parse::Error {
     )
 }
 
-impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
+impl<'a> TryFrom<&'a BStr> for Boolean<'a> {
     type Error = value::parse::Error;
 
-    fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
+    fn try_from(value: &'a BStr) -> Result<Self, Self::Error> {
         if let Ok(v) = TrueVariant::try_from(value) {
             return Ok(Self::True(v));
         }
@@ -407,39 +394,35 @@ impl<'a> TryFrom<&'a [u8]> for Boolean<'a> {
             || value.eq_ignore_ascii_case(b"off")
             || value.eq_ignore_ascii_case(b"false")
             || value.eq_ignore_ascii_case(b"zero")
-            || value == b"\"\""
+            || value == "\"\""
         {
-            return Ok(Self::False(
-                std::str::from_utf8(value).expect("value is already validated").into(),
-            ));
+            return Ok(Self::False(value.as_bstr().into()));
         }
 
         Err(bool_err(value))
     }
 }
 
-impl TryFrom<Vec<u8>> for Boolean<'_> {
+impl TryFrom<BString> for Boolean<'_> {
     type Error = value::parse::Error;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+    fn try_from(value: BString) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"no")
             || value.eq_ignore_ascii_case(b"off")
             || value.eq_ignore_ascii_case(b"false")
             || value.eq_ignore_ascii_case(b"zero")
-            || value == b"\"\""
+            || value == "\"\""
         {
-            return Ok(Self::False(Cow::Owned(
-                std::string::String::from_utf8(value).expect("value is already validated"),
-            )));
+            return Ok(Self::False(Cow::Owned(value.into())));
         }
 
         TrueVariant::try_from(value).map(Self::True)
     }
 }
 
-impl<'a> TryFrom<Cow<'a, [u8]>> for Boolean<'a> {
+impl<'a> TryFrom<Cow<'a, BStr>> for Boolean<'a> {
     type Error = value::parse::Error;
-    fn try_from(c: Cow<'a, [u8]>) -> Result<Self, Self::Error> {
+    fn try_from(c: Cow<'a, BStr>) -> Result<Self, Self::Error> {
         match c {
             Cow::Borrowed(c) => Self::try_from(c),
             Cow::Owned(c) => Self::try_from(c),
@@ -465,24 +448,24 @@ impl From<Boolean<'_>> for bool {
     }
 }
 
-impl<'a, 'b: 'a> From<&'b Boolean<'a>> for &'a [u8] {
+impl<'a, 'b: 'a> From<&'b Boolean<'a>> for &'a BStr {
     fn from(b: &'b Boolean<'_>) -> Self {
         match b {
             Boolean::True(t) => t.into(),
-            Boolean::False(f) => f.as_bytes(),
+            Boolean::False(f) => f.as_ref(),
         }
     }
 }
 
-impl From<Boolean<'_>> for Vec<u8> {
+impl From<Boolean<'_>> for BString {
     fn from(b: Boolean<'_>) -> Self {
         b.into()
     }
 }
 
-impl From<&Boolean<'_>> for Vec<u8> {
+impl From<&Boolean<'_>> for BString {
     fn from(b: &Boolean<'_>) -> Self {
-        b.to_string().into_bytes()
+        b.to_string().into()
     }
 }
 
@@ -505,23 +488,21 @@ impl Serialize for Boolean<'_> {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
 pub enum TrueVariant<'a> {
-    Explicit(Cow<'a, str>),
+    Explicit(Cow<'a, BStr>),
     /// For values defined without a `= <value>`.
     Implicit,
 }
 
-impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
+impl<'a> TryFrom<&'a BStr> for TrueVariant<'a> {
     type Error = value::parse::Error;
 
-    fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
+    fn try_from(value: &'a BStr) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"yes")
             || value.eq_ignore_ascii_case(b"on")
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(
-                std::str::from_utf8(value).expect("value is already validated").into(),
-            ))
+            Ok(Self::Explicit(value.as_bstr().into()))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
@@ -530,18 +511,16 @@ impl<'a> TryFrom<&'a [u8]> for TrueVariant<'a> {
     }
 }
 
-impl TryFrom<Vec<u8>> for TrueVariant<'_> {
+impl TryFrom<BString> for TrueVariant<'_> {
     type Error = value::parse::Error;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+    fn try_from(value: BString) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"yes")
             || value.eq_ignore_ascii_case(b"on")
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(Cow::Owned(
-                std::string::String::from_utf8(value).expect("value is already validated"),
-            )))
+            Ok(Self::Explicit(Cow::Owned(value.into())))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {
@@ -560,11 +539,11 @@ impl Display for TrueVariant<'_> {
     }
 }
 
-impl<'a, 'b: 'a> From<&'b TrueVariant<'a>> for &'a [u8] {
+impl<'a, 'b: 'a> From<&'b TrueVariant<'a>> for &'a BStr {
     fn from(t: &'b TrueVariant<'a>) -> Self {
         match t {
-            TrueVariant::Explicit(e) => e.as_bytes(),
-            TrueVariant::Implicit => &[],
+            TrueVariant::Explicit(e) => e.as_ref(),
+            TrueVariant::Implicit => "".into(),
         }
     }
 }
@@ -603,7 +582,7 @@ impl Integer {
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
     #[must_use]
-    pub fn to_vec(self) -> Vec<u8> {
+    pub fn to_bstring(self) -> BString {
         self.into()
     }
 
@@ -656,10 +635,10 @@ fn int_err(input: impl Into<BString>) -> value::parse::Error {
     )
 }
 
-impl TryFrom<&[u8]> for Integer {
+impl TryFrom<&BStr> for Integer {
     type Error = value::parse::Error;
 
-    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(s: &BStr) -> Result<Self, Self::Error> {
         let s = std::str::from_utf8(s).map_err(|err| int_err(s).with_err(err))?;
         if let Ok(value) = s.parse() {
             return Ok(Self { value, suffix: None });
@@ -683,18 +662,18 @@ impl TryFrom<&[u8]> for Integer {
     }
 }
 
-impl TryFrom<Vec<u8>> for Integer {
+impl TryFrom<BString> for Integer {
     type Error = value::parse::Error;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+    fn try_from(value: BString) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
     }
 }
 
-impl TryFrom<Cow<'_, [u8]>> for Integer {
+impl TryFrom<Cow<'_, BStr>> for Integer {
     type Error = value::parse::Error;
 
-    fn try_from(c: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
+    fn try_from(c: Cow<'_, BStr>) -> Result<Self, Self::Error> {
         match c {
             Cow::Borrowed(c) => Self::try_from(c),
             Cow::Owned(c) => Self::try_from(c),
@@ -702,15 +681,15 @@ impl TryFrom<Cow<'_, [u8]>> for Integer {
     }
 }
 
-impl From<Integer> for Vec<u8> {
+impl From<Integer> for BString {
     fn from(i: Integer) -> Self {
         i.into()
     }
 }
 
-impl From<&Integer> for Vec<u8> {
+impl From<&Integer> for BString {
     fn from(i: &Integer) -> Self {
-        i.to_string().into_bytes()
+        i.to_string().into()
     }
 }
 
@@ -812,7 +791,7 @@ impl Color {
     /// non-UTF-8 sequences are present or a UTF-8 representation can't be
     /// guaranteed.
     #[must_use]
-    pub fn to_vec(&self) -> Vec<u8> {
+    pub fn to_bstring(&self) -> BString {
         self.into()
     }
 }
@@ -853,10 +832,10 @@ fn color_err(input: impl Into<BString>) -> value::parse::Error {
     )
 }
 
-impl TryFrom<&[u8]> for Color {
+impl TryFrom<&BStr> for Color {
     type Error = value::parse::Error;
 
-    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(s: &BStr) -> Result<Self, Self::Error> {
         let s = std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?;
         enum ColorItem {
             Value(ColorValue),
@@ -898,18 +877,18 @@ impl TryFrom<&[u8]> for Color {
     }
 }
 
-impl TryFrom<Vec<u8>> for Color {
+impl TryFrom<BString> for Color {
     type Error = value::parse::Error;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+    fn try_from(value: BString) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
     }
 }
 
-impl TryFrom<Cow<'_, [u8]>> for Color {
+impl TryFrom<Cow<'_, BStr>> for Color {
     type Error = value::parse::Error;
 
-    fn try_from(c: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
+    fn try_from(c: Cow<'_, BStr>) -> Result<Self, Self::Error> {
         match c {
             Cow::Borrowed(c) => Self::try_from(c),
             Cow::Owned(c) => Self::try_from(c),
@@ -917,15 +896,15 @@ impl TryFrom<Cow<'_, [u8]>> for Color {
     }
 }
 
-impl From<Color> for Vec<u8> {
+impl From<Color> for BString {
     fn from(c: Color) -> Self {
         c.into()
     }
 }
 
-impl From<&Color> for Vec<u8> {
+impl From<&Color> for BString {
     fn from(c: &Color) -> Self {
-        c.to_string().into_bytes()
+        c.to_string().into()
     }
 }
 

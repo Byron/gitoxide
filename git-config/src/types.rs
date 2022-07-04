@@ -8,14 +8,7 @@ use crate::{
 /// High level `git-config` reader and writer.
 ///
 /// This is the full-featured implementation that can deserialize, serialize,
-/// and edit `git-config` files without loss of whitespace or comments. As a
-/// result, it's lot more complex than it's read-only variant,
-/// [`ResolvedGitConfig`] that exposes a [`HashMap`]-like interface. Users that
-/// only need to read `git-config` files should use that instead.
-///
-/// Internally, this uses various acceleration data structures to improve
-/// performance of the typical usage behavior of many lookups and relatively
-/// fewer insertions.
+/// and edit `git-config` files without loss of whitespace or comments.
 ///
 /// # Multivar behavior
 ///
@@ -52,7 +45,6 @@ use crate::{
 /// Consider the `multi` variants of the methods instead, if you want to work
 /// with all values instead.
 ///
-/// [`ResolvedGitConfig`]: crate::file::ResolvedGitConfig
 /// [`raw_value`]: Self::raw_value
 #[derive(PartialEq, Eq, Clone, Debug, Default)]
 pub struct File<'event> {

@@ -1,3 +1,5 @@
+use crate::file::cow_str;
+use bstr::BStr;
 use git_config::{
     values::{Boolean, Bytes, TrueVariant, *},
     File,
@@ -24,7 +26,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
 
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-explicit")?,
-        Boolean::False(Cow::Borrowed("false"))
+        Boolean::False(Cow::Borrowed("false".into()))
     );
     assert!(!file.boolean("core", None, "bool-explicit").expect("exists")?);
 
@@ -75,15 +77,13 @@ fn get_value_for_all_provided_values() -> crate::Result {
     );
 
     assert_eq!(
-        file.value::<Bytes>("core", None, "other")?,
-        Bytes {
-            value: Cow::Borrowed(b"hello world")
-        }
+        file.value::<Cow<'_, BStr>>("core", None, "other")?,
+        cow_str("hello world")
     );
     assert_eq!(
         file.value::<String>("core", None, "other-quoted")?,
         String {
-            value: Cow::Borrowed("hello world".into())
+            value: cow_str("hello world")
         }
     );
 
@@ -131,7 +131,7 @@ fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
 
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-explicit")?,
-        Boolean::False(Cow::Borrowed("false"))
+        Boolean::False(cow_str("false"))
     );
 
     Ok(())
@@ -170,12 +170,7 @@ fn single_section() -> Result<(), Box<dyn Error>> {
     let first_value: Bytes = config.value("core", None, "a")?;
     let second_value: Boolean = config.value("core", None, "c")?;
 
-    assert_eq!(
-        first_value,
-        Bytes {
-            value: Cow::Borrowed(b"b")
-        }
-    );
+    assert_eq!(first_value, Bytes { value: cow_str("b") });
     assert_eq!(second_value, Boolean::True(TrueVariant::Implicit));
 
     Ok(())
@@ -199,7 +194,7 @@ fn sections_by_name() {
     assert_eq!(
         value,
         Bytes {
-            value: Cow::Borrowed(b"git@github.com:Byron/gitoxide.git")
+            value: cow_str("git@github.com:Byron/gitoxide.git")
         }
     );
 }

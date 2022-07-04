@@ -1,7 +1,9 @@
+use bstr::BString;
 use std::{borrow::Cow, path::PathBuf};
 
 use crate::{
     file::{from_paths, resolve_includes},
+    parser,
     values::path::interpolate,
     File,
 };
@@ -113,7 +115,7 @@ impl<'a> File<'a> {
                 };
 
                 section.push(
-                    Cow::<str>::Owned(key.to_string()).into(),
+                    parser::Key(Cow::Owned(BString::from(key))),
                     Cow::Owned(git_path::into_bstr(PathBuf::from(value)).into_owned().into()),
                 );
             } else {

@@ -1,6 +1,8 @@
-/// Converts string to byte slice
-fn b(s: &str) -> &[u8] {
-    s.as_bytes()
+use bstr::BStr;
+
+/// Converts string to a bstr
+fn b(s: &str) -> &BStr {
+    s.into()
 }
 
 mod normalize;
