@@ -7,7 +7,7 @@ use std::{
     fmt::{self, Write},
 };
 
-use bstr::ByteSlice;
+use bstr::{BStr, ByteSlice};
 
 ///
 pub mod parse;
@@ -101,18 +101,18 @@ impl Url {
     }
 }
 
-impl TryFrom<&[u8]> for Url {
+impl TryFrom<&BStr> for Url {
     type Error = parse::Error;
 
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(value: &BStr) -> Result<Self, Self::Error> {
         Self::from_bytes(value)
     }
 }
 
-impl<'a> TryFrom<std::borrow::Cow<'a, [u8]>> for Url {
+impl<'a> TryFrom<std::borrow::Cow<'a, BStr>> for Url {
     type Error = parse::Error;
 
-    fn try_from(value: std::borrow::Cow<'a, [u8]>) -> Result<Self, Self::Error> {
+    fn try_from(value: std::borrow::Cow<'a, BStr>) -> Result<Self, Self::Error> {
         Self::try_from(&*value)
     }
 }
