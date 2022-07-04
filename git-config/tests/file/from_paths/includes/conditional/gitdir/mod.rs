@@ -104,7 +104,6 @@ fn case_insensitive_matches_any_case() -> crate::Result {
 }
 
 #[test]
-#[ignore]
 fn pattern_with_escaped_backslash() -> crate::Result {
     assert_section_value(
         Condition::new(r#"gitdir:\\work\\tree\\/"#),
