@@ -305,12 +305,7 @@ impl<'a> AsRef<BStr> for Path<'a> {
 
 impl<'a> From<Cow<'a, BStr>> for Path<'a> {
     fn from(value: Cow<'a, BStr>) -> Self {
-        Path {
-            value: match value {
-                Cow::Borrowed(v) => Cow::Borrowed(v.into()),
-                Cow::Owned(v) => Cow::Owned(v.into()),
-            },
-        }
+        Path { value }
     }
 }
 
@@ -382,7 +377,7 @@ impl TryFrom<BString> for Boolean<'_> {
             || value.eq_ignore_ascii_case(b"zero")
             || value == "\"\""
         {
-            return Ok(Self::False(Cow::Owned(value.into())));
+            return Ok(Self::False(Cow::Owned(value)));
         }
 
         TrueVariant::try_from(value).map(Self::True)
@@ -489,7 +484,7 @@ impl TryFrom<BString> for TrueVariant<'_> {
             || value.eq_ignore_ascii_case(b"true")
             || value.eq_ignore_ascii_case(b"one")
         {
-            Ok(Self::Explicit(Cow::Owned(value.into())))
+            Ok(Self::Explicit(Cow::Owned(value)))
         } else if value.is_empty() {
             Ok(Self::Implicit)
         } else {

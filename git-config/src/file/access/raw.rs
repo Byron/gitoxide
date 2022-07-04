@@ -173,7 +173,7 @@ impl<'a> File<'a> {
                     .expect("sections does not have section id from section ids")
                     .values(&Key(Cow::<BStr>::Borrowed(key.into())))
                     .iter()
-                    .map(|v| v.clone()),
+                    .cloned(),
             );
         }
 
