@@ -1131,7 +1131,7 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader<'_>> {
     let (i, whitespace) = take_spaces(i)?;
     let (i, subsection_name) = delimited(
         char('"'),
-        opt(escaped(none_of("\"\\\n\0"), '\\', one_of(r#""\"#))),
+        opt(escaped(none_of("\"\n\0"), '\\', one_of(r#""\"#))),
         tag("\"]"),
     )(i)?;
 
