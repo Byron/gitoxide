@@ -116,7 +116,7 @@ impl<'a> File<'a> {
 
                 section.push(
                     parser::Key(Cow::Owned(BString::from(key))),
-                    Cow::Owned(git_path::into_bstr(PathBuf::from(value)).into_owned().into()),
+                    Cow::Owned(git_path::into_bstr(PathBuf::from(value)).into_owned()),
                 );
             } else {
                 return Err(Error::InvalidKeyValue {

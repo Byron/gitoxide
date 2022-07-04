@@ -137,7 +137,7 @@ fn onbranch_matches(condition: &BStr, options: Options<'_>) -> Option<()> {
     };
 
     git_glob::wildmatch(
-        condition.as_ref().into(),
+        condition.as_ref(),
         branch_name,
         git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
     )
