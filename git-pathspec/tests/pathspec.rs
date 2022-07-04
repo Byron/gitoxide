@@ -322,9 +322,31 @@ mod parse {
             let inputs = vec![
                 r":(attr:v=inva\\lid)some/path",
                 r":(attr:v=invalid\\)some/path",
+                r":(attr:v=invalid\#)some/path",
+            ];
+
+            for input in inputs {
+                assert!(
+                    !check_against_baseline(input),
+                    "This pathspec is valid in git: {}",
+                    input
+                );
+
+                let output = git_pathspec::parse(input.as_bytes());
+                assert!(output.is_err(), "This pathspec did not produce an error {}", input);
+                assert!(
+                    matches!(output.unwrap_err(), Error::InvalidAttributeValue { .. }),
+                    "Errors did not match for pathspec: {}",
+                    input
+                );
+            }
+        }
+
+        #[test]
+        fn escape_character_at_end_of_attribute_value() {
+            let inputs = vec![
                 r":(attr:v=invalid\)some/path",
                 r":(attr:v=invalid\ )some/path",
-                r":(attr:v=invalid\#)some/path",
                 r":(attr:v=invalid\ valid)some/path",
             ];
 
@@ -337,7 +359,7 @@ mod parse {
 
                 let output = git_pathspec::parse(input.as_bytes());
                 assert!(output.is_err(), "This pathspec did not produce an error {}", input);
-                assert!(matches!(output.unwrap_err(), Error::InvalidAttributeValue { .. }));
+                assert!(matches!(output.unwrap_err(), Error::TrailingEscapeCharacter));
             }
         }
 

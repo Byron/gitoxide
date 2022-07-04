@@ -116,9 +116,11 @@ baseline ':(attr:inva\lid)some/path'
 # invalid_attribute_values
 baseline ':(attr:v=inva\\lid)some/path'
 baseline ':(attr:v=invalid\\)some/path'
+baseline ':(attr:v=invalid\#)some/path'
+
+# escape_character_at_end_of_attribute_value
 baseline ':(attr:v=invalid\)some/path'
 baseline ':(attr:v=invalid\ )some/path'
-baseline ':(attr:v=invalid\#)some/path'
 baseline ':(attr:v=invalid\ valid)some/path'
 
 # empty_attribute_specification

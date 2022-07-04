@@ -1,5 +1,6 @@
 use crate::{MagicSignature, Pattern, SearchMode};
-use bstr::{BStr, BString, ByteSlice};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
+use std::borrow::Cow;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -15,6 +16,8 @@ pub enum Error {
     InvalidAttribute { attribute: BString },
     #[error("Invalid character in attribute value: {:?}", character)]
     InvalidAttributeValue { character: char },
+    #[error("Escape character '\\' is not allowed as the last character in an attribute value")]
+    TrailingEscapeCharacter,
     #[error("Attribute specification cannot be empty")]
     EmptyAttribute,
     #[error("Only one attribute specification is allowed in the same pathspec")]
@@ -161,54 +164,38 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<git_attributes::Name>, Error> {
         })
 }
 
-fn unescape_attribute_values(input: &BStr) -> Result<BString, Error> {
-    let unescaped_tokens = input
-        .split(|&c| c == b' ')
-        .map(|attr| {
-            if attr.contains(&b'=') {
-                let mut s = attr.split(|&c| c == b'=');
-                let name = s.next().expect("name should be here");
-                let value = s.next().expect("value should be here");
-
-                let value = value
-                    .windows(2)
-                    .filter_map(|window| match (window[0], window[1]) {
-                        (b'\\', b'\\') => Some(&window[1..2]),
-                        (b'\\', _) => {
-                            if value.ends_with(window) {
-                                Some(&window[1..2])
-                            } else {
-                                None
-                            }
-                        }
-                        (_, _) => {
-                            if value.ends_with(window) {
-                                Some(&window[0..2])
-                            } else {
-                                Some(&window[0..1])
-                            }
-                        }
-                    })
-                    .flat_map(|c| c.to_owned())
-                    .collect::<Vec<_>>();
-
-                check_attr_value(value.as_bstr())?;
-
-                Ok([Vec::from(name), value].join(&b'='))
-            } else {
-                Ok(Vec::from(attr))
-            }
-        })
-        .collect::<Result<Vec<_>, _>>()?;
-    Ok(unescaped_tokens.join(&b' ').into())
-}
-
-fn check_attr_value(value: &BStr) -> Result<(), Error> {
-    let is_valid_char = |&c: &u8| c.is_ascii_alphanumeric() || b",-_".contains(&c);
-
-    if let Some(c) = value.bytes().find(|c| !is_valid_char(c)) {
-        return Err(Error::InvalidAttributeValue { character: c as char });
+fn unescape_attribute_values(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
+    if !input.contains(&b'=') {
+        return Ok(Cow::Borrowed(input));
     }
 
-    Ok(())
+    let mut ret = BString::from(Vec::with_capacity(input.len()));
+
+    for attr in input.split(|&c| c == b' ') {
+        if let Some(i) = attr.find_byte(b'=') {
+            ret.push_str(&attr[0..=i]);
+            let mut i = i + 1;
+            while i < attr.len() {
+                if attr[i] == b'\\' {
+                    i += 1;
+                    if i >= attr.len() {
+                        return Err(Error::TrailingEscapeCharacter);
+                    }
+                }
+                if attr[i].is_ascii_alphanumeric() || b",-_".contains(&attr[i]) {
+                    ret.push(attr[i]);
+                    i += 1
+                } else {
+                    return Err(Error::InvalidAttributeValue {
+                        character: attr[i] as char,
+                    });
+                }
+            }
+        } else {
+            ret.push_str(attr);
+        }
+        ret.push(b' ');
+    }
+
+    Ok(Cow::Owned(ret))
 }
