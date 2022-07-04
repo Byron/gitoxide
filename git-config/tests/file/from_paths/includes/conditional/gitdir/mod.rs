@@ -1,5 +1,6 @@
 mod util;
 
+use serial_test::serial;
 use util::{assert_section_value, git_env_with_symlinked_repo, Condition, GitEnv};
 
 #[test]
@@ -47,7 +48,7 @@ fn dot_slash_path_is_replaced_with_directory_containing_the_including_config_fil
 }
 
 #[test]
-#[serial_test::serial]
+#[serial]
 #[ignore]
 fn dot_slash_from_environment_causes_error() {
     use git_config::file::from_paths;

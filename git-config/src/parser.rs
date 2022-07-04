@@ -1039,7 +1039,7 @@ fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment<'_>> {
     Ok((
         i,
         ParsedComment {
-            comment_tag: comment_tag as u8, // TODO: don't use character based nom functions
+            comment_tag: comment_tag as u8,
             comment: Cow::Borrowed(comment.as_bstr()),
         },
     ))
@@ -1217,14 +1217,14 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
         }));
     }
 
-    if !(i[0] as char).is_alphabetic() {
+    if !i[0].is_ascii_alphabetic() {
         return Err(nom::Err::Error(NomError {
             input: i,
             code: ErrorKind::Alpha,
         }));
     }
 
-    let (i, v) = take_while(|c: u8| (c as char).is_alphanumeric() || c == b'-')(i)?;
+    let (i, v) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-')(i)?;
     Ok((i, v.as_bstr()))
 }
 
@@ -1330,7 +1330,7 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
     let (i, remainder_value) = {
         let mut new_index = parsed_index;
         for index in (offset..parsed_index).rev() {
-            if !(i[index] as char).is_whitespace() {
+            if !i[index].is_ascii_whitespace() {
                 new_index = index + 1;
                 break;
             }
@@ -1348,7 +1348,7 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
 }
 
 fn take_spaces(i: &[u8]) -> IResult<&[u8], &BStr> {
-    let (i, v) = take_while(|c| (c as char).is_ascii() && is_space(c))(i)?;
+    let (i, v) = take_while(|c: u8| c.is_ascii() && is_space(c))(i)?;
     if v.is_empty() {
         Err(nom::Err::Error(NomError {
             input: i,
@@ -1363,18 +1363,18 @@ fn take_newlines(i: &[u8]) -> IResult<&[u8], (&BStr, usize)> {
     let mut counter = 0;
     let mut consumed_bytes = 0;
     let mut next_must_be_newline = false;
-    for b in i.iter() {
-        if !(*b as char).is_ascii() {
+    for b in i.iter().copied() {
+        if !b.is_ascii() {
             break;
         };
-        if *b == b'\r' {
+        if b == b'\r' {
             if next_must_be_newline {
                 break;
             }
             next_must_be_newline = true;
             continue;
         };
-        if *b == b'\n' {
+        if b == b'\n' {
             counter += 1;
             consumed_bytes += if next_must_be_newline { 2 } else { 1 };
             next_must_be_newline = false;
