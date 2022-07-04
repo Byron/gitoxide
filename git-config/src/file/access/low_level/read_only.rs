@@ -76,7 +76,7 @@ impl<'a> File<'a> {
     ///
     /// ```
     /// # use git_config::File;
-    /// # use git_config::values::{Integer, Bytes, Boolean, TrueVariant};
+    /// # use git_config::values::{Integer, String, Boolean, TrueVariant};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -99,8 +99,8 @@ impl<'a> File<'a> {
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Vec<Bytes> = git_config.multi_value("core", None, "c")?;
-    /// assert_eq!(c_value, vec![Bytes { value: Cow::Borrowed("g".into()) }]);
+    /// let c_value: Vec<String> = git_config.multi_value("core", None, "c")?;
+    /// assert_eq!(c_value, vec![String { value: Cow::Borrowed("g".into()) }]);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///

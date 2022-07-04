@@ -1,7 +1,7 @@
 use crate::file::cow_str;
 use bstr::BStr;
 use git_config::{
-    values::{Boolean, Bytes, TrueVariant, *},
+    values::{Boolean, TrueVariant, *},
     File,
 };
 use std::{borrow::Cow, convert::TryFrom, error::Error};
@@ -167,10 +167,10 @@ fn value_names_are_case_insensitive() -> crate::Result {
 #[test]
 fn single_section() -> Result<(), Box<dyn Error>> {
     let config = File::try_from("[core]\na=b\nc").unwrap();
-    let first_value: Bytes = config.value("core", None, "a")?;
+    let first_value: String = config.value("core", None, "a")?;
     let second_value: Boolean = config.value("core", None, "c")?;
 
-    assert_eq!(first_value, Bytes { value: cow_str("b") });
+    assert_eq!(first_value, String { value: cow_str("b") });
     assert_eq!(second_value, Boolean::True(TrueVariant::Implicit));
 
     Ok(())
@@ -190,10 +190,10 @@ fn sections_by_name() {
     "#;
 
     let config = File::try_from(config).unwrap();
-    let value = config.value::<Bytes>("remote", Some("origin"), "url").unwrap();
+    let value = config.value::<String>("remote", Some("origin"), "url").unwrap();
     assert_eq!(
         value,
-        Bytes {
+        String {
             value: cow_str("git@github.com:Byron/gitoxide.git")
         }
     );
