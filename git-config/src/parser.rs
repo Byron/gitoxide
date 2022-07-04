@@ -14,9 +14,9 @@ use std::{borrow::Cow, convert::TryFrom, fmt::Display, hash::Hash, io::Read, ite
 
 use nom::{
     branch::alt,
-    bytes::complete::{escaped, tag, take_till, take_while},
+    bytes::complete::{tag, take_till, take_while},
     character::{
-        complete::{char, none_of, one_of},
+        complete::{char, one_of},
         is_space,
     },
     combinator::{map, opt},
@@ -1129,22 +1129,61 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader<'_>> {
     // Section header must be using modern subsection syntax at this point.
 
     let (i, whitespace) = take_spaces(i)?;
-    let (i, subsection_name) = delimited(
-        char('"'),
-        opt(escaped(none_of("\"\n\0"), '\\', one_of(r#""\"#))),
-        tag("\"]"),
-    )(i)?;
-
-    let subsection_name = subsection_name.map(|s| s.as_bstr());
+    let (i, subsection_name) = delimited(char('"'), opt(sub_section), tag("\"]"))(i)?;
 
     Ok((
         i,
         ParsedSectionHeader {
             name: SectionHeaderName(Cow::Borrowed(name)),
             separator: Some(Cow::Borrowed(whitespace)),
-            subsection_name: Cow::Borrowed(subsection_name.unwrap_or_default()).into(),
+            subsection_name: subsection_name.map(Cow::Owned),
         },
     ))
+}
+
+fn sub_section(i: &[u8]) -> IResult<&[u8], BString> {
+    let mut cursor = 0;
+    let mut bytes = i.iter().copied();
+    let mut found_terminator = false;
+    let mut buf = BString::default();
+    while let Some(mut b) = bytes.next() {
+        cursor += 1;
+        if b == b'\n' {
+            return Err(nom::Err::Error(NomError {
+                input: &i[cursor..],
+                code: ErrorKind::NonEmpty,
+            }));
+        }
+        if b == b'"' {
+            found_terminator = true;
+            break;
+        }
+        if b == b'\\' {
+            b = bytes.next().ok_or_else(|| {
+                nom::Err::Error(NomError {
+                    input: &i[cursor..],
+                    code: ErrorKind::NonEmpty,
+                })
+            })?;
+            cursor += 1;
+            if b == b'\n' {
+                return Err(nom::Err::Error(NomError {
+                    input: &i[cursor..],
+                    code: ErrorKind::NonEmpty,
+                }));
+            }
+        }
+        buf.push_byte(b);
+    }
+
+    if !found_terminator {
+        return Err(nom::Err::Error(NomError {
+            input: &i[cursor..],
+            code: ErrorKind::NonEmpty,
+        }));
+    }
+
+    Ok((&i[cursor - 1..], buf))
 }
 
 fn section_body<'a, 'b, 'c>(
@@ -1409,7 +1448,7 @@ mod section_headers {
     fn escaped_subsection() {
         assert_eq!(
             section_header(br#"[hello "foo\\bar\""]"#).unwrap(),
-            fully_consumed(parsed_section_header("hello", (" ", r#"foo\\bar\""#))),
+            fully_consumed(parsed_section_header("hello", (" ", r#"foo\bar""#))),
         );
     }
 
