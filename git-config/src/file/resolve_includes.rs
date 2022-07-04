@@ -158,10 +158,9 @@ fn gitdir_matches(
     let git_dir =
         git_path::to_unix_separators_on_windows(git_path::into_bstr(git_dir.ok_or(from_paths::Error::MissingGitDir)?));
 
-    let mut pattern_path = {
-        let cow = Cow::Borrowed(condition_path);
-        let path = values::Path::from(cow).interpolate(git_install_dir, home_dir)?;
-        git_path::into_bstr(path).into_owned()
+    let mut pattern_path: Cow<'_, _> = {
+        let path = values::Path::from(Cow::Borrowed(condition_path)).interpolate(git_install_dir, home_dir)?;
+        git_path::into_bstr(path).into_owned().into()
     };
 
     if let Some(relative_pattern_path) = pattern_path.strip_prefix(b"./") {
@@ -172,21 +171,24 @@ fn gitdir_matches(
         let mut joined_path = git_path::to_unix_separators_on_windows(git_path::into_bstr(parent_dir)).into_owned();
         joined_path.push(b'/');
         joined_path.extend_from_slice(relative_pattern_path);
-        pattern_path = joined_path;
+        pattern_path = joined_path.into();
     }
 
     if ["~/", "./", "/"]
         .iter()
         .all(|prefix| !pattern_path.starts_with(prefix.as_bytes()))
     {
-        let v = bstr::concat(&[&b"**/"[..], &pattern_path]);
-        pattern_path = BString::from(v);
+        let mut prefixed = pattern_path.into_owned();
+        prefixed.insert_str(0, "**/");
+        pattern_path = prefixed.into()
     }
     if pattern_path.ends_with(b"/") {
-        pattern_path.push_str("**");
+        let mut suffixed = pattern_path.into_owned();
+        suffixed.push_str("**");
+        pattern_path = suffixed.into();
     }
 
-    pattern_path = git_path::to_unix_separators_on_windows(pattern_path).into_owned();
+    pattern_path = git_path::to_unix_separators_on_windows(pattern_path);
 
     let match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL | wildmatch_mode;
     let is_match = git_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
