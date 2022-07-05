@@ -152,16 +152,10 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<git_attributes::Name>, Error> {
 
     let unescaped = unescape_attribute_values(input.into())?;
 
-    git_attributes::parse::Iter::new(unescaped.as_bstr(), 0)
+    git_attributes::parse::Iter::new(unescaped.as_bstr())
         .map(|res| res.map(|v| v.into()))
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| match e {
-            git_attributes::parse::Error::AttributeName {
-                line_number: _,
-                attribute,
-            } => Error::InvalidAttribute { attribute },
-            _ => unreachable!("expecting only 'Error::AttributeName' but got {}", e),
-        })
+        .map_err(|e| Error::InvalidAttribute { attribute: e.attribute })
 }
 
 fn unescape_attribute_values(input: &BStr) -> Result<Cow<'_, BStr>, Error> {

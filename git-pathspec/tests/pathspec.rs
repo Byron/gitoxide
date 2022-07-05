@@ -21,7 +21,11 @@ mod parse {
                 path: p.path,
                 signature: p.signature,
                 search_mode: p.search_mode,
-                attributes: p.attributes.into_iter().map(|v| v.into()).collect(),
+                attributes: p
+                    .attributes
+                    .into_iter()
+                    .map(|v| (v.name().clone(), v.state().clone()))
+                    .collect(),
             }
         }
     }
@@ -451,7 +455,7 @@ mod parse {
         pat("", signature, SearchMode::ShellGlob, vec![])
     }
 
-    fn pat_with_attrs(attrs: Vec<(&str, State)>) -> PatternForTesting {
+    fn pat_with_attrs(attrs: Vec<(&'static str, State)>) -> PatternForTesting {
         pat("", MagicSignature::empty(), SearchMode::ShellGlob, attrs)
     }
 

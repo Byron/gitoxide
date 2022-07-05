@@ -100,7 +100,7 @@ pub struct PatternMapping<T> {
     pub sequence_number: usize,
 }
 
-mod name {
+pub mod name {
     use bstr::BString;
 
     #[derive(Debug, thiserror::Error)]

@@ -1,4 +1,4 @@
-use crate::{Name, NameRef, State, StateRef};
+use crate::{Name, NameRef, State, StateRef, name};
 use bstr::{BStr, BString, ByteSlice};
 use std::borrow::Cow;
 
@@ -34,19 +34,17 @@ pub struct Lines<'a> {
 }
 
 pub struct Iter<'a> {
-    attrs: bstr::Fields<'a>,
-    line_no: usize,
+    attrs: bstr::Fields<'a>
 }
 
 impl<'a> Iter<'a> {
-    pub fn new(attrs: &'a BStr, line_no: usize) -> Self {
+    pub fn new(attrs: &'a BStr) -> Self {
         Iter {
-            attrs: attrs.fields(),
-            line_no,
+            attrs: attrs.fields()
         }
     }
 
-    fn parse_attr(&self, attr: &'a [u8]) -> Result<NameRef<'a>, Error> {
+    fn parse_attr(&self, attr: &'a [u8]) -> Result<NameRef<'a>, name::Error> {
         let mut tokens = attr.splitn(2, |b| *b == b'=');
         let attr = tokens.next().expect("attr itself").as_bstr();
         let possibly_value = tokens.next();
@@ -62,11 +60,11 @@ impl<'a> Iter<'a> {
                     .unwrap_or(crate::StateRef::Set),
             )
         };
-        Ok(NameRef(check_attr(attr, self.line_no)?, state))
+        Ok(NameRef(check_attr(attr)?, state))
     }
 }
 
-fn check_attr(attr: &BStr, line_number: usize) -> Result<&BStr, Error> {
+fn check_attr(attr: &BStr) -> Result<&BStr, name::Error> {
     fn attr_valid(attr: &BStr) -> bool {
         if attr.first() == Some(&b'-') {
             return false;
@@ -78,14 +76,13 @@ fn check_attr(attr: &BStr, line_number: usize) -> Result<&BStr, Error> {
         })
     }
 
-    attr_valid(attr).then(|| attr).ok_or_else(|| Error::AttributeName {
-        line_number,
-        attribute: attr.into(),
-    })
+    attr_valid(attr)
+        .then(|| attr)
+        .ok_or_else(|| name::Error { attribute: attr.into() })
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = Result<NameRef<'a>, Error>;
+    type Item = Result<NameRef<'a>, name::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let attr = self.attrs.next().filter(|a| !a.is_empty())?;
@@ -143,14 +140,11 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
     };
 
     let kind_res = match line.strip_prefix(b"[attr]") {
-        Some(macro_name) => check_attr(macro_name.into(), line_number)
+        Some(macro_name) => check_attr(macro_name.into())
             .map(|m| Kind::Macro(m.into()))
-            .map_err(|err| match err {
-                Error::AttributeName { line_number, attribute } => Error::MacroName {
-                    line_number,
-                    macro_name: attribute,
-                },
-                _ => unreachable!("BUG: check_attr() must only return attribute errors"),
+            .map_err(|err| Error::MacroName {
+                line_number,
+                macro_name: err.attribute,
             }),
         None => {
             let pattern = git_glob::Pattern::from_bytes(line.as_ref())?;
@@ -168,10 +162,20 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
         Ok(kind) => kind,
         Err(err) => return Some(Err(err)),
     };
-    Ok((kind, Iter::new(attrs, line_number), line_number)).into()
+    Ok((kind, Iter::new(attrs), line_number)).into()
 }
 
 const BLANKS: &[u8] = b" \t\r";
+
+impl<'a> NameRef<'a> {
+    pub fn name(&self) -> &'a BStr {
+        self.0
+    }
+
+    pub fn state(&self) -> StateRef<'a> {
+        self.1.clone()
+    }
+}
 
 impl<'a> From<NameRef<'a>> for Name {
     fn from(v: NameRef<'a>) -> Self {
@@ -179,14 +183,12 @@ impl<'a> From<NameRef<'a>> for Name {
     }
 }
 
-impl<'a> From<NameRef<'a>> for (&'a BStr, StateRef<'a>) {
-    fn from(v: NameRef<'a>) -> Self {
-        (v.0, v.1)
+impl Name {
+    pub fn name(&self) -> &BString {
+        &self.0
     }
-}
 
-impl From<Name> for (BString, State) {
-    fn from(v: Name) -> Self {
-        (v.0, v.1)
+    pub fn state(&self) -> &State {
+        &self.1
     }
 }
