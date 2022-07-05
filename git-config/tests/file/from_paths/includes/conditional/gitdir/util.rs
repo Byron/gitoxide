@@ -215,6 +215,16 @@ fn write_main_config(
     };
 
     let condition = condition.as_ref();
+    let condition = {
+        let c = condition
+            .replace("$gitdir", &env.git_dir().to_string_lossy())
+            .replace("$worktree", &env.worktree_dir().to_string_lossy());
+        if c == condition {
+            condition.to_owned()
+        } else {
+            escape_backslashes(c)
+        }
+    };
     let include_file_path = escape_backslashes(include_file_path);
     let mut file = std::fs::OpenOptions::new()
         .append(true)

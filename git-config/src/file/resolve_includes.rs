@@ -162,6 +162,10 @@ fn gitdir_matches(
         let path = values::Path::from(Cow::Borrowed(condition_path)).interpolate(git_install_dir, home_dir)?;
         git_path::into_bstr(path).into_owned().into()
     };
+    // NOTE: yes, only if we do path interpolation will the slashes be forced to unix separators on windows
+    if pattern_path != condition_path {
+        pattern_path = git_path::to_unix_separators_on_windows(pattern_path);
+    }
 
     if let Some(relative_pattern_path) = pattern_path.strip_prefix(b"./") {
         let parent_dir = target_config_path
@@ -174,9 +178,9 @@ fn gitdir_matches(
         pattern_path = joined_path.into();
     }
 
-    if ["~/", "./", "/"]
-        .iter()
-        .all(|prefix| !pattern_path.starts_with(prefix.as_bytes()))
+    // NOTE: this special handling of leading backslash is needed to do it like git does
+    if pattern_path.iter().next() != Some(&(std::path::MAIN_SEPARATOR as u8))
+        && !git_path::from_bstr(pattern_path.clone()).is_absolute()
     {
         let mut prefixed = pattern_path.into_owned();
         prefixed.insert_str(0, "**/");
@@ -187,8 +191,6 @@ fn gitdir_matches(
         suffixed.push_str("**");
         pattern_path = suffixed.into();
     }
-
-    pattern_path = git_path::to_unix_separators_on_windows(pattern_path);
 
     let match_mode = git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL | wildmatch_mode;
     let is_match = git_glob::wildmatch(pattern_path.as_bstr(), git_dir.as_bstr(), match_mode);
