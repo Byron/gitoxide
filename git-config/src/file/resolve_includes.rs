@@ -202,7 +202,7 @@ fn gitdir_matches(
         git_path::from_byte_slice(&git_dir),
         target_config_path.ok_or(from_paths::Error::MissingConfigPath)?,
     )?;
-    let expanded_git_dir = git_path::to_unix_separators_on_windows(git_path::into_bstr(expanded_git_dir));
+    let expanded_git_dir = git_path::into_bstr(expanded_git_dir);
     Ok(git_glob::wildmatch(
         pattern_path.as_bstr(),
         expanded_git_dir.as_bstr(),
