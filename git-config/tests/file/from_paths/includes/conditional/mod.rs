@@ -128,11 +128,9 @@ fn various_gitdir() {
     let absolute_path = dir.path().join("b");
     let home_dot_git_path = dir.path().join("c");
     let foo_trailing_slash_path = dir.path().join("foo_slash");
-    let wildcards_path = dir.path().join("d");
     let relative_path = dir.path().join("e");
     let casei_path = dir.path().join("i");
     let relative_dot_git_path = dir.path().join("w");
-    let relative_with_backslash_path = dir.path().join("x");
     let tmp_path = dir.path().join("tmp");
     let dot_dot_path = dir.path().join("dot_dot");
     let dir = canonicalized_tempdir().unwrap();
@@ -155,8 +153,6 @@ fn various_gitdir() {
   x = 1
 [includeIf "gitdir/i:a/B/c/D/"]
   path = {}
-[includeIf "gitdir:c\\d/"]
-  path = {}
 [includeIf "gitdir:foo/bar"]
   path = {}
 [includeIf "gitdir:.."]
@@ -167,20 +163,16 @@ fn various_gitdir() {
   path = {}
 [includeIf "gitdir:foo/"]
   path = {}
-[includeIf "gitdir:stan?ard/glo*ng/[xwz]ildcards/.git"]
-  path = {}
 [includeIf "gitdir:{}"]
   path = {}
 [includeIf "gitdir:/e/x/"]
   path = {}"#,
             escape_backslashes(&casei_path),
-            escape_backslashes(&relative_with_backslash_path),
             escape_backslashes(&relative_path),
             escape_backslashes(&dot_dot_path),
             escape_backslashes(&relative_dot_git_path),
             escape_backslashes(&home_dot_git_path),
             escape_backslashes(&foo_trailing_slash_path),
-            escape_backslashes(&wildcards_path),
             &tmp_dir_m_n_with_slash,
             escape_backslashes(&tmp_path),
             escape_backslashes(&absolute_path),
@@ -197,14 +189,6 @@ fn various_gitdir() {
     .unwrap();
 
     fs::write(
-        relative_with_backslash_path.as_path(),
-        "
-[core]
-  c = absolute with double-slash do match",
-    )
-    .unwrap();
-
-    fs::write(
         absolute_path.as_path(),
         "
 [core]
@@ -217,14 +201,6 @@ fn various_gitdir() {
         "
 [core]
   b = home-dot-git",
-    )
-    .unwrap();
-
-    fs::write(
-        wildcards_path.as_path(),
-        "
-[core]
-  b = standard-globbing-wildcards",
     )
     .unwrap();
 
@@ -275,16 +251,6 @@ fn various_gitdir() {
             config.string("core", None, "i"),
             Some(cow_str("case-i-match")),
             "case insensitive patterns match"
-        );
-    }
-
-    // TODO: figure out what this is testing, I have a feeling double-slash git dirs aren't relevant, it's the condition that matters
-    if false {
-        let dir = Path::new("/c//d/.git");
-        let config = File::from_paths(Some(&config_path), options_with_git_dir(dir)).unwrap();
-        assert_eq!(
-            config.string("core", None, "c"),
-            Some(cow_str("absolute with double-slash do match")),
         );
     }
 
@@ -341,21 +307,6 @@ fn various_gitdir() {
             config.string("core", None, "b"),
             Some(cow_str("foo-trailing-slash")),
             "path with trailing slash is matched"
-        );
-    }
-
-    {
-        let dir = dir
-            .path()
-            .join("standard")
-            .join("globbing")
-            .join("wildcards")
-            .join(".git");
-        let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
-        assert_eq!(
-            config.string("core", None, "b"),
-            Some(cow_str("standard-globbing-wildcards")),
-            "standard globbing wildcards works"
         );
     }
 

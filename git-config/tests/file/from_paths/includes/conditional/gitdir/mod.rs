@@ -23,7 +23,7 @@ fn relative_path_without_trailing_slash_and_dot_git_suffix_matches() -> crate::R
 
 #[test]
 fn tilde_slash_expands_the_current_user_home() -> crate::Result {
-    let env = GitEnv::repo_name("subdir/worktree")?;
+    let env = GitEnv::repo_name(format!("subdir{}worktree", std::path::MAIN_SEPARATOR))?;
     assert_section_value(Condition::new("gitdir:~/subdir/worktree/"), env)
 }
 
@@ -36,6 +36,41 @@ fn tilde_alone_does_not_match_even_if_home_is_git_directory() -> crate::Result {
 #[test]
 fn explicit_star_star_prefix_and_suffix_match_zero_or_more_path_components() -> crate::Result {
     assert_section_value(Condition::new("gitdir:**/worktree/**"), GitEnv::repo_name("worktree")?)
+}
+
+#[test]
+fn double_slash_does_not_match() -> crate::Result {
+    assert_section_value(
+        Condition::new("gitdir://worktree").expect_original_value(),
+        GitEnv::repo_name("worktree")?,
+    )
+}
+
+#[test]
+fn absolute_git_dir_with_os_separators_match() -> crate::Result {
+    assert_section_value(
+        original_value_on_windows(Condition::new("gitdir:$gitdir")),
+        GitEnv::repo_name("worktree")?,
+    )
+}
+
+#[test]
+fn absolute_worktree_dir_with_os_separators_does_not_match_if_trailing_slash_is_missing() -> crate::Result {
+    assert_section_value(
+        Condition::new("gitdir:$worktree").expect_original_value(),
+        GitEnv::repo_name("worktree")?,
+    )
+}
+
+#[test]
+fn absolute_worktree_dir_with_os_separators_matches_with_trailing_glob() -> crate::Result {
+    assert_section_value(
+        original_value_on_windows(Condition::new(format!(
+            "gitdir:$worktree{}**",
+            std::path::MAIN_SEPARATOR
+        ))),
+        GitEnv::repo_name("worktree")?,
+    )
 }
 
 #[test]
@@ -96,6 +131,14 @@ fn dot_slash_path_with_dot_git_suffix_matches() -> crate::Result {
 }
 
 #[test]
+fn globbing_and_wildcards() -> crate::Result {
+    assert_section_value(
+        Condition::new("gitdir:stan?ard/glo*ng/[xwz]ildcards/.git").set_user_config_instead_of_repo_config(),
+        GitEnv::repo_name("standard/globbing/wildcards")?,
+    )
+}
+
+#[test]
 fn case_insensitive_matches_any_case() -> crate::Result {
     assert_section_value(Condition::new("gitdir/i:WORKTREE/"), GitEnv::repo_name("worktree")?)?;
     assert_section_value(
@@ -107,14 +150,7 @@ fn case_insensitive_matches_any_case() -> crate::Result {
 #[test]
 fn pattern_with_escaped_backslash() -> crate::Result {
     assert_section_value(
-        {
-            let condition = Condition::new(r#"gitdir:\\work\\tree\\/"#);
-            if cfg!(windows) {
-                condition.expect_original_value()
-            } else {
-                condition
-            }
-        },
+        original_value_on_windows(Condition::new(r#"gitdir:\\work\\tree\\/"#)),
         GitEnv::repo_name("worktree")?,
     )
 }
@@ -167,4 +203,12 @@ fn dot_path_matching_symlink_with_icase() -> crate::Result {
         Condition::new("gitdir/i:SYMLINK-WORKTREE/").set_user_config_instead_of_repo_config(),
         env,
     )
+}
+
+fn original_value_on_windows(c: Condition) -> Condition {
+    if cfg!(windows) {
+        c.expect_original_value()
+    } else {
+        c
+    }
 }
