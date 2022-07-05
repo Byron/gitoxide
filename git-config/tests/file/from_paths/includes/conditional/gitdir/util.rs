@@ -149,6 +149,7 @@ fn assure_git_agrees(expected: Option<Value>, env: GitEnv) -> crate::Result {
         .args(["config", "--get", "section.value"])
         .env("HOME", env.home_dir())
         .env("GIT_DIR", env.git_dir())
+        .env_remove("GIT_CONFIG_COUNT")
         .current_dir(env.worktree_dir())
         .output()?;
 
