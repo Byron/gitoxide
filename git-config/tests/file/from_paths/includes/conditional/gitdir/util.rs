@@ -1,6 +1,8 @@
+#![cfg_attr(windows, allow(dead_code))]
+
 use crate::file::cow_str;
 use crate::file::from_paths::escape_backslashes;
-use crate::file::from_paths::includes::conditional::{create_symlink, options_with_git_dir};
+use crate::file::from_paths::includes::conditional::options_with_git_dir;
 use bstr::{BString, ByteSlice};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -135,7 +137,7 @@ pub fn assert_section_value(
 pub fn git_env_with_symlinked_repo() -> crate::Result<GitEnv> {
     let mut env = GitEnv::repo_name("worktree")?;
     let link_destination = env.root_dir().join("symlink-worktree");
-    create_symlink(&link_destination, env.worktree_dir());
+    crate::file::from_paths::includes::conditional::create_symlink(&link_destination, env.worktree_dir());
 
     let git_dir_through_symlink = link_destination.join(".git");
     env.set_git_dir(git_dir_through_symlink);

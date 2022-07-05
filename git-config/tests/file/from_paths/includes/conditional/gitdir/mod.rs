@@ -1,7 +1,7 @@
 mod util;
 
 use serial_test::serial;
-use util::{assert_section_value, git_env_with_symlinked_repo, Condition, GitEnv};
+use util::{assert_section_value, Condition, GitEnv};
 
 #[test]
 fn relative_path_with_trailing_slash_matches_like_star_star() -> crate::Result {
@@ -135,14 +135,14 @@ fn star_star_in_the_middle() -> crate::Result {
 #[test]
 #[cfg(not(windows))]
 fn tilde_expansion_with_symlink() -> crate::Result {
-    let env = git_env_with_symlinked_repo()?;
+    let env = util::git_env_with_symlinked_repo()?;
     assert_section_value(Condition::new("gitdir:~/symlink-worktree/"), env)
 }
 
 #[test]
 #[cfg(not(windows))]
 fn dot_path_with_symlink() -> crate::Result {
-    let env = git_env_with_symlinked_repo()?;
+    let env = util::git_env_with_symlinked_repo()?;
     assert_section_value(
         Condition::new("gitdir:./symlink-worktree/.git").set_user_config_instead_of_repo_config(),
         env,
@@ -152,7 +152,7 @@ fn dot_path_with_symlink() -> crate::Result {
 #[test]
 #[cfg(not(windows))]
 fn relative_path_matching_symlink() -> crate::Result {
-    let env = git_env_with_symlinked_repo()?;
+    let env = util::git_env_with_symlinked_repo()?;
     assert_section_value(
         Condition::new("gitdir:symlink-worktree/").set_user_config_instead_of_repo_config(),
         env,
@@ -162,7 +162,7 @@ fn relative_path_matching_symlink() -> crate::Result {
 #[test]
 #[cfg(not(windows))]
 fn dot_path_matching_symlink_with_icase() -> crate::Result {
-    let env = git_env_with_symlinked_repo()?;
+    let env = util::git_env_with_symlinked_repo()?;
     assert_section_value(
         Condition::new("gitdir/i:SYMLINK-WORKTREE/").set_user_config_instead_of_repo_config(),
         env,
