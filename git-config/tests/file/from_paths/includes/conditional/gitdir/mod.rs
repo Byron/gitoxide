@@ -107,7 +107,14 @@ fn case_insensitive_matches_any_case() -> crate::Result {
 #[test]
 fn pattern_with_escaped_backslash() -> crate::Result {
     assert_section_value(
-        Condition::new(r#"gitdir:\\work\\tree\\/"#),
+        {
+            let condition = Condition::new(r#"gitdir:\\work\\tree\\/"#);
+            if cfg!(windows) {
+                condition.expect_original_value()
+            } else {
+                condition
+            }
+        },
         GitEnv::repo_name("worktree")?,
     )
 }
