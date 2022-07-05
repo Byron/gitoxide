@@ -7,81 +7,6 @@ use tempfile::tempdir;
 
 use crate::file::{cow_str, from_paths::escape_backslashes};
 
-enum Value {
-    Base,
-    OverrideByInclude,
-}
-
-struct Options<'a> {
-    condition: &'a str,
-    branch_name: &'a str,
-    expect: Value,
-}
-
-fn assert_section_value(opts: Options) {
-    assert_section_value_msg(opts, None)
-}
-
-fn assert_section_value_msg(
-    Options {
-        condition,
-        branch_name,
-        expect,
-    }: Options,
-    message: Option<&str>,
-) {
-    let dir = tempdir().unwrap();
-    let root_config = dir.path().join("root.config");
-    let included_config = dir.path().join("include.config");
-
-    fs::write(
-        &root_config,
-        format!(
-            r#"
-[section]
-value = base-value
-
-[includeIf "onbranch:{}"]
-path = {}"#,
-            condition,
-            escape_backslashes(&included_config),
-        ),
-    )
-    .unwrap();
-
-    fs::write(
-        included_config,
-        r#"
-[section]
-value = branch-override-by-include
-"#,
-    )
-    .unwrap();
-
-    let branch_name = FullName::try_from(BString::from(branch_name)).unwrap();
-    let branch_name = branch_name.as_ref();
-    let options = from_paths::Options {
-        branch_name: Some(branch_name),
-        ..Default::default()
-    };
-
-    let config = git_config::File::from_paths(Some(&root_config), options).unwrap();
-    assert_eq!(
-        config.string("section", None, "value"),
-        Some(cow_str(match expect {
-            Value::OverrideByInclude => "branch-override-by-include",
-            Value::Base => "base-value",
-        })),
-        "{}, info: {:?}",
-        match expect {
-            Value::Base => "the base value should not be overridden as the branch does not match",
-            Value::OverrideByInclude =>
-                "the base value is overridden by an included file because the condition matches",
-        },
-        message
-    );
-}
-
 #[test]
 fn literal_branch_names_match() {
     assert_section_value(Options {
@@ -190,4 +115,79 @@ fn double_star_globs_cross_component_boundaries() {
         branch_name: "refs/heads/feature/a/b/start",
         expect: Value::OverrideByInclude,
     });
+}
+
+enum Value {
+    Base,
+    OverrideByInclude,
+}
+
+struct Options<'a> {
+    condition: &'a str,
+    branch_name: &'a str,
+    expect: Value,
+}
+
+fn assert_section_value(opts: Options) {
+    assert_section_value_msg(opts, None)
+}
+
+fn assert_section_value_msg(
+    Options {
+        condition,
+        branch_name,
+        expect,
+    }: Options,
+    message: Option<&str>,
+) {
+    let dir = tempdir().unwrap();
+    let root_config = dir.path().join("root.config");
+    let included_config = dir.path().join("include.config");
+
+    fs::write(
+        &root_config,
+        format!(
+            r#"
+[section]
+value = base-value
+
+[includeIf "onbranch:{}"]
+path = {}"#,
+            condition,
+            escape_backslashes(&included_config),
+        ),
+    )
+    .unwrap();
+
+    fs::write(
+        included_config,
+        r#"
+[section]
+value = branch-override-by-include
+"#,
+    )
+    .unwrap();
+
+    let branch_name = FullName::try_from(BString::from(branch_name)).unwrap();
+    let branch_name = branch_name.as_ref();
+    let options = from_paths::Options {
+        branch_name: Some(branch_name),
+        ..Default::default()
+    };
+
+    let config = git_config::File::from_paths(Some(&root_config), options).unwrap();
+    assert_eq!(
+        config.string("section", None, "value"),
+        Some(cow_str(match expect {
+            Value::OverrideByInclude => "branch-override-by-include",
+            Value::Base => "base-value",
+        })),
+        "{}, info: {:?}",
+        match expect {
+            Value::Base => "the base value should not be overridden as the branch does not match",
+            Value::OverrideByInclude =>
+                "the base value is overridden by an included file because the condition matches",
+        },
+        message
+    );
 }
