@@ -98,7 +98,7 @@ mod section {
         comment_event, fully_consumed, name_event, newline_event, section_header as parsed_section_header,
         value_done_event, value_event, value_not_done_event, whitespace_event,
     };
-    use crate::parse::{error::ParserNode, Event, ParsedSection};
+    use crate::parse::{error::ParserNode, Event, Section};
 
     #[test]
     fn empty_section() {
@@ -106,7 +106,7 @@ mod section {
         assert_eq!(
             section(b"[test]", &mut node).unwrap(),
             fully_consumed((
-                ParsedSection {
+                Section {
                     section_header: parsed_section_header("test", None),
                     events: vec![]
                 },
@@ -125,7 +125,7 @@ mod section {
         assert_eq!(
             section(section_data, &mut node).unwrap(),
             fully_consumed((
-                ParsedSection {
+                Section {
                     section_header: parsed_section_header("hello", None),
                     events: vec![
                         newline_event(),
@@ -163,7 +163,7 @@ mod section {
         assert_eq!(
             section(section_data, &mut node).unwrap(),
             fully_consumed((
-                ParsedSection {
+                Section {
                     section_header: parsed_section_header("hello", None),
                     events: vec![
                         newline_event(),
@@ -198,7 +198,7 @@ mod section {
         assert_eq!(
             section(b"[hello] c", &mut node).unwrap(),
             fully_consumed((
-                ParsedSection {
+                Section {
                     section_header: parsed_section_header("hello", None),
                     events: vec![whitespace_event(" "), name_event("c"), value_event("")]
                 },
@@ -218,7 +218,7 @@ mod section {
         assert_eq!(
             section(section_data, &mut node).unwrap(),
             fully_consumed((
-                ParsedSection {
+                Section {
                     section_header: parsed_section_header("hello", None),
                     events: vec![
                         whitespace_event(" "),
@@ -259,7 +259,7 @@ mod section {
         assert_eq!(
             section(b"[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c", &mut node).unwrap(),
             fully_consumed((
-                ParsedSection {
+                Section {
                     section_header: parsed_section_header("section", None),
                     events: vec![
                         whitespace_event(" "),
@@ -287,7 +287,7 @@ mod section {
         assert_eq!(
             section(b"[section \"a\"] b =\"\\\n;\";a", &mut node).unwrap(),
             fully_consumed((
-                ParsedSection {
+                Section {
                     section_header: parsed_section_header("section", (" ", "a")),
                     events: vec![
                         whitespace_event(" "),
@@ -311,7 +311,7 @@ mod section {
         assert_eq!(
             section(b"[s]hello             #world", &mut node).unwrap(),
             fully_consumed((
-                ParsedSection {
+                Section {
                     section_header: parsed_section_header("s", None),
                     events: vec![
                         name_event("hello"),

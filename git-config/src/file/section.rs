@@ -10,7 +10,7 @@ use std::{
 use crate::{
     file::Index,
     lookup,
-    parse::{Event, Key},
+    parse::{section::Key, Event},
     value::{normalize, normalize_bstring},
 };
 
@@ -34,7 +34,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
             }));
         }
 
-        self.section.0.push(Event::Key(key));
+        self.section.0.push(Event::SectionKey(key));
         self.section.0.push(Event::KeyValueSeparator);
         self.section.0.push(Event::Value(value));
         if self.implicit_newline {
@@ -49,7 +49,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         // events are popped in reverse order
         while let Some(e) = self.section.0.pop() {
             match e {
-                Event::Key(k) => {
+                Event::SectionKey(k) => {
                     // pop leading whitespace
                     if let Some(Event::Whitespace(_)) = self.section.0.last() {
                         self.section.0.pop();
@@ -172,7 +172,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
         for event in &self.section.0[start.0..=end.0] {
             match event {
-                Event::Key(event_key) if event_key == key => found_key = true,
+                Event::SectionKey(event_key) if event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
                     found_key = false;
                     // Clones the Cow, doesn't copy underlying value if borrowed
@@ -203,7 +203,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: BString) {
         self.section.0.insert(index.0, Event::Value(Cow::Owned(value)));
         self.section.0.insert(index.0, Event::KeyValueSeparator);
-        self.section.0.insert(index.0, Event::Key(key));
+        self.section.0.insert(index.0, Event::SectionKey(key));
     }
 }
 
@@ -289,7 +289,7 @@ impl<'event> SectionBody<'event> {
         // section anyways
         for event in &self.0 {
             match event {
-                Event::Key(event_key) if event_key == key => found_key = true,
+                Event::SectionKey(event_key) if event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
                     found_key = false;
                     // Clones the Cow, doesn't copy underlying value if borrowed
@@ -332,7 +332,7 @@ impl<'event> SectionBody<'event> {
     pub fn keys(&self) -> impl Iterator<Item = &Key<'event>> {
         self.0
             .iter()
-            .filter_map(|e| if let Event::Key(k) = e { Some(k) } else { None })
+            .filter_map(|e| if let Event::SectionKey(k) = e { Some(k) } else { None })
     }
 
     /// Checks if the section contains the provided key.
@@ -340,7 +340,7 @@ impl<'event> SectionBody<'event> {
     pub fn contains_key(&self, key: &Key<'_>) -> bool {
         self.0.iter().any(|e| {
             matches!(e,
-                Event::Key(k) if k == key
+                Event::SectionKey(k) if k == key
             )
         })
     }
@@ -348,7 +348,7 @@ impl<'event> SectionBody<'event> {
     /// Returns the number of values in the section.
     #[must_use]
     pub fn num_values(&self) -> usize {
-        self.0.iter().filter(|e| matches!(e, Event::Key(_))).count()
+        self.0.iter().filter(|e| matches!(e, Event::SectionKey(_))).count()
     }
 
     /// Returns if the section is empty.
@@ -366,7 +366,7 @@ impl<'event> SectionBody<'event> {
         let mut values_end = 0;
         for (i, e) in self.0.iter().enumerate().rev() {
             match e {
-                Event::Key(k) => {
+                Event::SectionKey(k) => {
                     if k == key {
                         break;
                     }
@@ -416,7 +416,7 @@ impl<'event> Iterator for SectionBodyIter<'event> {
 
         while let Some(event) = self.0.pop_front() {
             match event {
-                Event::Key(k) => key = Some(k),
+                Event::SectionKey(k) => key = Some(k),
                 Event::Value(v) => {
                     value = Some(v);
                     break;

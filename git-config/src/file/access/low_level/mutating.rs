@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use crate::{
     file::{MutableSection, SectionBody},
     lookup,
-    parse::{ParsedSectionHeader, SectionHeaderName},
+    parse::section,
     File,
 };
 
@@ -132,8 +132,8 @@ impl<'a> File<'a> {
     ) -> MutableSection<'_, 'a> {
         let subsection_name = subsection_name.into().map(into_cow_bstr);
         self.push_section_internal(
-            ParsedSectionHeader {
-                name: SectionHeaderName(into_cow_bstr(section_name.into())),
+            section::Header {
+                name: section::Name(into_cow_bstr(section_name.into())),
                 separator: subsection_name.is_some().then(|| Cow::Borrowed(" ".into())),
                 subsection_name,
             },
@@ -150,7 +150,7 @@ impl<'a> File<'a> {
         &mut self,
         section_name: &'lookup str,
         subsection_name: impl Into<Option<&'lookup str>>,
-        new_section_name: impl Into<SectionHeaderName<'a>>,
+        new_section_name: impl Into<section::Name<'a>>,
         new_subsection_name: impl Into<Option<Cow<'a, str>>>,
     ) -> Result<(), lookup::existing::Error> {
         let id = self.section_ids_by_name_and_subname(section_name, subsection_name.into())?;

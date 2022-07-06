@@ -4,8 +4,9 @@ use super::{Cow, HashMap, LookupTreeNode, SectionId};
 use crate::{
     file::SectionBody,
     parse::{
+        section,
         tests::util::{name_event, newline_event, section_header, value_event},
-        Event, SectionHeaderName,
+        Event,
     },
     File,
 };
@@ -33,7 +34,7 @@ fn parse_single_section() {
     let expected_lookup_tree = {
         let mut tree = HashMap::new();
         tree.insert(
-            SectionHeaderName(Cow::Borrowed("core".into())),
+            section::Name(Cow::Borrowed("core".into())),
             vec![LookupTreeNode::Terminal(vec![SectionId(0)])],
         );
         tree
@@ -75,7 +76,7 @@ fn parse_single_subsection() {
         let mut inner_tree = HashMap::new();
         inner_tree.insert(Cow::Borrowed("sub".into()), vec![SectionId(0)]);
         tree.insert(
-            SectionHeaderName(Cow::Borrowed("core".into())),
+            section::Name(Cow::Borrowed("core".into())),
             vec![LookupTreeNode::NonTerminal(inner_tree)],
         );
         tree
@@ -116,11 +117,11 @@ fn parse_multiple_sections() {
     let expected_lookup_tree = {
         let mut tree = HashMap::new();
         tree.insert(
-            SectionHeaderName(Cow::Borrowed("core".into())),
+            section::Name(Cow::Borrowed("core".into())),
             vec![LookupTreeNode::Terminal(vec![SectionId(0)])],
         );
         tree.insert(
-            SectionHeaderName(Cow::Borrowed("other".into())),
+            section::Name(Cow::Borrowed("other".into())),
             vec![LookupTreeNode::Terminal(vec![SectionId(1)])],
         );
         tree
@@ -166,7 +167,7 @@ fn parse_multiple_duplicate_sections() {
     let expected_lookup_tree = {
         let mut tree = HashMap::new();
         tree.insert(
-            SectionHeaderName(Cow::Borrowed("core".into())),
+            section::Name(Cow::Borrowed("core".into())),
             vec![LookupTreeNode::Terminal(vec![SectionId(0), SectionId(1)])],
         );
         tree

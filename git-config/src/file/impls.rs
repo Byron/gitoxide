@@ -61,7 +61,7 @@ impl<'a> From<State<'a>> for File<'a> {
                     prev_section_header = Some(header);
                     section_events = SectionBody::new();
                 }
-                e @ Event::Key(_)
+                e @ Event::SectionKey(_)
                 | e @ Event::Value(_)
                 | e @ Event::ValueNotDone(_)
                 | e @ Event::ValueDone(_)

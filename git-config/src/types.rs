@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::{
     file::{LookupTreeNode, SectionBody, SectionId},
-    parse::{ParsedSectionHeader, SectionHeaderName},
+    parse::section,
 };
 
 /// High level `git-config` reader and writer.
@@ -55,14 +55,14 @@ pub struct File<'event> {
     /// Section name and subsection name to section id lookup tree. This is
     /// effectively a n-tree (opposed to a binary tree) that can have a height
     /// of at most three (including an implicit root node).
-    pub(crate) section_lookup_tree: HashMap<SectionHeaderName<'event>, Vec<LookupTreeNode<'event>>>,
+    pub(crate) section_lookup_tree: HashMap<section::Name<'event>, Vec<LookupTreeNode<'event>>>,
     /// SectionId to section mapping. The value of this HashMap contains actual
     /// events.
     ///
     /// This indirection with the SectionId as the key is critical to flexibly
     /// supporting `git-config` sections, as duplicated keys are permitted.
     pub(crate) sections: HashMap<SectionId, SectionBody<'event>>,
-    pub(crate) section_headers: HashMap<SectionId, ParsedSectionHeader<'event>>,
+    pub(crate) section_headers: HashMap<SectionId, section::Header<'event>>,
     /// Internal monotonically increasing counter for section ids.
     pub(crate) section_id_counter: usize,
     /// Section order for output ordering.

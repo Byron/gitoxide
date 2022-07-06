@@ -31,7 +31,7 @@ impl Event<'_> {
         match self {
             Event::Comment(e) => Event::Comment(e.to_owned()),
             Event::SectionHeader(e) => Event::SectionHeader(e.to_owned()),
-            Event::Key(e) => Event::Key(e.to_owned()),
+            Event::SectionKey(e) => Event::SectionKey(e.to_owned()),
             Event::Value(e) => Event::Value(Cow::Owned(e.clone().into_owned())),
             Event::ValueNotDone(e) => Event::ValueNotDone(Cow::Owned(e.clone().into_owned())),
             Event::ValueDone(e) => Event::ValueDone(Cow::Owned(e.clone().into_owned())),
@@ -54,7 +54,7 @@ impl Display for Event<'_> {
             },
             Self::Comment(e) => e.fmt(f),
             Self::SectionHeader(e) => e.fmt(f),
-            Self::Key(e) => e.fmt(f),
+            Self::SectionKey(e) => e.fmt(f),
             Self::Newline(e) | Self::Whitespace(e) => e.fmt(f),
             Self::KeyValueSeparator => write!(f, "="),
         }
@@ -73,7 +73,7 @@ impl From<&Event<'_>> for BString {
             Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.as_ref().into(),
             Event::Comment(e) => e.into(),
             Event::SectionHeader(e) => e.into(),
-            Event::Key(e) => e.0.as_ref().into(),
+            Event::SectionKey(e) => e.0.as_ref().into(),
             Event::Newline(e) | Event::Whitespace(e) => e.as_ref().into(),
             Event::KeyValueSeparator => "=".into(),
         }

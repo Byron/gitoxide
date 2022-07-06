@@ -1,7 +1,7 @@
 use bstr::BStr;
 use std::{borrow::Cow, convert::TryFrom};
 
-use crate::{file::SectionBody, lookup, parse::ParsedSectionHeader, File};
+use crate::{file::SectionBody, lookup, parse::section, File};
 
 /// Read-only low-level access methods.
 impl<'a> File<'a> {
@@ -204,7 +204,7 @@ impl<'a> File<'a> {
     ///
     /// ```rust
     /// use git_config::File;
-    /// use git_config::parse::Key;
+    /// use git_config::parse::section;
     /// use std::borrow::Cow;
     /// use std::convert::TryFrom;
     /// use nom::AsBytes;
@@ -221,7 +221,7 @@ impl<'a> File<'a> {
     ///
     /// for (i, (header, body)) in url.iter().enumerate() {
     ///     let url = header.subsection_name.as_ref();
-    ///     let instead_of = body.value(&Key::from("insteadOf"));
+    ///     let instead_of = body.value(&section::Key::from("insteadOf"));
     ///
     ///     // todo(unstable-order): the order is not always the same, so `i` cannot be used here
     ///     if instead_of.as_ref().unwrap().as_ref().as_bytes().eq("https://github.com/".as_bytes()) {
@@ -236,7 +236,7 @@ impl<'a> File<'a> {
     pub fn sections_by_name_with_header<'lookup>(
         &self,
         section_name: &'lookup str,
-    ) -> Vec<(&ParsedSectionHeader<'a>, &SectionBody<'a>)> {
+    ) -> Vec<(&section::Header<'a>, &SectionBody<'a>)> {
         self.section_ids_by_name(section_name)
             .unwrap_or_default()
             .into_iter()

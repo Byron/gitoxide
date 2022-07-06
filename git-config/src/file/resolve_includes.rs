@@ -9,7 +9,7 @@ use git_ref::Category;
 use crate::file::from_paths::Options;
 use crate::{
     file::{from_paths, SectionId},
-    parse::Key,
+    parse::section,
     value, File,
 };
 
@@ -87,7 +87,7 @@ fn resolve_includes_recursive(
 
 fn extract_include_path<'a>(target_config: &mut File<'a>, include_paths: &mut Vec<value::Path<'a>>, id: SectionId) {
     if let Some(body) = target_config.sections.get(&id) {
-        let paths = body.values(&Key::from("path"));
+        let paths = body.values(&section::Key::from("path"));
         let paths = paths.iter().map(|path| value::Path::from(path.clone()));
         include_paths.extend(paths);
     }

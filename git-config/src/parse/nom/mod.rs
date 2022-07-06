@@ -1,4 +1,4 @@
-use crate::parse::{Error, Event, Key, ParsedComment, ParsedSection, ParsedSectionHeader, SectionHeaderName, State};
+use crate::parse::{section, Error, Event, ParsedComment, Section, State};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
@@ -170,7 +170,7 @@ fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment<'_>> {
 #[cfg(test)]
 mod tests;
 
-fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (ParsedSection<'a>, usize)> {
+fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (Section<'a>, usize)> {
     let (mut i, section_header) = section_header(i)?;
 
     let mut newlines = 0;
@@ -217,7 +217,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (
     Ok((
         i,
         (
-            ParsedSection {
+            Section {
                 section_header,
                 events: items,
             },
@@ -226,7 +226,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (
     ))
 }
 
-fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader<'_>> {
+fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
     let (i, _) = char('[')(i)?;
     // No spaces must be between section name and section start
     let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
@@ -236,13 +236,13 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader<'_>> {
         // Either section does not have a subsection or using deprecated
         // subsection syntax at this point.
         let header = match memchr::memrchr(b'.', name.as_bytes()) {
-            Some(index) => ParsedSectionHeader {
-                name: SectionHeaderName(Cow::Borrowed(name[..index].as_bstr())),
+            Some(index) => section::Header {
+                name: section::Name(Cow::Borrowed(name[..index].as_bstr())),
                 separator: name.get(index..=index).map(|s| Cow::Borrowed(s.as_bstr())),
                 subsection_name: name.get(index + 1..).map(|s| Cow::Borrowed(s.as_bstr())),
             },
-            None => ParsedSectionHeader {
-                name: SectionHeaderName(Cow::Borrowed(name.as_bstr())),
+            None => section::Header {
+                name: section::Name(Cow::Borrowed(name.as_bstr())),
                 separator: None,
                 subsection_name: None,
             },
@@ -258,8 +258,8 @@ fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader<'_>> {
 
     Ok((
         i,
-        ParsedSectionHeader {
-            name: SectionHeaderName(Cow::Borrowed(name)),
+        section::Header {
+            name: section::Name(Cow::Borrowed(name)),
             separator: Some(Cow::Borrowed(whitespace)),
             subsection_name: subsection_name.map(Cow::Owned),
         },
@@ -320,7 +320,7 @@ fn section_body<'a, 'b, 'c>(
     *node = ParserNode::ConfigName;
     let (i, name) = config_name(i)?;
 
-    items.push(Event::Key(Key(Cow::Borrowed(name))));
+    items.push(Event::SectionKey(section::Key(Cow::Borrowed(name))));
 
     let (i, whitespace) = opt(take_spaces)(i)?;
 

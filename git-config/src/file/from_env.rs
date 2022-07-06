@@ -115,7 +115,7 @@ impl<'a> File<'a> {
                 };
 
                 section.push(
-                    parse::Key(Cow::Owned(BString::from(key))),
+                    parse::section::Key(Cow::Owned(BString::from(key))),
                     Cow::Owned(git_path::into_bstr(PathBuf::from(value)).into_owned()),
                 );
             } else {

@@ -7,7 +7,7 @@ use crate::{
         Index, SectionId, Size,
     },
     lookup,
-    parse::{Event, Key},
+    parse::{section, Event},
     value::{normalize_bstr, normalize_bstring},
 };
 
@@ -24,7 +24,7 @@ use crate::{
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct MutableValue<'borrow, 'lookup, 'event> {
     section: MutableSection<'borrow, 'event>,
-    key: Key<'lookup>,
+    key: section::Key<'lookup>,
     index: Index,
     size: Size,
 }
@@ -32,7 +32,7 @@ pub struct MutableValue<'borrow, 'lookup, 'event> {
 impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
     pub(crate) const fn new(
         section: MutableSection<'borrow, 'event>,
-        key: Key<'lookup>,
+        key: section::Key<'lookup>,
         index: Index,
         size: Size,
     ) -> Self {
@@ -111,7 +111,7 @@ impl EntryData {
 #[derive(PartialEq, Eq, Debug)]
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     section: &'borrow mut HashMap<SectionId, SectionBody<'event>>,
-    key: Key<'lookup>,
+    key: section::Key<'lookup>,
     /// Each entry data struct provides sufficient information to index into
     /// [`Self::offsets`]. This layer of indirection is used for users to index
     /// into the offsets rather than leaking the internal data structures.
@@ -125,7 +125,7 @@ pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
 impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     pub(crate) fn new(
         section: &'borrow mut HashMap<SectionId, SectionBody<'event>>,
-        key: Key<'lookup>,
+        key: section::Key<'lookup>,
         indices_and_sizes: Vec<EntryData>,
         offsets: HashMap<SectionId, Vec<usize>>,
     ) -> Self {
@@ -161,7 +161,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
                 .as_ref()[offset..offset + size]
             {
                 match event {
-                    Event::Key(event_key) if *event_key == self.key => found_key = true,
+                    Event::SectionKey(section_key) if *section_key == self.key => found_key = true,
                     Event::Value(v) if found_key => {
                         found_key = false;
                         values.push(normalize_bstr(v.as_ref()));
@@ -326,7 +326,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     }
 
     fn set_value_inner<'a: 'event>(
-        key: &Key<'lookup>,
+        key: &section::Key<'lookup>,
         offsets: &mut HashMap<SectionId, Vec<usize>>,
         section: &mut SectionBody<'event>,
         section_id: SectionId,
@@ -339,7 +339,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
         MutableMultiValue::set_offset(offsets, section_id, offset_index, 3);
         section.as_mut().insert(offset, Event::Value(input));
         section.as_mut().insert(offset, Event::KeyValueSeparator);
-        section.as_mut().insert(offset, Event::Key(key.to_owned()));
+        section.as_mut().insert(offset, Event::SectionKey(key.to_owned()));
     }
 
     /// Removes the value at the given index. Does nothing when called multiple

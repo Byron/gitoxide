@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::{
     file::{LookupTreeNode, MutableSection, SectionBody, SectionId},
     lookup,
-    parse::{ParsedSectionHeader, SectionHeaderName},
+    parse::section,
     File,
 };
 
@@ -13,7 +13,7 @@ impl<'event> File<'event> {
     /// Adds a new section to the config file.
     pub(crate) fn push_section_internal(
         &mut self,
-        header: ParsedSectionHeader<'event>,
+        header: section::Header<'event>,
         section: SectionBody<'event>,
     ) -> MutableSection<'_, 'event> {
         let new_section_id = SectionId(self.section_id_counter);
@@ -59,7 +59,7 @@ impl<'event> File<'event> {
     /// Returns the mapping between section and subsection name to section ids.
     pub(crate) fn section_ids_by_name_and_subname<'lookup>(
         &self,
-        section_name: impl Into<SectionHeaderName<'lookup>>,
+        section_name: impl Into<section::Name<'lookup>>,
         subsection_name: Option<&'lookup str>,
     ) -> Result<Vec<SectionId>, lookup::existing::Error> {
         let section_name = section_name.into();
@@ -94,7 +94,7 @@ impl<'event> File<'event> {
 
     pub(crate) fn section_ids_by_name<'lookup>(
         &self,
-        section_name: impl Into<SectionHeaderName<'lookup>>,
+        section_name: impl Into<section::Name<'lookup>>,
     ) -> Result<Vec<SectionId>, lookup::existing::Error> {
         let section_name = section_name.into();
         self.section_lookup_tree

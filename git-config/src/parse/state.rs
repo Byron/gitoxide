@@ -1,4 +1,4 @@
-use crate::parse::{Error, Event, ParsedSection, ParserOrIoError, State};
+use crate::parse::{Error, Event, ParserOrIoError, Section, State};
 use std::convert::TryFrom;
 use std::io::Read;
 
@@ -96,14 +96,14 @@ impl<'a> State<'a> {
     /// [`State::take_sections`] if you need an owned copy only once. If that
     /// function was called, then this will always return an empty slice.
     #[must_use]
-    pub fn sections(&self) -> &[ParsedSection<'a>] {
+    pub fn sections(&self) -> &[Section<'a>] {
         &self.sections
     }
 
     /// Takes the parsed sections from the parser. Subsequent calls will return
     /// an empty vec. Consider [`State::sections`] if you only need a reference
     /// to the comments.
-    pub fn take_sections(&mut self) -> Vec<ParsedSection<'a>> {
+    pub fn take_sections(&mut self) -> Vec<Section<'a>> {
         let mut to_return = vec![];
         std::mem::swap(&mut self.sections, &mut to_return);
         to_return

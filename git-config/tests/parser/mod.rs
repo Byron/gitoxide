@@ -1,24 +1,21 @@
 use std::borrow::Cow;
 
-use git_config::parse::{Event, Key, ParsedSectionHeader, SectionHeaderName, State};
+use git_config::parse::{section, Event, State};
 
 pub fn section_header_event(name: &str, subsection: impl Into<Option<(&'static str, &'static str)>>) -> Event<'_> {
     Event::SectionHeader(section_header(name, subsection))
 }
 
-pub fn section_header(
-    name: &str,
-    subsection: impl Into<Option<(&'static str, &'static str)>>,
-) -> ParsedSectionHeader<'_> {
-    let name = SectionHeaderName(Cow::Borrowed(name.into()));
+pub fn section_header(name: &str, subsection: impl Into<Option<(&'static str, &'static str)>>) -> section::Header<'_> {
+    let name = section::Name(Cow::Borrowed(name.into()));
     if let Some((separator, subsection_name)) = subsection.into() {
-        ParsedSectionHeader {
+        section::Header {
             name,
             separator: Some(Cow::Borrowed(separator.into())),
             subsection_name: Some(Cow::Borrowed(subsection_name.into())),
         }
     } else {
-        ParsedSectionHeader {
+        section::Header {
             name,
             separator: None,
             subsection_name: None,
@@ -27,7 +24,7 @@ pub fn section_header(
 }
 
 fn name(name: &'static str) -> Event<'static> {
-    Event::Key(Key(Cow::Borrowed(name.into())))
+    Event::SectionKey(section::Key(Cow::Borrowed(name.into())))
 }
 
 fn value(value: &'static str) -> Event<'static> {

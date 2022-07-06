@@ -52,21 +52,21 @@ pub(crate) mod util {
 
     use std::borrow::Cow;
 
-    use crate::parse::{Event, Key, ParsedComment, ParsedSectionHeader};
+    use crate::parse::{section, Event, ParsedComment};
 
     pub fn section_header(
         name: &str,
         subsection: impl Into<Option<(&'static str, &'static str)>>,
-    ) -> ParsedSectionHeader<'_> {
+    ) -> section::Header<'_> {
         let name = name.into();
         if let Some((separator, subsection_name)) = subsection.into() {
-            ParsedSectionHeader {
+            section::Header {
                 name,
                 separator: Some(Cow::Borrowed(separator.into())),
                 subsection_name: Some(Cow::Borrowed(subsection_name.into())),
             }
         } else {
-            ParsedSectionHeader {
+            section::Header {
                 name,
                 separator: None,
                 subsection_name: None,
@@ -75,7 +75,7 @@ pub(crate) mod util {
     }
 
     pub(crate) fn name_event(name: &'static str) -> Event<'static> {
-        Event::Key(Key(Cow::Borrowed(name.into())))
+        Event::SectionKey(section::Key(Cow::Borrowed(name.into())))
     }
 
     pub(crate) fn value_event(value: &'static str) -> Event<'static> {

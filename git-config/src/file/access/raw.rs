@@ -4,7 +4,7 @@ use std::{borrow::Cow, collections::HashMap};
 use crate::{
     file::{EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size},
     lookup,
-    parse::{Event, Key},
+    parse::{section, Event},
     File,
 };
 
@@ -32,7 +32,7 @@ impl<'a> File<'a> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
         // the "last one wins" resolution strategy by `git-config`).
-        let key = Key(Cow::<BStr>::Borrowed(key.into()));
+        let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
         for section_id in self
             .section_ids_by_name_and_subname(section_name, subsection_name)?
             .iter()
@@ -68,7 +68,7 @@ impl<'a> File<'a> {
         key: &'lookup str,
     ) -> Result<MutableValue<'_, 'lookup, 'a>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
-        let key = Key(Cow::<BStr>::Borrowed(key.into()));
+        let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
         for section_id in section_ids.iter().rev() {
             let mut size = Size(0);
@@ -84,7 +84,7 @@ impl<'a> File<'a> {
                 .enumerate()
             {
                 match event {
-                    Event::Key(event_key) if *event_key == key => {
+                    Event::SectionKey(event_key) if *event_key == key => {
                         found_key = true;
                         size = Size(1);
                         index = Index(i);
@@ -171,7 +171,7 @@ impl<'a> File<'a> {
                 self.sections
                     .get(&section_id)
                     .expect("sections does not have section id from section ids")
-                    .values(&Key(Cow::<BStr>::Borrowed(key.into())))
+                    .values(&section::Key(Cow::<BStr>::Borrowed(key.into())))
                     .iter()
                     .cloned(),
             );
@@ -247,7 +247,7 @@ impl<'a> File<'a> {
         key: &'lookup str,
     ) -> Result<MutableMultiValue<'_, 'lookup, 'a>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
-        let key = Key(Cow::<BStr>::Borrowed(key.into()));
+        let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
         let mut offsets = HashMap::new();
         let mut entries = vec![];
@@ -265,7 +265,7 @@ impl<'a> File<'a> {
                 .enumerate()
             {
                 match event {
-                    Event::Key(event_key) if *event_key == key => {
+                    Event::SectionKey(event_key) if *event_key == key => {
                         found_key = true;
                         offset_list.push(i - last_boundary);
                         offset_index += 1;

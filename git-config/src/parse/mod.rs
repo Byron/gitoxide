@@ -86,10 +86,10 @@ use std::{borrow::Cow, hash::Hash};
 /// non-significant events that occur in addition to the ones you may expect:
 ///
 /// ```
-/// # use git_config::parse::{Event, ParsedSectionHeader, State, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, State, section};
 /// # use std::borrow::Cow;
-/// # let section_header = ParsedSectionHeader {
-/// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
+/// # let section_header = section::Header {
+/// #   name: section::Name(Cow::Borrowed("core".into())),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
@@ -98,7 +98,7 @@ use std::{borrow::Cow, hash::Hash};
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
-/// Event::Key(Key(Cow::Borrowed("autocrlf".into()))),
+/// Event::SectionKey(section::Key(Cow::Borrowed("autocrlf".into()))),
 /// Event::Whitespace(Cow::Borrowed(" ".into())),
 /// Event::KeyValueSeparator,
 /// Event::Whitespace(Cow::Borrowed(" ".into())),
@@ -125,10 +125,10 @@ use std::{borrow::Cow, hash::Hash};
 /// which means that the corresponding event won't appear either:
 ///
 /// ```
-/// # use git_config::parse::{Event, ParsedSectionHeader, State, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, State, section};
 /// # use std::borrow::Cow;
-/// # let section_header = ParsedSectionHeader {
-/// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
+/// # let section_header = section::Header {
+/// #   name: section::Name(Cow::Borrowed("core".into())),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
@@ -137,7 +137,7 @@ use std::{borrow::Cow, hash::Hash};
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
-/// Event::Key(Key(Cow::Borrowed("autocrlf".into()))),
+/// Event::SectionKey(section::Key(Cow::Borrowed("autocrlf".into()))),
 /// Event::Value(Cow::Borrowed("".into())),
 /// # ]);
 /// ```
@@ -159,10 +159,10 @@ use std::{borrow::Cow, hash::Hash};
 /// relevant event stream emitted is thus emitted as:
 ///
 /// ```
-/// # use git_config::parse::{Event, ParsedSectionHeader, State, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, State, section};
 /// # use std::borrow::Cow;
-/// # let section_header = ParsedSectionHeader {
-/// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
+/// # let section_header = section::Header {
+/// #   name: section::Name(Cow::Borrowed("core".into())),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
@@ -170,11 +170,11 @@ use std::{borrow::Cow, hash::Hash};
 /// # assert_eq!(State::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::Key(Key(Cow::Borrowed("autocrlf".into()))),
+/// Event::SectionKey(section::Key(Cow::Borrowed("autocrlf".into()))),
 /// Event::KeyValueSeparator,
 /// Event::Value(Cow::Borrowed(r#"true"""#.into())),
 /// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::Key(Key(Cow::Borrowed("filemode".into()))),
+/// Event::SectionKey(section::Key(Cow::Borrowed("filemode".into()))),
 /// Event::KeyValueSeparator,
 /// Event::Value(Cow::Borrowed(r#"fa"lse""#.into())),
 /// # ]);
@@ -196,10 +196,10 @@ use std::{borrow::Cow, hash::Hash};
 /// split value accordingly:
 ///
 /// ```
-/// # use git_config::parse::{Event, ParsedSectionHeader, State, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, State, section};
 /// # use std::borrow::Cow;
-/// # let section_header = ParsedSectionHeader {
-/// #   name: SectionHeaderName(Cow::Borrowed("some-section".into())),
+/// # let section_header = section::Header {
+/// #   name: section::Name(Cow::Borrowed("some-section".into())),
 /// #   separator: None,
 /// #   subsection_name: None,
 /// # };
@@ -207,7 +207,7 @@ use std::{borrow::Cow, hash::Hash};
 /// # assert_eq!(State::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::Key(Key(Cow::Borrowed("file".into()))),
+/// Event::SectionKey(section::Key(Cow::Borrowed("file".into()))),
 /// Event::KeyValueSeparator,
 /// Event::ValueNotDone(Cow::Borrowed("a".into())),
 /// Event::Newline(Cow::Borrowed("\n".into())),
@@ -223,7 +223,7 @@ use std::{borrow::Cow, hash::Hash};
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct State<'a> {
     frontmatter: Vec<Event<'a>>,
-    sections: Vec<ParsedSection<'a>>,
+    sections: Vec<Section<'a>>,
 }
 
 mod state;
@@ -245,10 +245,10 @@ pub enum Event<'a> {
     /// at the beginning.
     Comment(ParsedComment<'a>),
     /// A section header containing the section name and a subsection, if it
-    /// exists.
-    SectionHeader(ParsedSectionHeader<'a>),
-    /// A name to a value in a section.
-    Key(Key<'a>),
+    /// exists, like `remote "origin"`.
+    SectionHeader(section::Header<'a>),
+    /// A name to a value in a section, like `url` in `remote.origin.url`.
+    SectionKey(section::Key<'a>),
     /// A completed value. This may be any string, including the empty string,
     /// if an implicit boolean value is used. Note that these values may contain
     /// spaces and any special character. This value is also unprocessed, so it
@@ -278,36 +278,15 @@ mod event;
 
 /// A parsed section containing the header and the section events.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct ParsedSection<'a> {
+pub struct Section<'a> {
     /// The section name and subsection name, if any.
-    pub section_header: ParsedSectionHeader<'a>,
+    pub section_header: section::Header<'a>,
     /// The syntactic events found in this section.
     pub events: Vec<Event<'a>>,
 }
 
-/// A parsed section header, containing a name and optionally a subsection name.
 ///
-/// Note that section headers must be parsed as valid ASCII, and thus all valid
-/// instances must also necessarily be valid UTF-8, which is why we use a
-/// [`str`] instead of [`[u8]`].
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct ParsedSectionHeader<'a> {
-    /// The name of the header.
-    pub name: SectionHeaderName<'a>,
-    /// The separator used to determine if the section contains a subsection.
-    /// This is either a period `.` or a string of whitespace. Note that
-    /// reconstruction of subsection format is dependent on this value. If this
-    /// is all whitespace, then the subsection name needs to be surrounded by
-    /// quotes to have perfect reconstruction.
-    pub separator: Option<Cow<'a, BStr>>,
-    /// The subsection name without quotes if any exist.
-    pub subsection_name: Option<Cow<'a, BStr>>,
-}
-
-mod section;
-
-mod types;
-pub use types::{Key, SectionHeaderName};
+pub mod section;
 
 /// A parsed comment event containing the comment marker and comment.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
