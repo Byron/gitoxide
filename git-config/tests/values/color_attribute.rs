@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use git_config::values::ColorAttribute;
+use git_config::value::ColorAttribute;
 
 #[test]
 fn non_inverted() {

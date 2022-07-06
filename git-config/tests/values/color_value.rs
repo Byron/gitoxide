@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use git_config::values::ColorValue;
+use git_config::value::ColorValue;
 
 #[test]
 fn non_bright() {

@@ -27,3 +27,6 @@ pub mod parse {
         }
     }
 }
+
+mod color;
+pub use color::{Color, ColorAttribute, ColorValue};

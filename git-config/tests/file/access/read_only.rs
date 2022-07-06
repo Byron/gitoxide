@@ -1,5 +1,6 @@
 use crate::file::cow_str;
 use bstr::BStr;
+use git_config::value::{Color, ColorAttribute, ColorValue};
 use git_config::{
     values::{Boolean, TrueVariant, *},
     File,
