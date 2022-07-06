@@ -1,8 +1,14 @@
+mod string;
+pub use string::String;
+
 mod color;
 pub use color::{Color, ColorAttribute, ColorValue};
 
 mod integer;
 pub use integer::{Integer, IntegerSuffix};
+
+mod boolean;
+pub use boolean::{Boolean, TrueVariant};
 
 pub mod parse {
     use bstr::BString;

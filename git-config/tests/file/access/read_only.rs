@@ -1,10 +1,7 @@
 use crate::file::cow_str;
 use bstr::BStr;
-use git_config::value::{Color, ColorAttribute, ColorValue, Integer, IntegerSuffix};
-use git_config::{
-    values::{Boolean, String, TrueVariant},
-    File,
-};
+use git_config::value::{Boolean, Color, ColorAttribute, ColorValue, Integer, IntegerSuffix, String, TrueVariant};
+use git_config::File;
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
 /// Asserts we can cast into all variants of our type

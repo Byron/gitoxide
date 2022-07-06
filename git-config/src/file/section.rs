@@ -11,7 +11,7 @@ use crate::{
     file::Index,
     lookup,
     parser::{Event, Key},
-    values::{normalize_bstring, normalize_cow},
+    values::{normalize, normalize_bstring},
 };
 
 /// A opaque type that represents a mutable reference to a section.
@@ -57,7 +57,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
 
                     if values.len() == 1 {
                         let value = values.pop().expect("vec is non-empty but popped to empty value");
-                        return Some((k, normalize_cow(value)));
+                        return Some((k, normalize(value)));
                     }
 
                     return Some((
@@ -191,7 +191,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         }
 
         latest_value
-            .map(normalize_cow)
+            .map(normalize)
             .or_else(|| partial_value.map(normalize_bstring))
             .ok_or(lookup::existing::Error::KeyMissing)
     }
@@ -293,7 +293,7 @@ impl<'event> SectionBody<'event> {
                 Event::Value(v) if found_key => {
                     found_key = false;
                     // Clones the Cow, doesn't copy underlying value if borrowed
-                    values.push(normalize_cow(v.clone()));
+                    values.push(normalize(v.clone()));
                     partial_value = None;
                 }
                 Event::ValueNotDone(v) if found_key => {
@@ -431,7 +431,7 @@ impl<'event> Iterator for SectionBodyIter<'event> {
             }
         }
 
-        key.zip(value.map(normalize_cow))
+        key.zip(value.map(normalize))
     }
 }
 
