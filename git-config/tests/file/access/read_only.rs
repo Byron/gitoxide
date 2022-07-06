@@ -1,8 +1,8 @@
 use crate::file::cow_str;
 use bstr::BStr;
-use git_config::value::{Color, ColorAttribute, ColorValue};
+use git_config::value::{Color, ColorAttribute, ColorValue, Integer, IntegerSuffix};
 use git_config::{
-    values::{Boolean, TrueVariant, *},
+    values::{Boolean, String, TrueVariant},
     File,
 };
 use std::{borrow::Cow, convert::TryFrom, error::Error};

@@ -1,3 +1,9 @@
+mod color;
+pub use color::{Color, ColorAttribute, ColorValue};
+
+mod integer;
+pub use integer::{Integer, IntegerSuffix};
+
 pub mod parse {
     use bstr::BString;
 
@@ -27,6 +33,3 @@ pub mod parse {
         }
     }
 }
-
-mod color;
-pub use color::{Color, ColorAttribute, ColorValue};

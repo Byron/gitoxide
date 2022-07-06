@@ -19,7 +19,7 @@ impl<'a> File<'a> {
     ///
     /// ```
     /// # use git_config::File;
-    /// # use git_config::values::{Integer, Boolean};
+    /// # use git_config::value::{Integer, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -76,7 +76,7 @@ impl<'a> File<'a> {
     ///
     /// ```
     /// # use git_config::File;
-    /// # use git_config::values::{Integer, String, Boolean, TrueVariant};
+    /// # use git_config::value::{Integer, String, Boolean, TrueVariant};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -160,7 +160,7 @@ impl<'a> File<'a> {
     ///
     /// ```
     /// # use git_config::File;
-    /// # use git_config::values::{Integer, Boolean, TrueVariant};
+    /// # use git_config::value::{Integer, Boolean, TrueVariant};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"

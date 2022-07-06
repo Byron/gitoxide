@@ -51,7 +51,7 @@ impl<'a> File<'a> {
         key: &str,
     ) -> Option<Result<i64, value::parse::Error>> {
         let int = self.raw_value(section_name, subsection_name, key).ok()?;
-        Some(values::Integer::try_from(int.as_ref()).and_then(|b| {
+        Some(value::Integer::try_from(int.as_ref()).and_then(|b| {
             b.to_decimal()
                 .ok_or_else(|| value::parse::Error::new("Integer overflow", int.into_owned()))
         }))
@@ -78,7 +78,7 @@ impl<'a> File<'a> {
                 values
                     .into_iter()
                     .map(|v| {
-                        values::Integer::try_from(v.as_ref()).and_then(|int| {
+                        value::Integer::try_from(v.as_ref()).and_then(|int| {
                             int.to_decimal()
                                 .ok_or_else(|| value::parse::Error::new("Integer overflow", v.into_owned()))
                         })
