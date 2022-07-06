@@ -130,7 +130,7 @@ mod types {
     macro_rules! generate_case_insensitive {
         ($name:ident, $cow_inner_type:ty, $comment:literal) => {
             #[doc = $comment]
-            #[derive(Clone, Eq, Ord, Debug, Default)]
+            #[derive(Clone, Eq, Debug, Default)]
             pub struct $name<'a>(pub std::borrow::Cow<'a, $cow_inner_type>);
 
             impl $name<'_> {
@@ -166,12 +166,17 @@ mod types {
                 }
             }
 
-            // TODO: compare without lowercase conversion
             impl PartialOrd for $name<'_> {
                 fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-                    self.0
-                        .to_ascii_lowercase()
-                        .partial_cmp(&other.0.to_ascii_lowercase())
+                    self.cmp(other).into()
+                }
+            }
+
+            impl Ord for $name<'_> {
+                fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+                    let a = self.0.iter().map(|c| c.to_ascii_lowercase());
+                    let b = other.0.iter().map(|c| c.to_ascii_lowercase());
+                    a.cmp(b)
                 }
             }
 
@@ -213,5 +218,33 @@ mod types {
         bstr::BStr,
         "Wrapper struct for key names, like `path` in `include.path`, since keys are case-insensitive."
     );
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use std::cmp::Ordering;
+
+        #[test]
+        fn case_insentive_eq() {
+            assert_eq!(Key::from("aBc"), Key::from("AbC"));
+        }
+
+        #[test]
+        fn case_insentive_ord() {
+            assert_eq!(Key::from("a").cmp(&Key::from("a")), Ordering::Equal);
+            assert_eq!(Key::from("aBc").cmp(&Key::from("AbC")), Ordering::Equal);
+        }
+
+        #[test]
+        fn case_insentive_hash() {
+            fn calculate_hash<T: std::hash::Hash>(t: T) -> u64 {
+                use std::hash::Hasher;
+                let mut s = std::collections::hash_map::DefaultHasher::new();
+                t.hash(&mut s);
+                s.finish()
+            }
+            assert_eq!(calculate_hash(Key::from("aBc")), calculate_hash(Key::from("AbC")));
+        }
+    }
 }
 pub use types::{Key, Name};
