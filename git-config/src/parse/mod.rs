@@ -3,8 +3,8 @@
 //! explicit reason to work with events instead.
 //!
 //! The general workflow for interacting with this is to use one of the
-//! `parse_from_*` function variants. These will return a [`Parser`] on success,
-//! which can be converted into an [`Event`] iterator. The [`Parser`] also has
+//! `parse_from_*` function variants. These will return a [`State`] on success,
+//! which can be converted into an [`Event`] iterator. The [`State`] also has
 //! additional methods for accessing leading comments or events by section.
 //!
 //! [`File`]: crate::File
@@ -86,7 +86,7 @@ use std::{borrow::Cow, hash::Hash};
 /// non-significant events that occur in addition to the ones you may expect:
 ///
 /// ```
-/// # use git_config::parse::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, ParsedSectionHeader, State, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
@@ -94,7 +94,7 @@ use std::{borrow::Cow, hash::Hash};
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf = input";
-/// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(State::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
@@ -125,7 +125,7 @@ use std::{borrow::Cow, hash::Hash};
 /// which means that the corresponding event won't appear either:
 ///
 /// ```
-/// # use git_config::parse::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, ParsedSectionHeader, State, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
@@ -133,7 +133,7 @@ use std::{borrow::Cow, hash::Hash};
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf";
-/// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(State::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
@@ -159,7 +159,7 @@ use std::{borrow::Cow, hash::Hash};
 /// relevant event stream emitted is thus emitted as:
 ///
 /// ```
-/// # use git_config::parse::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, ParsedSectionHeader, State, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
@@ -167,7 +167,7 @@ use std::{borrow::Cow, hash::Hash};
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\nautocrlf=true\"\"\nfilemode=fa\"lse\"";
-/// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(State::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Key(Key(Cow::Borrowed("autocrlf".into()))),
@@ -196,7 +196,7 @@ use std::{borrow::Cow, hash::Hash};
 /// split value accordingly:
 ///
 /// ```
-/// # use git_config::parse::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, ParsedSectionHeader, State, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: SectionHeaderName(Cow::Borrowed("some-section".into())),
@@ -204,7 +204,7 @@ use std::{borrow::Cow, hash::Hash};
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[some-section]\nfile=a\\\n    c";
-/// # assert_eq!(parse_from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(State::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Key(Key(Cow::Borrowed("file".into()))),
@@ -221,84 +221,12 @@ use std::{borrow::Cow, hash::Hash};
 /// [`FromStr`]: std::str::FromStr
 /// [`From<&'_ str>`]: std::convert::From
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct Parser<'a> {
+pub struct State<'a> {
     frontmatter: Vec<Event<'a>>,
     sections: Vec<ParsedSection<'a>>,
 }
 
-mod state {
-    use crate::parse::{parse_from_bytes, parse_from_str, Error, Event, ParsedSection, Parser};
-    use std::convert::TryFrom;
-
-    impl<'a> Parser<'a> {
-        /// Returns the leading events (any comments, whitespace, or newlines before
-        /// a section) from the parser. Consider [`Parser::take_frontmatter`] if
-        /// you need an owned copy only once. If that function was called, then this
-        /// will always return an empty slice.
-        #[must_use]
-        pub fn frontmatter(&self) -> &[Event<'a>] {
-            &self.frontmatter
-        }
-
-        /// Takes the leading events (any comments, whitespace, or newlines before
-        /// a section) from the parser. Subsequent calls will return an empty vec.
-        /// Consider [`Parser::frontmatter`] if you only need a reference to the
-        /// frontmatter
-        pub fn take_frontmatter(&mut self) -> Vec<Event<'a>> {
-            std::mem::take(&mut self.frontmatter)
-        }
-
-        /// Returns the parsed sections from the parser. Consider
-        /// [`Parser::take_sections`] if you need an owned copy only once. If that
-        /// function was called, then this will always return an empty slice.
-        #[must_use]
-        pub fn sections(&self) -> &[ParsedSection<'a>] {
-            &self.sections
-        }
-
-        /// Takes the parsed sections from the parser. Subsequent calls will return
-        /// an empty vec. Consider [`Parser::sections`] if you only need a reference
-        /// to the comments.
-        pub fn take_sections(&mut self) -> Vec<ParsedSection<'a>> {
-            let mut to_return = vec![];
-            std::mem::swap(&mut self.sections, &mut to_return);
-            to_return
-        }
-
-        /// Consumes the parser to produce a Vec of Events.
-        #[must_use]
-        pub fn into_vec(self) -> Vec<Event<'a>> {
-            self.into_iter().collect()
-        }
-
-        /// Consumes the parser to produce an iterator of Events.
-        #[must_use = "iterators are lazy and do nothing unless consumed"]
-        #[allow(clippy::should_implement_trait)]
-        pub fn into_iter(self) -> impl Iterator<Item = Event<'a>> + std::iter::FusedIterator {
-            self.frontmatter
-                .into_iter()
-                .chain(self.sections.into_iter().flat_map(|section| {
-                    std::iter::once(Event::SectionHeader(section.section_header)).chain(section.events)
-                }))
-        }
-    }
-
-    impl<'a> TryFrom<&'a str> for Parser<'a> {
-        type Error = Error<'a>;
-
-        fn try_from(value: &'a str) -> Result<Self, Self::Error> {
-            parse_from_str(value)
-        }
-    }
-
-    impl<'a> TryFrom<&'a [u8]> for Parser<'a> {
-        type Error = Error<'a>;
-
-        fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
-            parse_from_bytes(value)
-        }
-    }
-}
+mod state;
 
 /// Syntactic events that occurs in the config. Despite all these variants
 /// holding a [`Cow`] instead over a simple reference, the parser will only emit
@@ -417,7 +345,6 @@ pub enum ParserOrIoError<'a> {
 mod error;
 
 mod nom;
-pub use self::nom::{parse_from_bytes, parse_from_bytes_owned, parse_from_path, parse_from_str};
 
 #[cfg(test)]
 pub(crate) mod tests;

@@ -2,9 +2,7 @@ use std::path::Path;
 
 use crate::{
     file::{from_paths, resolve_includes},
-    parse,
-    parse::parse_from_path,
-    File,
+    parse, File,
 };
 
 impl<'a> File<'a> {
@@ -21,7 +19,7 @@ impl<'a> File<'a> {
     /// Returns an error if there was an IO error or if the file wasn't a valid
     /// git-config file.
     pub fn at<P: AsRef<Path>>(path: P) -> Result<Self, parse::ParserOrIoError<'static>> {
-        parse_from_path(path).map(Self::from)
+        parse::State::from_path(path).map(Self::from)
     }
 
     /// Constructs a `git-config` file from the provided paths in the order provided.

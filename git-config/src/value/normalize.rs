@@ -11,7 +11,7 @@ use bstr::{BStr, BString};
 /// the value.
 ///
 /// This is the function used to normalize raw values from higher level
-/// abstractions over the [`parser`] implementation. Generally speaking these
+/// abstractions. Generally speaking these
 /// high level abstractions will handle normalization for you, and you do not
 /// need to call this yourself. However, if you're directly handling events
 /// from the parser, you may want to use this to help with value interpretation.
@@ -56,8 +56,6 @@ use bstr::{BStr, BString};
 /// # use git_config::value::normalize_bstr;
 /// assert_eq!(normalize_bstr(r#"hello "world\"""#), Cow::<BStr>::Owned(BString::from(r#"hello world""#)));
 /// ```
-///
-/// [`parser`]: crate::parse::Parser
 #[must_use]
 pub fn normalize(input: Cow<'_, BStr>) -> Cow<'_, BStr> {
     let size = input.len();

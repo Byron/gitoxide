@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use git_config::parse::{parse_from_str, Event, Key, ParsedSectionHeader, SectionHeaderName};
+use git_config::parse::{Event, Key, ParsedSectionHeader, SectionHeaderName, State};
 
 pub fn section_header_event(name: &str, subsection: impl Into<Option<(&'static str, &'static str)>>) -> Event<'_> {
     Event::SectionHeader(section_header(name, subsection))
@@ -74,7 +74,7 @@ fn personal_config() {
         defaultBranch = master"#;
 
     assert_eq!(
-        parse_from_str(config)
+        State::from_str(config)
             .unwrap()
             .into_vec(),
         vec![
@@ -189,13 +189,13 @@ fn personal_config() {
 
 #[test]
 fn parse_empty() {
-    assert_eq!(parse_from_str("").unwrap().into_vec(), vec![]);
+    assert_eq!(State::from_str("").unwrap().into_vec(), vec![]);
 }
 
 #[test]
 fn parse_whitespace() {
     assert_eq!(
-        parse_from_str("\n   \n \n").unwrap().into_vec(),
+        State::from_str("\n   \n \n").unwrap().into_vec(),
         vec![newline(), whitespace("   "), newline(), whitespace(" "), newline()]
     )
 }
@@ -203,7 +203,7 @@ fn parse_whitespace() {
 #[test]
 fn newline_events_are_merged() {
     assert_eq!(
-        parse_from_str("\n\n\n\n\n").unwrap().into_vec(),
+        State::from_str("\n\n\n\n\n").unwrap().into_vec(),
         vec![newline_custom("\n\n\n\n\n")]
     );
 }
@@ -212,23 +212,23 @@ fn newline_events_are_merged() {
 fn error() {
     let input = "[a_b]\n c=d";
     assert_eq!(
-        parse_from_str(input).unwrap_err().to_string(),
+        State::from_str(input).unwrap_err().to_string(),
         "Got an unexpected token on line 1 while trying to parse a section header: '[a_b]\n c=d'",
         "underscores in section names aren't allowed and will be rejected by git"
     );
     let input = "[core] a=b\n 4a=3";
     assert_eq!(
-        parse_from_str(input).unwrap_err().to_string(),
+        State::from_str(input).unwrap_err().to_string(),
         "Got an unexpected token on line 2 while trying to parse a config name: '4a=3'"
     );
     let input = "[core] a=b\n =3";
     assert_eq!(
-        parse_from_str(input).unwrap_err().to_string(),
+        State::from_str(input).unwrap_err().to_string(),
         "Got an unexpected token on line 2 while trying to parse a config name: '=3'"
     );
     let input = "[core";
     assert_eq!(
-        parse_from_str(input).unwrap_err().to_string(),
+        State::from_str(input).unwrap_err().to_string(),
         "Got an unexpected token on line 1 while trying to parse a section header: '[core'"
     );
 }

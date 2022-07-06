@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use git_config::{parse::Parser, File};
+use git_config::{parse::State, File};
 
 fn git_config(c: &mut Criterion) {
     c.bench_function("GitConfig large config file", |b| {
@@ -11,7 +11,7 @@ fn git_config(c: &mut Criterion) {
 
 fn parser(c: &mut Criterion) {
     c.bench_function("Parser large config file", |b| {
-        b.iter(|| Parser::try_from(black_box(CONFIG_FILE)).unwrap())
+        b.iter(|| State::try_from(black_box(CONFIG_FILE)).unwrap())
     });
 }
 

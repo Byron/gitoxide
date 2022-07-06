@@ -1,9 +1,6 @@
-use crate::parse::{
-    Error, Event, Key, ParsedComment, ParsedSection, ParsedSectionHeader, Parser, ParserOrIoError, SectionHeaderName,
-};
+use crate::parse::{Error, Event, Key, ParsedComment, ParsedSection, ParsedSectionHeader, SectionHeaderName, State};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
-use std::io::Read;
 
 use crate::parse::error::ParserNode;
 use nom::{
@@ -20,42 +17,6 @@ use nom::{
     IResult,
 };
 
-/// Parses a git config located at the provided path. On success, returns a
-/// [`Parser`] that provides methods to accessing leading comments and sections
-/// of a `git-config` file and can be converted into an iterator of [`Event`]
-/// for higher level processing.
-///
-/// Note that since we accept a path rather than a reference to the actual
-/// bytes, this function is _not_ zero-copy, as the Parser must own (and thus
-/// copy) the bytes that it reads from. Consider one of the other variants if
-/// performance is a concern.
-///
-/// # Errors
-///
-/// Returns an error if there was an IO error or the read file is not a valid
-/// `git-config` This generally is due to either invalid names or if there's
-/// extraneous data succeeding valid `git-config` data.
-pub fn parse_from_path<P: AsRef<std::path::Path>>(path: P) -> Result<Parser<'static>, ParserOrIoError<'static>> {
-    let mut bytes = vec![];
-    let mut file = std::fs::File::open(path)?;
-    file.read_to_end(&mut bytes)?;
-    parse_from_bytes_owned(&bytes).map_err(ParserOrIoError::Parser)
-}
-
-/// Attempt to zero-copy parse the provided `&str`. On success, returns a
-/// [`Parser`] that provides methods to accessing leading comments and sections
-/// of a `git-config` file and can be converted into an iterator of [`Event`]
-/// for higher level processing.
-///
-/// # Errors
-///
-/// Returns an error if the string provided is not a valid `git-config`.
-/// This generally is due to either invalid names or if there's extraneous
-/// data succeeding valid `git-config` data.
-pub fn parse_from_str(input: &str) -> Result<Parser<'_>, Error<'_>> {
-    parse_from_bytes(input.as_bytes())
-}
-
 /// Attempt to zero-copy parse the provided bytes. On success, returns a
 /// [`Parser`] that provides methods to accessing leading comments and sections
 /// of a `git-config` file and can be converted into an iterator of [`Event`]
@@ -67,7 +28,7 @@ pub fn parse_from_str(input: &str) -> Result<Parser<'_>, Error<'_>> {
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 #[allow(clippy::shadow_unrelated)]
-pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error<'_>> {
+pub fn from_bytes(input: &[u8]) -> Result<State<'_>, Error<'_>> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
@@ -86,7 +47,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error<'_>> {
     .expect("many0(alt(...)) panicked. Likely a bug in one of the children parsers.");
 
     if i.is_empty() {
-        return Ok(Parser {
+        return Ok(State {
             frontmatter,
             sections: vec![],
         });
@@ -119,7 +80,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error<'_>> {
         });
     }
 
-    Ok(Parser { frontmatter, sections })
+    Ok(State { frontmatter, sections })
 }
 
 /// Parses the provided bytes, returning an [`Parser`] that contains allocated
@@ -134,7 +95,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error<'_>> {
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 #[allow(clippy::shadow_unrelated)]
-pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'static>> {
+pub fn from_bytes_owned(input: &[u8]) -> Result<State<'static>, Error<'static>> {
     // FIXME: This is duplication is necessary until comment, take_spaces, and take_newlines
     // accept cows instead, since we don't want to unnecessarily copy the frontmatter
     // events in a hypothetical parse_from_cow function.
@@ -158,7 +119,7 @@ pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'st
     .expect("many0(alt(...)) panicked. Likely a bug in one of the children parsers.");
     let frontmatter = frontmatter.iter().map(Event::to_owned).collect();
     if i.is_empty() {
-        return Ok(Parser {
+        return Ok(State {
             frontmatter,
             sections: vec![],
         });
@@ -191,7 +152,7 @@ pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'st
         });
     }
 
-    Ok(Parser { frontmatter, sections })
+    Ok(State { frontmatter, sections })
 }
 
 fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment<'_>> {

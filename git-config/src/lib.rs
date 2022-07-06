@@ -15,7 +15,7 @@
 //! | Offering      | Description                                         | Zero-copy?        |
 //! | ------------- | --------------------------------------------------- | ----------------- |
 //! | [`File`] | Accelerated wrapper for reading and writing values. | On some reads[^1] |
-//! | [`Parser`]    | Syntactic event emitter for `git-config` files.     | Yes               |
+//! | [`parse::State`]    | Syntactic events for `git-config` files.     | Yes               |
 //! | [`value`]    | Wrappers for `git-config` value types.              | Yes               |
 //!
 //! This crate also exposes efficient value normalization which unescapes
@@ -43,7 +43,7 @@
 //! [`git-config` files]: https://git-scm.com/docs/git-config#_configuration_file
 //! [INI file format]: https://en.wikipedia.org/wiki/INI_file
 //! [`File`]: crate::File
-//! [`Parser`]: crate::parse::Parser
+//! [`parse::State`]: crate::parse::State
 //! [`value`]: crate::value
 //! [`nom`]: https://github.com/Geal/nom
 //!

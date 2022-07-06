@@ -3,7 +3,8 @@ use std::{convert::TryFrom, fmt::Display};
 
 use crate::{
     file::SectionBody,
-    parse::{parse_from_bytes, parse_from_str, Error, Event, Parser},
+    parse,
+    parse::{Error, Event, State},
     File,
 };
 
@@ -11,11 +12,9 @@ impl<'a> TryFrom<&'a str> for File<'a> {
     type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided string into a
-    /// [`File`]. See [`parse_from_str`] for more information.
-    ///
-    /// [`parse_from_str`]: crate::parse::parse_from_str
+    /// [`File`]. See [`State::from_str()`] for more information.
     fn try_from(s: &'a str) -> Result<File<'a>, Self::Error> {
-        parse_from_str(s).map(Self::from)
+        parse::State::from_str(s).map(Self::from)
     }
 }
 
@@ -27,7 +26,7 @@ impl<'a> TryFrom<&'a [u8]> for File<'a> {
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
     fn try_from(value: &'a [u8]) -> Result<File<'a>, Self::Error> {
-        parse_from_bytes(value).map(File::from)
+        parse::State::from_bytes(value).map(File::from)
     }
 }
 
@@ -35,16 +34,14 @@ impl<'a> TryFrom<&'a BString> for File<'a> {
     type Error = Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
-    //// a [`File`]. See [`parse_from_bytes`] for more information.
-    ///
-    /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
+    //// a [`File`]. See [`State::from_bytes()`] for more information.
     fn try_from(value: &'a BString) -> Result<File<'a>, Self::Error> {
-        parse_from_bytes(value.as_ref()).map(File::from)
+        parse::State::from_bytes(value.as_ref()).map(File::from)
     }
 }
 
-impl<'a> From<Parser<'a>> for File<'a> {
-    fn from(parser: Parser<'a>) -> Self {
+impl<'a> From<State<'a>> for File<'a> {
+    fn from(parser: State<'a>) -> Self {
         let mut new_self = Self::default();
 
         // Current section that we're building
