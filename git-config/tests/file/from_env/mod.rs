@@ -18,8 +18,8 @@ impl<'a> Env<'a> {
         }
     }
 
-    pub(crate) fn set(mut self, var: &'a str, value: &'a str) -> Self {
-        env::set_var(var, value);
+    pub(crate) fn set(mut self, var: &'a str, value: impl Into<String>) -> Self {
+        env::set_var(var, value.into());
         self.altered_vars.push(var);
         self
     }

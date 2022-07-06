@@ -1,5 +1,6 @@
 mod util;
 
+use crate::file::from_paths::escape_backslashes;
 use serial_test::serial;
 use util::{assert_section_value, Condition, GitEnv};
 
@@ -84,22 +85,69 @@ fn dot_slash_path_is_replaced_with_directory_containing_the_including_config_fil
 
 #[test]
 #[serial]
-#[ignore]
-fn dot_slash_from_environment_causes_error() {
+fn dot_slash_from_environment_causes_error() -> crate::Result {
     use git_config::file::from_paths;
-    // TODO: figure out how to do this, how do we parse sub-keys? Can git do that even? YES, git can actually!
-    let _env = crate::file::from_env::Env::new()
-        .set("GIT_CONFIG_COUNT", "1")
-        .set("GIT_CONFIG_KEY_0", "includeIf.path")
-        .set("GIT_CONFIG_VALUE_0", "some_git_config");
+    let env = GitEnv::repo_name("worktree")?;
 
-    let res = git_config::File::from_env(from_paths::Options::default());
-    assert!(matches!(
-        res,
-        Err(git_config::file::from_env::Error::FromPathsError(
-            from_paths::Error::MissingConfigPath
-        ))
-    ));
+    {
+        let _environment = crate::file::from_env::Env::new()
+            .set("GIT_CONFIG_COUNT", "1")
+            .set(
+                "GIT_CONFIG_KEY_0",
+                format!("includeIf.gitdir:{}.path", escape_backslashes(env.git_dir())),
+            )
+            .set("GIT_CONFIG_VALUE_0", "./include.path");
+
+        let res = git_config::File::from_env(env.include_options());
+        assert!(
+            matches!(
+                res,
+                Err(git_config::file::from_env::Error::FromPathsError(
+                    from_paths::Error::MissingConfigPath
+                ))
+            ),
+            "this is a failure of resolving the include path, after trying to include it"
+        );
+    }
+
+    let absolute_path = format!(
+        "{}{}include.config",
+        env.home_dir().display(),
+        std::path::MAIN_SEPARATOR
+    );
+    {
+        let _environment = crate::file::from_env::Env::new()
+            .set("GIT_CONFIG_COUNT", "1")
+            .set("GIT_CONFIG_KEY_0", format!("includeIf.gitdir:./worktree/.path"))
+            .set("GIT_CONFIG_VALUE_0", &absolute_path);
+
+        let res = git_config::File::from_env(env.include_options());
+        assert!(
+            matches!(
+                res,
+                Err(git_config::file::from_env::Error::FromPathsError(
+                    from_paths::Error::MissingConfigPath
+                ))
+            ),
+            "here the pattern path tries to be resolved and fails as target config isn't set"
+        );
+    }
+
+    {
+        let _environment = crate::file::from_env::Env::new()
+            .set("GIT_CONFIG_COUNT", "1")
+            .set(
+                "GIT_CONFIG_KEY_0",
+                format!("includeIf.gitdir:{}.path", escape_backslashes(env.git_dir())),
+            )
+            .set("GIT_CONFIG_VALUE_0", absolute_path);
+
+        let res = git_config::File::from_env(env.include_options());
+        dbg!(&res);
+        assert!(res.is_ok(), "missing paths are ignored as before");
+    }
+
+    Ok(())
 }
 
 #[test]
