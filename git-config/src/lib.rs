@@ -59,7 +59,6 @@ pub mod fs;
 pub mod lookup;
 pub mod parser;
 mod permissions;
-/// The future home of the `values` module (TODO).
 pub mod value;
 pub mod values;
 

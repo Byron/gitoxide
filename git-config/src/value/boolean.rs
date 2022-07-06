@@ -129,7 +129,7 @@ impl From<&Boolean<'_>> for BString {
 }
 
 #[cfg(feature = "serde")]
-impl Serialize for Boolean<'_> {
+impl serde::Serialize for Boolean<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -208,7 +208,7 @@ impl<'a, 'b: 'a> From<&'b TrueVariant<'a>> for &'a BStr {
 }
 
 #[cfg(feature = "serde")]
-impl Serialize for TrueVariant<'_> {
+impl serde::Serialize for TrueVariant<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

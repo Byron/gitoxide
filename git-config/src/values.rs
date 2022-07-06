@@ -3,8 +3,6 @@
 use std::borrow::Cow;
 
 use bstr::{BStr, BString};
-#[cfg(feature = "serde")]
-use serde::{Serialize, Serializer};
 
 /// Removes quotes, if any, from the provided inputs. This assumes the input
 /// contains a even number of unescaped quotes, and will unescape escaped

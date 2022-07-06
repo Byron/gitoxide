@@ -51,7 +51,7 @@ impl Display for Color {
 }
 
 #[cfg(feature = "serde")]
-impl Serialize for Color {
+impl serde::Serialize for Color {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -199,7 +199,7 @@ impl Display for ColorValue {
 }
 
 #[cfg(feature = "serde")]
-impl Serialize for ColorValue {
+impl serde::Serialize for ColorValue {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -318,7 +318,7 @@ impl Display for ColorAttribute {
 }
 
 #[cfg(feature = "serde")]
-impl Serialize for ColorAttribute {
+impl serde::Serialize for ColorAttribute {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

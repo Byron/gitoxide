@@ -62,7 +62,7 @@ impl Display for Integer {
 }
 
 #[cfg(feature = "serde")]
-impl Serialize for Integer {
+impl serde::Serialize for Integer {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -174,7 +174,7 @@ impl Display for IntegerSuffix {
 }
 
 #[cfg(feature = "serde")]
-impl Serialize for IntegerSuffix {
+impl serde::Serialize for IntegerSuffix {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
