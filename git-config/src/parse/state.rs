@@ -53,6 +53,7 @@ impl<'a> State<'a> {
     /// Returns an error if the string provided is not a valid `git-config`.
     /// This generally is due to either invalid names or if there's extraneous
     /// data succeeding valid `git-config` data.
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(input: &'a str) -> Result<State<'a>, Error<'a>> {
         crate::parse::nom::from_bytes(input.as_bytes())
     }
