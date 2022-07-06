@@ -198,8 +198,7 @@ fn gitdir_matches(
         return Ok(true);
     }
 
-    let expanded_git_dir = git_path::realpath(git_path::from_byte_slice(&git_dir), std::env::current_dir().unwrap())?;
-    let expanded_git_dir = git_path::into_bstr(expanded_git_dir);
+    let expanded_git_dir = git_path::into_bstr(git_path::realpath(git_path::from_byte_slice(&git_dir))?);
     Ok(git_glob::wildmatch(
         pattern_path.as_bstr(),
         expanded_git_dir.as_bstr(),

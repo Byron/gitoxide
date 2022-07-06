@@ -60,11 +60,10 @@ impl Condition {
 impl GitEnv {
     pub fn repo_name(repo_name: impl AsRef<Path>) -> crate::Result<Self> {
         let tempdir = tempfile::tempdir()?;
-        let cwd = std::env::current_dir()?;
-        let root_dir = git_path::realpath(tempdir.path(), &cwd)?;
+        let root_dir = git_path::realpath(tempdir.path())?;
         let worktree_dir = root_dir.join(repo_name);
         std::fs::create_dir_all(&worktree_dir)?;
-        let home_dir = git_path::realpath(tempdir.path(), cwd)?;
+        let home_dir = git_path::realpath(tempdir.path())?;
         Ok(Self {
             tempdir,
             root_dir,
