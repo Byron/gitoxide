@@ -11,7 +11,7 @@ pub struct String<'a> {
 impl<'a> From<Cow<'a, BStr>> for String<'a> {
     fn from(c: Cow<'a, BStr>) -> Self {
         String {
-            value: crate::values::normalize(c),
+            value: crate::value::normalize(c),
         }
     }
 }

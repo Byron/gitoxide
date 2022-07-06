@@ -1,3 +1,6 @@
+mod normalize;
+pub use normalize::{normalize, normalize_bstr, normalize_bstring};
+
 mod string;
 pub use string::String;
 

@@ -1,5 +1,5 @@
 use crate::file::cow_str;
-use git_config::values::normalize_bstr;
+use git_config::value::normalize_bstr;
 
 #[test]
 fn not_modified_is_borrowed() {

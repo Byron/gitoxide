@@ -8,7 +8,7 @@ use crate::{
     },
     lookup,
     parser::{Event, Key},
-    values::{normalize_bstr, normalize_bstring},
+    value::{normalize_bstr, normalize_bstring},
 };
 
 /// An intermediate representation of a mutable value obtained from

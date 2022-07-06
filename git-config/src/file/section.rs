@@ -11,7 +11,7 @@ use crate::{
     file::Index,
     lookup,
     parser::{Event, Key},
-    values::{normalize, normalize_bstring},
+    value::{normalize, normalize_bstring},
 };
 
 /// A opaque type that represents a mutable reference to a section.

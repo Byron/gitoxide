@@ -2,7 +2,7 @@ use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
 
-use crate::values::normalize;
+use crate::value::normalize;
 use crate::{value, File};
 
 /// Comfortable API for accessing values
