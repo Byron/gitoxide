@@ -1,0 +1,558 @@
+use crate::parser::{
+    Error, Event, Key, ParsedComment, ParsedSection, ParsedSectionHeader, Parser, ParserOrIoError, SectionHeaderName,
+};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
+use std::borrow::Cow;
+use std::io::Read;
+
+use crate::parser::error::ParserNode;
+use nom::{
+    branch::alt,
+    bytes::complete::{tag, take_till, take_while},
+    character::{
+        complete::{char, one_of},
+        is_space,
+    },
+    combinator::{map, opt},
+    error::{Error as NomError, ErrorKind},
+    multi::{many0, many1},
+    sequence::delimited,
+    IResult,
+};
+
+/// Parses a git config located at the provided path. On success, returns a
+/// [`Parser`] that provides methods to accessing leading comments and sections
+/// of a `git-config` file and can be converted into an iterator of [`Event`]
+/// for higher level processing.
+///
+/// Note that since we accept a path rather than a reference to the actual
+/// bytes, this function is _not_ zero-copy, as the Parser must own (and thus
+/// copy) the bytes that it reads from. Consider one of the other variants if
+/// performance is a concern.
+///
+/// # Errors
+///
+/// Returns an error if there was an IO error or the read file is not a valid
+/// `git-config` This generally is due to either invalid names or if there's
+/// extraneous data succeeding valid `git-config` data.
+pub fn parse_from_path<P: AsRef<std::path::Path>>(path: P) -> Result<Parser<'static>, ParserOrIoError<'static>> {
+    let mut bytes = vec![];
+    let mut file = std::fs::File::open(path)?;
+    file.read_to_end(&mut bytes)?;
+    parse_from_bytes_owned(&bytes).map_err(ParserOrIoError::Parser)
+}
+
+/// Attempt to zero-copy parse the provided `&str`. On success, returns a
+/// [`Parser`] that provides methods to accessing leading comments and sections
+/// of a `git-config` file and can be converted into an iterator of [`Event`]
+/// for higher level processing.
+///
+/// # Errors
+///
+/// Returns an error if the string provided is not a valid `git-config`.
+/// This generally is due to either invalid names or if there's extraneous
+/// data succeeding valid `git-config` data.
+pub fn parse_from_str(input: &str) -> Result<Parser<'_>, Error<'_>> {
+    parse_from_bytes(input.as_bytes())
+}
+
+/// Attempt to zero-copy parse the provided bytes. On success, returns a
+/// [`Parser`] that provides methods to accessing leading comments and sections
+/// of a `git-config` file and can be converted into an iterator of [`Event`]
+/// for higher level processing.
+///
+/// # Errors
+///
+/// Returns an error if the string provided is not a valid `git-config`.
+/// This generally is due to either invalid names or if there's extraneous
+/// data succeeding valid `git-config` data.
+#[allow(clippy::shadow_unrelated)]
+pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error<'_>> {
+    let bom = unicode_bom::Bom::from(input);
+    let mut newlines = 0;
+    let (i, frontmatter) = many0(alt((
+        map(comment, Event::Comment),
+        map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
+        map(take_newlines, |(newline, counter)| {
+            newlines += counter;
+            Event::Newline(Cow::Borrowed(newline))
+        }),
+    )))(&input[bom.len()..])
+    // I don't think this can panic. many0 errors if the child parser returns
+    // a success where the input was not consumed, but alt will only return Ok
+    // if one of its children succeed. However, all of it's children are
+    // guaranteed to consume something if they succeed, so the Ok(i) == i case
+    // can never occur.
+    .expect("many0(alt(...)) panicked. Likely a bug in one of the children parser.");
+
+    if i.is_empty() {
+        return Ok(Parser {
+            frontmatter,
+            sections: vec![],
+        });
+    }
+
+    let mut node = ParserNode::SectionHeader;
+
+    let maybe_sections = many1(|i| section(i, &mut node))(i);
+    let (i, sections) = maybe_sections.map_err(|_| Error {
+        line_number: newlines,
+        last_attempted_parser: node,
+        parsed_until: i.as_bstr().into(),
+    })?;
+
+    let sections = sections
+        .into_iter()
+        .map(|(section, additional_newlines)| {
+            newlines += additional_newlines;
+            section
+        })
+        .collect();
+
+    // This needs to happen after we collect sections, otherwise the line number
+    // will be off.
+    if !i.is_empty() {
+        return Err(Error {
+            line_number: newlines,
+            last_attempted_parser: node,
+            parsed_until: i.as_bstr().into(),
+        });
+    }
+
+    Ok(Parser { frontmatter, sections })
+}
+
+/// Parses the provided bytes, returning an [`Parser`] that contains allocated
+/// and owned events. This is similar to [`parse_from_bytes`], but performance
+/// is degraded as it requires allocation for every event. However, this permits
+/// the reference bytes to be dropped, allowing the parser to be passed around
+/// without lifetime worries.
+///
+/// # Errors
+///
+/// Returns an error if the string provided is not a valid `git-config`.
+/// This generally is due to either invalid names or if there's extraneous
+/// data succeeding valid `git-config` data.
+#[allow(clippy::shadow_unrelated)]
+pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'static>> {
+    // FIXME: This is duplication is necessary until comment, take_spaces, and take_newlines
+    // accept cows instead, since we don't want to unnecessarily copy the frontmatter
+    // events in a hypothetical parse_from_cow function.
+    let mut newlines = 0;
+    let bom = unicode_bom::Bom::from(input);
+    let (i, frontmatter) = many0(alt((
+        map(comment, Event::Comment),
+        map(take_spaces, |whitespace| {
+            Event::Whitespace(Cow::Borrowed(whitespace.as_bstr()))
+        }),
+        map(take_newlines, |(newline, counter)| {
+            newlines += counter;
+            Event::Newline(Cow::Borrowed(newline.as_bstr()))
+        }),
+    )))(&input[bom.len()..])
+    // I don't think this can panic. many0 errors if the child parser returns
+    // a success where the input was not consumed, but alt will only return Ok
+    // if one of its children succeed. However, all of it's children are
+    // guaranteed to consume something if they succeed, so the Ok(i) == i case
+    // can never occur.
+    .expect("many0(alt(...)) panicked. Likely a bug in one of the children parser.");
+    let frontmatter = frontmatter.iter().map(Event::to_owned).collect();
+    if i.is_empty() {
+        return Ok(Parser {
+            frontmatter,
+            sections: vec![],
+        });
+    }
+
+    let mut node = ParserNode::SectionHeader;
+
+    let maybe_sections = many1(|i| section(i, &mut node))(i);
+    let (i, sections) = maybe_sections.map_err(|_| Error {
+        line_number: newlines,
+        last_attempted_parser: node,
+        parsed_until: Cow::Owned(i.into()),
+    })?;
+
+    let sections = sections
+        .into_iter()
+        .map(|(section, additional_newlines)| {
+            newlines += additional_newlines;
+            section.to_owned()
+        })
+        .collect();
+
+    // This needs to happen after we collect sections, otherwise the line number
+    // will be off.
+    if !i.is_empty() {
+        return Err(Error {
+            line_number: newlines,
+            last_attempted_parser: node,
+            parsed_until: Cow::Owned(i.into()),
+        });
+    }
+
+    Ok(Parser { frontmatter, sections })
+}
+
+fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment<'_>> {
+    let (i, comment_tag) = one_of(";#")(i)?;
+    let (i, comment) = take_till(|c| c == b'\n')(i)?;
+    Ok((
+        i,
+        ParsedComment {
+            comment_tag: comment_tag as u8,
+            comment: Cow::Borrowed(comment.as_bstr()),
+        },
+    ))
+}
+
+#[cfg(test)]
+mod tests;
+
+fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (ParsedSection<'a>, usize)> {
+    let (mut i, section_header) = section_header(i)?;
+
+    let mut newlines = 0;
+    let mut items = vec![];
+
+    // This would usually be a many0(alt(...)), the manual loop allows us to
+    // optimize vec insertions
+    loop {
+        let old_i = i;
+
+        if let Ok((new_i, v)) = take_spaces(i) {
+            if old_i != new_i {
+                i = new_i;
+                items.push(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
+            }
+        }
+
+        if let Ok((new_i, (v, new_newlines))) = take_newlines(i) {
+            if old_i != new_i {
+                i = new_i;
+                newlines += new_newlines;
+                items.push(Event::Newline(Cow::Borrowed(v.as_bstr())));
+            }
+        }
+
+        if let Ok((new_i, _)) = section_body(i, node, &mut items) {
+            if old_i != new_i {
+                i = new_i;
+            }
+        }
+
+        if let Ok((new_i, comment)) = comment(i) {
+            if old_i != new_i {
+                i = new_i;
+                items.push(Event::Comment(comment));
+            }
+        }
+
+        if old_i == i {
+            break;
+        }
+    }
+
+    Ok((
+        i,
+        (
+            ParsedSection {
+                section_header,
+                events: items,
+            },
+            newlines,
+        ),
+    ))
+}
+
+fn section_header(i: &[u8]) -> IResult<&[u8], ParsedSectionHeader<'_>> {
+    let (i, _) = char('[')(i)?;
+    // No spaces must be between section name and section start
+    let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-' || c == b'.')(i)?;
+
+    let name = name.as_bstr();
+    if let Ok((i, _)) = char::<_, NomError<&[u8]>>(']')(i) {
+        // Either section does not have a subsection or using deprecated
+        // subsection syntax at this point.
+        let header = match memchr::memrchr(b'.', name.as_bytes()) {
+            Some(index) => ParsedSectionHeader {
+                name: SectionHeaderName(Cow::Borrowed(name[..index].as_bstr())),
+                separator: name.get(index..=index).map(|s| Cow::Borrowed(s.as_bstr())),
+                subsection_name: name.get(index + 1..).map(|s| Cow::Borrowed(s.as_bstr())),
+            },
+            None => ParsedSectionHeader {
+                name: SectionHeaderName(Cow::Borrowed(name.as_bstr())),
+                separator: None,
+                subsection_name: None,
+            },
+        };
+
+        return Ok((i, header));
+    }
+
+    // Section header must be using modern subsection syntax at this point.
+
+    let (i, whitespace) = take_spaces(i)?;
+    let (i, subsection_name) = delimited(char('"'), opt(sub_section), tag("\"]"))(i)?;
+
+    Ok((
+        i,
+        ParsedSectionHeader {
+            name: SectionHeaderName(Cow::Borrowed(name)),
+            separator: Some(Cow::Borrowed(whitespace)),
+            subsection_name: subsection_name.map(Cow::Owned),
+        },
+    ))
+}
+
+fn sub_section(i: &[u8]) -> IResult<&[u8], BString> {
+    let mut cursor = 0;
+    let mut bytes = i.iter().copied();
+    let mut found_terminator = false;
+    let mut buf = BString::default();
+    while let Some(mut b) = bytes.next() {
+        cursor += 1;
+        if b == b'\n' {
+            return Err(nom::Err::Error(NomError {
+                input: &i[cursor..],
+                code: ErrorKind::NonEmpty,
+            }));
+        }
+        if b == b'"' {
+            found_terminator = true;
+            break;
+        }
+        if b == b'\\' {
+            b = bytes.next().ok_or_else(|| {
+                nom::Err::Error(NomError {
+                    input: &i[cursor..],
+                    code: ErrorKind::NonEmpty,
+                })
+            })?;
+            cursor += 1;
+            if b == b'\n' {
+                return Err(nom::Err::Error(NomError {
+                    input: &i[cursor..],
+                    code: ErrorKind::NonEmpty,
+                }));
+            }
+        }
+        buf.push_byte(b);
+    }
+
+    if !found_terminator {
+        return Err(nom::Err::Error(NomError {
+            input: &i[cursor..],
+            code: ErrorKind::NonEmpty,
+        }));
+    }
+
+    Ok((&i[cursor - 1..], buf))
+}
+
+fn section_body<'a, 'b, 'c>(
+    i: &'a [u8],
+    node: &'b mut ParserNode,
+    items: &'c mut Vec<Event<'a>>,
+) -> IResult<&'a [u8], ()> {
+    // maybe need to check for [ here
+    *node = ParserNode::ConfigName;
+    let (i, name) = config_name(i)?;
+
+    items.push(Event::Key(Key(Cow::Borrowed(name))));
+
+    let (i, whitespace) = opt(take_spaces)(i)?;
+
+    if let Some(whitespace) = whitespace {
+        items.push(Event::Whitespace(Cow::Borrowed(whitespace)));
+    }
+
+    let (i, _) = config_value(i, items)?;
+    Ok((i, ()))
+}
+
+/// Parses the config name of a config pair. Assumes the input has already been
+/// trimmed of any leading whitespace.
+fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
+    if i.is_empty() {
+        return Err(nom::Err::Error(NomError {
+            input: i,
+            code: ErrorKind::NonEmpty,
+        }));
+    }
+
+    if !i[0].is_ascii_alphabetic() {
+        return Err(nom::Err::Error(NomError {
+            input: i,
+            code: ErrorKind::Alpha,
+        }));
+    }
+
+    let (i, v) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-')(i)?;
+    Ok((i, v.as_bstr()))
+}
+
+fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'a [u8], ()> {
+    if let (i, Some(_)) = opt(char('='))(i)? {
+        events.push(Event::KeyValueSeparator);
+        let (i, whitespace) = opt(take_spaces)(i)?;
+        if let Some(whitespace) = whitespace {
+            events.push(Event::Whitespace(Cow::Borrowed(whitespace)));
+        }
+        let (i, _) = value_impl(i, events)?;
+        Ok((i, ()))
+    } else {
+        events.push(Event::Value(Cow::Borrowed("".into())));
+        Ok((i, ()))
+    }
+}
+
+/// Handles parsing of known-to-be values. This function handles both single
+/// line values as well as values that are continuations.
+///
+/// # Errors
+///
+/// Returns an error if an invalid escape was used, if there was an unfinished
+/// quote, or there was an escape but there is nothing left to escape.
+fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'a [u8], ()> {
+    let mut parsed_index: usize = 0;
+    let mut offset: usize = 0;
+
+    let mut was_prev_char_escape_char = false;
+    // This is required to ignore comment markers if they're in a quote.
+    let mut is_in_quotes = false;
+    // Used to determine if we return a Value or Value{Not,}Done
+    let mut partial_value_found = false;
+    let mut index: usize = 0;
+
+    for c in i.iter() {
+        if was_prev_char_escape_char {
+            was_prev_char_escape_char = false;
+            match c {
+                // We're escaping a newline, which means we've found a
+                // continuation.
+                b'\n' => {
+                    partial_value_found = true;
+                    events.push(Event::ValueNotDone(Cow::Borrowed(i[offset..index - 1].as_bstr())));
+                    events.push(Event::Newline(Cow::Borrowed(i[index..=index].as_bstr())));
+                    offset = index + 1;
+                    parsed_index = 0;
+                }
+                b't' | b'\\' | b'n' | b'"' => (),
+                _ => {
+                    return Err(nom::Err::Error(NomError {
+                        input: i,
+                        code: ErrorKind::Escaped,
+                    }));
+                }
+            }
+        } else {
+            match c {
+                b'\n' => {
+                    parsed_index = index;
+                    break;
+                }
+                b';' | b'#' if !is_in_quotes => {
+                    parsed_index = index;
+                    break;
+                }
+                b'\\' => was_prev_char_escape_char = true,
+                b'"' => is_in_quotes = !is_in_quotes,
+                _ => {}
+            }
+        }
+        index += 1;
+    }
+
+    if parsed_index == 0 {
+        if index != 0 {
+            parsed_index = i.len();
+        } else {
+            // Didn't parse anything at all, newline straight away.
+            events.push(Event::Value(Cow::Owned(BString::default())));
+            events.push(Event::Newline(Cow::Borrowed("\n".into())));
+            return Ok((&i[1..], ()));
+        }
+    }
+
+    // Handle incomplete escape
+    if was_prev_char_escape_char {
+        return Err(nom::Err::Error(NomError {
+            input: i,
+            code: ErrorKind::Escaped,
+        }));
+    }
+
+    // Handle incomplete quotes
+    if is_in_quotes {
+        return Err(nom::Err::Error(NomError {
+            input: i,
+            code: ErrorKind::Tag,
+        }));
+    }
+
+    let (i, remainder_value) = {
+        let mut new_index = parsed_index;
+        for index in (offset..parsed_index).rev() {
+            if !i[index].is_ascii_whitespace() {
+                new_index = index + 1;
+                break;
+            }
+        }
+        (&i[new_index..], &i[offset..new_index])
+    };
+
+    if partial_value_found {
+        events.push(Event::ValueDone(Cow::Borrowed(remainder_value.as_bstr())));
+    } else {
+        events.push(Event::Value(Cow::Borrowed(remainder_value.as_bstr())));
+    }
+
+    Ok((i, ()))
+}
+
+fn take_spaces(i: &[u8]) -> IResult<&[u8], &BStr> {
+    let (i, v) = take_while(|c: u8| c.is_ascii() && is_space(c))(i)?;
+    if v.is_empty() {
+        Err(nom::Err::Error(NomError {
+            input: i,
+            code: ErrorKind::Eof,
+        }))
+    } else {
+        Ok((i, v.as_bstr()))
+    }
+}
+
+fn take_newlines(i: &[u8]) -> IResult<&[u8], (&BStr, usize)> {
+    let mut counter = 0;
+    let mut consumed_bytes = 0;
+    let mut next_must_be_newline = false;
+    for b in i.iter().copied() {
+        if !b.is_ascii() {
+            break;
+        };
+        if b == b'\r' {
+            if next_must_be_newline {
+                break;
+            }
+            next_must_be_newline = true;
+            continue;
+        };
+        if b == b'\n' {
+            counter += 1;
+            consumed_bytes += if next_must_be_newline { 2 } else { 1 };
+            next_must_be_newline = false;
+        } else {
+            break;
+        }
+    }
+    let (v, i) = i.split_at(consumed_bytes);
+    if v.is_empty() {
+        Err(nom::Err::Error(NomError {
+            input: i,
+            code: ErrorKind::Eof,
+        }))
+    } else {
+        Ok((i, (v.as_bstr(), counter)))
+    }
+}
