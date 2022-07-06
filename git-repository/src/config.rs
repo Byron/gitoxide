@@ -3,7 +3,7 @@ use crate::{bstr::BString, permission};
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Could not open repository conifguration file")]
-    Open(#[from] git_config::parse::ParserOrIoError<'static>),
+    Open(#[from] git_config::parse::state::from_path::Error),
     #[error("Cannot handle objects formatted as {:?}", .name)]
     UnsupportedObjectFormat { name: crate::bstr::BString },
     #[error("The value for '{}' cannot be empty", .key)]
