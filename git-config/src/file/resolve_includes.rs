@@ -9,7 +9,7 @@ use git_ref::Category;
 use crate::file::from_paths::Options;
 use crate::{
     file::{from_paths, SectionId},
-    parser::Key,
+    parse::Key,
     value, File,
 };
 

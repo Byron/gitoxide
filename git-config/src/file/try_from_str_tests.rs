@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use super::{Cow, HashMap, LookupTreeNode, SectionId};
 use crate::{
     file::SectionBody,
-    parser::{
+    parse::{
         tests::util::{name_event, newline_event, section_header, value_event},
         Event, SectionHeaderName,
     },

@@ -4,7 +4,7 @@ use std::{borrow::Cow, collections::HashMap};
 use crate::{
     file::{EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size},
     lookup,
-    parser::{Event, Key},
+    parse::{Event, Key},
     File,
 };
 

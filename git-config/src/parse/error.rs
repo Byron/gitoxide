@@ -1,4 +1,4 @@
-use crate::parser::{Error, ParserOrIoError};
+use crate::parse::{Error, ParserOrIoError};
 use std::fmt::Display;
 
 /// A list of parsers that parsing can fail on. This is used for pretty-printing

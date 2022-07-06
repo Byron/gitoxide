@@ -1,11 +1,11 @@
-use crate::{parser, value::path::interpolate};
+use crate::{parse, value::path::interpolate};
 
 /// The error returned by [`File::from_paths()`][crate::File::from_paths()] and [`File::from_env_paths()`][crate::File::from_env_paths()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    ParserOrIoError(#[from] parser::ParserOrIoError<'static>),
+    ParserOrIoError(#[from] parse::ParserOrIoError<'static>),
     #[error(transparent)]
     Interpolate(#[from] interpolate::Error),
     #[error("The maximum allowed length {} of the file include chain built by following nested resolve_includes is exceeded", .max_depth)]

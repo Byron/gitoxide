@@ -86,7 +86,7 @@ use std::{borrow::Cow, hash::Hash};
 /// non-significant events that occur in addition to the ones you may expect:
 ///
 /// ```
-/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
@@ -125,7 +125,7 @@ use std::{borrow::Cow, hash::Hash};
 /// which means that the corresponding event won't appear either:
 ///
 /// ```
-/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
@@ -159,7 +159,7 @@ use std::{borrow::Cow, hash::Hash};
 /// relevant event stream emitted is thus emitted as:
 ///
 /// ```
-/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: SectionHeaderName(Cow::Borrowed("core".into())),
@@ -196,7 +196,7 @@ use std::{borrow::Cow, hash::Hash};
 /// split value accordingly:
 ///
 /// ```
-/// # use git_config::parser::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
+/// # use git_config::parse::{Event, ParsedSectionHeader, parse_from_str, SectionHeaderName, Key};
 /// # use std::borrow::Cow;
 /// # let section_header = ParsedSectionHeader {
 /// #   name: SectionHeaderName(Cow::Borrowed("some-section".into())),
@@ -227,7 +227,7 @@ pub struct Parser<'a> {
 }
 
 mod state {
-    use crate::parser::{parse_from_bytes, parse_from_str, Error, Event, ParsedSection, Parser};
+    use crate::parse::{parse_from_bytes, parse_from_str, Error, Event, ParsedSection, Parser};
     use std::convert::TryFrom;
 
     impl<'a> Parser<'a> {

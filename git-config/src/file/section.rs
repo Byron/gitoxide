@@ -10,7 +10,7 @@ use std::{
 use crate::{
     file::Index,
     lookup,
-    parser::{Event, Key},
+    parse::{Event, Key},
     value::{normalize, normalize_bstring},
 };
 

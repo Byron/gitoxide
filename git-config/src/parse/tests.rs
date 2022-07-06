@@ -1,5 +1,5 @@
 mod parse {
-    use crate::parser::{parse_from_bytes, parse_from_bytes_owned};
+    use crate::parse::{parse_from_bytes, parse_from_bytes_owned};
 
     #[test]
     fn parser_skips_bom() {
@@ -25,7 +25,7 @@ mod parse {
 
 #[cfg(test)]
 mod error {
-    use crate::parser::parse_from_str;
+    use crate::parse::parse_from_str;
 
     #[test]
     fn line_no_is_one_indexed() {
@@ -52,7 +52,7 @@ pub(crate) mod util {
 
     use std::borrow::Cow;
 
-    use crate::parser::{Event, Key, ParsedComment, ParsedSectionHeader};
+    use crate::parse::{Event, Key, ParsedComment, ParsedSectionHeader};
 
     pub fn section_header(
         name: &str,

@@ -2,8 +2,8 @@ use std::path::Path;
 
 use crate::{
     file::{from_paths, resolve_includes},
-    parser,
-    parser::parse_from_path,
+    parse,
+    parse::parse_from_path,
     File,
 };
 
@@ -20,7 +20,7 @@ impl<'a> File<'a> {
     ///
     /// Returns an error if there was an IO error or if the file wasn't a valid
     /// git-config file.
-    pub fn at<P: AsRef<Path>>(path: P) -> Result<Self, parser::ParserOrIoError<'static>> {
+    pub fn at<P: AsRef<Path>>(path: P) -> Result<Self, parse::ParserOrIoError<'static>> {
         parse_from_path(path).map(Self::from)
     }
 

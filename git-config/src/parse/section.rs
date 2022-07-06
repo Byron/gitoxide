@@ -1,4 +1,4 @@
-use crate::parser::{Event, ParsedSection, ParsedSectionHeader};
+use crate::parse::{Event, ParsedSection, ParsedSectionHeader};
 use bstr::BString;
 use std::borrow::Cow;
 use std::fmt::Display;

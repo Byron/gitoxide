@@ -7,7 +7,7 @@ use crate::{
         Index, SectionId, Size,
     },
     lookup,
-    parser::{Event, Key},
+    parse::{Event, Key},
     value::{normalize_bstr, normalize_bstring},
 };
 

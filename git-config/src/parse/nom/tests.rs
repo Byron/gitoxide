@@ -2,7 +2,7 @@ use super::*;
 
 mod section_headers {
     use super::section_header;
-    use crate::parser::tests::util::{fully_consumed, section_header as parsed_section_header};
+    use crate::parse::tests::util::{fully_consumed, section_header as parsed_section_header};
 
     #[test]
     fn no_subsection() {
@@ -73,7 +73,7 @@ mod section_headers {
 
 mod config_name {
     use super::config_name;
-    use crate::parser::tests::util::fully_consumed;
+    use crate::parse::tests::util::fully_consumed;
 
     #[test]
     fn just_name() {
@@ -94,11 +94,11 @@ mod config_name {
 
 mod section {
     use super::section;
-    use crate::parser::tests::util::{
+    use crate::parse::tests::util::{
         comment_event, fully_consumed, name_event, newline_event, section_header as parsed_section_header,
         value_done_event, value_event, value_not_done_event, whitespace_event,
     };
-    use crate::parser::{error::ParserNode, Event, ParsedSection};
+    use crate::parse::{error::ParserNode, Event, ParsedSection};
 
     #[test]
     fn empty_section() {
@@ -328,7 +328,7 @@ mod section {
 
 mod value_continuation {
     use super::value_impl;
-    use crate::parser::tests::util::{newline_event, value_done_event, value_not_done_event};
+    use crate::parse::tests::util::{newline_event, value_done_event, value_not_done_event};
 
     #[test]
     fn simple_continuation() {
@@ -392,7 +392,7 @@ mod value_continuation {
 
 mod value_no_continuation {
     use super::value_impl;
-    use crate::parser::tests::util::value_event;
+    use crate::parse::tests::util::value_event;
 
     #[test]
     fn no_comment() {
@@ -481,8 +481,8 @@ mod value_no_continuation {
 
 mod section_body {
     use super::section_body;
-    use crate::parser::tests::util::{name_event, value_event, whitespace_event};
-    use crate::parser::{error::ParserNode, Event};
+    use crate::parse::tests::util::{name_event, value_event, whitespace_event};
+    use crate::parse::{error::ParserNode, Event};
 
     #[test]
     fn whitespace_is_not_ambigious() {
@@ -515,7 +515,7 @@ mod section_body {
 
 mod comment {
     use super::comment;
-    use crate::parser::tests::util::{comment as parsed_comment, fully_consumed};
+    use crate::parse::tests::util::{comment as parsed_comment, fully_consumed};
 
     #[test]
     fn semicolon() {

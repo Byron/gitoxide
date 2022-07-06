@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fs, io};
 
-use git_config::{file::from_paths::Error, parser::ParserOrIoError, File};
+use git_config::{file::from_paths::Error, parse::ParserOrIoError, File};
 use tempfile::tempdir;
 
 use crate::file::cow_str;

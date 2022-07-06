@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use crate::{
     file::{MutableSection, SectionBody},
     lookup,
-    parser::{ParsedSectionHeader, SectionHeaderName},
+    parse::{ParsedSectionHeader, SectionHeaderName},
     File,
 };
 

@@ -43,7 +43,7 @@
 //! [`git-config` files]: https://git-scm.com/docs/git-config#_configuration_file
 //! [INI file format]: https://en.wikipedia.org/wiki/INI_file
 //! [`File`]: crate::File
-//! [`Parser`]: crate::parser::Parser
+//! [`Parser`]: crate::parse::Parser
 //! [`value`]: crate::value
 //! [`nom`]: https://github.com/Geal/nom
 //!
@@ -56,7 +56,7 @@ cfg_attr(doc, doc = ::document_features::document_features!())
 pub mod file;
 pub mod fs;
 pub mod lookup;
-pub mod parser;
+pub mod parse;
 pub mod value;
 
 mod types;

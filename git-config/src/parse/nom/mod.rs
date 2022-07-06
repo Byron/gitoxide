@@ -1,11 +1,11 @@
-use crate::parser::{
+use crate::parse::{
     Error, Event, Key, ParsedComment, ParsedSection, ParsedSectionHeader, Parser, ParserOrIoError, SectionHeaderName,
 };
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 use std::io::Read;
 
-use crate::parser::error::ParserNode;
+use crate::parse::error::ParserNode;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_till, take_while},
@@ -83,7 +83,7 @@ pub fn parse_from_bytes(input: &[u8]) -> Result<Parser<'_>, Error<'_>> {
     // if one of its children succeed. However, all of it's children are
     // guaranteed to consume something if they succeed, so the Ok(i) == i case
     // can never occur.
-    .expect("many0(alt(...)) panicked. Likely a bug in one of the children parser.");
+    .expect("many0(alt(...)) panicked. Likely a bug in one of the children parsers.");
 
     if i.is_empty() {
         return Ok(Parser {
@@ -155,7 +155,7 @@ pub fn parse_from_bytes_owned(input: &[u8]) -> Result<Parser<'static>, Error<'st
     // if one of its children succeed. However, all of it's children are
     // guaranteed to consume something if they succeed, so the Ok(i) == i case
     // can never occur.
-    .expect("many0(alt(...)) panicked. Likely a bug in one of the children parser.");
+    .expect("many0(alt(...)) panicked. Likely a bug in one of the children parsers.");
     let frontmatter = frontmatter.iter().map(Event::to_owned).collect();
     if i.is_empty() {
         return Ok(Parser {

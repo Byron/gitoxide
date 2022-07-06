@@ -1,7 +1,7 @@
 use bstr::BStr;
 use std::{borrow::Cow, convert::TryFrom};
 
-use crate::{file::SectionBody, lookup, parser::ParsedSectionHeader, File};
+use crate::{file::SectionBody, lookup, parse::ParsedSectionHeader, File};
 
 /// Read-only low-level access methods.
 impl<'a> File<'a> {
@@ -204,7 +204,7 @@ impl<'a> File<'a> {
     ///
     /// ```rust
     /// use git_config::File;
-    /// use git_config::parser::Key;
+    /// use git_config::parse::Key;
     /// use std::borrow::Cow;
     /// use std::convert::TryFrom;
     /// use nom::AsBytes;

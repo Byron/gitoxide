@@ -1,4 +1,4 @@
-use crate::parser::ParsedComment;
+use crate::parse::ParsedComment;
 use bstr::{BString, ByteVec};
 use std::borrow::Cow;
 use std::fmt::Display;

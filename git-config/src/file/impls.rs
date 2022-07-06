@@ -3,7 +3,7 @@ use std::{convert::TryFrom, fmt::Display};
 
 use crate::{
     file::SectionBody,
-    parser::{parse_from_bytes, parse_from_str, Error, Event, Parser},
+    parse::{parse_from_bytes, parse_from_str, Error, Event, Parser},
     File,
 };
 
@@ -13,7 +13,7 @@ impl<'a> TryFrom<&'a str> for File<'a> {
     /// Convenience constructor. Attempts to parse the provided string into a
     /// [`File`]. See [`parse_from_str`] for more information.
     ///
-    /// [`parse_from_str`]: crate::parser::parse_from_str
+    /// [`parse_from_str`]: crate::parse::parse_from_str
     fn try_from(s: &'a str) -> Result<File<'a>, Self::Error> {
         parse_from_str(s).map(Self::from)
     }

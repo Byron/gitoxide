@@ -57,7 +57,7 @@ use bstr::{BStr, BString};
 /// assert_eq!(normalize_bstr(r#"hello "world\"""#), Cow::<BStr>::Owned(BString::from(r#"hello world""#)));
 /// ```
 ///
-/// [`parser`]: crate::parser::Parser
+/// [`parser`]: crate::parse::Parser
 #[must_use]
 pub fn normalize(input: Cow<'_, BStr>) -> Cow<'_, BStr> {
     let size = input.len();
