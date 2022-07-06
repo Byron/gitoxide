@@ -34,7 +34,7 @@ pub(crate) mod function {
         let cwd = path
             .as_ref()
             .is_relative()
-            .then(|| std::env::current_dir())
+            .then(std::env::current_dir)
             .unwrap_or_else(|| Ok(PathBuf::default()))
             .map_err(Error::CurrentWorkingDir)?;
         realpath_opts(path, cwd, MAX_SYMLINKS)

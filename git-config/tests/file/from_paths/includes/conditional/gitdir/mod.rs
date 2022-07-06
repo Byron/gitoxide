@@ -118,7 +118,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
     {
         let _environment = crate::file::from_env::Env::new()
             .set("GIT_CONFIG_COUNT", "1")
-            .set("GIT_CONFIG_KEY_0", format!("includeIf.gitdir:./worktree/.path"))
+            .set("GIT_CONFIG_KEY_0", "includeIf.gitdir:./worktree/.path")
             .set("GIT_CONFIG_VALUE_0", &absolute_path);
 
         let res = git_config::File::from_env(env.include_options());
@@ -143,7 +143,6 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
             .set("GIT_CONFIG_VALUE_0", absolute_path);
 
         let res = git_config::File::from_env(env.include_options());
-        dbg!(&res);
         assert!(res.is_ok(), "missing paths are ignored as before");
     }
 
