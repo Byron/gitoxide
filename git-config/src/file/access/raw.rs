@@ -25,7 +25,7 @@ impl<'a> File<'a> {
     /// section and subsection, or if the section and subsection do not exist.
     pub fn raw_value<'lookup>(
         &self,
-        section_name: &'lookup str, // TODO: consider making this BStr, while keeping higher-level APIs as 'str'
+        section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
