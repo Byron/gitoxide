@@ -1084,6 +1084,7 @@ version = "0.6.0"
 dependencies = [
  "bstr",
  "criterion",
+ "document-features",
  "git-features",
  "git-glob",
  "git-path",

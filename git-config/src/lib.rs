@@ -46,6 +46,12 @@
 //! [`Parser`]: crate::parser::Parser
 //! [`values`]: crate::values
 //! [`nom`]: https://github.com/Geal/nom
+//!
+//! ## Feature Flags
+#![cfg_attr(
+feature = "document-features",
+cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 
 pub mod file;
 pub mod fs;

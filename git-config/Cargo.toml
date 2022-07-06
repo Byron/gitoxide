@@ -28,6 +28,8 @@ unicode-bom = "1.1.4"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
+document-features = { version = "0.2.0", optional = true }
+
 [target.'cfg(not(windows))'.dependencies]
 libc = "0.2"
 
@@ -43,3 +45,7 @@ tempfile = "3.2.0"
 name = "large_config_file"
 harness = false
 path = "./benches/large_config_file.rs"
+
+[package.metadata.docs.rs]
+features = ["document-features"]
+all-features = true

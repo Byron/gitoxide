@@ -120,13 +120,13 @@ pub fn normalize(input: Cow<'_, BStr>) -> Cow<'_, BStr> {
     }
 }
 
-/// `&[u8]` variant of [`normalize_cow`].
+/// `&[u8]` variant of [`normalize`].
 #[must_use]
 pub fn normalize_bstr<'a>(input: impl Into<&'a BStr>) -> Cow<'a, BStr> {
     normalize(Cow::Borrowed(input.into()))
 }
 
-/// `Vec[u8]` variant of [`normalize_cow`].
+/// `Vec[u8]` variant of [`normalize`].
 #[must_use]
 pub fn normalize_bstring(input: impl Into<BString>) -> Cow<'static, BStr> {
     normalize(Cow::Owned(input.into()))

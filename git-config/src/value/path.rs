@@ -3,7 +3,7 @@ use bstr::BStr;
 use std::borrow::Cow;
 
 pub mod interpolate {
-    /// The error returned by [`Path::interpolate()`][crate::values::Path::interpolate()].
+    /// The error returned by [`Path::interpolate()`][crate::value::Path::interpolate()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
