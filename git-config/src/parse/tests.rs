@@ -52,7 +52,7 @@ pub(crate) mod util {
 
     use std::borrow::Cow;
 
-    use crate::parse::{section, Event, ParsedComment};
+    use crate::parse::{section, Comment, Event};
 
     pub fn section_header(
         name: &str,
@@ -106,8 +106,8 @@ pub(crate) mod util {
         Event::Comment(comment(tag, msg))
     }
 
-    pub(crate) fn comment(comment_tag: char, comment: &'static str) -> ParsedComment<'static> {
-        ParsedComment {
+    pub(crate) fn comment(comment_tag: char, comment: &'static str) -> Comment<'static> {
+        Comment {
             comment_tag: comment_tag as u8,
             comment: Cow::Borrowed(comment.into()),
         }

@@ -1,4 +1,4 @@
-use crate::parse::{section, Error, Event, ParsedComment, Section, State};
+use crate::parse::{section, Comment, Error, Event, Section, State};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
@@ -155,12 +155,12 @@ pub fn from_bytes_owned(input: &[u8]) -> Result<State<'static>, Error<'static>> 
     Ok(State { frontmatter, sections })
 }
 
-fn comment(i: &[u8]) -> IResult<&[u8], ParsedComment<'_>> {
+fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
     let (i, comment_tag) = one_of(";#")(i)?;
     let (i, comment) = take_till(|c| c == b'\n')(i)?;
     Ok((
         i,
-        ParsedComment {
+        Comment {
             comment_tag: comment_tag as u8,
             comment: Cow::Borrowed(comment.as_bstr()),
         },

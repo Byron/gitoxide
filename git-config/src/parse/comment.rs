@@ -1,9 +1,9 @@
-use crate::parse::ParsedComment;
+use crate::parse::Comment;
 use bstr::{BString, ByteVec};
 use std::borrow::Cow;
 use std::fmt::Display;
 
-impl ParsedComment<'_> {
+impl Comment<'_> {
     /// Coerces into an owned instance. This differs from the standard [`clone`]
     /// implementation as calling clone will _not_ copy the borrowed variant,
     /// while this method will. In other words:
@@ -19,15 +19,15 @@ impl ParsedComment<'_> {
     ///
     /// [`clone`]: Self::clone
     #[must_use]
-    pub fn to_owned(&self) -> ParsedComment<'static> {
-        ParsedComment {
+    pub fn to_owned(&self) -> Comment<'static> {
+        Comment {
             comment_tag: self.comment_tag,
             comment: Cow::Owned(self.comment.as_ref().into()),
         }
     }
 }
 
-impl Display for ParsedComment<'_> {
+impl Display for Comment<'_> {
     /// Note that this is a best-effort attempt at printing an comment. If
     /// there are non UTF-8 values in your config, this will _NOT_ render
     /// as read.
@@ -41,14 +41,14 @@ impl Display for ParsedComment<'_> {
     }
 }
 
-impl From<ParsedComment<'_>> for BString {
-    fn from(c: ParsedComment<'_>) -> Self {
+impl From<Comment<'_>> for BString {
+    fn from(c: Comment<'_>) -> Self {
         c.into()
     }
 }
 
-impl From<&ParsedComment<'_>> for BString {
-    fn from(c: &ParsedComment<'_>) -> Self {
+impl From<&Comment<'_>> for BString {
+    fn from(c: &Comment<'_>) -> Self {
         let mut values = BString::from(vec![c.comment_tag]);
         values.push_str(c.comment.as_ref());
         values

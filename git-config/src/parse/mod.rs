@@ -243,7 +243,7 @@ pub enum Event<'a> {
     /// A comment with a comment tag and the comment itself. Note that the
     /// comment itself may contain additional whitespace and comment markers
     /// at the beginning.
-    Comment(ParsedComment<'a>),
+    Comment(Comment<'a>),
     /// A section header containing the section name and a subsection, if it
     /// exists, like `remote "origin"`.
     SectionHeader(section::Header<'a>),
@@ -290,7 +290,7 @@ pub mod section;
 
 /// A parsed comment event containing the comment marker and comment.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct ParsedComment<'a> {
+pub struct Comment<'a> {
     /// The comment marker used. This is either a semicolon or octothorpe.
     pub comment_tag: u8,
     /// The parsed comment.
