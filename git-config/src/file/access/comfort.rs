@@ -3,7 +3,7 @@ use std::{borrow::Cow, convert::TryFrom};
 use bstr::BStr;
 
 use crate::values::normalize;
-use crate::{value, values, File};
+use crate::{value, File};
 
 /// Comfortable API for accessing values
 impl<'a> File<'a> {
@@ -23,10 +23,10 @@ impl<'a> File<'a> {
     // TODO: add `secure_path()` or similar to make use of our knowledge of the trust associated with each configuration
     //       file, maybe even remove the insecure version to force every caller to ask themselves if the resource can
     //       be used securely or not.
-    pub fn path(&'a self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<values::Path<'a>> {
+    pub fn path(&'a self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<value::Path<'a>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
-            .map(values::Path::from)
+            .map(value::Path::from)
     }
 
     /// Like [`value()`][File::value()], but returning an `Option` if the boolean wasn't found.

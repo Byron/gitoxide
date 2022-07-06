@@ -2,11 +2,11 @@ mod interpolate {
     use std::borrow::Cow;
     use std::path::Path;
 
-    use git_config::values::Path as InterpolatingPath;
+    use git_config::value::Path as InterpolatingPath;
 
     use crate::file::cow_str;
     use crate::values::b;
-    use git_config::values::path::interpolate::Error;
+    use git_config::value::path::interpolate::Error;
 
     #[test]
     fn backslash_is_not_special_and_they_are_not_escaping_anything() -> crate::Result {
@@ -109,7 +109,7 @@ mod interpolate {
 
     fn interpolate_without_context(
         path: impl AsRef<str>,
-    ) -> Result<Cow<'static, Path>, git_config::values::path::interpolate::Error> {
+    ) -> Result<Cow<'static, Path>, git_config::value::path::interpolate::Error> {
         InterpolatingPath::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(None, None)
     }
 }

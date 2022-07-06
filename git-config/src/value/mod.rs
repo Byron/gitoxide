@@ -10,6 +10,17 @@ pub use integer::{Integer, IntegerSuffix};
 mod boolean;
 pub use boolean::{Boolean, TrueVariant};
 
+/// Any value that can be interpreted as a file path.
+///
+/// Git represents file paths as byte arrays, modeled here as owned or borrowed byte sequences.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct Path<'a> {
+    /// The path string, un-interpolated
+    pub value: std::borrow::Cow<'a, bstr::BStr>,
+}
+///
+pub mod path;
+
 pub mod parse {
     use bstr::BString;
 

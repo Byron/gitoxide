@@ -94,7 +94,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         "hello world"
     );
 
-    let actual = file.value::<git_config::values::Path>("core", None, "location")?;
+    let actual = file.value::<git_config::value::Path>("core", None, "location")?;
     assert_eq!(&*actual, "~/tmp", "no interpolation occurs when querying a path");
 
     let home = std::env::current_dir()?;

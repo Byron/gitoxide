@@ -10,7 +10,7 @@ use crate::file::from_paths::Options;
 use crate::{
     file::{from_paths, SectionId},
     parser::Key,
-    values, File,
+    value, File,
 };
 
 pub(crate) fn resolve_includes(
@@ -85,10 +85,10 @@ fn resolve_includes_recursive(
     Ok(())
 }
 
-fn extract_include_path<'a>(target_config: &mut File<'a>, include_paths: &mut Vec<values::Path<'a>>, id: SectionId) {
+fn extract_include_path<'a>(target_config: &mut File<'a>, include_paths: &mut Vec<value::Path<'a>>, id: SectionId) {
     if let Some(body) = target_config.sections.get(&id) {
         let paths = body.values(&Key::from("path"));
-        let paths = paths.iter().map(|path| values::Path::from(path.clone()));
+        let paths = paths.iter().map(|path| value::Path::from(path.clone()));
         include_paths.extend(paths);
     }
 }
@@ -159,7 +159,7 @@ fn gitdir_matches(
         git_path::to_unix_separators_on_windows(git_path::into_bstr(git_dir.ok_or(from_paths::Error::MissingGitDir)?));
 
     let mut pattern_path: Cow<'_, _> = {
-        let path = values::Path::from(Cow::Borrowed(condition_path)).interpolate(git_install_dir, home_dir)?;
+        let path = value::Path::from(Cow::Borrowed(condition_path)).interpolate(git_install_dir, home_dir)?;
         git_path::into_bstr(path).into_owned().into()
     };
     // NOTE: yes, only if we do path interpolation will the slashes be forced to unix separators on windows
@@ -207,7 +207,7 @@ fn gitdir_matches(
 }
 
 fn resolve(
-    path: values::Path<'_>,
+    path: value::Path<'_>,
     target_config_path: Option<&Path>,
     from_paths::Options {
         git_install_dir,

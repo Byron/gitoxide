@@ -4,7 +4,7 @@ use std::{borrow::Cow, path::PathBuf};
 use crate::{
     file::{from_paths, resolve_includes},
     parser,
-    values::path::interpolate,
+    value::path::interpolate,
     File,
 };
 
