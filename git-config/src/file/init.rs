@@ -18,7 +18,7 @@ impl<'a> File<'a> {
     ///
     /// Returns an error if there was an IO error or if the file wasn't a valid
     /// git-config file.
-    pub fn at<P: AsRef<Path>>(path: P) -> Result<Self, parse::ParserOrIoError<'static>> {
+    pub fn at<P: AsRef<Path>>(path: P) -> Result<Self, parse::state::from_path::Error> {
         parse::State::from_path(path).map(Self::from)
     }
 

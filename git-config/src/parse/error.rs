@@ -1,15 +1,15 @@
-use crate::parse::{Error, ParserOrIoError};
+use crate::parse::Error;
 use std::fmt::Display;
 
 /// A list of parsers that parsing can fail on. This is used for pretty-printing
 /// errors
 #[derive(PartialEq, Debug, Clone, Copy)]
-pub(crate) enum ParserNode {
+pub(crate) enum ParseNode {
     SectionHeader,
     ConfigName,
 }
 
-impl Display for ParserNode {
+impl Display for ParseNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::SectionHeader => write!(f, "section header"),
@@ -84,44 +84,3 @@ impl Display for Error<'_> {
 }
 
 impl std::error::Error for Error<'_> {}
-
-impl ParserOrIoError<'_> {
-    /// Coerces into an owned instance. This differs from the standard [`clone`]
-    /// implementation as calling clone will _not_ copy the borrowed variant,
-    /// while this method will. In other words:
-    ///
-    /// | Borrow type | `.clone()` | `to_owned()` |
-    /// | ----------- | ---------- | ------------ |
-    /// | Borrowed    | Borrowed   | Owned        |
-    /// | Owned       | Owned      | Owned        |
-    ///
-    /// This can be most effectively seen by the differing lifetimes between the
-    /// two. This method guarantees a `'static` lifetime, while `clone` does
-    /// not.
-    ///
-    /// [`clone`]: std::clone::Clone::clone
-    #[must_use]
-    pub fn into_owned(self) -> ParserOrIoError<'static> {
-        match self {
-            ParserOrIoError::Parser(error) => ParserOrIoError::Parser(error.to_owned()),
-            ParserOrIoError::Io(error) => ParserOrIoError::Io(error),
-        }
-    }
-}
-
-impl Display for ParserOrIoError<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ParserOrIoError::Parser(e) => e.fmt(f),
-            ParserOrIoError::Io(e) => e.fmt(f),
-        }
-    }
-}
-
-impl From<std::io::Error> for ParserOrIoError<'_> {
-    fn from(e: std::io::Error) -> Self {
-        Self::Io(e)
-    }
-}
-
-impl std::error::Error for ParserOrIoError<'_> {}

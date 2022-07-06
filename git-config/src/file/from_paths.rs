@@ -5,7 +5,7 @@ use crate::{parse, value::path::interpolate};
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    ParserOrIoError(#[from] parse::ParserOrIoError<'static>),
+    Parse(#[from] parse::state::from_path::Error),
     #[error(transparent)]
     Interpolate(#[from] interpolate::Error),
     #[error("The maximum allowed length {} of the file include chain built by following nested resolve_includes is exceeded", .max_depth)]

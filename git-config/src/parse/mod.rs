@@ -226,7 +226,8 @@ pub struct State<'a> {
     sections: Vec<Section<'a>>,
 }
 
-mod state;
+///
+pub mod state;
 
 /// Syntactic events that occurs in the config. Despite all these variants
 /// holding a [`Cow`] instead over a simple reference, the parser will only emit
@@ -305,20 +306,8 @@ mod comment;
 #[derive(PartialEq, Debug)]
 pub struct Error<'a> {
     line_number: usize,
-    last_attempted_parser: error::ParserNode,
+    last_attempted_parser: error::ParseNode,
     parsed_until: Cow<'a, BStr>,
-}
-
-/// An error type representing a Parser [`Error`] or an [`IO error`]. This is
-/// returned from functions that will perform IO on top of standard parsing,
-/// such as reading from a file.
-///
-/// [`IO error`]: std::io::Error
-#[derive(Debug)]
-#[allow(missing_docs, clippy::module_name_repetitions)]
-pub enum ParserOrIoError<'a> {
-    Parser(Error<'a>),
-    Io(std::io::Error),
 }
 
 mod error;

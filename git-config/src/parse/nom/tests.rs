@@ -98,11 +98,11 @@ mod section {
         comment_event, fully_consumed, name_event, newline_event, section_header as parsed_section_header,
         value_done_event, value_event, value_not_done_event, whitespace_event,
     };
-    use crate::parse::{error::ParserNode, Event, Section};
+    use crate::parse::{error::ParseNode, Event, Section};
 
     #[test]
     fn empty_section() {
-        let mut node = ParserNode::SectionHeader;
+        let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[test]", &mut node).unwrap(),
             fully_consumed((
@@ -117,7 +117,7 @@ mod section {
 
     #[test]
     fn simple_section() {
-        let mut node = ParserNode::SectionHeader;
+        let mut node = ParseNode::SectionHeader;
         let section_data = br#"[hello]
             a = b
             c
@@ -155,7 +155,7 @@ mod section {
 
     #[test]
     fn section_with_empty_value() {
-        let mut node = ParserNode::SectionHeader;
+        let mut node = ParseNode::SectionHeader;
         let section_data = br#"[hello]
             a = b
             c=
@@ -194,7 +194,7 @@ mod section {
 
     #[test]
     fn section_single_line() {
-        let mut node = ParserNode::SectionHeader;
+        let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[hello] c", &mut node).unwrap(),
             fully_consumed((
@@ -209,7 +209,7 @@ mod section {
 
     #[test]
     fn section_very_commented() {
-        let mut node = ParserNode::SectionHeader;
+        let mut node = ParseNode::SectionHeader;
         let section_data = br#"[hello] ; commentA
             a = b # commentB
             ; commentC
@@ -254,7 +254,7 @@ mod section {
 
     #[test]
     fn complex_continuation() {
-        let mut node = ParserNode::SectionHeader;
+        let mut node = ParseNode::SectionHeader;
         // This test is absolute hell. Good luck if this fails.
         assert_eq!(
             section(b"[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c", &mut node).unwrap(),
@@ -283,7 +283,7 @@ mod section {
 
     #[test]
     fn quote_split_over_two_lines() {
-        let mut node = ParserNode::SectionHeader;
+        let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[section \"a\"] b =\"\\\n;\";a", &mut node).unwrap(),
             fully_consumed((
@@ -307,7 +307,7 @@ mod section {
 
     #[test]
     fn section_handles_extranous_whitespace_before_comment() {
-        let mut node = ParserNode::SectionHeader;
+        let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[s]hello             #world", &mut node).unwrap(),
             fully_consumed((
@@ -482,11 +482,11 @@ mod value_no_continuation {
 mod section_body {
     use super::section_body;
     use crate::parse::tests::util::{name_event, value_event, whitespace_event};
-    use crate::parse::{error::ParserNode, Event};
+    use crate::parse::{error::ParseNode, Event};
 
     #[test]
     fn whitespace_is_not_ambigious() {
-        let mut node = ParserNode::SectionHeader;
+        let mut node = ParseNode::SectionHeader;
         let mut vec = vec![];
         assert!(section_body(b"a =b", &mut node, &mut vec).is_ok());
         assert_eq!(

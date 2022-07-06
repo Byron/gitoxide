@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fs, io};
 
-use git_config::{file::from_paths::Error, parse::ParserOrIoError, File};
+use git_config::{file::from_paths::Error, parse, File};
 use tempfile::tempdir;
 
 use crate::file::cow_str;
@@ -18,7 +18,7 @@ fn file_not_found() {
     let paths = vec![config_path];
     let error = File::from_paths(paths, Default::default()).unwrap_err();
     assert!(
-        matches!(error,  Error::ParserOrIoError(ParserOrIoError::Io(io_error)) if io_error.kind() == io::ErrorKind::NotFound)
+        matches!(error,  Error::Parse(parse::state::from_path::Error::Io(io_error)) if io_error.kind() == io::ErrorKind::NotFound)
     );
 }
 

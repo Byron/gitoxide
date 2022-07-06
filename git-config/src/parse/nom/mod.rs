@@ -2,7 +2,7 @@ use crate::parse::{section, Comment, Error, Event, Section, State};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
-use crate::parse::error::ParserNode;
+use crate::parse::error::ParseNode;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_till, take_while},
@@ -53,7 +53,7 @@ pub fn from_bytes(input: &[u8]) -> Result<State<'_>, Error<'_>> {
         });
     }
 
-    let mut node = ParserNode::SectionHeader;
+    let mut node = ParseNode::SectionHeader;
 
     let maybe_sections = many1(|i| section(i, &mut node))(i);
     let (i, sections) = maybe_sections.map_err(|_| Error {
@@ -125,7 +125,7 @@ pub fn from_bytes_owned(input: &[u8]) -> Result<State<'static>, Error<'static>> 
         });
     }
 
-    let mut node = ParserNode::SectionHeader;
+    let mut node = ParseNode::SectionHeader;
 
     let maybe_sections = many1(|i| section(i, &mut node))(i);
     let (i, sections) = maybe_sections.map_err(|_| Error {
@@ -170,7 +170,7 @@ fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
 #[cfg(test)]
 mod tests;
 
-fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParserNode) -> IResult<&'a [u8], (Section<'a>, usize)> {
+fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParseNode) -> IResult<&'a [u8], (Section<'a>, usize)> {
     let (mut i, section_header) = section_header(i)?;
 
     let mut newlines = 0;
@@ -313,11 +313,11 @@ fn sub_section(i: &[u8]) -> IResult<&[u8], BString> {
 
 fn section_body<'a, 'b, 'c>(
     i: &'a [u8],
-    node: &'b mut ParserNode,
+    node: &'b mut ParseNode,
     items: &'c mut Vec<Event<'a>>,
 ) -> IResult<&'a [u8], ()> {
     // maybe need to check for [ here
-    *node = ParserNode::ConfigName;
+    *node = ParseNode::ConfigName;
     let (i, name) = config_name(i)?;
 
     items.push(Event::SectionKey(section::Key(Cow::Borrowed(name))));

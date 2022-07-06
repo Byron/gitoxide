@@ -1,4 +1,4 @@
-use crate::parse::{Error, Event, ParserOrIoError, Section, State};
+use crate::parse::{Error, Event, Section, State};
 use std::convert::TryFrom;
 use std::io::Read;
 
@@ -18,11 +18,11 @@ impl State<'static> {
     /// Returns an error if there was an IO error or the read file is not a valid
     /// `git-config` This generally is due to either invalid names or if there's
     /// extraneous data succeeding valid `git-config` data.
-    pub fn from_path<P: AsRef<std::path::Path>>(path: P) -> Result<State<'static>, ParserOrIoError<'static>> {
+    pub fn from_path<P: AsRef<std::path::Path>>(path: P) -> Result<State<'static>, from_path::Error> {
         let mut bytes = vec![];
         let mut file = std::fs::File::open(path)?;
         file.read_to_end(&mut bytes)?;
-        crate::parse::nom::from_bytes_owned(&bytes).map_err(ParserOrIoError::Parser)
+        crate::parse::nom::from_bytes_owned(&bytes).map_err(from_path::Error::Parse)
     }
 
     /// Parses the provided bytes, returning an [`State`] that contains allocated
@@ -140,5 +140,20 @@ impl<'a> TryFrom<&'a [u8]> for State<'a> {
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         crate::parse::nom::from_bytes(value)
+    }
+}
+
+pub mod from_path {
+    /// An error type representing a Parser [`Error`] or an [`IO error`]. This is
+    /// returned from functions that will perform IO on top of standard parsing,
+    /// such as reading from a file.
+    ///
+    /// [`IO error`]: std::io::Error
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        Parse(crate::parse::Error<'static>),
+        #[error(transparent)]
+        Io(#[from] std::io::Error),
     }
 }
