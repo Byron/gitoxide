@@ -182,7 +182,9 @@ mod types {
 
             impl std::hash::Hash for $name<'_> {
                 fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-                    self.0.to_ascii_lowercase().hash(state)
+                    for b in self.0.iter() {
+                        b.to_ascii_lowercase().hash(state);
+                    }
                 }
             }
 
