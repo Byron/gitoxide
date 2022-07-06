@@ -13,7 +13,7 @@ pub enum Error {
     #[error("Value '{}' at key '{}' could not be decoded as boolean", .value, .key)]
     DecodeBoolean { key: String, value: BString },
     #[error(transparent)]
-    PathInterpolation(#[from] git_config::values::path::interpolate::Error),
+    PathInterpolation(#[from] git_config::value::path::interpolate::Error),
 }
 
 /// Utility type to keep pre-obtained configuration values.
@@ -46,10 +46,7 @@ pub(crate) struct Cache {
 mod cache {
     use std::{convert::TryFrom, path::PathBuf};
 
-    use git_config::{
-        values::{Boolean, Integer},
-        File,
-    };
+    use git_config::{value::Boolean, value::Integer, File};
 
     use super::{Cache, Error};
     use crate::{bstr::ByteSlice, permission};

@@ -69,7 +69,7 @@ impl crate::Repository {
     /// Note that it may fail if there is no index.
     // TODO: test
     #[cfg(feature = "git-index")]
-    pub fn open_index(&self) -> Result<git_index::File, crate::worktree::open_index::Error> {
+    pub fn open_index(&self) -> Result<git_index::File, worktree::open_index::Error> {
         use std::convert::{TryFrom, TryInto};
         let thread_limit = self
             .config
@@ -77,8 +77,8 @@ impl crate::Repository {
             .boolean("index", None, "threads")
             .map(|res| {
                 res.map(|value| if value { 0usize } else { 1 }).or_else(|err| {
-                    git_config::values::Integer::try_from(err.input.as_ref())
-                        .map_err(|err| crate::worktree::open_index::Error::ConfigIndexThreads {
+                    git_config::value::Integer::try_from(err.input.as_ref())
+                        .map_err(|err| worktree::open_index::Error::ConfigIndexThreads {
                             value: err.input.clone(),
                             err,
                         })

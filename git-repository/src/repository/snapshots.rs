@@ -93,7 +93,7 @@ impl crate::Repository {
         let configured_path = self
             .config
             .resolved
-            .value::<git_config::values::Path<'_>>("mailmap", None, "file")
+            .value::<git_config::value::Path<'_>>("mailmap", None, "file")
             .ok()
             .and_then(|path| {
                 let install_dir = self.install_dir().ok()?;
