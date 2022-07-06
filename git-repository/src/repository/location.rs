@@ -1,3 +1,5 @@
+use git_path::realpath::MAX_SYMLINKS;
+
 impl crate::Repository {
     /// Returns the main git repository if this is a repository on a linked work-tree, or the `git_dir` itself.
     pub fn common_dir(&self) -> &std::path::Path {
@@ -27,7 +29,7 @@ impl crate::Repository {
     pub fn prefix(&self) -> Option<std::io::Result<std::path::PathBuf>> {
         self.work_tree.as_ref().map(|root| {
             std::env::current_dir().and_then(|cwd| {
-                git_path::realpath(root, &cwd)
+                git_path::realpath_opts(root, &cwd, MAX_SYMLINKS)
                     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
                     .and_then(|root| {
                         cwd.strip_prefix(&root)

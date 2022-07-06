@@ -102,7 +102,7 @@ fn parse_ceiling_dirs(ceiling_dirs: &[u8]) -> Vec<PathBuf> {
         }
 
         if should_normalize {
-            if let Ok(normalized) = git_path::realpath(&dir, "") {
+            if let Ok(normalized) = git_path::realpath(&dir) {
                 dir = Cow::Owned(normalized);
             }
         }
