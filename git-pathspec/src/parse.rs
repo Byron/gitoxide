@@ -163,33 +163,43 @@ fn unescape_attribute_values(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
         return Ok(Cow::Borrowed(input));
     }
 
-    let mut ret = BString::from(Vec::with_capacity(input.len()));
+    let mut out = Cow::Borrowed([].as_bstr());
 
     for attr in input.split(|&c| c == b' ') {
-        if let Some(i) = attr.find_byte(b'=') {
-            ret.push_str(&attr[0..=i]);
-            let mut i = i + 1;
-            while i < attr.len() {
-                if attr[i] == b'\\' {
-                    i += 1;
-                    if i >= attr.len() {
-                        return Err(Error::TrailingEscapeCharacter);
-                    }
-                }
-                if attr[i].is_ascii_alphanumeric() || b",-_".contains(&attr[i]) {
-                    ret.push(attr[i]);
-                    i += 1
-                } else {
-                    return Err(Error::InvalidAttributeValue {
-                        character: attr[i] as char,
-                    });
-                }
-            }
+        let split_point = attr.find_byte(b'=').map(|i| i + 1).unwrap_or(attr.len());
+        let (name, value) = attr.split_at(split_point);
+
+        if value.contains(&b'\\') {
+            out.to_mut().push_str(name);
+            out.to_mut().push_str(unescape_attribute_value(value.into())?);
+            out.to_mut().push(b' ');
         } else {
-            ret.push_str(attr);
+            let end = out.len() + attr.len() + 1;
+            out = Cow::Borrowed(&input[0..end.clamp(0, input.len())])
         }
-        ret.push(b' ');
     }
 
-    Ok(Cow::Owned(ret))
+    Ok(out)
+}
+
+fn unescape_attribute_value(value: &BStr) -> Result<BString, Error> {
+    let mut out = BString::from(Vec::with_capacity(value.len()));
+    let mut i = 0;
+    while i < value.len() {
+        if value[i] == b'\\' {
+            i += 1;
+            if i >= value.len() {
+                return Err(Error::TrailingEscapeCharacter);
+            }
+        }
+        if !value[i].is_ascii_alphanumeric() && !b",-_".contains(&value[i]) {
+            return Err(Error::InvalidAttributeValue {
+                character: value[i] as char,
+            });
+        }
+
+        out.push(value[i]);
+        i += 1;
+    }
+    Ok(out)
 }

@@ -327,6 +327,8 @@ mod parse {
                 r":(attr:v=inva\\lid)some/path",
                 r":(attr:v=invalid\\)some/path",
                 r":(attr:v=invalid\#)some/path",
+                r":(attr:v=inva\=lid)some/path",
+                r":(attr:a=valid b=inva\#lid)some/path",
             ];
 
             for input in inputs {

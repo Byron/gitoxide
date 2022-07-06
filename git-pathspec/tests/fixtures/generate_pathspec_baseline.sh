@@ -117,6 +117,8 @@ baseline ':(attr:inva\lid)some/path'
 baseline ':(attr:v=inva\\lid)some/path'
 baseline ':(attr:v=invalid\\)some/path'
 baseline ':(attr:v=invalid\#)some/path'
+baseline ':(attr:v=inva\=lid)some/path'
+baseline ':(attr:a=valid b=inva\#lid)some/path'
 
 # escape_character_at_end_of_attribute_value
 baseline ':(attr:v=invalid\)some/path'
