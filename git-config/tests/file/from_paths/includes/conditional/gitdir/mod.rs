@@ -76,10 +76,10 @@ fn absolute_worktree_dir_with_os_separators_matches_with_trailing_glob() -> crat
 
 #[test]
 fn dot_slash_path_is_replaced_with_directory_containing_the_including_config_file() -> crate::Result {
-    // TODO: understand this
     assert_section_value(
         Condition::new("gitdir:./").set_user_config_instead_of_repo_config(),
         GitEnv::repo_name("worktree")?,
+        // the user configuration is in $HOME, which is parent to $HOME/worktree, and the pattern path ends up being $HOME/**, including worktree/.git
     )
 }
 
@@ -160,13 +160,8 @@ fn dot_dot_slash_prefixes_are_not_special_and_are_not_what_you_want() -> crate::
 }
 
 #[test]
-#[ignore]
 fn leading_dots_are_not_special() -> crate::Result {
-    // TODO: write this test so that it could fail - right now it's naturally correct
-    assert_section_value(
-        Condition::new("gitdir:.hidden/").expect_original_value(),
-        GitEnv::repo_name(".hidden")?,
-    )
+    assert_section_value(Condition::new("gitdir:.hidden/"), GitEnv::repo_name(".hidden")?)
 }
 
 #[test]
@@ -219,7 +214,7 @@ fn star_star_in_the_middle() -> crate::Result {
 #[cfg(not(windows))]
 fn tilde_expansion_with_symlink() -> crate::Result {
     let env = util::git_env_with_symlinked_repo()?;
-    assert_section_value(Condition::new("gitdir:~/symlink-worktree/"), env)
+    assert_section_value(Condition::new("gitdir:~/worktree/"), env)
 }
 
 #[test]
