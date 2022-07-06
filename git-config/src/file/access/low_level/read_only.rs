@@ -8,7 +8,7 @@ impl<'a> File<'a> {
     /// Returns an interpreted value given a section, an optional subsection and
     /// key.
     ///
-    /// It's recommended to use one of the values in the [`values`] module as
+    /// It's recommended to use one of the values in the [`value`] module as
     /// the conversion is already implemented, but this function is flexible and
     /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
     ///
@@ -41,7 +41,7 @@ impl<'a> File<'a> {
     /// section and subsection, if the section and subsection do not exist, or
     /// if there was an issue converting the type into the requested variant.
     ///
-    /// [`values`]: crate::values
+    /// [`value`]: crate::value
     /// [`TryFrom`]: std::convert::TryFrom
     pub fn value<T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
@@ -65,7 +65,7 @@ impl<'a> File<'a> {
     /// Returns all interpreted values given a section, an optional subsection
     /// and key.
     ///
-    /// It's recommended to use one of the values in the [`values`] module as
+    /// It's recommended to use one of the values in the [`value`] module as
     /// the conversion is already implemented, but this function is flexible and
     /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
     ///
@@ -110,7 +110,7 @@ impl<'a> File<'a> {
     /// section and subsection, if the section and subsection do not exist, or
     /// if there was an issue converting the type into the requested variant.
     ///
-    /// [`values`]: crate::values
+    /// [`value`]: crate::value
     /// [`TryFrom`]: std::convert::TryFrom
     pub fn multi_value<'lookup, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
