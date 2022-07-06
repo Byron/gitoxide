@@ -1094,6 +1094,7 @@ dependencies = [
  "libc",
  "memchr",
  "nom",
+ "serde",
  "serde_derive",
  "serial_test",
  "tempfile",
