@@ -16,11 +16,11 @@
 //! | ------------- | --------------------------------------------------- | ----------------- |
 //! | [`File`] | Accelerated wrapper for reading and writing values. | On some reads[^1] |
 //! | [`Parser`]    | Syntactic event emitter for `git-config` files.     | Yes               |
-//! | [`values`]    | Wrappers for `git-config` value types.              | Yes               |
+//! | [`value`]    | Wrappers for `git-config` value types.              | Yes               |
 //!
 //! This crate also exposes efficient value normalization which unescapes
 //! characters and removes quotes through the `normalize_*` family of functions,
-//! located in the [`values`] module.
+//! located in the [`value`] module.
 //!
 //! # Zero-copy versus zero-alloc
 //!
@@ -44,7 +44,7 @@
 //! [INI file format]: https://en.wikipedia.org/wiki/INI_file
 //! [`File`]: crate::File
 //! [`Parser`]: crate::parser::Parser
-//! [`values`]: crate::values
+//! [`value`]: crate::value
 //! [`nom`]: https://github.com/Geal/nom
 //!
 //! ## Feature Flags
@@ -59,7 +59,6 @@ pub mod lookup;
 pub mod parser;
 mod permissions;
 pub mod value;
-pub mod values;
 
 mod types;
 pub use types::File;
