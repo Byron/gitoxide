@@ -44,6 +44,11 @@ mod error {
             "Got an unexpected token on line 1 while trying to parse a section header: '[123456789' ... (1 characters omitted)"
         );
     }
+
+    #[test]
+    fn detected_by_fuzz() {
+        assert!(Events::from_str("[]I=").is_err());
+    }
 }
 
 pub(crate) mod util {
