@@ -2,3 +2,4 @@
 target
 corpus
 artifacts
+Cargo.lock
