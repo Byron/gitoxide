@@ -218,16 +218,6 @@ pub struct Events<'a> {
     pub(crate) sections: Vec<Section<'a>>,
 }
 
-impl parse::Delegate for Events<'static> {
-    fn front_matter(&mut self, event: Event<'_>) {
-        self.frontmatter.push(event.to_owned());
-    }
-
-    fn section(&mut self, section: Section<'_>) {
-        self.sections.push(section.to_owned());
-    }
-}
-
 impl Events<'static> {
     /// Parses a git config located at the provided path. On success, returns a
     /// [`Events`] that provides methods to accessing leading comments and sections
@@ -261,17 +251,15 @@ impl Events<'static> {
     /// This generally is due to either invalid names or if there's extraneous
     /// data succeeding valid `git-config` data.
     #[allow(clippy::shadow_unrelated)]
-    pub fn from_bytes_owned(bytes: &[u8]) -> Result<Events<'static>, parse::Error<'static>> {
-        let mut events = Events::default();
-        {
-            // SAFETY: we don't actually keep the bytes around for 'static, but help the borrow checker who
-            //         cannot see that this is fine to do. Fortunately it's not possible to use these as 'static
-            //         either in the delegate.
-            #[allow(unsafe_code)]
-            let bytes: &'static [u8] = unsafe { std::mem::transmute(bytes) };
-            parse::from_bytes_1(bytes, &mut events)?;
-        }
-        Ok(events)
+    pub fn from_bytes_owned(input: &[u8]) -> Result<Events<'static>, parse::Error> {
+        let mut frontmatter = Vec::new();
+        let mut sections = Vec::new();
+        parse::from_bytes_1(
+            input,
+            |e| frontmatter.push(e.to_owned()),
+            |s: Section<'_>| sections.push(s.to_owned()),
+        )?;
+        Ok(Events { frontmatter, sections })
     }
 }
 
@@ -287,8 +275,8 @@ impl<'a> Events<'a> {
     /// This generally is due to either invalid names or if there's extraneous
     /// data succeeding valid `git-config` data.
     #[allow(clippy::should_implement_trait)]
-    pub fn from_str(input: &'a str) -> Result<Events<'a>, parse::Error<'a>> {
-        crate::parse::nom::from_bytes(input.as_bytes())
+    pub fn from_str(input: &'a str) -> Result<Events<'a>, parse::Error> {
+        Self::from_bytes(input.as_bytes())
     }
 
     /// Attempt to zero-copy parse the provided bytes. On success, returns a
@@ -302,8 +290,11 @@ impl<'a> Events<'a> {
     /// This generally is due to either invalid names or if there's extraneous
     /// data succeeding valid `git-config` data.
     #[allow(clippy::shadow_unrelated)]
-    pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, parse::Error<'a>> {
-        crate::parse::nom::from_bytes(input)
+    pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, parse::Error> {
+        let mut frontmatter = Vec::new();
+        let mut sections = Vec::new();
+        parse::from_bytes_1(input, |e| frontmatter.push(e), |s: Section<'_>| sections.push(s))?;
+        Ok(Events { frontmatter, sections })
     }
 }
 
@@ -361,7 +352,7 @@ impl<'a> Events<'a> {
 }
 
 impl<'a> TryFrom<&'a str> for Events<'a> {
-    type Error = parse::Error<'a>;
+    type Error = parse::Error;
 
     fn try_from(value: &'a str) -> Result<Self, Self::Error> {
         Self::from_str(value)
@@ -369,7 +360,7 @@ impl<'a> TryFrom<&'a str> for Events<'a> {
 }
 
 impl<'a> TryFrom<&'a [u8]> for Events<'a> {
-    type Error = parse::Error<'a>;
+    type Error = parse::Error;
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         crate::parse::nom::from_bytes(value)

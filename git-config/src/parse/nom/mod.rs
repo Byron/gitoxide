@@ -1,4 +1,4 @@
-use crate::parse::{section, Comment, Delegate, Error, Event, Events, Section};
+use crate::parse::{section, Comment, Error, Event, Events, Section};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
@@ -28,7 +28,7 @@ use nom::{
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 #[allow(clippy::shadow_unrelated)]
-pub fn from_bytes(input: &[u8]) -> Result<Events<'_>, Error<'_>> {
+pub fn from_bytes(input: &[u8]) -> Result<Events<'_>, Error> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
@@ -94,7 +94,13 @@ pub fn from_bytes(input: &[u8]) -> Result<Events<'_>, Error<'_>> {
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 #[allow(clippy::shadow_unrelated)]
-pub fn from_bytes_1<'a>(input: &'a [u8], delegate: &mut dyn Delegate) -> Result<(), Error<'a>> {
+pub fn from_bytes_1<'a>(
+    input: &'a [u8],
+    // receive_frontmatter: &mut FnFrontMatter<'a>,
+    // receive_section: &mut FnSection<'a>,
+    mut receive_frontmatter: impl FnMut(Event<'a>),
+    mut receive_section: impl FnMut(Section<'a>),
+) -> Result<(), Error> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
@@ -112,7 +118,7 @@ pub fn from_bytes_1<'a>(input: &'a [u8], delegate: &mut dyn Delegate) -> Result<
     // can never occur.
     .expect("many0(alt(...)) panicked. Likely a bug in one of the children parsers.");
     for event in frontmatter {
-        delegate.front_matter(event);
+        receive_frontmatter(event);
     }
 
     if i.is_empty() {
@@ -136,7 +142,7 @@ pub fn from_bytes_1<'a>(input: &'a [u8], delegate: &mut dyn Delegate) -> Result<
         })
         .collect();
     for section in sections {
-        delegate.section(section);
+        receive_section(section);
     }
 
     // This needs to happen after we collect sections, otherwise the line number

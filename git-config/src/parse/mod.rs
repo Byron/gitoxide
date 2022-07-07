@@ -79,7 +79,7 @@ pub mod events {
         #[derive(Debug, thiserror::Error)]
         pub enum Error {
             #[error(transparent)]
-            Parse(#[from] crate::parse::Error<'static>),
+            Parse(#[from] crate::parse::Error),
             #[error(transparent)]
             Io(#[from] std::io::Error),
         }
@@ -113,26 +113,16 @@ mod comment;
 /// occurred, as well as the last parser node and the remaining data to be
 /// parsed.
 #[derive(PartialEq, Debug)]
-pub struct Error<'a> {
+pub struct Error {
     line_number: usize,
     last_attempted_parser: error::ParseNode,
-    // TODO: use simple reference
-    parsed_until: Cow<'a, BStr>,
+    parsed_until: bstr::BString,
 }
 
 mod error;
 
 mod nom;
 pub use self::nom::from_bytes_1;
-
-/// A receive for events and sections
-pub trait Delegate {
-    /// Anything parsed before the first section.
-    fn front_matter(&mut self, event: Event<'_>);
-
-    /// A completely parsed section.
-    fn section(&mut self, section: Section<'_>);
-}
 
 #[cfg(test)]
 pub(crate) mod tests;

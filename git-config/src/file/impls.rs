@@ -4,7 +4,7 @@ use std::{convert::TryFrom, fmt::Display};
 use crate::{file::SectionBody, parse, File};
 
 impl<'a> TryFrom<&'a str> for File<'a> {
-    type Error = parse::Error<'a>;
+    type Error = parse::Error;
 
     /// Convenience constructor. Attempts to parse the provided string into a
     /// [`File`]. See [`Events::from_str()`][crate::parse::Events::from_str()] for more information.
@@ -14,7 +14,7 @@ impl<'a> TryFrom<&'a str> for File<'a> {
 }
 
 impl<'a> TryFrom<&'a [u8]> for File<'a> {
-    type Error = parse::Error<'a>;
+    type Error = parse::Error;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
     //// a [`File`]. See [`parse_from_bytes`] for more information.
@@ -26,7 +26,7 @@ impl<'a> TryFrom<&'a [u8]> for File<'a> {
 }
 
 impl<'a> TryFrom<&'a BString> for File<'a> {
-    type Error = parse::Error<'a>;
+    type Error = parse::Error;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
     //// a [`File`]. See [`State::from_bytes()`] for more information.

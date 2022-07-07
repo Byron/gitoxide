@@ -18,7 +18,7 @@ impl Display for ParseNode {
     }
 }
 
-impl Error<'_> {
+impl Error {
     /// The one-indexed line number where the error occurred. This is determined
     /// by the number of newlines that were successfully parsed.
     #[must_use]
@@ -31,32 +31,9 @@ impl Error<'_> {
     pub fn remaining_data(&self) -> &[u8] {
         &self.parsed_until
     }
-
-    /// Coerces into an owned instance. This differs from the standard [`clone`]
-    /// implementation as calling clone will _not_ copy the borrowed variant,
-    /// while this method will. In other words:
-    ///
-    /// | Borrow type | `.clone()` | `to_owned()` |
-    /// | ----------- | ---------- | ------------ |
-    /// | Borrowed    | Borrowed   | Owned        |
-    /// | Owned       | Owned      | Owned        |
-    ///
-    /// This can be most effectively seen by the differing lifetimes between the
-    /// two. This method guarantees a `'static` lifetime, while `clone` does
-    /// not.
-    ///
-    /// [`clone`]: std::clone::Clone::clone
-    #[must_use]
-    pub fn to_owned(&self) -> Error<'static> {
-        Error {
-            line_number: self.line_number,
-            last_attempted_parser: self.last_attempted_parser,
-            parsed_until: self.parsed_until.clone().into_owned().into(),
-        }
-    }
 }
 
-impl Display for Error<'_> {
+impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let data_size = self.parsed_until.len();
         let data = std::str::from_utf8(&self.parsed_until);
@@ -83,4 +60,4 @@ impl Display for Error<'_> {
     }
 }
 
-impl std::error::Error for Error<'_> {}
+impl std::error::Error for Error {}
