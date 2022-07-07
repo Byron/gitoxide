@@ -79,7 +79,7 @@ pub mod events {
         #[derive(Debug, thiserror::Error)]
         pub enum Error {
             #[error(transparent)]
-            Parse(crate::parse::Error<'static>),
+            Parse(#[from] crate::parse::Error<'static>),
             #[error(transparent)]
             Io(#[from] std::io::Error),
         }
