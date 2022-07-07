@@ -73,4 +73,4 @@ mod init;
 mod utils;
 
 #[cfg(test)]
-mod try_from_str_tests;
+mod tests;
