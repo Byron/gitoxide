@@ -59,7 +59,7 @@ impl File<'static> {
     pub fn from_path_with_buf(path: &std::path::Path, buf: &mut Vec<u8>) -> Result<Self, Error> {
         buf.clear();
         std::io::copy(&mut std::fs::File::open(path)?, buf)?;
-        Self::from_bytes(&buf)
+        Self::from_bytes(buf)
     }
 
     pub(crate) fn from_bytes(input: &[u8]) -> Result<Self, Error> {
