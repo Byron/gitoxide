@@ -116,12 +116,23 @@ mod comment;
 pub struct Error<'a> {
     line_number: usize,
     last_attempted_parser: error::ParseNode,
+    // TODO: use simple reference
     parsed_until: Cow<'a, BStr>,
 }
 
 mod error;
 
 mod nom;
+pub use self::nom::from_bytes_1;
+
+/// A receive for events and sections
+pub trait Delegate {
+    /// Anything parsed before the first section.
+    fn front_matter(&mut self, event: Event<'_>);
+
+    /// A completely parsed section.
+    fn section(&mut self, section: Section<'_>);
+}
 
 #[cfg(test)]
 pub(crate) mod tests;

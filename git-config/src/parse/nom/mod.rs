@@ -1,4 +1,4 @@
-use crate::parse::{section, Comment, Error, Event, Events, Section};
+use crate::parse::{section, Comment, Delegate, Error, Event, Events, Section};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
@@ -81,6 +81,75 @@ pub fn from_bytes(input: &[u8]) -> Result<Events<'_>, Error<'_>> {
     }
 
     Ok(Events { frontmatter, sections })
+}
+
+/// Attempt to zero-copy parse the provided bytes. On success, returns a
+/// [`Parser`] that provides methods to accessing leading comments and sections
+/// of a `git-config` file and can be converted into an iterator of [`Event`]
+/// for higher level processing.
+///
+/// # Errors
+///
+/// Returns an error if the string provided is not a valid `git-config`.
+/// This generally is due to either invalid names or if there's extraneous
+/// data succeeding valid `git-config` data.
+#[allow(clippy::shadow_unrelated)]
+pub fn from_bytes_1<'a>(input: &'a [u8], delegate: &mut dyn Delegate) -> Result<(), Error<'a>> {
+    let bom = unicode_bom::Bom::from(input);
+    let mut newlines = 0;
+    let (i, frontmatter) = many0(alt((
+        map(comment, Event::Comment),
+        map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
+        map(take_newlines, |(newline, counter)| {
+            newlines += counter;
+            Event::Newline(Cow::Borrowed(newline))
+        }),
+    )))(&input[bom.len()..])
+    // I don't think this can panic. many0 errors if the child parser returns
+    // a success where the input was not consumed, but alt will only return Ok
+    // if one of its children succeed. However, all of it's children are
+    // guaranteed to consume something if they succeed, so the Ok(i) == i case
+    // can never occur.
+    .expect("many0(alt(...)) panicked. Likely a bug in one of the children parsers.");
+    for event in frontmatter {
+        delegate.front_matter(event);
+    }
+
+    if i.is_empty() {
+        return Ok(());
+    }
+
+    let mut node = ParseNode::SectionHeader;
+
+    let maybe_sections = many1(|i| section(i, &mut node))(i);
+    let (i, sections) = maybe_sections.map_err(|_| Error {
+        line_number: newlines,
+        last_attempted_parser: node,
+        parsed_until: i.as_bstr().into(),
+    })?;
+
+    let sections: Vec<_> = sections
+        .into_iter()
+        .map(|(section, additional_newlines)| {
+            newlines += additional_newlines;
+            section
+        })
+        .collect();
+    for section in sections {
+        delegate.section(section);
+    }
+
+    // This needs to happen after we collect sections, otherwise the line number
+    // will be off.
+    if !i.is_empty() {
+        return Err(Error {
+            line_number: newlines,
+            last_attempted_parser: node,
+            parsed_until: i.as_bstr().into(),
+        });
+    }
+
+    Ok(())
 }
 
 /// Parses the provided bytes, returning an [`Parser`] that contains allocated
