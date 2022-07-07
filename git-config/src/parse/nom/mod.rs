@@ -18,22 +18,14 @@ use nom::{
 };
 use smallvec::SmallVec;
 
-/// Attempt to zero-copy parse the provided bytes, passing results to `receive_frontmatter` and
-/// `receive_section` respectively.
+/// Attempt to zero-copy parse the provided bytes, passing results to `receive_event`.
 ///
 /// # Errors
 ///
 /// Returns an error if the string provided is not a valid `git-config`.
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
-#[allow(clippy::shadow_unrelated)]
-pub fn from_bytes<'a>(
-    input: &'a [u8],
-    // receive_frontmatter: &mut FnFrontMatter<'a>,
-    // receive_section: &mut FnSection<'a>,
-    mut receive_frontmatter: impl FnMut(Event<'a>),
-    mut receive_section: impl FnMut(Section<'a>),
-) -> Result<(), Error> {
+pub fn from_bytes<'a>(input: &'a [u8], mut receive_event: impl FnMut(Event<'a>)) -> Result<(), Error> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
     let (i, _) = fold_many0(
@@ -46,7 +38,7 @@ pub fn from_bytes<'a>(
             }),
         )),
         || (),
-        |_acc, event| receive_frontmatter(event),
+        |_acc, event| receive_event(event),
     )(&input[bom.len()..])
     // I don't think this can panic. many0 errors if the child parser returns
     // a success where the input was not consumed, but alt will only return Ok
@@ -66,7 +58,10 @@ pub fn from_bytes<'a>(
         || (),
         |_acc, (section, additional_newlines)| {
             newlines += additional_newlines;
-            receive_section(section)
+            receive_event(Event::SectionHeader(section.section_header));
+            for event in section.events {
+                receive_event(event);
+            }
         },
     )(i);
     let (i, _) = res.map_err(|_| Error {

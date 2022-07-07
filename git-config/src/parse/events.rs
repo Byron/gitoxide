@@ -1,4 +1,4 @@
-use crate::parse::section;
+use crate::parse::{section, Event};
 use crate::{
     parse,
     parse::{events::from_path, Section},
@@ -221,6 +221,8 @@ pub struct Events<'a> {
     pub sections: Vec<Section<'a>>,
 }
 
+type Sections<'a> = Vec<Section<'a>>;
+
 impl Events<'static> {
     /// Parses a git config located at the provided path. On success, returns a
     /// [`Events`] that provides methods to accessing leading comments and sections
@@ -255,13 +257,39 @@ impl Events<'static> {
     /// data succeeding valid `git-config` data.
     #[allow(clippy::shadow_unrelated)]
     pub fn from_bytes_owned(input: &[u8]) -> Result<Events<'static>, parse::Error> {
+        let mut header = None;
+        let mut events = section::Events::default();
         let mut frontmatter = section::Events::default();
-        let mut sections = Vec::new(); // TODO: maybe smallvec here as well? This favors `File` to be on the heap for sure
-        parse::from_bytes(
-            input,
-            |e| frontmatter.push(e.to_owned()),
-            |s: Section<'_>| sections.push(s.to_owned()),
-        )?;
+        let mut sections = Sections::default(); // TODO: maybe smallvec here as well? This favors `File` to be on the heap for sure
+        parse::from_bytes(input, |e: Event<'_>| match e {
+            Event::SectionHeader(next_header) => {
+                match header.take() {
+                    None => {
+                        frontmatter = std::mem::take(&mut events);
+                    }
+                    Some(prev_header) => {
+                        sections.push(parse::Section {
+                            section_header: prev_header,
+                            events: std::mem::take(&mut events),
+                        });
+                    }
+                };
+                header = next_header.to_owned().into();
+            }
+            event => events.push(event.to_owned()),
+        })?;
+
+        match header {
+            None => {
+                frontmatter = std::mem::take(&mut events);
+            }
+            Some(prev_header) => {
+                sections.push(parse::Section {
+                    section_header: prev_header,
+                    events: std::mem::take(&mut events),
+                });
+            }
+        }
         Ok(Events { frontmatter, sections })
     }
 }
@@ -292,11 +320,40 @@ impl<'a> Events<'a> {
     /// Returns an error if the string provided is not a valid `git-config`.
     /// This generally is due to either invalid names or if there's extraneous
     /// data succeeding valid `git-config` data.
-    #[allow(clippy::shadow_unrelated)]
     pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, parse::Error> {
+        let mut header = None;
+        let mut events = section::Events::default();
         let mut frontmatter = section::Events::default();
-        let mut sections = Vec::new();
-        parse::from_bytes(input, |e| frontmatter.push(e), |s: Section<'_>| sections.push(s))?;
+        let mut sections = Sections::default(); // TODO: maybe smallvec here as well? This favors `File` to be on the heap for sure
+        parse::from_bytes(input, |e: Event<'_>| match e {
+            Event::SectionHeader(next_header) => {
+                match header.take() {
+                    None => {
+                        frontmatter = std::mem::take(&mut events);
+                    }
+                    Some(prev_header) => {
+                        sections.push(parse::Section {
+                            section_header: prev_header,
+                            events: std::mem::take(&mut events),
+                        });
+                    }
+                };
+                header = next_header.into();
+            }
+            event => events.push(event),
+        })?;
+
+        match header {
+            None => {
+                frontmatter = std::mem::take(&mut events);
+            }
+            Some(prev_header) => {
+                sections.push(parse::Section {
+                    section_header: prev_header,
+                    events: std::mem::take(&mut events),
+                });
+            }
+        }
         Ok(Events { frontmatter, sections })
     }
 
