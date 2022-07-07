@@ -1,4 +1,4 @@
-use crate::{Name, NameRef, State, StateRef, name};
+use crate::{name, Name, NameRef, State, StateRef};
 use bstr::{BStr, BString, ByteSlice};
 use std::borrow::Cow;
 
@@ -34,14 +34,12 @@ pub struct Lines<'a> {
 }
 
 pub struct Iter<'a> {
-    attrs: bstr::Fields<'a>
+    attrs: bstr::Fields<'a>,
 }
 
 impl<'a> Iter<'a> {
     pub fn new(attrs: &'a BStr) -> Self {
-        Iter {
-            attrs: attrs.fields()
-        }
+        Iter { attrs: attrs.fields() }
     }
 
     fn parse_attr(&self, attr: &'a [u8]) -> Result<NameRef<'a>, name::Error> {
@@ -70,10 +68,8 @@ fn check_attr(attr: &BStr) -> Result<&BStr, name::Error> {
             return false;
         }
 
-        attr.bytes().all(|b| {
-            matches!(b, 
-        b'-' | b'.' | b'_' | b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9')
-        })
+        attr.bytes()
+            .all(|b| matches!(b, b'-' | b'.' | b'_' | b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9'))
     }
 
     attr_valid(attr)
