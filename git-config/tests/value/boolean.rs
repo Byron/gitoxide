@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use crate::file::cow_str;
 use git_config::value::{Boolean, TrueVariant};
 
-use crate::values::b;
+use crate::value::b;
 
 #[test]
 fn from_str_false() {

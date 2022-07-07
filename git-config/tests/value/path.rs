@@ -5,7 +5,7 @@ mod interpolate {
     use git_config::value::Path as InterpolatingPath;
 
     use crate::file::cow_str;
-    use crate::values::b;
+    use crate::value::b;
     use git_config::value::path::interpolate::Error;
 
     #[test]

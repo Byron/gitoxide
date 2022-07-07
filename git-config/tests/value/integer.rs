@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use git_config::{value::Integer, value::IntegerSuffix};
 
-use crate::values::b;
+use crate::value::b;
 
 #[test]
 fn from_str_no_suffix() {
