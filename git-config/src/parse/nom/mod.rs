@@ -1,4 +1,4 @@
-use crate::parse::{section, Comment, Error, Event, Section};
+use crate::parse::{section, Comment, Error, Event};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
@@ -16,7 +16,6 @@ use nom::{
     sequence::delimited,
     IResult,
 };
-use smallvec::SmallVec;
 
 /// Attempt to zero-copy parse the provided bytes, passing results to `receive_event`.
 ///
@@ -54,14 +53,10 @@ pub fn from_bytes<'a>(input: &'a [u8], mut receive_event: impl FnMut(Event<'a>))
     let mut node = ParseNode::SectionHeader;
 
     let res = fold_many1(
-        |i| section(i, &mut node),
+        |i| section(i, &mut node, &mut receive_event),
         || (),
-        |_acc, (section, additional_newlines)| {
+        |_acc, additional_newlines| {
             newlines += additional_newlines;
-            receive_event(Event::SectionHeader(section.section_header));
-            for event in section.events {
-                receive_event(event);
-            }
         },
     )(i);
     let (i, _) = res.map_err(|_| Error {
@@ -98,11 +93,15 @@ fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
 #[cfg(test)]
 mod tests;
 
-fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParseNode) -> IResult<&'a [u8], (Section<'a>, usize)> {
-    let (mut i, section_header) = section_header(i)?;
+fn section<'a>(
+    i: &'a [u8],
+    node: &mut ParseNode,
+    receive_event: &mut impl FnMut(Event<'a>),
+) -> IResult<&'a [u8], usize> {
+    let (mut i, header) = section_header(i)?;
+    receive_event(Event::SectionHeader(header));
 
     let mut newlines = 0;
-    let mut items = SmallVec::default();
 
     // This would usually be a many0(alt(...)), the manual loop allows us to
     // optimize vec insertions
@@ -112,7 +111,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParseNode) -> IResult<&'a [u8], (S
         if let Ok((new_i, v)) = take_spaces(i) {
             if old_i != new_i {
                 i = new_i;
-                items.push(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
+                receive_event(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
             }
         }
 
@@ -120,11 +119,11 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParseNode) -> IResult<&'a [u8], (S
             if old_i != new_i {
                 i = new_i;
                 newlines += new_newlines;
-                items.push(Event::Newline(Cow::Borrowed(v.as_bstr())));
+                receive_event(Event::Newline(Cow::Borrowed(v.as_bstr())));
             }
         }
 
-        if let Ok((new_i, _)) = section_body(i, node, &mut items) {
+        if let Ok((new_i, _)) = section_body(i, node, receive_event) {
             if old_i != new_i {
                 i = new_i;
             }
@@ -133,7 +132,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParseNode) -> IResult<&'a [u8], (S
         if let Ok((new_i, comment)) = comment(i) {
             if old_i != new_i {
                 i = new_i;
-                items.push(Event::Comment(comment));
+                receive_event(Event::Comment(comment));
             }
         }
 
@@ -142,16 +141,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParseNode) -> IResult<&'a [u8], (S
         }
     }
 
-    Ok((
-        i,
-        (
-            Section {
-                section_header,
-                events: items,
-            },
-            newlines,
-        ),
-    ))
+    Ok((i, newlines))
 }
 
 fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
@@ -239,24 +229,24 @@ fn sub_section(i: &[u8]) -> IResult<&[u8], BString> {
     Ok((&i[cursor - 1..], buf))
 }
 
-fn section_body<'a, 'b, 'c>(
+fn section_body<'a>(
     i: &'a [u8],
-    node: &'b mut ParseNode,
-    items: &'c mut section::Events<'a>,
+    node: &mut ParseNode,
+    receive_event: &mut impl FnMut(Event<'a>),
 ) -> IResult<&'a [u8], ()> {
     // maybe need to check for [ here
     *node = ParseNode::ConfigName;
     let (i, name) = config_name(i)?;
 
-    items.push(Event::SectionKey(section::Key(Cow::Borrowed(name))));
+    receive_event(Event::SectionKey(section::Key(Cow::Borrowed(name))));
 
     let (i, whitespace) = opt(take_spaces)(i)?;
 
     if let Some(whitespace) = whitespace {
-        items.push(Event::Whitespace(Cow::Borrowed(whitespace)));
+        receive_event(Event::Whitespace(Cow::Borrowed(whitespace)));
     }
 
-    let (i, _) = config_value(i, items)?;
+    let (i, _) = config_value(i, receive_event)?;
     Ok((i, ()))
 }
 
@@ -281,17 +271,17 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
     Ok((i, v.as_bstr()))
 }
 
-fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut section::Events<'a>) -> IResult<&'a [u8], ()> {
+fn config_value<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], ()> {
     if let (i, Some(_)) = opt(char('='))(i)? {
-        events.push(Event::KeyValueSeparator);
+        receive_event(Event::KeyValueSeparator);
         let (i, whitespace) = opt(take_spaces)(i)?;
         if let Some(whitespace) = whitespace {
-            events.push(Event::Whitespace(Cow::Borrowed(whitespace)));
+            receive_event(Event::Whitespace(Cow::Borrowed(whitespace)));
         }
-        let (i, _) = value_impl(i, events)?;
+        let (i, _) = value_impl(i, receive_event)?;
         Ok((i, ()))
     } else {
-        events.push(Event::Value(Cow::Borrowed("".into())));
+        receive_event(Event::Value(Cow::Borrowed("".into())));
         Ok((i, ()))
     }
 }
@@ -303,7 +293,7 @@ fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut section::Events<'a>) -> IRe
 ///
 /// Returns an error if an invalid escape was used, if there was an unfinished
 /// quote, or there was an escape but there is nothing left to escape.
-fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut section::Events<'a>) -> IResult<&'a [u8], ()> {
+fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], ()> {
     let mut parsed_index: usize = 0;
     let mut offset: usize = 0;
 
@@ -322,8 +312,8 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut section::Events<'a>) -> IResu
                 // continuation.
                 b'\n' => {
                     partial_value_found = true;
-                    events.push(Event::ValueNotDone(Cow::Borrowed(i[offset..index - 1].as_bstr())));
-                    events.push(Event::Newline(Cow::Borrowed(i[index..=index].as_bstr())));
+                    receive_event(Event::ValueNotDone(Cow::Borrowed(i[offset..index - 1].as_bstr())));
+                    receive_event(Event::Newline(Cow::Borrowed(i[index..=index].as_bstr())));
                     offset = index + 1;
                     parsed_index = 0;
                 }
@@ -358,8 +348,8 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut section::Events<'a>) -> IResu
             parsed_index = i.len();
         } else {
             // Didn't parse anything at all, newline straight away.
-            events.push(Event::Value(Cow::Owned(BString::default())));
-            events.push(Event::Newline(Cow::Borrowed("\n".into())));
+            receive_event(Event::Value(Cow::Owned(BString::default())));
+            receive_event(Event::Newline(Cow::Borrowed("\n".into())));
             return Ok((
                 i.get(1..).ok_or(nom::Err::Error(NomError {
                     input: i,
@@ -398,9 +388,9 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut section::Events<'a>) -> IResu
     };
 
     if partial_value_found {
-        events.push(Event::ValueDone(Cow::Borrowed(remainder_value.as_bstr())));
+        receive_event(Event::ValueDone(Cow::Borrowed(remainder_value.as_bstr())));
     } else {
-        events.push(Event::Value(Cow::Borrowed(remainder_value.as_bstr())));
+        receive_event(Event::Value(Cow::Borrowed(remainder_value.as_bstr())));
     }
 
     Ok((i, ()))
