@@ -1,3 +1,4 @@
+use crate::parse::section;
 use crate::{
     parse,
     parse::{events::from_path, Event, Section},
@@ -214,7 +215,7 @@ use std::convert::TryFrom;
 /// [`From<&'_ str>`]: std::convert::From
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Events<'a> {
-    pub(crate) frontmatter: Vec<Event<'a>>,
+    pub(crate) frontmatter: parse::section::Events<'a>,
     pub(crate) sections: Vec<Section<'a>>,
 }
 
@@ -252,8 +253,8 @@ impl Events<'static> {
     /// data succeeding valid `git-config` data.
     #[allow(clippy::shadow_unrelated)]
     pub fn from_bytes_owned(input: &[u8]) -> Result<Events<'static>, parse::Error> {
-        let mut frontmatter = Vec::new();
-        let mut sections = Vec::new();
+        let mut frontmatter = section::Events::default();
+        let mut sections = Vec::new(); // TODO: maybe smallvec here as well? This favors `File` to be on the heap for sure
         parse::from_bytes(
             input,
             |e| frontmatter.push(e.to_owned()),
@@ -291,7 +292,7 @@ impl<'a> Events<'a> {
     /// data succeeding valid `git-config` data.
     #[allow(clippy::shadow_unrelated)]
     pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, parse::Error> {
-        let mut frontmatter = Vec::new();
+        let mut frontmatter = section::Events::default();
         let mut sections = Vec::new();
         parse::from_bytes(input, |e| frontmatter.push(e), |s: Section<'_>| sections.push(s))?;
         Ok(Events { frontmatter, sections })
@@ -312,7 +313,7 @@ impl<'a> Events<'a> {
     /// a section) from the parser. Subsequent calls will return an empty vec.
     /// Consider [`Events::frontmatter`] if you only need a reference to the
     /// frontmatter
-    pub fn take_frontmatter(&mut self) -> Vec<Event<'a>> {
+    pub fn take_frontmatter(&mut self) -> section::Events<'a> {
         std::mem::take(&mut self.frontmatter)
     }
 

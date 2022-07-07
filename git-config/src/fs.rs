@@ -96,7 +96,7 @@ impl ConfigBuilder {
 
     /// Builds a config, ignoring any failed configuration files.
     #[must_use]
-    pub fn build(&self) -> Config<'_> {
+    pub fn build(&self) -> Config<'static> {
         let system_conf = if self.no_system { None } else { todo!() };
 
         let global_conf = {
@@ -211,7 +211,7 @@ impl<'a> Config<'a> {
     }
 
     /// Returns a mapping from [`File`] to [`ConfigSource`]
-    const fn mapping(&self) -> [(&Option<File<'_>>, ConfigSource); 6] {
+    const fn mapping(&self) -> [(&Option<File<'a>>, ConfigSource); 6] {
         [
             (&self.cli_conf, ConfigSource::Cli),
             (&self.env_conf, ConfigSource::Env),

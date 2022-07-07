@@ -29,7 +29,7 @@ impl File<'static> {
         paths: impl IntoIterator<Item = impl AsRef<Path>>,
         options: from_paths::Options<'_>,
     ) -> Result<Self, from_paths::Error> {
-        let mut target = Self::new();
+        let mut target = Self::default();
         for path in paths {
             let path = path.as_ref();
             let mut config = Self::at(path)?;
@@ -37,13 +37,5 @@ impl File<'static> {
             target.append(config);
         }
         Ok(target)
-    }
-}
-
-impl<'a> File<'a> {
-    /// Constructs an empty `git-config` file.
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
     }
 }

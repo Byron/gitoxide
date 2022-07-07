@@ -41,7 +41,7 @@ impl<'a> File<'a> {
     /// ```
     /// # use git_config::File;
     /// # use std::convert::TryFrom;
-    /// let mut git_config = git_config::File::new();
+    /// let mut git_config = git_config::File::default();
     /// let _section = git_config.new_section("hello", Some("world".into()));
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n");
     /// ```
@@ -52,7 +52,7 @@ impl<'a> File<'a> {
     /// # use git_config::File;
     /// # use std::convert::TryFrom;
     /// # use bstr::ByteSlice;
-    /// let mut git_config = git_config::File::new();
+    /// let mut git_config = git_config::File::default();
     /// let mut section = git_config.new_section("hello", Some("world".into()));
     /// section.push("a".into(), b"b".as_bstr().into());
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n");
@@ -108,7 +108,7 @@ impl<'a> File<'a> {
         &mut self,
         section_name: &'lookup str,
         subsection_name: impl Into<Option<&'lookup str>>,
-    ) -> Option<SectionBody<'_>> {
+    ) -> Option<SectionBody<'a>> {
         let id = self
             .section_ids_by_name_and_subname(section_name, subsection_name.into())
             .ok()?

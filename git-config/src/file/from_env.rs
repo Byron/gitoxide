@@ -26,7 +26,7 @@ pub enum Error {
     FromPathsError(#[from] from_paths::Error),
 }
 
-impl<'a> File<'a> {
+impl File<'static> {
     /// Constructs a `git-config` from the default cascading sequence.
     /// This is neither zero-alloc nor zero-copy.
     ///
@@ -85,14 +85,14 @@ impl<'a> File<'a> {
     /// there was an invalid key value pair.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_env(options: from_paths::Options<'_>) -> Result<Option<File<'_>>, Error> {
+    pub fn from_env(options: from_paths::Options<'_>) -> Result<Option<File<'static>>, Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
             Ok(v) => v.parse().map_err(|_| Error::ParseError { input: v })?,
             Err(_) => return Ok(None),
         };
 
-        let mut config = File::new();
+        let mut config = File::default();
         for i in 0..count {
             let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| Error::InvalidKeyId { key_id: i })?;
             let value = env::var_os(format!("GIT_CONFIG_VALUE_{}", i)).ok_or(Error::InvalidValueId { value_id: i })?;

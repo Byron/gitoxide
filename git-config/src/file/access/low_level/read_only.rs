@@ -4,7 +4,7 @@ use std::{borrow::Cow, convert::TryFrom};
 use crate::{file::SectionBody, lookup, parse::section, File};
 
 /// Read-only low-level access methods.
-impl<'a> File<'a> {
+impl<'event> File<'event> {
     /// Returns an interpreted value given a section, an optional subsection and
     /// key.
     ///
@@ -43,7 +43,7 @@ impl<'a> File<'a> {
     ///
     /// [`value`]: crate::value
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn value<T: TryFrom<Cow<'a, BStr>>>(
+    pub fn value<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
         subsection_name: Option<&str>,
@@ -53,7 +53,7 @@ impl<'a> File<'a> {
     }
 
     /// Like [`value()`][File::value()], but returning an `Option` if the value wasn't found.
-    pub fn try_value<T: TryFrom<Cow<'a, BStr>>>(
+    pub fn try_value<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
         subsection_name: Option<&str>,
@@ -112,11 +112,11 @@ impl<'a> File<'a> {
     ///
     /// [`value`]: crate::value
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn multi_value<'lookup, T: TryFrom<Cow<'a, BStr>>>(
+    pub fn multi_value<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
     ) -> Result<Vec<T>, lookup::Error<T::Error>> {
         self.raw_multi_value(section_name, subsection_name, key)?
             .into_iter()
@@ -135,7 +135,7 @@ impl<'a> File<'a> {
         &mut self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
-    ) -> Result<&SectionBody<'a>, lookup::existing::Error> {
+    ) -> Result<&SectionBody<'event>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         let id = section_ids.last().expect("BUG: Section lookup vec was empty");
         Ok(self.sections.get(id).expect("BUG: Section did not have id from lookup"))
@@ -175,7 +175,7 @@ impl<'a> File<'a> {
     /// assert_eq!(git_config.sections_by_name("core").len(), 3);
     /// ```
     #[must_use]
-    pub fn sections_by_name<'lookup>(&self, section_name: &'lookup str) -> Vec<&SectionBody<'a>> {
+    pub fn sections_by_name<'lookup>(&self, section_name: &'lookup str) -> Vec<&SectionBody<'event>> {
         self.section_ids_by_name(section_name)
             .unwrap_or_default()
             .into_iter()
@@ -236,7 +236,7 @@ impl<'a> File<'a> {
     pub fn sections_by_name_with_header<'lookup>(
         &self,
         section_name: &'lookup str,
-    ) -> Vec<(&section::Header<'a>, &SectionBody<'a>)> {
+    ) -> Vec<(&section::Header<'event>, &SectionBody<'event>)> {
         self.section_ids_by_name(section_name)
             .unwrap_or_default()
             .into_iter()

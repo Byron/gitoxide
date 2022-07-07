@@ -47,16 +47,19 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                SectionBody::from(vec![
-                    newline_event(),
-                    name_event("a"),
-                    Event::KeyValueSeparator,
-                    value_event("b"),
-                    newline_event(),
-                    name_event("c"),
-                    Event::KeyValueSeparator,
-                    value_event("d"),
-                ]),
+                SectionBody(
+                    vec![
+                        newline_event(),
+                        name_event("a"),
+                        Event::KeyValueSeparator,
+                        value_event("b"),
+                        newline_event(),
+                        name_event("c"),
+                        Event::KeyValueSeparator,
+                        value_event("d"),
+                    ]
+                    .into(),
+                ),
             );
             sections
         };
@@ -89,16 +92,19 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                SectionBody::from(vec![
-                    newline_event(),
-                    name_event("a"),
-                    Event::KeyValueSeparator,
-                    value_event("b"),
-                    newline_event(),
-                    name_event("c"),
-                    Event::KeyValueSeparator,
-                    value_event("d"),
-                ]),
+                SectionBody(
+                    vec![
+                        newline_event(),
+                        name_event("a"),
+                        Event::KeyValueSeparator,
+                        value_event("b"),
+                        newline_event(),
+                        name_event("c"),
+                        Event::KeyValueSeparator,
+                        value_event("d"),
+                    ]
+                    .into(),
+                ),
             );
             sections
         };
@@ -134,21 +140,24 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                SectionBody::from(vec![
-                    newline_event(),
-                    name_event("a"),
-                    Event::KeyValueSeparator,
-                    value_event("b"),
-                    newline_event(),
-                    name_event("c"),
-                    Event::KeyValueSeparator,
-                    value_event("d"),
-                    newline_event(),
-                ]),
+                SectionBody(
+                    vec![
+                        newline_event(),
+                        name_event("a"),
+                        Event::KeyValueSeparator,
+                        value_event("b"),
+                        newline_event(),
+                        name_event("c"),
+                        Event::KeyValueSeparator,
+                        value_event("d"),
+                        newline_event(),
+                    ]
+                    .into(),
+                ),
             );
             sections.insert(
                 SectionId(1),
-                SectionBody::from(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")]),
+                SectionBody(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")].into()),
             );
             sections
         };
@@ -180,21 +189,24 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                SectionBody::from(vec![
-                    newline_event(),
-                    name_event("a"),
-                    Event::KeyValueSeparator,
-                    value_event("b"),
-                    newline_event(),
-                    name_event("c"),
-                    Event::KeyValueSeparator,
-                    value_event("d"),
-                    newline_event(),
-                ]),
+                SectionBody(
+                    vec![
+                        newline_event(),
+                        name_event("a"),
+                        Event::KeyValueSeparator,
+                        value_event("b"),
+                        newline_event(),
+                        name_event("c"),
+                        Event::KeyValueSeparator,
+                        value_event("d"),
+                        newline_event(),
+                    ]
+                    .into(),
+                ),
             );
             sections.insert(
                 SectionId(1),
-                SectionBody::from(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")]),
+                SectionBody(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")].into()),
             );
             sections
         };

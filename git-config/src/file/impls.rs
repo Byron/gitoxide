@@ -41,7 +41,7 @@ impl<'a> From<parse::Events<'a>> for File<'a> {
         this.frontmatter_events = SectionBody(events.frontmatter);
 
         for section in events.sections {
-            this.push_section_internal(section.section_header, SectionBody(section.events.into_vec()));
+            this.push_section_internal(section.section_header, SectionBody(section.events));
         }
 
         this

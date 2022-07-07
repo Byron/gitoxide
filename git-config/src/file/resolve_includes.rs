@@ -14,7 +14,7 @@ use crate::{
 };
 
 pub(crate) fn resolve_includes(
-    conf: &mut File<'_>,
+    conf: &mut File<'static>,
     config_path: Option<&std::path::Path>,
     options: from_paths::Options<'_>,
 ) -> Result<(), from_paths::Error> {
@@ -22,7 +22,7 @@ pub(crate) fn resolve_includes(
 }
 
 fn resolve_includes_recursive(
-    target_config: &mut File<'_>,
+    target_config: &mut File<'static>,
     target_config_path: Option<&Path>,
     depth: u8,
     options: from_paths::Options<'_>,

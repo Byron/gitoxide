@@ -9,7 +9,7 @@ use std::{
 use crate::value::normalize_bstr;
 use crate::{
     file::Index,
-    lookup,
+    lookup, parse,
     parse::{section::Key, Event},
     value::{normalize, normalize_bstring},
 };
@@ -218,14 +218,14 @@ impl<'event> Deref for MutableSection<'_, 'event> {
 /// A opaque type that represents a section body.
 #[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Default)]
-pub struct SectionBody<'event>(pub(crate) Vec<Event<'event>>);
+pub struct SectionBody<'event>(pub(crate) parse::section::Events<'event>);
 
 impl<'event> SectionBody<'event> {
     pub(crate) fn as_ref(&self) -> &[Event<'_>] {
         &self.0
     }
 
-    pub(crate) fn as_mut(&mut self) -> &mut Vec<Event<'event>> {
+    pub(crate) fn as_mut(&mut self) -> &mut parse::section::Events<'event> {
         &mut self.0
     }
 
@@ -329,7 +329,7 @@ impl<'event> SectionBody<'event> {
 
     /// Returns the the range containing the value events for the section.
     /// If the value is not found, then this returns an empty range.
-    fn value_range_by_key(&self, key: &Key<'event>) -> Range<usize> {
+    fn value_range_by_key(&self, key: &Key<'_>) -> Range<usize> {
         let mut values_start = 0;
         // value end needs to be offset by one so that the last value's index
         // is included in the range
@@ -367,8 +367,9 @@ impl<'event> IntoIterator for SectionBody<'event> {
 
     type IntoIter = SectionBodyIter<'event>;
 
+    // TODO: see if this is used at all
     fn into_iter(self) -> Self::IntoIter {
-        SectionBodyIter(self.0.into())
+        SectionBodyIter(self.0.into_vec().into())
     }
 }
 
@@ -406,9 +407,3 @@ impl<'event> Iterator for SectionBodyIter<'event> {
 }
 
 impl FusedIterator for SectionBodyIter<'_> {}
-
-impl<'event> From<Vec<Event<'event>>> for SectionBody<'event> {
-    fn from(e: Vec<Event<'event>>) -> Self {
-        Self(e)
-    }
-}
