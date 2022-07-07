@@ -186,19 +186,16 @@ fn unescape_attribute_value(value: &BStr) -> Result<BString, Error> {
     let mut out = BString::from(Vec::with_capacity(value.len()));
     let mut i = 0;
     while i < value.len() {
-        if value[i] == b'\\' {
+        let mut b = value[i];
+        if b == b'\\' {
             i += 1;
-            if i >= value.len() {
-                return Err(Error::TrailingEscapeCharacter);
-            }
+            b = *value.get(i).ok_or(Error::TrailingEscapeCharacter)?;
         }
-        if !value[i].is_ascii_alphanumeric() && !b",-_".contains(&value[i]) {
-            return Err(Error::InvalidAttributeValue {
-                character: value[i] as char,
-            });
+        if !b.is_ascii_alphanumeric() && !b",-_".contains(&b) {
+            return Err(Error::InvalidAttributeValue { character: b as char });
         }
 
-        out.push(value[i]);
+        out.push(b);
         i += 1;
     }
     Ok(out)
