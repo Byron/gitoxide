@@ -10,7 +10,7 @@ pub use git_glob as glob;
 /// The state an attribute can be in, referencing the value.
 ///
 /// Note that this doesn't contain the name.
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum StateRef<'a> {
     /// The attribute is listed, or has the special value 'true'
@@ -37,7 +37,7 @@ pub enum State {
     Unset,
     /// The attribute is set to the given value, which followed the `=` sign.
     /// Note that values can be empty.
-    Value(CompactString),
+    Value(CompactString), // TODO: use `kstring`, maybe it gets a binary string soon
     /// The attribute isn't mentioned with a given path or is explicitly set to `Unspecified` using the `!` sign.
     Unspecified,
 }
@@ -98,6 +98,22 @@ pub struct PatternMapping<T> {
     pub pattern: git_glob::Pattern,
     pub value: T,
     pub sequence_number: usize,
+}
+
+mod state {
+    use crate::{State, StateRef};
+    use bstr::ByteSlice;
+
+    impl<'a> From<StateRef<'a>> for State {
+        fn from(s: StateRef<'a>) -> Self {
+            match s {
+                StateRef::Value(v) => State::Value(v.to_str().expect("no illformed unicode").into()),
+                StateRef::Set => State::Set,
+                StateRef::Unset => State::Unset,
+                StateRef::Unspecified => State::Unspecified,
+            }
+        }
+    }
 }
 
 pub mod name {

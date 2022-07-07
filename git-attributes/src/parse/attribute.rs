@@ -169,7 +169,7 @@ impl<'a> NameRef<'a> {
     }
 
     pub fn state(&self) -> StateRef<'a> {
-        self.1.clone()
+        self.1
     }
 }
 
@@ -180,11 +180,12 @@ impl<'a> From<NameRef<'a>> for Name {
 }
 
 impl Name {
-    pub fn name(&self) -> &BString {
-        &self.0
+    pub fn name(&self) -> &BStr {
+        self.0.as_bstr()
     }
 
     pub fn state(&self) -> &State {
+        // TODO: StateRef<'_>
         &self.1
     }
 }

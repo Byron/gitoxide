@@ -6,17 +6,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-impl<'a> From<StateRef<'a>> for State {
-    fn from(s: StateRef<'a>) -> Self {
-        match s {
-            StateRef::Value(v) => State::Value(v.to_str().expect("no illformed unicode").into()),
-            StateRef::Set => State::Set,
-            StateRef::Unset => State::Unset,
-            StateRef::Unspecified => State::Unspecified,
-        }
-    }
-}
-
 fn attrs_to_assignments<'a>(
     attrs: impl Iterator<Item = Result<crate::NameRef<'a>, crate::name::Error>>,
 ) -> Result<Vec<Assignment>, crate::name::Error> {
