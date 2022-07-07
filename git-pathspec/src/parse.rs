@@ -161,7 +161,7 @@ fn unescape_attribute_values(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
         return Ok(Cow::Borrowed(input));
     }
 
-    let mut out = Cow::Borrowed([].as_bstr());
+    let mut out: Cow<'_, BStr> = Cow::Borrowed("".into());
 
     for attr in input.split(|&c| c == b' ') {
         let split_point = attr.find_byte(b'=').map_or_else(|| attr.len(), |i| i + 1);
