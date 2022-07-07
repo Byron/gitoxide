@@ -1,4 +1,4 @@
-use crate::{Assignment, MatchGroup, PatternList, PatternMapping, State, StateRef};
+use crate::{Assignment, MatchGroup, PatternList, PatternMapping};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::{
     ffi::OsString,

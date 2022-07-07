@@ -24,7 +24,7 @@ mod parse {
                 attributes: p
                     .attributes
                     .into_iter()
-                    .map(|v| (v.name().clone(), v.state().clone()))
+                    .map(|v| (v.name().to_owned(), v.state().to_owned()))
                     .collect(),
             }
         }
