@@ -18,8 +18,8 @@ impl<'a> File<'a> {
     ///
     /// Returns an error if there was an IO error or if the file wasn't a valid
     /// git-config file.
-    pub fn at<P: AsRef<Path>>(path: P) -> Result<Self, parse::event::list::from_path::Error> {
-        parse::event::List::from_path(path).map(Self::from)
+    pub fn at<P: AsRef<Path>>(path: P) -> Result<Self, parse::events::from_path::Error> {
+        parse::Events::from_path(path).map(Self::from)
     }
 
     /// Constructs a `git-config` file from the provided paths in the order provided.

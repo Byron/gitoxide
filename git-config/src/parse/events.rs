@@ -1,7 +1,6 @@
-use crate::parse::{Event, Section};
-use bstr::BString;
-use std::borrow::Cow;
-use std::fmt::Display;
+use crate::parse::{events::from_path, Error, Event, Section};
+use std::convert::TryFrom;
+use std::io::Read;
 
 /// A zero-copy `git-config` file parser.
 ///
@@ -77,7 +76,7 @@ use std::fmt::Display;
 /// non-significant events that occur in addition to the ones you may expect:
 ///
 /// ```
-/// # use git_config::parse::{Event, event, section};
+/// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
 /// # let section_header = section::Header {
 /// #   name: section::Name(Cow::Borrowed("core".into())),
@@ -85,7 +84,7 @@ use std::fmt::Display;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf = input";
-/// # assert_eq!(event::List::from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
@@ -116,7 +115,7 @@ use std::fmt::Display;
 /// which means that the corresponding event won't appear either:
 ///
 /// ```
-/// # use git_config::parse::{Event, event, section};
+/// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
 /// # let section_header = section::Header {
 /// #   name: section::Name(Cow::Borrowed("core".into())),
@@ -124,7 +123,7 @@ use std::fmt::Display;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf";
-/// # assert_eq!(event::List::from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
@@ -150,7 +149,7 @@ use std::fmt::Display;
 /// relevant event stream emitted is thus emitted as:
 ///
 /// ```
-/// # use git_config::parse::{Event, event, section};
+/// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
 /// # let section_header = section::Header {
 /// #   name: section::Name(Cow::Borrowed("core".into())),
@@ -158,7 +157,7 @@ use std::fmt::Display;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\nautocrlf=true\"\"\nfilemode=fa\"lse\"";
-/// # assert_eq!(event::from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::SectionKey(section::Key(Cow::Borrowed("autocrlf".into()))),
@@ -187,7 +186,7 @@ use std::fmt::Display;
 /// split value accordingly:
 ///
 /// ```
-/// # use git_config::parse::{Event, event, section};
+/// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
 /// # let section_header = section::Header {
 /// #   name: section::Name(Cow::Borrowed("some-section".into())),
@@ -195,7 +194,7 @@ use std::fmt::Display;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[some-section]\nfile=a\\\n    c";
-/// # assert_eq!(event::from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::SectionKey(section::Key(Cow::Borrowed("file".into()))),
@@ -212,87 +211,148 @@ use std::fmt::Display;
 /// [`FromStr`]: std::str::FromStr
 /// [`From<&'_ str>`]: std::convert::From
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct List<'a> {
+pub struct Events<'a> {
     pub(crate) frontmatter: Vec<Event<'a>>,
     pub(crate) sections: Vec<Section<'a>>,
 }
 
-///
-pub mod list;
+impl Events<'static> {
+    /// Parses a git config located at the provided path. On success, returns a
+    /// [`State`] that provides methods to accessing leading comments and sections
+    /// of a `git-config` file and can be converted into an iterator of [`Event`]
+    /// for higher level processing.
+    ///
+    /// Note that since we accept a path rather than a reference to the actual
+    /// bytes, this function is _not_ zero-copy, as the Parser must own (and thus
+    /// copy) the bytes that it reads from. Consider one of the other variants if
+    /// performance is a concern.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if there was an IO error or the read file is not a valid
+    /// `git-config` This generally is due to either invalid names or if there's
+    /// extraneous data succeeding valid `git-config` data.
+    pub fn from_path<P: AsRef<std::path::Path>>(path: P) -> Result<Events<'static>, from_path::Error> {
+        let mut bytes = vec![];
+        let mut file = std::fs::File::open(path)?;
+        file.read_to_end(&mut bytes)?;
+        crate::parse::nom::from_bytes_owned(&bytes).map_err(from_path::Error::Parse)
+    }
 
-impl Event<'_> {
-    /// Generates a byte representation of the value. This should be used when
-    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
-    /// guaranteed.
+    /// Parses the provided bytes, returning an [`State`] that contains allocated
+    /// and owned events. This is similar to [`State::from_bytes()`], but performance
+    /// is degraded as it requires allocation for every event. However, this permits
+    /// the reference bytes to be dropped, allowing the parser to be passed around
+    /// without lifetime worries.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the string provided is not a valid `git-config`.
+    /// This generally is due to either invalid names or if there's extraneous
+    /// data succeeding valid `git-config` data.
+    #[allow(clippy::shadow_unrelated)]
+    pub fn from_bytes_owned(input: &[u8]) -> Result<Events<'static>, Error<'static>> {
+        crate::parse::nom::from_bytes_owned(input)
+    }
+}
+
+impl<'a> Events<'a> {
+    /// Attempt to zero-copy parse the provided `&str`. On success, returns a
+    /// [`State`] that provides methods to accessing leading comments and sections
+    /// of a `git-config` file and can be converted into an iterator of [`Event`]
+    /// for higher level processing.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the string provided is not a valid `git-config`.
+    /// This generally is due to either invalid names or if there's extraneous
+    /// data succeeding valid `git-config` data.
+    #[allow(clippy::should_implement_trait)]
+    pub fn from_str(input: &'a str) -> Result<Events<'a>, Error<'a>> {
+        crate::parse::nom::from_bytes(input.as_bytes())
+    }
+
+    /// Attempt to zero-copy parse the provided bytes. On success, returns a
+    /// [`State`] that provides methods to accessing leading comments and sections
+    /// of a `git-config` file and can be converted into an iterator of [`Event`]
+    /// for higher level processing.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the string provided is not a valid `git-config`.
+    /// This generally is due to either invalid names or if there's extraneous
+    /// data succeeding valid `git-config` data.
+    #[allow(clippy::shadow_unrelated)]
+    pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, Error<'a>> {
+        crate::parse::nom::from_bytes(input)
+    }
+}
+
+impl<'a> Events<'a> {
+    /// Returns the leading events (any comments, whitespace, or newlines before
+    /// a section) from the parser. Consider [`State::take_frontmatter`] if
+    /// you need an owned copy only once. If that function was called, then this
+    /// will always return an empty slice.
     #[must_use]
-    pub fn to_bstring(&self) -> BString {
-        self.into()
+    pub fn frontmatter(&self) -> &[Event<'a>] {
+        &self.frontmatter
     }
 
-    /// Coerces into an owned instance. This differs from the standard [`clone`]
-    /// implementation as calling clone will _not_ copy the borrowed variant,
-    /// while this method will. In other words:
-    ///
-    /// | Borrow type | `.clone()` | `to_owned()` |
-    /// | ----------- | ---------- | ------------ |
-    /// | Borrowed    | Borrowed   | Owned        |
-    /// | Owned       | Owned      | Owned        |
-    ///
-    /// This can be most effectively seen by the differing lifetimes between the
-    /// two. This method guarantees a `'static` lifetime, while `clone` does
-    /// not.
-    ///
-    /// [`clone`]: Self::clone
+    /// Takes the leading events (any comments, whitespace, or newlines before
+    /// a section) from the parser. Subsequent calls will return an empty vec.
+    /// Consider [`State::frontmatter`] if you only need a reference to the
+    /// frontmatter
+    pub fn take_frontmatter(&mut self) -> Vec<Event<'a>> {
+        std::mem::take(&mut self.frontmatter)
+    }
+
+    /// Returns the parsed sections from the parser. Consider
+    /// [`State::take_sections`] if you need an owned copy only once. If that
+    /// function was called, then this will always return an empty slice.
     #[must_use]
-    pub fn to_owned(&self) -> Event<'static> {
-        match self {
-            Event::Comment(e) => Event::Comment(e.to_owned()),
-            Event::SectionHeader(e) => Event::SectionHeader(e.to_owned()),
-            Event::SectionKey(e) => Event::SectionKey(e.to_owned()),
-            Event::Value(e) => Event::Value(Cow::Owned(e.clone().into_owned())),
-            Event::ValueNotDone(e) => Event::ValueNotDone(Cow::Owned(e.clone().into_owned())),
-            Event::ValueDone(e) => Event::ValueDone(Cow::Owned(e.clone().into_owned())),
-            Event::Newline(e) => Event::Newline(Cow::Owned(e.clone().into_owned())),
-            Event::Whitespace(e) => Event::Whitespace(Cow::Owned(e.clone().into_owned())),
-            Event::KeyValueSeparator => Event::KeyValueSeparator,
-        }
+    pub fn sections(&self) -> &[Section<'a>] {
+        &self.sections
+    }
+
+    /// Takes the parsed sections from the parser. Subsequent calls will return
+    /// an empty vec. Consider [`State::sections`] if you only need a reference
+    /// to the comments.
+    pub fn take_sections(&mut self) -> Vec<Section<'a>> {
+        let mut to_return = vec![];
+        std::mem::swap(&mut self.sections, &mut to_return);
+        to_return
+    }
+
+    /// Consumes the parser to produce a Vec of Events.
+    #[must_use]
+    pub fn into_vec(self) -> Vec<Event<'a>> {
+        self.into_iter().collect()
+    }
+
+    /// Consumes the parser to produce an iterator of Events.
+    #[must_use = "iterators are lazy and do nothing unless consumed"]
+    #[allow(clippy::should_implement_trait)]
+    pub fn into_iter(self) -> impl Iterator<Item = Event<'a>> + std::iter::FusedIterator {
+        self.frontmatter.into_iter().chain(
+            self.sections.into_iter().flat_map(|section| {
+                std::iter::once(Event::SectionHeader(section.section_header)).chain(section.events)
+            }),
+        )
     }
 }
 
-impl Display for Event<'_> {
-    /// Note that this is a best-effort attempt at printing an `Event`. If
-    /// there are non UTF-8 values in your config, this will _NOT_ render
-    /// as read.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => match std::str::from_utf8(e) {
-                Ok(e) => e.fmt(f),
-                Err(_) => write!(f, "{:02x?}", e),
-            },
-            Self::Comment(e) => e.fmt(f),
-            Self::SectionHeader(e) => e.fmt(f),
-            Self::SectionKey(e) => e.fmt(f),
-            Self::Newline(e) | Self::Whitespace(e) => e.fmt(f),
-            Self::KeyValueSeparator => write!(f, "="),
-        }
+impl<'a> TryFrom<&'a str> for Events<'a> {
+    type Error = Error<'a>;
+
+    fn try_from(value: &'a str) -> Result<Self, Self::Error> {
+        Self::from_str(value)
     }
 }
 
-impl From<Event<'_>> for BString {
-    fn from(event: Event<'_>) -> Self {
-        event.into()
-    }
-}
+impl<'a> TryFrom<&'a [u8]> for Events<'a> {
+    type Error = Error<'a>;
 
-impl From<&Event<'_>> for BString {
-    fn from(event: &Event<'_>) -> Self {
-        match event {
-            Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.as_ref().into(),
-            Event::Comment(e) => e.into(),
-            Event::SectionHeader(e) => e.into(),
-            Event::SectionKey(e) => e.0.as_ref().into(),
-            Event::Newline(e) | Event::Whitespace(e) => e.as_ref().into(),
-            Event::KeyValueSeparator => "=".into(),
-        }
+    fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
+        crate::parse::nom::from_bytes(value)
     }
 }

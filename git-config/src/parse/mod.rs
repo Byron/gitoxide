@@ -63,6 +63,28 @@ pub enum Event<'a> {
 
 ///
 pub mod event;
+#[path = "events.rs"]
+mod events_type;
+pub use events_type::Events;
+
+///
+pub mod events {
+    ///
+    pub mod from_path {
+        /// An error type representing a Parser [`Error`] or an [`IO error`]. This is
+        /// returned from functions that will perform IO on top of standard parsing,
+        /// such as reading from a file.
+        ///
+        /// [`IO error`]: std::io::Error
+        #[derive(Debug, thiserror::Error)]
+        pub enum Error {
+            #[error(transparent)]
+            Parse(crate::parse::Error<'static>),
+            #[error(transparent)]
+            Io(#[from] std::io::Error),
+        }
+    }
+}
 
 /// A parsed section containing the header and the section events.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]

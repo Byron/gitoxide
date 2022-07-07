@@ -1,5 +1,5 @@
 mod parse {
-    use crate::parse::event::List;
+    use crate::parse::Events;
 
     #[test]
     fn parser_skips_bom() {
@@ -13,34 +13,34 @@ mod parse {
     ";
 
         assert_eq!(
-            List::from_bytes(bytes),
-            List::from_bytes(bytes_with_gb18030_bom.as_bytes())
+            Events::from_bytes(bytes),
+            Events::from_bytes(bytes_with_gb18030_bom.as_bytes())
         );
         assert_eq!(
-            List::from_bytes_owned(bytes),
-            List::from_bytes_owned(bytes_with_gb18030_bom.as_bytes())
+            Events::from_bytes_owned(bytes),
+            Events::from_bytes_owned(bytes_with_gb18030_bom.as_bytes())
         );
     }
 }
 
 #[cfg(test)]
 mod error {
-    use crate::parse::event::List;
+    use crate::parse::Events;
 
     #[test]
     fn line_no_is_one_indexed() {
-        assert_eq!(List::from_str("[hello").unwrap_err().line_number(), 1);
+        assert_eq!(Events::from_str("[hello").unwrap_err().line_number(), 1);
     }
 
     #[test]
     fn remaining_data_contains_bad_tokens() {
-        assert_eq!(List::from_str("[hello").unwrap_err().remaining_data(), b"[hello");
+        assert_eq!(Events::from_str("[hello").unwrap_err().remaining_data(), b"[hello");
     }
 
     #[test]
     fn to_string_truncates_extra_values() {
         assert_eq!(
-            List::from_str("[1234567890").unwrap_err().to_string(),
+            Events::from_str("[1234567890").unwrap_err().to_string(),
             "Got an unexpected token on line 1 while trying to parse a section header: '[123456789' ... (1 characters omitted)"
         );
     }
