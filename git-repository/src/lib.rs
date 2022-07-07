@@ -293,7 +293,7 @@ pub mod mailmap {
             #[error("The configured mailmap.blob could not be parsed")]
             BlobSpec(#[from] git_hash::decode::Error),
             #[error(transparent)]
-            PathInterpolate(#[from] git_config::value::path::interpolate::Error),
+            PathInterpolate(#[from] git_config::path::interpolate::Error),
             #[error("Could not find object configured in `mailmap.blob`")]
             FindExisting(#[from] crate::object::find::existing::OdbError),
         }
@@ -444,7 +444,7 @@ pub mod discover {
                 if let Some(cross_fs) = std::env::var_os("GIT_DISCOVERY_ACROSS_FILESYSTEM")
                     .and_then(|v| Vec::from_os_string(v).ok().map(BString::from))
                 {
-                    if let Ok(b) = git_config::value::Boolean::try_from(cross_fs) {
+                    if let Ok(b) = git_config::Boolean::try_from(cross_fs) {
                         opts.cross_fs = b.to_bool();
                     }
                 }

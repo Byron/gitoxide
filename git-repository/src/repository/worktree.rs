@@ -77,7 +77,7 @@ impl crate::Repository {
             .boolean("index", None, "threads")
             .map(|res| {
                 res.map(|value| if value { 0usize } else { 1 }).or_else(|err| {
-                    git_config::value::Integer::try_from(err.input.as_ref())
+                    git_config::Integer::try_from(err.input.as_ref())
                         .map_err(|err| worktree::open_index::Error::ConfigIndexThreads {
                             value: err.input.clone(),
                             err,
