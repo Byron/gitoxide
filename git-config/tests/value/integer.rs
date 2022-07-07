@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-use git_config::{value::Integer, value::IntegerSuffix};
+use git_config::value::{integer::Suffix, Integer};
 
 use crate::value::b;
 
@@ -23,7 +23,7 @@ fn from_str_with_suffix() {
         Integer::try_from(b("1k")).unwrap(),
         Integer {
             value: 1,
-            suffix: Some(IntegerSuffix::Kibi),
+            suffix: Some(Suffix::Kibi),
         }
     );
 
@@ -31,7 +31,7 @@ fn from_str_with_suffix() {
         Integer::try_from(b("1m")).unwrap(),
         Integer {
             value: 1,
-            suffix: Some(IntegerSuffix::Mebi),
+            suffix: Some(Suffix::Mebi),
         }
     );
 
@@ -39,7 +39,7 @@ fn from_str_with_suffix() {
         Integer::try_from(b("1g")).unwrap(),
         Integer {
             value: 1,
-            suffix: Some(IntegerSuffix::Gibi),
+            suffix: Some(Suffix::Gibi),
         }
     );
 }

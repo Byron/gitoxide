@@ -1,6 +1,6 @@
 use crate::file::cow_str;
 use bstr::BStr;
-use git_config::value::{color, Boolean, Color, Integer, IntegerSuffix, String, TrueVariant};
+use git_config::value::{color, integer, Boolean, Color, Integer, String, TrueVariant};
 use git_config::File;
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
@@ -61,7 +61,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         file.value::<Integer>("core", None, "integer-prefix")?,
         Integer {
             value: 10,
-            suffix: Some(IntegerSuffix::Gibi),
+            suffix: Some(integer::Suffix::Gibi),
         }
     );
 

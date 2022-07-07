@@ -5,24 +5,7 @@ use std::convert::TryFrom;
 use std::fmt::Display;
 use std::str::FromStr;
 
-/// Any value that can be interpreted as an integer.
-///
-/// This supports any numeric value that can fit in a [`i64`], excluding the
-/// suffix. The suffix is parsed separately from the value itself, so if you
-/// wish to obtain the true value of the integer, you must account for the
-/// suffix after fetching the value. [`IntegerSuffix`] provides
-/// [`bitwise_offset`] to help with the math, but do be warned that if the value
-/// is very large, you may run into overflows.
-///
-/// [`BStr`]: bstr::BStr
-/// [`bitwise_offset`]: IntegerSuffix::bitwise_offset
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Integer {
-    /// The value, without any suffix modification
-    pub value: i64,
-    /// A provided suffix, if any.
-    pub suffix: Option<IntegerSuffix>,
-}
+use value::Integer;
 
 impl Integer {
     /// Generates a byte representation of the value. This should be used when
@@ -42,9 +25,9 @@ impl Integer {
         match self.suffix {
             None => Some(self.value),
             Some(suffix) => match suffix {
-                IntegerSuffix::Kibi => self.value.checked_mul(1024),
-                IntegerSuffix::Mebi => self.value.checked_mul(1024 * 1024),
-                IntegerSuffix::Gibi => self.value.checked_mul(1024 * 1024 * 1024),
+                Suffix::Kibi => self.value.checked_mul(1024),
+                Suffix::Mebi => self.value.checked_mul(1024 * 1024),
+                Suffix::Gibi => self.value.checked_mul(1024 * 1024 * 1024),
             },
         }
     }
@@ -145,13 +128,13 @@ impl From<&Integer> for BString {
 /// These values are base-2 unit of measurements, not the base-10 variants.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
-pub enum IntegerSuffix {
+pub enum Suffix {
     Kibi,
     Mebi,
     Gibi,
 }
 
-impl IntegerSuffix {
+impl Suffix {
     /// Returns the number of bits that the suffix shifts left by.
     #[must_use]
     pub const fn bitwise_offset(self) -> usize {
@@ -163,7 +146,7 @@ impl IntegerSuffix {
     }
 }
 
-impl Display for IntegerSuffix {
+impl Display for Suffix {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Kibi => write!(f, "k"),
@@ -174,7 +157,7 @@ impl Display for IntegerSuffix {
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for IntegerSuffix {
+impl serde::Serialize for Suffix {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -187,7 +170,7 @@ impl serde::Serialize for IntegerSuffix {
     }
 }
 
-impl FromStr for IntegerSuffix {
+impl FromStr for Suffix {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -200,7 +183,7 @@ impl FromStr for IntegerSuffix {
     }
 }
 
-impl TryFrom<&[u8]> for IntegerSuffix {
+impl TryFrom<&[u8]> for Suffix {
     type Error = ();
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
@@ -208,7 +191,7 @@ impl TryFrom<&[u8]> for IntegerSuffix {
     }
 }
 
-impl TryFrom<BString> for IntegerSuffix {
+impl TryFrom<BString> for Suffix {
     type Error = ();
 
     fn try_from(value: BString) -> Result<Self, Self::Error> {

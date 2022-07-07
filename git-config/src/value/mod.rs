@@ -22,8 +22,26 @@ pub struct Color {
 }
 pub mod color;
 
-mod integer;
-pub use integer::{Integer, IntegerSuffix};
+/// Any value that can be interpreted as an integer.
+///
+/// This supports any numeric value that can fit in a [`i64`], excluding the
+/// suffix. The suffix is parsed separately from the value itself, so if you
+/// wish to obtain the true value of the integer, you must account for the
+/// suffix after fetching the value. [`IntegerSuffix`] provides
+/// [`bitwise_offset`] to help with the math, but do be warned that if the value
+/// is very large, you may run into overflows.
+///
+/// [`BStr`]: bstr::BStr
+/// [`bitwise_offset`]: IntegerSuffix::bitwise_offset
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct Integer {
+    /// The value, without any suffix modification
+    pub value: i64,
+    /// A provided suffix, if any.
+    pub suffix: Option<integer::Suffix>,
+}
+
+pub mod integer;
 
 mod boolean;
 pub use boolean::{Boolean, TrueVariant};
