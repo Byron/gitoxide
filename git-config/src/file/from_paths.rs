@@ -68,13 +68,6 @@ impl File<'static> {
 
     /// Constructs a `git-config` file from the provided paths in the order provided.
     /// This is neither zero-copy nor zero-alloc.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if there was an IO error or if a file wasn't a valid
-    /// git-config file.
-    ///
-    /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
     pub fn from_paths(
         paths: impl IntoIterator<Item = impl AsRef<std::path::Path>>,
         options: Options<'_>,

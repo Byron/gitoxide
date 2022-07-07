@@ -3,9 +3,9 @@ use crate::{bstr::BString, permission};
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Could not open repository conifguration file")]
-    Open(#[from] git_config::parse::events::from_path::Error),
+    Open(#[from] git_config::file::from_paths::Error),
     #[error("Cannot handle objects formatted as {:?}", .name)]
-    UnsupportedObjectFormat { name: crate::bstr::BString },
+    UnsupportedObjectFormat { name: BString },
     #[error("The value for '{}' cannot be empty", .key)]
     EmptyValue { key: &'static str },
     #[error("Invalid value for 'core.abbrev' = '{}'. It must be between 4 and {}", .value, .max)]
@@ -63,7 +63,10 @@ mod cache {
                 .and_then(|home| home_env.check(home).ok().flatten());
             // TODO: don't forget to use the canonicalized home for initializing the stacked config.
             //       like git here: https://github.com/git/git/blob/master/config.c#L208:L208
-            let config = File::at(git_dir.join("config"))?;
+            let config = {
+                let mut buf = Vec::with_capacity(512);
+                File::from_path_with_buf(&git_dir.join("config"), &mut buf)?
+            };
 
             let is_bare = config_bool(&config, "core.bare", false)?;
             let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;

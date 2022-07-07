@@ -101,7 +101,8 @@ where
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
     let non_bare = repo.join(".git").join("config");
-    let config = File::at(non_bare.as_path()).or_else(|_| File::at(repo.join("config").as_path()))?;
+    let config = File::from_path_with_buf(non_bare.as_path(), &mut Vec::new())
+        .or_else(|_| File::from_path_with_buf(repo.join("config").as_path(), &mut Vec::new()))?;
     Ok(config
         .string("remote", Some("origin"), "url")
         .map(|url| git_url::Url::from_bytes(url.as_ref()))
