@@ -1,6 +1,6 @@
 use crate::file::cow_str;
 use bstr::BStr;
-use git_config::value::{color, integer, Boolean, Color, Integer, String, TrueVariant};
+use git_config::value::{boolean::True, color, integer, Boolean, Color, Integer, String};
 use git_config::File;
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
@@ -30,12 +30,12 @@ fn get_value_for_all_provided_values() -> crate::Result {
 
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-implicit")?,
-        Boolean::True(TrueVariant::Implicit)
+        Boolean::True(True::Implicit)
     );
     assert_eq!(
         file.try_value::<Boolean>("core", None, "bool-implicit")
             .expect("exists")?,
-        Boolean::True(TrueVariant::Implicit)
+        Boolean::True(True::Implicit)
     );
 
     assert!(file.boolean("core", None, "bool-implicit").expect("present")?);
@@ -124,7 +124,7 @@ fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
     // Checks that we check the last entry first still
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-implicit")?,
-        Boolean::True(TrueVariant::Implicit)
+        Boolean::True(True::Implicit)
     );
 
     assert_eq!(
@@ -169,7 +169,7 @@ fn single_section() -> Result<(), Box<dyn Error>> {
     let second_value: Boolean = config.value("core", None, "c")?;
 
     assert_eq!(first_value, String { value: cow_str("b") });
-    assert_eq!(second_value, Boolean::True(TrueVariant::Implicit));
+    assert_eq!(second_value, Boolean::True(True::Implicit));
 
     Ok(())
 }

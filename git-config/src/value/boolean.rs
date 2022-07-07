@@ -4,18 +4,7 @@ use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::fmt::Display;
 
-/// Any value that can be interpreted as a boolean.
-///
-/// Note that while values can effectively be any byte string, the `git-config`
-/// documentation has a strict subset of values that may be interpreted as a
-/// boolean value, all of which are ASCII and thus UTF-8 representable.
-/// Consequently, variants hold [`str`]s rather than [`[u8]`]s.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-#[allow(missing_docs)]
-pub enum Boolean<'a> {
-    True(TrueVariant<'a>),
-    False(Cow<'a, BStr>),
-}
+use value::Boolean;
 
 impl Boolean<'_> {
     /// Return ourselves as plain bool.
@@ -45,7 +34,7 @@ impl<'a> TryFrom<&'a BStr> for Boolean<'a> {
     type Error = value::parse::Error;
 
     fn try_from(value: &'a BStr) -> Result<Self, Self::Error> {
-        if let Ok(v) = TrueVariant::try_from(value) {
+        if let Ok(v) = True::try_from(value) {
             return Ok(Self::True(v));
         }
 
@@ -75,7 +64,7 @@ impl TryFrom<BString> for Boolean<'_> {
             return Ok(Self::False(Cow::Owned(value)));
         }
 
-        TrueVariant::try_from(value).map(Self::True)
+        True::try_from(value).map(Self::True)
     }
 }
 
@@ -146,13 +135,13 @@ impl serde::Serialize for Boolean<'_> {
 /// This enum is part of the [`Boolean`] struct.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
-pub enum TrueVariant<'a> {
+pub enum True<'a> {
     Explicit(Cow<'a, BStr>),
     /// For values defined without a `= <value>`.
     Implicit,
 }
 
-impl<'a> TryFrom<&'a BStr> for TrueVariant<'a> {
+impl<'a> TryFrom<&'a BStr> for True<'a> {
     type Error = value::parse::Error;
 
     fn try_from(value: &'a BStr) -> Result<Self, Self::Error> {
@@ -170,7 +159,7 @@ impl<'a> TryFrom<&'a BStr> for TrueVariant<'a> {
     }
 }
 
-impl TryFrom<BString> for TrueVariant<'_> {
+impl TryFrom<BString> for True<'_> {
     type Error = value::parse::Error;
 
     fn try_from(value: BString) -> Result<Self, Self::Error> {
@@ -188,7 +177,7 @@ impl TryFrom<BString> for TrueVariant<'_> {
     }
 }
 
-impl Display for TrueVariant<'_> {
+impl Display for True<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Self::Explicit(v) = self {
             write!(f, "{}", v)
@@ -198,17 +187,17 @@ impl Display for TrueVariant<'_> {
     }
 }
 
-impl<'a, 'b: 'a> From<&'b TrueVariant<'a>> for &'a BStr {
-    fn from(t: &'b TrueVariant<'a>) -> Self {
+impl<'a, 'b: 'a> From<&'b True<'a>> for &'a BStr {
+    fn from(t: &'b True<'a>) -> Self {
         match t {
-            TrueVariant::Explicit(e) => e.as_ref(),
-            TrueVariant::Implicit => "".into(),
+            True::Explicit(e) => e.as_ref(),
+            True::Implicit => "".into(),
         }
     }
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for TrueVariant<'_> {
+impl serde::Serialize for True<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,

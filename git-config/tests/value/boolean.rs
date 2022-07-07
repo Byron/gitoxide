@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 
 use crate::file::cow_str;
-use git_config::value::{Boolean, TrueVariant};
+use git_config::value::{boolean::True, Boolean};
 
 use crate::value::b;
 
@@ -18,19 +18,19 @@ fn from_str_false() {
 fn from_str_true() {
     assert_eq!(
         Boolean::try_from(b("yes")),
-        Ok(Boolean::True(TrueVariant::Explicit(cow_str("yes"))))
+        Ok(Boolean::True(True::Explicit(cow_str("yes"))))
     );
     assert_eq!(
         Boolean::try_from(b("on")),
-        Ok(Boolean::True(TrueVariant::Explicit(cow_str("on"))))
+        Ok(Boolean::True(True::Explicit(cow_str("on"))))
     );
     assert_eq!(
         Boolean::try_from(b("true")),
-        Ok(Boolean::True(TrueVariant::Explicit(cow_str("true"))))
+        Ok(Boolean::True(True::Explicit(cow_str("true"))))
     );
     assert_eq!(
         Boolean::try_from(b("one")),
-        Ok(Boolean::True(TrueVariant::Explicit(cow_str("one"))))
+        Ok(Boolean::True(True::Explicit(cow_str("one"))))
     );
 }
 

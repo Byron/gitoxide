@@ -76,7 +76,7 @@ impl<'a> File<'a> {
     ///
     /// ```
     /// # use git_config::File;
-    /// # use git_config::value::{Integer, String, Boolean, TrueVariant};
+    /// # use git_config::value::{Integer, String, Boolean, boolean::True};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -93,8 +93,8 @@ impl<'a> File<'a> {
     /// assert_eq!(
     ///     a_value,
     ///     vec![
-    ///         Boolean::True(TrueVariant::Explicit(Cow::Borrowed("true".into()))),
-    ///         Boolean::True(TrueVariant::Implicit),
+    ///         Boolean::True(True::Explicit(Cow::Borrowed("true".into()))),
+    ///         Boolean::True(True::Implicit),
     ///         Boolean::False(Cow::Borrowed("false".into())),
     ///     ]
     /// );
@@ -160,7 +160,7 @@ impl<'a> File<'a> {
     ///
     /// ```
     /// # use git_config::File;
-    /// # use git_config::value::{Integer, Boolean, TrueVariant};
+    /// # use git_config::value::{Integer, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
