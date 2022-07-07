@@ -1,7 +1,7 @@
 use crate::parse::section;
 use crate::{
     parse,
-    parse::{events::from_path, Event, Section},
+    parse::{events::from_path, Section},
 };
 use std::convert::TryFrom;
 
@@ -87,7 +87,7 @@ use std::convert::TryFrom;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf = input";
-/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_iter().collect::<Vec<_>>(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
@@ -126,7 +126,7 @@ use std::convert::TryFrom;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf";
-/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_iter().collect::<Vec<_>>(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
@@ -160,7 +160,7 @@ use std::convert::TryFrom;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\nautocrlf=true\"\"\nfilemode=fa\"lse\"";
-/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_iter().collect::<Vec<_>>(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::SectionKey(section::Key(Cow::Borrowed("autocrlf".into()))),
@@ -197,7 +197,7 @@ use std::convert::TryFrom;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[some-section]\nfile=a\\\n    c";
-/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_iter().collect::<Vec<_>>(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::SectionKey(section::Key(Cow::Borrowed("file".into()))),
@@ -215,8 +215,10 @@ use std::convert::TryFrom;
 /// [`From<&'_ str>`]: std::convert::From
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Events<'a> {
-    pub(crate) frontmatter: parse::section::Events<'a>,
-    pub(crate) sections: Vec<Section<'a>>,
+    /// Events seen before the first section.
+    pub frontmatter: parse::section::Events<'a>,
+    /// All parsed sections.
+    pub sections: Vec<Section<'a>>,
 }
 
 impl Events<'static> {
@@ -297,58 +299,16 @@ impl<'a> Events<'a> {
         parse::from_bytes(input, |e| frontmatter.push(e), |s: Section<'_>| sections.push(s))?;
         Ok(Events { frontmatter, sections })
     }
-}
-
-impl<'a> Events<'a> {
-    /// Returns the leading events (any comments, whitespace, or newlines before
-    /// a section) from the parser. Consider [`Events::take_frontmatter`] if
-    /// you need an owned copy only once. If that function was called, then this
-    /// will always return an empty slice.
-    #[must_use]
-    pub fn frontmatter(&self) -> &[Event<'a>] {
-        &self.frontmatter
-    }
-
-    /// Takes the leading events (any comments, whitespace, or newlines before
-    /// a section) from the parser. Subsequent calls will return an empty vec.
-    /// Consider [`Events::frontmatter`] if you only need a reference to the
-    /// frontmatter
-    pub fn take_frontmatter(&mut self) -> section::Events<'a> {
-        std::mem::take(&mut self.frontmatter)
-    }
-
-    /// Returns the parsed sections from the parser. Consider
-    /// [`Events::take_sections`] if you need an owned copy only once. If that
-    /// function was called, then this will always return an empty slice.
-    #[must_use]
-    pub fn sections(&self) -> &[Section<'a>] {
-        &self.sections
-    }
-
-    /// Takes the parsed sections from the parser. Subsequent calls will return
-    /// an empty vec. Consider [`Events::sections`] if you only need a reference
-    /// to the comments.
-    pub fn take_sections(&mut self) -> Vec<Section<'a>> {
-        let mut to_return = vec![];
-        std::mem::swap(&mut self.sections, &mut to_return);
-        to_return
-    }
-
-    /// Consumes the parser to produce a Vec of Events.
-    #[must_use]
-    pub fn into_vec(self) -> Vec<Event<'a>> {
-        self.into_iter().collect()
-    }
 
     /// Consumes the parser to produce an iterator of Events.
     #[must_use = "iterators are lazy and do nothing unless consumed"]
     #[allow(clippy::should_implement_trait)]
-    pub fn into_iter(self) -> impl Iterator<Item = Event<'a>> + std::iter::FusedIterator {
-        self.frontmatter.into_iter().chain(
-            self.sections.into_iter().flat_map(|section| {
-                std::iter::once(Event::SectionHeader(section.section_header)).chain(section.events)
-            }),
-        )
+    pub fn into_iter(self) -> impl Iterator<Item = parse::Event<'a>> + std::iter::FusedIterator {
+        self.frontmatter
+            .into_iter()
+            .chain(self.sections.into_iter().flat_map(|section| {
+                std::iter::once(parse::Event::SectionHeader(section.section_header)).chain(section.events)
+            }))
     }
 }
 

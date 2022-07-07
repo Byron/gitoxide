@@ -87,7 +87,8 @@ fn personal_config() {
     assert_eq!(
         Events::from_str(config)
             .unwrap()
-            .into_vec(),
+            .into_iter()
+            .collect::<Vec<_>>(),
         vec![
             section_header_event("user", None),
             newline(),
@@ -200,13 +201,13 @@ fn personal_config() {
 
 #[test]
 fn parse_empty() {
-    assert_eq!(Events::from_str("").unwrap().into_vec(), vec![]);
+    assert_eq!(Events::from_str("").unwrap().into_iter().collect::<Vec<_>>(), vec![]);
 }
 
 #[test]
 fn parse_whitespace() {
     assert_eq!(
-        Events::from_str("\n   \n \n").unwrap().into_vec(),
+        Events::from_str("\n   \n \n").unwrap().into_iter().collect::<Vec<_>>(),
         vec![newline(), whitespace("   "), newline(), whitespace(" "), newline()]
     )
 }
@@ -214,7 +215,7 @@ fn parse_whitespace() {
 #[test]
 fn newline_events_are_merged() {
     assert_eq!(
-        Events::from_str("\n\n\n\n\n").unwrap().into_vec(),
+        Events::from_str("\n\n\n\n\n").unwrap().into_iter().collect::<Vec<_>>(),
         vec![newline_custom("\n\n\n\n\n")]
     );
 }
