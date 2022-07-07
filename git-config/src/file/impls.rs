@@ -37,8 +37,10 @@ impl<'a> TryFrom<&'a BString> for File<'a> {
 
 impl<'a> From<parse::Events<'a>> for File<'a> {
     fn from(events: parse::Events<'a>) -> Self {
-        let mut this = Self::default();
-        this.frontmatter_events = SectionBody(events.frontmatter);
+        let mut this = File {
+            frontmatter_events: SectionBody(events.frontmatter),
+            ..Default::default()
+        };
 
         for section in events.sections {
             this.push_section_internal(section.section_header, SectionBody(section.events));
