@@ -64,7 +64,7 @@ impl<'a> File<'a> {
         section_name: impl Into<Cow<'a, str>>,
         subsection_name: impl Into<Option<Cow<'a, str>>>,
     ) -> MutableSection<'_, 'a> {
-        let mut section = self.push_section(section_name, subsection_name, SectionBody::new());
+        let mut section = self.push_section(section_name, subsection_name, SectionBody::default());
         section.push_newline();
         section
     }

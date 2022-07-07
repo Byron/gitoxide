@@ -36,46 +36,15 @@ impl<'a> TryFrom<&'a BString> for File<'a> {
 }
 
 impl<'a> From<parse::Events<'a>> for File<'a> {
-    fn from(parser: parse::Events<'a>) -> Self {
-        let mut new_self = Self::default();
+    fn from(events: parse::Events<'a>) -> Self {
+        let mut this = Self::default();
+        this.frontmatter_events = SectionBody(events.frontmatter);
 
-        // Current section that we're building
-        let mut prev_section_header = None;
-        let mut section_events = SectionBody::new();
-
-        #[allow(clippy::explicit_into_iter_loop)]
-        // it's not really an iterator (yet), needs streaming iterator support
-        for event in parser.into_iter() {
-            match event {
-                parse::Event::SectionHeader(header) => {
-                    if let Some(prev_header) = prev_section_header.take() {
-                        new_self.push_section_internal(prev_header, section_events);
-                    } else {
-                        new_self.frontmatter_events = section_events;
-                    }
-                    prev_section_header = Some(header);
-                    section_events = SectionBody::new();
-                }
-                e @ parse::Event::SectionKey(_)
-                | e @ parse::Event::Value(_)
-                | e @ parse::Event::ValueNotDone(_)
-                | e @ parse::Event::ValueDone(_)
-                | e @ parse::Event::KeyValueSeparator => section_events.as_mut().push(e),
-                e @ parse::Event::Comment(_) | e @ parse::Event::Newline(_) | e @ parse::Event::Whitespace(_) => {
-                    section_events.as_mut().push(e);
-                }
-            }
+        for section in events.sections {
+            this.push_section_internal(section.section_header, SectionBody(section.events.into_vec()));
         }
 
-        // The last section doesn't get pushed since we only push if there's a
-        // new section header, so we need to call push one more time.
-        if let Some(header) = prev_section_header {
-            new_self.push_section_internal(header, section_events);
-        } else {
-            new_self.frontmatter_events = section_events;
-        }
-
-        new_self
+        this
     }
 }
 

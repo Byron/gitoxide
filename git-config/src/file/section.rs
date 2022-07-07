@@ -218,7 +218,7 @@ impl<'event> Deref for MutableSection<'_, 'event> {
 /// A opaque type that represents a section body.
 #[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Default)]
-pub struct SectionBody<'event>(Vec<Event<'event>>);
+pub struct SectionBody<'event>(pub(crate) Vec<Event<'event>>);
 
 impl<'event> SectionBody<'event> {
     pub(crate) fn as_ref(&self) -> &[Event<'_>] {
@@ -227,11 +227,6 @@ impl<'event> SectionBody<'event> {
 
     pub(crate) fn as_mut(&mut self) -> &mut Vec<Event<'event>> {
         &mut self.0
-    }
-
-    /// Constructs a new empty section body.
-    pub(crate) fn new() -> Self {
-        Self::default()
     }
 
     /// Retrieves the last matching value in a section with the given key.

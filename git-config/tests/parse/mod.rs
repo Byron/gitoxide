@@ -51,7 +51,7 @@ fn separator() -> Event<'static> {
 fn size_in_memory() {
     assert_eq!(
         std::mem::size_of::<Section<'_>>(),
-        3440,
+        6768,
         "This shouldn't change without us noticing"
     );
     assert_eq!(
