@@ -44,7 +44,7 @@ impl<'a> File<'a> {
                 .expect("sections does not have section id from section ids")
                 .value(&key)
             {
-                return Ok(v.clone());
+                return Ok(v);
             }
         }
 
@@ -172,8 +172,7 @@ impl<'a> File<'a> {
                     .get(&section_id)
                     .expect("sections does not have section id from section ids")
                     .values(&section::Key(Cow::<BStr>::Borrowed(key.into())))
-                    .iter()
-                    .cloned(),
+                    .into_iter(),
             );
         }
 
