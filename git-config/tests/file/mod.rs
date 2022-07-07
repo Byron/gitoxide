@@ -21,7 +21,8 @@ mod open {
 
     #[test]
     fn parse_config_with_windows_line_endings_successfully() {
-        File::at(fixture_path("repo-config.crlf")).unwrap();
+        let mut buf = Vec::new();
+        File::from_path_with_buf(&fixture_path("repo-config.crlf"), &mut buf).unwrap();
     }
 }
 

@@ -105,7 +105,7 @@ impl ConfigBuilder {
                 .as_ref()
                 .map_or_else(|| Path::new(".git/config"), PathBuf::as_path);
 
-            File::at(path).ok()
+            File::from_paths(Some(path), Default::default()).ok()
         };
 
         let env_conf = if self.load_env_conf {

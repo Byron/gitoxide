@@ -1,3 +1,4 @@
+use crate::{file::resolve_includes, File};
 use crate::{parse, path::interpolate};
 
 /// The error returned by [`File::from_paths()`][crate::File::from_paths()] and [`File::from_env_paths()`][crate::File::from_env_paths()].
@@ -5,7 +6,9 @@ use crate::{parse, path::interpolate};
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    Parse(#[from] parse::events::from_path::Error),
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Parse(#[from] parse::Error),
     #[error(transparent)]
     Interpolate(#[from] interpolate::Error),
     #[error("The maximum allowed length {} of the file include chain built by following nested resolve_includes is exceeded", .max_depth)]
@@ -48,5 +51,42 @@ impl<'a> Default for Options<'a> {
             branch_name: None,
             home_dir: None,
         }
+    }
+}
+
+impl File<'static> {
+    /// Open a single configuration file by reading `path` into `buf` and copying all contents from there, without resolving includes.
+    pub fn from_path_with_buf(path: &std::path::Path, buf: &mut Vec<u8>) -> Result<Self, Error> {
+        buf.clear();
+        std::io::copy(&mut std::fs::File::open(path)?, buf)?;
+        Self::from_bytes(&buf)
+    }
+
+    pub(crate) fn from_bytes(input: &[u8]) -> Result<Self, Error> {
+        Ok(parse::Events::from_bytes_owned(input)?.into())
+    }
+
+    /// Constructs a `git-config` file from the provided paths in the order provided.
+    /// This is neither zero-copy nor zero-alloc.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if there was an IO error or if a file wasn't a valid
+    /// git-config file.
+    ///
+    /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-FILES
+    pub fn from_paths(
+        paths: impl IntoIterator<Item = impl AsRef<std::path::Path>>,
+        options: Options<'_>,
+    ) -> Result<Self, Error> {
+        let mut target = Self::default();
+        let mut buf = Vec::with_capacity(512);
+        for path in paths {
+            let path = path.as_ref();
+            let mut config = Self::from_path_with_buf(path, &mut buf)?;
+            resolve_includes(&mut config, Some(path), &mut buf, options)?;
+            target.append(config);
+        }
+        Ok(target)
     }
 }

@@ -4,7 +4,8 @@ use git_config::File;
 use git_testtools::fixture_path;
 
 fn init_config() -> File<'static> {
-    File::at(fixture_path("multi-core.txt")).unwrap()
+    let mut buf = Vec::new();
+    File::from_path_with_buf(&fixture_path("multi-core.txt"), &mut buf).unwrap()
 }
 
 #[test]

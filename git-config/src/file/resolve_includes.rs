@@ -16,15 +16,17 @@ use crate::{
 pub(crate) fn resolve_includes(
     conf: &mut File<'static>,
     config_path: Option<&std::path::Path>,
+    buf: &mut Vec<u8>,
     options: from_paths::Options<'_>,
 ) -> Result<(), from_paths::Error> {
-    resolve_includes_recursive(conf, config_path, 0, options)
+    resolve_includes_recursive(conf, config_path, 0, buf, options)
 }
 
 fn resolve_includes_recursive(
     target_config: &mut File<'static>,
     target_config_path: Option<&Path>,
     depth: u8,
+    buf: &mut Vec<u8>,
     options: from_paths::Options<'_>,
 ) -> Result<(), from_paths::Error> {
     if depth == options.max_depth {
@@ -78,8 +80,8 @@ fn resolve_includes_recursive(
     }
 
     for config_path in paths_to_include {
-        let mut include_config = File::at(&config_path)?;
-        resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, options)?;
+        let mut include_config = File::from_path_with_buf(&config_path, buf)?;
+        resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, buf, options)?;
         target_config.append(include_config);
     }
     Ok(())

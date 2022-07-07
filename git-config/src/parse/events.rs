@@ -1,8 +1,5 @@
 use crate::parse::{section, Event};
-use crate::{
-    parse,
-    parse::{events::from_path, Section},
-};
+use crate::{parse, parse::Section};
 use smallvec::SmallVec;
 use std::convert::TryFrom;
 
@@ -226,26 +223,6 @@ pub struct Events<'a> {
 }
 
 impl Events<'static> {
-    /// Parses a git config located at the provided path. On success, returns a
-    /// [`Events`] that provides methods to accessing leading comments and sections
-    /// of a `git-config` file and can be converted into an iterator of [`Event`]
-    /// for higher level processing.
-    ///
-    /// Note that since we accept a path rather than a reference to the actual
-    /// bytes, this function is _not_ zero-copy, as the Parser must own (and thus
-    /// copy) the bytes that it reads from. Consider one of the other variants if
-    /// performance is a concern.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if there was an IO error or the read file is not a valid
-    /// `git-config` This generally is due to either invalid names or if there's
-    /// extraneous data succeeding valid `git-config` data.
-    pub fn from_path<P: AsRef<std::path::Path>>(path: P) -> Result<Events<'static>, from_path::Error> {
-        let bytes = std::fs::read(path)?;
-        Ok(Self::from_bytes_owned(&bytes)?)
-    }
-
     /// Parses the provided bytes, returning an [`Events`] that contains allocated
     /// and owned events. This is similar to [`Events::from_bytes()`], but performance
     /// is degraded as it requires allocation for every event. However, this permits

@@ -67,25 +67,6 @@ pub mod event;
 mod events_type;
 pub use events_type::{Events, FrontMatterEvents};
 
-///
-pub mod events {
-    ///
-    pub mod from_path {
-        /// An error type representing a Parser [`Error`] or an [`IO error`]. This is
-        /// returned from functions that will perform IO on top of standard parsing,
-        /// such as reading from a file.
-        ///
-        /// [`IO error`]: std::io::Error
-        #[derive(Debug, thiserror::Error)]
-        pub enum Error {
-            #[error(transparent)]
-            Parse(#[from] crate::parse::Error),
-            #[error(transparent)]
-            Io(#[from] std::io::Error),
-        }
-    }
-}
-
 /// A parsed section containing the header and the section events.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Section<'a> {

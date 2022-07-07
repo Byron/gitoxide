@@ -130,7 +130,8 @@ impl File<'static> {
         if config.is_empty() {
             Ok(None)
         } else {
-            resolve_includes(&mut config, None, options)?;
+            let mut buf = Vec::new();
+            resolve_includes(&mut config, None, &mut buf, options)?;
             Ok(Some(config))
         }
     }
