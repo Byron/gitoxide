@@ -133,12 +133,10 @@ fn split_on_non_escaped_char(input: &[u8], split_char: u8) -> Vec<&[u8]> {
     let mut i = 0;
     let mut last = 0;
     for window in input.windows(2) {
+        i += 1;
         if window[0] != b'\\' && window[1] == split_char {
-            i += 1;
             keywords.push(&input[last..i]);
             last = i + 1;
-        } else {
-            i += 1;
         }
     }
     keywords.push(&input[last..]);
@@ -166,16 +164,17 @@ fn unescape_attribute_values(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
     let mut out = Cow::Borrowed([].as_bstr());
 
     for attr in input.split(|&c| c == b' ') {
-        let split_point = attr.find_byte(b'=').map(|i| i + 1).unwrap_or(attr.len());
+        let split_point = attr.find_byte(b'=').map_or_else(|| attr.len(), |i| i + 1);
         let (name, value) = attr.split_at(split_point);
 
         if value.contains(&b'\\') {
-            out.to_mut().push_str(name);
-            out.to_mut().push_str(unescape_attribute_value(value.into())?);
-            out.to_mut().push(b' ');
+            let out = out.to_mut();
+            out.push_str(name);
+            out.push_str(unescape_attribute_value(value.into())?);
+            out.push(b' ');
         } else {
             let end = out.len() + attr.len() + 1;
-            out = Cow::Borrowed(&input[0..end.clamp(0, input.len())])
+            out = Cow::Borrowed(&input[0..end.min(input.len())])
         }
     }
 
