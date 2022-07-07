@@ -1,9 +1,11 @@
 use crate::file::cow_str;
 use git_config::value::normalize_bstr;
+use std::borrow::Cow;
 
 #[test]
 fn not_modified_is_borrowed() {
     assert_eq!(normalize_bstr("hello world"), cow_str("hello world"));
+    assert!(matches!(normalize_bstr("hello world"), Cow::Borrowed(_)));
 }
 
 #[test]

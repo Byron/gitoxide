@@ -249,7 +249,7 @@ impl<'event> SectionBody<'event> {
 
         if range.end - range.start == 1 {
             return self.0.get(range.start).map(|e| match e {
-                Event::Value(v) => normalize(v.to_owned()),
+                Event::Value(v) => normalize(v.clone()),
                 // range only has one element so we know it's a value event, so
                 // it's impossible to reach this code.
                 _ => unreachable!(),
