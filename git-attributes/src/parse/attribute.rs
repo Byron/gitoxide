@@ -1,4 +1,4 @@
-use crate::{name, Name, NameRef, State, StateRef};
+use crate::{name, NameRef, StateRef};
 use bstr::{BStr, BString, ByteSlice};
 use std::borrow::Cow;
 
@@ -162,30 +162,3 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
 }
 
 const BLANKS: &[u8] = b" \t\r";
-
-impl<'a> NameRef<'a> {
-    pub fn name(&self) -> &'a BStr {
-        self.0
-    }
-
-    pub fn state(&self) -> StateRef<'a> {
-        self.1
-    }
-}
-
-impl<'a> From<NameRef<'a>> for Name {
-    fn from(v: NameRef<'a>) -> Self {
-        Name(v.0.to_owned(), v.1.into())
-    }
-}
-
-impl Name {
-    pub fn name(&self) -> &BStr {
-        self.0.as_bstr()
-    }
-
-    pub fn state(&self) -> &State {
-        // TODO: StateRef<'_>
-        &self.1
-    }
-}

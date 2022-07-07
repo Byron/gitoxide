@@ -117,7 +117,35 @@ mod state {
 }
 
 pub mod name {
-    use bstr::BString;
+    use crate::{Name, NameRef, State, StateRef};
+    use bstr::{BStr, BString, ByteSlice};
+
+    impl<'a> NameRef<'a> {
+        pub fn name(&self) -> &'a BStr {
+            self.0
+        }
+
+        pub fn state(&self) -> StateRef<'a> {
+            self.1
+        }
+    }
+
+    impl<'a> From<NameRef<'a>> for Name {
+        fn from(v: NameRef<'a>) -> Self {
+            Name(v.0.to_owned(), v.1.into())
+        }
+    }
+
+    impl Name {
+        pub fn name(&self) -> &BStr {
+            self.0.as_bstr()
+        }
+
+        pub fn state(&self) -> &State {
+            // TODO: StateRef<'_>
+            &self.1
+        }
+    }
 
     #[derive(Debug, thiserror::Error)]
     #[error("Attribute has non-ascii characters or starts with '-': {attribute}")]
