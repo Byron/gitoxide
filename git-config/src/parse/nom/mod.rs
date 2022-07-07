@@ -433,12 +433,10 @@ fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'
             events.push(Event::Value(Cow::Owned(BString::default())));
             events.push(Event::Newline(Cow::Borrowed("\n".into())));
             return Ok((
-                i.get(1..).ok_or_else(|| {
-                    nom::Err::Error(NomError {
-                        input: i,
-                        code: ErrorKind::Eof,
-                    })
-                })?,
+                i.get(1..).ok_or(nom::Err::Error(NomError {
+                    input: i,
+                    code: ErrorKind::Eof,
+                }))?,
                 (),
             ));
         }
