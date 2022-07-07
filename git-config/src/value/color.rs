@@ -45,15 +45,15 @@ impl serde::Serialize for Color {
     }
 }
 
-fn color_err(input: impl Into<BString>) -> value::parse::Error {
-    value::parse::Error::new(
+fn color_err(input: impl Into<BString>) -> value::Error {
+    value::Error::new(
         "Colors are specific color values and their attributes, like 'brightred', or 'blue'",
         input,
     )
 }
 
 impl TryFrom<&BStr> for Color {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(s: &BStr) -> Result<Self, Self::Error> {
         let s = std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?;
@@ -98,7 +98,7 @@ impl TryFrom<&BStr> for Color {
 }
 
 impl TryFrom<BString> for Color {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(value: BString) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
@@ -106,7 +106,7 @@ impl TryFrom<BString> for Color {
 }
 
 impl TryFrom<Cow<'_, BStr>> for Color {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(c: Cow<'_, BStr>) -> Result<Self, Self::Error> {
         match c {
@@ -193,7 +193,7 @@ impl serde::Serialize for Name {
 }
 
 impl FromStr for Name {
-    type Err = value::parse::Error;
+    type Err = value::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut s = s;
@@ -249,7 +249,7 @@ impl FromStr for Name {
 }
 
 impl TryFrom<&[u8]> for Name {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?)
@@ -327,7 +327,7 @@ impl serde::Serialize for Attribute {
 }
 
 impl FromStr for Attribute {
-    type Err = value::parse::Error;
+    type Err = value::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let inverted = s.starts_with("no");
@@ -362,7 +362,7 @@ impl FromStr for Attribute {
 }
 
 impl TryFrom<&[u8]> for Attribute {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?)

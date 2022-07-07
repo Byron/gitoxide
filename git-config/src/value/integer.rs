@@ -58,15 +58,15 @@ impl serde::Serialize for Integer {
     }
 }
 
-fn int_err(input: impl Into<BString>) -> value::parse::Error {
-    value::parse::Error::new(
+fn int_err(input: impl Into<BString>) -> value::Error {
+    value::Error::new(
         "Integers needs to be positive or negative numbers which may have a suffix like 1k, 42, or 50G",
         input,
     )
 }
 
 impl TryFrom<&BStr> for Integer {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(s: &BStr) -> Result<Self, Self::Error> {
         let s = std::str::from_utf8(s).map_err(|err| int_err(s).with_err(err))?;
@@ -93,7 +93,7 @@ impl TryFrom<&BStr> for Integer {
 }
 
 impl TryFrom<BString> for Integer {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(value: BString) -> Result<Self, Self::Error> {
         Self::try_from(value.as_ref())
@@ -101,7 +101,7 @@ impl TryFrom<BString> for Integer {
 }
 
 impl TryFrom<Cow<'_, BStr>> for Integer {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(c: Cow<'_, BStr>) -> Result<Self, Self::Error> {
         match c {

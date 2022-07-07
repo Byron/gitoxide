@@ -69,10 +69,10 @@ pub struct Path<'a> {
 ///
 pub mod path;
 
-pub mod parse {
+mod error {
     use bstr::BString;
 
-    /// The error returned when creating `Integer` from byte string.
+    /// The error returned when any config value couldn't be instantiated due to malformed input.
     #[derive(Debug, thiserror::Error, Eq, PartialEq)]
     #[allow(missing_docs)]
     #[error("Could not decode '{}': {}", .input, .message)]
@@ -98,3 +98,4 @@ pub mod parse {
         }
     }
 }
+pub use error::Error;

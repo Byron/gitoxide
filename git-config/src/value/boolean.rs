@@ -23,15 +23,15 @@ impl Boolean<'_> {
     }
 }
 
-fn bool_err(input: impl Into<BString>) -> value::parse::Error {
-    value::parse::Error::new(
+fn bool_err(input: impl Into<BString>) -> value::Error {
+    value::Error::new(
         "Booleans need to be 'no', 'off', 'false', 'zero' or 'yes', 'on', 'true', 'one'",
         input,
     )
 }
 
 impl<'a> TryFrom<&'a BStr> for Boolean<'a> {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(value: &'a BStr) -> Result<Self, Self::Error> {
         if let Ok(v) = True::try_from(value) {
@@ -52,7 +52,7 @@ impl<'a> TryFrom<&'a BStr> for Boolean<'a> {
 }
 
 impl TryFrom<BString> for Boolean<'_> {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(value: BString) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"no")
@@ -69,7 +69,7 @@ impl TryFrom<BString> for Boolean<'_> {
 }
 
 impl<'a> TryFrom<Cow<'a, BStr>> for Boolean<'a> {
-    type Error = value::parse::Error;
+    type Error = value::Error;
     fn try_from(c: Cow<'a, BStr>) -> Result<Self, Self::Error> {
         match c {
             Cow::Borrowed(c) => Self::try_from(c),
@@ -142,7 +142,7 @@ pub enum True<'a> {
 }
 
 impl<'a> TryFrom<&'a BStr> for True<'a> {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(value: &'a BStr) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"yes")
@@ -160,7 +160,7 @@ impl<'a> TryFrom<&'a BStr> for True<'a> {
 }
 
 impl TryFrom<BString> for True<'_> {
-    type Error = value::parse::Error;
+    type Error = value::Error;
 
     fn try_from(value: BString) -> Result<Self, Self::Error> {
         if value.eq_ignore_ascii_case(b"yes")

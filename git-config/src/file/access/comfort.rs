@@ -35,7 +35,7 @@ impl<'a> File<'a> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-    ) -> Option<Result<bool, value::parse::Error>> {
+    ) -> Option<Result<bool, value::Error>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
             .map(|v| value::Boolean::try_from(v).map(|b| b.to_bool()))
@@ -47,11 +47,11 @@ impl<'a> File<'a> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-    ) -> Option<Result<i64, value::parse::Error>> {
+    ) -> Option<Result<i64, value::Error>> {
         let int = self.raw_value(section_name, subsection_name, key).ok()?;
         Some(value::Integer::try_from(int.as_ref()).and_then(|b| {
             b.to_decimal()
-                .ok_or_else(|| value::parse::Error::new("Integer overflow", int.into_owned()))
+                .ok_or_else(|| value::Error::new("Integer overflow", int.into_owned()))
         }))
     }
 
@@ -69,7 +69,7 @@ impl<'a> File<'a> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-    ) -> Option<Result<Vec<i64>, value::parse::Error>> {
+    ) -> Option<Result<Vec<i64>, value::Error>> {
         self.raw_multi_value(section_name, subsection_name, key)
             .ok()
             .map(|values| {
@@ -78,7 +78,7 @@ impl<'a> File<'a> {
                     .map(|v| {
                         value::Integer::try_from(v.as_ref()).and_then(|int| {
                             int.to_decimal()
-                                .ok_or_else(|| value::parse::Error::new("Integer overflow", v.into_owned()))
+                                .ok_or_else(|| value::Error::new("Integer overflow", v.into_owned()))
                         })
                     })
                     .collect()
