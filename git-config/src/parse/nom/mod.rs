@@ -3,6 +3,7 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
 use crate::parse::error::ParseNode;
+use nom::multi::fold_many0;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_till, take_while},
@@ -12,7 +13,7 @@ use nom::{
     },
     combinator::{map, opt},
     error::{Error as NomError, ErrorKind},
-    multi::{many0, many1},
+    multi::many1,
     sequence::delimited,
     IResult,
 };
@@ -37,23 +38,24 @@ pub fn from_bytes<'a>(
 ) -> Result<(), Error> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
-    let (i, frontmatter) = many0(alt((
-        map(comment, Event::Comment),
-        map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
-        map(take_newlines, |(newline, counter)| {
-            newlines += counter;
-            Event::Newline(Cow::Borrowed(newline))
-        }),
-    )))(&input[bom.len()..])
+    let (i, ()) = fold_many0(
+        alt((
+            map(comment, Event::Comment),
+            map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
+            map(take_newlines, |(newline, counter)| {
+                newlines += counter;
+                Event::Newline(Cow::Borrowed(newline))
+            }),
+        )),
+        || (),
+        |_acc, event| receive_frontmatter(event),
+    )(&input[bom.len()..])
     // I don't think this can panic. many0 errors if the child parser returns
     // a success where the input was not consumed, but alt will only return Ok
     // if one of its children succeed. However, all of it's children are
     // guaranteed to consume something if they succeed, so the Ok(i) == i case
     // can never occur.
     .expect("many0(alt(...)) panicked. Likely a bug in one of the children parsers.");
-    for event in frontmatter {
-        receive_frontmatter(event);
-    }
 
     if i.is_empty() {
         return Ok(());
