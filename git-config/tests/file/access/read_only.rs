@@ -23,7 +23,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             location-quoted = "~/quoted"
     "#;
 
-    let file = File::try_from(config)?;
+    let file = git_config::parse::State::from_bytes_owned(config.as_bytes()).map(File::from)?;
 
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-explicit")?,
@@ -77,47 +77,64 @@ fn get_value_for_all_provided_values() -> crate::Result {
         }
     );
 
-    assert_eq!(
-        file.value::<Cow<'_, BStr>>("core", None, "other")?,
-        cow_str("hello world")
-    );
+    {
+        let string = file.value::<Cow<'_, BStr>>("core", None, "other")?;
+        assert_eq!(string, cow_str("hello world"));
+        assert!(
+            matches!(string, Cow::Borrowed(_)),
+            "no copy is made, we reference the `file` itself"
+        );
+    }
+
     assert_eq!(
         file.value::<String>("core", None, "other-quoted")?,
         String {
             value: cow_str("hello world")
         }
     );
-    assert_eq!(
-        file.multi_value::<String>("core", None, "other-quoted")?,
-        vec![
-            String {
-                value: cow_str("hello")
-            },
-            String {
-                value: cow_str("hello world")
-            },
-        ]
-    );
 
-    assert_eq!(
-        file.string("core", None, "other").expect("present").as_ref(),
-        "hello world"
-    );
+    {
+        let strings = file.multi_value::<String>("core", None, "other-quoted")?;
+        assert_eq!(
+            strings,
+            vec![
+                String {
+                    value: cow_str("hello")
+                },
+                String {
+                    value: cow_str("hello world")
+                },
+            ]
+        );
+        assert!(matches!(strings[0].value, Cow::Borrowed(_)));
+        assert!(matches!(strings[1].value, Cow::Borrowed(_)));
+    }
+
+    {
+        let cow = file.string("core", None, "other").expect("present");
+        assert_eq!(cow.as_ref(), "hello world");
+        assert!(matches!(cow, Cow::Borrowed(_)));
+    }
     assert_eq!(
         file.string("core", None, "other-quoted").expect("present").as_ref(),
         "hello world"
     );
-    assert_eq!(
-        file.strings("core", None, "other-quoted").expect("present").as_ref(),
-        vec![cow_str("hello"), cow_str("hello world")]
-    );
+    {
+        let strings = file.strings("core", None, "other-quoted").expect("present");
+        assert_eq!(strings, vec![cow_str("hello"), cow_str("hello world")]);
+        assert!(matches!(strings[0], Cow::Borrowed(_)));
+        assert!(matches!(strings[1], Cow::Borrowed(_)));
+    }
 
-    let actual = file.value::<git_config::Path>("core", None, "location")?;
-    assert_eq!(&*actual, "~/tmp", "no interpolation occurs when querying a path");
+    {
+        let actual = file.value::<git_config::Path>("core", None, "location")?;
+        assert_eq!(&*actual, "~/tmp", "no interpolation occurs when querying a path");
 
-    let home = std::env::current_dir()?;
-    let expected = home.join("tmp");
-    assert_eq!(actual.interpolate(None, home.as_path().into()).unwrap(), expected);
+        let home = std::env::current_dir()?;
+        let expected = home.join("tmp");
+        assert!(matches!(actual.value, Cow::Borrowed(_)));
+        assert_eq!(actual.interpolate(None, home.as_path().into()).unwrap(), expected);
+    }
 
     let actual = file.path("core", None, "location").expect("present");
     assert_eq!(&*actual, "~/tmp");

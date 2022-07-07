@@ -58,14 +58,14 @@ use bstr::{BStr, BString};
 /// ```
 #[must_use]
 pub fn normalize(input: Cow<'_, BStr>) -> Cow<'_, BStr> {
-    let size = input.len();
     if input.as_ref() == "\"\"" {
-        return Cow::default();
+        return Cow::Borrowed("".into());
     }
 
-    if size >= 3 && input[0] == b'=' && input[size - 1] == b'=' && input[size - 2] != b'\\' {
+    let size = input.len();
+    if size >= 3 && input[0] == b'"' && input[size - 1] == b'"' && input[size - 2] != b'\\' {
         match input {
-            Cow::Borrowed(input) => return normalize_bstr(&input[1..size]),
+            Cow::Borrowed(input) => return normalize_bstr(&input[1..size - 1]),
             Cow::Owned(mut input) => {
                 input.pop();
                 input.remove(0);

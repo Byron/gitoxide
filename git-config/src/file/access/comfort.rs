@@ -10,7 +10,7 @@ impl<'a> File<'a> {
     /// Like [`value()`][File::value()], but returning an `Option` if the string wasn't found.
     ///
     /// As strings perform no conversions, this will never fail.
-    pub fn string(&'a self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Cow<'a, BStr>> {
+    pub fn string(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Cow<'_, BStr>> {
         self.raw_value(section_name, subsection_name, key).ok().map(normalize)
     }
 
@@ -23,7 +23,7 @@ impl<'a> File<'a> {
     // TODO: add `secure_path()` or similar to make use of our knowledge of the trust associated with each configuration
     //       file, maybe even remove the insecure version to force every caller to ask themselves if the resource can
     //       be used securely or not.
-    pub fn path(&'a self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<crate::Path<'a>> {
+    pub fn path(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<crate::Path<'_>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
             .map(|v| crate::Path::from(normalize(v)))
@@ -31,7 +31,7 @@ impl<'a> File<'a> {
 
     /// Like [`value()`][File::value()], but returning an `Option` if the boolean wasn't found.
     pub fn boolean(
-        &'a self,
+        &self,
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
@@ -43,7 +43,7 @@ impl<'a> File<'a> {
 
     /// Like [`value()`][File::value()], but returning an `Option` if the integer wasn't found.
     pub fn integer(
-        &'a self,
+        &self,
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,

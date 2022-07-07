@@ -2,11 +2,11 @@ use bstr::{BStr, BString, ByteVec};
 use std::{
     borrow::Cow,
     collections::VecDeque,
-    convert::TryFrom,
     iter::FusedIterator,
     ops::{Deref, Range},
 };
 
+use crate::value::normalize_bstr;
 use crate::{
     file::Index,
     lookup,
@@ -241,7 +241,7 @@ impl<'event> SectionBody<'event> {
     // function.
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
-    pub fn value(&self, key: &Key<'_>) -> Option<Cow<'event, BStr>> {
+    pub fn value(&self, key: &Key<'_>) -> Option<Cow<'_, BStr>> {
         let range = self.value_range_by_key(key);
         if range.is_empty() {
             return None;
@@ -249,7 +249,7 @@ impl<'event> SectionBody<'event> {
 
         if range.end - range.start == 1 {
             return self.0.get(range.start).map(|e| match e {
-                Event::Value(v) => normalize(v.clone()),
+                Event::Value(v) => normalize_bstr(v.as_ref()),
                 // range only has one element so we know it's a value event, so
                 // it's impossible to reach this code.
                 _ => unreachable!(),
@@ -266,21 +266,10 @@ impl<'event> SectionBody<'event> {
         .into()
     }
 
-    /// Retrieves the last matching value in a section with the given key, and
-    /// attempts to convert the value into the provided type.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the key was not found, or if the conversion failed.
-    pub fn value_as<T: TryFrom<Cow<'event, BStr>>>(&self, key: &Key<'_>) -> Result<T, lookup::Error<T::Error>> {
-        T::try_from(self.value(key).ok_or(lookup::existing::Error::KeyMissing)?)
-            .map_err(lookup::Error::FailedConversion)
-    }
-
     /// Retrieves all values that have the provided key name. This may return
     /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
-    pub fn values(&self, key: &Key<'_>) -> Vec<Cow<'event, BStr>> {
+    pub fn values(&self, key: &Key<'_>) -> Vec<Cow<'_, BStr>> {
         let mut values = vec![];
         let mut found_key = false;
         let mut partial_value = None;
@@ -293,7 +282,7 @@ impl<'event> SectionBody<'event> {
                 Event::Value(v) if found_key => {
                     found_key = false;
                     // Clones the Cow, doesn't copy underlying value if borrowed
-                    values.push(normalize(v.clone()));
+                    values.push(normalize(Cow::Borrowed(v.as_ref())));
                     partial_value = None;
                 }
                 Event::ValueNotDone(v) if found_key => {
@@ -312,20 +301,6 @@ impl<'event> SectionBody<'event> {
         }
 
         values
-    }
-
-    /// Retrieves all values that have the provided key name. This may return
-    /// an empty vec, which implies there was values with the provided key.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the conversion failed.
-    pub fn values_as<T: TryFrom<Cow<'event, BStr>>>(&self, key: &Key<'_>) -> Result<Vec<T>, lookup::Error<T::Error>> {
-        self.values(key)
-            .into_iter()
-            .map(T::try_from)
-            .collect::<Result<Vec<T>, _>>()
-            .map_err(lookup::Error::FailedConversion)
     }
 
     /// Returns an iterator visiting all keys in order.

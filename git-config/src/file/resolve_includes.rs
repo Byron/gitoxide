@@ -85,10 +85,12 @@ fn resolve_includes_recursive(
     Ok(())
 }
 
-fn extract_include_path<'a>(target_config: &mut File<'a>, include_paths: &mut Vec<crate::Path<'a>>, id: SectionId) {
+fn extract_include_path(target_config: &mut File<'_>, include_paths: &mut Vec<crate::Path<'static>>, id: SectionId) {
     if let Some(body) = target_config.sections.get(&id) {
         let paths = body.values(&section::Key::from("path"));
-        let paths = paths.iter().map(|path| crate::Path::from(path.clone()));
+        let paths = paths
+            .iter()
+            .map(|path| crate::Path::from(Cow::Owned(path.as_ref().to_owned())));
         include_paths.extend(paths);
     }
 }
