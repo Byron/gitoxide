@@ -43,7 +43,7 @@
 //! [`git-config` files]: https://git-scm.com/docs/git-config#_configuration_file
 //! [INI file format]: https://en.wikipedia.org/wiki/INI_file
 //! [`File`]: crate::File
-//! [`parse::State`]: crate::parse::State
+//! [`parse::State`]: crate::parse::Events
 //! [`value`]: crate::value
 //! [`nom`]: https://github.com/Geal/nom
 //!

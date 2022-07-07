@@ -7,7 +7,7 @@ impl<'a> TryFrom<&'a str> for File<'a> {
     type Error = parse::Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided string into a
-    /// [`File`]. See [`State::from_str()`] for more information.
+    /// [`File`]. See [`Events::from_str()`][crate::parse::Events::from_str()] for more information.
     fn try_from(s: &'a str) -> Result<File<'a>, Self::Error> {
         parse::Events::from_str(s).map(Self::from)
     }

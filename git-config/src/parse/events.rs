@@ -218,7 +218,7 @@ pub struct Events<'a> {
 
 impl Events<'static> {
     /// Parses a git config located at the provided path. On success, returns a
-    /// [`State`] that provides methods to accessing leading comments and sections
+    /// [`Events`] that provides methods to accessing leading comments and sections
     /// of a `git-config` file and can be converted into an iterator of [`Event`]
     /// for higher level processing.
     ///
@@ -239,8 +239,8 @@ impl Events<'static> {
         crate::parse::nom::from_bytes_owned(&bytes).map_err(from_path::Error::Parse)
     }
 
-    /// Parses the provided bytes, returning an [`State`] that contains allocated
-    /// and owned events. This is similar to [`State::from_bytes()`], but performance
+    /// Parses the provided bytes, returning an [`Events`] that contains allocated
+    /// and owned events. This is similar to [`Events::from_bytes()`], but performance
     /// is degraded as it requires allocation for every event. However, this permits
     /// the reference bytes to be dropped, allowing the parser to be passed around
     /// without lifetime worries.
@@ -258,7 +258,7 @@ impl Events<'static> {
 
 impl<'a> Events<'a> {
     /// Attempt to zero-copy parse the provided `&str`. On success, returns a
-    /// [`State`] that provides methods to accessing leading comments and sections
+    /// [`Events`] that provides methods to accessing leading comments and sections
     /// of a `git-config` file and can be converted into an iterator of [`Event`]
     /// for higher level processing.
     ///
@@ -273,7 +273,7 @@ impl<'a> Events<'a> {
     }
 
     /// Attempt to zero-copy parse the provided bytes. On success, returns a
-    /// [`State`] that provides methods to accessing leading comments and sections
+    /// [`Events`] that provides methods to accessing leading comments and sections
     /// of a `git-config` file and can be converted into an iterator of [`Event`]
     /// for higher level processing.
     ///
@@ -290,7 +290,7 @@ impl<'a> Events<'a> {
 
 impl<'a> Events<'a> {
     /// Returns the leading events (any comments, whitespace, or newlines before
-    /// a section) from the parser. Consider [`State::take_frontmatter`] if
+    /// a section) from the parser. Consider [`Events::take_frontmatter`] if
     /// you need an owned copy only once. If that function was called, then this
     /// will always return an empty slice.
     #[must_use]
@@ -300,14 +300,14 @@ impl<'a> Events<'a> {
 
     /// Takes the leading events (any comments, whitespace, or newlines before
     /// a section) from the parser. Subsequent calls will return an empty vec.
-    /// Consider [`State::frontmatter`] if you only need a reference to the
+    /// Consider [`Events::frontmatter`] if you only need a reference to the
     /// frontmatter
     pub fn take_frontmatter(&mut self) -> Vec<Event<'a>> {
         std::mem::take(&mut self.frontmatter)
     }
 
     /// Returns the parsed sections from the parser. Consider
-    /// [`State::take_sections`] if you need an owned copy only once. If that
+    /// [`Events::take_sections`] if you need an owned copy only once. If that
     /// function was called, then this will always return an empty slice.
     #[must_use]
     pub fn sections(&self) -> &[Section<'a>] {
@@ -315,7 +315,7 @@ impl<'a> Events<'a> {
     }
 
     /// Takes the parsed sections from the parser. Subsequent calls will return
-    /// an empty vec. Consider [`State::sections`] if you only need a reference
+    /// an empty vec. Consider [`Events::sections`] if you only need a reference
     /// to the comments.
     pub fn take_sections(&mut self) -> Vec<Section<'a>> {
         let mut to_return = vec![];

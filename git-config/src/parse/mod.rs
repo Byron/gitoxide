@@ -3,8 +3,8 @@
 //! explicit reason to work with events instead.
 //!
 //! The general workflow for interacting with this is to use one of the
-//! `parse_from_*` function variants. These will return a [`State`] on success,
-//! which can be converted into an [`Event`] iterator. The [`State`] also has
+//! `parse_from_*` function variants. These will return a [`Events`] on success,
+//! which can be converted into an [`Event`] iterator. The [`Events`] also has
 //! additional methods for accessing leading comments or events by section.
 //!
 //! [`File`]: crate::File
