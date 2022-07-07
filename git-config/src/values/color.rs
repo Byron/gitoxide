@@ -1,5 +1,5 @@
 use crate::value;
-use crate::value::Color;
+use crate::Color;
 use bstr::{BStr, BString};
 use std::borrow::Cow;
 use std::convert::TryFrom;

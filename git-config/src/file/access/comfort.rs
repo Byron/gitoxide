@@ -23,10 +23,10 @@ impl<'a> File<'a> {
     // TODO: add `secure_path()` or similar to make use of our knowledge of the trust associated with each configuration
     //       file, maybe even remove the insecure version to force every caller to ask themselves if the resource can
     //       be used securely or not.
-    pub fn path(&'a self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<value::Path<'a>> {
+    pub fn path(&'a self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<crate::Path<'a>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
-            .map(value::Path::from)
+            .map(crate::Path::from)
     }
 
     /// Like [`value()`][File::value()], but returning an `Option` if the boolean wasn't found.
@@ -38,7 +38,7 @@ impl<'a> File<'a> {
     ) -> Option<Result<bool, value::Error>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
-            .map(|v| value::Boolean::try_from(v).map(|b| b.to_bool()))
+            .map(|v| crate::Boolean::try_from(v).map(|b| b.to_bool()))
     }
 
     /// Like [`value()`][File::value()], but returning an `Option` if the integer wasn't found.
@@ -49,7 +49,7 @@ impl<'a> File<'a> {
         key: &str,
     ) -> Option<Result<i64, value::Error>> {
         let int = self.raw_value(section_name, subsection_name, key).ok()?;
-        Some(value::Integer::try_from(int.as_ref()).and_then(|b| {
+        Some(crate::Integer::try_from(int.as_ref()).and_then(|b| {
             b.to_decimal()
                 .ok_or_else(|| value::Error::new("Integer overflow", int.into_owned()))
         }))
@@ -76,7 +76,7 @@ impl<'a> File<'a> {
                 values
                     .into_iter()
                     .map(|v| {
-                        value::Integer::try_from(v.as_ref()).and_then(|int| {
+                        crate::Integer::try_from(v.as_ref()).and_then(|int| {
                             int.to_decimal()
                                 .ok_or_else(|| value::Error::new("Integer overflow", v.into_owned()))
                         })

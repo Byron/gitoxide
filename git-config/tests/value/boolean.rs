@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 
 use crate::file::cow_str;
-use git_config::value::{boolean::True, Boolean};
+use git_config::{boolean::True, Boolean};
 
 use crate::value::b;
 

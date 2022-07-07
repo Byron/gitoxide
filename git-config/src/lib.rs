@@ -58,6 +58,8 @@ pub mod fs;
 pub mod lookup;
 pub mod parse;
 pub mod value;
+mod values;
+pub use values::*;
 
 mod types;
 pub use types::File;

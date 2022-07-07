@@ -1,4 +1,4 @@
-use crate::{parse, value::path::interpolate};
+use crate::{parse, path::interpolate};
 
 /// The error returned by [`File::from_paths()`][crate::File::from_paths()] and [`File::from_env_paths()`][crate::File::from_env_paths()].
 #[derive(Debug, thiserror::Error)]

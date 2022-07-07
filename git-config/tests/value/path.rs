@@ -2,16 +2,14 @@ mod interpolate {
     use std::borrow::Cow;
     use std::path::Path;
 
-    use git_config::value::Path as InterpolatingPath;
-
     use crate::file::cow_str;
     use crate::value::b;
-    use git_config::value::path::interpolate::Error;
+    use git_config::path::interpolate::Error;
 
     #[test]
     fn backslash_is_not_special_and_they_are_not_escaping_anything() -> crate::Result {
         for path in ["C:\\foo\\bar", "/foo/bar"] {
-            let actual = InterpolatingPath::from(Cow::Borrowed(b(path))).interpolate(None, None)?;
+            let actual = git_config::Path::from(Cow::Borrowed(b(path))).interpolate(None, None)?;
             assert_eq!(actual, Path::new(path));
             assert!(
                 matches!(actual, Cow::Borrowed(_)),
@@ -36,7 +34,7 @@ mod interpolate {
                 let expected =
                     std::path::PathBuf::from(format!("{}{}{}", git_install_dir, std::path::MAIN_SEPARATOR, expected));
                 assert_eq!(
-                    InterpolatingPath::from(cow_str(val))
+                    git_config::Path::from(cow_str(val))
                         .interpolate(Path::new(git_install_dir).into(), None)
                         .unwrap(),
                     expected,
@@ -51,7 +49,7 @@ mod interpolate {
         let path = "./%(prefix)/foo/bar";
         let git_install_dir = "/tmp/git";
         assert_eq!(
-            InterpolatingPath::from(Cow::Borrowed(b(path)))
+            git_config::Path::from(Cow::Borrowed(b(path)))
                 .interpolate(Path::new(git_install_dir).into(), None)
                 .unwrap(),
             Path::new(path)
@@ -70,7 +68,7 @@ mod interpolate {
         let home = std::env::current_dir().unwrap();
         let expected = format!("{}{}foo/bar", home.display(), std::path::MAIN_SEPARATOR);
         assert_eq!(
-            InterpolatingPath::from(cow_str(path))
+            git_config::Path::from(cow_str(path))
                 .interpolate(None, Some(&home))
                 .unwrap()
                 .as_ref(),
@@ -109,7 +107,7 @@ mod interpolate {
 
     fn interpolate_without_context(
         path: impl AsRef<str>,
-    ) -> Result<Cow<'static, Path>, git_config::value::path::interpolate::Error> {
-        InterpolatingPath::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(None, None)
+    ) -> Result<Cow<'static, Path>, git_config::path::interpolate::Error> {
+        git_config::Path::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(None, None)
     }
 }

@@ -1,4 +1,4 @@
-use crate::value::Path;
+use crate::Path;
 use bstr::BStr;
 use std::borrow::Cow;
 

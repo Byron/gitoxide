@@ -1,10 +1,9 @@
 use crate::value;
+use crate::Boolean;
 use bstr::{BStr, BString, ByteSlice};
 use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::fmt::Display;
-
-use value::Boolean;
 
 impl Boolean<'_> {
     /// Return ourselves as plain bool.

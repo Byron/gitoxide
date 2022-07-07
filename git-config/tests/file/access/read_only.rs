@@ -1,7 +1,7 @@
 use crate::file::cow_str;
 use bstr::BStr;
-use git_config::value::{boolean::True, color, integer, Boolean, Color, Integer, String};
 use git_config::File;
+use git_config::{boolean::True, color, integer, Boolean, Color, Integer, String};
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
 /// Asserts we can cast into all variants of our type
@@ -94,7 +94,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         "hello world"
     );
 
-    let actual = file.value::<git_config::value::Path>("core", None, "location")?;
+    let actual = file.value::<git_config::Path>("core", None, "location")?;
     assert_eq!(&*actual, "~/tmp", "no interpolation occurs when querying a path");
 
     let home = std::env::current_dir()?;

@@ -1,7 +1,7 @@
 mod name {
     use std::str::FromStr;
 
-    use git_config::value::color::Name;
+    use git_config::color::Name;
 
     #[test]
     fn non_bright() {
@@ -56,7 +56,7 @@ mod name {
 mod attribute {
     use std::str::FromStr;
 
-    use git_config::value::color::Attribute;
+    use git_config::color::Attribute;
 
     #[test]
     fn non_inverted() {
