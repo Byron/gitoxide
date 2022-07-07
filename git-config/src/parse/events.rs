@@ -3,7 +3,11 @@ use crate::{
     parse,
     parse::{events::from_path, Section},
 };
+use smallvec::SmallVec;
 use std::convert::TryFrom;
+
+/// A type store without allocation all events that are typicaly preceeding the first section.
+pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 
 /// A zero-copy `git-config` file parser.
 ///
@@ -216,12 +220,10 @@ use std::convert::TryFrom;
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Events<'a> {
     /// Events seen before the first section.
-    pub frontmatter: parse::section::Events<'a>,
+    pub frontmatter: FrontMatterEvents<'a>,
     /// All parsed sections.
     pub sections: Vec<Section<'a>>,
 }
-
-type Sections<'a> = Vec<Section<'a>>;
 
 impl Events<'static> {
     /// Parses a git config located at the provided path. On success, returns a
@@ -259,13 +261,13 @@ impl Events<'static> {
     pub fn from_bytes_owned(input: &[u8]) -> Result<Events<'static>, parse::Error> {
         let mut header = None;
         let mut events = section::Events::default();
-        let mut frontmatter = section::Events::default();
-        let mut sections = Sections::default(); // TODO: maybe smallvec here as well? This favors `File` to be on the heap for sure
+        let mut frontmatter = FrontMatterEvents::default();
+        let mut sections = Vec::new();
         parse::from_bytes(input, |e: Event<'_>| match e {
             Event::SectionHeader(next_header) => {
                 match header.take() {
                     None => {
-                        frontmatter = std::mem::take(&mut events);
+                        frontmatter = std::mem::take(&mut events).into_iter().collect();
                     }
                     Some(prev_header) => {
                         sections.push(parse::Section {
@@ -281,7 +283,7 @@ impl Events<'static> {
 
         match header {
             None => {
-                frontmatter = std::mem::take(&mut events);
+                frontmatter = events.into_iter().collect();
             }
             Some(prev_header) => {
                 sections.push(parse::Section {
@@ -323,13 +325,13 @@ impl<'a> Events<'a> {
     pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, parse::Error> {
         let mut header = None;
         let mut events = section::Events::default();
-        let mut frontmatter = section::Events::default();
-        let mut sections = Sections::default(); // TODO: maybe smallvec here as well? This favors `File` to be on the heap for sure
+        let mut frontmatter = FrontMatterEvents::default();
+        let mut sections = Vec::new();
         parse::from_bytes(input, |e: Event<'_>| match e {
             Event::SectionHeader(next_header) => {
                 match header.take() {
                     None => {
-                        frontmatter = std::mem::take(&mut events);
+                        frontmatter = std::mem::take(&mut events).into_iter().collect();
                     }
                     Some(prev_header) => {
                         sections.push(parse::Section {
@@ -345,7 +347,7 @@ impl<'a> Events<'a> {
 
         match header {
             None => {
-                frontmatter = std::mem::take(&mut events);
+                frontmatter = events.into_iter().collect();
             }
             Some(prev_header) => {
                 sections.push(parse::Section {

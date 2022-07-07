@@ -51,7 +51,7 @@ pub struct File<'event> {
     /// The list of events that occur before an actual section. Since a
     /// `git-config` file prohibits global values, this vec is limited to only
     /// comment, newline, and whitespace events.
-    pub(crate) frontmatter_events: SectionBody<'event>,
+    pub(crate) frontmatter_events: crate::parse::FrontMatterEvents<'event>,
     /// Section name and subsection name to section id lookup tree. This is
     /// effectively a n-tree (opposed to a binary tree) that can have a height
     /// of at most three (including an implicit root node).

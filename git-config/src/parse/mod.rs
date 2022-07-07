@@ -65,7 +65,7 @@ pub enum Event<'a> {
 pub mod event;
 #[path = "events.rs"]
 mod events_type;
-pub use events_type::Events;
+pub use events_type::{Events, FrontMatterEvents};
 
 ///
 pub mod events {

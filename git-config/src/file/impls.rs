@@ -38,7 +38,7 @@ impl<'a> TryFrom<&'a BString> for File<'a> {
 impl<'a> From<parse::Events<'a>> for File<'a> {
     fn from(events: parse::Events<'a>) -> Self {
         let mut this = File {
-            frontmatter_events: SectionBody(events.frontmatter),
+            frontmatter_events: events.frontmatter,
             ..Default::default()
         };
 

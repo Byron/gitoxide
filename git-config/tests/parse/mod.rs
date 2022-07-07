@@ -59,6 +59,11 @@ fn size_in_memory() {
         104,
         "This shouldn't change without us noticing"
     );
+    assert_eq!(
+        std::mem::size_of::<Events<'_>>(),
+        872,
+        "This shouldn't change without us noticing"
+    );
 }
 
 #[test]
