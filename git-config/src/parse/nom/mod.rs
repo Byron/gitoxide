@@ -18,10 +18,8 @@ use nom::{
 };
 use smallvec::SmallVec;
 
-/// Attempt to zero-copy parse the provided bytes. On success, returns a
-/// [`Parser`] that provides methods to accessing leading comments and sections
-/// of a `git-config` file and can be converted into an iterator of [`Event`]
-/// for higher level processing.
+/// Attempt to zero-copy parse the provided bytes, passing results to `receive_frontmatter` and
+/// `receive_section` respectively.
 ///
 /// # Errors
 ///
