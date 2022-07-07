@@ -59,6 +59,10 @@ pub(crate) mod util {
 
     use crate::parse::{section, Comment, Event};
 
+    pub fn into_events(events: Vec<Event<'_>>) -> section::Events<'_> {
+        events.into()
+    }
+
     pub fn section_header(
         name: &str,
         subsection: impl Into<Option<(&'static str, &'static str)>>,

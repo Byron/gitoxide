@@ -16,6 +16,7 @@ use nom::{
     sequence::delimited,
     IResult,
 };
+use smallvec::SmallVec;
 
 /// Attempt to zero-copy parse the provided bytes. On success, returns a
 /// [`Parser`] that provides methods to accessing leading comments and sections
@@ -108,7 +109,7 @@ fn section<'a, 'b>(i: &'a [u8], node: &'b mut ParseNode) -> IResult<&'a [u8], (S
     let (mut i, section_header) = section_header(i)?;
 
     let mut newlines = 0;
-    let mut items = vec![];
+    let mut items = SmallVec::default();
 
     // This would usually be a many0(alt(...)), the manual loop allows us to
     // optimize vec insertions
@@ -248,7 +249,7 @@ fn sub_section(i: &[u8]) -> IResult<&[u8], BString> {
 fn section_body<'a, 'b, 'c>(
     i: &'a [u8],
     node: &'b mut ParseNode,
-    items: &'c mut Vec<Event<'a>>,
+    items: &'c mut section::Events<'a>,
 ) -> IResult<&'a [u8], ()> {
     // maybe need to check for [ here
     *node = ParseNode::ConfigName;
@@ -287,7 +288,7 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
     Ok((i, v.as_bstr()))
 }
 
-fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'a [u8], ()> {
+fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut section::Events<'a>) -> IResult<&'a [u8], ()> {
     if let (i, Some(_)) = opt(char('='))(i)? {
         events.push(Event::KeyValueSeparator);
         let (i, whitespace) = opt(take_spaces)(i)?;
@@ -309,7 +310,7 @@ fn config_value<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<
 ///
 /// Returns an error if an invalid escape was used, if there was an unfinished
 /// quote, or there was an escape but there is nothing left to escape.
-fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut Vec<Event<'a>>) -> IResult<&'a [u8], ()> {
+fn value_impl<'a, 'b>(i: &'a [u8], events: &'b mut section::Events<'a>) -> IResult<&'a [u8], ()> {
     let mut parsed_index: usize = 0;
     let mut offset: usize = 0;
 

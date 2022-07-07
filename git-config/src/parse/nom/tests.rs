@@ -108,7 +108,7 @@ mod section {
             fully_consumed((
                 Section {
                     section_header: parsed_section_header("test", None),
-                    events: vec![]
+                    events: Default::default()
                 },
                 0
             )),
@@ -147,6 +147,7 @@ mod section {
                         whitespace_event(" "),
                         value_event("\"lol\"")
                     ]
+                    .into()
                 },
                 3
             ))
@@ -186,6 +187,7 @@ mod section {
                         whitespace_event(" "),
                         value_event("\"lol\"")
                     ]
+                    .into()
                 },
                 2
             ))
@@ -200,7 +202,7 @@ mod section {
             fully_consumed((
                 Section {
                     section_header: parsed_section_header("hello", None),
-                    events: vec![whitespace_event(" "), name_event("c"), value_event("")]
+                    events: vec![whitespace_event(" "), name_event("c"), value_event("")].into()
                 },
                 0
             ))
@@ -246,6 +248,7 @@ mod section {
                         whitespace_event(" "),
                         value_event("d"),
                     ]
+                    .into()
                 },
                 4
             ))
@@ -275,6 +278,7 @@ mod section {
                         whitespace_event(" "),
                         comment_event('#', " \"b\t ; c"),
                     ]
+                    .into()
                 },
                 0
             ))
@@ -299,6 +303,7 @@ mod section {
                         value_done_event(";\""),
                         comment_event(';', "a"),
                     ]
+                    .into()
                 },
                 0
             ))
@@ -319,6 +324,7 @@ mod section {
                         value_event(""),
                         comment_event('#', "world"),
                     ]
+                    .into()
                 },
                 0
             ))
@@ -328,39 +334,40 @@ mod section {
 
 mod value_continuation {
     use super::value_impl;
-    use crate::parse::tests::util::{newline_event, value_done_event, value_not_done_event};
+    use crate::parse::section;
+    use crate::parse::tests::util::{into_events, newline_event, value_done_event, value_not_done_event};
 
     #[test]
     fn simple_continuation() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(value_impl(b"hello\\\nworld", &mut events).unwrap().0, b"");
         assert_eq!(
             events,
-            vec![
+            into_events(vec![
                 value_not_done_event("hello"),
                 newline_event(),
                 value_done_event("world")
-            ]
+            ])
         );
     }
 
     #[test]
     fn continuation_with_whitespace() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(value_impl(b"hello\\\n        world", &mut events).unwrap().0, b"");
         assert_eq!(
             events,
-            vec![
+            into_events(vec![
                 value_not_done_event("hello"),
                 newline_event(),
                 value_done_event("        world")
-            ]
+            ])
         );
     }
 
     #[test]
     fn complex_continuation_with_leftover_comment() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(
             value_impl(b"1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c", &mut events)
                 .unwrap()
@@ -369,146 +376,151 @@ mod value_continuation {
         );
         assert_eq!(
             events,
-            vec![
+            into_events(vec![
                 value_not_done_event(r#"1    "\""#),
                 newline_event(),
                 value_not_done_event(r#"a ; e "\""#),
                 newline_event(),
                 value_done_event("d")
-            ]
+            ])
         );
     }
 
     #[test]
     fn quote_split_over_two_lines_with_leftover_comment() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(value_impl(b"\"\\\n;\";a", &mut events).unwrap().0, b";a");
         assert_eq!(
             events,
-            vec![value_not_done_event("\""), newline_event(), value_done_event(";\"")]
+            into_events(vec![
+                value_not_done_event("\""),
+                newline_event(),
+                value_done_event(";\"")
+            ])
         );
     }
 }
 
 mod value_no_continuation {
     use super::value_impl;
-    use crate::parse::tests::util::value_event;
+    use crate::parse::section;
+    use crate::parse::tests::util::{into_events, value_event};
 
     #[test]
     fn no_comment() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(value_impl(b"hello", &mut events).unwrap().0, b"");
-        assert_eq!(events, vec![value_event("hello")]);
+        assert_eq!(events, into_events(vec![value_event("hello")]));
     }
 
     #[test]
     fn no_comment_newline() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(value_impl(b"hello\na", &mut events).unwrap().0, b"\na");
-        assert_eq!(events, vec![value_event("hello")]);
+        assert_eq!(events, into_events(vec![value_event("hello")]));
     }
 
     #[test]
     fn semicolon_comment_not_consumed() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(value_impl(b"hello;world", &mut events).unwrap().0, b";world");
-        assert_eq!(events, vec![value_event("hello")]);
+        assert_eq!(events, into_events(vec![value_event("hello")]));
     }
 
     #[test]
     fn octothorpe_comment_not_consumed() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(value_impl(b"hello#world", &mut events).unwrap().0, b"#world");
-        assert_eq!(events, vec![value_event("hello")]);
+        assert_eq!(events, into_events(vec![value_event("hello")]));
     }
 
     #[test]
     fn values_with_extraneous_whitespace_without_comment() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(
             value_impl(b"hello               ", &mut events).unwrap().0,
             b"               "
         );
-        assert_eq!(events, vec![value_event("hello")]);
+        assert_eq!(events, into_events(vec![value_event("hello")]));
     }
 
     #[test]
     fn values_with_extraneous_whitespace_before_comment() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(
             value_impl(b"hello             #world", &mut events).unwrap().0,
             b"             #world"
         );
-        assert_eq!(events, vec![value_event("hello")]);
+        assert_eq!(events, into_events(vec![value_event("hello")]));
 
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(
             value_impl(b"hello             ;world", &mut events).unwrap().0,
             b"             ;world"
         );
-        assert_eq!(events, vec![value_event("hello")]);
+        assert_eq!(events, into_events(vec![value_event("hello")]));
     }
 
     #[test]
     fn trans_escaped_comment_marker_not_consumed() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(value_impl(br##"hello"#"world; a"##, &mut events).unwrap().0, b"; a");
-        assert_eq!(events, vec![value_event(r##"hello"#"world"##)]);
+        assert_eq!(events, into_events(vec![value_event(r##"hello"#"world"##)]));
     }
 
     #[test]
     fn complex_test() {
-        let mut events = vec![];
+        let mut events = section::Events::default();
         assert_eq!(value_impl(br#"value";";ahhhh"#, &mut events).unwrap().0, b";ahhhh");
-        assert_eq!(events, vec![value_event(r#"value";""#)]);
+        assert_eq!(events, into_events(vec![value_event(r#"value";""#)]));
     }
 
     #[test]
     fn garbage_after_continution_is_err() {
-        assert!(value_impl(b"hello \\afwjdls", &mut vec![]).is_err());
+        assert!(value_impl(b"hello \\afwjdls", &mut Default::default()).is_err());
     }
 
     #[test]
     fn incomplete_quote() {
-        assert!(value_impl(br#"hello "world"#, &mut vec![]).is_err());
+        assert!(value_impl(br#"hello "world"#, &mut Default::default()).is_err());
     }
 
     #[test]
     fn incomplete_escape() {
-        assert!(value_impl(br#"hello world\"#, &mut vec![]).is_err());
+        assert!(value_impl(br#"hello world\"#, &mut Default::default()).is_err());
     }
 }
 
 mod section_body {
     use super::section_body;
-    use crate::parse::tests::util::{name_event, value_event, whitespace_event};
+    use crate::parse::tests::util::{into_events, name_event, value_event, whitespace_event};
     use crate::parse::{error::ParseNode, Event};
 
     #[test]
     fn whitespace_is_not_ambigious() {
         let mut node = ParseNode::SectionHeader;
-        let mut vec = vec![];
+        let mut vec = Default::default();
         assert!(section_body(b"a =b", &mut node, &mut vec).is_ok());
         assert_eq!(
             vec,
-            vec![
+            into_events(vec![
                 name_event("a"),
                 whitespace_event(" "),
                 Event::KeyValueSeparator,
                 value_event("b")
-            ]
+            ])
         );
 
-        let mut vec = vec![];
+        let mut vec = Default::default();
         assert!(section_body(b"a= b", &mut node, &mut vec).is_ok());
         assert_eq!(
             vec,
-            vec![
+            into_events(vec![
                 name_event("a"),
                 Event::KeyValueSeparator,
                 whitespace_event(" "),
                 value_event("b")
-            ]
+            ])
         );
     }
 }

@@ -1,7 +1,11 @@
 use crate::parse::{Event, Section};
 use bstr::{BStr, BString};
+use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::fmt::Display;
+
+/// A container for events, avoiding heap allocations in typical files.
+pub type Events<'a> = SmallVec<[Event<'a>; 32]>;
 
 /// A parsed section header, containing a name and optionally a subsection name.
 ///

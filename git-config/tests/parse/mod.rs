@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use git_config::parse::{section, Event, Events};
+use git_config::parse::{section, Event, Events, Section};
 
 pub fn section_header_event(name: &str, subsection: impl Into<Option<(&'static str, &'static str)>>) -> Event<'_> {
     Event::SectionHeader(section_header(name, subsection))
@@ -45,6 +45,20 @@ fn whitespace(value: &'static str) -> Event<'static> {
 
 fn separator() -> Event<'static> {
     Event::KeyValueSeparator
+}
+
+#[test]
+fn size_in_memory() {
+    assert_eq!(
+        std::mem::size_of::<Section<'_>>(),
+        3440,
+        "This shouldn't change without us noticing"
+    );
+    assert_eq!(
+        std::mem::size_of::<Event<'_>>(),
+        104,
+        "This shouldn't change without us noticing"
+    );
 }
 
 #[test]

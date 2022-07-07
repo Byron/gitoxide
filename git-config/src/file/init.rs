@@ -5,13 +5,7 @@ use crate::{
     parse, File,
 };
 
-impl<'a> File<'a> {
-    /// Constructs an empty `git-config` file.
-    #[must_use]
-    pub fn new() -> Self {
-        Self::default()
-    }
-
+impl File<'static> {
     /// Constructs a `git-config` file from the provided path.
     ///
     /// # Errors
@@ -43,5 +37,13 @@ impl<'a> File<'a> {
             target.append(config);
         }
         Ok(target)
+    }
+}
+
+impl<'a> File<'a> {
+    /// Constructs an empty `git-config` file.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
     }
 }

@@ -92,7 +92,7 @@ pub struct Section<'a> {
     /// The section name and subsection name, if any.
     pub section_header: section::Header<'a>,
     /// The syntactic events found in this section.
-    pub events: Vec<Event<'a>>,
+    pub events: section::Events<'a>,
 }
 
 ///
