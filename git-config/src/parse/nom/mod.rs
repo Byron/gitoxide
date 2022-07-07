@@ -3,7 +3,7 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
 use crate::parse::error::ParseNode;
-use nom::multi::fold_many0;
+use nom::multi::{fold_many0, fold_many1};
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_till, take_while},
@@ -13,7 +13,6 @@ use nom::{
     },
     combinator::{map, opt},
     error::{Error as NomError, ErrorKind},
-    multi::many1,
     sequence::delimited,
     IResult,
 };
@@ -38,7 +37,7 @@ pub fn from_bytes<'a>(
 ) -> Result<(), Error> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
-    let (i, ()) = fold_many0(
+    let (i, _) = fold_many0(
         alt((
             map(comment, Event::Comment),
             map(take_spaces, |whitespace| Event::Whitespace(Cow::Borrowed(whitespace))),
@@ -63,23 +62,19 @@ pub fn from_bytes<'a>(
 
     let mut node = ParseNode::SectionHeader;
 
-    let maybe_sections = many1(|i| section(i, &mut node))(i);
-    let (i, sections) = maybe_sections.map_err(|_| Error {
+    let res = fold_many1(
+        |i| section(i, &mut node),
+        || (),
+        |_acc, (section, additional_newlines)| {
+            newlines += additional_newlines;
+            receive_section(section)
+        },
+    )(i);
+    let (i, _) = res.map_err(|_| Error {
         line_number: newlines,
         last_attempted_parser: node,
         parsed_until: i.as_bstr().into(),
     })?;
-
-    let sections: Vec<_> = sections
-        .into_iter()
-        .map(|(section, additional_newlines)| {
-            newlines += additional_newlines;
-            section
-        })
-        .collect();
-    for section in sections {
-        receive_section(section);
-    }
 
     // This needs to happen after we collect sections, otherwise the line number
     // will be off.
