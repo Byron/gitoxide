@@ -1,26 +1,10 @@
 use crate::value;
+use crate::value::Color;
 use bstr::{BStr, BString};
 use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::fmt::Display;
 use std::str::FromStr;
-
-/// Any value that may contain a foreground color, background color, a
-/// collection of color (text) modifiers, or a combination of any of the
-/// aforementioned values.
-///
-/// Note that `git-config` allows color values to simply be a collection of
-/// [`ColorAttribute`]s, and does not require a [`ColorValue`] for either the
-/// foreground or background color.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct Color {
-    /// A provided foreground color
-    pub foreground: Option<ColorValue>,
-    /// A provided background color
-    pub background: Option<ColorValue>,
-    /// A potentially empty list of text attributes
-    pub attributes: Vec<ColorAttribute>,
-}
 
 impl Color {
     /// Generates a byte representation of the value. This should be used when
@@ -74,8 +58,8 @@ impl TryFrom<&BStr> for Color {
     fn try_from(s: &BStr) -> Result<Self, Self::Error> {
         let s = std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?;
         enum ColorItem {
-            Value(ColorValue),
-            Attr(ColorAttribute),
+            Value(Name),
+            Attr(Attribute),
         }
 
         let items = s.split_whitespace().filter_map(|s| {
@@ -84,9 +68,9 @@ impl TryFrom<&BStr> for Color {
             }
 
             Some(
-                ColorValue::from_str(s)
+                Name::from_str(s)
                     .map(ColorItem::Value)
-                    .or_else(|_| ColorAttribute::from_str(s).map(ColorItem::Attr)),
+                    .or_else(|_| Attribute::from_str(s).map(ColorItem::Attr)),
             )
         });
 
@@ -150,7 +134,7 @@ impl From<&Color> for BString {
 /// ANSI color code, or a 24-bit hex value prefixed with an octothorpe.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
-pub enum ColorValue {
+pub enum Name {
     Normal,
     Black,
     BrightBlack,
@@ -172,7 +156,7 @@ pub enum ColorValue {
     Rgb(u8, u8, u8),
 }
 
-impl Display for ColorValue {
+impl Display for Name {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Normal => write!(f, "normal"),
@@ -199,7 +183,7 @@ impl Display for ColorValue {
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for ColorValue {
+impl serde::Serialize for Name {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -208,7 +192,7 @@ impl serde::Serialize for ColorValue {
     }
 }
 
-impl FromStr for ColorValue {
+impl FromStr for Name {
     type Err = value::parse::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -264,7 +248,7 @@ impl FromStr for ColorValue {
     }
 }
 
-impl TryFrom<&[u8]> for ColorValue {
+impl TryFrom<&[u8]> for Name {
     type Error = value::parse::Error;
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
@@ -279,7 +263,7 @@ impl TryFrom<&[u8]> for ColorValue {
 /// variant.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
-pub enum ColorAttribute {
+pub enum Attribute {
     Bold,
     NoBold,
     Dim,
@@ -296,7 +280,7 @@ pub enum ColorAttribute {
     NoStrike,
 }
 
-impl Display for ColorAttribute {
+impl Display for Attribute {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Bold => write!(f, "bold"),
@@ -318,7 +302,7 @@ impl Display for ColorAttribute {
 }
 
 #[cfg(feature = "serde")]
-impl serde::Serialize for ColorAttribute {
+impl serde::Serialize for Attribute {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
@@ -342,7 +326,7 @@ impl serde::Serialize for ColorAttribute {
     }
 }
 
-impl FromStr for ColorAttribute {
+impl FromStr for Attribute {
     type Err = value::parse::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -377,7 +361,7 @@ impl FromStr for ColorAttribute {
     }
 }
 
-impl TryFrom<&[u8]> for ColorAttribute {
+impl TryFrom<&[u8]> for Attribute {
     type Error = value::parse::Error;
 
     fn try_from(s: &[u8]) -> Result<Self, Self::Error> {

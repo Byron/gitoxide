@@ -11,8 +11,6 @@ mod boolean;
 
 mod integer;
 
-mod color_value;
-
-mod color_attribute;
+mod color;
 
 mod path;

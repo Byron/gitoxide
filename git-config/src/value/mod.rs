@@ -4,8 +4,23 @@ pub use normalize::{normalize, normalize_bstr, normalize_bstring};
 mod string;
 pub use string::String;
 
-mod color;
-pub use color::{Color, ColorAttribute, ColorValue};
+/// Any value that may contain a foreground color, background color, a
+/// collection of color (text) modifiers, or a combination of any of the
+/// aforementioned values.
+///
+/// Note that `git-config` allows color values to simply be a collection of
+/// [`color::Attribute`]s, and does not require a [`color::Name`] for either the
+/// foreground or background color.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct Color {
+    /// A provided foreground color
+    pub foreground: Option<color::Name>,
+    /// A provided background color
+    pub background: Option<color::Name>,
+    /// A potentially empty list of text attributes
+    pub attributes: Vec<color::Attribute>,
+}
+pub mod color;
 
 mod integer;
 pub use integer::{Integer, IntegerSuffix};

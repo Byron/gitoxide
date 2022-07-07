@@ -1,6 +1,6 @@
 use crate::file::cow_str;
 use bstr::BStr;
-use git_config::value::{Boolean, Color, ColorAttribute, ColorValue, Integer, IntegerSuffix, String, TrueVariant};
+use git_config::value::{color, Boolean, Color, Integer, IntegerSuffix, String, TrueVariant};
 use git_config::File;
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
@@ -68,9 +68,9 @@ fn get_value_for_all_provided_values() -> crate::Result {
     assert_eq!(
         file.value::<Color>("core", None, "color")?,
         Color {
-            foreground: Some(ColorValue::BrightGreen),
-            background: Some(ColorValue::Red),
-            attributes: vec![ColorAttribute::Bold]
+            foreground: Some(color::Name::BrightGreen),
+            background: Some(color::Name::Red),
+            attributes: vec![color::Attribute::Bold]
         }
     );
 
