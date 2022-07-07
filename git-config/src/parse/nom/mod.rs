@@ -1,4 +1,4 @@
-use crate::parse::{section, Comment, Error, Event, Section, State};
+use crate::parse::{event::List, section, Comment, Error, Event, Section};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
@@ -28,7 +28,7 @@ use nom::{
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 #[allow(clippy::shadow_unrelated)]
-pub fn from_bytes(input: &[u8]) -> Result<State<'_>, Error<'_>> {
+pub fn from_bytes(input: &[u8]) -> Result<List<'_>, Error<'_>> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
     let (i, frontmatter) = many0(alt((
@@ -47,7 +47,7 @@ pub fn from_bytes(input: &[u8]) -> Result<State<'_>, Error<'_>> {
     .expect("many0(alt(...)) panicked. Likely a bug in one of the children parsers.");
 
     if i.is_empty() {
-        return Ok(State {
+        return Ok(List {
             frontmatter,
             sections: vec![],
         });
@@ -80,7 +80,7 @@ pub fn from_bytes(input: &[u8]) -> Result<State<'_>, Error<'_>> {
         });
     }
 
-    Ok(State { frontmatter, sections })
+    Ok(List { frontmatter, sections })
 }
 
 /// Parses the provided bytes, returning an [`Parser`] that contains allocated
@@ -95,7 +95,7 @@ pub fn from_bytes(input: &[u8]) -> Result<State<'_>, Error<'_>> {
 /// This generally is due to either invalid names or if there's extraneous
 /// data succeeding valid `git-config` data.
 #[allow(clippy::shadow_unrelated)]
-pub fn from_bytes_owned(input: &[u8]) -> Result<State<'static>, Error<'static>> {
+pub fn from_bytes_owned(input: &[u8]) -> Result<List<'static>, Error<'static>> {
     // FIXME: This is duplication is necessary until comment, take_spaces, and take_newlines
     // accept cows instead, since we don't want to unnecessarily copy the frontmatter
     // events in a hypothetical parse_from_cow function.
@@ -119,7 +119,7 @@ pub fn from_bytes_owned(input: &[u8]) -> Result<State<'static>, Error<'static>> 
     .expect("many0(alt(...)) panicked. Likely a bug in one of the children parsers.");
     let frontmatter = frontmatter.iter().map(Event::to_owned).collect();
     if i.is_empty() {
-        return Ok(State {
+        return Ok(List {
             frontmatter,
             sections: vec![],
         });
@@ -152,7 +152,7 @@ pub fn from_bytes_owned(input: &[u8]) -> Result<State<'static>, Error<'static>> 
         });
     }
 
-    Ok(State { frontmatter, sections })
+    Ok(List { frontmatter, sections })
 }
 
 fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {

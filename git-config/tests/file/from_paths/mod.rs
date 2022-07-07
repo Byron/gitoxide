@@ -18,7 +18,7 @@ fn file_not_found() {
     let paths = vec![config_path];
     let error = File::from_paths(paths, Default::default()).unwrap_err();
     assert!(
-        matches!(error,  Error::Parse(parse::state::from_path::Error::Io(io_error)) if io_error.kind() == io::ErrorKind::NotFound)
+        matches!(error,  Error::Parse(parse::event::list::from_path::Error::Io(io_error)) if io_error.kind() == io::ErrorKind::NotFound)
     );
 }
 

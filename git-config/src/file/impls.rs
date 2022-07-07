@@ -1,47 +1,42 @@
 use bstr::{BString, ByteVec};
 use std::{convert::TryFrom, fmt::Display};
 
-use crate::{
-    file::SectionBody,
-    parse,
-    parse::{Error, Event, State},
-    File,
-};
+use crate::{file::SectionBody, parse, File};
 
 impl<'a> TryFrom<&'a str> for File<'a> {
-    type Error = Error<'a>;
+    type Error = parse::Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided string into a
     /// [`File`]. See [`State::from_str()`] for more information.
     fn try_from(s: &'a str) -> Result<File<'a>, Self::Error> {
-        parse::State::from_str(s).map(Self::from)
+        parse::event::List::from_str(s).map(Self::from)
     }
 }
 
 impl<'a> TryFrom<&'a [u8]> for File<'a> {
-    type Error = Error<'a>;
+    type Error = parse::Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
     //// a [`File`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
     fn try_from(value: &'a [u8]) -> Result<File<'a>, Self::Error> {
-        parse::State::from_bytes(value).map(File::from)
+        parse::event::List::from_bytes(value).map(File::from)
     }
 }
 
 impl<'a> TryFrom<&'a BString> for File<'a> {
-    type Error = Error<'a>;
+    type Error = parse::Error<'a>;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
     //// a [`File`]. See [`State::from_bytes()`] for more information.
     fn try_from(value: &'a BString) -> Result<File<'a>, Self::Error> {
-        parse::State::from_bytes(value.as_ref()).map(File::from)
+        parse::event::List::from_bytes(value.as_ref()).map(File::from)
     }
 }
 
-impl<'a> From<State<'a>> for File<'a> {
-    fn from(parser: State<'a>) -> Self {
+impl<'a> From<parse::event::List<'a>> for File<'a> {
+    fn from(parser: parse::event::List<'a>) -> Self {
         let mut new_self = Self::default();
 
         // Current section that we're building
@@ -52,7 +47,7 @@ impl<'a> From<State<'a>> for File<'a> {
         // it's not really an iterator (yet), needs streaming iterator support
         for event in parser.into_iter() {
             match event {
-                Event::SectionHeader(header) => {
+                parse::Event::SectionHeader(header) => {
                     if let Some(prev_header) = prev_section_header.take() {
                         new_self.push_section_internal(prev_header, section_events);
                     } else {
@@ -61,12 +56,12 @@ impl<'a> From<State<'a>> for File<'a> {
                     prev_section_header = Some(header);
                     section_events = SectionBody::new();
                 }
-                e @ Event::SectionKey(_)
-                | e @ Event::Value(_)
-                | e @ Event::ValueNotDone(_)
-                | e @ Event::ValueDone(_)
-                | e @ Event::KeyValueSeparator => section_events.as_mut().push(e),
-                e @ Event::Comment(_) | e @ Event::Newline(_) | e @ Event::Whitespace(_) => {
+                e @ parse::Event::SectionKey(_)
+                | e @ parse::Event::Value(_)
+                | e @ parse::Event::ValueNotDone(_)
+                | e @ parse::Event::ValueDone(_)
+                | e @ parse::Event::KeyValueSeparator => section_events.as_mut().push(e),
+                e @ parse::Event::Comment(_) | e @ parse::Event::Newline(_) | e @ parse::Event::Whitespace(_) => {
                     section_events.as_mut().push(e);
                 }
             }
