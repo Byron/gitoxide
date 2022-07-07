@@ -122,7 +122,7 @@ pub struct Error {
 mod error;
 
 mod nom;
-pub use self::nom::from_bytes_1;
+pub use self::nom::from_bytes;
 
 #[cfg(test)]
 pub(crate) mod tests;

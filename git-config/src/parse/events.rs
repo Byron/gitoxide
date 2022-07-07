@@ -254,7 +254,7 @@ impl Events<'static> {
     pub fn from_bytes_owned(input: &[u8]) -> Result<Events<'static>, parse::Error> {
         let mut frontmatter = Vec::new();
         let mut sections = Vec::new();
-        parse::from_bytes_1(
+        parse::from_bytes(
             input,
             |e| frontmatter.push(e.to_owned()),
             |s: Section<'_>| sections.push(s.to_owned()),
@@ -293,7 +293,7 @@ impl<'a> Events<'a> {
     pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, parse::Error> {
         let mut frontmatter = Vec::new();
         let mut sections = Vec::new();
-        parse::from_bytes_1(input, |e| frontmatter.push(e), |s: Section<'_>| sections.push(s))?;
+        parse::from_bytes(input, |e| frontmatter.push(e), |s: Section<'_>| sections.push(s))?;
         Ok(Events { frontmatter, sections })
     }
 }
@@ -363,6 +363,6 @@ impl<'a> TryFrom<&'a [u8]> for Events<'a> {
     type Error = parse::Error;
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
-        crate::parse::nom::from_bytes(value)
+        Events::from_bytes(value)
     }
 }
