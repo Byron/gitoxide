@@ -9,6 +9,8 @@ use std::{borrow::Cow, convert::TryFrom, error::Error};
 fn get_value_for_all_provided_values() -> crate::Result {
     let config = r#"
         [core]
+            other-quoted = "hello"
+        [core]
             bool-explicit = false
             bool-implicit
             integer-no-prefix = 10
@@ -18,6 +20,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             other = hello world
             other-quoted = "hello world"
             location = ~/tmp
+            location-quoted = "~/quoted"
     "#;
 
     let file = File::try_from(config)?;
@@ -84,6 +87,17 @@ fn get_value_for_all_provided_values() -> crate::Result {
             value: cow_str("hello world")
         }
     );
+    assert_eq!(
+        file.multi_value::<String>("core", None, "other-quoted")?,
+        vec![
+            String {
+                value: cow_str("hello")
+            },
+            String {
+                value: cow_str("hello world")
+            },
+        ]
+    );
 
     assert_eq!(
         file.string("core", None, "other").expect("present").as_ref(),
@@ -92,6 +106,10 @@ fn get_value_for_all_provided_values() -> crate::Result {
     assert_eq!(
         file.string("core", None, "other-quoted").expect("present").as_ref(),
         "hello world"
+    );
+    assert_eq!(
+        file.strings("core", None, "other-quoted").expect("present").as_ref(),
+        vec![cow_str("hello"), cow_str("hello world")]
     );
 
     let actual = file.value::<git_config::Path>("core", None, "location")?;
@@ -102,7 +120,13 @@ fn get_value_for_all_provided_values() -> crate::Result {
     assert_eq!(actual.interpolate(None, home.as_path().into()).unwrap(), expected);
 
     let actual = file.path("core", None, "location").expect("present");
-    assert_eq!(&*actual, "~/tmp",);
+    assert_eq!(&*actual, "~/tmp");
+
+    let actual = file.path("core", None, "location-quoted").expect("present");
+    assert_eq!(&*actual, "~/quoted");
+
+    let actual = file.value::<git_config::Path>("core", None, "location-quoted")?;
+    assert_eq!(&*actual, "~/quoted", "but the path is unquoted");
 
     Ok(())
 }

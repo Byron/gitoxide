@@ -26,7 +26,7 @@ impl<'a> File<'a> {
     pub fn path(&'a self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<crate::Path<'a>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
-            .map(crate::Path::from)
+            .map(|v| crate::Path::from(normalize(v)))
     }
 
     /// Like [`value()`][File::value()], but returning an `Option` if the boolean wasn't found.
