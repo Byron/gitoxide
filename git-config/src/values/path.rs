@@ -2,6 +2,7 @@ use crate::Path;
 use bstr::BStr;
 use std::borrow::Cow;
 
+///
 pub mod interpolate {
     /// The error returned by [`Path::interpolate()`][crate::Path::interpolate()].
     #[derive(Debug, thiserror::Error)]

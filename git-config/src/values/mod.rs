@@ -17,6 +17,7 @@ pub struct Color {
     /// A potentially empty list of text attributes
     pub attributes: Vec<color::Attribute>,
 }
+///
 pub mod color;
 
 /// Any value that can be interpreted as an integer.

@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 #![allow(unused)]
 #![allow(clippy::result_unit_err)]
 

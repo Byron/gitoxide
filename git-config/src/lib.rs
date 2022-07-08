@@ -1,6 +1,4 @@
-#![deny(unsafe_code, rust_2018_idioms)]
-// #![warn(missing_docs)]
-// #![warn(clippy::pedantic, clippy::nursery)]
+#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
 
 //! # `git_config`
 //!
@@ -54,9 +52,12 @@ cfg_attr(doc, doc = ::document_features::document_features!())
 )]
 
 pub mod file;
+///
 pub mod fs;
+///
 pub mod lookup;
 pub mod parse;
+///
 pub mod value;
 mod values;
 pub use values::*;
