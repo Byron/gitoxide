@@ -228,42 +228,8 @@ impl Events<'static> {
     /// is degraded as it requires allocation for every event. However, this permits
     /// the reference bytes to be dropped, allowing the parser to be passed around
     /// without lifetime worries.
-    #[allow(clippy::shadow_unrelated)]
     pub fn from_bytes_owned(input: &[u8]) -> Result<Events<'static>, parse::Error> {
-        let mut header = None;
-        let mut events = section::Events::default();
-        let mut frontmatter = FrontMatterEvents::default();
-        let mut sections = Vec::new();
-        parse::from_bytes(input, |e: Event<'_>| match e {
-            Event::SectionHeader(next_header) => {
-                match header.take() {
-                    None => {
-                        frontmatter = std::mem::take(&mut events).into_iter().collect();
-                    }
-                    Some(prev_header) => {
-                        sections.push(parse::Section {
-                            section_header: prev_header,
-                            events: std::mem::take(&mut events),
-                        });
-                    }
-                };
-                header = next_header.to_owned().into();
-            }
-            event => events.push(event.to_owned()),
-        })?;
-
-        match header {
-            None => {
-                frontmatter = events.into_iter().collect();
-            }
-            Some(prev_header) => {
-                sections.push(parse::Section {
-                    section_header: prev_header,
-                    events: std::mem::take(&mut events),
-                });
-            }
-        }
-        Ok(Events { frontmatter, sections })
+        from_bytes(input, |e| e.to_owned())
     }
 }
 
@@ -282,40 +248,7 @@ impl<'a> Events<'a> {
     /// of a `git-config` file and can be converted into an iterator of [`Event`]
     /// for higher level processing.
     pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, parse::Error> {
-        let mut header = None;
-        let mut events = section::Events::default();
-        let mut frontmatter = FrontMatterEvents::default();
-        let mut sections = Vec::new();
-        parse::from_bytes(input, |e: Event<'_>| match e {
-            Event::SectionHeader(next_header) => {
-                match header.take() {
-                    None => {
-                        frontmatter = std::mem::take(&mut events).into_iter().collect();
-                    }
-                    Some(prev_header) => {
-                        sections.push(parse::Section {
-                            section_header: prev_header,
-                            events: std::mem::take(&mut events),
-                        });
-                    }
-                };
-                header = next_header.into();
-            }
-            event => events.push(event),
-        })?;
-
-        match header {
-            None => {
-                frontmatter = events.into_iter().collect();
-            }
-            Some(prev_header) => {
-                sections.push(parse::Section {
-                    section_header: prev_header,
-                    events: std::mem::take(&mut events),
-                });
-            }
-        }
-        Ok(Events { frontmatter, sections })
+        from_bytes(input, std::convert::identity)
     }
 
     /// Consumes the parser to produce an iterator of Events.
@@ -344,4 +277,45 @@ impl<'a> TryFrom<&'a [u8]> for Events<'a> {
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
         Events::from_bytes(value)
     }
+}
+
+fn from_bytes<'a, 'b>(input: &'a [u8], convert: impl Fn(Event<'a>) -> Event<'b>) -> Result<Events<'b>, parse::Error> {
+    let mut header = None;
+    let mut events = section::Events::default();
+    let mut frontmatter = FrontMatterEvents::default();
+    let mut sections = Vec::new();
+    parse::from_bytes(input, |e: Event<'_>| match e {
+        Event::SectionHeader(next_header) => {
+            match header.take() {
+                None => {
+                    frontmatter = std::mem::take(&mut events).into_iter().collect();
+                }
+                Some(prev_header) => {
+                    sections.push(parse::Section {
+                        section_header: prev_header,
+                        events: std::mem::take(&mut events),
+                    });
+                }
+            };
+            header = match convert(Event::SectionHeader(next_header)) {
+                Event::SectionHeader(h) => h,
+                _ => unreachable!("BUG: convert must not change the event type, just the lifetime"),
+            }
+            .into();
+        }
+        event => events.push(convert(event)),
+    })?;
+
+    match header {
+        None => {
+            frontmatter = events.into_iter().collect();
+        }
+        Some(prev_header) => {
+            sections.push(parse::Section {
+                section_header: prev_header,
+                events: std::mem::take(&mut events),
+            });
+        }
+    }
+    Ok(Events { frontmatter, sections })
 }
