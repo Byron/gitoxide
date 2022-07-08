@@ -185,7 +185,7 @@ fn sub_section(i: &[u8]) -> IResult<&[u8], BString> {
     let mut buf = BString::default();
     while let Some(mut b) = bytes.next() {
         cursor += 1;
-        if b == b'\n' {
+        if b == b'\n' || b == 0 {
             return Err(nom::Err::Error(NomError {
                 input: &i[cursor..],
                 code: ErrorKind::NonEmpty,

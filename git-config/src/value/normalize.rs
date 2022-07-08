@@ -27,25 +27,16 @@ use bstr::{BStr, BString};
 /// # use std::borrow::Cow;
 /// # use bstr::ByteSlice;
 /// # use git_config::value::normalize_bstr;
-/// assert_eq!(normalize_bstr("hello world"), Cow::Borrowed(b"hello world".as_bstr()));
+/// assert!(matches!(normalize_bstr("hello world"), Cow::Borrowed(_)));
 /// ```
 ///
-/// Fully quoted values are optimized to not need allocations.
-///
-/// ```
-/// # use std::borrow::Cow;
-/// # use bstr::ByteSlice;
-/// # use git_config::value::normalize_bstr;
-/// assert_eq!(normalize_bstr("\"hello world\""), Cow::Borrowed(b"hello world".as_bstr()));
-/// ```
-///
-/// Quoted values are unwrapped as an owned variant.
+/// Internally quoted values are turned into owned variant with quotes removed.
 ///
 /// ```
 /// # use std::borrow::Cow;
 /// # use bstr::{BStr, BString};
 /// # use git_config::value::{normalize_bstr};
-/// assert_eq!(normalize_bstr("hello \"world\""), Cow::<BStr>::Owned(BString::from( "hello world" )));
+/// assert_eq!(normalize_bstr("hello \"world\""), Cow::<BStr>::Owned(BString::from("hello world")));
 /// ```
 ///
 /// Escaped quotes are unescaped.

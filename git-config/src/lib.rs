@@ -19,6 +19,11 @@
 //! characters and removes quotes through the `normalize_*` family of functions,
 //! located in the [`value`] module.
 //!
+//! # Known differences to the `git config` specification
+//!
+//! - Legacy headers like `[section.subsection]` are supposed to be turned into to lower case and compared
+//!   case-sensitively. We keep its case and compare case-insensitively.
+//!
 //! [^1]: When read values do not need normalization.
 //!
 //! [`git-config` files]: https://git-scm.com/docs/git-config#_configuration_file

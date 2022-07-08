@@ -34,13 +34,17 @@ mod section_headers {
             section_header(br#"[hello.world]"#).unwrap(),
             fully_consumed(parsed_section_header("hello", (".", "world")))
         );
+        assert_eq!(
+            section_header(br#"[Hello.World]"#).unwrap(),
+            fully_consumed(parsed_section_header("Hello", (".", "World")))
+        );
     }
 
     #[test]
     fn empty_legacy_subsection_name() {
         assert_eq!(
-            section_header(br#"[hello.]"#).unwrap(),
-            fully_consumed(parsed_section_header("hello", (".", "")))
+            section_header(br#"[hello-world.]"#).unwrap(),
+            fully_consumed(parsed_section_header("hello-world", (".", "")))
         );
     }
 
@@ -53,8 +57,36 @@ mod section_headers {
     }
 
     #[test]
+    fn backslashes_in_subsections_do_not_escape_newlines_or_tabs() {
+        assert_eq!(
+            section_header(br#"[hello "single \ \\ \t \n \0"]"#).unwrap(),
+            fully_consumed(parsed_section_header("hello", (" ", r#"single  \ t n 0"#)))
+        );
+    }
+
+    #[test]
     fn newline_in_header() {
         assert!(section_header(b"[hello\n]").is_err());
+    }
+
+    #[test]
+    fn newline_in_sub_section() {
+        assert!(section_header(b"[hello \"hello\n\"]").is_err());
+    }
+
+    #[test]
+    fn null_byt_in_sub_section() {
+        assert!(section_header(b"[hello \"hello\0\"]").is_err());
+    }
+
+    #[test]
+    fn escaped_newline_in_sub_section() {
+        assert!(section_header(b"[hello \"hello\\\n\"]").is_err());
+    }
+
+    #[test]
+    fn eof_after_escape_in_sub_section() {
+        assert!(section_header(b"[hello \"hello\\").is_err());
     }
 
     #[test]
