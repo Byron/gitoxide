@@ -228,8 +228,7 @@ fn section_body<'a>(
     node: &mut ParseNode,
     receive_event: &mut impl FnMut(Event<'a>),
 ) -> IResult<&'a [u8], ()> {
-    // maybe need to check for [ here
-    *node = ParseNode::ConfigName;
+    *node = ParseNode::Name;
     let (i, name) = config_name(i)?;
 
     receive_event(Event::SectionKey(section::Key(Cow::Borrowed(name))));
@@ -240,6 +239,7 @@ fn section_body<'a>(
         receive_event(Event::Whitespace(Cow::Borrowed(whitespace)));
     }
 
+    *node = ParseNode::Value;
     let (i, _) = config_value(i, receive_event)?;
     Ok((i, ()))
 }
@@ -337,7 +337,7 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
             parsed_index = i.len();
         } else {
             // Didn't parse anything at all, newline straight away.
-            receive_event(Event::Value(Cow::Owned(BString::default())));
+            receive_event(Event::Value(Cow::Borrowed("".into())));
             receive_event(Event::Newline(Cow::Borrowed("\n".into())));
             return Ok((
                 i.get(1..).ok_or(nom::Err::Error(NomError {

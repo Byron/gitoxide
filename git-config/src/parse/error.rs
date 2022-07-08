@@ -6,14 +6,16 @@ use std::fmt::Display;
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub(crate) enum ParseNode {
     SectionHeader,
-    ConfigName,
+    Name,
+    Value,
 }
 
 impl Display for ParseNode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::SectionHeader => write!(f, "section header"),
-            Self::ConfigName => write!(f, "config name"),
+            Self::Name => write!(f, "name"),
+            Self::Value => write!(f, "value"),
         }
     }
 }

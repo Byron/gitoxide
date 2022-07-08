@@ -23,29 +23,30 @@ fn get_value_for_all_provided_values() -> crate::Result {
             location-quoted = "~/quoted"
     "#;
 
-    let file = git_config::parse::Events::from_bytes_owned(config.as_bytes(), None).map(File::from)?;
+    let config = git_config::parse::Events::from_bytes_owned(config.as_bytes(), None).map(File::from)?;
 
     assert_eq!(
-        file.value::<Boolean>("core", None, "bool-explicit")?,
+        config.value::<Boolean>("core", None, "bool-explicit")?,
         Boolean::False(Cow::Borrowed("false".into()))
     );
-    assert!(!file.boolean("core", None, "bool-explicit").expect("exists")?);
+    assert!(!config.boolean("core", None, "bool-explicit").expect("exists")?);
 
     assert_eq!(
-        file.value::<Boolean>("core", None, "bool-implicit")?,
+        config.value::<Boolean>("core", None, "bool-implicit")?,
         Boolean::True(True::Implicit)
     );
     assert_eq!(
-        file.try_value::<Boolean>("core", None, "bool-implicit")
+        config
+            .try_value::<Boolean>("core", None, "bool-implicit")
             .expect("exists")?,
         Boolean::True(True::Implicit)
     );
 
-    assert!(file.boolean("core", None, "bool-implicit").expect("present")?);
-    assert_eq!(file.try_value::<String>("doesnt", None, "exist"), None);
+    assert!(config.boolean("core", None, "bool-implicit").expect("present")?);
+    assert_eq!(config.try_value::<String>("doesnt", None, "exist"), None);
 
     assert_eq!(
-        file.value::<Integer>("core", None, "integer-no-prefix")?,
+        config.value::<Integer>("core", None, "integer-no-prefix")?,
         Integer {
             value: 10,
             suffix: None
@@ -53,7 +54,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
     );
 
     assert_eq!(
-        file.value::<Integer>("core", None, "integer-no-prefix")?,
+        config.value::<Integer>("core", None, "integer-no-prefix")?,
         Integer {
             value: 10,
             suffix: None
@@ -61,7 +62,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
     );
 
     assert_eq!(
-        file.value::<Integer>("core", None, "integer-prefix")?,
+        config.value::<Integer>("core", None, "integer-prefix")?,
         Integer {
             value: 10,
             suffix: Some(integer::Suffix::Gibi),
@@ -69,7 +70,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
     );
 
     assert_eq!(
-        file.value::<Color>("core", None, "color")?,
+        config.value::<Color>("core", None, "color")?,
         Color {
             foreground: Some(color::Name::BrightGreen),
             background: Some(color::Name::Red),
@@ -78,7 +79,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
     );
 
     {
-        let string = file.value::<Cow<'_, BStr>>("core", None, "other")?;
+        let string = config.value::<Cow<'_, BStr>>("core", None, "other")?;
         assert_eq!(string, cow_str("hello world"));
         assert!(
             matches!(string, Cow::Borrowed(_)),
@@ -87,14 +88,14 @@ fn get_value_for_all_provided_values() -> crate::Result {
     }
 
     assert_eq!(
-        file.value::<String>("core", None, "other-quoted")?,
+        config.value::<String>("core", None, "other-quoted")?,
         String {
             value: cow_str("hello world")
         }
     );
 
     {
-        let strings = file.multi_value::<String>("core", None, "other-quoted")?;
+        let strings = config.multi_value::<String>("core", None, "other-quoted")?;
         assert_eq!(
             strings,
             vec![
@@ -111,23 +112,23 @@ fn get_value_for_all_provided_values() -> crate::Result {
     }
 
     {
-        let cow = file.string("core", None, "other").expect("present");
+        let cow = config.string("core", None, "other").expect("present");
         assert_eq!(cow.as_ref(), "hello world");
         assert!(matches!(cow, Cow::Borrowed(_)));
     }
     assert_eq!(
-        file.string("core", None, "other-quoted").expect("present").as_ref(),
+        config.string("core", None, "other-quoted").expect("present").as_ref(),
         "hello world"
     );
     {
-        let strings = file.strings("core", None, "other-quoted").expect("present");
+        let strings = config.strings("core", None, "other-quoted").expect("present");
         assert_eq!(strings, vec![cow_str("hello"), cow_str("hello world")]);
         assert!(matches!(strings[0], Cow::Borrowed(_)));
         assert!(matches!(strings[1], Cow::Borrowed(_)));
     }
 
     {
-        let actual = file.value::<git_config::Path>("core", None, "location")?;
+        let actual = config.value::<git_config::Path>("core", None, "location")?;
         assert_eq!(&*actual, "~/tmp", "no interpolation occurs when querying a path");
 
         let home = std::env::current_dir()?;
@@ -136,13 +137,13 @@ fn get_value_for_all_provided_values() -> crate::Result {
         assert_eq!(actual.interpolate(None, home.as_path().into()).unwrap(), expected);
     }
 
-    let actual = file.path("core", None, "location").expect("present");
+    let actual = config.path("core", None, "location").expect("present");
     assert_eq!(&*actual, "~/tmp");
 
-    let actual = file.path("core", None, "location-quoted").expect("present");
+    let actual = config.path("core", None, "location-quoted").expect("present");
     assert_eq!(&*actual, "~/quoted");
 
-    let actual = file.value::<git_config::Path>("core", None, "location-quoted")?;
+    let actual = config.value::<git_config::Path>("core", None, "location-quoted")?;
     assert_eq!(&*actual, "~/quoted", "but the path is unquoted");
 
     Ok(())
@@ -259,6 +260,27 @@ fn multi_line_value_plain() {
         "only the un-normalized original value currently matches git's result"
     );
     assert_ne!(config.string("alias", None, "save").unwrap().as_ref(), expected);
+}
+
+#[test]
+#[ignore]
+fn complex_quoted_values() {
+    let config = r#"
+    [core]
+            escape-sequence = "hi\nho\tthere"
+            # escape-sequence = "hi\nho\tthere\b" # <- \b isn't allowed even though it should
+"#;
+    let config = File::try_from(config).unwrap();
+
+    assert_eq!(
+        config.raw_value("core", None, "escape-sequence").unwrap().as_ref(),
+        "hi\\nho\\tthere"
+    );
+    assert_eq!(
+        config.string("core", None, "escape-sequence").unwrap().as_ref(),
+        "hi\nho\tthere",
+        "normalization is what resolves these values"
+    );
 }
 
 #[test]
