@@ -1,6 +1,15 @@
 mod string;
 pub use string::String;
 
+///
+pub mod boolean;
+///
+pub mod color;
+///
+pub mod integer;
+///
+pub mod path;
+
 /// Any value that may contain a foreground color, background color, a
 /// collection of color (text) modifiers, or a combination of any of the
 /// aforementioned values.
@@ -17,8 +26,6 @@ pub struct Color {
     /// A potentially empty list of text attributes
     pub attributes: Vec<color::Attribute>,
 }
-///
-pub mod color;
 
 /// Any value that can be interpreted as an integer.
 ///
@@ -38,8 +45,6 @@ pub struct Integer {
     /// A provided suffix, if any.
     pub suffix: Option<integer::Suffix>,
 }
-///
-pub mod integer;
 
 /// Any value that can be interpreted as a boolean.
 ///
@@ -53,8 +58,6 @@ pub enum Boolean<'a> {
     True(boolean::True<'a>),
     False(std::borrow::Cow<'a, bstr::BStr>),
 }
-///
-pub mod boolean;
 
 /// Any value that can be interpreted as a file path.
 ///
@@ -64,5 +67,3 @@ pub struct Path<'a> {
     /// The path string, un-interpolated
     pub value: std::borrow::Cow<'a, bstr::BStr>,
 }
-///
-pub mod path;

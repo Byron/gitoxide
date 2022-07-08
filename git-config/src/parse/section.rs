@@ -26,20 +26,7 @@ pub struct Header<'a> {
 }
 
 impl Section<'_> {
-    /// Coerces into an owned instance. This differs from the standard [`clone`]
-    /// implementation as calling clone will _not_ copy the borrowed variant,
-    /// while this method will. In other words:
-    ///
-    /// | Borrow type | `.clone()` | `to_owned()` |
-    /// | ----------- | ---------- | ------------ |
-    /// | Borrowed    | Borrowed   | Owned        |
-    /// | Owned       | Owned      | Owned        |
-    ///
-    /// This can be most effectively seen by the differing lifetimes between the
-    /// two. This method guarantees a `'static` lifetime, while `clone` does
-    /// not.
-    ///
-    /// [`clone`]: Self::clone
+    /// Turn this instance into a fully owned one with `'static` lifetime.
     #[must_use]
     pub fn to_owned(&self) -> Section<'static> {
         Section {
@@ -68,20 +55,7 @@ impl Header<'_> {
         self.into()
     }
 
-    /// Coerces into an owned instance. This differs from the standard [`clone`]
-    /// implementation as calling clone will _not_ copy the borrowed variant,
-    /// while this method will. In other words:
-    ///
-    /// | Borrow type | `.clone()` | `to_owned()` |
-    /// | ----------- | ---------- | ------------ |
-    /// | Borrowed    | Borrowed   | Owned        |
-    /// | Owned       | Owned      | Owned        |
-    ///
-    /// This can be most effectively seen by the differing lifetimes between the
-    /// two. This method guarantees a `'static` lifetime, while `clone` does
-    /// not.
-    ///
-    /// [`clone`]: Self::clone
+    /// Turn this instance into a fully owned one with `'static` lifetime.
     #[must_use]
     pub fn to_owned(&self) -> Header<'static> {
         Header {
@@ -137,20 +111,7 @@ mod types {
             pub struct $name<'a>(pub std::borrow::Cow<'a, $cow_inner_type>);
 
             impl $name<'_> {
-                /// Coerces into an owned instance. This differs from the standard
-                /// [`clone`] implementation as calling clone will _not_ copy the
-                /// borrowed variant, while this method will. In other words:
-                ///
-                /// | Borrow type | `.clone()` | `to_owned()` |
-                /// | ----------- | ---------- | ------------ |
-                /// | Borrowed    | Borrowed   | Owned        |
-                /// | Owned       | Owned      | Owned        |
-                ///
-                /// This can be most effectively seen by the differing lifetimes
-                /// between the two. This method guarantees a `'static` lifetime,
-                /// while `clone` does not.
-                ///
-                /// [`clone`]: Self::clone
+                /// Turn this instance into a fully owned one with `'static` lifetime.
                 #[must_use]
                 pub fn to_owned(&self) -> $name<'static> {
                     $name(std::borrow::Cow::Owned(self.0.clone().into_owned()))

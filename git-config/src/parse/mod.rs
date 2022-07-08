@@ -12,8 +12,20 @@
 use bstr::BStr;
 use std::{borrow::Cow, hash::Hash};
 
+mod nom;
+pub use self::nom::from_bytes;
 ///
-pub mod state;
+pub mod event;
+#[path = "events.rs"]
+mod events_type;
+pub use events_type::{Events, FrontMatterEvents};
+mod comment;
+mod error;
+///
+pub mod section;
+
+#[cfg(test)]
+pub(crate) mod tests;
 
 /// Syntactic events that occurs in the config. Despite all these variants
 /// holding a [`Cow`] instead over a simple reference, the parser will only emit
@@ -61,12 +73,6 @@ pub enum Event<'a> {
     KeyValueSeparator,
 }
 
-///
-pub mod event;
-#[path = "events.rs"]
-mod events_type;
-pub use events_type::{Events, FrontMatterEvents};
-
 /// A parsed section containing the header and the section events.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Section<'a> {
@@ -75,9 +81,6 @@ pub struct Section<'a> {
     /// The syntactic events found in this section.
     pub events: section::Events<'a>,
 }
-
-///
-pub mod section;
 
 /// A parsed comment event containing the comment marker and comment.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
@@ -88,8 +91,6 @@ pub struct Comment<'a> {
     pub comment: Cow<'a, BStr>,
 }
 
-mod comment;
-
 /// A parser error reports the one-indexed line number where the parsing error
 /// occurred, as well as the last parser node and the remaining data to be
 /// parsed.
@@ -99,11 +100,3 @@ pub struct Error {
     last_attempted_parser: error::ParseNode,
     parsed_until: bstr::BString,
 }
-
-mod error;
-
-mod nom;
-pub use self::nom::from_bytes;
-
-#[cfg(test)]
-pub(crate) mod tests;
