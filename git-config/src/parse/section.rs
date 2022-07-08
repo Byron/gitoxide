@@ -77,7 +77,7 @@ impl Display for Header<'_> {
             if v.as_ref() == "." {
                 subsection_name.fmt(f)?;
             } else {
-                write!(f, "\"{}\"", subsection_name)?;
+                write!(f, "\"{}\"", subsection_name)?; // TODO: proper escaping of special characters
             }
         }
 

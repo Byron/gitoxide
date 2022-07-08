@@ -173,12 +173,12 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
         section::Header {
             name: section::Name(Cow::Borrowed(name)),
             separator: Some(Cow::Borrowed(whitespace)),
-            subsection_name: subsection_name.map(Cow::Owned),
+            subsection_name,
         },
     ))
 }
 
-fn sub_section(i: &[u8]) -> IResult<&[u8], BString> {
+fn sub_section(i: &[u8]) -> IResult<&[u8], Cow<'_, BStr>> {
     let mut cursor = 0;
     let mut bytes = i.iter().copied();
     let mut found_terminator = false;
@@ -220,7 +220,7 @@ fn sub_section(i: &[u8]) -> IResult<&[u8], BString> {
         }));
     }
 
-    Ok((&i[cursor - 1..], buf))
+    Ok((&i[cursor - 1..], buf.into()))
 }
 
 fn section_body<'a>(
