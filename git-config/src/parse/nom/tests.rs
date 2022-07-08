@@ -559,6 +559,11 @@ mod value_no_continuation {
     }
 
     #[test]
+    fn invalid_escape() {
+        assert!(value_impl(br#"\x"#, &mut Default::default()).is_err());
+    }
+
+    #[test]
     fn incomplete_quote() {
         assert!(value_impl(br#"hello "world"#, &mut Default::default()).is_err());
     }

@@ -306,7 +306,7 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
                     offset = index + 1;
                     parsed_index = 0;
                 }
-                b't' | b'\\' | b'n' | b'"' => (),
+                b'n' | b't' | b'\\' | b'b' | b'"' => (),
                 _ => {
                     return Err(nom::Err::Error(NomError {
                         input: i,

@@ -267,18 +267,17 @@ fn multi_line_value_plain() {
 fn complex_quoted_values() {
     let config = r#"
     [core]
-            escape-sequence = "hi\nho\tthere"
-            # escape-sequence = "hi\nho\tthere\b" # <- \b isn't allowed even though it should
+            escape-sequence = "hi\nho\tthere\bi"
 "#;
     let config = File::try_from(config).unwrap();
 
     assert_eq!(
         config.raw_value("core", None, "escape-sequence").unwrap().as_ref(),
-        "hi\\nho\\tthere"
+        "hi\\nho\\tthere\\b"
     );
     assert_eq!(
         config.string("core", None, "escape-sequence").unwrap().as_ref(),
-        "hi\nho\tthere",
+        "hi\nho\ttheri",
         "normalization is what resolves these values"
     );
 }
