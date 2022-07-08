@@ -3,8 +3,7 @@
 //! # `git_config`
 //!
 //! This crate is a high performance `git-config` file reader and writer. It
-//! exposes a high level API to parse, read, and write [`git-config` files],
-//! which are loosely based on the [INI file format].
+//! exposes a high level API to parse, read, and write [`git-config` files].
 //!
 //! This crate has a few primary offerings and various accessory functions. The
 //! table below gives a brief explanation of all offerings, loosely in order
@@ -14,35 +13,17 @@
 //! | ------------- | --------------------------------------------------- | ----------------- |
 //! | [`File`] | Accelerated wrapper for reading and writing values. | On some reads[^1] |
 //! | [`parse::State`]    | Syntactic events for `git-config` files.     | Yes               |
-//! | [`value`]    | Wrappers for `git-config` value types.              | Yes               |
+//! | value wrappers | Wrappers for `git-config` value types.            | Yes               |
 //!
 //! This crate also exposes efficient value normalization which unescapes
 //! characters and removes quotes through the `normalize_*` family of functions,
 //! located in the [`value`] module.
 //!
-//! # Zero-copy versus zero-alloc
-//!
-//! We follow [`nom`]'s definition of "zero-copy":
-//!
-//! > If a parser returns a subset of its input data, it will return a slice of
-//! > that input, without copying.
-//!
-//! Due to the syntax of `git-config`, we must allocate at the parsing level
-//! (and thus higher level abstractions must allocate as well) in order to
-//! provide a meaningful event stream. That being said, all operations with the
-//! parser is still zero-copy. Higher level abstractions may have operations
-//! that are zero-copy, but are not guaranteed to do so.
-//!
-//! However, we intend to be performant as possible, so allocations are
-//! limited restricted and we attempt to avoid copying whenever possible.
-//!
 //! [^1]: When read values do not need normalization.
 //!
 //! [`git-config` files]: https://git-scm.com/docs/git-config#_configuration_file
-//! [INI file format]: https://en.wikipedia.org/wiki/INI_file
 //! [`File`]: crate::File
 //! [`parse::State`]: crate::parse::Events
-//! [`value`]: crate::value
 //! [`nom`]: https://github.com/Geal/nom
 //!
 //! ## Feature Flags
