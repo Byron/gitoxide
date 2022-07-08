@@ -46,10 +46,6 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
 
     /// Returns the actual value. This is computed each time this is called, so
     /// it's best to reuse this value or own it if an allocation is acceptable.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the lookup failed.
     pub fn get(&self) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
         self.section.get(&self.key, self.index, self.index + self.size)
     }
@@ -138,10 +134,6 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     }
 
     /// Returns the actual values. This is computed each time this is called.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the lookup failed.
     pub fn get(&self) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
         let mut found_key = false;
         let mut values = vec![];

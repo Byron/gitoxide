@@ -228,12 +228,6 @@ impl Events<'static> {
     /// is degraded as it requires allocation for every event. However, this permits
     /// the reference bytes to be dropped, allowing the parser to be passed around
     /// without lifetime worries.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the string provided is not a valid `git-config`.
-    /// This generally is due to either invalid names or if there's extraneous
-    /// data succeeding valid `git-config` data.
     #[allow(clippy::shadow_unrelated)]
     pub fn from_bytes_owned(input: &[u8]) -> Result<Events<'static>, parse::Error> {
         let mut header = None;
@@ -278,12 +272,6 @@ impl<'a> Events<'a> {
     /// [`Events`] that provides methods to accessing leading comments and sections
     /// of a `git-config` file and can be converted into an iterator of [`Event`]
     /// for higher level processing.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the string provided is not a valid `git-config`.
-    /// This generally is due to either invalid names or if there's extraneous
-    /// data succeeding valid `git-config` data.
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(input: &'a str) -> Result<Events<'a>, parse::Error> {
         Self::from_bytes(input.as_bytes())
@@ -293,12 +281,6 @@ impl<'a> Events<'a> {
     /// [`Events`] that provides methods to accessing leading comments and sections
     /// of a `git-config` file and can be converted into an iterator of [`Event`]
     /// for higher level processing.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the string provided is not a valid `git-config`.
-    /// This generally is due to either invalid names or if there's extraneous
-    /// data succeeding valid `git-config` data.
     pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, parse::Error> {
         let mut header = None;
         let mut events = section::Events::default();

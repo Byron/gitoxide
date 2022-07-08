@@ -79,11 +79,6 @@ impl File<'static> {
     /// zero-copy nor zero-alloc. See [`git-config`'s documentation] on
     /// environment variable for more information.
     ///
-    /// # Errors
-    ///
-    /// Returns an error if `GIT_CONFIG_COUNT` set and is not a number, or if
-    /// there was an invalid key value pair.
-    ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
     pub fn from_env(options: from_paths::Options<'_>) -> Result<Option<File<'static>>, Error> {
         use std::env;

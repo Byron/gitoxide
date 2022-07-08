@@ -11,11 +11,6 @@ use crate::{
 /// Mutating low-level access methods.
 impl<'a> File<'a> {
     /// Returns an mutable section reference.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the section and optional
-    /// subsection do not exist.
     pub fn section_mut<'lookup>(
         &mut self,
         section_name: &'lookup str,
@@ -142,10 +137,6 @@ impl<'a> File<'a> {
     }
 
     /// Renames a section, modifying the last matching section.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the lookup doesn't exist
     pub fn rename_section<'lookup>(
         &mut self,
         section_name: &'lookup str,

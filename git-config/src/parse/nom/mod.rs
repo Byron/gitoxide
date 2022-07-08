@@ -18,12 +18,6 @@ use nom::{
 };
 
 /// Attempt to zero-copy parse the provided bytes, passing results to `receive_event`.
-///
-/// # Errors
-///
-/// Returns an error if the string provided is not a valid `git-config`.
-/// This generally is due to either invalid names or if there's extraneous
-/// data succeeding valid `git-config` data.
 pub fn from_bytes<'a>(input: &'a [u8], mut receive_event: impl FnMut(Event<'a>)) -> Result<(), Error> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
@@ -288,11 +282,6 @@ fn config_value<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> I
 
 /// Handles parsing of known-to-be values. This function handles both single
 /// line values as well as values that are continuations.
-///
-/// # Errors
-///
-/// Returns an error if an invalid escape was used, if there was an unfinished
-/// quote, or there was an escape but there is nothing left to escape.
 fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], ()> {
     let mut parsed_index: usize = 0;
     let mut offset: usize = 0;

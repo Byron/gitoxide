@@ -35,12 +35,6 @@ impl<'event> File<'event> {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in the requested
-    /// section and subsection, if the section and subsection do not exist, or
-    /// if there was an issue converting the type into the requested variant.
-    ///
     /// [`value`]: crate::value
     /// [`TryFrom`]: std::convert::TryFrom
     pub fn value<'a, T: TryFrom<Cow<'a, BStr>>>(
@@ -104,12 +98,6 @@ impl<'event> File<'event> {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in the requested
-    /// section and subsection, if the section and subsection do not exist, or
-    /// if there was an issue converting the type into the requested variant.
-    ///
     /// [`value`]: crate::value
     /// [`TryFrom`]: std::convert::TryFrom
     pub fn multi_value<'a, T: TryFrom<Cow<'a, BStr>>>(
@@ -126,11 +114,6 @@ impl<'event> File<'event> {
     }
 
     /// Returns an immutable section reference.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the section and optional
-    /// subsection do not exist.
     pub fn section<'lookup>(
         &mut self,
         section_name: &'lookup str,

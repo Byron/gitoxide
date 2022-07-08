@@ -18,11 +18,6 @@ impl<'a> File<'a> {
     ///
     /// Consider [`Self::raw_multi_value`] if you want to get all values of
     /// a multivar instead.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in the requested
-    /// section and subsection, or if the section and subsection do not exist.
     pub fn raw_value<'lookup>(
         &self,
         section_name: &'lookup str,
@@ -56,11 +51,6 @@ impl<'a> File<'a> {
     ///
     /// Consider [`Self::raw_multi_value_mut`] if you want to get mutable
     /// references to all values of a multivar instead.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in the requested
-    /// section and subsection, or if the section and subsection do not exist.
     pub fn raw_value_mut<'lookup>(
         &mut self,
         section_name: &'lookup str,
@@ -153,12 +143,6 @@ impl<'a> File<'a> {
     ///
     /// Consider [`Self::raw_value`] if you want to get the resolved single
     /// value for a given key, if your key does not support multi-valued values.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in any requested
-    /// section and subsection, or if no instance of the section and subsections
-    /// exist.
     pub fn raw_multi_value(
         &self,
         section_name: &str,
@@ -233,12 +217,6 @@ impl<'a> File<'a> {
     ///
     /// Note that this operation is relatively expensive, requiring a full
     /// traversal of the config.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in any requested
-    /// section and subsection, or if no instance of the section and subsections
-    /// exist.
     pub fn raw_multi_value_mut<'lookup>(
         &mut self,
         section_name: &'lookup str,
@@ -318,10 +296,6 @@ impl<'a> File<'a> {
     /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::<BStr>::Borrowed("e".into()));
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    ///
-    /// # Errors
-    ///
-    /// This errors if any lookup input (section, subsection, and key value) fails.
     pub fn set_raw_value<'lookup>(
         &mut self,
         section_name: &'lookup str,
@@ -417,10 +391,6 @@ impl<'a> File<'a> {
     /// assert!(!git_config.raw_multi_value("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
-    ///
-    /// # Errors
-    ///
-    /// This errors if any lookup input (section, subsection, and key value) fails.
     ///
     /// [`raw_multi_value_mut`]: Self::raw_multi_value_mut
     pub fn set_raw_multi_value<'lookup>(

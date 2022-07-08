@@ -62,10 +62,6 @@ impl File<'static> {
         Self::from_bytes(buf)
     }
 
-    pub(crate) fn from_bytes(input: &[u8]) -> Result<Self, Error> {
-        Ok(parse::Events::from_bytes_owned(input)?.into())
-    }
-
     /// Constructs a `git-config` file from the provided paths in the order provided.
     /// This is neither zero-copy nor zero-alloc.
     pub fn from_paths(
@@ -81,5 +77,9 @@ impl File<'static> {
             target.append(config);
         }
         Ok(target)
+    }
+
+    pub(crate) fn from_bytes(input: &[u8]) -> Result<Self, Error> {
+        Ok(parse::Events::from_bytes_owned(input)?.into())
     }
 }
