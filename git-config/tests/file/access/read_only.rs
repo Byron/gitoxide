@@ -284,7 +284,7 @@ fn complex_quoted_values() {
 
 #[test]
 #[ignore]
-fn multi_line_value_outer_quotes() {
+fn multi_line_value_outer_quotes_unescaped_inner_quotes() {
     let config = r#"
 [alias]
    save = "!f() { \
@@ -299,5 +299,25 @@ fn multi_line_value_outer_quotes() {
 "#;
     let config = File::try_from(config).unwrap();
     let expected = r#"!f() {            git status;            git add -A;            git commit -m $1;            git push -f;            git log -1;          };         f;          unset f"#;
+    assert_eq!(config.raw_value("alias", None, "save").unwrap().as_ref(), expected);
+}
+
+#[test]
+#[ignore]
+fn multi_line_value_outer_quotes_escaped_inner_quotes() {
+    let config = r#"
+[alias]
+   save = "!f() { \
+           git status; \
+           git add -A; \
+           git commit -m \"$1\"; \
+           git push -f; \
+           git log -1;  \
+        }; \ 
+        f;  \
+        unset f"
+"#;
+    let config = File::try_from(config).unwrap();
+    let expected = r#"!f() {            git status;            git add -A;            git commit -m "$1";            git push -f;            git log -1;          };         f;          unset f"#;
     assert_eq!(config.raw_value("alias", None, "save").unwrap().as_ref(), expected);
 }
