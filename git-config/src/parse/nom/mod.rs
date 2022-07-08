@@ -117,9 +117,10 @@ fn section<'a>(
             }
         }
 
-        if let Ok((new_i, _)) = section_body(i, node, receive_event) {
+        if let Ok((new_i, new_newlines)) = section_body(i, node, receive_event) {
             if old_i != new_i {
                 i = new_i;
+                newlines += new_newlines;
             }
         }
 
@@ -238,7 +239,7 @@ fn section_body<'a>(
     i: &'a [u8],
     node: &mut ParseNode,
     receive_event: &mut impl FnMut(Event<'a>),
-) -> IResult<&'a [u8], ()> {
+) -> IResult<&'a [u8], usize> {
     *node = ParseNode::Name;
     let (i, name) = config_name(i)?;
 
@@ -251,8 +252,8 @@ fn section_body<'a>(
     }
 
     *node = ParseNode::Value;
-    let (i, _) = config_value(i, receive_event)?;
-    Ok((i, ()))
+    let (i, newlines) = config_value(i, receive_event)?;
+    Ok((i, newlines))
 }
 
 /// Parses the config name of a config pair. Assumes the input has already been
@@ -276,26 +277,27 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
     Ok((i, name.as_bstr()))
 }
 
-fn config_value<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], ()> {
+fn config_value<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
     if let (i, Some(_)) = opt(char('='))(i)? {
         receive_event(Event::KeyValueSeparator);
         let (i, whitespace) = opt(take_spaces)(i)?;
         if let Some(whitespace) = whitespace {
             receive_event(Event::Whitespace(Cow::Borrowed(whitespace)));
         }
-        let (i, _) = value_impl(i, receive_event)?;
-        Ok((i, ()))
+        let (i, newlines) = value_impl(i, receive_event)?;
+        Ok((i, newlines))
     } else {
         receive_event(Event::Value(Cow::Borrowed("".into())));
-        Ok((i, ()))
+        Ok((i, 0))
     }
 }
 
 /// Handles parsing of known-to-be values. This function handles both single
 /// line values as well as values that are continuations.
-fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], ()> {
+fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
     let mut parsed_index: usize = 0;
     let mut offset: usize = 0;
+    let mut newlines = 0;
 
     let mut was_prev_char_escape_char = false;
     // This is required to ignore comment markers if they're in a quote.
@@ -316,6 +318,7 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
                     receive_event(Event::Newline(Cow::Borrowed(i[index..=index].as_bstr())));
                     offset = index + 1;
                     parsed_index = 0;
+                    newlines += 1;
                 }
                 b'n' | b't' | b'\\' | b'b' | b'"' => (),
                 _ => {
@@ -350,12 +353,13 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
             // Didn't parse anything at all, newline straight away.
             receive_event(Event::Value(Cow::Borrowed("".into())));
             receive_event(Event::Newline(Cow::Borrowed("\n".into())));
+            newlines += 1;
             return Ok((
                 i.get(1..).ok_or(nom::Err::Error(NomError {
                     input: i,
                     code: ErrorKind::Eof,
                 }))?,
-                (),
+                newlines,
             ));
         }
     }
@@ -393,7 +397,7 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
         receive_event(Event::Value(Cow::Borrowed(remainder_value.as_bstr())));
     }
 
-    Ok((i, ()))
+    Ok((i, newlines))
 }
 
 fn take_spaces(i: &[u8]) -> IResult<&[u8], &BStr> {

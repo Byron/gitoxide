@@ -233,6 +233,16 @@ fn error() {
         "Got an unexpected token on line 1 while trying to parse a section header: '[a_b]\n c=d'",
         "underscores in section names aren't allowed and will be rejected by git"
     );
+    let input = "[core] a=b\\\n cd\n[core]\n\n 4a=3";
+    assert_eq!(
+        Events::from_str(input).unwrap_err().to_string(),
+        "Got an unexpected token on line 5 while trying to parse a name: '4a=3'"
+    );
+    let input = "[core] a=b\\\n cd\n 4a=3";
+    assert_eq!(
+        Events::from_str(input).unwrap_err().to_string(),
+        "Got an unexpected token on line 3 while trying to parse a name: '4a=3'"
+    );
     let input = "[core] a=b\n 4a=3";
     assert_eq!(
         Events::from_str(input).unwrap_err().to_string(),

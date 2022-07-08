@@ -282,7 +282,7 @@ mod section {
                     ]
                     .into()
                 },
-                2
+                3
             ))
         );
     }
@@ -373,7 +373,7 @@ mod section {
                     ]
                     .into()
                 },
-                0
+                2
             ))
         );
     }
@@ -398,7 +398,7 @@ mod section {
                     ]
                     .into()
                 },
-                0
+                1
             ))
         );
     }
@@ -430,7 +430,7 @@ mod value_continuation {
     use crate::parse::tests::util::{into_events, newline_event, value_done_event, value_not_done_event};
 
     pub fn value_impl<'a>(i: &'a [u8], events: &mut section::Events<'a>) -> nom::IResult<&'a [u8], ()> {
-        super::value_impl(i, &mut |e| events.push(e))
+        super::value_impl(i, &mut |e| events.push(e)).map(|t| (t.0, ()))
     }
 
     #[test]
@@ -602,7 +602,7 @@ mod section_body {
         node: &mut ParseNode,
         events: &mut section::Events<'a>,
     ) -> nom::IResult<&'a [u8], ()> {
-        super::section_body(i, node, &mut |e| events.push(e))
+        super::section_body(i, node, &mut |e| events.push(e)).map(|t| (t.0, ()))
     }
 
     #[test]
