@@ -113,6 +113,25 @@ mod section_headers {
     }
 }
 
+mod sub_section {
+    use super::sub_section;
+    use std::borrow::Cow;
+
+    #[test]
+    fn zero_copy_simple() {
+        let actual = sub_section(b"name\"").unwrap().1;
+        assert_eq!(actual.as_ref(), "name");
+        assert!(matches!(actual, Cow::Borrowed(_)));
+    }
+
+    #[test]
+    fn escapes_need_allocation() {
+        let actual = sub_section(br#"\x\t\n\0\\\"""#).unwrap().1;
+        assert_eq!(actual.as_ref(), r#"xtn0\""#);
+        assert!(matches!(actual, Cow::Owned(_)));
+    }
+}
+
 mod config_name {
     use super::config_name;
     use crate::parse::tests::util::fully_consumed;

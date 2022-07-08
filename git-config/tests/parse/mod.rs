@@ -236,12 +236,12 @@ fn error() {
     let input = "[core] a=b\n 4a=3";
     assert_eq!(
         Events::from_str(input).unwrap_err().to_string(),
-        "Got an unexpected token on line 2 while trying to parse a config name: '4a=3'"
+        "Got an unexpected token on line 2 while trying to parse a name: '4a=3'"
     );
     let input = "[core] a=b\n =3";
     assert_eq!(
         Events::from_str(input).unwrap_err().to_string(),
-        "Got an unexpected token on line 2 while trying to parse a config name: '=3'"
+        "Got an unexpected token on line 2 while trying to parse a name: '=3'"
     );
     let input = "[core";
     assert_eq!(

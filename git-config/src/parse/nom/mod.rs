@@ -179,10 +179,20 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
 }
 
 fn sub_section(i: &[u8]) -> IResult<&[u8], Cow<'_, BStr>> {
+    let (rest, (found_escape, consumed)) = sub_section_delegate(i, &mut |_| ())?;
+    if found_escape {
+        let mut buf = BString::default();
+        sub_section_delegate(i, &mut |b| buf.push_byte(b)).map(|(i, _)| (i, buf.into()))
+    } else {
+        Ok((rest, i[..consumed].as_bstr().into()))
+    }
+}
+
+fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResult<&'a [u8], (bool, usize)> {
     let mut cursor = 0;
     let mut bytes = i.iter().copied();
     let mut found_terminator = false;
-    let mut buf = BString::default();
+    let mut found_escape = false;
     while let Some(mut b) = bytes.next() {
         cursor += 1;
         if b == b'\n' || b == 0 {
@@ -202,6 +212,7 @@ fn sub_section(i: &[u8]) -> IResult<&[u8], Cow<'_, BStr>> {
                     code: ErrorKind::NonEmpty,
                 })
             })?;
+            found_escape = true;
             cursor += 1;
             if b == b'\n' {
                 return Err(nom::Err::Error(NomError {
@@ -210,7 +221,7 @@ fn sub_section(i: &[u8]) -> IResult<&[u8], Cow<'_, BStr>> {
                 }));
             }
         }
-        buf.push_byte(b);
+        push_byte(b);
     }
 
     if !found_terminator {
@@ -220,7 +231,7 @@ fn sub_section(i: &[u8]) -> IResult<&[u8], Cow<'_, BStr>> {
         }));
     }
 
-    Ok((&i[cursor - 1..], buf.into()))
+    Ok((&i[cursor - 1..], (found_escape, cursor - 1)))
 }
 
 fn section_body<'a>(
