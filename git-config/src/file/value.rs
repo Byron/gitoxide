@@ -4,7 +4,7 @@ use std::{borrow::Cow, collections::HashMap, ops::DerefMut};
 use crate::{
     file::{
         section::{MutableSection, SectionBody},
-        Index, SectionId, Size,
+        Index, SectionBodyId, Size,
     },
     lookup,
     parse::{section, Event},
@@ -81,12 +81,12 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
 /// Internal data structure for [`MutableMultiValue`]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(crate) struct EntryData {
-    section_id: SectionId,
+    section_id: SectionBodyId,
     offset_index: usize,
 }
 
 impl EntryData {
-    pub(crate) const fn new(section_id: SectionId, offset_index: usize) -> Self {
+    pub(crate) const fn new(section_id: SectionBodyId, offset_index: usize) -> Self {
         Self {
             section_id,
             offset_index,
@@ -106,7 +106,7 @@ impl EntryData {
 #[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Debug)]
 pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
-    section: &'borrow mut HashMap<SectionId, SectionBody<'event>>,
+    section: &'borrow mut HashMap<SectionBodyId, SectionBody<'event>>,
     key: section::Key<'lookup>,
     /// Each entry data struct provides sufficient information to index into
     /// [`Self::offsets`]. This layer of indirection is used for users to index
@@ -115,15 +115,15 @@ pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     /// Each offset represents the size of a event slice and whether or not the
     /// event slice is significant or not. This is used to index into the
     /// actual section.
-    offsets: HashMap<SectionId, Vec<usize>>,
+    offsets: HashMap<SectionBodyId, Vec<usize>>,
 }
 
 impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     pub(crate) fn new(
-        section: &'borrow mut HashMap<SectionId, SectionBody<'event>>,
+        section: &'borrow mut HashMap<SectionBodyId, SectionBody<'event>>,
         key: section::Key<'lookup>,
         indices_and_sizes: Vec<EntryData>,
-        offsets: HashMap<SectionId, Vec<usize>>,
+        offsets: HashMap<SectionBodyId, Vec<usize>>,
     ) -> Self {
         Self {
             section,
@@ -319,9 +319,9 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
 
     fn set_value_inner<'a: 'event>(
         key: &section::Key<'lookup>,
-        offsets: &mut HashMap<SectionId, Vec<usize>>,
+        offsets: &mut HashMap<SectionBodyId, Vec<usize>>,
         section: &mut SectionBody<'event>,
-        section_id: SectionId,
+        section_id: SectionBodyId,
         offset_index: usize,
         input: Cow<'a, BStr>,
     ) {
@@ -382,8 +382,8 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     // SectionId is the same size as a reference, which means it's just as
     // efficient passing in a value instead of a reference.
     fn index_and_size(
-        offsets: &'lookup HashMap<SectionId, Vec<usize>>,
-        section_id: SectionId,
+        offsets: &'lookup HashMap<SectionBodyId, Vec<usize>>,
+        section_id: SectionBodyId,
         offset_index: usize,
     ) -> (usize, usize) {
         offsets
@@ -400,8 +400,8 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     // SectionId is the same size as a reference, which means it's just as
     // efficient passing in a value instead of a reference.
     fn set_offset(
-        offsets: &mut HashMap<SectionId, Vec<usize>>,
-        section_id: SectionId,
+        offsets: &mut HashMap<SectionBodyId, Vec<usize>>,
+        section_id: SectionBodyId,
         offset_index: usize,
         value: usize,
     ) {

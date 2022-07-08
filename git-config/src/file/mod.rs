@@ -36,7 +36,7 @@ impl AddAssign<usize> for Size {
     }
 }
 
-/// The section ID is a monotonically increasing ID used to refer to sections.
+/// The section ID is a monotonically increasing ID used to refer to section bodies.
 /// This value does not imply any ordering between sections, as new sections
 /// with higher section IDs may be in between lower ID sections.
 ///
@@ -48,16 +48,19 @@ impl AddAssign<usize> for Size {
 /// words, it's possible that a section may have an ID of 3 but the next section
 /// has an ID of 5.
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
-pub(crate) struct SectionId(pub(crate) usize);
+pub(crate) struct SectionBodyId(pub(crate) usize);
 
-/// Internal data structure for the section id lookup tree used by
-/// [`File`]. Note that order in Vec matters as it represents the order
+/// All section body ids referred to by a section name.
+///
+/// Note that order in Vec matters as it represents the order
 /// of section ids with the matched section and name, and is used for precedence
 /// management.
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub(crate) enum LookupTreeNode<'a> {
-    Terminal(Vec<SectionId>),
-    NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionId>>),
+pub(crate) enum SectionBodyIds<'a> {
+    /// The list of section ids to use for obtaining the section body.
+    Terminal(Vec<SectionBodyId>),
+    /// A hashmap from sub-section names to section ids.
+    NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionBodyId>>),
 }
 
 ///

@@ -2,7 +2,7 @@ use bstr::BStr;
 use std::collections::HashMap;
 
 use crate::{
-    file::{LookupTreeNode, MutableSection, SectionBody, SectionId},
+    file::{MutableSection, SectionBody, SectionBodyId, SectionBodyIds},
     lookup,
     parse::section,
     File,
@@ -16,7 +16,7 @@ impl<'event> File<'event> {
         header: section::Header<'event>,
         section: SectionBody<'event>,
     ) -> MutableSection<'_, 'event> {
-        let new_section_id = SectionId(self.section_id_counter);
+        let new_section_id = SectionBodyId(self.section_id_counter);
         self.section_headers.insert(new_section_id, header.clone());
         self.sections.insert(new_section_id, section);
         let lookup = self.section_lookup_tree.entry(header.name).or_default();
@@ -24,10 +24,9 @@ impl<'event> File<'event> {
         let mut found_node = false;
         if let Some(subsection_name) = header.subsection_name {
             for node in lookup.iter_mut() {
-                if let LookupTreeNode::NonTerminal(subsection) = node {
+                if let SectionBodyIds::NonTerminal(subsections) = node {
                     found_node = true;
-                    subsection
-                        // Clones the cow, not the inner borrowed str.
+                    subsections
                         .entry(subsection_name.clone())
                         .or_default()
                         .push(new_section_id);
@@ -37,18 +36,18 @@ impl<'event> File<'event> {
             if !found_node {
                 let mut map = HashMap::new();
                 map.insert(subsection_name, vec![new_section_id]);
-                lookup.push(LookupTreeNode::NonTerminal(map));
+                lookup.push(SectionBodyIds::NonTerminal(map));
             }
         } else {
             for node in lookup.iter_mut() {
-                if let LookupTreeNode::Terminal(vec) = node {
+                if let SectionBodyIds::Terminal(vec) = node {
                     found_node = true;
                     vec.push(new_section_id);
                     break;
                 }
             }
             if !found_node {
-                lookup.push(LookupTreeNode::Terminal(vec![new_section_id]));
+                lookup.push(SectionBodyIds::Terminal(vec![new_section_id]));
             }
         }
         self.section_order.push_back(new_section_id);
@@ -61,7 +60,7 @@ impl<'event> File<'event> {
         &self,
         section_name: impl Into<section::Name<'a>>,
         subsection_name: Option<&str>,
-    ) -> Result<Vec<SectionId>, lookup::existing::Error> {
+    ) -> Result<Vec<SectionBodyId>, lookup::existing::Error> {
         let section_name = section_name.into();
         let section_ids = self
             .section_lookup_tree
@@ -74,14 +73,14 @@ impl<'event> File<'event> {
         if let Some(subsection_name) = subsection_name {
             let subsection_name: &BStr = subsection_name.into();
             for node in section_ids {
-                if let LookupTreeNode::NonTerminal(subsection_lookup) = node {
+                if let SectionBodyIds::NonTerminal(subsection_lookup) = node {
                     maybe_ids = subsection_lookup.get(subsection_name);
                     break;
                 }
             }
         } else {
             for node in section_ids {
-                if let LookupTreeNode::Terminal(subsection_lookup) = node {
+                if let SectionBodyIds::Terminal(subsection_lookup) = node {
                     maybe_ids = Some(subsection_lookup);
                     break;
                 }
@@ -95,7 +94,7 @@ impl<'event> File<'event> {
     pub(crate) fn section_ids_by_name<'a>(
         &self,
         section_name: impl Into<section::Name<'a>>,
-    ) -> Result<Vec<SectionId>, lookup::existing::Error> {
+    ) -> Result<Vec<SectionBodyId>, lookup::existing::Error> {
         let section_name = section_name.into();
         self.section_lookup_tree
             .get(&section_name)
@@ -103,8 +102,8 @@ impl<'event> File<'event> {
                 lookup
                     .iter()
                     .flat_map(|node| match node {
-                        LookupTreeNode::Terminal(v) => v.clone(),
-                        LookupTreeNode::NonTerminal(v) => v.values().flatten().copied().collect(),
+                        SectionBodyIds::Terminal(v) => v.clone(),
+                        SectionBodyIds::NonTerminal(v) => v.values().flatten().copied().collect(),
                     })
                     .collect()
             })
