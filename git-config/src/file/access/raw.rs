@@ -12,17 +12,17 @@ use crate::{
 ///
 /// These functions are the raw value API. Instead of returning Rust structures,
 /// these functions return bytes which may or may not be owned.
-impl<'a> File<'a> {
+impl<'event> File<'event> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
     /// Consider [`Self::raw_multi_value`] if you want to get all values of
     /// a multivar instead.
-    pub fn raw_value<'lookup>(
+    pub fn raw_value(
         &self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
         // Note: cannot wrap around the raw_multi_value method because we need
         // to guarantee that the highest section id is used (so that we follow
@@ -56,7 +56,7 @@ impl<'a> File<'a> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableValue<'_, 'lookup, 'a>, lookup::existing::Error> {
+    ) -> Result<MutableValue<'_, 'lookup, 'event>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
@@ -222,7 +222,7 @@ impl<'a> File<'a> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableMultiValue<'_, 'lookup, 'a>, lookup::existing::Error> {
+    ) -> Result<MutableMultiValue<'_, 'lookup, 'event>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
@@ -296,11 +296,11 @@ impl<'a> File<'a> {
     /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::<BStr>::Borrowed("e".into()));
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn set_raw_value<'lookup>(
+    pub fn set_raw_value(
         &mut self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
         new_value: BString,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_value_mut(section_name, subsection_name, key)
@@ -393,12 +393,12 @@ impl<'a> File<'a> {
     /// ```
     ///
     /// [`raw_multi_value_mut`]: Self::raw_multi_value_mut
-    pub fn set_raw_multi_value<'lookup>(
+    pub fn set_raw_multi_value(
         &mut self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
-        new_values: impl Iterator<Item = Cow<'a, BStr>>,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
+        new_values: impl Iterator<Item = Cow<'event, BStr>>,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_multi_value_mut(section_name, subsection_name, key)
             .map(|mut v| v.set_values(new_values))

@@ -57,10 +57,10 @@ impl<'event> File<'event> {
     }
 
     /// Returns the mapping between section and subsection name to section ids.
-    pub(crate) fn section_ids_by_name_and_subname<'lookup>(
+    pub(crate) fn section_ids_by_name_and_subname<'a>(
         &self,
-        section_name: impl Into<section::Name<'lookup>>,
-        subsection_name: Option<&'lookup str>,
+        section_name: impl Into<section::Name<'a>>,
+        subsection_name: Option<&str>,
     ) -> Result<Vec<SectionId>, lookup::existing::Error> {
         let section_name = section_name.into();
         let section_ids = self
@@ -92,9 +92,9 @@ impl<'event> File<'event> {
             .ok_or(lookup::existing::Error::SubSectionMissing)
     }
 
-    pub(crate) fn section_ids_by_name<'lookup>(
+    pub(crate) fn section_ids_by_name<'a>(
         &self,
-        section_name: impl Into<section::Name<'lookup>>,
+        section_name: impl Into<section::Name<'a>>,
     ) -> Result<Vec<SectionId>, lookup::existing::Error> {
         let section_name = section_name.into();
         self.section_lookup_tree

@@ -114,10 +114,10 @@ impl<'event> File<'event> {
     }
 
     /// Returns an immutable section reference.
-    pub fn section<'lookup>(
+    pub fn section(
         &mut self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
+        section_name: &str,
+        subsection_name: Option<&str>,
     ) -> Result<&SectionBody<'event>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         let id = section_ids.last().expect("BUG: Section lookup vec was empty");
@@ -158,7 +158,7 @@ impl<'event> File<'event> {
     /// assert_eq!(git_config.sections_by_name("core").len(), 3);
     /// ```
     #[must_use]
-    pub fn sections_by_name<'lookup>(&self, section_name: &'lookup str) -> Vec<&SectionBody<'event>> {
+    pub fn sections_by_name(&self, section_name: &str) -> Vec<&SectionBody<'event>> {
         self.section_ids_by_name(section_name)
             .unwrap_or_default()
             .into_iter()
@@ -216,9 +216,9 @@ impl<'event> File<'event> {
     ///     }
     /// }
     /// ```
-    pub fn sections_by_name_with_header<'lookup>(
+    pub fn sections_by_name_with_header(
         &self,
-        section_name: &'lookup str,
+        section_name: &str,
     ) -> Vec<(&section::Header<'event>, &SectionBody<'event>)> {
         self.section_ids_by_name(section_name)
             .unwrap_or_default()

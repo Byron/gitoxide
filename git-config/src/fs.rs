@@ -179,11 +179,11 @@ impl<'a> Config<'a> {
         None
     }
 
-    pub fn try_value<'lookup, T: TryFrom<Cow<'a, BStr>>>(
+    pub fn try_value<T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
     ) -> Result<Option<T>, lookup::Error<T::Error>> {
         self.try_value_with_source(section_name, subsection_name, key)
             .map(|res| res.map(|(value, _)| value))
@@ -193,11 +193,11 @@ impl<'a> Config<'a> {
     /// if the key was not found. On a successful parse, the value will be
     /// returned as well as the source location. This respects the priority of
     /// the various configuration files.
-    pub fn try_value_with_source<'lookup, T: TryFrom<Cow<'a, BStr>>>(
+    pub fn try_value_with_source<T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
+        section_name: &str,
+        subsection_name: Option<&str>,
+        key: &str,
     ) -> Result<Option<(T, ConfigSource)>, lookup::Error<T::Error>> {
         let mapping = self.mapping();
 

@@ -9,13 +9,13 @@ use crate::{
 };
 
 /// Mutating low-level access methods.
-impl<'a> File<'a> {
+impl<'event> File<'event> {
     /// Returns an mutable section reference.
-    pub fn section_mut<'lookup>(
-        &mut self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-    ) -> Result<MutableSection<'_, 'a>, lookup::existing::Error> {
+    pub fn section_mut<'a>(
+        &'a mut self,
+        section_name: &str,
+        subsection_name: Option<&str>,
+    ) -> Result<MutableSection<'a, 'event>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         let id = section_ids.last().expect("BUG: Section lookup vec was empty");
         Ok(MutableSection::new(
@@ -56,9 +56,9 @@ impl<'a> File<'a> {
     /// ```
     pub fn new_section(
         &mut self,
-        section_name: impl Into<Cow<'a, str>>,
-        subsection_name: impl Into<Option<Cow<'a, str>>>,
-    ) -> MutableSection<'_, 'a> {
+        section_name: impl Into<Cow<'event, str>>,
+        subsection_name: impl Into<Option<Cow<'event, str>>>,
+    ) -> MutableSection<'_, 'event> {
         let mut section = self.push_section(section_name, subsection_name, SectionBody::default());
         section.push_newline();
         section
@@ -99,11 +99,11 @@ impl<'a> File<'a> {
     /// let events = git_config.remove_section("hello", Some("world".into()));
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n    some-value = 4\n");
     /// ```
-    pub fn remove_section<'lookup>(
+    pub fn remove_section<'a>(
         &mut self,
-        section_name: &'lookup str,
-        subsection_name: impl Into<Option<&'lookup str>>,
-    ) -> Option<SectionBody<'a>> {
+        section_name: &str,
+        subsection_name: impl Into<Option<&'a str>>,
+    ) -> Option<SectionBody<'event>> {
         let id = self
             .section_ids_by_name_and_subname(section_name, subsection_name.into())
             .ok()?
@@ -121,10 +121,10 @@ impl<'a> File<'a> {
     /// to it.
     pub fn push_section(
         &mut self,
-        section_name: impl Into<Cow<'a, str>>,
-        subsection_name: impl Into<Option<Cow<'a, str>>>,
-        section: SectionBody<'a>,
-    ) -> MutableSection<'_, 'a> {
+        section_name: impl Into<Cow<'event, str>>,
+        subsection_name: impl Into<Option<Cow<'event, str>>>,
+        section: SectionBody<'event>,
+    ) -> MutableSection<'_, 'event> {
         let subsection_name = subsection_name.into().map(into_cow_bstr);
         self.push_section_internal(
             section::Header {
@@ -137,12 +137,12 @@ impl<'a> File<'a> {
     }
 
     /// Renames a section, modifying the last matching section.
-    pub fn rename_section<'lookup>(
+    pub fn rename_section<'a>(
         &mut self,
-        section_name: &'lookup str,
-        subsection_name: impl Into<Option<&'lookup str>>,
-        new_section_name: impl Into<section::Name<'a>>,
-        new_subsection_name: impl Into<Option<Cow<'a, str>>>,
+        section_name: &str,
+        subsection_name: impl Into<Option<&'a str>>,
+        new_section_name: impl Into<section::Name<'event>>,
+        new_subsection_name: impl Into<Option<Cow<'event, str>>>,
     ) -> Result<(), lookup::existing::Error> {
         let id = self.section_ids_by_name_and_subname(section_name, subsection_name.into())?;
         let id = id
