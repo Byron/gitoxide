@@ -95,6 +95,16 @@ mod section_headers {
     }
 
     #[test]
+    fn invalid_characters_in_section() {
+        assert!(section_header(b"[$]").is_err());
+    }
+    #[test]
+    fn invalid_characters_in_legacy_sub_section() {
+        assert!(section_header(b"[hello.$]").is_err());
+        assert!(section_header(b"[hello. world]").is_err());
+    }
+
+    #[test]
     fn right_brace_in_subsection_name() {
         assert_eq!(
             section_header(br#"[hello "]"]"#).unwrap(),
@@ -106,6 +116,7 @@ mod section_headers {
 mod config_name {
     use super::config_name;
     use crate::parse::tests::util::fully_consumed;
+    use nom::combinator::all_consuming;
 
     #[test]
     fn just_name() {
@@ -116,6 +127,12 @@ mod config_name {
     fn must_start_with_alphabetic() {
         assert!(config_name(b"4aaa").is_err());
         assert!(config_name(b"-aaa").is_err());
+    }
+
+    #[test]
+    fn only_a_subset_of_characters_is_allowed() {
+        assert!(all_consuming(config_name)(b"Name$_").is_err());
+        assert!(all_consuming(config_name)(b"other#").is_err());
     }
 
     #[test]
@@ -537,7 +554,7 @@ mod value_no_continuation {
     }
 
     #[test]
-    fn garbage_after_continution_is_err() {
+    fn garbage_after_continuation_is_err() {
         assert!(value_impl(b"hello \\afwjdls", &mut Default::default()).is_err());
     }
 

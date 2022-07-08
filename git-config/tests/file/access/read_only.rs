@@ -237,3 +237,46 @@ fn sections_by_name() {
         }
     );
 }
+
+#[test]
+fn multi_line_value_plain() {
+    let config = r#"
+[alias]
+   save = !git status \
+        && git add -A \
+        && git commit -m \"$1\" \
+        && git push -f \
+        && git log -1 \
+        && :            # comment
+    "#;
+
+    let config = File::try_from(config).unwrap();
+
+    let expected = r#"!git status         && git add -A         && git commit -m "$1"         && git push -f         && git log -1         && :"#;
+    assert_eq!(
+        config.raw_value("alias", None, "save").unwrap().as_ref(),
+        expected,
+        "only the un-normalized original value currently matches git's result"
+    );
+    assert_ne!(config.string("alias", None, "save").unwrap().as_ref(), expected);
+}
+
+#[test]
+#[ignore]
+fn multi_line_value_outer_quotes() {
+    let config = r#"
+[alias]
+   save = "!f() { \
+           git status; \
+           git add -A; \
+           git commit -m "$1"; \
+           git push -f; \
+           git log -1;  \
+        }; \ 
+        f;  \
+        unset f"
+"#;
+    let config = File::try_from(config).unwrap();
+    let expected = r#"!f() {            git status;            git add -A;            git commit -m $1;            git push -f;            git log -1;          };         f;          unset f"#;
+    assert_eq!(config.raw_value("alias", None, "save").unwrap().as_ref(), expected);
+}

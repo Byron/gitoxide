@@ -261,8 +261,8 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
         }));
     }
 
-    let (i, v) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-')(i)?;
-    Ok((i, v.as_bstr()))
+    let (i, name) = take_while(|c: u8| c.is_ascii_alphanumeric() || c == b'-')(i)?;
+    Ok((i, name.as_bstr()))
 }
 
 fn config_value<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], ()> {
