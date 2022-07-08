@@ -228,8 +228,11 @@ impl Events<'static> {
     /// is degraded as it requires allocation for every event. However, this permits
     /// the reference bytes to be dropped, allowing the parser to be passed around
     /// without lifetime worries.
-    pub fn from_bytes_owned(input: &[u8]) -> Result<Events<'static>, parse::Error> {
-        from_bytes(input, |e| e.to_owned())
+    pub fn from_bytes_owned<'a>(
+        input: &'a [u8],
+        filter: Option<fn(&Event<'a>) -> bool>,
+    ) -> Result<Events<'static>, parse::Error> {
+        from_bytes(input, |e| e.to_owned(), filter)
     }
 }
 
@@ -248,7 +251,7 @@ impl<'a> Events<'a> {
     /// of a `git-config` file and can be converted into an iterator of [`Event`]
     /// for higher level processing.
     pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, parse::Error> {
-        from_bytes(input, std::convert::identity)
+        from_bytes(input, std::convert::identity, None)
     }
 
     /// Consumes the parser to produce an iterator of Events.
@@ -279,7 +282,11 @@ impl<'a> TryFrom<&'a [u8]> for Events<'a> {
     }
 }
 
-fn from_bytes<'a, 'b>(input: &'a [u8], convert: impl Fn(Event<'a>) -> Event<'b>) -> Result<Events<'b>, parse::Error> {
+fn from_bytes<'a, 'b>(
+    input: &'a [u8],
+    convert: impl Fn(Event<'a>) -> Event<'b>,
+    filter: Option<fn(&Event<'a>) -> bool>,
+) -> Result<Events<'b>, parse::Error> {
     let mut header = None;
     let mut events = section::Events::default();
     let mut frontmatter = FrontMatterEvents::default();
@@ -303,7 +310,11 @@ fn from_bytes<'a, 'b>(input: &'a [u8], convert: impl Fn(Event<'a>) -> Event<'b>)
             }
             .into();
         }
-        event => events.push(convert(event)),
+        event => {
+            if filter.map_or(true, |f| f(&event)) {
+                events.push(convert(event))
+            }
+        }
     })?;
 
     match header {

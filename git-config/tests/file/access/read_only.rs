@@ -23,7 +23,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             location-quoted = "~/quoted"
     "#;
 
-    let file = git_config::parse::Events::from_bytes_owned(config.as_bytes()).map(File::from)?;
+    let file = git_config::parse::Events::from_bytes_owned(config.as_bytes(), None).map(File::from)?;
 
     assert_eq!(
         file.value::<Boolean>("core", None, "bool-explicit")?,

@@ -80,6 +80,6 @@ impl File<'static> {
     }
 
     pub(crate) fn from_bytes(input: &[u8]) -> Result<Self, Error> {
-        Ok(parse::Events::from_bytes_owned(input)?.into())
+        Ok(parse::Events::from_bytes_owned(input, None)?.into())
     }
 }
