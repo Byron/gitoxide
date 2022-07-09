@@ -46,10 +46,10 @@ pub mod parse;
 ///
 pub mod value;
 mod values;
-pub use values::*;
+pub use values::{boolean, color, integer, path};
 
 mod types;
-pub use types::File;
+pub use types::{Boolean, Color, File, Integer, Path};
 
 mod permissions;
 pub use permissions::Permissions;
