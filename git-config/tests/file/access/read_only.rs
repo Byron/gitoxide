@@ -25,16 +25,15 @@ fn get_value_for_all_provided_values() -> crate::Result {
 
     let config = git_config::parse::Events::from_bytes_owned(config.as_bytes(), None).map(File::from)?;
 
-    assert_eq!(config.value::<Boolean>("core", None, "bool-explicit")?.0, false);
+    assert!(!config.value::<Boolean>("core", None, "bool-explicit")?.0);
     assert!(!config.boolean("core", None, "bool-explicit").expect("exists")?);
 
-    assert_eq!(config.value::<Boolean>("core", None, "bool-implicit")?.0, true);
-    assert_eq!(
+    assert!(config.value::<Boolean>("core", None, "bool-implicit")?.0);
+    assert!(
         config
             .try_value::<Boolean>("core", None, "bool-implicit")
             .expect("exists")?
-            .0,
-        true
+            .0
     );
 
     assert!(config.boolean("core", None, "bool-implicit").expect("present")?);
@@ -159,9 +158,9 @@ fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
     let file = File::try_from(config)?;
 
     // Checks that we check the last entry first still
-    assert_eq!(file.value::<Boolean>("core", None, "bool-implicit")?.0, true);
+    assert!(file.value::<Boolean>("core", None, "bool-implicit")?.0);
 
-    assert_eq!(file.value::<Boolean>("core", None, "bool-explicit")?.0, false);
+    assert!(!file.value::<Boolean>("core", None, "bool-explicit")?.0);
 
     Ok(())
 }
@@ -200,7 +199,7 @@ fn single_section() -> Result<(), Box<dyn Error>> {
     let second_value: Boolean = config.value("core", None, "c")?;
 
     assert_eq!(first_value, String { value: cow_str("b") });
-    assert_eq!(second_value.0, true);
+    assert!(second_value.0);
 
     Ok(())
 }

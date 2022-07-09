@@ -6,11 +6,11 @@ use crate::value::b;
 
 #[test]
 fn from_str_false() -> crate::Result {
-    assert_eq!(Boolean::try_from(b("no"))?.0, false);
-    assert_eq!(Boolean::try_from(b("off"))?.0, false);
-    assert_eq!(Boolean::try_from(b("false"))?.0, false);
-    assert_eq!(Boolean::try_from(b("zero"))?.0, false);
-    assert_eq!(Boolean::try_from(b("\"\""))?.0, false);
+    assert!(!Boolean::try_from(b("no"))?.0);
+    assert!(!Boolean::try_from(b("off"))?.0);
+    assert!(!Boolean::try_from(b("false"))?.0);
+    assert!(!Boolean::try_from(b("zero"))?.0);
+    assert!(!Boolean::try_from(b("\"\""))?.0);
     Ok(())
 }
 
