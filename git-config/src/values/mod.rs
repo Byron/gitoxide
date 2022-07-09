@@ -1,6 +1,3 @@
-mod string;
-pub use string::String;
-
 ///
 pub mod boolean;
 ///

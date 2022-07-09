@@ -15,6 +15,8 @@ impl<'event> File<'event> {
     /// Consider [`Self::multi_value`] if you want to get all values of a
     /// multivar instead.
     ///
+    /// If a `string` is desired, use the [`string()`][Self::string()] method instead.
+    ///
     /// # Examples
     ///
     /// ```
@@ -66,13 +68,16 @@ impl<'event> File<'event> {
     /// Consider [`Self::value`] if you want to get a single value
     /// (following last-one-wins resolution) instead.
     ///
+    /// To access plain strings, use the [`strings()`][Self::strings()] method instead.
+    ///
     /// # Examples
     ///
     /// ```
     /// # use git_config::File;
-    /// # use git_config::{Integer, String, Boolean};
+    /// # use git_config::{Integer, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
+    /// # use bstr::ByteSlice;
     /// let config = r#"
     ///     [core]
     ///         a = true
@@ -93,8 +98,8 @@ impl<'event> File<'event> {
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value: Vec<String> = git_config.multi_value("core", None, "c")?;
-    /// assert_eq!(c_value, vec![String { value: Cow::Borrowed("g".into()) }]);
+    /// let c_value = git_config.strings("core", None, "c").unwrap();
+    /// assert_eq!(c_value, vec![Cow::Borrowed("g".as_bytes().as_bstr())]);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///

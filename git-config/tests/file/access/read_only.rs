@@ -1,7 +1,7 @@
 use crate::file::cow_str;
 use bstr::BStr;
 use git_config::File;
-use git_config::{color, integer, Boolean, Color, Integer, String};
+use git_config::{color, integer, Boolean, Color, Integer};
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
 /// Asserts we can cast into all variants of our type
@@ -37,7 +37,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
     );
 
     assert!(config.boolean("core", None, "bool-implicit").expect("present")?);
-    assert_eq!(config.try_value::<String>("doesnt", None, "exist"), None);
+    assert_eq!(config.string("doesnt", None, "exist"), None);
 
     assert_eq!(
         config.value::<Integer>("core", None, "integer-no-prefix")?,
@@ -82,27 +82,15 @@ fn get_value_for_all_provided_values() -> crate::Result {
     }
 
     assert_eq!(
-        config.value::<String>("core", None, "other-quoted")?,
-        String {
-            value: cow_str("hello world")
-        }
+        config.string("core", None, "other-quoted").unwrap(),
+        cow_str("hello world")
     );
 
     {
-        let strings = config.multi_value::<String>("core", None, "other-quoted")?;
-        assert_eq!(
-            strings,
-            vec![
-                String {
-                    value: cow_str("hello")
-                },
-                String {
-                    value: cow_str("hello world")
-                },
-            ]
-        );
-        assert!(matches!(strings[0].value, Cow::Borrowed(_)));
-        assert!(matches!(strings[1].value, Cow::Borrowed(_)));
+        let strings = config.strings("core", None, "other-quoted").unwrap();
+        assert_eq!(strings, vec![cow_str("hello"), cow_str("hello world")]);
+        assert!(matches!(strings[0], Cow::Borrowed(_)));
+        assert!(matches!(strings[1], Cow::Borrowed(_)));
     }
 
     {
@@ -114,12 +102,6 @@ fn get_value_for_all_provided_values() -> crate::Result {
         config.string("core", None, "other-quoted").expect("present").as_ref(),
         "hello world"
     );
-    {
-        let strings = config.strings("core", None, "other-quoted").expect("present");
-        assert_eq!(strings, vec![cow_str("hello"), cow_str("hello world")]);
-        assert!(matches!(strings[0], Cow::Borrowed(_)));
-        assert!(matches!(strings[1], Cow::Borrowed(_)));
-    }
 
     {
         let actual = config.value::<git_config::Path>("core", None, "location")?;
@@ -195,10 +177,10 @@ fn value_names_are_case_insensitive() -> crate::Result {
 #[test]
 fn single_section() -> Result<(), Box<dyn Error>> {
     let config = File::try_from("[core]\na=b\nc").unwrap();
-    let first_value: String = config.value("core", None, "a")?;
+    let first_value = config.string("core", None, "a").unwrap();
     let second_value: Boolean = config.value("core", None, "c")?;
 
-    assert_eq!(first_value, String { value: cow_str("b") });
+    assert_eq!(first_value, cow_str("b"));
     assert!(second_value.0);
 
     Ok(())
@@ -218,13 +200,8 @@ fn sections_by_name() {
     "#;
 
     let config = File::try_from(config).unwrap();
-    let value = config.value::<String>("remote", Some("origin"), "url").unwrap();
-    assert_eq!(
-        value,
-        String {
-            value: cow_str("git@github.com:Byron/gitoxide.git")
-        }
-    );
+    let value = config.string("remote", Some("origin"), "url").unwrap();
+    assert_eq!(value, cow_str("git@github.com:Byron/gitoxide.git"));
 }
 
 #[test]
