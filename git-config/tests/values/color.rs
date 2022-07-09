@@ -6,6 +6,8 @@ mod name {
     #[test]
     fn non_bright() {
         assert_eq!(Name::from_str("normal"), Ok(Name::Normal));
+        assert_eq!(Name::from_str("-1"), Ok(Name::Normal));
+        assert_eq!(Name::from_str("default"), Ok(Name::Default));
         assert_eq!(Name::from_str("black"), Ok(Name::Black));
         assert_eq!(Name::from_str("red"), Ok(Name::Red));
         assert_eq!(Name::from_str("green"), Ok(Name::Green));
@@ -43,7 +45,9 @@ mod name {
 
     #[test]
     fn invalid() {
+        assert!(Name::from_str("-2").is_err());
         assert!(Name::from_str("brightnormal").is_err());
+        assert!(Name::from_str("brightdefault").is_err());
         assert!(Name::from_str("").is_err());
         assert!(Name::from_str("bright").is_err());
         assert!(Name::from_str("256").is_err());
@@ -60,6 +64,7 @@ mod attribute {
 
     #[test]
     fn non_inverted() {
+        assert_eq!(Attribute::from_str("reset"), Ok(Attribute::Reset));
         assert_eq!(Attribute::from_str("bold"), Ok(Attribute::Bold));
         assert_eq!(Attribute::from_str("dim"), Ok(Attribute::Dim));
         assert_eq!(Attribute::from_str("ul"), Ok(Attribute::Ul));
@@ -93,6 +98,8 @@ mod attribute {
 
     #[test]
     fn invalid() {
+        assert!(Attribute::from_str("no-reset").is_err());
+        assert!(Attribute::from_str("noreset").is_err());
         assert!(Attribute::from_str("a").is_err());
         assert!(Attribute::from_str("no bold").is_err());
         assert!(Attribute::from_str("").is_err());
@@ -109,12 +116,72 @@ mod from_git {
     #[test]
     #[ignore]
     fn reset() {
-        assert_eq!(color("reset"), "[m");
+        assert_eq!(color("reset"), "reset");
     }
 
     #[test]
     fn empty() {
         assert_eq!(color(""), "");
+    }
+
+    #[test]
+    fn attribute_before_color_name() {
+        assert_eq!(color("bold red"), "red bold");
+    }
+
+    #[test]
+    fn color_name_before_attribute() {
+        assert_eq!(color("red bold"), "red bold");
+    }
+
+    #[test]
+    fn attribute_fg_bg() {
+        assert_eq!(color("ul blue red"), "blue red ul");
+    }
+
+    #[test]
+    fn fg_bg_attribute() {
+        assert_eq!(color("blue red ul"), "blue red ul");
+    }
+
+    #[test]
+    fn multiple_attributes() {
+        assert_eq!(
+            color("blue bold dim ul blink reverse"),
+            "blue bold dim ul blink reverse"
+        );
+    }
+
+    #[test]
+    fn reset_then_multiple_attributes() {
+        assert_eq!(
+            color("reset blue bold dim ul blink reverse"),
+            "blue reset bold dim ul blink reverse"
+        );
+    }
+
+    #[test]
+    fn long_color_spec() {
+        assert_eq!(
+            color("254 255 bold dim ul blink reverse"),
+            "254 255 bold dim ul blink reverse"
+        );
+        let input = "#ffffff #ffffff bold nobold dim nodim italic noitalic ul noul blink noblink reverse noreverse strike nostrike";
+        let expected = input;
+        assert_eq!(color(input), expected);
+    }
+
+    #[test]
+    fn normal_default_can_clear_backgrounds() {
+        assert_eq!(color("normal default"), "normal default");
+    }
+
+    #[test]
+    fn default_can_combine_with_attributes() {
+        assert_eq!(
+            color("default default no-reverse bold"),
+            "default default noreverse bold"
+        );
     }
 
     fn color<'a>(name: impl Into<&'a BStr>) -> String {

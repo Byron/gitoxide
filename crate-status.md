@@ -394,6 +394,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [x] boolean
         * [x] integer
         * [x] color
+           * [ ] ANSI code output for terminal colors
         * [x] path (incl. resolution)
         * [x] include
         * **includeIf**

@@ -6,16 +6,6 @@ use std::convert::TryFrom;
 use std::fmt::Display;
 use std::str::FromStr;
 
-impl Color {
-    /// Generates a byte representation of the value. This should be used when
-    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
-    /// guaranteed.
-    #[must_use]
-    pub fn to_bstring(&self) -> BString {
-        self.into()
-    }
-}
-
 impl Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut write_space = None;
@@ -43,17 +33,6 @@ impl Display for Color {
                 attr.fmt(f)
             })
         })
-    }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for Color {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        // todo: maybe not?
-        serializer.serialize_str(&self.to_string())
     }
 }
 
@@ -109,34 +88,11 @@ impl TryFrom<&BStr> for Color {
     }
 }
 
-impl TryFrom<BString> for Color {
-    type Error = value::Error;
-
-    fn try_from(value: BString) -> Result<Self, Self::Error> {
-        Self::try_from(value.as_ref())
-    }
-}
-
 impl TryFrom<Cow<'_, BStr>> for Color {
     type Error = value::Error;
 
     fn try_from(c: Cow<'_, BStr>) -> Result<Self, Self::Error> {
-        match c {
-            Cow::Borrowed(c) => Self::try_from(c),
-            Cow::Owned(c) => Self::try_from(c),
-        }
-    }
-}
-
-impl From<Color> for BString {
-    fn from(c: Color) -> Self {
-        c.into()
-    }
-}
-
-impl From<&Color> for BString {
-    fn from(c: &Color) -> Self {
-        c.to_string().into()
+        Self::try_from(c.as_ref())
     }
 }
 
@@ -148,6 +104,7 @@ impl From<&Color> for BString {
 #[allow(missing_docs)]
 pub enum Name {
     Normal,
+    Default,
     Black,
     BrightBlack,
     Red,
@@ -172,6 +129,7 @@ impl Display for Name {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Normal => write!(f, "normal"),
+            Self::Default => write!(f, "default"),
             Self::Black => write!(f, "black"),
             Self::BrightBlack => write!(f, "brightblack"),
             Self::Red => write!(f, "red"),
@@ -218,7 +176,10 @@ impl FromStr for Name {
 
         match s {
             "normal" if !bright => return Ok(Self::Normal),
+            "-1" if !bright => return Ok(Self::Normal),
             "normal" if bright => return Err(color_err(s)),
+            "default" if !bright => return Ok(Self::Default),
+            "default" if bright => return Err(color_err(s)),
             "black" if !bright => return Ok(Self::Black),
             "black" if bright => return Ok(Self::BrightBlack),
             "red" if !bright => return Ok(Self::Red),
@@ -276,6 +237,7 @@ impl TryFrom<&[u8]> for Name {
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
 pub enum Attribute {
+    Reset,
     Bold,
     NoBold,
     Dim,
@@ -295,6 +257,7 @@ pub enum Attribute {
 impl Display for Attribute {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Reset => write!(f, "reset"),
             Self::Bold => write!(f, "bold"),
             Self::NoBold => write!(f, "nobold"),
             Self::Dim => write!(f, "dim"),
@@ -339,6 +302,8 @@ impl FromStr for Attribute {
         }
 
         match parsed {
+            "reset" if !inverted => Ok(Self::Reset),
+            "reset" if inverted => Err(color_err(parsed)),
             "bold" if !inverted => Ok(Self::Bold),
             "bold" if inverted => Ok(Self::NoBold),
             "dim" if !inverted => Ok(Self::Dim),
