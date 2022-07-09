@@ -49,7 +49,7 @@ impl<'event> File<'event> {
     /// Returns a mutable reference to an uninterpreted value given a section,
     /// an optional subsection and key.
     ///
-    /// Consider [`Self::raw_multi_value_mut`] if you want to get mutable
+    /// Consider [`Self::raw_values_mut`] if you want to get mutable
     /// references to all values of a multivar instead.
     pub fn raw_value_mut<'lookup>(
         &mut self,
@@ -199,7 +199,7 @@ impl<'event> File<'event> {
     ///     ]
     /// );
     ///
-    /// git_config.raw_multi_value_mut("core", None, "a")?.set_str_all("g");
+    /// git_config.raw_values_mut("core", None, "a")?.set_str_all("g");
     ///
     /// assert_eq!(
     ///     git_config.raw_multi_value("core", None, "a")?,
@@ -217,7 +217,7 @@ impl<'event> File<'event> {
     ///
     /// Note that this operation is relatively expensive, requiring a full
     /// traversal of the config.
-    pub fn raw_multi_value_mut<'lookup>(
+    pub fn raw_values_mut<'lookup>(
         &mut self,
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
@@ -392,7 +392,7 @@ impl<'event> File<'event> {
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///
-    /// [`raw_multi_value_mut`]: Self::raw_multi_value_mut
+    /// [`raw_multi_value_mut`]: Self::raw_values_mut
     pub fn set_raw_multi_value(
         &mut self,
         section_name: &str,
@@ -400,7 +400,7 @@ impl<'event> File<'event> {
         key: &str,
         new_values: impl Iterator<Item = Cow<'event, BStr>>,
     ) -> Result<(), lookup::existing::Error> {
-        self.raw_multi_value_mut(section_name, subsection_name, key)
+        self.raw_values_mut(section_name, subsection_name, key)
             .map(|mut v| v.set_values(new_values))
     }
 }

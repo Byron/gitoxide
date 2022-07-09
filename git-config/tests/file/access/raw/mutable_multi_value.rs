@@ -12,7 +12,7 @@ fn init_config() -> File<'static> {
 fn value_is_correct() {
     let mut git_config = init_config();
 
-    let value = git_config.raw_multi_value_mut("core", None, "a").unwrap();
+    let value = git_config.raw_values_mut("core", None, "a").unwrap();
     assert_eq!(
         &*value.get().unwrap(),
         vec![
@@ -26,14 +26,14 @@ fn value_is_correct() {
 #[test]
 fn non_empty_sizes_are_correct() {
     let mut git_config = init_config();
-    assert_eq!(git_config.raw_multi_value_mut("core", None, "a").unwrap().len(), 3);
-    assert!(!git_config.raw_multi_value_mut("core", None, "a").unwrap().is_empty());
+    assert_eq!(git_config.raw_values_mut("core", None, "a").unwrap().len(), 3);
+    assert!(!git_config.raw_values_mut("core", None, "a").unwrap().is_empty());
 }
 
 #[test]
 fn set_value_at_start() {
     let mut git_config = init_config();
-    let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
+    let mut values = git_config.raw_values_mut("core", None, "a").unwrap();
     values.set_string(0, "Hello".to_string());
     assert_eq!(
         git_config.to_string(),
@@ -44,7 +44,7 @@ fn set_value_at_start() {
 #[test]
 fn set_value_at_end() {
     let mut git_config = init_config();
-    let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
+    let mut values = git_config.raw_values_mut("core", None, "a").unwrap();
     values.set_string(2, "Hello".to_string());
     assert_eq!(
         git_config.to_string(),
@@ -55,7 +55,7 @@ fn set_value_at_end() {
 #[test]
 fn set_values_all() {
     let mut git_config = init_config();
-    let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
+    let mut values = git_config.raw_values_mut("core", None, "a").unwrap();
     values.set_owned_values_all("Hello");
     assert_eq!(
         git_config.to_string(),
@@ -66,7 +66,7 @@ fn set_values_all() {
 #[test]
 fn delete() {
     let mut git_config = init_config();
-    let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
+    let mut values = git_config.raw_values_mut("core", None, "a").unwrap();
     values.delete(0);
     assert_eq!(
         git_config.to_string(),
@@ -77,7 +77,7 @@ fn delete() {
 #[test]
 fn delete_all() {
     let mut git_config = init_config();
-    let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
+    let mut values = git_config.raw_values_mut("core", None, "a").unwrap();
     values.delete_all();
     assert!(values.get().is_err());
     assert_eq!(git_config.to_string(), "[core]\n    \n    [core]\n        \n        ",);
@@ -96,7 +96,7 @@ b
 a"#,
     )
     .unwrap();
-    let mut values = git_config.raw_multi_value_mut("core", None, "a").unwrap();
+    let mut values = git_config.raw_values_mut("core", None, "a").unwrap();
 
     assert_eq!(
         &*values.get().unwrap(),
