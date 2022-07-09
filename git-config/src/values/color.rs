@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use crate::value;
 use crate::Color;
 use bstr::{BStr, BString};
@@ -251,6 +252,107 @@ pub enum Attribute {
     NoItalic,
     Strike,
     NoStrike,
+}
+
+bitflags::bitflags! {
+    /// Discriminating enum for [`Color`] attributes.
+    ///
+    /// `git-config` supports modifiers and their negators. The negating color
+    /// attributes are equivalent to having a `no` or `no-` prefix to the normal
+    /// variant.
+    pub struct Attribute2: u32 {
+        const BOLD = 1 << 1;
+        const DIM = 1 << 2;
+        const ITALIC = 1 << 3;
+        const UL = 1 << 4;
+        const BLINK = 1 << 5;
+        const REVERSE = 1 << 6;
+        const STRIKE = 1 << 7;
+        /// Reset is special as we have to be able to parse it, without git actually doing anything with it
+        const RESET = 1 << 8;
+
+        const NO_DIM = 1 << 21;
+        const NO_BOLD = 1 << 22;
+        const NO_ITALIC = 1 << 23;
+        const NO_UL = 1 << 24;
+        const NO_BLINK = 1 << 25;
+        const NO_REVERSE = 1 << 26;
+        const NO_STRIKE = 1 << 27;
+    }
+}
+
+impl Display for Attribute2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Attribute2::RESET => write!(f, "reset"),
+            Attribute2::BOLD => write!(f, "bold"),
+            Attribute2::NO_BOLD => write!(f, "nobold"),
+            Attribute2::DIM => write!(f, "dim"),
+            Attribute2::NO_DIM => write!(f, "nodim"),
+            Attribute2::UL => write!(f, "ul"),
+            Attribute2::NO_UL => write!(f, "noul"),
+            Attribute2::BLINK => write!(f, "blink"),
+            Attribute2::NO_BLINK => write!(f, "noblink"),
+            Attribute2::REVERSE => write!(f, "reverse"),
+            Attribute2::NO_REVERSE => write!(f, "noreverse"),
+            Attribute2::ITALIC => write!(f, "italic"),
+            Attribute2::NO_ITALIC => write!(f, "noitalic"),
+            Attribute2::STRIKE => write!(f, "strike"),
+            Attribute2::NO_STRIKE => write!(f, "nostrike"),
+            _ => unreachable!("BUG: add new attribute flag"),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Attribute2 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl FromStr for Attribute2 {
+    type Err = value::Error;
+
+    fn from_str(mut s: &str) -> Result<Self, Self::Err> {
+        let inverted = if let Some(rest) = s.strip_prefix("no-").or_else(|| s.strip_prefix("no")) {
+            s = rest;
+            true
+        } else {
+            false
+        };
+
+        match s {
+            "reset" if !inverted => Ok(Attribute2::RESET),
+            "reset" if inverted => Err(color_err(s)),
+            "bold" if !inverted => Ok(Attribute2::BOLD),
+            "bold" if inverted => Ok(Attribute2::NO_BOLD),
+            "dim" if !inverted => Ok(Attribute2::DIM),
+            "dim" if inverted => Ok(Attribute2::NO_DIM),
+            "ul" if !inverted => Ok(Attribute2::UL),
+            "ul" if inverted => Ok(Attribute2::NO_UL),
+            "blink" if !inverted => Ok(Attribute2::BLINK),
+            "blink" if inverted => Ok(Attribute2::NO_BLINK),
+            "reverse" if !inverted => Ok(Attribute2::REVERSE),
+            "reverse" if inverted => Ok(Attribute2::NO_REVERSE),
+            "italic" if !inverted => Ok(Attribute2::ITALIC),
+            "italic" if inverted => Ok(Attribute2::NO_ITALIC),
+            "strike" if !inverted => Ok(Attribute2::STRIKE),
+            "strike" if inverted => Ok(Attribute2::NO_STRIKE),
+            _ => Err(color_err(s)),
+        }
+    }
+}
+
+impl TryFrom<&[u8]> for Attribute2 {
+    type Error = value::Error;
+
+    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+        Self::from_str(std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?)
+    }
 }
 
 impl Display for Attribute {
