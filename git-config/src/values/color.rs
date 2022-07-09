@@ -319,22 +319,7 @@ impl serde::Serialize for Attribute {
     where
         S: serde::Serializer,
     {
-        serializer.serialize_str(match self {
-            Self::Bold => "bold",
-            Self::NoBold => "nobold",
-            Self::Dim => "dim",
-            Self::NoDim => "nodim",
-            Self::Ul => "ul",
-            Self::NoUl => "noul",
-            Self::Blink => "blink",
-            Self::NoBlink => "noblink",
-            Self::Reverse => "reverse",
-            Self::NoReverse => "noreverse",
-            Self::Italic => "italic",
-            Self::NoItalic => "noitalic",
-            Self::Strike => "strike",
-            Self::NoStrike => "nostrike",
-        })
+        serializer.serialize_str(&self.to_string())
     }
 }
 
