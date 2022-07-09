@@ -55,14 +55,14 @@ impl<'a> File<'a> {
         }))
     }
 
-    /// Similar to [`multi_value(…)`][File::multi_value()] but returning strings if at least one of them was found.
+    /// Similar to [`values(…)`][File::values()] but returning strings if at least one of them was found.
     pub fn strings(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Vec<Cow<'_, BStr>>> {
         self.raw_multi_value(section_name, subsection_name, key)
             .ok()
             .map(|values| values.into_iter().map(normalize).collect())
     }
 
-    /// Similar to [`multi_value(…)`][File::multi_value()] but returning integers if at least one of them was found
+    /// Similar to [`values(…)`][File::values()] but returning integers if at least one of them was found
     /// and if none of them overflows.
     pub fn integers(
         &self,

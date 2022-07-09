@@ -12,8 +12,7 @@ impl<'event> File<'event> {
     /// the conversion is already implemented, but this function is flexible and
     /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
     ///
-    /// Consider [`Self::multi_value`] if you want to get all values of a
-    /// multivar instead.
+    /// Consider [`Self::values`] if you want to get all values of a multivar instead.
     ///
     /// If a `string` is desired, use the [`string()`][Self::string()] method instead.
     ///
@@ -88,7 +87,7 @@ impl<'event> File<'event> {
     /// "#;
     /// let git_config = git_config::File::try_from(config).unwrap();
     /// // You can either use the turbofish to determine the type...
-    /// let a_value = git_config.multi_value::<Boolean>("core", None, "a")?;
+    /// let a_value = git_config.values::<Boolean>("core", None, "a")?;
     /// assert_eq!(
     ///     a_value,
     ///     vec![
@@ -105,7 +104,7 @@ impl<'event> File<'event> {
     ///
     /// [`value`]: crate::value
     /// [`TryFrom`]: std::convert::TryFrom
-    pub fn multi_value<'a, T: TryFrom<Cow<'a, BStr>>>(
+    pub fn values<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
         subsection_name: Option<&str>,

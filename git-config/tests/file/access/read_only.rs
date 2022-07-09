@@ -165,7 +165,7 @@ fn value_names_are_case_insensitive() -> crate::Result {
         a = true
         A = false";
     let file = File::try_from(config)?;
-    assert_eq!(file.multi_value::<Boolean>("core", None, "a")?.len(), 2);
+    assert_eq!(file.values::<Boolean>("core", None, "a")?.len(), 2);
     assert_eq!(
         file.value::<Boolean>("core", None, "a").unwrap(),
         file.value::<Boolean>("core", None, "A").unwrap()
