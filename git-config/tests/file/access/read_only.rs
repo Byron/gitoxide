@@ -1,7 +1,7 @@
 use crate::file::cow_str;
 use bstr::BStr;
 use git_config::File;
-use git_config::{boolean::True, color, integer, Boolean, Color, Integer, String};
+use git_config::{color, integer, Boolean, Color, Integer, String};
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
 /// Asserts we can cast into all variants of our type
@@ -25,21 +25,16 @@ fn get_value_for_all_provided_values() -> crate::Result {
 
     let config = git_config::parse::Events::from_bytes_owned(config.as_bytes(), None).map(File::from)?;
 
-    assert_eq!(
-        config.value::<Boolean>("core", None, "bool-explicit")?,
-        Boolean::False(Cow::Borrowed("false".into()))
-    );
+    assert_eq!(config.value::<Boolean>("core", None, "bool-explicit")?.0, false);
     assert!(!config.boolean("core", None, "bool-explicit").expect("exists")?);
 
-    assert_eq!(
-        config.value::<Boolean>("core", None, "bool-implicit")?,
-        Boolean::True(True::Implicit)
-    );
+    assert_eq!(config.value::<Boolean>("core", None, "bool-implicit")?.0, true);
     assert_eq!(
         config
             .try_value::<Boolean>("core", None, "bool-implicit")
-            .expect("exists")?,
-        Boolean::True(True::Implicit)
+            .expect("exists")?
+            .0,
+        true
     );
 
     assert!(config.boolean("core", None, "bool-implicit").expect("present")?);
@@ -164,15 +159,9 @@ fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
     let file = File::try_from(config)?;
 
     // Checks that we check the last entry first still
-    assert_eq!(
-        file.value::<Boolean>("core", None, "bool-implicit")?,
-        Boolean::True(True::Implicit)
-    );
+    assert_eq!(file.value::<Boolean>("core", None, "bool-implicit")?.0, true);
 
-    assert_eq!(
-        file.value::<Boolean>("core", None, "bool-explicit")?,
-        Boolean::False(cow_str("false"))
-    );
+    assert_eq!(file.value::<Boolean>("core", None, "bool-explicit")?.0, false);
 
     Ok(())
 }
@@ -211,7 +200,7 @@ fn single_section() -> Result<(), Box<dyn Error>> {
     let second_value: Boolean = config.value("core", None, "c")?;
 
     assert_eq!(first_value, String { value: cow_str("b") });
-    assert_eq!(second_value, Boolean::True(True::Implicit));
+    assert_eq!(second_value.0, true);
 
     Ok(())
 }

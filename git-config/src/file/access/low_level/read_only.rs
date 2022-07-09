@@ -70,7 +70,7 @@ impl<'event> File<'event> {
     ///
     /// ```
     /// # use git_config::File;
-    /// # use git_config::{Integer, String, Boolean, boolean::True};
+    /// # use git_config::{Integer, String, Boolean};
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
     /// let config = r#"
@@ -87,9 +87,9 @@ impl<'event> File<'event> {
     /// assert_eq!(
     ///     a_value,
     ///     vec![
-    ///         Boolean::True(True::Explicit(Cow::Borrowed("true".into()))),
-    ///         Boolean::True(True::Implicit),
-    ///         Boolean::False(Cow::Borrowed("false".into())),
+    ///         Boolean(true),
+    ///         Boolean(true),
+    ///         Boolean(false),
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish

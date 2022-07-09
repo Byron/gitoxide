@@ -38,7 +38,7 @@ impl<'a> File<'a> {
     ) -> Option<Result<bool, value::Error>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
-            .map(|v| crate::Boolean::try_from(v).map(|b| b.to_bool()))
+            .map(|v| crate::Boolean::try_from(v).map(|b| b.into()))
     }
 
     /// Like [`value()`][File::value()], but returning an `Option` if the integer wasn't found.

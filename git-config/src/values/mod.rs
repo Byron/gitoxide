@@ -33,11 +33,8 @@ pub struct Color {
 /// suffix. The suffix is parsed separately from the value itself, so if you
 /// wish to obtain the true value of the integer, you must account for the
 /// suffix after fetching the value. [`integer::Suffix`] provides
-/// [`bitwise_offset`] to help with the math, but do be warned that if the value
-/// is very large, you may run into overflows.
-///
-/// [`BStr`]: bstr::BStr
-/// [`bitwise_offset`]: integer::Suffix::bitwise_offset
+/// [`bitwise_offset()`][integer::Suffix::bitwise_offset] to help with the
+/// math, or [to_decimal()][Integer::to_decimal()] for obtaining a usable value in one step.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Integer {
     /// The value, without any suffix modification
@@ -51,13 +48,9 @@ pub struct Integer {
 /// Note that while values can effectively be any byte string, the `git-config`
 /// documentation has a strict subset of values that may be interpreted as a
 /// boolean value, all of which are ASCII and thus UTF-8 representable.
-/// Consequently, variants hold [`str`]s rather than [`[u8]`]s.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
-pub enum Boolean<'a> {
-    True(boolean::True<'a>),
-    False(std::borrow::Cow<'a, bstr::BStr>),
-}
+pub struct Boolean(pub bool);
 
 /// Any value that can be interpreted as a file path.
 ///
