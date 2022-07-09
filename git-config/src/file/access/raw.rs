@@ -16,7 +16,7 @@ impl<'event> File<'event> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
-    /// Consider [`Self::raw_multi_value`] if you want to get all values of
+    /// Consider [`Self::raw_values()`] if you want to get all values of
     /// a multivar instead.
     pub fn raw_value(
         &self,
@@ -132,7 +132,7 @@ impl<'event> File<'event> {
     /// # use std::convert::TryFrom;
     /// # let git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
-    ///     git_config.raw_multi_value("core", None, "a").unwrap(),
+    ///     git_config.raw_values("core", None, "a").unwrap(),
     ///     vec![
     ///         Cow::<[u8]>::Borrowed(b"b"),
     ///         Cow::<[u8]>::Borrowed(b"c"),
@@ -143,7 +143,7 @@ impl<'event> File<'event> {
     ///
     /// Consider [`Self::raw_value`] if you want to get the resolved single
     /// value for a given key, if your key does not support multi-valued values.
-    pub fn raw_multi_value(
+    pub fn raw_values(
         &self,
         section_name: &str,
         subsection_name: Option<&str>,
@@ -191,7 +191,7 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
-    ///     git_config.raw_multi_value("core", None, "a")?,
+    ///     git_config.raw_values("core", None, "a")?,
     ///     vec![
     ///         Cow::<BStr>::Borrowed("b".into()),
     ///         Cow::<BStr>::Borrowed("c".into()),
@@ -202,7 +202,7 @@ impl<'event> File<'event> {
     /// git_config.raw_values_mut("core", None, "a")?.set_str_all("g");
     ///
     /// assert_eq!(
-    ///     git_config.raw_multi_value("core", None, "a")?,
+    ///     git_config.raw_values("core", None, "a")?,
     ///     vec![
     ///         Cow::<BStr>::Borrowed("g".into()),
     ///         Cow::<BStr>::Borrowed("g".into()),
@@ -347,7 +347,7 @@ impl<'event> File<'event> {
     ///     Cow::<BStr>::Borrowed("z".into()),
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
-    /// let fetched_config = git_config.raw_multi_value("core", None, "a")?;
+    /// let fetched_config = git_config.raw_values("core", None, "a")?;
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("z".into())));
@@ -367,7 +367,7 @@ impl<'event> File<'event> {
     ///     Cow::<BStr>::Borrowed("y".into()),
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
-    /// let fetched_config = git_config.raw_multi_value("core", None, "a")?;
+    /// let fetched_config = git_config.raw_values("core", None, "a")?;
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
@@ -388,7 +388,7 @@ impl<'event> File<'event> {
     ///     Cow::<BStr>::Borrowed("discarded".into()),
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
-    /// assert!(!git_config.raw_multi_value("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
+    /// assert!(!git_config.raw_values("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///

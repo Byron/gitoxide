@@ -110,7 +110,7 @@ impl<'event> File<'event> {
         subsection_name: Option<&str>,
         key: &str,
     ) -> Result<Vec<T>, lookup::Error<T::Error>> {
-        self.raw_multi_value(section_name, subsection_name, key)?
+        self.raw_values(section_name, subsection_name, key)?
             .into_iter()
             .map(T::try_from)
             .collect::<Result<Vec<_>, _>>()

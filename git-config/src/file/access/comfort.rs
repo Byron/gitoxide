@@ -57,7 +57,7 @@ impl<'a> File<'a> {
 
     /// Similar to [`values(…)`][File::values()] but returning strings if at least one of them was found.
     pub fn strings(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Vec<Cow<'_, BStr>>> {
-        self.raw_multi_value(section_name, subsection_name, key)
+        self.raw_values(section_name, subsection_name, key)
             .ok()
             .map(|values| values.into_iter().map(normalize).collect())
     }
@@ -70,18 +70,16 @@ impl<'a> File<'a> {
         subsection_name: Option<&str>,
         key: &str,
     ) -> Option<Result<Vec<i64>, value::Error>> {
-        self.raw_multi_value(section_name, subsection_name, key)
-            .ok()
-            .map(|values| {
-                values
-                    .into_iter()
-                    .map(|v| {
-                        crate::Integer::try_from(v.as_ref()).and_then(|int| {
-                            int.to_decimal()
-                                .ok_or_else(|| value::Error::new("Integer overflow", v.into_owned()))
-                        })
+        self.raw_values(section_name, subsection_name, key).ok().map(|values| {
+            values
+                .into_iter()
+                .map(|v| {
+                    crate::Integer::try_from(v.as_ref()).and_then(|int| {
+                        int.to_decimal()
+                            .ok_or_else(|| value::Error::new("Integer overflow", v.into_owned()))
                     })
-                    .collect()
-            })
+                })
+                .collect()
+        })
     }
 }
