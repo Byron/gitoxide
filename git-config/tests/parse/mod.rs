@@ -206,13 +206,13 @@ fn personal_config() {
 
 #[test]
 fn parse_empty() {
-    assert_eq!(Events::from_str("").unwrap().into_iter().collect::<Vec<_>>(), vec![]);
+    assert_eq!(Events::from_str("").unwrap().into_vec(), vec![]);
 }
 
 #[test]
 fn parse_whitespace() {
     assert_eq!(
-        Events::from_str("\n   \n \n").unwrap().into_iter().collect::<Vec<_>>(),
+        Events::from_str("\n   \n \n").unwrap().into_vec(),
         vec![newline(), whitespace("   "), newline(), whitespace(" "), newline()]
     )
 }
@@ -220,7 +220,7 @@ fn parse_whitespace() {
 #[test]
 fn newline_events_are_merged() {
     assert_eq!(
-        Events::from_str("\n\n\n\n\n").unwrap().into_iter().collect::<Vec<_>>(),
+        Events::from_str("\n\n\n\n\n").unwrap().into_vec(),
         vec![newline_custom("\n\n\n\n\n")]
     );
 }
@@ -258,4 +258,84 @@ fn error() {
         Events::from_str(input).unwrap_err().to_string(),
         "Got an unexpected token on line 1 while trying to parse a section header: '[core'"
     );
+}
+
+mod key {
+    use crate::parse::section::Key;
+    use std::cmp::Ordering;
+
+    #[test]
+    fn case_insentive_eq() {
+        assert_eq!(Key::from("aBc"), Key::from("AbC"));
+    }
+
+    #[test]
+    fn case_insentive_ord() {
+        assert_eq!(Key::from("a").cmp(&Key::from("a")), Ordering::Equal);
+        assert_eq!(Key::from("aBc").cmp(&Key::from("AbC")), Ordering::Equal);
+    }
+
+    #[test]
+    fn case_insentive_hash() {
+        fn calculate_hash<T: std::hash::Hash>(t: T) -> u64 {
+            use std::hash::Hasher;
+            let mut s = std::collections::hash_map::DefaultHasher::new();
+            t.hash(&mut s);
+            s.finish()
+        }
+        assert_eq!(calculate_hash(Key::from("aBc")), calculate_hash(Key::from("AbC")));
+    }
+}
+
+mod events {
+    use crate::parse::Events;
+
+    #[test]
+    fn parser_skips_bom() {
+        let bytes = b"
+        [core]
+            a = 1
+    ";
+        let bytes_with_gb18030_bom = "\u{feff}
+        [core]
+            a = 1
+    ";
+
+        assert_eq!(
+            Events::from_bytes(bytes),
+            Events::from_bytes(bytes_with_gb18030_bom.as_bytes())
+        );
+        assert_eq!(
+            Events::from_bytes_owned(bytes, None),
+            Events::from_bytes_owned(bytes_with_gb18030_bom.as_bytes(), None)
+        );
+    }
+}
+
+#[cfg(test)]
+mod error {
+    use crate::parse::Events;
+
+    #[test]
+    fn line_no_is_one_indexed() {
+        assert_eq!(Events::from_str("[hello").unwrap_err().line_number(), 1);
+    }
+
+    #[test]
+    fn remaining_data_contains_bad_tokens() {
+        assert_eq!(Events::from_str("[hello").unwrap_err().remaining_data(), b"[hello");
+    }
+
+    #[test]
+    fn to_string_truncates_extra_values() {
+        assert_eq!(
+            Events::from_str("[1234567890").unwrap_err().to_string(),
+            "Got an unexpected token on line 1 while trying to parse a section header: '[123456789' ... (1 characters omitted)"
+        );
+    }
+
+    #[test]
+    fn detected_by_fuzz() {
+        assert!(Events::from_str("[]I=").is_err());
+    }
 }

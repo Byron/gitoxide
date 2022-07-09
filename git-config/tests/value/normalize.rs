@@ -57,3 +57,10 @@ fn empty_string() {
     assert_eq!(cow, cow_str(""));
     assert!(matches!(cow, Cow::Borrowed(_)));
 }
+
+#[test]
+fn inner_quotes_are_removed() {
+    assert_eq!(normalize_bstr(r#"5"hello world""#), cow_str("5hello world"));
+    assert_eq!(normalize_bstr(r#"true"""#), cow_str("true"));
+    assert_eq!(normalize_bstr(r#"fa"lse""#), cow_str("false"));
+}

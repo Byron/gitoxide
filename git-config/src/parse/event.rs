@@ -30,9 +30,6 @@ impl Event<'_> {
 }
 
 impl Display for Event<'_> {
-    /// Note that this is a best-effort attempt at printing an `Event`. If
-    /// there are non UTF-8 values in your config, this will _NOT_ render
-    /// as read.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => match std::str::from_utf8(e) {

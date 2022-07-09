@@ -8,9 +8,6 @@ use std::fmt::Display;
 pub type Events<'a> = SmallVec<[Event<'a>; 64]>;
 
 /// A parsed section header, containing a name and optionally a subsection name.
-///
-/// Note that section headers must be parsed as valid ASCII, and thus all valid
-/// instances must also necessarily be valid UTF-8.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Header<'a> {
     /// The name of the header.
@@ -21,7 +18,10 @@ pub struct Header<'a> {
     /// is all whitespace, then the subsection name needs to be surrounded by
     /// quotes to have perfect reconstruction.
     pub separator: Option<Cow<'a, BStr>>,
-    /// The subsection name without quotes if any exist.
+    /// The subsection name without quotes if any exist, and with escapes folded
+    /// into their resulting characters.
+    /// Thus during serialization, escapes and quotes must be re-added.
+    /// This makes it possible to use [`Event`] data for lookups directly.
     pub subsection_name: Option<Cow<'a, BStr>>,
 }
 
@@ -184,33 +184,5 @@ mod types {
         bstr::BStr,
         "Wrapper struct for key names, like `path` in `include.path`, since keys are case-insensitive."
     );
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-        use std::cmp::Ordering;
-
-        #[test]
-        fn case_insentive_eq() {
-            assert_eq!(Key::from("aBc"), Key::from("AbC"));
-        }
-
-        #[test]
-        fn case_insentive_ord() {
-            assert_eq!(Key::from("a").cmp(&Key::from("a")), Ordering::Equal);
-            assert_eq!(Key::from("aBc").cmp(&Key::from("AbC")), Ordering::Equal);
-        }
-
-        #[test]
-        fn case_insentive_hash() {
-            fn calculate_hash<T: std::hash::Hash>(t: T) -> u64 {
-                use std::hash::Hasher;
-                let mut s = std::collections::hash_map::DefaultHasher::new();
-                t.hash(&mut s);
-                s.finish()
-            }
-            assert_eq!(calculate_hash(Key::from("aBc")), calculate_hash(Key::from("AbC")));
-        }
-    }
 }
 pub use types::{Key, Name};

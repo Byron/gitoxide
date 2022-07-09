@@ -15,9 +15,6 @@ impl Comment<'_> {
 }
 
 impl Display for Comment<'_> {
-    /// Note that this is a best-effort attempt at printing an comment. If
-    /// there are non UTF-8 values in your config, this will _NOT_ render
-    /// as read.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.comment_tag.fmt(f)?;
         if let Ok(s) = std::str::from_utf8(&self.comment) {

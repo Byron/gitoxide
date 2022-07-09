@@ -14,15 +14,15 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// file, including querying, modifying, and updating values.
 ///
 /// This parser guarantees that the events emitted are sufficient to
-/// reconstruct a `git-config` file identical to the source `git-config`.
+/// reconstruct a `git-config` file identical to the source `git-config`
+/// when writing it.
 ///
 /// # Differences between a `.ini` parser
 ///
 /// While the `git-config` format closely resembles the [`.ini` file format],
 /// there are subtle differences that make them incompatible. For one, the file
 /// format is not well defined, and there exists no formal specification to
-/// adhere to. Thus, attempting to use an `.ini` parser on a `git-config` file
-/// may successfully parse invalid configuration files.
+/// adhere to.
 ///
 /// For concrete examples, some notable differences are:
 /// - `git-config` sections permit subsections via either a quoted string
@@ -38,8 +38,9 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// - Only `\t`, `\n`, `\b` `\\` are valid escape characters.
 /// - Quoted and semi-quoted values will be parsed (but quotes will be included
 /// in event outputs). An example of a semi-quoted value is `5"hello world"`,
-/// which should be interpreted as `5hello world`.
-/// - Line continuations via a `\` character is supported.
+/// which should be interpreted as `5hello world` after
+/// [normalization][crate::value::normalize()].
+/// - Line continuations via a `\` character is supported (inside or outside of quotes)
 /// - Whitespace handling similarly follows the `git-config` specification as
 /// closely as possible, where excess whitespace after a non-quoted value are
 /// trimmed, and line continuations onto a new line with excess spaces are kept.
@@ -47,9 +48,9 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// delimiters.
 ///
 /// Note that that things such as case-sensitivity or duplicate sections are
-/// _not_ handled. This parser is a low level _syntactic_ interpreter (as a
-/// parser should be), and higher level wrappers around this parser (which may
-/// or may not be zero-copy) should handle _semantic_ values. This also means
+/// _not_ handled. This parser is a low level _syntactic_ interpreter
+/// and higher level wrappers around this parser, which may
+/// or may not be zero-copy, should handle _semantic_ values. This also means
 /// that string-like values are not interpreted. For example, `hello"world"`
 /// would be read at a high level as `helloworld` but this parser will return
 /// the former instead, with the extra quotes. This is because it is not the
@@ -88,7 +89,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf = input";
-/// # assert_eq!(Events::from_str(section_data).unwrap().into_iter().collect::<Vec<_>>(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
@@ -127,7 +128,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\n  autocrlf";
-/// # assert_eq!(Events::from_str(section_data).unwrap().into_iter().collect::<Vec<_>>(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
@@ -161,7 +162,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[core]\nautocrlf=true\"\"\nfilemode=fa\"lse\"";
-/// # assert_eq!(Events::from_str(section_data).unwrap().into_iter().collect::<Vec<_>>(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::SectionKey(section::Key(Cow::Borrowed("autocrlf".into()))),
@@ -198,7 +199,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// #   subsection_name: None,
 /// # };
 /// # let section_data = "[some-section]\nfile=a\\\n    c";
-/// # assert_eq!(Events::from_str(section_data).unwrap().into_iter().collect::<Vec<_>>(), vec![
+/// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::SectionKey(section::Key(Cow::Borrowed("file".into()))),
@@ -226,7 +227,7 @@ impl Events<'static> {
     /// Parses the provided bytes, returning an [`Events`] that contains allocated
     /// and owned events. This is similar to [`Events::from_bytes()`], but performance
     /// is degraded as it requires allocation for every event. However, this permits
-    /// the reference bytes to be dropped, allowing the parser to be passed around
+    /// the `input` bytes to be dropped and he parser to be passed around
     /// without lifetime worries.
     pub fn from_bytes_owned<'a>(
         input: &'a [u8],
@@ -237,15 +238,6 @@ impl Events<'static> {
 }
 
 impl<'a> Events<'a> {
-    /// Attempt to zero-copy parse the provided `&str`. On success, returns a
-    /// [`Events`] that provides methods to accessing leading comments and sections
-    /// of a `git-config` file and can be converted into an iterator of [`Event`]
-    /// for higher level processing.
-    #[allow(clippy::should_implement_trait)]
-    pub fn from_str(input: &'a str) -> Result<Events<'a>, parse::Error> {
-        Self::from_bytes(input.as_bytes())
-    }
-
     /// Attempt to zero-copy parse the provided bytes. On success, returns a
     /// [`Events`] that provides methods to accessing leading comments and sections
     /// of a `git-config` file and can be converted into an iterator of [`Event`]
@@ -254,7 +246,16 @@ impl<'a> Events<'a> {
         from_bytes(input, std::convert::identity, None)
     }
 
-    /// Consumes the parser to produce an iterator of Events.
+    /// Attempt to zero-copy parse the provided `input` string.
+    ///
+    /// Prefer the [`from_bytes()`][Self::from_bytes()] method if UTF8 encoding
+    /// isn't guaranteed.
+    #[allow(clippy::should_implement_trait)]
+    pub fn from_str(input: &'a str) -> Result<Events<'a>, parse::Error> {
+        Self::from_bytes(input.as_bytes())
+    }
+
+    /// Consumes the parser to produce an iterator of all contained events.
     #[must_use = "iterators are lazy and do nothing unless consumed"]
     #[allow(clippy::should_implement_trait)]
     pub fn into_iter(self) -> impl Iterator<Item = parse::Event<'a>> + std::iter::FusedIterator {
@@ -263,6 +264,11 @@ impl<'a> Events<'a> {
             .chain(self.sections.into_iter().flat_map(|section| {
                 std::iter::once(parse::Event::SectionHeader(section.section_header)).chain(section.events)
             }))
+    }
+
+    /// Place all contained events into a single `Vec`.
+    pub fn into_vec(self) -> Vec<parse::Event<'a>> {
+        self.into_iter().collect()
     }
 }
 
