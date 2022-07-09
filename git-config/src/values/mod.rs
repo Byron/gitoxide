@@ -12,7 +12,7 @@ pub mod path;
 
 /// Any value that may contain a foreground color, background color, a
 /// collection of color (text) modifiers, or a combination of any of the
-/// aforementioned values.
+/// aforementioned values, like `red` or `brightgreen`.
 ///
 /// Note that `git-config` allows color values to simply be a collection of
 /// [`color::Attribute`]s, and does not require a [`color::Name`] for either the

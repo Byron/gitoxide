@@ -100,3 +100,28 @@ mod attribute {
         assert!(Attribute::from_str("no-").is_err());
     }
 }
+
+mod from_git {
+    use bstr::BStr;
+    use git_config::Color;
+    use std::convert::TryFrom;
+
+    #[test]
+    #[ignore]
+    fn reset() {
+        assert_eq!(color("reset"), "[m");
+    }
+
+    #[test]
+    fn empty() {
+        assert_eq!(color(""), "");
+    }
+
+    fn color<'a>(name: impl Into<&'a BStr>) -> String {
+        try_color(name).expect("input color is expected to be valid")
+    }
+
+    fn try_color<'a>(name: impl Into<&'a BStr>) -> crate::Result<String> {
+        Ok(Color::try_from(name.into())?.to_string())
+    }
+}

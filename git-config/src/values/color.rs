@@ -18,19 +18,31 @@ impl Color {
 
 impl Display for Color {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut write_space = None;
         if let Some(fg) = self.foreground {
             fg.fmt(f)?;
+            write_space = Some(());
         }
-
-        write!(f, " ")?;
 
         if let Some(bg) = self.background {
+            if write_space.take().is_some() {
+                write!(f, " ")?;
+            }
             bg.fmt(f)?;
+            write_space = Some(())
         }
 
-        self.attributes
-            .iter()
-            .try_for_each(|attr| write!(f, " ").and_then(|_| attr.fmt(f)))
+        self.attributes.iter().try_for_each(|attr| {
+            if write_space.take().is_some() {
+                write!(f, " ")
+            } else {
+                Ok(())
+            }
+            .and_then(|_| {
+                write_space = Some(());
+                attr.fmt(f)
+            })
+        })
     }
 }
 
