@@ -23,17 +23,13 @@ impl Display for Color {
             write_space = Some(())
         }
 
-        self.attributes.iter().try_for_each(|attr| {
+        if !self.attributes.is_empty() {
             if write_space.take().is_some() {
-                write!(f, " ")
-            } else {
-                Ok(())
+                write!(f, " ")?;
             }
-            .and_then(|_| {
-                write_space = Some(());
-                attr.fmt(f)
-            })
-        })
+            self.attributes.fmt(f)?;
+        }
+        Ok(())
     }
 }
 
@@ -66,26 +62,32 @@ impl TryFrom<&BStr> for Color {
             )
         });
 
-        let mut new_self = Self::default();
+        let mut foreground = None;
+        let mut background = None;
+        let mut attributes = Attribute::empty();
         for item in items {
             match item {
                 Ok(item) => match item {
                     ColorItem::Value(v) => {
-                        if new_self.foreground.is_none() {
-                            new_self.foreground = Some(v);
-                        } else if new_self.background.is_none() {
-                            new_self.background = Some(v);
+                        if foreground.is_none() {
+                            foreground = Some(v);
+                        } else if background.is_none() {
+                            background = Some(v);
                         } else {
                             return Err(color_err(s));
                         }
                     }
-                    ColorItem::Attr(a) => new_self.attributes.push(a),
+                    ColorItem::Attr(a) => attributes |= a,
                 },
                 Err(_) => return Err(color_err(s)),
             }
         }
 
-        Ok(new_self)
+        Ok(Color {
+            foreground,
+            background,
+            attributes,
+        })
     }
 }
 
@@ -100,7 +102,7 @@ impl TryFrom<Cow<'_, BStr>> for Color {
 /// Discriminating enum for [`Color`] values.
 ///
 /// `git-config` supports the eight standard colors, their bright variants, an
-/// ANSI color code, or a 24-bit hex value prefixed with an octothorpe.
+/// ANSI color code, or a 24-bit hex value prefixed with an octothorpe/hash.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
 pub enum Name {
@@ -229,38 +231,14 @@ impl TryFrom<&[u8]> for Name {
     }
 }
 
-/// Discriminating enum for [`Color`] attributes.
-///
-/// `git-config` supports modifiers and their negators. The negating color
-/// attributes are equivalent to having a `no` or `no-` prefix to the normal
-/// variant.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-#[allow(missing_docs)]
-pub enum Attribute {
-    Reset,
-    Bold,
-    NoBold,
-    Dim,
-    NoDim,
-    Ul,
-    NoUl,
-    Blink,
-    NoBlink,
-    Reverse,
-    NoReverse,
-    Italic,
-    NoItalic,
-    Strike,
-    NoStrike,
-}
-
 bitflags::bitflags! {
     /// Discriminating enum for [`Color`] attributes.
     ///
     /// `git-config` supports modifiers and their negators. The negating color
     /// attributes are equivalent to having a `no` or `no-` prefix to the normal
     /// variant.
-    pub struct Attribute2: u32 {
+    #[derive(Default)]
+    pub struct Attribute: u32 {
         const BOLD = 1 << 1;
         const DIM = 1 << 2;
         const ITALIC = 1 << 3;
@@ -281,99 +259,40 @@ bitflags::bitflags! {
     }
 }
 
-impl Display for Attribute2 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match *self {
-            Attribute2::RESET => write!(f, "reset"),
-            Attribute2::BOLD => write!(f, "bold"),
-            Attribute2::NO_BOLD => write!(f, "nobold"),
-            Attribute2::DIM => write!(f, "dim"),
-            Attribute2::NO_DIM => write!(f, "nodim"),
-            Attribute2::UL => write!(f, "ul"),
-            Attribute2::NO_UL => write!(f, "noul"),
-            Attribute2::BLINK => write!(f, "blink"),
-            Attribute2::NO_BLINK => write!(f, "noblink"),
-            Attribute2::REVERSE => write!(f, "reverse"),
-            Attribute2::NO_REVERSE => write!(f, "noreverse"),
-            Attribute2::ITALIC => write!(f, "italic"),
-            Attribute2::NO_ITALIC => write!(f, "noitalic"),
-            Attribute2::STRIKE => write!(f, "strike"),
-            Attribute2::NO_STRIKE => write!(f, "nostrike"),
-            _ => unreachable!("BUG: add new attribute flag"),
-        }
-    }
-}
-
-#[cfg(feature = "serde")]
-impl serde::Serialize for Attribute2 {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-impl FromStr for Attribute2 {
-    type Err = value::Error;
-
-    fn from_str(mut s: &str) -> Result<Self, Self::Err> {
-        let inverted = if let Some(rest) = s.strip_prefix("no-").or_else(|| s.strip_prefix("no")) {
-            s = rest;
-            true
-        } else {
-            false
-        };
-
-        match s {
-            "reset" if !inverted => Ok(Attribute2::RESET),
-            "reset" if inverted => Err(color_err(s)),
-            "bold" if !inverted => Ok(Attribute2::BOLD),
-            "bold" if inverted => Ok(Attribute2::NO_BOLD),
-            "dim" if !inverted => Ok(Attribute2::DIM),
-            "dim" if inverted => Ok(Attribute2::NO_DIM),
-            "ul" if !inverted => Ok(Attribute2::UL),
-            "ul" if inverted => Ok(Attribute2::NO_UL),
-            "blink" if !inverted => Ok(Attribute2::BLINK),
-            "blink" if inverted => Ok(Attribute2::NO_BLINK),
-            "reverse" if !inverted => Ok(Attribute2::REVERSE),
-            "reverse" if inverted => Ok(Attribute2::NO_REVERSE),
-            "italic" if !inverted => Ok(Attribute2::ITALIC),
-            "italic" if inverted => Ok(Attribute2::NO_ITALIC),
-            "strike" if !inverted => Ok(Attribute2::STRIKE),
-            "strike" if inverted => Ok(Attribute2::NO_STRIKE),
-            _ => Err(color_err(s)),
-        }
-    }
-}
-
-impl TryFrom<&[u8]> for Attribute2 {
-    type Error = value::Error;
-
-    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
-        Self::from_str(std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?)
-    }
-}
-
 impl Display for Attribute {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Reset => write!(f, "reset"),
-            Self::Bold => write!(f, "bold"),
-            Self::NoBold => write!(f, "nobold"),
-            Self::Dim => write!(f, "dim"),
-            Self::NoDim => write!(f, "nodim"),
-            Self::Ul => write!(f, "ul"),
-            Self::NoUl => write!(f, "noul"),
-            Self::Blink => write!(f, "blink"),
-            Self::NoBlink => write!(f, "noblink"),
-            Self::Reverse => write!(f, "reverse"),
-            Self::NoReverse => write!(f, "noreverse"),
-            Self::Italic => write!(f, "italic"),
-            Self::NoItalic => write!(f, "noitalic"),
-            Self::Strike => write!(f, "strike"),
-            Self::NoStrike => write!(f, "nostrike"),
+        let mut write_space = None;
+        for bit in 1..std::mem::size_of::<Attribute>() * 8 {
+            let attr = match Attribute::from_bits(1 << bit) {
+                Some(attr) => attr,
+                None => continue,
+            };
+            if self.contains(attr) {
+                if write_space.take().is_some() {
+                    write!(f, " ")?
+                }
+                match attr {
+                    Attribute::RESET => write!(f, "reset"),
+                    Attribute::BOLD => write!(f, "bold"),
+                    Attribute::NO_BOLD => write!(f, "nobold"),
+                    Attribute::DIM => write!(f, "dim"),
+                    Attribute::NO_DIM => write!(f, "nodim"),
+                    Attribute::UL => write!(f, "ul"),
+                    Attribute::NO_UL => write!(f, "noul"),
+                    Attribute::BLINK => write!(f, "blink"),
+                    Attribute::NO_BLINK => write!(f, "noblink"),
+                    Attribute::REVERSE => write!(f, "reverse"),
+                    Attribute::NO_REVERSE => write!(f, "noreverse"),
+                    Attribute::ITALIC => write!(f, "italic"),
+                    Attribute::NO_ITALIC => write!(f, "noitalic"),
+                    Attribute::STRIKE => write!(f, "strike"),
+                    Attribute::NO_STRIKE => write!(f, "nostrike"),
+                    _ => unreachable!("BUG: add new attribute flag"),
+                }?;
+                write_space = Some(());
+            }
         }
+        Ok(())
     }
 }
 
@@ -399,22 +318,22 @@ impl FromStr for Attribute {
         };
 
         match s {
-            "reset" if !inverted => Ok(Self::Reset),
+            "reset" if !inverted => Ok(Attribute::RESET),
             "reset" if inverted => Err(color_err(s)),
-            "bold" if !inverted => Ok(Self::Bold),
-            "bold" if inverted => Ok(Self::NoBold),
-            "dim" if !inverted => Ok(Self::Dim),
-            "dim" if inverted => Ok(Self::NoDim),
-            "ul" if !inverted => Ok(Self::Ul),
-            "ul" if inverted => Ok(Self::NoUl),
-            "blink" if !inverted => Ok(Self::Blink),
-            "blink" if inverted => Ok(Self::NoBlink),
-            "reverse" if !inverted => Ok(Self::Reverse),
-            "reverse" if inverted => Ok(Self::NoReverse),
-            "italic" if !inverted => Ok(Self::Italic),
-            "italic" if inverted => Ok(Self::NoItalic),
-            "strike" if !inverted => Ok(Self::Strike),
-            "strike" if inverted => Ok(Self::NoStrike),
+            "bold" if !inverted => Ok(Attribute::BOLD),
+            "bold" if inverted => Ok(Attribute::NO_BOLD),
+            "dim" if !inverted => Ok(Attribute::DIM),
+            "dim" if inverted => Ok(Attribute::NO_DIM),
+            "ul" if !inverted => Ok(Attribute::UL),
+            "ul" if inverted => Ok(Attribute::NO_UL),
+            "blink" if !inverted => Ok(Attribute::BLINK),
+            "blink" if inverted => Ok(Attribute::NO_BLINK),
+            "reverse" if !inverted => Ok(Attribute::REVERSE),
+            "reverse" if inverted => Ok(Attribute::NO_REVERSE),
+            "italic" if !inverted => Ok(Attribute::ITALIC),
+            "italic" if inverted => Ok(Attribute::NO_ITALIC),
+            "strike" if !inverted => Ok(Attribute::STRIKE),
+            "strike" if inverted => Ok(Attribute::NO_STRIKE),
             _ => Err(color_err(s)),
         }
     }

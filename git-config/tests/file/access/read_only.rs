@@ -74,7 +74,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         Color {
             foreground: Some(color::Name::BrightGreen),
             background: Some(color::Name::Red),
-            attributes: vec![color::Attribute::Bold]
+            attributes: color::Attribute::BOLD
         }
     );
 

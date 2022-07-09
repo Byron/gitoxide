@@ -64,36 +64,36 @@ mod attribute {
 
     #[test]
     fn non_inverted() {
-        assert_eq!(Attribute::from_str("reset"), Ok(Attribute::Reset));
-        assert_eq!(Attribute::from_str("bold"), Ok(Attribute::Bold));
-        assert_eq!(Attribute::from_str("dim"), Ok(Attribute::Dim));
-        assert_eq!(Attribute::from_str("ul"), Ok(Attribute::Ul));
-        assert_eq!(Attribute::from_str("blink"), Ok(Attribute::Blink));
-        assert_eq!(Attribute::from_str("reverse"), Ok(Attribute::Reverse));
-        assert_eq!(Attribute::from_str("italic"), Ok(Attribute::Italic));
-        assert_eq!(Attribute::from_str("strike"), Ok(Attribute::Strike));
+        assert_eq!(Attribute::from_str("reset"), Ok(Attribute::RESET));
+        assert_eq!(Attribute::from_str("bold"), Ok(Attribute::BOLD));
+        assert_eq!(Attribute::from_str("dim"), Ok(Attribute::DIM));
+        assert_eq!(Attribute::from_str("ul"), Ok(Attribute::UL));
+        assert_eq!(Attribute::from_str("blink"), Ok(Attribute::BLINK));
+        assert_eq!(Attribute::from_str("reverse"), Ok(Attribute::REVERSE));
+        assert_eq!(Attribute::from_str("italic"), Ok(Attribute::ITALIC));
+        assert_eq!(Attribute::from_str("strike"), Ok(Attribute::STRIKE));
     }
 
     #[test]
     fn inverted_no_dash() {
-        assert_eq!(Attribute::from_str("nobold"), Ok(Attribute::NoBold));
-        assert_eq!(Attribute::from_str("nodim"), Ok(Attribute::NoDim));
-        assert_eq!(Attribute::from_str("noul"), Ok(Attribute::NoUl));
-        assert_eq!(Attribute::from_str("noblink"), Ok(Attribute::NoBlink));
-        assert_eq!(Attribute::from_str("noreverse"), Ok(Attribute::NoReverse));
-        assert_eq!(Attribute::from_str("noitalic"), Ok(Attribute::NoItalic));
-        assert_eq!(Attribute::from_str("nostrike"), Ok(Attribute::NoStrike));
+        assert_eq!(Attribute::from_str("nobold"), Ok(Attribute::NO_BOLD));
+        assert_eq!(Attribute::from_str("nodim"), Ok(Attribute::NO_DIM));
+        assert_eq!(Attribute::from_str("noul"), Ok(Attribute::NO_UL));
+        assert_eq!(Attribute::from_str("noblink"), Ok(Attribute::NO_BLINK));
+        assert_eq!(Attribute::from_str("noreverse"), Ok(Attribute::NO_REVERSE));
+        assert_eq!(Attribute::from_str("noitalic"), Ok(Attribute::NO_ITALIC));
+        assert_eq!(Attribute::from_str("nostrike"), Ok(Attribute::NO_STRIKE));
     }
 
     #[test]
     fn inverted_dashed() {
-        assert_eq!(Attribute::from_str("no-bold"), Ok(Attribute::NoBold));
-        assert_eq!(Attribute::from_str("no-dim"), Ok(Attribute::NoDim));
-        assert_eq!(Attribute::from_str("no-ul"), Ok(Attribute::NoUl));
-        assert_eq!(Attribute::from_str("no-blink"), Ok(Attribute::NoBlink));
-        assert_eq!(Attribute::from_str("no-reverse"), Ok(Attribute::NoReverse));
-        assert_eq!(Attribute::from_str("no-italic"), Ok(Attribute::NoItalic));
-        assert_eq!(Attribute::from_str("no-strike"), Ok(Attribute::NoStrike));
+        assert_eq!(Attribute::from_str("no-bold"), Ok(Attribute::NO_BOLD));
+        assert_eq!(Attribute::from_str("no-dim"), Ok(Attribute::NO_DIM));
+        assert_eq!(Attribute::from_str("no-ul"), Ok(Attribute::NO_UL));
+        assert_eq!(Attribute::from_str("no-blink"), Ok(Attribute::NO_BLINK));
+        assert_eq!(Attribute::from_str("no-reverse"), Ok(Attribute::NO_REVERSE));
+        assert_eq!(Attribute::from_str("no-italic"), Ok(Attribute::NO_ITALIC));
+        assert_eq!(Attribute::from_str("no-strike"), Ok(Attribute::NO_STRIKE));
     }
 
     #[test]
@@ -114,7 +114,6 @@ mod from_git {
     use std::convert::TryFrom;
 
     #[test]
-    #[ignore]
     fn reset() {
         assert_eq!(color("reset"), "reset");
     }
@@ -122,6 +121,11 @@ mod from_git {
     #[test]
     fn empty() {
         assert_eq!(color(""), "");
+    }
+
+    #[test]
+    fn at_most_two_colors() {
+        assert!(try_color("red green blue").is_err());
     }
 
     #[test]
@@ -155,8 +159,8 @@ mod from_git {
     #[test]
     fn reset_then_multiple_attributes() {
         assert_eq!(
-            color("reset blue bold dim ul blink reverse"),
-            "blue reset bold dim ul blink reverse"
+            color("blue bold dim ul blink reverse reset"),
+            "blue bold dim ul blink reverse reset"
         );
     }
 
@@ -167,7 +171,7 @@ mod from_git {
             "254 255 bold dim ul blink reverse"
         );
         let input = "#ffffff #ffffff bold nobold dim nodim italic noitalic ul noul blink noblink reverse noreverse strike nostrike";
-        let expected = input;
+        let expected = "#ffffff #ffffff bold dim italic ul blink reverse strike nodim nobold noitalic noul noblink noreverse nostrike";
         assert_eq!(color(input), expected);
     }
 
@@ -180,7 +184,7 @@ mod from_git {
     fn default_can_combine_with_attributes() {
         assert_eq!(
             color("default default no-reverse bold"),
-            "default default noreverse bold"
+            "default default bold noreverse"
         );
     }
 

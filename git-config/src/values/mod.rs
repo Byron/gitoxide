@@ -23,8 +23,8 @@ pub struct Color {
     pub foreground: Option<color::Name>,
     /// A provided background color
     pub background: Option<color::Name>,
-    /// A potentially empty list of text attributes
-    pub attributes: Vec<color::Attribute>,
+    /// A potentially empty set of text attributes
+    pub attributes: color::Attribute,
 }
 
 /// Any value that can be interpreted as an integer.

@@ -85,7 +85,7 @@ pub struct Section<'a> {
 /// A parsed comment event containing the comment marker and comment.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Comment<'a> {
-    /// The comment marker used. This is either a semicolon or octothorpe.
+    /// The comment marker used. This is either a semicolon or octothorpe/hash.
     pub comment_tag: u8,
     /// The parsed comment.
     pub comment: Cow<'a, BStr>,
