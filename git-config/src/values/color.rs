@@ -165,10 +165,9 @@ impl serde::Serialize for Name {
 impl FromStr for Name {
     type Err = value::Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut s = s;
-        let bright = if s.starts_with("bright") {
-            s = &s[6..];
+    fn from_str(mut s: &str) -> Result<Self, Self::Err> {
+        let bright = if let Some(rest) = s.strip_prefix("bright") {
+            s = rest;
             true
         } else {
             false
@@ -289,21 +288,17 @@ impl serde::Serialize for Attribute {
 impl FromStr for Attribute {
     type Err = value::Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let inverted = s.starts_with("no");
-        let mut parsed = s;
+    fn from_str(mut s: &str) -> Result<Self, Self::Err> {
+        let inverted = if let Some(rest) = s.strip_prefix("no-").or_else(|| s.strip_prefix("no")) {
+            s = rest;
+            true
+        } else {
+            false
+        };
 
-        if inverted {
-            parsed = &parsed[2..];
-
-            if parsed.starts_with('-') {
-                parsed = &parsed[1..];
-            }
-        }
-
-        match parsed {
+        match s {
             "reset" if !inverted => Ok(Self::Reset),
-            "reset" if inverted => Err(color_err(parsed)),
+            "reset" if inverted => Err(color_err(s)),
             "bold" if !inverted => Ok(Self::Bold),
             "bold" if inverted => Ok(Self::NoBold),
             "dim" if !inverted => Ok(Self::Dim),
@@ -318,7 +313,7 @@ impl FromStr for Attribute {
             "italic" if inverted => Ok(Self::NoItalic),
             "strike" if !inverted => Ok(Self::Strike),
             "strike" if inverted => Ok(Self::NoStrike),
-            _ => Err(color_err(parsed)),
+            _ => Err(color_err(s)),
         }
     }
 }
