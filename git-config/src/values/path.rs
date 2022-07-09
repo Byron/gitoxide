@@ -27,7 +27,8 @@ pub mod interpolate {
 
     /// Obtain the home directory for the given user `name` or return `None` if the user wasn't found
     /// or any other error occurred.
-    /// It can be used as `home_for_user` parameter in [`Path::interpolate()`].
+    /// It can be used as `home_for_user` parameter in [`Path::interpolate()`][crate::Path::interpolate()].
+    #[cfg_attr(windows, allow(unused_variables))]
     pub fn home_for_user(name: &str) -> Option<PathBuf> {
         #[cfg(not(any(target_os = "android", target_os = "windows")))]
         {
