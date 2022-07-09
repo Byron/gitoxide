@@ -73,7 +73,14 @@ mod cache {
             let ignore_case = config_bool(&config, "core.ignorecase", false)?;
             let excludes_file = config
                 .path("core", None, "excludesFile")
-                .map(|p| p.interpolate(git_install_dir, home.as_deref()).map(|p| p.into_owned()))
+                .map(|p| {
+                    p.interpolate(
+                        git_install_dir,
+                        home.as_deref(),
+                        Some(git_config::path::interpolate::home_for_user),
+                    )
+                    .map(|p| p.into_owned())
+                })
                 .transpose()?;
             let repo_format_version = config
                 .value::<Integer>("core", None, "repositoryFormatVersion")

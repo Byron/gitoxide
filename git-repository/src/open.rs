@@ -63,9 +63,9 @@ impl ReplacementObjects {
 /// The options used in [`ThreadSafeRepository::open_opts`]
 #[derive(Default, Clone)]
 pub struct Options {
-    object_store_slots: git_odb::store::init::Slots,
-    replacement_objects: ReplacementObjects,
-    permissions: Permissions,
+    pub(crate) object_store_slots: git_odb::store::init::Slots,
+    pub(crate) replacement_objects: ReplacementObjects,
+    pub(crate) permissions: Permissions,
 }
 
 #[derive(Default, Clone)]
@@ -112,7 +112,7 @@ impl Options {
 
     // TODO: tests
     /// Set the given permissions, which are typically derived by a `Trust` level.
-    pub fn permissions(mut self, permissions: crate::Permissions) -> Self {
+    pub fn permissions(mut self, permissions: Permissions) -> Self {
         self.permissions = permissions;
         self
     }
