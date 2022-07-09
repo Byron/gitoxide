@@ -445,7 +445,7 @@ pub mod discover {
                     .and_then(|v| Vec::from_os_string(v).ok().map(BString::from))
                 {
                     if let Ok(b) = git_config::Boolean::try_from(cross_fs) {
-                        opts.cross_fs = b.to_bool();
+                        opts.cross_fs = b.into();
                     }
                 }
                 opts

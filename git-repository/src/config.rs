@@ -101,7 +101,7 @@ mod cache {
                 }
                 if hex_len_str.as_ref() != "auto" {
                     let value_bytes = hex_len_str.as_ref();
-                    if let Ok(Boolean::False(_)) = Boolean::try_from(value_bytes) {
+                    if let Ok(false) = Boolean::try_from(value_bytes).map(Into::into) {
                         hex_len = object_hash.len_in_hex().into();
                     } else {
                         let value = Integer::try_from(value_bytes)
