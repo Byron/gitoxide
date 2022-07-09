@@ -52,7 +52,7 @@ pub struct Integer {
 #[allow(missing_docs)]
 pub struct Boolean(pub bool);
 
-/// Any value that can be interpreted as a file path.
+/// Any value that can be interpreted as a path to a resource on disk.
 ///
 /// Git represents file paths as byte arrays, modeled here as owned or borrowed byte sequences.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]

@@ -128,7 +128,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         let home = std::env::current_dir()?;
         let expected = home.join("tmp");
         assert!(matches!(actual.value, Cow::Borrowed(_)));
-        assert_eq!(actual.interpolate(None, home.as_path().into()).unwrap(), expected);
+        assert_eq!(actual.interpolate(None, home.as_path().into(), None).unwrap(), expected);
     }
 
     let actual = config.path("core", None, "location").expect("present");

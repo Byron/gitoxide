@@ -1,9 +1,12 @@
 use crate::Path;
 use bstr::BStr;
 use std::borrow::Cow;
+use std::path::PathBuf;
 
 ///
 pub mod interpolate {
+    use std::path::PathBuf;
+
     /// The error returned by [`Path::interpolate()`][crate::Path::interpolate()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
@@ -20,6 +23,34 @@ pub mod interpolate {
         UsernameConversion(#[from] std::str::Utf8Error),
         #[error("User interpolation is not available on this platform")]
         UserInterpolationUnsupported,
+    }
+
+    /// Obtain the home directory for the given user `name` or return `None` if the user wasn't found
+    /// or any other error occurred.
+    /// It can be used as `home_for_user` parameter in [`Path::interpolate()`].
+    pub fn home_for_user(name: &str) -> Option<PathBuf> {
+        #[cfg(not(any(target_os = "android", target_os = "windows")))]
+        {
+            let cname = std::ffi::CString::new(name).ok()?;
+            // SAFETY: calling this in a threaded program that modifies the pw database is not actually safe.
+            //         TODO: use the `*_r` version, but it's much harder to use.
+            #[allow(unsafe_code)]
+            let pwd = unsafe { libc::getpwnam(cname.as_ptr()) };
+            if pwd.is_null() {
+                None
+            } else {
+                use std::os::unix::ffi::OsStrExt;
+                // SAFETY: pw_dir is a cstr and it lives as long as… well, we hope nobody changes the pw database while we are at it
+                //         from another thread. Otherwise it lives long enough.
+                #[allow(unsafe_code)]
+                let cstr = unsafe { std::ffi::CStr::from_ptr((*pwd).pw_dir) };
+                Some(std::ffi::OsStr::from_bytes(cstr.to_bytes()).into())
+            }
+        }
+        #[cfg(any(target_os = "android", target_os = "windows"))]
+        {
+            None
+        }
     }
 }
 
@@ -50,21 +81,25 @@ impl<'a> From<Cow<'a, BStr>> for Path<'a> {
 }
 
 impl<'a> Path<'a> {
-    /// Interpolates this path into a file system path.
+    /// Interpolates this path into a path usable on the file system.
     ///
     /// If this path starts with `~/` or `~user/` or `%(prefix)/`
     ///  - `~/` is expanded to the value of `home_dir`. The caller can use the [dirs](https://crates.io/crates/dirs) crate to obtain it.
     ///    It it is required but not set, an error is produced.
-    ///  - `~user/` to the specified user’s home directory, e.g `~alice` might get expanded to `/home/alice` on linux.
-    /// The interpolation uses `getpwnam` sys call and is therefore not available on windows. See also [pwd](https://crates.io/crates/pwd).
-    ///  - `%(prefix)/` is expanded to the location where gitoxide is installed. This location is not known at compile time and therefore need to be
-    /// optionally provided by the caller through `git_install_dir`.
+    ///  - `~user/` to the specified user’s home directory, e.g `~alice` might get expanded to `/home/alice` on linux, but requires
+    ///    the `home_for_user` function to be provided.
+    ///    The interpolation uses `getpwnam` sys call and is therefore not available on windows.
+    ///  - `%(prefix)/` is expanded to the location where `gitoxide` is installed.
+    ///     This location is not known at compile time and therefore need to be
+    ///     optionally provided by the caller through `git_install_dir`.
     ///
-    /// Any other, non-empty path value is returned unchanged and error is returned in case of an empty path value.
+    /// Any other, non-empty path value is returned unchanged and error is returned in case of an empty path value or if required input
+    /// wasn't provided.
     pub fn interpolate(
         self,
         git_install_dir: Option<&std::path::Path>,
         home_dir: Option<&std::path::Path>,
+        home_for_user: Option<fn(&str) -> Option<PathBuf>>,
     ) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
         if self.is_empty() {
             return Err(interpolate::Error::Missing { what: "path" });
@@ -94,38 +129,27 @@ impl<'a> Path<'a> {
             })?;
             Ok(home_path.join(val).into())
         } else if self.starts_with(b"~") && self.contains(&b'/') {
-            self.interpolate_user()
+            self.interpolate_user(home_for_user.ok_or(interpolate::Error::Missing {
+                what: "home for user lookup",
+            })?)
         } else {
             Ok(git_path::from_bstr(self.value))
         }
     }
 
     #[cfg(any(target_os = "windows", target_os = "android"))]
-    fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
+    fn interpolate_user(
+        self,
+        _home_for_user: fn(&str) -> Option<PathBuf>,
+    ) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
         Err(interpolate::Error::UserInterpolationUnsupported)
     }
 
     #[cfg(not(windows))]
-    fn interpolate_user(self) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
-        #[cfg(not(any(target_os = "android", target_os = "windows")))]
-        fn home_for_user(name: &str) -> Option<std::path::PathBuf> {
-            let cname = std::ffi::CString::new(name).ok()?;
-            // SAFETY: calling this in a threaded program that modifies the pw database is not actually safe.
-            //         TODO: use the `*_r` version, but it's much harder to use.
-            #[allow(unsafe_code)]
-            let pwd = unsafe { libc::getpwnam(cname.as_ptr()) };
-            if pwd.is_null() {
-                None
-            } else {
-                use std::os::unix::ffi::OsStrExt;
-                // SAFETY: pw_dir is a cstr and it lives as long as… well, we hope nobody changes the pw database while we are at it
-                //         from another thread. Otherwise it lives long enough.
-                #[allow(unsafe_code)]
-                let cstr = unsafe { std::ffi::CStr::from_ptr((*pwd).pw_dir) };
-                Some(std::ffi::OsStr::from_bytes(cstr.to_bytes()).into())
-            }
-        }
-
+    fn interpolate_user(
+        self,
+        home_for_user: fn(&str) -> Option<PathBuf>,
+    ) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
         let (_prefix, val) = self.split_at("/".len());
         let i = val
             .iter()
