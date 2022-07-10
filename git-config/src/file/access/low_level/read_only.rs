@@ -166,20 +166,19 @@ impl<'event> File<'event> {
     ///         e = f
     /// "#;
     /// let git_config = git_config::File::try_from(config).unwrap();
-    /// assert_eq!(git_config.sections_by_name("core").len(), 3);
+    /// assert_eq!(git_config.sections_by_name("core").count(), 3);
     /// ```
     #[must_use]
-    pub fn sections_by_name(&self, section_name: &str) -> Vec<&SectionBody<'event>> {
+    pub fn sections_by_name<'a>(&'a self, section_name: &'a str) -> impl Iterator<Item = &SectionBody<'event>> + '_ {
         self.section_ids_by_name(section_name)
-            .map(|ids| {
-                ids.map(|id| {
+            .map(move |ids| {
+                Box::new(ids.map(move |id| {
                     self.sections
                         .get(&id)
                         .expect("section doesn't have id from from lookup")
-                })
-                .collect()
+                })) as Box<dyn Iterator<Item = _>>
             })
-            .unwrap_or_default()
+            .unwrap_or_else(|_| Box::new(std::iter::empty()))
     }
 
     /// Get all sections that match the `section_name`, returning all matching section header along with their body.
@@ -212,29 +211,29 @@ impl<'event> File<'event> {
     /// "#;
     /// let config = git_config::File::try_from(input).unwrap();
     /// let url = config.sections_by_name_with_header("url");
-    /// assert_eq!(url.len(), 2);
+    /// assert_eq!(url.count(), 2);
     ///
-    /// for (i, (header, body)) in url.iter().enumerate() {
+    /// for (i, (header, body)) in config.sections_by_name_with_header("url").enumerate() {
     ///     let url = header.subsection_name.as_ref();
     ///     let instead_of = body.value(&section::Key::from("insteadOf"));
     ///
     ///     // todo(unstable-order): the order is not always the same, so `i` cannot be used here
-    ///     if instead_of.as_ref().unwrap().as_ref().as_bytes().eq("https://github.com/".as_bytes()) {
-    ///         assert_eq!(instead_of.unwrap().as_ref(), "https://github.com/".as_bytes());
+    ///     if instead_of.as_ref().unwrap().as_ref() == "https://github.com/" {
+    ///         assert_eq!(instead_of.unwrap().as_ref(), "https://github.com/");
     ///         assert_eq!(url.unwrap().as_ref(), "ssh://git@github.com/");
     ///     } else {
-    ///         assert_eq!(instead_of.unwrap().as_ref(), "https://bitbucket.org/".as_bytes());
+    ///         assert_eq!(instead_of.unwrap().as_ref(), "https://bitbucket.org/");
     ///         assert_eq!(url.unwrap().as_ref(), "ssh://git@bitbucket.org");
     ///     }
     /// }
     /// ```
-    pub fn sections_by_name_with_header(
-        &self,
-        section_name: &str,
-    ) -> Vec<(&section::Header<'event>, &SectionBody<'event>)> {
+    pub fn sections_by_name_with_header<'a>(
+        &'a self,
+        section_name: &'a str,
+    ) -> impl Iterator<Item = (&section::Header<'event>, &SectionBody<'event>)> + '_ {
         self.section_ids_by_name(section_name)
-            .map(|ids| {
-                ids.map(|id| {
+            .map(move |ids| {
+                Box::new(ids.map(move |id| {
                     (
                         self.section_headers
                             .get(&id)
@@ -243,10 +242,9 @@ impl<'event> File<'event> {
                             .get(&id)
                             .expect("section doesn't have id from from lookup"),
                     )
-                })
-                .collect()
+                })) as Box<dyn Iterator<Item = _>>
             })
-            .unwrap_or_default()
+            .unwrap_or_else(|_| Box::new(std::iter::empty()))
     }
 
     /// Returns the number of values in the config, no matter in which section.

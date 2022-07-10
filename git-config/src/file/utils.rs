@@ -60,11 +60,14 @@ impl<'event> File<'event> {
     }
 
     /// Returns the mapping between section and subsection name to section ids.
-    pub(crate) fn section_ids_by_name_and_subname<'b, 'a: 'b>(
-        &'b self,
+    pub(crate) fn section_ids_by_name_and_subname<'a>(
+        &'a self,
         section_name: impl Into<section::Name<'a>>,
         subsection_name: Option<&str>,
-    ) -> Result<impl Iterator<Item = SectionBodyId> + DoubleEndedIterator + '_, lookup::existing::Error> {
+    ) -> Result<
+        impl Iterator<Item = SectionBodyId> + ExactSizeIterator + DoubleEndedIterator + '_,
+        lookup::existing::Error,
+    > {
         let section_name = section_name.into();
         let section_ids = self
             .section_lookup_tree
@@ -93,8 +96,8 @@ impl<'event> File<'event> {
         maybe_ids.ok_or(lookup::existing::Error::SubSectionMissing)
     }
 
-    pub(crate) fn section_ids_by_name<'b, 'a: 'b>(
-        &'b self,
+    pub(crate) fn section_ids_by_name<'a>(
+        &'a self,
         section_name: impl Into<section::Name<'a>>,
     ) -> Result<impl Iterator<Item = SectionBodyId> + '_, lookup::existing::Error> {
         let section_name = section_name.into();
