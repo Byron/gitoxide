@@ -54,6 +54,7 @@ impl Default for Options<'_> {
     }
 }
 
+/// Instantiation from one or more paths
 impl File<'static> {
     /// Open a single configuration file by reading all data at `path` into `buf` and
     /// copying all contents from there, without resolving includes.

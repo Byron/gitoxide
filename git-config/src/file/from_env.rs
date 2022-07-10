@@ -27,6 +27,7 @@ pub enum Error {
     FromPathsError(#[from] from_paths::Error),
 }
 
+/// Instantiation from environment variables
 impl File<'static> {
     /// Constructs a `git-config` from the default cascading sequence of global configuration files,
     /// excluding any repository-local configuration.

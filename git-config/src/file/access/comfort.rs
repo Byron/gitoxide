@@ -6,14 +6,14 @@ use crate::{value, value::normalize, File};
 
 /// Comfortable API for accessing values
 impl<'a> File<'a> {
-    /// Like [`value()`][File::value()], but returning an `Option` if the string wasn't found.
+    /// Like [`value()`][File::value()], but returning an `None` if the string wasn't found.
     ///
     /// As strings perform no conversions, this will never fail.
     pub fn string(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Cow<'_, BStr>> {
         self.raw_value(section_name, subsection_name, key).ok().map(normalize)
     }
 
-    /// Like [`value()`][File::value()], but returning an `Option` if the path wasn't found.
+    /// Like [`value()`][File::value()], but returning `None` if the path wasn't found.
     ///
     /// Note that this path is not vetted and should only point to resources which can't be used
     /// to pose a security risk.
@@ -28,7 +28,7 @@ impl<'a> File<'a> {
             .map(|v| crate::Path::from(normalize(v)))
     }
 
-    /// Like [`value()`][File::value()], but returning an `Option` if the boolean wasn't found.
+    /// Like [`value()`][File::value()], but returning `None` if the boolean value wasn't found.
     pub fn boolean(
         &self,
         section_name: &str,

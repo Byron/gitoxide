@@ -11,9 +11,8 @@ use crate::{
 
 /// # Raw value API
 ///
-/// These functions are the raw value API. Instead of returning Rust structures,
-/// these functions return bytes which may or may not be owned.
-impl<'event> File<'event> {
+/// These functions are the raw value API, returning un-normalized byte strings.
+impl<'a> File<'a> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
@@ -25,20 +24,12 @@ impl<'event> File<'event> {
         subsection_name: Option<&str>,
         key: &str,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
-        // Note: cannot wrap around the raw_multi_value method because we need
-        // to guarantee that the highest section id is used (so that we follow
-        // the "last one wins" resolution strategy by `git-config`).
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
         for section_id in self
             .section_ids_by_name_and_subname(section_name, subsection_name)?
             .rev()
         {
-            if let Some(v) = self
-                .sections
-                .get(&section_id)
-                .expect("sections does not have section id from section ids")
-                .value(&key)
-            {
+            if let Some(v) = self.sections.get(&section_id).expect("known section id").value(&key) {
                 return Ok(v);
             }
         }
@@ -56,7 +47,7 @@ impl<'event> File<'event> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableValue<'_, 'lookup, 'event>, lookup::existing::Error> {
+    ) -> Result<MutableValue<'_, 'lookup, 'a>, lookup::existing::Error> {
         let mut section_ids = self
             .section_ids_by_name_and_subname(section_name, subsection_name)?
             .rev();
@@ -157,7 +148,7 @@ impl<'event> File<'event> {
             values.extend(
                 self.sections
                     .get(&section_id)
-                    .expect("sections does not have section id from section ids")
+                    .expect("known section id")
                     .values(&section::Key(Cow::<BStr>::Borrowed(key.into())))
                     .into_iter(),
             );
@@ -225,7 +216,7 @@ impl<'event> File<'event> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableMultiValue<'_, 'lookup, 'event>, lookup::existing::Error> {
+    ) -> Result<MutableMultiValue<'_, 'lookup, 'a>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
@@ -409,7 +400,7 @@ impl<'event> File<'event> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-        new_values: impl Iterator<Item = Cow<'event, BStr>>,
+        new_values: impl Iterator<Item = Cow<'a, BStr>>,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_values_mut(section_name, subsection_name, key)
             .map(|mut v| v.set_values(new_values))
