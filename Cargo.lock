@@ -1039,6 +1039,7 @@ version = "0.3.0"
 dependencies = [
  "bstr",
  "compact_str",
+ "document-features",
  "git-features",
  "git-glob",
  "git-path",
@@ -1069,6 +1070,7 @@ name = "git-commitgraph"
 version = "0.8.0"
 dependencies = [
  "bstr",
+ "document-features",
  "git-chunk",
  "git-features",
  "git-hash",
@@ -1121,6 +1123,7 @@ name = "git-credentials"
 version = "0.3.0"
 dependencies = [
  "bstr",
+ "document-features",
  "git-sec",
  "quick-error",
  "serde",
@@ -1199,6 +1202,7 @@ version = "0.3.0"
 dependencies = [
  "bitflags",
  "bstr",
+ "document-features",
  "git-testtools",
  "serde",
 ]
@@ -1207,6 +1211,7 @@ dependencies = [
 name = "git-hash"
 version = "0.9.5"
 dependencies = [
+ "document-features",
  "git-testtools",
  "hex",
  "quick-error",
@@ -1288,6 +1293,7 @@ name = "git-odb"
 version = "0.31.0"
 dependencies = [
  "arc-swap",
+ "document-features",
  "filetime",
  "git-actor",
  "git-features",
@@ -1405,6 +1411,7 @@ version = "0.0.0"
 name = "git-ref"
 version = "0.15.0"
 dependencies = [
+ "document-features",
  "git-actor",
  "git-discover",
  "git-features",
@@ -1471,6 +1478,7 @@ name = "git-revision"
 version = "0.2.1"
 dependencies = [
  "bstr",
+ "document-features",
  "git-date",
  "git-hash",
  "git-object",
@@ -1487,6 +1495,7 @@ version = "0.3.0"
 dependencies = [
  "bitflags",
  "dirs",
+ "document-features",
  "git-path",
  "libc",
  "serde",
@@ -1588,6 +1597,7 @@ name = "git-url"
 version = "0.7.0"
 dependencies = [
  "bstr",
+ "document-features",
  "git-features",
  "git-path",
  "home",

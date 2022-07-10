@@ -14,8 +14,12 @@
 //!     * one reference maps to a file on disk
 //!   * **packed**
 //!     * references are stored in a single human-readable file, along with their targets if they are symbolic.
-//! * **ref-table**
-//!   * supersedes all of the above to allow handling hundreds of thousands of references.
+//!
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 #![deny(unsafe_code, missing_docs, rust_2018_idioms)]
 
 use std::borrow::Cow;

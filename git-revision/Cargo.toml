@@ -25,7 +25,12 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 hash_hasher = "2.0.3"
 thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
+document-features = { version = "0.2.1", optional = true }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
 git-repository = { path = "../git-repository", default-features = false, features = ["unstable"] }
+
+[package.metadata.docs.rs]
+all-features = true
+features = ["document-features"]
