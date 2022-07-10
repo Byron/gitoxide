@@ -42,15 +42,17 @@ fn resolve_includes_recursive(
 
     let mut incl_section_ids = Vec::new();
     for name in ["include", "includeIf"] {
-        for id in target_config.section_ids_by_name(name).unwrap_or_default() {
-            incl_section_ids.push((
-                id,
-                target_config
-                    .section_order
-                    .iter()
-                    .position(|&e| e == id)
-                    .expect("section id is from config"),
-            ));
+        if let Ok(ids) = target_config.section_ids_by_name(name) {
+            for id in ids {
+                incl_section_ids.push((
+                    id,
+                    target_config
+                        .section_order
+                        .iter()
+                        .position(|&e| e == id)
+                        .expect("section id is from config"),
+                ));
+            }
         }
     }
     incl_section_ids.sort_by(|a, b| a.1.cmp(&b.1));

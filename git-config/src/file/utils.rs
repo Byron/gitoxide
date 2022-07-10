@@ -95,21 +95,18 @@ impl<'event> File<'event> {
             .ok_or(lookup::existing::Error::SubSectionMissing)
     }
 
-    pub(crate) fn section_ids_by_name<'a>(
-        &self,
+    pub(crate) fn section_ids_by_name<'b, 'a: 'b>(
+        &'b self,
         section_name: impl Into<section::Name<'a>>,
-    ) -> Result<Vec<SectionBodyId>, lookup::existing::Error> {
+    ) -> Result<impl Iterator<Item = SectionBodyId> + '_, lookup::existing::Error> {
         let section_name = section_name.into();
         self.section_lookup_tree
             .get(&section_name)
             .map(|lookup| {
-                lookup
-                    .iter()
-                    .flat_map(|node| match node {
-                        SectionBodyIds::Terminal(v) => Box::new(v.iter().copied()) as Box<dyn Iterator<Item = _>>,
-                        SectionBodyIds::NonTerminal(v) => Box::new(v.values().flatten().copied()),
-                    })
-                    .collect()
+                lookup.iter().flat_map(|node| match node {
+                    SectionBodyIds::Terminal(v) => Box::new(v.iter().copied()) as Box<dyn Iterator<Item = _>>,
+                    SectionBodyIds::NonTerminal(v) => Box::new(v.values().flatten().copied()),
+                })
             })
             .ok_or(lookup::existing::Error::SectionMissing)
     }

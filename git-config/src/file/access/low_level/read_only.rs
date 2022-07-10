@@ -165,14 +165,15 @@ impl<'event> File<'event> {
     #[must_use]
     pub fn sections_by_name(&self, section_name: &str) -> Vec<&SectionBody<'event>> {
         self.section_ids_by_name(section_name)
-            .unwrap_or_default()
-            .into_iter()
-            .map(|id| {
-                self.sections
-                    .get(&id)
-                    .expect("section doesn't have id from from lookup")
+            .map(|ids| {
+                ids.map(|id| {
+                    self.sections
+                        .get(&id)
+                        .expect("section doesn't have id from from lookup")
+                })
+                .collect()
             })
-            .collect()
+            .unwrap_or_default()
     }
 
     /// Get all sections that match the `section_name`, returning all matching section header along with their body.
@@ -226,19 +227,20 @@ impl<'event> File<'event> {
         section_name: &str,
     ) -> Vec<(&section::Header<'event>, &SectionBody<'event>)> {
         self.section_ids_by_name(section_name)
-            .unwrap_or_default()
-            .into_iter()
-            .map(|id| {
-                (
-                    self.section_headers
-                        .get(&id)
-                        .expect("section doesn't have a section header??"),
-                    self.sections
-                        .get(&id)
-                        .expect("section doesn't have id from from lookup"),
-                )
+            .map(|ids| {
+                ids.map(|id| {
+                    (
+                        self.section_headers
+                            .get(&id)
+                            .expect("section doesn't have a section header??"),
+                        self.sections
+                            .get(&id)
+                            .expect("section doesn't have id from from lookup"),
+                    )
+                })
+                .collect()
             })
-            .collect()
+            .unwrap_or_default()
     }
 
     /// Returns the number of values in the config, no matter in which section.
