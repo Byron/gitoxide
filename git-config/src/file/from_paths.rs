@@ -55,7 +55,8 @@ impl Default for Options<'_> {
 }
 
 impl File<'static> {
-    /// Open a single configuration file by reading `path` into `buf` and copying all contents from there, without resolving includes.
+    /// Open a single configuration file by reading all data at `path` into `buf` and
+    /// copying all contents from there, without resolving includes.
     pub fn from_path_with_buf(path: &std::path::Path, buf: &mut Vec<u8>) -> Result<Self, Error> {
         buf.clear();
         std::io::copy(&mut std::fs::File::open(path)?, buf)?;
@@ -63,7 +64,6 @@ impl File<'static> {
     }
 
     /// Constructs a `git-config` file from the provided paths in the order provided.
-    /// This is neither zero-copy nor zero-alloc.
     pub fn from_paths(
         paths: impl IntoIterator<Item = impl AsRef<std::path::Path>>,
         options: Options<'_>,

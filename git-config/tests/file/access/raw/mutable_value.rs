@@ -112,6 +112,7 @@ fn partial_values_are_supported() {
     let mut git_config = File::try_from(
         r#"[core]
             a=b"100"\
+c\
 b
         [core]
             c=d
@@ -119,7 +120,7 @@ b
     )
     .unwrap();
     let mut value = git_config.raw_value_mut("core", None, "a").unwrap();
-    assert_eq!(&*value.get().unwrap(), "b100b");
+    assert_eq!(&*value.get().unwrap(), "b100cb");
     value.delete();
     assert_eq!(
         git_config.to_string(),

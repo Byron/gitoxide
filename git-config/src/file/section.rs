@@ -17,14 +17,16 @@ use crate::{
 /// A opaque type that represents a mutable reference to a section.
 #[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
-pub struct MutableSection<'borrow, 'event> {
-    section: &'borrow mut SectionBody<'event>,
+pub struct MutableSection<'a, 'event> {
+    section: &'a mut SectionBody<'event>,
     implicit_newline: bool,
     whitespace: usize,
 }
 
-impl<'borrow, 'event> MutableSection<'borrow, 'event> {
+/// Mutating methods.
+impl<'a, 'event> MutableSection<'a, 'event> {
     /// Adds an entry to the end of this section.
+    // TODO: multi-line handling - maybe just escape it for now.
     pub fn push(&mut self, key: Key<'event>, value: Cow<'event, BStr>) {
         if self.whitespace > 0 {
             self.section.0.push(Event::Whitespace({
@@ -102,22 +104,16 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         Some(self.remove_internal(range))
     }
 
-    /// Performs the removal, assuming the range is valid. This is used to
-    /// avoid duplicating searching for the range in [`Self::set`].
+    /// Performs the removal, assuming the range is valid.
     fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, BStr> {
         self.section
             .0
             .drain(range)
-            .fold(Cow::Owned(BString::default()), |acc, e| match e {
-                Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
-                    // This is fine because we start out with an owned
-                    // variant, so we never actually clone the
-                    // accumulator.
-                    let mut acc = acc.into_owned();
-                    acc.extend(&**v);
-                    Cow::Owned(acc)
+            .fold(Cow::Owned(BString::default()), |mut acc, e| {
+                if let Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) = e {
+                    acc.to_mut().extend(&**v);
                 }
-                _ => acc,
+                acc
             })
     }
 
@@ -128,29 +124,29 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     }
 
     /// Enables or disables automatically adding newline events after adding
-    /// a value. This is enabled by default.
-    pub fn implicit_newline(&mut self, on: bool) {
+    /// a value. This is _enabled by default_.
+    pub fn set_implicit_newline(&mut self, on: bool) {
         self.implicit_newline = on;
     }
 
-    /// Sets the number of spaces before the start of a key value. By default,
-    /// this is set to two. Set to 0 to disable adding whitespace before a key
+    /// Sets the number of spaces before the start of a key value. The _default
+    /// is 2_. Set to 0 to disable adding whitespace before a key
     /// value.
-    pub fn set_whitespace(&mut self, num: usize) {
+    pub fn set_leading_space(&mut self, num: usize) {
         self.whitespace = num;
     }
 
-    /// Returns the number of whitespace this section will insert before the
+    /// Returns the number of space characters this section will insert before the
     /// beginning of a key.
     #[must_use]
-    pub const fn whitespace(&self) -> usize {
+    pub const fn leading_space(&self) -> usize {
         self.whitespace
     }
 }
 
 // Internal methods that may require exact indices for faster operations.
-impl<'borrow, 'event> MutableSection<'borrow, 'event> {
-    pub(crate) fn new(section: &'borrow mut SectionBody<'event>) -> Self {
+impl<'a, 'event> MutableSection<'a, 'event> {
+    pub(crate) fn new(section: &'a mut SectionBody<'event>) -> Self {
         Self {
             section,
             implicit_newline: true,
@@ -164,35 +160,35 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
         start: Index,
         end: Index,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
-        let mut found_key = false;
-        let mut latest_value = None;
-        let mut partial_value = None;
-        // section_id is guaranteed to exist in self.sections, else we have a
-        // violated invariant.
+        let mut expect_value = false;
+        let mut simple_value = None;
+        let mut concatenated_value = None::<BString>;
 
         for event in &self.section.0[start.0..=end.0] {
             match event {
-                Event::SectionKey(event_key) if event_key == key => found_key = true,
-                Event::Value(v) if found_key => {
-                    found_key = false;
-                    // Clones the Cow, doesn't copy underlying value if borrowed
-                    latest_value = Some(v.clone());
+                Event::SectionKey(event_key) if event_key == key => expect_value = true,
+                Event::Value(v) if expect_value => {
+                    simple_value = Some(v.as_ref().into());
+                    break;
                 }
-                Event::ValueNotDone(v) if found_key => {
-                    latest_value = None;
-                    partial_value = Some(v.as_ref().to_owned());
+                Event::ValueNotDone(v) if expect_value => {
+                    concatenated_value
+                        .get_or_insert_with(Default::default)
+                        .push_str(v.as_ref());
                 }
-                Event::ValueDone(v) if found_key => {
-                    found_key = false;
-                    partial_value.as_mut().unwrap().push_str(v.as_ref());
+                Event::ValueDone(v) if expect_value => {
+                    concatenated_value
+                        .get_or_insert_with(Default::default)
+                        .push_str(v.as_ref());
+                    break;
                 }
                 _ => (),
             }
         }
 
-        latest_value
+        simple_value
             .map(normalize)
-            .or_else(|| partial_value.map(normalize_bstring))
+            .or_else(|| concatenated_value.map(normalize_bstring))
             .ok_or(lookup::existing::Error::KeyMissing)
     }
 
@@ -201,7 +197,7 @@ impl<'borrow, 'event> MutableSection<'borrow, 'event> {
     }
 
     pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: BString) {
-        self.section.0.insert(index.0, Event::Value(Cow::Owned(value)));
+        self.section.0.insert(index.0, Event::Value(value.into()));
         self.section.0.insert(index.0, Event::KeyValueSeparator);
         self.section.0.insert(index.0, Event::SectionKey(key));
     }
@@ -229,12 +225,7 @@ impl<'event> SectionBody<'event> {
         &mut self.0
     }
 
-    /// Retrieves the last matching value in a section with the given key.
-    /// Returns None if the key was not found.
-    // We hit this lint because of the unreachable!() call may panic, but this
-    // is a clippy bug (rust-clippy#6699), so we allow this lint for this
-    // function.
-    #[allow(clippy::missing_panics_doc)]
+    /// Retrieves the last matching value in a section with the given key, if present.
     #[must_use]
     pub fn value(&self, key: &Key<'_>) -> Option<Cow<'_, BStr>> {
         let range = self.value_range_by_key(key);
@@ -242,7 +233,7 @@ impl<'event> SectionBody<'event> {
             return None;
         }
 
-        if range.end - range.start == 1 {
+        if range.len() == 1 {
             return self.0.get(range.start).map(|e| match e {
                 Event::Value(v) => normalize_bstr(v.as_ref()),
                 // range only has one element so we know it's a value event, so
@@ -251,12 +242,11 @@ impl<'event> SectionBody<'event> {
             });
         }
 
-        normalize_bstring(self.0[range].iter().fold(BString::default(), |mut acc, e| match e {
-            Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => {
+        normalize_bstring(self.0[range].iter().fold(BString::default(), |mut acc, e| {
+            if let Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) = e {
                 acc.push_str(v.as_ref());
-                acc
             }
-            _ => acc,
+            acc
         }))
         .into()
     }
@@ -276,8 +266,7 @@ impl<'event> SectionBody<'event> {
                 Event::SectionKey(event_key) if event_key == key => found_key = true,
                 Event::Value(v) if found_key => {
                     found_key = false;
-                    // Clones the Cow, doesn't copy underlying value if borrowed
-                    values.push(normalize(Cow::Borrowed(v.as_ref())));
+                    values.push(normalize(v.as_ref().into()));
                     partial_value = None;
                 }
                 Event::ValueNotDone(v) if found_key => {

@@ -1,6 +1,6 @@
 use std::{convert::TryFrom, fmt::Display};
 
-use bstr::{BString, ByteVec};
+use bstr::{BStr, BString, ByteVec};
 
 use crate::{file::SectionBody, parse, File};
 
@@ -18,7 +18,7 @@ impl<'a> TryFrom<&'a [u8]> for File<'a> {
     type Error = parse::Error;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
-    //// a [`File`]. See [`parse_from_bytes`] for more information.
+    /// a [`File`]. See [`parse_from_bytes`] for more information.
     ///
     /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
     fn try_from(value: &'a [u8]) -> Result<File<'a>, Self::Error> {
@@ -26,13 +26,13 @@ impl<'a> TryFrom<&'a [u8]> for File<'a> {
     }
 }
 
-impl<'a> TryFrom<&'a BString> for File<'a> {
+impl<'a> TryFrom<&'a BStr> for File<'a> {
     type Error = parse::Error;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
-    //// a [`File`]. See [`State::from_bytes()`] for more information.
-    fn try_from(value: &'a BString) -> Result<File<'a>, Self::Error> {
-        parse::Events::from_bytes(value.as_ref()).map(File::from)
+    /// a [`File`]. See [`State::from_bytes()`] for more information.
+    fn try_from(value: &'a BStr) -> Result<File<'a>, Self::Error> {
+        parse::Events::from_bytes(value).map(File::from)
     }
 }
 
@@ -89,9 +89,6 @@ impl From<&File<'_>> for BString {
 }
 
 impl Display for File<'_> {
-    /// Note that this is a best-effort attempt at printing a `GitConfig`. If
-    /// there are non UTF-8 values in your config, this will _NOT_ render as
-    /// read.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for front_matter in self.frontmatter_events.as_ref() {
             front_matter.fmt(f)?;
