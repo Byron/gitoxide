@@ -6,6 +6,7 @@ use std::{
 
 use bstr::{BStr, BString, ByteVec};
 
+use crate::file::Size;
 use crate::value::normalize_bstr;
 use crate::{
     file::Index,
@@ -184,10 +185,12 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         self.section.0.drain(start.0..=end.0);
     }
 
-    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: BString) {
+    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: BString) -> Size {
         self.section.0.insert(index.0, Event::Value(value.into()));
         self.section.0.insert(index.0, Event::KeyValueSeparator);
         self.section.0.insert(index.0, Event::SectionKey(key));
+
+        Size(3)
     }
 }
 

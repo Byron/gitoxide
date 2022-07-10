@@ -1,5 +1,4 @@
-//! This module provides a high level wrapper around a single `git-config` file,
-//! or multiple concatenated `git-config` files.
+//! A high level wrapper around a single or multiple `git-config` file, for reading and mutation.
 use std::{
     borrow::Cow,
     collections::HashMap,
@@ -9,10 +8,23 @@ use std::{
 use bstr::BStr;
 
 mod section;
-pub use section::*;
+pub use section::{MutableSection, SectionBody, SectionBodyIter};
 
 mod value;
-pub use value::*;
+pub use value::{MutableMultiValue, MutableValue};
+
+///
+pub mod from_env;
+
+///
+pub mod from_paths;
+
+mod access;
+mod impls;
+mod utils;
+
+mod resolve_includes;
+pub(crate) use resolve_includes::resolve_includes;
 
 /// A strongly typed index into some range.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Clone, Copy)]
@@ -61,19 +73,5 @@ pub(crate) enum SectionBodyIds<'a> {
     /// A hashmap from sub-section names to section ids.
     NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionBodyId>>),
 }
-
-///
-pub mod from_env;
-
-mod resolve_includes;
-pub(crate) use resolve_includes::resolve_includes;
-
-///
-pub mod from_paths;
-
-mod access;
-mod impls;
-mod utils;
-
 #[cfg(test)]
 mod tests;

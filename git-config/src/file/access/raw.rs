@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::HashMap};
 use bstr::{BStr, BString};
 
 use crate::{
-    file::{EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size},
+    file::{value::EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size},
     lookup,
     parse::{section, Event},
     File,
@@ -97,8 +97,8 @@ impl<'event> File<'event> {
             }
 
             drop(section_ids);
-            return Ok(MutableValue::new(
-                MutableSection::new(
+            return Ok(MutableValue {
+                section: MutableSection::new(
                     self.sections
                         .get_mut(&section_id)
                         .expect("sections does not have section id from section ids"),
@@ -106,7 +106,7 @@ impl<'event> File<'event> {
                 key,
                 index,
                 size,
-            ));
+            });
         }
 
         Err(lookup::existing::Error::KeyMissing)
@@ -253,7 +253,10 @@ impl<'event> File<'event> {
                     }
                     Event::Value(_) | Event::ValueDone(_) if found_key => {
                         found_key = false;
-                        entries.push(EntryData::new(section_id, offset_index));
+                        entries.push(EntryData {
+                            section_id,
+                            offset_index,
+                        });
                         offset_list.push(i - last_boundary + 1);
                         offset_index += 1;
                         last_boundary = i + 1;
@@ -269,7 +272,12 @@ impl<'event> File<'event> {
         if entries.is_empty() {
             Err(lookup::existing::Error::KeyMissing)
         } else {
-            Ok(MutableMultiValue::new(&mut self.sections, key, entries, offsets))
+            Ok(MutableMultiValue {
+                section: &mut self.sections,
+                key,
+                indices_and_sizes: entries,
+                offsets,
+            })
         }
     }
 
