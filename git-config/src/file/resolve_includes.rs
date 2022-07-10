@@ -155,10 +155,8 @@ fn gitdir_matches(
     condition_path: &BStr,
     target_config_path: Option<&Path>,
     from_paths::Options {
-        git_install_dir,
         git_dir,
-        home_dir,
-        home_for_user,
+        interpolate: interpolate_options,
         ..
     }: from_paths::Options<'_>,
     wildmatch_mode: git_glob::wildmatch::Mode,
@@ -167,8 +165,7 @@ fn gitdir_matches(
         git_path::to_unix_separators_on_windows(git_path::into_bstr(git_dir.ok_or(from_paths::Error::MissingGitDir)?));
 
     let mut pattern_path: Cow<'_, _> = {
-        let path =
-            crate::Path::from(Cow::Borrowed(condition_path)).interpolate(git_install_dir, home_dir, home_for_user)?;
+        let path = crate::Path::from(Cow::Borrowed(condition_path)).interpolate(interpolate_options)?;
         git_path::into_bstr(path).into_owned().into()
     };
     // NOTE: yes, only if we do path interpolation will the slashes be forced to unix separators on windows
@@ -219,13 +216,11 @@ fn resolve(
     path: crate::Path<'_>,
     target_config_path: Option<&Path>,
     from_paths::Options {
-        git_install_dir,
-        home_dir,
-        home_for_user,
+        interpolate: interpolate_options,
         ..
     }: from_paths::Options<'_>,
 ) -> Result<PathBuf, from_paths::Error> {
-    let path = path.interpolate(git_install_dir, home_dir, home_for_user)?;
+    let path = path.interpolate(interpolate_options)?;
     let path: PathBuf = if path.is_relative() {
         target_config_path
             .ok_or(from_paths::Error::MissingConfigPath)?

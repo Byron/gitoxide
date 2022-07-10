@@ -8,6 +8,21 @@ use crate::Path;
 pub mod interpolate {
     use std::path::PathBuf;
 
+    /// Options for interpolating paths with [`Path::interpolate()`][crate::Path::interpolate()].
+    #[derive(Clone, Copy, Default)]
+    pub struct Options<'a> {
+        /// The location where gitoxide or git is installed
+        pub git_install_dir: Option<&'a std::path::Path>,
+        /// The home directory of the current user.
+        ///
+        /// Used during path interpolation.
+        pub home_dir: Option<&'a std::path::Path>,
+        /// A function returning the home directory of a given user.
+        ///
+        /// Used during path interpolation.
+        pub home_for_user: Option<fn(&str) -> Option<PathBuf>>,
+    }
+
     /// The error returned by [`Path::interpolate()`][crate::Path::interpolate()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
@@ -99,9 +114,11 @@ impl<'a> Path<'a> {
     /// wasn't provided.
     pub fn interpolate(
         self,
-        git_install_dir: Option<&std::path::Path>,
-        home_dir: Option<&std::path::Path>,
-        home_for_user: Option<fn(&str) -> Option<PathBuf>>,
+        interpolate::Options {
+            git_install_dir,
+            home_dir,
+            home_for_user,
+        }: interpolate::Options<'_>,
     ) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
         if self.is_empty() {
             return Err(interpolate::Error::Missing { what: "path" });

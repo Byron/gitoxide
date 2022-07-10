@@ -1,4 +1,5 @@
 mod interpolate {
+    use git_config::path;
     use std::{
         borrow::Cow,
         path::{Path, PathBuf},
@@ -11,7 +12,7 @@ mod interpolate {
     #[test]
     fn backslash_is_not_special_and_they_are_not_escaping_anything() -> crate::Result {
         for path in ["C:\\foo\\bar", "/foo/bar"] {
-            let actual = git_config::Path::from(Cow::Borrowed(b(path))).interpolate(None, None, None)?;
+            let actual = git_config::Path::from(Cow::Borrowed(b(path))).interpolate(Default::default())?;
             assert_eq!(actual, Path::new(path));
             assert!(
                 matches!(actual, Cow::Borrowed(_)),
@@ -37,7 +38,10 @@ mod interpolate {
                     std::path::PathBuf::from(format!("{}{}{}", git_install_dir, std::path::MAIN_SEPARATOR, expected));
                 assert_eq!(
                     git_config::Path::from(cow_str(val))
-                        .interpolate(Path::new(git_install_dir).into(), None, None)
+                        .interpolate(path::interpolate::Options {
+                            git_install_dir: Path::new(git_install_dir).into(),
+                            ..Default::default()
+                        })
                         .unwrap(),
                     expected,
                     "prefix interpolation keeps separators as they are"
@@ -52,7 +56,10 @@ mod interpolate {
         let git_install_dir = "/tmp/git";
         assert_eq!(
             git_config::Path::from(Cow::Borrowed(b(path)))
-                .interpolate(Path::new(git_install_dir).into(), None, None)
+                .interpolate(path::interpolate::Options {
+                    git_install_dir: Path::new(git_install_dir).into(),
+                    ..Default::default()
+                })
                 .unwrap(),
             Path::new(path)
         );
@@ -71,7 +78,11 @@ mod interpolate {
         let expected = home.join("user").join("bar");
         assert_eq!(
             git_config::Path::from(cow_str(path))
-                .interpolate(None, Some(&home), Some(home_for_user))
+                .interpolate(path::interpolate::Options {
+                    home_dir: Some(&home),
+                    home_for_user: Some(home_for_user),
+                    ..Default::default()
+                })
                 .unwrap()
                 .as_ref(),
             expected
@@ -105,7 +116,10 @@ mod interpolate {
     fn interpolate_without_context(
         path: impl AsRef<str>,
     ) -> Result<Cow<'static, Path>, git_config::path::interpolate::Error> {
-        git_config::Path::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(None, None, Some(home_for_user))
+        git_config::Path::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(path::interpolate::Options {
+            home_for_user: Some(home_for_user),
+            ..Default::default()
+        })
     }
 
     fn home_for_user(name: &str) -> Option<PathBuf> {

@@ -85,7 +85,7 @@ impl GitEnv {
 impl GitEnv {
     pub fn include_options(&self) -> git_config::file::from_paths::Options {
         let mut opts = options_with_git_dir(self.git_dir());
-        opts.home_dir = Some(self.home_dir());
+        opts.interpolate.home_dir = Some(self.home_dir());
         opts
     }
 

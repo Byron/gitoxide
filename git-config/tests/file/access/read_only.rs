@@ -1,7 +1,7 @@
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
 use bstr::BStr;
-use git_config::{color, integer, Boolean, Color, File, Integer};
+use git_config::{color, integer, path, Boolean, Color, File, Integer};
 
 use crate::file::cow_str;
 
@@ -111,7 +111,15 @@ fn get_value_for_all_provided_values() -> crate::Result {
         let home = std::env::current_dir()?;
         let expected = home.join("tmp");
         assert!(matches!(actual.value, Cow::Borrowed(_)));
-        assert_eq!(actual.interpolate(None, home.as_path().into(), None).unwrap(), expected);
+        assert_eq!(
+            actual
+                .interpolate(path::interpolate::Options {
+                    home_dir: home.as_path().into(),
+                    ..Default::default()
+                })
+                .unwrap(),
+            expected
+        );
     }
 
     let actual = config.path("core", None, "location").expect("present");

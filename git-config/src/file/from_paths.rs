@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use crate::{file::resolve_includes, parse, path::interpolate, File};
 
 /// The error returned by [`File::from_paths()`][crate::File::from_paths()] and [`File::from_env_paths()`][crate::File::from_env_paths()].
@@ -25,10 +23,8 @@ pub enum Error {
 /// Options when loading git config using [`File::from_paths()`][crate::File::from_paths()].
 #[derive(Clone, Copy)]
 pub struct Options<'a> {
-    /// The location where gitoxide or git is installed
-    ///
     /// Used during path interpolation.
-    pub git_install_dir: Option<&'a std::path::Path>,
+    pub interpolate: interpolate::Options<'a>,
     /// The maximum allowed length of the file include chain built by following nested resolve_includes where base level is depth = 0.
     pub max_depth: u8,
     /// When max depth is exceeded while following nested included, return an error if true or silently stop following
@@ -44,26 +40,16 @@ pub struct Options<'a> {
     ///
     /// Used for conditional includes, e.g. `onbranch:`
     pub branch_name: Option<&'a git_ref::FullNameRef>,
-    /// The home directory of the current user.
-    ///
-    /// Used during path interpolation.
-    pub home_dir: Option<&'a std::path::Path>,
-    /// A function returning the home directory of a given user.
-    ///
-    /// Used during path interpolation.
-    pub home_for_user: Option<fn(&str) -> Option<PathBuf>>,
 }
 
 impl Default for Options<'_> {
     fn default() -> Self {
         Options {
-            git_install_dir: None,
+            interpolate: Default::default(),
             max_depth: 10,
             error_on_max_depth_exceeded: true,
             git_dir: None,
             branch_name: None,
-            home_dir: None,
-            home_for_user: Some(interpolate::home_for_user), // TODO: make this opt-in
         }
     }
 }
