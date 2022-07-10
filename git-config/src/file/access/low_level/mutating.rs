@@ -11,7 +11,7 @@ use crate::{
 
 /// Mutating low-level access methods.
 impl<'event> File<'event> {
-    /// Returns an mutable section reference.
+    /// Returns an mutable section with a given name and optional subsection.
     pub fn section_mut<'a>(
         &'a mut self,
         section_name: &str,
@@ -29,9 +29,9 @@ impl<'event> File<'event> {
         ))
     }
 
-    /// Adds a new section to config. If a subsection name was provided, then
-    /// the generated header will use the modern subsection syntax. Returns a
-    /// reference to the new section for immediate editing.
+    /// Adds a new section. If a subsection name was provided, then
+    /// the generated header will use the modern subsection syntax.
+    /// Returns a reference to the new section for immediate editing.
     ///
     /// # Examples
     ///
@@ -82,10 +82,11 @@ impl<'event> File<'event> {
     /// let mut git_config = git_config::File::try_from(
     /// r#"[hello "world"]
     ///     some-value = 4
-    /// "#).unwrap();
+    /// "#)?;
     ///
     /// let events = git_config.remove_section("hello", Some("world".into()));
     /// assert_eq!(git_config.to_string(), "");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
     /// Precedence example for removing sections with the same name:
@@ -98,10 +99,11 @@ impl<'event> File<'event> {
     ///     some-value = 4
     /// [hello "world"]
     ///     some-value = 5
-    /// "#).unwrap();
+    /// "#)?;
     ///
     /// let events = git_config.remove_section("hello", Some("world".into()));
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n    some-value = 4\n");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn remove_section<'a>(
         &mut self,
@@ -117,13 +119,13 @@ impl<'event> File<'event> {
             self.section_order
                 .iter()
                 .position(|v| *v == id)
-                .expect("Section order does not contain section that we were trying to remove"),
+                .expect("known section id"),
         );
         self.sections.remove(&id)
     }
 
     /// Adds the provided section to the config, returning a mutable reference
-    /// to it.
+    /// to it for immediate editing.
     pub fn push_section(
         &mut self,
         section_name: impl Into<Cow<'event, str>>,
@@ -154,10 +156,7 @@ impl<'event> File<'event> {
             .rev()
             .next()
             .expect("list of sections were empty, which violates invariant");
-        let header = self
-            .section_headers
-            .get_mut(&id)
-            .expect("sections does not have section id from section ids");
+        let header = self.section_headers.get_mut(&id).expect("known section-id");
         header.name = new_section_name.into();
         header.subsection_name = new_subsection_name.into().map(into_cow_bstr);
 
