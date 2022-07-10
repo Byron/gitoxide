@@ -53,7 +53,8 @@ pub struct File<'event> {
     /// `git-config` file prohibits global values, this vec is limited to only
     /// comment, newline, and whitespace events.
     pub(crate) frontmatter_events: crate::parse::FrontMatterEvents<'event>,
-    /// Section name and subsection name to section id lookup tree.
+    /// Section name to section id lookup tree, with section bodies for subsections being in a non-terminal
+    /// variant of `SectionBodyIds`.
     pub(crate) section_lookup_tree: HashMap<section::Name<'event>, Vec<SectionBodyIds<'event>>>,
     /// This indirection with the SectionId as the key is critical to flexibly
     /// supporting `git-config` sections, as duplicated keys are permitted.

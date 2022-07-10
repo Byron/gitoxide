@@ -53,7 +53,10 @@ impl<'event> File<'event> {
         }
         self.section_order.push_back(new_section_id);
         self.section_id_counter += 1;
-        self.sections.get_mut(&new_section_id).map(MutableSection::new).unwrap()
+        self.sections
+            .get_mut(&new_section_id)
+            .map(MutableSection::new)
+            .expect("previously inserted section")
     }
 
     /// Returns the mapping between section and subsection name to section ids.
@@ -103,8 +106,8 @@ impl<'event> File<'event> {
                 lookup
                     .iter()
                     .flat_map(|node| match node {
-                        SectionBodyIds::Terminal(v) => v.clone(),
-                        SectionBodyIds::NonTerminal(v) => v.values().flatten().copied().collect(),
+                        SectionBodyIds::Terminal(v) => Box::new(v.iter().copied()) as Box<dyn Iterator<Item = _>>,
+                        SectionBodyIds::NonTerminal(v) => Box::new(v.values().flatten().copied()),
                     })
                     .collect()
             })
