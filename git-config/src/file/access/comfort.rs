@@ -25,7 +25,7 @@ impl<'event> File<'event> {
     pub fn path(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<crate::Path<'_>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
-            .map(|v| crate::Path::from(v))
+            .map(crate::Path::from)
     }
 
     /// Like [`value()`][File::value()], but returning `None` if the boolean value wasn't found.
