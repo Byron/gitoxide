@@ -18,9 +18,7 @@ impl<'a> TryFrom<&'a [u8]> for File<'a> {
     type Error = parse::Error;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
-    /// a [`File`]. See [`parse_from_bytes`] for more information.
-    ///
-    /// [`parse_from_bytes`]: crate::parser::parse_from_bytes
+    /// a [`File`]. See [`from_bytes()`][crate::parse::from_bytes()] for more information.
     fn try_from(value: &'a [u8]) -> Result<File<'a>, Self::Error> {
         parse::Events::from_bytes(value).map(File::from)
     }
@@ -30,7 +28,7 @@ impl<'a> TryFrom<&'a BStr> for File<'a> {
     type Error = parse::Error;
 
     /// Convenience constructor. Attempts to parse the provided byte string into
-    /// a [`File`]. See [`State::from_bytes()`] for more information.
+    /// a [`File`]. See [`Events::from_bytes()`][parse::Events::from_bytes()] for more information.
     fn try_from(value: &'a BStr) -> Result<File<'a>, Self::Error> {
         parse::Events::from_bytes(value).map(File::from)
     }
