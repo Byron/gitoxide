@@ -46,7 +46,7 @@ pub(crate) struct Cache {
 mod cache {
     use std::{convert::TryFrom, path::PathBuf};
 
-    use git_config::{Boolean, File, Integer};
+    use git_config::{path, Boolean, File, Integer};
 
     use super::{Cache, Error};
     use crate::{bstr::ByteSlice, permission};
@@ -74,11 +74,11 @@ mod cache {
             let excludes_file = config
                 .path("core", None, "excludesFile")
                 .map(|p| {
-                    p.interpolate(
+                    p.interpolate(path::interpolate::Options {
                         git_install_dir,
-                        home.as_deref(),
-                        Some(git_config::path::interpolate::home_for_user),
-                    )
+                        home_dir: home.as_deref(),
+                        home_for_user: Some(git_config::path::interpolate::home_for_user),
+                    })
                     .map(|p| p.into_owned())
                 })
                 .transpose()?;

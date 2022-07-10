@@ -98,15 +98,15 @@ impl crate::Repository {
             .and_then(|path| {
                 let install_dir = self.install_dir().ok()?;
                 let home = self.config.home_dir();
-                match path.interpolate(
-                    Some(install_dir.as_path()),
-                    home.as_deref(),
-                    if self.linked_worktree_options.permissions.git_dir.is_all() {
+                match path.interpolate(git_config::path::interpolate::Options {
+                    git_install_dir: Some(install_dir.as_path()),
+                    home_dir: home.as_deref(),
+                    home_for_user: if self.linked_worktree_options.permissions.git_dir.is_all() {
                         Some(git_config::path::interpolate::home_for_user)
                     } else {
                         None
                     },
-                ) {
+                }) {
                     Ok(path) => Some(path),
                     Err(e) => {
                         err.get_or_insert(e.into());
