@@ -261,8 +261,9 @@ fn error() {
 }
 
 mod key {
-    use crate::parse::section::Key;
     use std::cmp::Ordering;
+
+    use crate::parse::section::Key;
 
     #[test]
     fn case_insentive_eq() {

@@ -1,9 +1,6 @@
-use crate::parse::{section, Comment, Error, Event};
-use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
-use crate::parse::error::ParseNode;
-use nom::multi::{fold_many0, fold_many1};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_till, take_while},
@@ -13,9 +10,12 @@ use nom::{
     },
     combinator::{map, opt},
     error::{Error as NomError, ErrorKind},
+    multi::{fold_many0, fold_many1},
     sequence::delimited,
     IResult,
 };
+
+use crate::parse::{error::ParseNode, section, Comment, Error, Event};
 
 /// Attempt to zero-copy parse the provided bytes, passing results to `receive_event`.
 pub fn from_bytes<'a>(input: &'a [u8], mut receive_event: impl FnMut(Event<'a>)) -> Result<(), Error> {

@@ -6,9 +6,8 @@ use std::{
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_ref::Category;
 
-use crate::file::from_paths::Options;
 use crate::{
-    file::{from_paths, SectionBodyId},
+    file::{from_paths, from_paths::Options, SectionBodyId},
     parse::section,
     File,
 };

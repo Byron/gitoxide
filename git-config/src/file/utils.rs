@@ -1,5 +1,6 @@
-use bstr::BStr;
 use std::collections::HashMap;
+
+use bstr::BStr;
 
 use crate::{
     file::{MutableSection, SectionBody, SectionBodyId, SectionBodyIds},

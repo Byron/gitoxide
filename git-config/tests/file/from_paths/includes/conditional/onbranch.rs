@@ -1,10 +1,14 @@
-use std::convert::TryInto;
-use std::{convert::TryFrom, fs};
+use std::{
+    convert::{TryFrom, TryInto},
+    fs,
+};
 
 use bstr::{BString, ByteSlice};
 use git_config::file::from_paths;
-use git_ref::transaction::{Change, PreviousValue, RefEdit};
-use git_ref::{FullName, Target};
+use git_ref::{
+    transaction::{Change, PreviousValue, RefEdit},
+    FullName, Target,
+};
 use git_repository as git;
 use tempfile::tempdir;
 

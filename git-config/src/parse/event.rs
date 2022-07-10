@@ -1,7 +1,8 @@
-use crate::parse::Event;
+use std::{borrow::Cow, fmt::Display};
+
 use bstr::BString;
-use std::borrow::Cow;
-use std::fmt::Display;
+
+use crate::parse::Event;
 
 impl Event<'_> {
     /// Generates a byte representation of the value. This should be used when

@@ -1,7 +1,8 @@
-use crate::Path;
+use std::{borrow::Cow, path::PathBuf};
+
 use bstr::BStr;
-use std::borrow::Cow;
-use std::path::PathBuf;
+
+use crate::Path;
 
 ///
 pub mod interpolate {

@@ -1,10 +1,12 @@
-//! This module provides a high level wrapper around a single `git-config` file.
-use bstr::BStr;
+//! This module provides a high level wrapper around a single `git-config` file,
+//! or multiple concatenated `git-config` files.
 use std::{
     borrow::Cow,
     collections::HashMap,
     ops::{Add, AddAssign},
 };
+
+use bstr::BStr;
 
 mod section;
 pub use section::*;

@@ -1,6 +1,8 @@
-use crate::file::cow_str;
-use git_config::value::normalize_bstr;
 use std::borrow::Cow;
+
+use git_config::value::normalize_bstr;
+
+use crate::file::cow_str;
 
 #[test]
 fn not_modified_is_borrowed() {

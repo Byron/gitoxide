@@ -1,9 +1,8 @@
-use crate::value;
-use crate::Boolean;
+use std::{borrow::Cow, convert::TryFrom, fmt::Display};
+
 use bstr::{BStr, BString, ByteSlice};
-use std::borrow::Cow;
-use std::convert::TryFrom;
-use std::fmt::Display;
+
+use crate::{value, Boolean};
 
 impl Boolean {
     /// Generates a byte representation of the value. This should be used when

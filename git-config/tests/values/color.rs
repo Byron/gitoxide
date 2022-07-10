@@ -109,9 +109,10 @@ mod attribute {
 }
 
 mod from_git {
+    use std::convert::TryFrom;
+
     use bstr::BStr;
     use git_config::Color;
-    use std::convert::TryFrom;
 
     #[test]
     fn reset() {

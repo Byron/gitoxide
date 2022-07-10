@@ -2,12 +2,13 @@
 #![allow(unused)]
 #![allow(clippy::result_unit_err)]
 
-use bstr::BStr;
 use std::{
     borrow::Cow,
     convert::TryFrom,
     path::{Path, PathBuf},
 };
+
+use bstr::BStr;
 
 use crate::{
     file::{from_env, from_paths},

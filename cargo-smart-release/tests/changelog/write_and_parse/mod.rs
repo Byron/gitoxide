@@ -5,8 +5,7 @@ use cargo_smart_release::{
     changelog::{section, section::segment::conventional, Section},
     ChangeLog,
 };
-use git_testtools::bstr::ByteSlice;
-use git_testtools::hex_to_id;
+use git_testtools::{bstr::ByteSlice, hex_to_id};
 
 use crate::Result;
 

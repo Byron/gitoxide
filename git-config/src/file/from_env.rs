@@ -1,5 +1,6 @@
-use bstr::BString;
 use std::{borrow::Cow, path::PathBuf};
+
+use bstr::BString;
 
 use crate::{
     file::{from_paths, resolve_includes},

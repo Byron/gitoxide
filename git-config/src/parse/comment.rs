@@ -1,7 +1,8 @@
-use crate::parse::Comment;
+use std::{borrow::Cow, fmt::Display};
+
 use bstr::{BString, ByteVec};
-use std::borrow::Cow;
-use std::fmt::Display;
+
+use crate::parse::Comment;
 
 impl Comment<'_> {
     /// Turn this instance into a fully owned one with `'static` lifetime.

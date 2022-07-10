@@ -10,8 +10,9 @@
 //!
 //! [`File`]: crate::File
 
-use bstr::BStr;
 use std::{borrow::Cow, hash::Hash};
+
+use bstr::BStr;
 
 mod nom;
 pub use self::nom::from_bytes;

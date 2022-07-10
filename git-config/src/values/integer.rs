@@ -1,10 +1,8 @@
-use crate::value;
-use crate::Integer;
+use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
+
 use bstr::{BStr, BString};
-use std::borrow::Cow;
-use std::convert::TryFrom;
-use std::fmt::Display;
-use std::str::FromStr;
+
+use crate::{value, Integer};
 
 impl Integer {
     /// Generates a byte representation of the value. This should be used when

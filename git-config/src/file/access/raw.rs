@@ -1,5 +1,6 @@
-use bstr::{BStr, BString};
 use std::{borrow::Cow, collections::HashMap};
+
+use bstr::{BStr, BString};
 
 use crate::{
     file::{EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size},

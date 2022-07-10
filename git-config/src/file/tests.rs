@@ -1,11 +1,8 @@
 mod try_from {
-    use crate::file::{SectionBodyId, SectionBodyIds};
-    use std::borrow::Cow;
-    use std::collections::HashMap;
-    use std::convert::TryFrom;
+    use std::{borrow::Cow, collections::HashMap, convert::TryFrom};
 
     use crate::{
-        file::SectionBody,
+        file::{SectionBody, SectionBodyId, SectionBodyIds},
         parse::{
             section,
             tests::util::{name_event, newline_event, section_header, value_event},

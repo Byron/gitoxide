@@ -1,8 +1,9 @@
 mod util;
 
-use crate::file::from_paths::escape_backslashes;
 use serial_test::serial;
 use util::{assert_section_value, Condition, GitEnv};
+
+use crate::file::from_paths::escape_backslashes;
 
 #[test]
 fn relative_path_with_trailing_slash_matches_like_star_star() -> crate::Result {

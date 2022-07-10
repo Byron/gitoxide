@@ -1,7 +1,11 @@
-use crate::parse::{section, Event};
-use crate::{parse, parse::Section};
-use smallvec::SmallVec;
 use std::convert::TryFrom;
+
+use smallvec::SmallVec;
+
+use crate::{
+    parse,
+    parse::{section, Event, Section},
+};
 
 /// A type store without allocation all events that are typicaly preceeding the first section.
 pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;

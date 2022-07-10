@@ -1,5 +1,6 @@
-use crate::parse::Error;
 use std::fmt::Display;
+
+use crate::parse::Error;
 
 /// A list of parsers that parsing can fail on. This is used for pretty-printing errors
 #[derive(PartialEq, Debug, Clone, Copy)]

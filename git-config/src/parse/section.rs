@@ -1,8 +1,9 @@
-use crate::parse::{Event, Section};
+use std::{borrow::Cow, fmt::Display};
+
 use bstr::{BStr, BString};
 use smallvec::SmallVec;
-use std::borrow::Cow;
-use std::fmt::Display;
+
+use crate::parse::{Event, Section};
 
 /// A container for events, avoiding heap allocations in typical files.
 pub type Events<'a> = SmallVec<[Event<'a>; 64]>;

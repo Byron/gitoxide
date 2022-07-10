@@ -1,5 +1,6 @@
-use bstr::{BString, ByteVec};
 use std::{convert::TryFrom, fmt::Display};
+
+use bstr::{BString, ByteVec};
 
 use crate::{file::SectionBody, parse, File};
 

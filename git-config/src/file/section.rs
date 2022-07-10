@@ -1,4 +1,3 @@
-use bstr::{BStr, BString, ByteVec};
 use std::{
     borrow::Cow,
     collections::VecDeque,
@@ -6,12 +5,13 @@ use std::{
     ops::{Deref, Range},
 };
 
-use crate::value::normalize_bstr;
+use bstr::{BStr, BString, ByteVec};
+
 use crate::{
     file::Index,
     lookup, parse,
     parse::{section::Key, Event},
-    value::{normalize, normalize_bstring},
+    value::{normalize, normalize_bstr, normalize_bstring},
 };
 
 /// A opaque type that represents a mutable reference to a section.

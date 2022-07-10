@@ -1,8 +1,9 @@
-use crate::file::cow_str;
-use bstr::BStr;
-use git_config::File;
-use git_config::{color, integer, Boolean, Color, Integer};
 use std::{borrow::Cow, convert::TryFrom, error::Error};
+
+use bstr::BStr;
+use git_config::{color, integer, Boolean, Color, File, Integer};
+
+use crate::file::cow_str;
 
 /// Asserts we can cast into all variants of our type
 #[test]

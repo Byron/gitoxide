@@ -1,5 +1,6 @@
-use bstr::{BStr, BString};
 use std::{borrow::Cow, collections::HashMap, ops::DerefMut};
+
+use bstr::{BStr, BString};
 
 use crate::{
     file::{

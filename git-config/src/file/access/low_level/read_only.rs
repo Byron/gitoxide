@@ -1,5 +1,6 @@
-use bstr::BStr;
 use std::{borrow::Cow, convert::TryFrom};
+
+use bstr::BStr;
 
 use crate::{file::SectionBody, lookup, parse::section, File};
 

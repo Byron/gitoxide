@@ -1,7 +1,8 @@
 use std::convert::TryFrom;
 
-use crate::file::cow_str;
 use git_config::{lookup, File};
+
+use crate::file::cow_str;
 
 #[test]
 fn single_value_is_identical_to_single_value_query() {

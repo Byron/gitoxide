@@ -114,8 +114,9 @@ mod section_headers {
 }
 
 mod sub_section {
-    use super::sub_section;
     use std::borrow::Cow;
+
+    use super::sub_section;
 
     #[test]
     fn zero_copy_simple() {
@@ -133,9 +134,10 @@ mod sub_section {
 }
 
 mod config_name {
+    use nom::combinator::all_consuming;
+
     use super::config_name;
     use crate::parse::tests::util::fully_consumed;
-    use nom::combinator::all_consuming;
 
     #[test]
     fn just_name() {
@@ -161,11 +163,15 @@ mod config_name {
 }
 
 mod section {
-    use crate::parse::tests::util::{
-        comment_event, fully_consumed, name_event, newline_event, section_header as parsed_section_header,
-        value_done_event, value_event, value_not_done_event, whitespace_event,
+    use crate::parse::{
+        error::ParseNode,
+        section,
+        tests::util::{
+            comment_event, fully_consumed, name_event, newline_event, section_header as parsed_section_header,
+            value_done_event, value_event, value_not_done_event, whitespace_event,
+        },
+        Event, Section,
     };
-    use crate::parse::{error::ParseNode, section, Event, Section};
 
     fn section<'a>(i: &'a [u8], node: &mut ParseNode) -> nom::IResult<&'a [u8], (Section<'a>, usize)> {
         let mut header = None;
@@ -426,8 +432,10 @@ mod section {
 }
 
 mod value_continuation {
-    use crate::parse::section;
-    use crate::parse::tests::util::{into_events, newline_event, value_done_event, value_not_done_event};
+    use crate::parse::{
+        section,
+        tests::util::{into_events, newline_event, value_done_event, value_not_done_event},
+    };
 
     pub fn value_impl<'a>(i: &'a [u8], events: &mut section::Events<'a>) -> nom::IResult<&'a [u8], ()> {
         super::value_impl(i, &mut |e| events.push(e)).map(|t| (t.0, ()))
@@ -498,10 +506,11 @@ mod value_continuation {
 }
 
 mod value_no_continuation {
-    use crate::parse::section;
-    use crate::parse::tests::util::{into_events, value_event};
-
     use super::value_continuation::value_impl;
+    use crate::parse::{
+        section,
+        tests::util::{into_events, value_event},
+    };
 
     #[test]
     fn no_comment() {
@@ -594,8 +603,12 @@ mod value_no_continuation {
 }
 
 mod section_body {
-    use crate::parse::tests::util::{into_events, name_event, value_event, whitespace_event};
-    use crate::parse::{error::ParseNode, section, Event};
+    use crate::parse::{
+        error::ParseNode,
+        section,
+        tests::util::{into_events, name_event, value_event, whitespace_event},
+        Event,
+    };
 
     fn section_body<'a>(
         i: &'a [u8],

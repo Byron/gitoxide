@@ -1,5 +1,6 @@
-use bstr::BStr;
 use std::borrow::Cow;
+
+use bstr::BStr;
 
 use crate::{
     file::{MutableSection, SectionBody},

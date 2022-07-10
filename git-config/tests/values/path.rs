@@ -1,10 +1,12 @@
 mod interpolate {
-    use std::borrow::Cow;
-    use std::path::{Path, PathBuf};
+    use std::{
+        borrow::Cow,
+        path::{Path, PathBuf},
+    };
 
-    use crate::file::cow_str;
-    use crate::value::b;
     use git_config::path::interpolate::Error;
+
+    use crate::{file::cow_str, value::b};
 
     #[test]
     fn backslash_is_not_special_and_they_are_not_escaping_anything() -> crate::Result {
