@@ -7,11 +7,12 @@ use std::{
 
 use bstr::{BStr, BString, ByteVec};
 
+use crate::value::normalize_bstr;
 use crate::{
     file::Index,
     lookup, parse,
     parse::{section::Key, Event},
-    value::{normalize, normalize_bstr, normalize_bstring},
+    value::{normalize, normalize_bstring},
 };
 
 /// A opaque type that represents a mutable reference to a section.
@@ -161,35 +162,24 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         end: Index,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
         let mut expect_value = false;
-        let mut simple_value = None;
-        let mut concatenated_value = None::<BString>;
+        let mut concatenated_value = BString::default();
 
         for event in &self.section.0[start.0..=end.0] {
             match event {
                 Event::SectionKey(event_key) if event_key == key => expect_value = true,
-                Event::Value(v) if expect_value => {
-                    simple_value = Some(v.as_ref().into());
-                    break;
-                }
+                Event::Value(v) if expect_value => return Ok(normalize_bstr(v.as_ref())),
                 Event::ValueNotDone(v) if expect_value => {
-                    concatenated_value
-                        .get_or_insert_with(Default::default)
-                        .push_str(v.as_ref());
+                    concatenated_value.push_str(v.as_ref());
                 }
                 Event::ValueDone(v) if expect_value => {
-                    concatenated_value
-                        .get_or_insert_with(Default::default)
-                        .push_str(v.as_ref());
-                    break;
+                    concatenated_value.push_str(v.as_ref());
+                    return Ok(normalize_bstring(concatenated_value));
                 }
                 _ => (),
             }
         }
 
-        simple_value
-            .map(normalize)
-            .or_else(|| concatenated_value.map(normalize_bstring))
-            .ok_or(lookup::existing::Error::KeyMissing)
+        Err(lookup::existing::Error::KeyMissing)
     }
 
     pub(crate) fn delete(&mut self, start: Index, end: Index) {
@@ -224,7 +214,10 @@ impl<'event> SectionBody<'event> {
     pub(crate) fn as_mut(&mut self) -> &mut parse::section::Events<'event> {
         &mut self.0
     }
+}
 
+/// Access
+impl<'event> SectionBody<'event> {
     /// Retrieves the last matching value in a section with the given key, if present.
     #[must_use]
     pub fn value(&self, key: &Key<'_>) -> Option<Cow<'_, BStr>> {
@@ -232,53 +225,48 @@ impl<'event> SectionBody<'event> {
         if range.is_empty() {
             return None;
         }
+        let mut concatenated = BString::default();
 
-        if range.len() == 1 {
-            return self.0.get(range.start).map(|e| match e {
-                Event::Value(v) => normalize_bstr(v.as_ref()),
-                // range only has one element so we know it's a value event, so
-                // it's impossible to reach this code.
-                _ => unreachable!(),
-            });
-        }
-
-        normalize_bstring(self.0[range].iter().fold(BString::default(), |mut acc, e| {
-            if let Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) = e {
-                acc.push_str(v.as_ref());
+        for event in &self.0[range] {
+            match event {
+                Event::Value(v) => {
+                    return Some(normalize_bstr(v.as_ref()));
+                }
+                Event::ValueNotDone(v) => {
+                    concatenated.push_str(v.as_ref());
+                }
+                Event::ValueDone(v) => {
+                    concatenated.push_str(v.as_ref());
+                    return Some(normalize_bstring(concatenated));
+                }
+                _ => (),
             }
-            acc
-        }))
-        .into()
+        }
+        None
     }
 
     /// Retrieves all values that have the provided key name. This may return
     /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
     pub fn values(&self, key: &Key<'_>) -> Vec<Cow<'_, BStr>> {
-        let mut values = vec![];
-        let mut found_key = false;
-        let mut partial_value = None;
+        let mut values = Vec::new();
+        let mut expect_value = false;
+        let mut concatenated_value = BString::default();
 
-        // This can iterate forwards because we need to iterate over the whole
-        // section anyways
         for event in &self.0 {
             match event {
-                Event::SectionKey(event_key) if event_key == key => found_key = true,
-                Event::Value(v) if found_key => {
-                    found_key = false;
-                    values.push(normalize(v.as_ref().into()));
-                    partial_value = None;
+                Event::SectionKey(event_key) if event_key == key => expect_value = true,
+                Event::Value(v) if expect_value => {
+                    expect_value = false;
+                    values.push(normalize_bstr(v.as_ref()));
                 }
-                Event::ValueNotDone(v) if found_key => {
-                    partial_value = Some(v.as_ref().to_owned());
+                Event::ValueNotDone(v) if expect_value => {
+                    concatenated_value.push_str(v.as_ref());
                 }
-                Event::ValueDone(v) if found_key => {
-                    found_key = false;
-                    let mut value = partial_value
-                        .take()
-                        .expect("ValueDone event called before ValueNotDone");
-                    value.push_str(v.as_ref());
-                    values.push(normalize_bstring(value));
+                Event::ValueDone(v) if expect_value => {
+                    expect_value = false;
+                    concatenated_value.push_str(v.as_ref());
+                    values.push(normalize_bstring(std::mem::take(&mut concatenated_value)));
                 }
                 _ => (),
             }
@@ -294,7 +282,7 @@ impl<'event> SectionBody<'event> {
             .filter_map(|e| if let Event::SectionKey(k) = e { Some(k) } else { None })
     }
 
-    /// Checks if the section contains the provided key.
+    /// Returns true if the section containss the provided key.
     #[must_use]
     pub fn contains_key(&self, key: &Key<'_>) -> bool {
         self.0.iter().any(|e| {
@@ -316,40 +304,41 @@ impl<'event> SectionBody<'event> {
         self.0.is_empty()
     }
 
-    /// Returns the the range containing the value events for the section.
+    /// Returns the the range containing the value events for the `key`.
     /// If the value is not found, then this returns an empty range.
     fn value_range_by_key(&self, key: &Key<'_>) -> Range<usize> {
-        let mut values_start = 0;
-        // value end needs to be offset by one so that the last value's index
-        // is included in the range
-        let mut values_end = 0;
+        let mut range = Range::default();
         for (i, e) in self.0.iter().enumerate().rev() {
             match e {
                 Event::SectionKey(k) => {
                     if k == key {
                         break;
                     }
-                    values_start = 0;
-                    values_end = 0;
+                    range = Range::default();
                 }
                 Event::Value(_) => {
-                    values_end = i + 1;
-                    values_start = i;
+                    (range.start, range.end) = (i, i);
                 }
                 Event::ValueNotDone(_) | Event::ValueDone(_) => {
-                    if values_end == 0 {
-                        values_end = i + 1;
+                    if range.end == 0 {
+                        range.end = i
                     } else {
-                        values_start = i;
-                    }
+                        range.start = i
+                    };
                 }
                 _ => (),
             }
         }
 
-        values_start..values_end
+        // value end needs to be offset by one so that the last value's index
+        // is included in the range
+        range.start..range.end + 1
     }
 }
+
+/// An owning iterator of a section body. Created by [`SectionBody::into_iter`].
+#[allow(clippy::module_name_repetitions)]
+pub struct SectionBodyIter<'event>(VecDeque<Event<'event>>);
 
 impl<'event> IntoIterator for SectionBody<'event> {
     type Item = (Key<'event>, Cow<'event, BStr>);
@@ -361,10 +350,6 @@ impl<'event> IntoIterator for SectionBody<'event> {
         SectionBodyIter(self.0.into_vec().into())
     }
 }
-
-/// An owning iterator of a section body. Created by [`SectionBody::into_iter`].
-#[allow(clippy::module_name_repetitions)]
-pub struct SectionBodyIter<'event>(VecDeque<Event<'event>>);
 
 impl<'event> Iterator for SectionBodyIter<'event> {
     type Item = (Key<'event>, Cow<'event, BStr>);
