@@ -1,6 +1,5 @@
 use std::{
     borrow::Cow,
-    collections::VecDeque,
     iter::FusedIterator,
     ops::{Deref, Range},
 };
@@ -16,7 +15,6 @@ use crate::{
 };
 
 /// A opaque type that represents a mutable reference to a section.
-#[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
 pub struct MutableSection<'a, 'event> {
     section: &'a mut SectionBody<'event>,
@@ -202,7 +200,6 @@ impl<'event> Deref for MutableSection<'_, 'event> {
 }
 
 /// A opaque type that represents a section body.
-#[allow(clippy::module_name_repetitions)]
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Default)]
 pub struct SectionBody<'event>(pub(crate) parse::section::Events<'event>);
 
@@ -213,6 +210,37 @@ impl<'event> SectionBody<'event> {
 
     pub(crate) fn as_mut(&mut self) -> &mut parse::section::Events<'event> {
         &mut self.0
+    }
+
+    /// Returns the the range containing the value events for the `key`.
+    /// If the value is not found, then this returns an empty range.
+    fn value_range_by_key(&self, key: &Key<'_>) -> Range<usize> {
+        let mut range = Range::default();
+        for (i, e) in self.0.iter().enumerate().rev() {
+            match e {
+                Event::SectionKey(k) => {
+                    if k == key {
+                        break;
+                    }
+                    range = Range::default();
+                }
+                Event::Value(_) => {
+                    (range.start, range.end) = (i, i);
+                }
+                Event::ValueNotDone(_) | Event::ValueDone(_) => {
+                    if range.end == 0 {
+                        range.end = i
+                    } else {
+                        range.start = i
+                    };
+                }
+                _ => (),
+            }
+        }
+
+        // value end needs to be offset by one so that the last value's index
+        // is included in the range
+        range.start..range.end + 1
     }
 }
 
@@ -303,51 +331,20 @@ impl<'event> SectionBody<'event> {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
-
-    /// Returns the the range containing the value events for the `key`.
-    /// If the value is not found, then this returns an empty range.
-    fn value_range_by_key(&self, key: &Key<'_>) -> Range<usize> {
-        let mut range = Range::default();
-        for (i, e) in self.0.iter().enumerate().rev() {
-            match e {
-                Event::SectionKey(k) => {
-                    if k == key {
-                        break;
-                    }
-                    range = Range::default();
-                }
-                Event::Value(_) => {
-                    (range.start, range.end) = (i, i);
-                }
-                Event::ValueNotDone(_) | Event::ValueDone(_) => {
-                    if range.end == 0 {
-                        range.end = i
-                    } else {
-                        range.start = i
-                    };
-                }
-                _ => (),
-            }
-        }
-
-        // value end needs to be offset by one so that the last value's index
-        // is included in the range
-        range.start..range.end + 1
-    }
 }
 
-/// An owning iterator of a section body. Created by [`SectionBody::into_iter`].
-#[allow(clippy::module_name_repetitions)]
-pub struct SectionBodyIter<'event>(VecDeque<Event<'event>>);
+/// An owning iterator of a section body. Created by [`SectionBody::into_iter`], yielding
+/// un-normalized (`key`, `value`) pairs.
+// TODO: tests
+pub struct SectionBodyIter<'event>(smallvec::IntoIter<[Event<'event>; 64]>);
 
 impl<'event> IntoIterator for SectionBody<'event> {
     type Item = (Key<'event>, Cow<'event, BStr>);
 
     type IntoIter = SectionBodyIter<'event>;
 
-    // TODO: see if this is used at all
     fn into_iter(self) -> Self::IntoIter {
-        SectionBodyIter(self.0.into_vec().into())
+        SectionBodyIter(self.0.into_iter())
     }
 }
 
@@ -359,7 +356,7 @@ impl<'event> Iterator for SectionBodyIter<'event> {
         let mut partial_value = BString::default();
         let mut value = None;
 
-        while let Some(event) = self.0.pop_front() {
+        for event in self.0.by_ref() {
             match event {
                 Event::SectionKey(k) => key = Some(k),
                 Event::Value(v) => {
