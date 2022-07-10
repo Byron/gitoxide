@@ -173,7 +173,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// remaining values are ignored.
     ///
     /// [`zip`]: std::iter::Iterator::zip
-    pub fn set_values(&mut self, input: impl Iterator<Item = Cow<'event, BStr>>) {
+    pub fn set_values(&mut self, input: impl IntoIterator<Item = Cow<'event, BStr>>) {
         for (
             EntryData {
                 section_id,
