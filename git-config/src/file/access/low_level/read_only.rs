@@ -124,8 +124,11 @@ impl<'event> File<'event> {
         section_name: &str,
         subsection_name: Option<&str>,
     ) -> Result<&SectionBody<'event>, lookup::existing::Error> {
-        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
-        let id = section_ids.last().expect("BUG: Section lookup vec was empty");
+        let id = self
+            .section_ids_by_name_and_subname(section_name, subsection_name)?
+            .rev()
+            .next()
+            .expect("BUG: Section lookup vec was empty");
         Ok(self
             .sections
             .get(&id)

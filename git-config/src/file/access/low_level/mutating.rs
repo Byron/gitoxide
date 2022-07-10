@@ -17,8 +17,11 @@ impl<'event> File<'event> {
         section_name: &str,
         subsection_name: Option<&str>,
     ) -> Result<MutableSection<'a, 'event>, lookup::existing::Error> {
-        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
-        let id = section_ids.last().expect("BUG: Section lookup vec was empty");
+        let id = self
+            .section_ids_by_name_and_subname(section_name, subsection_name)?
+            .rev()
+            .next()
+            .expect("BUG: Section lookup vec was empty");
         Ok(MutableSection::new(
             self.sections
                 .get_mut(&id)
@@ -108,7 +111,8 @@ impl<'event> File<'event> {
         let id = self
             .section_ids_by_name_and_subname(section_name, subsection_name.into())
             .ok()?
-            .last()?;
+            .rev()
+            .next()?;
         self.section_order.remove(
             self.section_order
                 .iter()
@@ -145,9 +149,10 @@ impl<'event> File<'event> {
         new_section_name: impl Into<section::Name<'event>>,
         new_subsection_name: impl Into<Option<Cow<'event, str>>>,
     ) -> Result<(), lookup::existing::Error> {
-        let ids = self.section_ids_by_name_and_subname(section_name, subsection_name.into())?;
-        let id = ids
-            .last()
+        let id = self
+            .section_ids_by_name_and_subname(section_name, subsection_name.into())?
+            .rev()
+            .next()
             .expect("list of sections were empty, which violates invariant");
         let header = self
             .section_headers
