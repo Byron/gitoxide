@@ -15,6 +15,7 @@ use crate::{
     lookup, File,
 };
 
+// TODO: how does this relate to `File::from_env_paths()`?
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum ConfigSource {
     /// System-wide configuration path. This is defined as

@@ -14,8 +14,7 @@ pub use section::*;
 mod value;
 pub use value::*;
 
-/// Newtype to represent an index into some range. This is to differentiate
-/// between raw usizes when multiple are present.
+/// A strongly typed index into some range.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Clone, Copy)]
 pub(crate) struct Index(pub(crate) usize);
 
@@ -27,8 +26,7 @@ impl Add<Size> for Index {
     }
 }
 
-/// Newtype to represent a size. This is to differentiate between raw usizes
-/// when multiple are present.
+/// A stronlgy typed a size.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Clone, Copy)]
 pub(crate) struct Size(pub(crate) usize);
 
@@ -40,15 +38,14 @@ impl AddAssign<usize> for Size {
 
 /// The section ID is a monotonically increasing ID used to refer to section bodies.
 /// This value does not imply any ordering between sections, as new sections
-/// with higher section IDs may be in between lower ID sections.
+/// with higher section IDs may be in between lower ID sections after `File` mutation.
 ///
 /// We need to use a section id because `git-config` permits sections with
-/// identical names. As a result, we can't simply use the section name as a key
-/// in a map.
+/// identical names, making it ambiguous when used in maps, for instance.
 ///
 /// This id guaranteed to be unique, but not guaranteed to be compact. In other
 /// words, it's possible that a section may have an ID of 3 but the next section
-/// has an ID of 5.
+/// has an ID of 5 as 4 was deleted.
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
 pub(crate) struct SectionBodyId(pub(crate) usize);
 

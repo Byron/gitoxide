@@ -53,7 +53,7 @@ fn empty_with_zero_count() {
 fn parse_error_with_invalid_count() {
     let _env = Env::new().set("GIT_CONFIG_COUNT", "invalid");
     let err = File::from_env(Options::default()).unwrap_err();
-    assert!(matches!(err, from_env::Error::ParseError { .. }));
+    assert!(matches!(err, from_env::Error::InvalidConfigCount { .. }));
 }
 
 #[test]
