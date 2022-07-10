@@ -31,12 +31,11 @@ impl<'event> File<'event> {
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
         for section_id in self
             .section_ids_by_name_and_subname(section_name, subsection_name)?
-            .iter()
             .rev()
         {
             if let Some(v) = self
                 .sections
-                .get(section_id)
+                .get(&section_id)
                 .expect("sections does not have section id from section ids")
                 .value(&key)
             {
@@ -58,17 +57,19 @@ impl<'event> File<'event> {
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
     ) -> Result<MutableValue<'_, 'lookup, 'event>, lookup::existing::Error> {
-        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
+        let mut section_ids = self
+            .section_ids_by_name_and_subname(section_name, subsection_name)?
+            .rev();
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
-        for section_id in section_ids.iter().rev() {
+        while let Some(section_id) = section_ids.next() {
             let mut size = Size(0);
             let mut index = Index(0);
             let mut found_key = false;
             // todo: iter backwards
             for (i, event) in self
                 .sections
-                .get(section_id)
+                .get(&section_id)
                 .expect("sections does not have section id from section ids")
                 .as_ref()
                 .iter()
@@ -95,10 +96,11 @@ impl<'event> File<'event> {
                 continue;
             }
 
+            drop(section_ids);
             return Ok(MutableValue::new(
                 MutableSection::new(
                     self.sections
-                        .get_mut(section_id)
+                        .get_mut(&section_id)
                         .expect("sections does not have section id from section ids"),
                 ),
                 key,
@@ -229,14 +231,14 @@ impl<'event> File<'event> {
 
         let mut offsets = HashMap::new();
         let mut entries = vec![];
-        for section_id in section_ids.iter().rev() {
+        for section_id in section_ids.rev() {
             let mut last_boundary = 0;
             let mut found_key = false;
             let mut offset_list = vec![];
             let mut offset_index = 0;
             for (i, event) in self
                 .sections
-                .get(section_id)
+                .get(&section_id)
                 .expect("sections does not have section id from section ids")
                 .as_ref()
                 .iter()
@@ -251,7 +253,7 @@ impl<'event> File<'event> {
                     }
                     Event::Value(_) | Event::ValueDone(_) if found_key => {
                         found_key = false;
-                        entries.push(EntryData::new(*section_id, offset_index));
+                        entries.push(EntryData::new(section_id, offset_index));
                         offset_list.push(i - last_boundary + 1);
                         offset_index += 1;
                         last_boundary = i + 1;
@@ -259,7 +261,7 @@ impl<'event> File<'event> {
                     _ => (),
                 }
             }
-            offsets.insert(*section_id, offset_list);
+            offsets.insert(section_id, offset_list);
         }
 
         entries.sort();

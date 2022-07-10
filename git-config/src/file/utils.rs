@@ -60,11 +60,11 @@ impl<'event> File<'event> {
     }
 
     /// Returns the mapping between section and subsection name to section ids.
-    pub(crate) fn section_ids_by_name_and_subname<'a>(
-        &self,
+    pub(crate) fn section_ids_by_name_and_subname<'b, 'a: 'b>(
+        &'b self,
         section_name: impl Into<section::Name<'a>>,
         subsection_name: Option<&str>,
-    ) -> Result<Vec<SectionBodyId>, lookup::existing::Error> {
+    ) -> Result<impl Iterator<Item = SectionBodyId> + DoubleEndedIterator + '_, lookup::existing::Error> {
         let section_name = section_name.into();
         let section_ids = self
             .section_lookup_tree
@@ -78,21 +78,19 @@ impl<'event> File<'event> {
             let subsection_name: &BStr = subsection_name.into();
             for node in section_ids {
                 if let SectionBodyIds::NonTerminal(subsection_lookup) = node {
-                    maybe_ids = subsection_lookup.get(subsection_name);
+                    maybe_ids = subsection_lookup.get(subsection_name).map(|v| v.iter().copied());
                     break;
                 }
             }
         } else {
             for node in section_ids {
                 if let SectionBodyIds::Terminal(subsection_lookup) = node {
-                    maybe_ids = Some(subsection_lookup);
+                    maybe_ids = Some(subsection_lookup.iter().copied());
                     break;
                 }
             }
         }
-        maybe_ids
-            .map(Vec::to_owned)
-            .ok_or(lookup::existing::Error::SubSectionMissing)
+        maybe_ids.ok_or(lookup::existing::Error::SubSectionMissing)
     }
 
     pub(crate) fn section_ids_by_name<'b, 'a: 'b>(

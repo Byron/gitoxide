@@ -126,7 +126,10 @@ impl<'event> File<'event> {
     ) -> Result<&SectionBody<'event>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         let id = section_ids.last().expect("BUG: Section lookup vec was empty");
-        Ok(self.sections.get(id).expect("BUG: Section did not have id from lookup"))
+        Ok(self
+            .sections
+            .get(&id)
+            .expect("BUG: Section did not have id from lookup"))
     }
 
     /// Gets all sections that match the provided name, ignoring any subsections.
