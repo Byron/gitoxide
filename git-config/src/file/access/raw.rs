@@ -12,7 +12,7 @@ use crate::{
 /// # Raw value API
 ///
 /// These functions are the raw value API, returning normalized byte strings.
-impl<'a> File<'a> {
+impl<'event> File<'event> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
@@ -45,7 +45,7 @@ impl<'a> File<'a> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableValue<'_, 'lookup, 'a>, lookup::existing::Error> {
+    ) -> Result<MutableValue<'_, 'lookup, 'event>, lookup::existing::Error> {
         let mut section_ids = self
             .section_ids_by_name_and_subname(section_name, subsection_name)?
             .rev();
@@ -211,7 +211,7 @@ impl<'a> File<'a> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableMultiValue<'_, 'lookup, 'a>, lookup::existing::Error> {
+    ) -> Result<MutableMultiValue<'_, 'lookup, 'event>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
@@ -396,14 +396,12 @@ impl<'a> File<'a> {
     /// assert!(!git_config.raw_values("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
-    ///
-    /// [`raw_values_mut`]:
     pub fn set_raw_multi_value(
         &mut self,
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-        new_values: impl IntoIterator<Item = Cow<'a, BStr>>,
+        new_values: impl IntoIterator<Item = Cow<'event, BStr>>,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_values_mut(section_name, subsection_name, key)
             .map(|mut v| v.set_values(new_values))

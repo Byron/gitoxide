@@ -4,14 +4,16 @@ use bstr::BStr;
 
 use crate::{file::SectionBody, lookup, parse::section, File};
 
-/// Read-only low-level access methods.
+/// Read-only low-level access methods, as it requires generics for converting into
+/// custom values defined in this crate like [`Integer`][crate::Integer] and
+/// [`Color`][crate::Color].
 impl<'event> File<'event> {
     /// Returns an interpreted value given a section, an optional subsection and
     /// key.
     ///
-    /// It's recommended to use one of the values in the [`value`] module as
-    /// the conversion is already implemented, but this function is flexible and
-    /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
+    /// It's recommended to use one of the value types provide dby this crate
+    /// as they implement the conversion, but this function is flexible and
+    /// will accept any type that implements [`TryFrom<&BStr>`][std::convert::TryFrom].
     ///
     /// Consider [`Self::values`] if you want to get all values of a multivar instead.
     ///
@@ -36,9 +38,6 @@ impl<'event> File<'event> {
     /// let c_value: Boolean = git_config.value("core", None, "c")?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    ///
-    /// [`value`]: crate::value
-    /// [`TryFrom`]: std::convert::TryFrom
     pub fn value<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
@@ -48,7 +47,7 @@ impl<'event> File<'event> {
         T::try_from(self.raw_value(section_name, subsection_name, key)?).map_err(lookup::Error::FailedConversion)
     }
 
-    /// Like [`value()`][File::value()], but returning an `Option` if the value wasn't found.
+    /// Like [`value()`][File::value()], but returning an `None` if the value wasn't found at `section[.subsection].key`
     pub fn try_value<'a, T: TryFrom<Cow<'a, BStr>>>(
         &'a self,
         section_name: &str,
@@ -61,9 +60,9 @@ impl<'event> File<'event> {
     /// Returns all interpreted values given a section, an optional subsection
     /// and key.
     ///
-    /// It's recommended to use one of the values in the [`value`] module as
-    /// the conversion is already implemented, but this function is flexible and
-    /// will accept any type that implements [`TryFrom<&[u8]>`][`TryFrom`].
+    /// It's recommended to use one of the value types provide dby this crate
+    /// as they implement the conversion, but this function is flexible and
+    /// will accept any type that implements [`TryFrom<&BStr>`][std::convert::TryFrom].
     ///
     /// Consider [`Self::value`] if you want to get a single value
     /// (following last-one-wins resolution) instead.
@@ -81,7 +80,7 @@ impl<'event> File<'event> {
     /// let config = r#"
     ///     [core]
     ///         a = true
-    ///         c = g
+    ///         c
     ///     [core]
     ///         a
     ///         a = false
@@ -98,8 +97,8 @@ impl<'event> File<'event> {
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
-    /// let c_value = git_config.strings("core", None, "c").unwrap();
-    /// assert_eq!(c_value, vec![Cow::Borrowed("g".as_bytes().as_bstr())]);
+    /// let c_value: Vec<Boolean> = git_config.values("core", None, "c").unwrap();
+    /// assert_eq!(c_value, vec![Boolean(true)]);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
@@ -118,7 +117,7 @@ impl<'event> File<'event> {
             .map_err(lookup::Error::FailedConversion)
     }
 
-    /// Returns an immutable section reference.
+    /// Returns the last found immutable section with a given name and optional subsection name.
     pub fn section(
         &mut self,
         section_name: &str,
@@ -165,8 +164,9 @@ impl<'event> File<'event> {
     ///     [core "apple"]
     ///         e = f
     /// "#;
-    /// let git_config = git_config::File::try_from(config).unwrap();
+    /// let git_config = git_config::File::try_from(config)?;
     /// assert_eq!(git_config.sections_by_name("core").map_or(0, |s|s.count()), 3);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     #[must_use]
     pub fn sections_by_name<'a>(
@@ -184,7 +184,7 @@ impl<'event> File<'event> {
 
     /// Get all sections that match the `section_name`, returning all matching section header along with their body.
     ///
-    /// An empty `Vec` is returned if there is no section with `section_name`.
+    /// `None` is returned if there is no section with `section_name`.
     ///
     /// # Example
     ///
@@ -210,7 +210,7 @@ impl<'event> File<'event> {
     /// [url "ssh://git@bitbucket.org"]
     ///    insteadOf = https://bitbucket.org/
     /// "#;
-    /// let config = git_config::File::try_from(input).unwrap();
+    /// let config = git_config::File::try_from(input)?;
     /// let url = config.sections_by_name_with_header("url");
     /// assert_eq!(url.map_or(0, |s| s.count()), 2);
     ///
@@ -218,8 +218,7 @@ impl<'event> File<'event> {
     ///     let url = header.subsection_name.as_ref();
     ///     let instead_of = body.value(&section::Key::from("insteadOf"));
     ///
-    ///     // todo(unstable-order): the order is not always the same, so `i` cannot be used here
-    ///     if instead_of.as_ref().unwrap().as_ref() == "https://github.com/" {
+    ///     if i == 0 {
     ///         assert_eq!(instead_of.unwrap().as_ref(), "https://github.com/");
     ///         assert_eq!(url.unwrap().as_ref(), "ssh://git@github.com/");
     ///     } else {
@@ -227,6 +226,7 @@ impl<'event> File<'event> {
     ///         assert_eq!(url.unwrap().as_ref(), "ssh://git@bitbucket.org");
     ///     }
     /// }
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn sections_by_name_with_header<'a>(
         &'a self,
@@ -252,9 +252,7 @@ impl<'event> File<'event> {
     /// This ignores any comments.
     #[must_use]
     pub fn num_values(&self) -> usize {
-        self.sections
-            .values()
-            .fold(0, |acc, section| acc + section.num_values())
+        self.sections.values().map(|section| section.num_values()).sum()
     }
 
     /// Returns if there are no entries in the config. This will return true

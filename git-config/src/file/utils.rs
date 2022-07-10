@@ -101,15 +101,19 @@ impl<'event> File<'event> {
         section_name: impl Into<section::Name<'a>>,
     ) -> Result<impl Iterator<Item = SectionBodyId> + '_, lookup::existing::Error> {
         let section_name = section_name.into();
-        self.section_lookup_tree
-            .get(&section_name)
-            .map(|lookup| {
-                lookup.iter().flat_map(|node| match node {
+        match self.section_lookup_tree.get(&section_name) {
+            Some(lookup) => Ok(lookup.iter().flat_map({
+                let section_order = &self.section_order;
+                move |node| match node {
                     SectionBodyIds::Terminal(v) => Box::new(v.iter().copied()) as Box<dyn Iterator<Item = _>>,
-                    SectionBodyIds::NonTerminal(v) => Box::new(v.values().flatten().copied()),
-                })
-            })
-            .ok_or(lookup::existing::Error::SectionMissing)
+                    SectionBodyIds::NonTerminal(v) => Box::new({
+                        let v: Vec<_> = v.values().flatten().copied().collect();
+                        section_order.iter().filter(move |a| v.contains(a)).copied()
+                    }),
+                }
+            })),
+            None => Err(lookup::existing::Error::SectionMissing),
+        }
     }
 
     // TODO: add note indicating that probably a lot if not all information about the original files is currently lost,

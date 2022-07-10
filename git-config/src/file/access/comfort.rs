@@ -5,7 +5,7 @@ use bstr::BStr;
 use crate::{value, File};
 
 /// Comfortable API for accessing values
-impl<'a> File<'a> {
+impl<'event> File<'event> {
     /// Like [`value()`][File::value()], but returning an `None` if the string wasn't found.
     ///
     /// As strings perform no conversions, this will never fail.
