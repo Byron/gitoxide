@@ -166,19 +166,20 @@ impl<'event> File<'event> {
     ///         e = f
     /// "#;
     /// let git_config = git_config::File::try_from(config).unwrap();
-    /// assert_eq!(git_config.sections_by_name("core").count(), 3);
+    /// assert_eq!(git_config.sections_by_name("core").map_or(0, |s|s.count()), 3);
     /// ```
     #[must_use]
-    pub fn sections_by_name<'a>(&'a self, section_name: &'a str) -> impl Iterator<Item = &SectionBody<'event>> + '_ {
-        self.section_ids_by_name(section_name)
-            .map(move |ids| {
-                Box::new(ids.map(move |id| {
-                    self.sections
-                        .get(&id)
-                        .expect("section doesn't have id from from lookup")
-                })) as Box<dyn Iterator<Item = _>>
+    pub fn sections_by_name<'a>(
+        &'a self,
+        section_name: &'a str,
+    ) -> Option<impl Iterator<Item = &SectionBody<'event>> + '_> {
+        self.section_ids_by_name(section_name).ok().map(move |ids| {
+            ids.map(move |id| {
+                self.sections
+                    .get(&id)
+                    .expect("section doesn't have id from from lookup")
             })
-            .unwrap_or_else(|_| Box::new(std::iter::empty()))
+        })
     }
 
     /// Get all sections that match the `section_name`, returning all matching section header along with their body.
@@ -211,9 +212,9 @@ impl<'event> File<'event> {
     /// "#;
     /// let config = git_config::File::try_from(input).unwrap();
     /// let url = config.sections_by_name_with_header("url");
-    /// assert_eq!(url.count(), 2);
+    /// assert_eq!(url.map_or(0, |s| s.count()), 2);
     ///
-    /// for (i, (header, body)) in config.sections_by_name_with_header("url").enumerate() {
+    /// for (i, (header, body)) in config.sections_by_name_with_header("url").unwrap().enumerate() {
     ///     let url = header.subsection_name.as_ref();
     ///     let instead_of = body.value(&section::Key::from("insteadOf"));
     ///
@@ -230,21 +231,19 @@ impl<'event> File<'event> {
     pub fn sections_by_name_with_header<'a>(
         &'a self,
         section_name: &'a str,
-    ) -> impl Iterator<Item = (&section::Header<'event>, &SectionBody<'event>)> + '_ {
-        self.section_ids_by_name(section_name)
-            .map(move |ids| {
-                Box::new(ids.map(move |id| {
-                    (
-                        self.section_headers
-                            .get(&id)
-                            .expect("section doesn't have a section header??"),
-                        self.sections
-                            .get(&id)
-                            .expect("section doesn't have id from from lookup"),
-                    )
-                })) as Box<dyn Iterator<Item = _>>
+    ) -> Option<impl Iterator<Item = (&section::Header<'event>, &SectionBody<'event>)> + '_> {
+        self.section_ids_by_name(section_name).ok().map(move |ids| {
+            ids.map(move |id| {
+                (
+                    self.section_headers
+                        .get(&id)
+                        .expect("section doesn't have a section header??"),
+                    self.sections
+                        .get(&id)
+                        .expect("section doesn't have id from from lookup"),
+                )
             })
-            .unwrap_or_else(|_| Box::new(std::iter::empty()))
+        })
     }
 
     /// Returns the number of values in the config, no matter in which section.
