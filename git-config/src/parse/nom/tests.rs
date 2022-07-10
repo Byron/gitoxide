@@ -436,6 +436,7 @@ mod value_continuation {
         section,
         tests::util::{into_events, newline_event, value_done_event, value_not_done_event},
     };
+    use bstr::ByteSlice;
 
     pub fn value_impl<'a>(i: &'a [u8], events: &mut section::Events<'a>) -> nom::IResult<&'a [u8], ()> {
         super::value_impl(i, &mut |e| events.push(e)).map(|t| (t.0, ()))
@@ -500,6 +501,66 @@ mod value_continuation {
                 value_not_done_event("\""),
                 newline_event(),
                 value_done_event(";\"")
+            ])
+        );
+    }
+
+    #[test]
+    fn quote_split_over_multiple_lines_without_surrounding_quotes_but_inner_quotes() {
+        let mut events = section::Events::default();
+        assert_eq!(
+            value_impl(
+                br#"1\
+"2" a\
+\"3 b\"\
+4 ; comment "#,
+                &mut events
+            )
+            .unwrap()
+            .0
+            .as_bstr(),
+            b" ; comment ".as_bstr()
+        );
+        assert_eq!(
+            events,
+            into_events(vec![
+                value_not_done_event("1"),
+                newline_event(),
+                value_not_done_event("\"2\" a"),
+                newline_event(),
+                value_not_done_event("\\\"3 b\\\""),
+                newline_event(),
+                value_done_event("4")
+            ])
+        );
+    }
+
+    #[test]
+    fn quote_split_over_multiple_lines_with_surrounding_quotes() {
+        let mut events = section::Events::default();
+        assert_eq!(
+            value_impl(
+                br#""1\
+"2" a\
+\"3 b\"\
+4 " ; comment "#,
+                &mut events
+            )
+            .unwrap()
+            .0
+            .as_bstr(),
+            b" ; comment ".as_bstr()
+        );
+        assert_eq!(
+            events,
+            into_events(vec![
+                value_not_done_event("\"1"),
+                newline_event(),
+                value_not_done_event("\"2\" a"),
+                newline_event(),
+                value_not_done_event("\\\"3 b\\\""),
+                newline_event(),
+                value_done_event("4 \"")
             ])
         );
     }

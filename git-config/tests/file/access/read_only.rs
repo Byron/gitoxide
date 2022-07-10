@@ -228,12 +228,8 @@ fn multi_line_value_plain() {
     let config = File::try_from(config).unwrap();
 
     let expected = r#"!git status         && git add -A         && git commit -m "$1"         && git push -f         && git log -1         && :"#;
-    assert_eq!(
-        config.raw_value("alias", None, "save").unwrap().as_ref(),
-        expected,
-        "only the un-normalized original value currently matches git's result"
-    );
-    assert_ne!(config.string("alias", None, "save").unwrap().as_ref(), expected);
+    assert_eq!(config.raw_value("alias", None, "save").unwrap().as_ref(), expected);
+    assert_eq!(config.string("alias", None, "save").unwrap().as_ref(), expected);
 }
 
 #[test]
@@ -252,12 +248,11 @@ fn complex_quoted_values() {
     assert_eq!(
         config.string("core", None, "escape-sequence").unwrap().as_ref(),
         "hi\nho\ttheri",
-        "normalization is what resolves these values"
+        "normalization is what resolves these valuesi, even backspaces"
     );
 }
 
 #[test]
-#[ignore]
 fn multi_line_value_outer_quotes_unescaped_inner_quotes() {
     let config = r#"
 [alias]
@@ -267,7 +262,7 @@ fn multi_line_value_outer_quotes_unescaped_inner_quotes() {
            git commit -m "$1"; \
            git push -f; \
            git log -1;  \
-        }; \ 
+        }; \
         f;  \
         unset f"
 "#;
@@ -277,7 +272,6 @@ fn multi_line_value_outer_quotes_unescaped_inner_quotes() {
 }
 
 #[test]
-#[ignore]
 fn multi_line_value_outer_quotes_escaped_inner_quotes() {
     let config = r#"
 [alias]
@@ -287,7 +281,7 @@ fn multi_line_value_outer_quotes_escaped_inner_quotes() {
            git commit -m \"$1\"; \
            git push -f; \
            git log -1;  \
-        }; \ 
+        }; \
         f;  \
         unset f"
 "#;

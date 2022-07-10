@@ -11,7 +11,7 @@ use crate::{
 
 /// # Raw value API
 ///
-/// These functions are the raw value API, returning un-normalized byte strings.
+/// These functions are the raw value API, returning normalized byte strings.
 impl<'a> File<'a> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.

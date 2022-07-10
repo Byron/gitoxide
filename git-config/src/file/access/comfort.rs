@@ -2,7 +2,7 @@ use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
 
-use crate::{value, value::normalize, File};
+use crate::{value, File};
 
 /// Comfortable API for accessing values
 impl<'a> File<'a> {
@@ -10,7 +10,7 @@ impl<'a> File<'a> {
     ///
     /// As strings perform no conversions, this will never fail.
     pub fn string(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Cow<'_, BStr>> {
-        self.raw_value(section_name, subsection_name, key).ok().map(normalize)
+        self.raw_value(section_name, subsection_name, key).ok()
     }
 
     /// Like [`value()`][File::value()], but returning `None` if the path wasn't found.
@@ -25,7 +25,7 @@ impl<'a> File<'a> {
     pub fn path(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<crate::Path<'_>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
-            .map(|v| crate::Path::from(normalize(v)))
+            .map(|v| crate::Path::from(v))
     }
 
     /// Like [`value()`][File::value()], but returning `None` if the boolean value wasn't found.
@@ -56,9 +56,7 @@ impl<'a> File<'a> {
 
     /// Similar to [`values(…)`][File::values()] but returning strings if at least one of them was found.
     pub fn strings(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Vec<Cow<'_, BStr>>> {
-        self.raw_values(section_name, subsection_name, key)
-            .ok()
-            .map(|values| values.into_iter().map(normalize).collect())
+        self.raw_values(section_name, subsection_name, key).ok()
     }
 
     /// Similar to [`values(…)`][File::values()] but returning integers if at least one of them was found
