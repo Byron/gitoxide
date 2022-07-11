@@ -170,9 +170,10 @@ fn unescape_attribute_values(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
         if value.contains(&b'\\') {
             let out = out.to_mut();
             out.push_str(name);
-            out.push_str(unescape_attribute_value(value.into())?);
+            out.push_str(unescape_and_check_attr_value(value.into())?);
             out.push(b' ');
         } else {
+            check_attribute_value(value.as_bstr())?;
             let end = out.len() + attr.len() + 1;
             out = Cow::Borrowed(&input[0..end.min(input.len())])
         }
@@ -181,18 +182,32 @@ fn unescape_attribute_values(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
     Ok(out)
 }
 
-fn unescape_attribute_value(value: &BStr) -> Result<BString, Error> {
+fn unescape_and_check_attr_value(value: &BStr) -> Result<BString, Error> {
     let mut out = BString::from(Vec::with_capacity(value.len()));
     let mut bytes = value.iter();
     while let Some(mut b) = bytes.next().copied() {
         if b == b'\\' {
             b = *bytes.next().ok_or(Error::TrailingEscapeCharacter)?;
         }
-        if !b.is_ascii_alphanumeric() && !b",-_".contains(&b) {
+        if !is_value_char_valid(&b) {
             return Err(Error::InvalidAttributeValue { character: b as char });
         }
 
         out.push(b);
     }
     Ok(out)
+}
+
+fn check_attribute_value(input: &BStr) -> Result<(), Error> {
+    let bytes = input.iter();
+    for b in bytes {
+        if !is_value_char_valid(b) {
+            return Err(Error::InvalidAttributeValue { character: *b as char });
+        }
+    }
+    Ok(())
+}
+
+fn is_value_char_valid(byte: &u8) -> bool {
+    byte.is_ascii_alphanumeric() || b",-_".contains(byte)
 }

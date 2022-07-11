@@ -324,11 +324,14 @@ mod parse {
         #[test]
         fn invalid_attribute_values() {
             let inputs = vec![
+                r":(attr:v=inva#lid)some/path",
                 r":(attr:v=inva\\lid)some/path",
                 r":(attr:v=invalid\\)some/path",
                 r":(attr:v=invalid\#)some/path",
                 r":(attr:v=inva\=lid)some/path",
                 r":(attr:a=valid b=inva\#lid)some/path",
+                ":(attr:v=val��)",
+                ":(attr:pr=pre��x:,)�",
             ];
 
             for input in inputs {
