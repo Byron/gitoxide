@@ -1,5 +1,6 @@
 use std::{borrow::Cow, env, fs};
 
+use crate::file::from_paths::escape_backslashes;
 use git_config::{
     file::{from_env, from_paths, from_paths::Options},
     File,
@@ -131,11 +132,11 @@ fn follow_include_paths() {
         .set("GIT_CONFIG_KEY_0", "core.key")
         .set("GIT_CONFIG_VALUE_0", "value")
         .set("GIT_CONFIG_KEY_1", "include.path")
-        .set("GIT_CONFIG_VALUE_1", a_path.to_str().unwrap())
+        .set("GIT_CONFIG_VALUE_1", escape_backslashes(a_path))
         .set("GIT_CONFIG_KEY_2", "other.path")
-        .set("GIT_CONFIG_VALUE_2", b_path.to_str().unwrap())
+        .set("GIT_CONFIG_VALUE_2", escape_backslashes(&b_path))
         .set("GIT_CONFIG_KEY_3", "include.origin.path")
-        .set("GIT_CONFIG_VALUE_3", b_path.to_str().unwrap());
+        .set("GIT_CONFIG_VALUE_3", escape_backslashes(b_path));
 
     let config = File::from_env(Options::default()).unwrap().unwrap();
 

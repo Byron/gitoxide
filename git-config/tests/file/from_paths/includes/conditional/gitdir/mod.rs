@@ -25,7 +25,7 @@ fn relative_path_without_trailing_slash_and_dot_git_suffix_matches() -> crate::R
 
 #[test]
 fn tilde_slash_expands_the_current_user_home() -> crate::Result {
-    let env = GitEnv::repo_name(format!("subdir{}worktree", std::path::MAIN_SEPARATOR))?;
+    let env = GitEnv::repo_name(std::path::Path::new("subdir").join("worktree"))?;
     assert_section_value(Condition::new("gitdir:~/subdir/worktree/"), env)
 }
 
@@ -111,11 +111,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
         );
     }
 
-    let absolute_path = format!(
-        "{}{}include.config",
-        env.home_dir().display(),
-        std::path::MAIN_SEPARATOR
-    );
+    let absolute_path = escape_backslashes(env.home_dir().join("include.config"));
     {
         let _environment = crate::file::from_env::Env::new()
             .set("GIT_CONFIG_COUNT", "1")

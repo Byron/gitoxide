@@ -6,7 +6,7 @@ use tempfile::tempdir;
 use crate::file::cow_str;
 
 /// Escapes backslash when writing a path as string so that it is a valid windows path
-fn escape_backslashes(path: impl AsRef<std::path::Path>) -> String {
+pub(crate) fn escape_backslashes(path: impl AsRef<std::path::Path>) -> String {
     path.as_ref().to_str().unwrap().replace('\\', "\\\\")
 }
 
