@@ -2,9 +2,15 @@ use std::borrow::Cow;
 
 use bstr::{BStr, BString, ByteSlice};
 
-/// Removes quotes, if any, from the provided inputs. This assumes the input
-/// contains a even number of unescaped quotes, and will unescape escaped
-/// quotes. The return values should be safe for value interpretation.
+/// Removes quotes, if any, from the provided inputs, and transforms
+/// the 3 escape sequences `\n`, `\t` and `\b` into newline and tab
+/// respectively, while `\b` will remove the previous character.
+///
+/// It assumes the input contains a even number of unescaped quotes,
+/// and will unescape escaped quotes and everything else (even though the latter
+/// would have been rejected in the parsing stage).
+///
+/// The return values should be safe for value interpretation.
 ///
 /// This has optimizations for fully-quoted values, where the returned value
 /// will be a borrowed reference if the only mutation necessary is to unquote
