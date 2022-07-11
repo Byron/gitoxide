@@ -66,3 +66,23 @@ fn inner_quotes_are_removed() {
     assert_eq!(normalize_bstr(r#"true"""#), cow_str("true"));
     assert_eq!(normalize_bstr(r#"fa"lse""#), cow_str("false"));
 }
+
+#[test]
+fn newline_tab_backspace_are_escapeable() {
+    assert_eq!(normalize_bstr(r#"\n\ta\b"#), cow_str("\n\t"));
+}
+
+#[test]
+fn other_escapes_are_ignored_entirely() {
+    assert_eq!(
+        normalize_bstr(r#"\x"#),
+        cow_str("x"),
+        "however, these would cause failure on parsing level so we ignore it similar to subsections"
+    );
+    assert_eq!(normalize_bstr(r#""\x""#), cow_str("x"), "same if within quotes");
+    assert_eq!(
+        normalize_bstr(r#""\"#),
+        cow_str(""),
+        "freestanding escapes are ignored as well"
+    );
+}

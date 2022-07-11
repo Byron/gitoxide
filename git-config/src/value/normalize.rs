@@ -70,27 +70,22 @@ pub fn normalize(input: Cow<'_, BStr>) -> Cow<'_, BStr> {
     }
 
     let mut out: BString = Vec::with_capacity(input.len()).into();
-
-    let mut prev_was_backslash = false;
-    for c in input.iter().copied() {
-        if prev_was_backslash {
-            prev_was_backslash = false;
-            match c {
-                b'n' => out.push(b'\n'),
-                b't' => out.push(b'\t'),
-                b'b' => {
+    let mut bytes = input.iter().copied();
+    while let Some(c) = bytes.next() {
+        match c {
+            b'\\' => match bytes.next() {
+                Some(b'n') => out.push(b'\n'),
+                Some(b't') => out.push(b'\t'),
+                Some(b'b') => {
                     out.pop();
                 }
-                _ => out.push(c),
-            };
-        } else {
-            match c {
-                b'\\' => {
-                    prev_was_backslash = true;
+                Some(c) => {
+                    out.push(c);
                 }
-                b'"' => {}
-                _ => out.push(c),
-            }
+                None => break,
+            },
+            b'"' => {}
+            _ => out.push(c),
         }
     }
     Cow::Owned(out)
