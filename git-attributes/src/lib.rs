@@ -110,6 +110,17 @@ mod state {
         }
     }
 
+    impl<'a> State {
+        pub fn as_ref(&'a self) -> StateRef<'a> {
+            match self {
+                State::Value(v) => StateRef::Value(v.as_bytes().as_bstr()),
+                State::Set => StateRef::Set,
+                State::Unset => StateRef::Unset,
+                State::Unspecified => StateRef::Unspecified,
+            }
+        }
+    }
+
     impl<'a> From<StateRef<'a>> for State {
         fn from(s: StateRef<'a>) -> Self {
             match s {
@@ -123,7 +134,7 @@ mod state {
 }
 
 pub mod name {
-    use crate::{Name, NameRef, State, StateRef};
+    use crate::{Name, NameRef, StateRef};
     use bstr::{BStr, BString, ByteSlice};
 
     impl<'a> NameRef<'a> {
@@ -151,9 +162,8 @@ pub mod name {
             self.0.as_bstr()
         }
 
-        pub fn state(&self) -> &State {
-            // TODO: StateRef<'_>
-            &self.1
+        pub fn state(&self) -> StateRef<'_> {
+            self.1.as_ref()
         }
     }
 
