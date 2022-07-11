@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteSlice};
 
 /// Removes quotes, if any, from the provided inputs. This assumes the input
 /// contains a even number of unescaped quotes, and will unescape escaped
@@ -65,46 +65,35 @@ pub fn normalize(input: Cow<'_, BStr>) -> Cow<'_, BStr> {
         }
     }
 
-    let mut owned = BString::default();
+    if input.find_byteset(b"\\\"").is_none() {
+        return input;
+    }
 
-    let mut first_index = 0;
-    let mut last_index = 0;
-    let mut was_escaped = false;
-    for (i, c) in input.iter().enumerate() {
-        if was_escaped {
-            was_escaped = false;
-            if *c == b'"' {
-                if first_index == 0 {
-                    owned.extend(&*input[last_index..i - 1]);
-                    last_index = i;
-                } else {
-                    owned.extend(&*input[first_index..i - 1]);
-                    first_index = i;
+    let mut out: BString = Vec::with_capacity(input.len()).into();
+
+    let mut prev_was_backslash = false;
+    for c in input.iter().copied() {
+        if prev_was_backslash {
+            prev_was_backslash = false;
+            match c {
+                b'n' => out.push(b'\n'),
+                b't' => out.push(b'\t'),
+                b'b' => {
+                    out.pop();
                 }
-            }
-            continue;
-        }
-
-        if *c == b'\\' {
-            was_escaped = true;
-        } else if *c == b'"' {
-            if first_index == 0 {
-                owned.extend(&*input[last_index..i]);
-                first_index = i + 1;
-            } else {
-                owned.extend(&*input[first_index..i]);
-                first_index = 0;
-                last_index = i + 1;
+                _ => out.push(c),
+            };
+        } else {
+            match c {
+                b'\\' => {
+                    prev_was_backslash = true;
+                }
+                b'"' => {}
+                _ => out.push(c),
             }
         }
     }
-
-    if last_index == 0 {
-        input
-    } else {
-        owned.extend(&*input[last_index..]);
-        Cow::Owned(owned)
-    }
+    Cow::Owned(out)
 }
 
 /// `&[u8]` variant of [`normalize`].

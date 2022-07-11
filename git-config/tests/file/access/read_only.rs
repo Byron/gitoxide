@@ -233,22 +233,22 @@ fn multi_line_value_plain() {
 }
 
 #[test]
-#[ignore]
 fn complex_quoted_values() {
     let config = r#"
     [core]
-            escape-sequence = "hi\nho\tthere\bi"
+            escape-sequence = "hi\nho\n\tthere\bi\\\" \""
 "#;
     let config = File::try_from(config).unwrap();
-
+    let expected = "hi\nho\n\ttheri\\\" \"";
     assert_eq!(
         config.raw_value("core", None, "escape-sequence").unwrap().as_ref(),
-        "hi\\nho\\tthere\\b"
+        expected,
+        "raw_value is normalized"
     );
     assert_eq!(
         config.string("core", None, "escape-sequence").unwrap().as_ref(),
-        "hi\nho\ttheri",
-        "normalization is what resolves these valuesi, even backspaces"
+        expected,
+        "and so is the comfort API"
     );
 }
 
