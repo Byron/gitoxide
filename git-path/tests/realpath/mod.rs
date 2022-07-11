@@ -1,5 +1,6 @@
-use git_path::{realpath::Error, realpath_opts};
 use std::path::Path;
+
+use git_path::{realpath::Error, realpath_opts};
 use tempfile::tempdir;
 
 #[test]

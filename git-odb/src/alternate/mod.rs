@@ -16,8 +16,9 @@
 //! ```
 //!
 //! Based on the [canonical implementation](https://github.com/git/git/blob/master/sha1-file.c#L598:L609).
-use git_path::realpath::MAX_SYMLINKS;
 use std::{fs, io, path::PathBuf};
+
+use git_path::realpath::MAX_SYMLINKS;
 
 ///
 pub mod parse;

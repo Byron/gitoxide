@@ -106,10 +106,10 @@ pub struct EstimateHours {
 }
 
 mod validator {
-    use git_repository as git;
     use std::{ffi::OsStr, path::PathBuf};
 
     use anyhow::Context;
+    use git_repository as git;
 
     fn is_repo_inner(dir: &OsStr) -> anyhow::Result<()> {
         let git_dir = PathBuf::from(dir).join(".git");

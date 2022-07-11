@@ -1,6 +1,6 @@
+use std::{borrow::Cow, path::Path};
+
 use git_path::absolutize;
-use std::borrow::Cow;
-use std::path::Path;
 
 fn p(input: &str) -> &Path {
     Path::new(input)

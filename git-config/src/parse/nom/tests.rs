@@ -432,11 +432,12 @@ mod section {
 }
 
 mod value_continuation {
+    use bstr::ByteSlice;
+
     use crate::parse::{
         section,
         tests::util::{into_events, newline_event, value_done_event, value_not_done_event},
     };
-    use bstr::ByteSlice;
 
     pub fn value_impl<'a>(i: &'a [u8], events: &mut section::Events<'a>) -> nom::IResult<&'a [u8], ()> {
         super::value_impl(i, &mut |e| events.push(e)).map(|t| (t.0, ()))

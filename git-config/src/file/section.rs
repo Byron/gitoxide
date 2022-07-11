@@ -6,13 +6,11 @@ use std::{
 
 use bstr::{BStr, BString, ByteVec};
 
-use crate::file::Size;
-use crate::value::normalize_bstr;
 use crate::{
-    file::Index,
+    file::{Index, Size},
     lookup, parse,
     parse::{section::Key, Event},
-    value::{normalize, normalize_bstring},
+    value::{normalize, normalize_bstr, normalize_bstring},
 };
 
 /// A opaque type that represents a mutable reference to a section.

@@ -18,13 +18,13 @@ pub enum Error {
 pub const MAX_SYMLINKS: u8 = 32;
 
 pub(crate) mod function {
-    use crate::realpath::MAX_SYMLINKS;
     use std::path::{
         Component::{CurDir, Normal, ParentDir, Prefix, RootDir},
         Path, PathBuf,
     };
 
     use super::Error;
+    use crate::realpath::MAX_SYMLINKS;
 
     /// Check each component of `path` and see if it is a symlink. If so, resolve it.
     /// Do not fail for non-existing components, but assume these are as is.
