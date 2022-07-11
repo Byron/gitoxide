@@ -151,7 +151,7 @@ fn parse_attributes(input: &[u8]) -> Result<Vec<git_attributes::Name>, Error> {
     let unescaped = unescape_attribute_values(input.into())?;
 
     git_attributes::parse::Iter::new(unescaped.as_bstr())
-        .map(|res| res.map(|v| v.into()))
+        .map(|res| res.map(|v| v.to_owned()))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| Error::InvalidAttribute { attribute: e.attribute })
 }

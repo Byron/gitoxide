@@ -13,7 +13,7 @@ fn attrs_to_assignments<'a>(
         .map(|res| {
             res.map(|attr| Assignment {
                 name: attr.0.to_str().expect("no illformed unicode").into(),
-                state: attr.1.into(),
+                state: attr.1.to_owned(),
             })
         })
         .collect()

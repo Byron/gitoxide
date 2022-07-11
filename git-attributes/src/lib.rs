@@ -104,6 +104,12 @@ mod state {
     use crate::{State, StateRef};
     use bstr::ByteSlice;
 
+    impl<'a> StateRef<'a> {
+        pub fn to_owned(self) -> State {
+            self.into()
+        }
+    }
+
     impl<'a> From<StateRef<'a>> for State {
         fn from(s: StateRef<'a>) -> Self {
             match s {
@@ -127,6 +133,10 @@ pub mod name {
 
         pub fn state(&self) -> StateRef<'a> {
             self.1
+        }
+
+        pub fn to_owned(self) -> Name {
+            self.into()
         }
     }
 
