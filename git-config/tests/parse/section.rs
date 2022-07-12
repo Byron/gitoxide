@@ -3,14 +3,32 @@ use git_config::parse::Event;
 use std::borrow::Cow;
 
 pub fn header_event(name: &'static str, subsection: impl Into<Option<&'static str>>) -> Event<'static> {
-    Event::SectionHeader(section::Header::new(name, subsection.into().map(Cow::Borrowed)))
+    Event::SectionHeader(section::Header::new(name, subsection.into().map(Cow::Borrowed)).unwrap())
 }
 
 mod header {
     mod new {
+        use git_config::parse::section;
+
         #[test]
-        #[ignore]
-        fn names_must_be_mostly_ascii() {}
+        fn names_must_be_mostly_ascii() {
+            assert_eq!(
+                section::Header::new("🤗", None),
+                Err(section::header::Error::InvalidName)
+            );
+            assert_eq!(
+                section::Header::new("x.y", None),
+                Err(section::header::Error::InvalidName)
+            );
+            assert_eq!(
+                section::Header::new("x y", None),
+                Err(section::header::Error::InvalidName)
+            );
+            assert_eq!(
+                section::Header::new("x\ny", None),
+                Err(section::header::Error::InvalidName)
+            );
+        }
 
         #[test]
         #[ignore]

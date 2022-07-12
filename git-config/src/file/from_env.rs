@@ -25,6 +25,8 @@ pub enum Error {
     PathInterpolationError(#[from] interpolate::Error),
     #[error(transparent)]
     FromPathsError(#[from] from_paths::Error),
+    #[error(transparent)]
+    Section(#[from] section::header::Error),
 }
 
 /// Instantiation from environment variables
@@ -106,7 +108,7 @@ impl File<'static> {
                         Err(_) => config.new_section(
                             section_name.to_string(),
                             subsection.map(|subsection| Cow::Owned(subsection.to_string())),
-                        ),
+                        )?,
                     };
 
                     section.push(

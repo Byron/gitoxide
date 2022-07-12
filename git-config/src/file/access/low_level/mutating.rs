@@ -51,20 +51,21 @@ impl<'event> File<'event> {
     /// # use std::convert::TryFrom;
     /// # use bstr::ByteSlice;
     /// let mut git_config = git_config::File::default();
-    /// let mut section = git_config.new_section("hello", Some("world".into()));
+    /// let mut section = git_config.new_section("hello", Some("world".into()))?;
     /// section.push("a".into(), b"b".as_bstr().into());
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n");
     /// let _section = git_config.new_section("core", None);
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n[core]\n");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn new_section(
         &mut self,
         section_name: impl Into<Cow<'event, str>>,
         subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) -> MutableSection<'_, 'event> {
-        let mut section = self.push_section(section_name, subsection_name, SectionBody::default());
+    ) -> Result<MutableSection<'_, 'event>, section::header::Error> {
+        let mut section = self.push_section(section_name, subsection_name, SectionBody::default())?;
         section.push_newline();
-        section
+        Ok(section)
     }
 
     /// Removes the section, returning the events it had, if any. If multiple
@@ -130,8 +131,8 @@ impl<'event> File<'event> {
         section_name: impl Into<Cow<'event, str>>,
         subsection_name: impl Into<Option<Cow<'event, str>>>,
         section: SectionBody<'event>,
-    ) -> MutableSection<'_, 'event> {
-        self.push_section_internal(section::Header::new(section_name, subsection_name), section)
+    ) -> Result<MutableSection<'_, 'event>, section::header::Error> {
+        Ok(self.push_section_internal(section::Header::new(section_name, subsection_name)?, section))
     }
 
     /// Renames a section, modifying the last matching section.
