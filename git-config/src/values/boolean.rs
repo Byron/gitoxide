@@ -1,18 +1,8 @@
 use std::{borrow::Cow, convert::TryFrom, fmt::Display};
 
-use bstr::{BStr, BString, ByteSlice};
+use bstr::{BStr, BString};
 
 use crate::{value, Boolean};
-
-impl Boolean {
-    /// Generates a byte representation of the value. This should be used when
-    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
-    /// guaranteed.
-    #[must_use]
-    pub fn to_bstring(self) -> BString {
-        self.to_string().into()
-    }
-}
 
 fn bool_err(input: impl Into<BString>) -> value::Error {
     value::Error::new(
@@ -32,14 +22,6 @@ impl TryFrom<&BStr> for Boolean {
         } else {
             Err(bool_err(value))
         }
-    }
-}
-
-impl TryFrom<BString> for Boolean {
-    type Error = value::Error;
-
-    fn try_from(value: BString) -> Result<Self, Self::Error> {
-        Self::try_from(value.as_bstr())
     }
 }
 
