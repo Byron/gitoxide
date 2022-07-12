@@ -7,6 +7,32 @@ pub fn header_event(name: &'static str, subsection: impl Into<Option<&'static st
 }
 
 mod header {
+    mod write_to {
+        use git_config::parse::section;
+        use std::borrow::Cow;
+
+        #[test]
+        fn subsection_backslashes_and_quotes_are_escaped() -> crate::Result {
+            assert_eq!(
+                section::Header::new("core", Cow::from(r#"a\b"#))?.to_bstring(),
+                r#"[core "a\\b"]"#
+            );
+            assert_eq!(
+                section::Header::new("core", Cow::from(r#"a:"b""#))?.to_bstring(),
+                r#"[core "a:\"b\""]"#
+            );
+            Ok(())
+        }
+
+        #[test]
+        fn everything_is_allowed() -> crate::Result {
+            assert_eq!(
+                section::Header::new("core", Cow::from("a/b \t\t a\\b"))?.to_bstring(),
+                "[core \"a/b \t\t a\\\\b\"]"
+            );
+            Ok(())
+        }
+    }
     mod new {
         use git_config::parse::section;
         use std::borrow::Cow;
