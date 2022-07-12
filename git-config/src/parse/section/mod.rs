@@ -48,12 +48,12 @@ impl Display for Section<'_> {
 
 mod types {
     macro_rules! generate_case_insensitive {
-        ($name:ident, $module:ident, $cow_inner_type:ty, $comment:literal) => {
+        ($name:ident, $module:ident, $err_doc:literal, $validate:ident, $cow_inner_type:ty, $comment:literal) => {
             ///
             pub mod $module {
                 /// The error returned when `TryFrom` is invoked to create an instance.
                 #[derive(Debug, thiserror::Error, Copy, Clone)]
-                #[error("Valid names consist alphanumeric characters or dashes.")]
+                #[error($err_doc)]
                 pub struct Error;
             }
 
@@ -110,7 +110,7 @@ mod types {
                 type Error = $module::Error;
 
                 fn try_from(s: &'a str) -> Result<Self, Self::Error> {
-                    Ok(Self(std::borrow::Cow::Borrowed(s.into())))
+                    Self::try_from(std::borrow::Cow::Borrowed(bstr::ByteSlice::as_bstr(s.as_bytes())))
                 }
             }
 
@@ -118,7 +118,11 @@ mod types {
                 type Error = $module::Error;
 
                 fn try_from(s: std::borrow::Cow<'a, bstr::BStr>) -> Result<Self, Self::Error> {
-                    Ok(Self(s))
+                    if $validate(s.as_ref()) {
+                        Ok(Self(s))
+                    } else {
+                        Err($module::Error)
+                    }
                 }
             }
 
@@ -137,9 +141,19 @@ mod types {
             }
         };
     }
+
+    fn is_valid_name(n: &bstr::BStr) -> bool {
+        !n.is_empty() && n.iter().all(|b| b.is_ascii_alphanumeric() || *b == b'-')
+    }
+    fn is_valid_key(n: &bstr::BStr) -> bool {
+        is_valid_name(n) && n[0].is_ascii_alphabetic()
+    }
+
     generate_case_insensitive!(
         Name,
         name,
+        "Valid names consist alphanumeric characters or dashes.",
+        is_valid_name,
         bstr::BStr,
         "Wrapper struct for section header names, like `includeIf`, since these are case-insensitive."
     );
@@ -147,6 +161,8 @@ mod types {
     generate_case_insensitive!(
         Key,
         key,
+        "Valid keys consist alphanumeric characters or dashes, starting with an alphabetic character.",
+        is_valid_key,
         bstr::BStr,
         "Wrapper struct for key names, like `path` in `include.path`, since keys are case-insensitive."
     );

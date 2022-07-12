@@ -60,6 +60,24 @@ mod header {
         }
     }
 }
+mod name {
+    use git_config::parse::section::Name;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn alphanum_and_dash_are_valid() {
+        assert!(Name::try_from("1a").is_ok());
+        assert!(Name::try_from("Hello-World").is_ok());
+    }
+
+    #[test]
+    fn rejects_invalid_format() {
+        assert!(Name::try_from("").is_err());
+        assert!(Name::try_from("a.2").is_err());
+        assert!(Name::try_from("\"").is_err());
+        assert!(Name::try_from("##").is_err());
+    }
+}
 
 mod key {
     use git_config::parse::section::Key;
@@ -71,8 +89,17 @@ mod key {
     }
 
     #[test]
+    fn rejects_invalid_format() {
+        assert!(Key::try_from("").is_err());
+        assert!(Key::try_from("1a").is_err());
+        assert!(Key::try_from("a.2").is_err());
+        assert!(Key::try_from("##").is_err());
+        assert!(Key::try_from("\"").is_err());
+    }
+
+    #[test]
     fn case_insentive_eq() {
-        assert_eq!(key("aBc"), key("AbC"));
+        assert_eq!(key("aB-c"), key("Ab-C"));
     }
 
     #[test]

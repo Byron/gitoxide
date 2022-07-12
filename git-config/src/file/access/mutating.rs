@@ -50,9 +50,10 @@ impl<'event> File<'event> {
     /// # use git_config::File;
     /// # use std::convert::TryFrom;
     /// # use bstr::ByteSlice;
+    /// # use git_config::parse::section;
     /// let mut git_config = git_config::File::default();
     /// let mut section = git_config.new_section("hello", Some("world".into()))?;
-    /// section.push("a", b"b".as_bstr().into());
+    /// section.push(section::Key::try_from("a")?, b"b".as_bstr().into());
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n");
     /// let _section = git_config.new_section("core", None);
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n[core]\n");

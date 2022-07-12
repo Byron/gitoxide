@@ -1,4 +1,3 @@
-use std::convert::TryInto;
 use std::{
     borrow::Cow,
     iter::FusedIterator,
@@ -7,7 +6,6 @@ use std::{
 
 use bstr::{BStr, BString, ByteVec};
 
-use crate::file::section;
 use crate::{
     file::{Index, Size},
     lookup, parse,
@@ -27,8 +25,7 @@ pub struct MutableSection<'a, 'event> {
 impl<'a, 'event> MutableSection<'a, 'event> {
     /// Adds an entry to the end of this section.
     // TODO: multi-line handling - maybe just escape it for now.
-    pub fn push(&mut self, key: impl TryInto<Key<'event>>, value: Cow<'event, BStr>) {
-        let key = key.try_into().unwrap_or_else(|_| todo!("error handline"));
+    pub fn push(&mut self, key: Key<'event>, value: Cow<'event, BStr>) {
         if self.whitespace > 0 {
             self.section.0.push(Event::Whitespace({
                 let mut s = BString::default();
@@ -48,7 +45,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     /// Removes all events until a key value pair is removed. This will also
     /// remove the whitespace preceding the key value pair, if any is found.
     pub fn pop(&mut self) -> Option<(Key<'_>, Cow<'event, BStr>)> {
-        let mut values = vec![];
+        let mut values = Vec::new();
         // events are popped in reverse order
         while let Some(e) = self.section.0.pop() {
             match e {
@@ -103,19 +100,6 @@ impl<'a, 'event> MutableSection<'a, 'event> {
             return None;
         }
         Some(self.remove_internal(range))
-    }
-
-    /// Performs the removal, assuming the range is valid.
-    fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, BStr> {
-        self.section
-            .0
-            .drain(range)
-            .fold(Cow::Owned(BString::default()), |mut acc, e| {
-                if let Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) = e {
-                    acc.to_mut().extend(&**v);
-                }
-                acc
-            })
     }
 
     /// Adds a new line event. Note that you don't need to call this unless
@@ -193,6 +177,19 @@ impl<'a, 'event> MutableSection<'a, 'event> {
 
         Size(3)
     }
+
+    /// Performs the removal, assuming the range is valid.
+    fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, BStr> {
+        self.section
+            .0
+            .drain(range)
+            .fold(Cow::Owned(BString::default()), |mut acc, e| {
+                if let Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) = e {
+                    acc.to_mut().extend(&**v);
+                }
+                acc
+            })
+    }
 }
 
 impl<'event> Deref for MutableSection<'_, 'event> {
@@ -253,7 +250,7 @@ impl<'event> SectionBody<'event> {
     /// Retrieves the last matching value in a section with the given key, if present.
     #[must_use]
     pub fn value(&self, key: &str) -> Option<Cow<'_, BStr>> {
-        let key = section::Key::from_str_unchecked(key);
+        let key = Key::from_str_unchecked(key);
         let range = self.value_range_by_key(&key);
         if range.is_empty() {
             return None;
@@ -282,7 +279,7 @@ impl<'event> SectionBody<'event> {
     /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
     pub fn values(&self, key: &str) -> Vec<Cow<'_, BStr>> {
-        let key = &section::Key::from_str_unchecked(key);
+        let key = &Key::from_str_unchecked(key);
         let mut values = Vec::new();
         let mut expect_value = false;
         let mut concatenated_value = BString::default();
@@ -319,7 +316,7 @@ impl<'event> SectionBody<'event> {
     /// Returns true if the section containss the provided key.
     #[must_use]
     pub fn contains_key(&self, key: &str) -> bool {
-        let key = &section::Key::from_str_unchecked(key);
+        let key = &Key::from_str_unchecked(key);
         self.0.iter().any(|e| {
             matches!(e,
                 Event::SectionKey(k) if k == key
