@@ -19,6 +19,19 @@ pub mod from_env;
 ///
 pub mod from_paths;
 
+///
+pub mod rename_section {
+    /// The error returned by [`File::rename_section(…)`][crate::File::rename_section()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Lookup(#[from] crate::lookup::existing::Error),
+        #[error(transparent)]
+        Section(#[from] crate::parse::section::header::Error),
+    }
+}
+
 mod access;
 mod impls;
 mod utils;

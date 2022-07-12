@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use crate::parse::section::into_cow_bstr;
+use crate::file::rename_section;
 use crate::{
     file::{MutableSection, SectionBody},
     lookup,
@@ -140,18 +140,16 @@ impl<'event> File<'event> {
         &mut self,
         section_name: &str,
         subsection_name: impl Into<Option<&'a str>>,
-        new_section_name: impl Into<section::Name<'event>>,
+        new_section_name: impl Into<Cow<'event, str>>,
         new_subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) -> Result<(), lookup::existing::Error> {
+    ) -> Result<(), rename_section::Error> {
         let id = self
             .section_ids_by_name_and_subname(section_name, subsection_name.into())?
             .rev()
             .next()
             .expect("list of sections were empty, which violates invariant");
         let header = self.section_headers.get_mut(&id).expect("known section-id");
-        header.name = new_section_name.into();
-        header.subsection_name = new_subsection_name.into().map(into_cow_bstr);
-
+        *header = section::Header::new(new_section_name, new_subsection_name)?;
         Ok(())
     }
 }
