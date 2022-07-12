@@ -5,14 +5,6 @@ use bstr::{BStr, BString};
 use crate::{value, Integer};
 
 impl Integer {
-    /// Generates a byte representation of the value. This should be used when
-    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
-    /// guaranteed.
-    #[must_use]
-    pub fn to_bstring(self) -> BString {
-        self.into()
-    }
-
     /// Canonicalize values as simple decimal numbers.
     /// An optional suffix of k, m, or g (case-insensitive), will cause the
     /// value to be multiplied by 1024 (k), 1048576 (m), or 1073741824 (g) respectively.
@@ -89,34 +81,11 @@ impl TryFrom<&BStr> for Integer {
     }
 }
 
-impl TryFrom<BString> for Integer {
-    type Error = value::Error;
-
-    fn try_from(value: BString) -> Result<Self, Self::Error> {
-        Self::try_from(value.as_ref())
-    }
-}
-
 impl TryFrom<Cow<'_, BStr>> for Integer {
     type Error = value::Error;
 
     fn try_from(c: Cow<'_, BStr>) -> Result<Self, Self::Error> {
-        match c {
-            Cow::Borrowed(c) => Self::try_from(c),
-            Cow::Owned(c) => Self::try_from(c),
-        }
-    }
-}
-
-impl From<Integer> for BString {
-    fn from(i: Integer) -> Self {
-        i.into()
-    }
-}
-
-impl From<&Integer> for BString {
-    fn from(i: &Integer) -> Self {
-        i.to_string().into()
+        Self::try_from(c.as_ref())
     }
 }
 
@@ -180,18 +149,10 @@ impl FromStr for Suffix {
     }
 }
 
-impl TryFrom<&[u8]> for Suffix {
+impl TryFrom<&BStr> for Suffix {
     type Error = ();
 
-    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(s: &BStr) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|_| ())?)
-    }
-}
-
-impl TryFrom<BString> for Suffix {
-    type Error = ();
-
-    fn try_from(value: BString) -> Result<Self, Self::Error> {
-        Self::try_from(value.as_ref())
     }
 }
