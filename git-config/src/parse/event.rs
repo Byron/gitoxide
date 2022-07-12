@@ -5,12 +5,28 @@ use bstr::BString;
 use crate::parse::Event;
 
 impl Event<'_> {
-    /// Generates a byte representation of the value. This should be used when
-    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
-    /// guaranteed.
+    /// Serialize this type into a `BString` for convenience.
+    ///
+    /// Note that `to_string()` can also be used, but might not be lossless.
     #[must_use]
     pub fn to_bstring(&self) -> BString {
-        self.into()
+        let mut buf = Vec::new();
+        self.write_to(&mut buf).expect("io error impossible");
+        buf.into()
+    }
+
+    /// Stream ourselves to the given `out`, in order to reproduce this event mostly losslessly
+    /// as it was parsed.
+    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+        match self {
+            Self::Whitespace(e) | Self::Newline(e) | Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => {
+                out.write_all(e.as_ref())
+            }
+            Self::KeyValueSeparator => out.write_all(&[b'=']),
+            Self::SectionKey(k) => out.write_all(k.0.as_ref()),
+            Self::SectionHeader(h) => h.write_to(&mut out),
+            Self::Comment(c) => c.write_to(&mut out),
+        }
     }
 
     /// Turn this instance into a fully owned one with `'static` lifetime.
@@ -32,17 +48,7 @@ impl Event<'_> {
 
 impl Display for Event<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => match std::str::from_utf8(e) {
-                Ok(e) => e.fmt(f),
-                Err(_) => write!(f, "{:02x?}", e),
-            },
-            Self::Comment(e) => e.fmt(f),
-            Self::SectionHeader(e) => e.fmt(f),
-            Self::SectionKey(e) => e.fmt(f),
-            Self::Newline(e) | Self::Whitespace(e) => e.fmt(f),
-            Self::KeyValueSeparator => write!(f, "="),
-        }
+        Display::fmt(&self.to_bstring(), f)
     }
 }
 
@@ -54,13 +60,6 @@ impl From<Event<'_>> for BString {
 
 impl From<&Event<'_>> for BString {
     fn from(event: &Event<'_>) -> Self {
-        match event {
-            Event::Value(e) | Event::ValueNotDone(e) | Event::ValueDone(e) => e.as_ref().into(),
-            Event::Comment(e) => e.into(),
-            Event::SectionHeader(e) => e.into(),
-            Event::SectionKey(e) => e.0.as_ref().into(),
-            Event::Newline(e) | Event::Whitespace(e) => e.as_ref().into(),
-            Event::KeyValueSeparator => "=".into(),
-        }
+        event.to_bstring()
     }
 }

@@ -48,12 +48,35 @@ impl Display for Section<'_> {
 }
 
 impl Header<'_> {
-    /// Generates a byte representation of the value. This should be used when
-    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
-    /// guaranteed.
+    /// Serialize this type into a `BString` for convenience.
+    ///
+    /// Note that `to_string()` can also be used, but might not be lossless.
     #[must_use]
     pub fn to_bstring(&self) -> BString {
-        self.into()
+        let mut buf = Vec::new();
+        self.write_to(&mut buf).expect("io error impossible");
+        buf.into()
+    }
+
+    /// Stream ourselves to the given `out`, in order to reproduce this header mostly losslessly
+    /// as it was parsed.
+    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+        out.write_all(b"[")?;
+        out.write_all(self.name.as_ref())?;
+
+        if let (Some(sep), Some(subsection)) = (&self.separator, &self.subsection_name) {
+            let sep = sep.as_ref();
+            out.write_all(sep)?;
+            if sep == "." {
+                out.write_all(subsection.as_ref())?;
+            } else {
+                out.write_all(&[b'"'])?;
+                out.write_all(subsection.as_ref())?;
+                out.write_all(&[b'"'])?;
+            }
+        }
+
+        out.write_all(b"]")
     }
 
     /// Turn this instance into a fully owned one with `'static` lifetime.
@@ -69,20 +92,7 @@ impl Header<'_> {
 
 impl Display for Header<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}", self.name)?;
-
-        if let Some(v) = &self.separator {
-            // Separator must be utf-8
-            v.fmt(f)?;
-            let subsection_name = self.subsection_name.as_ref().unwrap();
-            if v.as_ref() == "." {
-                subsection_name.fmt(f)?;
-            } else {
-                write!(f, "\"{}\"", subsection_name)?; // TODO: proper escaping of special characters
-            }
-        }
-
-        write!(f, "]")
+        Display::fmt(&self.to_bstring(), f)
     }
 }
 
@@ -94,7 +104,7 @@ impl From<Header<'_>> for BString {
 
 impl From<&Header<'_>> for BString {
     fn from(header: &Header<'_>) -> Self {
-        header.to_string().into()
+        header.to_bstring()
     }
 }
 
