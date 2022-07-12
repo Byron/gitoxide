@@ -47,7 +47,43 @@ impl Display for Section<'_> {
     }
 }
 
+impl<'a> Header<'a> {
+    /// Instantiate a new header either with a section `name`, e.g. "core" serializing to `["core"]`
+    /// or `[remote "origin"]` for `subsection` being "origin" and `name` being "remote".
+    pub fn new(name: impl Into<Cow<'a, str>>, subsection: impl Into<Option<Cow<'a, str>>>) -> Header<'a> {
+        let name = Name(into_cow_bstr(name.into()));
+        if let Some(subsection_name) = subsection.into() {
+            Header {
+                name,
+                separator: Some(Cow::Borrowed(" ".into())),
+                subsection_name: Some(into_cow_bstr(subsection_name)),
+            }
+        } else {
+            Header {
+                name,
+                separator: None,
+                subsection_name: None,
+            }
+        }
+    }
+}
+
 impl Header<'_> {
+    ///Return true if this is a header like `[legacy.subsection]`, or false otherwise.
+    pub fn is_legacy(&self) -> bool {
+        self.separator.as_deref().map_or(false, |n| n == ".")
+    }
+
+    /// Return the subsection name, if present, i.e. "origin" in `[remote "origin"]`.
+    pub fn subsection_name(&self) -> Option<&BStr> {
+        self.subsection_name.as_deref()
+    }
+
+    /// Return the name of the header, like "remote" in `[remote "origin"]`.
+    pub fn name(&self) -> &BStr {
+        self.name.as_ref().as_bstr()
+    }
+
     /// Serialize this type into a `BString` for convenience.
     ///
     /// Note that `to_string()` can also be used, but might not be lossless.
@@ -212,3 +248,10 @@ mod types {
     );
 }
 pub use types::{Key, Name};
+
+pub(crate) fn into_cow_bstr(c: Cow<'_, str>) -> Cow<'_, BStr> {
+    match c {
+        Cow::Borrowed(s) => Cow::Borrowed(s.into()),
+        Cow::Owned(s) => Cow::Owned(s.into()),
+    }
+}

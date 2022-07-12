@@ -1,3 +1,50 @@
+mod section {
+
+    mod header {
+        mod write_to {
+            use crate::parse::section;
+            use std::borrow::Cow;
+
+            fn header(name: &str, subsection: impl Into<Option<(&'static str, &'static str)>>) -> section::Header<'_> {
+                let name = section::Name(Cow::Borrowed(name.into()));
+                if let Some((separator, subsection_name)) = subsection.into() {
+                    section::Header {
+                        name,
+                        separator: Some(Cow::Borrowed(separator.into())),
+                        subsection_name: Some(Cow::Borrowed(subsection_name.into())),
+                    }
+                } else {
+                    section::Header {
+                        name,
+                        separator: None,
+                        subsection_name: None,
+                    }
+                }
+            }
+
+            #[test]
+            fn legacy_subsection_format_does_not_use_escapes() {
+                let invalid = header("invalid", Some((".", "\\ \"")));
+                assert_eq!(
+                    invalid.to_bstring(),
+                    "[invalid.\\ \"]",
+                    "no escaping happens for legacy subsections"
+                );
+            }
+
+            #[test]
+            fn subsections_escape_two_characters_only() {
+                let invalid = header("invalid", Some((" ", "\\ \"\npost newline")));
+                assert_eq!(
+                    invalid.to_bstring(),
+                    "[invalid \"\\\\ \\\"\npost newline\"]",
+                    "newlines are actually invalid in subsection, but they are possible due to unvalidated instance creation"
+                );
+            }
+        }
+    }
+}
+
 pub(crate) mod util {
     //! This module is only included for tests, and contains common unit test helper
     //! functions.

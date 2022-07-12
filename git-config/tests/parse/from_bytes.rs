@@ -93,7 +93,7 @@ fn complex() {
             value("gpg"),
             newline(),
 
-            section::header_event("url", (" ", "ssh://git@github.com/")),
+            section::header_event("url", "ssh://git@github.com/"),
             newline(),
 
             whitespace("        "),
@@ -104,7 +104,7 @@ fn complex() {
             value("\"github://\""),
             newline(),
 
-            section::header_event("url", (" ", "ssh://git@git.eddie.sh/edward/")),
+            section::header_event("url",  "ssh://git@git.eddie.sh/edward/"),
             newline(),
 
             whitespace("        "),

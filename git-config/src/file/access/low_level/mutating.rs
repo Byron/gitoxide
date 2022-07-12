@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
-use bstr::BStr;
-
+use crate::parse::section::into_cow_bstr;
 use crate::{
     file::{MutableSection, SectionBody},
     lookup,
@@ -132,15 +131,7 @@ impl<'event> File<'event> {
         subsection_name: impl Into<Option<Cow<'event, str>>>,
         section: SectionBody<'event>,
     ) -> MutableSection<'_, 'event> {
-        let subsection_name = subsection_name.into().map(into_cow_bstr);
-        self.push_section_internal(
-            section::Header {
-                name: section::Name(into_cow_bstr(section_name.into())),
-                separator: subsection_name.is_some().then(|| Cow::Borrowed(" ".into())),
-                subsection_name,
-            },
-            section,
-        )
+        self.push_section_internal(section::Header::new(section_name, subsection_name), section)
     }
 
     /// Renames a section, modifying the last matching section.
@@ -161,12 +152,5 @@ impl<'event> File<'event> {
         header.subsection_name = new_subsection_name.into().map(into_cow_bstr);
 
         Ok(())
-    }
-}
-
-fn into_cow_bstr(c: Cow<'_, str>) -> Cow<'_, BStr> {
-    match c {
-        Cow::Borrowed(s) => Cow::Borrowed(s.into()),
-        Cow::Owned(s) => Cow::Owned(s.into()),
     }
 }
