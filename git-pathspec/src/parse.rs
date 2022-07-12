@@ -174,8 +174,18 @@ fn unescape_attribute_values(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
             out.push(b' ');
         } else {
             check_attribute_value(value.as_bstr())?;
-            let end = out.len() + attr.len() + 1;
-            out = Cow::Borrowed(&input[0..end.min(input.len())])
+            match out {
+                Cow::Borrowed(_) => {
+                    let end = out.len() + attr.len() + 1;
+                    out = Cow::Borrowed(&input[0..end.min(input.len())])
+                }
+                Cow::Owned(_) => {
+                    let out = out.to_mut();
+                    out.push_str(name);
+                    out.push_str(value);
+                    out.push(b' ');
+                }
+            }
         }
     }
 

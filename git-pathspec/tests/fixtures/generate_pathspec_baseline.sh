@@ -78,6 +78,7 @@ baseline ':(attr:v=one\-)'
 baseline ':(attr:v=one\_)'
 baseline ':(attr:v=one\,)'
 baseline ':(attr:v=one\,two\,three)'
+baseline ':(attr:a=\d b= c=\d)'
 
 # failing
 

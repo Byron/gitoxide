@@ -224,6 +224,14 @@ mod parse {
                     r":(attr:v=one\,two\,three)",
                     pat_with_attrs(vec![("v", State::Value(r"one,two,three".into()))]),
                 ),
+                (
+                    r":(attr:a=\d b= c=\d)",
+                    pat_with_attrs(vec![
+                        ("a", State::Value(r"d".into())),
+                        ("b", State::Value(r"".into())),
+                        ("c", State::Value(r"d".into())),
+                    ]),
+                ),
             ];
 
             check_valid_inputs(inputs)
@@ -431,6 +439,24 @@ mod parse {
             assert!(output.is_err());
             assert!(matches!(output.unwrap_err(), Error::IncompatibleSearchModes));
         }
+
+        // #[test]
+        // fn fuzzer() {
+        //     let input = r":(attr:=\d t= �=\d)";
+        //     let input_raw = vec![
+        //         58, 40, 97, 116, 116, 114, 58, 61, 92, 100, 32, 116, 61, 32, 247, 61, 92, 100, 41,
+        //     ];
+
+        //     // assert!(
+        //     //     !check_against_baseline(input),
+        //     //     "This pathspec is valid in git: {}",
+        //     //     input
+        //     // );
+
+        //     let output = git_pathspec::parse(&input_raw);
+        //     assert!(output.is_err());
+        //     assert!(matches!(output.unwrap_err(), Error::InvalidAttributeValue { .. }));
+        // }
     }
 
     fn check_valid_inputs(inputs: Vec<(&str, PatternForTesting)>) {
