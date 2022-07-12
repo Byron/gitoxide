@@ -10,6 +10,8 @@ use std::fmt::Display;
 pub enum Error {
     #[error("section names can only be ascii, '-'")]
     InvalidName,
+    #[error("sub-section names must not contain newlines or null bytes")]
+    InvalidSubSection,
 }
 
 impl<'a> Header<'a> {
@@ -24,7 +26,7 @@ impl<'a> Header<'a> {
             Ok(Header {
                 name,
                 separator: Some(Cow::Borrowed(" ".into())),
-                subsection_name: Some(into_cow_bstr(subsection_name)),
+                subsection_name: Some(validated_subsection(into_cow_bstr(subsection_name))?),
             })
         } else {
             Ok(Header {
@@ -34,6 +36,13 @@ impl<'a> Header<'a> {
             })
         }
     }
+}
+
+fn validated_subsection(name: Cow<'_, BStr>) -> Result<Cow<'_, BStr>, Error> {
+    name.find_byteset(b"\n\0")
+        .is_none()
+        .then(|| name)
+        .ok_or(Error::InvalidSubSection)
 }
 
 fn validated_name(name: Cow<'_, BStr>) -> Result<Cow<'_, BStr>, Error> {

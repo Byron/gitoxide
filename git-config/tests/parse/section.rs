@@ -9,30 +9,29 @@ pub fn header_event(name: &'static str, subsection: impl Into<Option<&'static st
 mod header {
     mod new {
         use git_config::parse::section;
+        use std::borrow::Cow;
 
         #[test]
         fn names_must_be_mostly_ascii() {
-            assert_eq!(
-                section::Header::new("🤗", None),
-                Err(section::header::Error::InvalidName)
-            );
-            assert_eq!(
-                section::Header::new("x.y", None),
-                Err(section::header::Error::InvalidName)
-            );
-            assert_eq!(
-                section::Header::new("x y", None),
-                Err(section::header::Error::InvalidName)
-            );
-            assert_eq!(
-                section::Header::new("x\ny", None),
-                Err(section::header::Error::InvalidName)
-            );
+            for name in ["🤗", "x.y", "x y", "x\ny"] {
+                assert_eq!(
+                    section::Header::new(name, None),
+                    Err(section::header::Error::InvalidName)
+                );
+            }
         }
 
         #[test]
-        #[ignore]
-        fn subsections_with_newlines_and_null_bytes_are_rejected() {}
+        fn subsections_with_newlines_and_null_bytes_are_rejected() {
+            assert_eq!(
+                section::Header::new("a", Cow::from("a\nb")),
+                Err(section::header::Error::InvalidSubSection)
+            );
+            assert_eq!(
+                section::Header::new("a", Cow::from("a\0b")),
+                Err(section::header::Error::InvalidSubSection)
+            );
+        }
     }
 }
 
