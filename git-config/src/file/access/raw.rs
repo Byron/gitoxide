@@ -24,10 +24,9 @@ impl<'event> File<'event> {
         subsection_name: Option<&str>,
         key: &str,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
-        let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         for section_id in section_ids.rev() {
-            if let Some(v) = self.sections.get(&section_id).expect("known section id").value(&key) {
+            if let Some(v) = self.sections.get(&section_id).expect("known section id").value(key) {
                 return Ok(v);
             }
         }
@@ -141,12 +140,7 @@ impl<'event> File<'event> {
         let mut values = Vec::new();
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         for section_id in section_ids {
-            values.extend(
-                self.sections
-                    .get(&section_id)
-                    .expect("known section id")
-                    .values(&section::Key(Cow::<BStr>::Borrowed(key.into()))),
-            );
+            values.extend(self.sections.get(&section_id).expect("known section id").values(key));
         }
 
         if values.is_empty() {

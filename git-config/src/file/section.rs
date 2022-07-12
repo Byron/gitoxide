@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::{
     borrow::Cow,
     iter::FusedIterator,
@@ -6,6 +7,7 @@ use std::{
 
 use bstr::{BStr, BString, ByteVec};
 
+use crate::file::section;
 use crate::{
     file::{Index, Size},
     lookup, parse,
@@ -25,7 +27,8 @@ pub struct MutableSection<'a, 'event> {
 impl<'a, 'event> MutableSection<'a, 'event> {
     /// Adds an entry to the end of this section.
     // TODO: multi-line handling - maybe just escape it for now.
-    pub fn push(&mut self, key: Key<'event>, value: Cow<'event, BStr>) {
+    pub fn push(&mut self, key: impl TryInto<Key<'event>>, value: Cow<'event, BStr>) {
+        let key = key.try_into().unwrap_or_else(|_| todo!("error handline"));
         if self.whitespace > 0 {
             self.section.0.push(Event::Whitespace({
                 let mut s = BString::default();
@@ -249,8 +252,9 @@ impl<'event> SectionBody<'event> {
 impl<'event> SectionBody<'event> {
     /// Retrieves the last matching value in a section with the given key, if present.
     #[must_use]
-    pub fn value(&self, key: &Key<'_>) -> Option<Cow<'_, BStr>> {
-        let range = self.value_range_by_key(key);
+    pub fn value(&self, key: &str) -> Option<Cow<'_, BStr>> {
+        let key = section::Key::from_str_unchecked(key);
+        let range = self.value_range_by_key(&key);
         if range.is_empty() {
             return None;
         }
@@ -277,7 +281,8 @@ impl<'event> SectionBody<'event> {
     /// Retrieves all values that have the provided key name. This may return
     /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
-    pub fn values(&self, key: &Key<'_>) -> Vec<Cow<'_, BStr>> {
+    pub fn values(&self, key: &str) -> Vec<Cow<'_, BStr>> {
+        let key = &section::Key::from_str_unchecked(key);
         let mut values = Vec::new();
         let mut expect_value = false;
         let mut concatenated_value = BString::default();
@@ -313,7 +318,8 @@ impl<'event> SectionBody<'event> {
 
     /// Returns true if the section containss the provided key.
     #[must_use]
-    pub fn contains_key(&self, key: &Key<'_>) -> bool {
+    pub fn contains_key(&self, key: &str) -> bool {
+        let key = &section::Key::from_str_unchecked(key);
         self.0.iter().any(|e| {
             matches!(e,
                 Event::SectionKey(k) if k == key

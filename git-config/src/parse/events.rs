@@ -87,18 +87,20 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// ```
 /// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
+/// # use std::convert::TryFrom;
 /// # let section_header = section::Header::new("core", None).unwrap();
 /// # let section_data = "[core]\n  autocrlf = input";
 /// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
-/// Event::SectionKey(section::Key(Cow::Borrowed("autocrlf".into()))),
+/// Event::SectionKey(section::Key::try_from("autocrlf")?),
 /// Event::Whitespace(Cow::Borrowed(" ".into())),
 /// Event::KeyValueSeparator,
 /// Event::Whitespace(Cow::Borrowed(" ".into())),
 /// Event::Value(Cow::Borrowed("input".into())),
 /// # ]);
+/// # Ok::<_, Box<dyn std::error::Error>>(())
 /// ```
 ///
 /// Note the two whitespace events between the key and value pair! Those two
@@ -122,15 +124,17 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// ```
 /// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
+/// # use std::convert::TryFrom;
 /// # let section_header = section::Header::new("core", None).unwrap();
 /// # let section_data = "[core]\n  autocrlf";
 /// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::Whitespace(Cow::Borrowed("  ".into())),
-/// Event::SectionKey(section::Key(Cow::Borrowed("autocrlf".into()))),
+/// Event::SectionKey(section::Key::try_from("autocrlf")?),
 /// Event::Value(Cow::Borrowed("".into())),
 /// # ]);
+/// # Ok::<_, Box<dyn std::error::Error>>(())
 /// ```
 ///
 /// ## Quoted values are not unquoted
@@ -152,19 +156,21 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// ```
 /// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
+/// # use std::convert::TryFrom;
 /// # let section_header = section::Header::new("core", None).unwrap();
 /// # let section_data = "[core]\nautocrlf=true\"\"\nfilemode=fa\"lse\"";
 /// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::SectionKey(section::Key(Cow::Borrowed("autocrlf".into()))),
+/// Event::SectionKey(section::Key::try_from("autocrlf")?),
 /// Event::KeyValueSeparator,
 /// Event::Value(Cow::Borrowed(r#"true"""#.into())),
 /// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::SectionKey(section::Key(Cow::Borrowed("filemode".into()))),
+/// Event::SectionKey(section::Key::try_from("filemode")?),
 /// Event::KeyValueSeparator,
 /// Event::Value(Cow::Borrowed(r#"fa"lse""#.into())),
 /// # ]);
+/// # Ok::<_, Box<dyn std::error::Error>>(())
 /// ```
 ///
 /// ## Whitespace after line continuations are part of the value
@@ -185,17 +191,19 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// ```
 /// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
+/// # use std::convert::TryFrom;
 /// # let section_header = section::Header::new("some-section", None).unwrap();
 /// # let section_data = "[some-section]\nfile=a\\\n    c";
 /// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
 /// Event::Newline(Cow::Borrowed("\n".into())),
-/// Event::SectionKey(section::Key(Cow::Borrowed("file".into()))),
+/// Event::SectionKey(section::Key::try_from("file")?),
 /// Event::KeyValueSeparator,
 /// Event::ValueNotDone(Cow::Borrowed("a".into())),
 /// Event::Newline(Cow::Borrowed("\n".into())),
 /// Event::ValueDone(Cow::Borrowed("    c".into())),
 /// # ]);
+/// # Ok::<_, Box<dyn std::error::Error>>(())
 /// ```
 ///
 /// [`File`]: crate::File

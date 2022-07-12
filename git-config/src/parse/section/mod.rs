@@ -48,12 +48,23 @@ impl Display for Section<'_> {
 
 mod types {
     macro_rules! generate_case_insensitive {
-        ($name:ident, $cow_inner_type:ty, $comment:literal) => {
+        ($name:ident, $module:ident, $cow_inner_type:ty, $comment:literal) => {
+            ///
+            pub mod $module {
+                /// The error returned when `TryFrom` is invoked to create an instance.
+                #[derive(Debug, thiserror::Error, Copy, Clone)]
+                #[error("Valid names consist alphanumeric characters or dashes.")]
+                pub struct Error;
+            }
+
             #[doc = $comment]
             #[derive(Clone, Eq, Debug, Default)]
-            pub struct $name<'a>(pub std::borrow::Cow<'a, $cow_inner_type>);
+            pub struct $name<'a>(pub(crate) std::borrow::Cow<'a, $cow_inner_type>);
 
-            impl $name<'_> {
+            impl<'a> $name<'a> {
+                pub(crate) fn from_str_unchecked(s: &'a str) -> Self {
+                    $name(std::borrow::Cow::Borrowed(s.into()))
+                }
                 /// Turn this instance into a fully owned one with `'static` lifetime.
                 #[must_use]
                 pub fn to_owned(&self) -> $name<'static> {
@@ -95,15 +106,19 @@ mod types {
                 }
             }
 
-            impl<'a> From<&'a str> for $name<'a> {
-                fn from(s: &'a str) -> Self {
-                    Self(std::borrow::Cow::Borrowed(s.into()))
+            impl<'a> std::convert::TryFrom<&'a str> for $name<'a> {
+                type Error = $module::Error;
+
+                fn try_from(s: &'a str) -> Result<Self, Self::Error> {
+                    Ok(Self(std::borrow::Cow::Borrowed(s.into())))
                 }
             }
 
-            impl<'a> From<std::borrow::Cow<'a, bstr::BStr>> for $name<'a> {
-                fn from(s: std::borrow::Cow<'a, bstr::BStr>) -> Self {
-                    Self(s)
+            impl<'a> std::convert::TryFrom<std::borrow::Cow<'a, bstr::BStr>> for $name<'a> {
+                type Error = $module::Error;
+
+                fn try_from(s: std::borrow::Cow<'a, bstr::BStr>) -> Result<Self, Self::Error> {
+                    Ok(Self(s))
                 }
             }
 
@@ -114,21 +129,29 @@ mod types {
                     &self.0
                 }
             }
+
+            impl<'a> std::convert::AsRef<str> for $name<'a> {
+                fn as_ref(&self) -> &str {
+                    std::str::from_utf8(self.0.as_ref()).expect("only valid UTF8 makes it through our validation")
+                }
+            }
         };
     }
     generate_case_insensitive!(
         Name,
+        name,
         bstr::BStr,
         "Wrapper struct for section header names, like `includeIf`, since these are case-insensitive."
     );
 
     generate_case_insensitive!(
         Key,
+        key,
         bstr::BStr,
         "Wrapper struct for key names, like `path` in `include.path`, since keys are case-insensitive."
     );
 }
-pub use types::{Key, Name};
+pub use types::{key, name, Key, Name};
 
 pub(crate) fn into_cow_bstr(c: Cow<'_, str>) -> Cow<'_, BStr> {
     match c {

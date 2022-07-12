@@ -64,16 +64,21 @@ mod header {
 mod key {
     use git_config::parse::section::Key;
     use std::cmp::Ordering;
+    use std::convert::TryFrom;
+
+    fn key(k: &str) -> Key<'_> {
+        Key::try_from(k).unwrap()
+    }
 
     #[test]
     fn case_insentive_eq() {
-        assert_eq!(Key::from("aBc"), Key::from("AbC"));
+        assert_eq!(key("aBc"), key("AbC"));
     }
 
     #[test]
     fn case_insentive_ord() {
-        assert_eq!(Key::from("a").cmp(&Key::from("a")), Ordering::Equal);
-        assert_eq!(Key::from("aBc").cmp(&Key::from("AbC")), Ordering::Equal);
+        assert_eq!(key("a").cmp(&key("a")), Ordering::Equal);
+        assert_eq!(key("aBc").cmp(&key("AbC")), Ordering::Equal);
     }
 
     #[test]
@@ -84,6 +89,6 @@ mod key {
             t.hash(&mut s);
             s.finish()
         }
-        assert_eq!(calculate_hash(Key::from("aBc")), calculate_hash(Key::from("AbC")));
+        assert_eq!(calculate_hash(key("aBc")), calculate_hash(key("AbC")));
     }
 }

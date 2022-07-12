@@ -216,7 +216,7 @@ impl<'event> File<'event> {
     ///
     /// for (i, (header, body)) in config.sections_by_name_with_header("url").unwrap().enumerate() {
     ///     let url = header.subsection_name().unwrap();
-    ///     let instead_of = body.value(&section::Key::from("insteadOf")).unwrap();
+    ///     let instead_of = body.value("insteadOf").unwrap();
     ///
     ///     if i == 0 {
     ///         assert_eq!(instead_of.as_ref(), "https://github.com/");

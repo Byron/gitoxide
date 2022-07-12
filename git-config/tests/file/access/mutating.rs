@@ -1,3 +1,5 @@
+mod mutable_section {}
+
 mod rename_section {
     use git_config::file::rename_section;
     use git_config::parse::section;

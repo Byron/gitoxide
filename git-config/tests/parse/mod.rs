@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::convert::TryFrom;
 
 use git_config::parse::{Event, Events, Section};
 
@@ -48,7 +49,7 @@ fn consecutive_newlines() {
 }
 
 fn name(name: &'static str) -> Event<'static> {
-    Event::SectionKey(git_config::parse::section::Key(Cow::Borrowed(name.into())))
+    Event::SectionKey(git_config::parse::section::Key::try_from(name).unwrap())
 }
 
 fn value(value: &'static str) -> Event<'static> {

@@ -52,7 +52,7 @@ impl<'event> File<'event> {
     /// # use bstr::ByteSlice;
     /// let mut git_config = git_config::File::default();
     /// let mut section = git_config.new_section("hello", Some("world".into()))?;
-    /// section.push("a".into(), b"b".as_bstr().into());
+    /// section.push("a", b"b".as_bstr().into());
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n");
     /// let _section = git_config.new_section("core", None);
     /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n[core]\n");

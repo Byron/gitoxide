@@ -8,7 +8,6 @@ use git_ref::Category;
 
 use crate::{
     file::{from_paths, from_paths::Options, SectionBodyId},
-    parse::section,
     File,
 };
 
@@ -94,7 +93,7 @@ fn extract_include_path(
     id: SectionBodyId,
 ) {
     if let Some(body) = target_config.sections.get(&id) {
-        let paths = body.values(&section::Key::from("path"));
+        let paths = body.values("path");
         let paths = paths
             .iter()
             .map(|path| crate::Path::from(Cow::Owned(path.as_ref().to_owned())));

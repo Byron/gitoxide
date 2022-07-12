@@ -52,6 +52,7 @@ pub(crate) mod util {
     //! functions.
 
     use std::borrow::Cow;
+    use std::convert::TryFrom;
 
     use crate::parse::{section, Comment, Event};
 
@@ -63,7 +64,7 @@ pub(crate) mod util {
         name: &str,
         subsection: impl Into<Option<(&'static str, &'static str)>>,
     ) -> section::Header<'_> {
-        let name = name.into();
+        let name = section::Name::try_from(name).unwrap();
         if let Some((separator, subsection_name)) = subsection.into() {
             section::Header {
                 name,

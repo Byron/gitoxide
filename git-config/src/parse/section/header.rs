@@ -70,7 +70,7 @@ impl Header<'_> {
 
     /// Return the name of the header, like "remote" in `[remote "origin"]`.
     pub fn name(&self) -> &BStr {
-        self.name.as_ref().as_bstr()
+        &self.name
     }
 
     /// Serialize this type into a `BString` for convenience.
@@ -87,7 +87,7 @@ impl Header<'_> {
     /// as it was parsed.
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         out.write_all(b"[")?;
-        out.write_all(self.name.as_ref())?;
+        out.write_all(&self.name)?;
 
         if let (Some(sep), Some(subsection)) = (&self.separator, &self.subsection_name) {
             let sep = sep.as_ref();
