@@ -23,6 +23,32 @@ pub fn header(name: &str, subsection: impl Into<Option<(&'static str, &'static s
     }
 }
 
+mod header {
+    mod write_to {
+        use crate::parse::section::header;
+
+        #[test]
+        fn legacy_subsection_format_does_not_use_escapes() {
+            let invalid = header("invalid", Some((".", "\\ \"")));
+            assert_eq!(
+                invalid.to_bstring(),
+                "[invalid.\\ \"]",
+                "no escaping happens for legacy subsections"
+            );
+        }
+
+        #[test]
+        fn subsections_escape_two_characters_only() {
+            let invalid = header("invalid", Some((" ", "\\ \"\npost newline")));
+            assert_eq!(
+                invalid.to_bstring(),
+                "[invalid \"\\\\ \\\"\npost newline\"]",
+                "newlines are actually invalid in subsection, but they are possible due to unvalidated instance creation"
+            );
+        }
+    }
+}
+
 mod key {
     use git_config::parse::section::Key;
     use std::cmp::Ordering;

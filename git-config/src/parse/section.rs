@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt::Display};
 
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 use smallvec::SmallVec;
 
 use crate::parse::{Event, Section};
@@ -71,7 +71,7 @@ impl Header<'_> {
                 out.write_all(subsection.as_ref())?;
             } else {
                 out.write_all(&[b'"'])?;
-                out.write_all(subsection.as_ref())?;
+                out.write_all(escape_subsection(subsection.as_ref()).as_ref())?;
                 out.write_all(&[b'"'])?;
             }
         }
@@ -88,6 +88,21 @@ impl Header<'_> {
             subsection_name: self.subsection_name.clone().map(|v| Cow::Owned(v.into_owned())),
         }
     }
+}
+
+fn escape_subsection(name: &BStr) -> Cow<'_, BStr> {
+    if name.find_byteset(b"\\\"").is_none() {
+        return name.into();
+    }
+    let mut buf = Vec::with_capacity(name.len());
+    for b in name.iter().copied() {
+        match b {
+            b'\\' => buf.push_str(br#"\\"#),
+            b'"' => buf.push_str(br#"\""#),
+            _ => buf.push(b),
+        }
+    }
+    BString::from(buf).into()
 }
 
 impl Display for Header<'_> {
