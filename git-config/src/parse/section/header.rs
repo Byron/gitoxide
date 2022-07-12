@@ -59,6 +59,11 @@ impl Header<'_> {
     }
 
     /// Return the subsection name, if present, i.e. "origin" in `[remote "origin"]`.
+    ///
+    /// It is parsed without quotes, and with escapes folded
+    /// into their resulting characters.
+    /// Thus during serialization, escapes and quotes must be re-added.
+    /// This makes it possible to use [`Event`] data for lookups directly.
     pub fn subsection_name(&self) -> Option<&BStr> {
         self.subsection_name.as_deref()
     }

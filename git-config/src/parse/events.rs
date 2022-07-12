@@ -87,11 +87,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// ```
 /// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
-/// # let section_header = section::Header {
-/// #   name: section::Name(Cow::Borrowed("core".into())),
-/// #   separator: None,
-/// #   subsection_name: None,
-/// # };
+/// # let section_header = section::Header::new("core", None).unwrap();
 /// # let section_data = "[core]\n  autocrlf = input";
 /// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
@@ -126,11 +122,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// ```
 /// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
-/// # let section_header = section::Header {
-/// #   name: section::Name(Cow::Borrowed("core".into())),
-/// #   separator: None,
-/// #   subsection_name: None,
-/// # };
+/// # let section_header = section::Header::new("core", None).unwrap();
 /// # let section_data = "[core]\n  autocrlf";
 /// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
@@ -160,11 +152,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// ```
 /// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
-/// # let section_header = section::Header {
-/// #   name: section::Name(Cow::Borrowed("core".into())),
-/// #   separator: None,
-/// #   subsection_name: None,
-/// # };
+/// # let section_header = section::Header::new("core", None).unwrap();
 /// # let section_data = "[core]\nautocrlf=true\"\"\nfilemode=fa\"lse\"";
 /// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),
@@ -197,11 +185,7 @@ pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 /// ```
 /// # use git_config::parse::{Event, Events, section};
 /// # use std::borrow::Cow;
-/// # let section_header = section::Header {
-/// #   name: section::Name(Cow::Borrowed("some-section".into())),
-/// #   separator: None,
-/// #   subsection_name: None,
-/// # };
+/// # let section_header = section::Header::new("some-section", None).unwrap();
 /// # let section_data = "[some-section]\nfile=a\\\n    c";
 /// # assert_eq!(Events::from_str(section_data).unwrap().into_vec(), vec![
 /// Event::SectionHeader(section_header),

@@ -15,18 +15,14 @@ pub type Events<'a> = SmallVec<[Event<'a>; 64]>;
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Header<'a> {
     /// The name of the header.
-    pub name: Name<'a>,
+    pub(crate) name: Name<'a>,
     /// The separator used to determine if the section contains a subsection.
     /// This is either a period `.` or a string of whitespace. Note that
     /// reconstruction of subsection format is dependent on this value. If this
     /// is all whitespace, then the subsection name needs to be surrounded by
     /// quotes to have perfect reconstruction.
-    pub separator: Option<Cow<'a, BStr>>,
-    /// The subsection name without quotes if any exist, and with escapes folded
-    /// into their resulting characters.
-    /// Thus during serialization, escapes and quotes must be re-added.
-    /// This makes it possible to use [`Event`] data for lookups directly.
-    pub subsection_name: Option<Cow<'a, BStr>>,
+    pub(crate) separator: Option<Cow<'a, BStr>>,
+    pub(crate) subsection_name: Option<Cow<'a, BStr>>,
 }
 
 impl Section<'_> {

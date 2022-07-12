@@ -30,6 +30,7 @@ mod section {
                     "[invalid.\\ \"]",
                     "no escaping happens for legacy subsections"
                 );
+                assert!(invalid.is_legacy());
             }
 
             #[test]
@@ -40,6 +41,7 @@ mod section {
                     "[invalid \"\\\\ \\\"\npost newline\"]",
                     "newlines are actually invalid in subsection, but they are possible due to unvalidated instance creation"
                 );
+                assert!(!invalid.is_legacy());
             }
         }
     }
