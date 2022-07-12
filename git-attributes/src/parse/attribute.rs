@@ -55,7 +55,7 @@ impl<'a> Iter<'a> {
                 attr,
                 possibly_value
                     .map(|v| crate::StateRef::Value(v.as_bstr()))
-                    .unwrap_or(crate::StateRef::Set),
+                    .unwrap_or(StateRef::Set),
             )
         };
         Ok(NameRef(check_attr(attr)?, state))

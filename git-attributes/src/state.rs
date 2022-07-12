@@ -1,0 +1,30 @@
+use crate::{State, StateRef};
+use bstr::ByteSlice;
+
+impl<'a> StateRef<'a> {
+    pub fn to_owned(self) -> State {
+        self.into()
+    }
+}
+
+impl<'a> State {
+    pub fn as_ref(&'a self) -> StateRef<'a> {
+        match self {
+            State::Value(v) => StateRef::Value(v.as_bytes().as_bstr()),
+            State::Set => StateRef::Set,
+            State::Unset => StateRef::Unset,
+            State::Unspecified => StateRef::Unspecified,
+        }
+    }
+}
+
+impl<'a> From<StateRef<'a>> for State {
+    fn from(s: StateRef<'a>) -> Self {
+        match s {
+            StateRef::Value(v) => State::Value(v.to_str().expect("no illformed unicode").into()),
+            StateRef::Set => State::Set,
+            StateRef::Unset => State::Unset,
+            StateRef::Unspecified => State::Unspecified,
+        }
+    }
+}

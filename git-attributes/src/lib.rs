@@ -7,6 +7,17 @@ use bstr::{BStr, BString};
 use compact_str::CompactString;
 pub use git_glob as glob;
 
+pub mod name;
+mod state;
+
+mod match_group;
+pub use match_group::{Attributes, Ignore, Match, Pattern};
+
+pub mod parse;
+pub fn parse(buf: &[u8]) -> parse::Lines<'_> {
+    parse::Lines::new(buf)
+}
+
 /// The state an attribute can be in, referencing the value.
 ///
 /// Note that this doesn't contain the name.
@@ -37,7 +48,7 @@ pub enum State {
     Unset,
     /// The attribute is set to the given value, which followed the `=` sign.
     /// Note that values can be empty.
-    Value(CompactString), // TODO: use `kstring`, maybe it gets a binary string soon
+    Value(CompactString), // TODO: use `kstring`, maybe it gets a binary string soon, needs binary, too, no UTF8 is required for attr values
     /// The attribute isn't mentioned with a given path or is explicitly set to `Unspecified` using the `!` sign.
     Unspecified,
 }
@@ -64,7 +75,7 @@ pub struct Assignment {
 ///
 /// Pattern lists with base path are queryable relative to that base, otherwise they are relative to the repository root.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
-pub struct MatchGroup<T: match_group::Pattern = Attributes> {
+pub struct MatchGroup<T: Pattern = Attributes> {
     /// A list of pattern lists, each representing a patterns from a file or specified by hand, in the order they were
     /// specified in.
     ///
@@ -77,7 +88,7 @@ pub struct MatchGroup<T: match_group::Pattern = Attributes> {
 /// Knowing their base which is relative to a source directory, it will ignore all path to match against
 /// that don't also start with said base.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
-pub struct PatternList<T: match_group::Pattern> {
+pub struct PatternList<T: Pattern> {
     /// Patterns and their associated data in the order they were loaded in or specified,
     /// the line number in its source file or its sequence number (_`(pattern, value, line_number)`_).
     ///
@@ -98,87 +109,4 @@ pub struct PatternMapping<T> {
     pub pattern: git_glob::Pattern,
     pub value: T,
     pub sequence_number: usize,
-}
-
-mod state {
-    use crate::{State, StateRef};
-    use bstr::ByteSlice;
-
-    impl<'a> StateRef<'a> {
-        pub fn to_owned(self) -> State {
-            self.into()
-        }
-    }
-
-    impl<'a> State {
-        pub fn as_ref(&'a self) -> StateRef<'a> {
-            match self {
-                State::Value(v) => StateRef::Value(v.as_bytes().as_bstr()),
-                State::Set => StateRef::Set,
-                State::Unset => StateRef::Unset,
-                State::Unspecified => StateRef::Unspecified,
-            }
-        }
-    }
-
-    impl<'a> From<StateRef<'a>> for State {
-        fn from(s: StateRef<'a>) -> Self {
-            match s {
-                StateRef::Value(v) => State::Value(v.to_str().expect("no illformed unicode").into()),
-                StateRef::Set => State::Set,
-                StateRef::Unset => State::Unset,
-                StateRef::Unspecified => State::Unspecified,
-            }
-        }
-    }
-}
-
-pub mod name {
-    use crate::{Name, NameRef, StateRef};
-    use bstr::{BStr, BString, ByteSlice};
-
-    impl<'a> NameRef<'a> {
-        pub fn name(&self) -> &'a BStr {
-            self.0
-        }
-
-        pub fn state(&self) -> StateRef<'a> {
-            self.1
-        }
-
-        pub fn to_owned(self) -> Name {
-            self.into()
-        }
-    }
-
-    impl<'a> From<NameRef<'a>> for Name {
-        fn from(v: NameRef<'a>) -> Self {
-            Name(v.0.to_owned(), v.1.into())
-        }
-    }
-
-    impl Name {
-        pub fn name(&self) -> &BStr {
-            self.0.as_bstr()
-        }
-
-        pub fn state(&self) -> StateRef<'_> {
-            self.1.as_ref()
-        }
-    }
-
-    #[derive(Debug, thiserror::Error)]
-    #[error("Attribute has non-ascii characters or starts with '-': {attribute}")]
-    pub struct Error {
-        pub attribute: BString,
-    }
-}
-
-mod match_group;
-pub use match_group::{Attributes, Ignore, Match, Pattern};
-
-pub mod parse;
-
-pub fn parse(buf: &[u8]) -> parse::Lines<'_> {
-    parse::Lines::new(buf)
 }
