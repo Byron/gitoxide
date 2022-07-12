@@ -199,25 +199,29 @@ fn unescape_and_check_attr_value(value: &BStr) -> Result<BString, Error> {
         if b == b'\\' {
             b = *bytes.next().ok_or(Error::TrailingEscapeCharacter)?;
         }
-        if !is_value_char_valid(&b) {
-            return Err(Error::InvalidAttributeValue { character: b as char });
-        }
 
-        out.push(b);
+        out.push(validated_attr_value_byte(b)?);
     }
     Ok(out)
 }
 
 fn check_attribute_value(input: &BStr) -> Result<(), Error> {
-    let bytes = input.iter();
-    for b in bytes {
-        if !is_value_char_valid(b) {
-            return Err(Error::InvalidAttributeValue { character: *b as char });
-        }
+    match input.iter().copied().find(|b| !is_valid_attr_value(*b)) {
+        Some(b) => Err(Error::InvalidAttributeValue { character: b as char }),
+        None => Ok(()),
     }
-    Ok(())
 }
 
-fn is_value_char_valid(byte: &u8) -> bool {
-    byte.is_ascii_alphanumeric() || b",-_".contains(byte)
+fn is_valid_attr_value(byte: u8) -> bool {
+    byte.is_ascii_alphanumeric() || b",-_".contains(&byte)
+}
+
+fn validated_attr_value_byte(byte: u8) -> Result<u8, Error> {
+    if is_valid_attr_value(byte) {
+        Ok(byte)
+    } else {
+        Err(Error::InvalidAttributeValue {
+            character: byte as char,
+        })
+    }
 }
