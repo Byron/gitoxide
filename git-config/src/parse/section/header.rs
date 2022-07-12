@@ -95,9 +95,9 @@ impl Header<'_> {
             if sep == "." {
                 out.write_all(subsection.as_ref())?;
             } else {
-                out.write_all(&[b'"'])?;
+                out.write_all(b"\"")?;
                 out.write_all(escape_subsection(subsection.as_ref()).as_ref())?;
-                out.write_all(&[b'"'])?;
+                out.write_all(b"\"")?;
             }
         }
 

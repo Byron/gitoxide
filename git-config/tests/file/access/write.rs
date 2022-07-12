@@ -1,7 +1,6 @@
 use std::convert::TryFrom;
 
 #[test]
-#[ignore]
 fn complex_lossless_roundtrip() {
     let input = r#"
         [core]

@@ -19,10 +19,12 @@ impl Event<'_> {
     /// as it was parsed.
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         match self {
-            Self::Whitespace(e) | Self::Newline(e) | Self::Value(e) | Self::ValueNotDone(e) | Self::ValueDone(e) => {
-                out.write_all(e.as_ref())
+            Self::ValueNotDone(e) => {
+                out.write_all(e.as_ref())?;
+                out.write_all(b"\\")
             }
-            Self::KeyValueSeparator => out.write_all(&[b'=']),
+            Self::Whitespace(e) | Self::Newline(e) | Self::Value(e) | Self::ValueDone(e) => out.write_all(e.as_ref()),
+            Self::KeyValueSeparator => out.write_all(b"="),
             Self::SectionKey(k) => out.write_all(k.0.as_ref()),
             Self::SectionHeader(h) => h.write_to(&mut out),
             Self::Comment(c) => c.write_to(&mut out),
