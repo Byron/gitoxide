@@ -18,13 +18,17 @@ mod get {
 "100"
         [core]
             a=d\
-b
+"b  "\
+c
             a=f\
-a"#
+   a"#
         .parse()?;
 
         let mut values = config.raw_values_mut("core", None, "a")?;
-        assert_eq!(&*values.get()?, vec![cow_str("b100"), cow_str("db"), cow_str("fa"),]);
+        assert_eq!(
+            &*values.get()?,
+            vec![cow_str("b100"), cow_str("db  c"), cow_str("f   a"),]
+        );
 
         values.delete_all();
         assert!(values.get().is_err());
@@ -54,7 +58,7 @@ mod set {
         for value in ["a b", " a b", "a b\t", ";c", "#c", "a\nb\n\tc"] {
             let mut config = init_config();
             let mut values = config.raw_values_mut("core", None, "a")?;
-            values.set_values_all(value.into());
+            values.set_all(value);
 
             let config_str = config.to_string();
             let config: git_config::File = config_str.parse()?;
@@ -71,7 +75,7 @@ mod set {
     fn single_at_start() -> crate::Result {
         let mut config = init_config();
         let mut values = config.raw_values_mut("core", None, "a")?;
-        values.set_string(0, "Hello".into());
+        values.set_string_at(0, "Hello");
         assert_eq!(
             config.to_string(),
             "[core]\n    a = Hello\n    [core]\n        a =d\n        a= f"
@@ -83,7 +87,7 @@ mod set {
     fn single_at_end() -> crate::Result {
         let mut config = init_config();
         let mut values = config.raw_values_mut("core", None, "a")?;
-        values.set_string(2, "Hello".into());
+        values.set_string_at(2, "Hello");
         assert_eq!(
             config.to_string(),
             "[core]\n    a = b\"100\"\n    [core]\n        a =d\n        a= Hello"
@@ -95,7 +99,7 @@ mod set {
     fn all() -> crate::Result {
         let mut config = init_config();
         let mut values = config.raw_values_mut("core", None, "a")?;
-        values.set_owned_values_all("Hello");
+        values.set_all("Hello");
         assert_eq!(
             config.to_string(),
             "[core]\n    a = Hello\n    [core]\n        a= Hello\n        a =Hello"
@@ -107,7 +111,7 @@ mod set {
     fn all_empty() -> crate::Result {
         let mut config = init_config();
         let mut values = config.raw_values_mut("core", None, "a")?;
-        values.set_owned_values_all("");
+        values.set_all("");
         assert_eq!(
             config.to_string(),
             "[core]\n    a = \n    [core]\n        a= \n        a ="

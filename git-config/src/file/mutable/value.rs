@@ -31,13 +31,13 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
     pub fn set_string(&mut self, input: impl AsRef<str>) {
-        self.set_bytes(input.as_ref().into());
+        self.set(input.as_ref().into());
     }
 
     /// Update the value to the provided one. This modifies the value such that
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
-    pub fn set_bytes(&mut self, input: &BStr) {
+    pub fn set(&mut self, input: &BStr) {
         if self.size.0 > 0 {
             self.section.delete(self.index, self.index + self.size);
         }
@@ -132,8 +132,8 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// # Safety
     ///
     /// This will panic if the index is out of range.
-    pub fn set_string(&mut self, index: usize, input: String) {
-        self.set_bytes(index, input);
+    pub fn set_string_at(&mut self, index: usize, input: impl AsRef<str>) {
+        self.set_at(index, input.as_ref().into());
     }
 
     /// Sets the value at the given index.
@@ -141,16 +141,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// # Safety
     ///
     /// This will panic if the index is out of range.
-    pub fn set_bytes(&mut self, index: usize, input: impl Into<BString>) {
-        self.set_value(index, Cow::Owned(input.into()));
-    }
-
-    /// Sets the value at the given index.
-    ///
-    /// # Safety
-    ///
-    /// This will panic if the index is out of range.
-    pub fn set_value(&mut self, index: usize, input: Cow<'event, BStr>) {
+    pub fn set_at(&mut self, index: usize, input: &BStr) {
         let EntryData {
             section_id,
             offset_index,
@@ -172,7 +163,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     /// remaining values are ignored.
     ///
     /// [`zip`]: std::iter::Iterator::zip
-    pub fn set_values(&mut self, input: impl IntoIterator<Item = Cow<'event, BStr>>) {
+    pub fn set_values<'a>(&mut self, input: impl IntoIterator<Item = &'a BStr>) {
         for (
             EntryData {
                 section_id,
@@ -192,15 +183,13 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
         }
     }
 
-    /// Sets all values in this multivar to the provided one by copying the
-    /// `input` string to all values.
-    pub fn set_str_all(&mut self, input: &str) {
-        self.set_owned_values_all(input);
-    }
-
-    /// Sets all values in this multivar to the provided one by copying the
-    /// `input` bytes to all values.
-    pub fn set_owned_values_all<'a>(&mut self, input: impl Into<&'a BStr>) {
+    /// Sets all values in this multivar to the provided one without owning the
+    /// provided input. Consider using [`Self::set_owned_values_all`] or
+    /// [`Self::set_str_all`] unless you have a strict performance or memory
+    /// need for a more ergonomic interface.
+    ///
+    /// [`File`]: crate::File
+    pub fn set_all<'a>(&mut self, input: impl Into<&'a BStr>) {
         let input = input.into();
         for EntryData {
             section_id,
@@ -213,30 +202,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
                 self.section.get_mut(section_id).expect("known section id"),
                 *section_id,
                 *offset_index,
-                Cow::Owned(input.to_owned()),
-            );
-        }
-    }
-
-    /// Sets all values in this multivar to the provided one without owning the
-    /// provided input. Consider using [`Self::set_owned_values_all`] or
-    /// [`Self::set_str_all`] unless you have a strict performance or memory
-    /// need for a more ergonomic interface.
-    ///
-    /// [`File`]: crate::File
-    pub fn set_values_all(&mut self, input: &'event BStr) {
-        for EntryData {
-            section_id,
-            offset_index,
-        } in &self.indices_and_sizes
-        {
-            Self::set_value_inner(
-                &self.key,
-                &mut self.offsets,
-                self.section.get_mut(section_id).expect("known section id"),
-                *section_id,
-                *offset_index,
-                Cow::Borrowed(input),
+                input,
             );
         }
     }
@@ -247,7 +213,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
         section: &mut SectionBody<'event>,
         section_id: SectionBodyId,
         offset_index: usize,
-        value: Cow<'a, BStr>,
+        value: &BStr,
     ) {
         let (offset, size) = MutableMultiValue::index_and_size(offsets, section_id, offset_index);
         let whitespace: Whitespace<'_> = (&*section).into();
@@ -256,7 +222,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
 
         let key_sep_events = whitespace.key_value_separators();
         MutableMultiValue::set_offset(offsets, section_id, offset_index, 2 + key_sep_events.len());
-        section.insert(offset, Event::Value(escape_value(value.as_ref()).into()));
+        section.insert(offset, Event::Value(escape_value(value).into()));
         section.insert_many(offset, key_sep_events.into_iter().rev());
         section.insert(offset, Event::SectionKey(key.to_owned()));
     }
