@@ -157,7 +157,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         let mut expect_value = false;
         let mut concatenated_value = BString::default();
 
-        for event in &self.section.0[start.0..=end.0] {
+        for event in &self.section.0[start.0..end.0] {
             match event {
                 Event::SectionKey(event_key) if event_key == key => expect_value = true,
                 Event::Value(v) if expect_value => return Ok(normalize_bstr(v.as_ref())),
@@ -176,7 +176,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     }
 
     pub(crate) fn delete(&mut self, start: Index, end: Index) {
-        self.section.0.drain(start.0..=end.0);
+        self.section.0.drain(start.0..end.0);
     }
 
     pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: BString) -> Size {

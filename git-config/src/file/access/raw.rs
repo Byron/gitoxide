@@ -52,23 +52,22 @@ impl<'event> File<'event> {
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
         while let Some(section_id) = section_ids.next() {
-            let mut size = 0;
             let mut index = 0;
+            let mut size = 0;
             let mut found_key = false;
             for (i, event) in self
                 .sections
                 .get(&section_id)
-                .expect("sections does not have section id from section ids")
+                .expect("known section id")
                 .as_ref()
-                // todo: iter backwards
                 .iter()
                 .enumerate()
             {
                 match event {
                     Event::SectionKey(event_key) if *event_key == key => {
                         found_key = true;
-                        size = 1;
                         index = i;
+                        size = 1;
                     }
                     Event::Newline(_) | Event::Whitespace(_) | Event::ValueNotDone(_) if found_key => {
                         size += 1;
@@ -77,7 +76,10 @@ impl<'event> File<'event> {
                         found_key = false;
                         size += 1;
                     }
-                    _ => (),
+                    Event::KeyValueSeparator if found_key => {
+                        size += 1;
+                    }
+                    _ => {}
                 }
             }
 
@@ -304,7 +306,7 @@ impl<'event> File<'event> {
         new_value: BString,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_value_mut(section_name, subsection_name, key)
-            .map(|mut entry| entry.set_bytes(new_value))
+            .map(|mut entry| entry.set_bytes(new_value.into()))
     }
 
     /// Sets a multivar in a given section, optional subsection, and key value.
