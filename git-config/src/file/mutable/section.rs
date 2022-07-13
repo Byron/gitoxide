@@ -237,7 +237,7 @@ fn compute_whitespace<'event>(s: &mut SectionBody<'event>) -> Option<Cow<'event,
             Event::Whitespace(s) => Some(s.clone()),
             _ => None,
         }),
-        None => Some("\t\t".as_bytes().as_bstr().into()),
+        None => Some("\t".as_bytes().as_bstr().into()),
     }
 }
 

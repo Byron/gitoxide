@@ -8,7 +8,7 @@ mod push {
         for (input, expected) in [
             ("[a]\n\t\tb = c", Some("\t\t".into())),
             ("[a]\nb = c", None),
-            ("[a]", Some("\t\t".into())),
+            ("[a]", Some("\t".into())),
             ("[a]\t\tb = c", Some("\t\t".into())),
             ("[a]\n\t\t  \n    \t    b = c", Some("    \t    ".into())),
         ] {
@@ -29,6 +29,6 @@ mod push {
         let mut config = git_config::File::default();
         let mut section = config.new_section("core", None).unwrap();
         section.push(Key::try_from("value").unwrap(), Cow::Borrowed("none".into()));
-        assert_eq!(config.to_bstring(), "[core]\n\t\tvalue=none\n");
+        assert_eq!(config.to_bstring(), "[core]\n\tvalue=none\n");
     }
 }
