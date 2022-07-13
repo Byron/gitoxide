@@ -4,8 +4,9 @@ use std::{
     ops::{Deref, Range},
 };
 
-use bstr::{BStr, BString, ByteSlice, ByteVec};
+use bstr::{BStr, BString, ByteVec};
 
+use crate::file::mutable::{escape_value, Whitespace};
 use crate::{
     file::{Index, Size},
     lookup, parse,
@@ -30,7 +31,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         }
 
         self.section.0.push(Event::SectionKey(key));
-        self.section.0.extend(self.key_value_separators());
+        self.section.0.extend(self.whitespace.key_value_separators());
         self.section.0.push(Event::Value(escape_value(value.as_ref()).into()));
         if self.implicit_newline {
             self.section.0.push(Event::Newline(BString::from("\n").into()));
@@ -150,7 +151,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
 // Internal methods that may require exact indices for faster operations.
 impl<'a, 'event> MutableSection<'a, 'event> {
     pub(crate) fn new(section: &'a mut SectionBody<'event>) -> Self {
-        let whitespace = compute_whitespace(section);
+        let whitespace = (&*section).into();
         Self {
             section,
             implicit_newline: true,
@@ -195,7 +196,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         self.section.0.insert(index.0, Event::Value(escape_value(value).into()));
         size += 1;
 
-        let sep_events = self.key_value_separators();
+        let sep_events = self.whitespace.key_value_separators();
         size += sep_events.len();
         self.section.0.insert_many(index.0, sep_events.into_iter().rev());
 
@@ -217,102 +218,6 @@ impl<'a, 'event> MutableSection<'a, 'event> {
                 acc
             })
     }
-
-    fn key_value_separators(&self) -> Vec<Event<'event>> {
-        let mut out = Vec::with_capacity(3);
-        if let Some(ws) = &self.whitespace.pre_sep {
-            out.push(Event::Whitespace(ws.clone()));
-        }
-        out.push(Event::KeyValueSeparator);
-        if let Some(ws) = &self.whitespace.post_sep {
-            out.push(Event::Whitespace(ws.clone()));
-        }
-        out
-    }
-}
-
-#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
-struct Whitespace<'a> {
-    pre_key: Option<Cow<'a, BStr>>,
-    pre_sep: Option<Cow<'a, BStr>>,
-    post_sep: Option<Cow<'a, BStr>>,
-}
-
-impl Default for Whitespace<'_> {
-    fn default() -> Self {
-        Whitespace {
-            pre_key: Some(b"\t".as_bstr().into()),
-            pre_sep: Some(b" ".as_bstr().into()),
-            post_sep: Some(b" ".as_bstr().into()),
-        }
-    }
-}
-
-fn compute_whitespace<'a>(s: &mut SectionBody<'a>) -> Whitespace<'a> {
-    let key_pos =
-        s.0.iter()
-            .enumerate()
-            .find_map(|(idx, e)| matches!(e, Event::SectionKey(_)).then(|| idx));
-    key_pos
-        .map(|key_pos| {
-            let pre_key = s.0[..key_pos].iter().rev().next().and_then(|e| match e {
-                Event::Whitespace(s) => Some(s.clone()),
-                _ => None,
-            });
-            let from_key = &s.0[key_pos..];
-            let (pre_sep, post_sep) = from_key
-                .iter()
-                .enumerate()
-                .find_map(|(idx, e)| matches!(e, Event::KeyValueSeparator).then(|| idx))
-                .map(|sep_pos| {
-                    (
-                        from_key.get(sep_pos - 1).and_then(|e| match e {
-                            Event::Whitespace(ws) => Some(ws.clone()),
-                            _ => None,
-                        }),
-                        from_key.get(sep_pos + 1).and_then(|e| match e {
-                            Event::Whitespace(ws) => Some(ws.clone()),
-                            _ => None,
-                        }),
-                    )
-                })
-                .unwrap_or_default();
-            Whitespace {
-                pre_key,
-                pre_sep,
-                post_sep,
-            }
-        })
-        .unwrap_or_default()
-}
-
-fn escape_value(value: &BStr) -> BString {
-    let starts_with_whitespace = value.get(0).map_or(false, |b| b.is_ascii_whitespace());
-    let ends_with_whitespace = value
-        .get(value.len().saturating_sub(1))
-        .map_or(false, |b| b.is_ascii_whitespace());
-    let contains_comment_indicators = value.find_byteset(b";#").is_some();
-    let quote = starts_with_whitespace || ends_with_whitespace || contains_comment_indicators;
-
-    let mut buf: BString = Vec::with_capacity(value.len()).into();
-    if quote {
-        buf.push(b'"');
-    }
-
-    for b in value.iter().copied() {
-        match b {
-            b'\n' => buf.push_str("\\n"),
-            b'\t' => buf.push_str("\\t"),
-            b'"' => buf.push_str("\\\""),
-            b'\\' => buf.push_str("\\\\"),
-            _ => buf.push(b),
-        }
-    }
-
-    if quote {
-        buf.push(b'"');
-    }
-    buf
 }
 
 impl<'event> Deref for MutableSection<'_, 'event> {

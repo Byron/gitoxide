@@ -3,6 +3,7 @@ use std::{borrow::Cow, collections::HashMap, ops::DerefMut};
 use bstr::{BStr, BString, ByteVec};
 
 use crate::file::mutable::section::{MutableSection, SectionBody};
+use crate::file::mutable::{escape_value, Whitespace};
 use crate::{
     file::{Index, SectionBodyId, Size},
     lookup,
@@ -249,12 +250,14 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
         value: Cow<'a, BStr>,
     ) {
         let (offset, size) = MutableMultiValue::index_and_size(offsets, section_id, offset_index);
+        let whitespace: Whitespace<'_> = (&*section).into();
         let section = section.as_mut();
         section.drain(offset..offset + size);
 
-        MutableMultiValue::set_offset(offsets, section_id, offset_index, 3);
-        section.insert(offset, Event::Value(value));
-        section.insert(offset, Event::KeyValueSeparator);
+        let key_sep_events = whitespace.key_value_separators();
+        MutableMultiValue::set_offset(offsets, section_id, offset_index, 2 + key_sep_events.len());
+        section.insert(offset, Event::Value(escape_value(value.as_ref()).into()));
+        section.insert_many(offset, key_sep_events.into_iter().rev());
         section.insert(offset, Event::SectionKey(key.to_owned()));
     }
 

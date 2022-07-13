@@ -46,7 +46,26 @@ mod access {
 }
 
 mod set {
+    use crate::file::cow_str;
     use crate::file::mutable::multi_value::init_config;
+
+    #[test]
+    fn values_are_escaped() -> crate::Result {
+        for value in ["a b", " a b", "a b\t", ";c", "#c", "a\nb\n\tc"] {
+            let mut config = init_config();
+            let mut values = config.raw_values_mut("core", None, "a")?;
+            values.set_values_all(value.into());
+
+            let config_str = config.to_string();
+            let config: git_config::File = config_str.parse()?;
+            assert_eq!(
+                config.raw_values("core", None, "a")?,
+                vec![cow_str(value), cow_str(value), cow_str(value)],
+                "{config_str:?}"
+            );
+        }
+        Ok(())
+    }
 
     #[test]
     fn single_at_start() -> crate::Result {
@@ -55,7 +74,7 @@ mod set {
         values.set_string(0, "Hello".into());
         assert_eq!(
             config.to_string(),
-            "[core]\n    a=Hello\n    [core]\n        a=d\n        a=f"
+            "[core]\n    a = Hello\n    [core]\n        a =d\n        a= f"
         );
         Ok(())
     }
@@ -67,7 +86,7 @@ mod set {
         values.set_string(2, "Hello".into());
         assert_eq!(
             config.to_string(),
-            "[core]\n    a=b\"100\"\n    [core]\n        a=d\n        a=Hello"
+            "[core]\n    a = b\"100\"\n    [core]\n        a =d\n        a= Hello"
         );
         Ok(())
     }
@@ -79,7 +98,7 @@ mod set {
         values.set_owned_values_all("Hello");
         assert_eq!(
             config.to_string(),
-            "[core]\n    a=Hello\n    [core]\n        a=Hello\n        a=Hello"
+            "[core]\n    a = Hello\n    [core]\n        a= Hello\n        a =Hello"
         );
         Ok(())
     }
@@ -89,7 +108,10 @@ mod set {
         let mut config = init_config();
         let mut values = config.raw_values_mut("core", None, "a")?;
         values.set_owned_values_all("");
-        assert_eq!(config.to_string(), "[core]\n    a=\n    [core]\n        a=\n        a=");
+        assert_eq!(
+            config.to_string(),
+            "[core]\n    a = \n    [core]\n        a= \n        a ="
+        );
         Ok(())
     }
 }
@@ -103,12 +125,15 @@ mod delete {
         {
             let mut values = config.raw_values_mut("core", None, "a")?;
             values.delete(0);
-            assert_eq!(config.to_string(), "[core]\n    \n    [core]\n        a=d\n        a=f",);
+            assert_eq!(
+                config.to_string(),
+                "[core]\n    \n    [core]\n        a =d\n        a= f",
+            );
         }
 
         let mut values = config.raw_values_mut("core", None, "a")?;
         values.delete(1);
-        assert_eq!(config.to_string(), "[core]\n    \n    [core]\n        a=d\n        ",);
+        assert_eq!(config.to_string(), "[core]\n    \n    [core]\n        a =d\n        ");
         Ok(())
     }
 
@@ -118,17 +143,17 @@ mod delete {
         let mut values = config.raw_values_mut("core", None, "a")?;
         values.delete_all();
         assert!(values.get().is_err());
-        assert_eq!(config.to_string(), "[core]\n    \n    [core]\n        \n        ",);
+        assert_eq!(config.to_string(), "[core]\n    \n    [core]\n        \n        ");
         Ok(())
     }
 }
 
 fn init_config() -> git_config::File<'static> {
     r#"[core]
-    a=b"100"
+    a = b"100"
     [core]
-        a=d
-        a=f"#
+        a =d
+        a= f"#
         .parse()
         .unwrap()
 }
