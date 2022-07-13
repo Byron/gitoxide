@@ -12,11 +12,11 @@ impl<'event> File<'event> {
     /// Returns an mutable section with a given name and optional subsection.
     pub fn section_mut<'a>(
         &'a mut self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
     ) -> Result<SectionMut<'a, 'event>, lookup::existing::Error> {
         let id = self
-            .section_ids_by_name_and_subname(section_name, subsection_name)?
+            .section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?
             .rev()
             .next()
             .expect("BUG: Section lookup vec was empty");
@@ -138,13 +138,13 @@ impl<'event> File<'event> {
     /// Renames a section, modifying the last matching section.
     pub fn rename_section<'a>(
         &mut self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: impl Into<Option<&'a str>>,
         new_section_name: impl Into<Cow<'event, str>>,
         new_subsection_name: impl Into<Option<Cow<'event, str>>>,
     ) -> Result<(), rename_section::Error> {
         let id = self
-            .section_ids_by_name_and_subname(section_name, subsection_name.into())?
+            .section_ids_by_name_and_subname(section_name.as_ref(), subsection_name.into())?
             .rev()
             .next()
             .expect("list of sections were empty, which violates invariant");

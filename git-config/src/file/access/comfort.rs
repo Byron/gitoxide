@@ -9,7 +9,12 @@ impl<'event> File<'event> {
     /// Like [`value()`][File::value()], but returning an `None` if the string wasn't found.
     ///
     /// As strings perform no conversions, this will never fail.
-    pub fn string(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Cow<'_, BStr>> {
+    pub fn string(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+    ) -> Option<Cow<'_, BStr>> {
         self.raw_value(section_name, subsection_name, key).ok()
     }
 
@@ -22,7 +27,12 @@ impl<'event> File<'event> {
     // TODO: add `secure_path()` or similar to make use of our knowledge of the trust associated with each configuration
     //       file, maybe even remove the insecure version to force every caller to ask themselves if the resource can
     //       be used securely or not.
-    pub fn path(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<crate::Path<'_>> {
+    pub fn path(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+    ) -> Option<crate::Path<'_>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
             .map(crate::Path::from)
@@ -31,9 +41,9 @@ impl<'event> File<'event> {
     /// Like [`value()`][File::value()], but returning `None` if the boolean value wasn't found.
     pub fn boolean(
         &self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
-        key: &str,
+        key: impl AsRef<str>,
     ) -> Option<Result<bool, value::Error>> {
         self.raw_value(section_name, subsection_name, key)
             .ok()
@@ -43,9 +53,9 @@ impl<'event> File<'event> {
     /// Like [`value()`][File::value()], but returning an `Option` if the integer wasn't found.
     pub fn integer(
         &self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
-        key: &str,
+        key: impl AsRef<str>,
     ) -> Option<Result<i64, value::Error>> {
         let int = self.raw_value(section_name, subsection_name, key).ok()?;
         Some(crate::Integer::try_from(int.as_ref()).and_then(|b| {
@@ -55,7 +65,12 @@ impl<'event> File<'event> {
     }
 
     /// Similar to [`values(…)`][File::values()] but returning strings if at least one of them was found.
-    pub fn strings(&self, section_name: &str, subsection_name: Option<&str>, key: &str) -> Option<Vec<Cow<'_, BStr>>> {
+    pub fn strings(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+    ) -> Option<Vec<Cow<'_, BStr>>> {
         self.raw_values(section_name, subsection_name, key).ok()
     }
 
@@ -63,9 +78,9 @@ impl<'event> File<'event> {
     /// and if none of them overflows.
     pub fn integers(
         &self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
-        key: &str,
+        key: impl AsRef<str>,
     ) -> Option<Result<Vec<i64>, value::Error>> {
         self.raw_values(section_name, subsection_name, key).ok().map(|values| {
             values
