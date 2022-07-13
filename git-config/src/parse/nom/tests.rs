@@ -254,6 +254,47 @@ mod section {
     }
 
     #[test]
+    fn section_with_empty_value_simplified() {
+        let mut node = ParseNode::SectionHeader;
+        let section_data = b"[a] k=";
+        assert_eq!(
+            section(section_data, &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    section_header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        Event::KeyValueSeparator,
+                        value_event(""),
+                    ]
+                    .into()
+                },
+                0
+            ))
+        );
+
+        let section_data = b"[a] k=\n";
+        assert_eq!(
+            section(section_data, &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    section_header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        Event::KeyValueSeparator,
+                        value_event(""),
+                        newline_event(),
+                    ]
+                    .into()
+                },
+                1
+            ))
+        );
+    }
+
+    #[test]
     fn section_with_empty_value() {
         let mut node = ParseNode::SectionHeader;
         let section_data = br#"[hello]

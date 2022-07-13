@@ -83,6 +83,15 @@ mod set {
         );
         Ok(())
     }
+
+    #[test]
+    fn all_empty() -> crate::Result {
+        let mut config = init_config();
+        let mut values = config.raw_values_mut("core", None, "a")?;
+        values.set_owned_values_all("");
+        assert_eq!(config.to_string(), "[core]\n    a=\n    [core]\n        a=\n        a=");
+        Ok(())
+    }
 }
 
 mod delete {
@@ -112,12 +121,6 @@ mod delete {
         assert_eq!(config.to_string(), "[core]\n    \n    [core]\n        \n        ",);
         Ok(())
     }
-}
-
-#[test]
-#[ignore]
-fn empty_value() {
-    todo!()
 }
 
 fn init_config() -> git_config::File<'static> {

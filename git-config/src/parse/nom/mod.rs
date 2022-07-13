@@ -246,7 +246,6 @@ fn key_value_pair<'a>(
     receive_event(Event::SectionKey(section::Key(Cow::Borrowed(name))));
 
     let (i, whitespace) = opt(take_spaces)(i)?;
-
     if let Some(whitespace) = whitespace {
         receive_event(Event::Whitespace(Cow::Borrowed(whitespace)));
     }
@@ -352,15 +351,7 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
         } else {
             // Didn't parse anything at all, newline straight away.
             receive_event(Event::Value(Cow::Borrowed("".into())));
-            receive_event(Event::Newline(Cow::Borrowed("\n".into())));
-            newlines += 1;
-            return Ok((
-                i.get(1..).ok_or(nom::Err::Error(NomError {
-                    input: i,
-                    code: ErrorKind::Eof,
-                }))?,
-                newlines,
-            ));
+            return Ok((&i[0..], newlines));
         }
     }
 

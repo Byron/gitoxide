@@ -52,8 +52,21 @@ mod set_string {
 
         assert_eq!(v.get().unwrap().as_ref(), expected);
 
-        let file: git_config::File = file.to_string().parse().unwrap();
+        let file: git_config::File = match file.to_string().parse() {
+            Ok(f) => f,
+            Err(err) => panic!("{:?} failed with: {}", file.to_string(), err),
+        };
         assert_eq!(file.raw_value("a", None, "k").expect("present").as_ref(), expected);
+    }
+
+    #[test]
+    fn empty() {
+        assert_set_string("");
+    }
+
+    #[test]
+    fn just_whitespace() {
+        assert_set_string("\t ");
     }
 
     #[test]
@@ -92,6 +105,7 @@ mod set_string {
     fn comment_included() {
         assert_set_string(";hello ");
         assert_set_string(" # hello");
+        assert_set_string("value then seemingly # comment");
     }
 
     #[test]
@@ -208,12 +222,6 @@ b
         );
         Ok(())
     }
-}
-
-#[test]
-#[ignore]
-fn empty_values() {
-    todo!()
 }
 
 fn init_config() -> git_config::File<'static> {

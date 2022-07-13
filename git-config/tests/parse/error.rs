@@ -19,11 +19,6 @@ fn to_string_truncates_extra_values() {
 }
 
 #[test]
-fn detected_by_fuzz() {
-    assert!(Events::from_str("[]I=").is_err());
-}
-
-#[test]
 fn to_string() {
     let input = "[a_b]\n c=d";
     assert_eq!(
