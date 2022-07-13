@@ -73,6 +73,11 @@ fn newline_tab_backspace_are_escapable() {
 }
 
 #[test]
+fn tabs_are_not_resolved_to_spaces_unlike_what_git_does() {
+    assert_eq!(normalize_bstr("\t"), cow_str("\t"));
+}
+
+#[test]
 fn other_escapes_are_ignored_entirely() {
     assert_eq!(
         normalize_bstr(r#"\x"#),

@@ -306,7 +306,7 @@ impl<'event> File<'event> {
         new_value: BString,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_value_mut(section_name, subsection_name, key)
-            .map(|mut entry| entry.set_bytes(new_value.into()))
+            .map(|mut entry| entry.set_bytes(new_value))
     }
 
     /// Sets a multivar in a given section, optional subsection, and key value.
