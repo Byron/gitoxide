@@ -104,5 +104,6 @@ impl<'a> From<&SectionBody<'a>> for Whitespace<'a> {
     }
 }
 
+pub(crate) mod multi_value;
 pub(crate) mod section;
 pub(crate) mod value;
