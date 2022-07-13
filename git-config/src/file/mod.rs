@@ -7,11 +7,12 @@ use std::{
 
 use bstr::BStr;
 
-mod section;
-pub use section::{MutableSection, SectionBody, SectionBodyIter};
+mod mutable;
 
-mod value;
-pub use value::{MutableMultiValue, MutableValue};
+pub use mutable::{
+    section::{MutableSection, SectionBody, SectionBodyIter},
+    value::{MutableMultiValue, MutableValue},
+};
 
 ///
 pub mod from_env;

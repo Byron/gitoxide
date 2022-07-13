@@ -2,11 +2,9 @@ use std::{borrow::Cow, collections::HashMap, ops::DerefMut};
 
 use bstr::{BStr, BString, ByteVec};
 
+use crate::file::mutable::section::{MutableSection, SectionBody};
 use crate::{
-    file::{
-        section::{MutableSection, SectionBody},
-        Index, SectionBodyId, Size,
-    },
+    file::{Index, SectionBodyId, Size},
     lookup,
     parse::{section, Event},
     value::{normalize_bstr, normalize_bstring},

@@ -1,4 +1,4 @@
-mod mutating;
+mod mutate;
 mod raw;
 mod read_only;
 mod write;
