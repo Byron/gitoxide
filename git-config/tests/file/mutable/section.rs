@@ -1,7 +1,9 @@
 mod push {
-    use crate::file::cow_str;
-    use git_config::parse::section::Key;
     use std::convert::TryFrom;
+
+    use git_config::parse::section::Key;
+
+    use crate::file::cow_str;
 
     #[test]
     fn whitespace_is_derived_from_whitespace_before_first_value() -> crate::Result {
@@ -58,9 +60,11 @@ mod push {
 }
 
 mod set_leading_whitespace {
-    use crate::file::cow_str;
-    use git_config::parse::section::Key;
     use std::convert::TryFrom;
+
+    use git_config::parse::section::Key;
+
+    use crate::file::cow_str;
 
     #[test]
     fn any_whitespace_is_ok() -> crate::Result {

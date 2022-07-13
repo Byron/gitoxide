@@ -1,8 +1,8 @@
-use crate::file::SectionBody;
-use crate::parse::Event;
-use bstr::{BStr, BString};
-use bstr::{ByteSlice, ByteVec};
 use std::borrow::Cow;
+
+use bstr::{BStr, BString, ByteSlice, ByteVec};
+
+use crate::{file::SectionBody, parse::Event};
 
 fn escape_value(value: &BStr) -> BString {
     let starts_with_whitespace = value.get(0).map_or(false, |b| b.is_ascii_whitespace());

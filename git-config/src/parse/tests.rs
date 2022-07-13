@@ -2,8 +2,9 @@ mod section {
 
     mod header {
         mod write_to {
-            use crate::parse::section;
             use std::borrow::Cow;
+
+            use crate::parse::section;
 
             fn header(name: &str, subsection: impl Into<Option<(&'static str, &'static str)>>) -> section::Header<'_> {
                 let name = section::Name(Cow::Borrowed(name.into()));
@@ -51,8 +52,7 @@ pub(crate) mod util {
     //! This module is only included for tests, and contains common unit test helper
     //! functions.
 
-    use std::borrow::Cow;
-    use std::convert::TryFrom;
+    use std::{borrow::Cow, convert::TryFrom};
 
     use crate::parse::{section, Comment, Event};
 

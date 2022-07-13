@@ -6,9 +6,11 @@ use std::{
 
 use bstr::{BStr, BString, ByteVec};
 
-use crate::file::mutable::{escape_value, Whitespace};
 use crate::{
-    file::{Index, Size},
+    file::{
+        mutable::{escape_value, Whitespace},
+        Index, Size,
+    },
     lookup, parse,
     parse::{section::Key, Event},
     value::{normalize, normalize_bstr, normalize_bstring},

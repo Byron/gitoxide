@@ -2,10 +2,15 @@ use std::{borrow::Cow, collections::HashMap, ops::DerefMut};
 
 use bstr::{BStr, BString, ByteVec};
 
-use crate::file::mutable::section::{MutableSection, SectionBody};
-use crate::file::mutable::{escape_value, Whitespace};
 use crate::{
-    file::{Index, SectionBodyId, Size},
+    file::{
+        mutable::{
+            escape_value,
+            section::{MutableSection, SectionBody},
+            Whitespace,
+        },
+        Index, SectionBodyId, Size,
+    },
     lookup,
     parse::{section, Event},
     value::{normalize_bstr, normalize_bstring},

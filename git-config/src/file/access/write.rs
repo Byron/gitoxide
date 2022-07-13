@@ -1,5 +1,6 @@
-use crate::File;
 use bstr::BString;
+
+use crate::File;
 
 impl File<'_> {
     /// Serialize this type into a `BString` for convenience.

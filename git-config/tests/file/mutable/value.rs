@@ -1,6 +1,7 @@
 mod get {
-    use crate::file::mutable::value::init_config;
     use bstr::BString;
+
+    use crate::file::mutable::value::init_config;
 
     fn config_get(input: &str) -> BString {
         let mut file: git_config::File = input.parse().unwrap();

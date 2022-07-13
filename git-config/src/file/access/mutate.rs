@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 
-use crate::file::rename_section;
 use crate::{
-    file::{MutableSection, SectionBody},
+    file::{rename_section, MutableSection, SectionBody},
     lookup,
     parse::section,
     File,

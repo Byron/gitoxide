@@ -1,6 +1,6 @@
-use git_config::parse::section;
-use git_config::parse::Event;
 use std::borrow::Cow;
+
+use git_config::parse::{section, Event};
 
 pub fn header_event(name: &'static str, subsection: impl Into<Option<&'static str>>) -> Event<'static> {
     Event::SectionHeader(section::Header::new(name, subsection.into().map(Cow::Borrowed)).unwrap())
@@ -8,8 +8,9 @@ pub fn header_event(name: &'static str, subsection: impl Into<Option<&'static st
 
 mod header {
     mod write_to {
-        use git_config::parse::section;
         use std::borrow::Cow;
+
+        use git_config::parse::section;
 
         #[test]
         fn subsection_backslashes_and_quotes_are_escaped() -> crate::Result {
@@ -34,8 +35,9 @@ mod header {
         }
     }
     mod new {
-        use git_config::parse::section;
         use std::borrow::Cow;
+
+        use git_config::parse::section;
 
         #[test]
         fn names_must_be_mostly_ascii() {
@@ -61,8 +63,9 @@ mod header {
     }
 }
 mod name {
-    use git_config::parse::section::Name;
     use std::convert::TryFrom;
+
+    use git_config::parse::section::Name;
 
     #[test]
     fn alphanum_and_dash_are_valid() {
@@ -80,9 +83,9 @@ mod name {
 }
 
 mod key {
+    use std::{cmp::Ordering, convert::TryFrom};
+
     use git_config::parse::section::Key;
-    use std::cmp::Ordering;
-    use std::convert::TryFrom;
 
     fn key(k: &str) -> Key<'_> {
         Key::try_from(k).unwrap()

@@ -1,5 +1,4 @@
-use std::str::FromStr;
-use std::{convert::TryFrom, fmt::Display};
+use std::{convert::TryFrom, fmt::Display, str::FromStr};
 
 use bstr::{BStr, BString};
 

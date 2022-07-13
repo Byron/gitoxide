@@ -1,5 +1,4 @@
-use std::borrow::Cow;
-use std::convert::TryFrom;
+use std::{borrow::Cow, convert::TryFrom};
 
 use git_config::parse::{Event, Events, Section};
 

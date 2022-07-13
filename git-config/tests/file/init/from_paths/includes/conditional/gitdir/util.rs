@@ -8,8 +8,10 @@ use std::{
 
 use bstr::{BString, ByteSlice};
 
-use crate::file::cow_str;
-use crate::file::init::from_paths::{escape_backslashes, includes::conditional::options_with_git_dir};
+use crate::file::{
+    cow_str,
+    init::from_paths::{escape_backslashes, includes::conditional::options_with_git_dir},
+};
 
 #[derive(Debug)]
 pub struct GitEnv {

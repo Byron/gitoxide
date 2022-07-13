@@ -2,8 +2,12 @@ use std::{borrow::Cow, path::PathBuf};
 
 use bstr::BString;
 
-use crate::file::from_paths;
-use crate::{file::init::resolve_includes, parse::section, path::interpolate, File};
+use crate::{
+    file::{from_paths, init::resolve_includes},
+    parse::section,
+    path::interpolate,
+    File,
+};
 
 /// Represents the errors that may occur when calling [`File::from_env`][crate::File::from_env()].
 #[derive(Debug, thiserror::Error)]

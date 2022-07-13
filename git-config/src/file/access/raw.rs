@@ -2,9 +2,8 @@ use std::{borrow::Cow, collections::HashMap};
 
 use bstr::BStr;
 
-use crate::file::mutable::value::EntryData;
 use crate::{
-    file::{Index, MutableMultiValue, MutableSection, MutableValue, Size},
+    file::{mutable::value::EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size},
     lookup,
     parse::{section, Event},
     File,

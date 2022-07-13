@@ -1,8 +1,7 @@
 mod rename_section {
-    use git_config::file::rename_section;
-    use git_config::parse::section;
-    use std::borrow::Cow;
-    use std::convert::TryFrom;
+    use std::{borrow::Cow, convert::TryFrom};
+
+    use git_config::{file::rename_section, parse::section};
 
     #[test]
     fn section_renaming_validates_new_name() {

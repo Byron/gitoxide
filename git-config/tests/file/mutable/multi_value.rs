@@ -1,6 +1,5 @@
 mod get {
-    use crate::file::cow_str;
-    use crate::file::mutable::multi_value::init_config;
+    use crate::file::{cow_str, mutable::multi_value::init_config};
 
     #[test]
     fn single_lines() -> crate::Result {
@@ -50,8 +49,7 @@ mod access {
 }
 
 mod set {
-    use crate::file::cow_str;
-    use crate::file::mutable::multi_value::init_config;
+    use crate::file::{cow_str, mutable::multi_value::init_config};
 
     #[test]
     fn values_are_escaped() -> crate::Result {
