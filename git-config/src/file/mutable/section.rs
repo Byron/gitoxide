@@ -80,26 +80,26 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     /// Returns the previous value if it replaced a value, or None if it adds
     /// the value.
     pub fn set(&mut self, key: Key<'event>, value: &BStr) -> Option<Cow<'event, BStr>> {
-        let range = self.value_range_by_key(&key);
-        if range.is_empty() {
-            self.push(key, value);
-            return None;
+        match self.key_and_value_range_by(&key) {
+            None => {
+                self.push(key, value);
+                None
+            }
+            Some((_, value_range)) => {
+                let range_start = value_range.start;
+                let ret = self.remove_internal(value_range);
+                self.section
+                    .0
+                    .insert(range_start, Event::Value(escape_value(value).into()));
+                Some(ret)
+            }
         }
-        let range_start = range.start;
-        let ret = self.remove_internal(range);
-        self.section
-            .0
-            .insert(range_start, Event::Value(escape_value(value).into()));
-        Some(ret)
     }
 
     /// Removes the latest value by key and returns it, if it exists.
     pub fn remove(&mut self, key: &Key<'event>) -> Option<Cow<'event, BStr>> {
-        let range = self.value_range_by_key(key);
-        if range.is_empty() {
-            return None;
-        }
-        Some(self.remove_internal(range))
+        let (key_range, _value_range) = self.key_and_value_range_by(key)?;
+        Some(self.remove_internal(key_range))
     }
 
     /// Adds a new line event. Note that you don't need to call this unless
@@ -247,38 +247,37 @@ impl<'event> SectionBody<'event> {
 
     /// Returns the the range containing the value events for the `key`.
     /// If the value is not found, then this returns an empty range.
-    fn value_range_by_key(&self, key: &Key<'_>) -> Range<usize> {
-        let mut range = Range::default();
-        let mut key_seen = false;
+    fn key_and_value_range_by(&self, key: &Key<'_>) -> Option<(Range<usize>, Range<usize>)> {
+        let mut value_range = Range::default();
+        let mut key_start = None;
         for (i, e) in self.0.iter().enumerate().rev() {
             match e {
                 Event::SectionKey(k) => {
                     if k == key {
-                        key_seen = true;
+                        key_start = Some(i);
                         break;
                     }
-                    range = Range::default();
+                    value_range = Range::default();
                 }
                 Event::Value(_) => {
-                    (range.start, range.end) = (i, i);
+                    (value_range.start, value_range.end) = (i, i);
                 }
                 Event::ValueNotDone(_) | Event::ValueDone(_) => {
-                    if range.end == 0 {
-                        range.end = i
+                    if value_range.end == 0 {
+                        value_range.end = i
                     } else {
-                        range.start = i
+                        value_range.start = i
                     };
                 }
                 _ => (),
             }
         }
-        if !key_seen {
-            Range::default()
-        } else {
+        key_start.map(|key_start| {
             // value end needs to be offset by one so that the last value's index
             // is included in the range
-            range.start..range.end + 1
-        }
+            let value_range = value_range.start..value_range.end + 1;
+            (key_start..value_range.end, value_range)
+        })
     }
 }
 
@@ -288,10 +287,7 @@ impl<'event> SectionBody<'event> {
     #[must_use]
     pub fn value(&self, key: &str) -> Option<Cow<'_, BStr>> {
         let key = Key::from_str_unchecked(key);
-        let range = self.value_range_by_key(&key);
-        if range.is_empty() {
-            return None;
-        }
+        let (_, range) = self.key_and_value_range_by(&key)?;
         let mut concatenated = BString::default();
 
         for event in &self.0[range] {

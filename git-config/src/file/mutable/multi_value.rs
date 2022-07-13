@@ -138,11 +138,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
     }
 
     /// Sets all values in this multivar to the provided one without owning the
-    /// provided input. Consider using [`Self::set_owned_values_all`] or
-    /// [`Self::set_str_all`] unless you have a strict performance or memory
-    /// need for a more ergonomic interface.
-    ///
-    /// [`File`]: crate::File
+    /// provided input.
     pub fn set_all<'a>(&mut self, input: impl Into<&'a BStr>) {
         let input = input.into();
         for EntryData {

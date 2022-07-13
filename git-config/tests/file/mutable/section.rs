@@ -11,17 +11,18 @@ mod remove {
         assert_eq!(section.keys().count(), 5);
 
         let prev_values = vec!["v", "", "", "", "a        b        c"];
-        let num_values = section.num_values();
+        let mut num_values = section.num_values();
         for (key, expected_prev_value) in ('a'..='e').zip(prev_values) {
             let prev_value = section.remove(&key.to_string().try_into()?);
+            num_values -= 1;
             assert_eq!(prev_value.expect("present").as_ref(), expected_prev_value);
-            assert_eq!(section.num_values(), num_values, "we don't actually remove keys");
+            assert_eq!(section.num_values(), num_values);
         }
 
         assert!(!section.is_empty(), "everything is still there");
         assert_eq!(
             config.to_string(),
-            "\n        [a]\n            a = \n            b = \n            c=\n            d\n            e ="
+            "\n        [a]\n            \n            \n            \n            \n            "
         );
         Ok(())
     }
