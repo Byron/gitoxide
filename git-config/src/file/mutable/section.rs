@@ -128,7 +128,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
 // Internal methods that may require exact indices for faster operations.
 impl<'a, 'event> MutableSection<'a, 'event> {
     pub(crate) fn new(section: &'a mut SectionBody<'event>) -> Self {
-        let whitespace = Some(compute_whitespace(section));
+        let whitespace = compute_whitespace(section);
         Self {
             section,
             implicit_newline: true,
@@ -189,28 +189,20 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     }
 }
 
-fn compute_whitespace<'event>(s: &mut SectionBody<'event>) -> Cow<'event, BStr> {
-    let mut saw_events = false;
-    let computed =
-        s.0.iter()
-            .take_while(|e| matches!(e, Event::Whitespace(_)))
-            .inspect(|_| saw_events = true)
-            .map(|e| match e {
-                Event::Whitespace(s) => s
-                    .iter()
-                    .filter_map(|b| match *b {
-                        b'\t' => Some(4),
-                        b' ' => Some(1),
-                        _ => None,
-                    })
-                    .sum::<usize>(),
-                _ => unreachable!(),
-            })
-            .sum();
+fn compute_whitespace<'event>(s: &mut SectionBody<'event>) -> Option<Cow<'event, BStr>> {
+    use bstr::ByteSlice;
 
-    let mut buf = BString::default();
-    buf.extend(std::iter::repeat(b' ').take(saw_events.then(|| computed).unwrap_or(8)));
-    buf.into()
+    let first_value_pos = s.0.iter().enumerate().find_map(|(idx, e)| match e {
+        Event::SectionKey(_) => Some(idx),
+        _ => None,
+    });
+    match first_value_pos {
+        Some(pos) => s.0[..pos].iter().rev().next().and_then(|e| match e {
+            Event::Whitespace(s) => Some(s.clone()),
+            _ => None,
+        }),
+        None => Some("\t\t".as_bytes().as_bstr().into()),
+    }
 }
 
 impl<'event> Deref for MutableSection<'_, 'event> {

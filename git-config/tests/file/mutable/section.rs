@@ -4,12 +4,17 @@ mod push {
     use std::convert::TryFrom;
 
     #[test]
-    #[ignore]
     fn whitespace_is_derived_from_whitespace_before_first_value() -> crate::Result {
-        for (config, expected) in [("[a]\n\t\tb = c", "\t\t")] {
+        for (config, expected) in [
+            ("[a]\n\t\tb = c", Some("\t\t".into())),
+            ("[a]\nb = c", None),
+            ("[a]", Some("\t\t".into())),
+            ("[a]\t\tb = c", Some("\t\t".into())),
+            ("[a]\n\t\t  \n    \t    b = c", Some("    \t    ".into())),
+        ] {
             let mut file: git_config::File = config.parse()?;
             assert_eq!(
-                file.section_mut("a", None)?.leading_space().expect("present"),
+                file.section_mut("a", None)?.leading_space(),
                 expected,
                 "{:?} should find {:?} as whitespace",
                 config,
@@ -24,6 +29,6 @@ mod push {
         let mut file = git_config::File::default();
         let mut section = file.new_section("core", None).unwrap();
         section.push(Key::try_from("value").unwrap(), Cow::Borrowed("none".into()));
-        assert_eq!(file.to_bstring(), "[core]\n        value=none\n");
+        assert_eq!(file.to_bstring(), "[core]\n\t\tvalue=none\n");
     }
 }

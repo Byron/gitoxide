@@ -54,9 +54,9 @@ impl<'event> File<'event> {
     /// let mut git_config = git_config::File::default();
     /// let mut section = git_config.new_section("hello", Some("world".into()))?;
     /// section.push(section::Key::try_from("a")?, b"b".as_bstr().into());
-    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n        a=b\n");
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n\t\ta=b\n");
     /// let _section = git_config.new_section("core", None);
-    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n        a=b\n[core]\n");
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n\t\ta=b\n[core]\n");
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn new_section(
