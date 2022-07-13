@@ -32,3 +32,27 @@ mod push {
         assert_eq!(config.to_bstring(), "[core]\n\tvalue=none\n");
     }
 }
+
+mod set_leading_whitespace {
+    use crate::file::cow_str;
+    use git_config::parse::section::Key;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn any_whitespace_is_ok() -> crate::Result {
+        let mut config = git_config::File::default();
+        let mut section = config.new_section("core", None)?;
+        section.set_leading_whitespace(cow_str("\n\t").into());
+        section.push(Key::try_from("a")?, cow_str("v"));
+        assert_eq!(config.to_string(), "[core]\n\n\ta=v\n");
+        Ok(())
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_if_non_whitespace_is_used() {
+        let mut config = git_config::File::default();
+        let mut section = config.new_section("core", None).unwrap();
+        section.set_leading_whitespace(cow_str("foo").into());
+    }
+}

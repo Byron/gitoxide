@@ -18,7 +18,7 @@ use crate::{
 pub struct MutableSection<'a, 'event> {
     section: &'a mut SectionBody<'event>,
     implicit_newline: bool,
-    whitespace: Option<Cow<'event, BStr>>,
+    whitespace: Whitespace<'event>,
 }
 
 /// Mutating methods.
@@ -26,7 +26,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     /// Adds an entry to the end of this section.
     // TODO: multi-line handling - maybe just escape it for now.
     pub fn push(&mut self, key: Key<'event>, value: Cow<'event, BStr>) {
-        if let Some(ws) = &self.whitespace {
+        if let Some(ws) = &self.whitespace.pre_key {
             self.section.0.push(Event::Whitespace(ws.clone()));
         }
 
@@ -110,8 +110,9 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         self.implicit_newline = on;
     }
 
-    /// Sets the exact whitespace to use before each key-value pair, with only whitespace characters
-    /// being permissible.
+    /// Sets the exact whitespace to use before each newly created key-value pair,
+    /// with only whitespace characters being permissible.
+    ///
     /// The default is 2 tabs.
     /// Set to `None` to disable adding whitespace before a key value.
     ///
@@ -126,14 +127,14 @@ impl<'a, 'event> MutableSection<'a, 'event> {
                 .map_or(true, |ws| ws.iter().all(|b| b.is_ascii_whitespace())),
             "input whitespace must only contain whitespace characters."
         );
-        self.whitespace = whitespace;
+        self.whitespace.pre_key = whitespace;
     }
 
     /// Returns the whitespace this section will insert before the
     /// beginning of a key, if any.
     #[must_use]
     pub fn leading_whitespace(&self) -> Option<&BStr> {
-        self.whitespace.as_deref()
+        self.whitespace.pre_key.as_deref()
     }
 }
 
@@ -181,30 +182,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
 
     // TODO: borrow value only to avoid extra copy
     pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: BString) -> Size {
-        let quote = value.get(0).map_or(false, |b| b.is_ascii_whitespace())
-            || value
-                .get(value.len().saturating_sub(1))
-                .map_or(false, |b| b.is_ascii_whitespace())
-            || value.find_byteset(b";#").is_some();
-
-        let mut buf: BString = Vec::with_capacity(value.len()).into();
-        if quote {
-            buf.push(b'"');
-        }
-
-        for b in value.iter().copied() {
-            match b {
-                b'\n' => buf.push_str("\\n"),
-                b'\t' => buf.push_str("\\t"),
-                b'"' => buf.push_str("\\\""),
-                b'\\' => buf.push_str("\\\\"),
-                _ => buf.push(b),
-            }
-        }
-
-        if quote {
-            buf.push(b'"');
-        }
+        let buf = escape_value(value);
 
         self.section.0.insert(index.0, Event::Value(buf.into()));
         self.section.0.insert(index.0, Event::KeyValueSeparator);
@@ -227,18 +205,60 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     }
 }
 
-fn compute_whitespace<'event>(s: &mut SectionBody<'event>) -> Option<Cow<'event, BStr>> {
+#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
+struct Whitespace<'a> {
+    pre_key: Option<Cow<'a, BStr>>,
+    pre_sep: Option<Cow<'a, BStr>>,
+    post_sep: Option<Cow<'a, BStr>>,
+}
+
+fn compute_whitespace<'a>(s: &mut SectionBody<'a>) -> Whitespace<'a> {
     let first_value_pos = s.0.iter().enumerate().find_map(|(idx, e)| match e {
         Event::SectionKey(_) => Some(idx),
         _ => None,
     });
-    match first_value_pos {
+    let pre_key = match first_value_pos {
         Some(pos) => s.0[..pos].iter().rev().next().and_then(|e| match e {
             Event::Whitespace(s) => Some(s.clone()),
             _ => None,
         }),
         None => Some("\t".as_bytes().as_bstr().into()),
+    };
+    Whitespace {
+        pre_key,
+        pre_sep: None,
+        post_sep: None,
     }
+}
+
+fn escape_value(value: impl AsRef<BStr>) -> BString {
+    let value = value.as_ref();
+    let starts_with_whitespace = value.get(0).map_or(false, |b| b.is_ascii_whitespace());
+    let ends_with_whitespace = value
+        .get(value.len().saturating_sub(1))
+        .map_or(false, |b| b.is_ascii_whitespace());
+    let contains_comment_indicators = value.find_byteset(b";#").is_some();
+    let quote = starts_with_whitespace || ends_with_whitespace || contains_comment_indicators;
+
+    let mut buf: BString = Vec::with_capacity(value.len()).into();
+    if quote {
+        buf.push(b'"');
+    }
+
+    for b in value.iter().copied() {
+        match b {
+            b'\n' => buf.push_str("\\n"),
+            b'\t' => buf.push_str("\\t"),
+            b'"' => buf.push_str("\\\""),
+            b'\\' => buf.push_str("\\\\"),
+            _ => buf.push(b),
+        }
+    }
+
+    if quote {
+        buf.push(b'"');
+    }
+    buf
 }
 
 impl<'event> Deref for MutableSection<'_, 'event> {
