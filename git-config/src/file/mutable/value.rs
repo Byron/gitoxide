@@ -246,14 +246,14 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
         section: &mut SectionBody<'event>,
         section_id: SectionBodyId,
         offset_index: usize,
-        input: Cow<'a, BStr>,
+        value: Cow<'a, BStr>,
     ) {
         let (offset, size) = MutableMultiValue::index_and_size(offsets, section_id, offset_index);
         let section = section.as_mut();
         section.drain(offset..offset + size);
 
         MutableMultiValue::set_offset(offsets, section_id, offset_index, 3);
-        section.insert(offset, Event::Value(input));
+        section.insert(offset, Event::Value(value));
         section.insert(offset, Event::KeyValueSeparator);
         section.insert(offset, Event::SectionKey(key.to_owned()));
     }

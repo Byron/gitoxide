@@ -113,7 +113,7 @@ mod set_string {
         let mut config = init_config();
 
         let mut value = config.raw_value_mut("core", None, "a")?;
-        value.set_string("hello world".to_string());
+        value.set_string("hello world");
         assert_eq!(
             config.to_string(),
             r#"[core]
@@ -176,7 +176,7 @@ mod delete {
 
         let mut value = config.raw_value_mut("core", None, "a")?;
         value.delete();
-        value.set_string("hello world".to_string());
+        value.set_string("hello world");
         assert_eq!(
             config.to_string(),
             r#"[core]
