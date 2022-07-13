@@ -4,7 +4,7 @@ use std::{
     ops::{Deref, Range},
 };
 
-use bstr::{BStr, BString, ByteVec};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 
 use crate::{
     file::{Index, Size},
@@ -179,8 +179,34 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         self.section.0.drain(start.0..end.0);
     }
 
+    // TODO: borrow value only to avoid extra copy
     pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: BString) -> Size {
-        self.section.0.insert(index.0, Event::Value(value.into()));
+        let quote = value.get(0).map_or(false, |b| b.is_ascii_whitespace())
+            || value
+                .get(value.len().saturating_sub(1))
+                .map_or(false, |b| b.is_ascii_whitespace())
+            || value.find_byteset(b";#").is_some();
+
+        let mut buf: BString = Vec::with_capacity(value.len()).into();
+        if quote {
+            buf.push(b'"');
+        }
+
+        for b in value.iter().copied() {
+            match b {
+                b'\n' => buf.push_str("\\n"),
+                b'\t' => buf.push_str("\\t"),
+                b'"' => buf.push_str("\\\""),
+                b'\\' => buf.push_str("\\\\"),
+                _ => buf.push(b),
+            }
+        }
+
+        if quote {
+            buf.push(b'"');
+        }
+
+        self.section.0.insert(index.0, Event::Value(buf.into()));
         self.section.0.insert(index.0, Event::KeyValueSeparator);
         self.section.0.insert(index.0, Event::SectionKey(key));
 
@@ -202,8 +228,6 @@ impl<'a, 'event> MutableSection<'a, 'event> {
 }
 
 fn compute_whitespace<'event>(s: &mut SectionBody<'event>) -> Option<Cow<'event, BStr>> {
-    use bstr::ByteSlice;
-
     let first_value_pos = s.0.iter().enumerate().find_map(|(idx, e)| match e {
         Event::SectionKey(_) => Some(idx),
         _ => None,

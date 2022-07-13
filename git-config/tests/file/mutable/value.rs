@@ -44,22 +44,54 @@ mod set_string {
         "[a] k = v".parse().unwrap()
     }
 
-    fn assert_value(f: &git_config::File, expected: &str) {
-        let file: git_config::File = f.to_string().parse().unwrap();
+    fn assert_set_string(expected: &str) {
+        let mut file = file();
+        let mut v = file.raw_value_mut("a", None, "k").unwrap();
+        assert_eq!(v.get().unwrap().as_ref(), "v");
+        v.set_string(expected);
+
+        assert_eq!(v.get().unwrap().as_ref(), expected);
+
+        let file: git_config::File = file.to_string().parse().unwrap();
         assert_eq!(file.raw_value("a", None, "k").expect("present").as_ref(), expected);
     }
 
     #[test]
-    #[ignore]
-    fn leading_whitespace_causes_double_quotes() -> crate::Result {
-        let mut file = file();
-        let mut v = file.raw_value_mut("a", None, "k")?;
-        assert_eq!(v.get()?.as_ref(), "v");
-        v.set_string(" v");
+    fn leading_whitespace_causes_double_quotes() {
+        assert_set_string(" v");
+    }
 
-        assert_eq!(v.get()?.as_ref(), " v");
-        assert_value(&file, " v");
-        Ok(())
+    #[test]
+    fn single_line() {
+        assert_set_string("hello world");
+    }
+
+    #[test]
+    fn starts_with_whitespace() {
+        assert_set_string("\ta");
+        assert_set_string(" a");
+    }
+
+    #[test]
+    fn ends_with_whitespace() {
+        assert_set_string("a\t");
+        assert_set_string("a ");
+    }
+
+    #[test]
+    fn quotes_and_backslashes() {
+        assert_set_string(r#""hello"\"there"\\\b\x"#);
+    }
+
+    #[test]
+    fn multi_line() {
+        assert_set_string("a\nb   \n\t   c");
+    }
+
+    #[test]
+    fn comment_included() {
+        assert_set_string(";hello ");
+        assert_set_string(" # hello");
     }
 
     #[test]

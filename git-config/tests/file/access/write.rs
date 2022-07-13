@@ -15,6 +15,8 @@ fn complex_lossless_roundtrip() {
 
         [test]
             other-quoted = "hello"
+            implicit
+            implicit-equal =
             
         [test "sub-section \"special\" C:\\root"]
             bool-explicit = false
