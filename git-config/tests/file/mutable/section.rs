@@ -14,7 +14,7 @@ mod push {
         ] {
             let mut file: git_config::File = config.parse()?;
             assert_eq!(
-                file.section_mut("a", None)?.leading_space(),
+                file.section_mut("a", None)?.leading_whitespace(),
                 expected,
                 "{:?} should find {:?} as whitespace",
                 config,

@@ -110,17 +110,29 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         self.implicit_newline = on;
     }
 
-    /// Sets the exact whitespace to use before each key-value pair.
+    /// Sets the exact whitespace to use before each key-value pair, with only whitespace characters
+    /// being permissible.
     /// The default is 2 tabs.
     /// Set to `None` to disable adding whitespace before a key value.
-    pub fn set_leading_space(&mut self, whitespace: Option<Cow<'event, BStr>>) {
+    ///
+    /// # Panics
+    ///
+    /// If non-whitespace characters are used. This makes the method only suitable for validated
+    /// or known input.
+    pub fn set_leading_whitespace(&mut self, whitespace: Option<Cow<'event, BStr>>) {
+        assert!(
+            whitespace
+                .as_deref()
+                .map_or(true, |ws| ws.iter().all(|b| b.is_ascii_whitespace())),
+            "input whitespace must only contain whitespace characters."
+        );
         self.whitespace = whitespace;
     }
 
     /// Returns the whitespace this section will insert before the
     /// beginning of a key, if any.
     #[must_use]
-    pub fn leading_space(&self) -> Option<&BStr> {
+    pub fn leading_whitespace(&self) -> Option<&BStr> {
         self.whitespace.as_deref()
     }
 }
