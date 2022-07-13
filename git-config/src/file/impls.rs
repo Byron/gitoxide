@@ -1,8 +1,17 @@
+use std::str::FromStr;
 use std::{convert::TryFrom, fmt::Display};
 
 use bstr::{BStr, BString};
 
 use crate::{file::SectionBody, parse, File};
+
+impl FromStr for File<'static> {
+    type Err = parse::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        parse::Events::from_bytes_owned(s.as_bytes(), None).map(File::from)
+    }
+}
 
 impl<'a> TryFrom<&'a str> for File<'a> {
     type Error = parse::Error;
