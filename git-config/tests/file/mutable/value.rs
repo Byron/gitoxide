@@ -41,23 +41,28 @@ mod get {
 mod set_string {
     use crate::file::mutable::value::init_config;
 
-    fn file() -> git_config::File<'static> {
-        "[a] k = v".parse().unwrap()
-    }
-
     fn assert_set_string(expected: &str) {
-        let mut file = file();
-        let mut v = file.raw_value_mut("a", None, "k").unwrap();
-        assert_eq!(v.get().unwrap().as_ref(), "v");
-        v.set_string(expected);
+        for input in [
+            "[a] k = v",
+            "[a] k = ",
+            "[a] k =",
+            "[a] k =\n",
+            "[a] k ",
+            "[a] k\n",
+            "[a] k",
+        ] {
+            let mut file: git_config::File = input.parse().unwrap();
+            let mut v = file.raw_value_mut("a", None, "k").unwrap();
+            v.set_string(expected);
 
-        assert_eq!(v.get().unwrap().as_ref(), expected);
+            assert_eq!(v.get().unwrap().as_ref(), expected);
 
-        let file: git_config::File = match file.to_string().parse() {
-            Ok(f) => f,
-            Err(err) => panic!("{:?} failed with: {}", file.to_string(), err),
-        };
-        assert_eq!(file.raw_value("a", None, "k").expect("present").as_ref(), expected);
+            let file: git_config::File = match file.to_string().parse() {
+                Ok(f) => f,
+                Err(err) => panic!("{:?} failed with: {}", file.to_string(), err),
+            };
+            assert_eq!(file.raw_value("a", None, "k").expect("present").as_ref(), expected);
+        }
     }
 
     #[test]

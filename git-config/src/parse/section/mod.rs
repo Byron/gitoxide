@@ -114,6 +114,14 @@ mod types {
                 }
             }
 
+            impl<'a> std::convert::TryFrom<String> for $name<'a> {
+                type Error = $module::Error;
+
+                fn try_from(s: String) -> Result<Self, Self::Error> {
+                    Self::try_from(std::borrow::Cow::Owned(bstr::BString::from(s)))
+                }
+            }
+
             impl<'a> std::convert::TryFrom<std::borrow::Cow<'a, bstr::BStr>> for $name<'a> {
                 type Error = $module::Error;
 

@@ -113,7 +113,7 @@ impl File<'static> {
 
                     section.push(
                         section::Key(BString::from(key).into()),
-                        git_path::into_bstr(PathBuf::from(value)).into_owned().into(),
+                        git_path::into_bstr(PathBuf::from(value)).as_ref(),
                     );
                 }
                 None => {

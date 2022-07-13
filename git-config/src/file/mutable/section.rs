@@ -27,14 +27,14 @@ pub struct MutableSection<'a, 'event> {
 /// Mutating methods.
 impl<'a, 'event> MutableSection<'a, 'event> {
     /// Adds an entry to the end of this section.
-    pub fn push(&mut self, key: Key<'event>, value: Cow<'event, BStr>) {
+    pub fn push(&mut self, key: Key<'event>, value: &BStr) {
         if let Some(ws) = &self.whitespace.pre_key {
             self.section.0.push(Event::Whitespace(ws.clone()));
         }
 
         self.section.0.push(Event::SectionKey(key));
         self.section.0.extend(self.whitespace.key_value_separators());
-        self.section.0.push(Event::Value(escape_value(value.as_ref()).into()));
+        self.section.0.push(Event::Value(escape_value(value).into()));
         if self.implicit_newline {
             self.section.0.push(Event::Newline(BString::from("\n").into()));
         }
@@ -79,7 +79,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     /// Sets the last key value pair if it exists, or adds the new value.
     /// Returns the previous value if it replaced a value, or None if it adds
     /// the value.
-    pub fn set(&mut self, key: Key<'event>, value: Cow<'event, BStr>) -> Option<Cow<'event, BStr>> {
+    pub fn set(&mut self, key: Key<'event>, value: &BStr) -> Option<Cow<'event, BStr>> {
         let range = self.value_range_by_key(&key);
         if range.is_empty() {
             self.push(key, value);
@@ -87,7 +87,9 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         }
         let range_start = range.start;
         let ret = self.remove_internal(range);
-        self.section.0.insert(range_start, Event::Value(value));
+        self.section
+            .0
+            .insert(range_start, Event::Value(escape_value(value).into()));
         Some(ret)
     }
 
@@ -247,10 +249,12 @@ impl<'event> SectionBody<'event> {
     /// If the value is not found, then this returns an empty range.
     fn value_range_by_key(&self, key: &Key<'_>) -> Range<usize> {
         let mut range = Range::default();
+        let mut key_seen = false;
         for (i, e) in self.0.iter().enumerate().rev() {
             match e {
                 Event::SectionKey(k) => {
                     if k == key {
+                        key_seen = true;
                         break;
                     }
                     range = Range::default();
@@ -268,10 +272,13 @@ impl<'event> SectionBody<'event> {
                 _ => (),
             }
         }
-
-        // value end needs to be offset by one so that the last value's index
-        // is included in the range
-        range.start..range.end + 1
+        if !key_seen {
+            Range::default()
+        } else {
+            // value end needs to be offset by one so that the last value's index
+            // is included in the range
+            range.start..range.end + 1
+        }
     }
 }
 
@@ -361,6 +368,8 @@ impl<'event> SectionBody<'event> {
     }
 
     /// Returns if the section is empty.
+    /// Note that this may count whitespace, see [`num_values()`][Self::num_values()] for
+    /// another way to determine semantic emptiness.
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()

@@ -335,7 +335,7 @@ mod section {
     }
 
     #[test]
-    fn section_single_line() {
+    fn section_implicit_value() {
         let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[hello] c", &mut node).unwrap(),
