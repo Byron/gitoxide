@@ -42,7 +42,7 @@ mod pop {
             assert!(section.contains_key(std::str::from_utf8(&[key])?));
         }
         let mut num_values = section.num_values();
-        for _ in 0..num_values {
+        for _ in 0..section.num_values() {
             section.pop();
             num_values -= 1;
             assert_eq!(section.num_values(), num_values);
