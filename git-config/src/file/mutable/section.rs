@@ -26,15 +26,15 @@ pub struct SectionMut<'a, 'event> {
 
 /// Mutating methods.
 impl<'a, 'event> SectionMut<'a, 'event> {
-    /// Adds an entry to the end of this section.
-    pub fn push(&mut self, key: Key<'event>, value: &BStr) {
+    /// Adds an entry to the end of this section name `key` and `value`.
+    pub fn push<'b>(&mut self, key: Key<'event>, value: impl Into<&'b BStr>) {
         if let Some(ws) = &self.whitespace.pre_key {
             self.section.0.push(Event::Whitespace(ws.clone()));
         }
 
         self.section.0.push(Event::SectionKey(key));
         self.section.0.extend(self.whitespace.key_value_separators());
-        self.section.0.push(Event::Value(escape_value(value).into()));
+        self.section.0.push(Event::Value(escape_value(value.into()).into()));
         if self.implicit_newline {
             self.section.0.push(Event::Newline(BString::from("\n").into()));
         }
@@ -79,7 +79,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
     /// Sets the last key value pair if it exists, or adds the new value.
     /// Returns the previous value if it replaced a value, or None if it adds
     /// the value.
-    pub fn set(&mut self, key: Key<'event>, value: &BStr) -> Option<Cow<'event, BStr>> {
+    pub fn set<'b>(&mut self, key: Key<'event>, value: impl Into<&'b BStr>) -> Option<Cow<'event, BStr>> {
         match self.key_and_value_range_by(&key) {
             None => {
                 self.push(key, value);
@@ -90,15 +90,16 @@ impl<'a, 'event> SectionMut<'a, 'event> {
                 let ret = self.remove_internal(value_range);
                 self.section
                     .0
-                    .insert(range_start, Event::Value(escape_value(value).into()));
+                    .insert(range_start, Event::Value(escape_value(value.into()).into()));
                 Some(ret)
             }
         }
     }
 
     /// Removes the latest value by key and returns it, if it exists.
-    pub fn remove(&mut self, key: &Key<'event>) -> Option<Cow<'event, BStr>> {
-        let (key_range, _value_range) = self.key_and_value_range_by(key)?;
+    pub fn remove(&mut self, key: impl AsRef<str>) -> Option<Cow<'event, BStr>> {
+        let key = Key::from_str_unchecked(key.as_ref());
+        let (key_range, _value_range) = self.key_and_value_range_by(&key)?;
         Some(self.remove_internal(key_range))
     }
 

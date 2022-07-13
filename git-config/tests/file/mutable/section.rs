@@ -1,6 +1,5 @@
 mod remove {
     use super::multi_value_section;
-    use std::convert::TryInto;
 
     #[test]
     fn all() -> crate::Result {
@@ -13,7 +12,7 @@ mod remove {
         let prev_values = vec!["v", "", "", "", "a        b        c"];
         let mut num_values = section.num_values();
         for (key, expected_prev_value) in ('a'..='e').zip(prev_values) {
-            let prev_value = section.remove(&key.to_string().try_into()?);
+            let prev_value = section.remove(key.to_string());
             num_values -= 1;
             assert_eq!(prev_value.expect("present").as_ref(), expected_prev_value);
             assert_eq!(section.num_values(), num_values);
@@ -68,7 +67,7 @@ mod set {
 
         for (key, (new_value, expected_prev_value)) in (b'a'..=b'e').zip(values.into_iter().zip(prev_values)) {
             let key = std::str::from_utf8(std::slice::from_ref(&key))?.to_owned();
-            let prev_value = section.set(key.try_into()?, new_value.into());
+            let prev_value = section.set(key.try_into()?, new_value);
             assert_eq!(prev_value.as_deref().expect("prev value set"), expected_prev_value);
         }
 
@@ -76,7 +75,7 @@ mod set {
         assert_eq!(
             config
                 .section_mut("a", None)?
-                .set("new-one".to_owned().try_into()?, "value".into()),
+                .set("new-one".to_owned().try_into()?, "value"),
             None,
             "new values don't replace an existing one"
         );
@@ -139,7 +138,7 @@ mod push {
             let mut config = git_config::File::default();
             let mut section = config.new_section("a", None).unwrap();
             section.set_implicit_newline(false);
-            section.push(Key::try_from("k").unwrap(), value.into());
+            section.push(Key::try_from("k").unwrap(), value);
             assert_eq!(config.to_bstring(), expected);
         }
     }
@@ -157,7 +156,7 @@ mod set_leading_whitespace {
         let mut config = git_config::File::default();
         let mut section = config.new_section("core", None)?;
         section.set_leading_whitespace(cow_str("\n\t").into());
-        section.push(Key::try_from("a")?, "v".into());
+        section.push(Key::try_from("a")?, "v");
         assert_eq!(config.to_string(), "[core]\n\n\ta = v\n");
         Ok(())
     }

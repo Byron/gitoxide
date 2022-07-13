@@ -343,9 +343,9 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values = vec![
-    ///     "x".into(),
-    ///     "y".into(),
-    ///     "z".into(),
+    ///     "x",
+    ///     "y",
+    ///     "z",
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_values("core", None, "a")?;
@@ -364,8 +364,8 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values = vec![
-    ///     "x".into(),
-    ///     "y".into(),
+    ///     "x",
+    ///     "y",
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_values("core", None, "a")?;
@@ -383,22 +383,26 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values = vec![
-    ///     "x".into(),
-    ///     "y".into(),
-    ///     "z".into(),
-    ///     "discarded".into(),
+    ///     "x",
+    ///     "y",
+    ///     "z",
+    ///     "discarded",
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values)?;
     /// assert!(!git_config.raw_values("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
-    pub fn set_raw_multi_value<'a>(
+    pub fn set_raw_multi_value<'a, Iter, Item>(
         &mut self,
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-        new_values: impl IntoIterator<Item = &'a BStr>,
-    ) -> Result<(), lookup::existing::Error> {
+        new_values: Iter,
+    ) -> Result<(), lookup::existing::Error>
+    where
+        Iter: IntoIterator<Item = Item>,
+        Item: Into<&'a BStr>,
+    {
         self.raw_values_mut(section_name, subsection_name, key)
             .map(|mut v| v.set_values(new_values))
     }

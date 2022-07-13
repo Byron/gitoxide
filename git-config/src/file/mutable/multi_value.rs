@@ -86,8 +86,8 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
     /// # Safety
     ///
     /// This will panic if the index is out of range.
-    pub fn set_string_at(&mut self, index: usize, input: impl AsRef<str>) {
-        self.set_at(index, input.as_ref().into());
+    pub fn set_string_at(&mut self, index: usize, value: impl AsRef<str>) {
+        self.set_at(index, value.as_ref());
     }
 
     /// Sets the value at the given index.
@@ -95,7 +95,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
     /// # Safety
     ///
     /// This will panic if the index is out of range.
-    pub fn set_at(&mut self, index: usize, input: &BStr) {
+    pub fn set_at<'a>(&mut self, index: usize, value: impl Into<&'a BStr>) {
         let EntryData {
             section_id,
             offset_index,
@@ -106,7 +106,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
             self.section.get_mut(&section_id).expect("known section id"),
             section_id,
             offset_index,
-            input,
+            value.into(),
         );
     }
 
@@ -117,14 +117,18 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
     /// remaining values are ignored.
     ///
     /// [`zip`]: std::iter::Iterator::zip
-    pub fn set_values<'a>(&mut self, input: impl IntoIterator<Item = &'a BStr>) {
+    pub fn set_values<'a, Iter, Item>(&mut self, values: Iter)
+    where
+        Iter: IntoIterator<Item = Item>,
+        Item: Into<&'a BStr>,
+    {
         for (
             EntryData {
                 section_id,
                 offset_index,
             },
             value,
-        ) in self.indices_and_sizes.iter().zip(input)
+        ) in self.indices_and_sizes.iter().zip(values)
         {
             Self::set_value_inner(
                 &self.key,
@@ -132,7 +136,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
                 self.section.get_mut(section_id).expect("known section id"),
                 *section_id,
                 *offset_index,
-                value,
+                value.into(),
             );
         }
     }

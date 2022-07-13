@@ -144,6 +144,7 @@ mod delete {
         let mut config = init_config();
         let mut values = config.raw_values_mut("core", None, "a")?;
         values.delete_all();
+        values.delete_all();
         assert!(values.get().is_err());
         assert_eq!(config.to_string(), "[core]\n    \n    [core]\n        \n        ");
         Ok(())

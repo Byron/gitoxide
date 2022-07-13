@@ -28,17 +28,17 @@ impl<'borrow, 'lookup, 'event> ValueMut<'borrow, 'lookup, 'event> {
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
     pub fn set_string(&mut self, input: impl AsRef<str>) {
-        self.set(input.as_ref().into());
+        self.set(input.as_ref());
     }
 
     /// Update the value to the provided one. This modifies the value such that
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
-    pub fn set(&mut self, input: &BStr) {
+    pub fn set<'a>(&mut self, input: impl Into<&'a BStr>) {
         if self.size.0 > 0 {
             self.section.delete(self.index, self.index + self.size);
         }
-        self.size = self.section.set_internal(self.index, self.key.to_owned(), input);
+        self.size = self.section.set_internal(self.index, self.key.to_owned(), input.into());
     }
 
     /// Removes the value. Does nothing when called multiple times in
