@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt::Display};
 
-use bstr::{BString, ByteVec};
+use bstr::BString;
 
 use crate::parse::Comment;
 
@@ -13,16 +13,27 @@ impl Comment<'_> {
             comment: Cow::Owned(self.comment.as_ref().into()),
         }
     }
+
+    /// Serialize this type into a `BString` for convenience.
+    ///
+    /// Note that `to_string()` can also be used, but might not be lossless.
+    #[must_use]
+    pub fn to_bstring(&self) -> BString {
+        let mut buf = Vec::new();
+        self.write_to(&mut buf).expect("io error impossible");
+        buf.into()
+    }
+
+    /// Stream ourselves to the given `out`, in order to reproduce this comment losslessly.
+    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+        out.write_all(&[self.comment_tag])?;
+        out.write_all(self.comment.as_ref())
+    }
 }
 
 impl Display for Comment<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.comment_tag.fmt(f)?;
-        if let Ok(s) = std::str::from_utf8(&self.comment) {
-            s.fmt(f)
-        } else {
-            write!(f, "{:02x?}", self.comment)
-        }
+        Display::fmt(&self.to_bstring(), f)
     }
 }
 
@@ -34,8 +45,6 @@ impl From<Comment<'_>> for BString {
 
 impl From<&Comment<'_>> for BString {
     fn from(c: &Comment<'_>) -> Self {
-        let mut values = BString::from(vec![c.comment_tag]);
-        values.push_str(c.comment.as_ref());
-        values
+        c.to_bstring()
     }
 }

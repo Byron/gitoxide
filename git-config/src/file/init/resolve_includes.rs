@@ -6,11 +6,9 @@ use std::{
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_ref::Category;
 
-use crate::{
-    file::{from_paths, from_paths::Options, SectionBodyId},
-    parse::section,
-    File,
-};
+use crate::file::init::from_paths;
+use crate::file::init::from_paths::Options;
+use crate::{file::SectionBodyId, File};
 
 pub(crate) fn resolve_includes(
     conf: &mut File<'static>,
@@ -94,7 +92,7 @@ fn extract_include_path(
     id: SectionBodyId,
 ) {
     if let Some(body) = target_config.sections.get(&id) {
-        let paths = body.values(&section::Key::from("path"));
+        let paths = body.values("path");
         let paths = paths
             .iter()
             .map(|path| crate::Path::from(Cow::Owned(path.as_ref().to_owned())));

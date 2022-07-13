@@ -7,24 +7,32 @@ use std::{
 
 use bstr::BStr;
 
-mod section;
-pub use section::{MutableSection, SectionBody, SectionBodyIter};
+mod mutable;
 
-mod value;
-pub use value::{MutableMultiValue, MutableValue};
+pub use mutable::{
+    section::{MutableSection, SectionBody, SectionBodyIter},
+    value::{MutableMultiValue, MutableValue},
+};
+
+mod init;
+pub use init::{from_env, from_paths};
 
 ///
-pub mod from_env;
-
-///
-pub mod from_paths;
+pub mod rename_section {
+    /// The error returned by [`File::rename_section(…)`][crate::File::rename_section()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Lookup(#[from] crate::lookup::existing::Error),
+        #[error(transparent)]
+        Section(#[from] crate::parse::section::header::Error),
+    }
+}
 
 mod access;
 mod impls;
 mod utils;
-
-mod resolve_includes;
-pub(crate) use resolve_includes::resolve_includes;
 
 /// A strongly typed index into some range.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Clone, Copy)]

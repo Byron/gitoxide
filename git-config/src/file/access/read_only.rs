@@ -215,15 +215,15 @@ impl<'event> File<'event> {
     /// assert_eq!(url.map_or(0, |s| s.count()), 2);
     ///
     /// for (i, (header, body)) in config.sections_by_name_with_header("url").unwrap().enumerate() {
-    ///     let url = header.subsection_name.as_ref();
-    ///     let instead_of = body.value(&section::Key::from("insteadOf"));
+    ///     let url = header.subsection_name().unwrap();
+    ///     let instead_of = body.value("insteadOf").unwrap();
     ///
     ///     if i == 0 {
-    ///         assert_eq!(instead_of.unwrap().as_ref(), "https://github.com/");
-    ///         assert_eq!(url.unwrap().as_ref(), "ssh://git@github.com/");
+    ///         assert_eq!(instead_of.as_ref(), "https://github.com/");
+    ///         assert_eq!(url, "ssh://git@github.com/");
     ///     } else {
-    ///         assert_eq!(instead_of.unwrap().as_ref(), "https://bitbucket.org/");
-    ///         assert_eq!(url.unwrap().as_ref(), "ssh://git@bitbucket.org");
+    ///         assert_eq!(instead_of.as_ref(), "https://bitbucket.org/");
+    ///         assert_eq!(url, "ssh://git@bitbucket.org");
     ///     }
     /// }
     /// # Ok::<(), Box<dyn std::error::Error>>(())

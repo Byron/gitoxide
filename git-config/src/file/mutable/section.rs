@@ -6,6 +6,7 @@ use std::{
 
 use bstr::{BStr, BString, ByteVec};
 
+use crate::file::mutable::{escape_value, Whitespace};
 use crate::{
     file::{Index, Size},
     lookup, parse,
@@ -18,25 +19,20 @@ use crate::{
 pub struct MutableSection<'a, 'event> {
     section: &'a mut SectionBody<'event>,
     implicit_newline: bool,
-    whitespace: usize,
+    whitespace: Whitespace<'event>,
 }
 
 /// Mutating methods.
 impl<'a, 'event> MutableSection<'a, 'event> {
     /// Adds an entry to the end of this section.
-    // TODO: multi-line handling - maybe just escape it for now.
     pub fn push(&mut self, key: Key<'event>, value: Cow<'event, BStr>) {
-        if self.whitespace > 0 {
-            self.section.0.push(Event::Whitespace({
-                let mut s = BString::default();
-                s.extend(std::iter::repeat(b' ').take(self.whitespace));
-                s.into()
-            }));
+        if let Some(ws) = &self.whitespace.pre_key {
+            self.section.0.push(Event::Whitespace(ws.clone()));
         }
 
         self.section.0.push(Event::SectionKey(key));
-        self.section.0.push(Event::KeyValueSeparator);
-        self.section.0.push(Event::Value(value));
+        self.section.0.extend(self.whitespace.key_value_separators());
+        self.section.0.push(Event::Value(escape_value(value.as_ref()).into()));
         if self.implicit_newline {
             self.section.0.push(Event::Newline(BString::from("\n").into()));
         }
@@ -45,7 +41,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     /// Removes all events until a key value pair is removed. This will also
     /// remove the whitespace preceding the key value pair, if any is found.
     pub fn pop(&mut self) -> Option<(Key<'_>, Cow<'event, BStr>)> {
-        let mut values = vec![];
+        let mut values = Vec::new();
         // events are popped in reverse order
         while let Some(e) = self.section.0.pop() {
             match e {
@@ -102,19 +98,6 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         Some(self.remove_internal(range))
     }
 
-    /// Performs the removal, assuming the range is valid.
-    fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, BStr> {
-        self.section
-            .0
-            .drain(range)
-            .fold(Cow::Owned(BString::default()), |mut acc, e| {
-                if let Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) = e {
-                    acc.to_mut().extend(&**v);
-                }
-                acc
-            })
-    }
-
     /// Adds a new line event. Note that you don't need to call this unless
     /// you've disabled implicit newlines.
     pub fn push_newline(&mut self) {
@@ -127,28 +110,52 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         self.implicit_newline = on;
     }
 
-    /// Sets the number of spaces before the start of a key value. The _default
-    /// is 2_. Set to 0 to disable adding whitespace before a key
-    /// value.
-    pub fn set_leading_space(&mut self, num: usize) {
-        self.whitespace = num;
+    /// Sets the exact whitespace to use before each newly created key-value pair,
+    /// with only whitespace characters being permissible.
+    ///
+    /// The default is 2 tabs.
+    /// Set to `None` to disable adding whitespace before a key value.
+    ///
+    /// # Panics
+    ///
+    /// If non-whitespace characters are used. This makes the method only suitable for validated
+    /// or known input.
+    pub fn set_leading_whitespace(&mut self, whitespace: Option<Cow<'event, BStr>>) {
+        assert!(
+            whitespace
+                .as_deref()
+                .map_or(true, |ws| ws.iter().all(|b| b.is_ascii_whitespace())),
+            "input whitespace must only contain whitespace characters."
+        );
+        self.whitespace.pre_key = whitespace;
     }
 
-    /// Returns the number of space characters this section will insert before the
-    /// beginning of a key.
+    /// Returns the whitespace this section will insert before the
+    /// beginning of a key, if any.
     #[must_use]
-    pub const fn leading_space(&self) -> usize {
-        self.whitespace
+    pub fn leading_whitespace(&self) -> Option<&BStr> {
+        self.whitespace.pre_key.as_deref()
+    }
+
+    /// Returns the whitespace to be used before and after the `=` between the key
+    /// and the value.
+    ///
+    /// For example, `k = v` will have `(Some(" "), Some(" "))`, whereas `k=\tv` will
+    /// have `(None, Some("\t"))`.
+    #[must_use]
+    pub fn separator_whitespace(&self) -> (Option<&BStr>, Option<&BStr>) {
+        (self.whitespace.pre_sep.as_deref(), self.whitespace.post_sep.as_deref())
     }
 }
 
 // Internal methods that may require exact indices for faster operations.
 impl<'a, 'event> MutableSection<'a, 'event> {
     pub(crate) fn new(section: &'a mut SectionBody<'event>) -> Self {
+        let whitespace = (&*section).into();
         Self {
             section,
             implicit_newline: true,
-            whitespace: 2,
+            whitespace,
         }
     }
 
@@ -161,7 +168,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         let mut expect_value = false;
         let mut concatenated_value = BString::default();
 
-        for event in &self.section.0[start.0..=end.0] {
+        for event in &self.section.0[start.0..end.0] {
             match event {
                 Event::SectionKey(event_key) if event_key == key => expect_value = true,
                 Event::Value(v) if expect_value => return Ok(normalize_bstr(v.as_ref())),
@@ -180,15 +187,36 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     }
 
     pub(crate) fn delete(&mut self, start: Index, end: Index) {
-        self.section.0.drain(start.0..=end.0);
+        self.section.0.drain(start.0..end.0);
     }
 
-    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: BString) -> Size {
-        self.section.0.insert(index.0, Event::Value(value.into()));
-        self.section.0.insert(index.0, Event::KeyValueSeparator);
-        self.section.0.insert(index.0, Event::SectionKey(key));
+    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: &BStr) -> Size {
+        let mut size = 0;
 
-        Size(3)
+        self.section.0.insert(index.0, Event::Value(escape_value(value).into()));
+        size += 1;
+
+        let sep_events = self.whitespace.key_value_separators();
+        size += sep_events.len();
+        self.section.0.insert_many(index.0, sep_events.into_iter().rev());
+
+        self.section.0.insert(index.0, Event::SectionKey(key));
+        size += 1;
+
+        Size(size)
+    }
+
+    /// Performs the removal, assuming the range is valid.
+    fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, BStr> {
+        self.section
+            .0
+            .drain(range)
+            .fold(Cow::Owned(BString::default()), |mut acc, e| {
+                if let Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) = e {
+                    acc.to_mut().extend(&**v);
+                }
+                acc
+            })
     }
 }
 
@@ -249,8 +277,9 @@ impl<'event> SectionBody<'event> {
 impl<'event> SectionBody<'event> {
     /// Retrieves the last matching value in a section with the given key, if present.
     #[must_use]
-    pub fn value(&self, key: &Key<'_>) -> Option<Cow<'_, BStr>> {
-        let range = self.value_range_by_key(key);
+    pub fn value(&self, key: &str) -> Option<Cow<'_, BStr>> {
+        let key = Key::from_str_unchecked(key);
+        let range = self.value_range_by_key(&key);
         if range.is_empty() {
             return None;
         }
@@ -277,7 +306,8 @@ impl<'event> SectionBody<'event> {
     /// Retrieves all values that have the provided key name. This may return
     /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
-    pub fn values(&self, key: &Key<'_>) -> Vec<Cow<'_, BStr>> {
+    pub fn values(&self, key: &str) -> Vec<Cow<'_, BStr>> {
+        let key = &Key::from_str_unchecked(key);
         let mut values = Vec::new();
         let mut expect_value = false;
         let mut concatenated_value = BString::default();
@@ -313,7 +343,8 @@ impl<'event> SectionBody<'event> {
 
     /// Returns true if the section containss the provided key.
     #[must_use]
-    pub fn contains_key(&self, key: &Key<'_>) -> bool {
+    pub fn contains_key(&self, key: &str) -> bool {
+        let key = &Key::from_str_unchecked(key);
         self.0.iter().any(|e| {
             matches!(e,
                 Event::SectionKey(k) if k == key

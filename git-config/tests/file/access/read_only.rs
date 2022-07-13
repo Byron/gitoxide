@@ -243,12 +243,12 @@ fn complex_quoted_values() {
     assert_eq!(
         config.raw_value("core", None, "escape-sequence").unwrap().as_ref(),
         expected,
-        "raw_value is normalized"
+        "raw_value is normalized…"
     );
     assert_eq!(
         config.string("core", None, "escape-sequence").unwrap().as_ref(),
         expected,
-        "and so is the comfort API"
+        "…and so is the comfort API"
     );
 }
 

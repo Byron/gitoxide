@@ -2,12 +2,8 @@ use std::{borrow::Cow, path::PathBuf};
 
 use bstr::BString;
 
-use crate::{
-    file::{from_paths, resolve_includes},
-    parse::section,
-    path::interpolate,
-    File,
-};
+use crate::file::from_paths;
+use crate::{file::init::resolve_includes, parse::section, path::interpolate, File};
 
 /// Represents the errors that may occur when calling [`File::from_env`][crate::File::from_env()].
 #[derive(Debug, thiserror::Error)]
@@ -25,6 +21,8 @@ pub enum Error {
     PathInterpolationError(#[from] interpolate::Error),
     #[error(transparent)]
     FromPathsError(#[from] from_paths::Error),
+    #[error(transparent)]
+    Section(#[from] section::header::Error),
 }
 
 /// Instantiation from environment variables
@@ -106,7 +104,7 @@ impl File<'static> {
                         Err(_) => config.new_section(
                             section_name.to_string(),
                             subsection.map(|subsection| Cow::Owned(subsection.to_string())),
-                        ),
+                        )?,
                     };
 
                     section.push(

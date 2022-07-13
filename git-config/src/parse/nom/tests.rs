@@ -254,6 +254,47 @@ mod section {
     }
 
     #[test]
+    fn section_with_empty_value_simplified() {
+        let mut node = ParseNode::SectionHeader;
+        let section_data = b"[a] k=";
+        assert_eq!(
+            section(section_data, &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    section_header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        Event::KeyValueSeparator,
+                        value_event(""),
+                    ]
+                    .into()
+                },
+                0
+            ))
+        );
+
+        let section_data = b"[a] k=\n";
+        assert_eq!(
+            section(section_data, &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    section_header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        Event::KeyValueSeparator,
+                        value_event(""),
+                        newline_event(),
+                    ]
+                    .into()
+                },
+                1
+            ))
+        );
+    }
+
+    #[test]
     fn section_with_empty_value() {
         let mut node = ParseNode::SectionHeader;
         let section_data = br#"[hello]
@@ -664,7 +705,7 @@ mod value_no_continuation {
     }
 }
 
-mod section_body {
+mod key_value_pair {
     use crate::parse::{
         error::ParseNode,
         section,
@@ -672,19 +713,19 @@ mod section_body {
         Event,
     };
 
-    fn section_body<'a>(
+    fn key_value<'a>(
         i: &'a [u8],
         node: &mut ParseNode,
         events: &mut section::Events<'a>,
     ) -> nom::IResult<&'a [u8], ()> {
-        super::section_body(i, node, &mut |e| events.push(e)).map(|t| (t.0, ()))
+        super::key_value_pair(i, node, &mut |e| events.push(e)).map(|t| (t.0, ()))
     }
 
     #[test]
     fn whitespace_is_not_ambigious() {
         let mut node = ParseNode::SectionHeader;
         let mut vec = Default::default();
-        assert!(section_body(b"a =b", &mut node, &mut vec).is_ok());
+        assert!(key_value(b"a =b", &mut node, &mut vec).is_ok());
         assert_eq!(
             vec,
             into_events(vec![
@@ -696,7 +737,7 @@ mod section_body {
         );
 
         let mut vec = Default::default();
-        assert!(section_body(b"a= b", &mut node, &mut vec).is_ok());
+        assert!(key_value(b"a= b", &mut node, &mut vec).is_ok());
         assert_eq!(
             vec,
             into_events(vec![

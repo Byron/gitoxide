@@ -68,8 +68,13 @@ fn inner_quotes_are_removed() {
 }
 
 #[test]
-fn newline_tab_backspace_are_escapeable() {
+fn newline_tab_backspace_are_escapable() {
     assert_eq!(normalize_bstr(r#"\n\ta\b"#), cow_str("\n\t"));
+}
+
+#[test]
+fn tabs_are_not_resolved_to_spaces_unlike_what_git_does() {
+    assert_eq!(normalize_bstr("\t"), cow_str("\t"));
 }
 
 #[test]

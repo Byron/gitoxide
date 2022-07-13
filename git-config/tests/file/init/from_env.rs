@@ -1,13 +1,12 @@
 use std::{borrow::Cow, env, fs};
 
-use git_config::{
-    file::{from_env, from_paths, from_paths::Options},
-    File,
-};
+use git_config::file::from_paths::Options;
+use git_config::file::{from_env, from_paths};
+use git_config::File;
 use serial_test::serial;
 use tempfile::tempdir;
 
-use crate::file::from_paths::escape_backslashes;
+use crate::file::init::from_paths::escape_backslashes;
 
 pub struct Env<'a> {
     altered_vars: Vec<&'a str>,

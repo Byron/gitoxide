@@ -221,10 +221,10 @@ impl FromStr for Name {
     }
 }
 
-impl TryFrom<&[u8]> for Name {
+impl TryFrom<&BStr> for Name {
     type Error = value::Error;
 
-    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(s: &BStr) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?)
     }
 }
@@ -337,10 +337,10 @@ impl FromStr for Attribute {
     }
 }
 
-impl TryFrom<&[u8]> for Attribute {
+impl TryFrom<&BStr> for Attribute {
     type Error = value::Error;
 
-    fn try_from(s: &[u8]) -> Result<Self, Self::Error> {
+    fn try_from(s: &BStr) -> Result<Self, Self::Error> {
         Self::from_str(std::str::from_utf8(s).map_err(|err| color_err(s).with_err(err))?)
     }
 }

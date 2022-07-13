@@ -27,6 +27,6 @@ mod open {
 }
 
 mod access;
-mod from_env;
-mod from_paths;
 mod impls;
+mod init;
+mod mutable;

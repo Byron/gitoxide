@@ -1,9 +1,10 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use bstr::{BStr, BString};
+use bstr::BStr;
 
+use crate::file::mutable::value::EntryData;
 use crate::{
-    file::{value::EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size},
+    file::{Index, MutableMultiValue, MutableSection, MutableValue, Size},
     lookup,
     parse::{section, Event},
     File,
@@ -24,10 +25,9 @@ impl<'event> File<'event> {
         subsection_name: Option<&str>,
         key: &str,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
-        let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         for section_id in section_ids.rev() {
-            if let Some(v) = self.sections.get(&section_id).expect("known section id").value(&key) {
+            if let Some(v) = self.sections.get(&section_id).expect("known section id").value(key) {
                 return Ok(v);
             }
         }
@@ -52,23 +52,22 @@ impl<'event> File<'event> {
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
         while let Some(section_id) = section_ids.next() {
-            let mut size = 0;
             let mut index = 0;
+            let mut size = 0;
             let mut found_key = false;
             for (i, event) in self
                 .sections
                 .get(&section_id)
-                .expect("sections does not have section id from section ids")
+                .expect("known section id")
                 .as_ref()
-                // todo: iter backwards
                 .iter()
                 .enumerate()
             {
                 match event {
                     Event::SectionKey(event_key) if *event_key == key => {
                         found_key = true;
-                        size = 1;
                         index = i;
+                        size = 1;
                     }
                     Event::Newline(_) | Event::Whitespace(_) | Event::ValueNotDone(_) if found_key => {
                         size += 1;
@@ -77,7 +76,10 @@ impl<'event> File<'event> {
                         found_key = false;
                         size += 1;
                     }
-                    _ => (),
+                    Event::KeyValueSeparator if found_key => {
+                        size += 1;
+                    }
+                    _ => {}
                 }
             }
 
@@ -141,12 +143,7 @@ impl<'event> File<'event> {
         let mut values = Vec::new();
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         for section_id in section_ids {
-            values.extend(
-                self.sections
-                    .get(&section_id)
-                    .expect("known section id")
-                    .values(&section::Key(Cow::<BStr>::Borrowed(key.into()))),
-            );
+            values.extend(self.sections.get(&section_id).expect("known section id").values(key));
         }
 
         if values.is_empty() {
@@ -188,7 +185,7 @@ impl<'event> File<'event> {
     ///     ]
     /// );
     ///
-    /// git_config.raw_values_mut("core", None, "a")?.set_str_all("g");
+    /// git_config.raw_values_mut("core", None, "a")?.set_all("g");
     ///
     /// assert_eq!(
     ///     git_config.raw_values("core", None, "a")?,
@@ -306,10 +303,10 @@ impl<'event> File<'event> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-        new_value: BString,
+        new_value: &BStr,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_value_mut(section_name, subsection_name, key)
-            .map(|mut entry| entry.set_bytes(new_value))
+            .map(|mut entry| entry.set(new_value))
     }
 
     /// Sets a multivar in a given section, optional subsection, and key value.
@@ -347,9 +344,9 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values = vec![
-    ///     Cow::<BStr>::Borrowed("x".into()),
-    ///     Cow::<BStr>::Borrowed("y".into()),
-    ///     Cow::<BStr>::Borrowed("z".into()),
+    ///     "x".into(),
+    ///     "y".into(),
+    ///     "z".into(),
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_values("core", None, "a")?;
@@ -368,8 +365,8 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values = vec![
-    ///     Cow::<BStr>::Borrowed("x".into()),
-    ///     Cow::<BStr>::Borrowed("y".into()),
+    ///     "x".into(),
+    ///     "y".into(),
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_values("core", None, "a")?;
@@ -387,21 +384,21 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values = vec![
-    ///     Cow::<BStr>::Borrowed("x".into()),
-    ///     Cow::<BStr>::Borrowed("y".into()),
-    ///     Cow::<BStr>::Borrowed("z".into()),
-    ///     Cow::<BStr>::Borrowed("discarded".into()),
+    ///     "x".into(),
+    ///     "y".into(),
+    ///     "z".into(),
+    ///     "discarded".into(),
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values)?;
     /// assert!(!git_config.raw_values("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
-    pub fn set_raw_multi_value(
+    pub fn set_raw_multi_value<'a>(
         &mut self,
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-        new_values: impl IntoIterator<Item = Cow<'event, BStr>>,
+        new_values: impl IntoIterator<Item = &'a BStr>,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_values_mut(section_name, subsection_name, key)
             .map(|mut v| v.set_values(new_values))

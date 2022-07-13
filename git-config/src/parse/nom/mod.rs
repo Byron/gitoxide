@@ -117,7 +117,7 @@ fn section<'a>(
             }
         }
 
-        if let Ok((new_i, new_newlines)) = section_body(i, node, receive_event) {
+        if let Ok((new_i, new_newlines)) = key_value_pair(i, node, receive_event) {
             if old_i != new_i {
                 i = new_i;
                 newlines += new_newlines;
@@ -235,7 +235,7 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
     Ok((&i[cursor - 1..], (found_escape, cursor - 1)))
 }
 
-fn section_body<'a>(
+fn key_value_pair<'a>(
     i: &'a [u8],
     node: &mut ParseNode,
     receive_event: &mut impl FnMut(Event<'a>),
@@ -246,7 +246,6 @@ fn section_body<'a>(
     receive_event(Event::SectionKey(section::Key(Cow::Borrowed(name))));
 
     let (i, whitespace) = opt(take_spaces)(i)?;
-
     if let Some(whitespace) = whitespace {
         receive_event(Event::Whitespace(Cow::Borrowed(whitespace)));
     }
@@ -352,15 +351,7 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
         } else {
             // Didn't parse anything at all, newline straight away.
             receive_event(Event::Value(Cow::Borrowed("".into())));
-            receive_event(Event::Newline(Cow::Borrowed("\n".into())));
-            newlines += 1;
-            return Ok((
-                i.get(1..).ok_or(nom::Err::Error(NomError {
-                    input: i,
-                    code: ErrorKind::Eof,
-                }))?,
-                newlines,
-            ));
+            return Ok((&i[0..], newlines));
         }
     }
 

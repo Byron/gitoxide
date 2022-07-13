@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
-use bstr::BStr;
-
+use crate::file::rename_section;
 use crate::{
     file::{MutableSection, SectionBody},
     lookup,
@@ -51,21 +50,23 @@ impl<'event> File<'event> {
     /// # use git_config::File;
     /// # use std::convert::TryFrom;
     /// # use bstr::ByteSlice;
+    /// # use git_config::parse::section;
     /// let mut git_config = git_config::File::default();
-    /// let mut section = git_config.new_section("hello", Some("world".into()));
-    /// section.push("a".into(), b"b".as_bstr().into());
-    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n");
+    /// let mut section = git_config.new_section("hello", Some("world".into()))?;
+    /// section.push(section::Key::try_from("a")?, b"b".as_bstr().into());
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n\ta = b\n");
     /// let _section = git_config.new_section("core", None);
-    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n  a=b\n[core]\n");
+    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n\ta = b\n[core]\n");
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn new_section(
         &mut self,
         section_name: impl Into<Cow<'event, str>>,
         subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) -> MutableSection<'_, 'event> {
-        let mut section = self.push_section(section_name, subsection_name, SectionBody::default());
+    ) -> Result<MutableSection<'_, 'event>, section::header::Error> {
+        let mut section = self.push_section(section_name, subsection_name, SectionBody::default())?;
         section.push_newline();
-        section
+        Ok(section)
     }
 
     /// Removes the section, returning the events it had, if any. If multiple
@@ -131,16 +132,8 @@ impl<'event> File<'event> {
         section_name: impl Into<Cow<'event, str>>,
         subsection_name: impl Into<Option<Cow<'event, str>>>,
         section: SectionBody<'event>,
-    ) -> MutableSection<'_, 'event> {
-        let subsection_name = subsection_name.into().map(into_cow_bstr);
-        self.push_section_internal(
-            section::Header {
-                name: section::Name(into_cow_bstr(section_name.into())),
-                separator: subsection_name.is_some().then(|| Cow::Borrowed(" ".into())),
-                subsection_name,
-            },
-            section,
-        )
+    ) -> Result<MutableSection<'_, 'event>, section::header::Error> {
+        Ok(self.push_section_internal(section::Header::new(section_name, subsection_name)?, section))
     }
 
     /// Renames a section, modifying the last matching section.
@@ -148,25 +141,16 @@ impl<'event> File<'event> {
         &mut self,
         section_name: &str,
         subsection_name: impl Into<Option<&'a str>>,
-        new_section_name: impl Into<section::Name<'event>>,
+        new_section_name: impl Into<Cow<'event, str>>,
         new_subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) -> Result<(), lookup::existing::Error> {
+    ) -> Result<(), rename_section::Error> {
         let id = self
             .section_ids_by_name_and_subname(section_name, subsection_name.into())?
             .rev()
             .next()
             .expect("list of sections were empty, which violates invariant");
         let header = self.section_headers.get_mut(&id).expect("known section-id");
-        header.name = new_section_name.into();
-        header.subsection_name = new_subsection_name.into().map(into_cow_bstr);
-
+        *header = section::Header::new(new_section_name, new_subsection_name)?;
         Ok(())
-    }
-}
-
-fn into_cow_bstr(c: Cow<'_, str>) -> Cow<'_, BStr> {
-    match c {
-        Cow::Borrowed(s) => Cow::Borrowed(s.into()),
-        Cow::Owned(s) => Cow::Owned(s.into()),
     }
 }

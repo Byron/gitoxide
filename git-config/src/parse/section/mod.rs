@@ -1,9 +1,12 @@
 use std::{borrow::Cow, fmt::Display};
 
-use bstr::{BStr, BString};
+use bstr::BStr;
 use smallvec::SmallVec;
 
 use crate::parse::{Event, Section};
+
+///
+pub mod header;
 
 /// A container for events, avoiding heap allocations in typical files.
 pub type Events<'a> = SmallVec<[Event<'a>; 64]>;
@@ -12,18 +15,14 @@ pub type Events<'a> = SmallVec<[Event<'a>; 64]>;
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Header<'a> {
     /// The name of the header.
-    pub name: Name<'a>,
+    pub(crate) name: Name<'a>,
     /// The separator used to determine if the section contains a subsection.
     /// This is either a period `.` or a string of whitespace. Note that
     /// reconstruction of subsection format is dependent on this value. If this
     /// is all whitespace, then the subsection name needs to be surrounded by
     /// quotes to have perfect reconstruction.
-    pub separator: Option<Cow<'a, BStr>>,
-    /// The subsection name without quotes if any exist, and with escapes folded
-    /// into their resulting characters.
-    /// Thus during serialization, escapes and quotes must be re-added.
-    /// This makes it possible to use [`Event`] data for lookups directly.
-    pub subsection_name: Option<Cow<'a, BStr>>,
+    pub(crate) separator: Option<Cow<'a, BStr>>,
+    pub(crate) subsection_name: Option<Cow<'a, BStr>>,
 }
 
 impl Section<'_> {
@@ -47,71 +46,25 @@ impl Display for Section<'_> {
     }
 }
 
-impl Header<'_> {
-    /// Generates a byte representation of the value. This should be used when
-    /// non-UTF-8 sequences are present or a UTF-8 representation can't be
-    /// guaranteed.
-    #[must_use]
-    pub fn to_bstring(&self) -> BString {
-        self.into()
-    }
-
-    /// Turn this instance into a fully owned one with `'static` lifetime.
-    #[must_use]
-    pub fn to_owned(&self) -> Header<'static> {
-        Header {
-            name: self.name.to_owned(),
-            separator: self.separator.clone().map(|v| Cow::Owned(v.into_owned())),
-            subsection_name: self.subsection_name.clone().map(|v| Cow::Owned(v.into_owned())),
-        }
-    }
-}
-
-impl Display for Header<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}", self.name)?;
-
-        if let Some(v) = &self.separator {
-            // Separator must be utf-8
-            v.fmt(f)?;
-            let subsection_name = self.subsection_name.as_ref().unwrap();
-            if v.as_ref() == "." {
-                subsection_name.fmt(f)?;
-            } else {
-                write!(f, "\"{}\"", subsection_name)?; // TODO: proper escaping of special characters
-            }
-        }
-
-        write!(f, "]")
-    }
-}
-
-impl From<Header<'_>> for BString {
-    fn from(header: Header<'_>) -> Self {
-        header.into()
-    }
-}
-
-impl From<&Header<'_>> for BString {
-    fn from(header: &Header<'_>) -> Self {
-        header.to_string().into()
-    }
-}
-
-impl<'a> From<Header<'a>> for Event<'a> {
-    fn from(header: Header<'_>) -> Event<'_> {
-        Event::SectionHeader(header)
-    }
-}
-
 mod types {
     macro_rules! generate_case_insensitive {
-        ($name:ident, $cow_inner_type:ty, $comment:literal) => {
+        ($name:ident, $module:ident, $err_doc:literal, $validate:ident, $cow_inner_type:ty, $comment:literal) => {
+            ///
+            pub mod $module {
+                /// The error returned when `TryFrom` is invoked to create an instance.
+                #[derive(Debug, thiserror::Error, Copy, Clone)]
+                #[error($err_doc)]
+                pub struct Error;
+            }
+
             #[doc = $comment]
             #[derive(Clone, Eq, Debug, Default)]
-            pub struct $name<'a>(pub std::borrow::Cow<'a, $cow_inner_type>);
+            pub struct $name<'a>(pub(crate) std::borrow::Cow<'a, $cow_inner_type>);
 
-            impl $name<'_> {
+            impl<'a> $name<'a> {
+                pub(crate) fn from_str_unchecked(s: &'a str) -> Self {
+                    $name(std::borrow::Cow::Borrowed(s.into()))
+                }
                 /// Turn this instance into a fully owned one with `'static` lifetime.
                 #[must_use]
                 pub fn to_owned(&self) -> $name<'static> {
@@ -153,15 +106,23 @@ mod types {
                 }
             }
 
-            impl<'a> From<&'a str> for $name<'a> {
-                fn from(s: &'a str) -> Self {
-                    Self(std::borrow::Cow::Borrowed(s.into()))
+            impl<'a> std::convert::TryFrom<&'a str> for $name<'a> {
+                type Error = $module::Error;
+
+                fn try_from(s: &'a str) -> Result<Self, Self::Error> {
+                    Self::try_from(std::borrow::Cow::Borrowed(bstr::ByteSlice::as_bstr(s.as_bytes())))
                 }
             }
 
-            impl<'a> From<std::borrow::Cow<'a, bstr::BStr>> for $name<'a> {
-                fn from(s: std::borrow::Cow<'a, bstr::BStr>) -> Self {
-                    Self(s)
+            impl<'a> std::convert::TryFrom<std::borrow::Cow<'a, bstr::BStr>> for $name<'a> {
+                type Error = $module::Error;
+
+                fn try_from(s: std::borrow::Cow<'a, bstr::BStr>) -> Result<Self, Self::Error> {
+                    if $validate(s.as_ref()) {
+                        Ok(Self(s))
+                    } else {
+                        Err($module::Error)
+                    }
                 }
             }
 
@@ -172,18 +133,45 @@ mod types {
                     &self.0
                 }
             }
+
+            impl<'a> std::convert::AsRef<str> for $name<'a> {
+                fn as_ref(&self) -> &str {
+                    std::str::from_utf8(self.0.as_ref()).expect("only valid UTF8 makes it through our validation")
+                }
+            }
         };
     }
+
+    fn is_valid_name(n: &bstr::BStr) -> bool {
+        !n.is_empty() && n.iter().all(|b| b.is_ascii_alphanumeric() || *b == b'-')
+    }
+    fn is_valid_key(n: &bstr::BStr) -> bool {
+        is_valid_name(n) && n[0].is_ascii_alphabetic()
+    }
+
     generate_case_insensitive!(
         Name,
+        name,
+        "Valid names consist alphanumeric characters or dashes.",
+        is_valid_name,
         bstr::BStr,
         "Wrapper struct for section header names, like `includeIf`, since these are case-insensitive."
     );
 
     generate_case_insensitive!(
         Key,
+        key,
+        "Valid keys consist alphanumeric characters or dashes, starting with an alphabetic character.",
+        is_valid_key,
         bstr::BStr,
         "Wrapper struct for key names, like `path` in `include.path`, since keys are case-insensitive."
     );
 }
-pub use types::{Key, Name};
+pub use types::{key, name, Key, Name};
+
+pub(crate) fn into_cow_bstr(c: Cow<'_, str>) -> Cow<'_, BStr> {
+    match c {
+        Cow::Borrowed(s) => Cow::Borrowed(s.into()),
+        Cow::Owned(s) => Cow::Owned(s.into()),
+    }
+}
