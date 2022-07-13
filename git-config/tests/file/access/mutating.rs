@@ -9,7 +9,7 @@ mod mutable_section {
             let mut file = git_config::File::default();
             let mut section = file.new_section("core", None).unwrap();
             section.push(Key::try_from("value").unwrap(), Cow::Borrowed("none".into()));
-            assert_eq!(file.to_bstring(), "[core]\n  value=none\n");
+            assert_eq!(file.to_bstring(), "[core]\n        value=none\n");
         }
     }
 }

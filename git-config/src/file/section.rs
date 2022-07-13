@@ -132,10 +132,11 @@ impl<'a, 'event> MutableSection<'a, 'event> {
 // Internal methods that may require exact indices for faster operations.
 impl<'a, 'event> MutableSection<'a, 'event> {
     pub(crate) fn new(section: &'a mut SectionBody<'event>) -> Self {
+        let whitespace = compute_whitespace(section);
         Self {
             section,
             implicit_newline: true,
-            whitespace: 2,
+            whitespace,
         }
     }
 
@@ -190,6 +191,27 @@ impl<'a, 'event> MutableSection<'a, 'event> {
                 acc
             })
     }
+}
+
+fn compute_whitespace(s: &mut SectionBody<'_>) -> usize {
+    let mut saw_events = false;
+    let computed =
+        s.0.iter()
+            .take_while(|e| matches!(e, Event::Whitespace(_)))
+            .inspect(|_| saw_events = true)
+            .map(|e| match e {
+                Event::Whitespace(s) => s
+                    .iter()
+                    .filter_map(|b| match *b {
+                        b'\t' => Some(4),
+                        b' ' => Some(1),
+                        _ => None,
+                    })
+                    .sum::<usize>(),
+                _ => unreachable!(),
+            })
+            .sum();
+    saw_events.then(|| computed).unwrap_or(8)
 }
 
 impl<'event> Deref for MutableSection<'_, 'event> {
