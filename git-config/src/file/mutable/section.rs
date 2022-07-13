@@ -24,14 +24,13 @@ pub struct MutableSection<'a, 'event> {
 /// Mutating methods.
 impl<'a, 'event> MutableSection<'a, 'event> {
     /// Adds an entry to the end of this section.
-    // TODO: multi-line handling - maybe just escape it for now.
     pub fn push(&mut self, key: Key<'event>, value: Cow<'event, BStr>) {
         if let Some(ws) = &self.whitespace.pre_key {
             self.section.0.push(Event::Whitespace(ws.clone()));
         }
 
         self.section.0.push(Event::SectionKey(key));
-        self.section.0.push(Event::KeyValueSeparator);
+        self.section.0.extend(self.key_value_separators());
         self.section.0.push(Event::Value(escape_value(value.as_ref()).into()));
         if self.implicit_newline {
             self.section.0.push(Event::Newline(BString::from("\n").into()));
@@ -136,6 +135,16 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     pub fn leading_whitespace(&self) -> Option<&BStr> {
         self.whitespace.pre_key.as_deref()
     }
+
+    /// Returns the whitespace to be used before and after the `=` between the key
+    /// and the value.
+    ///
+    /// For example, `k = v` will have `(Some(" "), Some(" "))`, whereas `k=\tv` will
+    /// have `(None, Some("\t"))`.
+    #[must_use]
+    pub fn separator_whitespace(&self) -> (Option<&BStr>, Option<&BStr>) {
+        (self.whitespace.pre_sep.as_deref(), self.whitespace.post_sep.as_deref())
+    }
 }
 
 // Internal methods that may require exact indices for faster operations.
@@ -181,11 +190,19 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     }
 
     pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: &BStr) -> Size {
-        self.section.0.insert(index.0, Event::Value(escape_value(value).into()));
-        self.section.0.insert(index.0, Event::KeyValueSeparator);
-        self.section.0.insert(index.0, Event::SectionKey(key));
+        let mut size = 0;
 
-        Size(3)
+        self.section.0.insert(index.0, Event::Value(escape_value(value).into()));
+        size += 1;
+
+        let sep_events = self.key_value_separators();
+        size += sep_events.len();
+        self.section.0.insert_many(index.0, sep_events.into_iter().rev());
+
+        self.section.0.insert(index.0, Event::SectionKey(key));
+        size += 1;
+
+        Size(size)
     }
 
     /// Performs the removal, assuming the range is valid.
@@ -200,6 +217,18 @@ impl<'a, 'event> MutableSection<'a, 'event> {
                 acc
             })
     }
+
+    fn key_value_separators(&self) -> Vec<Event<'event>> {
+        let mut out = Vec::with_capacity(3);
+        if let Some(ws) = &self.whitespace.pre_sep {
+            out.push(Event::Whitespace(ws.clone()));
+        }
+        out.push(Event::KeyValueSeparator);
+        if let Some(ws) = &self.whitespace.post_sep {
+            out.push(Event::Whitespace(ws.clone()));
+        }
+        out
+    }
 }
 
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
@@ -209,23 +238,52 @@ struct Whitespace<'a> {
     post_sep: Option<Cow<'a, BStr>>,
 }
 
-fn compute_whitespace<'a>(s: &mut SectionBody<'a>) -> Whitespace<'a> {
-    let first_value_pos = s.0.iter().enumerate().find_map(|(idx, e)| match e {
-        Event::SectionKey(_) => Some(idx),
-        _ => None,
-    });
-    let pre_key = match first_value_pos {
-        Some(pos) => s.0[..pos].iter().rev().next().and_then(|e| match e {
-            Event::Whitespace(s) => Some(s.clone()),
-            _ => None,
-        }),
-        None => Some("\t".as_bytes().as_bstr().into()),
-    };
-    Whitespace {
-        pre_key,
-        pre_sep: None,
-        post_sep: None,
+impl Default for Whitespace<'_> {
+    fn default() -> Self {
+        Whitespace {
+            pre_key: Some(b"\t".as_bstr().into()),
+            pre_sep: Some(b" ".as_bstr().into()),
+            post_sep: Some(b" ".as_bstr().into()),
+        }
     }
+}
+
+fn compute_whitespace<'a>(s: &mut SectionBody<'a>) -> Whitespace<'a> {
+    let key_pos =
+        s.0.iter()
+            .enumerate()
+            .find_map(|(idx, e)| matches!(e, Event::SectionKey(_)).then(|| idx));
+    key_pos
+        .map(|key_pos| {
+            let pre_key = s.0[..key_pos].iter().rev().next().and_then(|e| match e {
+                Event::Whitespace(s) => Some(s.clone()),
+                _ => None,
+            });
+            let from_key = &s.0[key_pos..];
+            let (pre_sep, post_sep) = from_key
+                .iter()
+                .enumerate()
+                .find_map(|(idx, e)| matches!(e, Event::KeyValueSeparator).then(|| idx))
+                .map(|sep_pos| {
+                    (
+                        from_key.get(sep_pos - 1).and_then(|e| match e {
+                            Event::Whitespace(ws) => Some(ws.clone()),
+                            _ => None,
+                        }),
+                        from_key.get(sep_pos + 1).and_then(|e| match e {
+                            Event::Whitespace(ws) => Some(ws.clone()),
+                            _ => None,
+                        }),
+                    )
+                })
+                .unwrap_or_default();
+            Whitespace {
+                pre_key,
+                pre_sep,
+                post_sep,
+            }
+        })
+        .unwrap_or_default()
 }
 
 fn escape_value(value: &BStr) -> BString {
