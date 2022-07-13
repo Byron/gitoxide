@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use bstr::{BStr, BString};
+use bstr::BStr;
 
 use crate::file::mutable::value::EntryData;
 use crate::{
@@ -303,7 +303,7 @@ impl<'event> File<'event> {
         section_name: &str,
         subsection_name: Option<&str>,
         key: &str,
-        new_value: BString,
+        new_value: &BStr,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_value_mut(section_name, subsection_name, key)
             .map(|mut entry| entry.set_bytes(new_value))

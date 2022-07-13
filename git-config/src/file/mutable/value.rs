@@ -29,14 +29,14 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
     /// Update the value to the provided one. This modifies the value such that
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
-    pub fn set_string(&mut self, input: impl Into<String>) {
-        self.set_bytes(input.into().into());
+    pub fn set_string(&mut self, input: impl AsRef<str>) {
+        self.set_bytes(input.as_ref().into());
     }
 
     /// Update the value to the provided one. This modifies the value such that
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
-    pub fn set_bytes(&mut self, input: BString) {
+    pub fn set_bytes(&mut self, input: &BStr) {
         if self.size.0 > 0 {
             self.section.delete(self.index, self.index + self.size);
         }

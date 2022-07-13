@@ -1,6 +1,6 @@
 mod push {
+    use crate::file::cow_str;
     use git_config::parse::section::Key;
-    use std::borrow::Cow;
     use std::convert::TryFrom;
 
     #[test]
@@ -25,11 +25,13 @@ mod push {
     }
 
     #[test]
-    fn push_splits_values_into_events() {
-        let mut config = git_config::File::default();
-        let mut section = config.new_section("core", None).unwrap();
-        section.push(Key::try_from("value").unwrap(), Cow::Borrowed("none".into()));
-        assert_eq!(config.to_bstring(), "[core]\n\tvalue=none\n");
+    fn values_are_escaped() {
+        for (value, expected) in [("a b", "[a]\n\tk=a b\n")] {
+            let mut config = git_config::File::default();
+            let mut section = config.new_section("a", None).unwrap();
+            section.push(Key::try_from("k").unwrap(), cow_str(value));
+            assert_eq!(config.to_bstring(), expected);
+        }
     }
 }
 

@@ -32,7 +32,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
 
         self.section.0.push(Event::SectionKey(key));
         self.section.0.push(Event::KeyValueSeparator);
-        self.section.0.push(Event::Value(value));
+        self.section.0.push(Event::Value(escape_value(value.as_ref()).into()));
         if self.implicit_newline {
             self.section.0.push(Event::Newline(BString::from("\n").into()));
         }
@@ -180,11 +180,8 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         self.section.0.drain(start.0..end.0);
     }
 
-    // TODO: borrow value only to avoid extra copy
-    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: BString) -> Size {
-        let buf = escape_value(value);
-
-        self.section.0.insert(index.0, Event::Value(buf.into()));
+    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: &BStr) -> Size {
+        self.section.0.insert(index.0, Event::Value(escape_value(value).into()));
         self.section.0.insert(index.0, Event::KeyValueSeparator);
         self.section.0.insert(index.0, Event::SectionKey(key));
 
@@ -231,8 +228,7 @@ fn compute_whitespace<'a>(s: &mut SectionBody<'a>) -> Whitespace<'a> {
     }
 }
 
-fn escape_value(value: impl AsRef<BStr>) -> BString {
-    let value = value.as_ref();
+fn escape_value(value: &BStr) -> BString {
     let starts_with_whitespace = value.get(0).map_or(false, |b| b.is_ascii_whitespace());
     let ends_with_whitespace = value
         .get(value.len().saturating_sub(1))
