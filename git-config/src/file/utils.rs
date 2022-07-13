@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bstr::BStr;
 
 use crate::{
-    file::{MutableSection, SectionBody, SectionBodyId, SectionBodyIds},
+    file::{SectionBody, SectionBodyId, SectionBodyIds, SectionMut},
     lookup,
     parse::section,
     File,
@@ -16,7 +16,7 @@ impl<'event> File<'event> {
         &mut self,
         header: section::Header<'event>,
         section: SectionBody<'event>,
-    ) -> MutableSection<'_, 'event> {
+    ) -> SectionMut<'_, 'event> {
         let new_section_id = SectionBodyId(self.section_id_counter);
         self.section_headers.insert(new_section_id, header.clone());
         self.sections.insert(new_section_id, section);
@@ -55,7 +55,7 @@ impl<'event> File<'event> {
         self.section_id_counter += 1;
         self.sections
             .get_mut(&new_section_id)
-            .map(MutableSection::new)
+            .map(SectionMut::new)
             .expect("previously inserted section")
     }
 

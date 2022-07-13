@@ -17,7 +17,7 @@ pub(crate) struct EntryData {
 
 /// An intermediate representation of a mutable multivar obtained from a [`File`][crate::File].
 #[derive(PartialEq, Eq, Debug)]
-pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
+pub struct MultiValueMut<'borrow, 'lookup, 'event> {
     pub(crate) section: &'borrow mut HashMap<SectionBodyId, SectionBody<'event>>,
     pub(crate) key: section::Key<'lookup>,
     /// Each entry data struct provides sufficient information to index into
@@ -30,7 +30,7 @@ pub struct MutableMultiValue<'borrow, 'lookup, 'event> {
     pub(crate) offsets: HashMap<SectionBodyId, Vec<usize>>,
 }
 
-impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
+impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
     /// Returns the actual values.
     pub fn get(&self) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
         let mut expect_value = false;
@@ -42,7 +42,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
             offset_index,
         } in &self.indices_and_sizes
         {
-            let (offset, size) = MutableMultiValue::index_and_size(&self.offsets, *section_id, *offset_index);
+            let (offset, size) = MultiValueMut::index_and_size(&self.offsets, *section_id, *offset_index);
             for event in &self.section.get(section_id).expect("known section id").as_ref()[offset..offset + size] {
                 match event {
                     Event::SectionKey(section_key) if *section_key == self.key => expect_value = true,
@@ -100,7 +100,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
             section_id,
             offset_index,
         } = self.indices_and_sizes[index];
-        MutableMultiValue::set_value_inner(
+        MultiValueMut::set_value_inner(
             &self.key,
             &mut self.offsets,
             self.section.get_mut(&section_id).expect("known section id"),
@@ -165,13 +165,13 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
         offset_index: usize,
         value: &BStr,
     ) {
-        let (offset, size) = MutableMultiValue::index_and_size(offsets, section_id, offset_index);
+        let (offset, size) = MultiValueMut::index_and_size(offsets, section_id, offset_index);
         let whitespace: Whitespace<'_> = (&*section).into();
         let section = section.as_mut();
         section.drain(offset..offset + size);
 
         let key_sep_events = whitespace.key_value_separators();
-        MutableMultiValue::set_offset(offsets, section_id, offset_index, 2 + key_sep_events.len());
+        MultiValueMut::set_offset(offsets, section_id, offset_index, 2 + key_sep_events.len());
         section.insert(offset, Event::Value(escape_value(value).into()));
         section.insert_many(offset, key_sep_events.into_iter().rev());
         section.insert(offset, Event::SectionKey(key.to_owned()));
@@ -188,7 +188,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
             section_id,
             offset_index,
         } = &self.indices_and_sizes[index];
-        let (offset, size) = MutableMultiValue::index_and_size(&self.offsets, *section_id, *offset_index);
+        let (offset, size) = MultiValueMut::index_and_size(&self.offsets, *section_id, *offset_index);
         if size == 0 {
             return;
         }
@@ -210,7 +210,7 @@ impl<'borrow, 'lookup, 'event> MutableMultiValue<'borrow, 'lookup, 'event> {
             offset_index,
         } in &self.indices_and_sizes
         {
-            let (offset, size) = MutableMultiValue::index_and_size(&self.offsets, *section_id, *offset_index);
+            let (offset, size) = MultiValueMut::index_and_size(&self.offsets, *section_id, *offset_index);
             if size == 0 {
                 continue;
             }

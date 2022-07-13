@@ -3,7 +3,7 @@ use std::{borrow::Cow, collections::HashMap};
 use bstr::BStr;
 
 use crate::{
-    file::{mutable::multi_value::EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size},
+    file::{mutable::multi_value::EntryData, Index, MultiValueMut, SectionMut, Size, ValueMut},
     lookup,
     parse::{section, Event},
     File,
@@ -44,7 +44,7 @@ impl<'event> File<'event> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableValue<'_, 'lookup, 'event>, lookup::existing::Error> {
+    ) -> Result<ValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
         let mut section_ids = self
             .section_ids_by_name_and_subname(section_name, subsection_name)?
             .rev();
@@ -87,8 +87,8 @@ impl<'event> File<'event> {
             }
 
             drop(section_ids);
-            return Ok(MutableValue {
-                section: MutableSection::new(self.sections.get_mut(&section_id).expect("known section-id")),
+            return Ok(ValueMut {
+                section: SectionMut::new(self.sections.get_mut(&section_id).expect("known section-id")),
                 key,
                 index: Index(index),
                 size: Size(size),
@@ -207,7 +207,7 @@ impl<'event> File<'event> {
         section_name: &'lookup str,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableMultiValue<'_, 'lookup, 'event>, lookup::existing::Error> {
+    ) -> Result<MultiValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
@@ -254,7 +254,7 @@ impl<'event> File<'event> {
         if entries.is_empty() {
             Err(lookup::existing::Error::KeyMissing)
         } else {
-            Ok(MutableMultiValue {
+            Ok(MultiValueMut {
                 section: &mut self.sections,
                 key,
                 indices_and_sizes: entries,

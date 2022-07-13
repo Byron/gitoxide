@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    file::{rename_section, MutableSection, SectionBody},
+    file::{rename_section, SectionBody, SectionMut},
     lookup,
     parse::section,
     File,
@@ -14,13 +14,13 @@ impl<'event> File<'event> {
         &'a mut self,
         section_name: &str,
         subsection_name: Option<&str>,
-    ) -> Result<MutableSection<'a, 'event>, lookup::existing::Error> {
+    ) -> Result<SectionMut<'a, 'event>, lookup::existing::Error> {
         let id = self
             .section_ids_by_name_and_subname(section_name, subsection_name)?
             .rev()
             .next()
             .expect("BUG: Section lookup vec was empty");
-        Ok(MutableSection::new(
+        Ok(SectionMut::new(
             self.sections
                 .get_mut(&id)
                 .expect("BUG: Section did not have id from lookup"),
@@ -62,7 +62,7 @@ impl<'event> File<'event> {
         &mut self,
         section_name: impl Into<Cow<'event, str>>,
         subsection_name: impl Into<Option<Cow<'event, str>>>,
-    ) -> Result<MutableSection<'_, 'event>, section::header::Error> {
+    ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
         let mut section = self.push_section(section_name, subsection_name, SectionBody::default())?;
         section.push_newline();
         Ok(section)
@@ -131,7 +131,7 @@ impl<'event> File<'event> {
         section_name: impl Into<Cow<'event, str>>,
         subsection_name: impl Into<Option<Cow<'event, str>>>,
         section: SectionBody<'event>,
-    ) -> Result<MutableSection<'_, 'event>, section::header::Error> {
+    ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
         Ok(self.push_section_internal(section::Header::new(section_name, subsection_name)?, section))
     }
 

@@ -18,14 +18,14 @@ use crate::{
 
 /// A opaque type that represents a mutable reference to a section.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
-pub struct MutableSection<'a, 'event> {
+pub struct SectionMut<'a, 'event> {
     section: &'a mut SectionBody<'event>,
     implicit_newline: bool,
     whitespace: Whitespace<'event>,
 }
 
 /// Mutating methods.
-impl<'a, 'event> MutableSection<'a, 'event> {
+impl<'a, 'event> SectionMut<'a, 'event> {
     /// Adds an entry to the end of this section.
     pub fn push(&mut self, key: Key<'event>, value: &BStr) {
         if let Some(ws) = &self.whitespace.pre_key {
@@ -153,7 +153,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
 }
 
 // Internal methods that may require exact indices for faster operations.
-impl<'a, 'event> MutableSection<'a, 'event> {
+impl<'a, 'event> SectionMut<'a, 'event> {
     pub(crate) fn new(section: &'a mut SectionBody<'event>) -> Self {
         let whitespace = (&*section).into();
         Self {
@@ -224,7 +224,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     }
 }
 
-impl<'event> Deref for MutableSection<'_, 'event> {
+impl<'event> Deref for SectionMut<'_, 'event> {
     type Target = SectionBody<'event>;
 
     fn deref(&self) -> &Self::Target {

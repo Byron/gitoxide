@@ -3,21 +3,21 @@ use std::borrow::Cow;
 use bstr::BStr;
 
 use crate::{
-    file::{mutable::section::MutableSection, Index, Size},
+    file::{mutable::section::SectionMut, Index, Size},
     lookup,
     parse::section,
 };
 
 /// An intermediate representation of a mutable value obtained from a [`File`][crate::File].
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
-pub struct MutableValue<'borrow, 'lookup, 'event> {
-    pub(crate) section: MutableSection<'borrow, 'event>,
+pub struct ValueMut<'borrow, 'lookup, 'event> {
+    pub(crate) section: SectionMut<'borrow, 'event>,
     pub(crate) key: section::Key<'lookup>,
     pub(crate) index: Index,
     pub(crate) size: Size,
 }
 
-impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
+impl<'borrow, 'lookup, 'event> ValueMut<'borrow, 'lookup, 'event> {
     /// Returns the actual value. This is computed each time this is called
     /// requiring an allocation for multi-line values.
     pub fn get(&self) -> Result<Cow<'_, BStr>, lookup::existing::Error> {

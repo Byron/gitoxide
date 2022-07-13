@@ -144,7 +144,7 @@ mod set_string {
 }
 
 mod delete {
-    use crate::file::mutable::value::init_config;
+    use super::init_config;
 
     #[test]
     fn single_line_value() -> crate::Result {

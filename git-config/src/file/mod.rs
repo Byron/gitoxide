@@ -10,9 +10,9 @@ use bstr::BStr;
 mod mutable;
 
 pub use mutable::{
-    multi_value::MutableMultiValue,
-    section::{MutableSection, SectionBody, SectionBodyIter},
-    value::MutableValue,
+    multi_value::MultiValueMut,
+    section::{SectionBody, SectionBodyIter, SectionMut},
+    value::ValueMut,
 };
 
 mod init;
