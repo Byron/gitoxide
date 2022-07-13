@@ -29,8 +29,8 @@ impl<'borrow, 'lookup, 'event> MutableValue<'borrow, 'lookup, 'event> {
     /// Update the value to the provided one. This modifies the value such that
     /// the Value event(s) are replaced with a single new event containing the
     /// new value.
-    pub fn set_string(&mut self, input: String) {
-        self.set_bytes(input.into());
+    pub fn set_string(&mut self, input: impl Into<String>) {
+        self.set_bytes(input.into().into());
     }
 
     /// Update the value to the provided one. This modifies the value such that
