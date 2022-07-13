@@ -18,7 +18,7 @@ use crate::{
 pub struct MutableSection<'a, 'event> {
     section: &'a mut SectionBody<'event>,
     implicit_newline: bool,
-    whitespace: usize,
+    whitespace: Option<Cow<'event, BStr>>,
 }
 
 /// Mutating methods.
@@ -26,12 +26,8 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     /// Adds an entry to the end of this section.
     // TODO: multi-line handling - maybe just escape it for now.
     pub fn push(&mut self, key: Key<'event>, value: Cow<'event, BStr>) {
-        if self.whitespace > 0 {
-            self.section.0.push(Event::Whitespace({
-                let mut s = BString::default();
-                s.extend(std::iter::repeat(b' ').take(self.whitespace));
-                s.into()
-            }));
+        if let Some(ws) = &self.whitespace {
+            self.section.0.push(Event::Whitespace(ws.clone()));
         }
 
         self.section.0.push(Event::SectionKey(key));
@@ -114,25 +110,25 @@ impl<'a, 'event> MutableSection<'a, 'event> {
         self.implicit_newline = on;
     }
 
-    /// Sets the number of spaces before the start of a key value. The _default
-    /// is 2_. Set to 0 to disable adding whitespace before a key
-    /// value.
-    pub fn set_leading_space(&mut self, num: usize) {
-        self.whitespace = num;
+    /// Sets the exact whitespace to use before each key-value pair.
+    /// The default is 2 tabs.
+    /// Set to `None` to disable adding whitespace before a key value.
+    pub fn set_leading_space(&mut self, whitespace: Option<Cow<'event, BStr>>) {
+        self.whitespace = whitespace;
     }
 
-    /// Returns the number of space characters this section will insert before the
-    /// beginning of a key.
+    /// Returns the whitespace this section will insert before the
+    /// beginning of a key, if any.
     #[must_use]
-    pub const fn leading_space(&self) -> usize {
-        self.whitespace
+    pub fn leading_space(&self) -> Option<&BStr> {
+        self.whitespace.as_deref()
     }
 }
 
 // Internal methods that may require exact indices for faster operations.
 impl<'a, 'event> MutableSection<'a, 'event> {
     pub(crate) fn new(section: &'a mut SectionBody<'event>) -> Self {
-        let whitespace = compute_whitespace(section);
+        let whitespace = Some(compute_whitespace(section));
         Self {
             section,
             implicit_newline: true,
@@ -193,7 +189,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     }
 }
 
-fn compute_whitespace(s: &mut SectionBody<'_>) -> usize {
+fn compute_whitespace<'event>(s: &mut SectionBody<'event>) -> Cow<'event, BStr> {
     let mut saw_events = false;
     let computed =
         s.0.iter()
@@ -211,7 +207,10 @@ fn compute_whitespace(s: &mut SectionBody<'_>) -> usize {
                 _ => unreachable!(),
             })
             .sum();
-    saw_events.then(|| computed).unwrap_or(8)
+
+    let mut buf = BString::default();
+    buf.extend(std::iter::repeat(b' ').take(saw_events.then(|| computed).unwrap_or(8)));
+    buf.into()
 }
 
 impl<'event> Deref for MutableSection<'_, 'event> {
