@@ -10,10 +10,8 @@ use std::{
 
 use bstr::BStr;
 
-use crate::{
-    file::{from_env, from_paths},
-    lookup, File,
-};
+use crate::file::{from_env, from_paths};
+use crate::{lookup, File};
 
 // TODO: how does this relate to `File::from_env_paths()`?
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]

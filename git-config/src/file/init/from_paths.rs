@@ -1,4 +1,4 @@
-use crate::{file::resolve_includes, parse, path::interpolate, File};
+use crate::{file::init::resolve_includes, parse, path::interpolate, File};
 
 /// The error returned by [`File::from_paths()`][crate::File::from_paths()] and [`File::from_env_paths()`][crate::File::from_env_paths()].
 #[derive(Debug, thiserror::Error)]

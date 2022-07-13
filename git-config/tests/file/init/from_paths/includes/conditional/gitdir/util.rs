@@ -8,10 +8,8 @@ use std::{
 
 use bstr::{BString, ByteSlice};
 
-use crate::file::{
-    cow_str,
-    from_paths::{escape_backslashes, includes::conditional::options_with_git_dir},
-};
+use crate::file::cow_str;
+use crate::file::init::from_paths::{escape_backslashes, includes::conditional::options_with_git_dir};
 
 #[derive(Debug)]
 pub struct GitEnv {
@@ -141,7 +139,7 @@ pub fn assert_section_value(
 pub fn git_env_with_symlinked_repo() -> crate::Result<GitEnv> {
     let mut env = GitEnv::repo_name("worktree")?;
     let link_destination = env.root_dir().join("symlink-worktree");
-    crate::file::from_paths::includes::conditional::create_symlink(&link_destination, env.worktree_dir());
+    crate::file::init::from_paths::includes::conditional::create_symlink(&link_destination, env.worktree_dir());
 
     let git_dir_through_symlink = link_destination.join(".git");
     env.set_git_dir(git_dir_through_symlink);

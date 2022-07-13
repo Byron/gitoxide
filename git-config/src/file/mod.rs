@@ -14,11 +14,8 @@ pub use mutable::{
     value::{MutableMultiValue, MutableValue},
 };
 
-///
-pub mod from_env;
-
-///
-pub mod from_paths;
+mod init;
+pub use init::{from_env, from_paths};
 
 ///
 pub mod rename_section {
@@ -36,9 +33,6 @@ pub mod rename_section {
 mod access;
 mod impls;
 mod utils;
-
-mod resolve_includes;
-pub(crate) use resolve_includes::resolve_includes;
 
 /// A strongly typed index into some range.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Clone, Copy)]

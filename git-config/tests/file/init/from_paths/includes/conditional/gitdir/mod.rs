@@ -3,7 +3,7 @@ mod util;
 use serial_test::serial;
 use util::{assert_section_value, Condition, GitEnv};
 
-use crate::file::from_paths::escape_backslashes;
+use crate::file::init::from_paths::escape_backslashes;
 
 #[test]
 fn relative_path_with_trailing_slash_matches_like_star_star() -> crate::Result {
@@ -91,7 +91,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
     let env = GitEnv::repo_name("worktree")?;
 
     {
-        let _environment = crate::file::from_env::Env::new()
+        let _environment = crate::file::init::from_env::Env::new()
             .set("GIT_CONFIG_COUNT", "1")
             .set(
                 "GIT_CONFIG_KEY_0",
@@ -113,7 +113,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
 
     let absolute_path = escape_backslashes(env.home_dir().join("include.config"));
     {
-        let _environment = crate::file::from_env::Env::new()
+        let _environment = crate::file::init::from_env::Env::new()
             .set("GIT_CONFIG_COUNT", "1")
             .set("GIT_CONFIG_KEY_0", "includeIf.gitdir:./worktree/.path")
             .set("GIT_CONFIG_VALUE_0", &absolute_path);
@@ -131,7 +131,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
     }
 
     {
-        let _environment = crate::file::from_env::Env::new()
+        let _environment = crate::file::init::from_env::Env::new()
             .set("GIT_CONFIG_COUNT", "1")
             .set(
                 "GIT_CONFIG_KEY_0",
