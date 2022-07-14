@@ -36,7 +36,7 @@ fn reflog_lines(store: &file::Store, name: &str, buf: &mut Vec<u8>) -> Result<Ve
         .map_err(Into::into)
 }
 
-const WRITE_MODES: &[WriteReflog] = &[WriteReflog::Normal, WriteReflog::Disable];
+const WRITE_MODES: &[WriteReflog] = &[WriteReflog::Normal, WriteReflog::Disable, WriteReflog::Always];
 
 #[test]
 fn should_autocreate_is_unaffected_by_writemode() -> Result {
@@ -79,7 +79,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
 
         let mut buf = Vec::new();
         match mode {
-            WriteReflog::Normal => {
+            WriteReflog::Normal | WriteReflog::Always => {
                 assert_eq!(
                     reflog_lines(&store, full_name_str, &mut buf)?,
                     vec![crate::log::Line {
@@ -139,7 +139,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
         )?;
 
         match mode {
-            WriteReflog::Normal => {
+            WriteReflog::Normal | WriteReflog::Always => {
                 assert_eq!(
                     reflog_lines(&store, full_name_str, &mut buf)?.len(),
                     1,
