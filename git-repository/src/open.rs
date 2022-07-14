@@ -172,7 +172,7 @@ impl ThreadSafeRepository {
             match git_discover::is_git(&path) {
                 Ok(kind) => (path, kind),
                 Err(_err) => {
-                    let git_dir = path.join(".git");
+                    let git_dir = path.join(git_discover::DOT_GIT_DIR);
                     git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?
                 }
             }
