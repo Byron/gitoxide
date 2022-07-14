@@ -7,16 +7,9 @@ use std::{
 };
 
 fn attrs_to_assignments<'a>(
-    attrs: impl Iterator<Item = Result<crate::NameRef<'a>, crate::name::Error>>,
+    attrs: impl Iterator<Item = Result<crate::AssignmentRef<'a>, crate::name::Error>>,
 ) -> Result<Vec<Assignment>, crate::name::Error> {
-    attrs
-        .map(|res| {
-            res.map(|attr| Assignment {
-                name: attr.0.to_str().expect("no illformed unicode").into(),
-                state: attr.1.to_owned(),
-            })
-        })
-        .collect()
+    attrs.map(|res| res.map(|attr| attr.to_owned())).collect()
 }
 
 /// A marker trait to identify the type of a description.
@@ -73,7 +66,7 @@ impl Pattern for Attributes {
                 let (pattern, value) = match pattern_kind {
                     crate::parse::Kind::Macro(macro_name) => (
                         git_glob::Pattern {
-                            text: macro_name,
+                            text: macro_name.inner().to_owned(),
                             mode: git_glob::pattern::Mode::all(),
                             first_wildcard_pos: None,
                         },

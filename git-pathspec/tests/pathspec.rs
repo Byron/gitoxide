@@ -24,7 +24,7 @@ mod parse {
                 attributes: p
                     .attributes
                     .into_iter()
-                    .map(|v| (v.name().to_owned(), v.state().to_owned()))
+                    .map(|v| (v.name.inner().to_owned(), v.state))
                     .collect(),
             }
         }
@@ -439,24 +439,6 @@ mod parse {
             assert!(output.is_err());
             assert!(matches!(output.unwrap_err(), Error::IncompatibleSearchModes));
         }
-
-        // #[test]
-        // fn fuzzer() {
-        //     let input = r":(attr:=\d t= �=\d)";
-        //     let input_raw = vec![
-        //         58, 40, 97, 116, 116, 114, 58, 61, 92, 100, 32, 116, 61, 32, 247, 61, 92, 100, 41,
-        //     ];
-
-        //     // assert!(
-        //     //     !check_against_baseline(input),
-        //     //     "This pathspec is valid in git: {}",
-        //     //     input
-        //     // );
-
-        //     let output = git_pathspec::parse(&input_raw);
-        //     assert!(output.is_err());
-        //     assert!(matches!(output.unwrap_err(), Error::InvalidAttributeValue { .. }));
-        // }
     }
 
     fn check_valid_inputs(inputs: Vec<(&str, PatternForTesting)>) {

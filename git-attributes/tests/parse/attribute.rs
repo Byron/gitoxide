@@ -1,4 +1,4 @@
-use bstr::{BStr, ByteSlice};
+use bstr::{BString, ByteSlice};
 use git_attributes::{parse, StateRef};
 use git_glob::pattern::Mode;
 use git_testtools::fixture_bytes;
@@ -119,16 +119,28 @@ fn invalid_escapes_in_quotes_are_an_error() {
 
 #[test]
 fn custom_macros_can_be_differentiated() {
-    assert_eq!(
-        line(r#"[attr]foo bar -baz"#),
-        (macro_(r"foo"), vec![set("bar"), unset("baz")], 1)
-    );
+    let output = line(r#"[attr]foo bar -baz"#);
+    match output.0 {
+        parse::Kind::Pattern(_) => unreachable!(),
+        parse::Kind::Macro(name) => {
+            assert_eq!(
+                (name.inner().to_str().expect("no illformed utf-8"), output.1, output.2),
+                (r"foo", vec![set("bar"), unset("baz")], 1)
+            );
+        }
+    }
 
-    assert_eq!(
-        line(r#""[attr]foo" bar -baz"#),
-        (macro_(r"foo"), vec![set("bar"), unset("baz")], 1),
-        "it works after unquoting even, making it harder to denote a file name with [attr] prefix"
-    );
+    let output = line(r#""[attr]foo" bar -baz"#);
+    match output.0 {
+        parse::Kind::Pattern(_) => unreachable!(),
+        parse::Kind::Macro(name) => {
+            assert_eq!(
+                (name.inner().to_str().expect("no illformed utf-8"), output.1, output.2),
+                (r"foo", vec![set("bar"), unset("baz")], 1),
+                "it works after unquoting even, making it harder to denote a file name with [attr] prefix"
+            );
+        }
+    }
 }
 
 #[test]
@@ -249,22 +261,22 @@ fn trailing_whitespace_in_attributes_is_ignored() {
     );
 }
 
-type ExpandedAttribute<'a> = (parse::Kind, Vec<(&'a BStr, git_attributes::StateRef<'a>)>, usize);
+type ExpandedAttribute<'a> = (parse::Kind, Vec<(BString, git_attributes::StateRef<'a>)>, usize);
 
-fn set(attr: &str) -> (&BStr, StateRef) {
-    (attr.as_bytes().as_bstr(), StateRef::Set)
+fn set(attr: &str) -> (BString, StateRef) {
+    (attr.into(), StateRef::Set)
 }
 
-fn unset(attr: &str) -> (&BStr, StateRef) {
-    (attr.as_bytes().as_bstr(), StateRef::Unset)
+fn unset(attr: &str) -> (BString, StateRef) {
+    (attr.into(), StateRef::Unset)
 }
 
-fn unspecified(attr: &str) -> (&BStr, StateRef) {
-    (attr.as_bytes().as_bstr(), StateRef::Unspecified)
+fn unspecified(attr: &str) -> (BString, StateRef) {
+    (attr.into(), StateRef::Unspecified)
 }
 
-fn value<'a, 'b>(attr: &'a str, value: &'b str) -> (&'a BStr, StateRef<'b>) {
-    (attr.as_bytes().as_bstr(), StateRef::Value(value.as_bytes().as_bstr()))
+fn value<'a, 'b>(attr: &'a str, value: &'b str) -> (BString, StateRef<'b>) {
+    (attr.into(), StateRef::Value(value.as_bytes().as_bstr()))
 }
 
 fn pattern(name: &str, flags: git_glob::pattern::Mode, first_wildcard_pos: Option<usize>) -> parse::Kind {
@@ -273,10 +285,6 @@ fn pattern(name: &str, flags: git_glob::pattern::Mode, first_wildcard_pos: Optio
         mode: flags,
         first_wildcard_pos,
     })
-}
-
-fn macro_(name: &str) -> parse::Kind {
-    parse::Kind::Macro(name.into())
 }
 
 fn try_line(input: &str) -> Result<ExpandedAttribute, parse::Error> {
@@ -299,7 +307,7 @@ fn expand(
 ) -> Result<ExpandedAttribute<'_>, parse::Error> {
     let (pattern, attrs, line_no) = input?;
     let attrs = attrs
-        .map(|r| r.map(|attr| (attr.name(), attr.state())))
+        .map(|r| r.map(|attr| (attr.name.inner().into(), attr.state)))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| parse::Error::AttributeName {
             attribute: e.attribute,

@@ -1,5 +1,5 @@
-use crate::{name, NameRef, StateRef};
-use bstr::{BStr, BString, ByteSlice};
+use crate::{name, AssignmentRef, Name, NameRef, StateRef};
+use bstr::{BStr, ByteSlice};
 use std::borrow::Cow;
 
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -8,8 +8,7 @@ pub enum Kind {
     /// A pattern to match paths against
     Pattern(git_glob::Pattern),
     /// The name of the macro to define, always a valid attribute name
-    // TODO: turn it into its own type for maximum safety
-    Macro(BString),
+    Macro(Name),
 }
 
 mod error {
@@ -42,7 +41,7 @@ impl<'a> Iter<'a> {
         Iter { attrs: attrs.fields() }
     }
 
-    fn parse_attr(&self, attr: &'a [u8]) -> Result<NameRef<'a>, name::Error> {
+    fn parse_attr(&self, attr: &'a [u8]) -> Result<AssignmentRef<'a>, name::Error> {
         let mut tokens = attr.splitn(2, |b| *b == b'=');
         let attr = tokens.next().expect("attr itself").as_bstr();
         let possibly_value = tokens.next();
@@ -58,11 +57,11 @@ impl<'a> Iter<'a> {
                     .unwrap_or(StateRef::Set),
             )
         };
-        Ok(NameRef(check_attr(attr)?, state))
+        Ok(AssignmentRef::new(check_attr(attr)?, state))
     }
 }
 
-fn check_attr(attr: &BStr) -> Result<&BStr, name::Error> {
+fn check_attr(attr: &BStr) -> Result<NameRef<'_>, name::Error> {
     fn attr_valid(attr: &BStr) -> bool {
         if attr.first() == Some(&b'-') {
             return false;
@@ -73,12 +72,12 @@ fn check_attr(attr: &BStr) -> Result<&BStr, name::Error> {
     }
 
     attr_valid(attr)
-        .then(|| attr)
+        .then(|| NameRef(attr.to_str().expect("no illformed utf8")))
         .ok_or_else(|| name::Error { attribute: attr.into() })
 }
 
 impl<'a> Iterator for Iter<'a> {
-    type Item = Result<NameRef<'a>, name::Error>;
+    type Item = Result<AssignmentRef<'a>, name::Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let attr = self.attrs.next().filter(|a| !a.is_empty())?;
@@ -137,7 +136,7 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
 
     let kind_res = match line.strip_prefix(b"[attr]") {
         Some(macro_name) => check_attr(macro_name.into())
-            .map(|m| Kind::Macro(m.into()))
+            .map(|m| Kind::Macro(m.to_owned()))
             .map_err(|err| Error::MacroName {
                 line_number,
                 macro_name: err.attribute,

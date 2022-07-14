@@ -7,6 +7,7 @@ use bstr::{BStr, BString};
 use compact_str::CompactString;
 pub use git_glob as glob;
 
+mod assignment;
 pub mod name;
 mod state;
 
@@ -53,22 +54,32 @@ pub enum State {
     Unspecified,
 }
 
-/// Holds and owns data that represent one validated attribute
+/// Represents a validated attribute name
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-pub struct Name(BString, State);
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Name(pub(crate) CompactString);
 
-/// Holds validated attribute data as a reference
+/// Holds a validated attribute name as a reference
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
-pub struct NameRef<'a>(&'a BStr, StateRef<'a>);
+pub struct NameRef<'a>(&'a str);
 
 /// Name an attribute and describe it's assigned state.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Assignment {
     /// The name of the attribute.
-    pub name: CompactString,
+    pub name: Name,
     /// The state of the attribute.
     pub state: State,
+}
+
+/// Holds validated attribute data as a reference
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd)]
+pub struct AssignmentRef<'a> {
+    /// The name of the attribute.
+    pub name: NameRef<'a>,
+    /// The state of the attribute.
+    pub state: StateRef<'a>,
 }
 
 /// A grouping of lists of patterns while possibly keeping associated to their base path.

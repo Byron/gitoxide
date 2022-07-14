@@ -143,7 +143,7 @@ fn split_on_non_escaped_char(input: &[u8], split_char: u8) -> Vec<&[u8]> {
     keywords
 }
 
-fn parse_attributes(input: &[u8]) -> Result<Vec<git_attributes::Name>, Error> {
+fn parse_attributes(input: &[u8]) -> Result<Vec<git_attributes::Assignment>, Error> {
     if input.is_empty() {
         return Err(Error::EmptyAttribute);
     }
