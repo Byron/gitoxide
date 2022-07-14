@@ -190,10 +190,11 @@ pub fn into(
             core.push(key("ignorecase"), bool(caps.ignore_case));
             core.push(key("precomposeunicode"), bool(caps.precompose_unicode));
         }
-        let config_path = dot_git.join("config");
+        let mut cursor = PathCursor(&mut dot_git);
+        let config_path = cursor.at("config");
         std::fs::write(&config_path, &config.to_bstring()).map_err(|err| Error::IoWrite {
             source: err,
-            path: config_path,
+            path: config_path.to_owned(),
         })?;
     }
 
