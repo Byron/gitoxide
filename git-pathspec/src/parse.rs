@@ -114,9 +114,6 @@ fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Res
                     return Err(Error::MultipleAttributeSpecifications);
                 }
             }
-            _ if keyword.starts_with(b"prefix:") => {
-                // TODO: Needs research - what does 'prefix:' do
-            }
             _ => {
                 return Err(Error::InvalidKeyword {
                     keyword: BString::from(keyword),

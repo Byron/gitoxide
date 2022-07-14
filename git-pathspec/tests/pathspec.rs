@@ -236,14 +236,6 @@ mod parse {
 
             check_valid_inputs(inputs)
         }
-
-        #[test]
-        #[ignore]
-        fn prefix() {
-            let inputs = vec![(r":(prefix:)", pat_with_path(""))];
-
-            check_valid_inputs(inputs)
-        }
     }
 
     mod fail {
