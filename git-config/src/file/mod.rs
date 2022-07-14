@@ -6,6 +6,7 @@ use std::{
 };
 
 use bstr::BStr;
+use git_features::threading::OwnShared;
 
 mod mutable;
 
@@ -34,6 +35,15 @@ pub mod rename_section {
 mod access;
 mod impls;
 mod utils;
+
+///
+pub mod section;
+
+/// A section in a git-config file, like `[core]` or `[remote "origin"]`.
+pub struct Section<'a> {
+    inner: crate::parse::Section<'a>,
+    meta: OwnShared<section::Metadata>,
+}
 
 /// A strongly typed index into some range.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Clone, Copy)]

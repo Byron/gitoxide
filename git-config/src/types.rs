@@ -11,7 +11,7 @@ use crate::{
 /// by the second one, and so forth.
 /// Note that included files via `include.path` and `includeIf.<condition>.path` inherit
 /// their source.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum Source {
     /// System-wide configuration path. This is defined as
     /// `$(prefix)/etc/gitconfig` (where prefix is the git-installation directory).
