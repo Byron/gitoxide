@@ -255,11 +255,13 @@ impl ThreadSafeRepository {
         }
 
         let refs = {
-            let reflog = if worktree_dir.is_none() {
-                git_ref::store::WriteReflog::Disable
-            } else {
-                git_ref::store::WriteReflog::Normal
-            };
+            let reflog = config.reflog.unwrap_or_else(|| {
+                if worktree_dir.is_none() {
+                    git_ref::store::WriteReflog::Disable
+                } else {
+                    git_ref::store::WriteReflog::Normal
+                }
+            });
             match &common_dir {
                 Some(common_dir) => {
                     crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, config.object_hash)
