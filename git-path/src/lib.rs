@@ -1,4 +1,12 @@
-#![forbid(unsafe_code, rust_2018_idioms, missing_docs)]
+#![forbid(unsafe_code, rust_2018_idioms)]
+#![deny(missing_docs)]
+//! This crate contains an assortment of utilities to deal with paths and their conversions.
+//!
+//! Generally `git` treats paths as bytes, but inherently assumes non-illformed UTF-8 as encoding on windows. Internally, it expects
+//! slashes to be used as path separators and paths in files must have slashes, with conversions being performed on windows accordingly.
+//!
+//! <details>
+//!
 //! ### Research
 //!
 //! * **windows**
@@ -39,6 +47,7 @@
 //! Even though the error only exists on older windows versions, we will represent it in the type system through fallible function calls.
 //! Callers may `.expect()` on the result to indicate they don't wish to handle this special and rare case. Note that servers should not
 //! ever get into a code-path which does panic though.
+//! </details>
 
 /// A dummy type to represent path specs and help finding all spots that take path specs once it is implemented.
 
@@ -47,6 +56,10 @@
 pub struct Spec(bstr::BString);
 
 mod convert;
+pub use convert::*;
+
 mod spec;
 
-pub use convert::*;
+///
+pub mod realpath;
+pub use realpath::function::{realpath, realpath_opts};

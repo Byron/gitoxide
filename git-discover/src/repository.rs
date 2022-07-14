@@ -12,13 +12,20 @@ pub enum Path {
     },
     /// The currently checked out or nascent work tree of a git repository
     WorkTree(PathBuf),
-    /// The git repository itself
+    /// The git repository itself, typically bare and without known worktree.
+    ///
+    /// Note that it might still have linked work-trees which can be accessed later, weather bare or not.
     Repository(PathBuf),
 }
 
 mod path {
-    use crate::repository::{Kind, Path};
     use std::path::PathBuf;
+
+    use crate::{
+        path::without_dot_git_dir,
+        repository::{Kind, Path},
+        DOT_GIT_DIR,
+    };
 
     impl AsRef<std::path::Path> for Path {
         fn as_ref(&self) -> &std::path::Path {
@@ -47,14 +54,11 @@ mod path {
 
             let dir = dir.into();
             match kind {
+                Kind::WorkTreeGitDir { work_dir } => Path::LinkedWorkTree { git_dir: dir, work_dir },
                 Kind::WorkTree { linked_git_dir } => match linked_git_dir {
                     Some(git_dir) => Path::LinkedWorkTree {
                         git_dir,
-                        work_dir: {
-                            let mut dir = absolutize_on_trailing_parent(dir);
-                            dir.pop(); // ".git" portion
-                            dir
-                        },
+                        work_dir: without_dot_git_dir(absolutize_on_trailing_parent(dir)),
                     },
                     None => {
                         let mut dir = absolutize_on_trailing_parent(dir);
@@ -81,7 +85,7 @@ mod path {
         pub fn into_repository_and_work_tree_directories(self) -> (PathBuf, Option<PathBuf>) {
             match self {
                 Path::LinkedWorkTree { work_dir, git_dir } => (git_dir, Some(work_dir)),
-                Path::WorkTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),
+                Path::WorkTree(working_tree) => (working_tree.join(DOT_GIT_DIR), Some(working_tree)),
                 Path::Repository(repository) => (repository, None),
             }
         }
@@ -92,12 +96,19 @@ mod path {
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Kind {
     /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
+    ///
+    /// Note that this is merely a guess at this point as we didn't read the configuration yet.
     Bare,
     /// A `git` repository along with a checked out files in a work tree.
     WorkTree {
         /// If set, this is the git dir associated with this _linked_ worktree.
         /// If `None`, the git_dir is the `.git` directory inside the _main_ worktree we represent.
         linked_git_dir: Option<PathBuf>,
+    },
+    /// A worktree's git directory in the common`.git` directory in `worktrees/<name>`.
+    WorkTreeGitDir {
+        /// Path to the worktree directory.
+        work_dir: PathBuf,
     },
 }
 

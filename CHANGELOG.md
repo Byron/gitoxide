@@ -5,6 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 12 commits contributed to the release over the course of 61 calendar days.
+ - 67 days passed between releases.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#301](https://github.com/Byron/gitoxide/issues/301)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - Allow reading patterns from stdin ([`0c597fe`](https://github.com/Byron/gitoxide/commit/0c597fe78acdd5672b4535a7d82620c5f7f93649))
+    - Add `--show-ignore-patterns` to `gix repo exclude query` ([`09f904b`](https://github.com/Byron/gitoxide/commit/09f904b1f393f03176882d491d7fffcad4058b49))
+    - Basic prefix support as well the first working version of `exclude query` ([`9cb8385`](https://github.com/Byron/gitoxide/commit/9cb83859f9bb76f38ab5bbd0ae6d6f20a691e9e1))
+    - Support for overrides on the command-line ([`7d98b21`](https://github.com/Byron/gitoxide/commit/7d98b2196c130263ace4a948418affdd950302ed))
+    - fix build ([`cb56f12`](https://github.com/Byron/gitoxide/commit/cb56f12ad83cf2932a068ef4fa0ca5ce4aa73e84))
+    - refactor ([`3ff991d`](https://github.com/Byron/gitoxide/commit/3ff991d0ca0d63632fc5710680351840f51c14c3))
+    - frame for `gix repo exclude query` ([`a331314`](https://github.com/Byron/gitoxide/commit/a331314758629a93ba036245a5dd03cf4109dc52))
+    - make fmt ([`50ff7aa`](https://github.com/Byron/gitoxide/commit/50ff7aa7fa86e5e2a94fb15aab86470532ac3f51))
+ * **Uncategorized**
+    - make fmt ([`251b6df`](https://github.com/Byron/gitoxide/commit/251b6df5dbdda24b7bdc452085f808f3acef69d8))
+    - Merge branch 'git_includeif' of https://github.com/svetli-n/gitoxide into svetli-n-git_includeif ([`0e01da7`](https://github.com/Byron/gitoxide/commit/0e01da74dffedaa46190db6a7b60a2aaff190d81))
+    - thanks clippy ([`056e8d2`](https://github.com/Byron/gitoxide/commit/056e8d26dc511fe7939ec87c62ef16aafd34fa9c))
+    - thanks clippy ([`fdec111`](https://github.com/Byron/gitoxide/commit/fdec11135692b3503087b0a3245c12cc87554d67))
+</details>
+
 ## 0.12.0 (2022-04-05)
 
 ### New Features
@@ -304,8 +343,8 @@ Maintenance release without any new features.
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 94 calendar days.
- - 94 days passed between releases.
+ - 3 commits contributed to the release over the course of 65 calendar days.
+ - 84 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -319,7 +358,6 @@ Maintenance release without any new features.
     - Add lean-plumbing docs for path of commit-graph-verify ([`5c7b52d`](https://github.com/Byron/gitoxide/commit/5c7b52d658d5b86bf4cf05c724202e824016c0e2))
     - [commitgraph] Implement basic commit-graph file verification. ([`2571113`](https://github.com/Byron/gitoxide/commit/2571113fea516737acedac08d66632ead499b474))
     - [commitgraph] Stub out commit-graph-verify plumbing command. ([`aacf0f0`](https://github.com/Byron/gitoxide/commit/aacf0f05a909e5b7d9ffd5623ef9833e0465be93))
-    - Provide terminal dimensions to better use horizontal space ([`11f6b84`](https://github.com/Byron/gitoxide/commit/11f6b8497a5089377e605f4cbe1cd317ef677d59))
 </details>
 
 ## v0.4.3 (2020-09-21)
@@ -328,7 +366,7 @@ Maintenance release without any new features.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 10 calendar days.
+ - 1 commit contributed to the release over the course of 1 calendar day.
  - 3 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -341,8 +379,8 @@ Maintenance release without any new features.
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 35 calendar days.
- - 37 days passed between releases.
+ - 2 commits contributed to the release over the course of 6 calendar days.
+ - 6 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -353,18 +391,8 @@ Maintenance release without any new features.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - [clone] first journey test for pack-receive ([`46a3511`](https://github.com/Byron/gitoxide/commit/46a3511aead043bc45256ce603285ff4d0fff60a))
-    - [clone] This actually works: first MVP of retrieving packs via clone ([`c06d819`](https://github.com/Byron/gitoxide/commit/c06d8194173f9ec468ddd0faf72dd6d8dbf7d35d))
-    - [ref-ls] add pretty version for ls-refs ([`487d06d`](https://github.com/Byron/gitoxide/commit/487d06d53b9cc201b5a009977e835b51f4b9f690))
-    - [ref-ls] Fix progress display ([`2fcb557`](https://github.com/Byron/gitoxide/commit/2fcb557dce941eb94ca60f46ecee86b94e029db7))
-    - refactor ([`b38290e`](https://github.com/Byron/gitoxide/commit/b38290e4a8fcabd758f26a15407710ab2abcdc07))
-    - [ref-ls] refactor ([`35e26fc`](https://github.com/Byron/gitoxide/commit/35e26fc32978232aebda3468c9f172fb7b08b815))
-    - refactor ([`f90b92f`](https://github.com/Byron/gitoxide/commit/f90b92ffc2994f594352abaf4bacd9767cbc2e6c))
-    - [ref-ls] Frame for remote-ref-ls command in gitoxide-core ([`161e7df`](https://github.com/Byron/gitoxide/commit/161e7df34a53db40551879c6d2319ee775dfd551))
-    - [clone] link up lean plumbing command with gitoxide-core: pack-receive ([`5ea49c8`](https://github.com/Byron/gitoxide/commit/5ea49c8aa0d449bed98ce0147ad222ff25c27c32))
-    - refactor ([`40a6412`](https://github.com/Byron/gitoxide/commit/40a64125dc5556630576ec2164b68838c76ccd79))
-    - Less ambiguous name for 'index-from-pack': 'pack-index-from-data' ([`386673c`](https://github.com/Byron/gitoxide/commit/386673ccc99d18d023c7df3fcd40e86d71960b25))
-    - refactor ([`b4a6e16`](https://github.com/Byron/gitoxide/commit/b4a6e16364822c0dccb56f98dbfb0ca4c8007069))
+    - Finish removal of rust 2018 idioms ([`0d1699e`](https://github.com/Byron/gitoxide/commit/0d1699e0e0bc9052be0a74b1b3f3d3eeeec39e3e))
+    - Provide terminal dimensions to better use horizontal space ([`11f6b84`](https://github.com/Byron/gitoxide/commit/11f6b8497a5089377e605f4cbe1cd317ef677d59))
 </details>
 
 ## v0.4.0 (2020-09-12)
@@ -379,7 +407,8 @@ Maintenance release without any new features.
 
 <csr-read-only-do-not-edit/>
 
- - 1 commit contributed to the release.
+ - 14 commits contributed to the release over the course of 29 calendar days.
+ - 30 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -390,7 +419,20 @@ Maintenance release without any new features.
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - Finish removal of rust 2018 idioms ([`0d1699e`](https://github.com/Byron/gitoxide/commit/0d1699e0e0bc9052be0a74b1b3f3d3eeeec39e3e))
+    - [clone] refs can now be written into a specified directory ([`fb1f048`](https://github.com/Byron/gitoxide/commit/fb1f04837be994fa5bcb9aa24f25b5f4f72e4ce0))
+    - [clone] First version of writing references, but… ([`445be27`](https://github.com/Byron/gitoxide/commit/445be27cf81663ba4fe941c00262448444efbac2))
+    - [clone] first journey test for pack-receive ([`46a3511`](https://github.com/Byron/gitoxide/commit/46a3511aead043bc45256ce603285ff4d0fff60a))
+    - [clone] This actually works: first MVP of retrieving packs via clone ([`c06d819`](https://github.com/Byron/gitoxide/commit/c06d8194173f9ec468ddd0faf72dd6d8dbf7d35d))
+    - [ref-ls] add pretty version for ls-refs ([`487d06d`](https://github.com/Byron/gitoxide/commit/487d06d53b9cc201b5a009977e835b51f4b9f690))
+    - [ref-ls] Fix progress display ([`2fcb557`](https://github.com/Byron/gitoxide/commit/2fcb557dce941eb94ca60f46ecee86b94e029db7))
+    - refactor ([`b38290e`](https://github.com/Byron/gitoxide/commit/b38290e4a8fcabd758f26a15407710ab2abcdc07))
+    - [ref-ls] refactor ([`35e26fc`](https://github.com/Byron/gitoxide/commit/35e26fc32978232aebda3468c9f172fb7b08b815))
+    - refactor ([`f90b92f`](https://github.com/Byron/gitoxide/commit/f90b92ffc2994f594352abaf4bacd9767cbc2e6c))
+    - [ref-ls] Frame for remote-ref-ls command in gitoxide-core ([`161e7df`](https://github.com/Byron/gitoxide/commit/161e7df34a53db40551879c6d2319ee775dfd551))
+    - [clone] link up lean plumbing command with gitoxide-core: pack-receive ([`5ea49c8`](https://github.com/Byron/gitoxide/commit/5ea49c8aa0d449bed98ce0147ad222ff25c27c32))
+    - refactor ([`40a6412`](https://github.com/Byron/gitoxide/commit/40a64125dc5556630576ec2164b68838c76ccd79))
+    - Less ambiguous name for 'index-from-pack': 'pack-index-from-data' ([`386673c`](https://github.com/Byron/gitoxide/commit/386673ccc99d18d023c7df3fcd40e86d71960b25))
+    - refactor ([`b4a6e16`](https://github.com/Byron/gitoxide/commit/b4a6e16364822c0dccb56f98dbfb0ca4c8007069))
 </details>
 
 ## v0.3.0 (2020-08-12)
@@ -497,9 +539,9 @@ Many small and possibly breaking changes are not mentioned here.
     - prepare for optional addition of line renderer for lean version ([`aac0d34`](https://github.com/Byron/gitoxide/commit/aac0d341eb02f0dccdf740f7ef15e8f585907544))
     - upgrade to prodash version 7 ([`af02b46`](https://github.com/Byron/gitoxide/commit/af02b46cc1eff5ba1da7da20d3f524a79fad686f))
     - Make --version flags work as expected. ([`a4d978c`](https://github.com/Byron/gitoxide/commit/a4d978ccc11e73fd752055c9a28b3b23dea145ea))
+    - rename 'pretty' target into 'max', a better fit for what it is ([`5acecc5`](https://github.com/Byron/gitoxide/commit/5acecc59d2d39141f2e98b6f8556c6d457ab0965))
     - Make gio commands less cumbersome, self-document their build type (pretty, lean) ([`1f9bc03`](https://github.com/Byron/gitoxide/commit/1f9bc03dd773d90960a6f6d4ee59af3f938ad80b))
     - Allow to limit the logging depth for less cluttered output ([`fce7035`](https://github.com/Byron/gitoxide/commit/fce703531d7006f7d961d6ffa66f51f6c9bc0efc))
-    - rename 'pretty' target into 'max', a better fit for what it is ([`5acecc5`](https://github.com/Byron/gitoxide/commit/5acecc59d2d39141f2e98b6f8556c6d457ab0965))
     - support for json in pretty-plumbing and gitoxide (on demand) ([`b3780f8`](https://github.com/Byron/gitoxide/commit/b3780f87438d34b372c48b7385199f7ea22b3965))
     - Simplify the 'keep open' logic of TUI progress window ([`13cd8ce`](https://github.com/Byron/gitoxide/commit/13cd8ce372800eb0016190960834c759c9744b9c))
     - attempt to implement progress with a mode enum ([`ac490c2`](https://github.com/Byron/gitoxide/commit/ac490c21b8f369c45ee0d7688ddb381ce6f4af94))

@@ -1,7 +1,11 @@
-use crate::bstr::{BStr, BString};
-use crate::Repository;
-pub use git_worktree::*;
 use std::path::PathBuf;
+
+pub use git_worktree::*;
+
+use crate::{
+    bstr::{BStr, BString},
+    Repository,
+};
 
 /// A stand-in to a worktree as result of a worktree iteration.
 ///
@@ -74,7 +78,7 @@ pub mod open_index {
         ConfigIndexThreads {
             value: BString,
             #[source]
-            err: git_config::value::parse::Error,
+            err: git_config::value::Error,
         },
         #[error(transparent)]
         IndexFile(#[from] git_index::file::init::Error),

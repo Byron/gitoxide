@@ -1,0 +1,420 @@
+use std::{
+    borrow::Cow,
+    iter::FusedIterator,
+    ops::{Deref, Range},
+};
+
+use bstr::{BStr, BString, ByteVec};
+
+use crate::{
+    file::{
+        mutable::{escape_value, Whitespace},
+        Index, Size,
+    },
+    lookup, parse,
+    parse::{section::Key, Event},
+    value::{normalize, normalize_bstr, normalize_bstring},
+};
+
+/// A opaque type that represents a mutable reference to a section.
+#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
+pub struct SectionMut<'a, 'event> {
+    section: &'a mut SectionBody<'event>,
+    implicit_newline: bool,
+    whitespace: Whitespace<'event>,
+}
+
+/// Mutating methods.
+impl<'a, 'event> SectionMut<'a, 'event> {
+    /// Adds an entry to the end of this section name `key` and `value`.
+    pub fn push<'b>(&mut self, key: Key<'event>, value: impl Into<&'b BStr>) {
+        if let Some(ws) = &self.whitespace.pre_key {
+            self.section.0.push(Event::Whitespace(ws.clone()));
+        }
+
+        self.section.0.push(Event::SectionKey(key));
+        self.section.0.extend(self.whitespace.key_value_separators());
+        self.section.0.push(Event::Value(escape_value(value.into()).into()));
+        if self.implicit_newline {
+            self.section.0.push(Event::Newline(BString::from("\n").into()));
+        }
+    }
+
+    /// Removes all events until a key value pair is removed. This will also
+    /// remove the whitespace preceding the key value pair, if any is found.
+    pub fn pop(&mut self) -> Option<(Key<'_>, Cow<'event, BStr>)> {
+        let mut values = Vec::new();
+        // events are popped in reverse order
+        while let Some(e) = self.section.0.pop() {
+            match e {
+                Event::SectionKey(k) => {
+                    // pop leading whitespace
+                    if let Some(Event::Whitespace(_)) = self.section.0.last() {
+                        self.section.0.pop();
+                    }
+
+                    if values.len() == 1 {
+                        let value = values.pop().expect("vec is non-empty but popped to empty value");
+                        return Some((k, normalize(value)));
+                    }
+
+                    return Some((
+                        k,
+                        normalize_bstring({
+                            let mut s = BString::default();
+                            for value in values.into_iter().rev() {
+                                s.push_str(value.as_ref());
+                            }
+                            s
+                        }),
+                    ));
+                }
+                Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) => values.push(v),
+                _ => (),
+            }
+        }
+        None
+    }
+
+    /// Sets the last key value pair if it exists, or adds the new value.
+    /// Returns the previous value if it replaced a value, or None if it adds
+    /// the value.
+    pub fn set<'b>(&mut self, key: Key<'event>, value: impl Into<&'b BStr>) -> Option<Cow<'event, BStr>> {
+        match self.key_and_value_range_by(&key) {
+            None => {
+                self.push(key, value);
+                None
+            }
+            Some((_, value_range)) => {
+                let range_start = value_range.start;
+                let ret = self.remove_internal(value_range);
+                self.section
+                    .0
+                    .insert(range_start, Event::Value(escape_value(value.into()).into()));
+                Some(ret)
+            }
+        }
+    }
+
+    /// Removes the latest value by key and returns it, if it exists.
+    pub fn remove(&mut self, key: impl AsRef<str>) -> Option<Cow<'event, BStr>> {
+        let key = Key::from_str_unchecked(key.as_ref());
+        let (key_range, _value_range) = self.key_and_value_range_by(&key)?;
+        Some(self.remove_internal(key_range))
+    }
+
+    /// Adds a new line event. Note that you don't need to call this unless
+    /// you've disabled implicit newlines.
+    pub fn push_newline(&mut self) {
+        self.section.0.push(Event::Newline(Cow::Borrowed("\n".into())));
+    }
+
+    /// Enables or disables automatically adding newline events after adding
+    /// a value. This is _enabled by default_.
+    pub fn set_implicit_newline(&mut self, on: bool) {
+        self.implicit_newline = on;
+    }
+
+    /// Sets the exact whitespace to use before each newly created key-value pair,
+    /// with only whitespace characters being permissible.
+    ///
+    /// The default is 2 tabs.
+    /// Set to `None` to disable adding whitespace before a key value.
+    ///
+    /// # Panics
+    ///
+    /// If non-whitespace characters are used. This makes the method only suitable for validated
+    /// or known input.
+    pub fn set_leading_whitespace(&mut self, whitespace: Option<Cow<'event, BStr>>) {
+        assert!(
+            whitespace
+                .as_deref()
+                .map_or(true, |ws| ws.iter().all(|b| b.is_ascii_whitespace())),
+            "input whitespace must only contain whitespace characters."
+        );
+        self.whitespace.pre_key = whitespace;
+    }
+
+    /// Returns the whitespace this section will insert before the
+    /// beginning of a key, if any.
+    #[must_use]
+    pub fn leading_whitespace(&self) -> Option<&BStr> {
+        self.whitespace.pre_key.as_deref()
+    }
+
+    /// Returns the whitespace to be used before and after the `=` between the key
+    /// and the value.
+    ///
+    /// For example, `k = v` will have `(Some(" "), Some(" "))`, whereas `k=\tv` will
+    /// have `(None, Some("\t"))`.
+    #[must_use]
+    pub fn separator_whitespace(&self) -> (Option<&BStr>, Option<&BStr>) {
+        (self.whitespace.pre_sep.as_deref(), self.whitespace.post_sep.as_deref())
+    }
+}
+
+// Internal methods that may require exact indices for faster operations.
+impl<'a, 'event> SectionMut<'a, 'event> {
+    pub(crate) fn new(section: &'a mut SectionBody<'event>) -> Self {
+        let whitespace = (&*section).into();
+        Self {
+            section,
+            implicit_newline: true,
+            whitespace,
+        }
+    }
+
+    pub(crate) fn get<'key>(
+        &self,
+        key: &Key<'key>,
+        start: Index,
+        end: Index,
+    ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
+        let mut expect_value = false;
+        let mut concatenated_value = BString::default();
+
+        for event in &self.section.0[start.0..end.0] {
+            match event {
+                Event::SectionKey(event_key) if event_key == key => expect_value = true,
+                Event::Value(v) if expect_value => return Ok(normalize_bstr(v.as_ref())),
+                Event::ValueNotDone(v) if expect_value => {
+                    concatenated_value.push_str(v.as_ref());
+                }
+                Event::ValueDone(v) if expect_value => {
+                    concatenated_value.push_str(v.as_ref());
+                    return Ok(normalize_bstring(concatenated_value));
+                }
+                _ => (),
+            }
+        }
+
+        Err(lookup::existing::Error::KeyMissing)
+    }
+
+    pub(crate) fn delete(&mut self, start: Index, end: Index) {
+        self.section.0.drain(start.0..end.0);
+    }
+
+    pub(crate) fn set_internal(&mut self, index: Index, key: Key<'event>, value: &BStr) -> Size {
+        let mut size = 0;
+
+        self.section.0.insert(index.0, Event::Value(escape_value(value).into()));
+        size += 1;
+
+        let sep_events = self.whitespace.key_value_separators();
+        size += sep_events.len();
+        self.section.0.insert_many(index.0, sep_events.into_iter().rev());
+
+        self.section.0.insert(index.0, Event::SectionKey(key));
+        size += 1;
+
+        Size(size)
+    }
+
+    /// Performs the removal, assuming the range is valid.
+    fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, BStr> {
+        self.section
+            .0
+            .drain(range)
+            .fold(Cow::Owned(BString::default()), |mut acc, e| {
+                if let Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) = e {
+                    acc.to_mut().extend(&**v);
+                }
+                acc
+            })
+    }
+}
+
+impl<'event> Deref for SectionMut<'_, 'event> {
+    type Target = SectionBody<'event>;
+
+    fn deref(&self) -> &Self::Target {
+        self.section
+    }
+}
+
+/// A opaque type that represents a section body.
+#[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Default)]
+pub struct SectionBody<'event>(pub(crate) parse::section::Events<'event>);
+
+impl<'event> SectionBody<'event> {
+    pub(crate) fn as_ref(&self) -> &[Event<'_>] {
+        &self.0
+    }
+
+    pub(crate) fn as_mut(&mut self) -> &mut parse::section::Events<'event> {
+        &mut self.0
+    }
+
+    /// Returns the the range containing the value events for the `key`.
+    /// If the value is not found, then this returns an empty range.
+    fn key_and_value_range_by(&self, key: &Key<'_>) -> Option<(Range<usize>, Range<usize>)> {
+        let mut value_range = Range::default();
+        let mut key_start = None;
+        for (i, e) in self.0.iter().enumerate().rev() {
+            match e {
+                Event::SectionKey(k) => {
+                    if k == key {
+                        key_start = Some(i);
+                        break;
+                    }
+                    value_range = Range::default();
+                }
+                Event::Value(_) => {
+                    (value_range.start, value_range.end) = (i, i);
+                }
+                Event::ValueNotDone(_) | Event::ValueDone(_) => {
+                    if value_range.end == 0 {
+                        value_range.end = i
+                    } else {
+                        value_range.start = i
+                    };
+                }
+                _ => (),
+            }
+        }
+        key_start.map(|key_start| {
+            // value end needs to be offset by one so that the last value's index
+            // is included in the range
+            let value_range = value_range.start..value_range.end + 1;
+            (key_start..value_range.end, value_range)
+        })
+    }
+}
+
+/// Access
+impl<'event> SectionBody<'event> {
+    /// Retrieves the last matching value in a section with the given key, if present.
+    #[must_use]
+    pub fn value(&self, key: impl AsRef<str>) -> Option<Cow<'_, BStr>> {
+        let key = Key::from_str_unchecked(key.as_ref());
+        let (_, range) = self.key_and_value_range_by(&key)?;
+        let mut concatenated = BString::default();
+
+        for event in &self.0[range] {
+            match event {
+                Event::Value(v) => {
+                    return Some(normalize_bstr(v.as_ref()));
+                }
+                Event::ValueNotDone(v) => {
+                    concatenated.push_str(v.as_ref());
+                }
+                Event::ValueDone(v) => {
+                    concatenated.push_str(v.as_ref());
+                    return Some(normalize_bstring(concatenated));
+                }
+                _ => (),
+            }
+        }
+        None
+    }
+
+    /// Retrieves all values that have the provided key name. This may return
+    /// an empty vec, which implies there were no values with the provided key.
+    #[must_use]
+    pub fn values(&self, key: impl AsRef<str>) -> Vec<Cow<'_, BStr>> {
+        let key = &Key::from_str_unchecked(key.as_ref());
+        let mut values = Vec::new();
+        let mut expect_value = false;
+        let mut concatenated_value = BString::default();
+
+        for event in &self.0 {
+            match event {
+                Event::SectionKey(event_key) if event_key == key => expect_value = true,
+                Event::Value(v) if expect_value => {
+                    expect_value = false;
+                    values.push(normalize_bstr(v.as_ref()));
+                }
+                Event::ValueNotDone(v) if expect_value => {
+                    concatenated_value.push_str(v.as_ref());
+                }
+                Event::ValueDone(v) if expect_value => {
+                    expect_value = false;
+                    concatenated_value.push_str(v.as_ref());
+                    values.push(normalize_bstring(std::mem::take(&mut concatenated_value)));
+                }
+                _ => (),
+            }
+        }
+
+        values
+    }
+
+    /// Returns an iterator visiting all keys in order.
+    pub fn keys(&self) -> impl Iterator<Item = &Key<'event>> {
+        self.0
+            .iter()
+            .filter_map(|e| if let Event::SectionKey(k) = e { Some(k) } else { None })
+    }
+
+    /// Returns true if the section containss the provided key.
+    #[must_use]
+    pub fn contains_key(&self, key: impl AsRef<str>) -> bool {
+        let key = &Key::from_str_unchecked(key.as_ref());
+        self.0.iter().any(|e| {
+            matches!(e,
+                Event::SectionKey(k) if k == key
+            )
+        })
+    }
+
+    /// Returns the number of values in the section.
+    #[must_use]
+    pub fn num_values(&self) -> usize {
+        self.0.iter().filter(|e| matches!(e, Event::SectionKey(_))).count()
+    }
+
+    /// Returns if the section is empty.
+    /// Note that this may count whitespace, see [`num_values()`][Self::num_values()] for
+    /// another way to determine semantic emptiness.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+/// An owning iterator of a section body. Created by [`SectionBody::into_iter`], yielding
+/// un-normalized (`key`, `value`) pairs.
+// TODO: tests
+pub struct SectionBodyIter<'event>(smallvec::IntoIter<[Event<'event>; 64]>);
+
+impl<'event> IntoIterator for SectionBody<'event> {
+    type Item = (Key<'event>, Cow<'event, BStr>);
+
+    type IntoIter = SectionBodyIter<'event>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        SectionBodyIter(self.0.into_iter())
+    }
+}
+
+impl<'event> Iterator for SectionBodyIter<'event> {
+    type Item = (Key<'event>, Cow<'event, BStr>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut key = None;
+        let mut partial_value = BString::default();
+        let mut value = None;
+
+        for event in self.0.by_ref() {
+            match event {
+                Event::SectionKey(k) => key = Some(k),
+                Event::Value(v) => {
+                    value = Some(v);
+                    break;
+                }
+                Event::ValueNotDone(v) => partial_value.push_str(v.as_ref()),
+                Event::ValueDone(v) => {
+                    partial_value.push_str(v.as_ref());
+                    value = Some(partial_value.into());
+                    break;
+                }
+                _ => (),
+            }
+        }
+
+        key.zip(value.map(normalize))
+    }
+}
+
+impl FusedIterator for SectionBodyIter<'_> {}

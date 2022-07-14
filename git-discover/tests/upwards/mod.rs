@@ -3,19 +3,14 @@ use std::path::PathBuf;
 use git_discover::repository::Kind;
 
 fn expected_trust() -> git_sec::Trust {
-    #[cfg(not(windows))]
-    {
+    if std::env::var_os("GITOXIDE_TEST_EXPECT_REDUCED_TRUST").is_some() {
+        git_sec::Trust::Reduced
+    } else {
         git_sec::Trust::Full
     }
-    #[cfg(windows)]
-    {
-        if is_ci::cached() {
-            git_sec::Trust::Reduced
-        } else {
-            git_sec::Trust::Full
-        }
-    }
 }
+
+mod ceiling_dirs;
 
 #[test]
 fn from_bare_git_dir() -> crate::Result {
@@ -88,11 +83,6 @@ fn from_dir_with_dot_dot() -> crate::Result {
     let dir = working_dir.join("some/very/deeply/nested/subdir/../../../../../..");
     let (path, trust) = git_discover::upwards(&dir)?;
     assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
-    // On CI on windows we get a cursor like this with a question mark so our prefix check won't work.
-    // We recover, but that means this assertion will fail.
-    // &cursor = "\\\\?\\D:\\a\\gitoxide\\gitoxide\\.git"
-    // &cwd = "D:\\a\\gitoxide\\gitoxide\\git-repository"
-    #[cfg(not(windows))]
     assert_eq!(
         path.as_ref(),
         std::path::Path::new(".."),
@@ -103,7 +93,7 @@ fn from_dir_with_dot_dot() -> crate::Result {
         working_dir.canonicalize()?,
         "a relative path that climbs above the test repo should yield the gitoxide repo"
     );
-    assert_eq!(trust, git_sec::Trust::Full);
+    assert_eq!(trust, expected_trust());
     Ok(())
 }
 
@@ -130,8 +120,34 @@ fn from_non_existing_worktree() {
 }
 
 #[test]
-fn from_existing_worktree() {
+fn from_existing_worktree_inside_dot_git() {
     let top_level_repo = repo_path().unwrap();
+    let (path, _trust) = git_discover::upwards(top_level_repo.join(".git/worktrees/a")).unwrap();
+    let suffix = std::path::Path::new(top_level_repo.file_name().unwrap())
+        .join("worktrees")
+        .join("a");
+    assert!(
+        matches!(path, git_discover::repository::Path::LinkedWorkTree { work_dir, .. } if work_dir.ends_with(suffix)),
+        "we can handle to start from within a (somewhat partial) worktree git dir"
+    );
+}
+
+#[test]
+fn from_non_existing_worktree_inside_dot_git() {
+    let top_level_repo = repo_path().unwrap();
+    let (path, _trust) = git_discover::upwards(top_level_repo.join(".git/worktrees/c-worktree-deleted")).unwrap();
+    let suffix = std::path::Path::new(top_level_repo.file_name().unwrap())
+        .join("worktrees")
+        .join("c-worktree-deleted");
+    assert!(
+        matches!(path, git_discover::repository::Path::LinkedWorkTree { work_dir, .. } if work_dir.ends_with(suffix)),
+        "it's no problem if work-dirs don't exist - this can be discovered later and a lot of operations are possible anyway."
+    );
+}
+
+#[test]
+fn from_existing_worktree() -> crate::Result {
+    let top_level_repo = repo_path()?;
     for (discover_path, expected_worktree_path, expected_git_dir) in [
         (top_level_repo.join("worktrees/a"), "worktrees/a", ".git/worktrees/a"),
         (
@@ -140,21 +156,14 @@ fn from_existing_worktree() {
             "bare.git/worktrees/c",
         ),
     ] {
-        let (path, trust) = git_discover::upwards(discover_path).unwrap();
+        let (path, trust) = git_discover::upwards(discover_path)?;
         assert!(matches!(path, git_discover::repository::Path::LinkedWorkTree { .. }));
 
         assert_eq!(trust, expected_trust());
         let (git_dir, worktree) = path.into_repository_and_work_tree_directories();
-        #[cfg(not(windows))]
         assert_eq!(
-            git_dir.strip_prefix(top_level_repo.canonicalize().unwrap()),
+            git_dir.strip_prefix(git_path::realpath(&top_level_repo).unwrap()),
             Ok(std::path::Path::new(expected_git_dir)),
-            "we don't skip over worktrees and discover their git dir (gitdir is absolute in file)"
-        );
-        #[cfg(windows)]
-        assert_eq!(
-            git_dir.canonicalize().unwrap(),
-            top_level_repo.join(expected_git_dir).canonicalize().unwrap(),
             "we don't skip over worktrees and discover their git dir (gitdir is absolute in file)"
         );
         let worktree = worktree.expect("linked worktree is set");
@@ -163,12 +172,94 @@ fn from_existing_worktree() {
             Ok(std::path::Path::new(expected_worktree_path)),
             "the worktree path is the .git file's directory"
         );
-
-        assert!(
-            git_discover::is_git(&git_dir).is_err(),
-            "we aren't able to detect git directories from private worktrees and that's by design"
-        );
     }
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn cross_fs() -> crate::Result {
+    use std::{os::unix::fs::symlink, process::Command};
+
+    use git_discover::upwards::Options;
+
+    let top_level_repo = git_testtools::scripted_fixture_repo_writable("make_basic_repo.sh")?;
+
+    let _cleanup = {
+        // Create an empty dmg file
+        let dmg_location = tempfile::tempdir()?;
+        let dmg_file = dmg_location.path().join("temp.dmg");
+        Command::new("hdiutil")
+            .args(&["create", "-size", "1m"])
+            .arg(&dmg_file)
+            .status()?;
+
+        // Mount dmg file into temporary location
+        let mount_point = tempfile::tempdir()?;
+        Command::new("hdiutil")
+            .args(&["attach", "-nobrowse", "-mountpoint"])
+            .arg(mount_point.path())
+            .arg(&dmg_file)
+            .status()?;
+
+        // Ensure that the mount point is always cleaned up
+        let cleanup = defer::defer({
+            let arg = mount_point.path().to_owned();
+            move || {
+                Command::new("hdiutil")
+                    .arg("detach")
+                    .arg(arg)
+                    .status()
+                    .expect("detach temporary test dmg filesystem successfully");
+            }
+        });
+
+        // Symlink the mount point into the repo
+        symlink(mount_point.path(), top_level_repo.path().join("remote"))?;
+        cleanup
+    };
+
+    let res = git_discover::upwards(top_level_repo.path().join("remote"))
+        .expect_err("the cross-fs option should prevent us from discovering the repo");
+    assert!(matches!(
+        res,
+        git_discover::upwards::Error::NoGitRepositoryWithinFs { .. }
+    ));
+
+    let (repo_path, _trust) = git_discover::upwards_opts(
+        &top_level_repo.path().join("remote"),
+        Options {
+            cross_fs: true,
+            ..Default::default()
+        },
+    )
+    .expect("the cross-fs option should allow us to discover the repo");
+
+    assert_eq!(
+        repo_path
+            .into_repository_and_work_tree_directories()
+            .1
+            .expect("work dir")
+            .file_name(),
+        top_level_repo.path().file_name()
+    );
+
+    Ok(())
+}
+
+#[test]
+fn do_not_shorten_absolute_paths() -> crate::Result {
+    let top_level_repo = repo_path()?.canonicalize().expect("repo path exists");
+    let (repo_path, _trust) = git_discover::upwards(top_level_repo).expect("we can discover the repo");
+
+    match repo_path {
+        git_discover::repository::Path::WorkTree(work_dir) => {
+            assert!(work_dir.is_absolute());
+        }
+        _ => panic!("expected worktree path"),
+    };
+
+    Ok(())
 }
 
 fn repo_path() -> crate::Result<PathBuf> {

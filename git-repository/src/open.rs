@@ -1,10 +1,9 @@
-use std::borrow::Cow;
 use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
 use git_sec::Trust;
 
-use crate::Permissions;
+use crate::{Permissions, ThreadSafeRepository};
 
 /// A way to configure the usage of replacement objects, see `git replace`.
 #[derive(Debug, Clone)]
@@ -61,12 +60,12 @@ impl ReplacementObjects {
     }
 }
 
-/// The options used in [`Repository::open_opts
+/// The options used in [`ThreadSafeRepository::open_opts`]
 #[derive(Default, Clone)]
 pub struct Options {
-    object_store_slots: git_odb::store::init::Slots,
-    replacement_objects: ReplacementObjects,
-    permissions: Permissions,
+    pub(crate) object_store_slots: git_odb::store::init::Slots,
+    pub(crate) replacement_objects: ReplacementObjects,
+    pub(crate) permissions: Permissions,
 }
 
 #[derive(Default, Clone)]
@@ -83,17 +82,14 @@ pub(crate) struct EnvironmentOverrides {
 }
 
 impl EnvironmentOverrides {
-    // TODO: tests
-    fn from_env(
-        git_prefix: crate::permission::env_var::Resource,
-    ) -> Result<Self, crate::permission::env_var::resource::Error> {
+    fn from_env() -> Result<Self, crate::permission::env_var::resource::Error> {
         let mut worktree_dir = None;
         if let Some(path) = std::env::var_os("GIT_WORK_TREE") {
-            worktree_dir = git_prefix.check(PathBuf::from(path))?;
+            worktree_dir = PathBuf::from(path).into();
         }
         let mut git_dir = None;
         if let Some(path) = std::env::var_os("GIT_DIR") {
-            git_dir = git_prefix.check(PathBuf::from(path))?;
+            git_dir = PathBuf::from(path).into();
         }
         Ok(EnvironmentOverrides { worktree_dir, git_dir })
     }
@@ -116,14 +112,14 @@ impl Options {
 
     // TODO: tests
     /// Set the given permissions, which are typically derived by a `Trust` level.
-    pub fn permissions(mut self, permissions: crate::Permissions) -> Self {
+    pub fn permissions(mut self, permissions: Permissions) -> Self {
         self.permissions = permissions;
         self
     }
 
     /// Open a repository at `path` with the options set so far.
-    pub fn open(self, path: impl Into<std::path::PathBuf>) -> Result<crate::ThreadSafeRepository, Error> {
-        crate::ThreadSafeRepository::open_opts(path, self)
+    pub fn open(self, path: impl Into<std::path::PathBuf>) -> Result<ThreadSafeRepository, Error> {
+        ThreadSafeRepository::open_opts(path, self)
     }
 }
 
@@ -160,7 +156,7 @@ pub enum Error {
     EnvironmentAccessDenied(#[from] crate::permission::env_var::resource::Error),
 }
 
-impl crate::ThreadSafeRepository {
+impl ThreadSafeRepository {
     /// Open a git repository at the given `path`, possibly expanding it to `path/.git` if `path` is a work tree dir.
     pub fn open(path: impl Into<std::path::PathBuf>) -> Result<Self, Error> {
         Self::open_opts(path, Options::default())
@@ -176,14 +172,14 @@ impl crate::ThreadSafeRepository {
             match git_discover::is_git(&path) {
                 Ok(kind) => (path, kind),
                 Err(_err) => {
-                    let git_dir = path.join(".git");
+                    let git_dir = path.join(git_discover::DOT_GIT_DIR);
                     git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?
                 }
             }
         };
         let (git_dir, worktree_dir) =
             git_discover::repository::Path::from_dot_git_dir(path, kind).into_repository_and_work_tree_directories();
-        crate::ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
+        ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
     }
 
     /// Try to open a git repository in `fallback_directory` (can be worktree or `.git` directory) only if there is no override
@@ -194,12 +190,12 @@ impl crate::ThreadSafeRepository {
     ///
     /// Note that this will read various `GIT_*` environment variables to check for overrides, and is probably most useful when implementing
     /// custom hooks.
-    // TODO: tests, with hooks
+    // TODO: tests, with hooks, GIT_QUARANTINE for ref-log and transaction control (needs git-sec support to remove write access in git-ref)
     pub fn open_with_environment_overrides(
         fallback_directory: impl Into<PathBuf>,
         trust_map: git_sec::trust::Mapping<Options>,
     ) -> Result<Self, Error> {
-        let overrides = EnvironmentOverrides::from_env(git_sec::Access::resource(git_sec::Permission::Allow))?;
+        let overrides = EnvironmentOverrides::from_env()?;
         let (path, path_kind): (PathBuf, _) = match overrides.git_dir {
             Some(git_dir) => git_discover::is_git(&git_dir).map(|kind| (git_dir, kind))?,
             None => {
@@ -214,7 +210,7 @@ impl crate::ThreadSafeRepository {
 
         let trust = git_sec::Trust::from_path_ownership(&git_dir)?;
         let options = trust_map.into_value_by_level(trust);
-        crate::ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
+        ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
     }
 
     pub(crate) fn open_from_paths(
@@ -237,13 +233,12 @@ impl crate::ThreadSafeRepository {
         //       This would be something read in later as have to first check for extensions. Also this means
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
         //       as it may have its own configuration. That's fine actually.
-        let common_dir = git_discover::path::from_plain_file(git_dir.join("commondir")).transpose()?;
-        let common_dir_ref = common_dir
-            .as_deref()
-            .map(|cmn| Cow::Owned(git_dir.join(cmn)))
-            .unwrap_or_else(|| Cow::Borrowed(&git_dir));
+        let common_dir = git_discover::path::from_plain_file(git_dir.join("commondir"))
+            .transpose()?
+            .map(|cd| git_dir.join(cd));
+        let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
         let config = crate::config::Cache::new(
-            &common_dir_ref,
+            common_dir_ref,
             env.xdg_config_home.clone(),
             env.home.clone(),
             crate::path::install_dir().ok().as_deref(),
@@ -259,15 +254,21 @@ impl crate::ThreadSafeRepository {
             None => {}
         }
 
-        let refs = crate::RefStore::at(
-            &git_dir,
-            if worktree_dir.is_none() {
-                git_ref::store::WriteReflog::Disable
-            } else {
-                git_ref::store::WriteReflog::Normal
-            },
-            config.object_hash,
-        );
+        let refs = {
+            let reflog = config.reflog.unwrap_or_else(|| {
+                if worktree_dir.is_none() {
+                    git_ref::store::WriteReflog::Disable
+                } else {
+                    git_ref::store::WriteReflog::Normal
+                }
+            });
+            match &common_dir {
+                Some(common_dir) => {
+                    crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, config.object_hash)
+                }
+                None => crate::RefStore::at(&git_dir, reflog, config.object_hash),
+            }
+        };
 
         let replacements = replacement_objects
             .clone()
@@ -299,7 +300,7 @@ impl crate::ThreadSafeRepository {
             },
         };
 
-        Ok(crate::ThreadSafeRepository {
+        Ok(ThreadSafeRepository {
             objects: OwnShared::new(git_odb::Store::at_opts(
                 common_dir_ref.join("objects"),
                 replacements,
@@ -309,7 +310,7 @@ impl crate::ThreadSafeRepository {
                     use_multi_pack_index: config.use_multi_pack_index,
                 },
             )?),
-            common_dir: common_dir.map(|cd| git_dir.join(cd)),
+            common_dir,
             refs,
             work_tree: worktree_dir,
             config,

@@ -40,7 +40,6 @@ impl<'repo> Tree<'repo> {
                     } else {
                         let next_id = entry.oid.to_owned();
                         let handle = self.repo;
-                        drop(entry);
                         drop(self);
                         self = match handle.find_object(next_id)?.try_into_tree() {
                             Ok(tree) => tree,

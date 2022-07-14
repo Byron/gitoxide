@@ -250,13 +250,13 @@ fn find_target_section(wanted: &Version, sections: &[Section], first_release_ind
         None => match wanted {
             Version::Unreleased => Insertion::At(first_release_index),
             Version::Semantic(version) => {
-                let (pos, min_distance) = sections
+                let (mut pos, min_distance) = sections
                     .iter()
                     .enumerate()
-                    .map(|(idx, s)| {
+                    .map(|(idx, section)| {
                         (
                             idx,
-                            match s {
+                            match section {
                                 Section::Verbatim { .. } => MAX_DISTANCE,
                                 Section::Release { name, .. } => version_distance(name, version),
                             },
@@ -272,7 +272,10 @@ fn find_target_section(wanted: &Version, sections: &[Section], first_release_ind
                             (pos, dist)
                         },
                     );
-                debug_assert!(pos != usize::MAX, "need at least one section to compare against");
+                if pos == usize::MAX {
+                    // We had nothing to compare against, append to the end
+                    pos = sections.len();
+                }
                 if min_distance < (0, 0, 0) {
                     Insertion::At(pos + 1)
                 } else {

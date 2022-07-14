@@ -4,17 +4,6 @@ help:  ## Display this help
 
 always:
 
-##@ Publishing & Versioning
-
-try-publish-all: ## Dry-run publish all crates in the currently set version if they are not published yet.
-	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release gitoxide
-
-try-bump-minor-version: ## Show how updating the minor version of PACKAGE=<name> would look like.
-	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release --update-crates-index --bump minor --no-dependencies --no-publish --no-tag --no-push -v $(PACKAGE)
-
-bump-minor-version: ## Similar to try-bump-minor-version, but actually performs the operation on PACKAGE=<name>
-	cargo run --package cargo-smart-release --bin cargo-smart-release -- smart-release --update-crates-index --bump minor --no-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE) --execute
-
 ##@ Release Builds
 
 release-all: release release-lean release-small ## all release builds
@@ -65,10 +54,7 @@ clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --no-default-features --features lean-async --tests
 
 check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
-	cd git-repository && cargo +1.54.0 check --package git-repository --no-default-features --features async-network-client,unstable,local-time-support,max-performance
-
-check-win: ## see that windows compiles, provided the x86_64-pc-windows-msvc target and cargo-xwin are present.
-	cargo xwin build --target x86_64-pc-windows-msvc  --no-default-features --features small
+	cd git-repository && cargo check --package git-repository --no-default-features --features async-network-client,unstable,local-time-support,max-performance
 
 check: ## Build all code in suitable configurations
 	cargo check --all
@@ -97,6 +83,7 @@ check: ## Build all code in suitable configurations
 	cd git-mailmap && cargo check --features serde1
 	cd git-worktree && cargo check --features serde1
 	cd git-actor && cargo check --features serde1
+	cd git-date && cargo check --features serde1
 	cd git-pack && cargo check --features serde1 \
 			   && cargo check --features pack-cache-lru-static \
 			   && cargo check --features pack-cache-lru-dynamic \
@@ -168,6 +155,9 @@ unit-tests: ## run all unit tests
 					&& cargo test
 	cd gitoxide-core && cargo test --lib
 
+nextest: ## run tests with `cargo nextest` (all unit-tests, no doc-tests, faster)
+	cargo nextest run --all
+
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
 
@@ -188,7 +178,7 @@ journey-tests-async: always ## run journey tests (lean-async)
 	./tests/journey.sh target/debug/ein target/debug/gix $(jtt) async
 
 journey-tests-smart-release:
-	cargo build --package cargo-smart-release
+	cargo build --bin cargo-smart-release --package cargo-smart-release
 	cd cargo-smart-release && ./tests/journey.sh ../target/debug/cargo-smart-release
 
 continuous-journey-tests: ## run stateless journey tests whenever something changes
@@ -322,3 +312,9 @@ check-size: ## Run cargo-diet on all crates to see that they are still in bound
 fmt: ## run nightly rustfmt for its extra features, but check that it won't upset stable rustfmt
 	cargo +nightly fmt --all -- --config-path rustfmt-nightly.toml
 	cargo +stable fmt --all -- --check
+
+##@ Publishing & Versioning
+
+try-publish-all: ## Dry-run publish all crates in the currently set version if they are not published yet.
+	(cd cargo-smart-release && cargo build --bin cargo-smart-release) && cargo-smart-release/target/debug/cargo-smart-release smart-release gitoxide
+

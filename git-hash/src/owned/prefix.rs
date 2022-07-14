@@ -1,11 +1,8 @@
-use std::cmp::Ordering;
-use std::convert::TryFrom;
+use std::{cmp::Ordering, convert::TryFrom};
 
 use quick_error::quick_error;
 
 use crate::{oid, ObjectId, Prefix};
-
-const MIN_HEX_LEN: usize = 4;
 
 quick_error! {
     /// The error returned by [Prefix::try_from_id()][super::Prefix::try_from_id()].
@@ -13,7 +10,7 @@ quick_error! {
     #[allow(missing_docs)]
     pub enum Error {
         TooShort { hex_len: usize } {
-            display("The minimum hex length of a short object id is {}, got {}", MIN_HEX_LEN, hex_len)
+            display("The minimum hex length of a short object id is {}, got {}", Prefix::MIN_HEX_LEN, hex_len)
         }
         TooLong { object_kind: crate::Kind, hex_len: usize } {
             display("An object of kind {} cannot be larger than {} in hex, but {} was requested", object_kind, object_kind.len_in_hex(), hex_len)
@@ -30,7 +27,7 @@ pub mod from_hex {
         #[allow(missing_docs)]
         pub enum Error {
             TooShort { hex_len: usize } {
-                display("The minimum hex length of a short object id is {}, got {}", super::MIN_HEX_LEN, hex_len)
+                display("The minimum hex length of a short object id is {}, got {}", super::Prefix::MIN_HEX_LEN, hex_len)
             }
             TooLong { hex_len: usize } {
                 display("An id cannot be larger than {} chars in hex, but {} was requested", crate::Kind::longest().len_in_hex(), hex_len)
@@ -43,6 +40,9 @@ pub mod from_hex {
 }
 
 impl Prefix {
+    /// The smallest allowed prefix length below which chances for collisions are too high even in small repositories.
+    pub const MIN_HEX_LEN: usize = 4;
+
     /// Create a new instance by taking a full `id` as input and truncating it to `hex_len`.
     ///
     /// For instance, with `hex_len` of 7 the resulting prefix is 3.5 bytes, or 3 bytes and 4 bits
@@ -54,7 +54,7 @@ impl Prefix {
                 object_kind: id.kind(),
                 hex_len,
             })
-        } else if hex_len < MIN_HEX_LEN {
+        } else if hex_len < Self::MIN_HEX_LEN {
             Err(Error::TooShort { hex_len })
         } else {
             let mut prefix = ObjectId::null(id.kind());
@@ -106,7 +106,7 @@ impl Prefix {
 
         if hex_len > crate::Kind::longest().len_in_hex() {
             return Err(from_hex::Error::TooLong { hex_len });
-        } else if hex_len < MIN_HEX_LEN {
+        } else if hex_len < Self::MIN_HEX_LEN {
             return Err(from_hex::Error::TooShort { hex_len });
         };
 

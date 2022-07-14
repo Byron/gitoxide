@@ -1,10 +1,15 @@
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
 
 use std::path::PathBuf;
 
 use bstr::{BStr, BString};
-use compact_str::CompactStr;
+use compact_str::CompactString;
 pub use git_glob as glob;
 
 /// The state an attribute can be in, referencing the value.
@@ -37,7 +42,7 @@ pub enum State {
     Unset,
     /// The attribute is set to the given value, which followed the `=` sign.
     /// Note that values can be empty.
-    Value(compact_str::CompactStr),
+    Value(CompactString),
     /// The attribute isn't mentioned with a given path or is explicitly set to `Unspecified` using the `!` sign.
     Unspecified,
 }
@@ -47,7 +52,7 @@ pub enum State {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Assignment {
     /// The name of the attribute.
-    pub name: CompactStr,
+    pub name: CompactString,
     /// The state of the attribute.
     pub state: State,
 }

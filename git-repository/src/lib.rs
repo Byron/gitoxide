@@ -180,7 +180,7 @@ pub type RefStore = git_ref::file::Store;
 /// A handle for finding objects in an object database, abstracting away caches for thread-local use.
 pub type OdbHandle = git_odb::Handle;
 /// A way to access git configuration
-pub(crate) type Config = OwnShared<git_config::file::GitConfig<'static>>;
+pub(crate) type Config = OwnShared<git_config::File<'static>>;
 
 ///
 mod types;
@@ -219,6 +219,7 @@ impl From<git_discover::repository::Kind> for Kind {
     fn from(v: git_discover::repository::Kind) -> Self {
         match v {
             git_discover::repository::Kind::Bare => Kind::Bare,
+            git_discover::repository::Kind::WorkTreeGitDir { .. } => Kind::WorkTree { is_linked: true },
             git_discover::repository::Kind::WorkTree { linked_git_dir } => Kind::WorkTree {
                 is_linked: linked_git_dir.is_some(),
             },
@@ -233,12 +234,26 @@ pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, di
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
-    ThreadSafeRepository::init(directory, crate::create::Options { bare: false }).map(Into::into)
+    ThreadSafeRepository::init(
+        directory,
+        create::Options {
+            bare: false,
+            fs_capabilities: None,
+        },
+    )
+    .map(Into::into)
 }
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
-    ThreadSafeRepository::init(directory, crate::create::Options { bare: true }).map(Into::into)
+    ThreadSafeRepository::init(
+        directory,
+        create::Options {
+            bare: true,
+            fs_capabilities: None,
+        },
+    )
+    .map(Into::into)
 }
 
 /// See [ThreadSafeRepository::open()], but returns a [`Repository`] instead.
@@ -292,7 +307,7 @@ pub mod mailmap {
             #[error("The configured mailmap.blob could not be parsed")]
             BlobSpec(#[from] git_hash::decode::Error),
             #[error(transparent)]
-            PathInterpolate(#[from] git_config::values::path::interpolate::Error),
+            PathInterpolate(#[from] git_config::path::interpolate::Error),
             #[error("Could not find object configured in `mailmap.blob`")]
             FindExisting(#[from] crate::object::find::existing::OdbError),
         }
@@ -379,9 +394,9 @@ pub mod state {
 pub mod discover {
     use std::path::Path;
 
-    use crate::ThreadSafeRepository;
-
     pub use git_discover::*;
+
+    use crate::{bstr::BString, ThreadSafeRepository};
 
     /// The error returned by [`crate::discover()`].
     #[derive(Debug, thiserror::Error)]
@@ -394,7 +409,8 @@ pub mod discover {
     }
 
     impl ThreadSafeRepository {
-        /// Try to open a git repository in `directory` and search upwards through its parents until one is found.
+        /// Try to open a git repository in `directory` and search upwards through its parents until one is found,
+        /// using default trust options which matters in case the found repository isn't owned by the current user.
         pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
             Self::discover_opts(directory, Default::default(), Default::default())
         }
@@ -411,6 +427,50 @@ pub mod discover {
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
             let options = trust_map.into_value_by_level(trust);
             Self::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
+        }
+
+        /// Try to open a git repository directly from the environment.
+        /// If that fails, discover upwards from `directory` until one is found,
+        /// while applying discovery options from the environment.
+        pub fn discover_with_environment_overrides(directory: impl AsRef<Path>) -> Result<Self, Error> {
+            Self::discover_with_environment_overrides_opts(directory, Default::default(), Default::default())
+        }
+
+        /// Try to open a git repository directly from the environment, which reads `GIT_DIR`
+        /// if it is set. If unset, discover upwards from `directory` until one is found,
+        /// while applying `options` with overrides from the environment which includes:
+        ///
+        /// - `GIT_DISCOVERY_ACROSS_FILESYSTEM`
+        /// - `GIT_CEILING_DIRECTORIES`
+        ///
+        /// Finally, use the `trust_map` to determine which of our own repository options to use
+        /// based on the trust level of the effective repository directory.
+        pub fn discover_with_environment_overrides_opts(
+            directory: impl AsRef<Path>,
+            mut options: upwards::Options,
+            trust_map: git_sec::trust::Mapping<crate::open::Options>,
+        ) -> Result<Self, Error> {
+            fn apply_additional_environment(mut opts: upwards::Options) -> upwards::Options {
+                use std::convert::TryFrom;
+
+                use crate::bstr::ByteVec;
+
+                if let Some(cross_fs) = std::env::var_os("GIT_DISCOVERY_ACROSS_FILESYSTEM")
+                    .and_then(|v| Vec::from_os_string(v).ok().map(BString::from))
+                {
+                    if let Ok(b) = git_config::Boolean::try_from(cross_fs.as_ref()) {
+                        opts.cross_fs = b.into();
+                    }
+                }
+                opts
+            }
+
+            if std::env::var_os("GIT_DIR").is_some() {
+                return Self::open_with_environment_overrides(directory.as_ref(), trust_map).map_err(Error::Open);
+            }
+
+            options = apply_additional_environment(options.apply_environment());
+            Self::discover_opts(directory, options, trust_map)
         }
     }
 }

@@ -9,7 +9,7 @@ use crate::{
         },
     },
     transaction::{Change, LogChange, RefEdit, RefEditsExt, RefLog},
-    Reference, Target,
+    FullName, FullNameRef, Reference, Target,
 };
 
 impl<'s> Transaction<'s> {
@@ -25,9 +25,8 @@ impl<'s> Transaction<'s> {
             "locks can only be acquired once and it's all or nothing"
         );
 
-        let relative_path = change.update.name.to_path();
         let existing_ref = store
-            .ref_contents(relative_path.as_ref())
+            .ref_contents(change.update.name.as_ref())
             .map_err(Error::from)
             .and_then(|maybe_loose| {
                 maybe_loose
@@ -44,7 +43,7 @@ impl<'s> Transaction<'s> {
             })
             .and_then(|maybe_loose| match (maybe_loose, packed) {
                 (None, Some(packed)) => packed
-                    .try_find(change.update.name.to_ref())
+                    .try_find(change.update.name.as_ref())
                     .map(|opt| opt.map(Into::into))
                     .map_err(Error::from),
                 (None, None) => Ok(None),
@@ -52,10 +51,11 @@ impl<'s> Transaction<'s> {
             });
         let lock = match &mut change.update.change {
             Change::Delete { expected, .. } => {
+                let (base, relative_path) = store.reference_path_with_base(change.update.name.as_ref());
                 let lock = git_lock::Marker::acquire_to_hold_resource(
-                    store.reference_path(relative_path),
+                    base.join(relative_path),
                     lock_fail_mode,
-                    Some(store.base.to_owned()),
+                    Some(base.into_owned()),
                 )
                 .map_err(|err| Error::LockAcquire {
                     err,
@@ -97,10 +97,11 @@ impl<'s> Transaction<'s> {
                 lock
             }
             Change::Update { expected, new, .. } => {
+                let (base, relative_path) = store.reference_path_with_base(change.update.name.as_ref());
                 let mut lock = git_lock::File::acquire_to_update_resource(
-                    store.reference_path(relative_path),
+                    base.join(relative_path),
                     lock_fail_mode,
-                    Some(store.base.to_owned()),
+                    Some(base.into_owned()),
                 )
                 .map_err(|err| Error::LockAcquire {
                     err,
@@ -225,28 +226,33 @@ impl<'s> Transaction<'s> {
                 if log_mode == RefLog::Only {
                     continue;
                 }
+                let name = match possibly_adjust_name_for_prefixes(edit.update.name.as_ref()) {
+                    Some(n) => n,
+                    None => continue,
+                };
                 if let Some(ref mut num_updates) = maybe_updates_for_packed_refs {
                     if let Change::Update {
                         new: Target::Peeled(_), ..
                     } = edit.update.change
                     {
-                        edits_for_packed_transaction.push(edit.update.clone());
+                        edits_for_packed_transaction.push(RefEdit {
+                            name,
+                            ..edit.update.clone()
+                        });
                         *num_updates += 1;
                     }
                     continue;
                 }
                 match edit.update.change {
-                    // TODO: use or-pattern here once MRV is big enough (blocked by vergen 1.52)
                     Change::Update {
-                        expected: PreviousValue::ExistingMustMatch(_),
-                        ..
-                    }
-                    | Change::Update {
-                        expected: PreviousValue::MustExistAndMatch(_),
+                        expected: PreviousValue::ExistingMustMatch(_) | PreviousValue::MustExistAndMatch(_),
                         ..
                     } => needs_packed_refs_lookups = true,
                     Change::Delete { .. } => {
-                        edits_for_packed_transaction.push(edit.update.clone());
+                        edits_for_packed_transaction.push(RefEdit {
+                            name,
+                            ..edit.update.clone()
+                        });
                     }
                     _ => {
                         needs_packed_refs_lookups = true;
@@ -340,6 +346,25 @@ impl<'s> Transaction<'s> {
         }
         self.updates = Some(updates);
         Ok(self)
+    }
+}
+
+fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {
+    match name.category_and_short_name() {
+        Some((c, sn)) => {
+            use crate::Category::*;
+            let sn = FullNameRef::new_unchecked(sn);
+            match c {
+                Bisect | Rewritten | WorktreePrivate | LinkedPseudoRef { .. } | PseudoRef | MainPseudoRef => None,
+                Tag | LocalBranch | RemoteBranch | Note => name.into(),
+                MainRef | LinkedRef { .. } => sn
+                    .category()
+                    .map_or(false, |cat| !cat.is_worktree_private())
+                    .then(|| sn),
+            }
+            .map(|n| n.to_owned())
+        }
+        None => Some(name.to_owned()), // allow (uncategorized/very special) refs to be packed
     }
 }
 

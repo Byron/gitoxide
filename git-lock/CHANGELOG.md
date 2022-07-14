@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.1.0 (2022-05-18)
+
+### New Features
+
+ - <csr-id-a789490fbbba1f44d79d57c8ba74bf40c600faf2/> export git-tempfile in the root
+   This allows access to signal handler setup for example, which can be
+   useful in some situations.
+
+### Bug Fixes
+
+ - <csr-id-73ecb40bb20f9c3fe7341f4ff1b0b81ac09b9ae0/> Interpret `PermissionDenied` as reason to retry on lock acquisition failure.
+   Evidence from CI suggests that on windows 'AlreadyExists' isn't the
+   common error code. Instead, maybe due to racyness, it can also emit
+   PermissionDenied errors which we now handle specifically.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 5 calendar days.
+ - 45 days passed between releases.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#384](https://github.com/Byron/gitoxide/issues/384), [#386](https://github.com/Byron/gitoxide/issues/386)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#301](https://github.com/Byron/gitoxide/issues/301)**
+    - update changelogs prior to release ([`84cb256`](https://github.com/Byron/gitoxide/commit/84cb25614a5fcddff297c1713eba4efbb6ff1596))
+    - refactor ([`287f47c`](https://github.com/Byron/gitoxide/commit/287f47c17a52be382f0866abaa0db6b33a09f560))
+ * **[#384](https://github.com/Byron/gitoxide/issues/384)**
+    - export git-tempfile in the root ([`a789490`](https://github.com/Byron/gitoxide/commit/a789490fbbba1f44d79d57c8ba74bf40c600faf2))
+ * **[#386](https://github.com/Byron/gitoxide/issues/386)**
+    - Interpret `PermissionDenied` as reason to retry on lock acquisition failure. ([`73ecb40`](https://github.com/Byron/gitoxide/commit/73ecb40bb20f9c3fe7341f4ff1b0b81ac09b9ae0))
+ * **Uncategorized**
+    - make fmt ([`251b6df`](https://github.com/Byron/gitoxide/commit/251b6df5dbdda24b7bdc452085f808f3acef69d8))
+    - Merge branch 'main' into refs-and-worktrees ([`9cf0c7b`](https://github.com/Byron/gitoxide/commit/9cf0c7bd0cc5419137db5796f3a5b91bdf3dcc94))
+</details>
+
 ## 2.0.0 (2022-04-03)
 
 A maintenance release due to mildly breaking changes in `git-tempfile`.
@@ -13,7 +55,7 @@ A maintenance release due to mildly breaking changes in `git-tempfile`.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 44 calendar days.
+ - 3 commits contributed to the release over the course of 44 calendar days.
  - 169 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#364](https://github.com/Byron/gitoxide/issues/364)
@@ -27,6 +69,7 @@ A maintenance release due to mildly breaking changes in `git-tempfile`.
  * **[#364](https://github.com/Byron/gitoxide/issues/364)**
     - update changelogs prior to release ([`746a676`](https://github.com/Byron/gitoxide/commit/746a676056cd4907da7137a00798344b5bdb4419))
  * **Uncategorized**
+    - Release git-diff v0.14.0, git-bitmap v0.1.0, git-index v0.2.0, git-tempfile v2.0.1, git-lock v2.0.0, git-mailmap v0.1.0, git-traverse v0.13.0, git-pack v0.17.0, git-quote v0.2.0, git-odb v0.27.0, git-packetline v0.12.4, git-url v0.4.0, git-transport v0.16.0, git-protocol v0.15.0, git-ref v0.12.0, git-worktree v0.1.0, git-repository v0.15.0, cargo-smart-release v0.9.0, safety bump 5 crates ([`e58dc30`](https://github.com/Byron/gitoxide/commit/e58dc3084cf17a9f618ae3a6554a7323e44428bf))
     - Release git-tempfile v2.0.0, safety bump 6 crates ([`90b1c42`](https://github.com/Byron/gitoxide/commit/90b1c42d5487904a9f329362d185b035d0ddb975))
 </details>
 

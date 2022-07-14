@@ -15,27 +15,6 @@ Currently, this is _not_ a binary. While we do intent to have a drop-in
 replacement for the `git config` sub-command, we're currently missing
 system-level abstractions to do so.
 
-## Examples
-
-Reading and writing to a config:
-
-```rust
-use git_config::file::GitConfig;
-use git_config::values::Boolean;
-use std::fs::read_to_string;
-
-let input = r#"
-[core]
-  some-bool = true
-
-[other "internal"]
-  hello = world
-"#;
-let mut config = GitConfig::try_from(input)?;
-let boolean = config.value::<Boolean>("core", None, "some-bool")?;
-config.set_raw_value("other", Some("internal"), "hello", "clippy!".into())?
-```
-
 ## Contributing
 
 Contributions are always welcome!
@@ -53,8 +32,8 @@ Since this is a performance oriented crate, in addition to well tested code via
 performance. We use [`criterion`] so benches can be run via `cargo bench` after
 installing it via `cargo install cargo-criterion`.
 
-Changes to `parser.rs` may include a request to fuzz to ensure that it cannot
-panic on inputs. This can be done by executing `cargo fuzz parser` after
+Changes to parsing code may include a request to fuzz to ensure that it cannot
+panic on inputs. This can be done by executing `cargo +nightly fuzz run parse` after
 installing the `fuzz` sub-command via `cargo install cargo-fuzz`.
 
 #### License

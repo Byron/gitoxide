@@ -1,7 +1,10 @@
-use crate::bstr::{BStr, BString, ByteSlice};
-use crate::worktree::Proxy;
-use crate::{Repository, ThreadSafeRepository};
 use std::path::{Path, PathBuf};
+
+use crate::{
+    bstr::{BStr, BString, ByteSlice},
+    worktree::Proxy,
+    Repository, ThreadSafeRepository,
+};
 
 #[allow(missing_docs)]
 pub mod into_repo {
@@ -34,16 +37,14 @@ impl<'repo> Proxy<'repo> {
     /// Note that the location might not exist.
     pub fn base(&self) -> std::io::Result<PathBuf> {
         let git_dir = self.git_dir.join("gitdir");
-        let mut base_dot_git = git_discover::path::from_plain_file(&git_dir).ok_or_else(|| {
+        let base_dot_git = git_discover::path::from_plain_file(&git_dir).ok_or_else(|| {
             std::io::Error::new(
                 std::io::ErrorKind::NotFound,
                 format!("Required file '{}' does not exist", git_dir.display()),
             )
         })??;
-        if base_dot_git.file_name().and_then(|n| n.to_str()) == Some(".git") {
-            base_dot_git.pop();
-        }
-        Ok(base_dot_git)
+
+        Ok(git_discover::path::without_dot_git_dir(base_dot_git))
     }
 
     /// The git directory for the work tree, typically contained within the parent git dir.

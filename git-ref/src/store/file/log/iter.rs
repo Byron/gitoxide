@@ -24,7 +24,7 @@ pub mod decode {
         }
     }
 
-    impl<'a> std::error::Error for Error {}
+    impl std::error::Error for Error {}
 
     impl Error {
         pub(crate) fn new(err: log::line::decode::Error, line: LineNumber) -> Self {
@@ -83,7 +83,7 @@ pub struct Platform<'a, 's> {
     /// The store containing the reflogs
     pub store: &'s file::Store,
     /// The full name of the reference whose reflog to retrieve.
-    pub name: FullNameRef<'a>,
+    pub name: &'a FullNameRef,
     /// A reusable buffer for storing log lines read from disk.
     pub buf: Vec<u8>,
 }

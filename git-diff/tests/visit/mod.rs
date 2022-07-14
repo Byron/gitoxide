@@ -224,17 +224,17 @@ mod changes {
                 ":100644 100644 28ce6a8b26aa170e1de65536fe8abe1832bd3242 13c2aca72ab576cb5f22dc8e7f8ba8ddab553a8a M	f/f"
             );
 
-            #[cfg(target_os = "windows")]
+            #[cfg(windows)]
             let tree_with_link_id = hex_to_id("3b287f8730c81d0b763c2d294618a5e32b67b4f8");
-            #[cfg(target_os = "windows")]
+            #[cfg(windows)]
             let link_entry_oid = hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391");
-            #[cfg(target_os = "windows")]
+            #[cfg(windows)]
             let link_entry_mode = EntryMode::Blob;
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(not(windows))]
             let tree_with_link_id = hex_to_id("7e26dba59b6336f87d1d4ae3505a2da302b91c76");
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(not(windows))]
             let link_entry_oid = hex_to_id("2e65efe2a145dda7ee51d1741299f848e5bf752e");
-            #[cfg(not(target_os = "windows"))]
+            #[cfg(not(windows))]
             let link_entry_mode = EntryMode::Link;
             assert_eq!(
                 diff_with_previous_commit_from(&db, &all_commits[8])?,

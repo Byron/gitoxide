@@ -4,6 +4,9 @@
 #![forbid(unsafe_code, rust_2018_idioms)]
 #![deny(missing_docs)]
 
+/// The name of the `.git` directory.
+pub const DOT_GIT_DIR: &str = ".git";
+
 ///
 pub mod repository;
 
@@ -28,9 +31,6 @@ pub mod is_git {
         #[error(transparent)]
         GitFile(#[from] crate::path::from_gitdir_file::Error),
     }
-
-    /// Options for [`crate::is_git()`].
-    pub struct Options {}
 }
 
 mod is;

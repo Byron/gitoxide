@@ -24,13 +24,19 @@ impl<'repo> Reference<'repo> {
     }
 
     /// Return the reference's full name.
-    pub fn name(&self) -> git_ref::FullNameRef<'_> {
-        self.inner.name.to_ref()
+    pub fn name(&self) -> &git_ref::FullNameRef {
+        self.inner.name.as_ref()
     }
 
     /// Turn this instances into a stand-alone reference.
     pub fn detach(self) -> git_ref::Reference {
         self.inner
+    }
+}
+
+impl<'repo> std::fmt::Debug for Reference<'repo> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.inner, f)
     }
 }
 

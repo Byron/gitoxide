@@ -1,5 +1,11 @@
-#![deny(unsafe_code, rust_2018_idioms, missing_docs)]
 //! A shared trust model for `gitoxide` crates.
+//!
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
+#![deny(unsafe_code, rust_2018_idioms, missing_docs)]
 
 use std::{
     fmt::{Debug, Display, Formatter},
@@ -142,7 +148,7 @@ pub enum Permission {
     Forbid,
     /// Ignore resources or try to avoid performing an operation.
     Deny,
-    /// Allow loading a reasource or performing an action.
+    /// Allow loading a resource or performing an action.
     Allow,
 }
 

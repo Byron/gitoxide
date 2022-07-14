@@ -159,7 +159,7 @@ mod with_namespace {
             );
             assert!(
                 ns_store
-                    .try_find(fullname.clone().prefix_namespace(&ns_two).to_partial())?
+                    .try_find(fullname.clone().prefix_namespace(&ns_two).as_ref())?
                     .is_none(),
                 "it won't find namespaced items by their store-relative name with namespace"
             );
@@ -184,13 +184,31 @@ mod with_namespace {
                 .map(|r| r.name.into_inner())
                 .collect::<Vec<_>>(),
             [
-                "refs/namespaces/bar/refs/heads/multi-link-target1",
-                "refs/namespaces/bar/refs/multi-link",
-                "refs/namespaces/bar/refs/tags/multi-link-target2",
-                "refs/namespaces/foo/refs/remotes/origin/HEAD"
+                "refs/heads/multi-link-target1",
+                "refs/multi-link",
+                "refs/tags/multi-link-target2",
             ],
-            "loose iterators have no namespace support at all"
+            "loose iterators have namespace support as well"
         );
+
+        {
+            let prev = ns_store.namespace.take();
+            assert_eq!(
+                ns_store
+                    .loose_iter()?
+                    .map(Result::unwrap)
+                    .map(|r| r.name.into_inner())
+                    .collect::<Vec<_>>(),
+                [
+                    "refs/namespaces/bar/refs/heads/multi-link-target1",
+                    "refs/namespaces/bar/refs/multi-link",
+                    "refs/namespaces/bar/refs/tags/multi-link-target2",
+                    "refs/namespaces/foo/refs/remotes/origin/HEAD"
+                ],
+                "we can iterate without namespaces as well"
+            );
+            ns_store.namespace = prev;
+        }
 
         let ns_one = git_ref::namespace::expand("foo")?;
         ns_store.namespace = ns_one.into();

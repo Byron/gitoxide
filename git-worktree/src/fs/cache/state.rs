@@ -186,6 +186,9 @@ impl Ignore {
 }
 
 impl Attributes {
+    /// Create a new instance from an attribute match group that represents `globals`.
+    ///
+    /// A stack of attributes will be applied on top of it later.
     pub fn new(globals: AttributeMatchGroup) -> Self {
         Attributes {
             globals,

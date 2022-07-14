@@ -6,7 +6,8 @@ use crate::{
     transaction::RefEdit,
 };
 
-/// A function receiving an object id to resolve, returning its decompressed bytes.
+/// A function receiving an object id to resolve, returning its decompressed bytes,
+/// used to obtain the peeled object ids for storage in packed-refs files.
 ///
 /// Resolution means to follow tag objects until the end of the chain.
 pub type FindObjectFn =

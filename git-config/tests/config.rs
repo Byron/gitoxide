@@ -1,6 +1,6 @@
-type Result = std::result::Result<(), Box<dyn std::error::Error>>;
+type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-mod git_config;
-mod parser;
+mod file;
+mod parse;
 mod value;
 mod values;

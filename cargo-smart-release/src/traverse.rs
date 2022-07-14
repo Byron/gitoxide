@@ -119,20 +119,28 @@ pub mod dependency {
                 | Mode::NotForPublishing {
                     adjustment: Some(ManifestAdjustment::Version(adjustment)),
                     ..
-                } => Some(match adjustment {
-                    VersionAdjustment::Breakage { bump, .. } | VersionAdjustment::Changed { bump, .. } => bump,
-                }),
+                } => Some(adjustment.bump()),
                 _ => None,
             }
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Dependency<'meta> {
     pub package: &'meta Package,
     pub kind: dependency::Kind,
     pub mode: dependency::Mode,
+}
+
+impl<'a> std::fmt::Debug for Dependency<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut dbg = f.debug_struct("Dependency");
+        dbg.field("package", &self.package.id.repr);
+        dbg.field("kind", &self.kind);
+        dbg.field("mode", &self.mode);
+        dbg.finish()
+    }
 }
 
 pub struct Options {
@@ -270,14 +278,18 @@ fn forward_propagate_breaking_changes_for_manifest_updates<'meta>(
                     continue;
                 }
                 seen.insert(&dependant.id);
-                let crate_is_known_already = crates.iter().find_map(|c| {
-                    (c.package.id == dependant.id).then(|| c.mode.version_adjustment_bump().map(|b| b.is_breaking()))
-                });
+                let crate_is_known_already = crates
+                    .iter()
+                    .find_map(|c| {
+                        (c.package.id == dependant.id)
+                            .then(|| c.mode.version_adjustment_bump().map(|b| b.is_breaking()))
+                    })
+                    .flatten();
 
                 let bump = breaking_version_bump(ctx, dependant, bump_when_needed)?;
                 if bump.next_release_changes_manifest() {
                     if crate_is_known_already.is_some() {
-                        let is_breaking = crate_is_known_already.flatten().unwrap_or(false);
+                        let is_breaking = crate_is_known_already.unwrap_or(false);
                         if !is_breaking {
                             log::debug!(
                                 "Wanted to mark '{}' for breaking manifest change, but its already known without breaking change.",

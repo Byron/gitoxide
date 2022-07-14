@@ -61,7 +61,7 @@ impl Target {
     pub fn to_ref(&self) -> crate::TargetRef<'_> {
         match self {
             Target::Peeled(oid) => crate::TargetRef::Peeled(oid),
-            Target::Symbolic(name) => crate::TargetRef::Symbolic(name.to_ref()),
+            Target::Symbolic(name) => crate::TargetRef::Symbolic(name.as_ref()),
         }
     }
 

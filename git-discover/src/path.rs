@@ -1,5 +1,5 @@
-use std::io::Read;
-use std::path::PathBuf;
+use crate::DOT_GIT_DIR;
+use std::{io::Read, path::PathBuf};
 
 ///
 pub mod from_gitdir_file {
@@ -57,4 +57,12 @@ pub fn from_gitdir_file(path: impl AsRef<std::path::Path>) -> Result<PathBuf, fr
         gitdir = parent.join(gitdir);
     }
     Ok(gitdir)
+}
+
+/// Conditionally pop a trailing `.git` dir if present.
+pub fn without_dot_git_dir(mut path: PathBuf) -> PathBuf {
+    if path.file_name().and_then(|n| n.to_str()) == Some(DOT_GIT_DIR) {
+        path.pop();
+    }
+    path
 }

@@ -130,7 +130,7 @@ mod peel {
             "points to a tag object without actual object lookup"
         );
 
-        let odb = git_odb::at(store.base().join("objects"))?;
+        let odb = git_odb::at(store.git_dir().join("objects"))?;
         let mut r: Reference = store.find_loose("dt1")?.into();
         assert_eq!(
             r.peel_to_id_in_place(&store, |oid, buf| {

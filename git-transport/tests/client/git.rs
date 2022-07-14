@@ -73,6 +73,7 @@ async fn handshake_v1_and_request() -> crate::Result {
     while let Some(line) = lines.next().await {
         refs.push(line?)
     }
+    #[allow(clippy::drop_non_drop)] // needed for non-async version
     drop(lines);
 
     assert_eq!(

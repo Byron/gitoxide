@@ -1,5 +1,6 @@
-use git_discover::parse;
 use std::path::Path;
+
+use git_discover::parse;
 
 #[test]
 fn valid() -> crate::Result {
