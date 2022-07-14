@@ -397,7 +397,7 @@ fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
 
 #[test]
 fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
-    for reflog_writemode in &[WriteReflog::Normal, WriteReflog::Disable] {
+    for reflog_writemode in &[WriteReflog::Normal, WriteReflog::Disable, WriteReflog::Always] {
         let (_keep, mut store) = empty_store()?;
         store.write_reflog = *reflog_writemode;
         let referent = "refs/heads/alt-main";
@@ -522,7 +522,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let mut buf = Vec::new();
         for ref_name in &["HEAD", referent] {
             match reflog_writemode {
-                WriteReflog::Normal => {
+                WriteReflog::Normal | WriteReflog::Always => {
                     let expected_line = log_line(git_hash::Kind::Sha1.null(), new_oid, "an actual change");
                     assert_eq!(reflog_lines(&store, *ref_name)?, vec![expected_line]);
                 }

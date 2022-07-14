@@ -6,9 +6,13 @@ use std::{
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_ref::Category;
 
-use crate::file::init::from_paths;
-use crate::file::init::from_paths::Options;
-use crate::{file::SectionBodyId, File};
+use crate::{
+    file::{
+        init::{from_paths, from_paths::Options},
+        SectionBodyId,
+    },
+    File,
+};
 
 pub(crate) fn resolve_includes(
     conf: &mut File<'static>,

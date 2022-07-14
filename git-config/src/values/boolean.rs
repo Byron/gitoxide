@@ -1,12 +1,12 @@
 use std::{borrow::Cow, convert::TryFrom, fmt::Display};
 
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteSlice};
 
 use crate::{value, Boolean};
 
 fn bool_err(input: impl Into<BString>) -> value::Error {
     value::Error::new(
-        "Booleans need to be 'no', 'off', 'false', 'zero' or 'yes', 'on', 'true', 'one'",
+        "Booleans need to be 'no', 'off', 'false', '' or 'yes', 'on', 'true' or any number",
         input,
     )
 }
@@ -20,8 +20,22 @@ impl TryFrom<&BStr> for Boolean {
         } else if parse_false(value) {
             Ok(Boolean(false))
         } else {
-            Err(bool_err(value))
+            use std::str::FromStr;
+            if let Some(integer) = value.to_str().ok().and_then(|s| i64::from_str(s).ok()) {
+                Ok(Boolean(integer != 0))
+            } else {
+                Err(bool_err(value))
+            }
         }
+    }
+}
+
+impl Boolean {
+    /// Return true if the boolean is a true value.
+    ///
+    /// Note that the inner value is accessible directly as well.
+    pub fn is_true(self) -> bool {
+        self.0
     }
 }
 
@@ -58,14 +72,9 @@ fn parse_true(value: &BStr) -> bool {
     value.eq_ignore_ascii_case(b"yes")
         || value.eq_ignore_ascii_case(b"on")
         || value.eq_ignore_ascii_case(b"true")
-        || value.eq_ignore_ascii_case(b"one")
         || value.is_empty()
 }
 
 fn parse_false(value: &BStr) -> bool {
-    value.eq_ignore_ascii_case(b"no")
-        || value.eq_ignore_ascii_case(b"off")
-        || value.eq_ignore_ascii_case(b"false")
-        || value.eq_ignore_ascii_case(b"zero")
-        || value == "\"\""
+    value.eq_ignore_ascii_case(b"no") || value.eq_ignore_ascii_case(b"off") || value.eq_ignore_ascii_case(b"false")
 }

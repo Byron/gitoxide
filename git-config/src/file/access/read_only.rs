@@ -120,11 +120,11 @@ impl<'event> File<'event> {
     /// Returns the last found immutable section with a given name and optional subsection name.
     pub fn section(
         &mut self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
     ) -> Result<&SectionBody<'event>, lookup::existing::Error> {
         let id = self
-            .section_ids_by_name_and_subname(section_name, subsection_name)?
+            .section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?
             .rev()
             .next()
             .expect("BUG: Section lookup vec was empty");

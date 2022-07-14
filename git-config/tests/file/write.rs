@@ -13,10 +13,14 @@ fn complex_lossless_roundtrip() {
             url = git@github.com:Byron/gitoxide.git
             fetch = +refs/heads/*:refs/remotes/origin/*
 
-        [test]
-            other-quoted = "hello"
+        [test]  # other comment
+            other-quoted = "hello" ; comment
             implicit
             implicit-equal =
+            implicit-equal-trailing-ws=     
+            
+        ; more comments
+        # another one
             
         [test "sub-section \"special\" C:\\root"]
             bool-explicit = false
@@ -41,7 +45,7 @@ fn complex_lossless_roundtrip() {
                git log -1;  \
             }; \
             f;  \
-            unset f"
+            unset f" ; here we go
     "#;
     let config = git_config::File::try_from(input).unwrap();
     assert_eq!(config.to_bstring(), input);

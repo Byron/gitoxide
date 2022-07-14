@@ -234,12 +234,26 @@ pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, di
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
-    ThreadSafeRepository::init(directory, crate::create::Options { bare: false }).map(Into::into)
+    ThreadSafeRepository::init(
+        directory,
+        create::Options {
+            bare: false,
+            fs_capabilities: None,
+        },
+    )
+    .map(Into::into)
 }
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
-    ThreadSafeRepository::init(directory, crate::create::Options { bare: true }).map(Into::into)
+    ThreadSafeRepository::init(
+        directory,
+        create::Options {
+            bare: true,
+            fs_capabilities: None,
+        },
+    )
+    .map(Into::into)
 }
 
 /// See [ThreadSafeRepository::open()], but returns a [`Repository`] instead.
@@ -395,7 +409,8 @@ pub mod discover {
     }
 
     impl ThreadSafeRepository {
-        /// Try to open a git repository in `directory` and search upwards through its parents until one is found.
+        /// Try to open a git repository in `directory` and search upwards through its parents until one is found,
+        /// using default trust options which matters in case the found repository isn't owned by the current user.
         pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
             Self::discover_opts(directory, Default::default(), Default::default())
         }

@@ -1,5 +1,6 @@
-use super::*;
 use git_config::parse::Events;
+
+use super::*;
 
 #[test]
 #[rustfmt::skip]

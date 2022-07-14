@@ -58,6 +58,8 @@ pub mod store {
     /// The way a file store handles the reflog
     #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
     pub enum WriteReflog {
+        /// Always write the reflog for all references for ref edits, unconditionally.
+        Always,
         /// Write a ref log for ref edits according to the standard rules.
         Normal,
         /// Never write a ref log.

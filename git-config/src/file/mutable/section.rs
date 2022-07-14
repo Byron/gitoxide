@@ -6,9 +6,11 @@ use std::{
 
 use bstr::{BStr, BString, ByteVec};
 
-use crate::file::mutable::{escape_value, Whitespace};
 use crate::{
-    file::{Index, Size},
+    file::{
+        mutable::{escape_value, Whitespace},
+        Index, Size,
+    },
     lookup, parse,
     parse::{section::Key, Event},
     value::{normalize, normalize_bstr, normalize_bstring},
@@ -16,23 +18,23 @@ use crate::{
 
 /// A opaque type that represents a mutable reference to a section.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug)]
-pub struct MutableSection<'a, 'event> {
+pub struct SectionMut<'a, 'event> {
     section: &'a mut SectionBody<'event>,
     implicit_newline: bool,
     whitespace: Whitespace<'event>,
 }
 
 /// Mutating methods.
-impl<'a, 'event> MutableSection<'a, 'event> {
-    /// Adds an entry to the end of this section.
-    pub fn push(&mut self, key: Key<'event>, value: Cow<'event, BStr>) {
+impl<'a, 'event> SectionMut<'a, 'event> {
+    /// Adds an entry to the end of this section name `key` and `value`.
+    pub fn push<'b>(&mut self, key: Key<'event>, value: impl Into<&'b BStr>) {
         if let Some(ws) = &self.whitespace.pre_key {
             self.section.0.push(Event::Whitespace(ws.clone()));
         }
 
         self.section.0.push(Event::SectionKey(key));
         self.section.0.extend(self.whitespace.key_value_separators());
-        self.section.0.push(Event::Value(escape_value(value.as_ref()).into()));
+        self.section.0.push(Event::Value(escape_value(value.into()).into()));
         if self.implicit_newline {
             self.section.0.push(Event::Newline(BString::from("\n").into()));
         }
@@ -77,25 +79,28 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     /// Sets the last key value pair if it exists, or adds the new value.
     /// Returns the previous value if it replaced a value, or None if it adds
     /// the value.
-    pub fn set(&mut self, key: Key<'event>, value: Cow<'event, BStr>) -> Option<Cow<'event, BStr>> {
-        let range = self.value_range_by_key(&key);
-        if range.is_empty() {
-            self.push(key, value);
-            return None;
+    pub fn set<'b>(&mut self, key: Key<'event>, value: impl Into<&'b BStr>) -> Option<Cow<'event, BStr>> {
+        match self.key_and_value_range_by(&key) {
+            None => {
+                self.push(key, value);
+                None
+            }
+            Some((_, value_range)) => {
+                let range_start = value_range.start;
+                let ret = self.remove_internal(value_range);
+                self.section
+                    .0
+                    .insert(range_start, Event::Value(escape_value(value.into()).into()));
+                Some(ret)
+            }
         }
-        let range_start = range.start;
-        let ret = self.remove_internal(range);
-        self.section.0.insert(range_start, Event::Value(value));
-        Some(ret)
     }
 
     /// Removes the latest value by key and returns it, if it exists.
-    pub fn remove(&mut self, key: &Key<'event>) -> Option<Cow<'event, BStr>> {
-        let range = self.value_range_by_key(key);
-        if range.is_empty() {
-            return None;
-        }
-        Some(self.remove_internal(range))
+    pub fn remove(&mut self, key: impl AsRef<str>) -> Option<Cow<'event, BStr>> {
+        let key = Key::from_str_unchecked(key.as_ref());
+        let (key_range, _value_range) = self.key_and_value_range_by(&key)?;
+        Some(self.remove_internal(key_range))
     }
 
     /// Adds a new line event. Note that you don't need to call this unless
@@ -149,7 +154,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
 }
 
 // Internal methods that may require exact indices for faster operations.
-impl<'a, 'event> MutableSection<'a, 'event> {
+impl<'a, 'event> SectionMut<'a, 'event> {
     pub(crate) fn new(section: &'a mut SectionBody<'event>) -> Self {
         let whitespace = (&*section).into();
         Self {
@@ -220,7 +225,7 @@ impl<'a, 'event> MutableSection<'a, 'event> {
     }
 }
 
-impl<'event> Deref for MutableSection<'_, 'event> {
+impl<'event> Deref for SectionMut<'_, 'event> {
     type Target = SectionBody<'event>;
 
     fn deref(&self) -> &Self::Target {
@@ -243,33 +248,37 @@ impl<'event> SectionBody<'event> {
 
     /// Returns the the range containing the value events for the `key`.
     /// If the value is not found, then this returns an empty range.
-    fn value_range_by_key(&self, key: &Key<'_>) -> Range<usize> {
-        let mut range = Range::default();
+    fn key_and_value_range_by(&self, key: &Key<'_>) -> Option<(Range<usize>, Range<usize>)> {
+        let mut value_range = Range::default();
+        let mut key_start = None;
         for (i, e) in self.0.iter().enumerate().rev() {
             match e {
                 Event::SectionKey(k) => {
                     if k == key {
+                        key_start = Some(i);
                         break;
                     }
-                    range = Range::default();
+                    value_range = Range::default();
                 }
                 Event::Value(_) => {
-                    (range.start, range.end) = (i, i);
+                    (value_range.start, value_range.end) = (i, i);
                 }
                 Event::ValueNotDone(_) | Event::ValueDone(_) => {
-                    if range.end == 0 {
-                        range.end = i
+                    if value_range.end == 0 {
+                        value_range.end = i
                     } else {
-                        range.start = i
+                        value_range.start = i
                     };
                 }
                 _ => (),
             }
         }
-
-        // value end needs to be offset by one so that the last value's index
-        // is included in the range
-        range.start..range.end + 1
+        key_start.map(|key_start| {
+            // value end needs to be offset by one so that the last value's index
+            // is included in the range
+            let value_range = value_range.start..value_range.end + 1;
+            (key_start..value_range.end, value_range)
+        })
     }
 }
 
@@ -277,12 +286,9 @@ impl<'event> SectionBody<'event> {
 impl<'event> SectionBody<'event> {
     /// Retrieves the last matching value in a section with the given key, if present.
     #[must_use]
-    pub fn value(&self, key: &str) -> Option<Cow<'_, BStr>> {
-        let key = Key::from_str_unchecked(key);
-        let range = self.value_range_by_key(&key);
-        if range.is_empty() {
-            return None;
-        }
+    pub fn value(&self, key: impl AsRef<str>) -> Option<Cow<'_, BStr>> {
+        let key = Key::from_str_unchecked(key.as_ref());
+        let (_, range) = self.key_and_value_range_by(&key)?;
         let mut concatenated = BString::default();
 
         for event in &self.0[range] {
@@ -306,8 +312,8 @@ impl<'event> SectionBody<'event> {
     /// Retrieves all values that have the provided key name. This may return
     /// an empty vec, which implies there were no values with the provided key.
     #[must_use]
-    pub fn values(&self, key: &str) -> Vec<Cow<'_, BStr>> {
-        let key = &Key::from_str_unchecked(key);
+    pub fn values(&self, key: impl AsRef<str>) -> Vec<Cow<'_, BStr>> {
+        let key = &Key::from_str_unchecked(key.as_ref());
         let mut values = Vec::new();
         let mut expect_value = false;
         let mut concatenated_value = BString::default();
@@ -343,8 +349,8 @@ impl<'event> SectionBody<'event> {
 
     /// Returns true if the section containss the provided key.
     #[must_use]
-    pub fn contains_key(&self, key: &str) -> bool {
-        let key = &Key::from_str_unchecked(key);
+    pub fn contains_key(&self, key: impl AsRef<str>) -> bool {
+        let key = &Key::from_str_unchecked(key.as_ref());
         self.0.iter().any(|e| {
             matches!(e,
                 Event::SectionKey(k) if k == key
@@ -359,6 +365,8 @@ impl<'event> SectionBody<'event> {
     }
 
     /// Returns if the section is empty.
+    /// Note that this may count whitespace, see [`num_values()`][Self::num_values()] for
+    /// another way to determine semantic emptiness.
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()

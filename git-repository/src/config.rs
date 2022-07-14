@@ -28,6 +28,8 @@ pub(crate) struct Cache {
     pub object_hash: git_hash::Kind,
     /// If true, multi-pack indices, whether present or not, may be used by the object database.
     pub use_multi_pack_index: bool,
+    /// The representation of `core.logallrefupdates`, or `None` if the variable wasn't set.
+    pub reflog: Option<git_ref::store::WriteReflog>,
     /// If true, we are on a case-insensitive file system.
     #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub ignore_case: bool,
@@ -70,7 +72,7 @@ mod cache {
 
             let is_bare = config_bool(&config, "core.bare", false)?;
             let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
-            let ignore_case = config_bool(&config, "core.ignorecase", false)?;
+            let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
             let excludes_file = config
                 .path("core", None, "excludesFile")
                 .map(|p| {
@@ -84,12 +86,12 @@ mod cache {
                 .transpose()?;
             let repo_format_version = config
                 .value::<Integer>("core", None, "repositoryFormatVersion")
-                .map_or(0, |v| v.value);
+                .map_or(0, |v| v.to_decimal().unwrap_or_default());
             let object_hash = (repo_format_version != 1)
                 .then(|| Ok(git_hash::Kind::Sha1))
                 .or_else(|| {
                     config.string("extensions", None, "objectFormat").map(|format| {
-                        if format.as_ref() == "sha1" {
+                        if format.as_ref().eq_ignore_ascii_case(b"sha1") {
                             Ok(git_hash::Kind::Sha1)
                         } else {
                             Err(Error::UnsupportedObjectFormat {
@@ -100,13 +102,23 @@ mod cache {
                 })
                 .transpose()?
                 .unwrap_or(git_hash::Kind::Sha1);
+            let reflog = config.string("core", None, "logallrefupdates").map(|val| {
+                (val.eq_ignore_ascii_case(b"always"))
+                    .then(|| git_ref::store::WriteReflog::Always)
+                    .or_else(|| {
+                        git_config::Boolean::try_from(val)
+                            .ok()
+                            .and_then(|b| b.is_true().then(|| git_ref::store::WriteReflog::Normal))
+                    })
+                    .unwrap_or(git_ref::store::WriteReflog::Disable)
+            });
 
             let mut hex_len = None;
             if let Some(hex_len_str) = config.string("core", None, "abbrev") {
                 if hex_len_str.trim().is_empty() {
                     return Err(Error::EmptyValue { key: "core.abbrev" });
                 }
-                if hex_len_str.as_ref() != "auto" {
+                if !hex_len_str.eq_ignore_ascii_case(b"auto") {
                     let value_bytes = hex_len_str.as_ref();
                     if let Ok(false) = Boolean::try_from(value_bytes).map(Into::into) {
                         hex_len = object_hash.len_in_hex().into();
@@ -136,6 +148,7 @@ mod cache {
                 resolved: config.into(),
                 use_multi_pack_index,
                 object_hash,
+                reflog,
                 is_bare,
                 ignore_case,
                 hex_len,

@@ -1,6 +1,5 @@
 mod get {
-    use crate::file::cow_str;
-    use crate::file::mutable::multi_value::init_config;
+    use crate::file::{cow_str, mutable::multi_value::init_config};
 
     #[test]
     fn single_lines() -> crate::Result {
@@ -50,8 +49,7 @@ mod access {
 }
 
 mod set {
-    use crate::file::cow_str;
-    use crate::file::mutable::multi_value::init_config;
+    use crate::file::{cow_str, mutable::multi_value::init_config};
 
     #[test]
     fn values_are_escaped() -> crate::Result {
@@ -145,6 +143,7 @@ mod delete {
     fn all() -> crate::Result {
         let mut config = init_config();
         let mut values = config.raw_values_mut("core", None, "a")?;
+        values.delete_all();
         values.delete_all();
         assert!(values.get().is_err());
         assert_eq!(config.to_string(), "[core]\n    \n    [core]\n        \n        ");

@@ -1,8 +1,11 @@
-use crate::parse::section::{into_cow_bstr, Header, Name};
-use crate::parse::Event;
+use std::{borrow::Cow, fmt::Display};
+
 use bstr::{BStr, BString, ByteSlice, ByteVec};
-use std::borrow::Cow;
-use std::fmt::Display;
+
+use crate::parse::{
+    section::{into_cow_bstr, Header, Name},
+    Event,
+};
 
 /// The error returned by [`Header::new(…)`][super::Header::new()].
 #[derive(Debug, PartialOrd, PartialEq, thiserror::Error)]

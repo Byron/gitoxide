@@ -24,6 +24,7 @@ mod path {
     use crate::{
         path::without_dot_git_dir,
         repository::{Kind, Path},
+        DOT_GIT_DIR,
     };
 
     impl AsRef<std::path::Path> for Path {
@@ -84,7 +85,7 @@ mod path {
         pub fn into_repository_and_work_tree_directories(self) -> (PathBuf, Option<PathBuf>) {
             match self {
                 Path::LinkedWorkTree { work_dir, git_dir } => (git_dir, Some(work_dir)),
-                Path::WorkTree(working_tree) => (working_tree.join(".git"), Some(working_tree)),
+                Path::WorkTree(working_tree) => (working_tree.join(DOT_GIT_DIR), Some(working_tree)),
                 Path::Repository(repository) => (repository, None),
             }
         }

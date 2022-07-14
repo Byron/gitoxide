@@ -2,9 +2,8 @@ use std::{borrow::Cow, collections::HashMap};
 
 use bstr::BStr;
 
-use crate::file::mutable::value::EntryData;
 use crate::{
-    file::{Index, MutableMultiValue, MutableSection, MutableValue, Size},
+    file::{mutable::multi_value::EntryData, Index, MultiValueMut, SectionMut, Size, ValueMut},
     lookup,
     parse::{section, Event},
     File,
@@ -21,11 +20,12 @@ impl<'event> File<'event> {
     /// a multivar instead.
     pub fn raw_value(
         &self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
-        key: &str,
+        key: impl AsRef<str>,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
-        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
+        let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
+        let key = key.as_ref();
         for section_id in section_ids.rev() {
             if let Some(v) = self.sections.get(&section_id).expect("known section id").value(key) {
                 return Ok(v);
@@ -42,12 +42,12 @@ impl<'event> File<'event> {
     /// references to all values of a multivar instead.
     pub fn raw_value_mut<'lookup>(
         &mut self,
-        section_name: &'lookup str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableValue<'_, 'lookup, 'event>, lookup::existing::Error> {
+    ) -> Result<ValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
         let mut section_ids = self
-            .section_ids_by_name_and_subname(section_name, subsection_name)?
+            .section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?
             .rev();
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
@@ -88,8 +88,8 @@ impl<'event> File<'event> {
             }
 
             drop(section_ids);
-            return Ok(MutableValue {
-                section: MutableSection::new(self.sections.get_mut(&section_id).expect("known section-id")),
+            return Ok(ValueMut {
+                section: SectionMut::new(self.sections.get_mut(&section_id).expect("known section-id")),
                 key,
                 index: Index(index),
                 size: Size(size),
@@ -136,12 +136,13 @@ impl<'event> File<'event> {
     /// value for a given key, if your key does not support multi-valued values.
     pub fn raw_values(
         &self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
-        key: &str,
+        key: impl AsRef<str>,
     ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
         let mut values = Vec::new();
-        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
+        let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
+        let key = key.as_ref();
         for section_id in section_ids {
             values.extend(self.sections.get(&section_id).expect("known section id").values(key));
         }
@@ -205,11 +206,11 @@ impl<'event> File<'event> {
     /// traversal of the config.
     pub fn raw_values_mut<'lookup>(
         &mut self,
-        section_name: &'lookup str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableMultiValue<'_, 'lookup, 'event>, lookup::existing::Error> {
-        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
+    ) -> Result<MultiValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
+        let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
         let mut offsets = HashMap::new();
@@ -255,7 +256,7 @@ impl<'event> File<'event> {
         if entries.is_empty() {
             Err(lookup::existing::Error::KeyMissing)
         } else {
-            Ok(MutableMultiValue {
+            Ok(MultiValueMut {
                 section: &mut self.sections,
                 key,
                 indices_and_sizes: entries,
@@ -300,12 +301,12 @@ impl<'event> File<'event> {
     /// ```
     pub fn set_raw_value(
         &mut self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
-        key: &str,
+        key: impl AsRef<str>,
         new_value: &BStr,
     ) -> Result<(), lookup::existing::Error> {
-        self.raw_value_mut(section_name, subsection_name, key)
+        self.raw_value_mut(section_name, subsection_name, key.as_ref())
             .map(|mut entry| entry.set(new_value))
     }
 
@@ -344,9 +345,9 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values = vec![
-    ///     "x".into(),
-    ///     "y".into(),
-    ///     "z".into(),
+    ///     "x",
+    ///     "y",
+    ///     "z",
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_values("core", None, "a")?;
@@ -365,8 +366,8 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values = vec![
-    ///     "x".into(),
-    ///     "y".into(),
+    ///     "x",
+    ///     "y",
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_values("core", None, "a")?;
@@ -384,23 +385,27 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// let new_values = vec![
-    ///     "x".into(),
-    ///     "y".into(),
-    ///     "z".into(),
-    ///     "discarded".into(),
+    ///     "x",
+    ///     "y",
+    ///     "z",
+    ///     "discarded",
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values)?;
     /// assert!(!git_config.raw_values("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
-    pub fn set_raw_multi_value<'a>(
+    pub fn set_raw_multi_value<'a, Iter, Item>(
         &mut self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
-        key: &str,
-        new_values: impl IntoIterator<Item = &'a BStr>,
-    ) -> Result<(), lookup::existing::Error> {
-        self.raw_values_mut(section_name, subsection_name, key)
+        key: impl AsRef<str>,
+        new_values: Iter,
+    ) -> Result<(), lookup::existing::Error>
+    where
+        Iter: IntoIterator<Item = Item>,
+        Item: Into<&'a BStr>,
+    {
+        self.raw_values_mut(section_name, subsection_name, key.as_ref())
             .map(|mut v| v.set_values(new_values))
     }
 }

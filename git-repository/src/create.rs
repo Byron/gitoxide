@@ -1,10 +1,11 @@
+use git_config::parse::section;
+use git_discover::DOT_GIT_DIR;
+use std::convert::TryFrom;
 use std::{
     fs::{self, OpenOptions},
     io::Write,
     path::{Path, PathBuf},
 };
-
-use crate::bstr::ByteSlice;
 
 /// The error used in [`into()`].
 #[derive(Debug, thiserror::Error)]
@@ -22,8 +23,6 @@ pub enum Error {
     CreateDirectory { source: std::io::Error, path: PathBuf },
 }
 
-const GIT_DIR_NAME: &str = ".git";
-
 const TPL_INFO_EXCLUDE: &[u8] = include_bytes!("assets/baseline-init/info/exclude");
 const TPL_HOOKS_APPLYPATCH_MSG: &[u8] = include_bytes!("assets/baseline-init/hooks/applypatch-msg.sample");
 const TPL_HOOKS_COMMIT_MSG: &[u8] = include_bytes!("assets/baseline-init/hooks/commit-msg.sample");
@@ -37,7 +36,6 @@ const TPL_HOOKS_PRE_REBASE: &[u8] = include_bytes!("assets/baseline-init/hooks/p
 const TPL_HOOKS_PRE_RECEIVE: &[u8] = include_bytes!("assets/baseline-init/hooks/pre-receive.sample");
 const TPL_HOOKS_PREPARE_COMMIT_MSG: &[u8] = include_bytes!("assets/baseline-init/hooks/prepare-commit-msg.sample");
 const TPL_HOOKS_UPDATE: &[u8] = include_bytes!("assets/baseline-init/hooks/update.sample");
-const TPL_CONFIG: &[u8] = include_bytes!("assets/baseline-init/config");
 const TPL_DESCRIPTION: &[u8] = include_bytes!("assets/baseline-init/description");
 const TPL_HEAD: &[u8] = include_bytes!("assets/baseline-init/HEAD");
 
@@ -99,14 +97,22 @@ fn create_dir(p: &Path) -> Result<(), Error> {
 }
 
 /// Options for use in [`into()`];
+#[derive(Copy, Clone)]
 pub struct Options {
     /// If true, the repository will be a bare repository without a worktree.
     pub bare: bool,
+
+    /// If set, use these filesytem capabilities to populate the respective git-config fields.
+    /// If `None`, the directory will be probed.
+    pub fs_capabilities: Option<git_worktree::fs::Capabilities>,
 }
 
 /// Create a new `.git` repository of `kind` within the possibly non-existing `directory`
 /// and return its path.
-pub fn into(directory: impl Into<PathBuf>, Options { bare }: Options) -> Result<git_discover::repository::Path, Error> {
+pub fn into(
+    directory: impl Into<PathBuf>,
+    Options { bare, fs_capabilities }: Options,
+) -> Result<git_discover::repository::Path, Error> {
     let mut dot_git = directory.into();
 
     if bare {
@@ -121,7 +127,7 @@ pub fn into(directory: impl Into<PathBuf>, Options { bare }: Options) -> Result<
             return Err(Error::DirectoryNotEmpty { path: dot_git });
         }
     } else {
-        dot_git.push(GIT_DIR_NAME);
+        dot_git.push(DOT_GIT_DIR);
 
         if dot_git.is_dir() {
             return Err(Error::DirectoryExists { path: dot_git });
@@ -166,19 +172,29 @@ pub fn into(directory: impl Into<PathBuf>, Options { bare }: Options) -> Result<
         create_dir(PathCursor(cursor.as_mut()).at("tags"))?;
     }
 
-    for (tpl, filename) in &[
-        (TPL_HEAD, "HEAD"),
-        (TPL_DESCRIPTION, "description"),
-        (TPL_CONFIG, "config"),
-    ] {
-        if *filename == "config" {
-            write_file(
-                &tpl.replace("{bare-value}", if bare { "true" } else { "false" }),
-                PathCursor(&mut dot_git).at(filename),
-            )?;
-        } else {
-            write_file(tpl, PathCursor(&mut dot_git).at(filename))?;
+    for (tpl, filename) in &[(TPL_HEAD, "HEAD"), (TPL_DESCRIPTION, "description")] {
+        write_file(tpl, PathCursor(&mut dot_git).at(filename))?;
+    }
+
+    {
+        let mut config = git_config::File::default();
+        {
+            let caps = fs_capabilities.unwrap_or_else(|| git_worktree::fs::Capabilities::probe(&dot_git));
+            let mut core = config.new_section("core", None).expect("valid section name");
+
+            core.push(key("repositoryformatversion"), "0");
+            core.push(key("filemode"), bool(caps.executable_bit));
+            core.push(key("bare"), bool(bare));
+            core.push(key("logallrefupdates"), bool(!bare));
+            core.push(key("symlinks"), bool(caps.symlink));
+            core.push(key("ignorecase"), bool(caps.ignore_case));
+            core.push(key("precomposeunicode"), bool(caps.precompose_unicode));
         }
+        let config_path = dot_git.join("config");
+        std::fs::write(&config_path, &config.to_bstring()).map_err(|err| Error::IoWrite {
+            source: err,
+            path: config_path,
+        })?;
     }
 
     Ok(git_discover::repository::Path::from_dot_git_dir(
@@ -186,4 +202,15 @@ pub fn into(directory: impl Into<PathBuf>, Options { bare }: Options) -> Result<
         bare.then(|| git_discover::repository::Kind::Bare)
             .unwrap_or(git_discover::repository::Kind::WorkTree { linked_git_dir: None }),
     ))
+}
+
+fn key(name: &'static str) -> section::Key<'static> {
+    section::Key::try_from(name).expect("valid key name")
+}
+
+fn bool(v: bool) -> &'static str {
+    match v {
+        true => "true",
+        false => "false",
+    }
 }
