@@ -85,10 +85,10 @@ impl GitEnv {
 
 impl GitEnv {
     pub fn include_options(&self) -> resolve_includes::Options<'_> {
-        self.from_paths_options().resolve_includes
+        self.to_from_paths_options().resolve_includes
     }
 
-    pub fn from_paths_options(&self) -> from_paths::Options<'_> {
+    pub fn to_from_paths_options(&self) -> from_paths::Options<'_> {
         let mut opts = options_with_git_dir(self.git_dir());
         opts.resolve_includes.interpolate.home_dir = Some(self.home_dir());
         opts
@@ -128,7 +128,7 @@ pub fn assert_section_value(
         paths.push(env.home_dir().join(".gitconfig"));
     }
 
-    let config = git_config::File::from_paths(paths, env.from_paths_options())?;
+    let config = git_config::File::from_paths(paths, env.to_from_paths_options())?;
 
     assert_eq!(
         config.string("section", None, "value"),
