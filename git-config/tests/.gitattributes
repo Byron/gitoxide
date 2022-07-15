@@ -1,4 +1,4 @@
 # assure line feeds don't interfere with our working copy hash 
+/fixtures/**/* text eol=lf
 /fixtures/repo-config.crlf text eol=crlf
-/fixtures/**/* text crlf=input	eol=lf
 
