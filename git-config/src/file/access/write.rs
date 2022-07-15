@@ -21,14 +21,10 @@ impl File<'_> {
         }
 
         for section_id in &self.section_order {
-            self.section_headers
+            self.sections
                 .get(section_id)
                 .expect("known section-id")
                 .write_to(&mut out)?;
-
-            for event in self.sections.get(section_id).expect("known section-id").as_ref() {
-                event.write_to(&mut out)?;
-            }
         }
 
         Ok(())

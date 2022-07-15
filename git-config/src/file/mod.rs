@@ -6,18 +6,21 @@ use std::{
 };
 
 use bstr::BStr;
-use git_features::threading::OwnShared;
 
 mod mutable;
 
-pub use mutable::{
-    multi_value::MultiValueMut,
-    section::{SectionBody, SectionBodyIter, SectionMut},
-    value::ValueMut,
-};
+pub use mutable::{multi_value::MultiValueMut, section::SectionMut, value::ValueMut};
 
 mod init;
 pub use init::{from_env, from_paths};
+
+mod access;
+mod impls;
+mod utils;
+
+///
+pub mod section;
+pub use section::body::{SectionBody, SectionBodyIter};
 
 ///
 pub mod resolve_includes {
@@ -114,17 +117,11 @@ pub mod rename_section {
     }
 }
 
-mod access;
-mod impls;
-mod utils;
-
-///
-pub mod section;
-
-/// A section in a git-config file, like `[core]` or `[remote "origin"]`.
+/// A section in a git-config file, like `[core]` or `[remote "origin"]`, along with all of its keys.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Section<'a> {
-    inner: crate::parse::Section<'a>,
-    meta: OwnShared<section::Metadata>,
+    header: crate::parse::section::Header<'a>,
+    body: SectionBody<'a>,
 }
 
 /// A strongly typed index into some range.
@@ -160,7 +157,7 @@ impl AddAssign<usize> for Size {
 /// words, it's possible that a section may have an ID of 3 but the next section
 /// has an ID of 5 as 4 was deleted.
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
-pub(crate) struct SectionBodyId(pub(crate) usize);
+pub(crate) struct SectionId(pub(crate) usize);
 
 /// All section body ids referred to by a section name.
 ///
@@ -170,9 +167,9 @@ pub(crate) struct SectionBodyId(pub(crate) usize);
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub(crate) enum SectionBodyIds<'a> {
     /// The list of section ids to use for obtaining the section body.
-    Terminal(Vec<SectionBodyId>),
+    Terminal(Vec<SectionId>),
     /// A hashmap from sub-section names to section ids.
-    NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionBodyId>>),
+    NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionId>>),
 }
 #[cfg(test)]
 mod tests;

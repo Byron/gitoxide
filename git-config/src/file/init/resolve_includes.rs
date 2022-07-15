@@ -8,7 +8,7 @@ use git_ref::Category;
 
 use crate::file::resolve_includes::{conditional, Options};
 use crate::{
-    file::{init::from_paths, SectionBodyId},
+    file::{init::from_paths, SectionId},
     File,
 };
 
@@ -58,8 +58,9 @@ fn resolve_includes_recursive(
     incl_section_ids.sort_by(|a, b| a.1.cmp(&b.1));
 
     let mut include_paths = Vec::new();
+    // TODO: could this just use the section order and compare the name itself?
     for (id, _) in incl_section_ids {
-        if let Some(header) = target_config.section_headers.get(&id) {
+        if let Some(header) = target_config.sections.get(&id).map(|s| &s.header) {
             if header.name.0.as_ref() == "include" && header.subsection_name.is_none() {
                 extract_include_path(target_config, &mut include_paths, id)
             } else if header.name.0.as_ref() == "includeIf" {
@@ -88,11 +89,7 @@ fn resolve_includes_recursive(
     Ok(())
 }
 
-fn extract_include_path(
-    target_config: &mut File<'_>,
-    include_paths: &mut Vec<crate::Path<'static>>,
-    id: SectionBodyId,
-) {
+fn extract_include_path(target_config: &mut File<'_>, include_paths: &mut Vec<crate::Path<'static>>, id: SectionId) {
     if let Some(body) = target_config.sections.get(&id) {
         let paths = body.values("path");
         let paths = paths

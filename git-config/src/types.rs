@@ -1,8 +1,8 @@
 use std::collections::{HashMap, VecDeque};
 
 use crate::{
-    color,
-    file::{SectionBody, SectionBodyId, SectionBodyIds},
+    color, file,
+    file::{SectionBodyIds, SectionId},
     integer,
     parse::section,
 };
@@ -84,13 +84,11 @@ pub struct File<'event> {
     pub(crate) section_lookup_tree: HashMap<section::Name<'event>, Vec<SectionBodyIds<'event>>>,
     /// This indirection with the SectionId as the key is critical to flexibly
     /// supporting `git-config` sections, as duplicated keys are permitted.
-    pub(crate) sections: HashMap<SectionBodyId, SectionBody<'event>>,
-    /// A way to reconstruct the complete section being a header and a body.
-    pub(crate) section_headers: HashMap<SectionBodyId, section::Header<'event>>,
+    pub(crate) sections: HashMap<SectionId, file::Section<'event>>,
     /// Internal monotonically increasing counter for section ids.
     pub(crate) section_id_counter: usize,
     /// Section order for output ordering.
-    pub(crate) section_order: VecDeque<SectionBodyId>,
+    pub(crate) section_order: VecDeque<SectionId>,
 }
 
 /// Any value that may contain a foreground color, background color, a

@@ -121,7 +121,7 @@ impl<'event> File<'event> {
                 .position(|v| *v == id)
                 .expect("known section id"),
         );
-        self.sections.remove(&id)
+        self.sections.remove(&id).map(|s| s.body)
     }
 
     /// Adds the provided section to the config, returning a mutable reference
@@ -148,8 +148,8 @@ impl<'event> File<'event> {
             .rev()
             .next()
             .expect("list of sections were empty, which violates invariant");
-        let header = self.section_headers.get_mut(&id).expect("known section-id");
-        *header = section::Header::new(new_section_name, new_subsection_name)?;
+        let section = self.sections.get_mut(&id).expect("known section-id");
+        section.header = section::Header::new(new_section_name, new_subsection_name)?;
         Ok(())
     }
 }

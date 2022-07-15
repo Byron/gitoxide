@@ -1,5 +1,5 @@
 use crate::file::mutable::{escape_value, Whitespace};
-use crate::file::{SectionBody, SectionBodyId};
+use crate::file::{Section, SectionBody, SectionId};
 use crate::lookup;
 use crate::parse::{section, Event};
 use crate::value::{normalize_bstr, normalize_bstring};
@@ -11,14 +11,14 @@ use std::ops::DerefMut;
 /// Internal data structure for [`MutableMultiValue`]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub(crate) struct EntryData {
-    pub(crate) section_id: SectionBodyId,
+    pub(crate) section_id: SectionId,
     pub(crate) offset_index: usize,
 }
 
 /// An intermediate representation of a mutable multivar obtained from a [`File`][crate::File].
 #[derive(PartialEq, Eq, Debug)]
 pub struct MultiValueMut<'borrow, 'lookup, 'event> {
-    pub(crate) section: &'borrow mut HashMap<SectionBodyId, SectionBody<'event>>,
+    pub(crate) section: &'borrow mut HashMap<SectionId, Section<'event>>,
     pub(crate) key: section::Key<'lookup>,
     /// Each entry data struct provides sufficient information to index into
     /// [`Self::offsets`]. This layer of indirection is used for users to index
@@ -27,7 +27,7 @@ pub struct MultiValueMut<'borrow, 'lookup, 'event> {
     /// Each offset represents the size of a event slice and whether or not the
     /// event slice is significant or not. This is used to index into the
     /// actual section.
-    pub(crate) offsets: HashMap<SectionBodyId, Vec<usize>>,
+    pub(crate) offsets: HashMap<SectionId, Vec<usize>>,
 }
 
 impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
@@ -103,7 +103,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
         MultiValueMut::set_value_inner(
             &self.key,
             &mut self.offsets,
-            self.section.get_mut(&section_id).expect("known section id"),
+            &mut self.section.get_mut(&section_id).expect("known section id").body,
             section_id,
             offset_index,
             value.into(),
@@ -133,7 +133,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
             Self::set_value_inner(
                 &self.key,
                 &mut self.offsets,
-                self.section.get_mut(section_id).expect("known section id"),
+                &mut self.section.get_mut(section_id).expect("known section id").body,
                 *section_id,
                 *offset_index,
                 value.into(),
@@ -153,7 +153,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
             Self::set_value_inner(
                 &self.key,
                 &mut self.offsets,
-                self.section.get_mut(section_id).expect("known section id"),
+                &mut self.section.get_mut(section_id).expect("known section id").body,
                 *section_id,
                 *offset_index,
                 input,
@@ -163,9 +163,9 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
 
     fn set_value_inner<'a: 'event>(
         key: &section::Key<'lookup>,
-        offsets: &mut HashMap<SectionBodyId, Vec<usize>>,
+        offsets: &mut HashMap<SectionId, Vec<usize>>,
         section: &mut SectionBody<'event>,
-        section_id: SectionBodyId,
+        section_id: SectionId,
         offset_index: usize,
         value: &BStr,
     ) {
@@ -199,6 +199,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
         self.section
             .get_mut(section_id)
             .expect("known section id")
+            .body
             .as_mut()
             .drain(offset..offset + size);
 
@@ -221,6 +222,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
             self.section
                 .get_mut(section_id)
                 .expect("known section id")
+                .body
                 .as_mut()
                 .drain(offset..offset + size);
             Self::set_offset(&mut self.offsets, *section_id, *offset_index, 0);
@@ -229,8 +231,8 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
     }
 
     fn index_and_size(
-        offsets: &'lookup HashMap<SectionBodyId, Vec<usize>>,
-        section_id: SectionBodyId,
+        offsets: &'lookup HashMap<SectionId, Vec<usize>>,
+        section_id: SectionId,
         offset_index: usize,
     ) -> (usize, usize) {
         offsets
@@ -244,8 +246,8 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
     // This must be an associated function rather than a method to allow Rust
     // to split mutable borrows.
     fn set_offset(
-        offsets: &mut HashMap<SectionBodyId, Vec<usize>>,
-        section_id: SectionBodyId,
+        offsets: &mut HashMap<SectionId, Vec<usize>>,
+        section_id: SectionId,
         offset_index: usize,
         value: usize,
     ) {
