@@ -4,7 +4,7 @@ use bstr::BStr;
 
 use crate::file::Section;
 use crate::{
-    file::{SectionBody, SectionBodyIds, SectionId, SectionMut},
+    file::{self, SectionBodyIds, SectionId, SectionMut},
     lookup,
     parse::section,
     File,
@@ -16,7 +16,7 @@ impl<'event> File<'event> {
     pub(crate) fn push_section_internal(
         &mut self,
         header: section::Header<'event>,
-        body: SectionBody<'event>,
+        body: file::section::Body<'event>,
     ) -> SectionMut<'_, 'event> {
         let new_section_id = SectionId(self.section_id_counter);
         self.sections.insert(

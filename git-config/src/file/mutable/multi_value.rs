@@ -1,5 +1,5 @@
 use crate::file::mutable::{escape_value, Whitespace};
-use crate::file::{Section, SectionBody, SectionId};
+use crate::file::{self, Section, SectionId};
 use crate::lookup;
 use crate::parse::{section, Event};
 use crate::value::{normalize_bstr, normalize_bstring};
@@ -164,7 +164,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
     fn set_value_inner<'a: 'event>(
         key: &section::Key<'lookup>,
         offsets: &mut HashMap<SectionId, Vec<usize>>,
-        section: &mut SectionBody<'event>,
+        section: &mut file::section::Body<'event>,
         section_id: SectionId,
         offset_index: usize,
         value: &BStr,

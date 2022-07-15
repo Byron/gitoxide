@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    file::{rename_section, SectionBody, SectionMut},
+    file::{self, rename_section, SectionMut},
     lookup,
     parse::section,
     File,
@@ -63,7 +63,7 @@ impl<'event> File<'event> {
         section_name: impl Into<Cow<'event, str>>,
         subsection_name: impl Into<Option<Cow<'event, str>>>,
     ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
-        let mut section = self.push_section(section_name, subsection_name, SectionBody::default())?;
+        let mut section = self.push_section(section_name, subsection_name, file::section::Body::default())?;
         section.push_newline();
         Ok(section)
     }
@@ -109,7 +109,7 @@ impl<'event> File<'event> {
         &mut self,
         section_name: &str,
         subsection_name: impl Into<Option<&'a str>>,
-    ) -> Option<SectionBody<'event>> {
+    ) -> Option<file::section::Body<'event>> {
         let id = self
             .section_ids_by_name_and_subname(section_name, subsection_name.into())
             .ok()?
@@ -130,7 +130,7 @@ impl<'event> File<'event> {
         &mut self,
         section_name: impl Into<Cow<'event, str>>,
         subsection_name: impl Into<Option<Cow<'event, str>>>,
-        section: SectionBody<'event>,
+        section: file::section::Body<'event>,
     ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
         Ok(self.push_section_internal(section::Header::new(section_name, subsection_name)?, section))
     }

@@ -1,4 +1,4 @@
-use crate::file::{Section, SectionBody};
+use crate::file::Section;
 use crate::parse::section;
 use crate::Source;
 use bstr::BString;
@@ -19,7 +19,7 @@ pub struct Metadata {
 }
 
 impl<'a> Deref for Section<'a> {
-    type Target = SectionBody<'a>;
+    type Target = Body<'a>;
 
     fn deref(&self) -> &Self::Target {
         &self.body
@@ -33,7 +33,7 @@ impl<'a> Section<'a> {
     }
 
     /// Return our body, containing all keys and values.
-    pub fn body(&self) -> &SectionBody<'a> {
+    pub fn body(&self) -> &Body<'a> {
         &self.body
     }
 
@@ -59,3 +59,4 @@ impl<'a> Section<'a> {
 }
 
 pub(crate) mod body;
+pub use body::{Body, BodyIter};

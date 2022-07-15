@@ -1,4 +1,4 @@
-use crate::file::{Section, SectionBody, SectionId};
+use crate::file::{self, Section, SectionId};
 use crate::parse::section;
 use std::collections::HashMap;
 
@@ -7,7 +7,7 @@ mod try_from {
     use std::{borrow::Cow, collections::HashMap, convert::TryFrom};
 
     use crate::{
-        file::{SectionBody, SectionBodyIds, SectionId},
+        file::{self, SectionBodyIds, SectionId},
         parse::{
             section,
             tests::util::{name_event, newline_event, section_header, value_event},
@@ -48,7 +48,7 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                SectionBody(
+                file::section::Body(
                     vec![
                         newline_event(),
                         name_event("a"),
@@ -93,7 +93,7 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                SectionBody(
+                file::section::Body(
                     vec![
                         newline_event(),
                         name_event("a"),
@@ -141,7 +141,7 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                SectionBody(
+                file::section::Body(
                     vec![
                         newline_event(),
                         name_event("a"),
@@ -158,7 +158,7 @@ mod try_from {
             );
             sections.insert(
                 SectionId(1),
-                SectionBody(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")].into()),
+                file::section::Body(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")].into()),
             );
             sections
         };
@@ -190,7 +190,7 @@ mod try_from {
             let mut sections = HashMap::new();
             sections.insert(
                 SectionId(0),
-                SectionBody(
+                file::section::Body(
                     vec![
                         newline_event(),
                         name_event("a"),
@@ -207,7 +207,7 @@ mod try_from {
             );
             sections.insert(
                 SectionId(1),
-                SectionBody(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")].into()),
+                file::section::Body(vec![name_event("e"), Event::KeyValueSeparator, value_event("f")].into()),
             );
             sections
         };
@@ -220,6 +220,6 @@ fn headers<'a>(sections: &HashMap<SectionId, Section<'a>>) -> HashMap<SectionId,
     sections.iter().map(|(k, v)| (*k, v.header.clone())).collect()
 }
 
-fn bodies<'a>(sections: &HashMap<SectionId, Section<'a>>) -> HashMap<SectionId, SectionBody<'a>> {
+fn bodies<'a>(sections: &HashMap<SectionId, Section<'a>>) -> HashMap<SectionId, file::section::Body<'a>> {
     sections.iter().map(|(k, v)| (*k, v.body.clone())).collect()
 }

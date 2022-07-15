@@ -5,7 +5,7 @@ use std::{
 
 use bstr::{BStr, BString, ByteVec};
 
-use crate::file::{Section, SectionBody};
+use crate::file::{self, Section};
 use crate::{
     file::{
         mutable::{escape_value, Whitespace},
@@ -231,14 +231,14 @@ impl<'a, 'event> SectionMut<'a, 'event> {
 }
 
 impl<'event> Deref for SectionMut<'_, 'event> {
-    type Target = SectionBody<'event>;
+    type Target = file::section::Body<'event>;
 
     fn deref(&self) -> &Self::Target {
         self.section
     }
 }
 
-impl<'event> SectionBody<'event> {
+impl<'event> file::section::Body<'event> {
     pub(crate) fn as_mut(&mut self) -> &mut parse::section::Events<'event> {
         &mut self.0
     }

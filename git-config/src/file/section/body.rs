@@ -8,10 +8,10 @@ use std::ops::Range;
 
 /// A opaque type that represents a section body.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Default)]
-pub struct SectionBody<'event>(pub(crate) crate::parse::section::Events<'event>);
+pub struct Body<'event>(pub(crate) crate::parse::section::Events<'event>);
 
 /// Access
-impl<'event> SectionBody<'event> {
+impl<'event> Body<'event> {
     /// Retrieves the last matching value in a section with the given key, if present.
     #[must_use]
     pub fn value(&self, key: impl AsRef<str>) -> Option<Cow<'_, BStr>> {
@@ -101,7 +101,7 @@ impl<'event> SectionBody<'event> {
     }
 }
 
-impl<'event> SectionBody<'event> {
+impl<'event> Body<'event> {
     pub(crate) fn as_ref(&self) -> &[Event<'_>] {
         &self.0
     }
@@ -145,19 +145,19 @@ impl<'event> SectionBody<'event> {
 /// An owning iterator of a section body. Created by [`SectionBody::into_iter`], yielding
 /// un-normalized (`key`, `value`) pairs.
 // TODO: tests
-pub struct SectionBodyIter<'event>(smallvec::IntoIter<[Event<'event>; 64]>);
+pub struct BodyIter<'event>(smallvec::IntoIter<[Event<'event>; 64]>);
 
-impl<'event> IntoIterator for SectionBody<'event> {
+impl<'event> IntoIterator for Body<'event> {
     type Item = (Key<'event>, Cow<'event, BStr>);
 
-    type IntoIter = SectionBodyIter<'event>;
+    type IntoIter = BodyIter<'event>;
 
     fn into_iter(self) -> Self::IntoIter {
-        SectionBodyIter(self.0.into_iter())
+        BodyIter(self.0.into_iter())
     }
 }
 
-impl<'event> Iterator for SectionBodyIter<'event> {
+impl<'event> Iterator for BodyIter<'event> {
     type Item = (Key<'event>, Cow<'event, BStr>);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -186,4 +186,4 @@ impl<'event> Iterator for SectionBodyIter<'event> {
     }
 }
 
-impl FusedIterator for SectionBodyIter<'_> {}
+impl FusedIterator for BodyIter<'_> {}

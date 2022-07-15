@@ -2,7 +2,7 @@ use std::{convert::TryFrom, fmt::Display, str::FromStr};
 
 use bstr::{BStr, BString};
 
-use crate::{file::SectionBody, parse, File};
+use crate::{file::section, parse, File};
 
 impl FromStr for File<'static> {
     type Err = parse::Error;
@@ -40,7 +40,7 @@ impl<'a> From<parse::Events<'a>> for File<'a> {
         };
 
         for section in events.sections {
-            this.push_section_internal(section.section_header, SectionBody(section.events));
+            this.push_section_internal(section.section_header, section::Body(section.events));
         }
 
         this

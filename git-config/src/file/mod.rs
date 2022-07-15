@@ -20,7 +20,6 @@ mod utils;
 
 ///
 pub mod section;
-pub use section::body::{SectionBody, SectionBodyIter};
 
 ///
 pub mod resolve_includes {
@@ -121,7 +120,7 @@ pub mod rename_section {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Section<'a> {
     header: crate::parse::section::Header<'a>,
-    body: SectionBody<'a>,
+    body: section::Body<'a>,
 }
 
 /// A strongly typed index into some range.
