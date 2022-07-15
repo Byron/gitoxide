@@ -1,6 +1,5 @@
+use std::convert::TryFrom;
 use std::{borrow::Cow, path::PathBuf};
-
-use bstr::BString;
 
 use crate::{
     file::{from_paths, init::resolve_includes},
@@ -27,6 +26,8 @@ pub enum Error {
     FromPathsError(#[from] from_paths::Error),
     #[error(transparent)]
     Section(#[from] section::header::Error),
+    #[error(transparent)]
+    Key(#[from] section::key::Error),
 }
 
 /// Instantiation from environment variables
@@ -112,8 +113,8 @@ impl File<'static> {
                     };
 
                     section.push(
-                        section::Key(BString::from(key).into()),
-                        git_path::into_bstr(PathBuf::from(value)).as_ref(),
+                        section::Key::try_from(key.to_owned())?,
+                        git_path::os_str_into_bstr(&value).expect("no illformed UTF-8").as_ref(),
                     );
                 }
                 None => {
