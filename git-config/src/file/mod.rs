@@ -76,7 +76,7 @@ pub mod resolve_includes {
         /// Set the context used for interpolation when interpolating paths to include as well as the paths
         /// in `gitdir` conditional includes.
         pub fn interpolate_with(mut self, context: crate::path::interpolate::Context<'a>) -> Self {
-            self.interpolate = context.into();
+            self.interpolate = context;
             self
         }
     }
