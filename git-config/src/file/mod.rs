@@ -54,7 +54,10 @@ pub mod resolve_includes {
     }
 
     impl<'a> Options<'a> {
-        /// Provide options to follow includes like git does, provided the required `conditional` and `interpolate` contexts.
+        /// Provide options to follow includes like git does, provided the required `conditional` and `interpolate` contexts
+        /// to support `gitdir` and `onbranch` based `includeIf` directives as well as standard `include.path` resolution.
+        /// Note that the follow-mode is `git`-style, following at most 10 indirections while
+        /// producing an error if the depth is exceeded.
         pub fn follow(
             interpolate: crate::path::interpolate::Context<'a>,
             conditional: conditional::Context<'a>,
@@ -65,6 +68,13 @@ pub mod resolve_includes {
                 interpolate,
                 conditional,
             }
+        }
+
+        /// Set the context used for interpolation when interpolating paths to include as well as the paths
+        /// in `gitdir` conditional includes.
+        pub fn interpolate_with(mut self, context: crate::path::interpolate::Context<'a>) -> Self {
+            self.interpolate = context.into();
+            self
         }
     }
 
