@@ -33,17 +33,51 @@ pub mod resolve_includes {
         /// which otherwise always results in an error.
         pub error_on_max_depth_exceeded: bool,
 
-        /// Used during path interpolation, as each include path is interpolated before use.
+        /// Used during path interpolation, both for include paths before trying to read the file, and for
+        /// paths used in conditional `gitdir` includes.
         pub interpolate: crate::path::interpolate::Context<'a>,
 
         /// Additional context for conditional includes to work.
         pub conditional: conditional::Context<'a>,
     }
 
+    impl Options<'_> {
+        /// Provide options to never follow include directives at all.
+        pub fn no_follow() -> Self {
+            Options {
+                max_depth: 0,
+                error_on_max_depth_exceeded: false,
+                interpolate: Default::default(),
+                conditional: Default::default(),
+            }
+        }
+    }
+
+    impl<'a> Options<'a> {
+        /// Provide options to follow includes like git does, provided the required `conditional` and `interpolate` contexts.
+        pub fn follow(
+            interpolate: crate::path::interpolate::Context<'a>,
+            conditional: conditional::Context<'a>,
+        ) -> Self {
+            Options {
+                max_depth: 10,
+                error_on_max_depth_exceeded: true,
+                interpolate,
+                conditional,
+            }
+        }
+    }
+
+    impl Default for Options<'_> {
+        fn default() -> Self {
+            Self::no_follow()
+        }
+    }
+
     ///
     pub mod conditional {
         /// Options to handle conditional includes like `includeIf.<condition>.path`.
-        #[derive(Clone, Copy)]
+        #[derive(Clone, Copy, Default)]
         pub struct Context<'a> {
             /// The location of the .git directory. If `None`, `gitdir` conditions cause an error.
             ///

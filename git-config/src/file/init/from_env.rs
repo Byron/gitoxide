@@ -82,7 +82,7 @@ impl File<'static> {
     /// environment variable for more information.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_env(options: from_paths::Options<'_>) -> Result<Option<File<'static>>, Error> {
+    pub fn from_env(options: crate::file::resolve_includes::Options<'_>) -> Result<Option<File<'static>>, Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
             Ok(v) => v.parse().map_err(|_| Error::InvalidConfigCount { input: v })?,

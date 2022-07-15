@@ -1,7 +1,8 @@
 use std::{borrow::Cow, env, fs};
 
+use git_config::file::resolve_includes;
 use git_config::{
-    file::{from_env, from_paths, from_paths::Options},
+    file::{from_env, from_paths},
     File,
 };
 use serial_test::serial;
@@ -38,7 +39,7 @@ impl<'a> Drop for Env<'a> {
 #[test]
 #[serial]
 fn empty_without_relevant_environment() {
-    let config = File::from_env(Options::default()).unwrap();
+    let config = File::from_env(Default::default()).unwrap();
     assert!(config.is_none());
 }
 
@@ -46,7 +47,7 @@ fn empty_without_relevant_environment() {
 #[serial]
 fn empty_with_zero_count() {
     let _env = Env::new().set("GIT_CONFIG_COUNT", "0");
-    let config = File::from_env(Options::default()).unwrap();
+    let config = File::from_env(Default::default()).unwrap();
     assert!(config.is_none());
 }
 
@@ -54,7 +55,7 @@ fn empty_with_zero_count() {
 #[serial]
 fn parse_error_with_invalid_count() {
     let _env = Env::new().set("GIT_CONFIG_COUNT", "invalid");
-    let err = File::from_env(Options::default()).unwrap_err();
+    let err = File::from_env(Default::default()).unwrap_err();
     assert!(matches!(err, from_env::Error::InvalidConfigCount { .. }));
 }
 
@@ -66,7 +67,7 @@ fn single_key_value_pair() {
         .set("GIT_CONFIG_KEY_0", "core.key")
         .set("GIT_CONFIG_VALUE_0", "value");
 
-    let config = File::from_env(Options::default()).unwrap().unwrap();
+    let config = File::from_env(Default::default()).unwrap().unwrap();
     assert_eq!(
         config.raw_value("core", None, "key").unwrap(),
         Cow::<[u8]>::Borrowed(b"value")
@@ -87,7 +88,7 @@ fn multiple_key_value_pairs() {
         .set("GIT_CONFIG_KEY_2", "core.c")
         .set("GIT_CONFIG_VALUE_2", "c");
 
-    let config = File::from_env(Options::default()).unwrap().unwrap();
+    let config = File::from_env(Default::default()).unwrap().unwrap();
 
     assert_eq!(
         config.raw_value("core", None, "a").unwrap(),
@@ -112,7 +113,10 @@ fn error_on_relative_paths_in_include_paths() {
         .set("GIT_CONFIG_KEY_0", "include.path")
         .set("GIT_CONFIG_VALUE_0", "some_git_config");
 
-    let res = File::from_env(Options::default());
+    let res = File::from_env(resolve_includes::Options {
+        max_depth: 1,
+        ..Default::default()
+    });
     assert!(matches!(
         res,
         Err(from_env::Error::FromPathsError(from_paths::Error::MissingConfigPath))
@@ -139,7 +143,12 @@ fn follow_include_paths() {
         .set("GIT_CONFIG_KEY_3", "include.origin.path")
         .set("GIT_CONFIG_VALUE_3", escape_backslashes(b_path));
 
-    let config = File::from_env(Options::default()).unwrap().unwrap();
+    let config = File::from_env(resolve_includes::Options {
+        max_depth: 1,
+        ..Default::default()
+    })
+    .unwrap()
+    .unwrap();
 
     assert_eq!(
         config.raw_value("core", None, "key").unwrap(),

@@ -6,11 +6,9 @@ use std::{
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_ref::Category;
 
+use crate::file::resolve_includes::{conditional, Options};
 use crate::{
-    file::{
-        init::{from_paths, from_paths::Options},
-        SectionBodyId,
-    },
+    file::{init::from_paths, SectionBodyId},
     File,
 };
 
@@ -18,7 +16,7 @@ pub(crate) fn resolve_includes(
     conf: &mut File<'static>,
     config_path: Option<&std::path::Path>,
     buf: &mut Vec<u8>,
-    options: from_paths::Options<'_>,
+    options: Options<'_>,
 ) -> Result<(), from_paths::Error> {
     resolve_includes_recursive(conf, config_path, 0, buf, options)
 }
@@ -28,7 +26,7 @@ fn resolve_includes_recursive(
     target_config_path: Option<&Path>,
     depth: u8,
     buf: &mut Vec<u8>,
-    options: from_paths::Options<'_>,
+    options: Options<'_>,
 ) -> Result<(), from_paths::Error> {
     if depth == options.max_depth {
         return if options.error_on_max_depth_exceeded {
@@ -107,7 +105,7 @@ fn extract_include_path(
 fn include_condition_match(
     condition: &BStr,
     target_config_path: Option<&Path>,
-    options: from_paths::Options<'_>,
+    options: Options<'_>,
 ) -> Result<bool, from_paths::Error> {
     let mut tokens = condition.splitn(2, |b| *b == b':');
     let (prefix, condition) = match (tokens.next(), tokens.next()) {
@@ -128,12 +126,15 @@ fn include_condition_match(
             options,
             git_glob::wildmatch::Mode::IGNORE_CASE,
         ),
-        b"onbranch" => Ok(onbranch_matches(condition, options).is_some()),
+        b"onbranch" => Ok(onbranch_matches(condition, options.conditional).is_some()),
         _ => Ok(false),
     }
 }
 
-fn onbranch_matches(condition: &BStr, Options { branch_name, .. }: Options<'_>) -> Option<()> {
+fn onbranch_matches(
+    condition: &BStr,
+    conditional::Context { branch_name, .. }: conditional::Context<'_>,
+) -> Option<()> {
     let branch_name = branch_name?;
     let (_, branch_name) = branch_name
         .category_and_short_name()
@@ -158,18 +159,18 @@ fn onbranch_matches(condition: &BStr, Options { branch_name, .. }: Options<'_>) 
 fn gitdir_matches(
     condition_path: &BStr,
     target_config_path: Option<&Path>,
-    from_paths::Options {
-        git_dir,
-        interpolate: interpolate_options,
+    Options {
+        conditional: conditional::Context { git_dir, .. },
+        interpolate: context,
         ..
-    }: from_paths::Options<'_>,
+    }: Options<'_>,
     wildmatch_mode: git_glob::wildmatch::Mode,
 ) -> Result<bool, from_paths::Error> {
     let git_dir =
         git_path::to_unix_separators_on_windows(git_path::into_bstr(git_dir.ok_or(from_paths::Error::MissingGitDir)?));
 
     let mut pattern_path: Cow<'_, _> = {
-        let path = crate::Path::from(Cow::Borrowed(condition_path)).interpolate(interpolate_options)?;
+        let path = crate::Path::from(Cow::Borrowed(condition_path)).interpolate(context)?;
         git_path::into_bstr(path).into_owned().into()
     };
     // NOTE: yes, only if we do path interpolation will the slashes be forced to unix separators on windows
@@ -219,12 +220,11 @@ fn gitdir_matches(
 fn resolve(
     path: crate::Path<'_>,
     target_config_path: Option<&Path>,
-    from_paths::Options {
-        interpolate: interpolate_options,
-        ..
-    }: from_paths::Options<'_>,
+    Options {
+        interpolate: context, ..
+    }: Options<'_>,
 ) -> Result<PathBuf, from_paths::Error> {
-    let path = path.interpolate(interpolate_options)?;
+    let path = path.interpolate(context)?;
     let path: PathBuf = if path.is_relative() {
         target_config_path
             .ok_or(from_paths::Error::MissingConfigPath)?
