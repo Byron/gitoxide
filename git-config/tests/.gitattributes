@@ -1,3 +1,8 @@
 # assure line feeds don't interfere with our working copy hash 
+<<<<<<< HEAD
 /fixtures/**/* text crlf=input	eol=lf
+=======
+/fixtures/**/* text eol=lf
+/fixtures/repo-config.crlf text eol=crlf
+>>>>>>> 207e48362 (try to fix attributes, once more (#331))
 
