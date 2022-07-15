@@ -133,8 +133,8 @@ fn include_condition_match(
     }
 }
 
-fn onbranch_matches(condition: &BStr, options: Options<'_>) -> Option<()> {
-    let branch_name = options.branch_name?;
+fn onbranch_matches(condition: &BStr, Options { branch_name, .. }: Options<'_>) -> Option<()> {
+    let branch_name = branch_name?;
     let (_, branch_name) = branch_name
         .category_and_short_name()
         .filter(|(cat, _)| *cat == Category::LocalBranch)?;

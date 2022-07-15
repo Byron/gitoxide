@@ -79,7 +79,7 @@ fn include_and_includeif_correct_inclusion_order() {
 fn options_with_git_dir(git_dir: &Path) -> from_paths::Options<'_> {
     from_paths::Options {
         git_dir: Some(git_dir),
-        interpolate: path::interpolate::Options {
+        interpolate: path::interpolate::Context {
             home_dir: Some(git_dir.parent().unwrap()),
             ..Default::default()
         },

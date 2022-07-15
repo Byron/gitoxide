@@ -24,7 +24,7 @@ pub enum Error {
 #[derive(Clone, Copy)]
 pub struct Options<'a> {
     /// Used during path interpolation.
-    pub interpolate: interpolate::Options<'a>,
+    pub interpolate: interpolate::Context<'a>,
     /// The maximum allowed length of the file include chain built by following nested resolve_includes where base level is depth = 0.
     pub max_depth: u8,
     /// When max depth is exceeded while following nested included, return an error if true or silently stop following

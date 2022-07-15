@@ -113,7 +113,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         assert!(matches!(actual.value, Cow::Borrowed(_)));
         assert_eq!(
             actual
-                .interpolate(path::interpolate::Options {
+                .interpolate(path::interpolate::Context {
                     home_dir: home.as_path().into(),
                     ..Default::default()
                 })

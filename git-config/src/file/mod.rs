@@ -20,6 +20,44 @@ mod init;
 pub use init::{from_env, from_paths};
 
 ///
+pub mod resolve_includes {
+    /// Options to handle includes, like `include.path` or `includeIf.<condition>.path`,
+    #[derive(Clone, Copy)]
+    pub struct Options<'a> {
+        /// The maximum allowed length of the file include chain built by following nested resolve_includes where base level is depth = 0.
+        pub max_depth: u8,
+        /// When max depth is exceeded while following nested includes,
+        /// return an error if true or silently stop following resolve_includes.
+        ///
+        /// Setting this value to false allows to read configuration with cycles,
+        /// which otherwise always results in an error.
+        pub error_on_max_depth_exceeded: bool,
+
+        /// Used during path interpolation, as each include path is interpolated before use.
+        pub interpolate: crate::path::interpolate::Context<'a>,
+
+        /// Additional context for conditional includes to work.
+        pub conditional: conditional::Context<'a>,
+    }
+
+    ///
+    pub mod conditional {
+        /// Options to handle conditional includes like `includeIf.<condition>.path`.
+        #[derive(Clone, Copy)]
+        pub struct Context<'a> {
+            /// The location of the .git directory. If `None`, `gitdir` conditions cause an error.
+            ///
+            /// Used for conditional includes, e.g. `includeIf.gitdir:…` or `includeIf:gitdir/i…`.
+            pub git_dir: Option<&'a std::path::Path>,
+            /// The name of the branch that is currently checked out. If `None`, `onbranch` conditions cause an error.
+            ///
+            /// Used for conditional includes, e.g. `includeIf.onbranch:main.…`
+            pub branch_name: Option<&'a git_ref::FullNameRef>,
+        }
+    }
+}
+
+///
 pub mod rename_section {
     /// The error returned by [`File::rename_section(…)`][crate::File::rename_section()].
     #[derive(Debug, thiserror::Error)]
