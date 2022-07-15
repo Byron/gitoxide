@@ -76,7 +76,7 @@ mod cache {
             let excludes_file = config
                 .path("core", None, "excludesFile")
                 .map(|p| {
-                    p.interpolate(path::interpolate::Options {
+                    p.interpolate(path::interpolate::Context {
                         git_install_dir,
                         home_dir: home.as_deref(),
                         home_for_user: Some(git_config::path::interpolate::home_for_user),
