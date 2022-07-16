@@ -44,16 +44,36 @@ fn resolve_includes_recursive(
         let header = &section.header;
         let header_name = header.name.as_ref();
         if header_name == "include" && header.subsection_name.is_none() {
-            extract_include_path(&mut include_paths, section)
+            detach_include_paths(&mut include_paths, section)
         } else if header_name == "includeIf" {
             if let Some(condition) = &header.subsection_name {
                 if include_condition_match(condition.as_ref(), target_config_path, options)? {
-                    extract_include_path(&mut include_paths, section)
+                    detach_include_paths(&mut include_paths, section)
                 }
             }
         }
     }
 
+    append_followed_includes_recursively(
+        include_paths,
+        target_config,
+        target_config_path,
+        depth,
+        meta.clone(),
+        options,
+        buf,
+    )
+}
+
+fn append_followed_includes_recursively(
+    include_paths: Vec<crate::Path<'_>>,
+    target_config: &mut File<'static>,
+    target_config_path: Option<&Path>,
+    depth: u8,
+    meta: OwnShared<Metadata>,
+    options: Options<'_>,
+    buf: &mut Vec<u8>,
+) -> Result<(), from_paths::Error> {
     for config_path in include_paths {
         let config_path = resolve(config_path, target_config_path, options)?;
         if !config_path.is_file() {
@@ -77,7 +97,7 @@ fn resolve_includes_recursive(
     Ok(())
 }
 
-fn extract_include_path(include_paths: &mut Vec<crate::Path<'static>>, section: &file::Section<'_>) {
+fn detach_include_paths(include_paths: &mut Vec<crate::Path<'static>>, section: &file::Section<'_>) {
     include_paths.extend(
         section
             .body
