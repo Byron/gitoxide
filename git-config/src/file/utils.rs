@@ -109,14 +109,4 @@ impl<'event> File<'event> {
             None => Err(lookup::existing::Error::SectionMissing),
         }
     }
-
-    // TODO: add note indicating that probably a lot if not all information about the original files is currently lost,
-    //       so can't be written back. This will probably change a lot during refactor, so it's not too important now.
-    pub(crate) fn append(&mut self, mut other: Self) {
-        // TODO: don't loose the front-matter here. Not doing so means we know after which section it needs to be inserted, complicating things.
-        for id in std::mem::take(&mut other.section_order) {
-            let section = other.sections.remove(&id).expect("present");
-            self.push_section_internal(section);
-        }
-    }
 }

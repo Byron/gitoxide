@@ -1,6 +1,8 @@
 use git_features::threading::OwnShared;
 use std::borrow::Cow;
 
+use crate::file::SectionId;
+use crate::parse::{Event, FrontMatterEvents};
 use crate::{
     file::{self, rename_section, SectionMut},
     lookup,
@@ -152,5 +154,63 @@ impl<'event> File<'event> {
         let section = self.sections.get_mut(&id).expect("known section-id");
         section.header = section::Header::new(new_section_name, new_subsection_name)?;
         Ok(())
+    }
+
+    /// Append another File to the end of ourselves, without loosing any information.
+    pub fn append(&mut self, mut other: Self) {
+        fn ends_with_newline<'a>(it: impl DoubleEndedIterator<Item = &'a Event<'a>>) -> bool {
+            it.last().map_or(true, |e| e.to_bstring().last() == Some(&b'\n'))
+        }
+        fn newline_event() -> Event<'static> {
+            Event::Newline(Cow::Borrowed(
+                // NOTE: this is usually the right thing to assume, let's see
+                if cfg!(windows) { "\r\n" } else { "\n" }.into(),
+            ))
+        }
+
+        fn assure_ends_with_newline<'a, 'b>(events: &'b mut FrontMatterEvents<'a>) -> &'b mut FrontMatterEvents<'a> {
+            if !ends_with_newline(events.iter()) {
+                events.push(newline_event());
+            }
+            events
+        }
+
+        let last_section_id = (self.section_id_counter != 0).then(|| self.section_id_counter - 1);
+        let mut last_added_section_id = None;
+        for id in std::mem::take(&mut other.section_order) {
+            let section = other.sections.remove(&id).expect("present");
+            self.push_section_internal(section);
+
+            let new_id = self.section_id_counter - 1;
+            last_added_section_id = Some(new_id);
+            if let Some(post_matter) = other.frontmatter_post_section.remove(&id) {
+                self.frontmatter_post_section.insert(SectionId(new_id), post_matter);
+            }
+        }
+
+        if !other.frontmatter_events.is_empty() {
+            match last_added_section_id {
+                Some(id) => {
+                    if !ends_with_newline(self.sections[&SectionId(id)].body.0.iter()) {
+                        other.frontmatter_events.insert(0, newline_event());
+                    }
+                }
+                None => {
+                    if !last_section_id.map_or(true, |id| {
+                        ends_with_newline(self.sections[&SectionId(id)].body.0.iter())
+                    }) {
+                        other.frontmatter_events.insert(0, newline_event());
+                    }
+                }
+            }
+
+            match last_section_id {
+                Some(last_id) => {
+                    assure_ends_with_newline(self.frontmatter_post_section.entry(SectionId(last_id)).or_default())
+                        .extend(other.frontmatter_events)
+                }
+                None => assure_ends_with_newline(&mut self.frontmatter_events).extend(other.frontmatter_events),
+            }
+        }
     }
 }

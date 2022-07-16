@@ -10,7 +10,7 @@ pub fn cow_str(s: &str) -> Cow<'_, BStr> {
 fn size_in_memory() {
     assert_eq!(
         std::mem::size_of::<git_config::File<'_>>(),
-        992,
+        1040,
         "This shouldn't change without us noticing"
     );
 }

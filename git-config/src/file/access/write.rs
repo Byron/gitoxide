@@ -25,6 +25,11 @@ impl File<'_> {
                 .get(section_id)
                 .expect("known section-id")
                 .write_to(&mut out)?;
+            if let Some(post_matter) = self.frontmatter_post_section.get(section_id) {
+                for event in post_matter {
+                    event.write_to(&mut out)?;
+                }
+            }
         }
 
         Ok(())

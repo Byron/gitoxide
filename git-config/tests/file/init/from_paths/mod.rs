@@ -65,7 +65,6 @@ fn multiple_paths_single_value() -> crate::Result {
 }
 
 #[test]
-#[ignore]
 fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
     let dir = tempdir()?;
 
@@ -82,9 +81,19 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
     fs::write(d_path.as_path(), b"; nothing in d")?;
 
     let paths = vec![a_path, b_path, c_path, d_path];
-    let config = File::from_paths_metadata(into_meta(paths), Default::default())?;
+    let mut config = File::from_paths_metadata(into_meta(paths), Default::default())?;
 
-    assert_eq!(config.to_string(), ";before a\n[core]\na = true[core]\nb = true");
+    assert_eq!(
+        config.to_string(),
+        ";before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n\n; nothing in d"
+    );
+
+    config.append(config.clone());
+    assert_eq!(
+        config.to_string(),
+        ";before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n\n; nothing in d\n\n;before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n\n; nothing in d",
+        "other files post-section matter works as well, adding newlines as needed"
+    );
     Ok(())
 }
 

@@ -79,10 +79,12 @@ pub enum Source {
 /// [`raw_value()`]: Self::raw_value
 #[derive(PartialEq, Eq, Clone, Debug, Default)]
 pub struct File<'event> {
-    /// The list of events that occur before an actual section. Since a
+    /// The list of events that occur before any section. Since a
     /// `git-config` file prohibits global values, this vec is limited to only
     /// comment, newline, and whitespace events.
     pub(crate) frontmatter_events: crate::parse::FrontMatterEvents<'event>,
+    /// Frontmatter events to be placed after the given section.
+    pub(crate) frontmatter_post_section: HashMap<SectionId, crate::parse::FrontMatterEvents<'event>>,
     /// Section name to section id lookup tree, with section bodies for subsections being in a non-terminal
     /// variant of `SectionBodyIds`.
     pub(crate) section_lookup_tree: HashMap<section::Name<'event>, Vec<SectionBodyIds<'event>>>,

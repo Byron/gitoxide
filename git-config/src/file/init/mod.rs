@@ -15,6 +15,7 @@ impl<'a> File<'a> {
     pub fn new(meta: impl Into<OwnShared<Metadata>>) -> Self {
         Self {
             frontmatter_events: Default::default(),
+            frontmatter_post_section: Default::default(),
             section_lookup_tree: Default::default(),
             sections: Default::default(),
             section_id_counter: 0,
