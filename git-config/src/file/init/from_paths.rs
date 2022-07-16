@@ -54,7 +54,7 @@ impl File<'static> {
         buf.clear();
         std::io::copy(&mut std::fs::File::open(&path)?, buf)?;
 
-        meta.path = path.clone().into();
+        meta.path = path.into();
         let meta = OwnShared::new(meta);
         let mut config = Self::from_parse_events(parse::Events::from_bytes_owned(buf, None)?, OwnShared::clone(&meta));
         let mut buf = Vec::new();
@@ -82,6 +82,6 @@ impl File<'static> {
                 Some(target) => target.append(config),
             }
         }
-        Ok(target.ok_or(Error::NoInput)?)
+        target.ok_or(Error::NoInput)
     }
 }
