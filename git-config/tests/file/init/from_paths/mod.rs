@@ -65,6 +65,30 @@ fn multiple_paths_single_value() -> crate::Result {
 }
 
 #[test]
+#[ignore]
+fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
+    let dir = tempdir()?;
+
+    let a_path = dir.path().join("a");
+    fs::write(a_path.as_path(), b";before a\n[core]\na = true")?;
+
+    let b_path = dir.path().join("b");
+    fs::write(b_path.as_path(), b";before b\n [core]\nb = true")?;
+
+    let c_path = dir.path().join("c");
+    fs::write(c_path.as_path(), b"# nothing in c")?;
+
+    let d_path = dir.path().join("d");
+    fs::write(d_path.as_path(), b"; nothing in d")?;
+
+    let paths = vec![a_path, b_path, c_path, d_path];
+    let config = File::from_paths_metadata(into_meta(paths), Default::default())?;
+
+    assert_eq!(config.to_string(), ";before a\n[core]\na = true[core]\nb = true");
+    Ok(())
+}
+
+#[test]
 fn multiple_paths_multi_value() -> crate::Result {
     let dir = tempdir()?;
 
