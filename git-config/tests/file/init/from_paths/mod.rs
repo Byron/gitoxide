@@ -1,5 +1,5 @@
+use std::fs;
 use std::path::PathBuf;
-use std::{borrow::Cow, fs, io};
 
 use git_config::File;
 use tempfile::tempdir;
@@ -11,40 +11,29 @@ pub(crate) fn escape_backslashes(path: impl AsRef<std::path::Path>) -> String {
     path.as_ref().to_str().unwrap().replace('\\', "\\\\")
 }
 
-#[test]
-fn file_not_found() {
-    let dir = tempdir().unwrap();
-    let config_path = dir.path().join("config");
+mod from_path_no_includes {
+    #[test]
+    fn file_not_found() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join("config");
 
-    let paths = vec![config_path];
-    let err = File::from_paths_metadata(
-        paths.into_iter().map(|p| git_config::file::Metadata {
-            path: Some(p),
-            ..Default::default()
-        }),
-        Default::default(),
-    )
-    .unwrap_err();
-    assert!(
-        matches!(err,  git_config::file::from_paths::Error::Io(io_error) if io_error.kind() == io::ErrorKind::NotFound)
-    );
-}
+        let err = git_config::File::from_path_no_includes(config_path, git_config::Source::Local).unwrap_err();
+        assert!(
+            matches!(err,  git_config::file::from_paths::Error::Io(io_error) if io_error.kind() == std::io::ErrorKind::NotFound)
+        );
+    }
 
-#[test]
-fn single_path() {
-    let dir = tempdir().unwrap();
-    let config_path = dir.path().join("config");
-    fs::write(config_path.as_path(), b"[core]\nboolean = true").unwrap();
+    #[test]
+    fn single_path() {
+        let dir = tempfile::tempdir().unwrap();
+        let config_path = dir.path().join("config");
+        std::fs::write(config_path.as_path(), b"[core]\nboolean = true").unwrap();
 
-    let paths = vec![config_path];
-    let config = File::from_paths_metadata(into_meta(paths), Default::default()).unwrap();
+        let config = git_config::File::from_path_no_includes(config_path, git_config::Source::Local).unwrap();
 
-    assert_eq!(
-        config.raw_value("core", None, "boolean").unwrap(),
-        Cow::<[u8]>::Borrowed(b"true")
-    );
-
-    assert_eq!(config.num_values(), 1);
+        assert_eq!(config.raw_value("core", None, "boolean").unwrap().as_ref(), "true");
+        assert_eq!(config.num_values(), 1);
+    }
 }
 
 #[test]
@@ -70,6 +59,7 @@ fn multiple_paths_single_value() -> crate::Result {
     assert_eq!(config.boolean("core", None, "b"), Some(Ok(true)));
     assert_eq!(config.boolean("core", None, "c"), Some(Ok(true)));
     assert_eq!(config.num_values(), 4);
+    assert_eq!(config.sections().count(), 4, "each value is in a dedicated section");
 
     Ok(())
 }

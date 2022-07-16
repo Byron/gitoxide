@@ -9,10 +9,7 @@ use git_ref::Category;
 
 use crate::file::resolve_includes::{conditional, Options};
 use crate::file::Metadata;
-use crate::{
-    file::{init::from_paths, SectionId},
-    File,
-};
+use crate::{file, file::init::from_paths, File};
 
 pub(crate) fn resolve_includes(
     conf: &mut File<'static>,
@@ -40,51 +37,29 @@ fn resolve_includes_recursive(
         };
     }
 
-    let mut paths_to_include = Vec::new();
     let target_config_path = meta.path.as_deref();
 
-    let mut incl_section_ids = Vec::new();
-    for name in ["include", "includeIf"] {
-        if let Ok(ids) = target_config.section_ids_by_name(name) {
-            for id in ids {
-                incl_section_ids.push((
-                    id,
-                    target_config
-                        .section_order
-                        .iter()
-                        .position(|&e| e == id)
-                        .expect("section id is from config"),
-                ));
-            }
-        }
-    }
-    incl_section_ids.sort_by(|a, b| a.1.cmp(&b.1));
-
     let mut include_paths = Vec::new();
-    // TODO: could this just use the section order and compare the name itself?
-    for (id, _) in incl_section_ids {
-        if let Some(header) = target_config.sections.get(&id).map(|s| &s.header) {
-            if header.name.0.as_ref() == "include" && header.subsection_name.is_none() {
-                extract_include_path(target_config, &mut include_paths, id)
-            } else if header.name.0.as_ref() == "includeIf" {
-                if let Some(condition) = &header.subsection_name {
-                    if include_condition_match(condition.as_ref(), target_config_path, options)? {
-                        extract_include_path(target_config, &mut include_paths, id)
-                    }
+    for section in target_config.sections() {
+        let header = &section.header;
+        let header_name = header.name.as_ref();
+        if header_name == "include" && header.subsection_name.is_none() {
+            extract_include_path(&mut include_paths, section)
+        } else if header_name == "includeIf" {
+            if let Some(condition) = &header.subsection_name {
+                if include_condition_match(condition.as_ref(), target_config_path, options)? {
+                    extract_include_path(&mut include_paths, section)
                 }
             }
         }
     }
 
-    for path in include_paths {
-        let path = resolve(path, target_config_path, options)?;
-
-        if path.is_file() {
-            paths_to_include.push(path);
+    for config_path in include_paths {
+        let config_path = resolve(config_path, target_config_path, options)?;
+        if !config_path.is_file() {
+            continue;
         }
-    }
 
-    for config_path in paths_to_include {
         let config_meta = Metadata {
             path: None,
             trust: meta.trust,
@@ -94,20 +69,22 @@ fn resolve_includes_recursive(
         let no_follow_options = from_paths::Options::default();
         let mut include_config = File::from_path_with_buf(config_path, buf, config_meta, no_follow_options)?;
         let config_meta = include_config.meta_owned();
+
         resolve_includes_recursive(&mut include_config, config_meta, depth + 1, buf, options)?;
+
         target_config.append(include_config);
     }
     Ok(())
 }
 
-fn extract_include_path(target_config: &mut File<'_>, include_paths: &mut Vec<crate::Path<'static>>, id: SectionId) {
-    if let Some(body) = target_config.sections.get(&id) {
-        let paths = body.values("path");
-        let paths = paths
-            .iter()
-            .map(|path| crate::Path::from(Cow::Owned(path.as_ref().to_owned())));
-        include_paths.extend(paths);
-    }
+fn extract_include_path(include_paths: &mut Vec<crate::Path<'static>>, section: &file::Section<'_>) {
+    include_paths.extend(
+        section
+            .body
+            .values("path")
+            .into_iter()
+            .map(|path| crate::Path::from(Cow::Owned(path.into_owned()))),
+    )
 }
 
 fn include_condition_match(

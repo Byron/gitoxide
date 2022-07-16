@@ -210,4 +210,9 @@ impl<'event> File<'event> {
     pub fn meta_owned(&self) -> OwnShared<Metadata> {
         OwnShared::clone(&self.meta)
     }
+
+    /// Return an iterator over all sections, in order of occurrence in the file itself.
+    pub fn sections(&self) -> impl Iterator<Item = &file::Section<'event>> + '_ {
+        self.section_order.iter().map(move |id| &self.sections[id])
+    }
 }
