@@ -1,4 +1,4 @@
-use crate::file::{Section, SectionMut};
+use crate::file::{Metadata, Section, SectionMut};
 use crate::parse::section;
 use crate::{file, parse};
 use bstr::BString;
@@ -63,6 +63,11 @@ impl<'a> Section<'a> {
             event.write_to(&mut out)?;
         }
         Ok(())
+    }
+
+    /// Return additional information about this sections origin.
+    pub fn meta(&self) -> &Metadata {
+        &self.meta
     }
 
     /// Returns a mutable version of this section for adjustment of values.

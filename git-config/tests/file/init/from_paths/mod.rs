@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use git_config::File;
+use git_config::{File, Source};
 use tempfile::tempdir;
 
 use crate::file::cow_str;
@@ -83,8 +83,20 @@ fn multiple_paths_multi_value() -> crate::Result {
     let e_path = dir.path().join("e");
     fs::write(e_path.as_path(), b"[include]\npath = e_path")?;
 
-    let paths = vec![a_path, b_path, c_path, d_path, e_path];
-    let config = File::from_paths_metadata(into_meta(paths), Default::default())?;
+    let paths_and_source = vec![
+        (a_path, Source::System),
+        (b_path, Source::Global),
+        (c_path, Source::User),
+        (d_path, Source::Worktree),
+        (e_path, Source::Local),
+    ];
+
+    let config = File::from_paths_metadata(
+        paths_and_source
+            .iter()
+            .map(|(p, s)| git_config::file::Metadata::try_from_path(p, *s).unwrap()),
+        Default::default(),
+    )?;
 
     assert_eq!(
         config.strings("core", None, "key"),
@@ -97,6 +109,18 @@ fn multiple_paths_multi_value() -> crate::Result {
     );
 
     assert_eq!(config.num_values(), 5);
+    assert_eq!(
+        config
+            .sections()
+            .map(|s| (
+                s.meta().path.as_ref().expect("each section has file source").to_owned(),
+                s.meta().source,
+                s.meta().level
+            ))
+            .collect::<Vec<_>>(),
+        paths_and_source.into_iter().map(|(p, s)| (p, s, 0)).collect::<Vec<_>>(),
+        "sections are added in order and their path and sources are set as given, levels are 0 for the non-included ones"
+    );
     Ok(())
 }
 
