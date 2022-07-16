@@ -1,7 +1,9 @@
 use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
+use git_features::threading::OwnShared;
 
+use crate::file::Metadata;
 use crate::{file, lookup, File};
 
 /// Read-only low-level access methods, as it requires generics for converting into
@@ -197,5 +199,15 @@ impl<'event> File<'event> {
     #[must_use]
     pub fn is_void(&self) -> bool {
         self.sections.values().all(|s| s.body.is_void())
+    }
+
+    /// Return the file's metadata to guide filtering of all values upon retrieval.
+    pub fn meta(&self) -> &Metadata {
+        &*self.meta
+    }
+
+    /// Return the file's metadata to guide filtering of all values upon retrieval, wrapped for shared ownership.
+    pub fn meta_owned(&self) -> OwnShared<Metadata> {
+        OwnShared::clone(&self.meta)
     }
 }

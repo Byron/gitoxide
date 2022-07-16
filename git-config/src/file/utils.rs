@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use bstr::BStr;
 
-use crate::file::Section;
 use crate::{
     file::{self, SectionBodyIds, SectionId, SectionMut},
     lookup,
@@ -13,23 +12,14 @@ use crate::{
 /// Private helper functions
 impl<'event> File<'event> {
     /// Adds a new section to the config file.
-    pub(crate) fn push_section_internal(
-        &mut self,
-        header: section::Header<'event>,
-        body: file::section::Body<'event>,
-    ) -> SectionMut<'_, 'event> {
+    pub(crate) fn push_section_internal(&mut self, section: file::Section<'event>) -> SectionMut<'_, 'event> {
         let new_section_id = SectionId(self.section_id_counter);
-        self.sections.insert(
-            new_section_id,
-            Section {
-                body,
-                header: header.clone(),
-            },
-        );
-        let lookup = self.section_lookup_tree.entry(header.name).or_default();
+        self.sections.insert(new_section_id, section);
+        let header = &self.sections[&new_section_id].header;
+        let lookup = self.section_lookup_tree.entry(header.name.clone()).or_default();
 
         let mut found_node = false;
-        if let Some(subsection_name) = header.subsection_name {
+        if let Some(subsection_name) = header.subsection_name.clone() {
             for node in lookup.iter_mut() {
                 if let SectionBodyIds::NonTerminal(subsections) = node {
                     found_node = true;
@@ -123,9 +113,10 @@ impl<'event> File<'event> {
     // TODO: add note indicating that probably a lot if not all information about the original files is currently lost,
     //       so can't be written back. This will probably change a lot during refactor, so it's not too important now.
     pub(crate) fn append(&mut self, mut other: Self) {
+        // TODO: don't loose the front-matter here. Not doing so means we know after which section it needs to be inserted, complicating things.
         for id in std::mem::take(&mut other.section_order) {
             let section = other.sections.remove(&id).expect("present");
-            self.push_section_internal(section.header, section.body);
+            self.push_section_internal(section);
         }
     }
 }

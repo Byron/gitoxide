@@ -142,7 +142,7 @@ impl<'event> Body<'event> {
     }
 }
 
-/// An owning iterator of a section body. Created by [`SectionBody::into_iter`], yielding
+/// An owning iterator of a section body. Created by [`Body::into_iter`], yielding
 /// un-normalized (`key`, `value`) pairs.
 // TODO: tests
 pub struct BodyIter<'event>(smallvec::IntoIter<[Event<'event>; 64]>);

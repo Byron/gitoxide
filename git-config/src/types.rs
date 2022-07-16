@@ -1,5 +1,7 @@
+use git_features::threading::OwnShared;
 use std::collections::{HashMap, VecDeque};
 
+use crate::file::Metadata;
 use crate::{
     color, file,
     file::{SectionBodyIds, SectionId},
@@ -31,6 +33,8 @@ pub enum Source {
     Env,
     /// Values set from the command-line.
     Cli,
+    /// Entirely internal from a programmatic source
+    Api,
 }
 
 /// High level `git-config` reader and writer.
@@ -89,6 +93,8 @@ pub struct File<'event> {
     pub(crate) section_id_counter: usize,
     /// Section order for output ordering.
     pub(crate) section_order: VecDeque<SectionId>,
+    /// The source of the File itself, which is attached to new sections automatically.
+    pub(crate) meta: OwnShared<Metadata>,
 }
 
 /// Any value that may contain a foreground color, background color, a

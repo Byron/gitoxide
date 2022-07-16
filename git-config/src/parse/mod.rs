@@ -85,7 +85,7 @@ pub enum Event<'a> {
 
 /// A parsed section containing the header and the section events, typically
 /// comprising the keys and their values.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Section<'a> {
     /// The section name and subsection name, if any.
     pub section_header: section::Header<'a>,

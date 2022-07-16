@@ -244,7 +244,13 @@ value = branch-override-by-include
         ),
     };
 
-    let config = git_config::File::from_paths(Some(&root_config), options)?;
+    let config = git_config::File::from_paths_metadata(
+        Some(git_config::file::Metadata::try_from_path(
+            &root_config,
+            git_config::Source::Local,
+        )?),
+        options,
+    )?;
     assert_eq!(
         config.string("section", None, "value"),
         Some(cow_str(match expect {

@@ -12,7 +12,7 @@ pub mod header;
 pub type Events<'a> = SmallVec<[Event<'a>; 64]>;
 
 /// A parsed section header, containing a name and optionally a subsection name.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Header<'a> {
     /// The name of the header.
     pub(crate) name: Name<'a>,

@@ -10,8 +10,8 @@ mod gitdir;
 mod onbranch;
 
 #[test]
-fn include_and_includeif_correct_inclusion_order() {
-    let dir = tempdir().unwrap();
+fn include_and_includeif_correct_inclusion_order() -> crate::Result {
+    let dir = tempdir()?;
     let config_path = dir.path().join("p");
     let first_include_path = dir.path().join("first-incl");
     let second_include_path = dir.path().join("second-incl");
@@ -21,24 +21,21 @@ fn include_and_includeif_correct_inclusion_order() {
         "
 [core]
   b = first-incl-path",
-    )
-    .unwrap();
+    )?;
 
     fs::write(
         second_include_path.as_path(),
         "
 [core]
   b = second-incl-path",
-    )
-    .unwrap();
+    )?;
 
     fs::write(
         include_if_path.as_path(),
         "
 [core]
   b = incl-if-path",
-    )
-    .unwrap();
+    )?;
 
     fs::write(
         config_path.as_path(),
@@ -55,11 +52,16 @@ fn include_and_includeif_correct_inclusion_order() {
             escape_backslashes(&include_if_path),
             escape_backslashes(&second_include_path),
         ),
-    )
-    .unwrap();
+    )?;
 
     let dir = config_path.join(".git");
-    let config = File::from_paths(Some(&config_path), options_with_git_dir(&dir)).unwrap();
+    let config = File::from_paths_metadata(
+        Some(git_config::file::Metadata::try_from_path(
+            &config_path,
+            git_config::Source::Api,
+        )?),
+        options_with_git_dir(&dir),
+    )?;
 
     assert_eq!(
         config.strings("core", None, "b"),
@@ -75,6 +77,7 @@ fn include_and_includeif_correct_inclusion_order() {
         Some(cow_str("second-incl-path")),
         "second include is matched after incl-if",
     );
+    Ok(())
 }
 
 fn options_with_git_dir(git_dir: &Path) -> from_paths::Options<'_> {

@@ -2,13 +2,15 @@ use std::{convert::TryFrom, fmt::Display, str::FromStr};
 
 use bstr::{BStr, BString};
 
-use crate::{file::section, parse, File};
+use crate::file::Metadata;
+use crate::{parse, File};
 
 impl FromStr for File<'static> {
     type Err = parse::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        parse::Events::from_bytes_owned(s.as_bytes(), None).map(File::from)
+        parse::Events::from_bytes_owned(s.as_bytes(), None)
+            .map(|events| File::from_parse_events(events, Metadata::api()))
     }
 }
 
@@ -18,7 +20,7 @@ impl<'a> TryFrom<&'a str> for File<'a> {
     /// Convenience constructor. Attempts to parse the provided string into a
     /// [`File`]. See [`Events::from_str()`][crate::parse::Events::from_str()] for more information.
     fn try_from(s: &'a str) -> Result<File<'a>, Self::Error> {
-        parse::Events::from_str(s).map(Self::from)
+        parse::Events::from_str(s).map(|events| Self::from_parse_events(events, Metadata::api()))
     }
 }
 
@@ -28,22 +30,7 @@ impl<'a> TryFrom<&'a BStr> for File<'a> {
     /// Convenience constructor. Attempts to parse the provided byte string into
     /// a [`File`]. See [`Events::from_bytes()`][parse::Events::from_bytes()] for more information.
     fn try_from(value: &'a BStr) -> Result<File<'a>, Self::Error> {
-        parse::Events::from_bytes(value).map(File::from)
-    }
-}
-
-impl<'a> From<parse::Events<'a>> for File<'a> {
-    fn from(events: parse::Events<'a>) -> Self {
-        let mut this = File {
-            frontmatter_events: events.frontmatter,
-            ..Default::default()
-        };
-
-        for section in events.sections {
-            this.push_section_internal(section.section_header, section::Body(section.events));
-        }
-
-        this
+        parse::Events::from_bytes(value).map(|events| Self::from_parse_events(events, Metadata::api()))
     }
 }
 

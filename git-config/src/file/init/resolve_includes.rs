@@ -4,9 +4,11 @@ use std::{
 };
 
 use bstr::{BStr, BString, ByteSlice, ByteVec};
+use git_features::threading::OwnShared;
 use git_ref::Category;
 
 use crate::file::resolve_includes::{conditional, Options};
+use crate::file::Metadata;
 use crate::{
     file::{init::from_paths, SectionId},
     File,
@@ -14,16 +16,16 @@ use crate::{
 
 pub(crate) fn resolve_includes(
     conf: &mut File<'static>,
-    config_path: Option<&std::path::Path>,
+    meta: OwnShared<Metadata>,
     buf: &mut Vec<u8>,
     options: Options<'_>,
 ) -> Result<(), from_paths::Error> {
-    resolve_includes_recursive(conf, config_path, 0, buf, options)
+    resolve_includes_recursive(conf, meta, 0, buf, options)
 }
 
 fn resolve_includes_recursive(
     target_config: &mut File<'static>,
-    target_config_path: Option<&Path>,
+    meta: OwnShared<Metadata>,
     depth: u8,
     buf: &mut Vec<u8>,
     options: Options<'_>,
@@ -39,6 +41,7 @@ fn resolve_includes_recursive(
     }
 
     let mut paths_to_include = Vec::new();
+    let target_config_path = meta.path.as_deref();
 
     let mut incl_section_ids = Vec::new();
     for name in ["include", "includeIf"] {
@@ -82,8 +85,16 @@ fn resolve_includes_recursive(
     }
 
     for config_path in paths_to_include {
-        let mut include_config = File::from_path_with_buf(&config_path, buf)?;
-        resolve_includes_recursive(&mut include_config, Some(&config_path), depth + 1, buf, options)?;
+        let config_meta = Metadata {
+            path: None,
+            trust: meta.trust,
+            level: meta.level + 1,
+            source: meta.source,
+        };
+        let no_follow_options = from_paths::Options::default();
+        let mut include_config = File::from_path_with_buf(config_path, buf, config_meta, no_follow_options)?;
+        let config_meta = include_config.meta_owned();
+        resolve_includes_recursive(&mut include_config, config_meta, depth + 1, buf, options)?;
         target_config.append(include_config);
     }
     Ok(())

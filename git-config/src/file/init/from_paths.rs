@@ -1,6 +1,8 @@
+use crate::file::Metadata;
 use crate::{file, file::init::resolve_includes, parse, path::interpolate, File};
+use git_features::threading::OwnShared;
 
-/// The error returned by [`File::from_paths()`][crate::File::from_paths()] and [`File::from_env_paths()`][crate::File::from_env_paths()].
+/// The error returned by [`File::from_paths_metadata()`] and [`File::from_env_paths()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -18,9 +20,11 @@ pub enum Error {
     MissingGitDir,
     #[error(transparent)]
     Realpath(#[from] git_path::realpath::Error),
+    #[error("Not a single path was provided to load the configuration from")]
+    NoInput,
 }
 
-/// Options when loading git config using [`File::from_paths()`][crate::File::from_paths()].
+/// Options when loading git config using [`File::from_paths_metadata()`].
 #[derive(Clone, Copy, Default)]
 pub struct Options<'a> {
     /// Configure how to follow includes while handling paths.
@@ -29,31 +33,55 @@ pub struct Options<'a> {
 
 /// Instantiation from one or more paths
 impl File<'static> {
-    /// Open a single configuration file by reading all data at `path` into `buf` and
-    /// copying all contents from there, without resolving includes.
-    pub fn from_path_with_buf(path: &std::path::Path, buf: &mut Vec<u8>) -> Result<Self, Error> {
-        buf.clear();
-        std::io::copy(&mut std::fs::File::open(path)?, buf)?;
-        Self::from_bytes(buf)
+    /// Load the file at `path` from `source` without following include directives.
+    pub fn from_path_no_includes(path: impl Into<std::path::PathBuf>, source: crate::Source) -> Result<Self, Error> {
+        let path = path.into();
+        let trust = git_sec::Trust::from_path_ownership(&path)?;
+        let mut buf = Vec::new();
+        File::from_path_with_buf(path, &mut buf, Metadata::from(source).with(trust), Default::default())
     }
 
-    /// Constructs a `git-config` file from the provided paths in the order provided.
-    pub fn from_paths(
-        paths: impl IntoIterator<Item = impl AsRef<std::path::Path>>,
+    /// Open a single configuration file by reading all data at `path` into `buf` and
+    /// copying all contents from there, without resolving includes. Note that the `path` in `meta`
+    /// will be set to the one provided here.
+    pub fn from_path_with_buf(
+        path: impl Into<std::path::PathBuf>,
+        buf: &mut Vec<u8>,
+        mut meta: file::Metadata,
         options: Options<'_>,
     ) -> Result<Self, Error> {
-        let mut target = Self::default();
-        let mut buf = Vec::with_capacity(512);
-        for path in paths {
-            let path = path.as_ref();
-            let mut config = Self::from_path_with_buf(path, &mut buf)?;
-            resolve_includes(&mut config, Some(path), &mut buf, options.resolve_includes)?;
-            target.append(config);
-        }
-        Ok(target)
+        let path = path.into();
+        buf.clear();
+        std::io::copy(&mut std::fs::File::open(&path)?, buf)?;
+
+        meta.path = path.clone().into();
+        let meta = OwnShared::new(meta);
+        let mut config = Self::from_parse_events(parse::Events::from_bytes_owned(buf, None)?, OwnShared::clone(&meta));
+        let mut buf = Vec::new();
+        resolve_includes(&mut config, meta, &mut buf, options.resolve_includes)?;
+
+        Ok(config)
     }
 
-    pub(crate) fn from_bytes(input: &[u8]) -> Result<Self, Error> {
-        Ok(parse::Events::from_bytes_owned(input, None)?.into())
+    /// Constructs a `git-config` file from the provided metadata, which must include a path to read from or be ignored.
+    pub fn from_paths_metadata(
+        path_meta: impl IntoIterator<Item = impl Into<file::Metadata>>,
+        options: Options<'_>,
+    ) -> Result<Self, Error> {
+        let mut target = None;
+        let mut buf = Vec::with_capacity(512);
+        for (path, meta) in path_meta.into_iter().filter_map(|meta| {
+            let mut meta = meta.into();
+            meta.path.take().map(|p| (p, meta))
+        }) {
+            let config = Self::from_path_with_buf(path, &mut buf, meta, options)?;
+            match &mut target {
+                None => {
+                    target = Some(config);
+                }
+                Some(target) => target.append(config),
+            }
+        }
+        Ok(target.ok_or(Error::NoInput)?)
     }
 }

@@ -128,7 +128,12 @@ pub fn assert_section_value(
         paths.push(env.home_dir().join(".gitconfig"));
     }
 
-    let config = git_config::File::from_paths(paths, env.to_from_paths_options())?;
+    let config = git_config::File::from_paths_metadata(
+        paths
+            .into_iter()
+            .map(|path| git_config::file::Metadata::try_from_path(path, git_config::Source::Local).unwrap()),
+        env.to_from_paths_options(),
+    )?;
 
     assert_eq!(
         config.string("section", None, "value"),

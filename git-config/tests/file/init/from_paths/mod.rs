@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::{borrow::Cow, fs, io};
 
 use git_config::File;
@@ -16,7 +17,14 @@ fn file_not_found() {
     let config_path = dir.path().join("config");
 
     let paths = vec![config_path];
-    let err = File::from_paths(paths, Default::default()).unwrap_err();
+    let err = File::from_paths_metadata(
+        paths.into_iter().map(|p| git_config::file::Metadata {
+            path: Some(p),
+            ..Default::default()
+        }),
+        Default::default(),
+    )
+    .unwrap_err();
     assert!(
         matches!(err,  git_config::file::from_paths::Error::Io(io_error) if io_error.kind() == io::ErrorKind::NotFound)
     );
@@ -29,7 +37,7 @@ fn single_path() {
     fs::write(config_path.as_path(), b"[core]\nboolean = true").unwrap();
 
     let paths = vec![config_path];
-    let config = File::from_paths(paths, Default::default()).unwrap();
+    let config = File::from_paths_metadata(into_meta(paths), Default::default()).unwrap();
 
     assert_eq!(
         config.raw_value("core", None, "boolean").unwrap(),
@@ -56,7 +64,7 @@ fn multiple_paths_single_value() -> crate::Result {
     fs::write(d_path.as_path(), b"[core]\na = false")?;
 
     let paths = vec![a_path, b_path, c_path, d_path];
-    let config = File::from_paths(paths, Default::default())?;
+    let config = File::from_paths_metadata(into_meta(paths), Default::default())?;
 
     assert_eq!(config.boolean("core", None, "a"), Some(Ok(false)));
     assert_eq!(config.boolean("core", None, "b"), Some(Ok(true)));
@@ -86,7 +94,7 @@ fn multiple_paths_multi_value() -> crate::Result {
     fs::write(e_path.as_path(), b"[include]\npath = e_path")?;
 
     let paths = vec![a_path, b_path, c_path, d_path, e_path];
-    let config = File::from_paths(paths, Default::default())?;
+    let config = File::from_paths_metadata(into_meta(paths), Default::default())?;
 
     assert_eq!(
         config.strings("core", None, "key"),
@@ -100,6 +108,12 @@ fn multiple_paths_multi_value() -> crate::Result {
 
     assert_eq!(config.num_values(), 5);
     Ok(())
+}
+
+fn into_meta(paths: impl IntoIterator<Item = PathBuf>) -> impl IntoIterator<Item = git_config::file::Metadata> {
+    paths
+        .into_iter()
+        .map(|p| git_config::file::Metadata::try_from_path(p, git_config::Source::Local).unwrap())
 }
 
 mod includes {

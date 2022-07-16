@@ -1,3 +1,4 @@
+use git_features::threading::OwnShared;
 use std::borrow::Cow;
 
 use crate::{
@@ -60,10 +61,11 @@ impl<'event> File<'event> {
     /// ```
     pub fn new_section(
         &mut self,
-        section_name: impl Into<Cow<'event, str>>,
-        subsection_name: impl Into<Option<Cow<'event, str>>>,
+        name: impl Into<Cow<'event, str>>,
+        subsection: impl Into<Option<Cow<'event, str>>>,
     ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
-        let mut section = self.push_section(section_name, subsection_name, file::section::Body::default())?;
+        let mut section =
+            self.push_section_internal(file::Section::new(name, subsection, OwnShared::clone(&self.meta))?);
         section.push_newline();
         Ok(section)
     }
@@ -126,13 +128,12 @@ impl<'event> File<'event> {
 
     /// Adds the provided section to the config, returning a mutable reference
     /// to it for immediate editing.
+    /// Note that its meta-data will remain as is.
     pub fn push_section(
         &mut self,
-        section_name: impl Into<Cow<'event, str>>,
-        subsection_name: impl Into<Option<Cow<'event, str>>>,
-        section: file::section::Body<'event>,
+        section: file::Section<'event>,
     ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
-        Ok(self.push_section_internal(section::Header::new(section_name, subsection_name)?, section))
+        Ok(self.push_section_internal(section))
     }
 
     /// Renames a section, modifying the last matching section.

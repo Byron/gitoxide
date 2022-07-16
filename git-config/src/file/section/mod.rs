@@ -1,22 +1,13 @@
-use crate::file::Section;
+use crate::file::{Section, SectionMut};
 use crate::parse::section;
-use crate::Source;
+use crate::{file, parse};
 use bstr::BString;
+use std::borrow::Cow;
 use std::ops::Deref;
-use std::path::PathBuf;
 
-/// Additional information about a section.
-#[derive(Clone, Debug, PartialOrd, PartialEq, Ord, Eq, Hash)]
-pub struct Metadata {
-    /// The file path of the source, if known.
-    pub path: Option<PathBuf>,
-    /// Where the section is coming from.
-    pub source: Source,
-    /// The levels of indirection of the file, with 0 being a section
-    /// that was directly loaded, and 1 being an `include.path` of a
-    /// level 0 file.
-    pub level: u8,
-}
+pub(crate) mod body;
+pub use body::{Body, BodyIter};
+use git_features::threading::OwnShared;
 
 impl<'a> Deref for Section<'a> {
     type Target = Body<'a>;
@@ -26,6 +17,23 @@ impl<'a> Deref for Section<'a> {
     }
 }
 
+/// Instantiation and conversion
+impl<'a> Section<'a> {
+    /// Create a new section with the given `name` and optional, `subsection`, `meta`-data and an empty body.
+    pub fn new(
+        name: impl Into<Cow<'a, str>>,
+        subsection: impl Into<Option<Cow<'a, str>>>,
+        meta: impl Into<OwnShared<file::Metadata>>,
+    ) -> Result<Self, parse::section::header::Error> {
+        Ok(Section {
+            header: parse::section::Header::new(name, subsection)?,
+            body: Default::default(),
+            meta: meta.into(),
+        })
+    }
+}
+
+/// Access
 impl<'a> Section<'a> {
     /// Return our header.
     pub fn header(&self) -> &section::Header<'a> {
@@ -56,7 +64,9 @@ impl<'a> Section<'a> {
         }
         Ok(())
     }
-}
 
-pub(crate) mod body;
-pub use body::{Body, BodyIter};
+    /// Returns a mutable version of this section for adjustment of values.
+    pub fn to_mut(&mut self) -> SectionMut<'_, 'a> {
+        SectionMut::new(self)
+    }
+}
