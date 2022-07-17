@@ -108,7 +108,7 @@ impl File<'static> {
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
     // TODO: use `init::Options` instead for lossy support.
-    pub fn from_env(options: init::includes::Options<'_>) -> Result<Option<File<'static>>, Error> {
+    pub fn from_env(options: init::Options<'_>) -> Result<Option<File<'static>>, Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
             Ok(v) => v.parse().map_err(|_| Error::InvalidConfigCount { input: v })?,

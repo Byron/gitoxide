@@ -34,10 +34,7 @@ impl File<'static> {
         path: impl Into<std::path::PathBuf>,
         buf: &mut Vec<u8>,
         mut meta: file::Metadata,
-        Options {
-            includes: include_options,
-            lossy,
-        }: Options<'_>,
+        options: Options<'_>,
     ) -> Result<Self, Error> {
         let path = path.into();
         buf.clear();
@@ -46,12 +43,19 @@ impl File<'static> {
         meta.path = path.into();
         let meta = OwnShared::new(meta);
         let mut config = Self::from_parse_events(
-            parse::Events::from_bytes_owned(buf, if lossy { Some(discard_nonessential_events) } else { None })
-                .map_err(init::Error::from)?,
+            parse::Events::from_bytes_owned(
+                buf,
+                if options.lossy {
+                    Some(discard_nonessential_events)
+                } else {
+                    None
+                },
+            )
+            .map_err(init::Error::from)?,
             OwnShared::clone(&meta),
         );
         let mut buf = Vec::new();
-        includes::resolve(&mut config, meta, &mut buf, include_options).map_err(init::Error::from)?;
+        includes::resolve(&mut config, meta, &mut buf, options).map_err(init::Error::from)?;
 
         Ok(config)
     }

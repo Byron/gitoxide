@@ -1,5 +1,6 @@
 use std::{borrow::Cow, env, fs};
 
+use git_config::file::init;
 use git_config::file::init::includes;
 use git_config::{file::init::from_env, File};
 use serial_test::serial;
@@ -110,8 +111,11 @@ fn error_on_relative_paths_in_include_paths() {
         .set("GIT_CONFIG_KEY_0", "include.path")
         .set("GIT_CONFIG_VALUE_0", "some_git_config");
 
-    let res = File::from_env(includes::Options {
-        max_depth: 1,
+    let res = File::from_env(init::Options {
+        includes: includes::Options {
+            max_depth: 1,
+            ..Default::default()
+        },
         ..Default::default()
     });
     assert!(matches!(
@@ -140,8 +144,11 @@ fn follow_include_paths() {
         .set("GIT_CONFIG_KEY_3", "include.origin.path")
         .set("GIT_CONFIG_VALUE_3", escape_backslashes(b_path));
 
-    let config = File::from_env(includes::Options {
-        max_depth: 1,
+    let config = File::from_env(init::Options {
+        includes: includes::Options {
+            max_depth: 1,
+            ..Default::default()
+        },
         ..Default::default()
     })
     .unwrap()

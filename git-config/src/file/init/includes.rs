@@ -14,7 +14,7 @@ pub(crate) fn resolve(
     config: &mut File<'static>,
     meta: OwnShared<Metadata>,
     buf: &mut Vec<u8>,
-    options: Options<'_>,
+    options: init::Options<'_>,
 ) -> Result<(), Error> {
     resolve_includes_recursive(config, meta, 0, buf, options)
 }
@@ -24,12 +24,12 @@ fn resolve_includes_recursive(
     meta: OwnShared<Metadata>,
     depth: u8,
     buf: &mut Vec<u8>,
-    options: Options<'_>,
+    options: init::Options<'_>,
 ) -> Result<(), Error> {
-    if depth == options.max_depth {
-        return if options.error_on_max_depth_exceeded {
+    if depth == options.includes.max_depth {
+        return if options.includes.error_on_max_depth_exceeded {
             Err(Error::IncludeDepthExceeded {
-                max_depth: options.max_depth,
+                max_depth: options.includes.max_depth,
             })
         } else {
             Ok(())
@@ -46,7 +46,7 @@ fn resolve_includes_recursive(
             detach_include_paths(&mut include_paths, section)
         } else if header_name == "includeIf" {
             if let Some(condition) = &header.subsection_name {
-                if include_condition_match(condition.as_ref(), target_config_path, options)? {
+                if include_condition_match(condition.as_ref(), target_config_path, options.includes)? {
                     detach_include_paths(&mut include_paths, section)
                 }
             }
@@ -70,11 +70,11 @@ fn append_followed_includes_recursively(
     target_config_path: Option<&Path>,
     depth: u8,
     meta: OwnShared<Metadata>,
-    options: Options<'_>,
+    options: init::Options<'_>,
     buf: &mut Vec<u8>,
 ) -> Result<(), Error> {
     for config_path in include_paths {
-        let config_path = resolve_path(config_path, target_config_path, options)?;
+        let config_path = resolve_path(config_path, target_config_path, options.includes.interpolate)?;
         if !config_path.is_file() {
             continue;
         }
@@ -86,7 +86,10 @@ fn append_followed_includes_recursively(
             source: meta.source,
         };
 
-        let no_follow_options = init::Options::default();
+        let no_follow_options = init::Options {
+            lossy: options.lossy,
+            ..Default::default()
+        };
         let mut include_config =
             File::from_path_with_buf(config_path, buf, config_meta, no_follow_options).map_err(|err| match err {
                 from_paths::Error::Io(err) => Error::Io(err),
@@ -229,9 +232,7 @@ fn gitdir_matches(
 fn resolve_path(
     path: crate::Path<'_>,
     target_config_path: Option<&Path>,
-    Options {
-        interpolate: context, ..
-    }: Options<'_>,
+    context: crate::path::interpolate::Context<'_>,
 ) -> Result<PathBuf, Error> {
     let path = path.interpolate(context)?;
     let path: PathBuf = if path.is_relative() {
