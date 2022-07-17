@@ -161,12 +161,11 @@ impl<'event> File<'event> {
     pub fn append(&mut self, mut other: Self) {
         let nl = self.detect_newline_style();
 
-        // TODO: don't allocate here
         fn ends_with_newline<'a>(it: impl DoubleEndedIterator<Item = &'a Event<'a>>) -> bool {
-            it.last().map_or(true, |e| e.to_bstring().last() == Some(&b'\n'))
+            it.last().map_or(true, |e| e.to_bstr_lossy().last() == Some(&b'\n'))
         }
         fn starts_with_newline<'a>(mut it: impl Iterator<Item = &'a Event<'a>>) -> bool {
-            it.next().map_or(true, |e| e.to_bstring().first() == Some(&b'\n'))
+            it.next().map_or(true, |e| e.to_bstr_lossy().first() == Some(&b'\n'))
         }
         let newline_event = || Event::Newline(Cow::Owned(nl.clone()));
 
