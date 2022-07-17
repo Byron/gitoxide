@@ -3,7 +3,7 @@ use std::{borrow::Cow, convert::TryFrom};
 use bstr::BStr;
 use git_features::threading::OwnShared;
 
-use crate::file::Metadata;
+use crate::file::{Metadata, MetadataFilter};
 use crate::{file, lookup, File};
 
 /// Read-only low-level access methods, as it requires generics for converting into
@@ -119,24 +119,40 @@ impl<'event> File<'event> {
             .map_err(lookup::Error::FailedConversion)
     }
 
-    /// Returns the last found immutable section with a given name and optional subsection name.
+    /// Returns the last found immutable section with a given `name` and optional `subsection_name`.
     pub fn section(
         &mut self,
-        section_name: impl AsRef<str>,
+        name: impl AsRef<str>,
         subsection_name: Option<&str>,
-    ) -> Result<&file::section::Body<'event>, lookup::existing::Error> {
-        let id = self
-            .section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?
-            .rev()
-            .next()
-            .expect("BUG: Section lookup vec was empty");
+    ) -> Result<&file::Section<'event>, lookup::existing::Error> {
         Ok(self
-            .sections
-            .get(&id)
-            .expect("BUG: Section did not have id from lookup"))
+            .section_filter(name, subsection_name, &mut |_| true)?
+            .expect("section present as we take all"))
     }
 
-    /// Gets all sections that match the provided name, ignoring any subsections.
+    /// Returns the last found immutable section with a given `name` and optional `subsection_name`, that matches `filter`.
+    ///
+    /// If there are sections matching `section_name` and `subsection_name` but the `filter` rejects all of them, `Ok(None)`
+    /// is returned.
+    pub fn section_filter<'a>(
+        &'a mut self,
+        name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Option<&'a file::Section<'event>>, lookup::existing::Error> {
+        Ok(self
+            .section_ids_by_name_and_subname(name.as_ref(), subsection_name)?
+            .rev()
+            .find_map({
+                let sections = &self.sections;
+                move |id| {
+                    let s = &sections[&id];
+                    filter(s.meta()).then(|| s)
+                }
+            }))
+    }
+
+    /// Gets all sections that match the provided `name`, ignoring any subsections.
     ///
     /// # Examples
     ///
@@ -171,15 +187,30 @@ impl<'event> File<'event> {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     #[must_use]
-    pub fn sections_by_name<'a>(
-        &'a self,
-        section_name: &'a str,
-    ) -> Option<impl Iterator<Item = &file::Section<'event>> + '_> {
-        self.section_ids_by_name(section_name).ok().map(move |ids| {
+    pub fn sections_by_name<'a>(&'a self, name: &'a str) -> Option<impl Iterator<Item = &file::Section<'event>> + '_> {
+        self.section_ids_by_name(name).ok().map(move |ids| {
             ids.map(move |id| {
                 self.sections
                     .get(&id)
                     .expect("section doesn't have id from from lookup")
+            })
+        })
+    }
+
+    /// Gets all sections that match the provided `name`, ignoring any subsections, and pass the `filter`.
+    #[must_use]
+    pub fn sections_by_name_and_filter<'a>(
+        &'a self,
+        name: &'a str,
+        filter: &'a mut MetadataFilter,
+    ) -> Option<impl Iterator<Item = &file::Section<'event>> + '_> {
+        self.section_ids_by_name(name).ok().map(move |ids| {
+            ids.filter_map(move |id| {
+                let s = self
+                    .sections
+                    .get(&id)
+                    .expect("section doesn't have id from from lookup");
+                filter(s.meta()).then(|| s)
             })
         })
     }

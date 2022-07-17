@@ -98,7 +98,7 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
 }
 
 #[test]
-fn multiple_paths_multi_value() -> crate::Result {
+fn multiple_paths_multi_value_and_filter() -> crate::Result {
     let dir = tempdir()?;
 
     let a_path = dir.path().join("a");
@@ -134,6 +134,18 @@ fn multiple_paths_multi_value() -> crate::Result {
     assert_eq!(
         config.strings("core", None, "key"),
         Some(vec![cow_str("a"), cow_str("b"), cow_str("c"),])
+    );
+
+    assert_eq!(
+        config.string_filter("core", None, "key", &mut |m| m.source == Source::System),
+        Some(cow_str("a")),
+        "the filter discards all values with higher priority"
+    );
+
+    assert_eq!(
+        config.strings_filter("core", None, "key", &mut |m| m.source == Source::Global
+            || m.source == Source::User),
+        Some(vec![cow_str("b"), cow_str("c")])
     );
 
     assert_eq!(

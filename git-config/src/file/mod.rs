@@ -10,7 +10,6 @@ use bstr::BStr;
 use git_features::threading::OwnShared;
 
 mod mutable;
-
 pub use mutable::{multi_value::MultiValueMut, section::SectionMut, value::ValueMut};
 
 mod init;
@@ -62,6 +61,9 @@ pub struct Section<'a> {
     body: section::Body<'a>,
     meta: OwnShared<Metadata>,
 }
+
+/// A function to filter metadata, returning `true` if the corresponding but ommitted value can be used.
+pub type MetadataFilter = dyn FnMut(&'_ Metadata) -> bool;
 
 /// A strongly typed index into some range.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Clone, Copy)]

@@ -80,7 +80,9 @@ impl File<'static> {
                 None => {
                     target = Some(config);
                 }
-                Some(target) => target.append(config),
+                Some(target) => {
+                    target.append(config);
+                }
             }
         }
         target.ok_or(Error::NoInput)
