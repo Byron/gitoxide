@@ -27,7 +27,7 @@ impl Event<'_> {
             Self::KeyValueSeparator => "=".into(),
             Self::SectionKey(k) => k.0.as_ref(),
             Self::SectionHeader(h) => h.name.0.as_ref(),
-            Self::Comment(c) => c.comment.as_ref(),
+            Self::Comment(c) => c.text.as_ref(),
         }
     }
 

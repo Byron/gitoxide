@@ -187,7 +187,7 @@ mod section {
                 i,
                 (
                     Section {
-                        section_header: match header.expect("header set") {
+                        header: match header.expect("header set") {
                             Event::SectionHeader(header) => header,
                             _ => unreachable!("unexpected"),
                         },
@@ -206,7 +206,7 @@ mod section {
             section(b"[test]", &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("test", None),
+                    header: parsed_section_header("test", None),
                     events: Default::default()
                 },
                 0
@@ -225,7 +225,7 @@ mod section {
             section(section_data, &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("hello", None),
+                    header: parsed_section_header("hello", None),
                     events: vec![
                         newline_event(),
                         whitespace_event("            "),
@@ -261,7 +261,7 @@ mod section {
             section(section_data, &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("a", None),
+                    header: parsed_section_header("a", None),
                     events: vec![
                         whitespace_event(" "),
                         name_event("k"),
@@ -279,7 +279,7 @@ mod section {
             section(section_data, &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("a", None),
+                    header: parsed_section_header("a", None),
                     events: vec![
                         whitespace_event(" "),
                         name_event("k"),
@@ -305,7 +305,7 @@ mod section {
             section(section_data, &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("hello", None),
+                    header: parsed_section_header("hello", None),
                     events: vec![
                         newline_event(),
                         whitespace_event("            "),
@@ -341,7 +341,7 @@ mod section {
             section(b"[hello] c", &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("hello", None),
+                    header: parsed_section_header("hello", None),
                     events: vec![whitespace_event(" "), name_event("c"), value_event("")].into()
                 },
                 0
@@ -361,7 +361,7 @@ mod section {
             section(section_data, &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("hello", None),
+                    header: parsed_section_header("hello", None),
                     events: vec![
                         whitespace_event(" "),
                         comment_event(';', " commentA"),
@@ -403,7 +403,7 @@ mod section {
             section(b"[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c", &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("section", None),
+                    header: parsed_section_header("section", None),
                     events: vec![
                         whitespace_event(" "),
                         name_event("a"),
@@ -432,7 +432,7 @@ mod section {
             section(b"[section \"a\"] b =\"\\\n;\";a", &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("section", (" ", "a")),
+                    header: parsed_section_header("section", (" ", "a")),
                     events: vec![
                         whitespace_event(" "),
                         name_event("b"),
@@ -457,7 +457,7 @@ mod section {
             section(b"[s]hello             #world", &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("s", None),
+                    header: parsed_section_header("s", None),
                     events: vec![
                         name_event("hello"),
                         whitespace_event("             "),

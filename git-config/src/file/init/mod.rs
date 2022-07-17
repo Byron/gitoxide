@@ -38,7 +38,7 @@ impl<'a> File<'a> {
 
         for section in sections {
             this.push_section_internal(crate::file::Section {
-                header: section.section_header,
+                header: section.header,
                 body: section::Body(section.events),
                 meta: OwnShared::clone(&meta),
             });

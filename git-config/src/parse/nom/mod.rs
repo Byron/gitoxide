@@ -78,8 +78,8 @@ fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
     Ok((
         i,
         Comment {
-            comment_tag: comment_tag as u8,
-            comment: Cow::Borrowed(comment.as_bstr()),
+            tag: comment_tag as u8,
+            text: Cow::Borrowed(comment.as_bstr()),
         },
     ))
 }

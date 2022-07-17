@@ -114,8 +114,8 @@ pub(crate) mod util {
 
     pub(crate) fn comment(comment_tag: char, comment: &'static str) -> Comment<'static> {
         Comment {
-            comment_tag: comment_tag as u8,
-            comment: Cow::Borrowed(comment.into()),
+            tag: comment_tag as u8,
+            text: Cow::Borrowed(comment.into()),
         }
     }
 

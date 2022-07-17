@@ -88,7 +88,7 @@ pub enum Event<'a> {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Section<'a> {
     /// The section name and subsection name, if any.
-    pub section_header: section::Header<'a>,
+    pub header: section::Header<'a>,
     /// The syntactic events found in this section.
     pub events: section::Events<'a>,
 }
@@ -97,9 +97,9 @@ pub struct Section<'a> {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Comment<'a> {
     /// The comment marker used. This is either a semicolon or octothorpe/hash.
-    pub comment_tag: u8,
+    pub tag: u8,
     /// The parsed comment.
-    pub comment: Cow<'a, BStr>,
+    pub text: Cow<'a, BStr>,
 }
 
 /// A parser error reports the one-indexed line number where the parsing error

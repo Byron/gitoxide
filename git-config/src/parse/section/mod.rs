@@ -30,7 +30,7 @@ impl Section<'_> {
     #[must_use]
     pub fn to_owned(&self) -> Section<'static> {
         Section {
-            section_header: self.section_header.to_owned(),
+            header: self.header.to_owned(),
             events: self.events.iter().map(Event::to_owned).collect(),
         }
     }
@@ -38,7 +38,7 @@ impl Section<'_> {
 
 impl Display for Section<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.section_header)?;
+        write!(f, "{}", self.header)?;
         for event in &self.events {
             event.fmt(f)?;
         }
