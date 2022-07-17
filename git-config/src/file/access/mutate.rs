@@ -290,22 +290,4 @@ impl<'event> File<'event> {
         }
         self
     }
-
-    fn detect_newline_style(&self) -> &BStr {
-        fn extract_newline<'a, 'b>(e: &'a Event<'b>) -> Option<&'a BStr> {
-            match e {
-                Event::Newline(b) => b.as_ref().into(),
-                _ => None,
-            }
-        }
-
-        self.frontmatter_events
-            .iter()
-            .find_map(extract_newline)
-            .or_else(|| {
-                self.sections()
-                    .find_map(|s| s.body.as_ref().iter().find_map(extract_newline))
-            })
-            .unwrap_or_else(|| if cfg!(windows) { "\r\n" } else { "\n" }.into())
-    }
 }
