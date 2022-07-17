@@ -1,6 +1,6 @@
 use std::{borrow::Cow, env, fs};
 
-use git_config::file::resolve_includes;
+use git_config::file::includes;
 use git_config::{
     file::{from_env, from_paths},
     File,
@@ -113,7 +113,7 @@ fn error_on_relative_paths_in_include_paths() {
         .set("GIT_CONFIG_KEY_0", "include.path")
         .set("GIT_CONFIG_VALUE_0", "some_git_config");
 
-    let res = File::from_env(resolve_includes::Options {
+    let res = File::from_env(includes::Options {
         max_depth: 1,
         ..Default::default()
     });
@@ -143,7 +143,7 @@ fn follow_include_paths() {
         .set("GIT_CONFIG_KEY_3", "include.origin.path")
         .set("GIT_CONFIG_VALUE_3", escape_backslashes(b_path));
 
-    let config = File::from_env(resolve_includes::Options {
+    let config = File::from_env(includes::Options {
         max_depth: 1,
         ..Default::default()
     })

@@ -7,11 +7,11 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_features::threading::OwnShared;
 use git_ref::Category;
 
-use crate::file::resolve_includes::{conditional, Options};
+use crate::file::includes::{conditional, Options};
 use crate::file::Metadata;
 use crate::{file, file::init::from_paths, File};
 
-pub(crate) fn resolve_includes(
+pub(crate) fn resolve(
     conf: &mut File<'static>,
     meta: OwnShared<Metadata>,
     buf: &mut Vec<u8>,
@@ -75,7 +75,7 @@ fn append_followed_includes_recursively(
     buf: &mut Vec<u8>,
 ) -> Result<(), from_paths::Error> {
     for config_path in include_paths {
-        let config_path = resolve(config_path, target_config_path, options)?;
+        let config_path = resolve_path(config_path, target_config_path, options)?;
         if !config_path.is_file() {
             continue;
         }
@@ -222,7 +222,7 @@ fn gitdir_matches(
     ))
 }
 
-fn resolve(
+fn resolve_path(
     path: crate::Path<'_>,
     target_config_path: Option<&Path>,
     Options {

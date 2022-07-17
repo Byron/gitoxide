@@ -72,13 +72,14 @@ mod cache {
                     &mut buf,
                     git_config::file::Metadata::from(git_config::Source::Local),
                     git_config::file::from_paths::Options {
-                        resolve_includes: git_config::file::resolve_includes::Options::follow(
+                        lossy: true,
+                        includes: git_config::file::includes::Options::follow(
                             git_config::path::interpolate::Context {
                                 git_install_dir,
                                 home_dir: None,
                                 home_for_user: None, // TODO: figure out how to configure this
                             },
-                            git_config::file::resolve_includes::conditional::Context {
+                            git_config::file::includes::conditional::Context {
                                 git_dir: git_dir.into(),
                                 branch_name: None,
                             },

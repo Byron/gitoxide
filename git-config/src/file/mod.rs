@@ -24,7 +24,7 @@ mod utils;
 pub mod section;
 
 ///
-pub mod resolve_includes;
+pub mod includes;
 
 ///
 pub mod rename_section {

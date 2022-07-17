@@ -5,7 +5,7 @@ use std::{borrow::Cow, path::PathBuf};
 use crate::file::Metadata;
 use crate::{
     file,
-    file::{from_paths, init::resolve_includes},
+    file::{from_paths, init::includes},
     parse::section,
     path::interpolate,
     File, Source,
@@ -113,7 +113,7 @@ impl File<'static> {
     /// environment variable for more information.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_env(options: crate::file::resolve_includes::Options<'_>) -> Result<Option<File<'static>>, Error> {
+    pub fn from_env(options: crate::file::includes::Options<'_>) -> Result<Option<File<'static>>, Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
             Ok(v) => v.parse().map_err(|_| Error::InvalidConfigCount { input: v })?,
@@ -164,7 +164,7 @@ impl File<'static> {
         }
 
         let mut buf = Vec::new();
-        resolve_includes(&mut config, meta, &mut buf, options)?;
+        includes::resolve(&mut config, meta, &mut buf, options)?;
         Ok(Some(config))
     }
 }

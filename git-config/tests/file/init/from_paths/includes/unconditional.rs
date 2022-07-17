@@ -1,6 +1,6 @@
 use std::fs;
 
-use git_config::file::resolve_includes;
+use git_config::file::includes;
 use git_config::{file::from_paths, File};
 use tempfile::tempdir;
 
@@ -9,7 +9,8 @@ use crate::file::{cow_str, init::from_paths::escape_backslashes};
 
 fn follow_options() -> from_paths::Options<'static> {
     from_paths::Options {
-        resolve_includes: resolve_includes::Options::follow(Default::default(), Default::default()),
+        includes: includes::Options::follow(Default::default(), Default::default()),
+        ..Default::default()
     }
 }
 
@@ -119,11 +120,12 @@ fn respect_max_depth() -> crate::Result {
 
     fn make_options(max_depth: u8, error_on_max_depth_exceeded: bool) -> from_paths::Options<'static> {
         from_paths::Options {
-            resolve_includes: resolve_includes::Options {
+            includes: includes::Options {
                 max_depth,
                 error_on_max_depth_exceeded,
                 ..Default::default()
             },
+            ..Default::default()
         }
     }
 
@@ -135,7 +137,8 @@ fn respect_max_depth() -> crate::Result {
 
     // with default max_allowed_depth of 10 and 4 levels of includes, last level is read
     let options = from_paths::Options {
-        resolve_includes: resolve_includes::Options::follow(Default::default(), Default::default()),
+        includes: includes::Options::follow(Default::default(), Default::default()),
+        ..Default::default()
     };
     let config = File::from_paths_metadata(into_meta(vec![dir.path().join("0")]), options)?;
     assert_eq!(config.integer("core", None, "i"), Some(Ok(4)));
@@ -237,11 +240,12 @@ fn cycle_detection() -> crate::Result {
     )?;
 
     let options = from_paths::Options {
-        resolve_includes: resolve_includes::Options {
+        includes: includes::Options {
             max_depth: 4,
             error_on_max_depth_exceeded: true,
             ..Default::default()
         },
+        ..Default::default()
     };
     let config = File::from_paths_metadata(into_meta(vec![a_path.clone()]), options);
     assert!(matches!(
@@ -250,11 +254,12 @@ fn cycle_detection() -> crate::Result {
     ));
 
     let options = from_paths::Options {
-        resolve_includes: resolve_includes::Options {
+        includes: includes::Options {
             max_depth: 4,
             error_on_max_depth_exceeded: false,
             ..Default::default()
         },
+        ..Default::default()
     };
     let config = File::from_paths_metadata(into_meta(vec![a_path]), options)?;
     assert_eq!(config.integers("core", None, "b"), Some(Ok(vec![0, 1, 0, 1, 0])));

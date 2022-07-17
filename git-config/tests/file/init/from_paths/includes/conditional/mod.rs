@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use git_config::file::resolve_includes;
+use git_config::file::includes;
 use git_config::{file::from_paths, path, File};
 use tempfile::tempdir;
 
@@ -82,16 +82,17 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
 
 fn options_with_git_dir(git_dir: &Path) -> from_paths::Options<'_> {
     from_paths::Options {
-        resolve_includes: resolve_includes::Options::follow(
+        includes: includes::Options::follow(
             path::interpolate::Context {
                 home_dir: Some(git_dir.parent().unwrap()),
                 ..Default::default()
             },
-            resolve_includes::conditional::Context {
+            includes::conditional::Context {
                 git_dir: Some(git_dir),
                 ..Default::default()
             },
         ),
+        ..Default::default()
     }
 }
 

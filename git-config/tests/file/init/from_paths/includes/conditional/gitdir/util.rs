@@ -7,7 +7,7 @@ use std::{
 };
 
 use bstr::{BString, ByteSlice};
-use git_config::file::{from_paths, resolve_includes};
+use git_config::file::{from_paths, includes};
 
 use crate::file::{
     cow_str,
@@ -84,13 +84,13 @@ impl GitEnv {
 }
 
 impl GitEnv {
-    pub fn include_options(&self) -> resolve_includes::Options<'_> {
-        self.to_from_paths_options().resolve_includes
+    pub fn include_options(&self) -> includes::Options<'_> {
+        self.to_from_paths_options().includes
     }
 
     pub fn to_from_paths_options(&self) -> from_paths::Options<'_> {
         let mut opts = options_with_git_dir(self.git_dir());
-        opts.resolve_includes.interpolate.home_dir = Some(self.home_dir());
+        opts.includes.interpolate.home_dir = Some(self.home_dir());
         opts
     }
 

@@ -1,5 +1,6 @@
 use crate::file::Metadata;
-use crate::{file, file::init::resolve_includes, parse, path::interpolate, File};
+use crate::parse::Event;
+use crate::{file, file::init::includes, parse, path::interpolate, File};
 use git_features::threading::OwnShared;
 
 /// The error returned by [`File::from_paths_metadata()`] and [`File::from_env_paths()`].
@@ -28,9 +29,12 @@ pub enum Error {
 #[derive(Clone, Copy, Default)]
 pub struct Options<'a> {
     /// Configure how to follow includes while handling paths.
-    pub resolve_includes: file::resolve_includes::Options<'a>,
-    // /// The way parse events should be processed.
-    // pub events: crate::parse::Mode,
+    pub includes: file::includes::Options<'a>,
+    /// If true, only value-bearing parse events will be kept to reduce memory usage and increase performance.
+    ///
+    /// Note that doing so will prevent [`write_to()`][File::write_to()] to serialize itself meaningfully and correctly,
+    /// as newlines will be missing. Use this only if it's clear that serialization will not be attempted.
+    pub lossy: bool,
 }
 
 /// Instantiation from one or more paths
@@ -51,7 +55,10 @@ impl File<'static> {
         path: impl Into<std::path::PathBuf>,
         buf: &mut Vec<u8>,
         mut meta: file::Metadata,
-        options: Options<'_>,
+        Options {
+            includes: include_options,
+            lossy,
+        }: Options<'_>,
     ) -> Result<Self, Error> {
         let path = path.into();
         buf.clear();
@@ -59,9 +66,12 @@ impl File<'static> {
 
         meta.path = path.into();
         let meta = OwnShared::new(meta);
-        let mut config = Self::from_parse_events(parse::Events::from_bytes_owned(buf, None)?, OwnShared::clone(&meta));
+        let mut config = Self::from_parse_events(
+            parse::Events::from_bytes_owned(buf, if lossy { Some(discard_nonessential_events) } else { None })?,
+            OwnShared::clone(&meta),
+        );
         let mut buf = Vec::new();
-        resolve_includes(&mut config, meta, &mut buf, options.resolve_includes)?;
+        includes::resolve(&mut config, meta, &mut buf, include_options)?;
 
         Ok(config)
     }
@@ -88,5 +98,17 @@ impl File<'static> {
             }
         }
         target.ok_or(Error::NoInput)
+    }
+}
+
+fn discard_nonessential_events(e: &Event<'_>) -> bool {
+    match e {
+        Event::Whitespace(_) | Event::Comment(_) | Event::Newline(_) => false,
+        Event::SectionHeader(_)
+        | Event::SectionKey(_)
+        | Event::KeyValueSeparator
+        | Event::Value(_)
+        | Event::ValueNotDone(_)
+        | Event::ValueDone(_) => true,
     }
 }

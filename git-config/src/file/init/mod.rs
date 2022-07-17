@@ -7,8 +7,7 @@ pub mod from_env;
 ///
 pub mod from_paths;
 
-mod resolve_includes;
-pub(crate) use resolve_includes::resolve_includes;
+pub(crate) mod includes;
 
 impl<'a> File<'a> {
     /// Return an empty `File` with the given `meta`-data to be attached to all new sections.
