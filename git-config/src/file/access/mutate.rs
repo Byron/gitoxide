@@ -1,3 +1,4 @@
+use bstr::{BStr, BString};
 use git_features::threading::OwnShared;
 use std::borrow::Cow;
 
@@ -158,19 +159,19 @@ impl<'event> File<'event> {
 
     /// Append another File to the end of ourselves, without loosing any information.
     pub fn append(&mut self, mut other: Self) {
+        let nl = self.detect_newline_style();
+
         fn ends_with_newline<'a>(it: impl DoubleEndedIterator<Item = &'a Event<'a>>) -> bool {
             it.last().map_or(true, |e| e.to_bstring().last() == Some(&b'\n'))
         }
-        fn newline_event() -> Event<'static> {
-            Event::Newline(Cow::Borrowed(
-                // NOTE: this is usually the right thing to assume, let's see
-                if cfg!(windows) { "\r\n" } else { "\n" }.into(),
-            ))
-        }
+        let newline_event = || Event::Newline(Cow::Owned(nl.clone()));
 
-        fn assure_ends_with_newline<'a, 'b>(events: &'b mut FrontMatterEvents<'a>) -> &'b mut FrontMatterEvents<'a> {
+        fn assure_ends_with_newline<'a, 'b>(
+            events: &'b mut FrontMatterEvents<'a>,
+            nl: &BStr,
+        ) -> &'b mut FrontMatterEvents<'a> {
             if !ends_with_newline(events.iter()) {
-                events.push(newline_event());
+                events.push(Event::Newline(nl.to_owned().into()));
             }
             events
         }
@@ -205,12 +206,33 @@ impl<'event> File<'event> {
             }
 
             match last_section_id {
-                Some(last_id) => {
-                    assure_ends_with_newline(self.frontmatter_post_section.entry(SectionId(last_id)).or_default())
-                        .extend(other.frontmatter_events)
+                Some(last_id) => assure_ends_with_newline(
+                    self.frontmatter_post_section.entry(SectionId(last_id)).or_default(),
+                    nl.as_ref(),
+                )
+                .extend(other.frontmatter_events),
+                None => {
+                    assure_ends_with_newline(&mut self.frontmatter_events, nl.as_ref()).extend(other.frontmatter_events)
                 }
-                None => assure_ends_with_newline(&mut self.frontmatter_events).extend(other.frontmatter_events),
             }
         }
+    }
+
+    fn detect_newline_style(&self) -> BString {
+        fn extract_newline(e: &Event<'_>) -> Option<BString> {
+            match e {
+                Event::Newline(b) => b.as_ref().to_owned().into(),
+                _ => None,
+            }
+        }
+
+        self.frontmatter_events
+            .iter()
+            .find_map(extract_newline)
+            .or_else(|| {
+                self.sections()
+                    .find_map(|s| s.body.as_ref().iter().find_map(extract_newline))
+            })
+            .unwrap_or_else(|| if cfg!(windows) { "\r\n" } else { "\n" }.into())
     }
 }
