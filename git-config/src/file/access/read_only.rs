@@ -255,9 +255,7 @@ impl<'event> File<'event> {
     ///
     /// This allows to reproduce the look of sections perfectly when serializing them with
     /// [`write_to()`][file::Section::write_to()].
-    pub fn sections_and_postmatter(
-        &self,
-    ) -> impl Iterator<Item = (&file::Section<'event>, Vec<&crate::parse::Event<'event>>)> {
+    pub fn sections_and_postmatter(&self) -> impl Iterator<Item = (&file::Section<'event>, Vec<&Event<'event>>)> {
         self.section_order.iter().map(move |id| {
             let s = &self.sections[id];
             let pm: Vec<_> = self
@@ -270,7 +268,7 @@ impl<'event> File<'event> {
     }
 
     /// Return all events which are in front of the first of our sections, or `None` if there are none.
-    pub fn frontmatter(&self) -> Option<impl Iterator<Item = &crate::parse::Event<'event>>> {
+    pub fn frontmatter(&self) -> Option<impl Iterator<Item = &Event<'event>>> {
         (!self.frontmatter_events.is_empty()).then(|| self.frontmatter_events.iter())
     }
 

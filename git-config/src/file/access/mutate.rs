@@ -24,11 +24,11 @@ impl<'event> File<'event> {
             .rev()
             .next()
             .expect("BUG: Section lookup vec was empty");
-        Ok(SectionMut::new(
-            self.sections
-                .get_mut(&id)
-                .expect("BUG: Section did not have id from lookup"),
-        ))
+        Ok(self
+            .sections
+            .get_mut(&id)
+            .expect("BUG: Section did not have id from lookup")
+            .to_mut())
     }
 
     /// Returns the last found mutable section with a given `name` and optional `subsection_name`, that matches `filter`.

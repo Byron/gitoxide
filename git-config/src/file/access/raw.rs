@@ -4,7 +4,7 @@ use bstr::BStr;
 
 use crate::file::MetadataFilter;
 use crate::{
-    file::{mutable::multi_value::EntryData, Index, MultiValueMut, SectionMut, Size, ValueMut},
+    file::{mutable::multi_value::EntryData, Index, MultiValueMut, Size, ValueMut},
     lookup,
     parse::{section, Event},
     File,
@@ -121,7 +121,7 @@ impl<'event> File<'event> {
 
             drop(section_ids);
             return Ok(ValueMut {
-                section: SectionMut::new(self.sections.get_mut(&section_id).expect("known section-id")),
+                section: self.sections.get_mut(&section_id).expect("known section-id").to_mut(),
                 key,
                 index: Index(index),
                 size: Size(size),

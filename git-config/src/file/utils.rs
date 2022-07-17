@@ -51,8 +51,8 @@ impl<'event> File<'event> {
         self.section_id_counter += 1;
         self.sections
             .get_mut(&new_section_id)
-            .map(SectionMut::new)
             .expect("previously inserted section")
+            .to_mut()
     }
 
     /// Returns the mapping between section and subsection name to section ids.
