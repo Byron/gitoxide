@@ -251,7 +251,8 @@ mod types {
     use crate::parse;
     use crate::path::interpolate;
 
-    /// The error returned by [`File::from_paths_metadata()`] and [`File::from_env_paths()`].
+    /// The error returned by [`File::from_paths_metadata()`][crate::File::from_paths_metadata()]
+    /// and [`File::from_env_paths()`][crate::File::from_env_paths()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
