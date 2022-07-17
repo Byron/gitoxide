@@ -36,7 +36,7 @@ impl<'a> File<'a> {
         let meta = meta.into();
         Ok(Self::from_parse_events_no_includes(
             parse::Events::from_bytes(input, options.to_event_filter())?,
-            meta.clone(),
+            meta,
         ))
     }
 
