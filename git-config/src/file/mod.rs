@@ -1,4 +1,5 @@
 //! A high level wrapper around a single or multiple `git-config` file, for reading and mutation.
+use std::path::PathBuf;
 use std::{
     borrow::Cow,
     collections::HashMap,
@@ -6,17 +7,24 @@ use std::{
 };
 
 use bstr::BStr;
+use git_features::threading::OwnShared;
 
 mod mutable;
-
-pub use mutable::{
-    multi_value::MultiValueMut,
-    section::{SectionBody, SectionBodyIter, SectionMut},
-    value::ValueMut,
-};
+pub use mutable::{multi_value::MultiValueMut, section::SectionMut, value::ValueMut};
 
 mod init;
 pub use init::{from_env, from_paths};
+
+mod access;
+mod impls;
+mod meta;
+mod utils;
+
+///
+pub mod section;
+
+///
+pub mod resolve_includes;
 
 ///
 pub mod rename_section {
@@ -31,9 +39,31 @@ pub mod rename_section {
     }
 }
 
-mod access;
-mod impls;
-mod utils;
+/// Additional information about a section.
+#[derive(Clone, Debug, PartialOrd, PartialEq, Ord, Eq, Hash)]
+pub struct Metadata {
+    /// The file path of the source, if known.
+    pub path: Option<PathBuf>,
+    /// Where the section is coming from.
+    pub source: crate::Source,
+    /// The levels of indirection of the file, with 0 being a section
+    /// that was directly loaded, and 1 being an `include.path` of a
+    /// level 0 file.
+    pub level: u8,
+    /// The trust-level for the section this meta-data is associated with.
+    pub trust: git_sec::Trust,
+}
+
+/// A section in a git-config file, like `[core]` or `[remote "origin"]`, along with all of its keys.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct Section<'a> {
+    header: crate::parse::section::Header<'a>,
+    body: section::Body<'a>,
+    meta: OwnShared<Metadata>,
+}
+
+/// A function to filter metadata, returning `true` if the corresponding but ommitted value can be used.
+pub type MetadataFilter = dyn FnMut(&'_ Metadata) -> bool;
 
 /// A strongly typed index into some range.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Debug, Clone, Copy)]
@@ -68,7 +98,7 @@ impl AddAssign<usize> for Size {
 /// words, it's possible that a section may have an ID of 3 but the next section
 /// has an ID of 5 as 4 was deleted.
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
-pub(crate) struct SectionBodyId(pub(crate) usize);
+pub(crate) struct SectionId(pub(crate) usize);
 
 /// All section body ids referred to by a section name.
 ///
@@ -78,9 +108,9 @@ pub(crate) struct SectionBodyId(pub(crate) usize);
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub(crate) enum SectionBodyIds<'a> {
     /// The list of section ids to use for obtaining the section body.
-    Terminal(Vec<SectionBodyId>),
+    Terminal(Vec<SectionId>),
     /// A hashmap from sub-section names to section ids.
-    NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionBodyId>>),
+    NonTerminal(HashMap<Cow<'a, BStr>, Vec<SectionId>>),
 }
 #[cfg(test)]
 mod tests;

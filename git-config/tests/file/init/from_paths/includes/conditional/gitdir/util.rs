@@ -7,6 +7,7 @@ use std::{
 };
 
 use bstr::{BString, ByteSlice};
+use git_config::file::{from_paths, resolve_includes};
 
 use crate::file::{
     cow_str,
@@ -83,9 +84,13 @@ impl GitEnv {
 }
 
 impl GitEnv {
-    pub fn include_options(&self) -> git_config::file::from_paths::Options {
+    pub fn include_options(&self) -> resolve_includes::Options<'_> {
+        self.to_from_paths_options().resolve_includes
+    }
+
+    pub fn to_from_paths_options(&self) -> from_paths::Options<'_> {
         let mut opts = options_with_git_dir(self.git_dir());
-        opts.interpolate.home_dir = Some(self.home_dir());
+        opts.resolve_includes.interpolate.home_dir = Some(self.home_dir());
         opts
     }
 
@@ -123,7 +128,12 @@ pub fn assert_section_value(
         paths.push(env.home_dir().join(".gitconfig"));
     }
 
-    let config = git_config::File::from_paths(paths, env.include_options())?;
+    let config = git_config::File::from_paths_metadata(
+        paths
+            .into_iter()
+            .map(|path| git_config::file::Metadata::try_from_path(path, git_config::Source::Local).unwrap()),
+        env.to_from_paths_options(),
+    )?;
 
     assert_eq!(
         config.string("section", None, "value"),

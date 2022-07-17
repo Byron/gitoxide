@@ -1,11 +1,41 @@
+use git_features::threading::OwnShared;
 use std::collections::{HashMap, VecDeque};
 
+use crate::file::Metadata;
 use crate::{
-    color,
-    file::{SectionBody, SectionBodyId, SectionBodyIds},
+    color, file,
+    file::{SectionBodyIds, SectionId},
     integer,
     parse::section,
 };
+
+/// A list of known sources for configuration files, with the first one being overridden
+/// by the second one, and so forth.
+/// Note that included files via `include.path` and `includeIf.<condition>.path` inherit
+/// their source.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub enum Source {
+    /// System-wide configuration path. This is defined as
+    /// `$(prefix)/etc/gitconfig` (where prefix is the git-installation directory).
+    System,
+    /// Also known as the user configuration path. This is usually `~/.gitconfig`.
+    Global,
+    /// Second user-specific configuration path; if `$XDG_CONFIG_HOME` is not
+    /// set or empty, `$HOME/.config/git/config` will be used.
+    User,
+    /// The configuration of the repository itself, located in `.git/config`.
+    Local,
+    /// Configuration specific to a worktree as created with `git worktree` and
+    /// typically located in `$GIT_DIR/config.worktree` if `extensions.worktreeConfig`
+    /// is enabled.
+    Worktree,
+    /// values parsed from the environment.
+    Env,
+    /// Values set from the command-line.
+    Cli,
+    /// Entirely internal from a programmatic source
+    Api,
+}
 
 /// High level `git-config` reader and writer.
 ///
@@ -36,6 +66,15 @@ use crate::{
 /// key `a` with the above config will fetch `d` or replace `d`, since the last
 /// valid config key/value pair is `a = d`:
 ///
+/// # Filtering
+///
+/// All methods exist in a `*_filter(…, filter)` version to allow skipping sections by
+/// their metadata. That way it's possible to select values based on their `git_sec::Trust`
+/// for example, or by their location.
+///
+/// Note that the filter may be executed even on sections that don't contain the key in question,
+/// even though the section will have matched the `name` and `subsection_name` respectively.
+///
 /// ```
 /// # use std::borrow::Cow;
 /// # use std::convert::TryFrom;
@@ -49,22 +88,24 @@ use crate::{
 /// [`raw_value()`]: Self::raw_value
 #[derive(PartialEq, Eq, Clone, Debug, Default)]
 pub struct File<'event> {
-    /// The list of events that occur before an actual section. Since a
+    /// The list of events that occur before any section. Since a
     /// `git-config` file prohibits global values, this vec is limited to only
     /// comment, newline, and whitespace events.
     pub(crate) frontmatter_events: crate::parse::FrontMatterEvents<'event>,
+    /// Frontmatter events to be placed after the given section.
+    pub(crate) frontmatter_post_section: HashMap<SectionId, crate::parse::FrontMatterEvents<'event>>,
     /// Section name to section id lookup tree, with section bodies for subsections being in a non-terminal
     /// variant of `SectionBodyIds`.
     pub(crate) section_lookup_tree: HashMap<section::Name<'event>, Vec<SectionBodyIds<'event>>>,
     /// This indirection with the SectionId as the key is critical to flexibly
     /// supporting `git-config` sections, as duplicated keys are permitted.
-    pub(crate) sections: HashMap<SectionBodyId, SectionBody<'event>>,
-    /// A way to reconstruct the complete section being a header and a body.
-    pub(crate) section_headers: HashMap<SectionBodyId, section::Header<'event>>,
+    pub(crate) sections: HashMap<SectionId, file::Section<'event>>,
     /// Internal monotonically increasing counter for section ids.
     pub(crate) section_id_counter: usize,
     /// Section order for output ordering.
-    pub(crate) section_order: VecDeque<SectionBodyId>,
+    pub(crate) section_order: VecDeque<SectionId>,
+    /// The source of the File itself, which is attached to new sections automatically.
+    pub(crate) meta: OwnShared<Metadata>,
 }
 
 /// Any value that may contain a foreground color, background color, a

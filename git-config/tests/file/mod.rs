@@ -10,7 +10,7 @@ pub fn cow_str(s: &str) -> Cow<'_, BStr> {
 fn size_in_memory() {
     assert_eq!(
         std::mem::size_of::<git_config::File<'_>>(),
-        1032,
+        1040,
         "This shouldn't change without us noticing"
     );
 }
@@ -22,7 +22,13 @@ mod open {
     #[test]
     fn parse_config_with_windows_line_endings_successfully() {
         let mut buf = Vec::new();
-        File::from_path_with_buf(&fixture_path("repo-config.crlf"), &mut buf).unwrap();
+        File::from_path_with_buf(
+            &fixture_path("repo-config.crlf"),
+            &mut buf,
+            Default::default(),
+            Default::default(),
+        )
+        .unwrap();
     }
 }
 

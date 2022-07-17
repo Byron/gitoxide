@@ -255,11 +255,11 @@ impl<'a> Events<'a> {
     #[must_use = "iterators are lazy and do nothing unless consumed"]
     #[allow(clippy::should_implement_trait)]
     pub fn into_iter(self) -> impl Iterator<Item = parse::Event<'a>> + std::iter::FusedIterator {
-        self.frontmatter
-            .into_iter()
-            .chain(self.sections.into_iter().flat_map(|section| {
-                std::iter::once(parse::Event::SectionHeader(section.section_header)).chain(section.events)
-            }))
+        self.frontmatter.into_iter().chain(
+            self.sections
+                .into_iter()
+                .flat_map(|section| std::iter::once(parse::Event::SectionHeader(section.header)).chain(section.events)),
+        )
     }
 
     /// Place all contained events into a single `Vec`.
@@ -301,7 +301,7 @@ fn from_bytes<'a, 'b>(
                 }
                 Some(prev_header) => {
                     sections.push(parse::Section {
-                        section_header: prev_header,
+                        header: prev_header,
                         events: std::mem::take(&mut events),
                     });
                 }
@@ -325,7 +325,7 @@ fn from_bytes<'a, 'b>(
         }
         Some(prev_header) => {
             sections.push(parse::Section {
-                section_header: prev_header,
+                header: prev_header,
                 events: std::mem::take(&mut events),
             });
         }

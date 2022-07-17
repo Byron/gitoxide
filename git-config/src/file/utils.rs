@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bstr::BStr;
 
 use crate::{
-    file::{SectionBody, SectionBodyId, SectionBodyIds, SectionMut},
+    file::{self, SectionBodyIds, SectionId, SectionMut},
     lookup,
     parse::section,
     File,
@@ -12,18 +12,14 @@ use crate::{
 /// Private helper functions
 impl<'event> File<'event> {
     /// Adds a new section to the config file.
-    pub(crate) fn push_section_internal(
-        &mut self,
-        header: section::Header<'event>,
-        section: SectionBody<'event>,
-    ) -> SectionMut<'_, 'event> {
-        let new_section_id = SectionBodyId(self.section_id_counter);
-        self.section_headers.insert(new_section_id, header.clone());
+    pub(crate) fn push_section_internal(&mut self, section: file::Section<'event>) -> SectionMut<'_, 'event> {
+        let new_section_id = SectionId(self.section_id_counter);
         self.sections.insert(new_section_id, section);
-        let lookup = self.section_lookup_tree.entry(header.name).or_default();
+        let header = &self.sections[&new_section_id].header;
+        let lookup = self.section_lookup_tree.entry(header.name.clone()).or_default();
 
         let mut found_node = false;
-        if let Some(subsection_name) = header.subsection_name {
+        if let Some(subsection_name) = header.subsection_name.clone() {
             for node in lookup.iter_mut() {
                 if let SectionBodyIds::NonTerminal(subsections) = node {
                     found_node = true;
@@ -64,10 +60,8 @@ impl<'event> File<'event> {
         &'a self,
         section_name: &'a str,
         subsection_name: Option<&str>,
-    ) -> Result<
-        impl Iterator<Item = SectionBodyId> + ExactSizeIterator + DoubleEndedIterator + '_,
-        lookup::existing::Error,
-    > {
+    ) -> Result<impl Iterator<Item = SectionId> + ExactSizeIterator + DoubleEndedIterator + '_, lookup::existing::Error>
+    {
         let section_name = section::Name::from_str_unchecked(section_name);
         let section_ids = self
             .section_lookup_tree
@@ -99,7 +93,7 @@ impl<'event> File<'event> {
     pub(crate) fn section_ids_by_name<'a>(
         &'a self,
         section_name: &'a str,
-    ) -> Result<impl Iterator<Item = SectionBodyId> + '_, lookup::existing::Error> {
+    ) -> Result<impl Iterator<Item = SectionId> + '_, lookup::existing::Error> {
         let section_name = section::Name::from_str_unchecked(section_name);
         match self.section_lookup_tree.get(&section_name) {
             Some(lookup) => Ok(lookup.iter().flat_map({
@@ -113,16 +107,6 @@ impl<'event> File<'event> {
                 }
             })),
             None => Err(lookup::existing::Error::SectionMissing),
-        }
-    }
-
-    // TODO: add note indicating that probably a lot if not all information about the original files is currently lost,
-    //       so can't be written back. This will probably change a lot during refactor, so it's not too important now.
-    pub(crate) fn append(&mut self, mut other: Self) {
-        for id in std::mem::take(&mut other.section_order) {
-            let header = other.section_headers.remove(&id).expect("present");
-            let body = other.sections.remove(&id).expect("present");
-            self.push_section_internal(header, body);
         }
     }
 }

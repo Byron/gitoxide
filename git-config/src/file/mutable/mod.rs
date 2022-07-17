@@ -2,7 +2,11 @@ use std::borrow::Cow;
 
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 
-use crate::{file::SectionBody, parse::Event};
+use crate::{file, parse::Event};
+
+pub(crate) mod multi_value;
+pub(crate) mod section;
+pub(crate) mod value;
 
 fn escape_value(value: &BStr) -> BString {
     let starts_with_whitespace = value.get(0).map_or(false, |b| b.is_ascii_whitespace());
@@ -64,8 +68,8 @@ impl<'a> Whitespace<'a> {
     }
 }
 
-impl<'a> From<&SectionBody<'a>> for Whitespace<'a> {
-    fn from(s: &SectionBody<'a>) -> Self {
+impl<'a> From<&file::section::Body<'a>> for Whitespace<'a> {
+    fn from(s: &file::section::Body<'a>) -> Self {
         let key_pos =
             s.0.iter()
                 .enumerate()
@@ -103,7 +107,3 @@ impl<'a> From<&SectionBody<'a>> for Whitespace<'a> {
             .unwrap_or_default()
     }
 }
-
-pub(crate) mod multi_value;
-pub(crate) mod section;
-pub(crate) mod value;

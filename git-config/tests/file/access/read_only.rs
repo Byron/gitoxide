@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
 use bstr::BStr;
@@ -24,7 +25,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
             location-quoted = "~/quoted"
     "#;
 
-    let config = git_config::parse::Events::from_bytes_owned(config.as_bytes(), None).map(File::from)?;
+    let config = File::from_str(config)?;
 
     assert!(!config.value::<Boolean>("core", None, "bool-explicit")?.0);
     assert!(!config.boolean("core", None, "bool-explicit").expect("exists")?);
@@ -113,7 +114,7 @@ fn get_value_for_all_provided_values() -> crate::Result {
         assert!(matches!(actual.value, Cow::Borrowed(_)));
         assert_eq!(
             actual
-                .interpolate(path::interpolate::Options {
+                .interpolate(path::interpolate::Context {
                     home_dir: home.as_path().into(),
                     ..Default::default()
                 })

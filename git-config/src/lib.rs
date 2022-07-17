@@ -38,8 +38,7 @@
 )]
 
 pub mod file;
-///
-pub mod fs;
+
 ///
 pub mod lookup;
 pub mod parse;
@@ -49,7 +48,7 @@ mod values;
 pub use values::{boolean, color, integer, path};
 
 mod types;
-pub use types::{Boolean, Color, File, Integer, Path};
+pub use types::{Boolean, Color, File, Integer, Path, Source};
 
 mod permissions;
 pub use permissions::Permissions;

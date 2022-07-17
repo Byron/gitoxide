@@ -18,7 +18,7 @@ mod remove {
             assert_eq!(section.num_values(), num_values);
         }
 
-        assert!(!section.is_empty(), "everything is still there");
+        assert!(!section.is_void(), "everything is still there");
         assert_eq!(
             config.to_string(),
             "\n        [a]\n            \n            \n            \n            \n            "
@@ -47,7 +47,7 @@ mod pop {
             num_values -= 1;
             assert_eq!(section.num_values(), num_values);
         }
-        assert!(!section.is_empty(), "there still is some whitespace");
+        assert!(!section.is_void(), "there still is some whitespace");
         assert_eq!(config.to_string(), "\n        [a]\n");
         Ok(())
     }

@@ -13,7 +13,7 @@ pub struct Permissions {
     /// set or empty, `$HOME/.config/git/config` will be used.
     pub user: git_sec::Permission,
     /// How to use the repository configuration.
-    pub repository: git_sec::Permission,
+    pub local: git_sec::Permission,
     /// How to use worktree configuration from `config.worktree`.
     // TODO: figure out how this really applies and provide more information here.
     pub worktree: git_sec::Permission,
@@ -31,7 +31,7 @@ impl Permissions {
             system: Allow,
             global: Allow,
             user: Allow,
-            repository: Allow,
+            local: Allow,
             worktree: Allow,
             env: Allow,
             includes: Allow,
@@ -46,7 +46,7 @@ impl Permissions {
             system: Allow,
             global: Allow,
             user: Allow,
-            repository: Deny,
+            local: Deny,
             worktree: Deny,
             env: Allow,
             includes: Deny,

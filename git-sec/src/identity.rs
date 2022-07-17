@@ -80,6 +80,13 @@ mod impl_ {
         let mut is_owned = false;
         let path = path.as_ref();
 
+        if !path.exists() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("{:?} does not exist.", path),
+            ));
+        }
+
         // Home is not actually owned by the corresponding user
         // but it can be considered de-facto owned by the user
         // Ignore errors here and just do the regular checks below

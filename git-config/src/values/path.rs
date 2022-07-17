@@ -10,16 +10,12 @@ pub mod interpolate {
 
     /// Options for interpolating paths with [`Path::interpolate()`][crate::Path::interpolate()].
     #[derive(Clone, Copy, Default)]
-    pub struct Options<'a> {
-        /// The location where gitoxide or git is installed
+    pub struct Context<'a> {
+        /// The location where gitoxide or git is installed. If `None`, `%(prefix)` in paths will cause an error.
         pub git_install_dir: Option<&'a std::path::Path>,
-        /// The home directory of the current user.
-        ///
-        /// Used during path interpolation.
+        /// The home directory of the current user. If `None`, `~/` in paths will cause an error.
         pub home_dir: Option<&'a std::path::Path>,
-        /// A function returning the home directory of a given user.
-        ///
-        /// Used during path interpolation.
+        /// A function returning the home directory of a given user. If `None`, `~name/` in paths will cause an error.
         pub home_for_user: Option<fn(&str) -> Option<PathBuf>>,
     }
 
@@ -114,11 +110,11 @@ impl<'a> Path<'a> {
     /// wasn't provided.
     pub fn interpolate(
         self,
-        interpolate::Options {
+        interpolate::Context {
             git_install_dir,
             home_dir,
             home_for_user,
-        }: interpolate::Options<'_>,
+        }: interpolate::Context<'_>,
     ) -> Result<Cow<'a, std::path::Path>, interpolate::Error> {
         if self.is_empty() {
             return Err(interpolate::Error::Missing { what: "path" });

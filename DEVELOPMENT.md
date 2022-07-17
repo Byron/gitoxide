@@ -9,6 +9,8 @@
      for the mundane things, like unhappy code paths.
    * *use git itself* as reference implementation, and use their test-cases and fixtures where
      appropriate. At the very least, try to learn from them.
+      * Run the same test against git whenever feasible to assure git agrees with our implementation. 
+        See `git-glob` for examples.
    * *use libgit2* test fixtures and cases where appropriate, or learn from them.
  * **safety first**
    * handle all errors, never `unwrap()`. If needed, `expect("why")`.
@@ -106,6 +108,11 @@ A bunch of notes collected to keep track of what's needed to eventually support 
 * Use `expect(…)` as assertion on Options, providing context on *why* the expectations should hold. Or in other words,
   answer "This should work _because_…<expect(…)>"
   
+## `Options` vs `Context`
+
+- Use `Options` whenever there is something to configure in terms of branching behaviour.
+- Use `Context` when potential optional data is required to perform an operation at all. See `git_config::path::Context` as reference.
+
 ## Examples, Experiments, Porcelain CLI and Plumbing CLI - which does what?
 
 ### Plumbing vs Porcelain

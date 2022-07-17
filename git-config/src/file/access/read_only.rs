@@ -1,8 +1,10 @@
 use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
+use git_features::threading::OwnShared;
 
-use crate::{file::SectionBody, lookup, parse::section, File};
+use crate::file::{Metadata, MetadataFilter};
+use crate::{file, lookup, File};
 
 /// Read-only low-level access methods, as it requires generics for converting into
 /// custom values defined in this crate like [`Integer`][crate::Integer] and
@@ -117,24 +119,40 @@ impl<'event> File<'event> {
             .map_err(lookup::Error::FailedConversion)
     }
 
-    /// Returns the last found immutable section with a given name and optional subsection name.
+    /// Returns the last found immutable section with a given `name` and optional `subsection_name`.
     pub fn section(
         &mut self,
-        section_name: impl AsRef<str>,
+        name: impl AsRef<str>,
         subsection_name: Option<&str>,
-    ) -> Result<&SectionBody<'event>, lookup::existing::Error> {
-        let id = self
-            .section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?
-            .rev()
-            .next()
-            .expect("BUG: Section lookup vec was empty");
+    ) -> Result<&file::Section<'event>, lookup::existing::Error> {
         Ok(self
-            .sections
-            .get(&id)
-            .expect("BUG: Section did not have id from lookup"))
+            .section_filter(name, subsection_name, &mut |_| true)?
+            .expect("section present as we take all"))
     }
 
-    /// Gets all sections that match the provided name, ignoring any subsections.
+    /// Returns the last found immutable section with a given `name` and optional `subsection_name`, that matches `filter`.
+    ///
+    /// If there are sections matching `section_name` and `subsection_name` but the `filter` rejects all of them, `Ok(None)`
+    /// is returned.
+    pub fn section_filter<'a>(
+        &'a mut self,
+        name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Option<&'a file::Section<'event>>, lookup::existing::Error> {
+        Ok(self
+            .section_ids_by_name_and_subname(name.as_ref(), subsection_name)?
+            .rev()
+            .find_map({
+                let sections = &self.sections;
+                move |id| {
+                    let s = &sections[&id];
+                    filter(s.meta()).then(|| s)
+                }
+            }))
+    }
+
+    /// Gets all sections that match the provided `name`, ignoring any subsections.
     ///
     /// # Examples
     ///
@@ -169,11 +187,8 @@ impl<'event> File<'event> {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     #[must_use]
-    pub fn sections_by_name<'a>(
-        &'a self,
-        section_name: &'a str,
-    ) -> Option<impl Iterator<Item = &SectionBody<'event>> + '_> {
-        self.section_ids_by_name(section_name).ok().map(move |ids| {
+    pub fn sections_by_name<'a>(&'a self, name: &'a str) -> Option<impl Iterator<Item = &file::Section<'event>> + '_> {
+        self.section_ids_by_name(name).ok().map(move |ids| {
             ids.map(move |id| {
                 self.sections
                     .get(&id)
@@ -182,66 +197,20 @@ impl<'event> File<'event> {
         })
     }
 
-    /// Get all sections that match the `section_name`, returning all matching section header along with their body.
-    ///
-    /// `None` is returned if there is no section with `section_name`.
-    ///
-    /// # Example
-    ///
-    /// Provided the following config:
-    /// ```plain
-    /// [url "ssh://git@github.com/"]
-    ///     insteadOf = https://github.com/
-    /// [url "ssh://git@bitbucket.org"]
-    ///     insteadOf = https://bitbucket.org/
-    /// ```
-    /// Calling this method will yield all section bodies and their header:
-    ///
-    /// ```rust
-    /// use git_config::File;
-    /// use git_config::parse::section;
-    /// use std::borrow::Cow;
-    /// use std::convert::TryFrom;
-    /// use nom::AsBytes;
-    ///
-    /// let input = r#"
-    /// [url "ssh://git@github.com/"]
-    ///    insteadOf = https://github.com/
-    /// [url "ssh://git@bitbucket.org"]
-    ///    insteadOf = https://bitbucket.org/
-    /// "#;
-    /// let config = git_config::File::try_from(input)?;
-    /// let url = config.sections_by_name_with_header("url");
-    /// assert_eq!(url.map_or(0, |s| s.count()), 2);
-    ///
-    /// for (i, (header, body)) in config.sections_by_name_with_header("url").unwrap().enumerate() {
-    ///     let url = header.subsection_name().unwrap();
-    ///     let instead_of = body.value("insteadOf").unwrap();
-    ///
-    ///     if i == 0 {
-    ///         assert_eq!(instead_of.as_ref(), "https://github.com/");
-    ///         assert_eq!(url, "ssh://git@github.com/");
-    ///     } else {
-    ///         assert_eq!(instead_of.as_ref(), "https://bitbucket.org/");
-    ///         assert_eq!(url, "ssh://git@bitbucket.org");
-    ///     }
-    /// }
-    /// # Ok::<(), Box<dyn std::error::Error>>(())
-    /// ```
-    pub fn sections_by_name_with_header<'a>(
+    /// Gets all sections that match the provided `name`, ignoring any subsections, and pass the `filter`.
+    #[must_use]
+    pub fn sections_by_name_and_filter<'a>(
         &'a self,
-        section_name: &'a str,
-    ) -> Option<impl Iterator<Item = (&section::Header<'event>, &SectionBody<'event>)> + '_> {
-        self.section_ids_by_name(section_name).ok().map(move |ids| {
-            ids.map(move |id| {
-                (
-                    self.section_headers
-                        .get(&id)
-                        .expect("section doesn't have a section header??"),
-                    self.sections
-                        .get(&id)
-                        .expect("section doesn't have id from from lookup"),
-                )
+        name: &'a str,
+        filter: &'a mut MetadataFilter,
+    ) -> Option<impl Iterator<Item = &file::Section<'event>> + '_> {
+        self.section_ids_by_name(name).ok().map(move |ids| {
+            ids.filter_map(move |id| {
+                let s = self
+                    .sections
+                    .get(&id)
+                    .expect("section doesn't have id from from lookup");
+                filter(s.meta()).then(|| s)
             })
         })
     }
@@ -256,9 +225,51 @@ impl<'event> File<'event> {
     }
 
     /// Returns if there are no entries in the config. This will return true
-    /// if there are only empty sections or comments.
+    /// if there are only empty sections, with whitespace and comments not being considered
+    /// void.
     #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.sections.values().all(SectionBody::is_empty)
+    pub fn is_void(&self) -> bool {
+        self.sections.values().all(|s| s.body.is_void())
+    }
+
+    /// Return the file's metadata to guide filtering of all values upon retrieval.
+    ///
+    /// This is the metadata the file was instantiated with for use in all newly created sections.
+    pub fn meta(&self) -> &Metadata {
+        &*self.meta
+    }
+
+    /// Similar to [`meta()`][File::meta()], but with shared ownership.
+    pub fn meta_owned(&self) -> OwnShared<Metadata> {
+        OwnShared::clone(&self.meta)
+    }
+
+    /// Return an iterator over all sections, in order of occurrence in the file itself.
+    pub fn sections(&self) -> impl Iterator<Item = &file::Section<'event>> + '_ {
+        self.section_order.iter().map(move |id| &self.sections[id])
+    }
+
+    /// Return an iterator over all sections along with non-section events that are placed right after them,
+    /// in order of occurrence in the file itself.
+    ///
+    /// This allows to reproduce the look of sections perfectly when serializing them with
+    /// [`write_to()`][file::Section::write_to()].
+    pub fn sections_and_postmatter(
+        &self,
+    ) -> impl Iterator<Item = (&file::Section<'event>, Vec<&crate::parse::Event<'event>>)> {
+        self.section_order.iter().map(move |id| {
+            let s = &self.sections[id];
+            let pm: Vec<_> = self
+                .frontmatter_post_section
+                .get(id)
+                .map(|events| events.iter().collect())
+                .unwrap_or_default();
+            (s, pm)
+        })
+    }
+
+    /// Return all events which are in front of the first of our sections, or `None` if there are none.
+    pub fn frontmatter(&self) -> Option<impl Iterator<Item = &crate::parse::Event<'event>>> {
+        (!self.frontmatter_events.is_empty()).then(|| self.frontmatter_events.iter())
     }
 }
