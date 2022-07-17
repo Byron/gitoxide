@@ -12,8 +12,8 @@ use git_features::threading::OwnShared;
 mod mutable;
 pub use mutable::{multi_value::MultiValueMut, section::SectionMut, value::ValueMut};
 
-mod init;
-pub use init::{from_env, from_paths};
+///
+pub mod init;
 
 mod access;
 mod impls;
@@ -22,9 +22,6 @@ mod utils;
 
 ///
 pub mod section;
-
-///
-pub mod includes;
 
 ///
 pub mod rename_section {

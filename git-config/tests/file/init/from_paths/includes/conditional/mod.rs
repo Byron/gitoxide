@@ -1,7 +1,8 @@
 use std::{fs, path::Path};
 
-use git_config::file::includes;
-use git_config::{file::from_paths, path, File};
+use git_config::file::init;
+use git_config::file::init::includes;
+use git_config::{path, File};
 use tempfile::tempdir;
 
 use crate::file::{cow_str, init::from_paths::escape_backslashes};
@@ -80,8 +81,8 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
     Ok(())
 }
 
-fn options_with_git_dir(git_dir: &Path) -> from_paths::Options<'_> {
-    from_paths::Options {
+fn options_with_git_dir(git_dir: &Path) -> init::Options<'_> {
+    init::Options {
         includes: includes::Options::follow(
             path::interpolate::Context {
                 home_dir: Some(git_dir.parent().unwrap()),

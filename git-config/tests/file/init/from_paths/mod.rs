@@ -19,7 +19,7 @@ mod from_path_no_includes {
 
         let err = git_config::File::from_path_no_includes(config_path, git_config::Source::Local).unwrap_err();
         assert!(
-            matches!(err,  git_config::file::from_paths::Error::Io(io_error) if io_error.kind() == std::io::ErrorKind::NotFound)
+            matches!(err,  git_config::file::init::from_paths::Error::Io(io_error) if io_error.kind() == std::io::ErrorKind::NotFound)
         );
     }
 

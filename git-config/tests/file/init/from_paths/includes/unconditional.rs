@@ -1,14 +1,15 @@
 use std::fs;
 
-use git_config::file::includes;
-use git_config::{file::from_paths, File};
+use git_config::file::init;
+use git_config::file::init::includes;
+use git_config::{file::init::from_paths, File};
 use tempfile::tempdir;
 
 use crate::file::init::from_paths::into_meta;
 use crate::file::{cow_str, init::from_paths::escape_backslashes};
 
-fn follow_options() -> from_paths::Options<'static> {
-    from_paths::Options {
+fn follow_options() -> init::Options<'static> {
+    init::Options {
         includes: includes::Options::follow(Default::default(), Default::default()),
         ..Default::default()
     }
@@ -118,8 +119,8 @@ fn respect_max_depth() -> crate::Result {
     let config = File::from_paths_metadata(into_meta(vec![dir.path().join("0")]), follow_options())?;
     assert_eq!(config.integers("core", None, "i"), Some(Ok(vec![0, 1, 2, 3, 4])));
 
-    fn make_options(max_depth: u8, error_on_max_depth_exceeded: bool) -> from_paths::Options<'static> {
-        from_paths::Options {
+    fn make_options(max_depth: u8, error_on_max_depth_exceeded: bool) -> init::Options<'static> {
+        init::Options {
             includes: includes::Options {
                 max_depth,
                 error_on_max_depth_exceeded,
@@ -136,7 +137,7 @@ fn respect_max_depth() -> crate::Result {
     assert_eq!(config.integer("core", None, "i"), Some(Ok(1)));
 
     // with default max_allowed_depth of 10 and 4 levels of includes, last level is read
-    let options = from_paths::Options {
+    let options = init::Options {
         includes: includes::Options::follow(Default::default(), Default::default()),
         ..Default::default()
     };
@@ -153,7 +154,9 @@ fn respect_max_depth() -> crate::Result {
     let config = File::from_paths_metadata(into_meta(vec![dir.path().join("0")]), options);
     assert!(matches!(
         config.unwrap_err(),
-        from_paths::Error::IncludeDepthExceeded { max_depth: 2 }
+        from_paths::Error::Init(init::Error::Includes(includes::Error::IncludeDepthExceeded {
+            max_depth: 2
+        }))
     ));
 
     // with max_allowed_depth of 2 and 4 levels of includes and error_on_max_depth_exceeded: false , max_allowed_depth is exceeded and the value of level 2 is returned
@@ -166,7 +169,9 @@ fn respect_max_depth() -> crate::Result {
     let config = File::from_paths_metadata(into_meta(vec![dir.path().join("0")]), options);
     assert!(matches!(
         config.unwrap_err(),
-        from_paths::Error::IncludeDepthExceeded { max_depth: 0 }
+        from_paths::Error::Init(init::Error::Includes(includes::Error::IncludeDepthExceeded {
+            max_depth: 0
+        }))
     ));
     Ok(())
 }
@@ -239,7 +244,7 @@ fn cycle_detection() -> crate::Result {
         ),
     )?;
 
-    let options = from_paths::Options {
+    let options = init::Options {
         includes: includes::Options {
             max_depth: 4,
             error_on_max_depth_exceeded: true,
@@ -250,10 +255,12 @@ fn cycle_detection() -> crate::Result {
     let config = File::from_paths_metadata(into_meta(vec![a_path.clone()]), options);
     assert!(matches!(
         config.unwrap_err(),
-        from_paths::Error::IncludeDepthExceeded { max_depth: 4 }
+        from_paths::Error::Init(init::Error::Includes(includes::Error::IncludeDepthExceeded {
+            max_depth: 4
+        }))
     ));
 
-    let options = from_paths::Options {
+    let options = init::Options {
         includes: includes::Options {
             max_depth: 4,
             error_on_max_depth_exceeded: false,

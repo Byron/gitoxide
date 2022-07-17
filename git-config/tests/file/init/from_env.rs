@@ -1,10 +1,7 @@
 use std::{borrow::Cow, env, fs};
 
-use git_config::file::includes;
-use git_config::{
-    file::{from_env, from_paths},
-    File,
-};
+use git_config::file::init::includes;
+use git_config::{file::init::from_env, File};
 use serial_test::serial;
 use tempfile::tempdir;
 
@@ -119,7 +116,7 @@ fn error_on_relative_paths_in_include_paths() {
     });
     assert!(matches!(
         res,
-        Err(from_env::Error::FromPathsError(from_paths::Error::MissingConfigPath))
+        Err(from_env::Error::Includes(includes::Error::MissingConfigPath))
     ));
 }
 

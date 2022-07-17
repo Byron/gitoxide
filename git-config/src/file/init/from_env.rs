@@ -2,14 +2,8 @@ use git_features::threading::OwnShared;
 use std::convert::TryFrom;
 use std::{borrow::Cow, path::PathBuf};
 
-use crate::file::Metadata;
-use crate::{
-    file,
-    file::{from_paths, init::includes},
-    parse::section,
-    path::interpolate,
-    File, Source,
-};
+use crate::file::{init, Metadata};
+use crate::{file, parse::section, path::interpolate, File, Source};
 
 /// Represents the errors that may occur when calling [`File::from_env`][crate::File::from_env()].
 #[derive(Debug, thiserror::Error)]
@@ -26,7 +20,7 @@ pub enum Error {
     #[error(transparent)]
     PathInterpolationError(#[from] interpolate::Error),
     #[error(transparent)]
-    FromPathsError(#[from] from_paths::Error),
+    Includes(#[from] init::includes::Error),
     #[error(transparent)]
     Section(#[from] section::header::Error),
     #[error(transparent)]
@@ -40,7 +34,7 @@ impl File<'static> {
     ///
     /// See <https://git-scm.com/docs/git-config#FILES> for details.
     // TODO: how does this relate to the `fs` module? Have a feeling options should contain instructions on which files to use.
-    pub fn from_env_paths(options: from_paths::Options<'_>) -> Result<File<'static>, from_paths::Error> {
+    pub fn from_env_paths(options: init::Options<'_>) -> Result<File<'static>, init::from_paths::Error> {
         use std::env;
 
         let mut metas = vec![];
@@ -113,7 +107,8 @@ impl File<'static> {
     /// environment variable for more information.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_env(options: crate::file::includes::Options<'_>) -> Result<Option<File<'static>>, Error> {
+    // TODO: use `init::Options` instead for lossy support.
+    pub fn from_env(options: init::includes::Options<'_>) -> Result<Option<File<'static>>, Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
             Ok(v) => v.parse().map_err(|_| Error::InvalidConfigCount { input: v })?,
@@ -164,7 +159,7 @@ impl File<'static> {
         }
 
         let mut buf = Vec::new();
-        includes::resolve(&mut config, meta, &mut buf, options)?;
+        init::includes::resolve(&mut config, meta, &mut buf, options)?;
         Ok(Some(config))
     }
 }

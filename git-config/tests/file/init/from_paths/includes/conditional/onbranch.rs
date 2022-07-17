@@ -4,8 +4,8 @@ use std::{
 };
 
 use bstr::{BString, ByteSlice};
-use git_config::file::includes::conditional;
-use git_config::file::{from_paths, includes};
+use git_config::file::init::includes::conditional;
+use git_config::file::init::{self, includes};
 use git_ref::{
     transaction::{Change, PreviousValue, RefEdit},
     FullName, Target,
@@ -234,7 +234,7 @@ value = branch-override-by-include
     )?;
 
     let branch_name = FullName::try_from(BString::from(branch_name))?;
-    let options = from_paths::Options {
+    let options = init::Options {
         includes: includes::Options::follow(
             Default::default(),
             conditional::Context {

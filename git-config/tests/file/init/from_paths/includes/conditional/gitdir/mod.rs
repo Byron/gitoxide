@@ -87,7 +87,6 @@ fn dot_slash_path_is_replaced_with_directory_containing_the_including_config_fil
 #[test]
 #[serial]
 fn dot_slash_from_environment_causes_error() -> crate::Result {
-    use git_config::file::from_paths;
     let env = GitEnv::repo_name("worktree")?;
 
     {
@@ -103,8 +102,8 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
         assert!(
             matches!(
                 res,
-                Err(git_config::file::from_env::Error::FromPathsError(
-                    from_paths::Error::MissingConfigPath
+                Err(git_config::file::init::from_env::Error::Includes(
+                    git_config::file::init::includes::Error::MissingConfigPath
                 ))
             ),
             "this is a failure of resolving the include path, after trying to include it"
@@ -122,8 +121,8 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
         assert!(
             matches!(
                 res,
-                Err(git_config::file::from_env::Error::FromPathsError(
-                    from_paths::Error::MissingConfigPath
+                Err(git_config::file::init::from_env::Error::Includes(
+                    git_config::file::init::includes::Error::MissingConfigPath
                 ))
             ),
             "here the pattern path tries to be resolved and fails as target config isn't set"
