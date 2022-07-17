@@ -29,6 +29,8 @@ pub enum Error {
 pub struct Options<'a> {
     /// Configure how to follow includes while handling paths.
     pub resolve_includes: file::resolve_includes::Options<'a>,
+    // /// The way parse events should be processed.
+    // pub events: crate::parse::Mode,
 }
 
 /// Instantiation from one or more paths

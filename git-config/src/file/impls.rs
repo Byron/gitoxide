@@ -30,7 +30,7 @@ impl<'a> TryFrom<&'a BStr> for File<'a> {
     /// Convenience constructor. Attempts to parse the provided byte string into
     /// a [`File`]. See [`Events::from_bytes()`][parse::Events::from_bytes()] for more information.
     fn try_from(value: &'a BStr) -> Result<File<'a>, Self::Error> {
-        parse::Events::from_bytes(value).map(|events| Self::from_parse_events(events, Metadata::api()))
+        parse::Events::from_bytes(value, None).map(|events| Self::from_parse_events(events, Metadata::api()))
     }
 }
 
