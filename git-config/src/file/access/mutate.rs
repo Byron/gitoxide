@@ -1,4 +1,4 @@
-use bstr::{BStr, BString};
+use bstr::BStr;
 use git_features::threading::OwnShared;
 use std::borrow::Cow;
 
@@ -159,7 +159,7 @@ impl<'event> File<'event> {
 
     /// Append another File to the end of ourselves, without loosing any information.
     pub fn append(&mut self, mut other: Self) {
-        let nl = self.detect_newline_style();
+        let nl = self.detect_newline_style().to_owned();
 
         fn ends_with_newline<'a>(it: impl DoubleEndedIterator<Item = &'a Event<'a>>) -> bool {
             it.last().map_or(true, |e| e.to_bstr_lossy().last() == Some(&b'\n'))
@@ -224,10 +224,10 @@ impl<'event> File<'event> {
         }
     }
 
-    fn detect_newline_style(&self) -> BString {
-        fn extract_newline(e: &Event<'_>) -> Option<BString> {
+    fn detect_newline_style(&self) -> &BStr {
+        fn extract_newline<'a, 'b>(e: &'a Event<'b>) -> Option<&'a BStr> {
             match e {
-                Event::Newline(b) => b.as_ref().to_owned().into(),
+                Event::Newline(b) => b.as_ref().into(),
                 _ => None,
             }
         }
