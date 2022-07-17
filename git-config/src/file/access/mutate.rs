@@ -188,29 +188,24 @@ impl<'event> File<'event> {
             self.push_section_internal(section);
 
             let new_id = self.section_id_counter - 1;
-            last_added_section_id = Some(new_id);
+            last_added_section_id = Some(SectionId(new_id));
             if let Some(post_matter) = other.frontmatter_post_section.remove(&id) {
                 self.frontmatter_post_section.insert(SectionId(new_id), post_matter);
             }
         }
 
         if !other.frontmatter_events.is_empty() {
-            match last_added_section_id {
-                Some(id) => {
-                    if !ends_with_newline(self.sections[&SectionId(id)].body.0.iter()) {
-                        other.frontmatter_events.insert(0, newline_event());
-                    }
-                }
-                None => {
-                    if !our_last_section_before_append
-                        .map_or(true, |id| ends_with_newline(self.sections[&id].body.0.iter()))
-                    {
-                        other.frontmatter_events.insert(0, newline_event());
-                    }
+            let mut needs_nl = !starts_with_newline(other.frontmatter_events.iter());
+            if let Some(id) = last_added_section_id
+                .or(our_last_section_before_append)
+                .filter(|_| needs_nl)
+            {
+                if !ends_with_newline(self.sections[&id].body.0.iter()) {
+                    other.frontmatter_events.insert(0, newline_event());
+                    needs_nl = false;
                 }
             }
 
-            let needs_nl = !starts_with_newline(other.frontmatter_events.iter());
             match our_last_section_before_append {
                 Some(last_id) => assure_ends_with_newline_if(
                     needs_nl,

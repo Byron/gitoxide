@@ -78,7 +78,7 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
     fs::write(c_path.as_path(), b"# nothing in c")?;
 
     let d_path = dir.path().join("d");
-    fs::write(d_path.as_path(), b"; nothing in d")?;
+    fs::write(d_path.as_path(), b"\n; nothing in d")?;
 
     let paths = vec![a_path, b_path, c_path, d_path];
     let mut config = File::from_paths_metadata(into_meta(paths), Default::default())?;
