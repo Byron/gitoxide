@@ -1,6 +1,5 @@
 use crate::file::init::Options;
 use crate::file::{init, Metadata};
-use crate::parse::Event;
 use crate::{file, file::init::includes, parse, File};
 use git_features::threading::OwnShared;
 
@@ -42,16 +41,8 @@ impl File<'static> {
 
         meta.path = path.into();
         let meta = OwnShared::new(meta);
-        let mut config = Self::from_parse_events(
-            parse::Events::from_bytes_owned(
-                buf,
-                if options.lossy {
-                    Some(discard_nonessential_events)
-                } else {
-                    None
-                },
-            )
-            .map_err(init::Error::from)?,
+        let mut config = Self::from_parse_events_no_includes(
+            parse::Events::from_bytes_owned(buf, options.to_event_filter()).map_err(init::Error::from)?,
             OwnShared::clone(&meta),
         );
         let mut buf = Vec::new();
@@ -82,17 +73,5 @@ impl File<'static> {
             }
         }
         target.ok_or(Error::NoInput)
-    }
-}
-
-fn discard_nonessential_events(e: &Event<'_>) -> bool {
-    match e {
-        Event::Whitespace(_) | Event::Comment(_) | Event::Newline(_) => false,
-        Event::SectionHeader(_)
-        | Event::SectionKey(_)
-        | Event::KeyValueSeparator
-        | Event::Value(_)
-        | Event::ValueNotDone(_)
-        | Event::ValueDone(_) => true,
     }
 }

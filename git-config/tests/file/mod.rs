@@ -16,6 +16,7 @@ fn size_in_memory() {
 }
 
 mod open {
+    use git_config::file::init;
     use git_config::File;
     use git_testtools::fixture_path;
 
@@ -26,7 +27,10 @@ mod open {
             &fixture_path("repo-config.crlf"),
             &mut buf,
             Default::default(),
-            Default::default(),
+            init::Options {
+                lossy: true,
+                ..Default::default()
+            },
         )
         .unwrap();
     }
