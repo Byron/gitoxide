@@ -45,7 +45,7 @@ impl<'event> File<'event> {
             .section_ids_by_name_and_subname(name.as_ref(), subsection_name)?
             .rev()
             .find(|id| {
-                let s = &self.sections[&id];
+                let s = &self.sections[id];
                 filter(s.meta())
             });
         Ok(id.and_then(move |id| self.sections.get_mut(&id).map(|s| s.to_mut())))
@@ -163,7 +163,7 @@ impl<'event> File<'event> {
             .section_ids_by_name_and_subname(name, subsection_name.into())
             .ok()?
             .rev()
-            .find(|id| filter(self.sections.get(&id).expect("each id has a section").meta()))?;
+            .find(|id| filter(self.sections.get(id).expect("each id has a section").meta()))?;
         self.section_order.remove(
             self.section_order
                 .iter()
@@ -218,7 +218,7 @@ impl<'event> File<'event> {
         let id = self
             .section_ids_by_name_and_subname(name.as_ref(), subsection_name.into())?
             .rev()
-            .find(|id| filter(self.sections.get(&id).expect("each id has a section").meta()))
+            .find(|id| filter(self.sections.get(id).expect("each id has a section").meta()))
             .ok_or(rename_section::Error::Lookup(lookup::existing::Error::KeyMissing))?;
         let section = self.sections.get_mut(&id).expect("known section-id");
         section.header = section::Header::new(new_name, new_subsection_name)?;
