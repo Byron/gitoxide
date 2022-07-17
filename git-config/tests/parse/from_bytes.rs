@@ -152,8 +152,8 @@ fn skips_bom() {
 ";
 
     assert_eq!(
-        Events::from_bytes(bytes),
-        Events::from_bytes(bytes_with_gb18030_bom.as_bytes())
+        Events::from_bytes(bytes, None),
+        Events::from_bytes(bytes_with_gb18030_bom.as_bytes(), None)
     );
     assert_eq!(
         Events::from_bytes_owned(bytes, None),

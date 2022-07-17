@@ -10,7 +10,7 @@ impl FromStr for File<'static> {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         parse::Events::from_bytes_owned(s.as_bytes(), None)
-            .map(|events| File::from_parse_events(events, Metadata::api()))
+            .map(|events| File::from_parse_events_no_includes(events, Metadata::api()))
     }
 }
 
@@ -20,7 +20,7 @@ impl<'a> TryFrom<&'a str> for File<'a> {
     /// Convenience constructor. Attempts to parse the provided string into a
     /// [`File`]. See [`Events::from_str()`][crate::parse::Events::from_str()] for more information.
     fn try_from(s: &'a str) -> Result<File<'a>, Self::Error> {
-        parse::Events::from_str(s).map(|events| Self::from_parse_events(events, Metadata::api()))
+        parse::Events::from_str(s).map(|events| Self::from_parse_events_no_includes(events, Metadata::api()))
     }
 }
 
@@ -30,7 +30,8 @@ impl<'a> TryFrom<&'a BStr> for File<'a> {
     /// Convenience constructor. Attempts to parse the provided byte string into
     /// a [`File`]. See [`Events::from_bytes()`][parse::Events::from_bytes()] for more information.
     fn try_from(value: &'a BStr) -> Result<File<'a>, Self::Error> {
-        parse::Events::from_bytes(value).map(|events| Self::from_parse_events(events, Metadata::api()))
+        parse::Events::from_bytes(value, None)
+            .map(|events| Self::from_parse_events_no_includes(events, Metadata::api()))
     }
 }
 

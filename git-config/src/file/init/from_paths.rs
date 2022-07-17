@@ -1,5 +1,6 @@
-use crate::file::Metadata;
-use crate::{file, file::init::resolve_includes, parse, path::interpolate, File};
+use crate::file::init::Options;
+use crate::file::{init, Metadata};
+use crate::{file, file::init::includes, parse, File};
 use git_features::threading::OwnShared;
 
 /// The error returned by [`File::from_paths_metadata()`] and [`File::from_env_paths()`].
@@ -9,26 +10,9 @@ pub enum Error {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]
-    Parse(#[from] parse::Error),
-    #[error(transparent)]
-    Interpolate(#[from] interpolate::Error),
-    #[error("The maximum allowed length {} of the file include chain built by following nested resolve_includes is exceeded", .max_depth)]
-    IncludeDepthExceeded { max_depth: u8 },
-    #[error("Include paths from environment variables must not be relative as no config file paths exists as root")]
-    MissingConfigPath,
-    #[error("The git directory must be provided to support `gitdir:` conditional includes")]
-    MissingGitDir,
-    #[error(transparent)]
-    Realpath(#[from] git_path::realpath::Error),
+    Init(#[from] init::Error),
     #[error("Not a single path was provided to load the configuration from")]
     NoInput,
-}
-
-/// Options when loading git config using [`File::from_paths_metadata()`].
-#[derive(Clone, Copy, Default)]
-pub struct Options<'a> {
-    /// Configure how to follow includes while handling paths.
-    pub resolve_includes: file::resolve_includes::Options<'a>,
 }
 
 /// Instantiation from one or more paths
@@ -57,9 +41,12 @@ impl File<'static> {
 
         meta.path = path.into();
         let meta = OwnShared::new(meta);
-        let mut config = Self::from_parse_events(parse::Events::from_bytes_owned(buf, None)?, OwnShared::clone(&meta));
+        let mut config = Self::from_parse_events_no_includes(
+            parse::Events::from_bytes_owned(buf, options.to_event_filter()).map_err(init::Error::from)?,
+            OwnShared::clone(&meta),
+        );
         let mut buf = Vec::new();
-        resolve_includes(&mut config, meta, &mut buf, options.resolve_includes)?;
+        includes::resolve(&mut config, meta, &mut buf, options).map_err(init::Error::from)?;
 
         Ok(config)
     }
