@@ -94,6 +94,22 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
         ";before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n; nothing in d\n;before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n; nothing in d",
         "other files post-section matter works as well, adding newlines as needed"
     );
+
+    assert_eq!(
+        config
+            .frontmatter()
+            .expect("present")
+            .map(|e| e.to_string())
+            .collect::<Vec<_>>()
+            .join(""),
+        ";before a\n"
+    );
+
+    assert_eq!(
+        config.sections_and_postmatter().count(),
+        4,
+        "we trust rust here and don't validate it's actually what we think it is"
+    );
     Ok(())
 }
 

@@ -226,18 +226,20 @@ impl<'event> File<'event> {
 
     /// Returns if there are no entries in the config. This will return true
     /// if there are only empty sections, with whitespace and comments not being considered
-    /// 'empty'.
+    /// void.
     #[must_use]
     pub fn is_void(&self) -> bool {
         self.sections.values().all(|s| s.body.is_void())
     }
 
     /// Return the file's metadata to guide filtering of all values upon retrieval.
+    ///
+    /// This is the metadata the file was instantiated with for use in all newly created sections.
     pub fn meta(&self) -> &Metadata {
         &*self.meta
     }
 
-    /// Return the file's metadata to guide filtering of all values upon retrieval, wrapped for shared ownership.
+    /// Similar to [`meta()`][File::meta()], but with shared ownership.
     pub fn meta_owned(&self) -> OwnShared<Metadata> {
         OwnShared::clone(&self.meta)
     }
@@ -245,5 +247,29 @@ impl<'event> File<'event> {
     /// Return an iterator over all sections, in order of occurrence in the file itself.
     pub fn sections(&self) -> impl Iterator<Item = &file::Section<'event>> + '_ {
         self.section_order.iter().map(move |id| &self.sections[id])
+    }
+
+    /// Return an iterator over all sections along with non-section events that are placed right after them,
+    /// in order of occurrence in the file itself.
+    ///
+    /// This allows to reproduce the look of sections perfectly when serializing them with
+    /// [`write_to()`][file::Section::write_to()].
+    pub fn sections_and_postmatter(
+        &self,
+    ) -> impl Iterator<Item = (&file::Section<'event>, Vec<&crate::parse::Event<'event>>)> {
+        self.section_order.iter().map(move |id| {
+            let s = &self.sections[id];
+            let pm: Vec<_> = self
+                .frontmatter_post_section
+                .get(id)
+                .map(|events| events.iter().collect())
+                .unwrap_or_default();
+            (s, pm)
+        })
+    }
+
+    /// Return all events which are in front of the first of our sections, or `None` if there are none.
+    pub fn frontmatter(&self) -> Option<impl Iterator<Item = &crate::parse::Event<'event>>> {
+        (!self.frontmatter_events.is_empty()).then(|| self.frontmatter_events.iter())
     }
 }
