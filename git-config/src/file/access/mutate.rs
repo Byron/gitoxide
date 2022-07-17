@@ -161,22 +161,28 @@ impl<'event> File<'event> {
     pub fn append(&mut self, mut other: Self) {
         let nl = self.detect_newline_style();
 
+        // TODO: don't allocate here
         fn ends_with_newline<'a>(it: impl DoubleEndedIterator<Item = &'a Event<'a>>) -> bool {
             it.last().map_or(true, |e| e.to_bstring().last() == Some(&b'\n'))
         }
+        fn starts_with_newline<'a>(mut it: impl Iterator<Item = &'a Event<'a>>) -> bool {
+            it.next().map_or(true, |e| e.to_bstring().first() == Some(&b'\n'))
+        }
         let newline_event = || Event::Newline(Cow::Owned(nl.clone()));
 
-        fn assure_ends_with_newline<'a, 'b>(
+        fn assure_ends_with_newline_if<'a, 'b>(
+            needs_nl: bool,
             events: &'b mut FrontMatterEvents<'a>,
             nl: &BStr,
         ) -> &'b mut FrontMatterEvents<'a> {
-            if !ends_with_newline(events.iter()) {
+            if needs_nl && !ends_with_newline(events.iter()) {
                 events.push(Event::Newline(nl.to_owned().into()));
             }
             events
         }
 
-        let last_section_id = (self.section_id_counter != 0).then(|| self.section_id_counter - 1);
+        let our_last_section_before_append =
+            (self.section_id_counter != 0).then(|| SectionId(self.section_id_counter - 1));
         let mut last_added_section_id = None;
         for id in std::mem::take(&mut other.section_order) {
             let section = other.sections.remove(&id).expect("present");
@@ -197,23 +203,24 @@ impl<'event> File<'event> {
                     }
                 }
                 None => {
-                    if !last_section_id.map_or(true, |id| {
-                        ends_with_newline(self.sections[&SectionId(id)].body.0.iter())
-                    }) {
+                    if !our_last_section_before_append
+                        .map_or(true, |id| ends_with_newline(self.sections[&id].body.0.iter()))
+                    {
                         other.frontmatter_events.insert(0, newline_event());
                     }
                 }
             }
 
-            match last_section_id {
-                Some(last_id) => assure_ends_with_newline(
-                    self.frontmatter_post_section.entry(SectionId(last_id)).or_default(),
+            let needs_nl = !starts_with_newline(other.frontmatter_events.iter());
+            match our_last_section_before_append {
+                Some(last_id) => assure_ends_with_newline_if(
+                    needs_nl,
+                    self.frontmatter_post_section.entry(last_id).or_default(),
                     nl.as_ref(),
                 )
                 .extend(other.frontmatter_events),
-                None => {
-                    assure_ends_with_newline(&mut self.frontmatter_events, nl.as_ref()).extend(other.frontmatter_events)
-                }
+                None => assure_ends_with_newline_if(needs_nl, &mut self.frontmatter_events, nl.as_ref())
+                    .extend(other.frontmatter_events),
             }
         }
     }

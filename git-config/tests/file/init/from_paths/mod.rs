@@ -85,13 +85,13 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
 
     assert_eq!(
         config.to_string(),
-        ";before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n\n; nothing in d"
+        ";before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n; nothing in d"
     );
 
     config.append(config.clone());
     assert_eq!(
         config.to_string(),
-        ";before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n\n; nothing in d\n\n;before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n\n; nothing in d",
+        ";before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n; nothing in d\n;before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n; nothing in d",
         "other files post-section matter works as well, adding newlines as needed"
     );
     Ok(())
