@@ -261,6 +261,11 @@ pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<Repository, open
     ThreadSafeRepository::open(directory).map(Into::into)
 }
 
+/// See [ThreadSafeRepository::open_opts()], but returns a [`Repository`] instead.
+pub fn open_opts(directory: impl Into<std::path::PathBuf>, options: open::Options) -> Result<Repository, open::Error> {
+    ThreadSafeRepository::open_opts(directory, options).map(Into::into)
+}
+
 ///
 pub mod permission {
     ///

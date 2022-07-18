@@ -3,7 +3,8 @@ use std::{
     ops::{Deref, Range},
 };
 
-use bstr::{BStr, BString, ByteVec};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
+use smallvec::SmallVec;
 
 use crate::file::{self, Section};
 use crate::{
@@ -22,6 +23,7 @@ pub struct SectionMut<'a, 'event> {
     section: &'a mut Section<'event>,
     implicit_newline: bool,
     whitespace: Whitespace<'event>,
+    newline: SmallVec<[u8; 2]>,
 }
 
 /// Mutating methods.
@@ -37,7 +39,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
         body.extend(self.whitespace.key_value_separators());
         body.push(Event::Value(escape_value(value.into()).into()));
         if self.implicit_newline {
-            body.push(Event::Newline(BString::from("\n").into()));
+            body.push(Event::Newline(BString::from(self.newline.to_vec()).into()));
         }
     }
 
@@ -109,7 +111,15 @@ impl<'a, 'event> SectionMut<'a, 'event> {
     /// Adds a new line event. Note that you don't need to call this unless
     /// you've disabled implicit newlines.
     pub fn push_newline(&mut self) {
-        self.section.body.0.push(Event::Newline(Cow::Borrowed("\n".into())));
+        self.section
+            .body
+            .0
+            .push(Event::Newline(Cow::Owned(BString::from(self.newline.to_vec()))));
+    }
+
+    /// Return the newline used when calling [`push_newline()`][Self::push_newline()].
+    pub fn newline(&self) -> &BStr {
+        self.newline.as_slice().as_bstr()
     }
 
     /// Enables or disables automatically adding newline events after adding
@@ -158,12 +168,13 @@ impl<'a, 'event> SectionMut<'a, 'event> {
 
 // Internal methods that may require exact indices for faster operations.
 impl<'a, 'event> SectionMut<'a, 'event> {
-    pub(crate) fn new(section: &'a mut Section<'event>) -> Self {
-        let whitespace = (&section.body).into();
+    pub(crate) fn new(section: &'a mut Section<'event>, newline: SmallVec<[u8; 2]>) -> Self {
+        let whitespace = Whitespace::from_body(&section.body);
         Self {
             section,
             implicit_newline: true,
             whitespace,
+            newline,
         }
     }
 
@@ -231,7 +242,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
 }
 
 impl<'event> Deref for SectionMut<'_, 'event> {
-    type Target = file::section::Body<'event>;
+    type Target = file::Section<'event>;
 
     fn deref(&self) -> &Self::Target {
         self.section

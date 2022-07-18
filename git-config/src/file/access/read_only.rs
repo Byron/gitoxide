@@ -1,9 +1,12 @@
+use std::iter::FromIterator;
 use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
 use git_features::threading::OwnShared;
+use smallvec::SmallVec;
 
 use crate::file::{Metadata, MetadataFilter};
+use crate::parse::Event;
 use crate::{file, lookup, File};
 
 /// Read-only low-level access methods, as it requires generics for converting into
@@ -254,9 +257,7 @@ impl<'event> File<'event> {
     ///
     /// This allows to reproduce the look of sections perfectly when serializing them with
     /// [`write_to()`][file::Section::write_to()].
-    pub fn sections_and_postmatter(
-        &self,
-    ) -> impl Iterator<Item = (&file::Section<'event>, Vec<&crate::parse::Event<'event>>)> {
+    pub fn sections_and_postmatter(&self) -> impl Iterator<Item = (&file::Section<'event>, Vec<&Event<'event>>)> {
         self.section_order.iter().map(move |id| {
             let s = &self.sections[id];
             let pm: Vec<_> = self
@@ -269,7 +270,33 @@ impl<'event> File<'event> {
     }
 
     /// Return all events which are in front of the first of our sections, or `None` if there are none.
-    pub fn frontmatter(&self) -> Option<impl Iterator<Item = &crate::parse::Event<'event>>> {
+    pub fn frontmatter(&self) -> Option<impl Iterator<Item = &Event<'event>>> {
         (!self.frontmatter_events.is_empty()).then(|| self.frontmatter_events.iter())
+    }
+
+    /// Return the newline characters that have been detected in this config file or the default ones
+    /// for the current platform.
+    ///
+    /// Note that the first found newline is the one we use in the assumption of consistency.
+    pub fn detect_newline_style(&self) -> &BStr {
+        fn extract_newline<'a, 'b>(e: &'a Event<'b>) -> Option<&'a BStr> {
+            match e {
+                Event::Newline(b) => b.as_ref().into(),
+                _ => None,
+            }
+        }
+
+        self.frontmatter_events
+            .iter()
+            .find_map(extract_newline)
+            .or_else(|| {
+                self.sections()
+                    .find_map(|s| s.body.as_ref().iter().find_map(extract_newline))
+            })
+            .unwrap_or_else(|| if cfg!(windows) { "\r\n" } else { "\n" }.into())
+    }
+
+    pub(crate) fn detect_newline_style_smallvec(&self) -> SmallVec<[u8; 2]> {
+        SmallVec::from_iter(self.detect_newline_style().iter().copied())
     }
 }

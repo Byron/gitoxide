@@ -2,6 +2,7 @@ use crate::file::{Metadata, Section, SectionMut};
 use crate::parse::section;
 use crate::{file, parse};
 use bstr::BString;
+use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::ops::Deref;
 
@@ -71,7 +72,7 @@ impl<'a> Section<'a> {
     }
 
     /// Returns a mutable version of this section for adjustment of values.
-    pub fn to_mut(&mut self) -> SectionMut<'_, 'a> {
-        SectionMut::new(self)
+    pub fn to_mut(&mut self, newline: SmallVec<[u8; 2]>) -> SectionMut<'_, 'a> {
+        SectionMut::new(self, newline)
     }
 }

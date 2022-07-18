@@ -1,10 +1,11 @@
 use std::{borrow::Cow, collections::HashMap};
 
 use bstr::BStr;
+use smallvec::ToSmallVec;
 
 use crate::file::MetadataFilter;
 use crate::{
-    file::{mutable::multi_value::EntryData, Index, MultiValueMut, SectionMut, Size, ValueMut},
+    file::{mutable::multi_value::EntryData, Index, MultiValueMut, Size, ValueMut},
     lookup,
     parse::{section, Event},
     File,
@@ -120,8 +121,9 @@ impl<'event> File<'event> {
             }
 
             drop(section_ids);
+            let nl = self.detect_newline_style().to_smallvec();
             return Ok(ValueMut {
-                section: SectionMut::new(self.sections.get_mut(&section_id).expect("known section-id")),
+                section: self.sections.get_mut(&section_id).expect("known section-id").to_mut(nl),
                 key,
                 index: Index(index),
                 size: Size(size),

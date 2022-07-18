@@ -66,10 +66,8 @@ impl<'a> Whitespace<'a> {
         }
         out
     }
-}
 
-impl<'a> From<&file::section::Body<'a>> for Whitespace<'a> {
-    fn from(s: &file::section::Body<'a>) -> Self {
+    fn from_body(s: &file::section::Body<'a>) -> Self {
         let key_pos =
             s.0.iter()
                 .enumerate()

@@ -44,6 +44,8 @@ mod worktree;
 /// Various permissions for parts of git repositories.
 pub(crate) mod permissions;
 
+mod config;
+
 mod init;
 
 mod location;

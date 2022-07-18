@@ -24,11 +24,12 @@ impl<'event> File<'event> {
             .rev()
             .next()
             .expect("BUG: Section lookup vec was empty");
-        Ok(SectionMut::new(
-            self.sections
-                .get_mut(&id)
-                .expect("BUG: Section did not have id from lookup"),
-        ))
+        let nl = self.detect_newline_style_smallvec();
+        Ok(self
+            .sections
+            .get_mut(&id)
+            .expect("BUG: Section did not have id from lookup")
+            .to_mut(nl))
     }
 
     /// Returns the last found mutable section with a given `name` and optional `subsection_name`, that matches `filter`.
@@ -48,7 +49,8 @@ impl<'event> File<'event> {
                 let s = &self.sections[id];
                 filter(s.meta())
             });
-        Ok(id.and_then(move |id| self.sections.get_mut(&id).map(|s| s.to_mut())))
+        let nl = self.detect_newline_style_smallvec();
+        Ok(id.and_then(move |id| self.sections.get_mut(&id).map(move |s| s.to_mut(nl))))
     }
 
     /// Adds a new section. If a subsection name was provided, then
@@ -63,8 +65,10 @@ impl<'event> File<'event> {
     /// # use git_config::File;
     /// # use std::convert::TryFrom;
     /// let mut git_config = git_config::File::default();
-    /// let _section = git_config.new_section("hello", Some("world".into()));
-    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n");
+    /// let section = git_config.new_section("hello", Some("world".into()))?;
+    /// let nl = section.newline().to_owned();
+    /// assert_eq!(git_config.to_string(), format!("[hello \"world\"]{nl}"));
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///
     /// Creating a new empty section and adding values to it:
@@ -77,9 +81,10 @@ impl<'event> File<'event> {
     /// let mut git_config = git_config::File::default();
     /// let mut section = git_config.new_section("hello", Some("world".into()))?;
     /// section.push(section::Key::try_from("a")?, "b");
-    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n\ta = b\n");
+    /// let nl = section.newline().to_owned();
+    /// assert_eq!(git_config.to_string(), format!("[hello \"world\"]{nl}\ta = b{nl}"));
     /// let _section = git_config.new_section("core", None);
-    /// assert_eq!(git_config.to_string(), "[hello \"world\"]\n\ta = b\n[core]\n");
+    /// assert_eq!(git_config.to_string(), format!("[hello \"world\"]{nl}\ta = b{nl}[core]{nl}"));
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn new_section(
@@ -87,8 +92,9 @@ impl<'event> File<'event> {
         name: impl Into<Cow<'event, str>>,
         subsection: impl Into<Option<Cow<'event, str>>>,
     ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
-        let mut section =
-            self.push_section_internal(file::Section::new(name, subsection, OwnShared::clone(&self.meta))?);
+        let id = self.push_section_internal(file::Section::new(name, subsection, OwnShared::clone(&self.meta))?);
+        let nl = self.detect_newline_style_smallvec();
+        let mut section = self.sections.get_mut(&id).expect("each id yields a section").to_mut(nl);
         section.push_newline();
         Ok(section)
     }
@@ -180,7 +186,10 @@ impl<'event> File<'event> {
         &mut self,
         section: file::Section<'event>,
     ) -> Result<SectionMut<'_, 'event>, section::header::Error> {
-        Ok(self.push_section_internal(section))
+        let id = self.push_section_internal(section);
+        let nl = self.detect_newline_style_smallvec();
+        let section = self.sections.get_mut(&id).expect("each id yields a section").to_mut(nl);
+        Ok(section)
     }
 
     /// Renames the section with `name` and `subsection_name`, modifying the last matching section
@@ -289,23 +298,5 @@ impl<'event> File<'event> {
                 .extend(other.frontmatter_events),
         }
         self
-    }
-
-    fn detect_newline_style(&self) -> &BStr {
-        fn extract_newline<'a, 'b>(e: &'a Event<'b>) -> Option<&'a BStr> {
-            match e {
-                Event::Newline(b) => b.as_ref().into(),
-                _ => None,
-            }
-        }
-
-        self.frontmatter_events
-            .iter()
-            .find_map(extract_newline)
-            .or_else(|| {
-                self.sections()
-                    .find_map(|s| s.body.as_ref().iter().find_map(extract_newline))
-            })
-            .unwrap_or_else(|| if cfg!(windows) { "\r\n" } else { "\n" }.into())
     }
 }

@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
-use git_sec::Trust;
 
 use crate::{Permissions, ThreadSafeRepository};
 
@@ -66,6 +65,7 @@ pub struct Options {
     pub(crate) object_store_slots: git_odb::store::init::Slots,
     pub(crate) replacement_objects: ReplacementObjects,
     pub(crate) permissions: Permissions,
+    pub(crate) git_dir_trust: Option<git_sec::Trust>,
 }
 
 #[derive(Default, Clone)]
@@ -117,6 +117,19 @@ impl Options {
         self
     }
 
+    /// Set the trust level of the `.git` directory we are about to open.
+    ///
+    /// This can be set manually to force trust even though otherwise it might
+    /// not be fully trusted, leading to limitations in how configuration files
+    /// are interpreted.
+    ///
+    /// If not called explicitly, it will be determined by looking at its
+    /// ownership via [`git_sec::Trust::from_path_ownership()`].
+    pub fn with(mut self, trust: git_sec::Trust) -> Self {
+        self.git_dir_trust = trust.into();
+        self
+    }
+
     /// Open a repository at `path` with the options set so far.
     pub fn open(self, path: impl Into<std::path::PathBuf>) -> Result<ThreadSafeRepository, Error> {
         ThreadSafeRepository::open_opts(path, self)
@@ -124,17 +137,19 @@ impl Options {
 }
 
 impl git_sec::trust::DefaultForLevel for Options {
-    fn default_for_level(level: Trust) -> Self {
+    fn default_for_level(level: git_sec::Trust) -> Self {
         match level {
             git_sec::Trust::Full => Options {
                 object_store_slots: Default::default(),
                 replacement_objects: Default::default(),
                 permissions: Permissions::all(),
+                git_dir_trust: git_sec::Trust::Full.into(),
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
                 replacement_objects: ReplacementObjects::Disable, // don't be tricked into seeing manufactured objects
                 permissions: Default::default(),
+                git_dir_trust: git_sec::Trust::Reduced.into(),
             },
         }
     }
@@ -166,7 +181,7 @@ impl ThreadSafeRepository {
     /// `options` for fine-grained control.
     ///
     /// Note that you should use [`crate::discover()`] if security should be adjusted by ownership.
-    pub fn open_opts(path: impl Into<std::path::PathBuf>, options: Options) -> Result<Self, Error> {
+    pub fn open_opts(path: impl Into<std::path::PathBuf>, mut options: Options) -> Result<Self, Error> {
         let (path, kind) = {
             let path = path.into();
             match git_discover::is_git(&path) {
@@ -179,6 +194,9 @@ impl ThreadSafeRepository {
         };
         let (git_dir, worktree_dir) =
             git_discover::repository::Path::from_dot_git_dir(path, kind).into_repository_and_work_tree_directories();
+        if options.git_dir_trust.is_none() {
+            options.git_dir_trust = git_sec::Trust::from_path_ownership(&git_dir)?.into();
+        }
         ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
     }
 
@@ -208,24 +226,28 @@ impl ThreadSafeRepository {
             .into_repository_and_work_tree_directories();
         let worktree_dir = worktree_dir.or(overrides.worktree_dir);
 
-        let trust = git_sec::Trust::from_path_ownership(&git_dir)?;
-        let options = trust_map.into_value_by_level(trust);
+        let git_dir_trust = git_sec::Trust::from_path_ownership(&git_dir)?;
+        let options = trust_map.into_value_by_level(git_dir_trust);
         ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
     }
 
     pub(crate) fn open_from_paths(
         git_dir: PathBuf,
         mut worktree_dir: Option<PathBuf>,
-        Options {
-            object_store_slots,
-            replacement_objects,
-            permissions: Permissions {
-                git_dir: git_dir_perm,
-                env,
-            },
-        }: Options,
+        options: Options,
     ) -> Result<Self, Error> {
-        if *git_dir_perm != git_sec::ReadWrite::all() {
+        let Options {
+            git_dir_trust,
+            object_store_slots,
+            ref replacement_objects,
+            permissions: Permissions {
+                git_dir: ref git_dir_perm,
+                ref env,
+            },
+        } = options;
+        let git_dir_trust = git_dir_trust.expect("trust must be been determined by now");
+
+        if **git_dir_perm != git_sec::ReadWrite::all() {
             // TODO: respect `save.directory`, which needs more support from git-config to do properly.
             return Err(Error::UnsafeGitDir { path: git_dir });
         }
@@ -238,6 +260,7 @@ impl ThreadSafeRepository {
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
         let config = crate::config::Cache::new(
+            git_dir_trust,
             common_dir_ref,
             env.xdg_config_home.clone(),
             env.home.clone(),
@@ -290,16 +313,6 @@ impl ThreadSafeRepository {
             })
             .unwrap_or_default();
 
-        // used when spawning new repositories off this one when following worktrees
-        let linked_worktree_options = Options {
-            object_store_slots,
-            replacement_objects,
-            permissions: Permissions {
-                env,
-                git_dir: git_dir_perm,
-            },
-        };
-
         Ok(ThreadSafeRepository {
             objects: OwnShared::new(git_odb::Store::at_opts(
                 common_dir_ref.join("objects"),
@@ -314,7 +327,8 @@ impl ThreadSafeRepository {
             refs,
             work_tree: worktree_dir,
             config,
-            linked_worktree_options,
+            // used when spawning new repositories off this one when following worktrees
+            linked_worktree_options: options,
         })
     }
 }
