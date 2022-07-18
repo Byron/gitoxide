@@ -128,23 +128,26 @@ mod push {
     #[test]
     fn values_are_escaped() {
         for (value, expected) in [
-            ("a b", "[a]\n\tk = a b"),
-            (" a b", "[a]\n\tk = \" a b\""),
-            ("a b\t", "[a]\n\tk = \"a b\\t\""),
-            (";c", "[a]\n\tk = \";c\""),
-            ("#c", "[a]\n\tk = \"#c\""),
-            ("a\nb\n\tc", "[a]\n\tk = a\\nb\\n\\tc"),
+            ("a b", "$head\tk = a b"),
+            (" a b", "$head\tk = \" a b\""),
+            ("a b\t", "$head\tk = \"a b\\t\""),
+            (";c", "$head\tk = \";c\""),
+            ("#c", "$head\tk = \"#c\""),
+            ("a\nb\n\tc", "$head\tk = a\\nb\\n\\tc"),
         ] {
             let mut config = git_config::File::default();
             let mut section = config.new_section("a", None).unwrap();
             section.set_implicit_newline(false);
             section.push(Key::try_from("k").unwrap(), value);
+            let expected = expected.replace("$head", &format!("[a]{nl}", nl = section.newline()));
             assert_eq!(config.to_bstring(), expected);
         }
     }
 }
 
 mod set_leading_whitespace {
+    use bstr::BString;
+    use std::borrow::Cow;
     use std::convert::TryFrom;
 
     use git_config::parse::section::Key;
@@ -155,9 +158,12 @@ mod set_leading_whitespace {
     fn any_whitespace_is_ok() -> crate::Result {
         let mut config = git_config::File::default();
         let mut section = config.new_section("core", None)?;
-        section.set_leading_whitespace(cow_str("\n\t").into());
+
+        let nl = section.newline().to_owned();
+        section.set_leading_whitespace(Some(Cow::Owned(BString::from(format!("{nl}\t")))));
         section.push(Key::try_from("a")?, "v");
-        assert_eq!(config.to_string(), "[core]\n\n\ta = v\n");
+
+        assert_eq!(config.to_string(), format!("[core]{nl}{nl}\ta = v{nl}"));
         Ok(())
     }
 

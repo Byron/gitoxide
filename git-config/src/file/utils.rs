@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bstr::BStr;
 
 use crate::{
-    file::{self, SectionBodyIds, SectionId, SectionMut},
+    file::{self, SectionBodyIds, SectionId},
     lookup,
     parse::section,
     File,
@@ -11,8 +11,8 @@ use crate::{
 
 /// Private helper functions
 impl<'event> File<'event> {
-    /// Adds a new section to the config file.
-    pub(crate) fn push_section_internal(&mut self, section: file::Section<'event>) -> SectionMut<'_, 'event> {
+    /// Adds a new section to the config file, returning the section id of the newly added section.
+    pub(crate) fn push_section_internal(&mut self, section: file::Section<'event>) -> SectionId {
         let new_section_id = SectionId(self.section_id_counter);
         self.sections.insert(new_section_id, section);
         let header = &self.sections[&new_section_id].header;
@@ -49,10 +49,7 @@ impl<'event> File<'event> {
         }
         self.section_order.push_back(new_section_id);
         self.section_id_counter += 1;
-        self.sections
-            .get_mut(&new_section_id)
-            .expect("previously inserted section")
-            .to_mut()
+        new_section_id
     }
 
     /// Returns the mapping between section and subsection name to section ids.

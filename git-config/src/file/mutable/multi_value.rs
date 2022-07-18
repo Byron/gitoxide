@@ -170,7 +170,7 @@ impl<'borrow, 'lookup, 'event> MultiValueMut<'borrow, 'lookup, 'event> {
         value: &BStr,
     ) {
         let (offset, size) = MultiValueMut::index_and_size(offsets, section_id, offset_index);
-        let whitespace: Whitespace<'_> = (&*section).into();
+        let whitespace = Whitespace::from_body(section);
         let section = section.as_mut();
         section.drain(offset..offset + size);
 

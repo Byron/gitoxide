@@ -1,7 +1,9 @@
+use std::iter::FromIterator;
 use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
 use git_features::threading::OwnShared;
+use smallvec::SmallVec;
 
 use crate::file::{Metadata, MetadataFilter};
 use crate::parse::Event;
@@ -292,5 +294,9 @@ impl<'event> File<'event> {
                     .find_map(|s| s.body.as_ref().iter().find_map(extract_newline))
             })
             .unwrap_or_else(|| if cfg!(windows) { "\r\n" } else { "\n" }.into())
+    }
+
+    pub(crate) fn detect_newline_style_smallvec(&self) -> SmallVec<[u8; 2]> {
+        SmallVec::from_iter(self.detect_newline_style().iter().copied())
     }
 }
