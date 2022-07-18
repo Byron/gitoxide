@@ -1,8 +1,9 @@
 use std::{convert::TryFrom, path::PathBuf};
 
-use git_config::{path, Boolean, File, Integer};
+use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
+use crate::config::section::is_trusted;
 use crate::{bstr::ByteSlice, permission};
 
 impl Cache {
@@ -19,18 +20,14 @@ impl Cache {
         //       like git here: https://github.com/git/git/blob/master/config.c#L208:L208
         let config = {
             let mut buf = Vec::with_capacity(512);
-            File::from_path_with_buf(
+            git_config::File::from_path_with_buf(
                 &git_dir.join("config"),
                 &mut buf,
                 git_config::file::Metadata::from(git_config::Source::Local),
                 git_config::file::init::Options {
                     lossy: !cfg!(debug_assertions),
                     includes: git_config::file::init::includes::Options::follow(
-                        git_config::path::interpolate::Context {
-                            git_install_dir,
-                            home_dir: None,
-                            home_for_user: None, // TODO: figure out how to configure this
-                        },
+                        interpolate_context(git_install_dir, home.as_deref()),
                         git_config::file::init::includes::conditional::Context {
                             git_dir: git_dir.into(),
                             branch_name: None,
@@ -44,14 +41,10 @@ impl Cache {
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
         let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
         let excludes_file = config
-            .path("core", None, "excludesFile")
+            .path_filter("core", None, "excludesFile", &mut is_trusted)
             .map(|p| {
-                p.interpolate(path::interpolate::Context {
-                    git_install_dir,
-                    home_dir: home.as_deref(),
-                    home_for_user: Some(git_config::path::interpolate::home_for_user),
-                })
-                .map(|p| p.into_owned())
+                p.interpolate(interpolate_context(git_install_dir, home.as_deref()))
+                    .map(|p| p.into_owned())
             })
             .transpose()?;
         let repo_format_version = config
@@ -148,7 +141,6 @@ impl Cache {
     ///
     /// We never fail for here even if the permission is set to deny as we `git-config` will fail later
     /// if it actually wants to use the home directory - we don't want to fail prematurely.
-    #[cfg(feature = "git-mailmap")]
     pub fn home_dir(&self) -> Option<PathBuf> {
         std::env::var_os("HOME")
             .map(PathBuf::from)
@@ -156,7 +148,18 @@ impl Cache {
     }
 }
 
-fn config_bool(config: &File<'_>, key: &str, default: bool) -> Result<bool, Error> {
+pub(crate) fn interpolate_context<'a>(
+    git_install_dir: Option<&'a std::path::Path>,
+    home_dir: Option<&'a std::path::Path>,
+) -> git_config::path::interpolate::Context<'a> {
+    git_config::path::interpolate::Context {
+        git_install_dir,
+        home_dir,
+        home_for_user: Some(git_config::path::interpolate::home_for_user), // TODO: figure out how to configure this
+    }
+}
+
+fn config_bool(config: &git_config::File<'_>, key: &str, default: bool) -> Result<bool, Error> {
     let (section, key) = key.split_once('.').expect("valid section.key format");
     config
         .boolean(section, None, key)

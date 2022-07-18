@@ -10,6 +10,12 @@ pub struct Snapshot<'repo> {
     pub(crate) repo: &'repo Repository,
 }
 
+pub(crate) mod section {
+    pub fn is_trusted(meta: &git_config::file::Metadata) -> bool {
+        meta.trust == git_sec::Trust::Full || !meta.source.is_in_repository()
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Could not open repository conifguration file")]
@@ -50,7 +56,6 @@ pub(crate) struct Cache {
     #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     xdg_config_home_env: permission::env_var::Resource,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.
-    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     home_env: permission::env_var::Resource,
     // TODO: make core.precomposeUnicode available as well.
 }
