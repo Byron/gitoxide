@@ -64,20 +64,20 @@ impl File<'static> {
         if let Some(git_config_global) = env::var_os("GIT_CONFIG_GLOBAL") {
             push_path(
                 PathBuf::from(git_config_global),
-                Source::Application,
+                Source::Git,
                 git_sec::Trust::Full.into(),
             );
         } else {
             if let Some(xdg_config_home) = env::var_os("XDG_CONFIG_HOME") {
                 push_path(
                     PathBuf::from(xdg_config_home).join("git/config"),
-                    Source::Application,
+                    Source::Git,
                     git_sec::Trust::Full.into(),
                 );
             } else if let Some(home) = env::var_os("HOME") {
                 push_path(
                     PathBuf::from(home).join(".config/git/config"),
-                    Source::Application,
+                    Source::Git,
                     git_sec::Trust::Full.into(),
                 );
             }

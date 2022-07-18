@@ -2,6 +2,7 @@ use crate::file::init::Options;
 use crate::file::{init, Metadata};
 use crate::{file, file::init::includes, parse, File};
 use git_features::threading::OwnShared;
+use std::collections::BTreeSet;
 
 /// The error returned by [`File::from_paths_metadata()`] and [`File::from_env_paths()`].
 #[derive(Debug, thiserror::Error)]
@@ -58,10 +59,14 @@ impl File<'static> {
     ) -> Result<Self, Error> {
         let mut target = None;
         let mut buf = Vec::with_capacity(512);
+        let mut seen = BTreeSet::default();
         for (path, meta) in path_meta.into_iter().filter_map(|meta| {
             let mut meta = meta.into();
             meta.path.take().map(|p| (p, meta))
         }) {
+            if !seen.insert(path.clone()) {
+                continue;
+            }
             let config = Self::from_path_with_buf(path, &mut buf, meta, options)?;
             match &mut target {
                 None => {

@@ -5,6 +5,7 @@ use git_features::threading::OwnShared;
 mod types;
 pub use types::{Error, Options};
 
+mod comfort;
 ///
 pub mod from_env;
 ///

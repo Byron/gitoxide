@@ -18,10 +18,10 @@ pub enum Source {
     /// System-wide configuration path. This is defined as
     /// `$(prefix)/etc/gitconfig` (where prefix is the git-installation directory).
     System,
-    /// A platform defined location for where a user's application data should be located.
+    /// A platform defined location for where a user's git application configuration should be located.
     /// If `$XDG_CONFIG_HOME` is not set or empty, `$HOME/.config/git/config` will be used
     /// on unix.
-    Application,
+    Git,
     /// This is usually `~/.gitconfig` on unix.
     User,
     /// The configuration of the repository itself, located in `.git/config`.

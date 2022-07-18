@@ -16,13 +16,30 @@ pub enum Kind {
     Override,
 }
 
+impl Kind {
+    /// Return a list of sources associated with this `Kind` of source, in order of ascending precedence.
+    pub fn sources(self) -> &'static [Source] {
+        let src = match self {
+            Kind::System => &[Source::System] as &[_],
+            Kind::Global => &[Source::Git, Source::User],
+            Kind::Repository => &[Source::Local, Source::Worktree],
+            Kind::Override => &[Source::Env, Source::Cli, Source::Api],
+        };
+        debug_assert!(
+            src.iter().all(|src| src.kind() == self),
+            "BUG: classification of source has to match the ordering here, see `Source::kind()`"
+        );
+        src
+    }
+}
+
 impl Source {
     /// Return true if the source indicates a location within a file of a repository.
     pub const fn kind(self) -> Kind {
         use Source::*;
         match self {
             System => Kind::System,
-            Application | User => Kind::Global,
+            Git | User => Kind::Global,
             Local | Worktree => Kind::Repository,
             Env | Cli | Api => Kind::Override,
         }
@@ -44,7 +61,7 @@ impl Source {
             System => env_var("GIT_CONFIG_NO_SYSTEM")
                 .is_none()
                 .then(|| PathBuf::from(env_var("GIT_CONFIG_SYSTEM").unwrap_or_else(|| "/etc/gitconfig".into())).into()),
-            Application => match env_var("GIT_CONFIG_GLOBAL") {
+            Git => match env_var("GIT_CONFIG_GLOBAL") {
                 Some(global_override) => Some(PathBuf::from(global_override).into()),
                 None => env_var("XDG_CONFIG_HOME")
                     .map(|home| {
