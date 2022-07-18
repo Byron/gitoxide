@@ -242,7 +242,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
 }
 
 impl<'event> Deref for SectionMut<'_, 'event> {
-    type Target = file::section::Body<'event>;
+    type Target = file::Section<'event>;
 
     fn deref(&self) -> &Self::Target {
         self.section

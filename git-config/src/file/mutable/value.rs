@@ -3,6 +3,7 @@ use std::borrow::Cow;
 use bstr::BStr;
 
 use crate::{
+    file,
     file::{mutable::section::SectionMut, Index, Size},
     lookup,
     parse::section,
@@ -48,5 +49,15 @@ impl<'borrow, 'lookup, 'event> ValueMut<'borrow, 'lookup, 'event> {
             self.section.delete(self.index, self.index + self.size);
             self.size = Size(0);
         }
+    }
+
+    /// Return the section containing the value.
+    pub fn section(&self) -> &file::Section<'event> {
+        &self.section
+    }
+
+    /// Convert this value into its owning mutable section.
+    pub fn into_section_mut(self) -> file::SectionMut<'borrow, 'event> {
+        self.section
     }
 }
