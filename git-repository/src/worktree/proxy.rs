@@ -81,13 +81,8 @@ impl<'repo> Proxy<'repo> {
     /// a lot of information if work tree access is avoided.
     pub fn into_repo_with_possibly_inaccessible_worktree(self) -> Result<Repository, crate::open::Error> {
         let base = self.base().ok();
-        let git_dir_trust = git_sec::Trust::from_path_ownership(&self.git_dir)?;
-        let repo = ThreadSafeRepository::open_from_paths(
-            git_dir_trust,
-            self.git_dir,
-            base,
-            self.parent.linked_worktree_options.clone(),
-        )?;
+        let repo =
+            ThreadSafeRepository::open_from_paths(self.git_dir, base, self.parent.linked_worktree_options.clone())?;
         Ok(repo.into())
     }
 
@@ -101,7 +96,6 @@ impl<'repo> Proxy<'repo> {
             return Err(into_repo::Error::MissingWorktree { base });
         }
         let repo = ThreadSafeRepository::open_from_paths(
-            self.parent.config.git_dir_trust,
             self.git_dir,
             base.into(),
             self.parent.linked_worktree_options.clone(),

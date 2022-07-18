@@ -5,4 +5,9 @@ impl crate::Repository {
     pub fn config_snapshot(&self) -> config::Snapshot<'_> {
         config::Snapshot { repo: self }
     }
+
+    /// The options used to open the repository.
+    pub fn open_options(&self) -> &crate::open::Options {
+        &self.linked_worktree_options
+    }
 }

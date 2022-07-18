@@ -109,7 +109,6 @@ impl Cache {
         }
 
         Ok(Cache {
-            git_dir_trust,
             resolved: config.into(),
             use_multi_pack_index,
             object_hash,
