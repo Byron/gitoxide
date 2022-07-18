@@ -15,7 +15,7 @@ impl<'repo> Snapshot<'repo> {
     /// Note that this method takes the most recent value at `key` even if it is from a file with reduced trust.
     /// For a non-degenerating version, use [`try_boolean(…)`][Self::try_boolean()]
     pub fn boolean(&self, key: &str) -> Option<bool> {
-        self.try_boolean(key).map(Result::ok).flatten()
+        self.try_boolean(key).and_then(Result::ok)
     }
 
     /// Like [`boolean()`][Self::boolean()], but it will report an error if the value couldn't be interpreted as boolean.
