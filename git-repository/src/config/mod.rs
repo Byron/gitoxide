@@ -1,5 +1,15 @@
 use crate::{bstr::BString, permission, Repository};
 
+mod cache;
+mod snapshot;
+
+/// A platform to access configuration values as read from disk.
+///
+/// Note that these values won't update even if the underlying file(s) change.
+pub struct Snapshot<'repo> {
+    pub(crate) repo: &'repo Repository,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("Could not open repository conifguration file")]
@@ -14,46 +24,6 @@ pub enum Error {
     DecodeBoolean { key: String, value: BString },
     #[error(transparent)]
     PathInterpolation(#[from] git_config::path::interpolate::Error),
-}
-
-/// A platform to access configuration values as read from disk.
-///
-/// Note that these values won't update even if the underlying file(s) change.
-pub struct Snapshot<'repo> {
-    pub(crate) repo: &'repo Repository,
-}
-
-mod snapshot {
-    use crate::config::Snapshot;
-
-    /// Access configuration values, frozen in time, using a `key` which is a `.` separated string of up to
-    /// three tokens, namely `section_name.[subsection_name.]value_name`, like `core.bare` or `remote.origin.url`.
-    ///
-    /// Note that single-value methods always return the last value found, which is the one set most recently in the
-    /// hierarchy of configuration files, aka 'last one wins'.
-    impl<'repo> Snapshot<'repo> {
-        /// Return the boolean at `key`, or `None` if there is no such value or if the value can't be interpreted as
-        /// boolean.
-        ///
-        /// Note that this method takes the most recent value at `key` even if it is from a file with reduced trust.
-        /// For a non-degenerating version, use [`try_boolean(…)`][Self::try_boolean()]
-        pub fn boolean(&self, key: &str) -> Option<bool> {
-            self.try_boolean(key).map(Result::ok).flatten()
-        }
-
-        /// Like [`boolean()`][Self::boolean()], but it will report an error if the value couldn't be interpreted as boolean.
-        pub fn try_boolean(&self, key: &str) -> Option<Result<bool, git_config::value::Error>> {
-            let git_config::parse::Key {
-                section_name,
-                subsection_name,
-                value_name,
-            } = git_config::parse::key(key)?;
-            self.repo
-                .config
-                .resolved
-                .boolean(section_name, subsection_name, value_name)
-        }
-    }
 }
 
 /// Utility type to keep pre-obtained configuration values.
@@ -84,5 +54,3 @@ pub(crate) struct Cache {
     home_env: permission::env_var::Resource,
     // TODO: make core.precomposeUnicode available as well.
 }
-
-mod cache;

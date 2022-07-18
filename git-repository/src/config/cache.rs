@@ -24,7 +24,7 @@ impl Cache {
                 &mut buf,
                 git_config::file::Metadata::from(git_config::Source::Local),
                 git_config::file::init::Options {
-                    lossy: true,
+                    lossy: !cfg!(debug_assertions),
                     includes: git_config::file::init::includes::Options::follow(
                         git_config::path::interpolate::Context {
                             git_install_dir,
