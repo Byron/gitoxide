@@ -26,6 +26,10 @@ mod error;
 ///
 pub mod section;
 
+///
+mod key;
+pub use key::{parse_unvalidated as key, Key};
+
 #[cfg(test)]
 pub(crate) mod tests;
 

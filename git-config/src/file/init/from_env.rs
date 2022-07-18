@@ -3,7 +3,7 @@ use std::convert::TryFrom;
 use std::{borrow::Cow, path::PathBuf};
 
 use crate::file::{init, Metadata};
-use crate::{file, parse::section, path::interpolate, File, Source};
+use crate::{file, parse, parse::section, path::interpolate, File, Source};
 
 /// Represents the errors that may occur when calling [`File::from_env`][crate::File::from_env()].
 #[derive(Debug, thiserror::Error)]
@@ -129,33 +129,23 @@ impl File<'static> {
         for i in 0..count {
             let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| Error::InvalidKeyId { key_id: i })?;
             let value = env::var_os(format!("GIT_CONFIG_VALUE_{}", i)).ok_or(Error::InvalidValueId { value_id: i })?;
-            match key.split_once('.') {
-                Some((section_name, maybe_subsection)) => {
-                    let (subsection, key) = match maybe_subsection.rsplit_once('.') {
-                        Some((subsection, key)) => (Some(subsection), key),
-                        None => (None, maybe_subsection),
-                    };
+            let key = parse::key(&key).ok_or_else(|| Error::InvalidKeyValue {
+                key_id: i,
+                key_val: key.to_string(),
+            })?;
 
-                    let mut section = match config.section_mut(section_name, subsection) {
-                        Ok(section) => section,
-                        Err(_) => config.new_section(
-                            section_name.to_string(),
-                            subsection.map(|subsection| Cow::Owned(subsection.to_string())),
-                        )?,
-                    };
+            let mut section = match config.section_mut(key.section_name, key.subsection_name) {
+                Ok(section) => section,
+                Err(_) => config.new_section(
+                    key.section_name.to_owned(),
+                    key.subsection_name.map(|subsection| Cow::Owned(subsection.to_owned())),
+                )?,
+            };
 
-                    section.push(
-                        section::Key::try_from(key.to_owned())?,
-                        git_path::os_str_into_bstr(&value).expect("no illformed UTF-8").as_ref(),
-                    );
-                }
-                None => {
-                    return Err(Error::InvalidKeyValue {
-                        key_id: i,
-                        key_val: key.to_string(),
-                    })
-                }
-            }
+            section.push(
+                section::Key::try_from(key.value_name.to_owned())?,
+                git_path::os_str_into_bstr(&value).expect("no illformed UTF-8").as_ref(),
+            );
         }
 
         let mut buf = Vec::new();
