@@ -8,6 +8,7 @@ use crate::{bstr::ByteSlice, permission};
 
 impl Cache {
     pub fn new(
+        git_dir_trust: git_sec::Trust,
         git_dir: &std::path::Path,
         xdg_config_home_env: permission::env_var::Resource,
         home_env: permission::env_var::Resource,
@@ -23,7 +24,7 @@ impl Cache {
             git_config::File::from_path_with_buf(
                 &git_dir.join("config"),
                 &mut buf,
-                git_config::file::Metadata::from(git_config::Source::Local),
+                git_config::file::Metadata::from(git_config::Source::Local).with(git_dir_trust),
                 git_config::file::init::Options {
                     lossy: !cfg!(debug_assertions),
                     includes: git_config::file::init::includes::Options::follow(
@@ -108,6 +109,7 @@ impl Cache {
         }
 
         Ok(Cache {
+            git_dir_trust,
             resolved: config.into(),
             use_multi_pack_index,
             object_hash,

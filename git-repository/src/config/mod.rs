@@ -52,6 +52,8 @@ pub(crate) struct Cache {
     /// The path to the user-level excludes file to ignore certain files in the worktree.
     #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub excludes_file: Option<std::path::PathBuf>,
+    /// The amount of trust we place into the git_dir of the repository.
+    pub git_dir_trust: git_sec::Trust,
     /// Define how we can use values obtained with `xdg_config(…)` and its `XDG_CONFIG_HOME` variable.
     #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     xdg_config_home_env: permission::env_var::Resource,

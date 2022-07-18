@@ -65,4 +65,9 @@ impl crate::Repository {
     pub fn git_dir(&self) -> &std::path::Path {
         self.refs.git_dir()
     }
+
+    /// The trust we place in the git-dir, with lower amounts of trust causing access to configuration to be limited.
+    pub fn git_dir_trust(&self) -> git_sec::Trust {
+        self.config.git_dir_trust
+    }
 }

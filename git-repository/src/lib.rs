@@ -355,8 +355,9 @@ pub mod init {
             use git_sec::trust::DefaultForLevel;
             let path = crate::create::into(directory.as_ref(), options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-            let options = crate::open::Options::default_for_level(git_sec::Trust::Full);
-            ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
+            let trust = git_sec::Trust::Full;
+            let options = crate::open::Options::default_for_level(trust);
+            ThreadSafeRepository::open_from_paths(trust, git_dir, worktree_dir, options).map_err(Into::into)
         }
     }
 }
@@ -426,7 +427,7 @@ pub mod discover {
             let (path, trust) = upwards_opts(directory, options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
             let options = trust_map.into_value_by_level(trust);
-            Self::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
+            Self::open_from_paths(trust, git_dir, worktree_dir, options).map_err(Into::into)
         }
 
         /// Try to open a git repository directly from the environment.

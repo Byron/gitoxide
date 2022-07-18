@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
-use git_sec::Trust;
 
 use crate::{Permissions, ThreadSafeRepository};
 
@@ -124,7 +123,7 @@ impl Options {
 }
 
 impl git_sec::trust::DefaultForLevel for Options {
-    fn default_for_level(level: Trust) -> Self {
+    fn default_for_level(level: git_sec::Trust) -> Self {
         match level {
             git_sec::Trust::Full => Options {
                 object_store_slots: Default::default(),
@@ -179,7 +178,8 @@ impl ThreadSafeRepository {
         };
         let (git_dir, worktree_dir) =
             git_discover::repository::Path::from_dot_git_dir(path, kind).into_repository_and_work_tree_directories();
-        ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
+        let git_dir_trust = git_sec::Trust::from_path_ownership(&git_dir)?;
+        ThreadSafeRepository::open_from_paths(git_dir_trust, git_dir, worktree_dir, options)
     }
 
     /// Try to open a git repository in `fallback_directory` (can be worktree or `.git` directory) only if there is no override
@@ -208,12 +208,13 @@ impl ThreadSafeRepository {
             .into_repository_and_work_tree_directories();
         let worktree_dir = worktree_dir.or(overrides.worktree_dir);
 
-        let trust = git_sec::Trust::from_path_ownership(&git_dir)?;
-        let options = trust_map.into_value_by_level(trust);
-        ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options)
+        let git_dir_trust = git_sec::Trust::from_path_ownership(&git_dir)?;
+        let options = trust_map.into_value_by_level(git_dir_trust);
+        ThreadSafeRepository::open_from_paths(git_dir_trust, git_dir, worktree_dir, options)
     }
 
     pub(crate) fn open_from_paths(
+        git_dir_trust: git_sec::Trust,
         git_dir: PathBuf,
         mut worktree_dir: Option<PathBuf>,
         Options {
@@ -238,6 +239,7 @@ impl ThreadSafeRepository {
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
         let config = crate::config::Cache::new(
+            git_dir_trust,
             common_dir_ref,
             env.xdg_config_home.clone(),
             env.home.clone(),
