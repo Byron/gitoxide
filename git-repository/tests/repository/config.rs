@@ -11,6 +11,16 @@ fn access_values() {
     assert_eq!(config.try_boolean("core.bare"), Some(Ok(false)));
     assert!(matches!(config.try_boolean("a.bad-bool"), Some(Err(_))));
 
+    assert_eq!(config.integer("a.int"), Some(42));
+    assert_eq!(config.integer("a.int-overflowing"), None);
+    assert_eq!(config.integer("a.int-overflowing"), None);
+    assert!(config.try_integer("a.int-overflowing").expect("present").is_err());
+
+    assert_eq!(
+        config.string("a.single-string").expect("present").as_ref(),
+        "hello world"
+    );
+
     assert_eq!(config.boolean("core.missing"), None);
     assert_eq!(config.try_boolean("core.missing"), None);
 
