@@ -5,6 +5,20 @@ use git_config::{Boolean, Integer};
 use super::{Cache, Error};
 use crate::{bstr::ByteSlice, permission};
 
+/// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
+/// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
+#[allow(dead_code)]
+pub struct StageOne {
+    git_dir_config: git_config::File<'static>,
+}
+
+#[allow(dead_code)]
+impl StageOne {
+    pub fn new(_git_dir_trust: git_sec::Trust, _git_dir: &std::path::Path) -> Result<Self, Error> {
+        todo!()
+    }
+}
+
 impl Cache {
     pub fn new(
         branch_name: Option<&git_ref::FullNameRef>,
@@ -22,10 +36,14 @@ impl Cache {
         //       like git here: https://github.com/git/git/blob/master/config.c#L208:L208
         let config = {
             let mut buf = Vec::with_capacity(512);
-            git_config::File::from_path_with_buf(
-                &git_dir.join("config"),
+            let config_path = git_dir.join("config");
+            std::io::copy(&mut std::fs::File::open(&config_path)?, &mut buf)?;
+
+            git_config::File::from_bytes_owned(
                 &mut buf,
-                git_config::file::Metadata::from(git_config::Source::Local).with(git_dir_trust),
+                git_config::file::Metadata::from(git_config::Source::Local)
+                    .at(config_path)
+                    .with(git_dir_trust),
                 git_config::file::init::Options {
                     lossy: !cfg!(debug_assertions),
                     includes: git_config::file::init::includes::Options::follow(

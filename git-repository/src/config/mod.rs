@@ -1,6 +1,6 @@
 use crate::{bstr::BString, permission, Repository};
 
-mod cache;
+pub(crate) mod cache;
 mod snapshot;
 
 /// A platform to access configuration values as read from disk.
@@ -18,8 +18,10 @@ pub(crate) mod section {
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("Could not open repository conifguration file")]
-    Open(#[from] git_config::file::init::from_paths::Error),
+    #[error("Could not read configuration file")]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Config(#[from] git_config::file::init::Error),
     #[error("Cannot handle objects formatted as {:?}", .name)]
     UnsupportedObjectFormat { name: BString },
     #[error("The value for '{}' cannot be empty", .key)]
