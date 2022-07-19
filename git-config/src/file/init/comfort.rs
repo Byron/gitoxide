@@ -19,6 +19,8 @@ impl File<'static> {
     /// * [user][crate::Source::User]
     ///
     /// which excludes repository local configuration, as well as override-configuration from environment variables.
+    ///
+    /// Note that the file might [be empty][File::is_void()] in case no configuration file was found.
     pub fn new_globals() -> Result<File<'static>, init::from_paths::Error> {
         let metas = [source::Kind::System, source::Kind::Global]
             .iter()
@@ -43,7 +45,10 @@ impl File<'static> {
             includes: init::includes::Options::follow_without_conditional(home.as_deref()),
             ..Default::default()
         };
-        File::from_paths_metadata(metas, options)
+        File::from_paths_metadata(metas, options).or_else(|err| match err {
+            init::from_paths::Error::NoInput => Ok(File::default()),
+            err => Err(err),
+        })
     }
 
     /// Generates a config from `GIT_CONFIG_*` environment variables and return a possibly empty `File`.
@@ -61,5 +66,13 @@ impl File<'static> {
         };
 
         File::from_environment(options).map(Option::unwrap_or_default)
+    }
+}
+
+/// An easy way to provide complete configuration for a repository.
+impl File<'static> {
+    /// TODO
+    pub fn from_git_dir(_dir: impl AsRef<std::path::Path>) -> Result<File<'static>, init::from_paths::Error> {
+        todo!()
     }
 }

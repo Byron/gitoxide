@@ -18,8 +18,9 @@ pub enum Error {
 
 /// Instantiation from one or more paths
 impl File<'static> {
-    /// Load the file at `path` from `source` without following include directives. Note that the path will be checked for
-    /// ownership to derive trust.
+    /// Load the single file at `path` with `source` without following include directives.
+    ///
+    /// Note that the path will be checked for ownership to derive trust.
     pub fn from_path_no_includes(path: impl Into<std::path::PathBuf>, source: crate::Source) -> Result<Self, Error> {
         let path = path.into();
         let trust = git_sec::Trust::from_path_ownership(&path)?;
