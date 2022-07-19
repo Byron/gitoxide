@@ -288,7 +288,7 @@ mod types {
 
         /// Used during path interpolation, both for include paths before trying to read the file, and for
         /// paths used in conditional `gitdir` includes.
-        pub interpolate: crate::path::interpolate::Context<'a>,
+        pub interpolate: interpolate::Context<'a>,
 
         /// Additional context for conditional includes to work.
         pub conditional: conditional::Context<'a>,
@@ -311,10 +311,7 @@ mod types {
         /// to support `gitdir` and `onbranch` based `includeIf` directives as well as standard `include.path` resolution.
         /// Note that the follow-mode is `git`-style, following at most 10 indirections while
         /// producing an error if the depth is exceeded.
-        pub fn follow(
-            interpolate: crate::path::interpolate::Context<'a>,
-            conditional: conditional::Context<'a>,
-        ) -> Self {
+        pub fn follow(interpolate: interpolate::Context<'a>, conditional: conditional::Context<'a>) -> Self {
             Options {
                 max_depth: 10,
                 error_on_max_depth_exceeded: true,
@@ -323,9 +320,26 @@ mod types {
             }
         }
 
+        /// Like [`follow`][Options::follow()], but without information to resolve `includeIf` directories as well as default
+        /// configuration to allow resolving `~username/` path. `home_dir` is required to resolve `~/` paths if set.
+        /// Note that `%(prefix)` paths cannot be interpolated with this configuration, use [`follow()`][Options::follow()]
+        /// instead for complete control.
+        pub fn follow_without_conditional(home_dir: Option<&'a std::path::Path>) -> Self {
+            Options {
+                max_depth: 10,
+                error_on_max_depth_exceeded: true,
+                interpolate: interpolate::Context {
+                    git_install_dir: None,
+                    home_dir,
+                    home_for_user: Some(interpolate::home_for_user),
+                },
+                conditional: Default::default(),
+            }
+        }
+
         /// Set the context used for interpolation when interpolating paths to include as well as the paths
         /// in `gitdir` conditional includes.
-        pub fn interpolate_with(mut self, context: crate::path::interpolate::Context<'a>) -> Self {
+        pub fn interpolate_with(mut self, context: interpolate::Context<'a>) -> Self {
             self.interpolate = context;
             self
         }
