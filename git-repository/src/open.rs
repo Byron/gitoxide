@@ -273,7 +273,17 @@ impl ThreadSafeRepository {
             .transpose()?
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
+        let mut refs = {
+            let reflog = git_ref::store::WriteReflog::Disable;
+            let object_hash = git_hash::Kind::Sha1; // TODO: load repo-local config first, no includes resolution, then merge with global.
+            match &common_dir {
+                Some(common_dir) => crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, object_hash),
+                None => crate::RefStore::at(&git_dir, reflog, object_hash),
+            }
+        };
+        let head = refs.find("HEAD").ok();
         let config = crate::config::Cache::new(
+            head.as_ref().and_then(|head| head.target.try_name()),
             filter_config_section.unwrap_or(crate::config::section::is_trusted),
             git_dir_trust,
             common_dir_ref,
@@ -292,21 +302,13 @@ impl ThreadSafeRepository {
             None => {}
         }
 
-        let refs = {
-            let reflog = config.reflog.unwrap_or_else(|| {
-                if worktree_dir.is_none() {
-                    git_ref::store::WriteReflog::Disable
-                } else {
-                    git_ref::store::WriteReflog::Normal
-                }
-            });
-            match &common_dir {
-                Some(common_dir) => {
-                    crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, config.object_hash)
-                }
-                None => crate::RefStore::at(&git_dir, reflog, config.object_hash),
+        refs.write_reflog = config.reflog.unwrap_or_else(|| {
+            if worktree_dir.is_none() {
+                git_ref::store::WriteReflog::Disable
+            } else {
+                git_ref::store::WriteReflog::Normal
             }
-        };
+        });
 
         let replacements = replacement_objects
             .clone()

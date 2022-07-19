@@ -7,6 +7,7 @@ use crate::{bstr::ByteSlice, permission};
 
 impl Cache {
     pub fn new(
+        branch_name: Option<&git_ref::FullNameRef>,
         mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
         git_dir_trust: git_sec::Trust,
         git_dir: &std::path::Path,
@@ -31,7 +32,7 @@ impl Cache {
                         interpolate_context(git_install_dir, home.as_deref()),
                         git_config::file::init::includes::conditional::Context {
                             git_dir: git_dir.into(),
-                            branch_name: None,
+                            branch_name,
                         },
                     ),
                 },
