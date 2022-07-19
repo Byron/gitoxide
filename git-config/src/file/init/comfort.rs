@@ -45,10 +45,7 @@ impl File<'static> {
             includes: init::includes::Options::follow_without_conditional(home.as_deref()),
             ..Default::default()
         };
-        File::from_paths_metadata(metas, options).or_else(|err| match err {
-            init::from_paths::Error::NoInput => Ok(File::default()),
-            err => Err(err),
-        })
+        File::from_paths_metadata(metas, options).map(Option::unwrap_or_default)
     }
 
     /// Generates a config from `GIT_CONFIG_*` environment variables and return a possibly empty `File`.

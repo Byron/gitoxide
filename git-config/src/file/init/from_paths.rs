@@ -12,8 +12,6 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error(transparent)]
     Init(#[from] init::Error),
-    #[error("Not a single path was provided to load the configuration from")]
-    NoInput,
 }
 
 /// Instantiation from one or more paths
@@ -54,10 +52,12 @@ impl File<'static> {
     }
 
     /// Constructs a `git-config` file from the provided metadata, which must include a path to read from or be ignored.
+    /// Returns `Ok(None)` if there was not a single input path provided, which is a possibility due to
+    /// [`Metadata::path`] being an `Option`.
     pub fn from_paths_metadata(
-        path_meta: impl IntoIterator<Item = impl Into<file::Metadata>>,
+        path_meta: impl IntoIterator<Item = impl Into<Metadata>>,
         options: Options<'_>,
-    ) -> Result<Self, Error> {
+    ) -> Result<Option<Self>, Error> {
         let mut target = None;
         let mut buf = Vec::with_capacity(512);
         let mut seen = BTreeSet::default();
@@ -78,6 +78,6 @@ impl File<'static> {
                 }
             }
         }
-        target.ok_or(Error::NoInput)
+        Ok(target)
     }
 }

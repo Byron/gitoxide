@@ -251,7 +251,8 @@ value = branch-override-by-include
             git_config::Source::Local,
         )?),
         options,
-    )?;
+    )?
+    .expect("non-empty");
     assert_eq!(
         config.string("section", None, "value"),
         Some(cow_str(match expect {

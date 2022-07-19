@@ -53,7 +53,7 @@ fn multiple_paths_single_value() -> crate::Result {
     fs::write(d_path.as_path(), b"[core]\na = false")?;
 
     let paths = vec![a_path, b_path, c_path, d_path];
-    let config = File::from_paths_metadata(into_meta(paths), Default::default())?;
+    let config = File::from_paths_metadata(into_meta(paths), Default::default())?.expect("non-empty");
 
     assert_eq!(config.boolean("core", None, "a"), Some(Ok(false)));
     assert_eq!(config.boolean("core", None, "b"), Some(Ok(true)));
@@ -81,7 +81,7 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
     fs::write(d_path.as_path(), b"\n; nothing in d")?;
 
     let paths = vec![a_path, b_path, c_path, d_path];
-    let mut config = File::from_paths_metadata(into_meta(paths), Default::default())?;
+    let mut config = File::from_paths_metadata(into_meta(paths), Default::default())?.expect("non-empty");
 
     assert_eq!(
         config.to_string(),
@@ -145,7 +145,8 @@ fn multiple_paths_multi_value_and_filter() -> crate::Result {
             .iter()
             .map(|(p, s)| git_config::file::Metadata::try_from_path(p, *s).unwrap()),
         Default::default(),
-    )?;
+    )?
+    .expect("non-empty");
 
     assert_eq!(
         config.strings("core", None, "key"),

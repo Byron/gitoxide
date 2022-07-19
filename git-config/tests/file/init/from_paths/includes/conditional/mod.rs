@@ -62,7 +62,8 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
             git_config::Source::Api,
         )?),
         options_with_git_dir(&dir),
-    )?;
+    )?
+    .expect("non-empty");
 
     assert_eq!(
         config.strings("core", None, "b"),
