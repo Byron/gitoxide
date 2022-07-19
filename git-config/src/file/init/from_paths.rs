@@ -4,7 +4,7 @@ use crate::{file, file::init::includes, parse, File};
 use git_features::threading::OwnShared;
 use std::collections::BTreeSet;
 
-/// The error returned by [`File::from_paths_metadata()`] and [`File::from_env_paths()`].
+/// The error returned by [`File::from_paths_metadata()`] and [`File::from_path_with_buf()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

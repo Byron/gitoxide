@@ -5,7 +5,7 @@ use std::convert::TryFrom;
 use crate::file::init;
 use crate::{file, parse, parse::section, path::interpolate, File};
 
-/// Represents the errors that may occur when calling [`File::from_env`][crate::File::from_env()].
+/// Represents the errors that may occur when calling [`File::from_environment()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

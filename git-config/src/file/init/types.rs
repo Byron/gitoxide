@@ -3,8 +3,7 @@ use crate::parse;
 use crate::parse::Event;
 use crate::path::interpolate;
 
-/// The error returned by [`File::from_paths_metadata()`][crate::File::from_paths_metadata()] and
-/// [`File::from_env_paths()`][crate::File::from_env_paths()].
+/// The error returned by [`File::from_bytes_no_includes()`][crate::File::from_bytes_no_includes()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
