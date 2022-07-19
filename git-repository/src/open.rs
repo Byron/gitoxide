@@ -261,10 +261,6 @@ impl ThreadSafeRepository {
         } = options;
         let git_dir_trust = git_dir_trust.expect("trust must be been determined by now");
 
-        if **git_dir_perm != git_sec::ReadWrite::all() {
-            // TODO: respect `save.directory`, which needs more support from git-config to do properly.
-            return Err(Error::UnsafeGitDir { path: git_dir });
-        }
         // TODO: assure we handle the worktree-dir properly as we can have config per worktree with an extension.
         //       This would be something read in later as have to first check for extensions. Also this means
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
@@ -273,24 +269,32 @@ impl ThreadSafeRepository {
             .transpose()?
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
+
+        let early_cache = crate::config::cache::StageOne::new(common_dir_ref, git_dir_trust)?;
         let mut refs = {
-            let reflog = git_ref::store::WriteReflog::Disable;
-            let object_hash = git_hash::Kind::Sha1; // TODO: load repo-local config first, no includes resolution, then merge with global.
+            let reflog = early_cache.reflog.unwrap_or(git_ref::store::WriteReflog::Disable);
+            let object_hash = early_cache.object_hash;
             match &common_dir {
                 Some(common_dir) => crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, object_hash),
                 None => crate::RefStore::at(&git_dir, reflog, object_hash),
             }
         };
         let head = refs.find("HEAD").ok();
-        let config = crate::config::Cache::new(
+        let config = crate::config::Cache::from_stage_one(
+            early_cache,
+            common_dir_ref,
             head.as_ref().and_then(|head| head.target.try_name()),
             filter_config_section.unwrap_or(crate::config::section::is_trusted),
-            git_dir_trust,
-            common_dir_ref,
             env.xdg_config_home.clone(),
             env.home.clone(),
             crate::path::install_dir().ok().as_deref(),
         )?;
+
+        if **git_dir_perm != git_sec::ReadWrite::all() {
+            // TODO: respect `save.directory`, which needs global configuration to later combine. Probably have to do the check later.
+            return Err(Error::UnsafeGitDir { path: git_dir });
+        }
+
         match worktree_dir {
             None if !config.is_bare => {
                 worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());

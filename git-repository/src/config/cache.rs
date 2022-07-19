@@ -8,34 +8,20 @@ use crate::{bstr::ByteSlice, permission};
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
 #[allow(dead_code)]
-pub struct StageOne {
+pub(crate) struct StageOne {
     git_dir_config: git_config::File<'static>,
+    buf: Vec<u8>,
+
+    is_bare: bool,
+    pub object_hash: git_hash::Kind,
+    use_multi_pack_index: bool,
+    pub reflog: Option<git_ref::store::WriteReflog>,
 }
 
-#[allow(dead_code)]
 impl StageOne {
-    pub fn new(_git_dir_trust: git_sec::Trust, _git_dir: &std::path::Path) -> Result<Self, Error> {
-        todo!()
-    }
-}
-
-impl Cache {
-    pub fn new(
-        branch_name: Option<&git_ref::FullNameRef>,
-        mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
-        git_dir_trust: git_sec::Trust,
-        git_dir: &std::path::Path,
-        xdg_config_home_env: permission::env_var::Resource,
-        home_env: permission::env_var::Resource,
-        git_install_dir: Option<&std::path::Path>,
-    ) -> Result<Self, Error> {
-        let home = std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .and_then(|home| home_env.check(home).ok().flatten());
-        // TODO: don't forget to use the canonicalized home for initializing the stacked config.
-        //       like git here: https://github.com/git/git/blob/master/config.c#L208:L208
+    pub fn new(git_dir: &std::path::Path, git_dir_trust: git_sec::Trust) -> Result<Self, Error> {
+        let mut buf = Vec::with_capacity(512);
         let config = {
-            let mut buf = Vec::with_capacity(512);
             let config_path = git_dir.join("config");
             std::io::copy(&mut std::fs::File::open(&config_path)?, &mut buf)?;
 
@@ -46,27 +32,13 @@ impl Cache {
                     .with(git_dir_trust),
                 git_config::file::init::Options {
                     lossy: !cfg!(debug_assertions),
-                    includes: git_config::file::init::includes::Options::follow(
-                        interpolate_context(git_install_dir, home.as_deref()),
-                        git_config::file::init::includes::conditional::Context {
-                            git_dir: git_dir.into(),
-                            branch_name,
-                        },
-                    ),
+                    includes: git_config::file::init::includes::Options::no_includes(),
                 },
             )?
         };
 
         let is_bare = config_bool(&config, "core.bare", false)?;
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
-        let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
-        let excludes_file = config
-            .path_filter("core", None, "excludesFile", &mut filter_config_section)
-            .map(|p| {
-                p.interpolate(interpolate_context(git_install_dir, home.as_deref()))
-                    .map(|p| p.into_owned())
-            })
-            .transpose()?;
         let repo_format_version = config
             .value::<Integer>("core", None, "repositoryFormatVersion")
             .map_or(0, |v| v.to_decimal().unwrap_or_default());
@@ -95,6 +67,57 @@ impl Cache {
                 })
                 .unwrap_or(git_ref::store::WriteReflog::Disable)
         });
+
+        Ok(StageOne {
+            git_dir_config: config,
+            buf,
+            is_bare,
+            object_hash,
+            use_multi_pack_index,
+            reflog,
+        })
+    }
+}
+
+impl Cache {
+    pub fn from_stage_one(
+        StageOne {
+            git_dir_config: config,
+            buf: _,
+            is_bare,
+            object_hash,
+            use_multi_pack_index,
+            reflog,
+        }: StageOne,
+        git_dir: &std::path::Path,
+        branch_name: Option<&git_ref::FullNameRef>,
+        mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
+        xdg_config_home_env: permission::env_var::Resource,
+        home_env: permission::env_var::Resource,
+        git_install_dir: Option<&std::path::Path>,
+    ) -> Result<Self, Error> {
+        let home = std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .and_then(|home| home_env.check(home).ok().flatten());
+        // TODO: don't forget to use the canonicalized home for initializing the stacked config.
+        //       like git here: https://github.com/git/git/blob/master/config.c#L208:L208
+        // TODO: resolve includes and load other kinds of configuration
+        let options = git_config::file::init::Options {
+            lossy: !cfg!(debug_assertions),
+            includes: git_config::file::init::includes::Options::follow(
+                interpolate_context(git_install_dir, home.as_deref()),
+                git_config::file::init::includes::conditional::Context {
+                    git_dir: git_dir.into(),
+                    branch_name,
+                },
+            ),
+        };
+
+        let excludes_file = config
+            .path_filter("core", None, "excludesFile", &mut filter_config_section)
+            .map(|p| p.interpolate(options.includes.interpolate).map(|p| p.into_owned()))
+            .transpose()?;
+        let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
 
         let mut hex_len = None;
         if let Some(hex_len_str) = config.string("core", None, "abbrev") {
