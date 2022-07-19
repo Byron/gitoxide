@@ -10,7 +10,7 @@ use crate::{
 };
 
 /// A list of known sources for configuration files, with the first one being overridden
-/// by the second one, and so forth.
+/// by the second one, and so forth, in order of ascending precedence.
 /// Note that included files via `include.path` and `includeIf.<condition>.path` inherit
 /// their source.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
@@ -18,10 +18,11 @@ pub enum Source {
     /// System-wide configuration path. This is defined as
     /// `$(prefix)/etc/gitconfig` (where prefix is the git-installation directory).
     System,
-    /// Also known as the user configuration path. This is usually `~/.gitconfig`.
-    Global,
-    /// Second user-specific configuration path; if `$XDG_CONFIG_HOME` is not
-    /// set or empty, `$HOME/.config/git/config` will be used.
+    /// A platform defined location for where a user's application data should be located.
+    /// If `$XDG_CONFIG_HOME` is not set or empty, `$HOME/.config/git/config` will be used
+    /// on unix.
+    Application,
+    /// This is usually `~/.gitconfig` on unix.
     User,
     /// The configuration of the repository itself, located in `.git/config`.
     Local,

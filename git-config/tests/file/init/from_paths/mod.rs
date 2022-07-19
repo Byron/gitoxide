@@ -134,7 +134,7 @@ fn multiple_paths_multi_value_and_filter() -> crate::Result {
 
     let paths_and_source = vec![
         (a_path, Source::System),
-        (b_path, Source::Global),
+        (b_path, Source::Application),
         (c_path, Source::User),
         (d_path, Source::Worktree),
         (e_path, Source::Local),
@@ -159,7 +159,7 @@ fn multiple_paths_multi_value_and_filter() -> crate::Result {
     );
 
     assert_eq!(
-        config.strings_filter("core", None, "key", &mut |m| m.source == Source::Global
+        config.strings_filter("core", None, "key", &mut |m| m.source == Source::Application
             || m.source == Source::User),
         Some(vec![cow_str("b"), cow_str("c")])
     );

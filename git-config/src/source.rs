@@ -3,10 +3,29 @@ use std::borrow::Cow;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
+/// The category of a [`Source`], in order of ascending precedence.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub enum Kind {
+    /// A source shared for the entire system.
+    System,
+    /// Application specific configuration unique for each user of the `System`.
+    Global,
+    /// Configuration relevant only to the repository, possibly including the worktree.
+    Repository,
+    /// Configuration specified after all other configuration was loaded for the purpose of overrides.
+    Override,
+}
+
 impl Source {
     /// Return true if the source indicates a location within a file of a repository.
-    pub fn is_in_repository(self) -> bool {
-        matches!(self, Source::Local | Source::Worktree)
+    pub const fn kind(self) -> Kind {
+        use Source::*;
+        match self {
+            System => Kind::System,
+            Application | User => Kind::Global,
+            Local | Worktree => Kind::Repository,
+            Env | Cli | Api => Kind::Override,
+        }
     }
 
     /// Returns the location at which a file of this type would be stored, or `None` if
@@ -25,7 +44,7 @@ impl Source {
             System => env_var("GIT_CONFIG_NO_SYSTEM")
                 .is_none()
                 .then(|| PathBuf::from(env_var("GIT_CONFIG_SYSTEM").unwrap_or_else(|| "/etc/gitconfig".into())).into()),
-            Global => match env_var("GIT_CONFIG_GLOBAL") {
+            Application => match env_var("GIT_CONFIG_GLOBAL") {
                 Some(global_override) => Some(PathBuf::from(global_override).into()),
                 None => env_var("XDG_CONFIG_HOME")
                     .map(|home| {

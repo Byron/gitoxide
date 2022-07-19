@@ -49,7 +49,8 @@ pub use values::{boolean, color, integer, path};
 
 mod types;
 pub use types::{Boolean, Color, File, Integer, Path, Source};
-mod source;
+///
+pub mod source;
 
 mod permissions;
 pub use permissions::Permissions;
