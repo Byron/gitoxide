@@ -12,7 +12,7 @@ pub struct Snapshot<'repo> {
 
 pub(crate) mod section {
     pub fn is_trusted(meta: &git_config::file::Metadata) -> bool {
-        meta.trust == git_sec::Trust::Full || !meta.source.is_in_repository()
+        meta.trust == git_sec::Trust::Full || meta.source.kind() != git_config::source::Kind::Repository
     }
 }
 
