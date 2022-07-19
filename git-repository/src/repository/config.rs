@@ -8,6 +8,6 @@ impl crate::Repository {
 
     /// The options used to open the repository.
     pub fn open_options(&self) -> &crate::open::Options {
-        &self.linked_worktree_options
+        &self.options
     }
 }

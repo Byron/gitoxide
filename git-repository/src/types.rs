@@ -132,8 +132,10 @@ pub struct Repository {
     pub(crate) bufs: RefCell<Vec<Vec<u8>>>,
     /// A pre-assembled selection of often-accessed configuration values for quick access.
     pub(crate) config: crate::config::Cache,
-    /// options obtained when instantiating this repository for use when following linked worktrees.
-    pub(crate) linked_worktree_options: crate::open::Options,
+    /// the options obtained when instantiating this repository.
+    ///
+    /// Particularly useful when following linked worktrees and instantiating new equally configured worktree repositories.
+    pub(crate) options: crate::open::Options,
 }
 
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_

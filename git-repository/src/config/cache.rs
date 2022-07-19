@@ -3,11 +3,11 @@ use std::{convert::TryFrom, path::PathBuf};
 use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
-use crate::config::section::is_trusted;
 use crate::{bstr::ByteSlice, permission};
 
 impl Cache {
     pub fn new(
+        mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
         git_dir_trust: git_sec::Trust,
         git_dir: &std::path::Path,
         xdg_config_home_env: permission::env_var::Resource,
@@ -42,7 +42,7 @@ impl Cache {
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
         let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
         let excludes_file = config
-            .path_filter("core", None, "excludesFile", &mut is_trusted)
+            .path_filter("core", None, "excludesFile", &mut filter_config_section)
             .map(|p| {
                 p.interpolate(interpolate_context(git_install_dir, home.as_deref()))
                     .map(|p| p.into_owned())

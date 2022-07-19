@@ -66,6 +66,7 @@ pub struct Options {
     pub(crate) replacement_objects: ReplacementObjects,
     pub(crate) permissions: Permissions,
     pub(crate) git_dir_trust: Option<git_sec::Trust>,
+    pub(crate) filter_config_section: Option<fn(&git_config::file::Metadata) -> bool>,
 }
 
 #[derive(Default, Clone)]
@@ -130,6 +131,16 @@ impl Options {
         self
     }
 
+    /// Set the filter which determines if a configuration section can be used to read values from,
+    /// hence it returns true if it is eligible.
+    ///
+    /// The default filter selects sections whose trust level is [`full`][git_sec::Trust::Full] or
+    /// whose source is not [`repository-local`][git_config::source::Kind::Repository].
+    pub fn filter_config_section(mut self, filter: fn(&git_config::file::Metadata) -> bool) -> Self {
+        self.filter_config_section = Some(filter);
+        self
+    }
+
     /// Open a repository at `path` with the options set so far.
     pub fn open(self, path: impl Into<std::path::PathBuf>) -> Result<ThreadSafeRepository, Error> {
         ThreadSafeRepository::open_opts(path, self)
@@ -144,12 +155,14 @@ impl git_sec::trust::DefaultForLevel for Options {
                 replacement_objects: Default::default(),
                 permissions: Permissions::all(),
                 git_dir_trust: git_sec::Trust::Full.into(),
+                filter_config_section: Some(crate::config::section::is_trusted),
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
                 replacement_objects: ReplacementObjects::Disable, // don't be tricked into seeing manufactured objects
                 permissions: Default::default(),
                 git_dir_trust: git_sec::Trust::Reduced.into(),
+                filter_config_section: Some(crate::config::section::is_trusted),
             },
         }
     }
@@ -239,6 +252,7 @@ impl ThreadSafeRepository {
         let Options {
             git_dir_trust,
             object_store_slots,
+            filter_config_section,
             ref replacement_objects,
             permissions: Permissions {
                 git_dir: ref git_dir_perm,
@@ -260,6 +274,7 @@ impl ThreadSafeRepository {
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
         let config = crate::config::Cache::new(
+            filter_config_section.unwrap_or(crate::config::section::is_trusted),
             git_dir_trust,
             common_dir_ref,
             env.xdg_config_home.clone(),
@@ -341,7 +356,7 @@ mod tests {
     fn size_of_options() {
         assert_eq!(
             std::mem::size_of::<Options>(),
-            56,
+            64,
             "size shouldn't change without us knowing"
         );
     }
