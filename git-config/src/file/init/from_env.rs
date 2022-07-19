@@ -68,19 +68,16 @@ impl File<'static> {
                 git_sec::Trust::Full.into(),
             );
         } else {
-            // Divergence from git-config(1)
-            // These two are supposed to share the same scope and override
-            // rather than append according to git-config(1) documentation.
             if let Some(xdg_config_home) = env::var_os("XDG_CONFIG_HOME") {
                 push_path(
                     PathBuf::from(xdg_config_home).join("git/config"),
-                    Source::User,
+                    Source::Global,
                     git_sec::Trust::Full.into(),
                 );
             } else if let Some(home) = env::var_os("HOME") {
                 push_path(
                     PathBuf::from(home).join(".config/git/config"),
-                    Source::User,
+                    Source::Global,
                     git_sec::Trust::Full.into(),
                 );
             }

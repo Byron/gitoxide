@@ -37,13 +37,6 @@ pub enum Source {
     Api,
 }
 
-impl Source {
-    /// Return true if the source indicates a location within a file of a repository.
-    pub fn is_in_repository(self) -> bool {
-        matches!(self, Source::Local | Source::Worktree)
-    }
-}
-
 /// High level `git-config` reader and writer.
 ///
 /// This is the full-featured implementation that can deserialize, serialize,
