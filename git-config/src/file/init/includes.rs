@@ -8,7 +8,7 @@ use git_features::threading::OwnShared;
 use git_ref::Category;
 
 use crate::file::{init, Metadata};
-use crate::{file, file::init::from_paths, File};
+use crate::{file, File};
 
 pub(crate) fn resolve(
     config: &mut File<'static>,
@@ -79,22 +79,25 @@ fn append_followed_includes_recursively(
             continue;
         }
 
+        buf.clear();
+        std::io::copy(&mut std::fs::File::open(&config_path)?, buf)?;
+
         let config_meta = Metadata {
-            path: None,
+            path: Some(config_path),
             trust: meta.trust,
             level: meta.level + 1,
             source: meta.source,
         };
-
         let no_follow_options = init::Options {
             lossy: options.lossy,
             ..Default::default()
         };
+
         let mut include_config =
-            File::from_path_with_buf(config_path, buf, config_meta, no_follow_options).map_err(|err| match err {
-                from_paths::Error::Io(err) => Error::Io(err),
-                from_paths::Error::Init(init::Error::Parse(err)) => Error::Parse(err),
-                err => unreachable!("BUG: {:?} shouldn't be possible here", err),
+            File::from_bytes_owned(buf, config_meta, no_follow_options).map_err(|err| match err {
+                init::Error::Parse(err) => Error::Parse(err),
+                init::Error::Interpolate(err) => Error::Interpolate(err),
+                init::Error::Includes(_) => unreachable!("BUG: {:?} not possible due to no-follow options", err),
             })?;
         let config_meta = include_config.meta_owned();
 

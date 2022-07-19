@@ -5,7 +5,7 @@ use std::convert::TryFrom;
 use crate::file::init;
 use crate::{file, parse, parse::section, path::interpolate, File};
 
-/// Represents the errors that may occur when calling [`File::from_environment()`].
+/// Represents the errors that may occur when calling [`File::from_env()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -35,7 +35,7 @@ impl File<'static> {
     /// With `options` configured, it's possible `include.path` directives as well.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    pub fn from_environment(options: init::Options<'_>) -> Result<Option<File<'static>>, Error> {
+    pub fn from_env(options: init::Options<'_>) -> Result<Option<File<'static>>, Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
             Ok(v) => v.parse().map_err(|_| Error::InvalidConfigCount { input: v })?,

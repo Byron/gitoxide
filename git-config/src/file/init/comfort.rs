@@ -62,7 +62,7 @@ impl File<'static> {
             ..Default::default()
         };
 
-        File::from_environment(options).map(Option::unwrap_or_default)
+        File::from_env(options).map(Option::unwrap_or_default)
     }
 }
 
