@@ -96,10 +96,6 @@ impl<'repo> Snapshot<'repo> {
 
 impl Debug for Snapshot<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if cfg!(debug_assertions) {
-            f.write_str(&self.repo.config.resolved.to_string())
-        } else {
-            Debug::fmt(&self.repo.config.resolved, f)
-        }
+        f.write_str(&self.repo.config.resolved.to_string())
     }
 }
