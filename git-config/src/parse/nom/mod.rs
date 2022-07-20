@@ -157,6 +157,12 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
             },
         };
 
+        if header.name.is_empty() {
+            return Err(nom::Err::Error(NomError {
+                input: i,
+                code: ErrorKind::NoneOf,
+            }));
+        }
         return Ok((i, header));
     }
 
@@ -302,7 +308,6 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
         // Used to determine if we return a Value or Value{Not,}Done
         let mut partial_value_found = false;
         let mut last_value_index: usize = 0;
-        let mut prev_c = None;
 
         let mut bytes = i.iter();
         while let Some(mut c) = bytes.next() {
@@ -329,19 +334,19 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
                         value_start = nl_end;
                         value_end = None;
                         newlines += 1;
+
+                        last_value_index += consumed;
                     }
-                    b'n' | b't' | b'\\' | b'b' | b'"' => (),
+                    b'n' | b't' | b'\\' | b'b' | b'"' => {
+                        last_value_index += 1;
+                    }
                     _ => {
                         return Err(new_err(ErrorKind::Escaped));
                     }
                 }
-                last_value_index += consumed;
             } else {
                 match c {
                     b'\n' => {
-                        if prev_c == Some(b'\r') {
-                            last_value_index -= 1;
-                        }
                         value_end = last_value_index.into();
                         break;
                     }
@@ -351,9 +356,7 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
                     }
                     b'\\' => prev_char_was_backslash = true,
                     b'"' => is_in_quotes = !is_in_quotes,
-                    _ => {
-                        prev_c = Some(*c);
-                    }
+                    _ => {}
                 }
                 last_value_index += 1;
             }
