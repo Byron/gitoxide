@@ -5,6 +5,7 @@ use bstr::BStr;
 use git_features::threading::OwnShared;
 use smallvec::SmallVec;
 
+use crate::file::write::{extract_newline, platform_newline};
 use crate::file::{Metadata, MetadataFilter};
 use crate::parse::Event;
 use crate::{file, lookup, File};
@@ -279,13 +280,6 @@ impl<'event> File<'event> {
     ///
     /// Note that the first found newline is the one we use in the assumption of consistency.
     pub fn detect_newline_style(&self) -> &BStr {
-        fn extract_newline<'a, 'b>(e: &'a Event<'b>) -> Option<&'a BStr> {
-            match e {
-                Event::Newline(b) => b.as_ref().into(),
-                _ => None,
-            }
-        }
-
         self.frontmatter_events
             .iter()
             .find_map(extract_newline)
@@ -293,7 +287,7 @@ impl<'event> File<'event> {
                 self.sections()
                     .find_map(|s| s.body.as_ref().iter().find_map(extract_newline))
             })
-            .unwrap_or_else(|| if cfg!(windows) { "\r\n" } else { "\n" }.into())
+            .unwrap_or_else(|| platform_newline())
     }
 
     pub(crate) fn detect_newline_style_smallvec(&self) -> SmallVec<[u8; 2]> {

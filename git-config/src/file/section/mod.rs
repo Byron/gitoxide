@@ -1,12 +1,13 @@
 use crate::file::{Metadata, Section, SectionMut};
-use crate::parse::section;
+use crate::parse::{section, Event};
 use crate::{file, parse};
-use bstr::BString;
+use bstr::{BString, ByteSlice};
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::ops::Deref;
 
 pub(crate) mod body;
+use crate::file::write::{extract_newline, platform_newline};
 pub use body::{Body, BodyIter};
 use git_features::threading::OwnShared;
 
@@ -60,8 +61,60 @@ impl<'a> Section<'a> {
     /// as it was parsed.
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         self.header.write_to(&mut out)?;
-        for event in self.body.as_ref() {
+
+        if self.body.0.is_empty() {
+            return Ok(());
+        }
+
+        let nl = self
+            .body
+            .as_ref()
+            .iter()
+            .find_map(extract_newline)
+            .unwrap_or_else(|| platform_newline());
+
+        if self
+            .body
+            .0
+            .iter()
+            .take_while(|e| !matches!(e, Event::SectionKey(_)))
+            .find(|e| e.to_bstr_lossy().contains_str(nl))
+            .is_none()
+        {
+            out.write_all(nl)?;
+        }
+
+        let mut saw_newline_after_value = true;
+        let mut in_key_value_pair = false;
+        for (idx, event) in self.body.as_ref().iter().enumerate() {
+            match event {
+                Event::SectionKey(_) => {
+                    if !saw_newline_after_value {
+                        out.write_all(nl)?;
+                    }
+                    saw_newline_after_value = false;
+                    in_key_value_pair = true;
+                }
+                Event::Newline(_) if !in_key_value_pair => {
+                    saw_newline_after_value = true;
+                }
+                Event::Value(_) | Event::ValueDone(_) => {
+                    in_key_value_pair = false;
+                }
+                _ => {}
+            }
             event.write_to(&mut out)?;
+            if let Event::ValueNotDone(_) = event {
+                if self
+                    .body
+                    .0
+                    .get(idx + 1)
+                    .filter(|e| matches!(e, Event::Newline(_)))
+                    .is_none()
+                {
+                    out.write_all(nl)?;
+                }
+            }
         }
         Ok(())
     }

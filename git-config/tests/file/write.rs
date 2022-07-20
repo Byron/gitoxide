@@ -1,4 +1,5 @@
 use bstr::ByteVec;
+use git_config::file::{init, Metadata};
 use std::convert::TryFrom;
 
 #[test]
@@ -62,10 +63,10 @@ fn complex_lossless_roundtrip() {
         ; more comments
         # another one
             
-        [test "sub-section \"special\" C:\\root"]
+        [test "sub-section \"special\" C:\\root"] ; section comment
             bool-explicit = false
             bool-implicit
-            integer-no-prefix = 10
+            integer-no-prefix = 10 ; a value comment
             integer-prefix = 10g
             color = brightgreen red \
             bold
@@ -89,4 +90,20 @@ fn complex_lossless_roundtrip() {
     "#;
     let config = git_config::File::try_from(input).unwrap();
     assert_eq!(config.to_bstring(), input);
+
+    let lossy_config = git_config::File::from_bytes_owned(
+        &mut input.as_bytes().into(),
+        Metadata::api(),
+        init::Options {
+            lossy: true,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    let lossy_config: git_config::File = lossy_config.to_string().parse().unwrap();
+    assert_eq!(
+        lossy_config, config,
+        "Even lossy configuration serializes properly to be able to restore all values"
+    );
 }

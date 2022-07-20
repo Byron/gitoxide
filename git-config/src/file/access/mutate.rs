@@ -247,7 +247,7 @@ impl<'event> File<'event> {
             rhs: FrontMatterEvents<'a>,
             nl: &impl AsRef<[u8]>,
         ) {
-            if !ends_with_newline(lhs.as_ref(), nl)
+            if !ends_with_newline(lhs.as_ref(), nl, true)
                 && !rhs.first().map_or(true, |e| e.to_bstr_lossy().starts_with(nl.as_ref()))
             {
                 lhs.push(Event::Newline(Cow::Owned(nl.as_ref().into())))

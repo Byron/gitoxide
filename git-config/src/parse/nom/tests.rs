@@ -396,6 +396,25 @@ mod section {
                 0
             ))
         );
+
+        assert_eq!(
+            section(b"[hello] c\nd", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("hello", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("c"),
+                        value_event(""),
+                        newline_event(),
+                        name_event("d"),
+                        value_event("")
+                    ]
+                    .into()
+                },
+                1
+            ))
+        );
     }
 
     #[test]
