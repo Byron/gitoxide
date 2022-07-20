@@ -24,14 +24,14 @@ impl File<'_> {
             }
 
             if !ends_with_newline(self.frontmatter_events.as_ref(), nl) && self.sections.iter().next().is_some() {
-                out.write_all(&nl)?;
+                out.write_all(nl)?;
             }
         }
 
         let mut prev_section_ended_with_newline = true;
         for section_id in &self.section_order {
             if !prev_section_ended_with_newline {
-                out.write_all(&nl)?;
+                out.write_all(nl)?;
             }
             let section = self.sections.get(section_id).expect("known section-id");
             section.write_to(&mut out)?;
@@ -39,7 +39,7 @@ impl File<'_> {
             prev_section_ended_with_newline = ends_with_newline(section.body.0.as_ref(), nl);
             if let Some(post_matter) = self.frontmatter_post_section.get(section_id) {
                 if !prev_section_ended_with_newline {
-                    out.write_all(&nl)?;
+                    out.write_all(nl)?;
                 }
                 for event in post_matter {
                     event.write_to(&mut out)?;
@@ -49,7 +49,7 @@ impl File<'_> {
         }
 
         if !prev_section_ended_with_newline {
-            out.write_all(&nl)?;
+            out.write_all(nl)?;
         }
 
         Ok(())
