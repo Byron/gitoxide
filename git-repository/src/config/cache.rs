@@ -14,7 +14,6 @@ pub(crate) struct StageOne {
 
     is_bare: bool,
     pub object_hash: git_hash::Kind,
-    use_multi_pack_index: bool,
     pub reflog: Option<git_ref::store::WriteReflog>,
 }
 
@@ -38,7 +37,6 @@ impl StageOne {
         };
 
         let is_bare = config_bool(&config, "core.bare", false)?;
-        let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
         let repo_format_version = config
             .value::<Integer>("core", None, "repositoryFormatVersion")
             .map_or(0, |v| v.to_decimal().unwrap_or_default());
@@ -57,23 +55,13 @@ impl StageOne {
             })
             .transpose()?
             .unwrap_or(git_hash::Kind::Sha1);
-        let reflog = config.string("core", None, "logallrefupdates").map(|val| {
-            (val.eq_ignore_ascii_case(b"always"))
-                .then(|| git_ref::store::WriteReflog::Always)
-                .or_else(|| {
-                    git_config::Boolean::try_from(val)
-                        .ok()
-                        .and_then(|b| b.is_true().then(|| git_ref::store::WriteReflog::Normal))
-                })
-                .unwrap_or(git_ref::store::WriteReflog::Disable)
-        });
 
+        let reflog = query_refupdates(&config);
         Ok(StageOne {
             git_dir_config: config,
             buf,
             is_bare,
             object_hash,
-            use_multi_pack_index,
             reflog,
         })
     }
@@ -86,8 +74,7 @@ impl Cache {
             buf: _,
             is_bare,
             object_hash,
-            use_multi_pack_index,
-            reflog,
+            reflog: _,
         }: StageOne,
         git_dir: &std::path::Path,
         branch_name: Option<&git_ref::FullNameRef>,
@@ -117,7 +104,6 @@ impl Cache {
             .path_filter("core", None, "excludesFile", &mut filter_config_section)
             .map(|p| p.interpolate(options.includes.interpolate).map(|p| p.into_owned()))
             .transpose()?;
-        let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
 
         let mut hex_len = None;
         if let Some(hex_len_str) = config.string("core", None, "abbrev") {
@@ -150,6 +136,9 @@ impl Cache {
             }
         }
 
+        let reflog = query_refupdates(&config);
+        let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
+        let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
         Ok(Cache {
             resolved: config.into(),
             use_multi_pack_index,
@@ -211,4 +200,17 @@ fn config_bool(config: &git_config::File<'_>, key: &str, default: bool) -> Resul
             value: err.input,
             key: key.into(),
         })
+}
+
+fn query_refupdates(config: &git_config::File<'static>) -> Option<git_ref::store::WriteReflog> {
+    config.string("core", None, "logallrefupdates").map(|val| {
+        (val.eq_ignore_ascii_case(b"always"))
+            .then(|| git_ref::store::WriteReflog::Always)
+            .or_else(|| {
+                git_config::Boolean::try_from(val)
+                    .ok()
+                    .and_then(|b| b.is_true().then(|| git_ref::store::WriteReflog::Normal))
+            })
+            .unwrap_or(git_ref::store::WriteReflog::Disable)
+    })
 }
