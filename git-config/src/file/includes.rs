@@ -325,7 +325,7 @@ mod types {
         pub conditional: conditional::Context<'a>,
     }
 
-    impl Options<'_> {
+    impl<'a> Options<'a> {
         /// Provide options to never follow include directives at all.
         pub fn no_includes() -> Self {
             Options {
@@ -335,9 +335,6 @@ mod types {
                 conditional: Default::default(),
             }
         }
-    }
-
-    impl<'a> Options<'a> {
         /// Provide options to follow includes like git does, provided the required `conditional` and `interpolate` contexts
         /// to support `gitdir` and `onbranch` based `includeIf` directives as well as standard `include.path` resolution.
         /// Note that the follow-mode is `git`-style, following at most 10 indirections while
