@@ -73,13 +73,12 @@ impl<'a> Section<'a> {
             .find_map(extract_newline)
             .unwrap_or_else(|| platform_newline());
 
-        if self
+        if !self
             .body
-            .0
+            .as_ref()
             .iter()
             .take_while(|e| !matches!(e, Event::SectionKey(_)))
-            .find(|e| e.to_bstr_lossy().contains_str(nl))
-            .is_none()
+            .any(|e| e.to_bstr_lossy().contains_str(nl))
         {
             out.write_all(nl)?;
         }

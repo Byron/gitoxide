@@ -310,7 +310,7 @@ fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<
                 prev_char_was_backslash = false;
                 let mut consumed = 1;
                 if *c == b'\r' {
-                    c = bytes.next().ok_or(new_err(ErrorKind::Escaped))?;
+                    c = bytes.next().ok_or_else(|| new_err(ErrorKind::Escaped))?;
                     if *c != b'\n' {
                         return Err(new_err(ErrorKind::Tag));
                     }
