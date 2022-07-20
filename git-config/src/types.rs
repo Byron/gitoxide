@@ -86,8 +86,13 @@ pub enum Source {
 /// Consider the `multi` variants of the methods instead, if you want to work
 /// with all values.
 ///
+/// # Equality
+///
+/// In order to make it useful, equality will ignore all non-value bearing information, hence compare
+/// only sections and their names, as well as all of their values. The ordering matters, of course.
+///
 /// [`raw_value()`]: Self::raw_value
-#[derive(PartialEq, Eq, Clone, Debug, Default)]
+#[derive(Eq, Clone, Debug, Default)]
 pub struct File<'event> {
     /// The list of events that occur before any section. Since a
     /// `git-config` file prohibits global values, this vec is limited to only

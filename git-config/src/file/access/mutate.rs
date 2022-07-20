@@ -263,8 +263,8 @@ impl<'event> File<'event> {
         }
 
         let our_last_section_before_append =
-            (self.section_id_counter != 0).then(|| SectionId(self.section_id_counter - 1));
-        let mut last_added_section_id = None;
+            insert_after.or_else(|| (self.section_id_counter != 0).then(|| SectionId(self.section_id_counter - 1)));
+        let mut last_added_section_id = None::<SectionId>;
 
         for id in std::mem::take(&mut other.section_order) {
             let section = other.sections.remove(&id).expect("present");
