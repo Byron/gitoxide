@@ -13,4 +13,14 @@ cat <<EOF>>.git/config
   absolute-path = /etc/man.conf
   bad-user-path = ~noname/repo
   single-string = hello world
+  override = base
+
+[include]
+  path = ../a.config
+EOF
+
+
+cat <<EOF>>a.config
+[a]
+  override = from-a.config
 EOF

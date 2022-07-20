@@ -25,6 +25,8 @@ fn access_values() {
             "hello world"
         );
 
+        assert_eq!(config.string("a.override").expect("present").as_ref(), "from-a.config");
+
         assert_eq!(config.boolean("core.missing"), None);
         assert_eq!(config.try_boolean("core.missing"), None);
 

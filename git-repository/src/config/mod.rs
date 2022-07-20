@@ -21,7 +21,9 @@ pub enum Error {
     #[error("Could not read configuration file")]
     Io(#[from] std::io::Error),
     #[error(transparent)]
-    Config(#[from] git_config::file::init::Error),
+    Init(#[from] git_config::file::init::Error),
+    #[error(transparent)]
+    ResolveIncludes(#[from] git_config::file::includes::Error),
     #[error("Cannot handle objects formatted as {:?}", .name)]
     UnsupportedObjectFormat { name: BString },
     #[error("The value for '{}' cannot be empty", .key)]

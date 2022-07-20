@@ -82,7 +82,7 @@ impl StageOne {
 impl Cache {
     pub fn from_stage_one(
         StageOne {
-            git_dir_config: config,
+            git_dir_config: mut config,
             buf: _,
             is_bare,
             object_hash,
@@ -101,7 +101,6 @@ impl Cache {
             .and_then(|home| home_env.check(home).ok().flatten());
         // TODO: don't forget to use the canonicalized home for initializing the stacked config.
         //       like git here: https://github.com/git/git/blob/master/config.c#L208:L208
-        // TODO: resolve includes and load other kinds of configuration
         let options = git_config::file::init::Options {
             lossy: !cfg!(debug_assertions),
             includes: git_config::file::includes::Options::follow(
@@ -112,6 +111,7 @@ impl Cache {
                 },
             ),
         };
+        config.resolve_includes(options)?;
 
         let excludes_file = config
             .path_filter("core", None, "excludesFile", &mut filter_config_section)

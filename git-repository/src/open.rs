@@ -270,10 +270,10 @@ impl ThreadSafeRepository {
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
 
-        let early_cache = crate::config::cache::StageOne::new(common_dir_ref, git_dir_trust)?;
+        let cache = crate::config::cache::StageOne::new(common_dir_ref, git_dir_trust)?;
         let mut refs = {
-            let reflog = early_cache.reflog.unwrap_or(git_ref::store::WriteReflog::Disable);
-            let object_hash = early_cache.object_hash;
+            let reflog = cache.reflog.unwrap_or(git_ref::store::WriteReflog::Disable);
+            let object_hash = cache.object_hash;
             match &common_dir {
                 Some(common_dir) => crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, object_hash),
                 None => crate::RefStore::at(&git_dir, reflog, object_hash),
@@ -281,7 +281,7 @@ impl ThreadSafeRepository {
         };
         let head = refs.find("HEAD").ok();
         let config = crate::config::Cache::from_stage_one(
-            early_cache,
+            cache,
             common_dir_ref,
             head.as_ref().and_then(|head| head.target.try_name()),
             filter_config_section.unwrap_or(crate::config::section::is_trusted),
