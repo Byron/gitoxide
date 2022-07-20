@@ -132,22 +132,25 @@ impl Cache {
                     .into()
                 });
 
-            let no_include_options = git_config::file::init::Options {
-                includes: git_config::file::includes::Options::no_includes(),
-                ..options
-            };
-            git_dir_config.resolve_includes(options)?;
-            match git_config::File::from_paths_metadata(metas, no_include_options).map_err(|err| match err {
+            let mut globals = git_config::File::from_paths_metadata(
+                metas,
+                git_config::file::init::Options {
+                    includes: git_config::file::includes::Options::no_includes(),
+                    ..options
+                },
+            )
+            .map_err(|err| match err {
                 git_config::file::init::from_paths::Error::Init(err) => Error::from(err),
                 git_config::file::init::from_paths::Error::Io(err) => err.into(),
-            })? {
-                Some(mut globals) => {
-                    globals.resolve_includes(options)?;
-                    globals.append(git_dir_config);
-                    globals
-                }
-                None => git_dir_config,
-            }
+            })?
+            .unwrap_or_default();
+
+            // TODO: resolve should also work after append, but that needs it to use paths from metadata.
+            git_dir_config.resolve_includes(options)?;
+            globals.resolve_includes(options)?;
+
+            globals.append(git_dir_config);
+            globals
         };
 
         config.resolve_includes(options)?;
