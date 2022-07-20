@@ -614,6 +614,7 @@ mod value_continuation {
     }
 
     #[test]
+    #[ignore]
     fn quote_split_over_two_lines_with_leftover_comment() {
         let mut events = section::Events::default();
         assert_eq!(value_impl(b"\"\\\n;\";a", &mut events).unwrap().0, b";a");
@@ -622,6 +623,17 @@ mod value_continuation {
             into_events(vec![
                 value_not_done_event("\""),
                 newline_event(),
+                value_done_event(";\"")
+            ])
+        );
+
+        let mut events = section::Events::default();
+        assert_eq!(value_impl(b"\"\\\r\n;\";a", &mut events).unwrap().0, b";a");
+        assert_eq!(
+            events,
+            into_events(vec![
+                value_not_done_event("\""),
+                newline_custom_event("\r\n"),
                 value_done_event(";\"")
             ])
         );
