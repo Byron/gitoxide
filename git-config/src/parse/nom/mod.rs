@@ -372,7 +372,7 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
     }
 
     let (i, remainder_value) = {
-        let mut new_index = parsed_index;
+        let mut new_index = 0;
         for index in (offset..parsed_index).rev() {
             if !i[index].is_ascii_whitespace() {
                 new_index = index + 1;

@@ -128,18 +128,20 @@ mod push {
     #[test]
     fn values_are_escaped() {
         for (value, expected) in [
-            ("a b", "$head\tk = a b\n"),
-            (" a b", "$head\tk = \" a b\"\n"),
-            ("a b\t", "$head\tk = \"a b\\t\"\n"),
-            (";c", "$head\tk = \";c\"\n"),
-            ("#c", "$head\tk = \"#c\"\n"),
-            ("a\nb\n\tc", "$head\tk = a\\nb\\n\\tc\n"),
+            ("a b", "$head\tk = a b$nl"),
+            (" a b", "$head\tk = \" a b\"$nl"),
+            ("a b\t", "$head\tk = \"a b\\t\"$nl"),
+            (";c", "$head\tk = \";c\"$nl"),
+            ("#c", "$head\tk = \"#c\"$nl"),
+            ("a\nb\n\tc", "$head\tk = a\\nb\\n\\tc$nl"),
         ] {
             let mut config = git_config::File::default();
             let mut section = config.new_section("a", None).unwrap();
             section.set_implicit_newline(false);
             section.push(Key::try_from("k").unwrap(), value);
-            let expected = expected.replace("$head", &format!("[a]{nl}", nl = section.newline()));
+            let expected = expected
+                .replace("$head", &format!("[a]{nl}", nl = section.newline()))
+                .replace("$nl", &section.newline().to_string());
             assert_eq!(config.to_bstring(), expected);
         }
     }

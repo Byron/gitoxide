@@ -163,6 +163,7 @@ mod config_name {
 }
 
 mod section {
+    use crate::parse::tests::util::newline_custom_event;
     use crate::parse::{
         error::ParseNode,
         section,
@@ -197,6 +198,54 @@ mod section {
                 ),
             )
         })
+    }
+
+    #[test]
+    fn empty_value_with_windows_newlines() {
+        let mut node = ParseNode::SectionHeader;
+        assert_eq!(
+            section(b"[a] k = \r\n", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event(""),
+                        newline_custom_event("\r\n")
+                    ]
+                    .into(),
+                },
+                1
+            )),
+        );
+    }
+
+    #[test]
+    fn simple_value_with_windows_newlines() {
+        let mut node = ParseNode::SectionHeader;
+        assert_eq!(
+            section(b"[a] k = v\r\n", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event("v"),
+                        newline_custom_event("\r\n")
+                    ]
+                    .into(),
+                },
+                1
+            )),
+        );
     }
 
     #[test]
