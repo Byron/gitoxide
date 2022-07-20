@@ -32,7 +32,7 @@ impl StageOne {
                     .with(git_dir_trust),
                 git_config::file::init::Options {
                     lossy: !cfg!(debug_assertions),
-                    includes: git_config::file::init::includes::Options::no_includes(),
+                    includes: git_config::file::includes::Options::no_includes(),
                 },
             )?
         };
@@ -104,9 +104,9 @@ impl Cache {
         // TODO: resolve includes and load other kinds of configuration
         let options = git_config::file::init::Options {
             lossy: !cfg!(debug_assertions),
-            includes: git_config::file::init::includes::Options::follow(
+            includes: git_config::file::includes::Options::follow(
                 interpolate_context(git_install_dir, home.as_deref()),
-                git_config::file::init::includes::conditional::Context {
+                git_config::file::includes::conditional::Context {
                     git_dir: git_dir.into(),
                     branch_name,
                 },
