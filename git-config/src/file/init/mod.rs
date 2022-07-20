@@ -71,13 +71,12 @@ impl File<'static> {
         meta: impl Into<OwnShared<Metadata>>,
         options: Options<'_>,
     ) -> Result<Self, Error> {
-        let meta = meta.into();
         let mut config = Self::from_parse_events_no_includes(
             parse::Events::from_bytes_owned(input_and_buf, options.to_event_filter()).map_err(Error::from)?,
-            OwnShared::clone(&meta),
+            meta,
         );
 
-        includes::resolve(&mut config, meta, input_and_buf, options).map_err(Error::from)?;
+        includes::resolve(&mut config, input_and_buf, options).map_err(Error::from)?;
         Ok(config)
     }
 }

@@ -27,22 +27,16 @@ impl File<'static> {
     ///   We can fix this by 'splitting' the inlcude section if needed so the included sections are put into the right place.
     pub fn resolve_includes(&mut self, options: init::Options<'_>) -> Result<(), Error> {
         let mut buf = Vec::new();
-        resolve(self, OwnShared::clone(&self.meta), &mut buf, options)
+        resolve(self, &mut buf, options)
     }
 }
 
-pub(crate) fn resolve(
-    config: &mut File<'static>,
-    meta: OwnShared<Metadata>,
-    buf: &mut Vec<u8>,
-    options: init::Options<'_>,
-) -> Result<(), Error> {
-    resolve_includes_recursive(config, meta, 0, buf, options)
+pub(crate) fn resolve(config: &mut File<'static>, buf: &mut Vec<u8>, options: init::Options<'_>) -> Result<(), Error> {
+    resolve_includes_recursive(config, 0, buf, options)
 }
 
 fn resolve_includes_recursive(
     target_config: &mut File<'static>,
-    meta: OwnShared<Metadata>,
     depth: u8,
     buf: &mut Vec<u8>,
     options: init::Options<'_>,
@@ -57,8 +51,6 @@ fn resolve_includes_recursive(
         };
     }
 
-    let target_config_path = meta.path.as_deref();
-
     let mut section_ids_and_include_paths = Vec::new();
     for (id, section) in target_config
         .section_order
@@ -71,6 +63,7 @@ fn resolve_includes_recursive(
             detach_include_paths(&mut section_ids_and_include_paths, section, id)
         } else if header_name == "includeIf" {
             if let Some(condition) = &header.subsection_name {
+                let target_config_path = section.meta.path.as_deref();
                 if include_condition_match(condition.as_ref(), target_config_path, options.includes)? {
                     detach_include_paths(&mut section_ids_and_include_paths, section, id)
                 }
@@ -78,27 +71,19 @@ fn resolve_includes_recursive(
         }
     }
 
-    append_followed_includes_recursively(
-        section_ids_and_include_paths,
-        target_config,
-        target_config_path,
-        depth,
-        meta.clone(),
-        options,
-        buf,
-    )
+    append_followed_includes_recursively(section_ids_and_include_paths, target_config, depth, options, buf)
 }
 
 fn append_followed_includes_recursively(
     section_ids_and_include_paths: Vec<(SectionId, crate::Path<'_>)>,
     target_config: &mut File<'static>,
-    target_config_path: Option<&Path>,
     depth: u8,
-    meta: OwnShared<Metadata>,
     options: init::Options<'_>,
     buf: &mut Vec<u8>,
 ) -> Result<(), Error> {
     for (section_id, config_path) in section_ids_and_include_paths {
+        let meta = OwnShared::clone(&target_config.sections[&section_id].meta);
+        let target_config_path = meta.path.as_deref();
         let config_path = resolve_path(config_path, target_config_path, options.includes.interpolate)?;
         if !config_path.is_file() {
             continue;
@@ -106,7 +91,6 @@ fn append_followed_includes_recursively(
 
         buf.clear();
         std::io::copy(&mut std::fs::File::open(&config_path)?, buf)?;
-
         let config_meta = Metadata {
             path: Some(config_path),
             trust: meta.trust,
@@ -124,9 +108,7 @@ fn append_followed_includes_recursively(
                 init::Error::Interpolate(err) => Error::Interpolate(err),
                 init::Error::Includes(_) => unreachable!("BUG: {:?} not possible due to no-follow options", err),
             })?;
-        let config_meta = include_config.meta_owned();
-
-        resolve_includes_recursive(&mut include_config, config_meta, depth + 1, buf, options)?;
+        resolve_includes_recursive(&mut include_config, depth + 1, buf, options)?;
 
         target_config.append_or_insert(include_config, Some(section_id));
     }

@@ -1,4 +1,3 @@
-use git_features::threading::OwnShared;
 use std::borrow::Cow;
 use std::convert::TryFrom;
 
@@ -46,13 +45,13 @@ impl File<'static> {
             return Ok(None);
         }
 
-        let meta = OwnShared::new(file::Metadata {
+        let meta = file::Metadata {
             path: None,
             source: crate::Source::Env,
             level: 0,
             trust: git_sec::Trust::Full,
-        });
-        let mut config = File::new(OwnShared::clone(&meta));
+        };
+        let mut config = File::new(meta);
         for i in 0..count {
             let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| Error::InvalidKeyId { key_id: i })?;
             let value = env::var_os(format!("GIT_CONFIG_VALUE_{}", i)).ok_or(Error::InvalidValueId { value_id: i })?;
@@ -76,7 +75,7 @@ impl File<'static> {
         }
 
         let mut buf = Vec::new();
-        init::includes::resolve(&mut config, meta, &mut buf, options)?;
+        init::includes::resolve(&mut config, &mut buf, options)?;
         Ok(Some(config))
     }
 }
