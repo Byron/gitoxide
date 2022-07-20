@@ -240,7 +240,7 @@ impl<'event> File<'event> {
     }
 
     /// Append another File to the end of ourselves, without loosing any information.
-    fn append_or_insert(&mut self, mut other: Self, mut insert_after: Option<SectionId>) -> &mut Self {
+    pub(crate) fn append_or_insert(&mut self, mut other: Self, mut insert_after: Option<SectionId>) -> &mut Self {
         let nl = self.detect_newline_style().to_owned();
 
         fn ends_with_newline<'a>(it: impl DoubleEndedIterator<Item = &'a Event<'a>>) -> bool {

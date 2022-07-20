@@ -11,7 +11,6 @@ mod gitdir;
 mod onbranch;
 
 #[test]
-#[ignore]
 fn include_and_includeif_correct_inclusion_order() -> crate::Result {
     let dir = tempdir()?;
     let config_path = dir.path().join("root");

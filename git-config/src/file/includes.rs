@@ -7,7 +7,7 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_features::threading::OwnShared;
 use git_ref::Category;
 
-use crate::file::{init, Metadata};
+use crate::file::{init, Metadata, SectionId};
 use crate::{file, File};
 
 impl File<'static> {
@@ -20,6 +20,11 @@ impl File<'static> {
     ///   times. It's recommended use is as part of a multi-step bootstrapping which needs fine-grained control,
     ///   and unless that's given one should prefer one of the other ways of initialization that resolve includes
     ///   at the right time.
+    /// - included values are added after the _section_ that included them, not directly after the value. This is
+    ///   a deviation from how git does it, as it technically adds new value right after the include path itself,
+    ///   technically 'splitting' the section. This can only make a difference if the `include` section also has values
+    ///   which later overwrite portions of the included file, which seems unusual as these would be related to `includes`.
+    ///   We can fix this by 'splitting' the inlcude section if needed so the included sections are put into the right place.
     pub fn resolve_includes(&mut self, options: init::Options<'_>) -> Result<(), Error> {
         let mut buf = Vec::new();
         resolve(self, OwnShared::clone(&self.meta), &mut buf, options)
@@ -54,23 +59,27 @@ fn resolve_includes_recursive(
 
     let target_config_path = meta.path.as_deref();
 
-    let mut include_paths = Vec::new();
-    for section in target_config.sections() {
+    let mut section_ids_and_include_paths = Vec::new();
+    for (id, section) in target_config
+        .section_order
+        .iter()
+        .map(|id| (*id, &target_config.sections[id]))
+    {
         let header = &section.header;
         let header_name = header.name.as_ref();
         if header_name == "include" && header.subsection_name.is_none() {
-            detach_include_paths(&mut include_paths, section)
+            detach_include_paths(&mut section_ids_and_include_paths, section, id)
         } else if header_name == "includeIf" {
             if let Some(condition) = &header.subsection_name {
                 if include_condition_match(condition.as_ref(), target_config_path, options.includes)? {
-                    detach_include_paths(&mut include_paths, section)
+                    detach_include_paths(&mut section_ids_and_include_paths, section, id)
                 }
             }
         }
     }
 
     append_followed_includes_recursively(
-        include_paths,
+        section_ids_and_include_paths,
         target_config,
         target_config_path,
         depth,
@@ -81,7 +90,7 @@ fn resolve_includes_recursive(
 }
 
 fn append_followed_includes_recursively(
-    include_paths: Vec<crate::Path<'_>>,
+    section_ids_and_include_paths: Vec<(SectionId, crate::Path<'_>)>,
     target_config: &mut File<'static>,
     target_config_path: Option<&Path>,
     depth: u8,
@@ -89,7 +98,7 @@ fn append_followed_includes_recursively(
     options: init::Options<'_>,
     buf: &mut Vec<u8>,
 ) -> Result<(), Error> {
-    for config_path in include_paths {
+    for (section_id, config_path) in section_ids_and_include_paths {
         let config_path = resolve_path(config_path, target_config_path, options.includes.interpolate)?;
         if !config_path.is_file() {
             continue;
@@ -119,18 +128,22 @@ fn append_followed_includes_recursively(
 
         resolve_includes_recursive(&mut include_config, config_meta, depth + 1, buf, options)?;
 
-        target_config.append(include_config);
+        target_config.append_or_insert(include_config, Some(section_id));
     }
     Ok(())
 }
 
-fn detach_include_paths(include_paths: &mut Vec<crate::Path<'static>>, section: &file::Section<'_>) {
+fn detach_include_paths(
+    include_paths: &mut Vec<(SectionId, crate::Path<'static>)>,
+    section: &file::Section<'_>,
+    id: SectionId,
+) {
     include_paths.extend(
         section
             .body
             .values("path")
             .into_iter()
-            .map(|path| crate::Path::from(Cow::Owned(path.into_owned()))),
+            .map(|path| (id, crate::Path::from(Cow::Owned(path.into_owned())))),
     )
 }
 
