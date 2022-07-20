@@ -65,7 +65,6 @@ fn multiple_paths_single_value() -> crate::Result {
 }
 
 #[test]
-#[ignore]
 fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
     let dir = tempdir()?;
 

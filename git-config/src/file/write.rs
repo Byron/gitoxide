@@ -18,23 +18,12 @@ impl File<'_> {
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
         let nl = self.detect_newline_style();
 
-        let ends_with_newline = |e: &[crate::parse::Event<'_>]| -> bool {
-            if e.is_empty() {
-                return true;
-            }
-            e.iter()
-                .rev()
-                .take_while(|e| e.to_bstr_lossy().iter().all(|b| b.is_ascii_whitespace()))
-                .find_map(|e| e.to_bstr_lossy().contains_str(nl).then(|| true))
-                .unwrap_or(false)
-        };
-
         {
             for event in self.frontmatter_events.as_ref() {
                 event.write_to(&mut out)?;
             }
 
-            if !ends_with_newline(self.frontmatter_events.as_ref()) && self.sections.iter().next().is_some() {
+            if !ends_with_newline(self.frontmatter_events.as_ref(), nl) && self.sections.iter().next().is_some() {
                 out.write_all(&nl)?;
             }
         }
@@ -47,7 +36,7 @@ impl File<'_> {
             let section = self.sections.get(section_id).expect("known section-id");
             section.write_to(&mut out)?;
 
-            prev_section_ended_with_newline = ends_with_newline(section.body.0.as_ref());
+            prev_section_ended_with_newline = ends_with_newline(section.body.0.as_ref(), nl);
             if let Some(post_matter) = self.frontmatter_post_section.get(section_id) {
                 if !prev_section_ended_with_newline {
                     out.write_all(&nl)?;
@@ -55,7 +44,7 @@ impl File<'_> {
                 for event in post_matter {
                     event.write_to(&mut out)?;
                 }
-                prev_section_ended_with_newline = ends_with_newline(post_matter);
+                prev_section_ended_with_newline = ends_with_newline(post_matter, nl);
             }
         }
 
@@ -65,4 +54,15 @@ impl File<'_> {
 
         Ok(())
     }
+}
+
+pub(crate) fn ends_with_newline(e: &[crate::parse::Event<'_>], nl: impl AsRef<[u8]>) -> bool {
+    if e.is_empty() {
+        return true;
+    }
+    e.iter()
+        .rev()
+        .take_while(|e| e.to_bstr_lossy().iter().all(|b| b.is_ascii_whitespace()))
+        .find_map(|e| e.to_bstr_lossy().contains_str(nl.as_ref()).then(|| true))
+        .unwrap_or(false)
 }

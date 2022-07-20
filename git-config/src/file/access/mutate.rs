@@ -1,7 +1,9 @@
 use git_features::threading::OwnShared;
 use std::borrow::Cow;
 
+use crate::file::write::ends_with_newline;
 use crate::file::{MetadataFilter, SectionId};
+use crate::parse::{Event, FrontMatterEvents};
 use crate::{
     file::{self, rename_section, SectionMut},
     lookup,
@@ -239,6 +241,19 @@ impl<'event> File<'event> {
 
     /// Append another File to the end of ourselves, without loosing any information.
     pub(crate) fn append_or_insert(&mut self, mut other: Self, mut insert_after: Option<SectionId>) -> &mut Self {
+        let nl = self.detect_newline_style_smallvec();
+        fn extend_and_assure_newline<'a>(
+            lhs: &mut FrontMatterEvents<'a>,
+            rhs: FrontMatterEvents<'a>,
+            nl: &impl AsRef<[u8]>,
+        ) {
+            if !ends_with_newline(lhs.as_ref(), nl)
+                && !rhs.first().map_or(true, |e| e.to_bstr_lossy().starts_with(nl.as_ref()))
+            {
+                lhs.push(Event::Newline(Cow::Owned(nl.as_ref().into())))
+            }
+            lhs.extend(rhs);
+        }
         let our_last_section_before_append =
             insert_after.or_else(|| (self.section_id_counter != 0).then(|| SectionId(self.section_id_counter - 1)));
 
@@ -264,12 +279,12 @@ impl<'event> File<'event> {
         }
 
         match our_last_section_before_append {
-            Some(last_id) => self
-                .frontmatter_post_section
-                .entry(last_id)
-                .or_default()
-                .extend(other.frontmatter_events),
-            None => self.frontmatter_events.extend(other.frontmatter_events),
+            Some(last_id) => extend_and_assure_newline(
+                self.frontmatter_post_section.entry(last_id).or_default(),
+                other.frontmatter_events,
+                &nl,
+            ),
+            None => extend_and_assure_newline(&mut self.frontmatter_events, other.frontmatter_events, &nl),
         }
         self
     }

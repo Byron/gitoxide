@@ -12,7 +12,6 @@ mod gitdir;
 mod onbranch;
 
 #[test]
-#[ignore]
 fn include_and_includeif_correct_inclusion_order() -> crate::Result {
     let dir = tempdir()?;
     let config_path = dir.path().join("root");
@@ -57,6 +56,7 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
 # root past first include
 [section]
   value = base-past-first-include
+# root before include-if no-nl
 [includeIf "gitdir:root/"]
   path = {}
 [section]
@@ -101,24 +101,20 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
         );
         assert_eq!(config.sections().count(), 10);
 
-        // TODO: also validate serialization here, with front/post-matter.
-        if delayed_resolve {
-            let config_string = config.to_string();
-            let deserialized = File::from_str(&config_string)?;
-            assert_eq!(config, config, "equality comparisons work");
-            eprintln!("{}", config_string);
-            assert_eq!(
-                deserialized.sections().count(),
-                config.sections().count(),
-                "sections must match to have a chance for equality"
-            );
-            assert_eq!(config, deserialized, "we can round-trip the information at least");
-            assert_eq!(
-                deserialized.to_string(),
-                config_string,
-                "even though complete roundtripping might not work due to newline issues"
-            );
-        }
+        let config_string = config.to_string();
+        let deserialized = File::from_str(&config_string)?;
+        assert_eq!(config, config, "equality comparisons work");
+        assert_eq!(
+            deserialized.sections().count(),
+            config.sections().count(),
+            "sections must match to have a chance for equality"
+        );
+        assert_eq!(config, deserialized, "we can round-trip the information at least");
+        assert_eq!(
+            deserialized.to_string(),
+            config_string,
+            "serialization works exactly as before"
+        );
     }
     Ok(())
 }

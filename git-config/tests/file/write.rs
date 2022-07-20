@@ -1,4 +1,44 @@
+use bstr::ByteVec;
 use std::convert::TryFrom;
+
+#[test]
+fn empty_sections_roundtrip() {
+    let input = r#"
+        [a]
+    [b]
+        [c] 
+        
+            [d]
+"#;
+
+    let config = git_config::File::try_from(input).unwrap();
+    assert_eq!(config.to_bstring(), input);
+}
+
+#[test]
+fn empty_sections_with_comments_roundtrip() {
+    let input = r#"; pre-a
+        [a] # side a
+        ; post a  
+    [b] ; side b
+        [c] ; side c
+        ; post c
+            [d] # side d
+"#;
+
+    let mut config = git_config::File::try_from(input).unwrap();
+    let mut single_string = config.to_bstring();
+    assert_eq!(single_string, input);
+    assert_eq!(
+        config.append(config.clone()).to_string(),
+        {
+            let clone = single_string.clone();
+            single_string.push_str(&clone);
+            single_string
+        },
+        "string-duplication is the same as data structure duplication"
+    );
+}
 
 #[test]
 fn complex_lossless_roundtrip() {
