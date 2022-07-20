@@ -11,6 +11,7 @@ mod gitdir;
 mod onbranch;
 
 #[test]
+#[ignore]
 fn include_and_includeif_correct_inclusion_order() -> crate::Result {
     let dir = tempdir()?;
     let config_path = dir.path().join("root");
@@ -20,33 +21,40 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
     fs::write(
         first_include_path.as_path(),
         "
-[core]
-  b = first-incl-path",
+[section]
+  value = first-incl-path",
     )?;
 
     fs::write(
         second_include_path.as_path(),
         "
-[core]
-  b = second-incl-path",
+[section]
+  value = second-incl-path",
     )?;
 
     fs::write(
         include_if_path.as_path(),
         "
-[core]
-  b = incl-if-path",
+[section]
+  value = incl-if-path",
     )?;
 
     let root_config = format!(
         r#"
-[core]
+[section]
+    value = base
 [include]
   path = {}
+[section]
+  value = base-past-first-include
 [includeIf "gitdir:root/"]
   path = {}
+[section]
+  value = base-past-includeIf
 [include]
-  path = {}"#,
+  path = {}
+[section]
+  value = base-past-second-include "#,
         escape_backslashes(&first_include_path),
         escape_backslashes(&include_if_path),
         escape_backslashes(&second_include_path),
@@ -65,22 +73,22 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
             File::from_paths_metadata(Some(meta), options)?.expect("non-empty")
         };
 
-        // TODO: test interaction with values from root as well - maybe against git as baseline.
         assert_eq!(
-            config.strings("core", None, "b"),
+            config.strings("section", None, "value"),
             Some(vec![
+                cow_str("base"),
                 cow_str("first-incl-path"),
+                cow_str("base-past-first-include"),
                 cow_str("incl-if-path"),
-                cow_str("second-incl-path")
+                cow_str("base-past-includeIf"),
+                cow_str("second-incl-path"),
+                cow_str("base-past-second-include"),
             ]),
-            "first include is matched correctly, delayed_resolve = {}",
+            "include order isn't changed also in relation to the root configuratino, delayed_resolve = {}",
             delayed_resolve,
         );
-        assert_eq!(
-            config.string("core", None, "b"),
-            Some(cow_str("second-incl-path")),
-            "second include is matched after incl-if",
-        );
+
+        // TODO: also validate serialization here, with front/post-matter.
     }
     Ok(())
 }
