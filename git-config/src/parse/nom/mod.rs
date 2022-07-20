@@ -293,6 +293,7 @@ fn config_value<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> I
 
 /// Handles parsing of known-to-be values. This function handles both single
 /// line values as well as values that are continuations.
+// TODO: rewrite this… it's crazy complicated and super hard to work with.
 fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
     let mut parsed_index: usize = 0;
     let mut offset: usize = 0;
@@ -304,18 +305,25 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
     // Used to determine if we return a Value or Value{Not,}Done
     let mut partial_value_found = false;
     let mut index: usize = 0;
+    let mut cr_needs_newline = false;
 
     for c in i.iter() {
-        if was_prev_char_escape_char {
+        if was_prev_char_escape_char || cr_needs_newline {
             was_prev_char_escape_char = false;
             match c {
-                // We're escaping a newline, which means we've found a
-                // continuation.
+                b'\r' if !cr_needs_newline => {
+                    cr_needs_newline = true;
+                    continue;
+                }
                 b'\n' => {
                     partial_value_found = true;
+                    let local_offset = if cr_needs_newline { 1 } else { 0 };
                     receive_event(Event::ValueNotDone(Cow::Borrowed(i[offset..index - 1].as_bstr())));
-                    receive_event(Event::Newline(Cow::Borrowed(i[index..=index].as_bstr())));
-                    offset = index + 1;
+                    receive_event(Event::Newline(Cow::Borrowed({
+                        let end = index + local_offset;
+                        i[index..=end].as_bstr()
+                    })));
+                    offset = index + 1 + local_offset;
                     parsed_index = 0;
                     newlines += 1;
                 }
@@ -327,6 +335,7 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
                     }));
                 }
             }
+            cr_needs_newline = false;
         } else {
             match c {
                 b'\n' => {

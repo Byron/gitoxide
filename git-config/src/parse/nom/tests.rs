@@ -543,6 +543,7 @@ mod section {
 mod value_continuation {
     use bstr::ByteSlice;
 
+    use crate::parse::tests::util::newline_custom_event;
     use crate::parse::{
         section,
         tests::util::{into_events, newline_event, value_done_event, value_not_done_event},
@@ -575,6 +576,17 @@ mod value_continuation {
             into_events(vec![
                 value_not_done_event("hello"),
                 newline_event(),
+                value_done_event("        world")
+            ])
+        );
+
+        let mut events = section::Events::default();
+        assert_eq!(value_impl(b"hello\\\r\n        world", &mut events).unwrap().0, b"");
+        assert_eq!(
+            events,
+            into_events(vec![
+                value_not_done_event("hello"),
+                newline_custom_event("\r\n"),
                 value_done_event("        world")
             ])
         );
