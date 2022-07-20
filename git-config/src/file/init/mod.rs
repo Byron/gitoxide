@@ -1,4 +1,4 @@
-use crate::file::{section, Metadata};
+use crate::file::{includes, section, Metadata};
 use crate::{parse, File};
 use git_features::threading::OwnShared;
 
@@ -10,8 +10,6 @@ mod comfort;
 pub mod from_env;
 ///
 pub mod from_paths;
-///
-pub mod includes;
 
 impl<'a> File<'a> {
     /// Return an empty `File` with the given `meta`-data to be attached to all new sections.

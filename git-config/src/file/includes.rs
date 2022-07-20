@@ -10,6 +10,22 @@ use git_ref::Category;
 use crate::file::{init, Metadata};
 use crate::{file, File};
 
+impl File<'static> {
+    /// Traverse all `include` and `includeIf` directives found in this instance and follow them, loading the
+    /// referenced files from their location and adding their content right past the value that included them.
+    ///
+    /// # Limitations
+    ///
+    /// - Note that this method is _not idempotent_ and calling it multiple times will resolve includes multiple
+    ///   times. It's recommended use is as part of a multi-step bootstrapping which needs fine-grained control,
+    ///   and unless that's given one should prefer one of the other ways of initialization that resolve includes
+    ///   at the right time.
+    pub fn resolve_includes(&mut self, options: init::Options<'_>) -> Result<(), Error> {
+        let mut buf = Vec::new();
+        resolve(self, OwnShared::clone(&self.meta), &mut buf, options)
+    }
+}
+
 pub(crate) fn resolve(
     config: &mut File<'static>,
     meta: OwnShared<Metadata>,

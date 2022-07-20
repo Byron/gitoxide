@@ -1,7 +1,7 @@
 use std::{fs, path::Path};
 
+use git_config::file::includes;
 use git_config::file::init;
-use git_config::file::init::includes;
 use git_config::{path, File};
 use tempfile::tempdir;
 
@@ -13,7 +13,7 @@ mod onbranch;
 #[test]
 fn include_and_includeif_correct_inclusion_order() -> crate::Result {
     let dir = tempdir()?;
-    let config_path = dir.path().join("p");
+    let config_path = dir.path().join("root");
     let first_include_path = dir.path().join("first-incl");
     let second_include_path = dir.path().join("second-incl");
     let include_if_path = dir.path().join("incl-if");
@@ -38,47 +38,50 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
   b = incl-if-path",
     )?;
 
-    fs::write(
-        config_path.as_path(),
-        format!(
-            r#"
+    let root_config = format!(
+        r#"
 [core]
 [include]
   path = {}
-[includeIf "gitdir:p/"]
+[includeIf "gitdir:root/"]
   path = {}
 [include]
   path = {}"#,
-            escape_backslashes(&first_include_path),
-            escape_backslashes(&include_if_path),
-            escape_backslashes(&second_include_path),
-        ),
-    )?;
+        escape_backslashes(&first_include_path),
+        escape_backslashes(&include_if_path),
+        escape_backslashes(&second_include_path),
+    );
+    fs::write(config_path.as_path(), &root_config)?;
 
     let dir = config_path.join(".git");
-    let config = File::from_paths_metadata(
-        Some(git_config::file::Metadata::try_from_path(
-            &config_path,
-            git_config::Source::Api,
-        )?),
-        options_with_git_dir(&dir),
-    )?
-    .expect("non-empty");
+    for delayed_resolve in [false, true] {
+        let meta = git_config::file::Metadata::try_from_path(&config_path, git_config::Source::Api)?;
+        let options = options_with_git_dir(&dir);
+        let config = if delayed_resolve {
+            let mut config = File::from_bytes_owned(&mut root_config.as_bytes().into(), meta, Default::default())?;
+            config.resolve_includes(options)?;
+            config
+        } else {
+            File::from_paths_metadata(Some(meta), options)?.expect("non-empty")
+        };
 
-    assert_eq!(
-        config.strings("core", None, "b"),
-        Some(vec![
-            cow_str("first-incl-path"),
-            cow_str("incl-if-path"),
-            cow_str("second-incl-path")
-        ]),
-        "first include is matched correctly",
-    );
-    assert_eq!(
-        config.string("core", None, "b"),
-        Some(cow_str("second-incl-path")),
-        "second include is matched after incl-if",
-    );
+        // TODO: test interaction with values from root as well - maybe against git as baseline.
+        assert_eq!(
+            config.strings("core", None, "b"),
+            Some(vec![
+                cow_str("first-incl-path"),
+                cow_str("incl-if-path"),
+                cow_str("second-incl-path")
+            ]),
+            "first include is matched correctly, delayed_resolve = {}",
+            delayed_resolve,
+        );
+        assert_eq!(
+            config.string("core", None, "b"),
+            Some(cow_str("second-incl-path")),
+            "second include is matched after incl-if",
+        );
+    }
     Ok(())
 }
 

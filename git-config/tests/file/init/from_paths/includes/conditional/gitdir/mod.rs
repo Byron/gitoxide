@@ -103,7 +103,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
             matches!(
                 res,
                 Err(git_config::file::init::from_env::Error::Includes(
-                    git_config::file::init::includes::Error::MissingConfigPath
+                    git_config::file::includes::Error::MissingConfigPath
                 ))
             ),
             "this is a failure of resolving the include path, after trying to include it"
@@ -122,7 +122,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
             matches!(
                 res,
                 Err(git_config::file::init::from_env::Error::Includes(
-                    git_config::file::init::includes::Error::MissingConfigPath
+                    git_config::file::includes::Error::MissingConfigPath
                 ))
             ),
             "here the pattern path tries to be resolved and fails as target config isn't set"
