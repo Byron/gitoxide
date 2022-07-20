@@ -12,7 +12,7 @@ mod gitdir;
 mod onbranch;
 
 #[test]
-fn include_and_includeif_correct_inclusion_order() -> crate::Result {
+fn include_and_includeif_correct_inclusion_order_and_delayed_resolve_include() -> crate::Result {
     let dir = tempdir()?;
     let config_path = dir.path().join("root");
     let first_include_path = dir.path().join("first-incl");
@@ -53,6 +53,7 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
 ; root post base    
 [include]
   path = {}
+  path = {} ; paths are multi-values
 # root past first include
 [section]
   value = base-past-first-include
@@ -67,6 +68,7 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
 [section]
   value = base-past-second-include 
 ; root last include"#,
+        escape_backslashes(&first_include_path),
         escape_backslashes(&first_include_path),
         escape_backslashes(&include_if_path),
         escape_backslashes(&second_include_path),
@@ -90,6 +92,7 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
             Some(vec![
                 cow_str("base"),
                 cow_str("first-incl-path"),
+                cow_str("first-incl-path"),
                 cow_str("base-past-first-include"),
                 cow_str("incl-if-path"),
                 cow_str("base-past-includeIf"),
@@ -99,7 +102,7 @@ fn include_and_includeif_correct_inclusion_order() -> crate::Result {
             "include order isn't changed also in relation to the root configuratino, delayed_resolve = {}",
             delayed_resolve,
         );
-        assert_eq!(config.sections().count(), 10);
+        assert_eq!(config.sections().count(), 11);
 
         let config_string = config.to_string();
         let deserialized = File::from_str(&config_string)?;
