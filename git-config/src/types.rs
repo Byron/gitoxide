@@ -4,7 +4,7 @@ use std::collections::{HashMap, VecDeque};
 use crate::file::Metadata;
 use crate::{
     color, file,
-    file::{SectionBodyIds, SectionId},
+    file::{SectionBodyIdsLut, SectionId},
     integer,
     parse::section,
 };
@@ -97,7 +97,7 @@ pub struct File<'event> {
     pub(crate) frontmatter_post_section: HashMap<SectionId, crate::parse::FrontMatterEvents<'event>>,
     /// Section name to section id lookup tree, with section bodies for subsections being in a non-terminal
     /// variant of `SectionBodyIds`.
-    pub(crate) section_lookup_tree: HashMap<section::Name<'event>, Vec<SectionBodyIds<'event>>>,
+    pub(crate) section_lookup_tree: HashMap<section::Name<'event>, Vec<SectionBodyIdsLut<'event>>>,
     /// This indirection with the SectionId as the key is critical to flexibly
     /// supporting `git-config` sections, as duplicated keys are permitted.
     pub(crate) sections: HashMap<SectionId, file::Section<'event>>,

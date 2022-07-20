@@ -235,7 +235,12 @@ impl<'event> File<'event> {
     }
 
     /// Append another File to the end of ourselves, without loosing any information.
-    pub fn append(&mut self, mut other: Self) -> &mut Self {
+    pub fn append(&mut self, other: Self) -> &mut Self {
+        self.append_or_insert(other, None)
+    }
+
+    /// Append another File to the end of ourselves, without loosing any information.
+    fn append_or_insert(&mut self, mut other: Self, mut insert_after: Option<SectionId>) -> &mut Self {
         let nl = self.detect_newline_style().to_owned();
 
         fn ends_with_newline<'a>(it: impl DoubleEndedIterator<Item = &'a Event<'a>>) -> bool {
@@ -263,12 +268,19 @@ impl<'event> File<'event> {
 
         for id in std::mem::take(&mut other.section_order) {
             let section = other.sections.remove(&id).expect("present");
-            self.push_section_internal(section);
 
-            let new_id = self.section_id_counter - 1;
-            last_added_section_id = Some(SectionId(new_id));
+            let new_id = match insert_after {
+                Some(id) => {
+                    let new_id = self.insert_section_after(section, id);
+                    insert_after = Some(new_id);
+                    new_id
+                }
+                None => self.push_section_internal(section),
+            };
+
+            last_added_section_id = Some(new_id);
             if let Some(post_matter) = other.frontmatter_post_section.remove(&id) {
-                self.frontmatter_post_section.insert(SectionId(new_id), post_matter);
+                self.frontmatter_post_section.insert(new_id, post_matter);
             }
         }
 

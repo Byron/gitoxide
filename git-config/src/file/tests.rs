@@ -7,7 +7,7 @@ mod try_from {
     use std::{borrow::Cow, collections::HashMap, convert::TryFrom};
 
     use crate::{
-        file::{self, SectionBodyIds, SectionId},
+        file::{self, SectionBodyIdsLut, SectionId},
         parse::{
             section,
             tests::util::{name_event, newline_event, section_header, value_event},
@@ -39,7 +39,7 @@ mod try_from {
             let mut tree = HashMap::new();
             tree.insert(
                 section::Name(Cow::Borrowed("core".into())),
-                vec![SectionBodyIds::Terminal(vec![SectionId(0)])],
+                vec![SectionBodyIdsLut::Terminal(vec![SectionId(0)])],
             );
             tree
         };
@@ -84,7 +84,7 @@ mod try_from {
             inner_tree.insert(Cow::Borrowed("sub".into()), vec![SectionId(0)]);
             tree.insert(
                 section::Name(Cow::Borrowed("core".into())),
-                vec![SectionBodyIds::NonTerminal(inner_tree)],
+                vec![SectionBodyIdsLut::NonTerminal(inner_tree)],
             );
             tree
         };
@@ -128,11 +128,11 @@ mod try_from {
             let mut tree = HashMap::new();
             tree.insert(
                 section::Name(Cow::Borrowed("core".into())),
-                vec![SectionBodyIds::Terminal(vec![SectionId(0)])],
+                vec![SectionBodyIdsLut::Terminal(vec![SectionId(0)])],
             );
             tree.insert(
                 section::Name(Cow::Borrowed("other".into())),
-                vec![SectionBodyIds::Terminal(vec![SectionId(1)])],
+                vec![SectionBodyIdsLut::Terminal(vec![SectionId(1)])],
             );
             tree
         };
@@ -181,7 +181,7 @@ mod try_from {
             let mut tree = HashMap::new();
             tree.insert(
                 section::Name(Cow::Borrowed("core".into())),
-                vec![SectionBodyIds::Terminal(vec![SectionId(0), SectionId(1)])],
+                vec![SectionBodyIdsLut::Terminal(vec![SectionId(0), SectionId(1)])],
             );
             tree
         };
