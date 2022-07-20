@@ -372,13 +372,12 @@ fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IRe
     }
 
     let (i, remainder_value) = {
-        let mut new_index = 0;
-        for index in (offset..parsed_index).rev() {
-            if !i[index].is_ascii_whitespace() {
-                new_index = index + 1;
-                break;
-            }
-        }
+        let new_index = i[offset..parsed_index]
+            .iter()
+            .enumerate()
+            .rev()
+            .find_map(|(idx, b)| (!b.is_ascii_whitespace()).then(|| offset + idx + 1))
+            .unwrap_or(0);
         (&i[new_index..], &i[offset..new_index])
     };
 
