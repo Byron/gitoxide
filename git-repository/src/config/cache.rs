@@ -71,7 +71,7 @@ impl StageOne {
 impl Cache {
     pub fn from_stage_one(
         StageOne {
-            mut git_dir_config,
+            git_dir_config,
             buf: _,
             is_bare,
             object_hash,
@@ -102,7 +102,7 @@ impl Cache {
             ),
         };
 
-        let mut config = {
+        let config = {
             let home_env = &home_env;
             let xdg_config_home_env = &xdg_config_home_env;
             let git_prefix = &git_prefix;
@@ -145,15 +145,10 @@ impl Cache {
             })?
             .unwrap_or_default();
 
-            // TODO: resolve should also work after append, but that needs it to use paths from metadata.
-            git_dir_config.resolve_includes(options)?;
-            globals.resolve_includes(options)?;
-
             globals.append(git_dir_config);
+            globals.resolve_includes(options)?;
             globals
         };
-
-        config.resolve_includes(options)?;
 
         let excludes_file = config
             .path_filter("core", None, "excludesFile", &mut filter_config_section)
