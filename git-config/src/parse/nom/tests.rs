@@ -246,6 +246,25 @@ mod section {
                 1
             )),
         );
+        assert_eq!(
+            section(b"[a] k = \r\n", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event(""),
+                        newline_custom_event("\r\n")
+                    ]
+                    .into(),
+                },
+                1
+            )),
+        );
     }
 
     #[test]
@@ -590,6 +609,12 @@ mod value_continuation {
                 value_done_event("        world")
             ])
         );
+
+        let mut events = section::Events::default();
+        assert!(
+            value_impl(b"hello\\\r\r\n        world", &mut events).is_err(),
+            "\\r must be followed by \\n"
+        );
     }
 
     #[test]
@@ -614,7 +639,6 @@ mod value_continuation {
     }
 
     #[test]
-    #[ignore]
     fn quote_split_over_two_lines_with_leftover_comment() {
         let mut events = section::Events::default();
         assert_eq!(value_impl(b"\"\\\n;\";a", &mut events).unwrap().0, b";a");
@@ -628,13 +652,13 @@ mod value_continuation {
         );
 
         let mut events = section::Events::default();
-        assert_eq!(value_impl(b"\"\\\r\n;\";a", &mut events).unwrap().0, b";a");
+        assert_eq!(value_impl(b"\"a\\\r\nb;\";c", &mut events).unwrap().0, b";c");
         assert_eq!(
             events,
             into_events(vec![
-                value_not_done_event("\""),
+                value_not_done_event("\"a"),
                 newline_custom_event("\r\n"),
-                value_done_event(";\"")
+                value_done_event("b;\"")
             ])
         );
     }
@@ -712,6 +736,17 @@ mod value_no_continuation {
         let mut events = section::Events::default();
         assert_eq!(value_impl(b"hello", &mut events).unwrap().0, b"");
         assert_eq!(events, into_events(vec![value_event("hello")]));
+    }
+
+    #[test]
+    fn windows_newline() {
+        let mut events = section::Events::default();
+        assert_eq!(value_impl(b"hi\r\nrest", &mut events).unwrap().0, b"\r\nrest");
+        assert_eq!(events, into_events(vec![value_event("hi")]));
+
+        events.clear();
+        assert_eq!(value_impl(b"hi\r\r\r\nrest", &mut events).unwrap().0, b"\r\r\r\nrest");
+        assert_eq!(events, into_events(vec![value_event("hi")]));
     }
 
     #[test]
