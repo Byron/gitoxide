@@ -410,6 +410,7 @@ pub fn sleep_forever() -> ! {
     }
 }
 
+#[derive(Default)]
 pub struct Env<'a> {
     altered_vars: Vec<&'a str>,
 }
