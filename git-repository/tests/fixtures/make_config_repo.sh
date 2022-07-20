@@ -3,7 +3,7 @@ set -eu -o pipefail
 
 git init -q
 
-cat <<EOF>>.git/config
+cat <<EOF >>.git/config
 [a]
   bool = on
   bad-bool = zero
@@ -20,7 +20,19 @@ cat <<EOF>>.git/config
 EOF
 
 
-cat <<EOF>>a.config
+cat <<EOF >>a.config
 [a]
   override = from-a.config
+EOF
+cat <<EOF >>b.config
+[a]
+  system-override = from-b.config
+EOF
+
+cat <<EOF >>system.config
+[a]
+  system = from-system.config
+  system-override = base
+[include]
+  path = ./b.config
 EOF

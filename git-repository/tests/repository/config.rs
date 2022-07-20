@@ -1,12 +1,37 @@
 use crate::named_repo;
 use git_repository as git;
+use git_sec::{Access, Permission};
+use git_testtools::Env;
+use serial_test::serial;
 use std::path::Path;
 
 #[test]
+#[serial]
 fn access_values() {
     for trust in [git_sec::Trust::Full, git_sec::Trust::Reduced] {
         let repo = named_repo("make_config_repo.sh").unwrap();
-        let repo = git::open_opts(repo.git_dir(), repo.open_options().clone().with(trust)).unwrap();
+        let _env = Env::new().set(
+            "GIT_CONFIG_SYSTEM",
+            repo.work_dir()
+                .expect("present")
+                .join("system.config")
+                .canonicalize()
+                .unwrap()
+                .display()
+                .to_string(),
+        );
+        let repo = git::open_opts(
+            repo.git_dir(),
+            repo.open_options().clone().with(trust).permissions(git::Permissions {
+                env: git::permissions::Environment {
+                    xdg_config_home: Access::resource(Permission::Deny),
+                    home: Access::resource(Permission::Deny),
+                    ..git::permissions::Environment::allow_all()
+                },
+                ..Default::default()
+            }),
+        )
+        .unwrap();
 
         let config = repo.config_snapshot();
 
@@ -26,6 +51,14 @@ fn access_values() {
         );
 
         assert_eq!(config.string("a.override").expect("present").as_ref(), "from-a.config");
+        assert_eq!(
+            config.string("a.system").expect("present").as_ref(),
+            "from-system.config"
+        );
+        assert_eq!(
+            config.string("a.system-override").expect("present").as_ref(),
+            "from-b.config"
+        );
 
         assert_eq!(config.boolean("core.missing"), None);
         assert_eq!(config.try_boolean("core.missing"), None);

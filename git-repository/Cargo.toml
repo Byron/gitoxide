@@ -103,6 +103,7 @@ git-testtools = { path = "../tests/tools" }
 is_ci = "1.1.1"
 anyhow = "1"
 tempfile = "3.2.0"
+serial_test = "0.8.0"
 
 [package.metadata.docs.rs]
 features = ["document-features", "max-performance", "one-stop-shop", "unstable", "blocking-network-client"]

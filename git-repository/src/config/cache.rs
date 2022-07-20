@@ -1,9 +1,10 @@
 use std::{convert::TryFrom, path::PathBuf};
 
+use crate::repository;
 use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
-use crate::{bstr::ByteSlice, permission};
+use crate::bstr::ByteSlice;
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
@@ -70,7 +71,7 @@ impl StageOne {
 impl Cache {
     pub fn from_stage_one(
         StageOne {
-            git_dir_config: mut config,
+            mut git_dir_config,
             buf: _,
             is_bare,
             object_hash,
@@ -79,15 +80,17 @@ impl Cache {
         git_dir: &std::path::Path,
         branch_name: Option<&git_ref::FullNameRef>,
         mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
-        xdg_config_home_env: permission::env_var::Resource,
-        home_env: permission::env_var::Resource,
         git_install_dir: Option<&std::path::Path>,
+        repository::permissions::Environment {
+            git_prefix,
+            home: home_env,
+            xdg_config_home: xdg_config_home_env,
+        }: repository::permissions::Environment,
     ) -> Result<Self, Error> {
         let home = std::env::var_os("HOME")
             .map(PathBuf::from)
             .and_then(|home| home_env.check(home).ok().flatten());
-        // TODO: don't forget to use the canonicalized home for initializing the stacked config.
-        //       like git here: https://github.com/git/git/blob/master/config.c#L208:L208
+
         let options = git_config::file::init::Options {
             lossy: !cfg!(debug_assertions),
             includes: git_config::file::includes::Options::follow(
@@ -98,6 +101,55 @@ impl Cache {
                 },
             ),
         };
+
+        let mut config = {
+            let home_env = &home_env;
+            let xdg_config_home_env = &xdg_config_home_env;
+            let git_prefix = &git_prefix;
+            let metas = [git_config::source::Kind::System, git_config::source::Kind::Global]
+                .iter()
+                .flat_map(|kind| kind.sources())
+                .filter_map(|source| {
+                    let path = source
+                        .storage_location(&mut |name| {
+                            match name {
+                                git_ if git_.starts_with("GIT_") => Some(git_prefix),
+                                "XDG_CONFIG_HOME" => Some(xdg_config_home_env),
+                                "HOME" => Some(home_env),
+                                _ => None,
+                            }
+                            .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check(val).ok().flatten()))
+                        })
+                        .and_then(|p| p.is_file().then(|| p)) // todo: allow it to skip non-existing ones in the options to save check
+                        .map(|p| p.into_owned());
+
+                    git_config::file::Metadata {
+                        path,
+                        source: *source,
+                        level: 0,
+                        trust: git_sec::Trust::Full,
+                    }
+                    .into()
+                });
+
+            let no_include_options = git_config::file::init::Options {
+                includes: git_config::file::includes::Options::no_includes(),
+                ..options
+            };
+            git_dir_config.resolve_includes(options)?;
+            match git_config::File::from_paths_metadata(metas, no_include_options).map_err(|err| match err {
+                git_config::file::init::from_paths::Error::Init(err) => Error::from(err),
+                git_config::file::init::from_paths::Error::Io(err) => err.into(),
+            })? {
+                Some(mut globals) => {
+                    globals.resolve_includes(options)?;
+                    globals.append(git_dir_config);
+                    globals
+                }
+                None => git_dir_config,
+            }
+        };
+
         config.resolve_includes(options)?;
 
         let excludes_file = config

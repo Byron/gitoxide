@@ -285,9 +285,8 @@ impl ThreadSafeRepository {
             common_dir_ref,
             head.as_ref().and_then(|head| head.target.try_name()),
             filter_config_section.unwrap_or(crate::config::section::is_trusted),
-            env.xdg_config_home.clone(),
-            env.home.clone(),
             crate::path::install_dir().ok().as_deref(),
+            env.clone(),
         )?;
 
         if **git_dir_perm != git_sec::ReadWrite::all() {

@@ -26,17 +26,24 @@ pub struct Environment {
     pub git_prefix: permission::env_var::Resource,
 }
 
+impl Environment {
+    /// Allow access to the entire environment.
+    pub fn allow_all() -> Self {
+        Environment {
+            xdg_config_home: Access::resource(git_sec::Permission::Allow),
+            home: Access::resource(git_sec::Permission::Allow),
+            git_prefix: Access::resource(git_sec::Permission::Allow),
+        }
+    }
+}
+
 impl Permissions {
     /// Return permissions similar to what git does when the repository isn't owned by the current user,
     /// thus refusing all operations in it.
     pub fn strict() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::READ),
-            env: Environment {
-                xdg_config_home: Access::resource(git_sec::Permission::Allow),
-                home: Access::resource(git_sec::Permission::Allow),
-                git_prefix: Access::resource(git_sec::Permission::Allow),
-            },
+            env: Environment::allow_all(),
         }
     }
 
@@ -48,11 +55,7 @@ impl Permissions {
     pub fn secure() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::all()),
-            env: Environment {
-                xdg_config_home: Access::resource(git_sec::Permission::Allow),
-                home: Access::resource(git_sec::Permission::Allow),
-                git_prefix: Access::resource(git_sec::Permission::Allow),
-            },
+            env: Environment::allow_all(),
         }
     }
 
@@ -61,11 +64,7 @@ impl Permissions {
     pub fn all() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::all()),
-            env: Environment {
-                xdg_config_home: Access::resource(git_sec::Permission::Allow),
-                home: Access::resource(git_sec::Permission::Allow),
-                git_prefix: Access::resource(git_sec::Permission::Allow),
-            },
+            env: Environment::allow_all(),
         }
     }
 }
