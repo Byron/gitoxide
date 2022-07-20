@@ -1,9 +1,7 @@
-use bstr::BStr;
 use git_features::threading::OwnShared;
 use std::borrow::Cow;
 
 use crate::file::{MetadataFilter, SectionId};
-use crate::parse::{Event, FrontMatterEvents};
 use crate::{
     file::{self, rename_section, SectionMut},
     lookup,
@@ -241,30 +239,8 @@ impl<'event> File<'event> {
 
     /// Append another File to the end of ourselves, without loosing any information.
     pub(crate) fn append_or_insert(&mut self, mut other: Self, mut insert_after: Option<SectionId>) -> &mut Self {
-        let nl = self.detect_newline_style().to_owned();
-
-        fn ends_with_newline<'a>(it: impl DoubleEndedIterator<Item = &'a Event<'a>>) -> bool {
-            it.last().map_or(true, |e| e.to_bstr_lossy().last() == Some(&b'\n'))
-        }
-        fn starts_with_newline<'a>(mut it: impl Iterator<Item = &'a Event<'a>>) -> bool {
-            it.next().map_or(true, |e| e.to_bstr_lossy().first() == Some(&b'\n'))
-        }
-        let newline_event = || Event::Newline(Cow::Owned(nl.clone()));
-
-        fn assure_ends_with_newline_if<'a, 'b>(
-            needs_nl: bool,
-            events: &'b mut FrontMatterEvents<'a>,
-            nl: &BStr,
-        ) -> &'b mut FrontMatterEvents<'a> {
-            if needs_nl && !ends_with_newline(events.iter()) {
-                events.push(Event::Newline(nl.to_owned().into()));
-            }
-            events
-        }
-
         let our_last_section_before_append =
             insert_after.or_else(|| (self.section_id_counter != 0).then(|| SectionId(self.section_id_counter - 1)));
-        let mut last_added_section_id = None::<SectionId>;
 
         for id in std::mem::take(&mut other.section_order) {
             let section = other.sections.remove(&id).expect("present");
@@ -278,7 +254,6 @@ impl<'event> File<'event> {
                 None => self.push_section_internal(section),
             };
 
-            last_added_section_id = Some(new_id);
             if let Some(post_matter) = other.frontmatter_post_section.remove(&id) {
                 self.frontmatter_post_section.insert(new_id, post_matter);
             }
@@ -288,26 +263,13 @@ impl<'event> File<'event> {
             return self;
         }
 
-        let mut needs_nl = !starts_with_newline(other.frontmatter_events.iter());
-        if let Some(id) = last_added_section_id
-            .or(our_last_section_before_append)
-            .filter(|_| needs_nl)
-        {
-            if !ends_with_newline(self.sections[&id].body.0.iter()) {
-                other.frontmatter_events.insert(0, newline_event());
-                needs_nl = false;
-            }
-        }
-
         match our_last_section_before_append {
-            Some(last_id) => assure_ends_with_newline_if(
-                needs_nl,
-                self.frontmatter_post_section.entry(last_id).or_default(),
-                nl.as_ref(),
-            )
-            .extend(other.frontmatter_events),
-            None => assure_ends_with_newline_if(needs_nl, &mut self.frontmatter_events, nl.as_ref())
+            Some(last_id) => self
+                .frontmatter_post_section
+                .entry(last_id)
+                .or_default()
                 .extend(other.frontmatter_events),
+            None => self.frontmatter_events.extend(other.frontmatter_events),
         }
         self
     }

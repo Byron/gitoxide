@@ -76,7 +76,7 @@ mod set {
         values.set_string_at(0, "Hello");
         assert_eq!(
             config.to_string(),
-            "[core]\n    a = Hello\n    [core]\n        a =d\n        a= f"
+            "[core]\n    a = Hello\n    [core]\n        a =d\n        a= f\n"
         );
         Ok(())
     }
@@ -88,7 +88,7 @@ mod set {
         values.set_string_at(2, "Hello");
         assert_eq!(
             config.to_string(),
-            "[core]\n    a = b\"100\"\n    [core]\n        a =d\n        a= Hello"
+            "[core]\n    a = b\"100\"\n    [core]\n        a =d\n        a= Hello\n"
         );
         Ok(())
     }
@@ -100,7 +100,7 @@ mod set {
         values.set_all("Hello");
         assert_eq!(
             config.to_string(),
-            "[core]\n    a = Hello\n    [core]\n        a= Hello\n        a =Hello"
+            "[core]\n    a = Hello\n    [core]\n        a= Hello\n        a =Hello\n"
         );
         Ok(())
     }
@@ -112,7 +112,7 @@ mod set {
         values.set_all("");
         assert_eq!(
             config.to_string(),
-            "[core]\n    a = \n    [core]\n        a= \n        a ="
+            "[core]\n    a = \n    [core]\n        a= \n        a =\n"
         );
         Ok(())
     }
@@ -129,7 +129,7 @@ mod delete {
             values.delete(0);
             assert_eq!(
                 config.to_string(),
-                "[core]\n    \n    [core]\n        a =d\n        a= f",
+                "[core]\n    \n    [core]\n        a =d\n        a= f\n",
             );
         }
 

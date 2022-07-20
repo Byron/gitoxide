@@ -71,7 +71,7 @@ mod set {
             assert_eq!(prev_value.as_deref().expect("prev value set"), expected_prev_value);
         }
 
-        assert_eq!(config.to_string(), "\n        [a]\n            a = \n            b = \" a\"\n            c=\"b\\t\"\n            d\"; comment\"\n            e =a\\n\\tc  d\\\\ \\\"x\\\"");
+        assert_eq!(config.to_string(), "\n        [a]\n            a = \n            b = \" a\"\n            c=\"b\\t\"\n            d\"; comment\"\n            e =a\\n\\tc  d\\\\ \\\"x\\\"\n");
         assert_eq!(
             config
                 .section_mut("a", None)?
@@ -128,12 +128,12 @@ mod push {
     #[test]
     fn values_are_escaped() {
         for (value, expected) in [
-            ("a b", "$head\tk = a b"),
-            (" a b", "$head\tk = \" a b\""),
-            ("a b\t", "$head\tk = \"a b\\t\""),
-            (";c", "$head\tk = \";c\""),
-            ("#c", "$head\tk = \"#c\""),
-            ("a\nb\n\tc", "$head\tk = a\\nb\\n\\tc"),
+            ("a b", "$head\tk = a b\n"),
+            (" a b", "$head\tk = \" a b\"\n"),
+            ("a b\t", "$head\tk = \"a b\\t\"\n"),
+            (";c", "$head\tk = \";c\"\n"),
+            ("#c", "$head\tk = \"#c\"\n"),
+            ("a\nb\n\tc", "$head\tk = a\\nb\\n\\tc\n"),
         ] {
             let mut config = git_config::File::default();
             let mut section = config.new_section("a", None).unwrap();

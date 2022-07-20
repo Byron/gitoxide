@@ -126,7 +126,8 @@ mod set_string {
             a=hello world
         [core]
             c=d
-            e=f"#,
+            e=f
+"#,
         );
 
         let mut value = config.raw_value_mut("core", None, "e")?;
@@ -137,7 +138,8 @@ mod set_string {
             a=hello world
         [core]
             c=d
-            e="#,
+            e=
+"#,
         );
         Ok(())
     }
@@ -154,14 +156,14 @@ mod delete {
         value.delete();
         assert_eq!(
             config.to_string(),
-            "[core]\n            \n        [core]\n            c=d\n            e=f",
+            "[core]\n            \n        [core]\n            c=d\n            e=f\n",
         );
 
         let mut value = config.raw_value_mut("core", None, "c")?;
         value.delete();
         assert_eq!(
             config.to_string(),
-            "[core]\n            \n        [core]\n            \n            e=f",
+            "[core]\n            \n        [core]\n            \n            e=f\n",
         );
         Ok(())
     }
@@ -189,7 +191,8 @@ mod delete {
             a=hello world
         [core]
             c=d
-            e=f"#,
+            e=f
+"#,
         );
         Ok(())
     }
@@ -204,7 +207,7 @@ mod delete {
         }
         assert_eq!(
             config.to_string(),
-            "[core]\n            \n        [core]\n            c=d\n            e=f"
+            "[core]\n            \n        [core]\n            c=d\n            e=f\n"
         );
         Ok(())
     }
@@ -224,7 +227,7 @@ b
         value.delete();
         assert_eq!(
             config.to_string(),
-            "[core]\n            \n        [core]\n            c=d\n            e=f"
+            "[core]\n            \n        [core]\n            c=d\n            e=f\n"
         );
         Ok(())
     }
