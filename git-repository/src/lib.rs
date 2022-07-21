@@ -283,7 +283,7 @@ pub mod permission {
 }
 ///
 pub mod permissions {
-    pub use crate::repository::permissions::Environment;
+    pub use crate::repository::permissions::{Config, Environment};
 }
 pub use repository::permissions::Permissions;
 
@@ -430,7 +430,8 @@ pub mod discover {
         ) -> Result<Self, Error> {
             let (path, trust) = upwards_opts(directory, options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-            let options = trust_map.into_value_by_level(trust);
+            let mut options = trust_map.into_value_by_level(trust);
+            options.git_dir_trust = trust.into();
             Self::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
         }
 

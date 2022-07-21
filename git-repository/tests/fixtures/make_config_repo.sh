@@ -11,9 +11,11 @@ cat <<EOF >>.git/config
   int-overflowing = 9999999999999g
   relative-path = ./something
   absolute-path = /etc/man.conf
+  bad-home-path = ~/repo
   bad-user-path = ~noname/repo
   single-string = hello world
-  override = base
+  local-override = base
+  env-override = base
 
 [include]
   path = ../a.config
@@ -22,11 +24,16 @@ EOF
 
 cat <<EOF >>a.config
 [a]
-  override = from-a.config
+  local-override = from-a.config
 EOF
 cat <<EOF >>b.config
 [a]
   system-override = from-b.config
+EOF
+
+cat <<EOF >>c.config
+[a]
+  env-override = from-c.config
 EOF
 
 cat <<EOF >>system.config

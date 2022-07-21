@@ -10,23 +10,22 @@ use std::path::Path;
 fn access_values() {
     for trust in [git_sec::Trust::Full, git_sec::Trust::Reduced] {
         let repo = named_repo("make_config_repo.sh").unwrap();
-        let _env = Env::new().set(
-            "GIT_CONFIG_SYSTEM",
-            repo.work_dir()
-                .expect("present")
-                .join("system.config")
-                .canonicalize()
-                .unwrap()
-                .display()
-                .to_string(),
-        );
+        let work_dir = repo.work_dir().expect("present").canonicalize().unwrap();
+        let _env = Env::new()
+            .set(
+                "GIT_CONFIG_SYSTEM",
+                work_dir.join("system.config").display().to_string(),
+            )
+            .set("GIT_CONFIG_COUNT", "1")
+            .set("GIT_CONFIG_KEY_0", "include.path")
+            .set("GIT_CONFIG_VALUE_0", work_dir.join("c.config").display().to_string());
         let repo = git::open_opts(
             repo.git_dir(),
             repo.open_options().clone().with(trust).permissions(git::Permissions {
                 env: git::permissions::Environment {
                     xdg_config_home: Access::resource(Permission::Deny),
                     home: Access::resource(Permission::Deny),
-                    ..git::permissions::Environment::allow_all()
+                    ..git::permissions::Environment::all()
                 },
                 ..Default::default()
             }),
@@ -50,7 +49,10 @@ fn access_values() {
             "hello world"
         );
 
-        assert_eq!(config.string("a.override").expect("present").as_ref(), "from-a.config");
+        assert_eq!(
+            config.string("a.local-override").expect("present").as_ref(),
+            "from-a.config"
+        );
         assert_eq!(
             config.string("a.system").expect("present").as_ref(),
             "from-system.config"
@@ -58,6 +60,11 @@ fn access_values() {
         assert_eq!(
             config.string("a.system-override").expect("present").as_ref(),
             "from-b.config"
+        );
+
+        assert_eq!(
+            config.string("a.env-override").expect("present").as_ref(),
+            "from-c.config"
         );
 
         assert_eq!(config.boolean("core.missing"), None);

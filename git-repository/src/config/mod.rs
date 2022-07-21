@@ -24,6 +24,8 @@ pub enum Error {
     Init(#[from] git_config::file::init::Error),
     #[error(transparent)]
     ResolveIncludes(#[from] git_config::file::includes::Error),
+    #[error(transparent)]
+    FromEnv(#[from] git_config::file::init::from_env::Error),
     #[error("Cannot handle objects formatted as {:?}", .name)]
     UnsupportedObjectFormat { name: BString },
     #[error("The value for '{}' cannot be empty", .key)]

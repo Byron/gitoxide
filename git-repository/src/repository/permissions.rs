@@ -11,6 +11,48 @@ pub struct Permissions {
     pub git_dir: Access<Resource, git_sec::ReadWrite>,
     /// Permissions related to the environment
     pub env: Environment,
+    /// Permissions related to the handling of git configuration.
+    pub config: Config,
+}
+
+/// Configure security relevant options when loading a git configuration.
+#[derive(Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Debug, Hash)]
+pub struct Config {
+    /// Whether to use the system configuration.
+    /// This is defined as `$(prefix)/etc/gitconfig` on unix.
+    pub system: bool,
+    /// Whether to use the git application configuration.
+    ///
+    /// A platform defined location for where a user's git application configuration should be located.
+    /// If `$XDG_CONFIG_HOME` is not set or empty, `$HOME/.config/git/config` will be used
+    /// on unix.
+    pub git: bool,
+    /// Whether to use the user configuration.
+    /// This is usually `~/.gitconfig` on unix.
+    pub user: bool,
+    /// Whether to use worktree configuration from `config.worktree`.
+    // TODO: figure out how this really applies and provide more information here.
+    // pub worktree: bool,
+    /// Whether to use the configuration from environment variables.
+    pub env: bool,
+    /// Whether to follow include files are encountered in loaded configuration,
+    /// via `include` and `includeIf` sections.
+    ///
+    /// Note that this needs access to `GIT_*` prefixed environment variables.
+    pub includes: bool,
+}
+
+impl Config {
+    /// Allow everything which usually relates to a fully trusted environment
+    pub fn all() -> Self {
+        Config {
+            system: true,
+            git: true,
+            user: true,
+            env: true,
+            includes: true,
+        }
+    }
 }
 
 /// Permissions related to the usage of environment variables
@@ -28,7 +70,7 @@ pub struct Environment {
 
 impl Environment {
     /// Allow access to the entire environment.
-    pub fn allow_all() -> Self {
+    pub fn all() -> Self {
         Environment {
             xdg_config_home: Access::resource(git_sec::Permission::Allow),
             home: Access::resource(git_sec::Permission::Allow),
@@ -43,7 +85,8 @@ impl Permissions {
     pub fn strict() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::READ),
-            env: Environment::allow_all(),
+            env: Environment::all(),
+            config: Config::all(),
         }
     }
 
@@ -55,7 +98,8 @@ impl Permissions {
     pub fn secure() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::all()),
-            env: Environment::allow_all(),
+            env: Environment::all(),
+            config: Config::all(),
         }
     }
 
@@ -64,7 +108,8 @@ impl Permissions {
     pub fn all() -> Self {
         Permissions {
             git_dir: Access::resource(git_sec::ReadWrite::all()),
-            env: Environment::allow_all(),
+            env: Environment::all(),
+            config: Config::all(),
         }
     }
 }

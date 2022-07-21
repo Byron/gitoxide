@@ -254,10 +254,12 @@ impl ThreadSafeRepository {
             object_store_slots,
             filter_config_section,
             ref replacement_objects,
-            permissions: Permissions {
-                git_dir: ref git_dir_perm,
-                ref env,
-            },
+            permissions:
+                Permissions {
+                    git_dir: ref git_dir_perm,
+                    ref env,
+                    config,
+                },
         } = options;
         let git_dir_trust = git_dir_trust.expect("trust must be been determined by now");
 
@@ -287,6 +289,7 @@ impl ThreadSafeRepository {
             filter_config_section.unwrap_or(crate::config::section::is_trusted),
             crate::path::install_dir().ok().as_deref(),
             env.clone(),
+            config,
         )?;
 
         if **git_dir_perm != git_sec::ReadWrite::all() {
@@ -361,7 +364,7 @@ mod tests {
     fn size_of_options() {
         assert_eq!(
             std::mem::size_of::<Options>(),
-            64,
+            72,
             "size shouldn't change without us knowing"
         );
     }

@@ -86,6 +86,13 @@ impl Cache {
             home: home_env,
             xdg_config_home: xdg_config_home_env,
         }: repository::permissions::Environment,
+        repository::permissions::Config {
+            system: use_system,
+            git: use_git,
+            user: use_user,
+            env: use_env,
+            includes: use_includes,
+        }: repository::permissions::Config,
     ) -> Result<Self, Error> {
         let home = std::env::var_os("HOME")
             .map(PathBuf::from)
@@ -93,13 +100,17 @@ impl Cache {
 
         let options = git_config::file::init::Options {
             lossy: !cfg!(debug_assertions),
-            includes: git_config::file::includes::Options::follow(
-                interpolate_context(git_install_dir, home.as_deref()),
-                git_config::file::includes::conditional::Context {
-                    git_dir: git_dir.into(),
-                    branch_name,
-                },
-            ),
+            includes: if use_includes {
+                git_config::file::includes::Options::follow(
+                    interpolate_context(git_install_dir, home.as_deref()),
+                    git_config::file::includes::conditional::Context {
+                        git_dir: git_dir.into(),
+                        branch_name,
+                    },
+                )
+            } else {
+                git_config::file::includes::Options::no_follow()
+            },
         };
 
         let config = {
@@ -110,6 +121,13 @@ impl Cache {
                 .iter()
                 .flat_map(|kind| kind.sources())
                 .filter_map(|source| {
+                    if !use_system && *source == git_config::Source::System {
+                        return None;
+                    } else if !use_git && *source == git_config::Source::Git {
+                        return None;
+                    } else if !use_user && *source == git_config::Source::User {
+                        return None;
+                    }
                     let path = source
                         .storage_location(&mut |name| {
                             match name {
@@ -149,6 +167,9 @@ impl Cache {
 
             globals.append(git_dir_config);
             globals.resolve_includes(options)?;
+            if use_env {
+                globals.append(git_config::File::from_env(options)?.unwrap_or_default());
+            }
             globals
         };
 
