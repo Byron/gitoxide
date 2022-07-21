@@ -90,7 +90,8 @@ fn error_on_relative_paths_in_include_paths() {
         includes: includes::Options {
             max_depth: 1,
             ..Default::default()
-        },
+        }
+        .strict(),
         ..Default::default()
     });
     assert!(matches!(

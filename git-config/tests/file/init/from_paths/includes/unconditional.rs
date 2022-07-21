@@ -124,7 +124,7 @@ fn respect_max_depth() -> crate::Result {
         init::Options {
             includes: includes::Options {
                 max_depth,
-                error_on_max_depth_exceeded,
+                err_on_max_depth_exceeded: error_on_max_depth_exceeded,
                 ..Default::default()
             },
             ..Default::default()
@@ -247,7 +247,7 @@ fn cycle_detection() -> crate::Result {
     let options = init::Options {
         includes: includes::Options {
             max_depth: 4,
-            error_on_max_depth_exceeded: true,
+            err_on_max_depth_exceeded: true,
             ..Default::default()
         },
         ..Default::default()
@@ -263,7 +263,7 @@ fn cycle_detection() -> crate::Result {
     let options = init::Options {
         includes: includes::Options {
             max_depth: 4,
-            error_on_max_depth_exceeded: false,
+            err_on_max_depth_exceeded: false,
             ..Default::default()
         },
         ..Default::default()

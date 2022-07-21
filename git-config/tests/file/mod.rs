@@ -29,4 +29,5 @@ mod access;
 mod impls;
 mod init;
 mod mutable;
+mod resolve_includes;
 mod write;

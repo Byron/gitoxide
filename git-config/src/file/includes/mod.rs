@@ -7,8 +7,8 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_features::threading::OwnShared;
 use git_ref::Category;
 
-use crate::file::{init, Metadata, SectionId};
-use crate::{file, File};
+use crate::file::{includes, init, Metadata, SectionId};
+use crate::{file, path, File};
 
 impl File<'static> {
     /// Traverse all `include` and `includeIf` directives found in this instance and follow them, loading the
@@ -42,7 +42,7 @@ fn resolve_includes_recursive(
     options: init::Options<'_>,
 ) -> Result<(), Error> {
     if depth == options.includes.max_depth {
-        return if options.includes.error_on_max_depth_exceeded {
+        return if options.includes.err_on_max_depth_exceeded {
             Err(Error::IncludeDepthExceeded {
                 max_depth: options.includes.max_depth,
             })
@@ -84,7 +84,10 @@ fn append_followed_includes_recursively(
     for (section_id, config_path) in section_ids_and_include_paths {
         let meta = OwnShared::clone(&target_config.sections[&section_id].meta);
         let target_config_path = meta.path.as_deref();
-        let config_path = resolve_path(config_path, target_config_path, options.includes.interpolate)?;
+        let config_path = match resolve_path(config_path, target_config_path, options.includes)? {
+            Some(p) => p,
+            None => continue,
+        };
         if !config_path.is_file() {
             continue;
         }
@@ -189,14 +192,25 @@ fn gitdir_matches(
     Options {
         conditional: conditional::Context { git_dir, .. },
         interpolate: context,
+        err_on_interpolation_failure,
+        err_on_missing_config_path,
         ..
     }: Options<'_>,
     wildmatch_mode: git_glob::wildmatch::Mode,
 ) -> Result<bool, Error> {
+    if !err_on_interpolation_failure && git_dir.is_none() {
+        return Ok(false);
+    }
     let git_dir = git_path::to_unix_separators_on_windows(git_path::into_bstr(git_dir.ok_or(Error::MissingGitDir)?));
 
     let mut pattern_path: Cow<'_, _> = {
-        let path = crate::Path::from(Cow::Borrowed(condition_path)).interpolate(context)?;
+        let path = match check_interpolation_result(
+            err_on_interpolation_failure,
+            crate::Path::from(Cow::Borrowed(condition_path)).interpolate(context),
+        )? {
+            Some(p) => p,
+            None => return Ok(false),
+        };
         git_path::into_bstr(path).into_owned().into()
     };
     // NOTE: yes, only if we do path interpolation will the slashes be forced to unix separators on windows
@@ -205,6 +219,9 @@ fn gitdir_matches(
     }
 
     if let Some(relative_pattern_path) = pattern_path.strip_prefix(b"./") {
+        if !err_on_missing_config_path && target_config_path.is_none() {
+            return Ok(false);
+        }
         let parent_dir = target_config_path
             .ok_or(Error::MissingConfigPath)?
             .parent()
@@ -243,13 +260,44 @@ fn gitdir_matches(
     ))
 }
 
+fn check_interpolation_result(
+    disable: bool,
+    res: Result<Cow<'_, std::path::Path>, path::interpolate::Error>,
+) -> Result<Option<Cow<'_, std::path::Path>>, path::interpolate::Error> {
+    if disable {
+        return res.map(Some);
+    }
+    match res {
+        Ok(good) => Ok(good.into()),
+        Err(err) => match err {
+            path::interpolate::Error::Missing { .. } | path::interpolate::Error::UserInterpolationUnsupported => {
+                Ok(None)
+            }
+            path::interpolate::Error::UsernameConversion(_) | path::interpolate::Error::Utf8Conversion { .. } => {
+                Err(err)
+            }
+        },
+    }
+}
+
 fn resolve_path(
     path: crate::Path<'_>,
     target_config_path: Option<&Path>,
-    context: crate::path::interpolate::Context<'_>,
-) -> Result<PathBuf, Error> {
-    let path = path.interpolate(context)?;
+    includes::Options {
+        interpolate: context,
+        err_on_interpolation_failure,
+        err_on_missing_config_path,
+        ..
+    }: includes::Options<'_>,
+) -> Result<Option<PathBuf>, Error> {
+    let path = match check_interpolation_result(err_on_interpolation_failure, path.interpolate(context))? {
+        Some(p) => p,
+        None => return Ok(None),
+    };
     let path: PathBuf = if path.is_relative() {
+        if !err_on_missing_config_path && target_config_path.is_none() {
+            return Ok(None);
+        }
         target_config_path
             .ok_or(Error::MissingConfigPath)?
             .parent()
@@ -258,123 +306,8 @@ fn resolve_path(
     } else {
         path.into()
     };
-    Ok(path)
+    Ok(Some(path))
 }
 
-mod types {
-    use crate::parse;
-    use crate::path::interpolate;
-
-    /// The error returned when following includes.
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        Io(#[from] std::io::Error),
-        #[error(transparent)]
-        Parse(#[from] parse::Error),
-        #[error(transparent)]
-        Interpolate(#[from] interpolate::Error),
-        #[error("The maximum allowed length {} of the file include chain built by following nested resolve_includes is exceeded", .max_depth)]
-        IncludeDepthExceeded { max_depth: u8 },
-        #[error(
-            "Include paths from environment variables must not be relative as no config file paths exists as root"
-        )]
-        MissingConfigPath,
-        #[error("The git directory must be provided to support `gitdir:` conditional includes")]
-        MissingGitDir,
-        #[error(transparent)]
-        Realpath(#[from] git_path::realpath::Error),
-    }
-
-    /// Options to handle includes, like `include.path` or `includeIf.<condition>.path`,
-    #[derive(Clone, Copy)]
-    pub struct Options<'a> {
-        /// The maximum allowed length of the file include chain built by following nested resolve_includes where base level is depth = 0.
-        pub max_depth: u8,
-        /// When max depth is exceeded while following nested includes,
-        /// return an error if true or silently stop following resolve_includes.
-        ///
-        /// Setting this value to false allows to read configuration with cycles,
-        /// which otherwise always results in an error.
-        pub error_on_max_depth_exceeded: bool,
-
-        /// Used during path interpolation, both for include paths before trying to read the file, and for
-        /// paths used in conditional `gitdir` includes.
-        pub interpolate: interpolate::Context<'a>,
-
-        /// Additional context for conditional includes to work.
-        pub conditional: conditional::Context<'a>,
-    }
-
-    impl<'a> Options<'a> {
-        /// Provide options to never follow include directives at all.
-        pub fn no_follow() -> Self {
-            Options {
-                max_depth: 0,
-                error_on_max_depth_exceeded: false,
-                interpolate: Default::default(),
-                conditional: Default::default(),
-            }
-        }
-        /// Provide options to follow includes like git does, provided the required `conditional` and `interpolate` contexts
-        /// to support `gitdir` and `onbranch` based `includeIf` directives as well as standard `include.path` resolution.
-        /// Note that the follow-mode is `git`-style, following at most 10 indirections while
-        /// producing an error if the depth is exceeded.
-        pub fn follow(interpolate: interpolate::Context<'a>, conditional: conditional::Context<'a>) -> Self {
-            Options {
-                max_depth: 10,
-                error_on_max_depth_exceeded: true,
-                interpolate,
-                conditional,
-            }
-        }
-
-        /// Like [`follow`][Options::follow()], but without information to resolve `includeIf` directories as well as default
-        /// configuration to allow resolving `~username/` path. `home_dir` is required to resolve `~/` paths if set.
-        /// Note that `%(prefix)` paths cannot be interpolated with this configuration, use [`follow()`][Options::follow()]
-        /// instead for complete control.
-        pub fn follow_without_conditional(home_dir: Option<&'a std::path::Path>) -> Self {
-            Options {
-                max_depth: 10,
-                error_on_max_depth_exceeded: true,
-                interpolate: interpolate::Context {
-                    git_install_dir: None,
-                    home_dir,
-                    home_for_user: Some(interpolate::home_for_user),
-                },
-                conditional: Default::default(),
-            }
-        }
-
-        /// Set the context used for interpolation when interpolating paths to include as well as the paths
-        /// in `gitdir` conditional includes.
-        pub fn interpolate_with(mut self, context: interpolate::Context<'a>) -> Self {
-            self.interpolate = context;
-            self
-        }
-    }
-
-    impl Default for Options<'_> {
-        fn default() -> Self {
-            Self::no_follow()
-        }
-    }
-
-    ///
-    pub mod conditional {
-        /// Options to handle conditional includes like `includeIf.<condition>.path`.
-        #[derive(Clone, Copy, Default)]
-        pub struct Context<'a> {
-            /// The location of the .git directory. If `None`, `gitdir` conditions cause an error.
-            ///
-            /// Used for conditional includes, e.g. `includeIf.gitdir:…` or `includeIf:gitdir/i…`.
-            pub git_dir: Option<&'a std::path::Path>,
-            /// The name of the branch that is currently checked out. If `None`, `onbranch` conditions cause an error.
-            ///
-            /// Used for conditional includes, e.g. `includeIf.onbranch:main.…`
-            pub branch_name: Option<&'a git_ref::FullNameRef>,
-        }
-    }
-}
+mod types;
 pub use types::{conditional, Error, Options};
