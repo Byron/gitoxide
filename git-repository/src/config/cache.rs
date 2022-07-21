@@ -81,6 +81,7 @@ impl Cache {
         branch_name: Option<&git_ref::FullNameRef>,
         mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
         git_install_dir: Option<&std::path::Path>,
+        home: Option<&std::path::Path>,
         repository::permissions::Environment {
             git_prefix,
             home: home_env,
@@ -94,10 +95,6 @@ impl Cache {
             includes: use_includes,
         }: repository::permissions::Config,
     ) -> Result<Self, Error> {
-        let home = std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .and_then(|home| home_env.check(home).ok().flatten());
-
         let options = git_config::file::init::Options {
             lossy: !cfg!(debug_assertions),
             includes: if use_includes {

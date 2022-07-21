@@ -55,6 +55,12 @@ impl Config {
     }
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Self::all()
+    }
+}
+
 /// Permissions related to the usage of environment variables
 #[derive(Debug, Clone)]
 pub struct Environment {

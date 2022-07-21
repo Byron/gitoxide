@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
 
+use crate::config::cache::interpolate_context;
 use crate::{Permissions, ThreadSafeRepository};
 
 /// A way to configure the usage of replacement objects, see `git replace`.
@@ -282,19 +283,59 @@ impl ThreadSafeRepository {
             }
         };
         let head = refs.find("HEAD").ok();
+        let git_install_dir = crate::path::install_dir().ok();
+        let home = std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .and_then(|home| env.home.check(home).ok().flatten());
         let config = crate::config::Cache::from_stage_one(
             repo_config,
             common_dir_ref,
             head.as_ref().and_then(|head| head.target.try_name()),
             filter_config_section.unwrap_or(crate::config::section::is_trusted),
-            crate::path::install_dir().ok().as_deref(),
+            git_install_dir.as_deref(),
+            home.as_deref(),
             env.clone(),
             config,
         )?;
 
         if **git_dir_perm != git_sec::ReadWrite::all() {
-            // TODO: respect `save.directory`, which needs global configuration to later combine. Probably have to do the check later.
-            return Err(Error::UnsafeGitDir { path: git_dir });
+            let mut is_safe = false;
+            let git_dir = match git_path::realpath(&git_dir) {
+                Ok(p) => p,
+                Err(_) => git_dir.clone(),
+            };
+            for safe_dir in config
+                .resolved
+                .strings_filter("safe", None, "directory", &mut |meta| {
+                    let kind = meta.source.kind();
+                    kind == git_config::source::Kind::System || kind == git_config::source::Kind::Global
+                })
+                .unwrap_or_default()
+            {
+                if safe_dir.as_ref() == "*" {
+                    is_safe = true;
+                    continue;
+                }
+                if safe_dir.is_empty() {
+                    is_safe = false;
+                    continue;
+                }
+                if !is_safe {
+                    let safe_dir = match git_config::Path::from(std::borrow::Cow::Borrowed(safe_dir.as_ref()))
+                        .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
+                    {
+                        Ok(path) => path,
+                        Err(_) => git_path::from_bstr(safe_dir),
+                    };
+                    if safe_dir == git_dir {
+                        is_safe = true;
+                        continue;
+                    }
+                }
+            }
+            if !is_safe {
+                return Err(Error::UnsafeGitDir { path: git_dir });
+            }
         }
 
         match worktree_dir {
