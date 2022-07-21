@@ -39,8 +39,18 @@ impl File<'static> {
         path_meta: impl IntoIterator<Item = impl Into<Metadata>>,
         options: Options<'_>,
     ) -> Result<Option<Self>, Error> {
-        let mut target = None;
         let mut buf = Vec::with_capacity(512);
+        Self::from_paths_metadata_buf(path_meta, &mut buf, options)
+    }
+
+    /// Like [from_paths_metadata()][Self::from_paths_metadata()], but will use `buf` to temporarily store the config file
+    /// contents for parsing instead of allocating an own buffer.
+    pub fn from_paths_metadata_buf(
+        path_meta: impl IntoIterator<Item = impl Into<Metadata>>,
+        buf: &mut Vec<u8>,
+        options: Options<'_>,
+    ) -> Result<Option<Self>, Error> {
+        let mut target = None;
         let mut seen = BTreeSet::default();
         for (path, mut meta) in path_meta.into_iter().filter_map(|meta| {
             let mut meta = meta.into();
@@ -51,10 +61,10 @@ impl File<'static> {
             }
 
             buf.clear();
-            std::io::copy(&mut std::fs::File::open(&path)?, &mut buf)?;
+            std::io::copy(&mut std::fs::File::open(&path)?, buf)?;
             meta.path = Some(path);
 
-            let config = Self::from_bytes_owned(&mut buf, meta, options)?;
+            let config = Self::from_bytes_owned(buf, meta, options)?;
             match &mut target {
                 None => {
                     target = Some(config);
