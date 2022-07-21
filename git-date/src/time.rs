@@ -41,6 +41,11 @@ impl Time {
         }
     }
 
+    /// Return true if this time has been initialized to anything non-default, i.e. 0.
+    pub fn is_set(&self) -> bool {
+        *self != Self::default()
+    }
+
     /// Return the passed seconds since epoch since this signature was made.
     pub fn seconds(&self) -> u32 {
         self.seconds_since_unix_epoch
