@@ -35,19 +35,25 @@ impl File<'static> {
     /// Constructs a `git-config` file from the provided metadata, which must include a path to read from or be ignored.
     /// Returns `Ok(None)` if there was not a single input path provided, which is a possibility due to
     /// [`Metadata::path`] being an `Option`.
+    /// If an input path doesn't exist, the entire operation will abort. See [`from_paths_metadata_buf()`][Self::from_paths_metadata_buf()]
+    /// for a more powerful version of this method.
     pub fn from_paths_metadata(
         path_meta: impl IntoIterator<Item = impl Into<Metadata>>,
         options: Options<'_>,
     ) -> Result<Option<Self>, Error> {
         let mut buf = Vec::with_capacity(512);
-        Self::from_paths_metadata_buf(path_meta, &mut buf, options)
+        let err_on_nonexisting_paths = true;
+        Self::from_paths_metadata_buf(path_meta, &mut buf, err_on_nonexisting_paths, options)
     }
 
     /// Like [from_paths_metadata()][Self::from_paths_metadata()], but will use `buf` to temporarily store the config file
     /// contents for parsing instead of allocating an own buffer.
+    ///
+    /// If `err_on_nonexisting_paths` is false, instead of aborting with error, we will continue to the next path instead.
     pub fn from_paths_metadata_buf(
         path_meta: impl IntoIterator<Item = impl Into<Metadata>>,
         buf: &mut Vec<u8>,
+        err_on_non_existing_paths: bool,
         options: Options<'_>,
     ) -> Result<Option<Self>, Error> {
         let mut target = None;
@@ -61,7 +67,14 @@ impl File<'static> {
             }
 
             buf.clear();
-            std::io::copy(&mut std::fs::File::open(&path)?, buf)?;
+            std::io::copy(
+                &mut match std::fs::File::open(&path) {
+                    Ok(f) => f,
+                    Err(err) if !err_on_non_existing_paths && err.kind() == std::io::ErrorKind::NotFound => continue,
+                    Err(err) => return Err(err.into()),
+                },
+                buf,
+            )?;
             meta.path = Some(path);
 
             let config = Self::from_bytes_owned(buf, meta, options)?;
