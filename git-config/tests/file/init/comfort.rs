@@ -64,14 +64,18 @@ fn from_git_dir() -> crate::Result {
         "per-user configuration"
     );
     assert_eq!(
-        config.string("a", None, "git").expect("present").as_ref(),
-        "git-application",
-        "we load the XDG directories, based on the HOME fallback"
-    );
-    assert_eq!(
         config.string("env", None, "override").expect("present").as_ref(),
         "from-c.config",
         "environment includes are resolved"
     );
+
+    // on CI this file actually exists in xdg home and our values aren't present
+    if !(cfg!(unix) && git_testtools::is_ci::cached()) {
+        assert_eq!(
+            config.string("a", None, "git").expect("present").as_ref(),
+            "git-application",
+            "we load the XDG directories, based on the HOME fallback"
+        );
+    }
     Ok(())
 }
