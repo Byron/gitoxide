@@ -12,6 +12,8 @@ use io_close::Close;
 use nom::error::VerboseError;
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
+
+pub use is_ci;
 pub use tempfile;
 
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
