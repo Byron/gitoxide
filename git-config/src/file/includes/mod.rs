@@ -26,6 +26,9 @@ impl File<'static> {
     ///   which later overwrite portions of the included file, which seems unusual as these would be related to `includes`.
     ///   We can fix this by 'splitting' the inlcude section if needed so the included sections are put into the right place.
     pub fn resolve_includes(&mut self, options: init::Options<'_>) -> Result<(), Error> {
+        if options.includes.max_depth == 0 {
+            return Ok(());
+        }
         let mut buf = Vec::new();
         resolve(self, &mut buf, options)
     }

@@ -31,7 +31,7 @@ impl File<'static> {
     /// Generates a config from `GIT_CONFIG_*` environment variables or returns `Ok(None)` if no configuration was found.
     /// See [`git-config`'s documentation] for more information on the environment variables in question.
     ///
-    /// With `options` configured, it's possible `include.path` directives as well.
+    /// With `options` configured, it's possible to resolve `include.path` or `includeIf.<condition>.path` directives as well.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
     pub fn from_env(options: init::Options<'_>) -> Result<Option<File<'static>>, Error> {
