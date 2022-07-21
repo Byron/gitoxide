@@ -1,8 +1,9 @@
-use crate::bstr::BString;
-use crate::permission;
+use std::borrow::Cow;
+
 use git_actor::SignatureRef;
 use git_config::File;
-use std::borrow::Cow;
+
+use crate::{bstr::BString, permission};
 
 /// Identity handling.
 impl crate::Repository {

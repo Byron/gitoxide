@@ -1,6 +1,7 @@
+use std::convert::TryFrom;
+
 use bstr::ByteVec;
 use git_config::file::{init, Metadata};
-use std::convert::TryFrom;
 
 #[test]
 fn empty_sections_roundtrip() {

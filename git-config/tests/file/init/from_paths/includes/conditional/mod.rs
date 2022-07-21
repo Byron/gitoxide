@@ -1,9 +1,9 @@
-use std::str::FromStr;
-use std::{fs, path::Path};
+use std::{fs, path::Path, str::FromStr};
 
-use git_config::file::includes;
-use git_config::file::init;
-use git_config::{path, File};
+use git_config::{
+    file::{includes, init},
+    path, File,
+};
 use tempfile::tempdir;
 
 use crate::file::{cow_str, init::from_paths::escape_backslashes};

@@ -4,9 +4,11 @@ use std::{
 };
 
 use bstr::{BString, ByteSlice};
-use git_config::file::includes;
-use git_config::file::includes::conditional;
-use git_config::file::init::{self};
+use git_config::file::{
+    includes,
+    includes::conditional,
+    init::{self},
+};
 use git_ref::{
     transaction::{Change, PreviousValue, RefEdit},
     FullName, Target,

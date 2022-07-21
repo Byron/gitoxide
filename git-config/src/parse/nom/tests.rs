@@ -163,13 +163,13 @@ mod config_name {
 }
 
 mod section {
-    use crate::parse::tests::util::newline_custom_event;
     use crate::parse::{
         error::ParseNode,
         section,
         tests::util::{
-            comment_event, fully_consumed, name_event, newline_event, section_header as parsed_section_header,
-            value_done_event, value_event, value_not_done_event, whitespace_event,
+            comment_event, fully_consumed, name_event, newline_custom_event, newline_event,
+            section_header as parsed_section_header, value_done_event, value_event, value_not_done_event,
+            whitespace_event,
         },
         Event, Section,
     };
@@ -562,10 +562,9 @@ mod section {
 mod value_continuation {
     use bstr::ByteSlice;
 
-    use crate::parse::tests::util::newline_custom_event;
     use crate::parse::{
         section,
-        tests::util::{into_events, newline_event, value_done_event, value_not_done_event},
+        tests::util::{into_events, newline_custom_event, newline_event, value_done_event, value_not_done_event},
     };
 
     pub fn value_impl<'a>(i: &'a [u8], events: &mut section::Events<'a>) -> nom::IResult<&'a [u8], ()> {

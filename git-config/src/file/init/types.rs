@@ -1,7 +1,4 @@
-use crate::file::init;
-use crate::parse;
-use crate::parse::Event;
-use crate::path::interpolate;
+use crate::{file::init, parse, parse::Event, path::interpolate};
 
 /// The error returned by [`File::from_bytes_no_includes()`][crate::File::from_bytes_no_includes()].
 #[derive(Debug, thiserror::Error)]

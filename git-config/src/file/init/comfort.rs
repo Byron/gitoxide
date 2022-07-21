@@ -1,6 +1,9 @@
-use crate::file::{init, Metadata};
-use crate::{path, source, File, Source};
 use std::path::PathBuf;
+
+use crate::{
+    file::{init, Metadata},
+    path, source, File, Source,
+};
 
 /// Easy-instantiation of typical non-repository git configuration files with all configuration defaulting to typical values.
 ///

@@ -1,5 +1,4 @@
-use std::fs;
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 use git_config::{File, Source};
 use tempfile::tempdir;

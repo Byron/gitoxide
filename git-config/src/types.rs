@@ -1,10 +1,10 @@
-use git_features::threading::OwnShared;
 use std::collections::{HashMap, VecDeque};
 
-use crate::file::Metadata;
+use git_features::threading::OwnShared;
+
 use crate::{
     color, file,
-    file::{SectionBodyIdsLut, SectionId},
+    file::{Metadata, SectionBodyIdsLut, SectionId},
     integer,
     parse::section,
 };

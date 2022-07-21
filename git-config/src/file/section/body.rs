@@ -1,10 +1,11 @@
-use crate::parse::section::Key;
-use crate::parse::Event;
-use crate::value::{normalize, normalize_bstr, normalize_bstring};
+use std::{borrow::Cow, iter::FusedIterator, ops::Range};
+
 use bstr::{BStr, BString, ByteVec};
-use std::borrow::Cow;
-use std::iter::FusedIterator;
-use std::ops::Range;
+
+use crate::{
+    parse::{section::Key, Event},
+    value::{normalize, normalize_bstr, normalize_bstring},
+};
 
 /// A opaque type that represents a section body.
 #[derive(PartialEq, Eq, Hash, PartialOrd, Ord, Clone, Debug, Default)]

@@ -1,7 +1,9 @@
-use crate::file::init::Options;
-use crate::file::{init, Metadata};
-use crate::File;
 use std::collections::BTreeSet;
+
+use crate::{
+    file::{init, init::Options, Metadata},
+    File,
+};
 
 /// The error returned by [`File::from_paths_metadata()`] and [`File::from_path_no_includes()`].
 #[derive(Debug, thiserror::Error)]

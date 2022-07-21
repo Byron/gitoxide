@@ -1,6 +1,4 @@
-use std::convert::TryInto;
-use std::io;
-use std::ops::Sub;
+use std::{convert::TryInto, io, ops::Sub};
 
 use crate::Time;
 

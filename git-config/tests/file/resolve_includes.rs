@@ -1,5 +1,4 @@
-use git_config::file;
-use git_config::file::init;
+use git_config::{file, file::init};
 
 #[test]
 fn missing_includes_are_ignored_by_default() -> crate::Result {

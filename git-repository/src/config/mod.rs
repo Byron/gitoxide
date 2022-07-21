@@ -1,8 +1,7 @@
-use crate::repository::identity;
-use crate::{bstr::BString, permission, Repository};
+pub use git_config::*;
 use git_features::threading::OnceCell;
 
-pub use git_config::*;
+use crate::{bstr::BString, permission, repository::identity, Repository};
 
 pub(crate) mod cache;
 mod snapshot;

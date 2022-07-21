@@ -1,11 +1,12 @@
-use git_config::parse::section;
-use git_discover::DOT_GIT_DIR;
-use std::convert::TryFrom;
 use std::{
+    convert::TryFrom,
     fs::{self, OpenOptions},
     io::Write,
     path::{Path, PathBuf},
 };
+
+use git_config::parse::section;
+use git_discover::DOT_GIT_DIR;
 
 /// The error used in [`into()`].
 #[derive(Debug, thiserror::Error)]

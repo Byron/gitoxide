@@ -1,12 +1,14 @@
-use std::borrow::Cow;
-use std::{convert::TryFrom, fmt::Display, str::FromStr};
+use std::{borrow::Cow, convert::TryFrom, fmt::Display, str::FromStr};
 
 use bstr::{BStr, BString, ByteVec};
 
-use crate::file::Metadata;
-use crate::parse::{section, Event};
-use crate::value::normalize;
-use crate::{parse, File};
+use crate::{
+    file::Metadata,
+    parse,
+    parse::{section, Event},
+    value::normalize,
+    File,
+};
 
 impl FromStr for File<'static> {
     type Err = parse::Error;

@@ -1,6 +1,9 @@
-use crate::file::{includes, section, Metadata};
-use crate::{parse, File};
 use git_features::threading::OwnShared;
+
+use crate::{
+    file::{includes, section, Metadata},
+    parse, File,
+};
 
 mod types;
 pub use types::{Error, Options};

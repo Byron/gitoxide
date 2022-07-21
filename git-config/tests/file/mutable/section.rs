@@ -54,8 +54,9 @@ mod pop {
 }
 
 mod set {
-    use super::multi_value_section;
     use std::convert::TryInto;
+
+    use super::multi_value_section;
 
     #[test]
     fn various_escapes_onto_various_kinds_of_values() -> crate::Result {
@@ -148,10 +149,9 @@ mod push {
 }
 
 mod set_leading_whitespace {
-    use bstr::BString;
-    use std::borrow::Cow;
-    use std::convert::TryFrom;
+    use std::{borrow::Cow, convert::TryFrom};
 
+    use bstr::BString;
     use git_config::parse::section::Key;
 
     use crate::file::cow_str;

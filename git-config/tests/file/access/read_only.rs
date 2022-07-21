@@ -1,8 +1,11 @@
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
 use bstr::BStr;
-use git_config::file::{init, Metadata};
-use git_config::{color, integer, path, Boolean, Color, File, Integer};
+use git_config::{
+    color,
+    file::{init, Metadata},
+    integer, path, Boolean, Color, File, Integer,
+};
 
 use crate::file::cow_str;
 

@@ -1,8 +1,6 @@
-use std::borrow::Cow;
-use std::convert::TryFrom;
+use std::{borrow::Cow, convert::TryFrom};
 
-use crate::file::init;
-use crate::{file, parse, parse::section, path::interpolate, File};
+use crate::{file, file::init, parse, parse::section, path::interpolate, File};
 
 /// Represents the errors that may occur when calling [`File::from_env()`].
 #[derive(Debug, thiserror::Error)]

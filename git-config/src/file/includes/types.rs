@@ -1,5 +1,4 @@
-use crate::parse;
-use crate::path::interpolate;
+use crate::{parse, path::interpolate};
 
 /// The error returned when following includes.
 #[derive(Debug, thiserror::Error)]

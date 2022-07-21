@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 
-use crate::file::Metadata;
-use crate::{file, Source};
+use crate::{file, file::Metadata, Source};
 
 /// Instantiation
 impl Metadata {

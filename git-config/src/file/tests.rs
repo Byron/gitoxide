@@ -1,11 +1,14 @@
-use crate::file::{self, Section, SectionId};
-use crate::parse::section;
 use std::collections::HashMap;
 
+use crate::{
+    file::{self, Section, SectionId},
+    parse::section,
+};
+
 mod try_from {
-    use super::{bodies, headers};
     use std::{borrow::Cow, collections::HashMap, convert::TryFrom};
 
+    use super::{bodies, headers};
     use crate::{
         file::{self, SectionBodyIdsLut, SectionId},
         parse::{

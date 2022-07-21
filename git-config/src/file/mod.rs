@@ -1,9 +1,9 @@
 //! A high level wrapper around a single or multiple `git-config` file, for reading and mutation.
-use std::path::PathBuf;
 use std::{
     borrow::Cow,
     collections::HashMap,
     ops::{Add, AddAssign},
+    path::PathBuf,
 };
 
 use bstr::BStr;

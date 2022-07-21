@@ -1,7 +1,10 @@
+use std::{
+    borrow::Cow,
+    ffi::OsString,
+    path::{Path, PathBuf},
+};
+
 use crate::Source;
-use std::borrow::Cow;
-use std::ffi::OsString;
-use std::path::{Path, PathBuf};
 
 /// The category of a [`Source`], in order of ascending precedence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]

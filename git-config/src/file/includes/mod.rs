@@ -7,8 +7,11 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_features::threading::OwnShared;
 use git_ref::Category;
 
-use crate::file::{includes, init, Metadata, SectionId};
-use crate::{file, path, File};
+use crate::{
+    file,
+    file::{includes, init, Metadata, SectionId},
+    path, File,
+};
 
 impl File<'static> {
     /// Traverse all `include` and `includeIf` directives found in this instance and follow them, loading the

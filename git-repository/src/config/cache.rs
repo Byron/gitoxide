@@ -1,11 +1,9 @@
 use std::{convert::TryFrom, path::PathBuf};
 
-use crate::repository;
 use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
-use crate::bstr::ByteSlice;
-use crate::repository::identity;
+use crate::{bstr::ByteSlice, repository, repository::identity};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.

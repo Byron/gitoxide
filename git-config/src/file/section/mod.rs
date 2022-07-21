@@ -1,15 +1,20 @@
-use crate::file::{Metadata, Section, SectionMut};
-use crate::parse::{section, Event};
-use crate::{file, parse};
+use std::{borrow::Cow, ops::Deref};
+
 use bstr::{BString, ByteSlice};
 use smallvec::SmallVec;
-use std::borrow::Cow;
-use std::ops::Deref;
+
+use crate::{
+    file,
+    file::{Metadata, Section, SectionMut},
+    parse,
+    parse::{section, Event},
+};
 
 pub(crate) mod body;
-use crate::file::write::{extract_newline, platform_newline};
 pub use body::{Body, BodyIter};
 use git_features::threading::OwnShared;
+
+use crate::file::write::{extract_newline, platform_newline};
 
 impl<'a> Deref for Section<'a> {
     type Target = Body<'a>;

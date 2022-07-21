@@ -2,8 +2,7 @@ use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
 
-use crate::file::MetadataFilter;
-use crate::{value, File};
+use crate::{file::MetadataFilter, value, File};
 
 /// Comfortable API for accessing values
 impl<'event> File<'event> {

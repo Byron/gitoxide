@@ -1,13 +1,11 @@
-use git_features::threading::OwnShared;
 use std::borrow::Cow;
 
-use crate::file::write::ends_with_newline;
-use crate::file::{MetadataFilter, SectionId};
-use crate::parse::{Event, FrontMatterEvents};
+use git_features::threading::OwnShared;
+
 use crate::{
-    file::{self, rename_section, SectionMut},
+    file::{self, rename_section, write::ends_with_newline, MetadataFilter, SectionId, SectionMut},
     lookup,
-    parse::section,
+    parse::{section, Event, FrontMatterEvents},
     File,
 };
 

@@ -13,9 +13,8 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::{commit, config, exclude, mailmap, odb, revision, tree};
 use crate::{
-    plumbing::options::{free, Args, Subcommands},
+    plumbing::options::{commit, config, exclude, free, mailmap, odb, revision, tree, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 

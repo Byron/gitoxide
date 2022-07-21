@@ -1,12 +1,15 @@
 use std::fs;
 
-use git_config::file::includes;
-use git_config::file::init;
-use git_config::{file::init::from_paths, File};
+use git_config::{
+    file::{includes, init, init::from_paths},
+    File,
+};
 use tempfile::tempdir;
 
-use crate::file::init::from_paths::into_meta;
-use crate::file::{cow_str, init::from_paths::escape_backslashes};
+use crate::file::{
+    cow_str,
+    init::from_paths::{escape_backslashes, into_meta},
+};
 
 fn follow_options() -> init::Options<'static> {
     init::Options {

@@ -6,11 +6,11 @@ use std::{
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use smallvec::SmallVec;
 
-use crate::file::{self, Section};
 use crate::{
     file::{
+        self,
         mutable::{escape_value, Whitespace},
-        Index, Size,
+        Index, Section, Size,
     },
     lookup, parse,
     parse::{section::Key, Event},

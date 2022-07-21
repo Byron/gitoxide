@@ -1,6 +1,7 @@
-use crate::OutputFormat;
 use anyhow::{bail, Result};
 use git_repository as git;
+
+use crate::OutputFormat;
 
 pub fn list(
     repo: git::Repository,

@@ -1,14 +1,19 @@
-use std::iter::FromIterator;
-use std::{borrow::Cow, convert::TryFrom};
+use std::{borrow::Cow, convert::TryFrom, iter::FromIterator};
 
 use bstr::BStr;
 use git_features::threading::OwnShared;
 use smallvec::SmallVec;
 
-use crate::file::write::{extract_newline, platform_newline};
-use crate::file::{Metadata, MetadataFilter};
-use crate::parse::Event;
-use crate::{file, lookup, File};
+use crate::{
+    file,
+    file::{
+        write::{extract_newline, platform_newline},
+        Metadata, MetadataFilter,
+    },
+    lookup,
+    parse::Event,
+    File,
+};
 
 /// Read-only low-level access methods, as it requires generics for converting into
 /// custom values defined in this crate like [`Integer`][crate::Integer] and

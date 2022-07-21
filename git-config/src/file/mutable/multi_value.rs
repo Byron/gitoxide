@@ -1,12 +1,17 @@
-use crate::file::mutable::{escape_value, Whitespace};
-use crate::file::{self, Section, SectionId};
-use crate::lookup;
-use crate::parse::{section, Event};
-use crate::value::{normalize_bstr, normalize_bstring};
+use std::{borrow::Cow, collections::HashMap, ops::DerefMut};
+
 use bstr::{BStr, BString, ByteVec};
-use std::borrow::Cow;
-use std::collections::HashMap;
-use std::ops::DerefMut;
+
+use crate::{
+    file::{
+        self,
+        mutable::{escape_value, Whitespace},
+        Section, SectionId,
+    },
+    lookup,
+    parse::{section, Event},
+    value::{normalize_bstr, normalize_bstring},
+};
 
 /// Internal data structure for [`MutableMultiValue`]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
