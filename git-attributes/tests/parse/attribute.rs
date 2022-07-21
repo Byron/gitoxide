@@ -124,7 +124,7 @@ fn custom_macros_can_be_differentiated() {
         parse::Kind::Pattern(_) => unreachable!(),
         parse::Kind::Macro(name) => {
             assert_eq!(
-                (name.inner().to_str().expect("no illformed utf-8"), output.1, output.2),
+                (name.as_str(), output.1, output.2),
                 (r"foo", vec![set("bar"), unset("baz")], 1)
             );
         }
@@ -135,7 +135,7 @@ fn custom_macros_can_be_differentiated() {
         parse::Kind::Pattern(_) => unreachable!(),
         parse::Kind::Macro(name) => {
             assert_eq!(
-                (name.inner().to_str().expect("no illformed utf-8"), output.1, output.2),
+                (name.as_str(), output.1, output.2),
                 (r"foo", vec![set("bar"), unset("baz")], 1),
                 "it works after unquoting even, making it harder to denote a file name with [attr] prefix"
             );
@@ -307,7 +307,7 @@ fn expand(
 ) -> Result<ExpandedAttribute<'_>, parse::Error> {
     let (pattern, attrs, line_no) = input?;
     let attrs = attrs
-        .map(|r| r.map(|attr| (attr.name.inner().into(), attr.state)))
+        .map(|r| r.map(|attr| (attr.name.as_bstring(), attr.state)))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| parse::Error::AttributeName {
             attribute: e.attribute,

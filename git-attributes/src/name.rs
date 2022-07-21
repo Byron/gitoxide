@@ -1,13 +1,17 @@
 use crate::{Name, NameRef};
-use bstr::{BStr, BString, ByteSlice};
+use bstr::BString;
 
 impl<'a> NameRef<'a> {
     pub fn to_owned(self) -> Name {
         Name(self.0.into())
     }
 
-    pub fn inner(&self) -> &str {
+    pub fn as_str(&self) -> &str {
         self.0
+    }
+
+    pub fn as_bstring(self) -> BString {
+        self.0.into()
     }
 }
 
@@ -16,8 +20,12 @@ impl<'a> Name {
         NameRef(self.0.as_ref())
     }
 
-    pub fn inner(&'a self) -> &'a BStr {
-        self.0.as_bytes().as_bstr()
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    pub fn as_bstring(self) -> BString {
+        self.0.as_str().into()
     }
 }
 

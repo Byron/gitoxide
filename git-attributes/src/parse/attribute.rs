@@ -53,7 +53,7 @@ impl<'a> Iter<'a> {
             (
                 attr,
                 possibly_value
-                    .map(|v| crate::StateRef::Value(v.as_bstr()))
+                    .map(|v| StateRef::Value(v.as_bstr()))
                     .unwrap_or(StateRef::Set),
             )
         };
@@ -136,7 +136,7 @@ fn parse_line(line: &BStr, line_number: usize) -> Option<Result<(Kind, Iter<'_>,
 
     let kind_res = match line.strip_prefix(b"[attr]") {
         Some(macro_name) => check_attr(macro_name.into())
-            .map(|m| Kind::Macro(m.to_owned()))
+            .map(|name| Kind::Macro(name.to_owned()))
             .map_err(|err| Error::MacroName {
                 line_number,
                 macro_name: err.attribute,

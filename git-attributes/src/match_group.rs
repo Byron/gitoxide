@@ -66,7 +66,7 @@ impl Pattern for Attributes {
                 let (pattern, value) = match pattern_kind {
                     crate::parse::Kind::Macro(macro_name) => (
                         git_glob::Pattern {
-                            text: macro_name.inner().to_owned(),
+                            text: macro_name.as_bstring(),
                             mode: git_glob::pattern::Mode::all(),
                             first_wildcard_pos: None,
                         },
