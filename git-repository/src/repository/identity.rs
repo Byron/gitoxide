@@ -45,7 +45,7 @@ impl crate::Repository {
                 .as_ref()
                 .or(p.user.email.as_ref())
                 .map(|v| v.as_ref())?,
-            time: p.committer.time.unwrap_or_else(|| git_date::Time::now_local_or_utc()),
+            time: p.committer.time.unwrap_or_else(git_date::Time::now_local_or_utc),
         }
         .into()
     }
@@ -73,7 +73,7 @@ impl crate::Repository {
         git_actor::SignatureRef {
             name: p.author.name.as_ref().or(p.user.name.as_ref()).map(|v| v.as_ref())?,
             email: p.author.email.as_ref().or(p.user.email.as_ref()).map(|v| v.as_ref())?,
-            time: p.author.time.unwrap_or_else(|| git_date::Time::now_local_or_utc()),
+            time: p.author.time.unwrap_or_else(git_date::Time::now_local_or_utc),
         }
         .into()
     }

@@ -97,7 +97,6 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features rustsha1 \
 			   && cargo check --features fast-sha1 \
 			   && cargo check --features progress \
-			   && cargo check --features time \
 			   && cargo check --features io-pipe \
 			   && cargo check --features crc32 \
 			   && cargo check --features zlib \
