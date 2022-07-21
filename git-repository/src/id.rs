@@ -147,7 +147,7 @@ pub mod ancestors {
         error_on_missing_commit: bool,
         // TODO: tests
         /// After iteration this flag is true if the iteration was stopped prematurely due to missing parent commits.
-        /// Note that this flag won't be `Some` if any iteration error occours, which is the case if
+        /// Note that this flag won't be `Some` if any iteration error occurs, which is the case if
         /// [`error_on_missing_commit()`][Iter::error_on_missing_commit()] was called.
         ///
         /// This happens if a repository is a shallow clone.
@@ -157,7 +157,7 @@ pub mod ancestors {
 
     impl<'repo> Iter<'repo> {
         // TODO: tests
-        /// Once invoked, the iteration will return an error if a commit cannot be found in the object database. This typicall happens
+        /// Once invoked, the iteration will return an error if a commit cannot be found in the object database. This typically happens
         /// when operating on a shallow clone and thus is non-critical by default.
         ///
         /// Check the [`is_shallow`][Iter::is_shallow] field once the iteration ended otherwise to learn if a shallow commit graph

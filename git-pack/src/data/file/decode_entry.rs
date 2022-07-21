@@ -135,7 +135,7 @@ impl File {
     /// a base object, instead of an in-pack offset.
     ///
     /// `delta_cache` is a mechanism to avoid looking up base objects multiple times when decompressing multiple objects in a row.
-    /// Use a [Noop-Cache][cache::Never] to disable caching alltogether at the cost of repeating work.
+    /// Use a [Noop-Cache][cache::Never] to disable caching all together at the cost of repeating work.
     pub fn decode_entry(
         &self,
         entry: crate::data::Entry,
@@ -165,7 +165,7 @@ impl File {
         }
     }
 
-    /// resolve: technically, this shoudln't ever be required as stored local packs don't refer to objects by id
+    /// resolve: technically, this shouldn't ever be required as stored local packs don't refer to objects by id
     /// that are outside of the pack. Unless, of course, the ref refers to an object within this pack, which means
     /// it's very, very large as 20bytes are smaller than the corresponding MSB encoded number
     fn resolve_deltas(
@@ -298,7 +298,7 @@ impl File {
                 let end = first_buffer_size + second_buffer_size;
                 if delta_range.start < end {
                     // …this means that the delta size is even larger than two uncompressed worst-case
-                    // intermediate results combined. It would already be undesireable to have it bigger
+                    // intermediate results combined. It would already be undesirable to have it bigger
                     // then the target size (as you could just store the object in whole).
                     // However, this just means that it reuses existing deltas smartly, which as we rightfully
                     // remember stand for an object each. However, this means a lot of data is read to restore

@@ -484,7 +484,7 @@ pub mod free {
             /// This flag is primarily to test the implementation of encoding, and requires to decode the object first.
             /// Encoding an object after decoding it should yield exactly the same bytes.
             /// This will reduce overall performance even more, as re-encoding requires to transform zero-copy objects into
-            /// owned objects, causing plenty of allocation to occour.
+            /// owned objects, causing plenty of allocation to occur.
             pub re_encode: bool,
         }
 

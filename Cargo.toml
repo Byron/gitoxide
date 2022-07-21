@@ -118,7 +118,7 @@ codegen-units = 1
 incremental = false
 build-override = { opt-level = 0 }
 
-# It's not quite worth building depencies with more optimizations yet. Let's keep it here for later.
+# It's not quite worth building dependencies with more optimizations yet. Let's keep it here for later.
 #[profile.dev.package."*"]
 #opt-level = 2
 

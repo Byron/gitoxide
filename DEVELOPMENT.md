@@ -150,7 +150,7 @@ by humans.
 * **Experiments**
   * quick, potentially one-off programs to learn about an aspect of gitoxide potentially in comparison to other implementations like `libgit2`.
   * No need for tests of any kind, but it must compile and be idiomatic Rust and `gitoxide`.
-  * Manual commmand-line parsing is OK
+  * Manual command-line parsing is OK
   * no polish
   * make it compile quickly, so no extras
 * **Examples**

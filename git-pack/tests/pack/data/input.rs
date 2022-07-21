@@ -182,7 +182,7 @@ mod lookup_ref_delta_objects {
             }),
             Ok(entry(base(), D_B)),
         ];
-        let actual = LookupRefDeltaObjectsIter::new(input.into_iter(), |_, _| unreachable!("wont be called"))
+        let actual = LookupRefDeltaObjectsIter::new(input.into_iter(), |_, _| unreachable!("won't be called"))
             .collect::<Vec<_>>();
         for (actual, expected) in actual.into_iter().zip(expected.into_iter()) {
             assert_eq!(format!("{:?}", actual), format!("{:?}", expected));

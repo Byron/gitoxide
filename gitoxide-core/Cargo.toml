@@ -1,6 +1,6 @@
 [package]
 name = "gitoxide-core"
-description = "The library implementating all capabilities of the gitoxide CLI"
+description = "The library implementing all capabilities of the gitoxide CLI"
 repository = "https://github.com/Byron/gitoxide"
 version = "0.15.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]

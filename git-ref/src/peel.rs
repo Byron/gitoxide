@@ -32,7 +32,7 @@ pub mod to_id {
                 display("Refusing to follow more than {} levels of indirection", max_depth)
             }
             Find(err: Box<dyn std::error::Error + Send + Sync + 'static>) {
-                display("An error occurred when trying to resolve an object a refererence points to")
+                display("An error occurred when trying to resolve an object a reference points to")
                 from()
                 source(&**err)
             }

@@ -102,7 +102,7 @@ pub struct Options {
     /// If true, the repository will be a bare repository without a worktree.
     pub bare: bool,
 
-    /// If set, use these filesytem capabilities to populate the respective git-config fields.
+    /// If set, use these filesystem capabilities to populate the respective git-config fields.
     /// If `None`, the directory will be probed.
     pub fs_capabilities: Option<git_worktree::fs::Capabilities>,
 }
