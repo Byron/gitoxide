@@ -120,7 +120,6 @@ impl Cache {
                             }
                             .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check(val).ok().flatten()))
                         })
-                        .and_then(|p| p.is_file().then(|| p)) // todo: allow it to skip non-existing ones in the options to save check
                         .map(|p| p.into_owned());
 
                     git_config::file::Metadata {
@@ -132,9 +131,11 @@ impl Cache {
                     .into()
                 });
 
+            let err_on_nonexisting_paths = false;
             let mut globals = git_config::File::from_paths_metadata_buf(
                 metas,
                 &mut buf,
+                err_on_nonexisting_paths,
                 git_config::file::init::Options {
                     includes: git_config::file::includes::Options::no_follow(),
                     ..options
