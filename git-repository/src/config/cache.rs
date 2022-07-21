@@ -32,7 +32,7 @@ impl StageOne {
                     .with(git_dir_trust),
                 git_config::file::init::Options {
                     lossy: !cfg!(debug_assertions),
-                    includes: git_config::file::includes::Options::no_includes(),
+                    includes: git_config::file::includes::Options::no_follow(),
                 },
             )?
         };
@@ -136,7 +136,7 @@ impl Cache {
                 metas,
                 &mut buf,
                 git_config::file::init::Options {
-                    includes: git_config::file::includes::Options::no_includes(),
+                    includes: git_config::file::includes::Options::no_follow(),
                     ..options
                 },
             )
