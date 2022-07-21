@@ -85,7 +85,10 @@ pub mod config {
     #[derive(Debug, clap::Parser)]
     #[clap(subcommand_required(false))]
     pub struct Platform {
-        /// The filter terms to limit the output to matching sections and values only.
+        /// The filter terms to limit the output to matching sections and subsections only.
+        ///
+        /// Typical filters are `branch` or `remote.origin` or `remote.or*` - git-style globs are supported
+        /// and comparisons are case-insensitive.
         pub filter: Vec<String>,
     }
 }
