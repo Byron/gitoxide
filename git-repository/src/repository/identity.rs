@@ -18,7 +18,7 @@ impl crate::Repository {
         SignatureRef {
             name: "gitoxide".into(),
             email: "gitoxide@localhost".into(),
-            time: Default::default(),
+            time: git_date::Time::now_local_or_utc(),
         }
     }
 
