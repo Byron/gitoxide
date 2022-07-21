@@ -121,12 +121,11 @@ impl Cache {
                 .iter()
                 .flat_map(|kind| kind.sources())
                 .filter_map(|source| {
-                    if !use_system && *source == git_config::Source::System {
-                        return None;
-                    } else if !use_git && *source == git_config::Source::Git {
-                        return None;
-                    } else if !use_user && *source == git_config::Source::User {
-                        return None;
+                    match source {
+                        git_config::Source::System if !use_system => return None,
+                        git_config::Source::Git if !use_git => return None,
+                        git_config::Source::User if !use_user => return None,
+                        _ => {}
                     }
                     let path = source
                         .storage_location(&mut |name| {
