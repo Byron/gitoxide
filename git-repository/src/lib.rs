@@ -88,6 +88,7 @@
 //! * [`url`]
 //! * [`actor`]
 //! * [`bstr`][bstr]
+//! * [`date`]
 //! * [`mod@discover`]
 //! * [`index`]
 //! * [`glob`]
@@ -129,6 +130,8 @@ pub use git_actor as actor;
 pub use git_attributes as attrs;
 #[cfg(all(feature = "unstable", feature = "git-credentials"))]
 pub use git_credentials as credentials;
+#[cfg(feature = "unstable")]
+pub use git_date as date;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
 use git_features::threading::OwnShared;

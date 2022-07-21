@@ -1492,6 +1492,7 @@ dependencies = [
  "git-attributes",
  "git-config",
  "git-credentials",
+ "git-date",
  "git-diff",
  "git-discover",
  "git-features",

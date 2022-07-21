@@ -125,7 +125,7 @@ impl<'event> File<'event> {
 
     /// Returns the last found immutable section with a given `name` and optional `subsection_name`.
     pub fn section(
-        &mut self,
+        &self,
         name: impl AsRef<str>,
         subsection_name: Option<&str>,
     ) -> Result<&file::Section<'event>, lookup::existing::Error> {
@@ -139,7 +139,7 @@ impl<'event> File<'event> {
     /// If there are sections matching `section_name` and `subsection_name` but the `filter` rejects all of them, `Ok(None)`
     /// is returned.
     pub fn section_filter<'a>(
-        &'a mut self,
+        &'a self,
         name: impl AsRef<str>,
         subsection_name: Option<&str>,
         filter: &mut MetadataFilter,
