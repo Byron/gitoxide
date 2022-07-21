@@ -10,7 +10,11 @@ impl crate::Repository {
     /// in a similar vein as the default that git chooses if there is nothing configured.
     ///
     /// This can be useful as fallback for an unset `committer` or `author`.
-    pub fn user_default() -> SignatureRef<'static> {
+    ///
+    /// # Note
+    ///
+    /// The values are cached when the repository is instantiated.
+    pub fn user_default(&self) -> SignatureRef<'_> {
         SignatureRef {
             name: "gitoxide".into(),
             email: "gitoxide@localhost".into(),
@@ -18,23 +22,19 @@ impl crate::Repository {
         }
     }
 
-    // TODO: actual implementation
     /// Return the committer as configured by this repository, which is determined by…
     ///
     /// * …the git configuration `committer.name|email`…
-    /// * …the `GIT_(COMMITTER)_(NAME|EMAIL|DATE)` and `EMAIL` environment variables…
+    /// * …the `GIT_COMMITTER_(NAME|EMAIL|DATE)` environment variables…
     /// * …the configuration for `user.name|email` as fallback…
     ///
     /// …and in that order, or `None` if there was nothing configured. In that case, one may use the
-    /// [`user_default()`][Self::user_default()] method.
+    /// [`committer_or_default()`][Self::committer_or_default()] method.
+    ///
+    /// # Note
     ///
     /// The values are cached when the repository is instantiated.
-    pub fn committer(&self) -> git_actor::Signature {
-        git_actor::Signature::empty()
-    }
-
-    ///
-    pub fn committer2(&self) -> Option<git_actor::SignatureRef<'_>> {
+    pub fn committer(&self) -> Option<git_actor::SignatureRef<'_>> {
         let p = self.config.personas();
 
         git_actor::SignatureRef {
@@ -50,7 +50,23 @@ impl crate::Repository {
         .into()
     }
 
+    /// Like [`committer()`][Self::committer()], but may use a default value in case nothing is configured.
+    pub fn committer_or_default(&self) -> git_actor::SignatureRef<'_> {
+        self.committer().unwrap_or_else(|| self.user_default())
+    }
+
+    /// Return the author as configured by this repository, which is determined by…
     ///
+    /// * …the git configuration `author.name|email`…
+    /// * …the `GIT_AUTHOR_(NAME|EMAIL|DATE)` environment variables…
+    /// * …the configuration for `user.name|email` as fallback…
+    ///
+    /// …and in that order, or `None` if there was nothing configured. In that case, one may use the
+    /// [`author_or_default()`][Self::author_or_default()] method.
+    ///
+    /// # Note
+    ///
+    /// The values are cached when the repository is instantiated.
     pub fn author(&self) -> Option<git_actor::SignatureRef<'_>> {
         let p = self.config.personas();
 
@@ -60,6 +76,11 @@ impl crate::Repository {
             time: p.author.time.unwrap_or_else(|| git_date::Time::now_local_or_utc()),
         }
         .into()
+    }
+
+    /// Like [`author()`][Self::author()], but may use a default value in case nothing is configured.
+    pub fn author_or_default(&self) -> git_actor::SignatureRef<'_> {
+        self.author().unwrap_or_else(|| self.user_default())
     }
 }
 
@@ -97,7 +118,8 @@ impl Personas {
 
         let (mut committer_name, mut committer_email) = entity_in_section("committer", config);
         let mut committer_date = None;
-        let ((mut author_name, mut author_email), mut author_date) = (entity_in_section("author", config), None);
+        let (mut author_name, mut author_email) = entity_in_section("author", config);
+        let mut author_date = None;
         let (user_name, mut user_email) = entity_in_section("user", config);
 
         if git_env.eq(&git_sec::Permission::Allow) {

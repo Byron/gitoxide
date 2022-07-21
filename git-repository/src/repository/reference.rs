@@ -150,18 +150,14 @@ impl crate::Repository {
         lock_mode: lock::acquire::Fail,
         log_committer: Option<&actor::Signature>,
     ) -> Result<Vec<RefEdit>, reference::edit::Error> {
-        let committer_storage;
         let committer = match log_committer {
-            Some(c) => c,
-            None => {
-                committer_storage = self.committer();
-                &committer_storage
-            }
+            Some(c) => c.to_ref(),
+            None => self.committer_or_default(),
         };
         self.refs
             .transaction()
             .prepare(edits, lock_mode)?
-            .commit(committer.to_ref())
+            .commit(committer)
             .map_err(Into::into)
     }
 
