@@ -54,7 +54,7 @@ clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --no-default-features --features lean-async --tests
 
 check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
-	cd git-repository && cargo check --package git-repository --no-default-features --features async-network-client,unstable,local-time-support,max-performance
+	cd git-repository && cargo check --package git-repository --no-default-features --features async-network-client,unstable,max-performance
 
 check: ## Build all code in suitable configurations
 	cargo check --all
@@ -63,12 +63,9 @@ check: ## Build all code in suitable configurations
 	cargo check --no-default-features --features lean
 	cargo check --no-default-features --features lean-async
 	cargo check --no-default-features --features max
-	cd git-actor && cargo check \
-				 && cargo check --features local-time-support
 	cd gitoxide-core && cargo check \
                      && cargo check --features blocking-client \
-                     && cargo check --features async-client \
-                     && cargo check --features local-time-support
+                     && cargo check --features async-client
 	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-hash && cargo check --all-features \
 				&& cargo check
@@ -276,7 +273,7 @@ bench-git-config:
 check-msrv-on-ci: ## Check the minimal support rust version for currently installed Rust version
 	rustc --version
 	cargo check --package git-repository
-	cargo check --package git-repository --no-default-features --features async-network-client,unstable,local-time-support,max-performance
+	cargo check --package git-repository --no-default-features --features async-network-client,unstable,max-performance
 
 ##@ Maintenance
 

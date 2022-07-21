@@ -36,7 +36,7 @@ blocking-http-transport = ["git-transport/http-client-curl"]
 ## Provide additional non-networked functionality like `git-url` and `git-diff`.
 local = [ "git-url", "git-diff" ]
 ## Turns on access to all stable features that are unrelated to networking.
-one-stop-shop = [ "local", "local-time-support" ]
+one-stop-shop = [ "local" ]
 
 #! ### Other
 
@@ -45,8 +45,6 @@ serde1 = ["git-pack/serde1", "git-object/serde1", "git-protocol/serde1", "git-tr
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
 ## **Note** that
 max-performance = ["git-features/parallel", "git-features/zlib-ng-compat", "git-pack/pack-cache-lru-static", "git-pack/pack-cache-lru-dynamic"]
-## Functions dealing with time may include the local timezone offset, not just UTC with the offset being zero.
-local-time-support = ["git-actor/local-time-support"]
 ## Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
 ## Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
 unstable = ["git-index", "git-mailmap", "git-glob", "git-credentials", "git-attributes"]

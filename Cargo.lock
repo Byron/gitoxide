@@ -1187,6 +1187,7 @@ dependencies = [
  "git-testtools",
  "itoa 1.0.2",
  "serde",
+ "time",
 ]
 
 [[package]]
@@ -1238,7 +1239,6 @@ dependencies = [
  "quick-error",
  "sha-1",
  "sha1_smol",
- "time",
  "walkdir",
 ]
 

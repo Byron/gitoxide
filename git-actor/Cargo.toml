@@ -15,9 +15,6 @@ doctest = false
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1", "git-date/serde1"]
 
-## Make `Signature` initializers use the local time (with UTC offset) available.
-local-time-support = ["git-features/time"]
-
 [dependencies]
 git-features = { version = "^0.21.1", path = "../git-features", optional = true }
 git-date = { version = "^0.0.1", path = "../git-date" }
