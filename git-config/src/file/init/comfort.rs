@@ -1,5 +1,5 @@
 use crate::file::{init, Metadata};
-use crate::{source, File};
+use crate::{path, source, File, Source};
 use std::path::PathBuf;
 
 /// Easy-instantiation of typical non-repository git configuration files with all configuration defaulting to typical values.
@@ -68,8 +68,68 @@ impl File<'static> {
 
 /// An easy way to provide complete configuration for a repository.
 impl File<'static> {
-    /// TODO
-    pub fn from_git_dir(_dir: impl AsRef<std::path::Path>) -> Result<File<'static>, init::from_paths::Error> {
-        todo!()
+    /// This configuration type includes the following sources, in order of precedence:
+    ///
+    /// - globals
+    /// - repository-local by loading `dir`/config
+    /// - environment
+    ///
+    /// Note that `dir` is the `.git` dir to load the configuration from, not the configuration file.
+    ///
+    /// Includes will be resolved within limits as some information like the git installation directory is missing to interpolate
+    /// paths with as well as git repository information like the branch name.
+    pub fn from_git_dir(dir: impl Into<std::path::PathBuf>) -> Result<File<'static>, from_git_dir::Error> {
+        let (mut local, git_dir) = {
+            let source = Source::Local;
+            let mut path = dir.into();
+            path.push(
+                source
+                    .storage_location(&mut |n| std::env::var_os(n))
+                    .expect("location available for local"),
+            );
+            let local = Self::from_path_no_includes(&path, source)?;
+            path.pop();
+            (local, path)
+        };
+
+        let home = std::env::var("HOME").ok().map(PathBuf::from);
+        let options = init::Options {
+            includes: init::includes::Options::follow(
+                path::interpolate::Context {
+                    home_dir: home.as_deref(),
+                    ..Default::default()
+                },
+                init::includes::conditional::Context {
+                    git_dir: Some(git_dir.as_ref()),
+                    branch_name: None,
+                },
+            ),
+            lossy: false,
+        };
+
+        let mut globals = Self::new_globals()?;
+        globals.resolve_includes(options)?;
+        local.resolve_includes(options)?;
+
+        globals.append(local).append(Self::new_environment_overrides()?);
+        Ok(globals)
+    }
+}
+
+///
+pub mod from_git_dir {
+    use crate::file::init;
+
+    /// The error returned by [`File::from_git_dir()`][crate::File::from_git_dir()].
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        FromPaths(#[from] init::from_paths::Error),
+        #[error(transparent)]
+        FromEnv(#[from] init::from_env::Error),
+        #[error(transparent)]
+        Init(#[from] init::Error),
+        #[error(transparent)]
+        Includes(#[from] init::includes::Error),
     }
 }

@@ -309,7 +309,7 @@ mod types {
 
     impl<'a> Options<'a> {
         /// Provide options to never follow include directives at all.
-        pub fn no_includes() -> Self {
+        pub fn no_follow() -> Self {
             Options {
                 max_depth: 0,
                 error_on_max_depth_exceeded: false,
@@ -357,7 +357,7 @@ mod types {
 
     impl Default for Options<'_> {
         fn default() -> Self {
-            Self::no_includes()
+            Self::no_follow()
         }
     }
 
