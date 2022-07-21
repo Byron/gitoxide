@@ -5,6 +5,7 @@ use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
 use crate::bstr::ByteSlice;
+use crate::repository::identity;
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
@@ -18,6 +19,7 @@ pub(crate) struct StageOne {
     pub reflog: Option<git_ref::store::WriteReflog>,
 }
 
+/// Initialization
 impl StageOne {
     pub fn new(git_dir: &std::path::Path, git_dir_trust: git_sec::Trust) -> Result<Self, Error> {
         let mut buf = Vec::with_capacity(512);
@@ -68,6 +70,7 @@ impl StageOne {
     }
 }
 
+/// Initialization
 impl Cache {
     #[allow(clippy::too_many_arguments)]
     pub fn from_stage_one(
@@ -220,6 +223,8 @@ impl Cache {
             excludes_file,
             xdg_config_home_env,
             home_env,
+            personas: Default::default(),
+            git_prefix,
         })
     }
 
@@ -247,6 +252,14 @@ impl Cache {
         std::env::var_os("HOME")
             .map(PathBuf::from)
             .and_then(|path| self.home_env.check(path).ok().flatten())
+    }
+}
+
+/// Access
+impl Cache {
+    pub fn personas(&self) -> &identity::Personas {
+        self.personas
+            .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved, &self.git_prefix))
     }
 }
 

@@ -1,4 +1,4 @@
-use git_repository::{open, permission, permissions, Permissions, Repository, ThreadSafeRepository};
+use git_repository::{open, Repository, ThreadSafeRepository};
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -13,24 +13,7 @@ fn named_repo(name: &str) -> Result<Repository> {
 }
 
 fn restricted() -> open::Options {
-    open::Options::default().permissions(Permissions {
-        config: permissions::Config {
-            system: false,
-            git: false,
-            user: false,
-            env: false,
-            includes: false,
-        },
-        env: {
-            let deny = permission::env_var::Resource::resource(git_sec::Permission::Deny);
-            permissions::Environment {
-                xdg_config_home: deny.clone(),
-                home: deny.clone(),
-                git_prefix: deny,
-            }
-        },
-        ..Permissions::default()
-    })
+    open::Options::isolated()
 }
 
 fn repo_rw(name: &str) -> Result<(Repository, tempfile::TempDir)> {

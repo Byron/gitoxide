@@ -157,9 +157,6 @@ pub struct ThreadSafeRepository {
     pub work_tree: Option<PathBuf>,
     /// The path to the common directory if this is a linked worktree repository or it is otherwise set.
     pub common_dir: Option<PathBuf>,
-    // TODO: git-config should be here - it's read a lot but not written much in must applications, so shouldn't be in `State`.
-    //       Probably it's best reload it on signal (in servers) or refresh it when it's known to have been changed similar to how
-    //       packs are refreshed. This would be `git_config::fs::Config` when ready.
     pub(crate) config: crate::config::Cache,
     /// options obtained when instantiating this repository for use when following linked worktrees.
     pub(crate) linked_worktree_options: crate::open::Options,

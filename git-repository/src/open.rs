@@ -2,8 +2,8 @@ use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
 
-use crate::config;
 use crate::config::cache::interpolate_context;
+use crate::{config, permission, permissions};
 use crate::{Permissions, ThreadSafeRepository};
 
 /// A way to configure the usage of replacement objects, see `git replace`.
@@ -98,6 +98,33 @@ impl EnvironmentOverrides {
     }
 }
 
+/// Instantiation
+impl Options {
+    /// Options configured to prevent accessing anything else than the repository configuration file, prohibiting
+    /// accessing the environment or spreading beyond the git repository location.
+    pub fn isolated() -> Self {
+        Options::default().permissions(Permissions {
+            config: permissions::Config {
+                system: false,
+                git: false,
+                user: false,
+                env: false,
+                includes: false,
+            },
+            env: {
+                let deny = permission::env_var::Resource::resource(git_sec::Permission::Deny);
+                permissions::Environment {
+                    xdg_config_home: deny.clone(),
+                    home: deny.clone(),
+                    git_prefix: deny,
+                }
+            },
+            ..Permissions::default()
+        })
+    }
+}
+
+/// Builder methods
 impl Options {
     /// Set the amount of slots to use for the object database. It's a value that doesn't need changes on the client, typically,
     /// but should be controlled on the server.

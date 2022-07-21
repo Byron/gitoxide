@@ -78,7 +78,7 @@ git-protocol = { version = "^0.18.0", path = "../git-protocol", optional = true 
 git-transport = { version = "^0.19.0", path = "../git-transport", optional = true }
 git-diff = { version = "^0.16.0", path = "../git-diff", optional = true }
 git-mailmap = { version = "^0.2.0", path = "../git-mailmap", optional = true }
-git-features = { version = "^0.21.1", path = "../git-features", features = ["progress"] }
+git-features = { version = "^0.21.1", path = "../git-features", features = ["progress", "once_cell"] }
 
 # unstable only
 git-attributes = { version = "^0.3.0", path = "../git-attributes", optional = true }
