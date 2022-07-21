@@ -72,7 +72,7 @@ impl Cache {
     pub fn from_stage_one(
         StageOne {
             git_dir_config,
-            buf: _,
+            mut buf,
             is_bare,
             object_hash,
             reflog: _,
@@ -132,8 +132,9 @@ impl Cache {
                     .into()
                 });
 
-            let mut globals = git_config::File::from_paths_metadata(
+            let mut globals = git_config::File::from_paths_metadata_buf(
                 metas,
+                &mut buf,
                 git_config::file::init::Options {
                     includes: git_config::file::includes::Options::no_includes(),
                     ..options
