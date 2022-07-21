@@ -1,4 +1,6 @@
+use std::convert::TryInto;
 use std::io;
+use std::ops::Sub;
 
 use crate::Time;
 
@@ -31,6 +33,7 @@ impl Default for Time {
     }
 }
 
+/// Instantiation
 impl Time {
     /// Create a new instance from seconds and offset.
     pub fn new(seconds_since_unix_epoch: u32, offset_in_seconds: i32) -> Self {
@@ -41,6 +44,61 @@ impl Time {
         }
     }
 
+    /// Return the current time without figuring out a timezone offset
+    pub fn now_utc() -> Self {
+        let seconds_since_unix_epoch = time::OffsetDateTime::now_utc()
+            .sub(std::time::SystemTime::UNIX_EPOCH)
+            .whole_seconds()
+            .try_into()
+            .expect("this is not year 2038");
+        Self {
+            seconds_since_unix_epoch,
+            offset_in_seconds: 0,
+            sign: Sign::Plus,
+        }
+    }
+
+    /// Return the current local time, or `None` if the local time wasn't available.
+    pub fn now_local() -> Option<Self> {
+        let now = time::OffsetDateTime::now_utc();
+        let seconds_since_unix_epoch = now
+            .sub(std::time::SystemTime::UNIX_EPOCH)
+            .whole_seconds()
+            .try_into()
+            .expect("this is not year 2038");
+        // TODO: make this work without cfg(unsound_local_offset), see
+        //       https://github.com/time-rs/time/issues/293#issuecomment-909158529
+        let offset = time::UtcOffset::local_offset_at(now).ok()?;
+        Self {
+            seconds_since_unix_epoch,
+            offset_in_seconds: offset.whole_seconds(),
+            sign: Sign::Plus,
+        }
+        .into()
+    }
+
+    /// Return the current local time, or the one at UTC if the local time wasn't available.
+    pub fn now_local_or_utc() -> Self {
+        let now = time::OffsetDateTime::now_utc();
+        let seconds_since_unix_epoch = now
+            .sub(std::time::SystemTime::UNIX_EPOCH)
+            .whole_seconds()
+            .try_into()
+            .expect("this is not year 2038");
+        // TODO: make this work without cfg(unsound_local_offset), see
+        //       https://github.com/time-rs/time/issues/293#issuecomment-909158529
+        let offset_in_seconds = time::UtcOffset::local_offset_at(now)
+            .map(|ofs| ofs.whole_seconds())
+            .unwrap_or(0);
+        Self {
+            seconds_since_unix_epoch,
+            offset_in_seconds,
+            sign: Sign::Plus,
+        }
+    }
+}
+
+impl Time {
     /// Return true if this time has been initialized to anything non-default, i.e. 0.
     pub fn is_set(&self) -> bool {
         *self != Self::default()
@@ -79,7 +137,8 @@ impl Time {
         }
         out.write_all(itoa.format(minutes).as_bytes()).map(|_| ())
     }
-    /// Computes the number of bytes necessary to render this time
+
+    /// Computes the number of bytes necessary to render this time.
     pub fn size(&self) -> usize {
         // TODO: this is not year 2038 safe…but we also can't parse larger numbers (or represent them) anyway. It's a trap nonetheless
         //       that can be fixed by increasing the size to usize.
