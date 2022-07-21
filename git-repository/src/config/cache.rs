@@ -69,6 +69,7 @@ impl StageOne {
 }
 
 impl Cache {
+    #[allow(clippy::too_many_arguments)]
     pub fn from_stage_one(
         StageOne {
             git_dir_config,
@@ -99,7 +100,7 @@ impl Cache {
             lossy: !cfg!(debug_assertions),
             includes: if use_includes {
                 git_config::file::includes::Options::follow(
-                    interpolate_context(git_install_dir, home.as_deref()),
+                    interpolate_context(git_install_dir, home),
                     git_config::file::includes::conditional::Context {
                         git_dir: git_dir.into(),
                         branch_name,
