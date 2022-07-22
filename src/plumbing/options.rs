@@ -51,6 +51,11 @@ pub struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
+    /// Interact with the object database.
+    Odb {
+        #[clap(subcommand)]
+        cmd: odb::Subcommands,
+    },
     /// Interact with tree objects.
     Tree {
         #[clap(subcommand)]
@@ -76,6 +81,16 @@ pub enum Subcommands {
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+}
+
+pub mod odb {
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Print all object names.
+        Entries,
+        /// Provide general information about the object database.
+        Info,
+    }
 }
 
 pub mod tree {
@@ -564,11 +579,6 @@ pub mod repo {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "repo")]
     pub enum Subcommands {
-        /// Interact with the object database.
-        Odb {
-            #[clap(subcommand)]
-            cmd: odb::Subcommands,
-        },
         /// Interact with the mailmap.
         Mailmap {
             #[clap(subcommand)]
@@ -612,16 +622,6 @@ pub mod repo {
         pub enum Subcommands {
             /// Print all entries in configured mailmaps, inform about errors as well.
             Entries,
-        }
-    }
-
-    pub mod odb {
-        #[derive(Debug, clap::Subcommand)]
-        pub enum Subcommands {
-            /// Print all object names.
-            Entries,
-            /// Provide general information about the object database.
-            Info,
         }
     }
 }

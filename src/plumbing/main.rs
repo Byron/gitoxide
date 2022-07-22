@@ -13,7 +13,7 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::{commit, revision, tree};
+use crate::plumbing::options::{commit, odb, revision, tree};
 use crate::{
     plumbing::options::{free, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
@@ -581,6 +581,24 @@ pub fn main() -> Result<()> {
                 },
             ),
         },
+        Subcommands::Odb { cmd } => match cmd {
+            odb::Subcommands::Entries => prepare_and_run(
+                "repository-odb-entries",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| core::repository::odb::entries(repository()?.into(), format, out),
+            ),
+            odb::Subcommands::Info => prepare_and_run(
+                "repository-odb-info",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, err| core::repository::odb::info(repository()?.into(), format, out, err),
+            ),
+        },
         Subcommands::Repository(repo::Platform { cmd }) => match cmd {
             repo::Subcommands::Exclude { cmd } => match cmd {
                 repo::exclude::Subcommands::Query {
@@ -627,24 +645,6 @@ pub fn main() -> Result<()> {
                     move |_progress, out, err| {
                         core::repository::mailmap::entries(repository()?.into(), format, out, err)
                     },
-                ),
-            },
-            repo::Subcommands::Odb { cmd } => match cmd {
-                repo::odb::Subcommands::Entries => prepare_and_run(
-                    "repository-odb-entries",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, _err| core::repository::odb::entries(repository()?.into(), format, out),
-                ),
-                repo::odb::Subcommands::Info => prepare_and_run(
-                    "repository-odb-info",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, err| core::repository::odb::info(repository()?.into(), format, out, err),
                 ),
             },
         },
