@@ -1,10 +1,15 @@
 use gitoxide_core as core;
+use std::path::PathBuf;
 
 #[derive(Debug, clap::Parser)]
 #[clap(name = "gix-plumbing", about = "The git underworld", version = clap::crate_version!())]
 #[clap(subcommand_required = true)]
 #[clap(arg_required_else_help = true)]
 pub struct Args {
+    /// The repository to access.
+    #[clap(short = 'r', long, default_value = ".")]
+    pub repository: PathBuf,
+
     #[clap(long, short = 't')]
     /// The amount of threads to use for some operations.
     ///
@@ -49,7 +54,7 @@ pub enum Subcommands {
     /// Subcommands for interacting with packs and their indices.
     #[clap(subcommand)]
     Pack(pack::Subcommands),
-    /// Subcommands for interacting with git remotes, e.g. git repositories hosted on servers.
+    /// Subcommands for interacting with git remote server.
     #[clap(subcommand)]
     #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     Remote(remote::Subcommands),
@@ -329,14 +334,8 @@ pub mod pack {
 
 ///
 pub mod repo {
-    use std::path::PathBuf;
-
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
-        /// The repository to access.
-        #[clap(short = 'r', long, default_value = ".")]
-        pub repository: PathBuf,
-
         /// Subcommands
         #[clap(subcommand)]
         pub cmd: Subcommands,
