@@ -19,12 +19,20 @@ cat <<EOF >>.git/config
 
 [include]
   path = ../a.config
+
+[user]
+  name = user
+  email = user@email
 EOF
 
 
 cat <<EOF >>a.config
 [a]
   local-override = from-a.config
+
+[committer]
+  name = committer
+  email = committer@email
 EOF
 cat <<EOF >>b.config
 [a]

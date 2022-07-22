@@ -16,6 +16,9 @@ fn access_values() {
                 "GIT_CONFIG_SYSTEM",
                 work_dir.join("system.config").display().to_string(),
             )
+            .set("GIT_AUTHOR_NAME", "author")
+            .set("GIT_AUTHOR_EMAIL", "author@email")
+            .set("GIT_AUTHOR_DATE", "1979-02-26 18:30:00")
             .set("GIT_CONFIG_COUNT", "1")
             .set("GIT_CONFIG_KEY_0", "include.path")
             .set("GIT_CONFIG_VALUE_0", work_dir.join("c.config").display().to_string());
@@ -31,6 +34,36 @@ fn access_values() {
             }),
         )
         .unwrap();
+
+        assert_eq!(
+            repo.author(),
+            Some(git_actor::SignatureRef {
+                name: "author".into(),
+                email: "author@email".into(),
+                time: git_date::Time {
+                    seconds_since_unix_epoch: 42,
+                    offset_in_seconds: 1800,
+                    sign: git_date::time::Sign::Plus
+                }
+            }),
+            "the only parsesable marker time we know right now, indicating time parse success"
+        );
+        assert_eq!(
+            repo.committer(),
+            Some(git_actor::SignatureRef {
+                name: "committer".into(),
+                email: "committer@email".into(),
+                time: git_date::Time::now_local_or_utc()
+            })
+        );
+        assert_eq!(
+            repo.user_default(),
+            git_actor::SignatureRef {
+                name: "gitoxide".into(),
+                email: "gitoxide@localhost".into(),
+                time: git_date::Time::now_local_or_utc()
+            }
+        );
 
         let config = repo.config_snapshot();
 
