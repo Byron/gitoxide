@@ -2,6 +2,8 @@ use crate::repository::identity;
 use crate::{bstr::BString, permission, Repository};
 use git_features::threading::OnceCell;
 
+pub use git_config::*;
+
 pub(crate) mod cache;
 mod snapshot;
 
@@ -18,7 +20,9 @@ pub(crate) mod section {
     }
 }
 
+/// The error returned when failing to initialize the repository configuration.
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("Could not read configuration file")]
     Io(#[from] std::io::Error),

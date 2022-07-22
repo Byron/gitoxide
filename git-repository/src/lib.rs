@@ -297,7 +297,7 @@ pub mod create;
 pub mod open;
 
 ///
-mod config;
+pub mod config;
 
 ///
 pub mod mailmap {
