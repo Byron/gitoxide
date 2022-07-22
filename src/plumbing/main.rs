@@ -13,7 +13,7 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::{commit, exclude, mailmap, odb, revision, tree};
+use crate::plumbing::options::{commit, config, exclude, mailmap, odb, revision, tree};
 use crate::{
     plumbing::options::{free, Args, Subcommands},
     shared::pretty::prepare_and_run,
@@ -76,6 +76,15 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Config(config::Platform { filter }) => prepare_and_run(
+            "config-list",
+            verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |_progress, out, _err| core::repository::config::list(repository()?.into(), filter, format, out),
+        )
+        .map(|_| ()),
         Subcommands::Free(subcommands) => match subcommands {
             #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
             free::Subcommands::Remote(subcommands) => match subcommands {
@@ -483,7 +492,7 @@ pub fn main() -> Result<()> {
                     re_encode,
                 },
         } => prepare_and_run(
-            "repository-verify",
+            "verify",
             verbose,
             progress,
             progress_keep_open,
@@ -505,7 +514,7 @@ pub fn main() -> Result<()> {
         ),
         Subcommands::Revision(cmd) => match cmd {
             revision::Subcommands::Explain { spec } => prepare_and_run(
-                "repository-commit-describe",
+                "commit-describe",
                 verbose,
                 progress,
                 progress_keep_open,
@@ -524,7 +533,7 @@ pub fn main() -> Result<()> {
                 max_candidates,
                 rev_spec,
             } => prepare_and_run(
-                "repository-commit-describe",
+                "commit-describe",
                 verbose,
                 progress,
                 progress_keep_open,
@@ -554,7 +563,7 @@ pub fn main() -> Result<()> {
                 recursive,
                 extended,
             } => prepare_and_run(
-                "repository-tree-entries",
+                "tree-entries",
                 verbose,
                 progress,
                 progress_keep_open,
@@ -571,7 +580,7 @@ pub fn main() -> Result<()> {
                 },
             ),
             tree::Subcommands::Info { treeish, extended } => prepare_and_run(
-                "repository-tree-info",
+                "tree-info",
                 verbose,
                 progress,
                 progress_keep_open,
@@ -583,7 +592,7 @@ pub fn main() -> Result<()> {
         },
         Subcommands::Odb(cmd) => match cmd {
             odb::Subcommands::Entries => prepare_and_run(
-                "repository-odb-entries",
+                "odb-entries",
                 verbose,
                 progress,
                 progress_keep_open,
@@ -591,7 +600,7 @@ pub fn main() -> Result<()> {
                 move |_progress, out, _err| core::repository::odb::entries(repository()?.into(), format, out),
             ),
             odb::Subcommands::Info => prepare_and_run(
-                "repository-odb-info",
+                "odb-info",
                 verbose,
                 progress,
                 progress_keep_open,
@@ -601,7 +610,7 @@ pub fn main() -> Result<()> {
         },
         Subcommands::Mailmap(cmd) => match cmd {
             mailmap::Subcommands::Entries => prepare_and_run(
-                "repository-mailmap-entries",
+                "mailmap-entries",
                 verbose,
                 progress,
                 progress_keep_open,
@@ -615,7 +624,7 @@ pub fn main() -> Result<()> {
                 pathspecs,
                 show_ignore_patterns,
             } => prepare_and_run(
-                "repository-exclude-query",
+                "exclude-query",
                 verbose,
                 progress,
                 progress_keep_open,

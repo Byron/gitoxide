@@ -74,9 +74,20 @@ pub enum Subcommands {
     /// Interact with the exclude files like .gitignore.
     #[clap(subcommand)]
     Exclude(exclude::Subcommands),
+    Config(config::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+}
+
+pub mod config {
+    /// Print all entries in a configuration file or access other sub-commands
+    #[derive(Debug, clap::Parser)]
+    #[clap(subcommand_required(false))]
+    pub struct Platform {
+        /// The filter terms to limit the output to matching sections and values only.
+        pub filter: Vec<String>,
+    }
 }
 
 pub mod mailmap {
