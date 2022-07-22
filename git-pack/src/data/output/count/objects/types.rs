@@ -58,7 +58,7 @@ impl Default for ObjectExpansion {
     }
 }
 
-/// Configuration options for the pack generation functions provied in [this module][crate::data::output].
+/// Configuration options for the pack generation functions provided in [this module][crate::data::output].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Options {

@@ -315,7 +315,7 @@ pub mod existing {
             #[allow(missing_docs)]
             pub enum Error {
                 Find(err: find::Error) {
-                    display("An error occured while trying to find a reference")
+                    display("An error occurred while trying to find a reference")
                     from()
                     source(err)
                 }

@@ -183,7 +183,7 @@ async fn peek_past_a_delimiter_is_no_error() -> crate::Result {
     let res = reader.peek_data_line().await;
     assert!(
         res.is_none(),
-        "peeking past a flush packet is a 'natural' event that shold not cause an error"
+        "peeking past a flush packet is a 'natural' event that should not cause an error"
     );
     Ok(())
 }

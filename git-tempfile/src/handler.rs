@@ -7,7 +7,7 @@ use crate::{SignalHandlerMode, NEXT_MAP_INDEX, REGISTER, SIGNAL_HANDLER_MODE};
 ///
 /// # Safety
 /// Note that Mutexes of any kind are not allowed, and so aren't allocation or deallocation of memory.
-/// We are usign lock-free datastructures and sprinkle in `std::mem::forget` to avoid deallocating.
+/// We are using lock-free datastructures and sprinkle in `std::mem::forget` to avoid deallocating.
 pub fn cleanup_tempfiles() {
     let current_pid = std::process::id();
     let one_past_last_index = NEXT_MAP_INDEX.load(Ordering::SeqCst);

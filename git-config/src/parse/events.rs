@@ -7,7 +7,7 @@ use crate::{
     parse::{section, Event, Section},
 };
 
-/// A type store without allocation all events that are typicaly preceeding the first section.
+/// A type store without allocation all events that are typically preceding the first section.
 pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 
 /// A zero-copy `git-config` file parser.

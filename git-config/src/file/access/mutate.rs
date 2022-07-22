@@ -234,12 +234,12 @@ impl<'event> File<'event> {
         Ok(())
     }
 
-    /// Append another File to the end of ourselves, without loosing any information.
+    /// Append another File to the end of ourselves, without losing any information.
     pub fn append(&mut self, other: Self) -> &mut Self {
         self.append_or_insert(other, None)
     }
 
-    /// Append another File to the end of ourselves, without loosing any information.
+    /// Append another File to the end of ourselves, without losing any information.
     pub(crate) fn append_or_insert(&mut self, mut other: Self, mut insert_after: Option<SectionId>) -> &mut Self {
         let nl = self.detect_newline_style_smallvec();
         fn extend_and_assure_newline<'a>(

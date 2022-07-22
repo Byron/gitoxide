@@ -61,7 +61,7 @@ impl<'repo> Snapshot<'repo> {
 
     /// Return the trusted and fully interpolated path at `key`, or `None` if there is no such value
     /// or if no value was found in a trusted file.
-    /// An error occours if the path could not be interpolated to its final value.
+    /// An error occurs if the path could not be interpolated to its final value.
     pub fn trusted_path(
         &self,
         key: &str,

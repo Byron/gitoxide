@@ -21,7 +21,7 @@ pub fn decode(data: &[u8]) -> Result<(Vec, &[u8]), decode::Error> {
     let (len, data) = decode::u32(data).ok_or(Error::Corrupt("eof reading chunk length"))?;
     let len = len as usize;
 
-    // NOTE: git does this by copying all bytes first, and then it will change the endianess in a separate loop.
+    // NOTE: git does this by copying all bytes first, and then it will change the endianness in a separate loop.
     //       Maybe it's faster, but we can't do it without unsafe. Let's leave it to the optimizer and maybe
     //       one day somebody will find out that it's worth it to use unsafe here.
     let (mut bits, data) = decode::split_at_pos(data, len * std::mem::size_of::<u64>())
