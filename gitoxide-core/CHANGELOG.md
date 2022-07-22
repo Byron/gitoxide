@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed (BREAKING)
+
+ - <csr-id-89a41bf2b37db29b9983b4e5492cfd67ed490b23/> remove local-time-support feature toggle.
+   We treat local time as default feature without a lot of fuzz, and
+   will eventually document that definitive support needs a compile
+   time switch in the compiler (`--cfg unsound_local_offset` or something).
+   
+   One day it will perish. Failure is possible anyway and we will write
+   code to deal with it while minimizing the amount of system time
+   fetches when asking for the current local time.
+ - <csr-id-6f4eea936d64fb9827277c160f989168e7b1dba2/> Associate `file::Metadata` with each `File`.
+   This is the first step towards knowing more about the source of each
+   value to filter them based on some properties.
+   
+   This breaks various methods handling the instantiation of configuration
+   files as `file::Metadata` typically has to be provided by the caller
+   now or be associated with each path to read configuration from.
+
+### New Features
+
+ - <csr-id-eda39ec7d736d49af1ad9e2ad775e4aa12b264b7/> `gix config` with section and sub-section filtering.
+ - <csr-id-d99453ebeb970ed493be236def299d1e82b01f83/> `gix config` lists all entries of all configuration files git considers.
+   Filters allow to narrow down the output.
+ - <csr-id-7f67b23b9462b805591b1fe5a8406f8d7404f372/> Use `git-config` to write config file on initialization, including `logallrefupdates` and `precomposeunicode`.
+
 ### Bug Fixes
 
  - <csr-id-5667a7c1bafcfdff1a278b3ad0e1198cd0cc4653/> `ein tool organize` now ignores worktrees.
@@ -19,10 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 35 commits contributed to the release over the course of 61 calendar days.
- - 67 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#301](https://github.com/Byron/gitoxide/issues/301)
+ - 60 commits contributed to the release over the course of 101 calendar days.
+ - 107 days passed between releases.
+ - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Thanks Clippy
 
@@ -56,7 +81,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - fix build ([`ffe92ca`](https://github.com/Byron/gitoxide/commit/ffe92ca3cf066c09020bf6fa875bea06552cbd0d))
     - Make attributes and ignore configuration possible, but… ([`8a75fd7`](https://github.com/Byron/gitoxide/commit/8a75fd745a194786f0da7c1fd660211446ea51f7))
     - make fmt ([`50ff7aa`](https://github.com/Byron/gitoxide/commit/50ff7aa7fa86e5e2a94fb15aab86470532ac3f51))
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - Group similarly named sections together more by not separating them with newline ([`4c69541`](https://github.com/Byron/gitoxide/commit/4c69541cd7192ebd5bdd696a833992d5a52cd9b6))
+    - Make lossy-configuration configurable ([`b0e4da6`](https://github.com/Byron/gitoxide/commit/b0e4da621114d188a73b9f40757f59564da3c079))
+    - update README with `gix config` information ([`c19d9fd`](https://github.com/Byron/gitoxide/commit/c19d9fdc569528972f7f6255760ae86ba99848cc))
+    - remove local-time-support feature toggle. ([`89a41bf`](https://github.com/Byron/gitoxide/commit/89a41bf2b37db29b9983b4e5492cfd67ed490b23))
+    - `gix config` with section and sub-section filtering. ([`eda39ec`](https://github.com/Byron/gitoxide/commit/eda39ec7d736d49af1ad9e2ad775e4aa12b264b7))
+    - `gix config` lists all entries of all configuration files git considers. ([`d99453e`](https://github.com/Byron/gitoxide/commit/d99453ebeb970ed493be236def299d1e82b01f83))
+    - Associate `file::Metadata` with each `File`. ([`6f4eea9`](https://github.com/Byron/gitoxide/commit/6f4eea936d64fb9827277c160f989168e7b1dba2))
+    - Use `git-config` to write config file on initialization, including `logallrefupdates` and `precomposeunicode`. ([`7f67b23`](https://github.com/Byron/gitoxide/commit/7f67b23b9462b805591b1fe5a8406f8d7404f372))
+    - adjust to changes in `git-config` ([`c52cb95`](https://github.com/Byron/gitoxide/commit/c52cb958f85b533e791ec6b38166a9d819f12dd4))
+ * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - Handle 'kind' changes which completes 'explain' ([`45022a0`](https://github.com/Byron/gitoxide/commit/45022a0efe6e71404868a7ba816c6972050098b9))
+    - Support for explaining all navitation ([`ace9c89`](https://github.com/Byron/gitoxide/commit/ace9c8953bebc4a808c639e365010ed53c031622))
+    - start navigation implementation ([`ea1c009`](https://github.com/Byron/gitoxide/commit/ea1c009e1b064deccf242fc60876a8535f4814b5))
+    - Implement `Revision` anchors ([`a1f0e3d`](https://github.com/Byron/gitoxide/commit/a1f0e3d463397be201f4df40184ce38b830f3bde))
+    - basic infrastructure for delegate implementation ([`d3c0bc6`](https://github.com/Byron/gitoxide/commit/d3c0bc6e8d7764728f4e10500bb895152ccd0b0b))
+    - Hookup explain command ([`1049b00`](https://github.com/Byron/gitoxide/commit/1049b00eaa261a67f060eaca4eb50dcda831eafd))
  * **Uncategorized**
+    - make fmt ([`0700b09`](https://github.com/Byron/gitoxide/commit/0700b09d6828849fa2470df89af1f75a67bfb27d))
+    - fix build after changes to `git-url` and `git-config` ([`1f02420`](https://github.com/Byron/gitoxide/commit/1f0242034071ce317743df75cc685e7428b604b0))
+    - Merge branch 'main' into cont_include_if ([`daa71c3`](https://github.com/Byron/gitoxide/commit/daa71c3b753c6d76a3d652c29237906b3e28728f))
+    - Merge branch 'main' into cont_include_if ([`0e9df36`](https://github.com/Byron/gitoxide/commit/0e9df364c4cddf006b1de18b8d167319b7cc1186))
+    - Merge branch 'main' into cont_include_if ([`41ea8ba`](https://github.com/Byron/gitoxide/commit/41ea8ba78e74f5c988148367386a1f4f304cb951))
+    - Release git-path v0.3.0, safety bump 14 crates ([`400c9be`](https://github.com/Byron/gitoxide/commit/400c9bec49e4ec5351dc9357b246e7677a63ea35))
+    - Release git-date v0.0.1, git-hash v0.9.5, git-features v0.21.1, git-actor v0.10.1, git-path v0.2.0, git-attributes v0.2.0, git-ref v0.14.0, git-sec v0.2.0, git-config v0.5.0, git-credentials v0.2.0, git-discover v0.2.0, git-pack v0.20.0, git-odb v0.30.0, git-url v0.6.0, git-transport v0.18.0, git-protocol v0.17.0, git-revision v0.2.1, git-worktree v0.3.0, git-repository v0.19.0, safety bump 13 crates ([`a417177`](https://github.com/Byron/gitoxide/commit/a41717712578f590f04a33d27adaa63171f25267))
+    - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
+    - Merge branch 'main' into svetli-n-cont_include_if ([`315c87e`](https://github.com/Byron/gitoxide/commit/315c87e18c6cac0fafa7b4e59fdd3c076a58a45a))
+    - Refact. ([`a342e53`](https://github.com/Byron/gitoxide/commit/a342e53dac58cea1787a94eaa1a9d24fb1389df2))
     - `ein tool organize` now ignores worktrees. ([`5667a7c`](https://github.com/Byron/gitoxide/commit/5667a7c1bafcfdff1a278b3ad0e1198cd0cc4653))
     - Revert "ignore worktrees in 'organize', but…" ([`f59471f`](https://github.com/Byron/gitoxide/commit/f59471f0cf883176594ab4635248b4029bcb6caf))
     - ignore worktrees in 'organize', but… ([`e501c9e`](https://github.com/Byron/gitoxide/commit/e501c9e6348e1595fee4a5e0bd712fc2433b10df))

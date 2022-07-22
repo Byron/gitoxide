@@ -5,6 +5,150 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-1b765ec6ae70d1f4cc5a885b3c68d6f3335ba827/> respect `safe.directory`.
+   In practice, this code will rarely be hit as it would require very
+   strict settings that forbid any operation within a non-owned git
+   directory.
+ - <csr-id-840d9a3018d11146bb8e80fc92693c65eb534d91/> permissions for configuration.
+   It provides fine-grained control over what sources to load.
+ - <csr-id-657080829867d9dcb0c9b9cb6c1c8126c4df3783/> `git-config` is now accessible in `git-repository::config`.
+ - <csr-id-d99453ebeb970ed493be236def299d1e82b01f83/> `gix config` lists all entries of all configuration files git considers.
+   Filters allow to narrow down the output.
+ - <csr-id-ebedd03e119aa5d46da07e577bfccad621eaecb5/> repository now initializes global configuration files and resolves includes
+ - <csr-id-de8572ff2ced9422832e1ba433955c33f0994675/> resolve includes in local repository configuration
+ - <csr-id-d5a48b82230b047434610550aacd2dc741b4b5f0/> `config::Snapshot::trusted_path()` to obtain trustworthy paths.
+   We also apply trust-based config query during initialization to assure
+   we don't use paths which aren't owned by the current user.
+ - <csr-id-5f9bfa89ceb61f484be80575b0379bbf9d7a36b3/> `Repository::config_snapshot()` to access configuration values.
+ - <csr-id-7f67b23b9462b805591b1fe5a8406f8d7404f372/> Use `git-config` to write config file on initialization, including `logallrefupdates` and `precomposeunicode`.
+ - <csr-id-e263e13d312e41aa1481d104fa79ede509fbe1c5/> respect `core.logallrefupdates` configuration setting.
+
+### Changed (BREAKING)
+
+ - <csr-id-68f4bc2570d455c762da7e3d675b9b507cec69bb/> Make `SignatureRef<'_>` mandatory for editing reference changelogs.
+   If defaults are desired, these can be set by the caller.
+ - <csr-id-f932cea68ece997f711add3368db53aeb8cdf064/> `Repository::committer()` now returns an `Option`, see `::committer_or_default()` for a method that doesn't.
+ - <csr-id-89a41bf2b37db29b9983b4e5492cfd67ed490b23/> remove local-time-support feature toggle.
+   We treat local time as default feature without a lot of fuzz, and
+   will eventually document that definitive support needs a compile
+   time switch in the compiler (`--cfg unsound_local_offset` or something).
+   
+   One day it will perish. Failure is possible anyway and we will write
+   code to deal with it while minimizing the amount of system time
+   fetches when asking for the current local time.
+ - <csr-id-6f4eea936d64fb9827277c160f989168e7b1dba2/> Associate `file::Metadata` with each `File`.
+   This is the first step towards knowing more about the source of each
+   value to filter them based on some properties.
+   
+   This breaks various methods handling the instantiation of configuration
+   files as `file::Metadata` typically has to be provided by the caller
+   now or be associated with each path to read configuration from.
+
+### New Features (BREAKING)
+
+ - <csr-id-d003c0f139d61e3bd998a0283a9c7af25a60db02/> Support for `lossy` load mode.
+   There is a lot of breaking changes as `file::from_paths::Options` now
+   became `file::init::Options`, and the same goes for the error type.
+ - <csr-id-311d4b447daf8d4364670382a20901468748d34d/> change mostily internal uses of [u8] to BString/BStr
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 69 commits contributed to the release over the course of 33 calendar days.
+ - 39 days passed between releases.
+ - 16 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - Make lossy-configuration configurable ([`b0e4da6`](https://github.com/Byron/gitoxide/commit/b0e4da621114d188a73b9f40757f59564da3c079))
+    - tests for author/committer/user ([`6d2e53c`](https://github.com/Byron/gitoxide/commit/6d2e53c32145770e8314f0879d6d769090667f90))
+    - refactor ([`4dc6594`](https://github.com/Byron/gitoxide/commit/4dc6594686478d9d6cd09e2ba02048624c3577e7))
+    - default user signature now with 'now' time, like advertised. ([`ad40202`](https://github.com/Byron/gitoxide/commit/ad4020224114127612eaf5d1e732baf81818812d))
+    - Make `SignatureRef<'_>` mandatory for editing reference changelogs. ([`68f4bc2`](https://github.com/Byron/gitoxide/commit/68f4bc2570d455c762da7e3d675b9b507cec69bb))
+    - `Repository::committer()` now returns an `Option`, see `::committer_or_default()` for a method that doesn't. ([`f932cea`](https://github.com/Byron/gitoxide/commit/f932cea68ece997f711add3368db53aeb8cdf064))
+    - first sketch of using configuration and environment variables for author/committer ([`330d0a1`](https://github.com/Byron/gitoxide/commit/330d0a19d54aabac868b76ef6281fffdbdcde53c))
+    - remove local-time-support feature toggle. ([`89a41bf`](https://github.com/Byron/gitoxide/commit/89a41bf2b37db29b9983b4e5492cfd67ed490b23))
+    - a first sketch on how identity management could look like. ([`780f14f`](https://github.com/Byron/gitoxide/commit/780f14f5c270802e51cf039639c2fbdb5ac5a85e))
+    - refactor ([`4f61312`](https://github.com/Byron/gitoxide/commit/4f613120f9f761b86fc7eb16227d08fc5b9828d8))
+    - respect `safe.directory`. ([`1b765ec`](https://github.com/Byron/gitoxide/commit/1b765ec6ae70d1f4cc5a885b3c68d6f3335ba827))
+    - permissions for configuration. ([`840d9a3`](https://github.com/Byron/gitoxide/commit/840d9a3018d11146bb8e80fc92693c65eb534d91))
+    - `git-config` is now accessible in `git-repository::config`. ([`6570808`](https://github.com/Byron/gitoxide/commit/657080829867d9dcb0c9b9cb6c1c8126c4df3783))
+    - `gix config` lists all entries of all configuration files git considers. ([`d99453e`](https://github.com/Byron/gitoxide/commit/d99453ebeb970ed493be236def299d1e82b01f83))
+    - adapt to changes in `git-config` ([`b52b540`](https://github.com/Byron/gitoxide/commit/b52b5407638adef2216aeb4215a7c0437d6ee2d5))
+    - adapt to changes in `git-config` ([`3c57344`](https://github.com/Byron/gitoxide/commit/3c57344325ad20ae891824cd8791d2d17f4148e5))
+    - adjust to changes in `git-config` for greater efficiency ([`e9afede`](https://github.com/Byron/gitoxide/commit/e9afedeebafb70d81a8fa2e6dc320b387e6ee926))
+    - adapt to changes in git-config ([`14ba883`](https://github.com/Byron/gitoxide/commit/14ba8834b8738817d2bfb0ca66d1fb86fc8f3075))
+    - refactor ([`95ed219`](https://github.com/Byron/gitoxide/commit/95ed219c5f414b6fa96d80eacf297f24d823a4fe))
+    - repository now initializes global configuration files and resolves includes ([`ebedd03`](https://github.com/Byron/gitoxide/commit/ebedd03e119aa5d46da07e577bfccad621eaecb5))
+    - adapt to changes in git-config ([`627a0e1`](https://github.com/Byron/gitoxide/commit/627a0e1e12e15a060a70d880ffdfb05f1f7db36c))
+    - only a select few early config attributes must be repo-local ([`be0971c`](https://github.com/Byron/gitoxide/commit/be0971c5191f7866063ebcc0407331e683cf7d68))
+    - resolve includes in local repository configuration ([`de8572f`](https://github.com/Byron/gitoxide/commit/de8572ff2ced9422832e1ba433955c33f0994675))
+    - Adjust to changes in `git-config` ([`30cbe29`](https://github.com/Byron/gitoxide/commit/30cbe299860d84b5aeffced54839529dc068a8c7))
+    - solve cycle between config and ref-store ([`1679d56`](https://github.com/Byron/gitoxide/commit/1679d5684cec852b39a0d51d5001fbcecafc6748))
+    - adapt to changes in `git-config` ([`7f41f1e`](https://github.com/Byron/gitoxide/commit/7f41f1e267c9cbf87061821dd2f0edb6b0984226))
+    - prepare for resolving a complete config… ([`9be1dd6`](https://github.com/Byron/gitoxide/commit/9be1dd6f7cdb9aea7c85df896e370b3c40f5e4ec))
+    - Allow to configure a different filter for configuration section. ([`e512ab0`](https://github.com/Byron/gitoxide/commit/e512ab09477629957e469719f05e7de65955f3db))
+    - adjust to changes in `git-config` ([`ca89d0d`](https://github.com/Byron/gitoxide/commit/ca89d0d4785ec4d66a0a4316fbc74be63dcc0f48))
+    - refactor ([`5723730`](https://github.com/Byron/gitoxide/commit/57237303d9ae8a746c64d05ecedf3d43a0d041f6))
+    - load configuration with trust information, needs cleanup ([`d8e41e2`](https://github.com/Byron/gitoxide/commit/d8e41e20de741c3d4701d862033cf50582a0d015))
+    - Add remaining config access, and an escape hatch. ([`81715ff`](https://github.com/Byron/gitoxide/commit/81715ffca33e40cb6e37fff25baa68fca70c4844))
+    - `config::Snapshot::trusted_path()` to obtain trustworthy paths. ([`d5a48b8`](https://github.com/Byron/gitoxide/commit/d5a48b82230b047434610550aacd2dc741b4b5f0))
+    - `Debug` for `config::Snapshot`. ([`2c21956`](https://github.com/Byron/gitoxide/commit/2c2195640818319795a93e73bed79174fa358f55))
+    - `Repository::config_snapshot()` to access configuration values. ([`5f9bfa8`](https://github.com/Byron/gitoxide/commit/5f9bfa89ceb61f484be80575b0379bbf9d7a36b3))
+    - adapt to changes in `git-config` ([`c9423db`](https://github.com/Byron/gitoxide/commit/c9423db5381064296d22f48b532f29d3e8162ce9))
+    - Support for `lossy` load mode. ([`d003c0f`](https://github.com/Byron/gitoxide/commit/d003c0f139d61e3bd998a0283a9c7af25a60db02))
+    - Associate `file::Metadata` with each `File`. ([`6f4eea9`](https://github.com/Byron/gitoxide/commit/6f4eea936d64fb9827277c160f989168e7b1dba2))
+    - adjust to changes in `git-config` ([`81e63cc`](https://github.com/Byron/gitoxide/commit/81e63cc3590301ca32c1172b358ffb45a13b6a8f))
+    - Use `git-config` to write config file on initialization, including `logallrefupdates` and `precomposeunicode`. ([`7f67b23`](https://github.com/Byron/gitoxide/commit/7f67b23b9462b805591b1fe5a8406f8d7404f372))
+    - respect `core.logallrefupdates` configuration setting. ([`e263e13`](https://github.com/Byron/gitoxide/commit/e263e13d312e41aa1481d104fa79ede509fbe1c5))
+    - adapt to breaking changes in `git-config` ([`a02d575`](https://github.com/Byron/gitoxide/commit/a02d5759c14eb1d42fe24e61afc32a4cd463d1b7))
+    - adapt to changes in `git-config` ([`858dc8b`](https://github.com/Byron/gitoxide/commit/858dc8b1b721ce5a45a76d9a97935cb0daf61e1a))
+    - adjustments due to breaking changes in `git-config` ([`924f148`](https://github.com/Byron/gitoxide/commit/924f14879bd14ca1ff13fdd6ccafe43d6de01b68))
+    - adjustments for breaking changes in `git-config` ([`d3841ee`](https://github.com/Byron/gitoxide/commit/d3841ee752e426bf58130cde1e4e40215ccb8f33))
+    - adjust to changes in `git-config` ([`c52cb95`](https://github.com/Byron/gitoxide/commit/c52cb958f85b533e791ec6b38166a9d819f12dd4))
+    - adjustments due to breaking changes in `git-config` ([`07bf647`](https://github.com/Byron/gitoxide/commit/07bf647c788afbe5a595ed3091744459e3623f13))
+    - adapt to changes in `git-config` ([`363a826`](https://github.com/Byron/gitoxide/commit/363a826144ad59518b5c1a3dbbc82d04e4fc062d))
+    - adjust to changes in `git-config` ([`920d56e`](https://github.com/Byron/gitoxide/commit/920d56e4f5141eeb536956cdc5fac042ddee3525))
+    - adjustments required due to changed in `git-config` ([`41bfd3b`](https://github.com/Byron/gitoxide/commit/41bfd3b4122e37370d268608b60cb00a671a8879))
+    - adjust to breaking changes in `git-config` ([`5b66202`](https://github.com/Byron/gitoxide/commit/5b66202d96bf664ed84755afc3ec49c301ecd62c))
+    - adjustments due to breaking changes in `git_path` ([`4420ae9`](https://github.com/Byron/gitoxide/commit/4420ae932d5b20a9662a6d36353a27111b5cd672))
+ * **Uncategorized**
+    - thanks clippy ([`fddc720`](https://github.com/Byron/gitoxide/commit/fddc7206476423a6964d61acd060305572ecd02b))
+    - thanks clippy ([`0346aaa`](https://github.com/Byron/gitoxide/commit/0346aaaeccfe18a443410652cada7b14eb34d8b9))
+    - thanks clippy ([`b630543`](https://github.com/Byron/gitoxide/commit/b630543669af5289508ce066bd026e2b9a9d5044))
+    - thanks clippy ([`d9eb34c`](https://github.com/Byron/gitoxide/commit/d9eb34cad7a69b56f10eec5b88b86ebd6a9a74af))
+    - avoid extra copies of paths using `PathCursor` tool during repo init ([`5771721`](https://github.com/Byron/gitoxide/commit/5771721ff5f86dd808d9961126c9c4a61867507c))
+    - make fmt ([`0700b09`](https://github.com/Byron/gitoxide/commit/0700b09d6828849fa2470df89af1f75a67bfb27d))
+    - change mostily internal uses of [u8] to BString/BStr ([`311d4b4`](https://github.com/Byron/gitoxide/commit/311d4b447daf8d4364670382a20901468748d34d))
+    - Merge branch 'main' into cont_include_if ([`daa71c3`](https://github.com/Byron/gitoxide/commit/daa71c3b753c6d76a3d652c29237906b3e28728f))
+    - Merge branch 'normalize-values' ([`4e8cc7a`](https://github.com/Byron/gitoxide/commit/4e8cc7a5b447656c744cd84e6521e620d0479acb))
+    - thanks clippy ([`e1003d5`](https://github.com/Byron/gitoxide/commit/e1003d5fdee5d4439c0cf0286c67dec9b5e34f53))
+    - Merge branch 'main' into cont_include_if ([`0e9df36`](https://github.com/Byron/gitoxide/commit/0e9df364c4cddf006b1de18b8d167319b7cc1186))
+    - Use git_path::realpath in all places that allow it right now ([`229dc91`](https://github.com/Byron/gitoxide/commit/229dc917fc7d9241b85e5818260a6fbdd3a5daaa))
+    - fix build warnings ([`84109f5`](https://github.com/Byron/gitoxide/commit/84109f54877d045f8ccc7a380c012802708c2f1e))
+    - Make a note to be sure we use the home-dir correctly in git-repository; avoid `dirs` crate ([`0e8cf19`](https://github.com/Byron/gitoxide/commit/0e8cf19d7f742f9400afa4863d302ba18a452adc))
+    - adjust to changes in git-config ([`7a1678d`](https://github.com/Byron/gitoxide/commit/7a1678d8da0c361e0a0cc4380a04ebfb3ce5035d))
+    - Merge branch 'main' into cont_include_if ([`41ea8ba`](https://github.com/Byron/gitoxide/commit/41ea8ba78e74f5c988148367386a1f4f304cb951))
+    - Release git-path v0.3.0, safety bump 14 crates ([`400c9be`](https://github.com/Byron/gitoxide/commit/400c9bec49e4ec5351dc9357b246e7677a63ea35))
+</details>
+
 ## 0.19.0 (2022-06-13)
 
 ### New Features (BREAKING)
@@ -16,7 +160,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 20 calendar days.
+ - 13 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -28,14 +172,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-worktree v0.3.0, git-repository v0.19.0 ([`0d8e856`](https://github.com/Byron/gitoxide/commit/0d8e8566dc5c6955487d67e235f86fbc75a3a88a))
     - Release git-date v0.0.1, git-hash v0.9.5, git-features v0.21.1, git-actor v0.10.1, git-path v0.2.0, git-attributes v0.2.0, git-ref v0.14.0, git-sec v0.2.0, git-config v0.5.0, git-credentials v0.2.0, git-discover v0.2.0, git-pack v0.20.0, git-odb v0.30.0, git-url v0.6.0, git-transport v0.18.0, git-protocol v0.17.0, git-revision v0.2.1, git-worktree v0.3.0, git-repository v0.19.0, safety bump 13 crates ([`a417177`](https://github.com/Byron/gitoxide/commit/a41717712578f590f04a33d27adaa63171f25267))
     - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
     - make fmt ([`c665aef`](https://github.com/Byron/gitoxide/commit/c665aef4270c5ee54da89ee015cc0affd6337608))
+    - Merge branch 'main' into svetli-n-cont_include_if ([`315c87e`](https://github.com/Byron/gitoxide/commit/315c87e18c6cac0fafa7b4e59fdd3c076a58a45a))
     - fix docs ([`daef221`](https://github.com/Byron/gitoxide/commit/daef2215cc6c4fddded5229951e8ac71c395468d))
     - refactor ([`b27a8c2`](https://github.com/Byron/gitoxide/commit/b27a8c243cdc14730478c2a94cafdc8ccf5c60d3))
     - refactor ([`06e96a4`](https://github.com/Byron/gitoxide/commit/06e96a435d820a1ef1e567bf93e7b9ca5fa74829))
     - Merge branch 'main' into davidkna-envopen ([`bc0abc6`](https://github.com/Byron/gitoxide/commit/bc0abc643d3329f885f250b6880560dec861150f))
     - Make `realpath()` easier to use by introducing `realpath_opt()`. ([`266d437`](https://github.com/Byron/gitoxide/commit/266d4379e9132fd7dd21e6c8fccb36e125069d6e))
+    - Refact. ([`a342e53`](https://github.com/Byron/gitoxide/commit/a342e53dac58cea1787a94eaa1a9d24fb1389df2))
     - Add discovery opt env-overrides & env discovery helpers ([`e521d39`](https://github.com/Byron/gitoxide/commit/e521d39e1b0f4849280bae1527bf28977eec5093))
     - Merge branch 'davidkna-admin-sec' ([`3d0e2c2`](https://github.com/Byron/gitoxide/commit/3d0e2c2d4ebdbe3dff01846aac3375128353a2e1))
 </details>
