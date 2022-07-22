@@ -189,6 +189,7 @@ pub mod revision {
 ///
 pub mod free {
     #[derive(Debug, clap::Subcommand)]
+    #[clap(visible_alias = "no-repo")]
     pub enum Subcommands {
         /// Subcommands for interacting with git remote server.
         #[clap(subcommand)]
