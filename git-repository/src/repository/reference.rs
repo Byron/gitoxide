@@ -36,11 +36,11 @@ impl crate::Repository {
                 deref: false,
             },
             DEFAULT_LOCK_MODE,
-            None,
+            self.committer_or_default(),
         )?;
         assert_eq!(edits.len(), 1, "reference splits should ever happen");
         let edit = edits.pop().expect("exactly one item");
-        Ok(crate::Reference {
+        Ok(Reference {
             inner: git_ref::Reference {
                 name: edit.name,
                 target: id.into(),
@@ -110,7 +110,7 @@ impl crate::Repository {
                 deref: false,
             },
             DEFAULT_LOCK_MODE,
-            None,
+            self.committer_or_default(),
         )?;
         assert_eq!(
             edits.len(),
@@ -134,7 +134,7 @@ impl crate::Repository {
         &self,
         edit: RefEdit,
         lock_mode: lock::acquire::Fail,
-        log_committer: Option<&actor::Signature>,
+        log_committer: actor::SignatureRef<'_>,
     ) -> Result<Vec<RefEdit>, reference::edit::Error> {
         self.edit_references(Some(edit), lock_mode, log_committer)
     }
@@ -148,20 +148,12 @@ impl crate::Repository {
         &self,
         edits: impl IntoIterator<Item = RefEdit>,
         lock_mode: lock::acquire::Fail,
-        log_committer: Option<&actor::Signature>,
+        log_committer: actor::SignatureRef<'_>,
     ) -> Result<Vec<RefEdit>, reference::edit::Error> {
-        let committer_storage;
-        let committer = match log_committer {
-            Some(c) => c,
-            None => {
-                committer_storage = self.committer();
-                &committer_storage
-            }
-        };
         self.refs
             .transaction()
             .prepare(edits, lock_mode)?
-            .commit(committer.to_ref())
+            .commit(log_committer)
             .map_err(Into::into)
     }
 

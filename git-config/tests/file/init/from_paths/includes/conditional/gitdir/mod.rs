@@ -1,5 +1,6 @@
 mod util;
 
+use git_testtools::Env;
 use serial_test::serial;
 use util::{assert_section_value, Condition, GitEnv};
 
@@ -90,7 +91,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
     let env = GitEnv::repo_name("worktree")?;
 
     {
-        let _environment = crate::file::init::from_env::Env::new()
+        let _environment = Env::new()
             .set("GIT_CONFIG_COUNT", "1")
             .set(
                 "GIT_CONFIG_KEY_0",
@@ -103,7 +104,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
             matches!(
                 res,
                 Err(git_config::file::init::from_env::Error::Includes(
-                    git_config::file::init::includes::Error::MissingConfigPath
+                    git_config::file::includes::Error::MissingConfigPath
                 ))
             ),
             "this is a failure of resolving the include path, after trying to include it"
@@ -112,7 +113,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
 
     let absolute_path = escape_backslashes(env.home_dir().join("include.config"));
     {
-        let _environment = crate::file::init::from_env::Env::new()
+        let _environment = Env::new()
             .set("GIT_CONFIG_COUNT", "1")
             .set("GIT_CONFIG_KEY_0", "includeIf.gitdir:./worktree/.path")
             .set("GIT_CONFIG_VALUE_0", &absolute_path);
@@ -122,7 +123,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
             matches!(
                 res,
                 Err(git_config::file::init::from_env::Error::Includes(
-                    git_config::file::init::includes::Error::MissingConfigPath
+                    git_config::file::includes::Error::MissingConfigPath
                 ))
             ),
             "here the pattern path tries to be resolved and fails as target config isn't set"
@@ -130,7 +131,7 @@ fn dot_slash_from_environment_causes_error() -> crate::Result {
     }
 
     {
-        let _environment = crate::file::init::from_env::Env::new()
+        let _environment = Env::new()
             .set("GIT_CONFIG_COUNT", "1")
             .set(
                 "GIT_CONFIG_KEY_0",

@@ -34,6 +34,12 @@ impl Metadata {
         self.trust = trust;
         self
     }
+
+    /// Set the metadata to be located at the given `path`.
+    pub fn at(mut self, path: impl Into<PathBuf>) -> Self {
+        self.path = Some(path.into());
+        self
+    }
 }
 
 impl Default for Metadata {

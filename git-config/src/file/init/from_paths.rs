@@ -1,9 +1,9 @@
 use crate::file::init::Options;
 use crate::file::{init, Metadata};
-use crate::{file, file::init::includes, parse, File};
-use git_features::threading::OwnShared;
+use crate::File;
+use std::collections::BTreeSet;
 
-/// The error returned by [`File::from_paths_metadata()`] and [`File::from_env_paths()`].
+/// The error returned by [`File::from_paths_metadata()`] and [`File::from_path_no_includes()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -11,58 +11,73 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error(transparent)]
     Init(#[from] init::Error),
-    #[error("Not a single path was provided to load the configuration from")]
-    NoInput,
 }
 
 /// Instantiation from one or more paths
 impl File<'static> {
-    /// Load the file at `path` from `source` without following include directives. Note that the path will be checked for
-    /// ownership to derive trust.
+    /// Load the single file at `path` with `source` without following include directives.
+    ///
+    /// Note that the path will be checked for ownership to derive trust.
     pub fn from_path_no_includes(path: impl Into<std::path::PathBuf>, source: crate::Source) -> Result<Self, Error> {
         let path = path.into();
         let trust = git_sec::Trust::from_path_ownership(&path)?;
+
         let mut buf = Vec::new();
-        File::from_path_with_buf(path, &mut buf, Metadata::from(source).with(trust), Default::default())
-    }
+        std::io::copy(&mut std::fs::File::open(&path)?, &mut buf)?;
 
-    /// Open a single configuration file by reading all data at `path` into `buf` and
-    /// copying all contents from there, without resolving includes. Note that the `path` in `meta`
-    /// will be set to the one provided here.
-    pub fn from_path_with_buf(
-        path: impl Into<std::path::PathBuf>,
-        buf: &mut Vec<u8>,
-        mut meta: file::Metadata,
-        options: Options<'_>,
-    ) -> Result<Self, Error> {
-        let path = path.into();
-        buf.clear();
-        std::io::copy(&mut std::fs::File::open(&path)?, buf)?;
-
-        meta.path = path.into();
-        let meta = OwnShared::new(meta);
-        let mut config = Self::from_parse_events_no_includes(
-            parse::Events::from_bytes_owned(buf, options.to_event_filter()).map_err(init::Error::from)?,
-            OwnShared::clone(&meta),
-        );
-        let mut buf = Vec::new();
-        includes::resolve(&mut config, meta, &mut buf, options).map_err(init::Error::from)?;
-
-        Ok(config)
+        Ok(File::from_bytes_owned(
+            &mut buf,
+            Metadata::from(source).at(path).with(trust),
+            Default::default(),
+        )?)
     }
 
     /// Constructs a `git-config` file from the provided metadata, which must include a path to read from or be ignored.
+    /// Returns `Ok(None)` if there was not a single input path provided, which is a possibility due to
+    /// [`Metadata::path`] being an `Option`.
+    /// If an input path doesn't exist, the entire operation will abort. See [`from_paths_metadata_buf()`][Self::from_paths_metadata_buf()]
+    /// for a more powerful version of this method.
     pub fn from_paths_metadata(
-        path_meta: impl IntoIterator<Item = impl Into<file::Metadata>>,
+        path_meta: impl IntoIterator<Item = impl Into<Metadata>>,
         options: Options<'_>,
-    ) -> Result<Self, Error> {
-        let mut target = None;
+    ) -> Result<Option<Self>, Error> {
         let mut buf = Vec::with_capacity(512);
-        for (path, meta) in path_meta.into_iter().filter_map(|meta| {
+        let err_on_nonexisting_paths = true;
+        Self::from_paths_metadata_buf(path_meta, &mut buf, err_on_nonexisting_paths, options)
+    }
+
+    /// Like [from_paths_metadata()][Self::from_paths_metadata()], but will use `buf` to temporarily store the config file
+    /// contents for parsing instead of allocating an own buffer.
+    ///
+    /// If `err_on_nonexisting_paths` is false, instead of aborting with error, we will continue to the next path instead.
+    pub fn from_paths_metadata_buf(
+        path_meta: impl IntoIterator<Item = impl Into<Metadata>>,
+        buf: &mut Vec<u8>,
+        err_on_non_existing_paths: bool,
+        options: Options<'_>,
+    ) -> Result<Option<Self>, Error> {
+        let mut target = None;
+        let mut seen = BTreeSet::default();
+        for (path, mut meta) in path_meta.into_iter().filter_map(|meta| {
             let mut meta = meta.into();
             meta.path.take().map(|p| (p, meta))
         }) {
-            let config = Self::from_path_with_buf(path, &mut buf, meta, options)?;
+            if !seen.insert(path.clone()) {
+                continue;
+            }
+
+            buf.clear();
+            std::io::copy(
+                &mut match std::fs::File::open(&path) {
+                    Ok(f) => f,
+                    Err(err) if !err_on_non_existing_paths && err.kind() == std::io::ErrorKind::NotFound => continue,
+                    Err(err) => return Err(err.into()),
+                },
+                buf,
+            )?;
+            meta.path = Some(path);
+
+            let config = Self::from_bytes_owned(buf, meta, options)?;
             match &mut target {
                 None => {
                     target = Some(config);
@@ -72,6 +87,6 @@ impl File<'static> {
                 }
             }
         }
-        target.ok_or(Error::NoInput)
+        Ok(target)
     }
 }

@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
 
+use crate::config::cache::interpolate_context;
+use crate::{config, permission, permissions};
 use crate::{Permissions, ThreadSafeRepository};
 
 /// A way to configure the usage of replacement objects, see `git replace`.
@@ -66,6 +68,7 @@ pub struct Options {
     pub(crate) replacement_objects: ReplacementObjects,
     pub(crate) permissions: Permissions,
     pub(crate) git_dir_trust: Option<git_sec::Trust>,
+    pub(crate) filter_config_section: Option<fn(&git_config::file::Metadata) -> bool>,
 }
 
 #[derive(Default, Clone)]
@@ -95,6 +98,33 @@ impl EnvironmentOverrides {
     }
 }
 
+/// Instantiation
+impl Options {
+    /// Options configured to prevent accessing anything else than the repository configuration file, prohibiting
+    /// accessing the environment or spreading beyond the git repository location.
+    pub fn isolated() -> Self {
+        Options::default().permissions(Permissions {
+            config: permissions::Config {
+                system: false,
+                git: false,
+                user: false,
+                env: false,
+                includes: false,
+            },
+            env: {
+                let deny = permission::env_var::Resource::resource(git_sec::Permission::Deny);
+                permissions::Environment {
+                    xdg_config_home: deny.clone(),
+                    home: deny.clone(),
+                    git_prefix: deny,
+                }
+            },
+            ..Permissions::default()
+        })
+    }
+}
+
+/// Builder methods
 impl Options {
     /// Set the amount of slots to use for the object database. It's a value that doesn't need changes on the client, typically,
     /// but should be controlled on the server.
@@ -130,6 +160,16 @@ impl Options {
         self
     }
 
+    /// Set the filter which determines if a configuration section can be used to read values from,
+    /// hence it returns true if it is eligible.
+    ///
+    /// The default filter selects sections whose trust level is [`full`][git_sec::Trust::Full] or
+    /// whose source is not [`repository-local`][git_config::source::Kind::Repository].
+    pub fn filter_config_section(mut self, filter: fn(&git_config::file::Metadata) -> bool) -> Self {
+        self.filter_config_section = Some(filter);
+        self
+    }
+
     /// Open a repository at `path` with the options set so far.
     pub fn open(self, path: impl Into<std::path::PathBuf>) -> Result<ThreadSafeRepository, Error> {
         ThreadSafeRepository::open_opts(path, self)
@@ -144,12 +184,14 @@ impl git_sec::trust::DefaultForLevel for Options {
                 replacement_objects: Default::default(),
                 permissions: Permissions::all(),
                 git_dir_trust: git_sec::Trust::Full.into(),
+                filter_config_section: Some(crate::config::section::is_trusted),
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
                 replacement_objects: ReplacementObjects::Disable, // don't be tricked into seeing manufactured objects
                 permissions: Default::default(),
                 git_dir_trust: git_sec::Trust::Reduced.into(),
+                filter_config_section: Some(crate::config::section::is_trusted),
             },
         }
     }
@@ -239,18 +281,17 @@ impl ThreadSafeRepository {
         let Options {
             git_dir_trust,
             object_store_slots,
+            filter_config_section,
             ref replacement_objects,
-            permissions: Permissions {
-                git_dir: ref git_dir_perm,
-                ref env,
-            },
+            permissions:
+                Permissions {
+                    git_dir: ref git_dir_perm,
+                    ref env,
+                    config,
+                },
         } = options;
         let git_dir_trust = git_dir_trust.expect("trust must be been determined by now");
 
-        if **git_dir_perm != git_sec::ReadWrite::all() {
-            // TODO: respect `save.directory`, which needs more support from git-config to do properly.
-            return Err(Error::UnsafeGitDir { path: git_dir });
-        }
         // TODO: assure we handle the worktree-dir properly as we can have config per worktree with an extension.
         //       This would be something read in later as have to first check for extensions. Also this means
         //       that each worktree, even if accessible through this instance, has to come in its own Repository instance
@@ -259,13 +300,36 @@ impl ThreadSafeRepository {
             .transpose()?
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
-        let config = crate::config::Cache::new(
-            git_dir_trust,
+
+        let repo_config = crate::config::cache::StageOne::new(common_dir_ref, git_dir_trust)?;
+        let mut refs = {
+            let reflog = repo_config.reflog.unwrap_or(git_ref::store::WriteReflog::Disable);
+            let object_hash = repo_config.object_hash;
+            match &common_dir {
+                Some(common_dir) => crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, object_hash),
+                None => crate::RefStore::at(&git_dir, reflog, object_hash),
+            }
+        };
+        let head = refs.find("HEAD").ok();
+        let git_install_dir = crate::path::install_dir().ok();
+        let home = std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .and_then(|home| env.home.check(home).ok().flatten());
+        let config = config::Cache::from_stage_one(
+            repo_config,
             common_dir_ref,
-            env.xdg_config_home.clone(),
-            env.home.clone(),
-            crate::path::install_dir().ok().as_deref(),
+            head.as_ref().and_then(|head| head.target.try_name()),
+            filter_config_section.unwrap_or(crate::config::section::is_trusted),
+            git_install_dir.as_deref(),
+            home.as_deref(),
+            env.clone(),
+            config,
         )?;
+
+        if **git_dir_perm != git_sec::ReadWrite::all() {
+            check_safe_directories(&git_dir, git_install_dir.as_deref(), home.as_deref(), &config)?;
+        }
+
         match worktree_dir {
             None if !config.is_bare => {
                 worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());
@@ -277,21 +341,13 @@ impl ThreadSafeRepository {
             None => {}
         }
 
-        let refs = {
-            let reflog = config.reflog.unwrap_or_else(|| {
-                if worktree_dir.is_none() {
-                    git_ref::store::WriteReflog::Disable
-                } else {
-                    git_ref::store::WriteReflog::Normal
-                }
-            });
-            match &common_dir {
-                Some(common_dir) => {
-                    crate::RefStore::for_linked_worktree(&git_dir, common_dir, reflog, config.object_hash)
-                }
-                None => crate::RefStore::at(&git_dir, reflog, config.object_hash),
+        refs.write_reflog = config.reflog.unwrap_or_else(|| {
+            if worktree_dir.is_none() {
+                git_ref::store::WriteReflog::Disable
+            } else {
+                git_ref::store::WriteReflog::Normal
             }
-        };
+        });
 
         let replacements = replacement_objects
             .clone()
@@ -333,6 +389,53 @@ impl ThreadSafeRepository {
     }
 }
 
+fn check_safe_directories(
+    git_dir: &std::path::Path,
+    git_install_dir: Option<&std::path::Path>,
+    home: Option<&std::path::Path>,
+    config: &config::Cache,
+) -> Result<(), Error> {
+    let mut is_safe = false;
+    let git_dir = match git_path::realpath(git_dir) {
+        Ok(p) => p,
+        Err(_) => git_dir.to_owned(),
+    };
+    for safe_dir in config
+        .resolved
+        .strings_filter("safe", None, "directory", &mut |meta| {
+            let kind = meta.source.kind();
+            kind == git_config::source::Kind::System || kind == git_config::source::Kind::Global
+        })
+        .unwrap_or_default()
+    {
+        if safe_dir.as_ref() == "*" {
+            is_safe = true;
+            continue;
+        }
+        if safe_dir.is_empty() {
+            is_safe = false;
+            continue;
+        }
+        if !is_safe {
+            let safe_dir = match git_config::Path::from(std::borrow::Cow::Borrowed(safe_dir.as_ref()))
+                .interpolate(interpolate_context(git_install_dir, home))
+            {
+                Ok(path) => path,
+                Err(_) => git_path::from_bstr(safe_dir),
+            };
+            if safe_dir == git_dir {
+                is_safe = true;
+                continue;
+            }
+        }
+    }
+    if is_safe {
+        Ok(())
+    } else {
+        Err(Error::UnsafeGitDir { path: git_dir })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -341,7 +444,7 @@ mod tests {
     fn size_of_options() {
         assert_eq!(
             std::mem::size_of::<Options>(),
-            56,
+            72,
             "size shouldn't change without us knowing"
         );
     }

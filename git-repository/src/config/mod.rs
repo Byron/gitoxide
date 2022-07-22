@@ -1,6 +1,8 @@
+use crate::repository::identity;
 use crate::{bstr::BString, permission, Repository};
+use git_features::threading::OnceCell;
 
-mod cache;
+pub(crate) mod cache;
 mod snapshot;
 
 /// A platform to access configuration values as read from disk.
@@ -12,14 +14,20 @@ pub struct Snapshot<'repo> {
 
 pub(crate) mod section {
     pub fn is_trusted(meta: &git_config::file::Metadata) -> bool {
-        meta.trust == git_sec::Trust::Full || !meta.source.is_in_repository()
+        meta.trust == git_sec::Trust::Full || meta.source.kind() != git_config::source::Kind::Repository
     }
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("Could not open repository conifguration file")]
-    Open(#[from] git_config::file::init::from_paths::Error),
+    #[error("Could not read configuration file")]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Init(#[from] git_config::file::init::Error),
+    #[error(transparent)]
+    ResolveIncludes(#[from] git_config::file::includes::Error),
+    #[error(transparent)]
+    FromEnv(#[from] git_config::file::init::from_env::Error),
     #[error("Cannot handle objects formatted as {:?}", .name)]
     UnsupportedObjectFormat { name: BString },
     #[error("The value for '{}' cannot be empty", .key)]
@@ -46,6 +54,8 @@ pub(crate) struct Cache {
     pub use_multi_pack_index: bool,
     /// The representation of `core.logallrefupdates`, or `None` if the variable wasn't set.
     pub reflog: Option<git_ref::store::WriteReflog>,
+    /// identities for later use, lazy initialization.
+    pub personas: OnceCell<identity::Personas>,
     /// If true, we are on a case-insensitive file system.
     #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub ignore_case: bool,
@@ -57,5 +67,7 @@ pub(crate) struct Cache {
     xdg_config_home_env: permission::env_var::Resource,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.
     home_env: permission::env_var::Resource,
+    /// How to use git-prefixed environment variables
+    git_prefix: permission::env_var::Resource,
     // TODO: make core.precomposeUnicode available as well.
 }

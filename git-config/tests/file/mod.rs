@@ -16,23 +16,12 @@ fn size_in_memory() {
 }
 
 mod open {
-    use git_config::file::init;
     use git_config::File;
     use git_testtools::fixture_path;
 
     #[test]
     fn parse_config_with_windows_line_endings_successfully() {
-        let mut buf = Vec::new();
-        File::from_path_with_buf(
-            &fixture_path("repo-config.crlf"),
-            &mut buf,
-            Default::default(),
-            init::Options {
-                lossy: true,
-                ..Default::default()
-            },
-        )
-        .unwrap();
+        File::from_path_no_includes(&fixture_path("repo-config.crlf"), git_config::Source::Local).unwrap();
     }
 }
 
@@ -40,4 +29,5 @@ mod access;
 mod impls;
 mod init;
 mod mutable;
+mod resolve_includes;
 mod write;

@@ -71,7 +71,11 @@ impl<'repo> Snapshot<'repo> {
             key.section_name,
             key.subsection_name,
             key.value_name,
-            &mut crate::config::section::is_trusted,
+            &mut self
+                .repo
+                .options
+                .filter_config_section
+                .unwrap_or(crate::config::section::is_trusted),
         )?;
 
         let install_dir = self.repo.install_dir().ok();
@@ -92,10 +96,6 @@ impl<'repo> Snapshot<'repo> {
 
 impl Debug for Snapshot<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if cfg!(debug_assertions) {
-            f.write_str(&self.repo.config.resolved.to_string())
-        } else {
-            Debug::fmt(&self.repo.config.resolved, f)
-        }
+        f.write_str(&self.repo.config.resolved.to_string())
     }
 }

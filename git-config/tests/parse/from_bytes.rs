@@ -3,6 +3,14 @@ use git_config::parse::Events;
 use super::*;
 
 #[test]
+fn fuzz() {
+    assert!(
+        Events::from_str("[]A=\\\\\r\\\n\n").is_err(),
+        "empty sections are not allowed, and it won't crash either"
+    );
+}
+
+#[test]
 #[rustfmt::skip]
 fn complex() {
     let config = r#"[user]

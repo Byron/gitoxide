@@ -1,38 +1,13 @@
-use std::{borrow::Cow, env, fs};
+use std::{borrow::Cow, fs};
 
+use git_config::file::includes;
 use git_config::file::init;
-use git_config::file::init::includes;
 use git_config::{file::init::from_env, File};
+use git_testtools::Env;
 use serial_test::serial;
 use tempfile::tempdir;
 
 use crate::file::init::from_paths::escape_backslashes;
-
-pub struct Env<'a> {
-    altered_vars: Vec<&'a str>,
-}
-
-impl<'a> Env<'a> {
-    pub(crate) fn new() -> Self {
-        Env {
-            altered_vars: Vec::new(),
-        }
-    }
-
-    pub(crate) fn set(mut self, var: &'a str, value: impl Into<String>) -> Self {
-        env::set_var(var, value.into());
-        self.altered_vars.push(var);
-        self
-    }
-}
-
-impl<'a> Drop for Env<'a> {
-    fn drop(&mut self) {
-        for var in &self.altered_vars {
-            env::remove_var(var);
-        }
-    }
-}
 
 #[test]
 #[serial]
@@ -115,7 +90,8 @@ fn error_on_relative_paths_in_include_paths() {
         includes: includes::Options {
             max_depth: 1,
             ..Default::default()
-        },
+        }
+        .strict(),
         ..Default::default()
     });
     assert!(matches!(

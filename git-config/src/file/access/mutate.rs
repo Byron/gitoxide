@@ -1,7 +1,7 @@
-use bstr::BStr;
 use git_features::threading::OwnShared;
 use std::borrow::Cow;
 
+use crate::file::write::ends_with_newline;
 use crate::file::{MetadataFilter, SectionId};
 use crate::parse::{Event, FrontMatterEvents};
 use crate::{
@@ -235,40 +235,42 @@ impl<'event> File<'event> {
     }
 
     /// Append another File to the end of ourselves, without loosing any information.
-    pub fn append(&mut self, mut other: Self) -> &mut Self {
-        let nl = self.detect_newline_style().to_owned();
+    pub fn append(&mut self, other: Self) -> &mut Self {
+        self.append_or_insert(other, None)
+    }
 
-        fn ends_with_newline<'a>(it: impl DoubleEndedIterator<Item = &'a Event<'a>>) -> bool {
-            it.last().map_or(true, |e| e.to_bstr_lossy().last() == Some(&b'\n'))
-        }
-        fn starts_with_newline<'a>(mut it: impl Iterator<Item = &'a Event<'a>>) -> bool {
-            it.next().map_or(true, |e| e.to_bstr_lossy().first() == Some(&b'\n'))
-        }
-        let newline_event = || Event::Newline(Cow::Owned(nl.clone()));
-
-        fn assure_ends_with_newline_if<'a, 'b>(
-            needs_nl: bool,
-            events: &'b mut FrontMatterEvents<'a>,
-            nl: &BStr,
-        ) -> &'b mut FrontMatterEvents<'a> {
-            if needs_nl && !ends_with_newline(events.iter()) {
-                events.push(Event::Newline(nl.to_owned().into()));
+    /// Append another File to the end of ourselves, without loosing any information.
+    pub(crate) fn append_or_insert(&mut self, mut other: Self, mut insert_after: Option<SectionId>) -> &mut Self {
+        let nl = self.detect_newline_style_smallvec();
+        fn extend_and_assure_newline<'a>(
+            lhs: &mut FrontMatterEvents<'a>,
+            rhs: FrontMatterEvents<'a>,
+            nl: &impl AsRef<[u8]>,
+        ) {
+            if !ends_with_newline(lhs.as_ref(), nl, true)
+                && !rhs.first().map_or(true, |e| e.to_bstr_lossy().starts_with(nl.as_ref()))
+            {
+                lhs.push(Event::Newline(Cow::Owned(nl.as_ref().into())))
             }
-            events
+            lhs.extend(rhs);
         }
-
         let our_last_section_before_append =
-            (self.section_id_counter != 0).then(|| SectionId(self.section_id_counter - 1));
-        let mut last_added_section_id = None;
+            insert_after.or_else(|| (self.section_id_counter != 0).then(|| SectionId(self.section_id_counter - 1)));
 
         for id in std::mem::take(&mut other.section_order) {
             let section = other.sections.remove(&id).expect("present");
-            self.push_section_internal(section);
 
-            let new_id = self.section_id_counter - 1;
-            last_added_section_id = Some(SectionId(new_id));
+            let new_id = match insert_after {
+                Some(id) => {
+                    let new_id = self.insert_section_after(section, id);
+                    insert_after = Some(new_id);
+                    new_id
+                }
+                None => self.push_section_internal(section),
+            };
+
             if let Some(post_matter) = other.frontmatter_post_section.remove(&id) {
-                self.frontmatter_post_section.insert(SectionId(new_id), post_matter);
+                self.frontmatter_post_section.insert(new_id, post_matter);
             }
         }
 
@@ -276,26 +278,13 @@ impl<'event> File<'event> {
             return self;
         }
 
-        let mut needs_nl = !starts_with_newline(other.frontmatter_events.iter());
-        if let Some(id) = last_added_section_id
-            .or(our_last_section_before_append)
-            .filter(|_| needs_nl)
-        {
-            if !ends_with_newline(self.sections[&id].body.0.iter()) {
-                other.frontmatter_events.insert(0, newline_event());
-                needs_nl = false;
-            }
-        }
-
         match our_last_section_before_append {
-            Some(last_id) => assure_ends_with_newline_if(
-                needs_nl,
+            Some(last_id) => extend_and_assure_newline(
                 self.frontmatter_post_section.entry(last_id).or_default(),
-                nl.as_ref(),
-            )
-            .extend(other.frontmatter_events),
-            None => assure_ends_with_newline_if(needs_nl, &mut self.frontmatter_events, nl.as_ref())
-                .extend(other.frontmatter_events),
+                other.frontmatter_events,
+                &nl,
+            ),
+            None => extend_and_assure_newline(&mut self.frontmatter_events, other.frontmatter_events, &nl),
         }
         self
     }

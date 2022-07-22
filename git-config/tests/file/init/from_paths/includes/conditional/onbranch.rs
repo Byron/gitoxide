@@ -4,8 +4,9 @@ use std::{
 };
 
 use bstr::{BString, ByteSlice};
-use git_config::file::init::includes::conditional;
-use git_config::file::init::{self, includes};
+use git_config::file::includes;
+use git_config::file::includes::conditional;
+use git_config::file::init::{self};
 use git_ref::{
     transaction::{Change, PreviousValue, RefEdit},
     FullName, Target,
@@ -251,7 +252,8 @@ value = branch-override-by-include
             git_config::Source::Local,
         )?),
         options,
-    )?;
+    )?
+    .expect("non-empty");
     assert_eq!(
         config.string("section", None, "value"),
         Some(cow_str(match expect {
@@ -282,7 +284,7 @@ value = branch-override-by-include
             }),
             git_repository::lock::acquire::Fail::Immediately,
         )?
-        .commit(repo.committer().to_ref())?;
+        .commit(repo.committer_or_default())?;
 
     let dir = assure_git_agrees(expect, dir)?;
     Ok(GitEnv { repo, dir })

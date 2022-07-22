@@ -163,6 +163,7 @@ mod config_name {
 }
 
 mod section {
+    use crate::parse::tests::util::newline_custom_event;
     use crate::parse::{
         error::ParseNode,
         section,
@@ -197,6 +198,73 @@ mod section {
                 ),
             )
         })
+    }
+
+    #[test]
+    fn empty_value_with_windows_newlines() {
+        let mut node = ParseNode::SectionHeader;
+        assert_eq!(
+            section(b"[a] k = \r\n", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event(""),
+                        newline_custom_event("\r\n")
+                    ]
+                    .into(),
+                },
+                1
+            )),
+        );
+    }
+
+    #[test]
+    fn simple_value_with_windows_newlines() {
+        let mut node = ParseNode::SectionHeader;
+        assert_eq!(
+            section(b"[a] k = v\r\n", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event("v"),
+                        newline_custom_event("\r\n")
+                    ]
+                    .into(),
+                },
+                1
+            )),
+        );
+        assert_eq!(
+            section(b"[a] k = \r\n", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event(""),
+                        newline_custom_event("\r\n")
+                    ]
+                    .into(),
+                },
+                1
+            )),
+        );
     }
 
     #[test]
@@ -347,6 +415,25 @@ mod section {
                 0
             ))
         );
+
+        assert_eq!(
+            section(b"[hello] c\nd", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("hello", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("c"),
+                        value_event(""),
+                        newline_event(),
+                        name_event("d"),
+                        value_event("")
+                    ]
+                    .into()
+                },
+                1
+            ))
+        );
     }
 
     #[test]
@@ -475,6 +562,7 @@ mod section {
 mod value_continuation {
     use bstr::ByteSlice;
 
+    use crate::parse::tests::util::newline_custom_event;
     use crate::parse::{
         section,
         tests::util::{into_events, newline_event, value_done_event, value_not_done_event},
@@ -510,6 +598,23 @@ mod value_continuation {
                 value_done_event("        world")
             ])
         );
+
+        let mut events = section::Events::default();
+        assert_eq!(value_impl(b"hello\\\r\n        world", &mut events).unwrap().0, b"");
+        assert_eq!(
+            events,
+            into_events(vec![
+                value_not_done_event("hello"),
+                newline_custom_event("\r\n"),
+                value_done_event("        world")
+            ])
+        );
+
+        let mut events = section::Events::default();
+        assert!(
+            value_impl(b"hello\\\r\r\n        world", &mut events).is_err(),
+            "\\r must be followed by \\n"
+        );
     }
 
     #[test]
@@ -543,6 +648,17 @@ mod value_continuation {
                 value_not_done_event("\""),
                 newline_event(),
                 value_done_event(";\"")
+            ])
+        );
+
+        let mut events = section::Events::default();
+        assert_eq!(value_impl(b"\"a\\\r\nb;\";c", &mut events).unwrap().0, b";c");
+        assert_eq!(
+            events,
+            into_events(vec![
+                value_not_done_event("\"a"),
+                newline_custom_event("\r\n"),
+                value_done_event("b;\"")
             ])
         );
     }
@@ -620,6 +736,17 @@ mod value_no_continuation {
         let mut events = section::Events::default();
         assert_eq!(value_impl(b"hello", &mut events).unwrap().0, b"");
         assert_eq!(events, into_events(vec![value_event("hello")]));
+    }
+
+    #[test]
+    fn windows_newline() {
+        let mut events = section::Events::default();
+        assert_eq!(value_impl(b"hi\r\nrest", &mut events).unwrap().0, b"\r\nrest");
+        assert_eq!(events, into_events(vec![value_event("hi")]));
+
+        events.clear();
+        assert_eq!(value_impl(b"hi\r\r\r\nrest", &mut events).unwrap().0, b"\r\r\r\nrest");
+        assert_eq!(events, into_events(vec![value_event("hi")]));
     }
 
     #[test]

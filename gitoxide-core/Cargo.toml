@@ -32,8 +32,6 @@ async-client = ["git-repository/async-network-client", "async-trait", "futures-i
 #! ### Other
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serde"]
-## Functions dealing with time may include the local timezone offset, not just UTC with the offset being zero.
-local-time-support = ["git-repository/local-time-support"]
 
 
 [dependencies]

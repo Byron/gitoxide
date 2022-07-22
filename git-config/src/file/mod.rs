@@ -17,6 +17,8 @@ pub mod init;
 
 mod access;
 mod impls;
+///
+pub mod includes;
 mod meta;
 mod utils;
 
@@ -103,7 +105,7 @@ pub(crate) struct SectionId(pub(crate) usize);
 /// of section ids with the matched section and name, and is used for precedence
 /// management.
 #[derive(PartialEq, Eq, Clone, Debug)]
-pub(crate) enum SectionBodyIds<'a> {
+pub(crate) enum SectionBodyIdsLut<'a> {
     /// The list of section ids to use for obtaining the section body.
     Terminal(Vec<SectionId>),
     /// A hashmap from sub-section names to section ids.
@@ -111,3 +113,4 @@ pub(crate) enum SectionBodyIds<'a> {
 }
 #[cfg(test)]
 mod tests;
+mod write;

@@ -1,53 +1,45 @@
 use std::{convert::TryFrom, path::PathBuf};
 
+use crate::repository;
 use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
-use crate::config::section::is_trusted;
-use crate::{bstr::ByteSlice, permission};
+use crate::bstr::ByteSlice;
+use crate::repository::identity;
 
-impl Cache {
-    pub fn new(
-        git_dir_trust: git_sec::Trust,
-        git_dir: &std::path::Path,
-        xdg_config_home_env: permission::env_var::Resource,
-        home_env: permission::env_var::Resource,
-        git_install_dir: Option<&std::path::Path>,
-    ) -> Result<Self, Error> {
-        let home = std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .and_then(|home| home_env.check(home).ok().flatten());
-        // TODO: don't forget to use the canonicalized home for initializing the stacked config.
-        //       like git here: https://github.com/git/git/blob/master/config.c#L208:L208
+/// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
+/// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
+#[allow(dead_code)]
+pub(crate) struct StageOne {
+    git_dir_config: git_config::File<'static>,
+    buf: Vec<u8>,
+
+    is_bare: bool,
+    pub object_hash: git_hash::Kind,
+    pub reflog: Option<git_ref::store::WriteReflog>,
+}
+
+/// Initialization
+impl StageOne {
+    pub fn new(git_dir: &std::path::Path, git_dir_trust: git_sec::Trust) -> Result<Self, Error> {
+        let mut buf = Vec::with_capacity(512);
         let config = {
-            let mut buf = Vec::with_capacity(512);
-            git_config::File::from_path_with_buf(
-                &git_dir.join("config"),
+            let config_path = git_dir.join("config");
+            std::io::copy(&mut std::fs::File::open(&config_path)?, &mut buf)?;
+
+            git_config::File::from_bytes_owned(
                 &mut buf,
-                git_config::file::Metadata::from(git_config::Source::Local).with(git_dir_trust),
+                git_config::file::Metadata::from(git_config::Source::Local)
+                    .at(config_path)
+                    .with(git_dir_trust),
                 git_config::file::init::Options {
-                    lossy: !cfg!(debug_assertions),
-                    includes: git_config::file::init::includes::Options::follow(
-                        interpolate_context(git_install_dir, home.as_deref()),
-                        git_config::file::init::includes::conditional::Context {
-                            git_dir: git_dir.into(),
-                            branch_name: None,
-                        },
-                    ),
+                    includes: git_config::file::includes::Options::no_follow(),
+                    ..base_options()
                 },
             )?
         };
 
         let is_bare = config_bool(&config, "core.bare", false)?;
-        let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
-        let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
-        let excludes_file = config
-            .path_filter("core", None, "excludesFile", &mut is_trusted)
-            .map(|p| {
-                p.interpolate(interpolate_context(git_install_dir, home.as_deref()))
-                    .map(|p| p.into_owned())
-            })
-            .transpose()?;
         let repo_format_version = config
             .value::<Integer>("core", None, "repositoryFormatVersion")
             .map_or(0, |v| v.to_decimal().unwrap_or_default());
@@ -66,16 +58,125 @@ impl Cache {
             })
             .transpose()?
             .unwrap_or(git_hash::Kind::Sha1);
-        let reflog = config.string("core", None, "logallrefupdates").map(|val| {
-            (val.eq_ignore_ascii_case(b"always"))
-                .then(|| git_ref::store::WriteReflog::Always)
-                .or_else(|| {
-                    git_config::Boolean::try_from(val)
-                        .ok()
-                        .and_then(|b| b.is_true().then(|| git_ref::store::WriteReflog::Normal))
-                })
-                .unwrap_or(git_ref::store::WriteReflog::Disable)
-        });
+
+        let reflog = query_refupdates(&config);
+        Ok(StageOne {
+            git_dir_config: config,
+            buf,
+            is_bare,
+            object_hash,
+            reflog,
+        })
+    }
+}
+
+/// Initialization
+impl Cache {
+    #[allow(clippy::too_many_arguments)]
+    pub fn from_stage_one(
+        StageOne {
+            git_dir_config,
+            mut buf,
+            is_bare,
+            object_hash,
+            reflog: _,
+        }: StageOne,
+        git_dir: &std::path::Path,
+        branch_name: Option<&git_ref::FullNameRef>,
+        mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
+        git_install_dir: Option<&std::path::Path>,
+        home: Option<&std::path::Path>,
+        repository::permissions::Environment {
+            git_prefix,
+            home: home_env,
+            xdg_config_home: xdg_config_home_env,
+        }: repository::permissions::Environment,
+        repository::permissions::Config {
+            system: use_system,
+            git: use_git,
+            user: use_user,
+            env: use_env,
+            includes: use_includes,
+        }: repository::permissions::Config,
+    ) -> Result<Self, Error> {
+        let options = git_config::file::init::Options {
+            includes: if use_includes {
+                git_config::file::includes::Options::follow(
+                    interpolate_context(git_install_dir, home),
+                    git_config::file::includes::conditional::Context {
+                        git_dir: git_dir.into(),
+                        branch_name,
+                    },
+                )
+            } else {
+                git_config::file::includes::Options::no_follow()
+            },
+            ..base_options()
+        };
+
+        let config = {
+            let home_env = &home_env;
+            let xdg_config_home_env = &xdg_config_home_env;
+            let git_prefix = &git_prefix;
+            let metas = [git_config::source::Kind::System, git_config::source::Kind::Global]
+                .iter()
+                .flat_map(|kind| kind.sources())
+                .filter_map(|source| {
+                    match source {
+                        git_config::Source::System if !use_system => return None,
+                        git_config::Source::Git if !use_git => return None,
+                        git_config::Source::User if !use_user => return None,
+                        _ => {}
+                    }
+                    let path = source
+                        .storage_location(&mut |name| {
+                            match name {
+                                git_ if git_.starts_with("GIT_") => Some(git_prefix),
+                                "XDG_CONFIG_HOME" => Some(xdg_config_home_env),
+                                "HOME" => Some(home_env),
+                                _ => None,
+                            }
+                            .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check(val).ok().flatten()))
+                        })
+                        .map(|p| p.into_owned());
+
+                    git_config::file::Metadata {
+                        path,
+                        source: *source,
+                        level: 0,
+                        trust: git_sec::Trust::Full,
+                    }
+                    .into()
+                });
+
+            let err_on_nonexisting_paths = false;
+            let mut globals = git_config::File::from_paths_metadata_buf(
+                metas,
+                &mut buf,
+                err_on_nonexisting_paths,
+                git_config::file::init::Options {
+                    includes: git_config::file::includes::Options::no_follow(),
+                    ..options
+                },
+            )
+            .map_err(|err| match err {
+                git_config::file::init::from_paths::Error::Init(err) => Error::from(err),
+                git_config::file::init::from_paths::Error::Io(err) => err.into(),
+            })?
+            .unwrap_or_default();
+
+            globals.append(git_dir_config);
+            globals.resolve_includes(options)?;
+            if use_env {
+                globals.append(git_config::File::from_env(options)?.unwrap_or_default());
+            }
+            globals
+        };
+
+        let excludes_file = config
+            .path_filter("core", None, "excludesFile", &mut filter_config_section)
+            .map(|p| p.interpolate(options.includes.interpolate).map(|p| p.into_owned()))
+            .transpose()?;
 
         let mut hex_len = None;
         if let Some(hex_len_str) = config.string("core", None, "abbrev") {
@@ -108,6 +209,9 @@ impl Cache {
             }
         }
 
+        let reflog = query_refupdates(&config);
+        let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
+        let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
         Ok(Cache {
             resolved: config.into(),
             use_multi_pack_index,
@@ -119,6 +223,8 @@ impl Cache {
             excludes_file,
             xdg_config_home_env,
             home_env,
+            personas: Default::default(),
+            git_prefix,
         })
     }
 
@@ -149,6 +255,14 @@ impl Cache {
     }
 }
 
+/// Access
+impl Cache {
+    pub fn personas(&self) -> &identity::Personas {
+        self.personas
+            .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved, &self.git_prefix))
+    }
+}
+
 pub(crate) fn interpolate_context<'a>(
     git_install_dir: Option<&'a std::path::Path>,
     home_dir: Option<&'a std::path::Path>,
@@ -157,6 +271,13 @@ pub(crate) fn interpolate_context<'a>(
         git_install_dir,
         home_dir,
         home_for_user: Some(git_config::path::interpolate::home_for_user), // TODO: figure out how to configure this
+    }
+}
+
+fn base_options() -> git_config::file::init::Options<'static> {
+    git_config::file::init::Options {
+        lossy: !cfg!(debug_assertions),
+        ..Default::default()
     }
 }
 
@@ -169,4 +290,17 @@ fn config_bool(config: &git_config::File<'_>, key: &str, default: bool) -> Resul
             value: err.input,
             key: key.into(),
         })
+}
+
+fn query_refupdates(config: &git_config::File<'static>) -> Option<git_ref::store::WriteReflog> {
+    config.string("core", None, "logallrefupdates").map(|val| {
+        (val.eq_ignore_ascii_case(b"always"))
+            .then(|| git_ref::store::WriteReflog::Always)
+            .or_else(|| {
+                git_config::Boolean::try_from(val)
+                    .ok()
+                    .and_then(|b| b.is_true().then(|| git_ref::store::WriteReflog::Normal))
+            })
+            .unwrap_or(git_ref::store::WriteReflog::Disable)
+    })
 }

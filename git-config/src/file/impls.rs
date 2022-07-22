@@ -1,8 +1,11 @@
+use std::borrow::Cow;
 use std::{convert::TryFrom, fmt::Display, str::FromStr};
 
-use bstr::{BStr, BString};
+use bstr::{BStr, BString, ByteVec};
 
 use crate::file::Metadata;
+use crate::parse::{section, Event};
+use crate::value::normalize;
 use crate::{parse, File};
 
 impl FromStr for File<'static> {
@@ -44,5 +47,63 @@ impl From<File<'_>> for BString {
 impl Display for File<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         Display::fmt(&self.to_bstring(), f)
+    }
+}
+
+impl PartialEq for File<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        fn find_key<'a>(mut it: impl Iterator<Item = &'a Event<'a>>) -> Option<&'a section::Key<'a>> {
+            it.find_map(|e| match e {
+                Event::SectionKey(k) => Some(k),
+                _ => None,
+            })
+        }
+        fn collect_value<'a>(it: impl Iterator<Item = &'a Event<'a>>) -> Cow<'a, BStr> {
+            let mut partial_value = BString::default();
+            let mut value = None;
+
+            for event in it {
+                match event {
+                    Event::SectionKey(_) => break,
+                    Event::Value(v) => {
+                        value = v.clone().into();
+                        break;
+                    }
+                    Event::ValueNotDone(v) => partial_value.push_str(v.as_ref()),
+                    Event::ValueDone(v) => {
+                        partial_value.push_str(v.as_ref());
+                        value = Some(partial_value.into());
+                        break;
+                    }
+                    _ => (),
+                }
+            }
+            value.map(normalize).unwrap_or_default()
+        }
+        if self.section_order.len() != other.section_order.len() {
+            return false;
+        }
+
+        for (lhs, rhs) in self
+            .section_order
+            .iter()
+            .zip(&other.section_order)
+            .map(|(lhs, rhs)| (&self.sections[lhs], &other.sections[rhs]))
+        {
+            if !(lhs.header.name == rhs.header.name && lhs.header.subsection_name == rhs.header.subsection_name) {
+                return false;
+            }
+
+            let (mut lhs, mut rhs) = (lhs.body.0.iter(), rhs.body.0.iter());
+            while let (Some(lhs_key), Some(rhs_key)) = (find_key(&mut lhs), find_key(&mut rhs)) {
+                if lhs_key != rhs_key {
+                    return false;
+                }
+                if collect_value(&mut lhs) != collect_value(&mut rhs) {
+                    return false;
+                }
+            }
+        }
+        true
     }
 }

@@ -3,8 +3,7 @@ use crate::parse;
 use crate::parse::Event;
 use crate::path::interpolate;
 
-/// The error returned by [`File::from_paths_metadata()`][crate::File::from_paths_metadata()] and
-/// [`File::from_env_paths()`][crate::File::from_env_paths()].
+/// The error returned by [`File::from_bytes_no_includes()`][crate::File::from_bytes_no_includes()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -23,8 +22,8 @@ pub struct Options<'a> {
     pub includes: init::includes::Options<'a>,
     /// If true, only value-bearing parse events will be kept to reduce memory usage and increase performance.
     ///
-    /// Note that doing so will prevent [`write_to()`][crate::File::write_to()] to serialize itself meaningfully and correctly,
-    /// as newlines will be missing. Use this only if it's clear that serialization will not be attempted.
+    /// Note that doing so will degenerate [`write_to()`][crate::File::write_to()] and strip it off its comments
+    /// and additional whitespace entirely, but will otherwise be a valid configuration file.
     pub lossy: bool,
 }
 

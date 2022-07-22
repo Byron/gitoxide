@@ -1,11 +1,10 @@
-use git_features::threading::OwnShared;
+use std::borrow::Cow;
 use std::convert::TryFrom;
-use std::{borrow::Cow, path::PathBuf};
 
-use crate::file::{init, Metadata};
-use crate::{file, parse, parse::section, path::interpolate, File, Source};
+use crate::file::init;
+use crate::{file, parse, parse::section, path::interpolate, File};
 
-/// Represents the errors that may occur when calling [`File::from_env`][crate::File::from_env()].
+/// Represents the errors that may occur when calling [`File::from_env()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -29,85 +28,12 @@ pub enum Error {
 
 /// Instantiation from environment variables
 impl File<'static> {
-    /// Constructs a `git-config` from the default cascading sequence of global configuration files,
-    /// excluding any repository-local configuration.
+    /// Generates a config from `GIT_CONFIG_*` environment variables or returns `Ok(None)` if no configuration was found.
+    /// See [`git-config`'s documentation] for more information on the environment variables in question.
     ///
-    /// See <https://git-scm.com/docs/git-config#FILES> for details.
-    // TODO: how does this relate to the `fs` module? Have a feeling options should contain instructions on which files to use.
-    pub fn from_env_paths(options: init::Options<'_>) -> Result<File<'static>, init::from_paths::Error> {
-        use std::env;
-
-        let mut metas = vec![];
-        let mut push_path = |path: PathBuf, source: Source, trust: Option<git_sec::Trust>| {
-            if let Some(meta) = trust
-                .or_else(|| git_sec::Trust::from_path_ownership(&path).ok())
-                .map(|trust| Metadata {
-                    path: Some(path),
-                    trust,
-                    level: 0,
-                    source,
-                })
-            {
-                metas.push(meta)
-            }
-        };
-
-        if env::var("GIT_CONFIG_NO_SYSTEM").is_err() {
-            let git_config_system_path = env::var_os("GIT_CONFIG_SYSTEM").unwrap_or_else(|| "/etc/gitconfig".into());
-            push_path(
-                PathBuf::from(git_config_system_path),
-                Source::System,
-                git_sec::Trust::Full.into(),
-            );
-        }
-
-        if let Some(git_config_global) = env::var_os("GIT_CONFIG_GLOBAL") {
-            push_path(
-                PathBuf::from(git_config_global),
-                Source::Global,
-                git_sec::Trust::Full.into(),
-            );
-        } else {
-            // Divergence from git-config(1)
-            // These two are supposed to share the same scope and override
-            // rather than append according to git-config(1) documentation.
-            if let Some(xdg_config_home) = env::var_os("XDG_CONFIG_HOME") {
-                push_path(
-                    PathBuf::from(xdg_config_home).join("git/config"),
-                    Source::User,
-                    git_sec::Trust::Full.into(),
-                );
-            } else if let Some(home) = env::var_os("HOME") {
-                push_path(
-                    PathBuf::from(home).join(".config/git/config"),
-                    Source::User,
-                    git_sec::Trust::Full.into(),
-                );
-            }
-
-            if let Some(home) = env::var_os("HOME") {
-                push_path(
-                    PathBuf::from(home).join(".gitconfig"),
-                    Source::User,
-                    git_sec::Trust::Full.into(),
-                );
-            }
-        }
-
-        // TODO: remove this in favor of a clear non-local approach to integrate better with git-repository
-        if let Some(git_dir) = env::var_os("GIT_DIR") {
-            push_path(PathBuf::from(git_dir).join("config"), Source::Local, None);
-        }
-
-        File::from_paths_metadata(metas, options)
-    }
-
-    /// Generates a config from the environment variables. This is neither
-    /// zero-copy nor zero-alloc. See [`git-config`'s documentation] on
-    /// environment variable for more information.
+    /// With `options` configured, it's possible to resolve `include.path` or `includeIf.<condition>.path` directives as well.
     ///
     /// [`git-config`'s documentation]: https://git-scm.com/docs/git-config#Documentation/git-config.txt-GITCONFIGCOUNT
-    // TODO: use `init::Options` instead for lossy support.
     pub fn from_env(options: init::Options<'_>) -> Result<Option<File<'static>>, Error> {
         use std::env;
         let count: usize = match env::var("GIT_CONFIG_COUNT") {
@@ -119,13 +45,13 @@ impl File<'static> {
             return Ok(None);
         }
 
-        let meta = OwnShared::new(file::Metadata {
+        let meta = file::Metadata {
             path: None,
             source: crate::Source::Env,
             level: 0,
             trust: git_sec::Trust::Full,
-        });
-        let mut config = File::new(OwnShared::clone(&meta));
+        };
+        let mut config = File::new(meta);
         for i in 0..count {
             let key = env::var(format!("GIT_CONFIG_KEY_{}", i)).map_err(|_| Error::InvalidKeyId { key_id: i })?;
             let value = env::var_os(format!("GIT_CONFIG_VALUE_{}", i)).ok_or(Error::InvalidValueId { value_id: i })?;
@@ -149,7 +75,7 @@ impl File<'static> {
         }
 
         let mut buf = Vec::new();
-        init::includes::resolve(&mut config, meta, &mut buf, options)?;
+        init::includes::resolve(&mut config, &mut buf, options)?;
         Ok(Some(config))
     }
 }

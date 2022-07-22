@@ -129,7 +129,8 @@ pub fn assert_section_value(
             .into_iter()
             .map(|path| git_config::file::Metadata::try_from_path(path, git_config::Source::Local).unwrap()),
         env.to_init_options(),
-    )?;
+    )?
+    .expect("non-empty");
 
     assert_eq!(
         config.string("section", None, "value"),
