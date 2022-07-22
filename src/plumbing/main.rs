@@ -218,17 +218,17 @@ pub fn main() -> Result<()> {
                     },
                 ),
             },
-            free::Subcommands::Mailmap { cmd } => match cmd {
-                free::mailmap::Platform { path, cmd } => match cmd {
-                    free::mailmap::Subcommands::Verify => prepare_and_run(
-                        "mailmap-verify",
-                        verbose,
-                        progress,
-                        progress_keep_open,
-                        core::mailmap::PROGRESS_RANGE,
-                        move |_progress, out, _err| core::mailmap::verify(path, format, out),
-                    ),
-                },
+            free::Subcommands::Mailmap {
+                cmd: free::mailmap::Platform { path, cmd },
+            } => match cmd {
+                free::mailmap::Subcommands::Verify => prepare_and_run(
+                    "mailmap-verify",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    core::mailmap::PROGRESS_RANGE,
+                    move |_progress, out, _err| core::mailmap::verify(path, format, out),
+                ),
             },
             free::Subcommands::Pack(subcommands) => match subcommands {
                 free::pack::Subcommands::Create {
