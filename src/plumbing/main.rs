@@ -13,7 +13,7 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::{commit, revision};
+use crate::plumbing::options::{commit, revision, tree};
 use crate::{
     plumbing::options::{free, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
@@ -548,6 +548,39 @@ pub fn main() -> Result<()> {
                 },
             ),
         },
+        Subcommands::Tree { cmd } => match cmd {
+            tree::Subcommands::Entries {
+                treeish,
+                recursive,
+                extended,
+            } => prepare_and_run(
+                "repository-tree-entries",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    core::repository::tree::entries(
+                        repository()?.into(),
+                        treeish.as_deref(),
+                        recursive,
+                        extended,
+                        format,
+                        out,
+                    )
+                },
+            ),
+            tree::Subcommands::Info { treeish, extended } => prepare_and_run(
+                "repository-tree-info",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, err| {
+                    core::repository::tree::info(repository()?.into(), treeish.as_deref(), extended, format, out, err)
+                },
+            ),
+        },
         Subcommands::Repository(repo::Platform { cmd }) => match cmd {
             repo::Subcommands::Exclude { cmd } => match cmd {
                 repo::exclude::Subcommands::Query {
@@ -612,46 +645,6 @@ pub fn main() -> Result<()> {
                     progress_keep_open,
                     None,
                     move |_progress, out, err| core::repository::odb::info(repository()?.into(), format, out, err),
-                ),
-            },
-            repo::Subcommands::Tree { cmd } => match cmd {
-                repo::tree::Subcommands::Entries {
-                    treeish,
-                    recursive,
-                    extended,
-                } => prepare_and_run(
-                    "repository-tree-entries",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, _err| {
-                        core::repository::tree::entries(
-                            repository()?.into(),
-                            treeish.as_deref(),
-                            recursive,
-                            extended,
-                            format,
-                            out,
-                        )
-                    },
-                ),
-                repo::tree::Subcommands::Info { treeish, extended } => prepare_and_run(
-                    "repository-tree-info",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, err| {
-                        core::repository::tree::info(
-                            repository()?.into(),
-                            treeish.as_deref(),
-                            extended,
-                            format,
-                            out,
-                            err,
-                        )
-                    },
                 ),
             },
         },

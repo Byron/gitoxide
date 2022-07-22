@@ -51,6 +51,11 @@ pub struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
+    /// Interact with tree objects.
+    Tree {
+        #[clap(subcommand)]
+        cmd: tree::Subcommands,
+    },
     /// Interact with commit objects.
     Commit {
         #[clap(subcommand)]
@@ -71,6 +76,33 @@ pub enum Subcommands {
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+}
+
+pub mod tree {
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Print entries in a given tree
+        Entries {
+            /// Traverse the entire tree and its subtrees respectively, not only this tree.
+            #[clap(long, short = 'r')]
+            recursive: bool,
+
+            /// Provide files size as well. This is expensive as the object is decoded entirely.
+            #[clap(long, short = 'e')]
+            extended: bool,
+
+            /// The tree to traverse, or the tree at `HEAD` if unspecified.
+            treeish: Option<String>,
+        },
+        /// Provide information about a tree.
+        Info {
+            /// Provide files size as well. This is expensive as the object is decoded entirely.
+            #[clap(long, short = 'e')]
+            extended: bool,
+            /// The tree to traverse, or the tree at `HEAD` if unspecified.
+            treeish: Option<String>,
+        },
+    }
 }
 
 pub mod commit {
@@ -532,11 +564,6 @@ pub mod repo {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "repo")]
     pub enum Subcommands {
-        /// Interact with tree objects.
-        Tree {
-            #[clap(subcommand)]
-            cmd: tree::Subcommands,
-        },
         /// Interact with the object database.
         Odb {
             #[clap(subcommand)]
@@ -595,33 +622,6 @@ pub mod repo {
             Entries,
             /// Provide general information about the object database.
             Info,
-        }
-    }
-
-    pub mod tree {
-        #[derive(Debug, clap::Subcommand)]
-        pub enum Subcommands {
-            /// Print entries in a given tree
-            Entries {
-                /// Traverse the entire tree and its subtrees respectively, not only this tree.
-                #[clap(long, short = 'r')]
-                recursive: bool,
-
-                /// Provide files size as well. This is expensive as the object is decoded entirely.
-                #[clap(long, short = 'e')]
-                extended: bool,
-
-                /// The tree to traverse, or the tree at `HEAD` if unspecified.
-                treeish: Option<String>,
-            },
-            /// Provide information about a tree.
-            Info {
-                /// Provide files size as well. This is expensive as the object is decoded entirely.
-                #[clap(long, short = 'e')]
-                extended: bool,
-                /// The tree to traverse, or the tree at `HEAD` if unspecified.
-                treeish: Option<String>,
-            },
         }
     }
 }
