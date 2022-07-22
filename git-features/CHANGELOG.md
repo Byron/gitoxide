@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.22.0 (2022-07-22)
 
 ### New Features
 
@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 17 calendar days.
+ - 5 commits contributed to the release over the course of 17 calendar days.
  - 39 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - initialize `Time` from `now_utc` and `now_local` ([`c76fde7`](https://github.com/Byron/gitoxide/commit/c76fde7de278b49ded13b655d5345e4eb8c1b134))
     - a first sketch on how identity management could look like. ([`780f14f`](https://github.com/Byron/gitoxide/commit/780f14f5c270802e51cf039639c2fbdb5ac5a85e))
  * **Uncategorized**
+    - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
     - git-features' walkdir: 2.3.1 -> 2.3.2 ([`41dd754`](https://github.com/Byron/gitoxide/commit/41dd7545234e6d2637d2bca5bb6d4f6d8bfc8f57))
 </details>
 

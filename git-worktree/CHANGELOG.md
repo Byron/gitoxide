@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.0 (2022-07-22)
 
 This is a maintenance release with no functional changes.
 
@@ -13,7 +13,7 @@ This is a maintenance release with no functional changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 33 calendar days.
+ - 3 commits contributed to the release over the course of 33 calendar days.
  - 39 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -25,6 +25,7 @@ This is a maintenance release with no functional changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
     - make it harder to forget documentation in git-worktree ([`15d87ee`](https://github.com/Byron/gitoxide/commit/15d87ee99ef269985e8f378bb2ab9c8931e8fd7d))
     - Release git-path v0.3.0, safety bump 14 crates ([`400c9be`](https://github.com/Byron/gitoxide/commit/400c9bec49e4ec5351dc9357b246e7677a63ea35))
 </details>

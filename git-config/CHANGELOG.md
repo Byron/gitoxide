@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.6.0 (2022-07-22)
+
+<csr-id-32d5b3c695d868ba93755123a25b276bfbe55e0a/>
+<csr-id-9cd99337333f5ef4b30e0ec9461fc087699576e6/>
+<csr-id-0076dcf9b37f1d633bdad5573b40d34a9fbaba90/>
+<csr-id-a8604a237782f8d60a185d4730db57bad81424a6/>
 
 ### New Features
 
@@ -150,7 +155,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    It's more of a 'dumb' structure now than before, merely present
    to facilitate typical parsing than something special on its own.
  - <csr-id-2e47167e4a963743494b2df6b0c15800cb876dd0/> remove `File::new()` method in favor of `File::default()`.
-
  - <csr-id-ea6765093b5475912ba1aa81d4440cbf5dd49fb6/> rename `parse::event::List` to `parse::Events`
  - <csr-id-89f5fca843d999c5bea35fb3fe2a03dc3588f74e/> rename `parse::State` to `parse::event::List`
  - <csr-id-3cdb0890b71e62cfa92b1ed1760c88cb547ec729/> move `value::*` into the crate root, except for `Error` and `normalize_*()`.
@@ -225,7 +229,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 312 commits contributed to the release over the course of 33 calendar days.
+ - 313 commits contributed to the release over the course of 33 calendar days.
  - 39 days passed between releases.
  - 93 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
@@ -483,6 +487,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - conforming subsection parsing handling backslashes like git ([`6366148`](https://github.com/Byron/gitoxide/commit/6366148f538ee03314dd866e083157de810d4ad4))
     - Only copy pattern if required ([`b3a752a`](https://github.com/Byron/gitoxide/commit/b3a752a0a873cf9d685e1893c8d35255d7f7323a))
  * **Uncategorized**
+    - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
     - thanks clippy ([`fddc720`](https://github.com/Byron/gitoxide/commit/fddc7206476423a6964d61acd060305572ecd02b))
     - thanks fuzzy ([`15a379a`](https://github.com/Byron/gitoxide/commit/15a379a85d59d83f3a0512b9e9fbff1774c9f561))
     - thanks clippy ([`15fee74`](https://github.com/Byron/gitoxide/commit/15fee74fdfb5fc84349ac103cd5727332f3d2230))

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.3.0 (2022-07-22)
 
 ### New Features
 
@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 33 calendar days.
+ - 6 commits contributed to the release over the course of 33 calendar days.
  - 39 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - on windows, emit a `NotFound` io error, similar to what happens on unix. ([`9a1e982`](https://github.com/Byron/gitoxide/commit/9a1e9828e813ec1de68ac2e83a986c49c71c5dbe))
     - fix build after breaking changes in `git-path` ([`34aed2f`](https://github.com/Byron/gitoxide/commit/34aed2fb608df79bdc56b244f7ac216f46322e5f))
  * **Uncategorized**
+    - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
     - assure document-features are available in all 'usable' and 'early' crates ([`238581c`](https://github.com/Byron/gitoxide/commit/238581cc46c7288691eed37dc7de5069e3d86721))
     - Support for SUDO_UID as fallback for ownership check on unix. ([`3d16c36`](https://github.com/Byron/gitoxide/commit/3d16c36d7288d9a5fae5b9d23715e043d4d8ce76))
     - Release git-path v0.3.0, safety bump 14 crates ([`400c9be`](https://github.com/Byron/gitoxide/commit/400c9bec49e4ec5351dc9357b246e7677a63ea35))

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.20.0 (2022-07-22)
 
 ### New Features
 
@@ -59,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 69 commits contributed to the release over the course of 33 calendar days.
+ - 70 commits contributed to the release over the course of 33 calendar days.
  - 39 days passed between releases.
  - 16 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
@@ -130,6 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - adjust to breaking changes in `git-config` ([`5b66202`](https://github.com/Byron/gitoxide/commit/5b66202d96bf664ed84755afc3ec49c301ecd62c))
     - adjustments due to breaking changes in `git_path` ([`4420ae9`](https://github.com/Byron/gitoxide/commit/4420ae932d5b20a9662a6d36353a27111b5cd672))
  * **Uncategorized**
+    - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
     - thanks clippy ([`fddc720`](https://github.com/Byron/gitoxide/commit/fddc7206476423a6964d61acd060305572ecd02b))
     - thanks clippy ([`0346aaa`](https://github.com/Byron/gitoxide/commit/0346aaaeccfe18a443410652cada7b14eb34d8b9))
     - thanks clippy ([`b630543`](https://github.com/Byron/gitoxide/commit/b630543669af5289508ce066bd026e2b9a9d5044))

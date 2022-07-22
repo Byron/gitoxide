@@ -60,30 +60,30 @@ git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-validate = { version = "^0.5.4", path = "../git-validate" }
 git-sec = { version = "^0.3.0", path = "../git-sec", features = ["thiserror"] }
-git-date = { version = "^0.0.1", path = "../git-date" }
+git-date = { version = "^0.0.2", path = "../git-date" }
 
 git-config = { version = "^0.6.0", path = "../git-config" }
 git-odb = { version = "^0.31.0", path = "../git-odb" }
-git-hash = { version = "^0.9.5", path = "../git-hash" }
-git-object = { version = "^0.19.0", path = "../git-object" }
-git-actor = { version = "^0.10.1", path = "../git-actor" }
+git-hash = { version = "^0.9.6", path = "../git-hash" }
+git-object = { version = "^0.20.0", path = "../git-object" }
+git-actor = { version = "^0.11.0", path = "../git-actor" }
 git-pack = { version = "^0.21.0", path = "../git-pack", features = ["object-cache-dynamic"] }
-git-revision = { version = "^0.2.1", path = "../git-revision" }
+git-revision = { version = "^0.3.0", path = "../git-revision" }
 
-git-path = { version = "^0.3.0", path = "../git-path" }
+git-path = { version = "^0.4.0", path = "../git-path" }
 git-url = { version = "^0.7.0", path = "../git-url", optional = true }
-git-traverse = { version = "^0.15.0", path = "../git-traverse" }
+git-traverse = { version = "^0.16.0", path = "../git-traverse" }
 git-protocol = { version = "^0.18.0", path = "../git-protocol", optional = true }
 git-transport = { version = "^0.19.0", path = "../git-transport", optional = true }
-git-diff = { version = "^0.16.0", path = "../git-diff", optional = true }
-git-mailmap = { version = "^0.2.0", path = "../git-mailmap", optional = true }
-git-features = { version = "^0.21.1", path = "../git-features", features = ["progress", "once_cell"] }
+git-diff = { version = "^0.17.0", path = "../git-diff", optional = true }
+git-mailmap = { version = "^0.3.0", path = "../git-mailmap", optional = true }
+git-features = { version = "^0.22.0", path = "../git-features", features = ["progress", "once_cell"] }
 
 # unstable only
 git-attributes = { version = "^0.3.0", path = "../git-attributes", optional = true }
-git-glob = { version = "^0.3.0", path = "../git-glob", optional = true }
+git-glob = { version = "^0.3.1", path = "../git-glob", optional = true }
 git-credentials = { version = "^0.3.0", path = "../git-credentials", optional = true }
-git-index = { version = "^0.3.0", path = "../git-index", optional = true }
+git-index = { version = "^0.4.0", path = "../git-index", optional = true }
 git-worktree = { version = "^0.4.0", path = "../git-worktree" }
 
 signal-hook = { version = "0.3.9", default-features = false }
