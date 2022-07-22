@@ -21,7 +21,8 @@ pub fn list(
     }
     let filters: Vec<_> = filters.into_iter().map(Filter::new).collect();
     let mut last_meta = None;
-    for (section, matter) in config.sections_and_postmatter() {
+    let mut it = config.sections_and_postmatter().peekable();
+    while let Some((section, matter)) = it.next() {
         if !filters.is_empty() && !filters.iter().any(|filter| filter.matches_section(section)) {
             continue;
         }
@@ -36,7 +37,11 @@ pub fn list(
         for event in matter {
             event.write_to(&mut out)?;
         }
-        writeln!(&mut out)?;
+        if it.peek().map_or(false, |(next_section, _)| {
+            next_section.header().name() != section.header().name()
+        }) {
+            writeln!(&mut out)?;
+        }
     }
     Ok(())
 }
