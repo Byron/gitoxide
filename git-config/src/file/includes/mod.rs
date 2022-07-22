@@ -104,8 +104,8 @@ fn append_followed_includes_recursively(
             source: meta.source,
         };
         let no_follow_options = init::Options {
-            lossy: options.lossy,
-            ..Default::default()
+            includes: includes::Options::no_follow(),
+            ..options
         };
 
         let mut include_config =

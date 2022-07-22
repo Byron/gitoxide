@@ -33,8 +33,8 @@ impl StageOne {
                     .at(config_path)
                     .with(git_dir_trust),
                 git_config::file::init::Options {
-                    lossy: !cfg!(debug_assertions),
                     includes: git_config::file::includes::Options::no_follow(),
+                    ..base_options()
                 },
             )?
         };
@@ -100,7 +100,6 @@ impl Cache {
         }: repository::permissions::Config,
     ) -> Result<Self, Error> {
         let options = git_config::file::init::Options {
-            lossy: !cfg!(debug_assertions),
             includes: if use_includes {
                 git_config::file::includes::Options::follow(
                     interpolate_context(git_install_dir, home),
@@ -112,6 +111,7 @@ impl Cache {
             } else {
                 git_config::file::includes::Options::no_follow()
             },
+            ..base_options()
         };
 
         let config = {
@@ -271,6 +271,13 @@ pub(crate) fn interpolate_context<'a>(
         git_install_dir,
         home_dir,
         home_for_user: Some(git_config::path::interpolate::home_for_user), // TODO: figure out how to configure this
+    }
+}
+
+fn base_options() -> git_config::file::init::Options<'static> {
+    git_config::file::init::Options {
+        lossy: !cfg!(debug_assertions),
+        ..Default::default()
     }
 }
 
