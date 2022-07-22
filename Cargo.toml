@@ -13,14 +13,14 @@ resolver = "2"
 
 [[bin]]
 name = "ein"
-path = "src/porcelain-cli.rs"
+path = "src/ein.rs"
 test = false
 doctest = false
 
 
 [[bin]]
 name = "gix"
-path = "src/plumbing-cli.rs"
+path = "src/gix.rs"
 test = false
 doctest = false
 

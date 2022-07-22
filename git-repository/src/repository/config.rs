@@ -2,6 +2,7 @@ use crate::config;
 
 /// Configuration
 impl crate::Repository {
+    /// Return
     /// Return a snapshot of the configuration as seen upon opening the repository.
     pub fn config_snapshot(&self) -> config::Snapshot<'_> {
         config::Snapshot { repo: self }
