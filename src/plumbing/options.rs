@@ -81,8 +81,11 @@ pub enum Subcommands {
         #[clap(subcommand)]
         cmd: mailmap::Subcommands,
     },
-    /// Subcommands for interacting with entire git repositories
-    Repository(repo::Platform),
+    /// Interact with the exclude files like .gitignore.
+    Exclude {
+        #[clap(subcommand)]
+        cmd: exclude::Subcommands,
+    },
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
@@ -580,48 +583,28 @@ pub mod free {
     }
 }
 
-///
-pub mod repo {
-    #[derive(Debug, clap::Parser)]
-    pub struct Platform {
-        /// Subcommands
-        #[clap(subcommand)]
-        pub cmd: Subcommands,
-    }
+pub mod exclude {
+    use std::ffi::OsString;
+
+    use git_repository as git;
 
     #[derive(Debug, clap::Subcommand)]
-    #[clap(visible_alias = "repo")]
     pub enum Subcommands {
-        /// Interact with the exclude files like .gitignore.
-        Exclude {
-            #[clap(subcommand)]
-            cmd: exclude::Subcommands,
+        /// Check if path-specs are excluded and print the result similar to `git check-ignore`.
+        Query {
+            /// Show actual ignore patterns instead of un-excluding an entry.
+            ///
+            /// That way one can understand why an entry might not be excluded.
+            #[clap(long, short = 'i')]
+            show_ignore_patterns: bool,
+            /// Additional patterns to use for exclusions. They have the highest priority.
+            ///
+            /// Useful for undoing previous patterns using the '!' prefix.
+            #[clap(long, short = 'p')]
+            patterns: Vec<OsString>,
+            /// The git path specifications to check for exclusion, or unset to read from stdin one per line.
+            #[clap(parse(try_from_os_str = std::convert::TryFrom::try_from))]
+            pathspecs: Vec<git::path::Spec>,
         },
-    }
-
-    pub mod exclude {
-        use std::ffi::OsString;
-
-        use git_repository as git;
-
-        #[derive(Debug, clap::Subcommand)]
-        pub enum Subcommands {
-            /// Check if path-specs are excluded and print the result similar to `git check-ignore`.
-            Query {
-                /// Show actual ignore patterns instead of un-excluding an entry.
-                ///
-                /// That way one can understand why an entry might not be excluded.
-                #[clap(long, short = 'i')]
-                show_ignore_patterns: bool,
-                /// Additional patterns to use for exclusions. They have the highest priority.
-                ///
-                /// Useful for undoing previous patterns using the '!' prefix.
-                #[clap(long, short = 'p')]
-                patterns: Vec<OsString>,
-                /// The git path specifications to check for exclusion, or unset to read from stdin one per line.
-                #[clap(parse(try_from_os_str = std::convert::TryFrom::try_from))]
-                pathspecs: Vec<git::path::Spec>,
-            },
-        }
     }
 }

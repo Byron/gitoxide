@@ -13,9 +13,9 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::{commit, mailmap, odb, revision, tree};
+use crate::plumbing::options::{commit, exclude, mailmap, odb, revision, tree};
 use crate::{
-    plumbing::options::{free, repo, Args, Subcommands},
+    plumbing::options::{free, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 
@@ -609,42 +609,40 @@ pub fn main() -> Result<()> {
                 move |_progress, out, err| core::repository::mailmap::entries(repository()?.into(), format, out, err),
             ),
         },
-        Subcommands::Repository(repo::Platform { cmd }) => match cmd {
-            repo::Subcommands::Exclude { cmd } => match cmd {
-                repo::exclude::Subcommands::Query {
-                    patterns,
-                    pathspecs,
-                    show_ignore_patterns,
-                } => prepare_and_run(
-                    "repository-exclude-query",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, _err| {
-                        use git::bstr::ByteSlice;
-                        core::repository::exclude::query(
-                            repository()?.into(),
-                            if pathspecs.is_empty() {
-                                Box::new(
-                                    stdin_or_bail()?
-                                        .byte_lines()
-                                        .filter_map(Result::ok)
-                                        .filter_map(|line| git::path::Spec::from_bytes(line.as_bstr())),
-                                ) as Box<dyn Iterator<Item = git::path::Spec>>
-                            } else {
-                                Box::new(pathspecs.into_iter())
-                            },
-                            out,
-                            core::repository::exclude::query::Options {
-                                format,
-                                show_ignore_patterns,
-                                overrides: patterns,
-                            },
-                        )
-                    },
-                ),
-            },
+        Subcommands::Exclude { cmd } => match cmd {
+            exclude::Subcommands::Query {
+                patterns,
+                pathspecs,
+                show_ignore_patterns,
+            } => prepare_and_run(
+                "repository-exclude-query",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| {
+                    use git::bstr::ByteSlice;
+                    core::repository::exclude::query(
+                        repository()?.into(),
+                        if pathspecs.is_empty() {
+                            Box::new(
+                                stdin_or_bail()?
+                                    .byte_lines()
+                                    .filter_map(Result::ok)
+                                    .filter_map(|line| git::path::Spec::from_bytes(line.as_bstr())),
+                            ) as Box<dyn Iterator<Item = git::path::Spec>>
+                        } else {
+                            Box::new(pathspecs.into_iter())
+                        },
+                        out,
+                        core::repository::exclude::query::Options {
+                            format,
+                            show_ignore_patterns,
+                            overrides: patterns,
+                        },
+                    )
+                },
+            ),
         },
     }?;
     Ok(())
