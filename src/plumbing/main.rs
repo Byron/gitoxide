@@ -16,7 +16,7 @@ use gitoxide_core::pack::verify;
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 use crate::plumbing::options::remote;
 use crate::{
-    plumbing::options::{commitgraph, free, repo, Args, Subcommands},
+    plumbing::options::{free, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 
@@ -78,6 +78,27 @@ pub fn main() -> Result<()> {
 
     match cmd {
         Subcommands::Free(subcommands) => match subcommands {
+            free::Subcommands::CommitGraph(subcommands) => match subcommands {
+                free::commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
+                    "commitgraph-verify",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, err| {
+                        let output_statistics = if statistics { Some(format) } else { None };
+                        core::commitgraph::verify::graph_or_file(
+                            path,
+                            core::commitgraph::verify::Context {
+                                err,
+                                out,
+                                output_statistics,
+                            },
+                        )
+                    },
+                )
+                .map(|_| ()),
+            },
             free::Subcommands::Index(free::index::Platform {
                 object_hash,
                 index_path,
@@ -634,27 +655,6 @@ pub fn main() -> Result<()> {
                     )
                 },
             ),
-        },
-        Subcommands::CommitGraph(subcommands) => match subcommands {
-            commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
-                "commitgraph-verify",
-                verbose,
-                progress,
-                progress_keep_open,
-                None,
-                move |_progress, out, err| {
-                    let output_statistics = if statistics { Some(format) } else { None };
-                    core::commitgraph::verify::graph_or_file(
-                        path,
-                        core::commitgraph::verify::Context {
-                            err,
-                            out,
-                            output_statistics,
-                        },
-                    )
-                },
-            )
-            .map(|_| ()),
         },
     }?;
     Ok(())

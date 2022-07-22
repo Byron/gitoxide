@@ -55,9 +55,6 @@ pub enum Subcommands {
     #[clap(subcommand)]
     #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     Remote(remote::Subcommands),
-    /// Subcommands for interacting with commit-graphs
-    #[clap(subcommand)]
-    CommitGraph(commitgraph::Subcommands),
     /// Subcommands for interacting with entire git repositories
     Repository(repo::Platform),
     /// Subcommands that need no git repository to run.
@@ -69,6 +66,9 @@ pub enum Subcommands {
 pub mod free {
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
+        /// Subcommands for interacting with commit-graphs
+        #[clap(subcommand)]
+        CommitGraph(commitgraph::Subcommands),
         /// Subcommands for interacting with mailmaps
         Mailmap {
             #[clap(flatten)]
@@ -79,6 +79,23 @@ pub mod free {
         Pack(pack::Subcommands),
         /// Subcommands for interacting with a worktree index, typically at .git/index
         Index(index::Platform),
+    }
+
+    ///
+    pub mod commitgraph {
+        use std::path::PathBuf;
+
+        #[derive(Debug, clap::Subcommand)]
+        pub enum Subcommands {
+            /// Verify the integrity of a commit graph
+            Verify {
+                /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
+                path: PathBuf,
+                /// output statistical information about the pack
+                #[clap(long, short = 's')]
+                statistics: bool,
+            },
+        }
     }
 
     pub mod index {
@@ -582,24 +599,6 @@ pub mod repo {
                 treeish: Option<String>,
             },
         }
-    }
-}
-
-///
-///
-pub mod commitgraph {
-    use std::path::PathBuf;
-
-    #[derive(Debug, clap::Subcommand)]
-    pub enum Subcommands {
-        /// Verify the integrity of a commit graph
-        Verify {
-            /// The path to '.git/objects/info/', '.git/objects/info/commit-graphs/', or '.git/objects/info/commit-graph' to validate.
-            path: PathBuf,
-            /// output statistical information about the pack
-            #[clap(long, short = 's')]
-            statistics: bool,
-        },
     }
 }
 
