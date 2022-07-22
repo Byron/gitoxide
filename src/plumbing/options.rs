@@ -58,8 +58,6 @@ pub enum Subcommands {
     /// Subcommands for interacting with commit-graphs
     #[clap(subcommand)]
     CommitGraph(commitgraph::Subcommands),
-    /// Subcommands for interacting with a worktree index, typically at .git/index
-    Index(index::Platform),
     /// Subcommands for interacting with entire git repositories
     Repository(repo::Platform),
     /// Subcommands that need no git repository to run.
@@ -79,6 +77,57 @@ pub mod free {
         /// Subcommands for interacting with pack files and indices
         #[clap(subcommand)]
         Pack(pack::Subcommands),
+        /// Subcommands for interacting with a worktree index, typically at .git/index
+        Index(index::Platform),
+    }
+
+    pub mod index {
+        use std::path::PathBuf;
+
+        #[derive(Debug, clap::Parser)]
+        pub struct Platform {
+            /// The object format to assume when reading files that don't inherently know about it, or when writing files.
+            #[clap(long, default_value_t = git_repository::hash::Kind::default(), possible_values(&["SHA1"]))]
+            pub object_hash: git_repository::hash::Kind,
+
+            /// The path to the index file.
+            #[clap(short = 'i', long, default_value = ".git/index")]
+            pub index_path: PathBuf,
+
+            /// Subcommands
+            #[clap(subcommand)]
+            pub cmd: Subcommands,
+        }
+
+        #[derive(Debug, clap::Subcommand)]
+        pub enum Subcommands {
+            /// Validate constraints and assumptions of an index along with its integrity.
+            Verify,
+            /// Print all entries to standard output
+            Entries,
+            /// Print information about the index structure
+            Info {
+                /// Do not extract specific extension information to gain only a superficial idea of the index's composition.
+                #[clap(long)]
+                no_details: bool,
+            },
+            /// Checkout the index into a directory with exclusive write access, similar to what would happen during clone.
+            CheckoutExclusive {
+                /// The path to `.git` repository from which objects can be obtained to write the actual files referenced
+                /// in the index. Use this measure the impact on extracting objects on overall performance.
+                #[clap(long, short = 'r')]
+                repository: Option<PathBuf>,
+                /// Ignore errors and keep checking out as many files as possible, and report all errors at the end of the operation.
+                #[clap(long, short = 'k')]
+                keep_going: bool,
+                /// Enable to query the object database yet write only empty files. This is useful to measure the overhead of ODB query
+                /// compared to writing the bytes to disk.
+                #[clap(long, short = 'e', requires = "repository")]
+                empty_files: bool,
+                /// The directory into which to write all index entries.
+                directory: PathBuf,
+            },
+        }
     }
 
     ///
@@ -537,55 +586,6 @@ pub mod repo {
 }
 
 ///
-pub mod index {
-    use std::path::PathBuf;
-
-    #[derive(Debug, clap::Parser)]
-    pub struct Platform {
-        /// The object format to assume when reading files that don't inherently know about it, or when writing files.
-        #[clap(long, default_value_t = git_repository::hash::Kind::default(), possible_values(&["SHA1"]))]
-        pub object_hash: git_repository::hash::Kind,
-
-        /// The path to the index file.
-        #[clap(short = 'i', long, default_value = ".git/index")]
-        pub index_path: PathBuf,
-
-        /// Subcommands
-        #[clap(subcommand)]
-        pub cmd: Subcommands,
-    }
-
-    #[derive(Debug, clap::Subcommand)]
-    pub enum Subcommands {
-        /// Validate constraints and assumptions of an index along with its integrity.
-        Verify,
-        /// Print all entries to standard output
-        Entries,
-        /// Print information about the index structure
-        Info {
-            /// Do not extract specific extension information to gain only a superficial idea of the index's composition.
-            #[clap(long)]
-            no_details: bool,
-        },
-        /// Checkout the index into a directory with exclusive write access, similar to what would happen during clone.
-        CheckoutExclusive {
-            /// The path to `.git` repository from which objects can be obtained to write the actual files referenced
-            /// in the index. Use this measure the impact on extracting objects on overall performance.
-            #[clap(long, short = 'r')]
-            repository: Option<PathBuf>,
-            /// Ignore errors and keep checking out as many files as possible, and report all errors at the end of the operation.
-            #[clap(long, short = 'k')]
-            keep_going: bool,
-            /// Enable to query the object database yet write only empty files. This is useful to measure the overhead of ODB query
-            /// compared to writing the bytes to disk.
-            #[clap(long, short = 'e', requires = "repository")]
-            empty_files: bool,
-            /// The directory into which to write all index entries.
-            directory: PathBuf,
-        },
-    }
-}
-
 ///
 pub mod commitgraph {
     use std::path::PathBuf;

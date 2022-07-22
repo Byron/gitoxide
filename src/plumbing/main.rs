@@ -16,7 +16,7 @@ use gitoxide_core::pack::verify;
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 use crate::plumbing::options::remote;
 use crate::{
-    plumbing::options::{commitgraph, free, index, repo, Args, Subcommands},
+    plumbing::options::{commitgraph, free, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 
@@ -77,79 +77,79 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
-        Subcommands::Index(index::Platform {
-            object_hash,
-            index_path,
-            cmd,
-        }) => match cmd {
-            index::Subcommands::CheckoutExclusive {
-                directory,
-                empty_files,
-                repository,
-                keep_going,
-            } => prepare_and_run(
-                "index-checkout",
-                verbose,
-                progress,
-                progress_keep_open,
-                None,
-                move |progress, _out, err| {
-                    core::index::checkout_exclusive(
-                        index_path,
-                        directory,
-                        repository,
-                        err,
-                        progress,
-                        &should_interrupt,
-                        core::index::checkout_exclusive::Options {
-                            index: core::index::Options { object_hash, format },
-                            empty_files,
-                            keep_going,
-                            thread_limit,
-                        },
-                    )
-                },
-            ),
-            index::Subcommands::Info { no_details } => prepare_and_run(
-                "index-entries",
-                verbose,
-                progress,
-                progress_keep_open,
-                None,
-                move |_progress, out, err| {
-                    core::index::information(
-                        index_path,
-                        out,
-                        err,
-                        core::index::information::Options {
-                            index: core::index::Options { object_hash, format },
-                            extension_details: !no_details,
-                        },
-                    )
-                },
-            ),
-            index::Subcommands::Entries => prepare_and_run(
-                "index-entries",
-                verbose,
-                progress,
-                progress_keep_open,
-                None,
-                move |_progress, out, _err| {
-                    core::index::entries(index_path, out, core::index::Options { object_hash, format })
-                },
-            ),
-            index::Subcommands::Verify => prepare_and_run(
-                "index-verify",
-                verbose,
-                progress,
-                progress_keep_open,
-                None,
-                move |_progress, out, _err| {
-                    core::index::verify(index_path, out, core::index::Options { object_hash, format })
-                },
-            ),
-        },
         Subcommands::Free(subcommands) => match subcommands {
+            free::Subcommands::Index(free::index::Platform {
+                object_hash,
+                index_path,
+                cmd,
+            }) => match cmd {
+                free::index::Subcommands::CheckoutExclusive {
+                    directory,
+                    empty_files,
+                    repository,
+                    keep_going,
+                } => prepare_and_run(
+                    "index-checkout",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |progress, _out, err| {
+                        core::index::checkout_exclusive(
+                            index_path,
+                            directory,
+                            repository,
+                            err,
+                            progress,
+                            &should_interrupt,
+                            core::index::checkout_exclusive::Options {
+                                index: core::index::Options { object_hash, format },
+                                empty_files,
+                                keep_going,
+                                thread_limit,
+                            },
+                        )
+                    },
+                ),
+                free::index::Subcommands::Info { no_details } => prepare_and_run(
+                    "index-entries",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, err| {
+                        core::index::information(
+                            index_path,
+                            out,
+                            err,
+                            core::index::information::Options {
+                                index: core::index::Options { object_hash, format },
+                                extension_details: !no_details,
+                            },
+                        )
+                    },
+                ),
+                free::index::Subcommands::Entries => prepare_and_run(
+                    "index-entries",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, _err| {
+                        core::index::entries(index_path, out, core::index::Options { object_hash, format })
+                    },
+                ),
+                free::index::Subcommands::Verify => prepare_and_run(
+                    "index-verify",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |_progress, out, _err| {
+                        core::index::verify(index_path, out, core::index::Options { object_hash, format })
+                    },
+                ),
+            },
             free::Subcommands::Mailmap { cmd } => match cmd {
                 free::mailmap::Platform { path, cmd } => match cmd {
                     free::mailmap::Subcommands::Verify => prepare_and_run(
