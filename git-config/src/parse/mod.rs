@@ -5,7 +5,7 @@
 //! The workflow for interacting with this is to use
 //! [`from_bytes()`] to obtain all parse events or tokens of the given input.
 //!
-//! On a higher level, one can use [`Events`] to parse all evnets into a set
+//! On a higher level, one can use [`Events`] to parse all events into a set
 //! of easily interpretable data type, similar to what [`File`] does.
 //!
 //! [`File`]: crate::File
@@ -16,8 +16,7 @@ use bstr::BStr;
 
 mod nom;
 pub use self::nom::from_bytes;
-///
-pub mod event;
+mod event;
 #[path = "events.rs"]
 mod events_type;
 pub use events_type::{Events, FrontMatterEvents};

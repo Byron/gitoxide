@@ -9,8 +9,9 @@ use crate::{
     parse::section,
 };
 
-/// A list of known sources for configuration files, with the first one being overridden
-/// by the second one, and so forth, in order of ascending precedence.
+/// A list of known sources for git configuration in order of ascending precedence.
+///
+/// This means values from the first one will be overridden by values in the second one, and so forth.
 /// Note that included files via `include.path` and `includeIf.<condition>.path` inherit
 /// their source.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
@@ -148,10 +149,6 @@ pub struct Integer {
 }
 
 /// Any value that can be interpreted as a boolean.
-///
-/// Note that while values can effectively be any byte string, the `git-config`
-/// documentation has a strict subset of values that may be interpreted as a
-/// boolean value, all of which are ASCII and thus UTF-8 representable.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[allow(missing_docs)]
 pub struct Boolean(pub bool);

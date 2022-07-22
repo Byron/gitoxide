@@ -63,8 +63,6 @@ impl TryFrom<&BStr> for Integer {
             return Ok(Self { value, suffix: None });
         }
 
-        // Assume we have a prefix at this point.
-
         if s.len() <= 1 {
             return Err(int_err(s));
         }
@@ -89,7 +87,7 @@ impl TryFrom<Cow<'_, BStr>> for Integer {
     }
 }
 
-/// Integer prefixes that are supported by `git-config`.
+/// Integer suffixes that are supported by `git-config`.
 ///
 /// These values are base-2 unit of measurements, not the base-10 variants.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
