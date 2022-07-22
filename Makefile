@@ -241,20 +241,20 @@ commit_graphs = \
 
 stress: ## Run various algorithms on big repositories
 	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
-	time ./target/release/gix --verbose pack verify --re-encode $(linux_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack multi-index -i $(linux_repo)/objects/pack/multi-pack-index create $(linux_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack verify $(linux_repo)/objects/pack/multi-pack-index
+	time ./target/release/gix --verbose no-repo pack verify --re-encode $(linux_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack multi-index -i $(linux_repo)/objects/pack/multi-pack-index create $(linux_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify $(linux_repo)/objects/pack/multi-pack-index
 	rm -Rf out; mkdir out && time ./target/release/gix --verbose pack index create -p $(linux_repo)/objects/pack/*.pack out/
-	time ./target/release/gix --verbose pack verify out/*.idx
+	time ./target/release/gix --verbose no-repo pack verify out/*.idx
 
-	time ./target/release/gix --verbose pack verify --statistics $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack verify --algorithm less-memory $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack verify --re-encode $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --statistics $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --algorithm less-memory $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --re-encode $(rust_repo)/objects/pack/*.idx
 	# We must ensure there is exactly one pack file for the pack-explode *.idx globs to work.
 	git repack -Ad
-	time ./target/release/gix --verbose pack explode .git/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack explode .git/objects/pack/*.idx
 
-	rm -Rf delme; mkdir delme && time ./target/release/gix --verbose pack explode .git/objects/pack/*.idx delme/
+	rm -Rf delme; mkdir delme && time ./target/release/gix --verbose no-repo pack explode .git/objects/pack/*.idx delme/
 
 	$(MAKE) stress-commitgraph
 	$(MAKE) bench-git-config
@@ -262,7 +262,7 @@ stress: ## Run various algorithms on big repositories
 .PHONY: stress-commitgraph
 stress-commitgraph: release-lean $(commit_graphs)
 	set -x; for path in $(wordlist 2, 999, $^); do \
-		time ./target/release/gix --verbose commit-graph verify $$path; \
+		time ./target/release/gix --verbose no-repo commit-graph verify $$path; \
 	done
 
 .PHONY: bench-git-config
