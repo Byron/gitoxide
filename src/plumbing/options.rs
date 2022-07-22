@@ -51,6 +51,11 @@ pub struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
+    /// Verify the integrity of the entire repository
+    Verify {
+        #[clap(flatten)]
+        args: free::pack::VerifyOptions,
+    },
     /// Query and obtain information about revisions.
     Revision {
         #[clap(subcommand)]
@@ -483,11 +488,6 @@ pub mod repo {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "repo")]
     pub enum Subcommands {
-        /// Verify the integrity of the entire repository
-        Verify {
-            #[clap(flatten)]
-            args: super::free::pack::VerifyOptions,
-        },
         /// Interact with commit objects.
         Commit {
             #[clap(subcommand)]

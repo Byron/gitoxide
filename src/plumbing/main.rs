@@ -474,6 +474,35 @@ pub fn main() -> Result<()> {
                 },
             },
         },
+        Subcommands::Verify {
+            args:
+                free::pack::VerifyOptions {
+                    statistics,
+                    algorithm,
+                    decode,
+                    re_encode,
+                },
+        } => prepare_and_run(
+            "repository-verify",
+            verbose,
+            progress,
+            progress_keep_open,
+            core::repository::verify::PROGRESS_RANGE,
+            move |progress, out, _err| {
+                core::repository::verify::integrity(
+                    repository()?.into(),
+                    out,
+                    progress,
+                    &should_interrupt,
+                    core::repository::verify::Context {
+                        output_statistics: statistics.then(|| format),
+                        algorithm,
+                        verify_mode: verify_mode(decode, re_encode),
+                        thread_limit,
+                    },
+                )
+            },
+        ),
         Subcommands::Revision { cmd } => match cmd {
             revision::Subcommands::Explain { spec } => prepare_and_run(
                 "repository-commit-describe",
@@ -625,35 +654,6 @@ pub fn main() -> Result<()> {
                     },
                 ),
             },
-            repo::Subcommands::Verify {
-                args:
-                    free::pack::VerifyOptions {
-                        statistics,
-                        algorithm,
-                        decode,
-                        re_encode,
-                    },
-            } => prepare_and_run(
-                "repository-verify",
-                verbose,
-                progress,
-                progress_keep_open,
-                core::repository::verify::PROGRESS_RANGE,
-                move |progress, out, _err| {
-                    core::repository::verify::integrity(
-                        repository()?.into(),
-                        out,
-                        progress,
-                        &should_interrupt,
-                        core::repository::verify::Context {
-                            output_statistics: statistics.then(|| format),
-                            algorithm,
-                            verify_mode: verify_mode(decode, re_encode),
-                            thread_limit,
-                        },
-                    )
-                },
-            ),
         },
     }?;
     Ok(())
