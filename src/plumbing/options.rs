@@ -65,8 +65,9 @@ pub enum Subcommands {
     Index(index::Platform),
     /// Subcommands for interacting with entire git repositories
     Repository(repo::Platform),
-    /// Subcommands for interacting with mailmaps
-    Mailmap(mailmap::Platform),
+    /// Subcommands that need no git repository to run.
+    #[clap(subcommand)]
+    Free(free::Subcommands),
 }
 
 ///
@@ -333,6 +334,40 @@ pub mod pack {
 }
 
 ///
+pub mod free {
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Subcommands for interacting with mailmaps
+        Mailmap {
+            #[clap(flatten)]
+            cmd: mailmap::Platform,
+        },
+    }
+
+    ///
+    pub mod mailmap {
+        use std::path::PathBuf;
+
+        #[derive(Debug, clap::Parser)]
+        pub struct Platform {
+            /// The path to the mailmap file.
+            #[clap(short = 'p', long, default_value = ".mailmap")]
+            pub path: PathBuf,
+
+            /// Subcommands
+            #[clap(subcommand)]
+            pub cmd: Subcommands,
+        }
+
+        #[derive(Debug, clap::Subcommand)]
+        pub enum Subcommands {
+            /// Parse all entries in the mailmap and report malformed lines or collisions.
+            Verify,
+        }
+    }
+}
+
+///
 pub mod repo {
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
@@ -548,28 +583,6 @@ pub mod index {
             /// The directory into which to write all index entries.
             directory: PathBuf,
         },
-    }
-}
-
-///
-pub mod mailmap {
-    use std::path::PathBuf;
-
-    #[derive(Debug, clap::Parser)]
-    pub struct Platform {
-        /// The path to the mailmap file.
-        #[clap(short = 'p', long, default_value = ".mailmap")]
-        pub path: PathBuf,
-
-        /// Subcommands
-        #[clap(subcommand)]
-        pub cmd: Subcommands,
-    }
-
-    #[derive(Debug, clap::Subcommand)]
-    pub enum Subcommands {
-        /// Parse all entries in the mailmap and report malformed lines or collisions.
-        Verify,
     }
 }
 

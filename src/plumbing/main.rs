@@ -16,7 +16,7 @@ use gitoxide_core::pack::verify;
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 use crate::plumbing::options::remote;
 use crate::{
-    plumbing::options::{commitgraph, index, mailmap, pack, pack::multi_index, repo, Args, Subcommands},
+    plumbing::options::{commitgraph, free, index, pack, pack::multi_index, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 
@@ -77,16 +77,6 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
-        Subcommands::Mailmap(mailmap::Platform { path, cmd }) => match cmd {
-            mailmap::Subcommands::Verify => prepare_and_run(
-                "mailmap-verify",
-                verbose,
-                progress,
-                progress_keep_open,
-                core::mailmap::PROGRESS_RANGE,
-                move |_progress, out, _err| core::mailmap::verify(path, format, out),
-            ),
-        },
         Subcommands::Index(index::Platform {
             object_hash,
             index_path,
@@ -158,6 +148,18 @@ pub fn main() -> Result<()> {
                     core::index::verify(index_path, out, core::index::Options { object_hash, format })
                 },
             ),
+        },
+        Subcommands::Free(free::Subcommands::Mailmap { cmd }) => match cmd {
+            free::mailmap::Platform { path, cmd } => match cmd {
+                free::mailmap::Subcommands::Verify => prepare_and_run(
+                    "mailmap-verify",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    core::mailmap::PROGRESS_RANGE,
+                    move |_progress, out, _err| core::mailmap::verify(path, format, out),
+                ),
+            },
         },
         Subcommands::Repository(repo::Platform { cmd }) => match cmd {
             repo::Subcommands::Revision { cmd } => match cmd {
