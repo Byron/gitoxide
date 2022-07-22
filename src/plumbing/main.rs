@@ -16,7 +16,7 @@ use gitoxide_core::pack::verify;
 #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 use crate::plumbing::options::remote;
 use crate::{
-    plumbing::options::{commitgraph, free, index, pack, pack::multi_index, repo, Args, Subcommands},
+    plumbing::options::{commitgraph, free, index, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 
@@ -149,16 +149,270 @@ pub fn main() -> Result<()> {
                 },
             ),
         },
-        Subcommands::Free(free::Subcommands::Mailmap { cmd }) => match cmd {
-            free::mailmap::Platform { path, cmd } => match cmd {
-                free::mailmap::Subcommands::Verify => prepare_and_run(
-                    "mailmap-verify",
+        Subcommands::Free(subcommands) => match subcommands {
+            free::Subcommands::Mailmap { cmd } => match cmd {
+                free::mailmap::Platform { path, cmd } => match cmd {
+                    free::mailmap::Subcommands::Verify => prepare_and_run(
+                        "mailmap-verify",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        core::mailmap::PROGRESS_RANGE,
+                        move |_progress, out, _err| core::mailmap::verify(path, format, out),
+                    ),
+                },
+            },
+            free::Subcommands::Pack(subcommands) => match subcommands {
+                free::pack::Subcommands::Create {
+                    repository,
+                    expansion,
+                    thin,
+                    statistics,
+                    nondeterministic_count,
+                    tips,
+                    pack_cache_size_mb,
+                    counting_threads,
+                    object_cache_size_mb,
+                    output_directory,
+                } => {
+                    let has_tips = !tips.is_empty();
+                    prepare_and_run(
+                        "pack-create",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        core::pack::create::PROGRESS_RANGE,
+                        move |progress, out, _err| {
+                            let input = if has_tips { None } else { stdin_or_bail()?.into() };
+                            let repository = repository.unwrap_or_else(|| PathBuf::from("."));
+                            let context = core::pack::create::Context {
+                                thread_limit,
+                                thin,
+                                nondeterministic_thread_count: nondeterministic_count.then(|| counting_threads),
+                                pack_cache_size_in_bytes: pack_cache_size_mb.unwrap_or(0) * 1_000_000,
+                                object_cache_size_in_bytes: object_cache_size_mb.unwrap_or(0) * 1_000_000,
+                                statistics: if statistics { Some(format) } else { None },
+                                out,
+                                expansion: expansion.unwrap_or(if has_tips {
+                                    core::pack::create::ObjectExpansion::TreeTraversal
+                                } else {
+                                    core::pack::create::ObjectExpansion::None
+                                }),
+                            };
+                            core::pack::create(repository, tips, input, output_directory, progress, context)
+                        },
+                    )
+                }
+                #[cfg(feature = "gitoxide-core-async-client")]
+                pack::Subcommands::Receive {
+                    protocol,
+                    url,
+                    directory,
+                    refs,
+                    refs_directory,
+                } => {
+                    let (_handle, progress) =
+                        async_util::prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
+                    let fut = core::pack::receive(
+                        protocol,
+                        &url,
+                        directory,
+                        refs_directory,
+                        refs.into_iter().map(|s| s.into()).collect(),
+                        git_features::progress::DoOrDiscard::from(progress),
+                        core::pack::receive::Context {
+                            thread_limit,
+                            format,
+                            out: std::io::stdout(),
+                            should_interrupt,
+                            object_hash,
+                        },
+                    );
+                    return futures_lite::future::block_on(fut);
+                }
+                #[cfg(feature = "gitoxide-core-blocking-client")]
+                free::pack::Subcommands::Receive {
+                    protocol,
+                    url,
+                    directory,
+                    refs,
+                    refs_directory,
+                } => prepare_and_run(
+                    "pack-receive",
                     verbose,
                     progress,
                     progress_keep_open,
-                    core::mailmap::PROGRESS_RANGE,
-                    move |_progress, out, _err| core::mailmap::verify(path, format, out),
+                    core::pack::receive::PROGRESS_RANGE,
+                    move |progress, out, _err| {
+                        core::pack::receive(
+                            protocol,
+                            &url,
+                            directory,
+                            refs_directory,
+                            refs.into_iter().map(|r| r.into()).collect(),
+                            progress,
+                            core::pack::receive::Context {
+                                thread_limit,
+                                format,
+                                should_interrupt,
+                                out,
+                                object_hash,
+                            },
+                        )
+                    },
                 ),
+                free::pack::Subcommands::Explode {
+                    check,
+                    sink_compress,
+                    delete_pack,
+                    pack_path,
+                    object_path,
+                    verify,
+                } => prepare_and_run(
+                    "pack-explode",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    None,
+                    move |progress, _out, _err| {
+                        core::pack::explode::pack_or_pack_index(
+                            pack_path,
+                            object_path,
+                            check,
+                            progress,
+                            core::pack::explode::Context {
+                                thread_limit,
+                                delete_pack,
+                                sink_compress,
+                                verify,
+                                should_interrupt,
+                                object_hash,
+                            },
+                        )
+                    },
+                ),
+                free::pack::Subcommands::Verify {
+                    args:
+                        free::pack::VerifyOptions {
+                            algorithm,
+                            decode,
+                            re_encode,
+                            statistics,
+                        },
+                    path,
+                } => prepare_and_run(
+                    "pack-verify",
+                    verbose,
+                    progress,
+                    progress_keep_open,
+                    verify::PROGRESS_RANGE,
+                    move |progress, out, err| {
+                        let mode = verify_mode(decode, re_encode);
+                        let output_statistics = if statistics { Some(format) } else { None };
+                        verify::pack_or_pack_index(
+                            path,
+                            progress,
+                            verify::Context {
+                                output_statistics,
+                                out,
+                                err,
+                                thread_limit,
+                                mode,
+                                algorithm,
+                                should_interrupt: &should_interrupt,
+                                object_hash,
+                            },
+                        )
+                    },
+                )
+                .map(|_| ()),
+                free::pack::Subcommands::MultiIndex(free::pack::multi_index::Platform { multi_index_path, cmd }) => {
+                    match cmd {
+                        free::pack::multi_index::Subcommands::Entries => prepare_and_run(
+                            "pack-multi-index-entries",
+                            verbose,
+                            progress,
+                            progress_keep_open,
+                            core::pack::multi_index::PROGRESS_RANGE,
+                            move |_progress, out, _err| core::pack::multi_index::entries(multi_index_path, format, out),
+                        ),
+                        free::pack::multi_index::Subcommands::Info => prepare_and_run(
+                            "pack-multi-index-info",
+                            verbose,
+                            progress,
+                            progress_keep_open,
+                            core::pack::multi_index::PROGRESS_RANGE,
+                            move |_progress, out, err| {
+                                core::pack::multi_index::info(multi_index_path, format, out, err)
+                            },
+                        ),
+                        free::pack::multi_index::Subcommands::Verify => prepare_and_run(
+                            "pack-multi-index-verify",
+                            verbose,
+                            progress,
+                            progress_keep_open,
+                            core::pack::multi_index::PROGRESS_RANGE,
+                            move |progress, _out, _err| {
+                                core::pack::multi_index::verify(multi_index_path, progress, &should_interrupt)
+                            },
+                        ),
+                        free::pack::multi_index::Subcommands::Create { index_paths } => prepare_and_run(
+                            "pack-multi-index-create",
+                            verbose,
+                            progress,
+                            progress_keep_open,
+                            core::pack::multi_index::PROGRESS_RANGE,
+                            move |progress, _out, _err| {
+                                core::pack::multi_index::create(
+                                    index_paths,
+                                    multi_index_path,
+                                    progress,
+                                    &should_interrupt,
+                                    object_hash,
+                                )
+                            },
+                        ),
+                    }
+                }
+                free::pack::Subcommands::Index(subcommands) => match subcommands {
+                    free::pack::index::Subcommands::Create {
+                        iteration_mode,
+                        pack_path,
+                        directory,
+                    } => prepare_and_run(
+                        "pack-index-create",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        core::pack::index::PROGRESS_RANGE,
+                        move |progress, out, _err| {
+                            use gitoxide_core::pack::index::PathOrRead;
+                            let input = if let Some(path) = pack_path {
+                                PathOrRead::Path(path)
+                            } else {
+                                if atty::is(atty::Stream::Stdin) {
+                                    anyhow::bail!(
+                                    "Refusing to read from standard input as no path is given, but it's a terminal."
+                                )
+                                }
+                                PathOrRead::Read(Box::new(std::io::stdin()))
+                            };
+                            core::pack::index::from_pack(
+                                input,
+                                directory,
+                                progress,
+                                core::pack::index::Context {
+                                    thread_limit,
+                                    iteration_mode,
+                                    format,
+                                    out,
+                                    object_hash,
+                                    should_interrupt: &git_repository::interrupt::IS_INTERRUPTED,
+                                },
+                            )
+                        },
+                    ),
+                },
             },
         },
         Subcommands::Repository(repo::Platform { cmd }) => match cmd {
@@ -314,7 +568,7 @@ pub fn main() -> Result<()> {
             },
             repo::Subcommands::Verify {
                 args:
-                    pack::VerifyOptions {
+                    free::pack::VerifyOptions {
                         statistics,
                         algorithm,
                         decode,
@@ -341,254 +595,6 @@ pub fn main() -> Result<()> {
                     )
                 },
             ),
-        },
-        Subcommands::Pack(subcommands) => match subcommands {
-            pack::Subcommands::Create {
-                repository,
-                expansion,
-                thin,
-                statistics,
-                nondeterministic_count,
-                tips,
-                pack_cache_size_mb,
-                counting_threads,
-                object_cache_size_mb,
-                output_directory,
-            } => {
-                let has_tips = !tips.is_empty();
-                prepare_and_run(
-                    "pack-create",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    core::pack::create::PROGRESS_RANGE,
-                    move |progress, out, _err| {
-                        let input = if has_tips { None } else { stdin_or_bail()?.into() };
-                        let repository = repository.unwrap_or_else(|| PathBuf::from("."));
-                        let context = core::pack::create::Context {
-                            thread_limit,
-                            thin,
-                            nondeterministic_thread_count: nondeterministic_count.then(|| counting_threads),
-                            pack_cache_size_in_bytes: pack_cache_size_mb.unwrap_or(0) * 1_000_000,
-                            object_cache_size_in_bytes: object_cache_size_mb.unwrap_or(0) * 1_000_000,
-                            statistics: if statistics { Some(format) } else { None },
-                            out,
-                            expansion: expansion.unwrap_or(if has_tips {
-                                core::pack::create::ObjectExpansion::TreeTraversal
-                            } else {
-                                core::pack::create::ObjectExpansion::None
-                            }),
-                        };
-                        core::pack::create(repository, tips, input, output_directory, progress, context)
-                    },
-                )
-            }
-            #[cfg(feature = "gitoxide-core-async-client")]
-            pack::Subcommands::Receive {
-                protocol,
-                url,
-                directory,
-                refs,
-                refs_directory,
-            } => {
-                let (_handle, progress) =
-                    async_util::prepare(verbose, "pack-receive", core::pack::receive::PROGRESS_RANGE);
-                let fut = core::pack::receive(
-                    protocol,
-                    &url,
-                    directory,
-                    refs_directory,
-                    refs.into_iter().map(|s| s.into()).collect(),
-                    git_features::progress::DoOrDiscard::from(progress),
-                    core::pack::receive::Context {
-                        thread_limit,
-                        format,
-                        out: std::io::stdout(),
-                        should_interrupt,
-                        object_hash,
-                    },
-                );
-                return futures_lite::future::block_on(fut);
-            }
-            #[cfg(feature = "gitoxide-core-blocking-client")]
-            pack::Subcommands::Receive {
-                protocol,
-                url,
-                directory,
-                refs,
-                refs_directory,
-            } => prepare_and_run(
-                "pack-receive",
-                verbose,
-                progress,
-                progress_keep_open,
-                core::pack::receive::PROGRESS_RANGE,
-                move |progress, out, _err| {
-                    core::pack::receive(
-                        protocol,
-                        &url,
-                        directory,
-                        refs_directory,
-                        refs.into_iter().map(|r| r.into()).collect(),
-                        progress,
-                        core::pack::receive::Context {
-                            thread_limit,
-                            format,
-                            should_interrupt,
-                            out,
-                            object_hash,
-                        },
-                    )
-                },
-            ),
-            pack::Subcommands::Explode {
-                check,
-                sink_compress,
-                delete_pack,
-                pack_path,
-                object_path,
-                verify,
-            } => prepare_and_run(
-                "pack-explode",
-                verbose,
-                progress,
-                progress_keep_open,
-                None,
-                move |progress, _out, _err| {
-                    core::pack::explode::pack_or_pack_index(
-                        pack_path,
-                        object_path,
-                        check,
-                        progress,
-                        core::pack::explode::Context {
-                            thread_limit,
-                            delete_pack,
-                            sink_compress,
-                            verify,
-                            should_interrupt,
-                            object_hash,
-                        },
-                    )
-                },
-            ),
-            pack::Subcommands::Verify {
-                args:
-                    pack::VerifyOptions {
-                        algorithm,
-                        decode,
-                        re_encode,
-                        statistics,
-                    },
-                path,
-            } => prepare_and_run(
-                "pack-verify",
-                verbose,
-                progress,
-                progress_keep_open,
-                verify::PROGRESS_RANGE,
-                move |progress, out, err| {
-                    let mode = verify_mode(decode, re_encode);
-                    let output_statistics = if statistics { Some(format) } else { None };
-                    verify::pack_or_pack_index(
-                        path,
-                        progress,
-                        verify::Context {
-                            output_statistics,
-                            out,
-                            err,
-                            thread_limit,
-                            mode,
-                            algorithm,
-                            should_interrupt: &should_interrupt,
-                            object_hash,
-                        },
-                    )
-                },
-            )
-            .map(|_| ()),
-            pack::Subcommands::MultiIndex(multi_index::Platform { multi_index_path, cmd }) => match cmd {
-                pack::multi_index::Subcommands::Entries => prepare_and_run(
-                    "pack-multi-index-entries",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    core::pack::multi_index::PROGRESS_RANGE,
-                    move |_progress, out, _err| core::pack::multi_index::entries(multi_index_path, format, out),
-                ),
-                pack::multi_index::Subcommands::Info => prepare_and_run(
-                    "pack-multi-index-info",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    core::pack::multi_index::PROGRESS_RANGE,
-                    move |_progress, out, err| core::pack::multi_index::info(multi_index_path, format, out, err),
-                ),
-                pack::multi_index::Subcommands::Verify => prepare_and_run(
-                    "pack-multi-index-verify",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    core::pack::multi_index::PROGRESS_RANGE,
-                    move |progress, _out, _err| {
-                        core::pack::multi_index::verify(multi_index_path, progress, &should_interrupt)
-                    },
-                ),
-                pack::multi_index::Subcommands::Create { index_paths } => prepare_and_run(
-                    "pack-multi-index-create",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    core::pack::multi_index::PROGRESS_RANGE,
-                    move |progress, _out, _err| {
-                        core::pack::multi_index::create(
-                            index_paths,
-                            multi_index_path,
-                            progress,
-                            &should_interrupt,
-                            object_hash,
-                        )
-                    },
-                ),
-            },
-            pack::Subcommands::Index(subcommands) => match subcommands {
-                pack::index::Subcommands::Create {
-                    iteration_mode,
-                    pack_path,
-                    directory,
-                } => prepare_and_run(
-                    "pack-index-create",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    core::pack::index::PROGRESS_RANGE,
-                    move |progress, out, _err| {
-                        use gitoxide_core::pack::index::PathOrRead;
-                        let input = if let Some(path) = pack_path {
-                            PathOrRead::Path(path)
-                        } else {
-                            if atty::is(atty::Stream::Stdin) {
-                                anyhow::bail!(
-                                    "Refusing to read from standard input as no path is given, but it's a terminal."
-                                )
-                            }
-                            PathOrRead::Read(Box::new(std::io::stdin()))
-                        };
-                        core::pack::index::from_pack(
-                            input,
-                            directory,
-                            progress,
-                            core::pack::index::Context {
-                                thread_limit,
-                                iteration_mode,
-                                format,
-                                out,
-                                object_hash,
-                                should_interrupt: &git_repository::interrupt::IS_INTERRUPTED,
-                            },
-                        )
-                    },
-                ),
-            },
         },
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Subcommands::Remote(subcommands) => match subcommands {
