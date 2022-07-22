@@ -13,7 +13,7 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::{commit, odb, revision, tree};
+use crate::plumbing::options::{commit, mailmap, odb, revision, tree};
 use crate::{
     plumbing::options::{free, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
@@ -599,6 +599,16 @@ pub fn main() -> Result<()> {
                 move |_progress, out, err| core::repository::odb::info(repository()?.into(), format, out, err),
             ),
         },
+        Subcommands::Mailmap { cmd } => match cmd {
+            mailmap::Subcommands::Entries => prepare_and_run(
+                "repository-mailmap-entries",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, err| core::repository::mailmap::entries(repository()?.into(), format, out, err),
+            ),
+        },
         Subcommands::Repository(repo::Platform { cmd }) => match cmd {
             repo::Subcommands::Exclude { cmd } => match cmd {
                 repo::exclude::Subcommands::Query {
@@ -632,18 +642,6 @@ pub fn main() -> Result<()> {
                                 overrides: patterns,
                             },
                         )
-                    },
-                ),
-            },
-            repo::Subcommands::Mailmap { cmd } => match cmd {
-                repo::mailmap::Subcommands::Entries => prepare_and_run(
-                    "repository-mailmap-entries",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, err| {
-                        core::repository::mailmap::entries(repository()?.into(), format, out, err)
                     },
                 ),
             },

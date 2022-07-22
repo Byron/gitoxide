@@ -76,11 +76,24 @@ pub enum Subcommands {
         #[clap(subcommand)]
         cmd: revision::Subcommands,
     },
+    /// Interact with the mailmap.
+    Mailmap {
+        #[clap(subcommand)]
+        cmd: mailmap::Subcommands,
+    },
     /// Subcommands for interacting with entire git repositories
     Repository(repo::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+}
+
+pub mod mailmap {
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Print all entries in configured mailmaps, inform about errors as well.
+        Entries,
+    }
 }
 
 pub mod odb {
@@ -579,11 +592,6 @@ pub mod repo {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "repo")]
     pub enum Subcommands {
-        /// Interact with the mailmap.
-        Mailmap {
-            #[clap(subcommand)]
-            cmd: mailmap::Subcommands,
-        },
         /// Interact with the exclude files like .gitignore.
         Exclude {
             #[clap(subcommand)]
@@ -614,14 +622,6 @@ pub mod repo {
                 #[clap(parse(try_from_os_str = std::convert::TryFrom::try_from))]
                 pathspecs: Vec<git::path::Spec>,
             },
-        }
-    }
-
-    pub mod mailmap {
-        #[derive(Debug, clap::Subcommand)]
-        pub enum Subcommands {
-            /// Print all entries in configured mailmaps, inform about errors as well.
-            Entries,
         }
     }
 }
