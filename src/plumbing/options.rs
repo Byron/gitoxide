@@ -52,40 +52,28 @@ pub struct Args {
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
     /// Interact with the object database.
-    Odb {
-        #[clap(subcommand)]
-        cmd: odb::Subcommands,
-    },
+    #[clap(subcommand)]
+    Odb(odb::Subcommands),
     /// Interact with tree objects.
-    Tree {
-        #[clap(subcommand)]
-        cmd: tree::Subcommands,
-    },
+    #[clap(subcommand)]
+    Tree(tree::Subcommands),
     /// Interact with commit objects.
-    Commit {
-        #[clap(subcommand)]
-        cmd: commit::Subcommands,
-    },
+    #[clap(subcommand)]
+    Commit(commit::Subcommands),
     /// Verify the integrity of the entire repository
     Verify {
         #[clap(flatten)]
         args: free::pack::VerifyOptions,
     },
     /// Query and obtain information about revisions.
-    Revision {
-        #[clap(subcommand)]
-        cmd: revision::Subcommands,
-    },
+    #[clap(subcommand)]
+    Revision(revision::Subcommands),
     /// Interact with the mailmap.
-    Mailmap {
-        #[clap(subcommand)]
-        cmd: mailmap::Subcommands,
-    },
+    #[clap(subcommand)]
+    Mailmap(mailmap::Subcommands),
     /// Interact with the exclude files like .gitignore.
-    Exclude {
-        #[clap(subcommand)]
-        cmd: exclude::Subcommands,
-    },
+    #[clap(subcommand)]
+    Exclude(exclude::Subcommands),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),

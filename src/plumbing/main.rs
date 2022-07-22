@@ -503,7 +503,7 @@ pub fn main() -> Result<()> {
                 )
             },
         ),
-        Subcommands::Revision { cmd } => match cmd {
+        Subcommands::Revision(cmd) => match cmd {
             revision::Subcommands::Explain { spec } => prepare_and_run(
                 "repository-commit-describe",
                 verbose,
@@ -513,7 +513,7 @@ pub fn main() -> Result<()> {
                 move |_progress, out, _err| core::repository::revision::explain(repository()?.into(), spec, out),
             ),
         },
-        Subcommands::Commit { cmd } => match cmd {
+        Subcommands::Commit(cmd) => match cmd {
             commit::Subcommands::Describe {
                 annotated_tags,
                 all_refs,
@@ -548,7 +548,7 @@ pub fn main() -> Result<()> {
                 },
             ),
         },
-        Subcommands::Tree { cmd } => match cmd {
+        Subcommands::Tree(cmd) => match cmd {
             tree::Subcommands::Entries {
                 treeish,
                 recursive,
@@ -581,7 +581,7 @@ pub fn main() -> Result<()> {
                 },
             ),
         },
-        Subcommands::Odb { cmd } => match cmd {
+        Subcommands::Odb(cmd) => match cmd {
             odb::Subcommands::Entries => prepare_and_run(
                 "repository-odb-entries",
                 verbose,
@@ -599,7 +599,7 @@ pub fn main() -> Result<()> {
                 move |_progress, out, err| core::repository::odb::info(repository()?.into(), format, out, err),
             ),
         },
-        Subcommands::Mailmap { cmd } => match cmd {
+        Subcommands::Mailmap(cmd) => match cmd {
             mailmap::Subcommands::Entries => prepare_and_run(
                 "repository-mailmap-entries",
                 verbose,
@@ -609,7 +609,7 @@ pub fn main() -> Result<()> {
                 move |_progress, out, err| core::repository::mailmap::entries(repository()?.into(), format, out, err),
             ),
         },
-        Subcommands::Exclude { cmd } => match cmd {
+        Subcommands::Exclude(cmd) => match cmd {
             exclude::Subcommands::Query {
                 patterns,
                 pathspecs,
