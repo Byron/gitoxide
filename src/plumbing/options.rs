@@ -51,6 +51,11 @@ pub struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
+    /// Interact with commit objects.
+    Commit {
+        #[clap(subcommand)]
+        cmd: commit::Subcommands,
+    },
     /// Verify the integrity of the entire repository
     Verify {
         #[clap(flatten)]
@@ -66,6 +71,45 @@ pub enum Subcommands {
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+}
+
+pub mod commit {
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Describe the current commit or the given one using the name of the closest annotated tag in its ancestry.
+        Describe {
+            /// Use annotated tag references only, not all tags.
+            #[clap(long, short = 't', conflicts_with("all-refs"))]
+            annotated_tags: bool,
+
+            /// Use all references under the `ref/` namespaces, which includes tag references, local and remote branches.
+            #[clap(long, short = 'a', conflicts_with("annotated-tags"))]
+            all_refs: bool,
+
+            /// Only follow the first parent when traversing the commit graph.
+            #[clap(long, short = 'f')]
+            first_parent: bool,
+
+            /// Always display the long format, even if that would not be necessary as the id is located directly on a reference.
+            #[clap(long, short = 'l')]
+            long: bool,
+
+            /// Consider only the given `n` candidates. This can take longer, but potentially produces more accurate results.
+            #[clap(long, short = 'c', default_value = "10")]
+            max_candidates: usize,
+
+            /// Print information on stderr to inform about performance statistics
+            #[clap(long, short = 's')]
+            statistics: bool,
+
+            #[clap(long)]
+            /// If there was no way to describe the commit, fallback to using the abbreviated input revision.
+            always: bool,
+
+            /// A specification of the revision to use, or the current `HEAD` if unset.
+            rev_spec: Option<String>,
+        },
+    }
 }
 
 pub mod revision {
@@ -488,11 +532,6 @@ pub mod repo {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "repo")]
     pub enum Subcommands {
-        /// Interact with commit objects.
-        Commit {
-            #[clap(subcommand)]
-            cmd: commit::Subcommands,
-        },
         /// Interact with tree objects.
         Tree {
             #[clap(subcommand)]
@@ -556,45 +595,6 @@ pub mod repo {
             Entries,
             /// Provide general information about the object database.
             Info,
-        }
-    }
-
-    pub mod commit {
-        #[derive(Debug, clap::Subcommand)]
-        pub enum Subcommands {
-            /// Describe the current commit or the given one using the name of the closest annotated tag in its ancestry.
-            Describe {
-                /// Use annotated tag references only, not all tags.
-                #[clap(long, short = 't', conflicts_with("all-refs"))]
-                annotated_tags: bool,
-
-                /// Use all references under the `ref/` namespaces, which includes tag references, local and remote branches.
-                #[clap(long, short = 'a', conflicts_with("annotated-tags"))]
-                all_refs: bool,
-
-                /// Only follow the first parent when traversing the commit graph.
-                #[clap(long, short = 'f')]
-                first_parent: bool,
-
-                /// Always display the long format, even if that would not be necessary as the id is located directly on a reference.
-                #[clap(long, short = 'l')]
-                long: bool,
-
-                /// Consider only the given `n` candidates. This can take longer, but potentially produces more accurate results.
-                #[clap(long, short = 'c', default_value = "10")]
-                max_candidates: usize,
-
-                /// Print information on stderr to inform about performance statistics
-                #[clap(long, short = 's')]
-                statistics: bool,
-
-                #[clap(long)]
-                /// If there was no way to describe the commit, fallback to using the abbreviated input revision.
-                always: bool,
-
-                /// A specification of the revision to use, or the current `HEAD` if unset.
-                rev_spec: Option<String>,
-            },
         }
     }
 

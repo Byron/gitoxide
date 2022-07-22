@@ -13,7 +13,7 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::revision;
+use crate::plumbing::options::{commit, revision};
 use crate::{
     plumbing::options::{free, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
@@ -513,42 +513,42 @@ pub fn main() -> Result<()> {
                 move |_progress, out, _err| core::repository::revision::explain(repository()?.into(), spec, out),
             ),
         },
+        Subcommands::Commit { cmd } => match cmd {
+            commit::Subcommands::Describe {
+                annotated_tags,
+                all_refs,
+                first_parent,
+                always,
+                long,
+                statistics,
+                max_candidates,
+                rev_spec,
+            } => prepare_and_run(
+                "repository-commit-describe",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, err| {
+                    core::repository::commit::describe(
+                        repository()?.into(),
+                        rev_spec.as_deref(),
+                        out,
+                        err,
+                        core::repository::commit::describe::Options {
+                            all_tags: !annotated_tags,
+                            all_refs,
+                            long_format: long,
+                            first_parent,
+                            statistics,
+                            max_candidates,
+                            always,
+                        },
+                    )
+                },
+            ),
+        },
         Subcommands::Repository(repo::Platform { cmd }) => match cmd {
-            repo::Subcommands::Commit { cmd } => match cmd {
-                repo::commit::Subcommands::Describe {
-                    annotated_tags,
-                    all_refs,
-                    first_parent,
-                    always,
-                    long,
-                    statistics,
-                    max_candidates,
-                    rev_spec,
-                } => prepare_and_run(
-                    "repository-commit-describe",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, err| {
-                        core::repository::commit::describe(
-                            repository()?.into(),
-                            rev_spec.as_deref(),
-                            out,
-                            err,
-                            core::repository::commit::describe::Options {
-                                all_tags: !annotated_tags,
-                                all_refs,
-                                long_format: long,
-                                first_parent,
-                                statistics,
-                                max_candidates,
-                                always,
-                            },
-                        )
-                    },
-                ),
-            },
             repo::Subcommands::Exclude { cmd } => match cmd {
                 repo::exclude::Subcommands::Query {
                     patterns,
