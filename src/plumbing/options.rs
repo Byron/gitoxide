@@ -51,11 +51,25 @@ pub struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
+    /// Query and obtain information about revisions.
+    Revision {
+        #[clap(subcommand)]
+        cmd: revision::Subcommands,
+    },
     /// Subcommands for interacting with entire git repositories
     Repository(repo::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+}
+
+pub mod revision {
+    #[derive(Debug, clap::Subcommand)]
+    #[clap(visible_alias = "rev")]
+    pub enum Subcommands {
+        /// Provide the revision specification like `@~1` to explain.
+        Explain { spec: std::ffi::OsString },
+    }
 }
 
 ///
@@ -499,20 +513,6 @@ pub mod repo {
             #[clap(subcommand)]
             cmd: exclude::Subcommands,
         },
-        /// Query and obtain information about revisions.
-        Revision {
-            #[clap(subcommand)]
-            cmd: revision::Subcommands,
-        },
-    }
-
-    pub mod revision {
-        #[derive(Debug, clap::Subcommand)]
-        #[clap(visible_alias = "rev")]
-        pub enum Subcommands {
-            /// Provide the revision specification like `@~1` to explain.
-            Explain { spec: std::ffi::OsString },
-        }
     }
 
     pub mod exclude {

@@ -13,6 +13,7 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
+use crate::plumbing::options::revision;
 use crate::{
     plumbing::options::{free, repo, Args, Subcommands},
     shared::pretty::prepare_and_run,
@@ -473,17 +474,17 @@ pub fn main() -> Result<()> {
                 },
             },
         },
+        Subcommands::Revision { cmd } => match cmd {
+            revision::Subcommands::Explain { spec } => prepare_and_run(
+                "repository-commit-describe",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| core::repository::revision::explain(repository()?.into(), spec, out),
+            ),
+        },
         Subcommands::Repository(repo::Platform { cmd }) => match cmd {
-            repo::Subcommands::Revision { cmd } => match cmd {
-                repo::revision::Subcommands::Explain { spec } => prepare_and_run(
-                    "repository-commit-describe",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    None,
-                    move |_progress, out, _err| core::repository::revision::explain(repository()?.into(), spec, out),
-                ),
-            },
             repo::Subcommands::Commit { cmd } => match cmd {
                 repo::commit::Subcommands::Describe {
                     annotated_tags,
