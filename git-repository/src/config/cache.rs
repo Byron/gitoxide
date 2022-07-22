@@ -15,13 +15,14 @@ pub(crate) struct StageOne {
     buf: Vec<u8>,
 
     is_bare: bool,
+    lossy: Option<bool>,
     pub object_hash: git_hash::Kind,
     pub reflog: Option<git_ref::store::WriteReflog>,
 }
 
 /// Initialization
 impl StageOne {
-    pub fn new(git_dir: &std::path::Path, git_dir_trust: git_sec::Trust) -> Result<Self, Error> {
+    pub fn new(git_dir: &std::path::Path, git_dir_trust: git_sec::Trust, lossy: Option<bool>) -> Result<Self, Error> {
         let mut buf = Vec::with_capacity(512);
         let config = {
             let config_path = git_dir.join("config");
@@ -34,7 +35,7 @@ impl StageOne {
                     .with(git_dir_trust),
                 git_config::file::init::Options {
                     includes: git_config::file::includes::Options::no_follow(),
-                    ..base_options()
+                    ..base_options(lossy)
                 },
             )?
         };
@@ -64,6 +65,7 @@ impl StageOne {
             git_dir_config: config,
             buf,
             is_bare,
+            lossy,
             object_hash,
             reflog,
         })
@@ -77,6 +79,7 @@ impl Cache {
         StageOne {
             git_dir_config,
             mut buf,
+            lossy,
             is_bare,
             object_hash,
             reflog: _,
@@ -111,7 +114,7 @@ impl Cache {
             } else {
                 git_config::file::includes::Options::no_follow()
             },
-            ..base_options()
+            ..base_options(lossy)
         };
 
         let config = {
@@ -274,9 +277,9 @@ pub(crate) fn interpolate_context<'a>(
     }
 }
 
-fn base_options() -> git_config::file::init::Options<'static> {
+fn base_options(lossy: Option<bool>) -> git_config::file::init::Options<'static> {
     git_config::file::init::Options {
-        lossy: !cfg!(debug_assertions),
+        lossy: lossy.unwrap_or(!cfg!(debug_assertions)),
         ..Default::default()
     }
 }

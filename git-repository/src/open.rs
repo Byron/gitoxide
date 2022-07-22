@@ -69,6 +69,7 @@ pub struct Options {
     pub(crate) permissions: Permissions,
     pub(crate) git_dir_trust: Option<git_sec::Trust>,
     pub(crate) filter_config_section: Option<fn(&git_config::file::Metadata) -> bool>,
+    pub(crate) lossy_config: Option<bool>,
 }
 
 #[derive(Default, Clone)]
@@ -170,6 +171,15 @@ impl Options {
         self
     }
 
+    /// By default, in release mode configuration will be read without retaining non-essential information like
+    /// comments or whitespace to optimize lookup performance.
+    ///
+    /// Some application might want to toggle this to false in they want to display or edit configuration losslessly.
+    pub fn lossy_config(mut self, toggle: bool) -> Self {
+        self.lossy_config = toggle.into();
+        self
+    }
+
     /// Open a repository at `path` with the options set so far.
     pub fn open(self, path: impl Into<std::path::PathBuf>) -> Result<ThreadSafeRepository, Error> {
         ThreadSafeRepository::open_opts(path, self)
@@ -184,7 +194,8 @@ impl git_sec::trust::DefaultForLevel for Options {
                 replacement_objects: Default::default(),
                 permissions: Permissions::all(),
                 git_dir_trust: git_sec::Trust::Full.into(),
-                filter_config_section: Some(crate::config::section::is_trusted),
+                filter_config_section: Some(config::section::is_trusted),
+                lossy_config: None,
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
@@ -192,6 +203,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 permissions: Default::default(),
                 git_dir_trust: git_sec::Trust::Reduced.into(),
                 filter_config_section: Some(crate::config::section::is_trusted),
+                lossy_config: None,
             },
         }
     }
@@ -283,6 +295,7 @@ impl ThreadSafeRepository {
             object_store_slots,
             filter_config_section,
             ref replacement_objects,
+            lossy_config,
             permissions:
                 Permissions {
                     git_dir: ref git_dir_perm,
@@ -301,7 +314,7 @@ impl ThreadSafeRepository {
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
 
-        let repo_config = crate::config::cache::StageOne::new(common_dir_ref, git_dir_trust)?;
+        let repo_config = crate::config::cache::StageOne::new(common_dir_ref, git_dir_trust, lossy_config)?;
         let mut refs = {
             let reflog = repo_config.reflog.unwrap_or(git_ref::store::WriteReflog::Disable);
             let object_hash = repo_config.object_hash;

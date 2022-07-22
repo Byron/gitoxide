@@ -11,6 +11,7 @@ pub fn list(
     if format != OutputFormat::Human {
         bail!("Only human output format is supported at the moment");
     }
+    let repo = git::open_opts(repo.git_dir(), repo.open_options().clone().lossy_config(false))?;
     let config = repo.config_snapshot();
     let config = config.plumbing();
     if let Some(frontmatter) = config.frontmatter() {
