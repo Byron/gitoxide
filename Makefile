@@ -244,7 +244,7 @@ stress: ## Run various algorithms on big repositories
 	time ./target/release/gix --verbose no-repo pack verify --re-encode $(linux_repo)/objects/pack/*.idx
 	time ./target/release/gix --verbose no-repo pack multi-index -i $(linux_repo)/objects/pack/multi-pack-index create $(linux_repo)/objects/pack/*.idx
 	time ./target/release/gix --verbose no-repo pack verify $(linux_repo)/objects/pack/multi-pack-index
-	rm -Rf out; mkdir out && time ./target/release/gix --verbose pack index create -p $(linux_repo)/objects/pack/*.pack out/
+	rm -Rf out; mkdir out && time ./target/release/gix --verbose no-repo pack index create -p $(linux_repo)/objects/pack/*.pack out/
 	time ./target/release/gix --verbose no-repo pack verify out/*.idx
 
 	time ./target/release/gix --verbose no-repo pack verify --statistics $(rust_repo)/objects/pack/*.idx
