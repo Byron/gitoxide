@@ -154,6 +154,13 @@ impl Options {
     ///
     /// If not called explicitly, it will be determined by looking at its
     /// ownership via [`git_sec::Trust::from_path_ownership()`].
+    ///
+    /// # Security Warning
+    ///
+    /// Use with extreme care and only if it's absolutely known that the repository
+    /// is always controlled by the desired user. Using this capability _only_ saves
+    /// a permission check and only so if the [`open()`][Self::open()] method is used,
+    /// as opposed to discovery.
     pub fn with(mut self, trust: git_sec::Trust) -> Self {
         self.git_dir_trust = trust.into();
         self

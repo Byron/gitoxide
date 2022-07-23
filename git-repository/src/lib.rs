@@ -426,6 +426,12 @@ pub mod discover {
         /// Try to open a git repository in `directory` and search upwards through its parents until one is found,
         /// while applying `options`. Then use the `trust_map` to determine which of our own repository options to use
         /// for instantiations.
+        ///
+        /// Note that [trust overrides](crate::open::Options::with()) in the `trust_map` are not effective here and we will
+        /// always override it with the determined trust value. This is a precaution as the API user is unable to actually know
+        /// if the directory that is discovered can indeed be trusted (or else they'd have to implement the discovery themselves
+        /// and be sure that no attacker ever gets access to a directory structure. The cost of this is a permission check, which
+        /// seems acceptable).
         pub fn discover_opts(
             directory: impl AsRef<Path>,
             options: upwards::Options,
