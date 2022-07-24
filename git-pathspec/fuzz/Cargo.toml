@@ -19,7 +19,7 @@ path = ".."
 members = ["."]
 
 [[bin]]
-name = "parser"
-path = "fuzz_targets/parser.rs"
+name = "parse"
+path = "fuzz_targets/parse.rs"
 test = false
 doc = false
