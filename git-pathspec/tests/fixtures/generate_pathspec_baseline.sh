@@ -15,6 +15,9 @@ function baseline() {
 
 # success
 
+# special 'there is no pathspec' spec
+baseline ':'
+
 # repeated_matcher_keywords
 baseline ':(glob,glob)'
 baseline ':(literal,literal)'

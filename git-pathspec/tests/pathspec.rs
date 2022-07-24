@@ -3,7 +3,7 @@ pub use git_testtools::Result;
 mod parse {
     use bstr::{BStr, BString, ByteSlice};
     use git_attributes::State;
-    use git_pathspec::{MagicSignature, Pattern, SearchMode};
+    use git_pathspec::{MagicSignature, MatchMode, Pattern};
     use once_cell::sync::Lazy;
     use std::collections::HashMap;
 
@@ -11,7 +11,7 @@ mod parse {
     struct PatternForTesting {
         path: BString,
         signature: MagicSignature,
-        search_mode: SearchMode,
+        search_mode: MatchMode,
         attributes: Vec<(BString, State)>,
     }
 
@@ -52,13 +52,18 @@ mod parse {
             pat_with_sig,
         };
         use git_attributes::State;
-        use git_pathspec::{MagicSignature, SearchMode};
+        use git_pathspec::{MagicSignature, MatchMode};
+
+        #[test]
+        fn there_is_no_pathspec_pathspec() {
+            check_valid_inputs(Some((":", pat_with_attrs(vec![]))));
+        }
 
         #[test]
         fn repeated_matcher_keywords() {
             let input = vec![
-                (":(glob,glob)", pat_with_search_mode(SearchMode::PathAwareGlob)),
-                (":(literal,literal)", pat_with_search_mode(SearchMode::Literal)),
+                (":(glob,glob)", pat_with_search_mode(MatchMode::PathAwareGlob)),
+                (":(literal,literal)", pat_with_search_mode(MatchMode::Literal)),
                 (":(top,top)", pat_with_sig(MagicSignature::TOP)),
                 (":(icase,icase)", pat_with_sig(MagicSignature::ICASE)),
                 (":(attr,attr)", pat_with_attrs(vec![])),
@@ -134,27 +139,27 @@ mod parse {
                 (":(icase)", pat_with_sig(MagicSignature::ICASE)),
                 (":(attr)", pat_with_path("")),
                 (":(exclude)", pat_with_sig(MagicSignature::EXCLUDE)),
-                (":(literal)", pat_with_search_mode(SearchMode::Literal)),
-                (":(glob)", pat_with_search_mode(SearchMode::PathAwareGlob)),
+                (":(literal)", pat_with_search_mode(MatchMode::Literal)),
+                (":(glob)", pat_with_search_mode(MatchMode::PathAwareGlob)),
                 (
                     ":(top,exclude)",
                     pat_with_sig(MagicSignature::TOP | MagicSignature::EXCLUDE),
                 ),
                 (
                     ":(icase,literal)",
-                    pat("", MagicSignature::ICASE, SearchMode::Literal, vec![]),
+                    pat("", MagicSignature::ICASE, MatchMode::Literal, vec![]),
                 ),
                 (
                     ":!(literal)some/*path",
-                    pat("some/*path", MagicSignature::EXCLUDE, SearchMode::Literal, vec![]),
+                    pat("some/*path", MagicSignature::EXCLUDE, MatchMode::Literal, vec![]),
                 ),
                 (
                     ":(top,literal,icase,attr,exclude)some/path",
-                    pat("some/path", MagicSignature::all(), SearchMode::Literal, vec![]),
+                    pat("some/path", MagicSignature::all(), MatchMode::Literal, vec![]),
                 ),
                 (
                     ":(top,glob,icase,attr,exclude)some/path",
-                    pat("some/path", MagicSignature::all(), SearchMode::PathAwareGlob, vec![]),
+                    pat("some/path", MagicSignature::all(), MatchMode::PathAwareGlob, vec![]),
                 ),
             ];
 
@@ -433,7 +438,7 @@ mod parse {
         }
     }
 
-    fn check_valid_inputs(inputs: Vec<(&str, PatternForTesting)>) {
+    fn check_valid_inputs<'a>(inputs: impl IntoIterator<Item = (&'a str, PatternForTesting)>) {
         inputs.into_iter().for_each(|(input, expected)| {
             assert!(
                 check_against_baseline(input),
@@ -453,25 +458,25 @@ mod parse {
     }
 
     fn pat_with_path_and_sig(path: &str, signature: MagicSignature) -> PatternForTesting {
-        pat(path, signature, SearchMode::ShellGlob, vec![])
+        pat(path, signature, MatchMode::ShellGlob, vec![])
     }
 
     fn pat_with_sig(signature: MagicSignature) -> PatternForTesting {
-        pat("", signature, SearchMode::ShellGlob, vec![])
+        pat("", signature, MatchMode::ShellGlob, vec![])
     }
 
     fn pat_with_attrs(attrs: Vec<(&'static str, State)>) -> PatternForTesting {
-        pat("", MagicSignature::empty(), SearchMode::ShellGlob, attrs)
+        pat("", MagicSignature::empty(), MatchMode::ShellGlob, attrs)
     }
 
-    fn pat_with_search_mode(search_mode: SearchMode) -> PatternForTesting {
+    fn pat_with_search_mode(search_mode: MatchMode) -> PatternForTesting {
         pat("", MagicSignature::empty(), search_mode, vec![])
     }
 
     fn pat(
         path: &str,
         signature: MagicSignature,
-        search_mode: SearchMode,
+        search_mode: MatchMode,
         attributes: Vec<(&str, State)>,
     ) -> PatternForTesting {
         PatternForTesting {

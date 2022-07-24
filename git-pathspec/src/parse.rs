@@ -1,8 +1,10 @@
-use crate::{MagicSignature, Pattern, SearchMode};
+use crate::{MagicSignature, MatchMode, Pattern};
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
 
+/// The error returned by [parse()][crate::parse()].
 #[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("Empty string is not a valid pathspec")]
     EmptyString,
@@ -27,6 +29,7 @@ pub enum Error {
 }
 
 impl Pattern {
+    /// Try to parse a path-spec pattern from the given `input` bytes.
     pub fn from_bytes(input: &[u8]) -> Result<Self, Error> {
         if input.is_empty() {
             return Err(Error::EmptyString);
@@ -35,7 +38,7 @@ impl Pattern {
         let mut p = Pattern {
             path: BString::default(),
             signature: MagicSignature::empty(),
-            search_mode: SearchMode::ShellGlob,
+            search_mode: MatchMode::ShellGlob,
             attributes: Vec::new(),
         };
 
@@ -87,7 +90,7 @@ fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Res
     let input = &input[*cursor..end];
     *cursor = end + 1;
 
-    debug_assert_eq!(p.search_mode, SearchMode::default());
+    debug_assert_eq!(p.search_mode, MatchMode::default());
 
     if input.is_empty() {
         return Ok(());
@@ -100,12 +103,12 @@ fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Res
             b"icase" => p.signature |= MagicSignature::ICASE,
             b"exclude" => p.signature |= MagicSignature::EXCLUDE,
             b"literal" => match p.search_mode {
-                SearchMode::PathAwareGlob => return Err(Error::IncompatibleSearchModes),
-                _ => p.search_mode = SearchMode::Literal,
+                MatchMode::PathAwareGlob => return Err(Error::IncompatibleSearchModes),
+                _ => p.search_mode = MatchMode::Literal,
             },
             b"glob" => match p.search_mode {
-                SearchMode::Literal => return Err(Error::IncompatibleSearchModes),
-                _ => p.search_mode = SearchMode::PathAwareGlob,
+                MatchMode::Literal => return Err(Error::IncompatibleSearchModes),
+                _ => p.search_mode = MatchMode::PathAwareGlob,
             },
             _ if keyword.starts_with(b"attr:") => {
                 if p.attributes.is_empty() {
