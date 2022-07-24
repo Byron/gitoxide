@@ -1,9 +1,4 @@
-# git-pathspec
-
-## TODOs
-
-- [x] parsing
-- [ ] matching
+# `git-pathspec`
 
 **Note**
 - There is one additional keyword that `git` can parse, but that this crate doesn't support yet: the `prefix` keyword
