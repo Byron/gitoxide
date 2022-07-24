@@ -307,7 +307,7 @@ fn expand(
 ) -> Result<ExpandedAttribute<'_>, parse::Error> {
     let (pattern, attrs, line_no) = input?;
     let attrs = attrs
-        .map(|r| r.map(|attr| (attr.name.as_bstring(), attr.state)))
+        .map(|r| r.map(|attr| (attr.name.as_str().into(), attr.state)))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| parse::Error::AttributeName {
             attribute: e.attribute,

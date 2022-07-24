@@ -24,7 +24,7 @@ mod parse {
                 attributes: p
                     .attributes
                     .into_iter()
-                    .map(|attr| (attr.name.as_bstring(), attr.state))
+                    .map(|attr| (attr.name.as_str().into(), attr.state))
                     .collect(),
             }
         }

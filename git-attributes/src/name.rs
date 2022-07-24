@@ -9,9 +9,11 @@ impl<'a> NameRef<'a> {
     pub fn as_str(&self) -> &str {
         self.0
     }
+}
 
-    pub fn as_bstring(self) -> BString {
-        self.0.into()
+impl AsRef<str> for NameRef<'_> {
+    fn as_ref(&self) -> &str {
+        self.0
     }
 }
 
@@ -23,9 +25,11 @@ impl<'a> Name {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
+}
 
-    pub fn as_bstring(self) -> BString {
-        self.0.as_str().into()
+impl AsRef<str> for Name {
+    fn as_ref(&self) -> &str {
+        self.0.as_str()
     }
 }
 
