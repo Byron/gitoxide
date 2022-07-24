@@ -77,7 +77,7 @@ pub struct NameRef<'a>(&'a str);
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Assignment {
-    /// The name of the attribute.
+    /// The validated name of the attribute.
     pub name: Name,
     /// The state of the attribute.
     pub state: State,

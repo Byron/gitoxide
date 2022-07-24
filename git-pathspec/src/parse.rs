@@ -6,17 +6,17 @@ use std::borrow::Cow;
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error("Empty string is not a valid pathspec")]
+    #[error("An empty string is not a valid pathspec")]
     EmptyString,
-    #[error("Found {:?} in signature, which is not a valid keyword", keyword)]
+    #[error("Found {keyword:?} in signature, which is not a valid keyword")]
     InvalidKeyword { keyword: BString },
-    #[error("Unimplemented short keyword: {:?}", short_keyword)]
+    #[error("Unimplemented short keyword: {short_keyword:?}")]
     Unimplemented { short_keyword: char },
     #[error("Missing ')' at the end of pathspec signature")]
     MissingClosingParenthesis,
-    #[error("Attribute has non-ascii characters or starts with '-': {:?}", attribute)]
+    #[error("Attribute has non-ascii characters or starts with '-': {attribute:?}")]
     InvalidAttribute { attribute: BString },
-    #[error("Invalid character in attribute value: {:?}", character)]
+    #[error("Invalid character in attribute value: {character:?}")]
     InvalidAttributeValue { character: char },
     #[error("Escape character '\\' is not allowed as the last character in an attribute value")]
     TrailingEscapeCharacter,
