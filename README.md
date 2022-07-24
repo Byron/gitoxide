@@ -107,7 +107,7 @@ Documentation is complete and was reviewed at least once.
 These crates may be missing some features and thus are somewhat incomplete, but what's there
 is usable to some extend.
 
-* **usable** _(with rough but complete docs)_
+* **usable** _(with rough but complete docs, possibly incomplete functionality)_
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
   * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
   * [git-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-object)
@@ -129,12 +129,12 @@ is usable to some extend.
   * [git-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-path)
   * [git-repository](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository)
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
+  * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
   * [git-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-worktree)
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
-  * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
   * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
 * **idea** _(just a name placeholder)_
