@@ -94,9 +94,10 @@ fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Res
         return Ok(());
     }
 
-    for keyword in split_on_non_escaped_char(input, b',') {
+    split_on_non_escaped_char(input, b',', |keyword| {
+        let attr_prefix = b"attr:";
         match keyword {
-            b"attr" => continue,
+            b"attr" => {}
             b"top" => p.signature |= MagicSignature::TOP,
             b"icase" => p.signature |= MagicSignature::ICASE,
             b"exclude" => p.signature |= MagicSignature::EXCLUDE,
@@ -108,9 +109,9 @@ fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Res
                 MatchMode::Literal => return Err(Error::IncompatibleSearchModes),
                 _ => p.search_mode = MatchMode::PathAwareGlob,
             },
-            _ if keyword.starts_with(b"attr:") => {
+            _ if keyword.starts_with(attr_prefix) => {
                 if p.attributes.is_empty() {
-                    p.attributes = parse_attributes(&keyword[5..])?;
+                    p.attributes = parse_attributes(&keyword[attr_prefix.len()..])?;
                 } else {
                     return Err(Error::MultipleAttributeSpecifications);
                 }
@@ -120,25 +121,28 @@ fn parse_long_keywords(input: &[u8], p: &mut Pattern, cursor: &mut usize) -> Res
                     keyword: BString::from(keyword),
                 });
             }
-        }
-    }
-
-    Ok(())
+        };
+        Ok(())
+    })
 }
 
-fn split_on_non_escaped_char(input: &[u8], split_char: u8) -> Vec<&[u8]> {
-    let mut keywords = Vec::new();
+fn split_on_non_escaped_char(
+    input: &[u8],
+    split_char: u8,
+    mut f: impl FnMut(&[u8]) -> Result<(), Error>,
+) -> Result<(), Error> {
     let mut i = 0;
     let mut last = 0;
     for window in input.windows(2) {
         i += 1;
         if window[0] != b'\\' && window[1] == split_char {
-            keywords.push(&input[last..i]);
+            let keyword = &input[last..i];
+            f(keyword)?;
             last = i + 1;
         }
     }
-    keywords.push(&input[last..]);
-    keywords
+    let last_keyword = &input[last..];
+    f(last_keyword)
 }
 
 fn parse_attributes(input: &[u8]) -> Result<Vec<git_attributes::Assignment>, Error> {
@@ -175,7 +179,7 @@ fn unescape_attribute_values(input: &BStr) -> Result<Cow<'_, BStr>, Error> {
             match out {
                 Cow::Borrowed(_) => {
                     let end = out.len() + attr.len() + 1;
-                    out = Cow::Borrowed(&input[0..end.min(input.len())])
+                    out = Cow::Borrowed(&input[0..end.min(input.len())]);
                 }
                 Cow::Owned(_) => {
                     let out = out.to_mut();
