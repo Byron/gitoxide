@@ -16,7 +16,7 @@ pub fn join<O1: Send, O2: Send>(left: impl FnOnce() -> O1 + Send, right: impl Fn
 /// That way it's possible to handle threads without needing the 'static lifetime for data they interact with.
 ///
 /// Note that the threads should not rely on actual parallelism as threading might be turned off entirely, hence should not
-/// connect each other with channels as deadlock would occour in single-threaded mode.
+/// connect each other with channels as deadlock would occur in single-threaded mode.
 pub fn threads<'env, F, R>(f: F) -> std::thread::Result<R>
 where
     F: FnOnce(&crossbeam_utils::thread::Scope<'env>) -> R,
@@ -85,7 +85,7 @@ where
 }
 
 /// An experiment to have fine-grained per-item parallelization with built-in aggregation via thread state.
-/// This is only good for operations where near-random access isn't detremental, so it's not usually great
+/// This is only good for operations where near-random access isn't detrimental, so it's not usually great
 /// for file-io as it won't make use of sorted inputs well.
 /// Note that `periodic` is not guaranteed to be called in case other threads come up first and finish too fast.
 // TODO: better docs

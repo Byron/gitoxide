@@ -111,7 +111,7 @@ fn known_and_unknown_sections_are_sorted() {
                         markdown: "- initial release\n\n".into()
                     },
                     Segment::User {
-                        markdown: "### Something inbetween\n\nintermezzo\n".into()
+                        markdown: "### Something in between\n\nintermezzo\n".into()
                     },
                 ]
             },

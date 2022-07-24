@@ -1,16 +1,17 @@
 mod interpolate {
-    use std::borrow::Cow;
-    use std::path::Path;
+    use std::{
+        borrow::Cow,
+        path::{Path, PathBuf},
+    };
 
-    use git_config::values::Path as InterpolatingPath;
+    use git_config::{path, path::interpolate::Error};
 
-    use crate::values::b;
-    use git_config::values::path::interpolate::Error;
+    use crate::{file::cow_str, value::b};
 
     #[test]
     fn backslash_is_not_special_and_they_are_not_escaping_anything() -> crate::Result {
         for path in ["C:\\foo\\bar", "/foo/bar"] {
-            let actual = InterpolatingPath::from(Cow::Borrowed(b(path))).interpolate(None, None)?;
+            let actual = git_config::Path::from(Cow::Borrowed(b(path))).interpolate(Default::default())?;
             assert_eq!(actual, Path::new(path));
             assert!(
                 matches!(actual, Cow::Borrowed(_)),
@@ -31,15 +32,15 @@ mod interpolate {
     #[test]
     fn prefix_substitutes_git_install_dir() {
         for git_install_dir in &["/tmp/git", "C:\\git"] {
-            for (val, expected) in &[
-                (&b"%(prefix)/foo/bar"[..], "foo/bar"),
-                (b"%(prefix)/foo\\bar", "foo\\bar"),
-            ] {
+            for (val, expected) in &[("%(prefix)/foo/bar", "foo/bar"), ("%(prefix)/foo\\bar", "foo\\bar")] {
                 let expected =
-                    &std::path::PathBuf::from(format!("{}{}{}", git_install_dir, std::path::MAIN_SEPARATOR, expected));
+                    std::path::PathBuf::from(format!("{}{}{}", git_install_dir, std::path::MAIN_SEPARATOR, expected));
                 assert_eq!(
-                    &*InterpolatingPath::from(Cow::Borrowed(*val))
-                        .interpolate(Path::new(git_install_dir).into(), None)
+                    git_config::Path::from(cow_str(val))
+                        .interpolate(path::interpolate::Context {
+                            git_install_dir: Path::new(git_install_dir).into(),
+                            ..Default::default()
+                        })
                         .unwrap(),
                     expected,
                     "prefix interpolation keeps separators as they are"
@@ -53,8 +54,11 @@ mod interpolate {
         let path = "./%(prefix)/foo/bar";
         let git_install_dir = "/tmp/git";
         assert_eq!(
-            InterpolatingPath::from(Cow::Borrowed(b(path)))
-                .interpolate(Path::new(git_install_dir).into(), None)
+            git_config::Path::from(Cow::Borrowed(b(path)))
+                .interpolate(path::interpolate::Context {
+                    git_install_dir: Path::new(git_install_dir).into(),
+                    ..Default::default()
+                })
                 .unwrap(),
             Path::new(path)
         );
@@ -67,18 +71,22 @@ mod interpolate {
     }
 
     #[test]
-    fn tilde_slash_substitutes_current_user() {
-        let path = &b"~/foo/bar"[..];
-        let home = std::env::current_dir().unwrap();
-        let expected = format!("{}{}foo/bar", home.display(), std::path::MAIN_SEPARATOR);
+    fn tilde_slash_substitutes_current_user() -> crate::Result {
+        let path = "~/user/bar";
+        let home = std::env::current_dir()?;
+        let expected = home.join("user").join("bar");
         assert_eq!(
-            InterpolatingPath::from(Cow::Borrowed(path))
-                .interpolate(None, Some(&home))
+            git_config::Path::from(cow_str(path))
+                .interpolate(path::interpolate::Context {
+                    home_dir: Some(&home),
+                    home_for_user: Some(home_for_user),
+                    ..Default::default()
+                })
                 .unwrap()
                 .as_ref(),
-            Path::new(&expected),
-            "note that path separators are not turned into slashes as we work with `std::path::Path`"
+            expected
         );
+        Ok(())
     }
 
     #[cfg(windows)]
@@ -93,25 +101,27 @@ mod interpolate {
     #[cfg(not(windows))]
     #[test]
     fn tilde_with_given_user() -> crate::Result {
-        let user = std::env::var("USER")?;
-        let home = std::env::var("HOME")?;
-        let specific_user_home = format!("~{}", user);
+        let home = std::env::current_dir()?;
 
         for path_suffix in &["foo/bar", "foo\\bar", ""] {
-            let path = format!("{}{}{}", specific_user_home, std::path::MAIN_SEPARATOR, path_suffix);
-            let expected = format!("{}{}{}", home, std::path::MAIN_SEPARATOR, path_suffix);
-            assert_eq!(
-                interpolate_without_context(path)?,
-                Path::new(&expected),
-                "it keeps path separators as is"
-            );
+            let path = format!("~user{}{}", std::path::MAIN_SEPARATOR, path_suffix);
+            let expected = home.join("user").join(path_suffix);
+
+            assert_eq!(interpolate_without_context(path)?, expected);
         }
         Ok(())
     }
 
     fn interpolate_without_context(
         path: impl AsRef<str>,
-    ) -> Result<Cow<'static, Path>, git_config::values::path::interpolate::Error> {
-        InterpolatingPath::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(None, None)
+    ) -> Result<Cow<'static, Path>, git_config::path::interpolate::Error> {
+        git_config::Path::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(path::interpolate::Context {
+            home_for_user: Some(home_for_user),
+            ..Default::default()
+        })
+    }
+
+    fn home_for_user(name: &str) -> Option<PathBuf> {
+        std::env::current_dir().unwrap().join(name).into()
     }
 }

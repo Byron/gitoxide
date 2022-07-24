@@ -2,6 +2,16 @@ use bstr::ByteSlice;
 use git_date::{time::Sign, Time};
 
 #[test]
+fn is_set() {
+    assert!(!Time::default().is_set());
+    assert!(Time {
+        seconds_since_unix_epoch: 1,
+        ..Default::default()
+    }
+    .is_set());
+}
+
+#[test]
 fn write_to() -> Result<(), Box<dyn std::error::Error>> {
     for (time, expected) in &[
         (

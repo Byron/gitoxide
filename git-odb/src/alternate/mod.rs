@@ -18,6 +18,8 @@
 //! Based on the [canonical implementation](https://github.com/git/git/blob/master/sha1-file.c#L598:L609).
 use std::{fs, io, path::PathBuf};
 
+use git_path::realpath::MAX_SYMLINKS;
+
 ///
 pub mod parse;
 
@@ -45,13 +47,13 @@ pub fn resolve(objects_directory: impl Into<PathBuf>) -> Result<Vec<PathBuf>, Er
     let mut dirs = vec![(0, relative_base.clone())];
     let mut out = Vec::new();
     let cwd = std::env::current_dir()?;
-    let mut seen = vec![git_path::realpath(&relative_base, &cwd)?];
+    let mut seen = vec![git_path::realpath_opts(&relative_base, &cwd, MAX_SYMLINKS)?];
     while let Some((depth, dir)) = dirs.pop() {
         match fs::read(dir.join("info").join("alternates")) {
             Ok(input) => {
                 for path in parse::content(&input)?.into_iter() {
                     let path = relative_base.join(path);
-                    let path_canonicalized = git_path::realpath(&path, &cwd)?;
+                    let path_canonicalized = git_path::realpath_opts(&path, &cwd, MAX_SYMLINKS)?;
                     if seen.contains(&path_canonicalized) {
                         return Err(Error::Cycle(seen));
                     }

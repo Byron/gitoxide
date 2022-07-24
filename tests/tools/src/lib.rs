@@ -9,6 +9,7 @@ use std::{
 pub use bstr;
 use bstr::{BStr, ByteSlice};
 use io_close::Close;
+pub use is_ci;
 use nom::error::VerboseError;
 use once_cell::sync::Lazy;
 use parking_lot::Mutex;
@@ -407,5 +408,32 @@ fn family_name() -> &'static str {
 pub fn sleep_forever() -> ! {
     loop {
         std::thread::sleep(std::time::Duration::from_secs(u64::MAX))
+    }
+}
+
+#[derive(Default)]
+pub struct Env<'a> {
+    altered_vars: Vec<&'a str>,
+}
+
+impl<'a> Env<'a> {
+    pub fn new() -> Self {
+        Env {
+            altered_vars: Vec::new(),
+        }
+    }
+
+    pub fn set(mut self, var: &'a str, value: impl Into<String>) -> Self {
+        std::env::set_var(var, value.into());
+        self.altered_vars.push(var);
+        self
+    }
+}
+
+impl<'a> Drop for Env<'a> {
+    fn drop(&mut self) {
+        for var in &self.altered_vars {
+            std::env::remove_var(var);
+        }
     }
 }

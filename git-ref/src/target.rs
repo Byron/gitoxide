@@ -1,9 +1,8 @@
 use std::{convert::TryFrom, fmt};
 
 use git_hash::{oid, ObjectId};
-use git_object::bstr::BStr;
 
-use crate::{FullName, Kind, Target, TargetRef};
+use crate::{FullName, FullNameRef, Kind, Target, TargetRef};
 
 impl<'a> TargetRef<'a> {
     /// Returns the kind of the target the ref is pointing to.
@@ -28,14 +27,14 @@ impl<'a> TargetRef<'a> {
         }
     }
     /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
-    pub fn try_name(&self) -> Option<&BStr> {
+    pub fn try_name(&self) -> Option<&FullNameRef> {
         match self {
-            TargetRef::Symbolic(path) => Some(path.as_bstr()),
+            TargetRef::Symbolic(name) => Some(name),
             TargetRef::Peeled(_) => None,
         }
     }
     /// Convert this instance into an owned version, without consuming it.
-    pub fn into_owned(self) -> crate::Target {
+    pub fn into_owned(self) -> Target {
         self.into()
     }
 }
@@ -58,10 +57,10 @@ impl Target {
     }
 
     /// Interpret this owned Target as shared Target
-    pub fn to_ref(&self) -> crate::TargetRef<'_> {
+    pub fn to_ref(&self) -> TargetRef<'_> {
         match self {
-            Target::Peeled(oid) => crate::TargetRef::Peeled(oid),
-            Target::Symbolic(name) => crate::TargetRef::Symbolic(name.as_ref()),
+            Target::Peeled(oid) => TargetRef::Peeled(oid),
+            Target::Symbolic(name) => TargetRef::Symbolic(name.as_ref()),
         }
     }
 
@@ -95,28 +94,28 @@ impl Target {
         }
     }
     /// Interpret this target as name of the reference it points to which maybe `None` if it an object id.
-    pub fn try_name(&self) -> Option<&BStr> {
+    pub fn try_name(&self) -> Option<&FullNameRef> {
         match self {
-            Target::Symbolic(name) => Some(name.as_bstr()),
+            Target::Symbolic(name) => Some(name.as_ref()),
             Target::Peeled(_) => None,
         }
     }
 }
 
-impl<'a> From<crate::TargetRef<'a>> for Target {
-    fn from(src: crate::TargetRef<'a>) -> Self {
+impl<'a> From<TargetRef<'a>> for Target {
+    fn from(src: TargetRef<'a>) -> Self {
         match src {
-            crate::TargetRef::Peeled(oid) => Target::Peeled(oid.to_owned()),
-            crate::TargetRef::Symbolic(name) => Target::Symbolic(name.to_owned()),
+            TargetRef::Peeled(oid) => Target::Peeled(oid.to_owned()),
+            TargetRef::Symbolic(name) => Target::Symbolic(name.to_owned()),
         }
     }
 }
 
-impl<'a> PartialEq<crate::TargetRef<'a>> for Target {
-    fn eq(&self, other: &crate::TargetRef<'a>) -> bool {
+impl<'a> PartialEq<TargetRef<'a>> for Target {
+    fn eq(&self, other: &TargetRef<'a>) -> bool {
         match (self, other) {
-            (Target::Peeled(lhs), crate::TargetRef::Peeled(rhs)) => lhs == rhs,
-            (Target::Symbolic(lhs), crate::TargetRef::Symbolic(rhs)) => lhs.as_bstr() == rhs.as_bstr(),
+            (Target::Peeled(lhs), TargetRef::Peeled(rhs)) => lhs == rhs,
+            (Target::Symbolic(lhs), TargetRef::Symbolic(rhs)) => lhs.as_bstr() == rhs.as_bstr(),
             _ => false,
         }
     }

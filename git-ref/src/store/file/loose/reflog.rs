@@ -106,11 +106,14 @@ pub mod create_or_update {
             new: &oid,
             committer: git_actor::SignatureRef<'_>,
             message: &BStr,
-            force_create_reflog: bool,
+            mut force_create_reflog: bool,
         ) -> Result<(), Error> {
             let (reflog_base, full_name) = self.reflog_base_and_relative_path(name);
             match self.write_reflog {
-                WriteReflog::Normal => {
+                WriteReflog::Normal | WriteReflog::Always => {
+                    if self.write_reflog == WriteReflog::Always {
+                        force_create_reflog = true;
+                    }
                     let mut options = std::fs::OpenOptions::new();
                     options.append(true).read(false);
                     let log_path = reflog_base.join(&full_name);

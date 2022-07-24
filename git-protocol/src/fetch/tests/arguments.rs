@@ -239,7 +239,7 @@ mod v2 {
 0009done
 0000"
                 .as_bstr(),
-            "we filter features/capabilities without value as these apparently sholdn't be listed (remote dies otherwise)"
+            "we filter features/capabilities without value as these apparently shouldn't be listed (remote dies otherwise)"
         );
     }
 

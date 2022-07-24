@@ -2,7 +2,7 @@ use bstr::BStr;
 
 use crate::Entry;
 
-/// Acccess
+/// Access
 impl<'a> Entry<'a> {
     /// The name to map to.
     pub fn new_name(&self) -> Option<&'a BStr> {

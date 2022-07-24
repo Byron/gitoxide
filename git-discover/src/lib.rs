@@ -4,6 +4,9 @@
 #![forbid(unsafe_code, rust_2018_idioms)]
 #![deny(missing_docs)]
 
+/// The name of the `.git` directory.
+pub const DOT_GIT_DIR: &str = ".git";
+
 ///
 pub mod repository;
 

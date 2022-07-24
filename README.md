@@ -27,52 +27,53 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
           * Based on the [git-hours] algorithm.
           * See the [discussion][git-hours-discussion] for some performance data.
   * **the `gix` program** _(plumbing)_ - lower level commands for use in automation
-    * **pack**
-      * [x] [verify](https://asciinema.org/a/352942)
-      * [x] [index verify](https://asciinema.org/a/352945) including each object sha1 and statistics
-      * [x] [explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
-        * [x] verify written objects (by reading them back from disk)
-      * [x] [receive](https://asciinema.org/a/359321) - receive a whole pack produced by **pack-send** or _git-upload-pack_, useful for `clone` like operations.
-      * [x] **create** - create a pack from given objects or tips of the commit graph.
-      * [ ] **send** - create a pack and send it using the pack protocol to stdout, similar to 'git-upload-pack', 
-            for consumption by **pack-receive** or _git-receive-pack_
-      - **multi-index**
-          * [x] **info** - print information about the file
-          * [x] **create** - create a multi-index from pack indices
-          * [x] **verify** - check the file for consistency
-          * [x] **entries** - list all entries of the file
-      - **index**
-          * [x] [create](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
-             * [x] support for thin packs (as needed for fetch/pull)
-    * **commit-graph**
-      * [x] **verify** - assure that a commit-graph is consistent
+    * **config** - list the complete git configuration in human-readable form and optionally filter sections by name.
+    * **exclude**
+        * [x] **query** - check if path specs are excluded via gits exclusion rules like `.gitignore`.
+    * **verify** - validate a whole repository, for now only the object database.
+    * **commit**
+        * [x] **describe** - identify a commit by its closest tag in its past
+    * **tree**
+        * [x] **entries** - list tree entries for a single tree or recursively
+        * [x] **info** - display tree statistics
+    * **odb**
+        * [x] **info** - display odb statistics
+        * [x] **entries** - display all object ids in the object database
     * **mailmap**
-      * [x] **verify** - check entries of a mailmap file for parse errors and display them
-    * **repository**
-      * **exclude**
-         * [x] **query** - check if path specs are excluded via gits exclusion rules like `.gitignore`.
-      * **verify** - validate a whole repository, for now only the object database.
-      * **commit**
-         * [x] **describe** - identify a commit by its closest tag in its past
-      * **tree**
-         * [x] **entries** - list tree entries for a single tree or recursively
-         * [x] **info** - display tree statistics
-      * **odb**
-         * [x] **info** - display odb statistics
-         * [x] **entries** - display all object ids in the object database
-      * **mailmap**
-          * [x] **entries** - display all entries of the aggregated mailmap git would use for substitution
-      * **revision**
-          * [ ] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
-    * **index**
-      * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
-      * [x] **verify** - check the index for consistency
-      * [x] **info** - display general information about the index itself, with detailed extension information by default
-         * [x] detailed information about the TREE extension
-         * [ ] …other extensions details aren't implemented yet
-      * [x] **checkout-exclusive** - a predecessor of `git worktree`, providing flexible options to evaluate checkout performance from an index and/or an object database.
-    * **remote**
-      * [ref-list](https://asciinema.org/a/359320) - list all (or given) references from a remote at the given URL
+        * [x] **entries** - display all entries of the aggregated mailmap git would use for substitution
+    * **revision**
+        * [ ] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
+    * **free** - no git repository necessary
+        * **pack**
+          * [x] [verify](https://asciinema.org/a/352942)
+          * [x] [index verify](https://asciinema.org/a/352945) including each object sha1 and statistics
+          * [x] [explode](https://asciinema.org/a/352951), useful for transforming packs into loose objects for inspection or restoration
+            * [x] verify written objects (by reading them back from disk)
+          * [x] [receive](https://asciinema.org/a/359321) - receive a whole pack produced by **pack-send** or _git-upload-pack_, useful for `clone` like operations.
+          * [x] **create** - create a pack from given objects or tips of the commit graph.
+          * [ ] **send** - create a pack and send it using the pack protocol to stdout, similar to 'git-upload-pack', 
+                for consumption by **pack-receive** or _git-receive-pack_
+          - **multi-index**
+              * [x] **info** - print information about the file
+              * [x] **create** - create a multi-index from pack indices
+              * [x] **verify** - check the file for consistency
+              * [x] **entries** - list all entries of the file
+          - **index**
+              * [x] [create](https://asciinema.org/a/352941) - create an index file by streaming a pack file as done during clone
+                 * [x] support for thin packs (as needed for fetch/pull)
+        * **commit-graph**
+          * [x] **verify** - assure that a commit-graph is consistent
+        * **mailmap**
+          * [x] **verify** - check entries of a mailmap file for parse errors and display them
+        * **index**
+            * [x] **entries** - show detailed entry information for human or machine consumption (via JSON)
+            * [x] **verify** - check the index for consistency
+            * [x] **info** - display general information about the index itself, with detailed extension information by default
+                * [x] detailed information about the TREE extension
+                * [ ] …other extensions details aren't implemented yet
+            * [x] **checkout-exclusive** - a predecessor of `git worktree`, providing flexible options to evaluate checkout performance from an index and/or an object database.
+        * **remote**
+            * [ref-list](https://asciinema.org/a/359320) - list all (or given) references from a remote at the given URL
 
 [skim]: https://github.com/lotabout/skim
 [git-hours]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
@@ -93,18 +94,25 @@ Follow linked crate name for detailed status. Please note that all crates follow
 ### Stabilization Candidates
 
 Crates that seem feature complete and need to see some more use before they can be released as 1.0.
+Documentation is complete and was reviewed at least once.
 
 * [git-mailmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-mailmap)
 * [git-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-chunk)
+* [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
+* [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
+* [git-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-glob)
 
 ### Initial Development
-* **usable**
+
+These crates may be missing some features and thus are somewhat incomplete, but what's there
+is usable to some extend.
+
+* **usable** _(with rough but complete docs)_
   * [git-actor](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-actor)
   * [git-hash](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-hash)
   * [git-object](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-object)
   * [git-validate](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-validate)
   * [git-url](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-url)
-  * [git-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-glob)
   * [git-packetline](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-packetline)
   * [git-transport](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-transport)
   * [git-protocol](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-protocol)
@@ -113,17 +121,15 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-commitgraph](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-commitgraph)
   * [git-diff](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-diff)
   * [git-traverse](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-traverse)
-  * [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
   * [git-features](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-features)
   * [git-credentials](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-credentials)
   * [git-sec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-sec)
   * [git-quote](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-quote)
-  * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
   * [git-discover](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-discover)
   * [git-path](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-path)
   * [git-repository](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository)
   * `gitoxide-core`
-* **very early**    
+* **very early**  _(possibly without any documentation and many rough edges)_
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
   * [git-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-worktree)
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
@@ -131,7 +137,7 @@ Crates that seem feature complete and need to see some more use before they can 
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
   * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
   * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
-* **idea**
+* **idea** _(just a name placeholder)_
   * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
   * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)
   * [git-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lfs)

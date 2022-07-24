@@ -1,5 +1,6 @@
-use git_path::{realpath::Error, realpath_opts};
 use std::path::Path;
+
+use git_path::{realpath::Error, realpath_opts};
 use tempfile::tempdir;
 
 #[test]
@@ -139,6 +140,6 @@ fn create_symlink(from: impl AsRef<Path>, to: impl AsRef<Path>) -> std::io::Resu
 }
 
 fn canonicalized_tempdir() -> crate::Result<tempfile::TempDir> {
-    let canonicalized_tempdir = git_path::realpath(std::env::temp_dir(), std::env::current_dir()?)?;
+    let canonicalized_tempdir = git_path::realpath(std::env::temp_dir())?;
     Ok(tempfile::tempdir_in(canonicalized_tempdir)?)
 }

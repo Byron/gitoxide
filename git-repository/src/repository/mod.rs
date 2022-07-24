@@ -19,47 +19,17 @@ impl crate::Repository {
     }
 }
 
-/// Everything else
-impl crate::Repository {
-    // TODO: actual implementation
-    /// Return the committer as configured by this repository, which is determined by…
-    ///
-    /// * …the git configuration…
-    /// * …the GIT_(AUTHOR|COMMITTER)_(NAME|EMAIL|DATE) environment variables…
-    ///
-    /// …and in that order.
-    pub fn committer(&self) -> git_actor::Signature {
-        // TODO: actually do the work, probably that should be cached and be refreshable
-        git_actor::Signature::empty()
-    }
-
-    /// The kind of object hash the repository is configured to use.
-    pub fn object_hash(&self) -> git_hash::Kind {
-        self.config.object_hash
-    }
-}
-
-mod worktree;
-
-/// Various permissions for parts of git repositories.
-pub(crate) mod permissions;
-
-mod init;
-
-mod location;
-
-mod snapshots;
-
-mod state;
-
-mod impls;
-
 mod cache;
-
-mod reference;
-
+mod config;
+pub(crate) mod identity;
+mod impls;
+mod init;
+mod location;
 mod object;
-
-mod thread_safe;
-
+pub(crate) mod permissions;
+mod reference;
 mod remote;
+mod snapshots;
+mod state;
+mod thread_safe;
+mod worktree;

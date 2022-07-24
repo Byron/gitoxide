@@ -25,12 +25,12 @@ required-features = ["internal-testing-git-features-parallel"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-features = { version = "^0.21.1", path = "../git-features", features = ["walkdir"]}
-git-path = { version = "^0.3.0", path = "../git-path" }
-git-hash = { version = "^0.9.5", path = "../git-hash" }
-git-object = { version = "^0.19.0", path = "../git-object" }
+git-features = { version = "^0.22.0", path = "../git-features", features = ["walkdir"]}
+git-path = { version = "^0.4.0", path = "../git-path" }
+git-hash = { version = "^0.9.6", path = "../git-hash" }
+git-object = { version = "^0.20.0", path = "../git-object" }
 git-validate = { version = "^0.5.4", path = "../git-validate" }
-git-actor = { version = "^0.10.1", path = "../git-actor" }
+git-actor = { version = "^0.11.0", path = "../git-actor" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 
@@ -41,8 +41,15 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 # packed refs
 memmap2 = "0.5.0"
 
+document-features = { version = "0.2.1", optional = true }
+
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
 git-discover = { path = "../git-discover" }
 git-odb = { path = "../git-odb" }
 tempfile = "3.2.0"
+
+
+[package.metadata.docs.rs]
+features = ["document-features"]
+all-features = true

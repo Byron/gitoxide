@@ -1,23 +1,26 @@
 use std::{borrow::Cow, ffi::OsStr, path::Path};
 
+use crate::DOT_GIT_DIR;
+
 /// Returns true if the given `git_dir` seems to be a bare repository.
 ///
 /// Please note that repositories without an index generally _look_ bare, even though they might also be uninitialized.
 pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
     let git_dir = git_dir_candidate.as_ref();
-    !(git_dir.join("index").exists() || (git_dir.file_name() == Some(OsStr::new(".git")) && git_dir.is_file()))
+    !(git_dir.join("index").exists() || (git_dir.file_name() == Some(OsStr::new(DOT_GIT_DIR)) && git_dir.is_file()))
 }
 
 /// What constitutes a valid git repository, returning the guessed repository kind
 /// purely based on the presence of files. Note that the git-config ultimately decides what's bare.
 ///
-/// Returns the Kind of git directory that was passed, possibly alongside the supporting private worktree git dir
+/// Returns the `Kind` of git directory that was passed, possibly alongside the supporting private worktree git dir.
 ///
-/// Note that `.git` files are followed to a valid git directory, which then requires
+/// Note that `.git` files are followed to a valid git directory, which then requires…
 ///
-/// * a valid head
-/// * an objects directory
-/// * a refs directory
+///   * …a valid head
+///   * …an objects directory
+///   * …a refs directory
+///
 pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::is_git::Error> {
     #[derive(Eq, PartialEq)]
     enum Kind {
@@ -52,13 +55,15 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
         }
         Err(crate::path::from_gitdir_file::Error::Io(err)) if is_directory(&err) => {
             let common_dir = git_dir.join("commondir");
-            match crate::path::from_plain_file(common_dir)
-                .and_then(Result::ok)
-                .and_then(|cd| {
-                    crate::path::from_plain_file(git_dir.join("gitdir"))
-                        .and_then(Result::ok)
-                        .map(|worktree_gitfile| (crate::path::without_dot_git_dir(worktree_gitfile), cd))
-                }) {
+            let worktree_and_common_dir =
+                crate::path::from_plain_file(common_dir)
+                    .and_then(Result::ok)
+                    .and_then(|cd| {
+                        crate::path::from_plain_file(git_dir.join("gitdir"))
+                            .and_then(Result::ok)
+                            .map(|worktree_gitfile| (crate::path::without_dot_git_dir(worktree_gitfile), cd))
+                    });
+            match worktree_and_common_dir {
                 Some((work_dir, common_dir)) => {
                     let common_dir = git_dir.join(common_dir);
                     (

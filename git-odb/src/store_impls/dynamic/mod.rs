@@ -134,7 +134,7 @@ pub mod structure {
         ///
         /// Note that this call is expensive as it gathers additional information about loose object databases.
         /// Note that it may change as we collect information due to the highly volatile nature of the
-        /// implementation. The likelyhood of actual changes is low though as these still depend on something
+        /// implementation. The likelihood of actual changes is low though as these still depend on something
         /// changing on disk and somebody reading at the same time.
         pub fn structure(&self) -> Result<Vec<Record>, load_index::Error> {
             let index = self.index.load();

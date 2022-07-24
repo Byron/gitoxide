@@ -41,10 +41,10 @@ impl crate::Repository {
 impl crate::Repository {
     /// Return the repository owning the main worktree.
     ///
-    /// Note that it might be the one that is currently open if this repository dosn't point to a linked worktree.
+    /// Note that it might be the one that is currently open if this repository doesn't point to a linked worktree.
     /// Also note that the main repo might be bare.
     pub fn main_repo(&self) -> Result<crate::Repository, crate::open::Error> {
-        crate::open(self.common_dir())
+        crate::ThreadSafeRepository::open_opts(self.common_dir(), self.options.clone()).map(Into::into)
     }
 
     /// Return the currently set worktree if there is one, acting as platform providing a validated worktree base path.
@@ -69,7 +69,7 @@ impl crate::Repository {
     /// Note that it may fail if there is no index.
     // TODO: test
     #[cfg(feature = "git-index")]
-    pub fn open_index(&self) -> Result<git_index::File, crate::worktree::open_index::Error> {
+    pub fn open_index(&self) -> Result<git_index::File, worktree::open_index::Error> {
         use std::convert::{TryFrom, TryInto};
         let thread_limit = self
             .config
@@ -77,8 +77,8 @@ impl crate::Repository {
             .boolean("index", None, "threads")
             .map(|res| {
                 res.map(|value| if value { 0usize } else { 1 }).or_else(|err| {
-                    git_config::values::Integer::try_from(err.input.as_ref())
-                        .map_err(|err| crate::worktree::open_index::Error::ConfigIndexThreads {
+                    git_config::Integer::try_from(err.input.as_ref())
+                        .map_err(|err| worktree::open_index::Error::ConfigIndexThreads {
                             value: err.input.clone(),
                             err,
                         })

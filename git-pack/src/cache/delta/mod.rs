@@ -44,7 +44,7 @@ enum NodeKind {
 pub struct Tree<T> {
     /// The root nodes, i.e. base objects
     root_items: Vec<Item<T>>,
-    /// The child nodes, i.e. those that rely a base object, like ref and ofs delta objets
+    /// The child nodes, i.e. those that rely a base object, like ref and ofs delta objects
     child_items: Vec<Item<T>>,
     /// The last encountered node was either a root or a child.
     last_seen: Option<NodeKind>,

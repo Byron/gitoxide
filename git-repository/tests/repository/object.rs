@@ -57,7 +57,7 @@ mod tag {
             "v1.0.0",
             &current_head_id,
             git_object::Kind::Commit,
-            Some(repo.committer().to_ref()),
+            Some(repo.committer_or_default()),
             message,
             git_ref::transaction::PreviousValue::MustNotExist,
         )?;
@@ -68,7 +68,7 @@ mod tag {
         assert_eq!(tag.name, "v1.0.0");
         assert_eq!(current_head_id, tag.target(), "the tag points to the commit");
         assert_eq!(tag.target_kind, git_object::Kind::Commit);
-        assert_eq!(*tag.tagger.as_ref().expect("tagger"), repo.committer().to_ref());
+        assert_eq!(*tag.tagger.as_ref().expect("tagger"), repo.committer_or_default());
         assert_eq!(tag.message, message);
         Ok(())
     }
