@@ -5,6 +5,7 @@ impl<'a> AssignmentRef<'a> {
         AssignmentRef { name, state }
     }
 
+    /// Turn this reference into its owned counterpart.
     pub fn to_owned(self) -> Assignment {
         self.into()
     }
@@ -20,6 +21,7 @@ impl<'a> From<AssignmentRef<'a>> for Assignment {
 }
 
 impl<'a> Assignment {
+    /// Provide a ref type to this owned instance.
     pub fn as_ref(&'a self) -> AssignmentRef<'a> {
         AssignmentRef::new(self.name.as_ref(), self.state.as_ref())
     }

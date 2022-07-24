@@ -2,6 +2,7 @@ use crate::{name, AssignmentRef, Name, NameRef, StateRef};
 use bstr::{BStr, ByteSlice};
 use std::borrow::Cow;
 
+/// The kind of attribute that was parsed.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Kind {
@@ -13,7 +14,9 @@ pub enum Kind {
 
 mod error {
     use bstr::BString;
+    /// The error returned by [`parse::Lines`][crate::parse::Lines].
     #[derive(thiserror::Error, Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("Line {line_number} has a negative pattern, for literal characters use \\!: {line}")]
         PatternNegation { line_number: usize, line: BString },
@@ -27,18 +30,21 @@ mod error {
 }
 pub use error::Error;
 
+/// An iterator over attribute assignments, parsed line by line.
 pub struct Lines<'a> {
     lines: bstr::Lines<'a>,
     line_no: usize,
 }
 
+/// An iterator over attribute assignments in a single line.
 pub struct Iter<'a> {
     attrs: bstr::Fields<'a>,
 }
 
 impl<'a> Iter<'a> {
-    pub fn new(attrs: &'a BStr) -> Self {
-        Iter { attrs: attrs.fields() }
+    /// Create a new instance to parse attribute assignments from `input`.
+    pub fn new(input: &'a BStr) -> Self {
+        Iter { attrs: input.fields() }
     }
 
     fn parse_attr(&self, attr: &'a [u8]) -> Result<AssignmentRef<'a>, name::Error> {
@@ -86,10 +92,11 @@ impl<'a> Iterator for Iter<'a> {
 }
 
 impl<'a> Lines<'a> {
-    pub fn new(buf: &'a [u8]) -> Self {
-        let bom = unicode_bom::Bom::from(buf);
+    /// Create a new instance to parse all attributes in all lines of the input `bytes`.
+    pub fn new(bytes: &'a [u8]) -> Self {
+        let bom = unicode_bom::Bom::from(bytes);
         Lines {
-            lines: buf[bom.len()..].lines(),
+            lines: bytes[bom.len()..].lines(),
             line_no: 0,
         }
     }

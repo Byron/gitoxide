@@ -1,10 +1,12 @@
+//! Parse `.gitattribute` and `.gitignore` files and provide utilities to match against them.
+//!
 //! ## Feature Flags
 #![cfg_attr(
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
 #![forbid(unsafe_code)]
-#![deny(rust_2018_idioms)]
+#![deny(rust_2018_idioms, missing_docs)]
 
 use std::path::PathBuf;
 
@@ -13,15 +15,18 @@ use compact_str::CompactString;
 pub use git_glob as glob;
 
 mod assignment;
+///
 pub mod name;
 mod state;
 
 mod match_group;
 pub use match_group::{Attributes, Ignore, Match, Pattern};
 
+///
 pub mod parse;
-pub fn parse(buf: &[u8]) -> parse::Lines<'_> {
-    parse::Lines::new(buf)
+/// Parse attribute assignments line by line from `bytes`.
+pub fn parse(bytes: &[u8]) -> parse::Lines<'_> {
+    parse::Lines::new(bytes)
 }
 
 /// The state an attribute can be in, referencing the value.
@@ -120,9 +125,13 @@ pub struct PatternList<T: Pattern> {
     pub base: Option<BString>,
 }
 
+/// An association of a pattern with its value, along with a sequence number providing a sort order in relation to its peers.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct PatternMapping<T> {
+    /// The pattern itself, like `/target/*`
     pub pattern: git_glob::Pattern,
+    /// The value associated with the pattern.
     pub value: T,
+    /// Typically the line number in the file the pattern was parsed from.
     pub sequence_number: usize,
 }

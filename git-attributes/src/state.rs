@@ -2,12 +2,14 @@ use crate::{State, StateRef};
 use bstr::ByteSlice;
 
 impl<'a> StateRef<'a> {
+    /// Turn ourselves into our owned counterpart.
     pub fn to_owned(self) -> State {
         self.into()
     }
 }
 
 impl<'a> State {
+    /// Turn ourselves into our ref-type.
     pub fn as_ref(&'a self) -> StateRef<'a> {
         match self {
             State::Value(v) => StateRef::Value(v.as_bytes().as_bstr()),
