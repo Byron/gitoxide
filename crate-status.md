@@ -231,7 +231,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] check for match
 
 ### git-pathspec
-* [ ] parse
+* [x] parse
 * [ ] check for match
 
 ### git-note
@@ -239,7 +239,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 A mechanism to associate metadata with any object, and keep revisions of it using git itself.
 
 * [ ] CRUD for git notes
-* 
+ 
 ### git-discover
 
 * [x] check if a git directory is a git repository

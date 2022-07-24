@@ -25,7 +25,7 @@ git-glob = { version = "^0.3.1", path = "../git-glob" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 unicode-bom = "1.1.4"
-quick-error = "2.0.0"
+thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 compact_str = "0.4"
 
