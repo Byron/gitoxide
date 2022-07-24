@@ -46,6 +46,18 @@ mod parse {
         .unwrap()
     });
 
+    #[test]
+    fn baseline() {
+        for (pattern, exit_code) in BASELINE.iter() {
+            let res = git_pathspec::parse(pattern);
+            assert_eq!(
+                res.is_ok(),
+                *exit_code == 0,
+                "{pattern:?} disagrees with baseline: {res:?}"
+            )
+        }
+    }
+
     mod succeed {
         use crate::parse::{
             check_valid_inputs, pat, pat_with_attrs, pat_with_path, pat_with_path_and_sig, pat_with_search_mode,

@@ -41,7 +41,7 @@ bitflags! {
 pub enum MatchMode {
     /// Expand special characters like `*` similar to how the shell would do it.
     ///
-    /// See [`PathAwareGlob`][SearchMode::PathAwareGlob] for the alternative.
+    /// See [`PathAwareGlob`][MatchMode::PathAwareGlob] for the alternative.
     ShellGlob,
     /// Special characters in the pattern, like `*` or `?`, are treated literally
     Literal,
