@@ -58,9 +58,7 @@ impl Pattern {
 }
 
 fn parse_short_keywords(input: &[u8], cursor: &mut usize) -> Result<MagicSignature, Error> {
-    let unimplemented_chars = vec![
-        b'"', b'#', b'%', b'&', b'\'', b',', b'-', b';', b'<', b'=', b'>', b'@', b'_', b'`', b'~',
-    ];
+    let unimplemented_chars = b"\"#%&'-',;<=>@_`~";
 
     let mut signature = MagicSignature::empty();
     while let Some(&b) = input.get(*cursor) {
