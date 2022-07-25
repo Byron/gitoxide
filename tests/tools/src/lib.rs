@@ -1,3 +1,6 @@
+//! Utilities for testing `gitoxide` crates, many of which might be useful for testing programs that use `git` in general.
+#![deny(missing_docs)]
+use std::ffi::OsString;
 use std::{
     collections::BTreeMap,
     convert::Infallible,
@@ -15,6 +18,20 @@ use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 pub use tempfile;
 
+/// A result type to allow using the try operator `?` in unit tests.
+///
+/// Use it like so:
+///
+/// ```norun
+/// use git_testtools::Result;
+///
+/// #[test]
+/// fn this() -> Result {
+///     let x: usize = "42".parse()?;    
+///     Ok(())
+///
+/// }
+/// ```
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 static SCRIPT_IDENTITY: Lazy<Mutex<BTreeMap<PathBuf, u32>>> = Lazy::new(|| Mutex::new(BTreeMap::new()));
@@ -46,11 +63,16 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache<'static>>>> = Lazy
     Mutex::new(cache)
 });
 
+/// Define how [scripted_fixture_repo_writable_with_args()] uses produces the writable copy.
 pub enum Creation {
+    /// Run the script once and copy the data from its output to the writable location.
+    /// This is fast but won't work if absolute paths are produced by the script.
     CopyFromReadOnly,
+    /// Run the script in the writable location. That way, absolute paths match the location.
     ExecuteScript,
 }
 
+/// Run `git` in `working_dir` with all provided `args`.
 pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::process::ExitStatus> {
     std::process::Command::new("git")
         .current_dir(working_dir)
@@ -58,37 +80,41 @@ pub fn run_git(working_dir: &Path, args: &[&str]) -> std::io::Result<std::proces
         .status()
 }
 
+/// Convert a hexadecimal hash into its corresponding `ObjectId` or _panic_.
 pub fn hex_to_id(hex: &str) -> git_hash::ObjectId {
     git_hash::ObjectId::from_hex(hex.as_bytes()).expect("40 bytes hex")
 }
 
+/// Return the path to the `<crate-root>/tests/fixtures/<path>` directory.
 pub fn fixture_path(path: impl AsRef<Path>) -> PathBuf {
     PathBuf::from("tests").join("fixtures").join(path.as_ref())
 }
 
-pub fn crate_under_test() -> String {
-    std::env::current_dir()
-        .expect("CWD is valid")
-        .file_name()
-        .expect("typical cargo invocation")
-        .to_string_lossy()
-        .into_owned()
-}
-
+/// Load the fixture from `<crate-root>/tests/fixtures/<path>` and return its data, or _panic_.
 pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
     match std::fs::read(fixture_path(path.as_ref())) {
         Ok(res) => res,
         Err(_) => panic!("File at '{}' not found", path.as_ref().display()),
     }
 }
+
+/// Run the executable at `script_name`, like `make_repo.sh` to produce a read-only directory to which
+/// the path is returned.
+/// Note that it persists and the script at `script_name` will only be executed once if it ran without error.
 pub fn scripted_fixture_repo_read_only(script_name: impl AsRef<Path>) -> Result<PathBuf> {
     scripted_fixture_repo_read_only_with_args(script_name, None)
 }
 
+/// Run the executable at `script_name`, like `make_repo.sh` to produce a writable directory to which
+/// the tempdir is returned. It will be removed automatically, courtesy of [`tempfile::TempDir`].
+///
+/// Note that `script_name` is only executed once, so the data can be copied from its read-only location.
 pub fn scripted_fixture_repo_writable(script_name: &str) -> Result<tempfile::TempDir> {
     scripted_fixture_repo_writable_with_args(script_name, None, Creation::CopyFromReadOnly)
 }
 
+/// Like [`scripted_fixture_repo_writable()`], but passes `args` to `script_name` while providing control over
+/// the way files are created with `mode`.
 pub fn scripted_fixture_repo_writable_with_args(
     script_name: &str,
     args: impl IntoIterator<Item = &'static str>,
@@ -108,6 +134,7 @@ pub fn scripted_fixture_repo_writable_with_args(
     })
 }
 
+/// A utility to copy the entire contents of `src_dir` into `dst_dir`.
 pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: impl AsRef<Path>) -> std::io::Result<()> {
     fs_extra::copy_items(
         &std::fs::read_dir(src_dir)?
@@ -125,7 +152,8 @@ pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: im
     .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
     Ok(())
 }
-/// Returns the directory at which the data is present
+
+/// Like `scripted_fixture_repo_read_only()`], but passes `args` to `script_name`.
 pub fn scripted_fixture_repo_read_only_with_args(
     script_name: impl AsRef<Path>,
     args: impl IntoIterator<Item = &'static str>,
@@ -387,6 +415,7 @@ fn extract_archive(
     Ok((archive_identity, platform))
 }
 
+/// Transform a verbose bom errors from raw bytes into a `BStr` to make printing/debugging human-readable.
 pub fn to_bstr_err(err: nom::Err<VerboseError<&[u8]>>) -> VerboseError<&BStr> {
     let err = match err {
         nom::Err::Error(err) | nom::Err::Failure(err) => err,
@@ -405,35 +434,36 @@ fn family_name() -> &'static str {
     }
 }
 
-pub fn sleep_forever() -> ! {
-    loop {
-        std::thread::sleep(std::time::Duration::from_secs(u64::MAX))
-    }
-}
-
+/// A utility to set environment variables, while unsetting them (or resetting them to their previous value) on drop.
 #[derive(Default)]
 pub struct Env<'a> {
-    altered_vars: Vec<&'a str>,
+    altered_vars: Vec<(&'a str, Option<OsString>)>,
 }
 
 impl<'a> Env<'a> {
+    /// Create a new instance.
     pub fn new() -> Self {
         Env {
             altered_vars: Vec::new(),
         }
     }
 
+    /// Set `var` to `value`.
     pub fn set(mut self, var: &'a str, value: impl Into<String>) -> Self {
+        let prev = std::env::var_os(var);
         std::env::set_var(var, value.into());
-        self.altered_vars.push(var);
+        self.altered_vars.push((var, prev));
         self
     }
 }
 
 impl<'a> Drop for Env<'a> {
     fn drop(&mut self) {
-        for var in &self.altered_vars {
-            std::env::remove_var(var);
+        for (var, prev_value) in &self.altered_vars {
+            match prev_value {
+                Some(value) => std::env::set_var(var, value),
+                None => std::env::remove_var(var),
+            }
         }
     }
 }
