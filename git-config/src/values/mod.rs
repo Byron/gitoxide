@@ -1,5 +1,4 @@
-///
-pub mod boolean;
+mod boolean;
 ///
 pub mod color;
 ///

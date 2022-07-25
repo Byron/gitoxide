@@ -37,7 +37,7 @@ mod interpolate {
                     std::path::PathBuf::from(format!("{}{}{}", git_install_dir, std::path::MAIN_SEPARATOR, expected));
                 assert_eq!(
                     git_config::Path::from(cow_str(val))
-                        .interpolate(path::interpolate::Options {
+                        .interpolate(path::interpolate::Context {
                             git_install_dir: Path::new(git_install_dir).into(),
                             ..Default::default()
                         })
@@ -55,7 +55,7 @@ mod interpolate {
         let git_install_dir = "/tmp/git";
         assert_eq!(
             git_config::Path::from(Cow::Borrowed(b(path)))
-                .interpolate(path::interpolate::Options {
+                .interpolate(path::interpolate::Context {
                     git_install_dir: Path::new(git_install_dir).into(),
                     ..Default::default()
                 })
@@ -77,7 +77,7 @@ mod interpolate {
         let expected = home.join("user").join("bar");
         assert_eq!(
             git_config::Path::from(cow_str(path))
-                .interpolate(path::interpolate::Options {
+                .interpolate(path::interpolate::Context {
                     home_dir: Some(&home),
                     home_for_user: Some(home_for_user),
                     ..Default::default()
@@ -115,7 +115,7 @@ mod interpolate {
     fn interpolate_without_context(
         path: impl AsRef<str>,
     ) -> Result<Cow<'static, Path>, git_config::path::interpolate::Error> {
-        git_config::Path::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(path::interpolate::Options {
+        git_config::Path::from(Cow::Owned(path.as_ref().to_owned().into())).interpolate(path::interpolate::Context {
             home_for_user: Some(home_for_user),
             ..Default::default()
         })

@@ -1,38 +1,20 @@
+use crate::{Assignment, MatchGroup, PatternList, PatternMapping};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::{
     ffi::OsString,
     io::Read,
     path::{Path, PathBuf},
 };
 
-use bstr::{BStr, BString, ByteSlice, ByteVec};
-
-use crate::{Assignment, MatchGroup, PatternList, PatternMapping, State, StateRef};
-
-impl<'a> From<StateRef<'a>> for State {
-    fn from(s: StateRef<'a>) -> Self {
-        match s {
-            StateRef::Value(v) => State::Value(v.to_str().expect("no illformed unicode").into()),
-            StateRef::Set => State::Set,
-            StateRef::Unset => State::Unset,
-            StateRef::Unspecified => State::Unspecified,
-        }
-    }
+fn into_owned_assignments<'a>(
+    attrs: impl Iterator<Item = Result<crate::AssignmentRef<'a>, crate::name::Error>>,
+) -> Result<Vec<Assignment>, crate::name::Error> {
+    attrs.map(|res| res.map(|attr| attr.to_owned())).collect()
 }
 
-fn attrs_to_assignments<'a>(
-    attrs: impl Iterator<Item = Result<(&'a BStr, StateRef<'a>), crate::parse::Error>>,
-) -> Result<Vec<Assignment>, crate::parse::Error> {
-    attrs
-        .map(|res| {
-            res.map(|(name, state)| Assignment {
-                name: name.to_str().expect("no illformed unicode").into(),
-                state: state.into(),
-            })
-        })
-        .collect()
-}
-
-/// A marker trait to identify the type of a description.
+/// A trait to convert bytes into patterns and their associated value.
+///
+/// This is used for `gitattributes` which have a value, and `gitignore` which don't.
 pub trait Pattern: Clone + PartialEq + Eq + std::fmt::Debug + std::hash::Hash + Ord + PartialOrd + Default {
     /// The value associated with a pattern.
     type Value: PartialEq + Eq + std::fmt::Debug + std::hash::Hash + Ord + PartialOrd + Clone;
@@ -40,10 +22,11 @@ pub trait Pattern: Clone + PartialEq + Eq + std::fmt::Debug + std::hash::Hash + 
     /// Parse all patterns in `bytes` line by line, ignoring lines with errors, and collect them.
     fn bytes_to_patterns(bytes: &[u8]) -> Vec<PatternMapping<Self::Value>>;
 
-    fn use_pattern(pattern: &git_glob::Pattern) -> bool;
+    /// Returns true if the given pattern may be used for matching.
+    fn may_use_glob_pattern(pattern: &git_glob::Pattern) -> bool;
 }
 
-/// Identify ignore patterns.
+/// An implementation of the [`Pattern`] trait for ignore patterns.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
 pub struct Ignore;
 
@@ -60,7 +43,7 @@ impl Pattern for Ignore {
             .collect()
     }
 
-    fn use_pattern(_pattern: &git_glob::Pattern) -> bool {
+    fn may_use_glob_pattern(_pattern: &git_glob::Pattern) -> bool {
         true
     }
 }
@@ -69,10 +52,10 @@ impl Pattern for Ignore {
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub enum Value {
     MacroAttributes(Vec<Assignment>),
-    Attributes(Vec<Assignment>),
+    Assignments(Vec<Assignment>),
 }
 
-/// Identify patterns with attributes.
+/// An implementation of the [`Pattern`] trait for attributes.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Default)]
 pub struct Attributes;
 
@@ -82,19 +65,19 @@ impl Pattern for Attributes {
     fn bytes_to_patterns(bytes: &[u8]) -> Vec<PatternMapping<Self::Value>> {
         crate::parse(bytes)
             .filter_map(Result::ok)
-            .filter_map(|(pattern_kind, attrs, line_number)| {
+            .filter_map(|(pattern_kind, assignments, line_number)| {
                 let (pattern, value) = match pattern_kind {
                     crate::parse::Kind::Macro(macro_name) => (
                         git_glob::Pattern {
-                            text: macro_name,
+                            text: macro_name.as_str().into(),
                             mode: git_glob::pattern::Mode::all(),
                             first_wildcard_pos: None,
                         },
-                        Value::MacroAttributes(attrs_to_assignments(attrs).ok()?),
+                        Value::MacroAttributes(into_owned_assignments(assignments).ok()?),
                     ),
                     crate::parse::Kind::Pattern(p) => (
                         (!p.is_negative()).then(|| p)?,
-                        Value::Attributes(attrs_to_assignments(attrs).ok()?),
+                        Value::Assignments(into_owned_assignments(assignments).ok()?),
                     ),
                 };
                 PatternMapping {
@@ -107,7 +90,7 @@ impl Pattern for Attributes {
             .collect()
     }
 
-    fn use_pattern(pattern: &git_glob::Pattern) -> bool {
+    fn may_use_glob_pattern(pattern: &git_glob::Pattern) -> bool {
         pattern.mode != git_glob::pattern::Mode::all()
     }
 }
@@ -115,6 +98,7 @@ impl Pattern for Attributes {
 /// Describes a matching value within a [`MatchGroup`].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 pub struct Match<'a, T> {
+    /// The glob pattern itself, like `/target/*`.
     pub pattern: &'a git_glob::Pattern,
     /// The value associated with the pattern.
     pub value: &'a T,
@@ -199,6 +183,8 @@ impl MatchGroup<Ignore> {
         Ok(self.patterns.len() != previous_len)
     }
 
+    /// Add patterns as parsed from `bytes`, providing their `source` path and possibly their `root` path, the path they
+    /// are relative to. This also means that `source` is contained within `root` if `root` is provided.
     pub fn add_patterns_buffer(&mut self, bytes: &[u8], source: impl Into<PathBuf>, root: Option<&Path>) {
         self.patterns
             .push(PatternList::<Ignore>::from_bytes(bytes, source.into(), root));
@@ -248,6 +234,9 @@ where
             base,
         }
     }
+
+    /// Create a pattern list from the `source` file, which may be located underneath `root`, while optionally
+    /// following symlinks with `follow_symlinks`, providing `buf` to temporarily store the data contained in the file.
     pub fn from_file(
         source: impl Into<PathBuf>,
         root: Option<&Path>,
@@ -263,6 +252,9 @@ impl<T> PatternList<T>
 where
     T: Pattern,
 {
+    /// Return a match if a pattern matches `relative_path`, providing a pre-computed `basename_pos` which is the
+    /// starting position of the basename of `relative_path`. `is_dir` is true if `relative_path` is a directory.
+    /// `case` specifies whether cases should be folded during matching or not.
     pub fn pattern_matching_relative_path(
         &self,
         relative_path: &BStr,
@@ -275,7 +267,7 @@ where
         self.patterns
             .iter()
             .rev()
-            .filter(|pm| T::use_pattern(&pm.pattern))
+            .filter(|pm| T::may_use_glob_pattern(&pm.pattern))
             .find_map(
                 |PatternMapping {
                      pattern,
@@ -294,6 +286,8 @@ where
             )
     }
 
+    /// Like [`pattern_matching_relative_path()`][Self::pattern_matching_relative_path()], but returns an index to the pattern
+    /// that matched `relative_path`, instead of the match itself.
     pub fn pattern_idx_matching_relative_path(
         &self,
         relative_path: &BStr,
@@ -307,7 +301,7 @@ where
             .iter()
             .enumerate()
             .rev()
-            .filter(|(_, pm)| T::use_pattern(&pm.pattern))
+            .filter(|(_, pm)| T::may_use_glob_pattern(&pm.pattern))
             .find_map(|(idx, pm)| {
                 pm.pattern
                     .matches_repo_relative_path(relative_path, basename_start_pos, is_dir, case)

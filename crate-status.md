@@ -231,7 +231,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] check for match
 
 ### git-pathspec
-* [ ] parse
+* [x] parse
 * [ ] check for match
 
 ### git-note
@@ -239,7 +239,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 A mechanism to associate metadata with any object, and keep revisions of it using git itself.
 
 * [ ] CRUD for git notes
-* 
+ 
 ### git-discover
 
 * [x] check if a git directory is a git repository
@@ -388,26 +388,33 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-tempfile/REA
 See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md).
 
 ### git-config
-* [ ] read
-    * line-wise parsing with decent error messages
+* [x] read
+    * zero-copy parsing with event emission
     * [x] decode value
         * [x] boolean
         * [x] integer
         * [x] color
            * [ ] ANSI code output for terminal colors
         * [x] path (incl. resolution)
+        * [ ] date
+        * [ ] [permission][https://github.com/git/git/blob/71a8fab31b70c417e8f5b5f716581f89955a7082/setup.c#L1526:L1526]
         * [x] include
-        * **includeIf**
-          * [x] `gitdir`,  `gitdir/i`, `onbranch`
-          * [ ] `hasconfig`
-* [x] write
+    * **includeIf**
+      * [x] `gitdir`,  `gitdir/i`, and `onbranch`
+      * [ ] `hasconfig`
+* [x] access values and sections by name and sub-section
+* [x] edit configuration in memory, non-destructively
+    * cross-platform newline handling
+* [x] write files back for lossless round-trips.
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
-* [ ] `Config` type which integrates multiple files into one interface to support system, user and repository levels for config files
+* [x] cascaded loading of various configuration files into one
+    * [x] load from environment variables
+    * [ ] load from well-known sources for global configuration
+    * [ ] load repository configuration with all known sources
 * [x] API documentation
     * [x] Some examples
 
 ### git-repository
-
 * [x] utilities for applications to make long running operations interruptible gracefully and to support timeouts in servers.
 * [ ] handle `core.repositoryFormatVersion` and extensions
 * [x] support for unicode-precomposition of command-line arguments (needs explicit use in parent application)
@@ -427,16 +434,15 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
       * [ ] make [git-notes](https://git-scm.com/docs/git-notes) accessible
       * [x] tree entries
     * **diffs/changes**
-        * [x] tree with tree
+        * [x] tree with working tree
         * [ ] tree with index
-        * [ ] index with working tree
     * [x] initialize
-        * [ ] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
+        * [x] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
     * **Id**
         * [x] short hashes with detection of ambiguity.
     * **Commit**
         * [x] `describe()` like functionality
-        * [x] create new commit
+        * [x] create new commit from tree
     * **Objects**
         * [x] lookup
         * [x] peel to object kind
@@ -446,23 +452,32 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * **references**
         * [x] peel to end
         * [x] ref-log access
-    * [ ] clone
+    * [ ] clone from remote
         * [ ] shallow
-        * [ ] namespaces support
-    * [ ] sparse checkout support
     * [ ] execute hooks
-    * [ ] .gitignore handling
-    * [ ] checkout/stage conversions clean + smudge as in .gitattributes
     * **refs**
         * [ ] run transaction hooks and handle special repository states like quarantine
         * [ ] support for different backends like `files` and `reftable`
-    * **worktrees**
-        * [x] open a repository with worktrees
-           * [x] read locked state
-           * [ ] obtain 'prunable' information
-        * [x] proper handling of worktree related refs
-        * [ ] create, move, remove, and repair
+    * **main or linked worktree**
+        * [ ] add files with `.gitignore` handling
+        * [ ] checkout with conversions like clean + smudge as in `.gitattributes`
+        * [ ] _diff_ index with working tree
+        * [ ] sparse checkout support
         * [ ] read per-worktree config if `extensions.worktreeConfig` is enabled.
+        * **index**
+            * [ ] tree from index
+            * [ ] index from tree
+    * **worktrees**
+       * [x] open a repository with worktrees
+          * [x] read locked state
+          * [ ] obtain 'prunable' information
+       * [x] proper handling of worktree related refs
+       * [ ] create, move, remove, and repair
+    * **config**
+       * [x] read the primitive types `boolean`, `integer`, `string`
+       * [x] read and interpolate trusted paths
+       * [x] low-level API for more elaborate access to all details of `git-config` files
+       * [ ] a way to make changes to individual configuration files
     * [ ] remotes with push and pull
     * [x] mailmap   
     * [x] object replacements (`git replace`)

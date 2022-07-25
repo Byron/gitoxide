@@ -1,9 +1,10 @@
 use std::{borrow::Cow, collections::HashMap};
 
 use bstr::BStr;
+use smallvec::ToSmallVec;
 
 use crate::{
-    file::{mutable::multi_value::EntryData, Index, MultiValueMut, SectionMut, Size, ValueMut},
+    file::{mutable::multi_value::EntryData, Index, MetadataFilter, MultiValueMut, Size, ValueMut},
     lookup,
     parse::{section, Event},
     File,
@@ -24,10 +25,29 @@ impl<'event> File<'event> {
         subsection_name: Option<&str>,
         key: impl AsRef<str>,
     ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
+        self.raw_value_filter(section_name, subsection_name, key, &mut |_| true)
+    }
+
+    /// Returns an uninterpreted value given a section, an optional subsection
+    /// and key, if it passes the `filter`.
+    ///
+    /// Consider [`Self::raw_values()`] if you want to get all values of
+    /// a multivar instead.
+    pub fn raw_value_filter(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
         let key = key.as_ref();
         for section_id in section_ids.rev() {
-            if let Some(v) = self.sections.get(&section_id).expect("known section id").value(key) {
+            let section = self.sections.get(&section_id).expect("known section id");
+            if !filter(section.meta()) {
+                continue;
+            }
+            if let Some(v) = section.value(key) {
                 return Ok(v);
             }
         }
@@ -46,6 +66,21 @@ impl<'event> File<'event> {
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
     ) -> Result<ValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
+        self.raw_value_mut_filter(section_name, subsection_name, key, &mut |_| true)
+    }
+
+    /// Returns a mutable reference to an uninterpreted value given a section,
+    /// an optional subsection and key, and if it passes `filter`.
+    ///
+    /// Consider [`Self::raw_values_mut`] if you want to get mutable
+    /// references to all values of a multivar instead.
+    pub fn raw_value_mut_filter<'lookup>(
+        &mut self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+        filter: &mut MetadataFilter,
+    ) -> Result<ValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
         let mut section_ids = self
             .section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?
             .rev();
@@ -55,14 +90,11 @@ impl<'event> File<'event> {
             let mut index = 0;
             let mut size = 0;
             let mut found_key = false;
-            for (i, event) in self
-                .sections
-                .get(&section_id)
-                .expect("known section id")
-                .as_ref()
-                .iter()
-                .enumerate()
-            {
+            let section = self.sections.get(&section_id).expect("known section id");
+            if !filter(section.meta()) {
+                continue;
+            }
+            for (i, event) in section.as_ref().iter().enumerate() {
                 match event {
                     Event::SectionKey(event_key) if *event_key == key => {
                         found_key = true;
@@ -88,8 +120,9 @@ impl<'event> File<'event> {
             }
 
             drop(section_ids);
+            let nl = self.detect_newline_style().to_smallvec();
             return Ok(ValueMut {
-                section: SectionMut::new(self.sections.get_mut(&section_id).expect("known section-id")),
+                section: self.sections.get_mut(&section_id).expect("known section-id").to_mut(nl),
                 key,
                 index: Index(index),
                 size: Size(size),
@@ -100,7 +133,10 @@ impl<'event> File<'event> {
     }
 
     /// Returns all uninterpreted values given a section, an optional subsection
-    /// and key.
+    /// ain order of occurrence.
+    ///
+    /// The ordering means that the last of the returned values is the one that would be the
+    /// value used in the single-value case.nd key.
     ///
     /// # Examples
     ///
@@ -140,11 +176,30 @@ impl<'event> File<'event> {
         subsection_name: Option<&str>,
         key: impl AsRef<str>,
     ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
+        self.raw_values_filter(section_name, subsection_name, key, &mut |_| true)
+    }
+
+    /// Returns all uninterpreted values given a section, an optional subsection
+    /// and key, if the value passes `filter`, in order of occurrence.
+    ///
+    /// The ordering means that the last of the returned values is the one that would be the
+    /// value used in the single-value case.
+    pub fn raw_values_filter(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
         let mut values = Vec::new();
         let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
         let key = key.as_ref();
         for section_id in section_ids {
-            values.extend(self.sections.get(&section_id).expect("known section id").values(key));
+            let section = self.sections.get(&section_id).expect("known section id");
+            if !filter(section.meta()) {
+                continue;
+            }
+            values.extend(section.values(key));
         }
 
         if values.is_empty() {
@@ -210,6 +265,18 @@ impl<'event> File<'event> {
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
     ) -> Result<MultiValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
+        self.raw_values_mut_filter(section_name, subsection_name, key, &mut |_| true)
+    }
+
+    /// Returns mutable references to all uninterpreted values given a section,
+    /// an optional subsection and key, if their sections pass `filter`.
+    pub fn raw_values_mut_filter<'lookup>(
+        &mut self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+        filter: &mut MetadataFilter,
+    ) -> Result<MultiValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
         let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
         let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
@@ -220,14 +287,11 @@ impl<'event> File<'event> {
             let mut expect_value = false;
             let mut offset_list = Vec::new();
             let mut offset_index = 0;
-            for (i, event) in self
-                .sections
-                .get(&section_id)
-                .expect("known section-id")
-                .as_ref()
-                .iter()
-                .enumerate()
-            {
+            let section = self.sections.get(&section_id).expect("known section-id");
+            if !filter(section.meta()) {
+                continue;
+            }
+            for (i, event) in section.as_ref().iter().enumerate() {
                 match event {
                     Event::SectionKey(event_key) if *event_key == key => {
                         expect_value = true;

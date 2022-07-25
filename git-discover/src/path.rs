@@ -1,5 +1,6 @@
-use crate::DOT_GIT_DIR;
 use std::{io::Read, path::PathBuf};
+
+use crate::DOT_GIT_DIR;
 
 ///
 pub mod from_gitdir_file {

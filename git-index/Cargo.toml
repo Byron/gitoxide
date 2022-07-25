@@ -1,6 +1,6 @@
 [package]
 name = "git-index"
-version = "0.3.0"
+version = "0.4.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A work-in-progress crate of the gitoxide project dedicated implementing the git index file"
@@ -32,10 +32,10 @@ internal-testing-to-avoid-being-run-by-cargo-test-all = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-features = { version = "^0.21.0", path = "../git-features", features = ["rustsha1", "progress"] }
-git-hash = { version = "^0.9.4", path = "../git-hash" }
+git-features = { version = "^0.22.0", path = "../git-features", features = ["rustsha1", "progress"] }
+git-hash = { version = "^0.9.6", path = "../git-hash" }
 git-bitmap = { version = "^0.1.0", path = "../git-bitmap" }
-git-object = { version = "^0.19.0", path = "../git-object" }
+git-object = { version = "^0.20.0", path = "../git-object" }
 
 quick-error = "2.0.0"
 memmap2 = "0.5.0"

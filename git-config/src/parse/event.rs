@@ -1,6 +1,6 @@
 use std::{borrow::Cow, fmt::Display};
 
-use bstr::BString;
+use bstr::{BStr, BString};
 
 use crate::parse::Event;
 
@@ -13,6 +13,22 @@ impl Event<'_> {
         let mut buf = Vec::new();
         self.write_to(&mut buf).expect("io error impossible");
         buf.into()
+    }
+
+    /// Turn ourselves into the text we represent, lossy.
+    ///
+    /// Note that this will be partial in case of `ValueNotDone` which doesn't include the backslash, and `SectionHeader` will only
+    /// provide their name, lacking the sub-section name.
+    pub fn to_bstr_lossy(&self) -> &BStr {
+        match self {
+            Self::ValueNotDone(e) | Self::Whitespace(e) | Self::Newline(e) | Self::Value(e) | Self::ValueDone(e) => {
+                e.as_ref()
+            }
+            Self::KeyValueSeparator => "=".into(),
+            Self::SectionKey(k) => k.0.as_ref(),
+            Self::SectionHeader(h) => h.name.0.as_ref(),
+            Self::Comment(c) => c.text.as_ref(),
+        }
     }
 
     /// Stream ourselves to the given `out`, in order to reproduce this event mostly losslessly

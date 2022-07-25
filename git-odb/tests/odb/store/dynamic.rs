@@ -325,7 +325,7 @@ fn contains() {
             unreachable_indices: 0,
             unreachable_packs: 0
         },
-        "when asking for an object in the smallest pack, all inbetween packs are also loaded."
+        "when asking for an object in the smallest pack, all in between packs are also loaded."
     );
 
     assert!(!new_handle.contains(hex_to_id("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));

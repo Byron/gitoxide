@@ -1,5 +1,47 @@
 use std::convert::TryFrom;
 
+use bstr::ByteVec;
+use git_config::file::{init, Metadata};
+
+#[test]
+fn empty_sections_roundtrip() {
+    let input = r#"
+        [a]
+    [b]
+        [c] 
+        
+            [d]
+"#;
+
+    let config = git_config::File::try_from(input).unwrap();
+    assert_eq!(config.to_bstring(), input);
+}
+
+#[test]
+fn empty_sections_with_comments_roundtrip() {
+    let input = r#"; pre-a
+        [a] # side a
+        ; post a  
+    [b] ; side b
+        [c] ; side c
+        ; post c
+            [d] # side d
+"#;
+
+    let mut config = git_config::File::try_from(input).unwrap();
+    let mut single_string = config.to_bstring();
+    assert_eq!(single_string, input);
+    assert_eq!(
+        config.append(config.clone()).to_string(),
+        {
+            let clone = single_string.clone();
+            single_string.push_str(&clone);
+            single_string
+        },
+        "string-duplication is the same as data structure duplication"
+    );
+}
+
 #[test]
 fn complex_lossless_roundtrip() {
     let input = r#"
@@ -22,10 +64,10 @@ fn complex_lossless_roundtrip() {
         ; more comments
         # another one
             
-        [test "sub-section \"special\" C:\\root"]
+        [test "sub-section \"special\" C:\\root"] ; section comment
             bool-explicit = false
             bool-implicit
-            integer-no-prefix = 10
+            integer-no-prefix = 10 ; a value comment
             integer-prefix = 10g
             color = brightgreen red \
             bold
@@ -49,4 +91,20 @@ fn complex_lossless_roundtrip() {
     "#;
     let config = git_config::File::try_from(input).unwrap();
     assert_eq!(config.to_bstring(), input);
+
+    let lossy_config = git_config::File::from_bytes_owned(
+        &mut input.as_bytes().into(),
+        Metadata::api(),
+        init::Options {
+            lossy: true,
+            ..Default::default()
+        },
+    )
+    .unwrap();
+
+    let lossy_config: git_config::File = lossy_config.to_string().parse().unwrap();
+    assert_eq!(
+        lossy_config, config,
+        "Even lossy configuration serializes properly to be able to restore all values"
+    );
 }

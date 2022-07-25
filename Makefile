@@ -54,7 +54,7 @@ clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --no-default-features --features lean-async --tests
 
 check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
-	cd git-repository && cargo check --package git-repository --no-default-features --features async-network-client,unstable,local-time-support,max-performance
+	cd git-repository && cargo check --package git-repository --no-default-features --features async-network-client,unstable,max-performance
 
 check: ## Build all code in suitable configurations
 	cargo check --all
@@ -63,12 +63,9 @@ check: ## Build all code in suitable configurations
 	cargo check --no-default-features --features lean
 	cargo check --no-default-features --features lean-async
 	cargo check --no-default-features --features max
-	cd git-actor && cargo check \
-				 && cargo check --features local-time-support
 	cd gitoxide-core && cargo check \
                      && cargo check --features blocking-client \
-                     && cargo check --features async-client \
-                     && cargo check --features local-time-support
+                     && cargo check --features async-client
 	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-hash && cargo check --all-features \
 				&& cargo check
@@ -100,7 +97,6 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features rustsha1 \
 			   && cargo check --features fast-sha1 \
 			   && cargo check --features progress \
-			   && cargo check --features time \
 			   && cargo check --features io-pipe \
 			   && cargo check --features crc32 \
 			   && cargo check --features zlib \
@@ -245,20 +241,20 @@ commit_graphs = \
 
 stress: ## Run various algorithms on big repositories
 	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
-	time ./target/release/gix --verbose pack verify --re-encode $(linux_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack multi-index -i $(linux_repo)/objects/pack/multi-pack-index create $(linux_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack verify $(linux_repo)/objects/pack/multi-pack-index
-	rm -Rf out; mkdir out && time ./target/release/gix --verbose pack index create -p $(linux_repo)/objects/pack/*.pack out/
-	time ./target/release/gix --verbose pack verify out/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --re-encode $(linux_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack multi-index -i $(linux_repo)/objects/pack/multi-pack-index create $(linux_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify $(linux_repo)/objects/pack/multi-pack-index
+	rm -Rf out; mkdir out && time ./target/release/gix --verbose no-repo pack index create -p $(linux_repo)/objects/pack/*.pack out/
+	time ./target/release/gix --verbose no-repo pack verify out/*.idx
 
-	time ./target/release/gix --verbose pack verify --statistics $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack verify --algorithm less-memory $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack verify --re-encode $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --statistics $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --algorithm less-memory $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --re-encode $(rust_repo)/objects/pack/*.idx
 	# We must ensure there is exactly one pack file for the pack-explode *.idx globs to work.
 	git repack -Ad
-	time ./target/release/gix --verbose pack explode .git/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack explode .git/objects/pack/*.idx
 
-	rm -Rf delme; mkdir delme && time ./target/release/gix --verbose pack explode .git/objects/pack/*.idx delme/
+	rm -Rf delme; mkdir delme && time ./target/release/gix --verbose no-repo pack explode .git/objects/pack/*.idx delme/
 
 	$(MAKE) stress-commitgraph
 	$(MAKE) bench-git-config
@@ -266,7 +262,7 @@ stress: ## Run various algorithms on big repositories
 .PHONY: stress-commitgraph
 stress-commitgraph: release-lean $(commit_graphs)
 	set -x; for path in $(wordlist 2, 999, $^); do \
-		time ./target/release/gix --verbose commit-graph verify $$path; \
+		time ./target/release/gix --verbose no-repo commit-graph verify $$path; \
 	done
 
 .PHONY: bench-git-config
@@ -276,7 +272,7 @@ bench-git-config:
 check-msrv-on-ci: ## Check the minimal support rust version for currently installed Rust version
 	rustc --version
 	cargo check --package git-repository
-	cargo check --package git-repository --no-default-features --features async-network-client,unstable,local-time-support,max-performance
+	cargo check --package git-repository --no-default-features --features async-network-client,unstable,max-performance
 
 ##@ Maintenance
 

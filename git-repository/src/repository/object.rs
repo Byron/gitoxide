@@ -171,7 +171,7 @@ impl crate::Repository {
                 deref: true,
             },
             git_lock::acquire::Fail::Immediately,
-            Some(&commit.committer),
+            commit.committer.to_ref(),
         )?;
         Ok(commit_id)
     }

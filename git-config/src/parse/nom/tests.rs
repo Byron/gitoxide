@@ -167,8 +167,9 @@ mod section {
         error::ParseNode,
         section,
         tests::util::{
-            comment_event, fully_consumed, name_event, newline_event, section_header as parsed_section_header,
-            value_done_event, value_event, value_not_done_event, whitespace_event,
+            comment_event, fully_consumed, name_event, newline_custom_event, newline_event,
+            section_header as parsed_section_header, value_done_event, value_event, value_not_done_event,
+            whitespace_event,
         },
         Event, Section,
     };
@@ -187,7 +188,7 @@ mod section {
                 i,
                 (
                     Section {
-                        section_header: match header.expect("header set") {
+                        header: match header.expect("header set") {
                             Event::SectionHeader(header) => header,
                             _ => unreachable!("unexpected"),
                         },
@@ -200,13 +201,80 @@ mod section {
     }
 
     #[test]
+    fn empty_value_with_windows_newlines() {
+        let mut node = ParseNode::SectionHeader;
+        assert_eq!(
+            section(b"[a] k = \r\n", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event(""),
+                        newline_custom_event("\r\n")
+                    ]
+                    .into(),
+                },
+                1
+            )),
+        );
+    }
+
+    #[test]
+    fn simple_value_with_windows_newlines() {
+        let mut node = ParseNode::SectionHeader;
+        assert_eq!(
+            section(b"[a] k = v\r\n", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event("v"),
+                        newline_custom_event("\r\n")
+                    ]
+                    .into(),
+                },
+                1
+            )),
+        );
+        assert_eq!(
+            section(b"[a] k = \r\n", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("a", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("k"),
+                        whitespace_event(" "),
+                        Event::KeyValueSeparator,
+                        whitespace_event(" "),
+                        value_event(""),
+                        newline_custom_event("\r\n")
+                    ]
+                    .into(),
+                },
+                1
+            )),
+        );
+    }
+
+    #[test]
     fn empty_section() {
         let mut node = ParseNode::SectionHeader;
         assert_eq!(
             section(b"[test]", &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("test", None),
+                    header: parsed_section_header("test", None),
                     events: Default::default()
                 },
                 0
@@ -225,7 +293,7 @@ mod section {
             section(section_data, &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("hello", None),
+                    header: parsed_section_header("hello", None),
                     events: vec![
                         newline_event(),
                         whitespace_event("            "),
@@ -261,7 +329,7 @@ mod section {
             section(section_data, &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("a", None),
+                    header: parsed_section_header("a", None),
                     events: vec![
                         whitespace_event(" "),
                         name_event("k"),
@@ -279,7 +347,7 @@ mod section {
             section(section_data, &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("a", None),
+                    header: parsed_section_header("a", None),
                     events: vec![
                         whitespace_event(" "),
                         name_event("k"),
@@ -305,7 +373,7 @@ mod section {
             section(section_data, &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("hello", None),
+                    header: parsed_section_header("hello", None),
                     events: vec![
                         newline_event(),
                         whitespace_event("            "),
@@ -341,10 +409,29 @@ mod section {
             section(b"[hello] c", &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("hello", None),
+                    header: parsed_section_header("hello", None),
                     events: vec![whitespace_event(" "), name_event("c"), value_event("")].into()
                 },
                 0
+            ))
+        );
+
+        assert_eq!(
+            section(b"[hello] c\nd", &mut node).unwrap(),
+            fully_consumed((
+                Section {
+                    header: parsed_section_header("hello", None),
+                    events: vec![
+                        whitespace_event(" "),
+                        name_event("c"),
+                        value_event(""),
+                        newline_event(),
+                        name_event("d"),
+                        value_event("")
+                    ]
+                    .into()
+                },
+                1
             ))
         );
     }
@@ -361,7 +448,7 @@ mod section {
             section(section_data, &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("hello", None),
+                    header: parsed_section_header("hello", None),
                     events: vec![
                         whitespace_event(" "),
                         comment_event(';', " commentA"),
@@ -403,7 +490,7 @@ mod section {
             section(b"[section] a = 1    \"\\\"\\\na ; e \"\\\"\\\nd # \"b\t ; c", &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("section", None),
+                    header: parsed_section_header("section", None),
                     events: vec![
                         whitespace_event(" "),
                         name_event("a"),
@@ -432,7 +519,7 @@ mod section {
             section(b"[section \"a\"] b =\"\\\n;\";a", &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("section", (" ", "a")),
+                    header: parsed_section_header("section", (" ", "a")),
                     events: vec![
                         whitespace_event(" "),
                         name_event("b"),
@@ -457,7 +544,7 @@ mod section {
             section(b"[s]hello             #world", &mut node).unwrap(),
             fully_consumed((
                 Section {
-                    section_header: parsed_section_header("s", None),
+                    header: parsed_section_header("s", None),
                     events: vec![
                         name_event("hello"),
                         whitespace_event("             "),
@@ -477,7 +564,7 @@ mod value_continuation {
 
     use crate::parse::{
         section,
-        tests::util::{into_events, newline_event, value_done_event, value_not_done_event},
+        tests::util::{into_events, newline_custom_event, newline_event, value_done_event, value_not_done_event},
     };
 
     pub fn value_impl<'a>(i: &'a [u8], events: &mut section::Events<'a>) -> nom::IResult<&'a [u8], ()> {
@@ -509,6 +596,23 @@ mod value_continuation {
                 newline_event(),
                 value_done_event("        world")
             ])
+        );
+
+        let mut events = section::Events::default();
+        assert_eq!(value_impl(b"hello\\\r\n        world", &mut events).unwrap().0, b"");
+        assert_eq!(
+            events,
+            into_events(vec![
+                value_not_done_event("hello"),
+                newline_custom_event("\r\n"),
+                value_done_event("        world")
+            ])
+        );
+
+        let mut events = section::Events::default();
+        assert!(
+            value_impl(b"hello\\\r\r\n        world", &mut events).is_err(),
+            "\\r must be followed by \\n"
         );
     }
 
@@ -543,6 +647,17 @@ mod value_continuation {
                 value_not_done_event("\""),
                 newline_event(),
                 value_done_event(";\"")
+            ])
+        );
+
+        let mut events = section::Events::default();
+        assert_eq!(value_impl(b"\"a\\\r\nb;\";c", &mut events).unwrap().0, b";c");
+        assert_eq!(
+            events,
+            into_events(vec![
+                value_not_done_event("\"a"),
+                newline_custom_event("\r\n"),
+                value_done_event("b;\"")
             ])
         );
     }
@@ -620,6 +735,17 @@ mod value_no_continuation {
         let mut events = section::Events::default();
         assert_eq!(value_impl(b"hello", &mut events).unwrap().0, b"");
         assert_eq!(events, into_events(vec![value_event("hello")]));
+    }
+
+    #[test]
+    fn windows_newline() {
+        let mut events = section::Events::default();
+        assert_eq!(value_impl(b"hi\r\nrest", &mut events).unwrap().0, b"\r\nrest");
+        assert_eq!(events, into_events(vec![value_event("hi")]));
+
+        events.clear();
+        assert_eq!(value_impl(b"hi\r\r\r\nrest", &mut events).unwrap().0, b"\r\r\r\nrest");
+        assert_eq!(events, into_events(vec![value_event("hi")]));
     }
 
     #[test]

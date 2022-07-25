@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.22.0 (2022-07-22)
+
+### New Features
+
+ - <csr-id-c76fde7de278b49ded13b655d5345e4eb8c1b134/> initialize `Time` from `now_utc` and `now_local`
+   Localtime support depends on some other factors now, but that
+   will only get better over time.
+   
+   We might have to document `unsound_local_time` at some point.
+
+### Changed (BREAKING)
+
+ - <csr-id-89a41bf2b37db29b9983b4e5492cfd67ed490b23/> remove local-time-support feature toggle.
+   We treat local time as default feature without a lot of fuzz, and
+   will eventually document that definitive support needs a compile
+   time switch in the compiler (`--cfg unsound_local_offset` or something).
+   
+   One day it will perish. Failure is possible anyway and we will write
+   code to deal with it while minimizing the amount of system time
+   fetches when asking for the current local time.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 5 commits contributed to the release over the course of 17 calendar days.
+ - 39 days passed between releases.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - remove local-time-support feature toggle. ([`89a41bf`](https://github.com/Byron/gitoxide/commit/89a41bf2b37db29b9983b4e5492cfd67ed490b23))
+    - initialize `Time` from `now_utc` and `now_local` ([`c76fde7`](https://github.com/Byron/gitoxide/commit/c76fde7de278b49ded13b655d5345e4eb8c1b134))
+    - a first sketch on how identity management could look like. ([`780f14f`](https://github.com/Byron/gitoxide/commit/780f14f5c270802e51cf039639c2fbdb5ac5a85e))
+ * **Uncategorized**
+    - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
+    - git-features' walkdir: 2.3.1 -> 2.3.2 ([`41dd754`](https://github.com/Byron/gitoxide/commit/41dd7545234e6d2637d2bca5bb6d4f6d8bfc8f57))
+</details>
+
 ## 0.21.1 (2022-06-13)
 
 A maintenance release without user-facing changes.
@@ -13,7 +58,7 @@ A maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 6 calendar days.
+ - 3 commits contributed to the release over the course of 6 calendar days.
  - 25 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -25,6 +70,7 @@ A maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-date v0.0.1, git-hash v0.9.5, git-features v0.21.1, git-actor v0.10.1, git-path v0.2.0, git-attributes v0.2.0, git-ref v0.14.0, git-sec v0.2.0, git-config v0.5.0, git-credentials v0.2.0, git-discover v0.2.0, git-pack v0.20.0, git-odb v0.30.0, git-url v0.6.0, git-transport v0.18.0, git-protocol v0.17.0, git-revision v0.2.1, git-worktree v0.3.0, git-repository v0.19.0, safety bump 13 crates ([`a417177`](https://github.com/Byron/gitoxide/commit/a41717712578f590f04a33d27adaa63171f25267))
     - update changelogs prior to release ([`bb424f5`](https://github.com/Byron/gitoxide/commit/bb424f51068b8a8e762696890a55ab48900ab980))
     - Assure we used most recent version of crossbeam-utils ([`033f0d3`](https://github.com/Byron/gitoxide/commit/033f0d3e0015b7eead6408c775d2101eb413ffbf))
 </details>
