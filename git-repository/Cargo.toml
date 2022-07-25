@@ -104,6 +104,7 @@ clru = "0.5.0"
 byte-unit = "4.0"
 log = "0.4.14"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+smallvec = "1.9.0"
 
 document-features = { version = "0.2.0", optional = true }
 

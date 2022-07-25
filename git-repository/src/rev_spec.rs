@@ -9,26 +9,26 @@ pub mod parse {
     use crate::types::RevSpecDetached;
     use crate::Repository;
     use crate::RevSpec;
+    use git_hash::ObjectId;
     use git_revision::spec::parse;
     use git_revision::spec::parse::delegate::{self, PeelTo, ReflogLookup, SiblingBranch, Traversal};
+    use smallvec::SmallVec;
+    use std::collections::HashSet;
 
     /// The error returned by [`crate::Repository::rev_parse()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
         #[error(
-            "The short hash {} matched both the reference {} and the object {}",
-            prefix,
-            reference.name,
-            oid
+            "The short hash {prefix} matched both the reference {} and the object {oids:?}", reference.name
         )]
         AmbiguousRefAndObject {
             /// The prefix to look for.
             prefix: git_hash::Prefix,
             /// The reference matching the prefix.
             reference: git_ref::Reference,
-            /// The object's id that was matching the prefix as well.
-            oid: git_hash::ObjectId,
+            /// The object's ids that were matching the prefix as well.
+            oids: HashSet<git_hash::ObjectId>,
         },
         #[error(transparent)]
         IdFromHex(#[from] git_hash::decode::Error),
@@ -79,12 +79,33 @@ pub mod parse {
 
     impl<'repo> RevSpec<'repo> {
         pub fn from_bstr(spec: impl AsRef<BStr>, repo: &'repo Repository, opts: Options) -> Result<Self, Error> {
+            fn zero_or_one_objects_or_ambguity_err(
+                candidates: Option<HashSet<ObjectId>>,
+                prefix: Option<git_hash::Prefix>,
+            ) -> Result<Option<ObjectId>, Error> {
+                match candidates {
+                    None => Ok(None),
+                    Some(candidates) => {
+                        match candidates.len() {
+                            0 => unreachable!(
+                                "BUG: let's avoid still being around if no candidate matched the requirements"
+                            ),
+                            1 => Ok(candidates.into_iter().next()),
+                            _ => Err(Error::AmbiguousPrefix {
+                                // TODO: resolve object types and provide additional information about them
+                                prefix: prefix.expect("set when obtaining candidates"),
+                            }),
+                        }
+                    }
+                }
+            }
             let mut delegate = Delegate {
                 refs: Default::default(),
                 objs: Default::default(),
                 idx: 0,
                 kind: None,
                 err: Vec::new(),
+                prefix: Default::default(),
                 opts,
                 repo,
             };
@@ -97,7 +118,7 @@ pub mod parse {
                     if delegate.err.len() == 1 {
                         return Err(delegate.err.remove(0));
                     }
-                    // TODO: is there a way to not degenerate the error easily?
+                    // TODO: is there a way to not degenerate the error but rather build some sort of error chain?
                     return Err(Error::Multi {
                         combined_message: delegate
                             .err
@@ -111,9 +132,9 @@ pub mod parse {
                 Ok(()) => RevSpec {
                     inner: RevSpecDetached {
                         from_ref: delegate.refs[0].take(),
-                        from: delegate.objs[0],
+                        from: zero_or_one_objects_or_ambguity_err(delegate.objs[0].take(), delegate.prefix[0])?,
                         to_ref: delegate.refs[1].take(),
-                        to: delegate.objs[1],
+                        to: zero_or_one_objects_or_ambguity_err(delegate.objs[1].take(), delegate.prefix[1])?,
                         kind: delegate.kind,
                     },
                     repo,
@@ -126,12 +147,14 @@ pub mod parse {
     #[allow(dead_code)]
     struct Delegate<'repo> {
         refs: [Option<git_ref::Reference>; 2],
-        objs: [Option<git_hash::ObjectId>; 2],
+        objs: [Option<HashSet<git_hash::ObjectId>>; 2],
         idx: usize,
         kind: Option<git_revision::spec::Kind>,
 
         opts: Options,
         err: Vec<Error>,
+        /// The ambiguous prefix obtained during a call to `disambiguate_prefix()`
+        prefix: [Option<git_hash::Prefix>; 2],
 
         repo: &'repo Repository,
     }
@@ -152,10 +175,10 @@ pub mod parse {
             for (r, obj) in self.refs.iter().zip(self.objs.iter_mut()) {
                 if let (_ref_opt @ Some(ref_), obj_opt @ None) = (r, obj) {
                     match ref_.target.try_id() {
-                        Some(id) => *obj_opt = Some(id.into()),
+                        Some(id) => obj_opt.get_or_insert_with(HashSet::default).insert(id.into()),
                         None => todo!("follow ref to get direct target object"),
-                    }
-                }
+                    };
+                };
             }
             Some(())
         }
@@ -184,11 +207,11 @@ pub mod parse {
             prefix: git_hash::Prefix,
             _must_be_commit: Option<delegate::PrefixHint<'_>>,
         ) -> Option<()> {
-            let candidates = None; // TODO: keep track of all candidates.
+            let mut candidates = Some(HashSet::default()); // TODO: keep track of all candidates.
             match self
                 .repo
                 .objects
-                .lookup_prefix(prefix, candidates)
+                .lookup_prefix(prefix, candidates.as_mut())
                 .map_err(crate::object::find::existing::OdbError::Find)
             {
                 Err(err) => {
@@ -199,21 +222,19 @@ pub mod parse {
                     self.err.push(Error::PrefixNotFound { prefix });
                     None
                 }
-                Ok(Some(Err(()))) => {
-                    self.err.push(Error::AmbiguousPrefix { prefix });
-                    None
-                }
-                Ok(Some(Ok(id))) => {
+                Ok(Some(Ok(_) | Err(()))) => {
                     assert!(self.objs[self.idx].is_none(), "BUG: cannot set the same prefix twice");
+                    let candidates = candidates.expect("set above");
                     match self.opts.refs_hint {
                         RefsHint::PreferObjectOnFullLengthHexShaUseRefOtherwise
-                            if prefix.hex_len() == id.kind().len_in_hex() =>
+                            if prefix.hex_len()
+                                == candidates.iter().next().expect("at least one").kind().len_in_hex() =>
                         {
-                            self.objs[self.idx] = Some(id);
+                            self.objs[self.idx] = Some(candidates);
                             Some(())
                         }
                         RefsHint::PreferObject => {
-                            self.objs[self.idx] = Some(id);
+                            self.objs[self.idx] = Some(candidates);
                             Some(())
                         }
                         RefsHint::PreferRef
@@ -226,7 +247,7 @@ pub mod parse {
                                     self.err.push(Error::AmbiguousRefAndObject {
                                         prefix,
                                         reference: ref_,
-                                        oid: id,
+                                        oids: candidates,
                                     });
                                     None
                                 } else {
@@ -235,7 +256,7 @@ pub mod parse {
                                 }
                             }
                             Err(_) => {
-                                self.objs[self.idx] = Some(id);
+                                self.objs[self.idx] = Some(candidates);
                                 Some(())
                             }
                         },
@@ -267,9 +288,25 @@ pub mod parse {
 
             match kind {
                 PeelTo::ValidObject => {
-                    if let Err(err) = self.repo.find_object(self.objs[self.idx]?) {
-                        self.err.push(err.into());
+                    let mut errors =
+                        SmallVec::<[(git_hash::ObjectId, crate::object::find::existing::OdbError); 1]>::default();
+                    let objs = self.objs[self.idx].as_mut()?;
+                    for obj in objs.iter() {
+                        match self.repo.find_object(*obj) {
+                            Ok(_) => {}
+                            Err(err) => {
+                                errors.push((*obj, err));
+                            }
+                        };
+                    }
+
+                    if errors.len() == objs.len() {
+                        self.err.extend(errors.into_iter().map(|(_, err)| err.into()));
                         return None;
+                    } else {
+                        for (obj, _) in errors {
+                            objs.remove(&obj);
+                        }
                     }
                 }
                 PeelTo::ObjectKind(_kind) => todo!("peel to kind"),

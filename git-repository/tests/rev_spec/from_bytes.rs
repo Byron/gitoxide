@@ -102,6 +102,7 @@ mod ambiguous {
     use git_testtools::hex_to_id;
 
     #[test]
+    #[ignore]
     fn prefix() {
         {
             let repo = repo("blob.prefix").unwrap();
@@ -127,6 +128,7 @@ mod ambiguous {
     }
 
     #[test]
+    #[ignore]
     fn blob_and_tree_can_be_disambiguated_by_type_some_day() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         assert_eq!(
@@ -138,6 +140,7 @@ mod ambiguous {
     }
 
     #[test]
+    #[ignore]
     fn trees_can_be_disambiguated_by_blob_access_some_day() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         assert_eq!(
@@ -148,6 +151,7 @@ mod ambiguous {
     }
 
     #[test]
+    #[ignore]
     fn commits_can_be_disambiguated_with_commit_specific_transformations_one_day() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         for spec in ["0000000000^0", "0000000000^{commit}"] {
@@ -160,6 +164,7 @@ mod ambiguous {
     }
 
     #[test]
+    #[ignore]
     fn tags_can_be_disambiguated_with_commit_specific_transformations_one_day() {
         let repo = repo("ambiguous_commits").unwrap();
         assert_eq!(
@@ -170,6 +175,7 @@ mod ambiguous {
     }
 
     #[test]
+    #[ignore]
     fn duplicates_are_deduplicated_across_all_odb_types_on_day() {
         let repo = repo("duplicate_ambiguous_objects").unwrap();
         assert_eq!(
@@ -184,6 +190,7 @@ mod ambiguous {
     }
 
     #[test]
+    #[ignore]
     fn ambiguous_40hex_refs_are_ignored_and_we_prefer_the_object_of_the_same_name() {
         let repo = repo("ambiguous_refs").unwrap();
         let spec = "0000000000e4f9fbd19cf1e932319e5ad0d1d00b";
@@ -218,6 +225,7 @@ mod ambiguous {
     }
 
     #[test]
+    #[ignore]
     fn ambiguous_short_refs_are_dereferenced() {
         let repo = repo("ambiguous_refs").unwrap();
         let spec = "0000000000e";

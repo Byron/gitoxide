@@ -1525,6 +1525,7 @@ dependencies = [
  "serde",
  "serial_test 0.8.0",
  "signal-hook",
+ "smallvec",
  "tempfile",
  "thiserror",
  "unicode-normalization",
