@@ -5,22 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.13.0 (2022-07-22)
+
+### New Features
+
+ - <csr-id-eda39ec7d736d49af1ad9e2ad775e4aa12b264b7/> `gix config` with section and sub-section filtering.
+ - <csr-id-d99453ebeb970ed493be236def299d1e82b01f83/> `gix config` lists all entries of all configuration files git considers.
+   Filters allow to narrow down the output.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 61 calendar days.
- - 67 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#301](https://github.com/Byron/gitoxide/issues/301)
+ - 37 commits contributed to the release over the course of 101 calendar days.
+ - 107 days passed between releases.
+ - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Thanks Clippy
 
 <csr-read-only-do-not-edit/>
 
-[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
 
 ### Commit Details
 
@@ -37,7 +43,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor ([`3ff991d`](https://github.com/Byron/gitoxide/commit/3ff991d0ca0d63632fc5710680351840f51c14c3))
     - frame for `gix repo exclude query` ([`a331314`](https://github.com/Byron/gitoxide/commit/a331314758629a93ba036245a5dd03cf4109dc52))
     - make fmt ([`50ff7aa`](https://github.com/Byron/gitoxide/commit/50ff7aa7fa86e5e2a94fb15aab86470532ac3f51))
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - fix journey tests after `gix` restructuring ([`59b95c9`](https://github.com/Byron/gitoxide/commit/59b95c94aacac174e374048b7d11d2c0984a19e0))
+    - `gix config` with section and sub-section filtering. ([`eda39ec`](https://github.com/Byron/gitoxide/commit/eda39ec7d736d49af1ad9e2ad775e4aa12b264b7))
+    - `gix config` lists all entries of all configuration files git considers. ([`d99453e`](https://github.com/Byron/gitoxide/commit/d99453ebeb970ed493be236def299d1e82b01f83))
+    - refactor ([`a437abe`](https://github.com/Byron/gitoxide/commit/a437abe8e77ad07bf25a16f19ca046ebdaef42d6))
+    - move 'exclude' up one level and dissolve 'repo' subcommand ([`8e5b796`](https://github.com/Byron/gitoxide/commit/8e5b796ea3fd760839f3c29a4f65bb42b1f3e893))
+    - move 'mailmap' up one level ([`5cf08ce`](https://github.com/Byron/gitoxide/commit/5cf08ce3d04d635bbfee169cb77ce259efbf6bc3))
+    - move 'odb' up one level ([`0ed65da`](https://github.com/Byron/gitoxide/commit/0ed65da9b66d4cc3c85d3b70fa4bc383c7a0d1a3))
+    - move 'tree' up one level ([`38a8350`](https://github.com/Byron/gitoxide/commit/38a8350d75720a8455e9c55d12f7cdf4b1742e56))
+    - move 'commit' up one level ([`72876f1`](https://github.com/Byron/gitoxide/commit/72876f1fd65efc816b704db6880ab881c89cff01))
+    - move 'verify' up one level ([`ac7d99a`](https://github.com/Byron/gitoxide/commit/ac7d99ac42ff8561e81f476856d0bbe86b5fa627))
+    - move 'revision' one level up ([`c9c78e8`](https://github.com/Byron/gitoxide/commit/c9c78e86c387c09838404c90de420892f41f4356))
+    - move 'remote' to 'free' ([`8967fcd`](https://github.com/Byron/gitoxide/commit/8967fcd009260c2d32881866244ba673894775f2))
+    - move commitgraph to 'free' ([`f99c3b2`](https://github.com/Byron/gitoxide/commit/f99c3b29cea30f1cbbea7e5855abfec3de6ca630))
+    - move index to 'free' ([`83585bd`](https://github.com/Byron/gitoxide/commit/83585bdfccdc42b5307255b2d56d8cb12d4136cb))
+    - move 'pack' to 'free' ([`1cdecbc`](https://github.com/Byron/gitoxide/commit/1cdecbc583ae412e7f25cade73b46e00a182125f))
+    - migrate mailmap to the new 'free' section ([`141c5f1`](https://github.com/Byron/gitoxide/commit/141c5f1145f9d3864e2d879089c66c62f38a2b5d))
+    - first step towards moving all repository-commands one level up. ([`f4e1810`](https://github.com/Byron/gitoxide/commit/f4e1810fb711d57778be79c88f49aa583821abab))
+    - make obvious what plumbing and porcelain really are ([`faaf791`](https://github.com/Byron/gitoxide/commit/faaf791cc960c37b180ddef9792dfabc7d106138))
+    - adjustments due to breaking changes in `git_path` ([`4420ae9`](https://github.com/Byron/gitoxide/commit/4420ae932d5b20a9662a6d36353a27111b5cd672))
+ * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - basic infrastructure for delegate implementation ([`d3c0bc6`](https://github.com/Byron/gitoxide/commit/d3c0bc6e8d7764728f4e10500bb895152ccd0b0b))
+    - Hookup explain command ([`1049b00`](https://github.com/Byron/gitoxide/commit/1049b00eaa261a67f060eaca4eb50dcda831eafd))
+    - frame for `gix repo rev explain` ([`12e6277`](https://github.com/Byron/gitoxide/commit/12e6277a65a6572a0e43e8324d2d1dfb23d0bb40))
  * **Uncategorized**
+    - thanks clippy ([`48b3f4a`](https://github.com/Byron/gitoxide/commit/48b3f4a5077ba66d47482a80e505feb69e9ac9fc))
+    - make fmt ([`0700b09`](https://github.com/Byron/gitoxide/commit/0700b09d6828849fa2470df89af1f75a67bfb27d))
+    - Use git_path::realpath in all places that allow it right now ([`229dc91`](https://github.com/Byron/gitoxide/commit/229dc917fc7d9241b85e5818260a6fbdd3a5daaa))
     - make fmt ([`251b6df`](https://github.com/Byron/gitoxide/commit/251b6df5dbdda24b7bdc452085f808f3acef69d8))
     - Merge branch 'git_includeif' of https://github.com/svetli-n/gitoxide into svetli-n-git_includeif ([`0e01da7`](https://github.com/Byron/gitoxide/commit/0e01da74dffedaa46190db6a7b60a2aaff190d81))
     - thanks clippy ([`056e8d2`](https://github.com/Byron/gitoxide/commit/056e8d26dc511fe7939ec87c62ef16aafd34fa9c))

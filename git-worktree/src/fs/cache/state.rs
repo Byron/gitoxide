@@ -102,10 +102,10 @@ impl Ignore {
             if mapping.pattern.is_negative() {
                 dir_match = Some(match_);
             } else {
-                // Note that returning here is wrong if this pattern _was_ preceeded by a negative pattern that
+                // Note that returning here is wrong if this pattern _was_ preceded by a negative pattern that
                 // didn't match the directory, but would match now.
                 // Git does it similarly so we do too even though it's incorrect.
-                // To fix this, one would probably keep track of whether there was a preceeding negative pattern, and
+                // To fix this, one would probably keep track of whether there was a preceding negative pattern, and
                 // if so we check the path in full and only use the dir match if there was no match, similar to the negative
                 // case above whose fix fortunately won't change the overall result.
                 return match_.into();
@@ -186,6 +186,9 @@ impl Ignore {
 }
 
 impl Attributes {
+    /// Create a new instance from an attribute match group that represents `globals`.
+    ///
+    /// A stack of attributes will be applied on top of it later.
     pub fn new(globals: AttributeMatchGroup) -> Self {
         Attributes {
             globals,

@@ -93,11 +93,20 @@ impl crate::Repository {
         let configured_path = self
             .config
             .resolved
-            .value::<git_config::values::Path<'_>>("mailmap", None, "file")
+            .value::<git_config::Path<'_>>("mailmap", None, "file")
             .ok()
             .and_then(|path| {
                 let install_dir = self.install_dir().ok()?;
-                match path.interpolate(Some(install_dir.as_path())) {
+                let home = self.config.home_dir();
+                match path.interpolate(git_config::path::interpolate::Context {
+                    git_install_dir: Some(install_dir.as_path()),
+                    home_dir: home.as_deref(),
+                    home_for_user: if self.options.git_dir_trust.expect("trust is set") == git_sec::Trust::Full {
+                        Some(git_config::path::interpolate::home_for_user)
+                    } else {
+                        None
+                    },
+                }) {
                     Ok(path) => Some(path),
                     Err(e) => {
                         err.get_or_insert(e.into());

@@ -4,17 +4,6 @@ help:  ## Display this help
 
 always:
 
-##@ Publishing & Versioning
-
-try-publish-all: ## Dry-run publish all crates in the currently set version if they are not published yet.
-	(cd cargo-smart-release && cargo build --bin cargo-smart-release) && cargo-smart-release/target/debug/cargo-smart-release smart-release gitoxide
-
-try-bump-minor-version: ## Show how updating the minor version of PACKAGE=<name> would look like.
-	(cd cargo-smart-release && cargo build --bin cargo-smart-release) && cargo-smart-release/target/debug/cargo-smart-release smart-release --update-crates-index --bump minor --no-dependencies --no-publish --no-tag --no-push -v $(PACKAGE)
-
-bump-minor-version: ## Similar to try-bump-minor-version, but actually performs the operation on PACKAGE=<name>
-	(cd cargo-smart-release && cargo build --bin cargo-smart-release) && cargo-smart-release/target/debug/cargo-smart-release smart-release --update-crates-index --bump minor --no-dependencies --skip-publish --skip-tag --skip-push -v $(PACKAGE) --execute
-
 ##@ Release Builds
 
 release-all: release release-lean release-small ## all release builds
@@ -65,10 +54,7 @@ clippy: ## Run cargo clippy on all crates
 	cargo clippy --all --no-default-features --features lean-async --tests
 
 check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
-	cd git-repository && cargo check --package git-repository --no-default-features --features async-network-client,unstable,local-time-support,max-performance
-
-check-win: ## see that windows compiles, provided the x86_64-pc-windows-msvc target and cargo-xwin are present.
-	cargo xwin build --target x86_64-pc-windows-msvc  --no-default-features --features small
+	cd git-repository && cargo check --package git-repository --no-default-features --features async-network-client,unstable,max-performance
 
 check: ## Build all code in suitable configurations
 	cargo check --all
@@ -77,12 +63,9 @@ check: ## Build all code in suitable configurations
 	cargo check --no-default-features --features lean
 	cargo check --no-default-features --features lean-async
 	cargo check --no-default-features --features max
-	cd git-actor && cargo check \
-				 && cargo check --features local-time-support
 	cd gitoxide-core && cargo check \
                      && cargo check --features blocking-client \
-                     && cargo check --features async-client \
-                     && cargo check --features local-time-support
+                     && cargo check --features async-client
 	cd gitoxide-core && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-hash && cargo check --all-features \
 				&& cargo check
@@ -114,7 +97,6 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features rustsha1 \
 			   && cargo check --features fast-sha1 \
 			   && cargo check --features progress \
-			   && cargo check --features time \
 			   && cargo check --features io-pipe \
 			   && cargo check --features crc32 \
 			   && cargo check --features zlib \
@@ -168,6 +150,9 @@ unit-tests: ## run all unit tests
 					&& cargo test --features async-client \
 					&& cargo test
 	cd gitoxide-core && cargo test --lib
+
+nextest: ## run tests with `cargo nextest` (all unit-tests, no doc-tests, faster)
+	cargo nextest run --all
 
 continuous-unit-tests: ## run all unit tests whenever something changes
 	watchexec -w src $(MAKE) unit-tests
@@ -256,20 +241,20 @@ commit_graphs = \
 
 stress: ## Run various algorithms on big repositories
 	$(MAKE) -j3 $(linux_repo) $(rust_repo) release-lean
-	time ./target/release/gix --verbose pack verify --re-encode $(linux_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack multi-index -i $(linux_repo)/objects/pack/multi-pack-index create $(linux_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack verify $(linux_repo)/objects/pack/multi-pack-index
-	rm -Rf out; mkdir out && time ./target/release/gix --verbose pack index create -p $(linux_repo)/objects/pack/*.pack out/
-	time ./target/release/gix --verbose pack verify out/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --re-encode $(linux_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack multi-index -i $(linux_repo)/objects/pack/multi-pack-index create $(linux_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify $(linux_repo)/objects/pack/multi-pack-index
+	rm -Rf out; mkdir out && time ./target/release/gix --verbose no-repo pack index create -p $(linux_repo)/objects/pack/*.pack out/
+	time ./target/release/gix --verbose no-repo pack verify out/*.idx
 
-	time ./target/release/gix --verbose pack verify --statistics $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack verify --algorithm less-memory $(rust_repo)/objects/pack/*.idx
-	time ./target/release/gix --verbose pack verify --re-encode $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --statistics $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --algorithm less-memory $(rust_repo)/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack verify --re-encode $(rust_repo)/objects/pack/*.idx
 	# We must ensure there is exactly one pack file for the pack-explode *.idx globs to work.
 	git repack -Ad
-	time ./target/release/gix --verbose pack explode .git/objects/pack/*.idx
+	time ./target/release/gix --verbose no-repo pack explode .git/objects/pack/*.idx
 
-	rm -Rf delme; mkdir delme && time ./target/release/gix --verbose pack explode .git/objects/pack/*.idx delme/
+	rm -Rf delme; mkdir delme && time ./target/release/gix --verbose no-repo pack explode .git/objects/pack/*.idx delme/
 
 	$(MAKE) stress-commitgraph
 	$(MAKE) bench-git-config
@@ -277,7 +262,7 @@ stress: ## Run various algorithms on big repositories
 .PHONY: stress-commitgraph
 stress-commitgraph: release-lean $(commit_graphs)
 	set -x; for path in $(wordlist 2, 999, $^); do \
-		time ./target/release/gix --verbose commit-graph verify $$path; \
+		time ./target/release/gix --verbose no-repo commit-graph verify $$path; \
 	done
 
 .PHONY: bench-git-config
@@ -287,7 +272,7 @@ bench-git-config:
 check-msrv-on-ci: ## Check the minimal support rust version for currently installed Rust version
 	rustc --version
 	cargo check --package git-repository
-	cargo check --package git-repository --no-default-features --features async-network-client,unstable,local-time-support,max-performance
+	cargo check --package git-repository --no-default-features --features async-network-client,unstable,max-performance
 
 ##@ Maintenance
 
@@ -323,3 +308,9 @@ check-size: ## Run cargo-diet on all crates to see that they are still in bound
 fmt: ## run nightly rustfmt for its extra features, but check that it won't upset stable rustfmt
 	cargo +nightly fmt --all -- --config-path rustfmt-nightly.toml
 	cargo +stable fmt --all -- --check
+
+##@ Publishing & Versioning
+
+try-publish-all: ## Dry-run publish all crates in the currently set version if they are not published yet.
+	(cd cargo-smart-release && cargo build --bin cargo-smart-release) && cargo-smart-release/target/debug/cargo-smart-release smart-release gitoxide
+

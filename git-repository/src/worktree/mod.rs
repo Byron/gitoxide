@@ -78,7 +78,7 @@ pub mod open_index {
         ConfigIndexThreads {
             value: BString,
             #[source]
-            err: git_config::value::parse::Error,
+            err: git_config::value::Error,
         },
         #[error(transparent)]
         IndexFile(#[from] git_index::file::init::Error),

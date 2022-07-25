@@ -59,7 +59,7 @@ impl<'s> Transaction<'s> {
                 )
                 .map_err(|err| Error::LockAcquire {
                     err,
-                    full_name: "borrowchk wont allow change.name()".into(),
+                    full_name: "borrowchk won't allow change.name()".into(),
                 })?;
                 let existing_ref = existing_ref?;
                 match (&expected, &existing_ref) {
@@ -105,7 +105,7 @@ impl<'s> Transaction<'s> {
                 )
                 .map_err(|err| Error::LockAcquire {
                     err,
-                    full_name: "borrowchk wont allow change.name() and this will be corrected by caller".into(),
+                    full_name: "borrowchk won't allow change.name() and this will be corrected by caller".into(),
                 })?;
 
                 let existing_ref = existing_ref?;

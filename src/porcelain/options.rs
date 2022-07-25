@@ -109,11 +109,11 @@ mod validator {
     use std::{ffi::OsStr, path::PathBuf};
 
     use anyhow::Context;
+    use git_repository as git;
 
     fn is_repo_inner(dir: &OsStr) -> anyhow::Result<()> {
         let git_dir = PathBuf::from(dir).join(".git");
-        let p = git_dir
-            .canonicalize()
+        let p = git::path::realpath(&git_dir)
             .with_context(|| format!("Could not canonicalize git repository at '{}'", git_dir.display()))?;
         if p.extension().unwrap_or_default() == "git"
             || p.file_name().unwrap_or_default() == ".git"

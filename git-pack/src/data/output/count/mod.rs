@@ -8,7 +8,7 @@ use crate::data::output::Count;
 pub enum PackLocation {
     /// We did not lookup this object
     NotLookedUp,
-    /// The object was looked up and there may be a location in a pack, along with enty information
+    /// The object was looked up and there may be a location in a pack, along with entry information
     LookedUp(Option<crate::data::entry::Location>),
 }
 

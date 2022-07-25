@@ -531,7 +531,7 @@ impl super::Store {
         let mut files = slot.files.load_full();
         let files_mut = Arc::make_mut(&mut files);
         // set the generation before we actually change the value, otherwise readers of old generations could observe the new one.
-        // We rather want them to turn around here and update their index, which, by that time, migth actually already be available.
+        // We rather want them to turn around here and update their index, which, by that time, might actually already be available.
         // If not, they would fail unable to load a pack or index they need, but that's preferred over returning wrong objects.
         // Safety: can't race as we hold the lock, have to set the generation beforehand to help avoid others to observe the value.
         slot.generation.store(generation, Ordering::SeqCst);

@@ -1,6 +1,6 @@
+use std::{borrow::Cow, path::Path};
+
 use git_path::absolutize;
-use std::borrow::Cow;
-use std::path::Path;
 
 fn p(input: &str) -> &Path {
     Path::new(input)
@@ -15,8 +15,8 @@ fn no_change_if_there_are_no_trailing_relative_components() {
 }
 
 #[test]
-fn special_cases_around_cwd() {
-    let cwd = std::env::current_dir().unwrap();
+fn special_cases_around_cwd() -> crate::Result {
+    let cwd = std::env::current_dir()?;
     assert_eq!(
         absolutize(p("a/.."), None::<&Path>),
         p("."),
@@ -24,9 +24,10 @@ fn special_cases_around_cwd() {
     );
     assert_eq!(
         absolutize(p("a/../.."), Some(&cwd)),
-        cwd.parent().unwrap(),
+        cwd.parent().expect("parent"),
         "it automatically extends the poppable items by using the current working dir"
     );
+    Ok(())
 }
 
 #[test]

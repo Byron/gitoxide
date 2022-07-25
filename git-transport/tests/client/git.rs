@@ -73,6 +73,7 @@ async fn handshake_v1_and_request() -> crate::Result {
     while let Some(line) = lines.next().await {
         refs.push(line?)
     }
+    #[allow(clippy::drop_non_drop)] // needed for non-async version
     drop(lines);
 
     assert_eq!(
@@ -198,9 +199,9 @@ async fn handshake_v2_and_request() -> crate::Result {
     // This monstrosity simulates how one can process a pack received in async-io by transforming it into
     // blocking io::BufRead, while still handling the whole operation in a way that won't block the executor.
     // It's a way of `spawn_blocking()` in other executors. Currently this can only be done on a per-command basis.
-    // Thinking about it, it's most certainly fine to do `fetch' commands on another thread and move the entire conenction
+    // Thinking about it, it's most certainly fine to do `fetch' commands on another thread and move the entire connection
     // there as it's always the end of an operation and a lot of IO is required that is blocking anyway, like accessing
-    // commit graph information for fetch negotiations, and of cource processing a received pack.
+    // commit graph information for fetch negotiations, and of course processing a received pack.
     #[cfg(feature = "async-client")]
     Ok(
         blocking::unblock(|| futures_lite::future::block_on(handshake_v2_and_request_inner()).expect("no failure"))

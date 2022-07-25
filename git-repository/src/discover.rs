@@ -2,7 +2,7 @@ use std::path::Path;
 
 pub use git_discover::*;
 
-use crate::ThreadSafeRepository;
+use crate::{bstr::BString, ThreadSafeRepository};
 
 /// The error returned by [`crate::discover()`].
 #[derive(Debug, thiserror::Error)]
@@ -15,7 +15,8 @@ pub enum Error {
 }
 
 impl ThreadSafeRepository {
-    /// Try to open a git repository in `directory` and search upwards through its parents until one is found.
+    /// Try to open a git repository in `directory` and search upwards through its parents until one is found,
+    /// using default trust options which matters in case the found repository isn't owned by the current user.
     pub fn discover(directory: impl AsRef<Path>) -> Result<Self, Error> {
         Self::discover_opts(directory, Default::default(), Default::default())
     }
@@ -23,6 +24,12 @@ impl ThreadSafeRepository {
     /// Try to open a git repository in `directory` and search upwards through its parents until one is found,
     /// while applying `options`. Then use the `trust_map` to determine which of our own repository options to use
     /// for instantiations.
+    ///
+    /// Note that [trust overrides](crate::open::Options::with()) in the `trust_map` are not effective here and we will
+    /// always override it with the determined trust value. This is a precaution as the API user is unable to actually know
+    /// if the directory that is discovered can indeed be trusted (or else they'd have to implement the discovery themselves
+    /// and be sure that no attacker ever gets access to a directory structure. The cost of this is a permission check, which
+    /// seems acceptable).
     pub fn discover_opts(
         directory: impl AsRef<Path>,
         options: upwards::Options,
@@ -30,7 +37,8 @@ impl ThreadSafeRepository {
     ) -> Result<Self, Error> {
         let (path, trust) = upwards_opts(directory, options)?;
         let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-        let options = trust_map.into_value_by_level(trust);
+        let mut options = trust_map.into_value_by_level(trust);
+        options.git_dir_trust = trust.into();
         Self::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
     }
 
@@ -60,11 +68,11 @@ impl ThreadSafeRepository {
 
             use crate::bstr::ByteVec;
 
-            if let Some(cross_fs) =
-                std::env::var_os("GIT_DISCOVERY_ACROSS_FILESYSTEM").and_then(|v| Vec::from_os_string(v).ok())
+            if let Some(cross_fs) = std::env::var_os("GIT_DISCOVERY_ACROSS_FILESYSTEM")
+                .and_then(|v| Vec::from_os_string(v).ok().map(BString::from))
             {
-                if let Ok(b) = git_config::values::Boolean::try_from(cross_fs) {
-                    opts.cross_fs = b.to_bool();
+                if let Ok(b) = git_config::Boolean::try_from(cross_fs.as_ref()) {
+                    opts.cross_fs = b.into();
                 }
             }
             opts

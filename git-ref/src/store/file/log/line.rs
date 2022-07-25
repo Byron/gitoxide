@@ -108,7 +108,7 @@ pub mod decode {
             }
         }
 
-        impl<'a> std::error::Error for Error {}
+        impl std::error::Error for Error {}
 
         impl Error {
             pub(crate) fn new(input: &[u8]) -> Self {

@@ -193,7 +193,10 @@ mod parse {
                         Reference::try_from_path("HEAD".try_into().expect("valid static name"), $input).unwrap();
                     assert_eq!(reference.kind(), $kind);
                     assert_eq!(reference.target.to_ref().try_id(), $id);
-                    assert_eq!(reference.target.to_ref().try_name(), $ref);
+                    assert_eq!(
+                        reference.target.to_ref().try_name().map(|n| n.as_bstr()),
+                        $ref
+                    );
                 }
             };
         }

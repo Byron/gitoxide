@@ -14,8 +14,12 @@
 //!     * one reference maps to a file on disk
 //!   * **packed**
 //!     * references are stored in a single human-readable file, along with their targets if they are symbolic.
-//! * **ref-table**
-//!   * supersedes all of the above to allow handling hundreds of thousands of references.
+//!
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 #![deny(unsafe_code, missing_docs, rust_2018_idioms)]
 
 use std::borrow::Cow;
@@ -54,6 +58,8 @@ pub mod store {
     /// The way a file store handles the reflog
     #[derive(Debug, PartialOrd, PartialEq, Ord, Eq, Hash, Clone, Copy)]
     pub enum WriteReflog {
+        /// Always write the reflog for all references for ref edits, unconditionally.
+        Always,
         /// Write a ref log for ref edits according to the standard rules.
         Normal,
         /// Never write a ref log.

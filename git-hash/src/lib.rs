@@ -1,6 +1,11 @@
 //! This crate provides types for identifying git objects using a hash digest.
 //!
 //! These are provided in borrowed versions as well as owned ones.
+//! ## Feature Flags
+#![cfg_attr(
+feature = "document-features",
+cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 #![deny(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 

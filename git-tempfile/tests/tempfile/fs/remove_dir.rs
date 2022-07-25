@@ -118,7 +118,7 @@ mod empty_depth_first {
         create_dir_all(tree_parent.join("one").join("two").join("three")).unwrap();
         create_dir_all(tree_parent.join("c")).unwrap();
         for empty in &[nested_parent, single_parent, tree_parent] {
-            let _ = git_tempfile::remove_dir::empty_depth_first(empty).unwrap();
+            git_tempfile::remove_dir::empty_depth_first(empty).unwrap();
         }
     }
 }

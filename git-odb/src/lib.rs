@@ -9,6 +9,11 @@
 //! * loose object reading and writing
 //! * access to packed objects
 //! * multiple loose objects and pack locations as gathered from `alternates` files.
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
 
 use std::{
     cell::RefCell,

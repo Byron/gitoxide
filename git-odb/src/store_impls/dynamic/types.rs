@@ -259,7 +259,7 @@ impl IndexAndPacks {
         }
     }
 
-    /// If we are garbaged, put ourselve into the loaded state. Otherwise put ourselves back to unloaded.
+    /// If we are garbaged, put ourselves into the loaded state. Otherwise put ourselves back to unloaded.
     pub(crate) fn put_back(&mut self) {
         match self {
             IndexAndPacks::Index(bundle) => {

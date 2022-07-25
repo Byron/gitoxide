@@ -57,7 +57,7 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
                 #[cfg_attr(target_os = "windows", allow(unused_variables))]
                 Err(transaction::commit::Error::LockCommit { err, full_name }) => {
                     assert_eq!(full_name, "HEAD");
-                    #[cfg(not(target_os = "windows"))]
+                    #[cfg(not(windows))]
                     assert_eq!(err.to_string(), "Directory not empty");
                 }
                 _ => unreachable!("other errors shouldn't happen here"),
@@ -397,7 +397,7 @@ fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
 
 #[test]
 fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
-    for reflog_writemode in &[WriteReflog::Normal, WriteReflog::Disable] {
+    for reflog_writemode in &[WriteReflog::Normal, WriteReflog::Disable, WriteReflog::Always] {
         let (_keep, mut store) = empty_store()?;
         store.write_reflog = *reflog_writemode;
         let referent = "refs/heads/alt-main";
@@ -443,7 +443,10 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let head = store.find_loose(&edits[0].name)?;
         assert_eq!(head.name.as_bstr(), "HEAD");
         assert_eq!(head.kind(), git_ref::Kind::Symbolic);
-        assert_eq!(head.target.to_ref().try_name(), Some(referent.as_bytes().as_bstr()));
+        assert_eq!(
+            head.target.to_ref().try_name().map(|n| n.as_bstr()),
+            Some(referent.as_bytes().as_bstr())
+        );
         assert!(!head.log_exists(&store), "no reflog is written for symbolic ref");
         assert!(store.try_find_loose(referent)?.is_none(), "referent wasn't created");
 
@@ -506,7 +509,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "head is still symbolic, not detached"
         );
         assert_eq!(
-            head.target.to_ref().try_name(),
+            head.target.to_ref().try_name().map(|n| n.as_bstr()),
             Some(referent.as_bytes().as_bstr()),
             "it still points to the referent"
         );
@@ -522,7 +525,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let mut buf = Vec::new();
         for ref_name in &["HEAD", referent] {
             match reflog_writemode {
-                WriteReflog::Normal => {
+                WriteReflog::Normal | WriteReflog::Always => {
                     let expected_line = log_line(git_hash::Kind::Sha1.null(), new_oid, "an actual change");
                     assert_eq!(reflog_lines(&store, *ref_name)?, vec![expected_line]);
                 }

@@ -1,3 +1,5 @@
+use git_path::realpath::MAX_SYMLINKS;
+
 impl crate::Repository {
     /// Returns the main git repository if this is a repository on a linked work-tree, or the `git_dir` itself.
     pub fn common_dir(&self) -> &std::path::Path {
@@ -26,21 +28,23 @@ impl crate::Repository {
     // TODO: tests, details - there is a lot about environment variables to change things around.
     pub fn prefix(&self) -> Option<std::io::Result<std::path::PathBuf>> {
         self.work_tree.as_ref().map(|root| {
-            root.canonicalize().and_then(|root| {
-                std::env::current_dir().and_then(|cwd| {
-                    cwd.strip_prefix(&root)
-                        .map_err(|_| {
-                            std::io::Error::new(
-                                std::io::ErrorKind::Other,
-                                format!(
-                                    "CWD '{}' isn't within the work tree '{}'",
-                                    cwd.display(),
-                                    root.display()
-                                ),
-                            )
-                        })
-                        .map(ToOwned::to_owned)
-                })
+            std::env::current_dir().and_then(|cwd| {
+                git_path::realpath_opts(root, &cwd, MAX_SYMLINKS)
+                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))
+                    .and_then(|root| {
+                        cwd.strip_prefix(&root)
+                            .map_err(|_| {
+                                std::io::Error::new(
+                                    std::io::ErrorKind::Other,
+                                    format!(
+                                        "CWD '{}' isn't within the work tree '{}'",
+                                        cwd.display(),
+                                        root.display()
+                                    ),
+                                )
+                            })
+                            .map(ToOwned::to_owned)
+                    })
             })
         })
     }
@@ -60,5 +64,10 @@ impl crate::Repository {
     /// Synonymous to [`path()`][crate::Repository::path()].
     pub fn git_dir(&self) -> &std::path::Path {
         self.refs.git_dir()
+    }
+
+    /// The trust we place in the git-dir, with lower amounts of trust causing access to configuration to be limited.
+    pub fn git_dir_trust(&self) -> git_sec::Trust {
+        self.options.git_dir_trust.expect("definitely set by now")
     }
 }

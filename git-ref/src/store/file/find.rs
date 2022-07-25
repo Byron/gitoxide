@@ -225,7 +225,7 @@ impl file::Store {
                 Ok(buf.into())
             }
             Err(err) if err.kind() == io::ErrorKind::NotFound => Ok(None),
-            #[cfg(target_os = "windows")]
+            #[cfg(windows)]
             Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => Ok(None),
             Err(err) => Err(err),
         }
@@ -315,7 +315,7 @@ pub mod existing {
             #[allow(missing_docs)]
             pub enum Error {
                 Find(err: find::Error) {
-                    display("An error occured while trying to find a reference")
+                    display("An error occurred while trying to find a reference")
                     from()
                     source(err)
                 }

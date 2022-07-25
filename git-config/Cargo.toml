@@ -1,6 +1,6 @@
 [package]
 name = "git-config"
-version = "0.5.0"
+version = "0.6.0"
 repository = "https://github.com/Byron/gitoxide"
 description = "A git-config file parser and editor from the gitoxide project"
 license = "MIT OR Apache-2.0"
@@ -11,29 +11,34 @@ categories = ["config", "parser-implementations"]
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 
 [features]
-# serde = ["serde_crate"]
+## Data structures implement `serde::Serialize` and `serde::Deserialize`.
+serde1 = ["serde", "bstr/serde1", "git-sec/serde1", "git-ref/serde1", "git-glob/serde1"]
 
 [dependencies]
-git-features = { version = "^0.21.1", path = "../git-features"}
-git-path = { version = "^0.2.0", path = "../git-path" }
-git-sec = { version = "^0.2.0", path = "../git-sec" }
-git-ref = { version = "^0.14.0", path = "../git-ref" }
-git-glob = { version = "0.3.0", path = "../git-glob" }
+git-features = { version = "^0.22.0", path = "../git-features"}
+git-path = { version = "^0.4.0", path = "../git-path" }
+git-sec = { version = "^0.3.0", path = "../git-sec" }
+git-ref = { version = "^0.15.0", path = "../git-ref" }
+git-glob = { version = "^0.3.1", path = "../git-glob" }
 
-dirs = "4"
 nom = { version = "7", default_features = false, features = [ "std" ] }
 memchr = "2"
-serde_crate = { version = "1", package = "serde", optional = true }
 thiserror = "1.0.26"
 unicode-bom = "1.1.4"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
+smallvec = "1.9.0"
+bitflags = "1.3.2"
+
+document-features = { version = "0.2.0", optional = true }
 
 [target.'cfg(not(windows))'.dependencies]
 libc = "0.2"
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools"}
-serial_test = "0.6.0"
+git-repository = { path = "../git-repository" }
+serial_test = "0.7.0"
 serde_derive = "1.0"
 criterion = "0.3"
 tempfile = "3.2.0"
@@ -42,3 +47,7 @@ tempfile = "3.2.0"
 name = "large_config_file"
 harness = false
 path = "./benches/large_config_file.rs"
+
+[package.metadata.docs.rs]
+features = ["document-features"]
+all-features = true

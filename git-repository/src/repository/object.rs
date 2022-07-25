@@ -55,7 +55,6 @@ impl crate::Repository {
         match self.objects.try_find(&id, &mut buf)? {
             Some(obj) => {
                 let kind = obj.kind;
-                drop(obj);
                 Ok(Some(Object::from_data(id, kind, buf, self)))
             }
             None => Ok(None),
@@ -172,7 +171,7 @@ impl crate::Repository {
                 deref: true,
             },
             git_lock::acquire::Fail::Immediately,
-            Some(&commit.committer),
+            commit.committer.to_ref(),
         )?;
         Ok(commit_id)
     }

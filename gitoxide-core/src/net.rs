@@ -36,7 +36,7 @@ mod impls {
 
 impl Default for Protocol {
     fn default() -> Self {
-        // Note that it's very important this remains V2, as V1 may block forver in stateful (i.e. non-http) connections when fetching
+        // Note that it's very important this remains V2, as V1 may block forever in stateful (i.e. non-http) connections when fetching
         // as we chose not to complicate matters by counting which arguments where sent (just yet).
         Protocol::V2
     }

@@ -4,8 +4,30 @@ on:
   push:
     branches: [ main ]
     tags-ignore: '*'
+    paths:
+      - '.github/**'
+      - 'ci/**'
+      - 'etc/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'cargo-*/**'
+      - 'git*/**'
+      - 'experiments/**'
+      - '*.toml'
+      - Makefile
   pull_request:
     branches: [ main ]
+    paths:
+      - '.github/**'
+      - 'ci/**'
+      - 'etc/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'cargo-*/**'
+      - 'git*/**'
+      - 'experiments/**'
+      - '*.toml'
+      - Makefile
 
 jobs:
   test:
@@ -43,6 +65,9 @@ jobs:
     name: ${{ matrix.build }}
     steps:
       - uses: actions/checkout@v1
+      - run: rustup set auto-self-update disable
+        if: contains(runner.os, 'windows')
+        shell: bash
       - uses: actions-rs/toolchain@v1
         with:
           profile: default

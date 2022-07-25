@@ -27,7 +27,7 @@ impl Default for Parents {
 pub enum Sorting {
     /// Commits are sorted as they are mentioned in the commit graph.
     Topological,
-    /// Commits are sorted by their commit time in decending order, that is newest first.
+    /// Commits are sorted by their commit time in descending order, that is newest first.
     ///
     /// The sorting applies to all currently queued commit ids and thus is full.
     ByCommitTimeNewestFirst,

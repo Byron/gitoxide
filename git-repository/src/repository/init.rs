@@ -25,7 +25,7 @@ impl crate::Repository {
             },
             refs,
             config,
-            linked_worktree_options,
+            options: linked_worktree_options,
         }
     }
 

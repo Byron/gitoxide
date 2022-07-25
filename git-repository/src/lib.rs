@@ -88,6 +88,7 @@
 //! * [`url`]
 //! * [`actor`]
 //! * [`bstr`][bstr]
+//! * [`date`]
 //! * [`mod@discover`]
 //! * [`index`]
 //! * [`glob`]
@@ -129,6 +130,8 @@ pub use git_actor as actor;
 pub use git_attributes as attrs;
 #[cfg(all(feature = "unstable", feature = "git-credentials"))]
 pub use git_credentials as credentials;
+#[cfg(feature = "unstable")]
+pub use git_date as date;
 #[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
 use git_features::threading::OwnShared;
@@ -235,17 +238,36 @@ pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, di
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
-    ThreadSafeRepository::init(directory, create::Options { bare: false }).map(Into::into)
+    ThreadSafeRepository::init(
+        directory,
+        create::Options {
+            bare: false,
+            fs_capabilities: None,
+        },
+    )
+    .map(Into::into)
 }
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
-    ThreadSafeRepository::init(directory, create::Options { bare: true }).map(Into::into)
+    ThreadSafeRepository::init(
+        directory,
+        create::Options {
+            bare: true,
+            fs_capabilities: None,
+        },
+    )
+    .map(Into::into)
 }
 
 /// See [ThreadSafeRepository::open()], but returns a [`Repository`] instead.
 pub fn open(directory: impl Into<std::path::PathBuf>) -> Result<Repository, open::Error> {
     ThreadSafeRepository::open(directory).map(Into::into)
+}
+
+/// See [ThreadSafeRepository::open_opts()], but returns a [`Repository`] instead.
+pub fn open_opts(directory: impl Into<std::path::PathBuf>, options: open::Options) -> Result<Repository, open::Error> {
+    ThreadSafeRepository::open_opts(directory, options).map(Into::into)
 }
 
 ///
@@ -265,7 +287,7 @@ pub mod permission {
 }
 ///
 pub mod permissions {
-    pub use crate::repository::permissions::Environment;
+    pub use crate::repository::permissions::{Config, Environment};
 }
 pub use repository::permissions::Permissions;
 
@@ -276,7 +298,7 @@ pub mod create;
 pub mod open;
 
 ///
-mod config;
+pub mod config;
 
 ///
 pub mod mailmap;

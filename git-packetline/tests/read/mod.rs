@@ -187,7 +187,7 @@ pub mod streaming_peek_iter {
             "it should read the second part of the identical file from the previously advanced reader"
         );
 
-        // this reset is will cause actual io::Errors to occour
+        // this reset is will cause actual io::Errors to occur
         rd.reset();
         let res = rd.read_line().await;
         assert_eq!(

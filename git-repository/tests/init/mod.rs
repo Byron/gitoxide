@@ -1,8 +1,8 @@
 mod bare {
     #[test]
-    fn init_into_empty_directory_creates_a_dot_git_dir() {
-        let tmp = tempfile::tempdir().unwrap();
-        let repo = git_repository::init_bare(tmp.path()).unwrap();
+    fn init_into_empty_directory_creates_a_dot_git_dir() -> crate::Result {
+        let tmp = tempfile::tempdir()?;
+        let repo = git_repository::init_bare(tmp.path())?;
         assert_eq!(repo.kind(), git_repository::Kind::Bare);
         assert!(
             repo.work_dir().is_none(),
@@ -13,18 +13,20 @@ mod bare {
             tmp.path(),
             "the repository is placed into the directory itself"
         );
-        assert_eq!(git_repository::open(repo.git_dir()).unwrap(), repo);
+        assert_eq!(git_repository::open(repo.git_dir())?, repo);
+        Ok(())
     }
 
     #[test]
-    fn init_into_non_empty_directory_is_not_allowed() {
-        let tmp = tempfile::tempdir().unwrap();
-        std::fs::write(tmp.path().join("existing.txt"), b"I was here before you").unwrap();
+    fn init_into_non_empty_directory_is_not_allowed() -> crate::Result {
+        let tmp = tempfile::tempdir()?;
+        std::fs::write(tmp.path().join("existing.txt"), b"I was here before you")?;
 
         assert!(git_repository::init_bare(tmp.path())
             .unwrap_err()
             .to_string()
-            .starts_with("Refusing to initialize the non-empty directory as"),);
+            .starts_with("Refusing to initialize the non-empty directory as"));
+        Ok(())
     }
 }
 

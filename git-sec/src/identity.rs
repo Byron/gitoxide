@@ -34,8 +34,19 @@ mod impl_ {
             let uid = unsafe { libc::geteuid() };
             Ok(uid)
         }
+        use std::str::FromStr;
 
-        Ok(owner_from_path(path)? == owner_of_current_process()?)
+        let owner_of_path = owner_from_path(path)?;
+        let owner_of_process = owner_of_current_process()?;
+        if owner_of_path == owner_of_process {
+            Ok(true)
+        } else if let Some(sudo_uid) =
+            std::env::var_os("SUDO_UID").and_then(|val| val.to_str().and_then(|val_str| u32::from_str(val_str).ok()))
+        {
+            Ok(owner_of_path == sudo_uid)
+        } else {
+            Ok(false)
+        }
     }
 }
 
@@ -69,14 +80,17 @@ mod impl_ {
         let mut is_owned = false;
         let path = path.as_ref();
 
+        if !path.exists() {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("{:?} does not exist.", path),
+            ));
+        }
+
         // Home is not actually owned by the corresponding user
         // but it can be considered de-facto owned by the user
         // Ignore errors here and just do the regular checks below
-        if std::env::current_dir()
-            .ok()
-            .and_then(|cwd| git_path::realpath(path, cwd).ok())
-            == dirs::home_dir()
-        {
+        if git_path::realpath(path).ok() == dirs::home_dir() {
             return Ok(true);
         }
 

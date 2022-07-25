@@ -265,7 +265,7 @@ fn loose_iter_with_broken_refs() -> crate::Result {
     #[cfg(windows)]
     let msg = "The reference at 'refs\\broken' could not be instantiated";
     assert_eq!(
-        actual[first_error].as_ref().expect_err("unparseable ref").to_string(),
+        actual[first_error].as_ref().expect_err("unparsable ref").to_string(),
         msg
     );
     let ref_paths: Vec<_> = actual

@@ -32,8 +32,8 @@ Since this is a performance oriented crate, in addition to well tested code via
 performance. We use [`criterion`] so benches can be run via `cargo bench` after
 installing it via `cargo install cargo-criterion`.
 
-Changes to `parser.rs` may include a request to fuzz to ensure that it cannot
-panic on inputs. This can be done by executing `cargo fuzz parser` after
+Changes to parsing code may include a request to fuzz to ensure that it cannot
+panic on inputs. This can be done by executing `cargo +nightly fuzz run parse` after
 installing the `fuzz` sub-command via `cargo install cargo-fuzz`.
 
 #### License

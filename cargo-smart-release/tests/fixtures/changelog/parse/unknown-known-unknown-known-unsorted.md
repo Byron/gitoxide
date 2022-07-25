@@ -4,7 +4,7 @@ Hello, this is a changelog.
 
 - initial release
 
-### Something inbetween
+### Something in between
 
 intermezzo
 

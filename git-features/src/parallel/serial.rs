@@ -57,7 +57,7 @@ mod not_parallel {
     }
 
     /// An experiment to have fine-grained per-item parallelization with built-in aggregation via thread state.
-    /// This is only good for operations where near-random access isn't detremental, so it's not usually great
+    /// This is only good for operations where near-random access isn't detrimental, so it's not usually great
     /// for file-io as it won't make use of sorted inputs well.
     // TODO: better docs
     pub fn in_parallel_with_slice<I, S, E>(

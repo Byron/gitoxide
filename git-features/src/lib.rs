@@ -32,10 +32,6 @@ pub mod threading;
 pub mod zlib;
 
 ///
-#[cfg(feature = "time")]
-pub mod time;
-
-///
 pub mod iter {
     /// An iterator over chunks of input, producing `Vec<Item>` with a size of `size`, with the last chunk being the remainder and thus
     /// potentially smaller than `size`.

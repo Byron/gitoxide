@@ -1,46 +1,54 @@
-use crate::file::{EntryData, Index, MutableMultiValue, MutableSection, MutableValue, Size};
-use crate::parser::{Event, Key};
-use crate::{lookup, File};
-use std::borrow::Cow;
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
+
+use bstr::BStr;
+use smallvec::ToSmallVec;
+
+use crate::{
+    file::{mutable::multi_value::EntryData, Index, MetadataFilter, MultiValueMut, Size, ValueMut},
+    lookup,
+    parse::{section, Event},
+    File,
+};
 
 /// # Raw value API
 ///
-/// These functions are the raw value API. Instead of returning Rust structures,
-/// these functions return bytes which may or may not be owned.
-impl<'a> File<'a> {
+/// These functions are the raw value API, returning normalized byte strings.
+impl<'event> File<'event> {
     /// Returns an uninterpreted value given a section, an optional subsection
     /// and key.
     ///
-    /// Consider [`Self::raw_multi_value`] if you want to get all values of
+    /// Consider [`Self::raw_values()`] if you want to get all values of
     /// a multivar instead.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in the requested
-    /// section and subsection, or if the section and subsection do not exist.
-    pub fn raw_value<'lookup>(
+    pub fn raw_value(
         &self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
-    ) -> Result<Cow<'_, [u8]>, lookup::existing::Error> {
-        // Note: cannot wrap around the raw_multi_value method because we need
-        // to guarantee that the highest section id is used (so that we follow
-        // the "last one wins" resolution strategy by `git-config`).
-        let key = Key(key.into());
-        for section_id in self
-            .section_ids_by_name_and_subname(section_name, subsection_name)?
-            .iter()
-            .rev()
-        {
-            if let Some(v) = self
-                .sections
-                .get(section_id)
-                .expect("sections does not have section id from section ids")
-                .value(&key)
-            {
-                return Ok(v.to_vec().into());
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+    ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
+        self.raw_value_filter(section_name, subsection_name, key, &mut |_| true)
+    }
+
+    /// Returns an uninterpreted value given a section, an optional subsection
+    /// and key, if it passes the `filter`.
+    ///
+    /// Consider [`Self::raw_values()`] if you want to get all values of
+    /// a multivar instead.
+    pub fn raw_value_filter(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Cow<'_, BStr>, lookup::existing::Error> {
+        let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
+        let key = key.as_ref();
+        for section_id in section_ids.rev() {
+            let section = self.sections.get(&section_id).expect("known section id");
+            if !filter(section.meta()) {
+                continue;
+            }
+            if let Some(v) = section.value(key) {
+                return Ok(v);
             }
         }
 
@@ -50,40 +58,48 @@ impl<'a> File<'a> {
     /// Returns a mutable reference to an uninterpreted value given a section,
     /// an optional subsection and key.
     ///
-    /// Consider [`Self::raw_multi_value_mut`] if you want to get mutable
+    /// Consider [`Self::raw_values_mut`] if you want to get mutable
     /// references to all values of a multivar instead.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in the requested
-    /// section and subsection, or if the section and subsection do not exist.
     pub fn raw_value_mut<'lookup>(
         &mut self,
-        section_name: &'lookup str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableValue<'_, 'lookup, 'a>, lookup::existing::Error> {
-        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
-        let key = Key(key.into());
+    ) -> Result<ValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
+        self.raw_value_mut_filter(section_name, subsection_name, key, &mut |_| true)
+    }
 
-        for section_id in section_ids.iter().rev() {
-            let mut size = Size(0);
-            let mut index = Index(0);
+    /// Returns a mutable reference to an uninterpreted value given a section,
+    /// an optional subsection and key, and if it passes `filter`.
+    ///
+    /// Consider [`Self::raw_values_mut`] if you want to get mutable
+    /// references to all values of a multivar instead.
+    pub fn raw_value_mut_filter<'lookup>(
+        &mut self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+        filter: &mut MetadataFilter,
+    ) -> Result<ValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
+        let mut section_ids = self
+            .section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?
+            .rev();
+        let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
+
+        while let Some(section_id) = section_ids.next() {
+            let mut index = 0;
+            let mut size = 0;
             let mut found_key = false;
-            // todo: iter backwards
-            for (i, event) in self
-                .sections
-                .get(section_id)
-                .expect("sections does not have section id from section ids")
-                .as_ref()
-                .iter()
-                .enumerate()
-            {
+            let section = self.sections.get(&section_id).expect("known section id");
+            if !filter(section.meta()) {
+                continue;
+            }
+            for (i, event) in section.as_ref().iter().enumerate() {
                 match event {
-                    Event::Key(event_key) if *event_key == key => {
+                    Event::SectionKey(event_key) if *event_key == key => {
                         found_key = true;
-                        size = Size(1);
-                        index = Index(i);
+                        index = i;
+                        size = 1;
                     }
                     Event::Newline(_) | Event::Whitespace(_) | Event::ValueNotDone(_) if found_key => {
                         size += 1;
@@ -92,31 +108,35 @@ impl<'a> File<'a> {
                         found_key = false;
                         size += 1;
                     }
-                    _ => (),
+                    Event::KeyValueSeparator if found_key => {
+                        size += 1;
+                    }
+                    _ => {}
                 }
             }
 
-            if size.0 == 0 {
+            if size == 0 {
                 continue;
             }
 
-            return Ok(MutableValue::new(
-                MutableSection::new(
-                    self.sections
-                        .get_mut(section_id)
-                        .expect("sections does not have section id from section ids"),
-                ),
+            drop(section_ids);
+            let nl = self.detect_newline_style().to_smallvec();
+            return Ok(ValueMut {
+                section: self.sections.get_mut(&section_id).expect("known section-id").to_mut(nl),
                 key,
-                index,
-                size,
-            ));
+                index: Index(index),
+                size: Size(size),
+            });
         }
 
         Err(lookup::existing::Error::KeyMissing)
     }
 
     /// Returns all uninterpreted values given a section, an optional subsection
-    /// and key.
+    /// ain order of occurrence.
+    ///
+    /// The ordering means that the last of the returned values is the one that would be the
+    /// value used in the single-value case.nd key.
     ///
     /// # Examples
     ///
@@ -136,41 +156,50 @@ impl<'a> File<'a> {
     /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
+    /// # use bstr::BStr;
     /// # let git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
-    ///     git_config.raw_multi_value("core", None, "a").unwrap(),
+    ///     git_config.raw_values("core", None, "a").unwrap(),
     ///     vec![
-    ///         Cow::<[u8]>::Borrowed(b"b"),
-    ///         Cow::<[u8]>::Borrowed(b"c"),
-    ///         Cow::<[u8]>::Borrowed(b"d"),
+    ///         Cow::<BStr>::Borrowed("b".into()),
+    ///         Cow::<BStr>::Borrowed("c".into()),
+    ///         Cow::<BStr>::Borrowed("d".into()),
     ///     ],
     /// );
     /// ```
     ///
     /// Consider [`Self::raw_value`] if you want to get the resolved single
     /// value for a given key, if your key does not support multi-valued values.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in any requested
-    /// section and subsection, or if no instance of the section and subsections
-    /// exist.
-    pub fn raw_multi_value(
+    pub fn raw_values(
         &self,
-        section_name: &str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
-        key: &str,
-    ) -> Result<Vec<Cow<'_, [u8]>>, lookup::existing::Error> {
-        let mut values = vec![];
-        for section_id in self.section_ids_by_name_and_subname(section_name, subsection_name)? {
-            values.extend(
-                self.sections
-                    .get(&section_id)
-                    .expect("sections does not have section id from section ids")
-                    .values(&Key(key.into()))
-                    .iter()
-                    .map(|v| Cow::Owned(v.to_vec())),
-            );
+        key: impl AsRef<str>,
+    ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
+        self.raw_values_filter(section_name, subsection_name, key, &mut |_| true)
+    }
+
+    /// Returns all uninterpreted values given a section, an optional subsection
+    /// and key, if the value passes `filter`, in order of occurrence.
+    ///
+    /// The ordering means that the last of the returned values is the one that would be the
+    /// value used in the single-value case.
+    pub fn raw_values_filter(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Vec<Cow<'_, BStr>>, lookup::existing::Error> {
+        let mut values = Vec::new();
+        let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
+        let key = key.as_ref();
+        for section_id in section_ids {
+            let section = self.sections.get(&section_id).expect("known section id");
+            if !filter(section.meta()) {
+                continue;
+            }
+            values.extend(section.values(key));
         }
 
         if values.is_empty() {
@@ -201,24 +230,25 @@ impl<'a> File<'a> {
     /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
+    /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
     /// assert_eq!(
-    ///     git_config.raw_multi_value("core", None, "a")?,
+    ///     git_config.raw_values("core", None, "a")?,
     ///     vec![
-    ///         Cow::Borrowed(b"b"),
-    ///         Cow::Borrowed(b"c"),
-    ///         Cow::Borrowed(b"d")
+    ///         Cow::<BStr>::Borrowed("b".into()),
+    ///         Cow::<BStr>::Borrowed("c".into()),
+    ///         Cow::<BStr>::Borrowed("d".into())
     ///     ]
     /// );
     ///
-    /// git_config.raw_multi_value_mut("core", None, "a")?.set_str_all("g");
+    /// git_config.raw_values_mut("core", None, "a")?.set_all("g");
     ///
     /// assert_eq!(
-    ///     git_config.raw_multi_value("core", None, "a")?,
+    ///     git_config.raw_values("core", None, "a")?,
     ///     vec![
-    ///         Cow::Borrowed(b"g"),
-    ///         Cow::Borrowed(b"g"),
-    ///         Cow::Borrowed(b"g")
+    ///         Cow::<BStr>::Borrowed("g".into()),
+    ///         Cow::<BStr>::Borrowed("g".into()),
+    ///         Cow::<BStr>::Borrowed("g".into())
     ///     ],
     /// );
     /// # Ok::<(), git_config::lookup::existing::Error>(())
@@ -229,46 +259,52 @@ impl<'a> File<'a> {
     ///
     /// Note that this operation is relatively expensive, requiring a full
     /// traversal of the config.
-    ///
-    /// # Errors
-    ///
-    /// This function will return an error if the key is not in any requested
-    /// section and subsection, or if no instance of the section and subsections
-    /// exist.
-    pub fn raw_multi_value_mut<'lookup>(
+    pub fn raw_values_mut<'lookup>(
         &mut self,
-        section_name: &'lookup str,
+        section_name: impl AsRef<str>,
         subsection_name: Option<&'lookup str>,
         key: &'lookup str,
-    ) -> Result<MutableMultiValue<'_, 'lookup, 'a>, lookup::existing::Error> {
-        let section_ids = self.section_ids_by_name_and_subname(section_name, subsection_name)?;
-        let key = Key(key.into());
+    ) -> Result<MultiValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
+        self.raw_values_mut_filter(section_name, subsection_name, key, &mut |_| true)
+    }
+
+    /// Returns mutable references to all uninterpreted values given a section,
+    /// an optional subsection and key, if their sections pass `filter`.
+    pub fn raw_values_mut_filter<'lookup>(
+        &mut self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&'lookup str>,
+        key: &'lookup str,
+        filter: &mut MetadataFilter,
+    ) -> Result<MultiValueMut<'_, 'lookup, 'event>, lookup::existing::Error> {
+        let section_ids = self.section_ids_by_name_and_subname(section_name.as_ref(), subsection_name)?;
+        let key = section::Key(Cow::<BStr>::Borrowed(key.into()));
 
         let mut offsets = HashMap::new();
-        let mut entries = vec![];
-        for section_id in section_ids.iter().rev() {
+        let mut entries = Vec::new();
+        for section_id in section_ids.rev() {
             let mut last_boundary = 0;
-            let mut found_key = false;
-            let mut offset_list = vec![];
+            let mut expect_value = false;
+            let mut offset_list = Vec::new();
             let mut offset_index = 0;
-            for (i, event) in self
-                .sections
-                .get(section_id)
-                .expect("sections does not have section id from section ids")
-                .as_ref()
-                .iter()
-                .enumerate()
-            {
+            let section = self.sections.get(&section_id).expect("known section-id");
+            if !filter(section.meta()) {
+                continue;
+            }
+            for (i, event) in section.as_ref().iter().enumerate() {
                 match event {
-                    Event::Key(event_key) if *event_key == key => {
-                        found_key = true;
+                    Event::SectionKey(event_key) if *event_key == key => {
+                        expect_value = true;
                         offset_list.push(i - last_boundary);
                         offset_index += 1;
                         last_boundary = i;
                     }
-                    Event::Value(_) | Event::ValueDone(_) if found_key => {
-                        found_key = false;
-                        entries.push(EntryData::new(*section_id, offset_index));
+                    Event::Value(_) | Event::ValueDone(_) if expect_value => {
+                        expect_value = false;
+                        entries.push(EntryData {
+                            section_id,
+                            offset_index,
+                        });
                         offset_list.push(i - last_boundary + 1);
                         offset_index += 1;
                         last_boundary = i + 1;
@@ -276,7 +312,7 @@ impl<'a> File<'a> {
                     _ => (),
                 }
             }
-            offsets.insert(*section_id, offset_list);
+            offsets.insert(section_id, offset_list);
         }
 
         entries.sort();
@@ -284,7 +320,12 @@ impl<'a> File<'a> {
         if entries.is_empty() {
             Err(lookup::existing::Error::KeyMissing)
         } else {
-            Ok(MutableMultiValue::new(&mut self.sections, key, entries, offsets))
+            Ok(MultiValueMut {
+                section: &mut self.sections,
+                key,
+                indices_and_sizes: entries,
+                offsets,
+            })
         }
     }
 
@@ -307,25 +348,30 @@ impl<'a> File<'a> {
     /// ```
     /// # use git_config::File;
     /// # use std::borrow::Cow;
+    /// # use bstr::BStr;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// git_config.set_raw_value("core", None, "a", vec![b'e'])?;
-    /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::Borrowed(b"e"));
+    /// git_config.set_raw_value("core", None, "a", "e".into())?;
+    /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::<BStr>::Borrowed("e".into()));
+    /// assert_eq!(
+    ///     git_config.raw_values("core", None, "a")?,
+    ///     vec![
+    ///         Cow::<BStr>::Borrowed("b".into()),
+    ///         Cow::<BStr>::Borrowed("c".into()),
+    ///         Cow::<BStr>::Borrowed("e".into())
+    ///     ],
+    /// );
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    ///
-    /// # Errors
-    ///
-    /// This errors if any lookup input (section, subsection, and key value) fails.
-    pub fn set_raw_value<'lookup>(
+    pub fn set_raw_value(
         &mut self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
-        new_value: Vec<u8>,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+        new_value: &BStr,
     ) -> Result<(), lookup::existing::Error> {
-        self.raw_value_mut(section_name, subsection_name, key)
-            .map(|mut entry| entry.set_bytes(new_value))
+        self.raw_value_mut(section_name, subsection_name, key.as_ref())
+            .map(|mut entry| entry.set(new_value))
     }
 
     /// Sets a multivar in a given section, optional subsection, and key value.
@@ -337,7 +383,7 @@ impl<'a> File<'a> {
     ///
     /// **Note**: Mutation order is _not_ guaranteed and is non-deterministic.
     /// If you need finer control over which values of the multivar are set,
-    /// consider using [`raw_multi_value_mut`], which will let you iterate
+    /// consider using [`raw_values_mut()`][Self::raw_values_mut()], which will let you iterate
     /// and check over the values instead. This is best used as a convenience
     /// function for setting multivars whose values should be treated as an
     /// unordered set.
@@ -360,17 +406,18 @@ impl<'a> File<'a> {
     /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
+    /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// let new_values: Vec<Cow<'_, [u8]>> = vec![
-    ///     Cow::Borrowed(b"x"),
-    ///     Cow::Borrowed(b"y"),
-    ///     Cow::Borrowed(b"z"),
+    /// let new_values = vec![
+    ///     "x",
+    ///     "y",
+    ///     "z",
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
-    /// let fetched_config = git_config.raw_multi_value("core", None, "a")?;
-    /// assert!(fetched_config.contains(&Cow::Borrowed(b"x")));
-    /// assert!(fetched_config.contains(&Cow::Borrowed(b"y")));
-    /// assert!(fetched_config.contains(&Cow::Borrowed(b"z")));
+    /// let fetched_config = git_config.raw_values("core", None, "a")?;
+    /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
+    /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
+    /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("z".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///
@@ -380,15 +427,16 @@ impl<'a> File<'a> {
     /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
+    /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// let new_values: Vec<Cow<'_, [u8]>> = vec![
-    ///     Cow::Borrowed(b"x"),
-    ///     Cow::Borrowed(b"y"),
+    /// let new_values = vec![
+    ///     "x",
+    ///     "y",
     /// ];
     /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
-    /// let fetched_config = git_config.raw_multi_value("core", None, "a")?;
-    /// assert!(fetched_config.contains(&Cow::Borrowed(b"x")));
-    /// assert!(fetched_config.contains(&Cow::Borrowed(b"y")));
+    /// let fetched_config = git_config.raw_values("core", None, "a")?;
+    /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
+    /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
     ///
@@ -398,31 +446,30 @@ impl<'a> File<'a> {
     /// # use git_config::File;
     /// # use std::borrow::Cow;
     /// # use std::convert::TryFrom;
+    /// # use bstr::BStr;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// let new_values: Vec<Cow<'_, [u8]>> = vec![
-    ///     Cow::Borrowed(b"x"),
-    ///     Cow::Borrowed(b"y"),
-    ///     Cow::Borrowed(b"z"),
-    ///     Cow::Borrowed(b"discarded"),
+    /// let new_values = vec![
+    ///     "x",
+    ///     "y",
+    ///     "z",
+    ///     "discarded",
     /// ];
-    /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
-    /// assert!(!git_config.raw_multi_value("core", None, "a")?.contains(&Cow::Borrowed(b"discarded")));
+    /// git_config.set_raw_multi_value("core", None, "a", new_values)?;
+    /// assert!(!git_config.raw_values("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
-    ///
-    /// # Errors
-    ///
-    /// This errors if any lookup input (section, subsection, and key value) fails.
-    ///
-    /// [`raw_multi_value_mut`]: Self::raw_multi_value_mut
-    pub fn set_raw_multi_value<'lookup>(
+    pub fn set_raw_multi_value<'a, Iter, Item>(
         &mut self,
-        section_name: &'lookup str,
-        subsection_name: Option<&'lookup str>,
-        key: &'lookup str,
-        new_values: impl Iterator<Item = Cow<'a, [u8]>>,
-    ) -> Result<(), lookup::existing::Error> {
-        self.raw_multi_value_mut(section_name, subsection_name, key)
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+        new_values: Iter,
+    ) -> Result<(), lookup::existing::Error>
+    where
+        Iter: IntoIterator<Item = Item>,
+        Item: Into<&'a BStr>,
+    {
+        self.raw_values_mut(section_name, subsection_name, key.as_ref())
             .map(|mut v| v.set_values(new_values))
     }
 }
