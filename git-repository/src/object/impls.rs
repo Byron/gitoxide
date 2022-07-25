@@ -1,10 +1,10 @@
 use std::convert::TryFrom;
 
-use crate::{object, Commit, DetachedObject, Object, Tag, Tree};
+use crate::{object, Commit, Object, ObjectDetached, Tag, Tree};
 
-impl<'repo> From<Object<'repo>> for DetachedObject {
+impl<'repo> From<Object<'repo>> for ObjectDetached {
     fn from(mut v: Object<'repo>) -> Self {
-        DetachedObject {
+        ObjectDetached {
             id: v.id,
             kind: v.kind,
             data: std::mem::take(&mut v.data),
@@ -12,9 +12,9 @@ impl<'repo> From<Object<'repo>> for DetachedObject {
     }
 }
 
-impl<'repo> From<Commit<'repo>> for DetachedObject {
+impl<'repo> From<Commit<'repo>> for ObjectDetached {
     fn from(mut v: Commit<'repo>) -> Self {
-        DetachedObject {
+        ObjectDetached {
             id: v.id,
             kind: git_object::Kind::Commit,
             data: std::mem::take(&mut v.data),
@@ -22,9 +22,9 @@ impl<'repo> From<Commit<'repo>> for DetachedObject {
     }
 }
 
-impl<'repo> From<Tag<'repo>> for DetachedObject {
+impl<'repo> From<Tag<'repo>> for ObjectDetached {
     fn from(mut v: Tag<'repo>) -> Self {
-        DetachedObject {
+        ObjectDetached {
             id: v.id,
             kind: git_object::Kind::Tag,
             data: std::mem::take(&mut v.data),
@@ -49,7 +49,7 @@ impl<'repo> AsRef<[u8]> for Object<'repo> {
     }
 }
 
-impl AsRef<[u8]> for DetachedObject {
+impl AsRef<[u8]> for ObjectDetached {
     fn as_ref(&self) -> &[u8] {
         &self.data
     }

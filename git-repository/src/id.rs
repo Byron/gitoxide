@@ -197,7 +197,7 @@ mod impls {
 
     use git_hash::{oid, ObjectId};
 
-    use crate::{DetachedObject, Id, Object};
+    use crate::{Id, Object, ObjectDetached};
 
     // Eq, Hash, Ord, PartialOrd,
 
@@ -237,8 +237,8 @@ mod impls {
         }
     }
 
-    impl<'repo> PartialEq<DetachedObject> for Id<'repo> {
-        fn eq(&self, other: &DetachedObject) -> bool {
+    impl<'repo> PartialEq<ObjectDetached> for Id<'repo> {
+        fn eq(&self, other: &ObjectDetached) -> bool {
             self.inner == other.id
         }
     }

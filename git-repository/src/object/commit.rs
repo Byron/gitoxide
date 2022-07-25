@@ -1,4 +1,4 @@
-use crate::{bstr::BStr, Commit, DetachedObject, Tree};
+use crate::{bstr::BStr, Commit, ObjectDetached, Tree};
 
 mod error {
     use crate::object;
@@ -24,8 +24,8 @@ use crate::id::Ancestors;
 
 impl<'repo> Commit<'repo> {
     /// Create an owned instance of this object, copying our data in the process.
-    pub fn detached(&self) -> DetachedObject {
-        DetachedObject {
+    pub fn detached(&self) -> ObjectDetached {
+        ObjectDetached {
             id: self.id,
             kind: git_object::Kind::Commit,
             data: self.data.clone(),
@@ -33,7 +33,7 @@ impl<'repo> Commit<'repo> {
     }
 
     /// Sever the connection to the `Repository` and turn this instance into a standalone object.
-    pub fn detach(self) -> DetachedObject {
+    pub fn detach(self) -> ObjectDetached {
         self.into()
     }
 }

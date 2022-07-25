@@ -95,7 +95,7 @@ impl<'a> Drop for Commit<'a> {
 ///
 /// Use it if an `ObjectRef` should be sent over thread boundaries or stored in collections.
 #[derive(Clone)]
-pub struct DetachedObject {
+pub struct ObjectDetached {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object
