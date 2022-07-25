@@ -100,7 +100,26 @@ pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
 
 /// Run the executable at `script_name`, like `make_repo.sh` to produce a read-only directory to which
 /// the path is returned.
+///
 /// Note that it persists and the script at `script_name` will only be executed once if it ran without error.
+///
+/// ### Automatic Archive Creation
+///
+/// In order to speed up CI and even local runs should the cache get purged, the result of each script run
+/// is automatically placed into a compressed _tar_ archive.
+/// If a script result doesn't exist, these will be checked first and extracted if present, which they are by default.
+/// This behaviour can be prohibited by setting the `GITOXIDE_TEST_IGNORE_ARCHIVES` to any value.
+///
+/// To speed CI up, one can add these archives to the repository. It's absoutely recommended to use `git-lfs` for that to
+/// not bloat the repository size.
+///
+/// #### Disable Archive Creation
+///
+/// If archives aren't useful, they can be disabled by using `.gitignore` specifications.
+/// That way it's trivial to prevent creation of all archives with `generated-archives/*.tar.xz` in the root
+/// or more specific `.gitignore` configurations in lower levels of the work tree.
+///
+/// The latter is useful if the the script's output is platform specific.
 pub fn scripted_fixture_repo_read_only(script_name: impl AsRef<Path>) -> Result<PathBuf> {
     scripted_fixture_repo_read_only_with_args(script_name, None)
 }
