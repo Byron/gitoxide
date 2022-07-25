@@ -68,6 +68,7 @@ pub struct Options {
     pub(crate) git_dir_trust: Option<git_sec::Trust>,
     pub(crate) filter_config_section: Option<fn(&git_config::file::Metadata) -> bool>,
     pub(crate) lossy_config: Option<bool>,
+    pub(crate) bail_if_untrusted: bool,
 }
 
 #[derive(Default, Clone)]
@@ -118,7 +119,6 @@ impl Options {
                     git_prefix: deny,
                 }
             },
-            ..Permissions::default()
         })
     }
 }
@@ -166,6 +166,17 @@ impl Options {
         self
     }
 
+    /// If true, default false, and if the repository's trust level is not `Full`
+    /// (see [`with()`][Self::with()] for more), then the open operation will fail.
+    ///
+    /// Use this to mimic `git`s way of handling untrusted repositories. Note that `gitoxide` solves
+    /// this by not using configuration from untrusted sources and by generally being secured against
+    /// doctored input files which at worst could cause out-of-memory at the time of writing.
+    pub fn bail_if_untrusted(mut self, toggle: bool) -> Self {
+        self.bail_if_untrusted = toggle;
+        self
+    }
+
     /// Set the filter which determines if a configuration section can be used to read values from,
     /// hence it returns true if it is eligible.
     ///
@@ -201,6 +212,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 git_dir_trust: git_sec::Trust::Full.into(),
                 filter_config_section: Some(config::section::is_trusted),
                 lossy_config: None,
+                bail_if_untrusted: false,
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
@@ -208,6 +220,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 permissions: Permissions::default_for_level(level),
                 git_dir_trust: git_sec::Trust::Reduced.into(),
                 filter_config_section: Some(config::section::is_trusted),
+                bail_if_untrusted: false,
                 lossy_config: None,
             },
         }
@@ -301,12 +314,8 @@ impl ThreadSafeRepository {
             filter_config_section,
             ref replacement_objects,
             lossy_config,
-            permissions:
-                Permissions {
-                    git_dir: ref git_dir_perm,
-                    ref env,
-                    config,
-                },
+            bail_if_untrusted,
+            permissions: Permissions { ref env, config },
         } = options;
         let git_dir_trust = git_dir_trust.expect("trust must be been determined by now");
 
@@ -344,7 +353,7 @@ impl ThreadSafeRepository {
             config,
         )?;
 
-        if **git_dir_perm != git_sec::ReadWrite::all() {
+        if bail_if_untrusted && git_dir_trust != git_sec::Trust::Full {
             check_safe_directories(&git_dir, git_install_dir.as_deref(), home.as_deref(), &config)?;
         }
 

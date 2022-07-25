@@ -1,14 +1,10 @@
-use git_sec::{permission::Resource, Access, Trust};
+use git_sec::{Access, Trust};
 
 use crate::permission;
 
 /// Permissions associated with various resources of a git repository
 #[derive(Debug, Clone)]
 pub struct Permissions {
-    /// Control how a git-dir can be used.
-    ///
-    /// Note that a repository won't be usable at all unless read and write permissions are given.
-    pub git_dir: Access<Resource, git_sec::ReadWrite>,
     /// Permissions related to the environment
     pub env: Environment,
     /// Permissions related to the handling of git configuration.
@@ -90,7 +86,6 @@ impl Permissions {
     /// thus refusing all operations in it.
     pub fn strict() -> Self {
         Permissions {
-            git_dir: Access::resource(git_sec::ReadWrite::READ),
             env: Environment::all(),
             config: Config::all(),
         }
@@ -103,7 +98,6 @@ impl Permissions {
     /// anything else that could cause us to write into unknown locations or use programs beyond our `PATH`.
     pub fn secure() -> Self {
         Permissions {
-            git_dir: Access::resource(git_sec::ReadWrite::all()),
             env: Environment::all(),
             config: Config::all(),
         }
@@ -113,7 +107,6 @@ impl Permissions {
     /// does with owned repositories.
     pub fn all() -> Self {
         Permissions {
-            git_dir: Access::resource(git_sec::ReadWrite::all()),
             env: Environment::all(),
             config: Config::all(),
         }
