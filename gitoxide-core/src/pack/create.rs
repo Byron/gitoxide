@@ -66,7 +66,7 @@ impl From<ObjectExpansion> for pack::data::output::count::objects::ObjectExpansi
 pub struct Context<W> {
     /// The way input objects should be handled
     pub expansion: ObjectExpansion,
-    /// If `Some(threads)`, use this amount of `threads` to accelerate the counting phase at the cost of loosing
+    /// If `Some(threads)`, use this amount of `threads` to accelerate the counting phase at the cost of losing
     /// determinism as the order of objects during expansion changes with multiple threads unless no expansion is performed.
     /// In the latter case, this flag has no effect.
     /// If `None`, counting will only use one thread and thus yield the same sequence of objects in any case.

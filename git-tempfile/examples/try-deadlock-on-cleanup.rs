@@ -52,7 +52,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let signal_raised = Arc::clone(&signal_raised);
         move || {
             eprintln!(
-                "If a deadlock occours tempfiles will be left in '{}'",
+                "If a deadlock occurs tempfiles will be left in '{}'",
                 tmp.path().display()
             );
             for ttl in (1..=secs_to_run).rev() {

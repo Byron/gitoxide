@@ -14,6 +14,8 @@ pub fn init(directory: Option<PathBuf>) -> Result<git::discover::repository::Pat
     .with_context(|| "Repository initialization failed")
 }
 
+pub mod config;
+
 pub mod tree;
 
 pub mod commit;

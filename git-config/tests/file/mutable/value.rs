@@ -42,26 +42,32 @@ mod set_string {
     use crate::file::mutable::value::init_config;
 
     fn assert_set_string(expected: &str) {
+        let nl = git_config::File::default().detect_newline_style().to_string();
         for input in [
             "[a] k = v",
             "[a] k = ",
             "[a] k =",
-            "[a] k =\n",
+            "[a] k =$nl",
             "[a] k ",
-            "[a] k\n",
+            "[a] k$nl",
             "[a] k",
         ] {
-            let mut file: git_config::File = input.parse().unwrap();
+            let mut file: git_config::File = input.replace("$nl", &nl).parse().unwrap();
             let mut v = file.raw_value_mut("a", None, "k").unwrap();
             v.set_string(expected);
 
             assert_eq!(v.get().unwrap().as_ref(), expected);
 
-            let file: git_config::File = match file.to_string().parse() {
+            let file_string = file.to_string();
+            let file: git_config::File = match file_string.parse() {
                 Ok(f) => f,
-                Err(err) => panic!("{:?} failed with: {}", file.to_string(), err),
+                Err(err) => panic!("{:?} failed with: {}", file_string, err),
             };
-            assert_eq!(file.raw_value("a", None, "k").expect("present").as_ref(), expected);
+            assert_eq!(
+                file.raw_value("a", None, "k").expect("present").as_ref(),
+                expected,
+                "{file_string:?}"
+            );
         }
     }
 
@@ -126,7 +132,8 @@ mod set_string {
             a=hello world
         [core]
             c=d
-            e=f"#,
+            e=f
+"#,
         );
 
         let mut value = config.raw_value_mut("core", None, "e")?;
@@ -137,7 +144,8 @@ mod set_string {
             a=hello world
         [core]
             c=d
-            e="#,
+            e=
+"#,
         );
         Ok(())
     }
@@ -154,14 +162,14 @@ mod delete {
         value.delete();
         assert_eq!(
             config.to_string(),
-            "[core]\n            \n        [core]\n            c=d\n            e=f",
+            "[core]\n            \n        [core]\n            c=d\n            e=f\n",
         );
 
         let mut value = config.raw_value_mut("core", None, "c")?;
         value.delete();
         assert_eq!(
             config.to_string(),
-            "[core]\n            \n        [core]\n            \n            e=f",
+            "[core]\n            \n        [core]\n            \n            e=f\n",
         );
         Ok(())
     }
@@ -189,7 +197,8 @@ mod delete {
             a=hello world
         [core]
             c=d
-            e=f"#,
+            e=f
+"#,
         );
         Ok(())
     }
@@ -204,7 +213,7 @@ mod delete {
         }
         assert_eq!(
             config.to_string(),
-            "[core]\n            \n        [core]\n            c=d\n            e=f"
+            "[core]\n            \n        [core]\n            c=d\n            e=f\n"
         );
         Ok(())
     }
@@ -224,7 +233,7 @@ b
         value.delete();
         assert_eq!(
             config.to_string(),
-            "[core]\n            \n        [core]\n            c=d\n            e=f"
+            "[core]\n            \n        [core]\n            c=d\n            e=f\n"
         );
         Ok(())
     }

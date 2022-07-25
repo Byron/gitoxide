@@ -260,7 +260,7 @@ pub mod commit {
         #[allow(missing_docs)]
         pub enum Error {
             Commit(err: git_lock::commit::Error<git_lock::File>) {
-                display("Changes to the resource could not be comitted")
+                display("Changes to the resource could not be committed")
                 from()
                 source(err)
             }

@@ -9,8 +9,8 @@ impl Comment<'_> {
     #[must_use]
     pub fn to_owned(&self) -> Comment<'static> {
         Comment {
-            comment_tag: self.comment_tag,
-            comment: Cow::Owned(self.comment.as_ref().into()),
+            tag: self.tag,
+            text: Cow::Owned(self.text.as_ref().into()),
         }
     }
 
@@ -26,8 +26,8 @@ impl Comment<'_> {
 
     /// Stream ourselves to the given `out`, in order to reproduce this comment losslessly.
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
-        out.write_all(&[self.comment_tag])?;
-        out.write_all(self.comment.as_ref())
+        out.write_all(&[self.tag])?;
+        out.write_all(self.text.as_ref())
     }
 }
 

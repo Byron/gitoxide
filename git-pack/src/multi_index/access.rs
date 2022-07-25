@@ -24,7 +24,7 @@ pub struct Entry {
 
 /// Access methods
 impl File {
-    /// Returns the verion of the multi-index file.
+    /// Returns the version of the multi-index file.
     pub fn version(&self) -> Version {
         self.version
     }

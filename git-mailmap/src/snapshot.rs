@@ -183,7 +183,7 @@ impl<'a> From<crate::Entry<'a>> for EmailEntry {
 }
 
 impl Snapshot {
-    /// Create a new snapshot from the given bytes buffer, ignoring all parse errors that may occour on a line-by-line basis.
+    /// Create a new snapshot from the given bytes buffer, ignoring all parse errors that may occur on a line-by-line basis.
     ///
     /// This is similar to what git does.
     pub fn from_bytes(buf: &[u8]) -> Self {

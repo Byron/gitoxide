@@ -41,10 +41,10 @@ impl crate::Repository {
 impl crate::Repository {
     /// Return the repository owning the main worktree.
     ///
-    /// Note that it might be the one that is currently open if this repository dosn't point to a linked worktree.
+    /// Note that it might be the one that is currently open if this repository doesn't point to a linked worktree.
     /// Also note that the main repo might be bare.
     pub fn main_repo(&self) -> Result<crate::Repository, crate::open::Error> {
-        crate::open(self.common_dir())
+        crate::ThreadSafeRepository::open_opts(self.common_dir(), self.options.clone()).map(Into::into)
     }
 
     /// Return the currently set worktree if there is one, acting as platform providing a validated worktree base path.

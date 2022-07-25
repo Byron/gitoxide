@@ -28,7 +28,7 @@ document-features = { version = "0.2.1", optional = true }
 libc = "0.2.123"
 
 [target.'cfg(windows)'.dependencies]
-git-path = { version = "^0.3.0", path = "../git-path" }
+git-path = { version = "^0.4.0", path = "../git-path" }
 dirs = "4"
 windows = { version = "0.37.0", features = [ "alloc",
     "Win32_Foundation",

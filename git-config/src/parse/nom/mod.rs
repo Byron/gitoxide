@@ -17,8 +17,8 @@ use nom::{
 
 use crate::parse::{error::ParseNode, section, Comment, Error, Event};
 
-/// Attempt to zero-copy parse the provided bytes, passing results to `receive_event`.
-pub fn from_bytes<'a>(input: &'a [u8], mut receive_event: impl FnMut(Event<'a>)) -> Result<(), Error> {
+/// Attempt to zero-copy parse the provided bytes, passing results to `dispatch`.
+pub fn from_bytes<'a>(input: &'a [u8], mut dispatch: impl FnMut(Event<'a>)) -> Result<(), Error> {
     let bom = unicode_bom::Bom::from(input);
     let mut newlines = 0;
     let (i, _) = fold_many0(
@@ -31,7 +31,7 @@ pub fn from_bytes<'a>(input: &'a [u8], mut receive_event: impl FnMut(Event<'a>))
             }),
         )),
         || (),
-        |_acc, event| receive_event(event),
+        |_acc, event| dispatch(event),
     )(&input[bom.len()..])
     // I don't think this can panic. many0 errors if the child parser returns
     // a success where the input was not consumed, but alt will only return Ok
@@ -47,7 +47,7 @@ pub fn from_bytes<'a>(input: &'a [u8], mut receive_event: impl FnMut(Event<'a>))
     let mut node = ParseNode::SectionHeader;
 
     let res = fold_many1(
-        |i| section(i, &mut node, &mut receive_event),
+        |i| section(i, &mut node, &mut dispatch),
         || (),
         |_acc, additional_newlines| {
             newlines += additional_newlines;
@@ -78,8 +78,8 @@ fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
     Ok((
         i,
         Comment {
-            comment_tag: comment_tag as u8,
-            comment: Cow::Borrowed(comment.as_bstr()),
+            tag: comment_tag as u8,
+            text: Cow::Borrowed(comment.as_bstr()),
         },
     ))
 }
@@ -87,13 +87,9 @@ fn comment(i: &[u8]) -> IResult<&[u8], Comment<'_>> {
 #[cfg(test)]
 mod tests;
 
-fn section<'a>(
-    i: &'a [u8],
-    node: &mut ParseNode,
-    receive_event: &mut impl FnMut(Event<'a>),
-) -> IResult<&'a [u8], usize> {
+fn section<'a>(i: &'a [u8], node: &mut ParseNode, dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
     let (mut i, header) = section_header(i)?;
-    receive_event(Event::SectionHeader(header));
+    dispatch(Event::SectionHeader(header));
 
     let mut newlines = 0;
 
@@ -105,7 +101,7 @@ fn section<'a>(
         if let Ok((new_i, v)) = take_spaces(i) {
             if old_i != new_i {
                 i = new_i;
-                receive_event(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
+                dispatch(Event::Whitespace(Cow::Borrowed(v.as_bstr())));
             }
         }
 
@@ -113,11 +109,11 @@ fn section<'a>(
             if old_i != new_i {
                 i = new_i;
                 newlines += new_newlines;
-                receive_event(Event::Newline(Cow::Borrowed(v.as_bstr())));
+                dispatch(Event::Newline(Cow::Borrowed(v.as_bstr())));
             }
         }
 
-        if let Ok((new_i, new_newlines)) = key_value_pair(i, node, receive_event) {
+        if let Ok((new_i, new_newlines)) = key_value_pair(i, node, dispatch) {
             if old_i != new_i {
                 i = new_i;
                 newlines += new_newlines;
@@ -127,7 +123,7 @@ fn section<'a>(
         if let Ok((new_i, comment)) = comment(i) {
             if old_i != new_i {
                 i = new_i;
-                receive_event(Event::Comment(comment));
+                dispatch(Event::Comment(comment));
             }
         }
 
@@ -161,6 +157,12 @@ fn section_header(i: &[u8]) -> IResult<&[u8], section::Header<'_>> {
             },
         };
 
+        if header.name.is_empty() {
+            return Err(nom::Err::Error(NomError {
+                input: i,
+                code: ErrorKind::NoneOf,
+            }));
+        }
         return Ok((i, header));
     }
 
@@ -238,20 +240,20 @@ fn sub_section_delegate<'a>(i: &'a [u8], push_byte: &mut dyn FnMut(u8)) -> IResu
 fn key_value_pair<'a>(
     i: &'a [u8],
     node: &mut ParseNode,
-    receive_event: &mut impl FnMut(Event<'a>),
+    dispatch: &mut impl FnMut(Event<'a>),
 ) -> IResult<&'a [u8], usize> {
     *node = ParseNode::Name;
     let (i, name) = config_name(i)?;
 
-    receive_event(Event::SectionKey(section::Key(Cow::Borrowed(name))));
+    dispatch(Event::SectionKey(section::Key(Cow::Borrowed(name))));
 
     let (i, whitespace) = opt(take_spaces)(i)?;
     if let Some(whitespace) = whitespace {
-        receive_event(Event::Whitespace(Cow::Borrowed(whitespace)));
+        dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
     }
 
     *node = ParseNode::Value;
-    let (i, newlines) = config_value(i, receive_event)?;
+    let (i, newlines) = config_value(i, dispatch)?;
     Ok((i, newlines))
 }
 
@@ -276,117 +278,134 @@ fn config_name(i: &[u8]) -> IResult<&[u8], &BStr> {
     Ok((i, name.as_bstr()))
 }
 
-fn config_value<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
+fn config_value<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
     if let (i, Some(_)) = opt(char('='))(i)? {
-        receive_event(Event::KeyValueSeparator);
+        dispatch(Event::KeyValueSeparator);
         let (i, whitespace) = opt(take_spaces)(i)?;
         if let Some(whitespace) = whitespace {
-            receive_event(Event::Whitespace(Cow::Borrowed(whitespace)));
+            dispatch(Event::Whitespace(Cow::Borrowed(whitespace)));
         }
-        let (i, newlines) = value_impl(i, receive_event)?;
+        let (i, newlines) = value_impl(i, dispatch)?;
         Ok((i, newlines))
     } else {
-        receive_event(Event::Value(Cow::Borrowed("".into())));
+        dispatch(Event::Value(Cow::Borrowed("".into())));
         Ok((i, 0))
     }
 }
 
 /// Handles parsing of known-to-be values. This function handles both single
 /// line values as well as values that are continuations.
-fn value_impl<'a>(i: &'a [u8], receive_event: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
-    let mut parsed_index: usize = 0;
-    let mut offset: usize = 0;
-    let mut newlines = 0;
+fn value_impl<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResult<&'a [u8], usize> {
+    let (i, value_end, newlines, mut dispatch) = {
+        let new_err = |code| nom::Err::Error(NomError { input: i, code });
+        let mut value_end = None::<usize>;
+        let mut value_start: usize = 0;
+        let mut newlines = 0;
 
-    let mut was_prev_char_escape_char = false;
-    // This is required to ignore comment markers if they're in a quote.
-    let mut is_in_quotes = false;
-    // Used to determine if we return a Value or Value{Not,}Done
-    let mut partial_value_found = false;
-    let mut index: usize = 0;
+        let mut prev_char_was_backslash = false;
+        // This is required to ignore comment markers if they're in a quote.
+        let mut is_in_quotes = false;
+        // Used to determine if we return a Value or Value{Not,}Done
+        let mut partial_value_found = false;
+        let mut last_value_index: usize = 0;
 
-    for c in i.iter() {
-        if was_prev_char_escape_char {
-            was_prev_char_escape_char = false;
-            match c {
-                // We're escaping a newline, which means we've found a
-                // continuation.
-                b'\n' => {
-                    partial_value_found = true;
-                    receive_event(Event::ValueNotDone(Cow::Borrowed(i[offset..index - 1].as_bstr())));
-                    receive_event(Event::Newline(Cow::Borrowed(i[index..=index].as_bstr())));
-                    offset = index + 1;
-                    parsed_index = 0;
-                    newlines += 1;
+        let mut bytes = i.iter();
+        while let Some(mut c) = bytes.next() {
+            if prev_char_was_backslash {
+                prev_char_was_backslash = false;
+                let mut consumed = 1;
+                if *c == b'\r' {
+                    c = bytes.next().ok_or_else(|| new_err(ErrorKind::Escaped))?;
+                    if *c != b'\n' {
+                        return Err(new_err(ErrorKind::Tag));
+                    }
+                    consumed += 1;
                 }
-                b'n' | b't' | b'\\' | b'b' | b'"' => (),
-                _ => {
-                    return Err(nom::Err::Error(NomError {
-                        input: i,
-                        code: ErrorKind::Escaped,
-                    }));
+
+                match c {
+                    b'\n' => {
+                        partial_value_found = true;
+                        let backslash = 1;
+                        dispatch(Event::ValueNotDone(Cow::Borrowed(
+                            i[value_start..last_value_index - backslash].as_bstr(),
+                        )));
+                        let nl_end = last_value_index + consumed;
+                        dispatch(Event::Newline(Cow::Borrowed(i[last_value_index..nl_end].as_bstr())));
+                        value_start = nl_end;
+                        value_end = None;
+                        newlines += 1;
+
+                        last_value_index += consumed;
+                    }
+                    b'n' | b't' | b'\\' | b'b' | b'"' => {
+                        last_value_index += 1;
+                    }
+                    _ => {
+                        return Err(new_err(ErrorKind::Escaped));
+                    }
                 }
-            }
-        } else {
-            match c {
-                b'\n' => {
-                    parsed_index = index;
-                    break;
+            } else {
+                match c {
+                    b'\n' => {
+                        value_end = last_value_index.into();
+                        break;
+                    }
+                    b';' | b'#' if !is_in_quotes => {
+                        value_end = last_value_index.into();
+                        break;
+                    }
+                    b'\\' => prev_char_was_backslash = true,
+                    b'"' => is_in_quotes = !is_in_quotes,
+                    _ => {}
                 }
-                b';' | b'#' if !is_in_quotes => {
-                    parsed_index = index;
-                    break;
-                }
-                b'\\' => was_prev_char_escape_char = true,
-                b'"' => is_in_quotes = !is_in_quotes,
-                _ => {}
-            }
-        }
-        index += 1;
-    }
-
-    if parsed_index == 0 {
-        if index != 0 {
-            parsed_index = i.len();
-        } else {
-            // Didn't parse anything at all, newline straight away.
-            receive_event(Event::Value(Cow::Borrowed("".into())));
-            return Ok((&i[0..], newlines));
-        }
-    }
-
-    // Handle incomplete escape
-    if was_prev_char_escape_char {
-        return Err(nom::Err::Error(NomError {
-            input: i,
-            code: ErrorKind::Escaped,
-        }));
-    }
-
-    // Handle incomplete quotes
-    if is_in_quotes {
-        return Err(nom::Err::Error(NomError {
-            input: i,
-            code: ErrorKind::Tag,
-        }));
-    }
-
-    let (i, remainder_value) = {
-        let mut new_index = parsed_index;
-        for index in (offset..parsed_index).rev() {
-            if !i[index].is_ascii_whitespace() {
-                new_index = index + 1;
-                break;
+                last_value_index += 1;
             }
         }
-        (&i[new_index..], &i[offset..new_index])
+
+        if prev_char_was_backslash {
+            return Err(new_err(ErrorKind::Escaped));
+        }
+
+        if is_in_quotes {
+            return Err(new_err(ErrorKind::Tag));
+        }
+
+        let value_end = match value_end {
+            None => {
+                if last_value_index == 0 {
+                    dispatch(Event::Value(Cow::Borrowed("".into())));
+                    return Ok((&i[0..], newlines));
+                } else {
+                    i.len()
+                }
+            }
+            Some(idx) => idx,
+        };
+
+        let dispatch = move |value: &'a [u8]| {
+            if partial_value_found {
+                dispatch(Event::ValueDone(Cow::Borrowed(value.as_bstr())));
+            } else {
+                dispatch(Event::Value(Cow::Borrowed(value.as_bstr())));
+            }
+        };
+        (&i[value_start..], value_end - value_start, newlines, dispatch)
     };
 
-    if partial_value_found {
-        receive_event(Event::ValueDone(Cow::Borrowed(remainder_value.as_bstr())));
-    } else {
-        receive_event(Event::Value(Cow::Borrowed(remainder_value.as_bstr())));
-    }
+    let (i, remainder_value) = {
+        let value_end_no_trailing_whitespace = i[..value_end]
+            .iter()
+            .enumerate()
+            .rev()
+            .find_map(|(idx, b)| (!b.is_ascii_whitespace()).then(|| idx + 1))
+            .unwrap_or(0);
+        (
+            &i[value_end_no_trailing_whitespace..],
+            &i[..value_end_no_trailing_whitespace],
+        )
+    };
+
+    dispatch(remainder_value);
 
     Ok((i, newlines))
 }

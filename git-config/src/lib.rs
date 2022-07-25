@@ -24,7 +24,7 @@
 //! - Legacy headers like `[section.subsection]` are supposed to be turned into to lower case and compared
 //!   case-sensitively. We keep its case and compare case-insensitively.
 //!
-//! [^1]: When read values do not need normalization.
+//! [^1]: When read values do not need normalization and it wasn't parsed in 'owned' mode.
 //!
 //! [`git-config` files]: https://git-scm.com/docs/git-config#_configuration_file
 //! [`File`]: crate::File
@@ -38,18 +38,16 @@
 )]
 
 pub mod file;
-///
-pub mod fs;
+
 ///
 pub mod lookup;
 pub mod parse;
 ///
 pub mod value;
 mod values;
-pub use values::{boolean, color, integer, path};
+pub use values::{color, integer, path};
 
 mod types;
-pub use types::{Boolean, Color, File, Integer, Path};
-
-mod permissions;
-pub use permissions::Permissions;
+pub use types::{Boolean, Color, File, Integer, Path, Source};
+///
+pub mod source;

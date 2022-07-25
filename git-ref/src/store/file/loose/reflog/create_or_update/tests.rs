@@ -60,7 +60,7 @@ fn missing_reflog_creates_it_even_if_similarly_named_empty_dir_exists_and_append
         let new = hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242");
         let committer = Signature {
             name: "committer".into(),
-            email: "commiter@example.com".into(),
+            email: "committer@example.com".into(),
             time: Time {
                 seconds_since_unix_epoch: 1234,
                 offset_in_seconds: 1800,

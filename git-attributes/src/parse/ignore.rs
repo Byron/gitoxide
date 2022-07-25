@@ -1,11 +1,13 @@
 use bstr::ByteSlice;
 
+/// An iterator over line-wise ignore patterns parsed from a buffer.
 pub struct Lines<'a> {
     lines: bstr::Lines<'a>,
     line_no: usize,
 }
 
 impl<'a> Lines<'a> {
+    /// Create a new instance from `buf` to parse ignore patterns from.
     pub fn new(buf: &'a [u8]) -> Self {
         let bom = unicode_bom::Bom::from(buf);
         Lines {

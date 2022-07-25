@@ -22,6 +22,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+      - run: rustup set auto-self-update disable
+        if: contains(runner.os, 'windows')
+        shell: bash
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal

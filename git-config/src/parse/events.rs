@@ -7,7 +7,7 @@ use crate::{
     parse::{section, Event, Section},
 };
 
-/// A type store without allocation all events that are typicaly preceeding the first section.
+/// A type store without allocation all events that are typically preceding the first section.
 pub type FrontMatterEvents<'a> = SmallVec<[Event<'a>; 8]>;
 
 /// A zero-copy `git-config` file parser.
@@ -222,9 +222,9 @@ pub struct Events<'a> {
 impl Events<'static> {
     /// Parses the provided bytes, returning an [`Events`] that contains allocated
     /// and owned events. This is similar to [`Events::from_bytes()`], but performance
-    /// is degraded as it requires allocation for every event. However, this permits
-    /// the `input` bytes to be dropped and he parser to be passed around
-    /// without lifetime worries.
+    /// is degraded as it requires allocation for every event.
+    ///
+    /// Use `filter` to only include those events for which it returns true.
     pub fn from_bytes_owned<'a>(
         input: &'a [u8],
         filter: Option<fn(&Event<'a>) -> bool>,
@@ -238,8 +238,10 @@ impl<'a> Events<'a> {
     /// [`Events`] that provides methods to accessing leading comments and sections
     /// of a `git-config` file and can be converted into an iterator of [`Event`]
     /// for higher level processing.
-    pub fn from_bytes(input: &'a [u8]) -> Result<Events<'a>, parse::Error> {
-        from_bytes(input, std::convert::identity, None)
+    ///
+    /// Use `filter` to only include those events for which it returns true.
+    pub fn from_bytes(input: &'a [u8], filter: Option<fn(&Event<'a>) -> bool>) -> Result<Events<'a>, parse::Error> {
+        from_bytes(input, std::convert::identity, filter)
     }
 
     /// Attempt to zero-copy parse the provided `input` string.
@@ -248,18 +250,18 @@ impl<'a> Events<'a> {
     /// isn't guaranteed.
     #[allow(clippy::should_implement_trait)]
     pub fn from_str(input: &'a str) -> Result<Events<'a>, parse::Error> {
-        Self::from_bytes(input.as_bytes())
+        Self::from_bytes(input.as_bytes(), None)
     }
 
     /// Consumes the parser to produce an iterator of all contained events.
     #[must_use = "iterators are lazy and do nothing unless consumed"]
     #[allow(clippy::should_implement_trait)]
     pub fn into_iter(self) -> impl Iterator<Item = parse::Event<'a>> + std::iter::FusedIterator {
-        self.frontmatter
-            .into_iter()
-            .chain(self.sections.into_iter().flat_map(|section| {
-                std::iter::once(parse::Event::SectionHeader(section.section_header)).chain(section.events)
-            }))
+        self.frontmatter.into_iter().chain(
+            self.sections
+                .into_iter()
+                .flat_map(|section| std::iter::once(parse::Event::SectionHeader(section.header)).chain(section.events)),
+        )
     }
 
     /// Place all contained events into a single `Vec`.
@@ -280,7 +282,7 @@ impl<'a> TryFrom<&'a [u8]> for Events<'a> {
     type Error = parse::Error;
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
-        Events::from_bytes(value)
+        Events::from_bytes(value, None)
     }
 }
 
@@ -301,7 +303,7 @@ fn from_bytes<'a, 'b>(
                 }
                 Some(prev_header) => {
                     sections.push(parse::Section {
-                        section_header: prev_header,
+                        header: prev_header,
                         events: std::mem::take(&mut events),
                     });
                 }
@@ -325,7 +327,7 @@ fn from_bytes<'a, 'b>(
         }
         Some(prev_header) => {
             sections.push(parse::Section {
-                section_header: prev_header,
+                header: prev_header,
                 events: std::mem::take(&mut events),
             });
         }

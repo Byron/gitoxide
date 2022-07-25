@@ -37,7 +37,7 @@ pub struct FromEntriesIter<I, W> {
     /// It stores the pack offsets at which objects begin.
     /// Additionally we store if an object was invalid, and if so we will not write it nor will we allow delta objects to it.
     pack_offsets_and_validity: Vec<(u64, bool)>,
-    /// If we are done, no additional writes will occour
+    /// If we are done, no additional writes will occur
     is_done: bool,
 }
 

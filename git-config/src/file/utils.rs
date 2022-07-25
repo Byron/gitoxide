@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::{cmp::Ordering, collections::HashMap};
 
 use bstr::BStr;
 
 use crate::{
-    file::{SectionBody, SectionBodyId, SectionBodyIds, SectionMut},
+    file::{self, SectionBodyIdsLut, SectionId},
     lookup,
     parse::section,
     File,
@@ -11,21 +11,17 @@ use crate::{
 
 /// Private helper functions
 impl<'event> File<'event> {
-    /// Adds a new section to the config file.
-    pub(crate) fn push_section_internal(
-        &mut self,
-        header: section::Header<'event>,
-        section: SectionBody<'event>,
-    ) -> SectionMut<'_, 'event> {
-        let new_section_id = SectionBodyId(self.section_id_counter);
-        self.section_headers.insert(new_section_id, header.clone());
+    /// Adds a new section to the config file, returning the section id of the newly added section.
+    pub(crate) fn push_section_internal(&mut self, section: file::Section<'event>) -> SectionId {
+        let new_section_id = SectionId(self.section_id_counter);
         self.sections.insert(new_section_id, section);
-        let lookup = self.section_lookup_tree.entry(header.name).or_default();
+        let header = &self.sections[&new_section_id].header;
+        let lookup = self.section_lookup_tree.entry(header.name.clone()).or_default();
 
         let mut found_node = false;
-        if let Some(subsection_name) = header.subsection_name {
+        if let Some(subsection_name) = header.subsection_name.clone() {
             for node in lookup.iter_mut() {
-                if let SectionBodyIds::NonTerminal(subsections) = node {
+                if let SectionBodyIdsLut::NonTerminal(subsections) = node {
                     found_node = true;
                     subsections
                         .entry(subsection_name.clone())
@@ -37,26 +33,82 @@ impl<'event> File<'event> {
             if !found_node {
                 let mut map = HashMap::new();
                 map.insert(subsection_name, vec![new_section_id]);
-                lookup.push(SectionBodyIds::NonTerminal(map));
+                lookup.push(SectionBodyIdsLut::NonTerminal(map));
             }
         } else {
             for node in lookup.iter_mut() {
-                if let SectionBodyIds::Terminal(vec) = node {
+                if let SectionBodyIdsLut::Terminal(vec) = node {
                     found_node = true;
                     vec.push(new_section_id);
                     break;
                 }
             }
             if !found_node {
-                lookup.push(SectionBodyIds::Terminal(vec![new_section_id]));
+                lookup.push(SectionBodyIdsLut::Terminal(vec![new_section_id]));
             }
         }
         self.section_order.push_back(new_section_id);
         self.section_id_counter += 1;
-        self.sections
-            .get_mut(&new_section_id)
-            .map(SectionMut::new)
-            .expect("previously inserted section")
+        new_section_id
+    }
+
+    /// Inserts `section` after the section that comes `before` it, and maintains correct ordering in all of our lookup structures.
+    pub(crate) fn insert_section_after(&mut self, section: file::Section<'event>, before: SectionId) -> SectionId {
+        let lookup_section_order = {
+            let section_order = &self.section_order;
+            move |section_id| {
+                section_order
+                    .iter()
+                    .enumerate()
+                    .find_map(|(idx, id)| (*id == section_id).then(|| idx))
+                    .expect("before-section exists")
+            }
+        };
+
+        let before_order = lookup_section_order(before);
+        let new_section_id = SectionId(self.section_id_counter);
+        self.sections.insert(new_section_id, section);
+        let header = &self.sections[&new_section_id].header;
+        let lookup = self.section_lookup_tree.entry(header.name.clone()).or_default();
+
+        let mut found_node = false;
+        if let Some(subsection_name) = header.subsection_name.clone() {
+            for node in lookup.iter_mut() {
+                if let SectionBodyIdsLut::NonTerminal(subsections) = node {
+                    found_node = true;
+                    let sections_with_name_and_subsection_name =
+                        subsections.entry(subsection_name.clone()).or_default();
+                    let insert_pos = find_insert_pos_by_order(
+                        sections_with_name_and_subsection_name,
+                        before_order,
+                        lookup_section_order,
+                    );
+                    sections_with_name_and_subsection_name.insert(insert_pos, new_section_id);
+                    break;
+                }
+            }
+            if !found_node {
+                let mut map = HashMap::new();
+                map.insert(subsection_name, vec![new_section_id]);
+                lookup.push(SectionBodyIdsLut::NonTerminal(map));
+            }
+        } else {
+            for node in lookup.iter_mut() {
+                if let SectionBodyIdsLut::Terminal(sections_with_name) = node {
+                    found_node = true;
+                    let insert_pos = find_insert_pos_by_order(sections_with_name, before_order, lookup_section_order);
+                    sections_with_name.insert(insert_pos, new_section_id);
+                    break;
+                }
+            }
+            if !found_node {
+                lookup.push(SectionBodyIdsLut::Terminal(vec![new_section_id]));
+            }
+        }
+
+        self.section_order.insert(before_order + 1, new_section_id);
+        self.section_id_counter += 1;
+        new_section_id
     }
 
     /// Returns the mapping between section and subsection name to section ids.
@@ -64,10 +116,8 @@ impl<'event> File<'event> {
         &'a self,
         section_name: &'a str,
         subsection_name: Option<&str>,
-    ) -> Result<
-        impl Iterator<Item = SectionBodyId> + ExactSizeIterator + DoubleEndedIterator + '_,
-        lookup::existing::Error,
-    > {
+    ) -> Result<impl Iterator<Item = SectionId> + ExactSizeIterator + DoubleEndedIterator + '_, lookup::existing::Error>
+    {
         let section_name = section::Name::from_str_unchecked(section_name);
         let section_ids = self
             .section_lookup_tree
@@ -80,14 +130,14 @@ impl<'event> File<'event> {
         if let Some(subsection_name) = subsection_name {
             let subsection_name: &BStr = subsection_name.into();
             for node in section_ids {
-                if let SectionBodyIds::NonTerminal(subsection_lookup) = node {
+                if let SectionBodyIdsLut::NonTerminal(subsection_lookup) = node {
                     maybe_ids = subsection_lookup.get(subsection_name).map(|v| v.iter().copied());
                     break;
                 }
             }
         } else {
             for node in section_ids {
-                if let SectionBodyIds::Terminal(subsection_lookup) = node {
+                if let SectionBodyIdsLut::Terminal(subsection_lookup) = node {
                     maybe_ids = Some(subsection_lookup.iter().copied());
                     break;
                 }
@@ -99,14 +149,14 @@ impl<'event> File<'event> {
     pub(crate) fn section_ids_by_name<'a>(
         &'a self,
         section_name: &'a str,
-    ) -> Result<impl Iterator<Item = SectionBodyId> + '_, lookup::existing::Error> {
+    ) -> Result<impl Iterator<Item = SectionId> + '_, lookup::existing::Error> {
         let section_name = section::Name::from_str_unchecked(section_name);
         match self.section_lookup_tree.get(&section_name) {
             Some(lookup) => Ok(lookup.iter().flat_map({
                 let section_order = &self.section_order;
                 move |node| match node {
-                    SectionBodyIds::Terminal(v) => Box::new(v.iter().copied()) as Box<dyn Iterator<Item = _>>,
-                    SectionBodyIds::NonTerminal(v) => Box::new({
+                    SectionBodyIdsLut::Terminal(v) => Box::new(v.iter().copied()) as Box<dyn Iterator<Item = _>>,
+                    SectionBodyIdsLut::NonTerminal(v) => Box::new({
                         let v: Vec<_> = v.values().flatten().copied().collect();
                         section_order.iter().filter(move |a| v.contains(a)).copied()
                     }),
@@ -115,14 +165,27 @@ impl<'event> File<'event> {
             None => Err(lookup::existing::Error::SectionMissing),
         }
     }
+}
 
-    // TODO: add note indicating that probably a lot if not all information about the original files is currently lost,
-    //       so can't be written back. This will probably change a lot during refactor, so it's not too important now.
-    pub(crate) fn append(&mut self, mut other: Self) {
-        for id in std::mem::take(&mut other.section_order) {
-            let header = other.section_headers.remove(&id).expect("present");
-            let body = other.sections.remove(&id).expect("present");
-            self.push_section_internal(header, body);
+fn find_insert_pos_by_order(
+    sections_with_name: &[SectionId],
+    before_order: usize,
+    lookup_section_order: impl Fn(SectionId) -> usize,
+) -> usize {
+    let mut insert_pos = sections_with_name.len(); // push back by default
+    for (idx, candidate_id) in sections_with_name.iter().enumerate() {
+        let candidate_order = lookup_section_order(*candidate_id);
+        match candidate_order.cmp(&before_order) {
+            Ordering::Less => {}
+            Ordering::Equal => {
+                insert_pos = idx + 1; // insert right after this one
+                break;
+            }
+            Ordering::Greater => {
+                insert_pos = idx; // insert before this one
+                break;
+            }
         }
     }
+    insert_pos
 }

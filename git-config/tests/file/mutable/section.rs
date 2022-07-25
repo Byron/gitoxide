@@ -18,7 +18,7 @@ mod remove {
             assert_eq!(section.num_values(), num_values);
         }
 
-        assert!(!section.is_empty(), "everything is still there");
+        assert!(!section.is_void(), "everything is still there");
         assert_eq!(
             config.to_string(),
             "\n        [a]\n            \n            \n            \n            \n            "
@@ -47,15 +47,16 @@ mod pop {
             num_values -= 1;
             assert_eq!(section.num_values(), num_values);
         }
-        assert!(!section.is_empty(), "there still is some whitespace");
+        assert!(!section.is_void(), "there still is some whitespace");
         assert_eq!(config.to_string(), "\n        [a]\n");
         Ok(())
     }
 }
 
 mod set {
-    use super::multi_value_section;
     use std::convert::TryInto;
+
+    use super::multi_value_section;
 
     #[test]
     fn various_escapes_onto_various_kinds_of_values() -> crate::Result {
@@ -71,7 +72,7 @@ mod set {
             assert_eq!(prev_value.as_deref().expect("prev value set"), expected_prev_value);
         }
 
-        assert_eq!(config.to_string(), "\n        [a]\n            a = \n            b = \" a\"\n            c=\"b\\t\"\n            d\"; comment\"\n            e =a\\n\\tc  d\\\\ \\\"x\\\"");
+        assert_eq!(config.to_string(), "\n        [a]\n            a = \n            b = \" a\"\n            c=\"b\\t\"\n            d\"; comment\"\n            e =a\\n\\tc  d\\\\ \\\"x\\\"\n");
         assert_eq!(
             config
                 .section_mut("a", None)?
@@ -128,25 +129,29 @@ mod push {
     #[test]
     fn values_are_escaped() {
         for (value, expected) in [
-            ("a b", "[a]\n\tk = a b"),
-            (" a b", "[a]\n\tk = \" a b\""),
-            ("a b\t", "[a]\n\tk = \"a b\\t\""),
-            (";c", "[a]\n\tk = \";c\""),
-            ("#c", "[a]\n\tk = \"#c\""),
-            ("a\nb\n\tc", "[a]\n\tk = a\\nb\\n\\tc"),
+            ("a b", "$head\tk = a b$nl"),
+            (" a b", "$head\tk = \" a b\"$nl"),
+            ("a b\t", "$head\tk = \"a b\\t\"$nl"),
+            (";c", "$head\tk = \";c\"$nl"),
+            ("#c", "$head\tk = \"#c\"$nl"),
+            ("a\nb\n\tc", "$head\tk = a\\nb\\n\\tc$nl"),
         ] {
             let mut config = git_config::File::default();
             let mut section = config.new_section("a", None).unwrap();
             section.set_implicit_newline(false);
             section.push(Key::try_from("k").unwrap(), value);
+            let expected = expected
+                .replace("$head", &format!("[a]{nl}", nl = section.newline()))
+                .replace("$nl", &section.newline().to_string());
             assert_eq!(config.to_bstring(), expected);
         }
     }
 }
 
 mod set_leading_whitespace {
-    use std::convert::TryFrom;
+    use std::{borrow::Cow, convert::TryFrom};
 
+    use bstr::BString;
     use git_config::parse::section::Key;
 
     use crate::file::cow_str;
@@ -155,9 +160,12 @@ mod set_leading_whitespace {
     fn any_whitespace_is_ok() -> crate::Result {
         let mut config = git_config::File::default();
         let mut section = config.new_section("core", None)?;
-        section.set_leading_whitespace(cow_str("\n\t").into());
+
+        let nl = section.newline().to_owned();
+        section.set_leading_whitespace(Some(Cow::Owned(BString::from(format!("{nl}\t")))));
         section.push(Key::try_from("a")?, "v");
-        assert_eq!(config.to_string(), "[core]\n\n\ta = v\n");
+
+        assert_eq!(config.to_string(), format!("[core]{nl}{nl}\ta = v{nl}"));
         Ok(())
     }
 

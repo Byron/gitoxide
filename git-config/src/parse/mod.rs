@@ -5,7 +5,7 @@
 //! The workflow for interacting with this is to use
 //! [`from_bytes()`] to obtain all parse events or tokens of the given input.
 //!
-//! On a higher level, one can use [`Events`] to parse all evnets into a set
+//! On a higher level, one can use [`Events`] to parse all events into a set
 //! of easily interpretable data type, similar to what [`File`] does.
 //!
 //! [`File`]: crate::File
@@ -16,8 +16,7 @@ use bstr::BStr;
 
 mod nom;
 pub use self::nom::from_bytes;
-///
-pub mod event;
+mod event;
 #[path = "events.rs"]
 mod events_type;
 pub use events_type::{Events, FrontMatterEvents};
@@ -25,6 +24,10 @@ mod comment;
 mod error;
 ///
 pub mod section;
+
+///
+mod key;
+pub use key::{parse_unvalidated as key, Key};
 
 #[cfg(test)]
 pub(crate) mod tests;
@@ -85,10 +88,10 @@ pub enum Event<'a> {
 
 /// A parsed section containing the header and the section events, typically
 /// comprising the keys and their values.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Section<'a> {
     /// The section name and subsection name, if any.
-    pub section_header: section::Header<'a>,
+    pub header: section::Header<'a>,
     /// The syntactic events found in this section.
     pub events: section::Events<'a>,
 }
@@ -97,9 +100,9 @@ pub struct Section<'a> {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Comment<'a> {
     /// The comment marker used. This is either a semicolon or octothorpe/hash.
-    pub comment_tag: u8,
+    pub tag: u8,
     /// The parsed comment.
-    pub comment: Cow<'a, BStr>,
+    pub text: Cow<'a, BStr>,
 }
 
 /// A parser error reports the one-indexed line number where the parsing error

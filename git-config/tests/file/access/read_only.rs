@@ -1,7 +1,11 @@
 use std::{borrow::Cow, convert::TryFrom, error::Error};
 
 use bstr::BStr;
-use git_config::{color, integer, path, Boolean, Color, File, Integer};
+use git_config::{
+    color,
+    file::{init, Metadata},
+    integer, path, Boolean, Color, File, Integer,
+};
 
 use crate::file::cow_str;
 
@@ -23,113 +27,121 @@ fn get_value_for_all_provided_values() -> crate::Result {
             location = ~/tmp
             location-quoted = "~/quoted"
     "#;
+    for lossy in [false, true] {
+        let config = File::from_bytes_no_includes(
+            config.as_bytes(),
+            Metadata::api(),
+            init::Options {
+                lossy,
+                ..Default::default()
+            },
+        )?;
 
-    let config = git_config::parse::Events::from_bytes_owned(config.as_bytes(), None).map(File::from)?;
+        assert!(!config.value::<Boolean>("core", None, "bool-explicit")?.0);
+        assert!(!config.boolean("core", None, "bool-explicit").expect("exists")?);
 
-    assert!(!config.value::<Boolean>("core", None, "bool-explicit")?.0);
-    assert!(!config.boolean("core", None, "bool-explicit").expect("exists")?);
-
-    assert!(config.value::<Boolean>("core", None, "bool-implicit")?.0);
-    assert!(
-        config
-            .try_value::<Boolean>("core", None, "bool-implicit")
-            .expect("exists")?
-            .0
-    );
-
-    assert!(config.boolean("core", None, "bool-implicit").expect("present")?);
-    assert_eq!(config.string("doesnt", None, "exist"), None);
-
-    assert_eq!(
-        config.value::<Integer>("core", None, "integer-no-prefix")?,
-        Integer {
-            value: 10,
-            suffix: None
-        }
-    );
-
-    assert_eq!(
-        config.value::<Integer>("core", None, "integer-no-prefix")?,
-        Integer {
-            value: 10,
-            suffix: None
-        }
-    );
-
-    assert_eq!(
-        config.value::<Integer>("core", None, "integer-prefix")?,
-        Integer {
-            value: 10,
-            suffix: Some(integer::Suffix::Gibi),
-        }
-    );
-
-    assert_eq!(
-        config.value::<Color>("core", None, "color")?,
-        Color {
-            foreground: Some(color::Name::BrightGreen),
-            background: Some(color::Name::Red),
-            attributes: color::Attribute::BOLD
-        }
-    );
-
-    {
-        let string = config.value::<Cow<'_, BStr>>("core", None, "other")?;
-        assert_eq!(string, cow_str("hello world"));
+        assert!(config.value::<Boolean>("core", None, "bool-implicit")?.0);
         assert!(
-            matches!(string, Cow::Borrowed(_)),
-            "no copy is made, we reference the `file` itself"
+            config
+                .try_value::<Boolean>("core", None, "bool-implicit")
+                .expect("exists")?
+                .0
         );
-    }
 
-    assert_eq!(
-        config.string("core", None, "other-quoted").unwrap(),
-        cow_str("hello world")
-    );
+        assert!(config.boolean("core", None, "bool-implicit").expect("present")?);
+        assert_eq!(config.string("doesnt", None, "exist"), None);
 
-    {
-        let strings = config.strings("core", None, "other-quoted").unwrap();
-        assert_eq!(strings, vec![cow_str("hello"), cow_str("hello world")]);
-        assert!(matches!(strings[0], Cow::Borrowed(_)));
-        assert!(matches!(strings[1], Cow::Borrowed(_)));
-    }
-
-    {
-        let cow = config.string("core", None, "other").expect("present");
-        assert_eq!(cow.as_ref(), "hello world");
-        assert!(matches!(cow, Cow::Borrowed(_)));
-    }
-    assert_eq!(
-        config.string("core", None, "other-quoted").expect("present").as_ref(),
-        "hello world"
-    );
-
-    {
-        let actual = config.value::<git_config::Path>("core", None, "location")?;
-        assert_eq!(&*actual, "~/tmp", "no interpolation occurs when querying a path");
-
-        let home = std::env::current_dir()?;
-        let expected = home.join("tmp");
-        assert!(matches!(actual.value, Cow::Borrowed(_)));
         assert_eq!(
-            actual
-                .interpolate(path::interpolate::Options {
-                    home_dir: home.as_path().into(),
-                    ..Default::default()
-                })
-                .unwrap(),
-            expected
+            config.value::<Integer>("core", None, "integer-no-prefix")?,
+            Integer {
+                value: 10,
+                suffix: None
+            }
         );
+
+        assert_eq!(
+            config.value::<Integer>("core", None, "integer-no-prefix")?,
+            Integer {
+                value: 10,
+                suffix: None
+            }
+        );
+
+        assert_eq!(
+            config.value::<Integer>("core", None, "integer-prefix")?,
+            Integer {
+                value: 10,
+                suffix: Some(integer::Suffix::Gibi),
+            }
+        );
+
+        assert_eq!(
+            config.value::<Color>("core", None, "color")?,
+            Color {
+                foreground: Some(color::Name::BrightGreen),
+                background: Some(color::Name::Red),
+                attributes: color::Attribute::BOLD
+            }
+        );
+
+        {
+            let string = config.value::<Cow<'_, BStr>>("core", None, "other")?;
+            assert_eq!(string, cow_str("hello world"));
+            assert!(
+                matches!(string, Cow::Borrowed(_)),
+                "no copy is made, we reference the `file` itself"
+            );
+        }
+
+        assert_eq!(
+            config.string("core", None, "other-quoted").unwrap(),
+            cow_str("hello world")
+        );
+
+        {
+            let strings = config.strings("core", None, "other-quoted").unwrap();
+            assert_eq!(strings, vec![cow_str("hello"), cow_str("hello world")]);
+            assert!(matches!(strings[0], Cow::Borrowed(_)));
+            assert!(matches!(strings[1], Cow::Borrowed(_)));
+        }
+
+        {
+            let cow = config.string("core", None, "other").expect("present");
+            assert_eq!(cow.as_ref(), "hello world");
+            assert!(matches!(cow, Cow::Borrowed(_)));
+        }
+        assert_eq!(
+            config.string("core", None, "other-quoted").expect("present").as_ref(),
+            "hello world"
+        );
+
+        {
+            let actual = config.value::<git_config::Path>("core", None, "location")?;
+            assert_eq!(&*actual, "~/tmp", "no interpolation occurs when querying a path");
+
+            let home = std::env::current_dir()?;
+            let expected = home.join("tmp");
+            assert!(matches!(actual.value, Cow::Borrowed(_)));
+            assert_eq!(
+                actual
+                    .interpolate(path::interpolate::Context {
+                        home_dir: home.as_path().into(),
+                        ..Default::default()
+                    })
+                    .unwrap(),
+                expected
+            );
+        }
+
+        let actual = config.path("core", None, "location").expect("present");
+        assert_eq!(&*actual, "~/tmp");
+
+        let actual = config.path("core", None, "location-quoted").expect("present");
+        assert_eq!(&*actual, "~/quoted");
+
+        let actual = config.value::<git_config::Path>("core", None, "location-quoted")?;
+        assert_eq!(&*actual, "~/quoted", "but the path is unquoted");
     }
-
-    let actual = config.path("core", None, "location").expect("present");
-    assert_eq!(&*actual, "~/tmp");
-
-    let actual = config.path("core", None, "location-quoted").expect("present");
-    assert_eq!(&*actual, "~/quoted");
-
-    let actual = config.value::<git_config::Path>("core", None, "location-quoted")?;
-    assert_eq!(&*actual, "~/quoted", "but the path is unquoted");
 
     Ok(())
 }

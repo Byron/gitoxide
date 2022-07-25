@@ -6,6 +6,9 @@
 mod _impl {
     use std::sync::Arc;
 
+    /// A thread-safe cell which can be written to only once.
+    #[cfg(feature = "once_cell")]
+    pub type OnceCell<T> = once_cell::sync::OnceCell<T>;
     /// A reference counted pointer type for shared ownership.
     pub type OwnShared<T> = Arc<T>;
     /// A synchronization primitive which can start read-only and transition to support mutation.
@@ -53,6 +56,9 @@ mod _impl {
         rc::Rc,
     };
 
+    /// A thread-safe cell which can be written to only once.
+    #[cfg(feature = "once_cell")]
+    pub type OnceCell<T> = once_cell::unsync::OnceCell<T>;
     /// A reference counted pointer type for shared ownership.
     pub type OwnShared<T> = Rc<T>;
     /// A synchronization primitive which can start read-only and transition to support mutation.

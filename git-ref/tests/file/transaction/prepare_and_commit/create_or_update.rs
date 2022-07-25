@@ -443,7 +443,10 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
         let head = store.find_loose(&edits[0].name)?;
         assert_eq!(head.name.as_bstr(), "HEAD");
         assert_eq!(head.kind(), git_ref::Kind::Symbolic);
-        assert_eq!(head.target.to_ref().try_name(), Some(referent.as_bytes().as_bstr()));
+        assert_eq!(
+            head.target.to_ref().try_name().map(|n| n.as_bstr()),
+            Some(referent.as_bytes().as_bstr())
+        );
         assert!(!head.log_exists(&store), "no reflog is written for symbolic ref");
         assert!(store.try_find_loose(referent)?.is_none(), "referent wasn't created");
 
@@ -506,7 +509,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             "head is still symbolic, not detached"
         );
         assert_eq!(
-            head.target.to_ref().try_name(),
+            head.target.to_ref().try_name().map(|n| n.as_bstr()),
             Some(referent.as_bytes().as_bstr()),
             "it still points to the referent"
         );

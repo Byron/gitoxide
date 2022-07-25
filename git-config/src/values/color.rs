@@ -97,7 +97,7 @@ impl TryFrom<Cow<'_, BStr>> for Color {
     }
 }
 
-/// Discriminating enum for [`Color`] values.
+/// Discriminating enum for names of [`Color`] values.
 ///
 /// `git-config` supports the eight standard colors, their bright variants, an
 /// ANSI color code, or a 24-bit hex value prefixed with an octothorpe/hash.

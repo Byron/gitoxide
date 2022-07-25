@@ -4,7 +4,11 @@ use std::{
 };
 
 use bstr::{BString, ByteSlice};
-use git_config::file::from_paths;
+use git_config::file::{
+    includes,
+    includes::conditional,
+    init::{self},
+};
 use git_ref::{
     transaction::{Change, PreviousValue, RefEdit},
     FullName, Target,
@@ -233,12 +237,25 @@ value = branch-override-by-include
     )?;
 
     let branch_name = FullName::try_from(BString::from(branch_name))?;
-    let options = from_paths::Options {
-        branch_name: Some(branch_name.as_ref()),
+    let options = init::Options {
+        includes: includes::Options::follow(
+            Default::default(),
+            conditional::Context {
+                branch_name: Some(branch_name.as_ref()),
+                ..Default::default()
+            },
+        ),
         ..Default::default()
     };
 
-    let config = git_config::File::from_paths(Some(&root_config), options)?;
+    let config = git_config::File::from_paths_metadata(
+        Some(git_config::file::Metadata::try_from_path(
+            &root_config,
+            git_config::Source::Local,
+        )?),
+        options,
+    )?
+    .expect("non-empty");
     assert_eq!(
         config.string("section", None, "value"),
         Some(cow_str(match expect {
@@ -269,7 +286,7 @@ value = branch-override-by-include
             }),
             git_repository::lock::acquire::Fail::Immediately,
         )?
-        .commit(repo.committer().to_ref())?;
+        .commit(repo.committer_or_default())?;
 
     let dir = assure_git_agrees(expect, dir)?;
     Ok(GitEnv { repo, dir })
