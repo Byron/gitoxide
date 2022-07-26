@@ -49,8 +49,37 @@ pub mod parse {
         PrefixNotFound { prefix: git_hash::Prefix },
         #[error("Found more than one object prefixed with {}", .prefix)]
         AmbiguousPrefix { prefix: git_hash::Prefix },
-        #[error("{}", .combined_message)]
-        Multi { combined_message: String },
+        #[error("{current}")]
+        Multi {
+            current: Box<dyn std::error::Error + Send + Sync + 'static>,
+            #[source]
+            next: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
+        },
+    }
+
+    impl Error {
+        /// Create a new multi-error that chains all `errors`.
+        pub fn new_multi(errors: Vec<Self>) -> Self {
+            assert!(!errors.is_empty());
+            match errors.len() {
+                0 => unreachable!("BUG: cannot create something from nothing"),
+                1 => errors.into_iter().next().expect("one"),
+                _ => {
+                    let mut it = errors.into_iter().rev();
+                    let mut recent = Error::Multi {
+                        current: Box::new(it.next().expect("at least one error")),
+                        next: None,
+                    };
+                    for err in it {
+                        recent = Error::Multi {
+                            current: Box::new(err),
+                            next: Some(Box::new(recent)),
+                        }
+                    }
+                    recent
+                }
+            }
+        }
     }
 
     /// A hint to know what to do if refs and object names are equal.
@@ -149,18 +178,7 @@ pub mod parse {
                         !delegate.err.is_empty(),
                         "BUG: must have recorded at least one err if a delegate error was reported"
                     );
-                    if delegate.err.len() == 1 {
-                        return Err(delegate.err.remove(0));
-                    }
-                    // TODO: is there a way to not degenerate the error but rather build some sort of error chain?
-                    return Err(Error::Multi {
-                        combined_message: delegate
-                            .err
-                            .iter()
-                            .map(|err| err.to_string())
-                            .collect::<Vec<_>>()
-                            .join("\n"),
-                    });
+                    return Err(Error::new_multi(delegate.err));
                 }
                 Err(err) => return Err(err.into()),
                 Ok(()) => RevSpec {
