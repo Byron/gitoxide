@@ -213,10 +213,12 @@ impl Cache {
         let reflog = query_refupdates(&config);
         let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
+        let object_kind_hint = None;
         Ok(Cache {
             resolved: config.into(),
             use_multi_pack_index,
             object_hash,
+            object_kind_hint,
             reflog,
             is_bare,
             ignore_case,

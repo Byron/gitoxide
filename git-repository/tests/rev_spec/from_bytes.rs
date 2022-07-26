@@ -196,7 +196,10 @@ mod ambiguous {
     }
 
     fn opts_ref_hint(hint: RefsHint) -> Options {
-        Options { refs_hint: hint }
+        Options {
+            refs_hint: hint,
+            object_kind_hint: None,
+        }
     }
 
     #[test]

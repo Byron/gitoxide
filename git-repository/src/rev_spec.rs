@@ -1,4 +1,3 @@
-#![allow(missing_docs)]
 use crate::ext::ReferenceExt;
 use crate::types::RevSpecDetached;
 use crate::{Id, Reference, Repository, RevSpec};
@@ -66,18 +65,44 @@ pub mod parse {
         Fail,
     }
 
+    /// A hint to know which object kind to prefer if multiple objects match a prefix.
+    ///
+    /// This disambiguation mechanism is applied right after multiple candidates appear after resolving an object.
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    pub enum ObjectKindHint {
+        /// Pick objects that are commits themselves.
+        Commit,
+        /// Pick objects that can be peeled into a commit, i.e. commits themselves or tags which are peeled until a commit is found.
+        Committish,
+        /// Pick objects that are trees themselves.
+        Tree,
+        /// Pick objects that can be peeled into a tree, i.e. trees themselves or tags which are peeled until a tree is found or commits
+        /// whose tree is chosen.
+        Treeish,
+        /// Pick objects that are blobs.
+        Blob,
+    }
+
     impl Default for RefsHint {
         fn default() -> Self {
             RefsHint::PreferObjectOnFullLengthHexShaUseRefOtherwise
         }
     }
 
+    /// Options for use in [`RevSpec::from_bstr()`].
     #[derive(Debug, Default, Copy, Clone)]
     pub struct Options {
+        /// What to do if both refs and object names match the same input.
         pub refs_hint: RefsHint,
+        /// The hint to use when encountering multiple object matching a prefix.
+        ///
+        /// If `None`, the rev-spec itself must disambiguate the object by drilling down to desired kinds or applying
+        /// other disambiguating transformations.
+        pub object_kind_hint: Option<ObjectKindHint>,
     }
 
     impl<'repo> RevSpec<'repo> {
+        /// Parse `spec` and use information from `repo` to resolve it, using `opts` to learn how to deal with ambiguity.
         pub fn from_bstr<'a>(spec: impl Into<&'a BStr>, repo: &'repo Repository, opts: Options) -> Result<Self, Error> {
             fn zero_or_one_objects_or_ambguity_err(
                 candidates: Option<HashSet<ObjectId>>,
@@ -421,6 +446,7 @@ impl<'repo> RevSpec<'repo> {
         })
     }
 
+    /// Returns the kind of this rev-spec.
     pub fn kind(&self) -> git_revision::spec::Kind {
         self.inner.kind.unwrap_or(git_revision::spec::Kind::Single)
     }
@@ -477,6 +503,7 @@ impl RevSpecDetached {
         })
     }
 
+    /// Returns the kind of this detached rev-spec.
     pub fn kind(&self) -> git_revision::spec::Kind {
         self.kind.unwrap_or(git_revision::spec::Kind::Single)
     }
