@@ -10,7 +10,7 @@ pub mod parse {
     use crate::RevSpec;
     use git_hash::ObjectId;
     use git_revision::spec::parse;
-    use git_revision::spec::parse::delegate::{self, PeelTo, ReflogLookup, SiblingBranch, Traversal};
+    use git_revision::spec::parse::delegate::{self, Navigate, PeelTo, ReflogLookup, SiblingBranch, Traversal};
     use smallvec::SmallVec;
     use std::collections::HashSet;
 
@@ -67,7 +67,7 @@ pub mod parse {
 
     /// A hint to know which object kind to prefer if multiple objects match a prefix.
     ///
-    /// This disambiguation mechanism is applied right after multiple candidates appear after resolving an object.
+    /// This disambiguation mechanism is applied only if there is no disambiguation hints in the spec itself.
     #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     pub enum ObjectKindHint {
         /// Pick objects that are commits themselves.
@@ -131,6 +131,7 @@ pub mod parse {
                 kind: None,
                 err: Vec::new(),
                 prefix: Default::default(),
+                last_call_was_disambiguate_prefix: Default::default(),
                 opts,
                 repo,
             };
@@ -178,8 +179,10 @@ pub mod parse {
 
         opts: Options,
         err: Vec<Error>,
-        /// The ambiguous prefix obtained during a call to `disambiguate_prefix()`
+        /// The ambiguous prefix obtained during a call to `disambiguate_prefix()`.
         prefix: [Option<git_hash::Prefix>; 2],
+        /// If true, we didn't try to do any other transformation which might have helped with disambiguation.
+        last_call_was_disambiguate_prefix: [bool; 2],
 
         repo: &'repo Repository,
     }
@@ -187,6 +190,7 @@ pub mod parse {
     impl<'repo> parse::Delegate for Delegate<'repo> {
         fn done(&mut self) {
             self.follow_refs_to_objects_if_needed();
+            self.disambiguate_objects_by_fallback_hint();
             assert!(
                 self.err.is_empty(),
                 "BUG: cannot have errors and still arrive here - delegate must return None after registering an error"
@@ -195,6 +199,21 @@ pub mod parse {
     }
 
     impl<'repo> Delegate<'repo> {
+        fn disambiguate_objects_by_fallback_hint(&mut self) {
+            if self.last_call_was_disambiguate_prefix[self.idx] {
+                self.unset_disambiguate_call();
+                match self.opts.object_kind_hint {
+                    Some(ObjectKindHint::Committish) => {
+                        self.peel_until(PeelTo::ObjectKind(git_object::Kind::Commit));
+                    }
+                    Some(ObjectKindHint::Treeish) => todo!("treeish"),
+                    Some(ObjectKindHint::Commit) => todo!("commit"),
+                    Some(ObjectKindHint::Tree) => todo!("tree"),
+                    Some(ObjectKindHint::Blob) => todo!("blob"),
+                    None => {}
+                }
+            }
+        }
         fn follow_refs_to_objects_if_needed(&mut self) -> Option<()> {
             assert_eq!(self.refs.len(), self.objs.len());
             for (r, obj) in self.refs.iter().zip(self.objs.iter_mut()) {
@@ -207,10 +226,15 @@ pub mod parse {
             }
             Some(())
         }
+
+        fn unset_disambiguate_call(&mut self) {
+            self.last_call_was_disambiguate_prefix[self.idx] = false;
+        }
     }
 
     impl<'repo> delegate::Revision for Delegate<'repo> {
         fn find_ref(&mut self, name: &BStr) -> Option<()> {
+            self.unset_disambiguate_call();
             if !self.err.is_empty() && self.refs[self.idx].is_some() {
                 return None;
             }
@@ -232,7 +256,9 @@ pub mod parse {
             prefix: git_hash::Prefix,
             _must_be_commit: Option<delegate::PrefixHint<'_>>,
         ) -> Option<()> {
-            let mut candidates = Some(HashSet::default()); // TODO: keep track of all candidates.
+            self.last_call_was_disambiguate_prefix[self.idx] = true;
+            let mut candidates = Some(HashSet::default());
+            self.prefix[self.idx] = Some(prefix);
             match self
                 .repo
                 .objects
@@ -291,24 +317,29 @@ pub mod parse {
         }
 
         fn reflog(&mut self, _query: ReflogLookup) -> Option<()> {
+            self.unset_disambiguate_call();
             todo!()
         }
 
         fn nth_checked_out_branch(&mut self, _branch_no: usize) -> Option<()> {
+            self.unset_disambiguate_call();
             todo!()
         }
 
         fn sibling_branch(&mut self, _kind: SiblingBranch) -> Option<()> {
+            self.unset_disambiguate_call();
             todo!()
         }
     }
 
     impl<'repo> delegate::Navigate for Delegate<'repo> {
         fn traverse(&mut self, _kind: Traversal) -> Option<()> {
+            self.unset_disambiguate_call();
             todo!()
         }
 
         fn peel_until(&mut self, kind: PeelTo<'_>) -> Option<()> {
+            self.unset_disambiguate_call();
             self.follow_refs_to_objects_if_needed()?;
 
             match kind {
@@ -342,10 +373,12 @@ pub mod parse {
         }
 
         fn find(&mut self, _regex: &BStr, _negated: bool) -> Option<()> {
+            self.unset_disambiguate_call();
             todo!()
         }
 
         fn index_lookup(&mut self, _path: &BStr, _stage: u8) -> Option<()> {
+            self.unset_disambiguate_call();
             todo!()
         }
     }

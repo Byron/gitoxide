@@ -273,14 +273,19 @@ mod ambiguous {
 
     #[test]
     #[ignore]
-    fn disambiguation_hints_can_be_provided_to_choose_one() {
+    fn repository_local_disambiguation_hints_disambiguate() {
         let repo = repo("ambiguous_commits_disambiguation_config").unwrap();
         assert_eq!(
             rev_parse("0000000000f", &repo).unwrap(),
             RevSpec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&repo)),
             "we read the 'core.disambiguate' value and apply it to auto-disambiguate"
         );
+    }
 
+    #[test]
+    #[ignore]
+    fn repository_local_disambiguation_hints_are_overridden_by_specific_ones() {
+        let repo = repo("ambiguous_commits_disambiguation_config").unwrap();
         assert_eq!(
             rev_parse("0000000000f^{tree}", &repo).unwrap_err().to_string(),
             "Found more than one object prefixed with 0000000000f\nThe ref partially named '0000000000f' could not be found",
