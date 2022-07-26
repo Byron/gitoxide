@@ -250,11 +250,13 @@ git clone ambiguous_blob_tree_commit ambiguous_refs
   	baseline "$REF" # there is a ref and an object with the same name
 )
 
-git clone ambiguous_commits ambiguous_commits_disambiguation_config
-(
-    cd ambiguous_commits_disambiguation_config
-    git config core.disambiguate committish
-    baseline "0000000000f"
-)
-
-
+for name in committish treeish tree commit blob; do
+  clone_dir=ambiguous_objects_disambiguation_config_$name
+  git clone ambiguous_commits $clone_dir
+  (
+      cd $clone_dir
+      git config core.disambiguate $name
+      baseline "0000000000f"
+      baseline "0000000000f^{tree}"
+  )
+done

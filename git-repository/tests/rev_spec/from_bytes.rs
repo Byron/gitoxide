@@ -273,21 +273,34 @@ mod ambiguous {
 
     #[test]
     fn repository_local_disambiguation_hints_disambiguate() {
-        let repo = repo("ambiguous_commits_disambiguation_config").unwrap();
+        let r = repo("ambiguous_objects_disambiguation_config_committish").unwrap();
         assert_eq!(
-            rev_parse("0000000000f", &repo).unwrap(),
-            RevSpec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&repo)),
+            rev_parse("0000000000f", &r).unwrap(),
+            RevSpec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&r)),
             "we read the 'core.disambiguate' value and apply it to auto-disambiguate"
+        );
+
+        let r = repo("ambiguous_objects_disambiguation_config_treeish").unwrap();
+        assert_eq!(
+            rev_parse("0000000000f", &r).unwrap_err().to_string(),
+            "Found more than one object prefixed with 0000000000f",
+            "disambiguation might not always work either."
+        );
+
+        let r = repo("ambiguous_objects_disambiguation_config_tree").unwrap();
+        assert_eq!(
+            rev_parse("0000000000f", &r).unwrap(),
+            RevSpec::from_id(hex_to_id("0000000000fd8bcc566027a4d16bde8434cac1a4").attach(&r)),
+            "disambiguation may work precisely even with a simple object type constraint"
         );
     }
 
     #[test]
-    #[ignore]
     fn repository_local_disambiguation_hints_are_overridden_by_specific_ones() {
-        let repo = repo("ambiguous_commits_disambiguation_config").unwrap();
+        let repo = repo("ambiguous_objects_disambiguation_config_committish").unwrap();
         assert_eq!(
             rev_parse("0000000000f^{tree}", &repo).unwrap_err().to_string(),
-            "Found more than one object prefixed with 0000000000f\nThe ref partially named '0000000000f' could not be found",
+            "Found more than one object prefixed with 0000000000f",
             "spec overrides overrule the configuration value, which makes this particular object ambiguous between tree and tag"
         );
     }

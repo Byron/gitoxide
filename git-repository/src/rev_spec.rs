@@ -37,6 +37,12 @@ pub mod parse {
         FindObject(#[from] object::find::existing::OdbError),
         #[error(transparent)]
         PeelToKind(#[from] object::peel::to_kind::Error),
+        #[error("Object {oid} was a {actual}, but needed it to be a {expected}")]
+        ObjectKind {
+            oid: git_hash::ObjectId,
+            actual: git_object::Kind,
+            expected: git_object::Kind,
+        },
         #[error(transparent)]
         Parse(#[from] git_revision::spec::parse::Error),
         #[error("An object prefixed {} could not be found", .prefix)]
@@ -208,9 +214,19 @@ pub mod parse {
                             .iter()
                             .filter_map(|obj| peel(repo, obj, git_object::Kind::Commit).err().map(|err| (*obj, err)))
                             .collect(),
-                        Some(ObjectKindHint::Treeish) => todo!("treeish"),
-                        Some(ObjectKindHint::Commit) => todo!("commit"),
-                        Some(ObjectKindHint::Tree) => todo!("tree"),
+                        Some(ObjectKindHint::Treeish) => objs
+                            .iter()
+                            .filter_map(|obj| peel(repo, obj, git_object::Kind::Tree).err().map(|err| (*obj, err)))
+                            .collect(),
+                        Some(ObjectKindHint::Tree) => objs
+                            .iter()
+                            .filter_map(|obj| {
+                                require_object_kind(repo, obj, git_object::Kind::Tree)
+                                    .err()
+                                    .map(|err| (*obj, err))
+                            })
+                            .collect(),
+                        Some(ObjectKindHint::Commit) => todo!("tree"),
                         Some(ObjectKindHint::Blob) => todo!("blob"),
                         None => return,
                     };
@@ -416,6 +432,19 @@ pub mod parse {
         obj = obj.peel_to_kind(kind)?;
         debug_assert_eq!(obj.kind, kind, "bug in Object::peel_to_kind() which didn't deliver");
         Ok(obj.id)
+    }
+
+    fn require_object_kind(repo: &Repository, obj: &git_hash::oid, kind: git_object::Kind) -> Result<(), Error> {
+        let obj = repo.find_object(obj)?;
+        if obj.kind == kind {
+            Ok(())
+        } else {
+            Err(Error::ObjectKind {
+                actual: obj.kind,
+                expected: kind,
+                oid: obj.id,
+            })
+        }
     }
 }
 
