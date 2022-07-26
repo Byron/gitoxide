@@ -342,34 +342,52 @@ pub mod parse {
             self.unset_disambiguate_call();
             self.follow_refs_to_objects_if_needed()?;
 
+            let mut replacements = SmallVec::<[(git_hash::ObjectId, git_hash::ObjectId); 1]>::default();
+            let mut errors = Vec::new();
+            let objs = self.objs[self.idx].as_mut()?;
+
             match kind {
                 PeelTo::ValidObject => {
-                    let mut errors =
-                        SmallVec::<[(git_hash::ObjectId, crate::object::find::existing::OdbError); 1]>::default();
-                    let objs = self.objs[self.idx].as_mut()?;
                     for obj in objs.iter() {
                         match self.repo.find_object(*obj) {
                             Ok(_) => {}
                             Err(err) => {
-                                errors.push((*obj, err));
+                                errors.push((*obj, err.into()));
                             }
                         };
                     }
-
-                    if errors.len() == objs.len() {
-                        self.err.extend(errors.into_iter().map(|(_, err)| err.into()));
-                        return None;
-                    } else {
-                        for (obj, _) in errors {
-                            objs.remove(&obj);
+                }
+                PeelTo::ObjectKind(kind) => {
+                    let repo = self.repo;
+                    let mut peel = |obj: &git_hash::oid| -> Result<git_hash::ObjectId, Error> {
+                        let obj = repo.find_object(obj)?;
+                        todo!("peel to kind '{}'", kind)
+                    };
+                    for obj in objs.iter() {
+                        match peel(obj) {
+                            Ok(replace) => replacements.push((*obj, replace)),
+                            Err(err) => errors.push((*obj, err)),
                         }
                     }
                 }
-                PeelTo::ObjectKind(_kind) => todo!("peel to kind"),
                 PeelTo::Path(_path) => todo!("lookup path"),
                 PeelTo::RecursiveTagObject => todo!("recursive tag object"),
             }
-            Some(())
+
+            if errors.len() == objs.len() {
+                self.err.extend(errors.into_iter().map(|(_, err)| err));
+                None
+            } else {
+                for (obj, err) in errors {
+                    objs.remove(&obj);
+                    self.err.push(err);
+                }
+                for (find, replace) in replacements {
+                    objs.remove(&find);
+                    objs.insert(replace);
+                }
+                Some(())
+            }
         }
 
         fn find(&mut self, _regex: &BStr, _negated: bool) -> Option<()> {
