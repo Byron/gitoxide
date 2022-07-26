@@ -210,24 +210,29 @@ pub mod parse {
                 if let Some(objs) = self.objs[self.idx].as_mut() {
                     let repo = self.repo;
                     let errors: Vec<_> = match self.opts.object_kind_hint {
-                        Some(ObjectKindHint::Committish) => objs
-                            .iter()
-                            .filter_map(|obj| peel(repo, obj, git_object::Kind::Commit).err().map(|err| (*obj, err)))
-                            .collect(),
-                        Some(ObjectKindHint::Treeish) => objs
-                            .iter()
-                            .filter_map(|obj| peel(repo, obj, git_object::Kind::Tree).err().map(|err| (*obj, err)))
-                            .collect(),
-                        Some(ObjectKindHint::Tree) => objs
-                            .iter()
-                            .filter_map(|obj| {
-                                require_object_kind(repo, obj, git_object::Kind::Tree)
-                                    .err()
-                                    .map(|err| (*obj, err))
-                            })
-                            .collect(),
-                        Some(ObjectKindHint::Commit) => todo!("tree"),
-                        Some(ObjectKindHint::Blob) => todo!("blob"),
+                        Some(kind_hint) => match kind_hint {
+                            ObjectKindHint::Treeish | ObjectKindHint::Committish => {
+                                let kind = match kind_hint {
+                                    ObjectKindHint::Treeish => git_object::Kind::Tree,
+                                    ObjectKindHint::Committish => git_object::Kind::Commit,
+                                    _ => unreachable!("BUG: we narrow possibilities above"),
+                                };
+                                objs.iter()
+                                    .filter_map(|obj| peel(repo, obj, kind).err().map(|err| (*obj, err)))
+                                    .collect()
+                            }
+                            ObjectKindHint::Tree | ObjectKindHint::Commit | ObjectKindHint::Blob => {
+                                let kind = match kind_hint {
+                                    ObjectKindHint::Tree => git_object::Kind::Tree,
+                                    ObjectKindHint::Commit => git_object::Kind::Commit,
+                                    ObjectKindHint::Blob => git_object::Kind::Blob,
+                                    _ => unreachable!("BUG: we narrow possibilities above"),
+                                };
+                                objs.iter()
+                                    .filter_map(|obj| require_object_kind(repo, obj, kind).err().map(|err| (*obj, err)))
+                                    .collect()
+                            }
+                        },
                         None => return,
                     };
                     for (obj, err) in errors {
