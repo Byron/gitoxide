@@ -20,7 +20,7 @@ pub mod parse {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(
-            "The short hash {prefix} matched both the reference {} and the object {oids:?}", reference.name
+            "The short hash {prefix} matched both the reference {} and the object(s) {}", reference.name, oids.iter().map(|oid| oid.to_string()).collect::<Vec<_>>().join(", ")
         )]
         AmbiguousRefAndObject {
             /// The prefix to look for.

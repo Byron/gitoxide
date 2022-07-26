@@ -190,7 +190,6 @@ mod ambiguous {
     }
 
     #[test]
-    #[ignore]
     fn ambiguous_40hex_refs_are_ignored_and_we_prefer_the_object_of_the_same_name() {
         let repo = repo("ambiguous_refs").unwrap();
         let spec = "0000000000e4f9fbd19cf1e932319e5ad0d1d00b";
@@ -220,12 +219,11 @@ mod ambiguous {
             )
             .unwrap_err()
             .to_string(),
-            "The short hash 0000000000e4f9fbd19cf1e932319e5ad0d1d00b matched both the reference refs/heads/0000000000e4f9fbd19cf1e932319e5ad0d1d00b and the object 0000000000e4f9fbd19cf1e932319e5ad0d1d00b"
+            "The short hash 0000000000e4f9fbd19cf1e932319e5ad0d1d00b matched both the reference refs/heads/0000000000e4f9fbd19cf1e932319e5ad0d1d00b and the object(s) 0000000000e4f9fbd19cf1e932319e5ad0d1d00b"
         );
     }
 
     #[test]
-    #[ignore]
     fn ambiguous_short_refs_are_dereferenced() {
         let repo = repo("ambiguous_refs").unwrap();
         let spec = "0000000000e";
@@ -255,7 +253,7 @@ mod ambiguous {
             )
                 .unwrap_err()
                 .to_string(),
-            "The short hash 0000000000e matched both the reference refs/heads/0000000000e and the object 0000000000e4f9fbd19cf1e932319e5ad0d1d00b",
+            "The short hash 0000000000e matched both the reference refs/heads/0000000000e and the object(s) 0000000000e4f9fbd19cf1e932319e5ad0d1d00b",
             "users who don't want this ambiguity, could fail like this."
         );
     }
