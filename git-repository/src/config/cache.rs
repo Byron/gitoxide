@@ -3,6 +3,7 @@ use std::{convert::TryFrom, path::PathBuf};
 use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
+use crate::rev_spec::parse::ObjectKindHint;
 use crate::{bstr::ByteSlice, repository, repository::identity};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
@@ -213,7 +214,16 @@ impl Cache {
         let reflog = query_refupdates(&config);
         let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
-        let object_kind_hint = None;
+        let object_kind_hint = config.string("core", None, "disambiguate").and_then(|value| {
+            Some(match value.as_ref().as_ref() {
+                b"commit" => ObjectKindHint::Commit,
+                b"committish" => ObjectKindHint::Committish,
+                b"tree" => ObjectKindHint::Tree,
+                b"treeish" => ObjectKindHint::Treeish,
+                b"blob" => ObjectKindHint::Blob,
+                b"none" | _ => return None,
+            })
+        });
         Ok(Cache {
             resolved: config.into(),
             use_multi_pack_index,
