@@ -67,6 +67,17 @@ fn parse_spec_opts<'a>(
     opts: git::rev_spec::parse::Options,
 ) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
     let res = RevSpec::from_bstr(spec, repo, opts);
+    compare_with_baseline(&res, repo, spec);
+    res
+}
+
+fn rev_parse<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
+    let res = repo.rev_parse(spec);
+    compare_with_baseline(&res, repo, spec);
+    res
+}
+
+fn compare_with_baseline(res: &Result<RevSpec<'_>, git::rev_spec::parse::Error>, repo: &git::Repository, spec: &str) {
     let actual = res.as_ref().ok().and_then(|rs| rs.from().map(|id| id.detach()));
     let spec: BString = spec.into();
     assert_eq!(
@@ -79,7 +90,6 @@ fn parse_spec_opts<'a>(
         "{}: git baseline boiled down to success or failure must match our outcome",
         spec
     );
-    res
 }
 
 fn parse_spec<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
@@ -94,7 +104,7 @@ fn repo(name: &str) -> crate::Result<git::Repository> {
 mod ambiguous {
     use super::repo;
     use crate::rev_spec::from_bytes::{
-        parse_spec, parse_spec_no_baseline, parse_spec_no_baseline_opts, parse_spec_opts,
+        parse_spec, parse_spec_no_baseline, parse_spec_no_baseline_opts, parse_spec_opts, rev_parse,
     };
     use git_repository::prelude::ObjectIdExt;
     use git_repository::rev_spec::parse::{Options, RefsHint};
@@ -263,13 +273,13 @@ mod ambiguous {
     fn disambiguation_hints_can_be_provided_to_choose_one() {
         let repo = repo("ambiguous_commits_disambiguation_config").unwrap();
         assert_eq!(
-            parse_spec("0000000000f", &repo).unwrap(),
+            rev_parse("0000000000f", &repo).unwrap(),
             RevSpec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&repo)),
             "we read the 'core.disambiguate' value and apply it to auto-disambiguate"
         );
 
         assert_eq!(
-            parse_spec("0000000000f^{tree}", &repo).unwrap_err().to_string(),
+            rev_parse("0000000000f^{tree}", &repo).unwrap_err().to_string(),
             "Found more than one object prefixed with 0000000000f\nThe ref partially named '0000000000f' could not be found",
             "spec overrides overrule the configuration value, which makes this particular object ambiguous between tree and tag"
         );

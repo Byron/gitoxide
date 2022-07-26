@@ -5,7 +5,7 @@ use crate::{Id, Reference, Repository, RevSpec};
 
 ///
 pub mod parse {
-    use crate::bstr::{BStr, ByteSlice};
+    use crate::bstr::BStr;
     use crate::types::RevSpecDetached;
     use crate::Repository;
     use crate::RevSpec;
@@ -78,7 +78,7 @@ pub mod parse {
     }
 
     impl<'repo> RevSpec<'repo> {
-        pub fn from_bstr(spec: impl AsRef<BStr>, repo: &'repo Repository, opts: Options) -> Result<Self, Error> {
+        pub fn from_bstr<'a>(spec: impl Into<&'a BStr>, repo: &'repo Repository, opts: Options) -> Result<Self, Error> {
             fn zero_or_one_objects_or_ambguity_err(
                 candidates: Option<HashSet<ObjectId>>,
                 prefix: Option<git_hash::Prefix>,
@@ -109,7 +109,7 @@ pub mod parse {
                 opts,
                 repo,
             };
-            let spec = match git_revision::spec::parse(spec.as_ref().as_bstr(), &mut delegate) {
+            let spec = match git_revision::spec::parse(spec.into(), &mut delegate) {
                 Err(git_revision::spec::parse::Error::Delegate) => {
                     assert!(
                         !delegate.err.is_empty(),
