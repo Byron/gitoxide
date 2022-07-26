@@ -6,11 +6,11 @@ use crate::{Id, Reference, Repository, RevSpec};
 pub mod parse {
     use crate::bstr::BStr;
     use crate::types::RevSpecDetached;
-    use crate::Repository;
     use crate::RevSpec;
+    use crate::{object, Repository};
     use git_hash::ObjectId;
     use git_revision::spec::parse;
-    use git_revision::spec::parse::delegate::{self, Navigate, PeelTo, ReflogLookup, SiblingBranch, Traversal};
+    use git_revision::spec::parse::delegate::{self, PeelTo, ReflogLookup, SiblingBranch, Traversal};
     use smallvec::SmallVec;
     use std::collections::HashSet;
 
@@ -34,7 +34,9 @@ pub mod parse {
         #[error(transparent)]
         FindReference(#[from] git_ref::file::find::existing::Error),
         #[error(transparent)]
-        FindObject(#[from] crate::object::find::existing::OdbError),
+        FindObject(#[from] object::find::existing::OdbError),
+        #[error(transparent)]
+        PeelToKind(#[from] object::peel::to_kind::Error),
         #[error(transparent)]
         Parse(#[from] git_revision::spec::parse::Error),
         #[error("An object prefixed {} could not be found", .prefix)]
@@ -191,10 +193,6 @@ pub mod parse {
         fn done(&mut self) {
             self.follow_refs_to_objects_if_needed();
             self.disambiguate_objects_by_fallback_hint();
-            assert!(
-                self.err.is_empty(),
-                "BUG: cannot have errors and still arrive here - delegate must return None after registering an error"
-            )
         }
     }
 
@@ -202,15 +200,24 @@ pub mod parse {
         fn disambiguate_objects_by_fallback_hint(&mut self) {
             if self.last_call_was_disambiguate_prefix[self.idx] {
                 self.unset_disambiguate_call();
-                match self.opts.object_kind_hint {
-                    Some(ObjectKindHint::Committish) => {
-                        self.peel_until(PeelTo::ObjectKind(git_object::Kind::Commit));
+
+                if let Some(objs) = self.objs[self.idx].as_mut() {
+                    let repo = self.repo;
+                    let errors: Vec<_> = match self.opts.object_kind_hint {
+                        Some(ObjectKindHint::Committish) => objs
+                            .iter()
+                            .filter_map(|obj| peel(repo, obj, git_object::Kind::Commit).err().map(|err| (*obj, err)))
+                            .collect(),
+                        Some(ObjectKindHint::Treeish) => todo!("treeish"),
+                        Some(ObjectKindHint::Commit) => todo!("commit"),
+                        Some(ObjectKindHint::Tree) => todo!("tree"),
+                        Some(ObjectKindHint::Blob) => todo!("blob"),
+                        None => return,
+                    };
+                    for (obj, err) in errors {
+                        objs.remove(&obj);
+                        self.err.push(err);
                     }
-                    Some(ObjectKindHint::Treeish) => todo!("treeish"),
-                    Some(ObjectKindHint::Commit) => todo!("commit"),
-                    Some(ObjectKindHint::Tree) => todo!("tree"),
-                    Some(ObjectKindHint::Blob) => todo!("blob"),
-                    None => {}
                 }
             }
         }
@@ -263,7 +270,7 @@ pub mod parse {
                 .repo
                 .objects
                 .lookup_prefix(prefix, candidates.as_mut())
-                .map_err(crate::object::find::existing::OdbError::Find)
+                .map_err(object::find::existing::OdbError::Find)
             {
                 Err(err) => {
                     self.err.push(err.into());
@@ -359,10 +366,7 @@ pub mod parse {
                 }
                 PeelTo::ObjectKind(kind) => {
                     let repo = self.repo;
-                    let mut peel = |obj: &git_hash::oid| -> Result<git_hash::ObjectId, Error> {
-                        let obj = repo.find_object(obj)?;
-                        todo!("peel to kind '{}'", kind)
-                    };
+                    let peel = |obj| peel(repo, obj, kind);
                     for obj in objs.iter() {
                         match peel(obj) {
                             Ok(replace) => replacements.push((*obj, replace)),
@@ -405,6 +409,13 @@ pub mod parse {
         fn kind(&mut self, _kind: git_revision::spec::Kind) -> Option<()> {
             todo!("kind, deal with ^ and .. and ... correctly")
         }
+    }
+
+    fn peel(repo: &Repository, obj: &git_hash::oid, kind: git_object::Kind) -> Result<git_hash::ObjectId, Error> {
+        let mut obj = repo.find_object(obj)?;
+        obj = obj.peel_to_kind(kind)?;
+        debug_assert_eq!(obj.kind, kind, "bug in Object::peel_to_kind() which didn't deliver");
+        Ok(obj.id)
     }
 }
 

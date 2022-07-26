@@ -272,7 +272,6 @@ mod ambiguous {
     }
 
     #[test]
-    #[ignore]
     fn repository_local_disambiguation_hints_disambiguate() {
         let repo = repo("ambiguous_commits_disambiguation_config").unwrap();
         assert_eq!(
