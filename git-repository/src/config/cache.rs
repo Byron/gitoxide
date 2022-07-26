@@ -221,7 +221,7 @@ impl Cache {
                 b"tree" => ObjectKindHint::Tree,
                 b"treeish" => ObjectKindHint::Treeish,
                 b"blob" => ObjectKindHint::Blob,
-                b"none" | _ => return None,
+                _ => return None,
             })
         });
         Ok(Cache {
