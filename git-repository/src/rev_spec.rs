@@ -235,9 +235,14 @@ pub mod parse {
                         },
                         None => return,
                     };
-                    for (obj, err) in errors {
-                        objs.remove(&obj);
-                        self.err.push(err);
+
+                    if errors.len() == objs.len() {
+                        self.err.extend(errors.into_iter().map(|(_, err)| err));
+                    } else {
+                        for (obj, err) in errors {
+                            objs.remove(&obj);
+                            self.err.push(err);
+                        }
                     }
                 }
             }

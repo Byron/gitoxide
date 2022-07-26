@@ -293,6 +293,18 @@ mod ambiguous {
             RevSpec::from_id(hex_to_id("0000000000fd8bcc566027a4d16bde8434cac1a4").attach(&r)),
             "disambiguation may work precisely even with a simple object type constraint"
         );
+
+        let r = repo("ambiguous_objects_disambiguation_config_commit").unwrap();
+        assert_eq!(
+            rev_parse("0000000000f", &r).unwrap_err().to_string(),
+            "Found more than one object prefixed with 0000000000f",
+        );
+
+        let r = repo("ambiguous_objects_disambiguation_config_blob").unwrap();
+        assert_eq!(
+            rev_parse("0000000000f", &r).unwrap(),
+            RevSpec::from_id(hex_to_id("0000000000f2fdf63f36c0d76aece18a79ab64f2").attach(&r)),
+        );
     }
 
     #[test]
