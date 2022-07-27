@@ -147,3 +147,12 @@ impl std::fmt::Display for Prefix {
         self.bytes.to_hex_with_len(self.hex_len).fmt(f)
     }
 }
+
+impl From<ObjectId> for Prefix {
+    fn from(oid: ObjectId) -> Self {
+        Prefix {
+            bytes: oid,
+            hex_len: oid.kind().len_in_hex(),
+        }
+    }
+}
