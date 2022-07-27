@@ -132,6 +132,7 @@ EOF
   baseline "0000000000cdc^{tree}"    # unambiguous with tree assertion
   baseline "0000000000^{tree}"       # ambiguous with tree assertion, but git can't do it
   baseline "0000000000e4f"           # unambiguous
+  baseline "0000000000e"             # unambiguous
   baseline "0000000000e4f^{commit}"  # and with commit assertion
   baseline "0000000000^{commit}"     # ambiguous name, but there is only one commit, but git can't do it
   baseline "0000000000^0"            # another transformation that only works for commits
@@ -153,6 +154,7 @@ EOF
   # create one tag 0000000000f8f (making the previous baseline tests ambiguous, but it could be unambiguous since they point to the same commit)
   git tag -a -m j7cp83um v1.0.0
 
+  baseline "0000000000f8"             # unambiguous
   baseline "0000000000^{tag}"         # git can't do this yet
   baseline "v1.0.0-0-g0000000000e4f"  # unambiguous commit
   baseline "v1.0.0-0-g0000000000"     # ambiguous commit, but we know we need a commit here. The tag doesn't matter.

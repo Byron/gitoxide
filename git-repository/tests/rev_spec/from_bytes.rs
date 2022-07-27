@@ -53,6 +53,23 @@ fn parse_spec_no_baseline<'a>(
     parse_spec_no_baseline_opts(spec, repo, Default::default())
 }
 
+enum BaselineExpectation {
+    /// We have the same result as git
+    Same,
+    /// Git can't do something that we can
+    GitFailsWeSucceed,
+}
+
+/// Git can't do that, but we can
+fn parse_spec_better_than_baseline<'a>(
+    spec: &str,
+    repo: &'a git::Repository,
+) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
+    let res = RevSpec::from_bstr(spec, repo, Default::default());
+    compare_with_baseline(&res, repo, spec, BaselineExpectation::GitFailsWeSucceed);
+    res
+}
+
 fn parse_spec_no_baseline_opts<'a>(
     spec: &str,
     repo: &'a git::Repository,
@@ -67,29 +84,41 @@ fn parse_spec_opts<'a>(
     opts: git::rev_spec::parse::Options,
 ) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
     let res = RevSpec::from_bstr(spec, repo, opts);
-    compare_with_baseline(&res, repo, spec);
+    compare_with_baseline(&res, repo, spec, BaselineExpectation::Same);
     res
 }
 
 fn rev_parse<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
     let res = repo.rev_parse(spec);
-    compare_with_baseline(&res, repo, spec);
+    compare_with_baseline(&res, repo, spec, BaselineExpectation::Same);
     res
 }
 
-fn compare_with_baseline(res: &Result<RevSpec<'_>, git::rev_spec::parse::Error>, repo: &git::Repository, spec: &str) {
+fn compare_with_baseline(
+    res: &Result<RevSpec<'_>, git::rev_spec::parse::Error>,
+    repo: &git::Repository,
+    spec: &str,
+    expectation: BaselineExpectation,
+) {
     let actual = res.as_ref().ok().and_then(|rs| rs.from().map(|id| id.detach()));
     let spec: BString = spec.into();
-    assert_eq!(
-        &actual,
-        BASELINE
-            .get(repo.work_dir().unwrap_or_else(|| repo.git_dir()))
-            .unwrap_or_else(|| panic!("No baseline for {:?}", repo))
-            .get(&spec)
-            .unwrap_or_else(|| panic!("'{}' revspec not found in git baseline", spec)),
-        "{}: git baseline boiled down to success or failure must match our outcome",
-        spec
-    );
+    let expected = BASELINE
+        .get(repo.work_dir().unwrap_or_else(|| repo.git_dir()))
+        .unwrap_or_else(|| panic!("No baseline for {:?}", repo))
+        .get(&spec)
+        .unwrap_or_else(|| panic!("'{}' revspec not found in git baseline", spec));
+    match expectation {
+        BaselineExpectation::Same => {
+            assert_eq!(
+                &actual, expected,
+                "{}: git baseline boiled down to success or failure must match our outcome",
+                spec
+            );
+        }
+        BaselineExpectation::GitFailsWeSucceed => {
+            assert_eq!(expected, &None, "Git should fail here");
+        }
+    }
 }
 
 fn parse_spec<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
@@ -104,7 +133,8 @@ fn repo(name: &str) -> crate::Result<git::Repository> {
 mod ambiguous {
     use super::repo;
     use crate::rev_spec::from_bytes::{
-        parse_spec, parse_spec_no_baseline, parse_spec_no_baseline_opts, parse_spec_opts, rev_parse,
+        parse_spec, parse_spec_better_than_baseline, parse_spec_no_baseline, parse_spec_no_baseline_opts,
+        parse_spec_opts, rev_parse,
     };
     use git_repository::prelude::ObjectIdExt;
     use git_repository::rev_spec::parse::{Options, RefsHint};
@@ -112,18 +142,16 @@ mod ambiguous {
     use git_testtools::hex_to_id;
 
     #[test]
-    #[ignore]
     fn prefix() {
         {
             let repo = repo("blob.prefix").unwrap();
             assert_eq!(
                 parse_spec("dead", &repo).unwrap_err().to_string(),
-                "Found more than one object prefixed with dead\nThe ref partially named 'dead' could not be found",
-                "our messages aren't yet as good for ambiguous objects as we don't provide additional information"
+                "Short id dead is ambiguous. Candidates are:\n\tdead7b2 blob\n\tdead9d3 blob"
             );
             assert_eq!(
                 parse_spec("beef", &repo).unwrap_err().to_string(),
-                "Found more than one object prefixed with beef\nThe ref partially named 'beef' could not be found"
+                "Short id beef is ambiguous. Candidates are:\n\tbeef2b0 blob\n\tbeefc9b blob"
             );
         }
 
@@ -131,19 +159,19 @@ mod ambiguous {
             let repo = repo("blob.bad").unwrap();
             assert_eq!(
                 parse_spec("bad0", &repo).unwrap_err().to_string(),
-                "Found more than one object prefixed with bad0\nThe ref partially named 'bad0' could not be found",
-                "git is able to also detect that the object has an invalid type because it tries to provide additional context, we don't"
+                "Short id bad0 is ambiguous. Candidates are:\n\tbad0853 lookup error: An error occurred while obtaining an object from the loose object store\n\tbad0bd4 lookup error: An error occurred while obtaining an object from the loose object store",
+                "git provides a much worse hint messages and fails to provide information for both bad objects"
             );
         }
     }
 
     #[test]
-    fn blob_and_tree_can_be_disambiguated_by_type_some_day() {
+    fn blob_and_tree_can_be_disambiguated_by_type() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         assert_eq!(
-                parse_spec("0000000000", &repo).unwrap_err().to_string(),
-                "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"\n\t0000000000c tree\n\t0000000000b blob",
-                "in theory one could disambiguate with 0000000000^{{tree}} (which works in git) or 0000000000^{{blob}} which doesn't work for some reason."
+            parse_spec("0000000000", &repo).unwrap_err().to_string(),
+            "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"\n\t0000000000c tree\n\t0000000000b blob",
+            "in theory one could disambiguate with 0000000000^{{tree}} (which works in git) or 0000000000^{{blob}} which doesn't work for some reason."
             );
 
         assert_eq!(
@@ -153,12 +181,22 @@ mod ambiguous {
         );
 
         assert_eq!(
-            parse_spec_no_baseline("0000000000^{tree}", &repo).unwrap(),
+            parse_spec_better_than_baseline("0000000000^{tree}", &repo).unwrap(),
             RevSpec::from_id(hex_to_id("0000000000cdcf04beb2fab69e65622616294984").attach(&repo)),
             "the commit refers to the tree which also starts with this prefix, so ultimately the result is unambiguous. Git can't do that yet."
         );
 
-        // TODO: 0000000000cdc:a0blgqsjc, 0000000000:a0blgqsjc
+        assert_eq!(
+            parse_spec("0000000000^{commit}", &repo).unwrap(),
+            RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
+            "disambiguation with committish"
+        );
+
+        assert_eq!(
+            parse_spec("0000000000e", &repo).unwrap(),
+            RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
+            "no disambiguation needed here"
+        );
     }
 
     #[test]
@@ -173,36 +211,32 @@ mod ambiguous {
     }
 
     #[test]
-    #[ignore]
     fn commits_can_be_disambiguated_with_commit_specific_transformations_one_day() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         for spec in ["0000000000^0", "0000000000^{commit}"] {
             assert_eq!(
-                parse_spec_no_baseline(spec, &repo).unwrap_err().to_string(),
-                "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
-                "git can do this, but we can't just yet"
+                parse_spec(spec, &repo).unwrap(),
+                RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo))
             );
         }
     }
 
     #[test]
-    #[ignore]
-    fn tags_can_be_disambiguated_with_commit_specific_transformations_one_day() {
+    fn tags_can_be_disambiguated_with_commit_specific_transformations() {
         let repo = repo("ambiguous_commits").unwrap();
         assert_eq!(
-                parse_spec("0000000000^{tag}", &repo).unwrap_err().to_string(),
-                "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
-                "git also cannot do this actually"
-            );
+            parse_spec_better_than_baseline("0000000000^{tag}", &repo).unwrap(),
+            RevSpec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&repo)),
+            "disambiguation is possible by type, and git can't do that for some reason"
+        );
     }
 
     #[test]
-    #[ignore]
     fn duplicates_are_deduplicated_across_all_odb_types_on_day() {
         let repo = repo("duplicate_ambiguous_objects").unwrap();
         assert_eq!(
             parse_spec_no_baseline("0000000000", &repo).unwrap_err().to_string(),
-            "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
+            "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000f8 tag \"v1.0.0\"\n\t000000000004 commit 1112912053 -0700 \"czy8f73t\"\n\t00000000006 commit 1112912233 -0700 \"ad2uee\"\n\t00000000008 commit 1112912113 -0700 \"ioiley5o\"\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"\n\t000000000002 tree\n\t00000000005 tree\n\t00000000009 tree\n\t0000000000c tree\n\t0000000000fd tree\n\t00000000001 blob\n\t00000000003 blob\n\t0000000000a blob\n\t0000000000b blob\n\t0000000000f2 blob",
             "One day we want to see 16 objects here, and not 32 just because they exist in the loose and the packed odb"
         );
     }
