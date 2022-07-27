@@ -17,8 +17,9 @@ pub mod to_kind {
         pub enum Error {
             #[error(transparent)]
             FindExistingObject(#[from] object::find::existing::OdbError),
-            #[error("Last encountered object kind was {} while trying to peel to {}", .actual, .expected)]
+            #[error("Last encountered object {oid} was {actual} while trying to peel to {expected}")]
             NotFound {
+                oid: git_hash::Prefix,
                 actual: object::Kind,
                 expected: object::Kind,
             },
@@ -57,6 +58,7 @@ impl<'repo> Object<'repo> {
                 }
                 Kind::Tree | Kind::Blob => {
                     return Err(peel::to_kind::Error::NotFound {
+                        oid: self.id().shorten().unwrap_or_else(|_| self.id.into()),
                         actual: self.kind,
                         expected: kind,
                     })

@@ -96,12 +96,7 @@ impl Error {
                         },
                         Err(err) => CandidateInfo::FindError { source: err },
                     };
-                    (
-                        oid.attach(repo).shorten().unwrap_or_else(|_| {
-                            git_hash::Prefix::new(oid, oid.kind().len_in_hex()).expect("hex-len in range")
-                        }),
-                        info,
-                    )
+                    (oid.attach(repo).shorten().unwrap_or_else(|_| oid.into()), info)
                 })
                 .collect(),
         }
