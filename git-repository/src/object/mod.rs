@@ -4,7 +4,7 @@ use std::convert::TryInto;
 use git_hash::ObjectId;
 pub use git_object::Kind;
 
-use crate::{Commit, Object, ObjectDetached, Tag, Tree};
+use crate::{Commit, Id, Object, ObjectDetached, Tag, Tree};
 
 mod errors;
 pub(crate) mod cache {
@@ -210,5 +210,10 @@ impl<'repo> Object<'repo> {
                 expected: git_object::Kind::Tag,
                 actual: self.kind,
             })
+    }
+
+    /// Return the attached id of this object.
+    pub fn id(&self) -> Id<'repo> {
+        Id::from_id(self.id, self.repo)
     }
 }

@@ -279,7 +279,7 @@ mod ambiguous {
         let r = repo("ambiguous_objects_disambiguation_config_treeish").unwrap();
         assert_eq!(
             rev_parse("0000000000f", &r).unwrap_err().to_string(),
-            "Found the following objects prefixed with 0000000000f: ",
+            "Short id 0000000000f is ambiguous. Candidates are:\n\t0000000000f8 tag \"v1.0.0\"\n\t0000000000fd tree",
             "disambiguation might not always work either."
         );
 
@@ -293,7 +293,7 @@ mod ambiguous {
         let r = repo("ambiguous_objects_disambiguation_config_commit").unwrap();
         assert_eq!(
             rev_parse("0000000000f", &r).unwrap_err().to_string(),
-            "Found the following objects prefixed with 0000000000f: ",
+            "Short id 0000000000f is ambiguous. Candidates are:\n\t0000000000f2 blob\n\t0000000000f8 tag \"v1.0.0\"\n\t0000000000fd tree",
         );
 
         let r = repo("ambiguous_objects_disambiguation_config_blob").unwrap();
@@ -308,7 +308,7 @@ mod ambiguous {
         let repo = repo("ambiguous_objects_disambiguation_config_committish").unwrap();
         assert_eq!(
             rev_parse("0000000000f^{tree}", &repo).unwrap_err().to_string(),
-            "Found the following objects prefixed with 0000000000f: ",
+            "Short id 0000000000f is ambiguous. Candidates are:\n\t0000000000c tree\n\t0000000000fd tree",
             "spec overrides overrule the configuration value, which makes this particular object ambiguous between tree and tag"
         );
     }

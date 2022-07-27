@@ -1,3 +1,4 @@
+use bstr::BString;
 use std::{convert::TryInto, io, ops::Sub};
 
 use crate::Time;
@@ -105,6 +106,13 @@ impl Time {
     /// Return the passed seconds since epoch since this signature was made.
     pub fn seconds(&self) -> u32 {
         self.seconds_since_unix_epoch
+    }
+
+    /// Serialize this instance into a BString.
+    pub fn to_bstring(&self) -> BString {
+        let mut buf = Vec::with_capacity(128);
+        self.write_to(&mut buf).expect("enough memory");
+        buf.into()
     }
 
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.

@@ -86,10 +86,10 @@ pub enum Error {
     Parse(#[from] git_revision::spec::parse::Error),
     #[error("An object prefixed {prefix} could not be found")]
     PrefixNotFound { prefix: git_hash::Prefix },
-    #[error("Found the following objects prefixed with {prefix}: {}", info.iter().map(|(oid, info)| format!("\t{oid} {info}")).collect::<Vec<_>>().join("\t"))]
+    #[error("Short id {prefix} is ambiguous. Candidates are:\n{}", info.iter().map(|(oid, info)| format!("\t{oid} {info}")).collect::<Vec<_>>().join("\n"))]
     AmbiguousPrefix {
         prefix: git_hash::Prefix,
-        info: Vec<(git_hash::ObjectId, super::error::CandidateInfo)>,
+        info: Vec<(git_hash::Prefix, super::error::CandidateInfo)>,
     },
     #[error("{current}")]
     Multi {
