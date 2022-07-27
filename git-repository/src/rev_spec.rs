@@ -144,24 +144,33 @@ pub mod parse {
         /// Parse `spec` and use information from `repo` to resolve it, using `opts` to learn how to deal with ambiguity.
         pub fn from_bstr<'a>(spec: impl Into<&'a BStr>, repo: &'repo Repository, opts: Options) -> Result<Self, Error> {
             fn zero_or_one_objects_or_ambguity_err(
-                candidates: Option<HashSet<ObjectId>>,
-                prefix: Option<git_hash::Prefix>,
-            ) -> Result<Option<ObjectId>, Error> {
-                match candidates {
-                    None => Ok(None),
-                    Some(candidates) => {
-                        match candidates.len() {
-                            0 => unreachable!(
-                                "BUG: let's avoid still being around if no candidate matched the requirements"
-                            ),
-                            1 => Ok(candidates.into_iter().next()),
-                            _ => Err(Error::AmbiguousPrefix {
-                                // TODO: resolve object types and provide additional information about them
-                                prefix: prefix.expect("set when obtaining candidates"),
-                            }),
+                mut candidates: [Option<HashSet<ObjectId>>; 2],
+                prefix: [Option<git_hash::Prefix>; 2],
+            ) -> Result<[Option<ObjectId>; 2], Error> {
+                let mut out = [None, None];
+                for ((candidates, prefix), out) in candidates.iter_mut().zip(prefix).zip(out.iter_mut()) {
+                    let candidates = candidates.take();
+                    match candidates {
+                        None => *out = None,
+                        Some(candidates) => {
+                            match candidates.len() {
+                                0 => unreachable!(
+                                    "BUG: let's avoid still being around if no candidate matched the requirements"
+                                ),
+                                1 => {
+                                    *out = candidates.into_iter().next();
+                                }
+                                _ => {
+                                    return Err(Error::AmbiguousPrefix {
+                                        // TODO: resolve object types and provide additional information about them
+                                        prefix: prefix.expect("set when obtaining candidates"),
+                                    });
+                                }
+                            };
                         }
-                    }
+                    };
                 }
+                Ok(out)
             }
             let mut delegate = Delegate {
                 refs: Default::default(),
@@ -179,16 +188,19 @@ pub mod parse {
                     return Err(Error::from_errors(delegate.err));
                 }
                 Err(err) => return Err(err.into()),
-                Ok(()) => RevSpec {
-                    inner: RevSpecDetached {
-                        from_ref: delegate.refs[0].take(),
-                        from: zero_or_one_objects_or_ambguity_err(delegate.objs[0].take(), delegate.prefix[0])?,
-                        to_ref: delegate.refs[1].take(),
-                        to: zero_or_one_objects_or_ambguity_err(delegate.objs[1].take(), delegate.prefix[1])?,
-                        kind: delegate.kind,
-                    },
-                    repo,
-                },
+                Ok(()) => {
+                    let range = zero_or_one_objects_or_ambguity_err(delegate.objs, delegate.prefix)?;
+                    RevSpec {
+                        inner: RevSpecDetached {
+                            from_ref: delegate.refs[0].take(),
+                            from: range[0],
+                            to_ref: delegate.refs[1].take(),
+                            to: range[1],
+                            kind: delegate.kind,
+                        },
+                        repo,
+                    }
+                }
             };
             Ok(spec)
         }
