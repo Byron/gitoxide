@@ -34,25 +34,25 @@ mod range {
     #[test]
     fn leading_caret() {
         let rec = parse("^HEAD");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Exclude);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 2);
 
         let rec = parse("^abcd");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Exclude);
         assert_eq!(rec.find_ref[0], None);
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 2);
 
         let rec = parse("^r1");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Exclude);
         assert_eq!(rec.get_ref(0), "r1");
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 2);
 
         let rec = parse("^hello-0-gabcd-dirty");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Exclude);
         assert_eq!(rec.find_ref[0], None);
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 2);

@@ -18,8 +18,9 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
     let mut prev_kind = None;
     if let Some(b'^') = input.get(0) {
         input = next(input).1;
-        delegate.kind(spec::Kind::Range).ok_or(Error::Delegate)?;
-        prev_kind = spec::Kind::Range.into();
+        let kind = spec::Kind::Exclude;
+        delegate.kind(kind).ok_or(Error::Delegate)?;
+        prev_kind = kind.into();
     }
 
     input = revision(input, delegate)?;
