@@ -256,6 +256,7 @@ for name in committish treeish tree commit blob; do
   (
       cd $clone_dir
       git config core.disambiguate $name
+      baseline "0000000000"
       baseline "0000000000f"
       baseline "0000000000f^{tree}"
   )

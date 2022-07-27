@@ -275,6 +275,10 @@ mod ambiguous {
             RevSpec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&r)),
             "we read the 'core.disambiguate' value and apply it to auto-disambiguate"
         );
+        assert_eq!(
+            rev_parse("0000000000", &r).unwrap_err().to_string(),
+            "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000f8 tag \"v1.0.0\"\n\t000000000004 commit 1112912053 -0700 \"czy8f73t\"\n\t00000000006 commit 1112912233 -0700 \"ad2uee\"\n\t00000000008 commit 1112912113 -0700 \"ioiley5o\"\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"",
+        );
 
         let r = repo("ambiguous_objects_disambiguation_config_treeish").unwrap();
         assert_eq!(
@@ -294,6 +298,10 @@ mod ambiguous {
         assert_eq!(
             rev_parse("0000000000f", &r).unwrap_err().to_string(),
             "Short id 0000000000f is ambiguous. Candidates are:\n\t0000000000f8 tag \"v1.0.0\"\n\t0000000000fd tree\n\t0000000000f2 blob",
+        );
+        assert_eq!(
+            rev_parse("0000000000", &r).unwrap_err().to_string(),
+            "Short id 0000000000 is ambiguous. Candidates are:\n\t000000000004 commit 1112912053 -0700 \"czy8f73t\"\n\t00000000006 commit 1112912233 -0700 \"ad2uee\"\n\t00000000008 commit 1112912113 -0700 \"ioiley5o\"\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"",
         );
 
         let r = repo("ambiguous_objects_disambiguation_config_blob").unwrap();

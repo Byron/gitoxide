@@ -70,7 +70,7 @@ impl Error {
                     (oid, obj, order)
                 })
                 .collect();
-            c.sort_by_key(|t| t.2);
+            c.sort_by(|lhs, rhs| lhs.2.cmp(&rhs.2).then_with(|| lhs.0.cmp(&rhs.0)));
             c
         };
         Error::AmbiguousPrefix {
