@@ -219,7 +219,8 @@ impl<'a> delegate::Kind for Explain<'a> {
             match kind {
                 spec::Kind::Range => "range",
                 spec::Kind::MergeBase => "merge-base",
-                spec::Kind::Single => unreachable!("BUG: 'single' mode is implied but cannot be set explicitly"),
+                spec::Kind::Exclude => "exclude",
+                spec::Kind::Include => unreachable!("BUG: 'single' mode is implied but cannot be set explicitly"),
             }
         )
         .ok()
