@@ -27,7 +27,7 @@ pub mod parse {
             /// The reference matching the prefix.
             reference: git_ref::Reference,
             /// The object's ids that were matching the prefix as well.
-            oids: HashSet<git_hash::ObjectId>,
+            oids: HashSet<ObjectId>,
         },
         #[error(transparent)]
         IdFromHex(#[from] git_hash::decode::Error),
@@ -39,15 +39,15 @@ pub mod parse {
         PeelToKind(#[from] object::peel::to_kind::Error),
         #[error("Object {oid} was a {actual}, but needed it to be a {expected}")]
         ObjectKind {
-            oid: git_hash::ObjectId,
+            oid: ObjectId,
             actual: git_object::Kind,
             expected: git_object::Kind,
         },
         #[error(transparent)]
-        Parse(#[from] git_revision::spec::parse::Error),
-        #[error("An object prefixed {} could not be found", .prefix)]
+        Parse(#[from] parse::Error),
+        #[error("An object prefixed {prefix} could not be found")]
         PrefixNotFound { prefix: git_hash::Prefix },
-        #[error("Found more than one object prefixed with {}", .prefix)]
+        #[error("Found more than one object prefixed with {prefix}")]
         AmbiguousPrefix { prefix: git_hash::Prefix },
         #[error("{current}")]
         Multi {
@@ -146,6 +146,7 @@ pub mod parse {
             fn zero_or_one_objects_or_ambguity_err(
                 mut candidates: [Option<HashSet<ObjectId>>; 2],
                 prefix: [Option<git_hash::Prefix>; 2],
+                mut errors: Vec<Error>,
             ) -> Result<[Option<ObjectId>; 2], Error> {
                 let mut out = [None, None];
                 for ((candidates, prefix), out) in candidates.iter_mut().zip(prefix).zip(out.iter_mut()) {
@@ -161,10 +162,14 @@ pub mod parse {
                                     *out = candidates.into_iter().next();
                                 }
                                 _ => {
-                                    return Err(Error::AmbiguousPrefix {
-                                        // TODO: resolve object types and provide additional information about them
-                                        prefix: prefix.expect("set when obtaining candidates"),
-                                    });
+                                    errors.insert(
+                                        0,
+                                        Error::AmbiguousPrefix {
+                                            // TODO: resolve object types and provide additional information about them
+                                            prefix: prefix.expect("set when obtaining candidates"),
+                                        },
+                                    );
+                                    return Err(Error::from_errors(errors));
                                 }
                             };
                         }
@@ -184,12 +189,12 @@ pub mod parse {
                 repo,
             };
             let spec = match git_revision::spec::parse(spec.into(), &mut delegate) {
-                Err(git_revision::spec::parse::Error::Delegate) => {
+                Err(parse::Error::Delegate) => {
                     return Err(Error::from_errors(delegate.err));
                 }
                 Err(err) => return Err(err.into()),
                 Ok(()) => {
-                    let range = zero_or_one_objects_or_ambguity_err(delegate.objs, delegate.prefix)?;
+                    let range = zero_or_one_objects_or_ambguity_err(delegate.objs, delegate.prefix, delegate.err)?;
                     RevSpec {
                         inner: RevSpecDetached {
                             from_ref: delegate.refs[0].take(),
@@ -209,7 +214,7 @@ pub mod parse {
     #[allow(dead_code)]
     struct Delegate<'repo> {
         refs: [Option<git_ref::Reference>; 2],
-        objs: [Option<HashSet<git_hash::ObjectId>>; 2],
+        objs: [Option<HashSet<ObjectId>>; 2],
         idx: usize,
         kind: Option<git_revision::spec::Kind>,
 
@@ -320,14 +325,9 @@ pub mod parse {
             self.last_call_was_disambiguate_prefix[self.idx] = true;
             let mut candidates = Some(HashSet::default());
             self.prefix[self.idx] = Some(prefix);
-            match self
-                .repo
-                .objects
-                .lookup_prefix(prefix, candidates.as_mut())
-                .map_err(object::find::existing::OdbError::Find)
-            {
+            match self.repo.objects.lookup_prefix(prefix, candidates.as_mut()) {
                 Err(err) => {
-                    self.err.push(err.into());
+                    self.err.push(object::find::existing::OdbError::Find(err).into());
                     None
                 }
                 Ok(None) => {
@@ -403,7 +403,7 @@ pub mod parse {
             self.unset_disambiguate_call();
             self.follow_refs_to_objects_if_needed()?;
 
-            let mut replacements = SmallVec::<[(git_hash::ObjectId, git_hash::ObjectId); 1]>::default();
+            let mut replacements = SmallVec::<[(ObjectId, ObjectId); 1]>::default();
             let mut errors = Vec::new();
             let objs = self.objs[self.idx].as_mut()?;
 
@@ -465,7 +465,7 @@ pub mod parse {
         }
     }
 
-    fn peel(repo: &Repository, obj: &git_hash::oid, kind: git_object::Kind) -> Result<git_hash::ObjectId, Error> {
+    fn peel(repo: &Repository, obj: &git_hash::oid, kind: git_object::Kind) -> Result<ObjectId, Error> {
         let mut obj = repo.find_object(obj)?;
         obj = obj.peel_to_kind(kind)?;
         debug_assert_eq!(obj.kind, kind, "bug in Object::peel_to_kind() which didn't deliver");
