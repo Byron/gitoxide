@@ -138,15 +138,27 @@ mod ambiguous {
     }
 
     #[test]
-    #[ignore]
     fn blob_and_tree_can_be_disambiguated_by_type_some_day() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         assert_eq!(
                 parse_spec("0000000000", &repo).unwrap_err().to_string(),
-                "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
-                concat!("in theory one could disambiguate with 0000000000^{{tree}} (which works in git) or 0000000000^{{blob}} which doesn't work for some reason.",
-                        "but to do that we would have to know the list of object candidates and a lot more logic which right now we don't.")
+                "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"\n\t0000000000c tree\n\t0000000000b blob",
+                "in theory one could disambiguate with 0000000000^{{tree}} (which works in git) or 0000000000^{{blob}} which doesn't work for some reason."
             );
+
+        assert_eq!(
+            parse_spec("0000000000cdc^{tree}", &repo).unwrap(),
+            RevSpec::from_id(hex_to_id("0000000000cdcf04beb2fab69e65622616294984").attach(&repo)),
+            "this is unambiguous anyway, but also asserts for tree which is naturally the case"
+        );
+
+        assert_eq!(
+            parse_spec_no_baseline("0000000000^{tree}", &repo).unwrap(),
+            RevSpec::from_id(hex_to_id("0000000000cdcf04beb2fab69e65622616294984").attach(&repo)),
+            "the commit refers to the tree which also starts with this prefix, so ultimately the result is unambiguous. Git can't do that yet."
+        );
+
+        // TODO: 0000000000cdc:a0blgqsjc, 0000000000:a0blgqsjc
     }
 
     #[test]
