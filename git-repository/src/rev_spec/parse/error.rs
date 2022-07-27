@@ -45,17 +45,40 @@ impl std::fmt::Display for CandidateInfo {
 
 impl Error {
     pub(crate) fn ambiguous(candidates: HashSet<ObjectId>, prefix: git_hash::Prefix, repo: &Repository) -> Self {
+        #[derive(PartialOrd, Ord, Eq, PartialEq, Copy, Clone)]
+        enum Order {
+            Tag,
+            Commit,
+            Tree,
+            Blob,
+            Invalid,
+        }
         let candidates = {
-            let mut c: Vec<_> = candidates.into_iter().collect();
-            c.sort();
+            let mut c: Vec<_> = candidates
+                .into_iter()
+                .map(|oid| {
+                    let obj = repo.find_object(oid);
+                    let order = match &obj {
+                        Err(_) => Order::Invalid,
+                        Ok(obj) => match obj.kind {
+                            git_object::Kind::Tag => Order::Tag,
+                            git_object::Kind::Commit => Order::Commit,
+                            git_object::Kind::Tree => Order::Tree,
+                            git_object::Kind::Blob => Order::Blob,
+                        },
+                    };
+                    (oid, obj, order)
+                })
+                .collect();
+            c.sort_by_key(|t| t.2);
             c
         };
         Error::AmbiguousPrefix {
             prefix,
             info: candidates
                 .into_iter()
-                .map(|oid| {
-                    let info = match repo.find_object(oid) {
+                .map(|(oid, find_result, _)| {
+                    let info = match find_result {
                         Ok(obj) => match obj.kind {
                             git_object::Kind::Tree | git_object::Kind::Blob => CandidateInfo::Object { kind: obj.kind },
                             git_object::Kind::Tag => {

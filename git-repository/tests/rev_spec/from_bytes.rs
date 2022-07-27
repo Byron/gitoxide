@@ -293,7 +293,7 @@ mod ambiguous {
         let r = repo("ambiguous_objects_disambiguation_config_commit").unwrap();
         assert_eq!(
             rev_parse("0000000000f", &r).unwrap_err().to_string(),
-            "Short id 0000000000f is ambiguous. Candidates are:\n\t0000000000f2 blob\n\t0000000000f8 tag \"v1.0.0\"\n\t0000000000fd tree",
+            "Short id 0000000000f is ambiguous. Candidates are:\n\t0000000000f8 tag \"v1.0.0\"\n\t0000000000fd tree\n\t0000000000f2 blob",
         );
 
         let r = repo("ambiguous_objects_disambiguation_config_blob").unwrap();
