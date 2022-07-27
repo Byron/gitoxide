@@ -129,6 +129,7 @@ EOF
   baseline "0000000000"
   baseline "0000000000cdc:a0blgqsjc" # unambiguous by nature
   baseline "0000000000:a0blgqsjc"    # would be ambiguous, but only trees can have this syntax
+  baseline "0000000000cdc:missing"   # definitely not present
   baseline "0000000000cdc^{tree}"    # unambiguous with tree assertion
   baseline "0000000000^{tree}"       # ambiguous with tree assertion, but git can't do it
   baseline "0000000000e4f"           # unambiguous

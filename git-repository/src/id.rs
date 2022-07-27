@@ -45,6 +45,12 @@ impl<'repo> Id<'repo> {
             .map_err(find::existing::OdbError::Find)?
             .ok_or(find::existing::OdbError::NotFound { oid: self.inner })
     }
+
+    /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`, or default
+    /// to a prefix which equals our id in the unlikely error case.
+    pub fn shorten_or_id(&self) -> git_hash::Prefix {
+        self.shorten().unwrap_or_else(|_| self.inner.into())
+    }
 }
 
 fn calculate_auto_hex_len(num_packed_objects: u64) -> usize {

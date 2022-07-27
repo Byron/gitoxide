@@ -1,5 +1,6 @@
 use super::{Delegate, Error, ObjectKindHint, RefsHint};
 use crate::bstr::BStr;
+use crate::ext::ObjectIdExt;
 use crate::{object, Repository};
 use git_hash::ObjectId;
 use git_revision::spec::parse;
@@ -206,7 +207,31 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     }
                 }
             }
-            PeelTo::Path(_path) => todo!("lookup path"),
+            PeelTo::Path(path) => {
+                let repo = self.repo;
+                let lookup_path = |obj: &ObjectId| {
+                    let tree_id = peel(repo, obj, git_object::Kind::Tree)?;
+                    let tree = repo.find_object(tree_id)?.into_tree();
+                    let entry = tree
+                        .lookup_path(git_path::from_bstr(path).components().map(|c| {
+                            git_path::os_str_into_bstr(c.as_os_str())
+                                .expect("no illformed UTF-8")
+                                .as_ref()
+                        }))?
+                        .ok_or_else(|| Error::PathNotFound {
+                            path: path.into(),
+                            object: obj.attach(repo).shorten_or_id(),
+                            tree: tree_id.attach(repo).shorten_or_id(),
+                        })?;
+                    Ok(entry.oid)
+                };
+                for obj in objs.iter() {
+                    match lookup_path(obj) {
+                        Ok(replace) => replacements.push((*obj, replace)),
+                        Err(err) => errors.push((*obj, err)),
+                    }
+                }
+            }
             PeelTo::RecursiveTagObject => todo!("recursive tag object"),
         }
 

@@ -200,18 +200,17 @@ mod ambiguous {
     }
 
     #[test]
-    #[ignore]
-    fn trees_can_be_disambiguated_by_blob_access_some_day() {
+    fn trees_can_be_disambiguated_by_blob_access() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         assert_eq!(
-            parse_spec_no_baseline("0000000000:a0blgqsjc", &repo).unwrap_err().to_string(),
-            "Found more than one object prefixed with 0000000000\nThe ref partially named '0000000000' could not be found",
-            "git can do this, but we can't just yet. It requires to deal with multiple candidates and try to apply transformations to them, discarding ones that don't work"
+            parse_spec_better_than_baseline("0000000000:a0blgqsjc", &repo).unwrap(),
+            RevSpec::from_id(hex_to_id("0000000000b36b6aa7ea4b75318ed078f55505c3").attach(&repo)),
+            "we can disambiguate by providing a path, but git cannot"
         );
     }
 
     #[test]
-    fn commits_can_be_disambiguated_with_commit_specific_transformations_one_day() {
+    fn commits_can_be_disambiguated_with_commit_specific_transformations() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         for spec in ["0000000000^0", "0000000000^{commit}"] {
             assert_eq!(
@@ -232,7 +231,7 @@ mod ambiguous {
     }
 
     #[test]
-    fn duplicates_are_deduplicated_across_all_odb_types_on_day() {
+    fn duplicates_are_deduplicated_across_all_odb_types() {
         let repo = repo("duplicate_ambiguous_objects").unwrap();
         assert_eq!(
             parse_spec_no_baseline("0000000000", &repo).unwrap_err().to_string(),
@@ -398,12 +397,16 @@ fn bad_objects_are_valid_until_they_are_actually_read_from_the_odb() {
 }
 
 #[test]
-#[ignore]
 fn access_blob_through_tree() {
     let repo = repo("ambiguous_blob_tree_commit").unwrap();
     assert_eq!(
         parse_spec("0000000000cdc:a0blgqsjc", &repo).unwrap(),
         RevSpec::from_id(hex_to_id("0000000000b36b6aa7ea4b75318ed078f55505c3").attach(&repo))
+    );
+
+    assert_eq!(
+        parse_spec("0000000000cdc:missing", &repo).unwrap_err().to_string(),
+        "Could not find path \"missing\" in tree 0000000000c of parent object 0000000000c"
     );
 }
 

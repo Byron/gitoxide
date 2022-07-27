@@ -1,3 +1,4 @@
+use crate::bstr::BString;
 use crate::object;
 
 /// A hint to know what to do if refs and object names are equal.
@@ -90,6 +91,12 @@ pub enum Error {
     AmbiguousPrefix {
         prefix: git_hash::Prefix,
         info: Vec<(git_hash::Prefix, super::error::CandidateInfo)>,
+    },
+    #[error("Could not find path {path:?} in tree {tree} of parent object {object}")]
+    PathNotFound {
+        object: git_hash::Prefix,
+        tree: git_hash::Prefix,
+        path: BString,
     },
     #[error("{current}")]
     Multi {

@@ -2,8 +2,9 @@ use git_hash::ObjectId;
 use git_object::{bstr::BStr, TreeRefIter};
 use git_odb::FindExt;
 
-use crate::{object::find, Tree};
+use crate::{object::find, Id, Tree};
 
+/// Initialization
 impl<'repo> Tree<'repo> {
     /// Obtain a tree instance by handing in all components that it is made up of.
     pub fn from_data(id: impl Into<ObjectId>, data: Vec<u8>, repo: &'repo crate::Repository) -> Self {
@@ -13,6 +14,15 @@ impl<'repo> Tree<'repo> {
             repo,
         }
     }
+}
+
+/// Access
+impl<'repo> Tree<'repo> {
+    /// Return this tree's identifier.
+    pub fn id(&self) -> Id<'repo> {
+        Id::from_id(self.id, self.repo)
+    }
+
     // TODO: move implementation to git-object, tests.
     /// Follow a sequence of `path` components starting from this instance, and look them up one by one until the last component
     /// is looked up and its tree entry is returned.
