@@ -59,10 +59,12 @@ pub mod parse {
 
     impl Error {
         /// Create a new multi-error that chains all `errors`.
-        pub fn new_multi(errors: Vec<Self>) -> Self {
+        pub fn from_errors(errors: Vec<Self>) -> Self {
             assert!(!errors.is_empty());
             match errors.len() {
-                0 => unreachable!("BUG: cannot create something from nothing"),
+                0 => unreachable!(
+                    "BUG: cannot create something from nothing, must have recorded some errors to call from_errors()"
+                ),
                 1 => errors.into_iter().next().expect("one"),
                 _ => {
                     let mut it = errors.into_iter().rev();
@@ -174,11 +176,7 @@ pub mod parse {
             };
             let spec = match git_revision::spec::parse(spec.into(), &mut delegate) {
                 Err(git_revision::spec::parse::Error::Delegate) => {
-                    assert!(
-                        !delegate.err.is_empty(),
-                        "BUG: must have recorded at least one err if a delegate error was reported"
-                    );
-                    return Err(Error::new_multi(delegate.err));
+                    return Err(Error::from_errors(delegate.err));
                 }
                 Err(err) => return Err(err.into()),
                 Ok(()) => RevSpec {
