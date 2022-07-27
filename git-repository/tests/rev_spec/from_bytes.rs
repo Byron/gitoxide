@@ -232,7 +232,7 @@ mod ambiguous {
             )
             .unwrap_err()
             .to_string(),
-            "The short hash 0000000000e4f9fbd19cf1e932319e5ad0d1d00b matched both the reference refs/heads/0000000000e4f9fbd19cf1e932319e5ad0d1d00b and the object(s) 0000000000e4f9fbd19cf1e932319e5ad0d1d00b"
+            "The short hash 0000000000e4f9fbd19cf1e932319e5ad0d1d00b matched both the reference refs/heads/0000000000e4f9fbd19cf1e932319e5ad0d1d00b and at least one object"
         );
     }
 
@@ -259,14 +259,10 @@ mod ambiguous {
         );
 
         assert_eq!(
-            parse_spec_no_baseline_opts(
-                spec,
-                &repo,
-                opts_ref_hint(RefsHint::Fail)
-            )
+            parse_spec_no_baseline_opts(spec, &repo, opts_ref_hint(RefsHint::Fail))
                 .unwrap_err()
                 .to_string(),
-            "The short hash 0000000000e matched both the reference refs/heads/0000000000e and the object(s) 0000000000e4f9fbd19cf1e932319e5ad0d1d00b",
+            "The short hash 0000000000e matched both the reference refs/heads/0000000000e and at least one object",
             "users who don't want this ambiguity, could fail like this."
         );
     }
@@ -283,7 +279,7 @@ mod ambiguous {
         let r = repo("ambiguous_objects_disambiguation_config_treeish").unwrap();
         assert_eq!(
             rev_parse("0000000000f", &r).unwrap_err().to_string(),
-            "Found more than one object prefixed with 0000000000f",
+            "Found the following objects prefixed with 0000000000f: ",
             "disambiguation might not always work either."
         );
 
@@ -297,7 +293,7 @@ mod ambiguous {
         let r = repo("ambiguous_objects_disambiguation_config_commit").unwrap();
         assert_eq!(
             rev_parse("0000000000f", &r).unwrap_err().to_string(),
-            "Found more than one object prefixed with 0000000000f",
+            "Found the following objects prefixed with 0000000000f: ",
         );
 
         let r = repo("ambiguous_objects_disambiguation_config_blob").unwrap();
@@ -312,7 +308,7 @@ mod ambiguous {
         let repo = repo("ambiguous_objects_disambiguation_config_committish").unwrap();
         assert_eq!(
             rev_parse("0000000000f^{tree}", &repo).unwrap_err().to_string(),
-            "Found more than one object prefixed with 0000000000f",
+            "Found the following objects prefixed with 0000000000f: ",
             "spec overrides overrule the configuration value, which makes this particular object ambiguous between tree and tag"
         );
     }
