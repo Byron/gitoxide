@@ -86,7 +86,7 @@ impl<'repo> RevSpec<'repo> {
     pub fn range(&self) -> Option<(git_revision::spec::Kind, Id<'repo>, Id<'repo>)> {
         (matches!(
             self.kind(),
-            git_revision::spec::Kind::Range | git_revision::spec::Kind::ReachableToMergeBase
+            git_revision::spec::Kind::RangeBetween | git_revision::spec::Kind::ReachableToMergeBase
         ))
         .then(|| {
             (
@@ -134,8 +134,13 @@ impl RevSpecDetached {
 
     /// Return the single object represented by this instance, or `None` if it is a range of any kind.
     pub fn single(&self) -> Option<git_hash::ObjectId> {
-        self.from
-            .and_then(|id| matches!(self.kind(), git_revision::spec::Kind::IncludeReachable).then(|| id))
+        self.from.and_then(|id| {
+            matches!(
+                self.kind(),
+                git_revision::spec::Kind::IncludeReachable | git_revision::spec::Kind::ExcludeReachableFromParents
+            )
+            .then(|| id)
+        })
     }
 
     /// Return `(kind being merge-base or range, from-id, to-id)` if our `kind` is not describing a single revision.
@@ -146,7 +151,7 @@ impl RevSpecDetached {
     pub fn range(&self) -> Option<(git_revision::spec::Kind, git_hash::ObjectId, git_hash::ObjectId)> {
         (matches!(
             self.kind(),
-            git_revision::spec::Kind::Range | git_revision::spec::Kind::ReachableToMergeBase
+            git_revision::spec::Kind::RangeBetween | git_revision::spec::Kind::ReachableToMergeBase
         ))
         .then(|| {
             (

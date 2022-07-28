@@ -26,12 +26,12 @@ pub(crate) mod function {
                     writeln!(
                         &mut out,
                         "{}{}",
-                        matches!(kind, git::revision::spec::Kind::Range)
+                        matches!(kind, git::revision::spec::Kind::RangeBetween)
                             .then(|| "^")
                             .unwrap_or_default(),
                         to
                     )?;
-                    if matches!(kind, git::revision::spec::Kind::Range) {
+                    if matches!(kind, git::revision::spec::Kind::RangeBetween) {
                         writeln!(out, "^TBD: compute and display merge base hash")?;
                     }
                 } else if let Some(rev) = spec.single() {

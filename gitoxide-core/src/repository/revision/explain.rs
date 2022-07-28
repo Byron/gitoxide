@@ -217,7 +217,7 @@ impl<'a> delegate::Kind for Explain<'a> {
             self.out,
             "Set revision specification to {} mode",
             match kind {
-                spec::Kind::Range => "range",
+                spec::Kind::RangeBetween => "range",
                 spec::Kind::ReachableToMergeBase => "merge-base",
                 spec::Kind::ExcludeReachable => "exclude",
                 spec::Kind::IncludeReachableFromParents => "include parents",
