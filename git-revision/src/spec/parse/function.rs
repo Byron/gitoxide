@@ -527,6 +527,12 @@ where
                         invalid => return Err(Error::InvalidObject { input: invalid.into() }),
                     };
                     delegate.peel_until(target).ok_or(Error::Delegate)?;
+                } else if past_sep.and_then(|i| i.get(0)) == Some(&b'!') {
+                    delegate
+                        .kind(spec::Kind::ExcludeReachableFromParents)
+                        .ok_or(Error::Delegate)?;
+                    delegate.done();
+                    return Ok(input[cursor + 1..].as_bstr());
                 } else {
                     delegate
                         .traverse(delegate::Traversal::NthParent(1))
