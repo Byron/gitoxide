@@ -21,7 +21,7 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
     let mut prev_kind = None;
     if let Some(b'^') = input.get(0) {
         input = next(input).1;
-        let kind = spec::Kind::Exclude;
+        let kind = spec::Kind::ExcludeReachable;
         delegate.kind(kind).ok_or(Error::Delegate)?;
         prev_kind = kind.into();
     }
@@ -578,7 +578,7 @@ fn try_parse_isize(input: &BStr) -> Result<Option<(isize, bool, usize)>, Error> 
 fn try_range(input: &BStr) -> Option<(&[u8], spec::Kind)> {
     input
         .strip_prefix(b"...")
-        .map(|rest| (rest, spec::Kind::MergeBase))
+        .map(|rest| (rest, spec::Kind::ReachableToMergeBase))
         .or_else(|| input.strip_prefix(b"..").map(|rest| (rest, spec::Kind::Range)))
 }
 

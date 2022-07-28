@@ -34,25 +34,25 @@ mod exclusive {
     #[test]
     fn leading_caret() {
         let rec = parse("^HEAD");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Exclude);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ExcludeReachable);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 2);
 
         let rec = parse("^abcd");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Exclude);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ExcludeReachable);
         assert_eq!(rec.find_ref[0], None);
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 2);
 
         let rec = parse("^r1");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Exclude);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ExcludeReachable);
         assert_eq!(rec.get_ref(0), "r1");
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 2);
 
         let rec = parse("^hello-0-gabcd-dirty");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Exclude);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ExcludeReachable);
         assert_eq!(rec.find_ref[0], None);
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 2);
@@ -244,7 +244,7 @@ mod mergebase {
     #[test]
     fn trailing_dot_dot_dot() {
         let rec = parse("HEAD...");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ReachableToMergeBase);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.calls, 3);
@@ -253,7 +253,7 @@ mod mergebase {
     #[test]
     fn leading_dot_dot_dot() {
         let rec = parse("...r2");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ReachableToMergeBase);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.get_ref(1), "r2");
         assert_eq!(rec.prefix[0], None);
@@ -263,32 +263,32 @@ mod mergebase {
     #[test]
     fn middle_dot_dot_dot() {
         let rec = parse("HEAD...@");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ReachableToMergeBase);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.get_ref(1), "HEAD");
         assert_eq!(rec.calls, 3);
 
         let rec = parse("@...HEAD");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ReachableToMergeBase);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.get_ref(1), "HEAD");
         assert_eq!(rec.calls, 3);
 
         let rec = parse("r1...abcd");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ReachableToMergeBase);
         assert_eq!(rec.get_ref(0), "r1");
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 3);
 
         let rec = parse("v1.2.3-beta.1-42-g1234-dirty...abcd-dirty");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ReachableToMergeBase);
         assert_eq!(rec.find_ref[0], None);
         assert_eq!(rec.prefix[0], prefix("1234").into());
         assert_eq!(rec.prefix[1], prefix("abcd").into());
         assert_eq!(rec.calls, 3);
 
         let rec = parse("r1@{1}~~^10...@{2}~10^2");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ReachableToMergeBase);
         assert_eq!(rec.get_ref(0), "r1");
         assert_eq!(rec.find_ref[1], None, "HEAD is implied");
         assert_eq!(&rec.prefix, &[None, None]);
