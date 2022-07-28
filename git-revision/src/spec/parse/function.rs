@@ -1,8 +1,9 @@
 use std::{convert::TryInto, str::FromStr};
 
 use bstr::{BStr, BString, ByteSlice, ByteVec};
+use git_hash::Prefix;
 
-use crate::spec::parse::delegate::PrefixHint;
+use crate::spec::parse::delegate::{PrefixHint, ReflogLookup};
 use crate::{
     spec,
     spec::parse::{delegate, delegate::SiblingBranch, Delegate, Error},
@@ -50,6 +51,81 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
         Ok(())
     } else {
         Err(Error::UnconsumedInput { input: input.into() })
+    }
+}
+
+struct InterceptRev<'a, T> {
+    inner: &'a mut T,
+    last_ref: Option<BString>, // TODO: smallvec to save the unnecessary allocation? Can't keep ref due to lifetime constraints in traits
+    last_prefix: Option<git_hash::Prefix>,
+}
+
+impl<'a, T> InterceptRev<'a, T>
+where
+    T: Delegate,
+{
+    fn new(delegate: &'a mut T) -> Self {
+        InterceptRev {
+            inner: delegate,
+            last_ref: None,
+            last_prefix: None,
+        }
+    }
+}
+impl<'a, T> delegate::Revision for InterceptRev<'a, T>
+where
+    T: Delegate,
+{
+    fn find_ref(&mut self, name: &BStr) -> Option<()> {
+        self.last_ref = name.to_owned().into();
+        self.inner.find_ref(name)
+    }
+
+    fn disambiguate_prefix(&mut self, prefix: Prefix, hint: Option<PrefixHint<'_>>) -> Option<()> {
+        self.last_prefix = prefix.into();
+        self.inner.disambiguate_prefix(prefix, hint)
+    }
+
+    fn reflog(&mut self, query: ReflogLookup) -> Option<()> {
+        self.inner.reflog(query)
+    }
+
+    fn nth_checked_out_branch(&mut self, branch_no: usize) -> Option<()> {
+        self.inner.nth_checked_out_branch(branch_no)
+    }
+
+    fn sibling_branch(&mut self, kind: SiblingBranch) -> Option<()> {
+        self.inner.sibling_branch(kind)
+    }
+}
+
+impl<'a, T> delegate::Navigate for InterceptRev<'a, T>
+where
+    T: Delegate,
+{
+    fn traverse(&mut self, kind: delegate::Traversal) -> Option<()> {
+        self.inner.traverse(kind)
+    }
+
+    fn peel_until(&mut self, kind: delegate::PeelTo<'_>) -> Option<()> {
+        self.inner.peel_until(kind)
+    }
+
+    fn find(&mut self, regex: &BStr, negated: bool) -> Option<()> {
+        self.inner.find(regex, negated)
+    }
+
+    fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()> {
+        self.inner.index_lookup(path, stage)
+    }
+}
+
+impl<'a, T> delegate::Kind for InterceptRev<'a, T>
+where
+    T: Delegate,
+{
+    fn kind(&mut self, kind: spec::Kind) -> Option<()> {
+        self.inner.kind(kind)
     }
 }
 
