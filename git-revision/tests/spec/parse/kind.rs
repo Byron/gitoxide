@@ -26,6 +26,22 @@ fn delegate_can_refuse_spec_kinds() {
     );
 }
 
+mod exclude_parents {
+    use git_revision::spec;
+
+    use crate::spec::parse::{parse, Call};
+
+    #[test]
+    #[ignore]
+    fn trailing_caret_exclamation_mark() {
+        let rec = parse("HEAD^!");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::ExcludeReachableFromParents);
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.order, [Call::FindRef, Call::Kind]);
+    }
+}
+
 mod exclusive {
     use git_revision::spec;
 
