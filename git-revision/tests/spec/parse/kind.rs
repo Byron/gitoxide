@@ -145,10 +145,15 @@ mod range {
     }
 
     #[test]
-    #[ignore]
     fn minus_with_n_has_to_end_there_and_handle_range_suffix() {
         let err = try_parse("r1^-42..").unwrap_err();
-        dbg!(err);
+        assert!(matches!(err, spec::parse::Error::UnconsumedInput { .. }));
+    }
+
+    #[test]
+    fn minus_with_n_omitted_has_to_end_there_and_handle_range_suffix() {
+        let err = try_parse("r1^-..").unwrap_err();
+        assert!(matches!(err, spec::parse::Error::UnconsumedInput { .. }));
     }
 
     #[test]

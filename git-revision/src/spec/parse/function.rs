@@ -31,6 +31,13 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
         let rest = revision(input, &mut delegate)?;
         (rest, rest != input)
     };
+    if delegate.done {
+        return if input.is_empty() {
+            Ok(())
+        } else {
+            Err(Error::UnconsumedInput { input: input.into() })
+        };
+    }
     if let Some((rest, kind)) = try_range(input) {
         if let Some(prev_kind) = prev_kind {
             return Err(Error::KindSetTwice { prev_kind, kind });
@@ -90,6 +97,7 @@ struct InterceptRev<'a, T> {
     inner: &'a mut T,
     last_ref: Option<BString>, // TODO: smallvec to save the unnecessary allocation? Can't keep ref due to lifetime constraints in traits
     last_prefix: Option<(git_hash::Prefix, Option<PrefixHintOwned>)>,
+    done: bool,
 }
 
 impl<'a, T> InterceptRev<'a, T>
@@ -101,6 +109,7 @@ where
             inner: delegate,
             last_ref: None,
             last_prefix: None,
+            done: false,
         }
     }
 }
@@ -110,6 +119,7 @@ where
     T: Delegate,
 {
     fn done(&mut self) {
+        self.done = true;
         self.inner.done()
     }
 }
@@ -476,6 +486,7 @@ where
                         } else {
                             unreachable!("BUG: must have set either ref or prefix");
                         }
+                        delegate.done();
                         cursor += consumed;
                         return Ok(input[cursor..].as_bstr());
                     } else if number == 0 {
