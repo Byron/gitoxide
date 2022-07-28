@@ -35,9 +35,7 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git::ObjectId>>>>
     fn expected_lines_if_successful(spec: &BStr) -> usize {
         if spec.contains_str(b"...") {
             3
-        } else if spec.contains_str(b"..") {
-            2
-        } else if spec.ends_with(b"^!") {
+        } else if spec.contains_str(b"..") | spec.ends_with(b"^!") {
             2
         } else {
             1
