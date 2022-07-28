@@ -481,7 +481,13 @@ where
                     if negative {
                         delegate
                             .traverse(delegate::Traversal::NthParent(
-                                (-number).try_into().expect("non-negative"),
+                                number
+                                    .checked_mul(-1)
+                                    .ok_or_else(|| Error::InvalidNumber {
+                                        input: past_sep.expect("present").into(),
+                                    })?
+                                    .try_into()
+                                    .expect("non-negative"),
                             ))
                             .ok_or(Error::Delegate)?;
                         delegate.kind(spec::Kind::RangeBetween).ok_or(Error::Delegate)?;

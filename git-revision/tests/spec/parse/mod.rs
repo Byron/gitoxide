@@ -240,7 +240,7 @@ mod fuzz {
 
     #[test]
     fn failures() {
-        for spec in ["|^--", "^^-^", "^^-", ":/!-"] {
+        for spec in ["|^--", "^^-^", "^^-", ":/!-", "A6a^-09223372036854775808", "^^^^^^-("] {
             drop(
                 try_parse_opts(
                     spec,
