@@ -1,5 +1,6 @@
 use git::prelude::ObjectIdExt;
 use git::RevSpec;
+use git_object::bstr::BStr;
 use git_ref::bstr::{BString, ByteSlice};
 use git_repository as git;
 use git_testtools::{hex_to_id, once_cell::sync::Lazy};
@@ -9,6 +10,17 @@ use std::str::FromStr;
 
 const FIXTURE_NAME: &str = "make_rev_spec_parse_repos.sh";
 static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git::ObjectId>>>> = Lazy::new(|| {
+    fn expected_lines_if_successful(spec: &BStr) -> usize {
+        if spec.contains_str(b"...") {
+            3
+        } else if spec.contains_str(b"..") {
+            2
+        } else if spec.ends_with(b"^!") {
+            2
+        } else {
+            1
+        }
+    }
     let mut baseline_map = HashMap::new();
     let base = git_testtools::scripted_fixture_repo_read_only(FIXTURE_NAME).unwrap();
     for baseline_entry in walkdir::WalkDir::new(base)
@@ -24,23 +36,21 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git::ObjectId>>>>
         let mut lines = baseline.lines().peekable();
         while let Some(spec) = lines.next() {
             let exit_code_or_hash = lines.next().expect("exit code or single hash").to_str().unwrap();
+            let line_count = expected_lines_if_successful(spec.as_bstr()) - 1;
             let hash = match u8::from_str(exit_code_or_hash) {
                 Ok(_exit_code) => {
-                    map.insert(spec.into(), None);
+                    let is_duplicate = map.insert(spec.into(), None).is_some();
+                    assert!(!is_duplicate, "Duplicate spec '{}' cannot be handled", spec.as_bstr());
                     continue;
-                    // assert_eq!(
-                    //     map.insert(spec.into(), None),
-                    //     None,
-                    //     "Duplicate spec '{}' cannot be handled",
-                    //     spec.as_bstr()
-                    // );
                 }
                 Err(_) => match git::ObjectId::from_str(exit_code_or_hash) {
                     Ok(hash) => hash,
                     Err(_) => break, // for now bail out, we can't parse multi-line results yet
                 },
             };
-            map.insert(spec.into(), Some(hash));
+            let is_duplicate = map.insert(spec.into(), Some(hash)).is_some();
+            assert!(!is_duplicate, "Duplicate spec '{}' cannot be handled", spec.as_bstr());
+            lines.by_ref().take(line_count).count();
         }
     }
     baseline_map
