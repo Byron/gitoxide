@@ -80,16 +80,19 @@ impl<'repo> RevSpec<'repo> {
 
     /// Return `(kind being merge-base or range, from-id, to-id)` if our `kind` is not describing a single revision.
     ///
-    /// Note that `...HEAD` is equivalent to `HEAD...HEAD` and `HEAD..` is equivalent to `HEAD..HEAD`. If this is not desirable,
-    /// access [`from()`][RevSpec::from()] and [`to()`][RevSpec::to()] individually after validating that [`kind()`][RevSpec::kind()]
-    /// is indeed not a single revision.
+    /// Note that `...r2` is equivalent to `HEAD...r2` and `r1..` is equivalent to `r1..HEAD`. The parser enforces the names
+    /// to be set so the mentioned forms are no more than syntactic sugar which are desugared immediately.
     // TODO: test
     pub fn range(&self) -> Option<(git_revision::spec::Kind, Id<'repo>, Id<'repo>)> {
-        (!matches!(self.kind(), git_revision::spec::Kind::Include)).then(|| {
+        (matches!(
+            self.kind(),
+            git_revision::spec::Kind::Range | git_revision::spec::Kind::MergeBase
+        ))
+        .then(|| {
             (
                 self.kind(),
-                self.from().or_else(|| self.to()).expect("at least one id is set"),
-                self.to().or_else(|| self.from()).expect("at least one id is set"),
+                self.from().expect("'from' is set by the parser"),
+                self.to().expect("'to' is set by the parser"),
             )
         })
     }
@@ -137,16 +140,19 @@ impl RevSpecDetached {
 
     /// Return `(kind being merge-base or range, from-id, to-id)` if our `kind` is not describing a single revision.
     ///
-    /// Note that `...HEAD` is equivalent to `HEAD...HEAD` and `HEAD..` is equivalent to `HEAD..HEAD`. If this is not desirable,
-    /// access [`from()`][RevSpec::from()] and [`to()`][RevSpec::to()] individually after validating that [`kind()`][RevSpec::kind()]
-    /// is indeed not a single revision.
+    /// Note that `...r2` is equivalent to `HEAD...r2` and `r1..` is equivalent to `r1..HEAD`. The parser enforces the names
+    /// to be set so the mentioned forms are no more than syntactic sugar which are desugared immediately.
     // TODO: test
     pub fn range(&self) -> Option<(git_revision::spec::Kind, git_hash::ObjectId, git_hash::ObjectId)> {
-        (!matches!(self.kind(), git_revision::spec::Kind::Include)).then(|| {
+        (matches!(
+            self.kind(),
+            git_revision::spec::Kind::Range | git_revision::spec::Kind::MergeBase
+        ))
+        .then(|| {
             (
                 self.kind(),
-                self.from().or_else(|| self.to()).expect("at least one id is set"),
-                self.to().or_else(|| self.from()).expect("at least one id is set"),
+                self.from().expect("'from' is set by the parser"),
+                self.to().expect("'to' is set by the parser"),
             )
         })
     }

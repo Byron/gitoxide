@@ -6,9 +6,9 @@ pub enum Kind {
     Include,
     /// Include commits reachable from this revision, i.e. `a` and its ancestors.
     Exclude,
-    /// Two revision specifications `a` and `b` where we want all commits from `b` that are not also in `a`.
+    /// Every commit that is reachable from `b` but not from `a`.
     Range,
-    /// Everything in `a` and `b` but no commit from any of their merge bases.
+    /// Every commit reachable through either `a` or `b` but no commit that is reachable by both.
     MergeBase,
 }
 
