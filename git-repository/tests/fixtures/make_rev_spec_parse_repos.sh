@@ -224,6 +224,8 @@ EOF
   baseline "...000000000"
   baseline "000000000..."
 
+  baseline "00000000006^!"     # exclude parents (without anything related to ambiguity
+  baseline "00000000006^@"     # include parents (without actual commit)
 )
 
 git clone ambiguous_commits duplicate_ambiguous_objects

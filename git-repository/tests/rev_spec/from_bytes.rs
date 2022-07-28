@@ -8,6 +8,28 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
 
+#[allow(unused)]
+enum Spec {
+    Single(git::ObjectId),
+    Exclude(git::ObjectId),
+    Range {
+        from: git::ObjectId,
+        to: git::ObjectId,
+    },
+    Merge {
+        a: git::ObjectId,
+        b: git::ObjectId,
+        base: git::ObjectId,
+    },
+    IncludeFromParents {
+        parents: Vec<git::ObjectId>,
+    },
+    ExcludeFromParents {
+        from_inclusive: git::ObjectId,
+        parents: Vec<git::ObjectId>,
+    },
+}
+
 const FIXTURE_NAME: &str = "make_rev_spec_parse_repos.sh";
 static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git::ObjectId>>>> = Lazy::new(|| {
     fn expected_lines_if_successful(spec: &BStr) -> usize {
