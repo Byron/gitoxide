@@ -26,6 +26,42 @@ fn delegate_can_refuse_spec_kinds() {
     );
 }
 
+mod include_parents {
+    use git_revision::spec;
+
+    use crate::spec::parse::kind::prefix;
+    use crate::spec::parse::{parse, try_parse, Call};
+
+    #[test]
+    fn trailing_caret_at_symbol() {
+        let rec = parse("HEAD^@");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::IncludeReachableFromParents);
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.order, [Call::FindRef, Call::Kind]);
+        assert!(rec.done);
+
+        let rec = parse("abcd^@");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::IncludeReachableFromParents);
+        assert_eq!(rec.prefix[0], prefix("abcd").into());
+        assert_eq!(rec.order, [Call::DisambiguatePrefix, Call::Kind]);
+        assert!(rec.done);
+
+        let rec = parse("r1^@");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::IncludeReachableFromParents);
+        assert_eq!(rec.get_ref(0), "r1");
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.order, [Call::FindRef, Call::Kind]);
+        assert!(rec.done);
+    }
+
+    #[test]
+    fn trailing_caret_exclamation_mark_must_end_the_input() {
+        let err = try_parse("r1^@~1").unwrap_err();
+        assert!(matches!(err, spec::parse::Error::UnconsumedInput { .. }));
+    }
+}
+
 mod exclude_parents {
     use git_revision::spec;
 
@@ -54,6 +90,7 @@ mod exclude_parents {
         assert_eq!(rec.order, [Call::FindRef, Call::Kind]);
         assert!(rec.done);
     }
+
     #[test]
     fn trailing_caret_exclamation_mark_must_end_the_input() {
         let err = try_parse("r1^!~1").unwrap_err();

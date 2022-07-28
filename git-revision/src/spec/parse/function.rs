@@ -533,6 +533,12 @@ where
                         .ok_or(Error::Delegate)?;
                     delegate.done();
                     return Ok(input[cursor + 1..].as_bstr());
+                } else if past_sep.and_then(|i| i.get(0)) == Some(&b'@') {
+                    delegate
+                        .kind(spec::Kind::IncludeReachableFromParents)
+                        .ok_or(Error::Delegate)?;
+                    delegate.done();
+                    return Ok(input[cursor + 1..].as_bstr());
                 } else {
                     delegate
                         .traverse(delegate::Traversal::NthParent(1))

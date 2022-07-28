@@ -44,7 +44,7 @@ pub trait Kind {
     /// Reject a kind by returning `None` to stop the parsing.
     ///
     /// Note that ranges don't necessarily assure that a second specification will be parsed.
-    /// If `^rev` is given, this method is called with [`spec::Kind::Range`][crate::spec::Kind::Range]
+    /// If `^rev` is given, this method is called with [`spec::Kind::RangeBetween`][crate::spec::Kind::RangeBetween]
     /// and no second specification is provided.
     fn kind(&mut self, kind: crate::spec::Kind) -> Option<()>;
 }
