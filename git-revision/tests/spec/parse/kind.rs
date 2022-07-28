@@ -29,7 +29,7 @@ fn delegate_can_refuse_spec_kinds() {
 mod range {
     use git_revision::{spec, spec::parse::delegate::Traversal};
 
-    use crate::spec::parse::{kind::prefix, parse};
+    use crate::spec::parse::{kind::prefix, parse, Call};
 
     #[test]
     fn leading_caret() {
@@ -60,28 +60,30 @@ mod range {
 
     #[test]
     fn trailing_dot_dot() {
-        let rec = parse("HEAD..");
+        let rec = parse("r1..");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.get_ref(0), "r1");
         assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.order, [Call::FindRef, Call::Kind]);
         assert_eq!(rec.calls, 2);
     }
 
     #[test]
     fn leading_dot_dot() {
-        let rec = parse("..HEAD");
+        let rec = parse("..r2");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.get_ref(0), "r2");
         assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.order, [Call::Kind, Call::FindRef]);
         assert_eq!(rec.calls, 2);
     }
 
     #[test]
     fn middle_dot_dot() {
-        let rec = parse("@..HEAD");
+        let rec = parse("@..r2");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
         assert_eq!(rec.get_ref(0), "HEAD");
-        assert_eq!(rec.get_ref(1), "HEAD");
+        assert_eq!(rec.get_ref(1), "r2");
         assert_eq!(rec.calls, 3);
 
         let rec = parse("r1..r2");
@@ -123,7 +125,7 @@ mod range {
         assert_eq!(&rec.prefix, &[None, None]);
         assert_eq!(
             rec.traversal,
-            vec![
+            [
                 Traversal::NthAncestor(1),
                 Traversal::NthAncestor(1),
                 Traversal::NthParent(10),
@@ -193,7 +195,7 @@ mod mergebase {
         assert_eq!(&rec.prefix, &[None, None]);
         assert_eq!(
             rec.traversal,
-            vec![
+            [
                 Traversal::NthAncestor(1),
                 Traversal::NthAncestor(1),
                 Traversal::NthParent(10),

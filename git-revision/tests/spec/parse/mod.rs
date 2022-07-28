@@ -29,9 +29,24 @@ struct Recorder {
     // range
     kind: Option<spec::Kind>,
 
+    order: Vec<Call>,
     calls: usize,
     opts: Options,
     done: bool,
+}
+
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum Call {
+    FindRef,
+    DisambiguatePrefix,
+    Reflog,
+    NthCheckedOutBranch,
+    SiblingBranch,
+    Traverse,
+    PeelUntil,
+    Find,
+    IndexLookup,
+    Kind,
 }
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -59,6 +74,11 @@ impl Recorder {
     fn get_ref(&self, idx: usize) -> &BStr {
         self.find_ref[idx].as_ref().map(|b| b.as_ref()).unwrap()
     }
+
+    fn called(&mut self, f: Call) {
+        self.calls += 1;
+        self.order.push(f)
+    }
 }
 
 fn set_val<T: std::fmt::Debug>(fn_name: &str, store: &mut [Option<T>; 2], val: T) -> Option<()> {
@@ -73,12 +93,12 @@ fn set_val<T: std::fmt::Debug>(fn_name: &str, store: &mut [Option<T>; 2], val: T
 
 impl delegate::Revision for Recorder {
     fn find_ref(&mut self, input: &BStr) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::FindRef);
         set_val("find_ref", &mut self.find_ref, input.into())
     }
 
     fn disambiguate_prefix(&mut self, input: git_hash::Prefix, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::DisambiguatePrefix);
         if self.opts.reject_prefix {
             return None;
         }
@@ -100,7 +120,7 @@ impl delegate::Revision for Recorder {
     }
 
     fn reflog(&mut self, entry: delegate::ReflogLookup) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::Reflog);
         set_val(
             "current_branch_reflog",
             &mut self.current_branch_reflog_entry,
@@ -117,25 +137,25 @@ impl delegate::Revision for Recorder {
 
     fn nth_checked_out_branch(&mut self, branch: usize) -> Option<()> {
         assert_ne!(branch, 0);
-        self.calls += 1;
+        self.called(Call::NthCheckedOutBranch);
         set_val("nth_checked_out_branch", &mut self.nth_checked_out_branch, branch)
     }
 
     fn sibling_branch(&mut self, kind: delegate::SiblingBranch) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::SiblingBranch);
         set_val("sibling_branch", &mut self.sibling_branch, format!("{:?}", kind))
     }
 }
 
 impl delegate::Navigate for Recorder {
     fn traverse(&mut self, kind: delegate::Traversal) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::Traverse);
         self.traversal.push(kind);
         Some(())
     }
 
     fn peel_until(&mut self, kind: delegate::PeelTo) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::PeelUntil);
         self.peel_to.push(match kind {
             delegate::PeelTo::ObjectKind(kind) => PeelToOwned::ObjectKind(kind),
             delegate::PeelTo::ValidObject => PeelToOwned::ExistingObject,
@@ -146,13 +166,13 @@ impl delegate::Navigate for Recorder {
     }
 
     fn find(&mut self, regex: &BStr, negated: bool) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::Find);
         self.patterns.push((regex.into(), negated));
         Some(())
     }
 
     fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::IndexLookup);
         self.index_lookups.push((path.into(), stage));
         Some(())
     }
@@ -160,7 +180,7 @@ impl delegate::Navigate for Recorder {
 
 impl delegate::Kind for Recorder {
     fn kind(&mut self, kind: spec::Kind) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::Kind);
         if self.opts.reject_kind {
             return None;
         }
