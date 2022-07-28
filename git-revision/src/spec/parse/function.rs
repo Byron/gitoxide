@@ -23,13 +23,26 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
         prev_kind = kind.into();
     }
 
-    input = revision(input, delegate)?;
+    let mut found_revision;
+    (input, found_revision) = {
+        let rest = revision(input, delegate)?;
+        (rest, rest != input)
+    };
     if let Some((rest, kind)) = try_range(input) {
         if let Some(prev_kind) = prev_kind {
             return Err(Error::KindSetTwice { prev_kind, kind });
         }
+        if !found_revision {
+            delegate.find_ref("HEAD".into()).ok_or(Error::Delegate)?;
+        }
         delegate.kind(kind).ok_or(Error::Delegate)?;
-        input = revision(rest.as_bstr(), delegate)?;
+        (input, found_revision) = {
+            let remainder = revision(rest.as_bstr(), delegate)?;
+            (remainder, remainder != rest)
+        };
+        if !found_revision {
+            delegate.find_ref("HEAD".into()).ok_or(Error::Delegate)?;
+        }
     }
 
     if input.is_empty() {

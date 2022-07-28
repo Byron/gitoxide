@@ -63,19 +63,21 @@ mod range {
         let rec = parse("r1..");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
         assert_eq!(rec.get_ref(0), "r1");
+        assert_eq!(rec.get_ref(1), "HEAD");
         assert_eq!(rec.prefix[0], None);
-        assert_eq!(rec.order, [Call::FindRef, Call::Kind]);
-        assert_eq!(rec.calls, 2);
+        assert_eq!(rec.order, [Call::FindRef, Call::Kind, Call::FindRef]);
+        assert_eq!(rec.calls, 3);
     }
 
     #[test]
     fn leading_dot_dot() {
         let rec = parse("..r2");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
-        assert_eq!(rec.get_ref(0), "r2");
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.get_ref(1), "r2");
         assert_eq!(rec.prefix[0], None);
-        assert_eq!(rec.order, [Call::Kind, Call::FindRef]);
-        assert_eq!(rec.calls, 2);
+        assert_eq!(rec.order, [Call::FindRef, Call::Kind, Call::FindRef]);
+        assert_eq!(rec.calls, 3);
     }
 
     #[test]
@@ -149,16 +151,17 @@ mod mergebase {
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.prefix[0], None);
-        assert_eq!(rec.calls, 2);
+        assert_eq!(rec.calls, 3);
     }
 
     #[test]
     fn leading_dot_dot_dot() {
-        let rec = parse("...HEAD");
+        let rec = parse("...r2");
         assert_eq!(rec.kind.unwrap(), spec::Kind::MergeBase);
         assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.get_ref(1), "r2");
         assert_eq!(rec.prefix[0], None);
-        assert_eq!(rec.calls, 2);
+        assert_eq!(rec.calls, 3);
     }
 
     #[test]
