@@ -461,7 +461,7 @@ where
                     if negative {
                         delegate
                             .traverse(delegate::Traversal::NthParent(
-                                (number * -1).try_into().expect("non-negative"),
+                                (-number).try_into().expect("non-negative"),
                             ))
                             .ok_or(Error::Delegate)?;
                         delegate.kind(spec::Kind::Range).ok_or(Error::Delegate)?;
@@ -478,14 +478,12 @@ where
                         }
                         cursor += consumed;
                         return Ok(input[cursor..].as_bstr());
+                    } else if number == 0 {
+                        delegate.peel_until(delegate::PeelTo::ObjectKind(git_object::Kind::Commit))
                     } else {
-                        if number == 0 {
-                            delegate.peel_until(delegate::PeelTo::ObjectKind(git_object::Kind::Commit))
-                        } else {
-                            delegate.traverse(delegate::Traversal::NthParent(
-                                number.try_into().expect("positive number"),
-                            ))
-                        }
+                        delegate.traverse(delegate::Traversal::NthParent(
+                            number.try_into().expect("positive number"),
+                        ))
                     }
                     .ok_or(Error::Delegate)?;
                     cursor += consumed;
