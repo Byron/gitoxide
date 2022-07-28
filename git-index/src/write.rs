@@ -13,16 +13,9 @@ impl State {
     }
 }
 
+#[derive(Default)]
 pub struct Options {
     hash_kind: git_hash::Kind,
-}
-
-impl Default for Options {
-    fn default() -> Self {
-        Self {
-            hash_kind: Default::default(),
-        }
-    }
 }
 
 struct Writer<'a> {
@@ -96,7 +89,7 @@ impl<'a> Writer<'a> {
             self.push(&e.stat.uid.to_be_bytes(), "entries");
             self.push(&e.stat.gid.to_be_bytes(), "entries");
             self.push(&e.stat.size.to_be_bytes(), "entries");
-            self.push(&e.id.as_bytes(), "entries");
+            self.push(e.id.as_bytes(), "entries");
             // FIXME: self.push(&e.flags.bits().to_be_bytes(), "entries");
             self.push(b"\x00\x01\x61\x00", "entries");
         }
