@@ -26,6 +26,8 @@ pub enum Error {
     RefnameNeedsPositiveReflogEntries { nav: BString },
     #[error("Negative or explicitly positive numbers are invalid here: {:?}", .input)]
     SignedNumber { input: BString },
+    #[error("Could not parse number from {input:?}")]
+    InvalidNumber { input: BString },
     #[error("Negative zeroes are invalid: {:?} - remove the '-'", .input)]
     NegativeZero { input: BString },
     #[error("The opening brace in {:?} was not matched", .input)]

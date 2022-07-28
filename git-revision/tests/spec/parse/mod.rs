@@ -8,6 +8,7 @@ use git_revision::{
 struct Options {
     reject_kind: bool,
     reject_prefix: bool,
+    no_internal_assertions: bool,
 }
 
 #[derive(Default, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -187,7 +188,9 @@ impl delegate::Kind for Recorder {
         if self.kind.is_none() {
             self.kind = Some(kind);
         } else {
-            panic!("called kind more than once with '{:?}'", kind);
+            if !self.opts.no_internal_assertions {
+                panic!("called kind more than once with '{:?}'", kind);
+            }
         }
         Some(())
     }
@@ -234,6 +237,25 @@ fn all_characters_are_taken_verbatim_which_includes_whitespace() {
     assert_eq!(rec.get_ref(0), spec);
 }
 
+mod fuzz {
+    use crate::spec::parse::{try_parse_opts, Options};
+
+    #[test]
+    fn failures() {
+        for spec in ["|^--", "^^-^", "^^-", ":/!-"] {
+            drop(
+                try_parse_opts(
+                    spec,
+                    Options {
+                        no_internal_assertions: true,
+                        ..Default::default()
+                    },
+                )
+                .unwrap_err(),
+            );
+        }
+    }
+}
 mod anchor;
 mod kind;
 mod navigate;

@@ -326,7 +326,9 @@ where
         [b':', b'/'] => return Err(Error::EmptyTopLevelRegex),
         [b':', b'/', regex @ ..] => {
             let (regex, negated) = parse_regex_prefix(regex.as_bstr())?;
-            assert!(!regex.is_empty(), "This is handled earlier");
+            if regex.is_empty() {
+                return Err(Error::UnconsumedInput { input: input.into() });
+            }
             return consume_all(delegate.find(regex, negated));
         }
         [b':', b'0', b':', path @ ..] => return consume_all(delegate.index_lookup(path.as_bstr(), 0)),
@@ -492,7 +494,9 @@ where
                         } else if let Some(name) = delegate.last_ref.take() {
                             delegate.find_ref(name.as_bstr()).ok_or(Error::Delegate)?;
                         } else {
-                            unreachable!("BUG: must have set either ref or prefix");
+                            return Err(Error::UnconsumedInput {
+                                input: input[cursor..].into(),
+                            });
                         }
                         delegate.done();
                         cursor += consumed;
@@ -575,7 +579,8 @@ fn try_parse_usize(input: &BStr) -> Result<Option<(usize, usize)>, Error> {
     if num_digits == 0 {
         return Ok(None);
     }
-    let number = try_parse(&input[..num_digits])?.expect("parse number if only digits");
+    let input = &input[..num_digits];
+    let number = try_parse(input)?.ok_or_else(|| Error::InvalidNumber { input: input.into() })?;
     Ok(Some((number, num_digits)))
 }
 
@@ -591,7 +596,8 @@ fn try_parse_isize(input: &BStr) -> Result<Option<(isize, bool, usize)>, Error> 
     } else if num_digits == 1 && negative {
         return Ok(Some((-1, negative, num_digits)));
     }
-    let number = try_parse(&input[..num_digits])?.expect("parse number if only digits or sign");
+    let input = &input[..num_digits];
+    let number = try_parse(input)?.ok_or_else(|| Error::InvalidNumber { input: input.into() })?;
     Ok(Some((number, negative, num_digits)))
 }
 
