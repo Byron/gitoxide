@@ -16,6 +16,8 @@ use crate::{
 /// Returns `Ok(())` if all of `input` was consumed, or the error if either the `revspec` syntax was incorrect or
 /// the `delegate` failed to perform the request.
 pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
+    use delegate::{Kind, Revision};
+    let mut delegate = InterceptRev::new(delegate);
     let mut prev_kind = None;
     if let Some(b'^') = input.get(0) {
         input = next(input).1;
@@ -26,7 +28,7 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
 
     let mut found_revision;
     (input, found_revision) = {
-        let rest = revision(input, delegate)?;
+        let rest = revision(input, &mut delegate)?;
         (rest, rest != input)
     };
     if let Some((rest, kind)) = try_range(input) {
@@ -38,7 +40,7 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
         }
         delegate.kind(kind).ok_or(Error::Delegate)?;
         (input, found_revision) = {
-            let remainder = revision(rest.as_bstr(), delegate)?;
+            let remainder = revision(rest.as_bstr(), &mut delegate)?;
             (remainder, remainder != rest)
         };
         if !found_revision {
@@ -54,10 +56,40 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
     }
 }
 
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+pub enum PrefixHintOwned {
+    MustBeCommit,
+    DescribeAnchor { ref_name: BString, generation: usize },
+}
+
+impl PrefixHintOwned {
+    fn to_ref(&self) -> delegate::PrefixHint<'_> {
+        match self {
+            PrefixHintOwned::MustBeCommit => PrefixHint::MustBeCommit,
+            PrefixHintOwned::DescribeAnchor { ref_name, generation } => PrefixHint::DescribeAnchor {
+                ref_name: ref_name.as_ref(),
+                generation: *generation,
+            },
+        }
+    }
+}
+
+impl<'a> From<delegate::PrefixHint<'a>> for PrefixHintOwned {
+    fn from(v: PrefixHint<'a>) -> Self {
+        match v {
+            delegate::PrefixHint::MustBeCommit => PrefixHintOwned::MustBeCommit,
+            delegate::PrefixHint::DescribeAnchor { generation, ref_name } => PrefixHintOwned::DescribeAnchor {
+                ref_name: ref_name.to_owned(),
+                generation,
+            },
+        }
+    }
+}
+
 struct InterceptRev<'a, T> {
     inner: &'a mut T,
     last_ref: Option<BString>, // TODO: smallvec to save the unnecessary allocation? Can't keep ref due to lifetime constraints in traits
-    last_prefix: Option<git_hash::Prefix>,
+    last_prefix: Option<(git_hash::Prefix, Option<PrefixHintOwned>)>,
 }
 
 impl<'a, T> InterceptRev<'a, T>
@@ -72,6 +104,16 @@ where
         }
     }
 }
+
+impl<'a, T> Delegate for InterceptRev<'a, T>
+where
+    T: Delegate,
+{
+    fn done(&mut self) {
+        self.inner.done()
+    }
+}
+
 impl<'a, T> delegate::Revision for InterceptRev<'a, T>
 where
     T: Delegate,
@@ -82,7 +124,7 @@ where
     }
 
     fn disambiguate_prefix(&mut self, prefix: Prefix, hint: Option<PrefixHint<'_>>) -> Option<()> {
-        self.last_prefix = prefix.into();
+        self.last_prefix = Some((prefix, hint.map(Into::into)));
         self.inner.disambiguate_prefix(prefix, hint)
     }
 
@@ -253,7 +295,11 @@ fn try_parse<T: FromStr + PartialEq + Default>(input: &BStr) -> Result<Option<T>
         .transpose()
 }
 
-fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
+fn revision<'a, T>(mut input: &'a BStr, delegate: &mut InterceptRev<'_, T>) -> Result<&'a BStr, Error>
+where
+    T: Delegate,
+{
+    use delegate::{Navigate, Revision};
     fn consume_all(res: Option<()>) -> Result<&'static BStr, Error> {
         res.ok_or(Error::Delegate).map(|_| "".into())
     }
@@ -384,7 +430,11 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
     navigate(input, delegate)
 }
 
-fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
+fn navigate<'a, T>(input: &'a BStr, delegate: &mut InterceptRev<'_, T>) -> Result<&'a BStr, Error>
+where
+    T: Delegate,
+{
+    use delegate::{Kind, Navigate, Revision};
     let mut cursor = 0;
     while let Some(b) = input.get(cursor) {
         cursor += 1;
@@ -415,6 +465,17 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                             ))
                             .ok_or(Error::Delegate)?;
                         delegate.kind(spec::Kind::Range).ok_or(Error::Delegate)?;
+                        if let Some((prefix, hint)) = delegate.last_prefix.take() {
+                            match hint {
+                                Some(hint) => delegate.disambiguate_prefix(prefix, hint.to_ref().into()),
+                                None => delegate.disambiguate_prefix(prefix, None),
+                            }
+                            .ok_or(Error::Delegate)?;
+                        } else if let Some(name) = delegate.last_ref.take() {
+                            delegate.find_ref(name.as_bstr()).ok_or(Error::Delegate)?;
+                        } else {
+                            unreachable!("BUG: must have set either ref or prefix");
+                        }
                         cursor += consumed;
                         return Ok(input[cursor..].as_bstr());
                     } else {

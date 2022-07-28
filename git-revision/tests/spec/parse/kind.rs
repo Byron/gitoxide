@@ -65,7 +65,6 @@ mod range {
     use crate::spec::parse::{kind::prefix, parse, try_parse, Call};
 
     #[test]
-    #[ignore]
     fn minus_with_n_omitted() {
         let rec = parse("r1^-");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
@@ -100,7 +99,6 @@ mod range {
     }
 
     #[test]
-    #[ignore]
     fn minus_with_n() {
         let rec = parse("r1^-42");
         assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
@@ -135,17 +133,22 @@ mod range {
     }
 
     #[test]
-    #[ignore]
     fn minus_with_n_omitted_has_to_end_there() {
         let err = try_parse("r1^-^").unwrap_err();
-        assert!(matches!(err, spec::parse::Error::KindSetTwice { .. }));
+        assert!(matches!(err, spec::parse::Error::UnconsumedInput { .. }));
+    }
+
+    #[test]
+    fn minus_with_n_has_to_end_there() {
+        let err = try_parse("r1^-42^").unwrap_err();
+        assert!(matches!(err, spec::parse::Error::UnconsumedInput { .. }));
     }
 
     #[test]
     #[ignore]
-    fn minus_with_n_has_to_end_there() {
-        let err = try_parse("r1^-42^").unwrap_err();
-        assert!(matches!(err, spec::parse::Error::KindSetTwice { .. }));
+    fn minus_with_n_has_to_end_there_and_handle_range_suffix() {
+        let err = try_parse("r1^-42..").unwrap_err();
+        dbg!(err);
     }
 
     #[test]
