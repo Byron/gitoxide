@@ -26,10 +26,10 @@ fn delegate_can_refuse_spec_kinds() {
     );
 }
 
-mod range {
-    use git_revision::{spec, spec::parse::delegate::Traversal};
+mod exclusive {
+    use git_revision::spec;
 
-    use crate::spec::parse::{kind::prefix, parse, Call};
+    use crate::spec::parse::{kind::prefix, parse};
 
     #[test]
     fn leading_caret() {
@@ -57,6 +57,36 @@ mod range {
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 2);
     }
+}
+
+mod range {
+    use git_revision::{spec, spec::parse::delegate::Traversal};
+
+    use crate::spec::parse::{kind::prefix, parse, Call};
+
+    #[test]
+    #[ignore]
+    fn minus_with_n_omitted() {
+        let rec = parse("r1^-");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.get_ref(0), "r1");
+        assert_eq!(rec.traversal, [Traversal::NthParent(1)], "default is 1");
+        assert_eq!(rec.get_ref(1), "r1");
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.order, [Call::FindRef, Call::Traverse, Call::Kind, Call::FindRef]);
+    }
+
+    #[test]
+    #[ignore]
+    fn minus_with_n() {
+        let rec = parse("r1^-42");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.get_ref(0), "r1");
+        assert_eq!(rec.traversal, [Traversal::NthParent(42)]);
+        assert_eq!(rec.get_ref(1), "r1");
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.order, [Call::FindRef, Call::Traverse, Call::Kind, Call::FindRef]);
+    }
 
     #[test]
     fn trailing_dot_dot() {
@@ -66,7 +96,6 @@ mod range {
         assert_eq!(rec.get_ref(1), "HEAD");
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.order, [Call::FindRef, Call::Kind, Call::FindRef]);
-        assert_eq!(rec.calls, 3);
     }
 
     #[test]
@@ -77,7 +106,6 @@ mod range {
         assert_eq!(rec.get_ref(1), "r2");
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.order, [Call::FindRef, Call::Kind, Call::FindRef]);
-        assert_eq!(rec.calls, 3);
     }
 
     #[test]
