@@ -379,6 +379,12 @@ Provide a CLI to for the most basic user journey:
   * We use the `izip!` macro in code
 * **deflate2** _(MIT Licensed)_
   * We use various abstractions to implement decompression and compression directly on top of the rather low-level `miniz_oxide` crate
+    
+## 🙏 Special Thanks 🙏
+
+At least for now this section is exclusive to highlight the incredible support that [Josh Triplett](https://github.com/joshtriplett) has provided to me
+in the form of advice, sponsorship and countless other benefits that were incredibly meaningful. Going full time with `gitoxide` would hardly have been
+feasible without his involvement, and I couldn't be more grateful 😌.
   
 ## License
 
