@@ -88,8 +88,12 @@ impl<'a> Writer<'a> {
             self.push(&e.stat.gid.to_be_bytes(), "entries");
             self.push(&e.stat.size.to_be_bytes(), "entries");
             self.push(e.id.as_bytes(), "entries");
-            // FIXME: self.push(&e.flags.bits().to_be_bytes(), "entries");
+            //FIXME: correct flag values
+            // probably convert 'in-memory' Flags to at_rest::Flags
+            // self.push(&e.flags.bits().to_be_bytes(), "entries");
             self.push(b"\x00\x01\x61\x00", "entries");
+
+            println!("{:?}", e.flags.bits());
         }
     }
 
@@ -109,17 +113,21 @@ impl<'a> Writer<'a> {
     }
 
     fn tree_entry(&mut self, tree: &extension::Tree) {
-        let path = b"\0";
+        let path = [tree.name.as_slice(), b"\0"].concat();
 
         let num_entries_ascii = tree.num_entries.to_string();
         let num_children_ascii = tree.children.len().to_string();
 
-        self.push(path, "tree");
+        self.push(path.as_slice(), "tree");
         self.push(num_entries_ascii.as_bytes(), "tree");
         self.push(b" ", "tree");
         self.push(num_children_ascii.as_bytes(), "tree");
         self.push(b"\n", "tree");
         self.push(tree.id.as_bytes(), "tree");
+
+        for child in &tree.children {
+            self.tree_entry(child);
+        }
     }
 
     fn end_of_index(&mut self) {
@@ -130,9 +138,15 @@ impl<'a> Writer<'a> {
                 let offset: u32 = range.end as u32;
 
                 let mut hasher = git_features::hash::hasher(self.options.hash_kind);
-                // TODO: make this dynamic
-                hasher.update(b"TREE");
-                hasher.update(b"\0\0\0\x19");
+
+                match self.index_table.get("tree") {
+                    Some(range) => {
+                        hasher.update(b"TREE");
+                        hasher.update(&self.data[range.start + 4..range.start + 8]);
+                    }
+                    None => {}
+                }
+
                 let hash = hasher.digest();
 
                 self.data.push_str(signature);
