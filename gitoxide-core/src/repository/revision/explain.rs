@@ -218,9 +218,12 @@ impl<'a> delegate::Kind for Explain<'a> {
             "Set revision specification to {} mode",
             match kind {
                 spec::Kind::Range => "range",
-                spec::Kind::MergeBase => "merge-base",
-                spec::Kind::Exclude => "exclude",
-                spec::Kind::Include => unreachable!("BUG: 'single' mode is implied but cannot be set explicitly"),
+                spec::Kind::ReachableToMergeBase => "merge-base",
+                spec::Kind::ExcludeReachable => "exclude",
+                spec::Kind::IncludeReachableFromParents => "include parents",
+                spec::Kind::ExcludeReachableFromParents => "exclude parents",
+                spec::Kind::IncludeReachable =>
+                    unreachable!("BUG: 'single' mode is implied but cannot be set explicitly"),
             }
         )
         .ok()
