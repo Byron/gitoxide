@@ -187,10 +187,8 @@ impl delegate::Kind for Recorder {
         }
         if self.kind.is_none() {
             self.kind = Some(kind);
-        } else {
-            if !self.opts.no_internal_assertions {
-                panic!("called kind more than once with '{:?}'", kind);
-            }
+        } else if !self.opts.no_internal_assertions {
+            panic!("called kind more than once with '{:?}'", kind);
         }
         Some(())
     }
