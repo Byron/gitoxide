@@ -45,8 +45,6 @@ impl<'a> Writer<'a> {
         }
 
         self.end_of_index();
-
-        println! {"index_table: {:?}", self.index_table};
     }
 
     fn push(&mut self, data: &[u8], key: &'static str) {
