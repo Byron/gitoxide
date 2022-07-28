@@ -62,7 +62,7 @@ mod exclusive {
 mod range {
     use git_revision::{spec, spec::parse::delegate::Traversal};
 
-    use crate::spec::parse::{kind::prefix, parse, Call};
+    use crate::spec::parse::{kind::prefix, parse, try_parse, Call};
 
     #[test]
     #[ignore]
@@ -74,6 +74,29 @@ mod range {
         assert_eq!(rec.get_ref(1), "r1");
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.order, [Call::FindRef, Call::Traverse, Call::Kind, Call::FindRef]);
+
+        let rec = parse("@^-");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.traversal, [Traversal::NthParent(1)], "default is 1");
+        assert_eq!(rec.get_ref(1), "HEAD");
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.order, [Call::FindRef, Call::Traverse, Call::Kind, Call::FindRef]);
+
+        let rec = parse("abcd^-");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.prefix[0], prefix("abcd").into());
+        assert_eq!(rec.traversal, [Traversal::NthParent(1)], "default is 1");
+        assert_eq!(rec.prefix[1], prefix("abcd").into());
+        assert_eq!(
+            rec.order,
+            [
+                Call::DisambiguatePrefix,
+                Call::Traverse,
+                Call::Kind,
+                Call::DisambiguatePrefix
+            ]
+        );
     }
 
     #[test]
@@ -86,6 +109,43 @@ mod range {
         assert_eq!(rec.get_ref(1), "r1");
         assert_eq!(rec.prefix[0], None);
         assert_eq!(rec.order, [Call::FindRef, Call::Traverse, Call::Kind, Call::FindRef]);
+
+        let rec = parse("@^-42");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.get_ref(0), "HEAD");
+        assert_eq!(rec.traversal, [Traversal::NthParent(42)]);
+        assert_eq!(rec.get_ref(1), "HEAD");
+        assert_eq!(rec.prefix[0], None);
+        assert_eq!(rec.order, [Call::FindRef, Call::Traverse, Call::Kind, Call::FindRef]);
+
+        let rec = parse("abcd^-42");
+        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.prefix[0], prefix("abcd").into());
+        assert_eq!(rec.traversal, [Traversal::NthParent(42)]);
+        assert_eq!(rec.prefix[1], prefix("abcd").into());
+        assert_eq!(
+            rec.order,
+            [
+                Call::DisambiguatePrefix,
+                Call::Traverse,
+                Call::Kind,
+                Call::DisambiguatePrefix
+            ]
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn minus_with_n_omitted_has_to_end_there() {
+        let err = try_parse("r1^-^").unwrap_err();
+        assert!(matches!(err, spec::parse::Error::KindSetTwice { .. }));
+    }
+
+    #[test]
+    #[ignore]
+    fn minus_with_n_has_to_end_there() {
+        let err = try_parse("r1^-42^").unwrap_err();
+        assert!(matches!(err, spec::parse::Error::KindSetTwice { .. }));
     }
 
     #[test]

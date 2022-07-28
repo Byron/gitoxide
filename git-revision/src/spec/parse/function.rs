@@ -328,14 +328,27 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
             }
             b'^' => {
                 let past_sep = input.get(cursor..);
-                if let Some((number, consumed)) = past_sep
-                    .and_then(|past_sep| try_parse_usize(past_sep.as_bstr()).transpose())
+                if let Some((number, negative, consumed)) = past_sep
+                    .and_then(|past_sep| try_parse_isize(past_sep.as_bstr()).transpose())
                     .transpose()?
                 {
-                    if number == 0 {
-                        delegate.peel_until(delegate::PeelTo::ObjectKind(git_object::Kind::Commit))
+                    if negative {
+                        delegate
+                            .traverse(delegate::Traversal::NthParent(
+                                (number * -1).try_into().expect("non-negative"),
+                            ))
+                            .ok_or(Error::Delegate)?;
+                        delegate.kind(spec::Kind::Range).ok_or(Error::Delegate)?;
+                        cursor += consumed;
+                        return Ok(input[cursor..].as_bstr());
                     } else {
-                        delegate.traverse(delegate::Traversal::NthParent(number))
+                        if number == 0 {
+                            delegate.peel_until(delegate::PeelTo::ObjectKind(git_object::Kind::Commit))
+                        } else {
+                            delegate.traverse(delegate::Traversal::NthParent(
+                                number.try_into().expect("positive number"),
+                            ))
+                        }
                     }
                     .ok_or(Error::Delegate)?;
                     cursor += consumed;
@@ -398,6 +411,22 @@ fn try_parse_usize(input: &BStr) -> Result<Option<(usize, usize)>, Error> {
     }
     let number = try_parse(&input[..num_digits])?.expect("parse number if only digits");
     Ok(Some((number, num_digits)))
+}
+
+fn try_parse_isize(input: &BStr) -> Result<Option<(isize, bool, usize)>, Error> {
+    let mut bytes = input.iter().peekable();
+    if bytes.peek().filter(|&&&b| b == b'+').is_some() {
+        return Err(Error::SignedNumber { input: input.into() });
+    }
+    let negative = bytes.peek() == Some(&&b'-');
+    let num_digits = bytes.take_while(|b| b.is_ascii_digit() || *b == &b'-').count();
+    if num_digits == 0 {
+        return Ok(None);
+    } else if num_digits == 1 && negative {
+        return Ok(Some((-1, negative, num_digits)));
+    }
+    let number = try_parse(&input[..num_digits])?.expect("parse number if only digits or sign");
+    Ok(Some((number, negative, num_digits)))
 }
 
 fn try_range(input: &BStr) -> Option<(&[u8], spec::Kind)> {

@@ -56,12 +56,6 @@ fn followed_by_zero_is_peeling_to_commit() {
 }
 
 #[test]
-fn negative_numbers_are_invalid() {
-    let err = try_parse("@^-1").unwrap_err();
-    assert!(matches!(err, spec::parse::Error::SignedNumber {input} if input == "-1"))
-}
-
-#[test]
 fn explicitly_positive_numbers_are_invalid() {
     let err = try_parse("@^+1").unwrap_err();
     assert!(matches!(err, spec::parse::Error::SignedNumber {input} if input == "+1"))
