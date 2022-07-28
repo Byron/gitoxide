@@ -474,7 +474,7 @@ where
                                 (-number).try_into().expect("non-negative"),
                             ))
                             .ok_or(Error::Delegate)?;
-                        delegate.kind(spec::Kind::Range).ok_or(Error::Delegate)?;
+                        delegate.kind(spec::Kind::RangeBetween).ok_or(Error::Delegate)?;
                         if let Some((prefix, hint)) = delegate.last_prefix.take() {
                             match hint {
                                 Some(hint) => delegate.disambiguate_prefix(prefix, hint.to_ref().into()),
@@ -579,7 +579,7 @@ fn try_range(input: &BStr) -> Option<(&[u8], spec::Kind)> {
     input
         .strip_prefix(b"...")
         .map(|rest| (rest, spec::Kind::ReachableToMergeBase))
-        .or_else(|| input.strip_prefix(b"..").map(|rest| (rest, spec::Kind::Range)))
+        .or_else(|| input.strip_prefix(b"..").map(|rest| (rest, spec::Kind::RangeBetween)))
 }
 
 fn next(i: &BStr) -> (u8, &BStr) {

@@ -67,7 +67,7 @@ mod range {
     #[test]
     fn minus_with_n_omitted() {
         let rec = parse("r1^-");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.get_ref(0), "r1");
         assert_eq!(rec.traversal, [Traversal::NthParent(1)], "default is 1");
         assert_eq!(rec.get_ref(1), "r1");
@@ -75,7 +75,7 @@ mod range {
         assert_eq!(rec.order, [Call::FindRef, Call::Traverse, Call::Kind, Call::FindRef]);
 
         let rec = parse("@^-");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.traversal, [Traversal::NthParent(1)], "default is 1");
         assert_eq!(rec.get_ref(1), "HEAD");
@@ -83,7 +83,7 @@ mod range {
         assert_eq!(rec.order, [Call::FindRef, Call::Traverse, Call::Kind, Call::FindRef]);
 
         let rec = parse("abcd^-");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.traversal, [Traversal::NthParent(1)], "default is 1");
         assert_eq!(rec.prefix[1], prefix("abcd").into());
@@ -101,7 +101,7 @@ mod range {
     #[test]
     fn minus_with_n() {
         let rec = parse("r1^-42");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.get_ref(0), "r1");
         assert_eq!(rec.traversal, [Traversal::NthParent(42)]);
         assert_eq!(rec.get_ref(1), "r1");
@@ -109,7 +109,7 @@ mod range {
         assert_eq!(rec.order, [Call::FindRef, Call::Traverse, Call::Kind, Call::FindRef]);
 
         let rec = parse("@^-42");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.traversal, [Traversal::NthParent(42)]);
         assert_eq!(rec.get_ref(1), "HEAD");
@@ -117,7 +117,7 @@ mod range {
         assert_eq!(rec.order, [Call::FindRef, Call::Traverse, Call::Kind, Call::FindRef]);
 
         let rec = parse("abcd^-42");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.traversal, [Traversal::NthParent(42)]);
         assert_eq!(rec.prefix[1], prefix("abcd").into());
@@ -159,7 +159,7 @@ mod range {
     #[test]
     fn trailing_dot_dot() {
         let rec = parse("r1..");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.get_ref(0), "r1");
         assert_eq!(rec.get_ref(1), "HEAD");
         assert_eq!(rec.prefix[0], None);
@@ -169,7 +169,7 @@ mod range {
     #[test]
     fn leading_dot_dot() {
         let rec = parse("..r2");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.get_ref(1), "r2");
         assert_eq!(rec.prefix[0], None);
@@ -179,45 +179,45 @@ mod range {
     #[test]
     fn middle_dot_dot() {
         let rec = parse("@..r2");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.get_ref(0), "HEAD");
         assert_eq!(rec.get_ref(1), "r2");
         assert_eq!(rec.calls, 3);
 
         let rec = parse("r1..r2");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.get_ref(0), "r1");
         assert_eq!(rec.get_ref(1), "r2");
         assert_eq!(rec.calls, 3);
 
         let rec = parse("abcd..1234");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.prefix[1], prefix("1234").into());
         assert_eq!(rec.calls, 3);
 
         let rec = parse("r1..abcd");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.get_ref(0), "r1");
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.calls, 3);
 
         let rec = parse("abcd-dirty..v1.2-42-g1234");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.find_ref[0], None);
         assert_eq!(rec.prefix[0], prefix("abcd").into());
         assert_eq!(rec.prefix[1], prefix("1234").into());
         assert_eq!(rec.calls, 3);
 
         let rec = parse("v1.2-42-g1234..abcd-dirty");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.find_ref[0], None);
         assert_eq!(rec.prefix[0], prefix("1234").into());
         assert_eq!(rec.prefix[1], prefix("abcd").into());
         assert_eq!(rec.calls, 3);
 
         let rec = parse("v1.2.4@{1}~~^10..r1@{2}~10^2");
-        assert_eq!(rec.kind.unwrap(), spec::Kind::Range);
+        assert_eq!(rec.kind.unwrap(), spec::Kind::RangeBetween);
         assert_eq!(rec.get_ref(0), "v1.2.4");
         assert_eq!(rec.get_ref(1), "r1");
         assert_eq!(&rec.prefix, &[None, None]);

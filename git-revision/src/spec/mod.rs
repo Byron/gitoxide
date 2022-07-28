@@ -7,7 +7,7 @@ pub enum Kind {
     /// Exclude commits reachable from this revision, i.e. `a` and its ancestors.
     ExcludeReachable,
     /// Every commit that is reachable from `b` but not from `a`.
-    Range,
+    RangeBetween,
     /// Every commit reachable through either `a` or `b` but no commit that is reachable by both.
     ReachableToMergeBase,
     /// Include every commit of all parents of `a`, but not `a` itself.
