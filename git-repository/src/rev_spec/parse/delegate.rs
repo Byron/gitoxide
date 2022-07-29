@@ -366,8 +366,16 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
 }
 
 impl<'repo> delegate::Kind for Delegate<'repo> {
-    fn kind(&mut self, _kind: git_revision::spec::Kind) -> Option<()> {
-        todo!("kind, deal with ^ and .. and ... correctly")
+    fn kind(&mut self, kind: git_revision::spec::Kind) -> Option<()> {
+        use git_revision::spec::Kind::*;
+        self.kind = Some(kind);
+        if matches!(kind, RangeBetween | ReachableToMergeBase) {
+            self.idx += 1;
+        }
+        if !matches!(kind, IncludeReachable) && self.opts.object_kind_hint.is_none() {
+            self.opts.object_kind_hint = Some(ObjectKindHint::Committish);
+        }
+        Some(())
     }
 }
 

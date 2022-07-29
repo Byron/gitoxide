@@ -10,28 +10,6 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::str::FromStr;
 
-#[allow(unused)]
-enum Spec {
-    Single(git::ObjectId),
-    Exclude(git::ObjectId),
-    Range {
-        from: git::ObjectId,
-        to: git::ObjectId,
-    },
-    Merge {
-        a: git::ObjectId,
-        b: git::ObjectId,
-        base: git::ObjectId,
-    },
-    IncludeFromParents {
-        parents: Vec<git::ObjectId>,
-    },
-    ExcludeFromParents {
-        from_inclusive: git::ObjectId,
-        parents: Vec<git::ObjectId>,
-    },
-}
-
 const FIXTURE_NAME: &str = "make_rev_spec_parse_repos.sh";
 static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spec>>>> = Lazy::new(|| {
     fn kind_of(spec: &BStr) -> git_revision::spec::Kind {
@@ -92,7 +70,8 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
                     Err(_) => break, // for now bail out, we can't parse multi-line results yet
                 },
             };
-            let rev_spec = match lines_of(kind) {
+            let num_lines = lines_of(kind);
+            let rev_spec = match num_lines {
                 Some(line_count) => match line_count {
                     1 if kind == git_revision::spec::Kind::IncludeReachable => git_revision::Spec::Include(first_hash),
                     1 if kind == git_revision::spec::Kind::ExcludeReachable => git_revision::Spec::Exclude(first_hash),
@@ -100,8 +79,8 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
                         let second_hash = object_id_of_next(&mut lines);
                         if line_count == 2 {
                             git_revision::Spec::Range {
-                                from: first_hash,
-                                to: second_hash,
+                                from: second_hash,
+                                to: first_hash,
                             }
                         } else {
                             lines.next().expect("merge-base to consume");
@@ -128,6 +107,10 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
             };
             let is_duplicate = map.insert(spec.into(), Some(rev_spec)).is_some();
             assert!(!is_duplicate, "Duplicate spec '{}' cannot be handled", spec.as_bstr());
+            if num_lines.filter(|count| *count > 1).is_some() {
+                // git always considers these errors for some reason, so skip it.
+                lines.next();
+            }
         }
     }
     baseline_map
@@ -198,8 +181,8 @@ fn compare_with_baseline(
         BaselineExpectation::Same => {
             assert_eq!(
                 actual, expected,
-                "{}: git baseline boiled down to success or failure must match our outcome",
-                spec
+                "{}: left (ours) should match right (git): {:?}",
+                spec, res
             );
         }
         BaselineExpectation::GitFailsWeSucceed => {
@@ -259,6 +242,18 @@ mod ambiguous {
             parse_spec("0000000000^{tag}", &repo).unwrap_err().to_string(),
             "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"\n\t0000000000c tree\n\t0000000000b blob",
             "without special treatment, one would see a bunch of failed transformations with the impression that the first of them is the root cause, which isn't correct."
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn ranges_are_auto_disambiguating_by_committish() {
+        let repo = repo("ambiguous_blob_tree_commit").unwrap();
+        let expected = RevSpec::from_id(hex_to_id("0000000000cdcf04beb2fab69e65622616294984").attach(&repo));
+        assert_eq!(
+            parse_spec("000000000..000000000", &repo).unwrap(),
+            expected,
+            "as ranges need a commit, this is assumed when disambiguating"
         );
     }
 
