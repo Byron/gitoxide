@@ -17,3 +17,6 @@ pub use describe::function::describe;
 
 ///
 pub mod spec;
+
+mod types;
+pub use types::Spec;
