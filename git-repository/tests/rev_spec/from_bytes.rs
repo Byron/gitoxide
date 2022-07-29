@@ -206,7 +206,7 @@ mod ambiguous {
         parse_spec, parse_spec_better_than_baseline, parse_spec_no_baseline, parse_spec_no_baseline_opts,
         parse_spec_opts, rev_parse,
     };
-    use git_repository::prelude::ObjectIdExt;
+    use git_repository::prelude::{ObjectIdExt, RevSpecExt};
     use git_repository::rev_spec::parse::{Options, RefsHint};
     use git_repository::RevSpec;
     use git_testtools::hex_to_id;
@@ -246,15 +246,22 @@ mod ambiguous {
     }
 
     #[test]
-    #[ignore]
-    fn ranges_are_auto_disambiguating_by_committish() {
+    fn ranges_are_auto_disambiguated_by_committish() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
-        let expected = RevSpec::from_id(hex_to_id("0000000000cdcf04beb2fab69e65622616294984").attach(&repo));
+        let id = hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b");
+        let expected = git_revision::Spec::Range { from: id, to: id }.attach(&repo);
+
         assert_eq!(
             parse_spec("000000000..000000000", &repo).unwrap(),
             expected,
             "as ranges need a commit, this is assumed when disambiguating"
         );
+        // TODO: resolve direct target object, aka `HEAD`.
+        // assert_eq!(
+        //     parse_spec("000000000..", &repo).unwrap(),
+        //     expected,
+        //     "as ranges need a commit, this is assumed when disambiguating"
+        // );
     }
 
     #[test]

@@ -369,11 +369,13 @@ impl<'repo> delegate::Kind for Delegate<'repo> {
     fn kind(&mut self, kind: git_revision::spec::Kind) -> Option<()> {
         use git_revision::spec::Kind::*;
         self.kind = Some(kind);
-        if matches!(kind, RangeBetween | ReachableToMergeBase) {
-            self.idx += 1;
-        }
+
         if !matches!(kind, IncludeReachable) && self.opts.object_kind_hint.is_none() {
             self.opts.object_kind_hint = Some(ObjectKindHint::Committish);
+            self.disambiguate_objects_by_fallback_hint();
+        }
+        if matches!(kind, RangeBetween | ReachableToMergeBase) {
+            self.idx += 1;
         }
         Some(())
     }
