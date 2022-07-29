@@ -14,19 +14,9 @@ pub mod error;
 impl<'repo> RevSpec<'repo> {
     /// Parse `spec` and use information from `repo` to resolve it, using `opts` to learn how to deal with ambiguity.
     pub fn from_bstr<'a>(spec: impl Into<&'a BStr>, repo: &'repo Repository, opts: Options) -> Result<Self, Error> {
-        let mut delegate = Delegate {
-            refs: Default::default(),
-            objs: Default::default(),
-            idx: 0,
-            kind: None,
-            err: Vec::new(),
-            prefix: Default::default(),
-            last_call_was_disambiguate_prefix: Default::default(),
-            opts,
-            repo,
-        };
+        let mut delegate = Delegate::new(repo, opts);
         match git_revision::spec::parse(spec.into(), &mut delegate) {
-            Err(parse::Error::Delegate) => Err(Error::from_errors(delegate.err)),
+            Err(parse::Error::Delegate) => Err(delegate.into_err()),
             Err(err) => Err(err.into()),
             Ok(()) => delegate.into_rev_spec(),
         }
@@ -36,6 +26,8 @@ impl<'repo> RevSpec<'repo> {
 struct Delegate<'repo> {
     refs: [Option<git_ref::Reference>; 2],
     objs: [Option<HashSet<ObjectId>>; 2],
+    /// The originally encountered ambiguous objects for potential later use in errors.
+    ambiguous_objects: [Option<HashSet<ObjectId>>; 2],
     idx: usize,
     kind: Option<git_revision::spec::Kind>,
 

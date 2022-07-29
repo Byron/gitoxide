@@ -253,6 +253,16 @@ mod ambiguous {
     }
 
     #[test]
+    fn fully_failed_disambiguation_still_yields_an_ambiguity_error() {
+        let repo = repo("ambiguous_blob_tree_commit").unwrap();
+        assert_eq!(
+            parse_spec("0000000000^{tag}", &repo).unwrap_err().to_string(),
+            "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"\n\t0000000000c tree\n\t0000000000b blob",
+            "without special treatment, one would see a bunch of failed transformations with the impression that the first of them is the root cause, which isn't correct."
+        );
+    }
+
+    #[test]
     fn blob_and_tree_can_be_disambiguated_by_type() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
         assert_eq!(

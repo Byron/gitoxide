@@ -9,6 +9,36 @@ use smallvec::SmallVec;
 use std::collections::HashSet;
 
 impl<'repo> Delegate<'repo> {
+    pub fn new(repo: &'repo Repository, opts: crate::rev_spec::parse::Options) -> Self {
+        Delegate {
+            refs: Default::default(),
+            objs: Default::default(),
+            ambiguous_objects: Default::default(),
+            idx: 0,
+            kind: None,
+            err: Vec::new(),
+            prefix: Default::default(),
+            last_call_was_disambiguate_prefix: Default::default(),
+            opts,
+            repo,
+        }
+    }
+
+    pub fn into_err(mut self) -> Error {
+        let repo = self.repo;
+        for err in self
+            .ambiguous_objects
+            .iter_mut()
+            .zip(self.prefix)
+            .filter_map(|(a, b)| a.take().filter(|candidates| candidates.len() > 1).zip(b))
+            .map(|(candidates, prefix)| Error::ambiguous(candidates, prefix, repo))
+            .rev()
+        {
+            self.err.insert(0, err);
+        }
+        Error::from_errors(self.err)
+    }
+
     pub fn into_rev_spec(mut self) -> Result<crate::RevSpec<'repo>, Error> {
         fn zero_or_one_objects_or_ambguity_err(
             mut candidates: [Option<HashSet<ObjectId>>; 2],
@@ -191,10 +221,12 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
                     RefsHint::PreferObjectOnFullLengthHexShaUseRefOtherwise
                         if prefix.hex_len() == candidates.iter().next().expect("at least one").kind().len_in_hex() =>
                     {
+                        self.ambiguous_objects[self.idx] = Some(candidates.clone());
                         self.objs[self.idx] = Some(candidates);
                         Some(())
                     }
                     RefsHint::PreferObject => {
+                        self.ambiguous_objects[self.idx] = Some(candidates.clone());
                         self.objs[self.idx] = Some(candidates);
                         Some(())
                     }
@@ -216,6 +248,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
                                 }
                             }
                             Err(_) => {
+                                self.ambiguous_objects[self.idx] = Some(candidates.clone());
                                 self.objs[self.idx] = Some(candidates);
                                 Some(())
                             }
