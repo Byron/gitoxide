@@ -1,8 +1,10 @@
 use git::prelude::ObjectIdExt;
 use git::RevSpec;
+use git_object::bstr;
 use git_object::bstr::BStr;
 use git_ref::bstr::{BString, ByteSlice};
 use git_repository as git;
+use git_revision::spec::Kind;
 use git_testtools::{hex_to_id, once_cell::sync::Lazy};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -31,15 +33,37 @@ enum Spec {
 }
 
 const FIXTURE_NAME: &str = "make_rev_spec_parse_repos.sh";
-static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git::ObjectId>>>> = Lazy::new(|| {
-    fn expected_lines_if_successful(spec: &BStr) -> usize {
-        if spec.contains_str(b"...") {
-            3
-        } else if spec.contains_str(b"..") | spec.ends_with(b"^!") {
-            2
+static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spec>>>> = Lazy::new(|| {
+    fn kind_of(spec: &BStr) -> git_revision::spec::Kind {
+        if spec.starts_with(b"^") {
+            git_revision::spec::Kind::IncludeReachable
+        } else if spec.contains_str(b"...") {
+            git_revision::spec::Kind::ReachableToMergeBase
+        } else if spec.contains_str(b"..") {
+            git_revision::spec::Kind::RangeBetween
+        } else if spec.ends_with(b"^!") {
+            git_revision::spec::Kind::ExcludeReachableFromParents
+        } else if spec.ends_with(b"^@") {
+            unreachable!("BUG: cannot use rev^@ as it won't list the actual commit")
         } else {
-            1
+            git_revision::spec::Kind::IncludeReachable
         }
+    }
+    fn lines_of(kind: git_revision::spec::Kind) -> Option<usize> {
+        Some(match kind {
+            Kind::ExcludeReachable | Kind::IncludeReachable => 1,
+            Kind::RangeBetween => 2,
+            Kind::ReachableToMergeBase => 3,
+            Kind::IncludeReachableFromParents | Kind::ExcludeReachableFromParents => return None,
+        })
+    }
+    fn object_id_of_next(lines: &mut std::iter::Peekable<bstr::Lines<'_>>) -> git_hash::ObjectId {
+        let hex_hash = lines.next().expect("valid respect yields enough lines");
+        object_id_of(hex_hash).expect("git yields full objects ids")
+    }
+    fn object_id_of(input: &[u8]) -> Option<git_hash::ObjectId> {
+        let hex_hash = input.strip_prefix(b"^").unwrap_or(input);
+        git_hash::ObjectId::from_str(hex_hash.to_str().expect("hex is ascii")).ok()
     }
     let mut baseline_map = HashMap::new();
     let base = git_testtools::scripted_fixture_repo_read_only(FIXTURE_NAME).unwrap();
@@ -56,8 +80,8 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git::ObjectId>>>>
         let mut lines = baseline.lines().peekable();
         while let Some(spec) = lines.next() {
             let exit_code_or_hash = lines.next().expect("exit code or single hash").to_str().unwrap();
-            let line_count = expected_lines_if_successful(spec.as_bstr()) - 1;
-            let hash = match u8::from_str(exit_code_or_hash) {
+            let kind = kind_of(spec.as_bstr());
+            let first_hash = match u8::from_str(exit_code_or_hash) {
                 Ok(_exit_code) => {
                     let is_duplicate = map.insert(spec.into(), None).is_some();
                     assert!(!is_duplicate, "Duplicate spec '{}' cannot be handled", spec.as_bstr());
@@ -68,9 +92,42 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git::ObjectId>>>>
                     Err(_) => break, // for now bail out, we can't parse multi-line results yet
                 },
             };
-            let is_duplicate = map.insert(spec.into(), Some(hash)).is_some();
+            let rev_spec = match lines_of(kind) {
+                Some(line_count) => match line_count {
+                    1 if kind == git_revision::spec::Kind::IncludeReachable => git_revision::Spec::Include(first_hash),
+                    1 if kind == git_revision::spec::Kind::ExcludeReachable => git_revision::Spec::Exclude(first_hash),
+                    2 | 3 => {
+                        let second_hash = object_id_of_next(&mut lines);
+                        if line_count == 2 {
+                            git_revision::Spec::Range {
+                                from: first_hash,
+                                to: second_hash,
+                            }
+                        } else {
+                            lines.next().expect("merge-base to consume");
+                            git_revision::Spec::Merge {
+                                theirs: first_hash,
+                                ours: second_hash,
+                            }
+                        }
+                    }
+                    _ => unreachable!(),
+                },
+                None => {
+                    let rev_spec = match kind {
+                        git_revision::spec::Kind::ExcludeReachableFromParents => {
+                            git_revision::Spec::ExcludeFromParents { from: first_hash }
+                        }
+                        _ => unreachable!(),
+                    };
+                    while let Some(_oid) = lines.peek().map(|hex| object_id_of(hex)) {
+                        lines.next();
+                    }
+                    rev_spec
+                }
+            };
+            let is_duplicate = map.insert(spec.into(), Some(rev_spec)).is_some();
             assert!(!is_duplicate, "Duplicate spec '{}' cannot be handled", spec.as_bstr());
-            lines.by_ref().take(line_count).count();
         }
     }
     baseline_map
@@ -130,9 +187,9 @@ fn compare_with_baseline(
     spec: &str,
     expectation: BaselineExpectation,
 ) {
-    let actual = res.as_ref().ok().and_then(|rs| rs.from().map(|id| id.detach()));
+    let actual = res.as_deref().ok().copied();
     let spec: BString = spec.into();
-    let expected = BASELINE
+    let expected = *BASELINE
         .get(repo.work_dir().unwrap_or_else(|| repo.git_dir()))
         .unwrap_or_else(|| panic!("No baseline for {:?}", repo))
         .get(&spec)
@@ -140,13 +197,13 @@ fn compare_with_baseline(
     match expectation {
         BaselineExpectation::Same => {
             assert_eq!(
-                &actual, expected,
+                actual, expected,
                 "{}: git baseline boiled down to success or failure must match our outcome",
                 spec
             );
         }
         BaselineExpectation::GitFailsWeSucceed => {
-            assert_eq!(expected, &None, "Git should fail here");
+            assert_eq!(expected, None, "Git should fail here");
         }
     }
 }

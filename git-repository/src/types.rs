@@ -168,56 +168,10 @@ pub struct ThreadSafeRepository {
 /// to specify revisions and revision ranges.
 #[derive(Clone, Debug)]
 pub struct RevSpec<'repo> {
-    pub(crate) inner: RevSpecDetached,
+    pub(crate) inner: git_revision::Spec,
+    /// The first name of a reference as seen while parsing a `RevSpec`, for completeness.
+    pub(crate) first_ref: Option<git_ref::Reference>,
+    /// The second name of a reference as seen while parsing a `RevSpec`, for completeness.
+    pub(crate) second_ref: Option<git_ref::Reference>,
     pub(crate) repo: &'repo Repository,
-}
-
-/// A revision specification without any bindings to a repository, useful for serialization or movement over thread boundaries.
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct RevSpecDetached {
-    pub(crate) from_ref: Option<git_ref::Reference>,
-    pub(crate) from: Option<git_hash::ObjectId>,
-    pub(crate) to_ref: Option<git_ref::Reference>,
-    pub(crate) to: Option<git_hash::ObjectId>,
-    pub(crate) kind: Option<git_revision::spec::Kind>,
-}
-
-/// A revision specification without any bindings to a repository, useful for serialization or movement over thread boundaries.
-///
-/// Note that all [object ids][git_hash::ObjectId] should be a committish, but don't have to be.
-/// Unless the field name contains `_exclusive`, the respective objects are included in the set.
-#[derive(Clone, Debug)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub enum RevSpecDetached2 {
-    /// The equivalent to [git_revision::spec::Kind::IncludeReachable], but with data.
-    Include(git_hash::ObjectId),
-    /// The equivalent to [git_revision::spec::Kind::ExcludeReachable], but with data.
-    Exclude(git_hash::ObjectId),
-    /// The equivalent to [git_revision::spec::Kind::RangeBetween], but with data.
-    Range {
-        /// The starting point of the range, which is included in the set.
-        from: git_hash::ObjectId,
-        /// The end point of the range, which is included in the set.
-        to: git_hash::ObjectId,
-    },
-
-    /// The equivalent to [git_revision::spec::Kind::ReachableToMergeBase], but with data.
-    Merge {
-        /// Their side of the merge, which is included in the set.
-        theirs: git_hash::ObjectId,
-        /// Our side of the merge, which is included in the set.
-        ours: git_hash::ObjectId,
-    },
-
-    /// The equivalent to [git_revision::spec::Kind::IncludeReachableFromParents], but with data.
-    IncludeFromParents {
-        /// Include only the parents of this object, but not the object itself.
-        from_exclusive: git_hash::ObjectId,
-    },
-    /// The equivalent to [git_revision::spec::Kind::ExcludeReachableFromParents], but with data.
-    ExcludeFromParents {
-        /// Exclude the parents of this object, but not the object itself.
-        from: git_hash::ObjectId,
-    },
 }

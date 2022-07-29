@@ -8,6 +8,76 @@ use git_revision::spec::parse::delegate::{self, PeelTo, ReflogLookup, SiblingBra
 use smallvec::SmallVec;
 use std::collections::HashSet;
 
+impl<'repo> Delegate<'repo> {
+    pub fn into_rev_spec(mut self) -> Result<crate::RevSpec<'repo>, Error> {
+        fn zero_or_one_objects_or_ambguity_err(
+            mut candidates: [Option<HashSet<ObjectId>>; 2],
+            prefix: [Option<git_hash::Prefix>; 2],
+            mut errors: Vec<Error>,
+            repo: &Repository,
+        ) -> Result<[Option<ObjectId>; 2], Error> {
+            let mut out = [None, None];
+            for ((candidates, prefix), out) in candidates.iter_mut().zip(prefix).zip(out.iter_mut()) {
+                let candidates = candidates.take();
+                match candidates {
+                    None => *out = None,
+                    Some(candidates) => {
+                        match candidates.len() {
+                            0 => unreachable!(
+                                "BUG: let's avoid still being around if no candidate matched the requirements"
+                            ),
+                            1 => {
+                                *out = candidates.into_iter().next();
+                            }
+                            _ => {
+                                errors.insert(
+                                    0,
+                                    Error::ambiguous(candidates, prefix.expect("set when obtaining candidates"), repo),
+                                );
+                                return Err(Error::from_errors(errors));
+                            }
+                        };
+                    }
+                };
+            }
+            Ok(out)
+        }
+
+        fn kind_to_spec(
+            kind: Option<git_revision::spec::Kind>,
+            [first, second]: [Option<ObjectId>; 2],
+        ) -> git_revision::Spec {
+            use git_revision::spec::Kind::*;
+            match kind.unwrap_or_default() {
+                IncludeReachable => git_revision::Spec::Include(first.expect("set by parser")),
+                ExcludeReachable => git_revision::Spec::Exclude(first.expect("set by parser")),
+                RangeBetween => git_revision::Spec::Range {
+                    from: first.expect("set by parser"),
+                    to: second.expect("set by parser"),
+                },
+                ReachableToMergeBase => git_revision::Spec::Merge {
+                    theirs: first.expect("set by parser"),
+                    ours: second.expect("set by parser"),
+                },
+                IncludeReachableFromParents => git_revision::Spec::IncludeOnlyParents {
+                    from_exclusive: first.expect("set by parser"),
+                },
+                ExcludeReachableFromParents => git_revision::Spec::ExcludeFromParents {
+                    from: first.expect("set by parser"),
+                },
+            }
+        }
+
+        let range = zero_or_one_objects_or_ambguity_err(self.objs, self.prefix, self.err, self.repo)?;
+        Ok(crate::RevSpec {
+            first_ref: self.refs[0].take(),
+            second_ref: self.refs[1].take(),
+            inner: kind_to_spec(self.kind, range),
+            repo: self.repo,
+        })
+    }
+}
+
 impl<'repo> parse::Delegate for Delegate<'repo> {
     fn done(&mut self) {
         self.follow_refs_to_objects_if_needed();

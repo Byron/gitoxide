@@ -21,22 +21,7 @@ pub(crate) mod function {
 
         match format {
             OutputFormat::Human => {
-                if let Some((kind, from, to)) = spec.range() {
-                    writeln!(&mut out, "{}", from)?;
-                    writeln!(
-                        &mut out,
-                        "{}{}",
-                        matches!(kind, git::revision::spec::Kind::RangeBetween)
-                            .then(|| "^")
-                            .unwrap_or_default(),
-                        to
-                    )?;
-                    if matches!(kind, git::revision::spec::Kind::RangeBetween) {
-                        writeln!(out, "^TBD: compute and display merge base hash")?;
-                    }
-                } else if let Some(rev) = spec.single() {
-                    writeln!(&mut out, "{}", rev)?;
-                }
+                writeln!(out, "{spec:?}")?;
             }
             #[cfg(feature = "serde1")]
             OutputFormat::Json => {
