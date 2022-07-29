@@ -46,23 +46,10 @@ jobs:
   test-fast:
     strategy:
       matrix:
-        build:
-#          - win-gnu
-          - win-msvc
-          - macos
-        include:
-          # For some reason, the gnu-version has flaky tests when running it with nextest. Reproduces locally, can probably be fixed.
-#        - os: windows-2019
-#          build: win-gnu
-#          rust: stable-x86_64-gnu
-        - os: windows-2019
-          build: win-msvc
-          rust: nightly
-        - os: macos-latest
-          build: macos
-          rust: stable
+        os:
+          - windows-2019
+          - macos-latest
     runs-on: ${{ matrix.os }}
-    name: ${{ matrix.build }}
     steps:
       - uses: actions/checkout@v1
       - run: rustup set auto-self-update disable
@@ -71,7 +58,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: default
-          toolchain: ${{ matrix.rust }}
+          toolchain: stable
           override: true
       - uses: Swatinem/rust-cache@v1
       - name: Setup dependencies (macos)
