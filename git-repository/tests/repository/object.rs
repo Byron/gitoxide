@@ -68,7 +68,10 @@ mod tag {
         assert_eq!(tag.name, "v1.0.0");
         assert_eq!(current_head_id, tag.target(), "the tag points to the commit");
         assert_eq!(tag.target_kind, git_object::Kind::Commit);
-        assert_eq!(*tag.tagger.as_ref().expect("tagger"), repo.committer_or_default());
+        assert_eq!(
+            tag.tagger.as_ref().expect("tagger").actor(),
+            repo.committer_or_default().actor()
+        );
         assert_eq!(tag.message, message);
         Ok(())
     }
