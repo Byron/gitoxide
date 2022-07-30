@@ -1,4 +1,4 @@
-use crate::{bstr::BStr, Commit, ObjectDetached, Tree};
+use crate::{bstr, bstr::BStr, Commit, ObjectDetached, Tree};
 
 mod error {
     use crate::object;
@@ -49,10 +49,21 @@ impl<'repo> Commit<'repo> {
     pub fn message(&self) -> Result<git_object::commit::MessageRef<'_>, git_object::decode::Error> {
         Ok(git_object::commit::MessageRef::from_bytes(self.message_raw()?))
     }
-    /// Decode the entire commit object in full and return the raw message bytes.
+    /// Decode the commit object until the message and return it.
     pub fn message_raw(&self) -> Result<&'_ BStr, git_object::decode::Error> {
         git_object::CommitRefIter::from_bytes(&self.data).message()
     }
+    /// Obtain the message by using intricate knowledge about the encoding, which is fastest and
+    /// can't fail at the expense of error handling.
+    pub fn message_raw_sloppy(&self) -> &BStr {
+        use bstr::ByteSlice;
+        self.data
+            .find(b"\n\n")
+            .map(|pos| &self.data[pos + 2..])
+            .unwrap_or_default()
+            .as_bstr()
+    }
+
     /// Decode the commit and obtain the time at which the commit was created.
     ///
     /// For the time at which it was authored, refer to `.decode()?.author.time`.

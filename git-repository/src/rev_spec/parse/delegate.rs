@@ -415,20 +415,14 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                             }) {
                                 count += 1;
                                 match commit {
-                                    Ok(commit) => match commit.message_raw() {
-                                        Ok(message) => {
-                                            let matches = matches(message);
-                                            if matches && !negated || !matches && negated {
-                                                replacements.push((*oid, commit.id));
-                                                matched = true;
-                                                break;
-                                            }
+                                    Ok(commit) => {
+                                        let matches = matches(commit.message_raw_sloppy());
+                                        if matches && !negated || !matches && negated {
+                                            replacements.push((*oid, commit.id));
+                                            matched = true;
+                                            break;
                                         }
-                                        Err(err) => errors.push((
-                                            *oid,
-                                            git_traverse::commit::ancestors::Error::ObjectDecode(err).into(),
-                                        )),
-                                    },
+                                    }
                                     Err(err) => errors.push((*oid, err)),
                                 }
                             }
