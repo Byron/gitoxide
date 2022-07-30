@@ -61,6 +61,9 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[cfg(feature = "regex")]
+    #[error(transparent)]
+    InvalidRegex(#[from] regex::Error),
     #[error("None of {commits_searched} commits from {oid} matched regex {regex:?}")]
     NoRegexMatch {
         regex: BString,

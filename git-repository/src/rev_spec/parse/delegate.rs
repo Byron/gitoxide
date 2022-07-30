@@ -374,7 +374,15 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
         #[cfg(not(feature = "regex"))]
         let matches = |message: &BStr| -> bool { message.contains_str(regex) };
         #[cfg(feature = "regex")]
-        let matches = |message: &BStr| -> bool { todo!("regex match") };
+        let compiled_regex = match regex::bytes::Regex::new(regex.to_str_lossy().as_ref()) {
+            Ok(regex) => regex,
+            Err(err) => {
+                self.err.push(err.into());
+                return None;
+            }
+        };
+        #[cfg(feature = "regex")]
+        let matches = move |message: &BStr| -> bool { compiled_regex.is_match(message) };
 
         match self.objs[self.idx].as_mut() {
             Some(objs) => {

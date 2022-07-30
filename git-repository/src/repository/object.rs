@@ -12,9 +12,7 @@ use crate::{commit, ext::ObjectIdExt, object, rev_spec, tag, Id, Object, Referen
 
 /// Methods related to object creation.
 impl crate::Repository {
-    // TODO: tests, actual integration of rev-spec parsing when available.
     /// Parse a revision specification and turn it into the full id to the object it describes, similar to `git rev-parse`.
-    /// NOTE that currently this only parses full hex names.
     pub fn rev_parse<'a>(&self, spec: impl Into<&'a BStr>) -> Result<RevSpec<'_>, crate::rev_spec::parse::Error> {
         RevSpec::from_bstr(
             spec,
