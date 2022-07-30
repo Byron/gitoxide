@@ -386,13 +386,14 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
 
         match self.objs[self.idx].as_mut() {
             Some(objs) => {
+                let repo = self.repo;
                 let mut errors = Vec::new();
                 let mut replacements = SmallVec::<[(ObjectId, ObjectId); 1]>::default();
                 for oid in objs.iter() {
-                    let id = match oid.attach(self.repo).object().map_err(Error::from).and_then(|obj| {
+                    let id = match oid.attach(repo).object().map_err(Error::from).and_then(|obj| {
                         let actual = obj.kind;
                         obj.try_into_commit().map_err(|_| Error::ObjectKind {
-                            oid: *oid,
+                            oid: oid.attach(repo).shorten_or_id(),
                             actual,
                             expected: git_object::Kind::Commit,
                         })
@@ -496,7 +497,7 @@ fn require_object_kind(repo: &Repository, obj: &git_hash::oid, kind: git_object:
         Err(Error::ObjectKind {
             actual: obj.kind,
             expected: kind,
-            oid: obj.id,
+            oid: obj.id.attach(repo).shorten_or_id(),
         })
     }
 }

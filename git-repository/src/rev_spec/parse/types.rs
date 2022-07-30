@@ -88,7 +88,7 @@ pub enum Error {
     PeelToKind(#[from] object::peel::to_kind::Error),
     #[error("Object {oid} was a {actual}, but needed it to be a {expected}")]
     ObjectKind {
-        oid: git_hash::ObjectId,
+        oid: git_hash::Prefix,
         actual: git_object::Kind,
         expected: git_object::Kind,
     },
