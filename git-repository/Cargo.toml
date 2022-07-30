@@ -117,6 +117,9 @@ serde = { version = "1.0.114", optional = true, default-features = false, featur
 smallvec = "1.9.0"
 
 ## For use in rev-parse, which provides searching commits by running a regex on their message.
+##
+## If disabled, the text will be search verbatim in any portion of the commit message, similar to
+## how a simple unanchored regex of only 'normal' characters would work.
 regex = { version = "1.6.0", optional = true, default-features = false, features = ["std"] }
 
 document-features = { version = "0.2.0", optional = true }

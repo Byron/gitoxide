@@ -104,7 +104,6 @@ pub enum Error {
         #[source]
         next: Option<Box<dyn std::error::Error + Send + Sync + 'static>>,
     },
-    #[cfg(not(feature = "regex"))]
-    #[error("Cannot use regex based rev-specs unless the `regex` feature is enabled during compilation")]
-    RegexNotCompiledIn,
+    #[error(transparent)]
+    Traverse(#[from] git_traverse::commit::ancestors::Error),
 }

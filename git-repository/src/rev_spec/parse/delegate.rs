@@ -1,5 +1,5 @@
 use super::{Delegate, Error, ObjectKindHint, RefsHint};
-use crate::bstr::BStr;
+use crate::bstr::{BStr, ByteSlice};
 use crate::ext::{ObjectIdExt, ReferenceExt};
 use crate::{object, Repository};
 use git_hash::ObjectId;
@@ -367,16 +367,79 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
         }
     }
 
-    fn find(&mut self, _regex: &BStr, _negated: bool) -> Option<()> {
+    fn find(&mut self, regex: &BStr, negated: bool) -> Option<()> {
         self.unset_disambiguate_call();
+        self.follow_refs_to_objects_if_needed()?;
+
         #[cfg(not(feature = "regex"))]
-        {
-            self.err.push(Error::RegexNotCompiledIn);
-            None
-        }
+        let matches = |message: &BStr| -> bool { message.contains_str(regex) };
         #[cfg(feature = "regex")]
-        {
-            todo!()
+        let matches = |message: &BStr| -> bool { todo!("regex match") };
+
+        match self.objs[self.idx].as_mut() {
+            Some(objs) => {
+                let mut errors = Vec::new();
+                let mut replacements = SmallVec::<[(ObjectId, ObjectId); 1]>::default();
+                for oid in objs.iter() {
+                    let id = match oid.attach(self.repo).object().map_err(Error::from).and_then(|obj| {
+                        let actual = obj.kind;
+                        obj.try_into_commit().map_err(|_| Error::ObjectKind {
+                            oid: *oid,
+                            actual,
+                            expected: git_object::Kind::Commit,
+                        })
+                    }) {
+                        Ok(commit) => commit.id(),
+                        Err(err) => {
+                            errors.push((*oid, err));
+                            continue;
+                        }
+                    };
+
+                    match id.ancestors().all() {
+                        Ok(iter) => {
+                            for commit in iter.map(|res| {
+                                res.map_err(Error::from).and_then(|commit_id| {
+                                    commit_id.object().map_err(Error::from).map(|obj| obj.into_commit())
+                                })
+                            }) {
+                                match commit {
+                                    Ok(commit) => match commit.message_raw() {
+                                        Ok(message) => {
+                                            let matches = matches(message);
+                                            if matches && !negated || !matches && negated {
+                                                replacements.push((*oid, commit.id));
+                                                break;
+                                            }
+                                        }
+                                        Err(err) => errors.push((
+                                            *oid,
+                                            git_traverse::commit::ancestors::Error::ObjectDecode(err).into(),
+                                        )),
+                                    },
+                                    Err(err) => errors.push((*oid, err)),
+                                }
+                            }
+                        }
+                        Err(err) => errors.push((*oid, err.into())),
+                    }
+                }
+                if errors.len() == objs.len() {
+                    self.err.extend(errors.into_iter().map(|(_, err)| err));
+                    None
+                } else {
+                    for (obj, err) in errors {
+                        objs.remove(&obj);
+                        self.err.push(err);
+                    }
+                    for (find, replace) in replacements {
+                        objs.remove(&find);
+                        objs.insert(replace);
+                    }
+                    Some(())
+                }
+            }
+            None => todo!("find youngest match"),
         }
     }
 

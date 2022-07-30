@@ -520,21 +520,47 @@ fn access_blob_through_tree() {
     );
 }
 
-#[test]
-#[cfg(not(feature = "regex"))]
-fn using_regex_in_commit_messages_displays_an_error_if_not_compiled_in() {
-    let repo = repo("ambiguous_blob_tree_commit").unwrap();
-    assert_eq!(
-        parse_spec_no_baseline(":/fail even if no regex syntax is used", &repo)
-            .unwrap_err()
-            .to_string(),
-        "Cannot use regex based rev-specs unless the `regex` feature is enabled during compilation",
-    );
-}
+mod regex {
+    use crate::rev_spec::from_bytes::{parse_spec_no_baseline, repo};
+    use git_repository::prelude::ObjectIdExt;
+    use git_repository::RevSpec;
+    use git_testtools::hex_to_id;
 
-#[test]
-#[cfg(feature = "regex")]
-#[ignore]
-fn regex_search_in_commit_message() {
-    let _repo = repo("ambiguous_blob_tree_commit").unwrap();
+    mod with_known_revision {
+        use super::*;
+
+        #[test]
+        #[cfg(not(feature = "regex"))]
+        fn contained_string_matches_in_unanchored_regex_and_disambiguates_by_automatically() {
+            let repo = repo("ambiguous_blob_tree_commit").unwrap();
+            assert_eq!(
+                parse_spec_no_baseline("0000000000^{/x}", &repo).unwrap(),
+                RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo))
+            );
+
+            assert_eq!(
+                parse_spec_no_baseline("@^{/x}", &repo).unwrap(),
+                RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
+                "ref names are resolved"
+            );
+        }
+    }
+
+    mod find_youngest_matching_commit {
+        use super::*;
+
+        #[test]
+        #[cfg(not(feature = "regex"))]
+        #[ignore]
+        fn contained_string_matches() {
+            let _repo = repo("ambiguous_blob_tree_commit").unwrap();
+        }
+
+        #[test]
+        #[cfg(feature = "regex")]
+        #[ignore]
+        fn regex_matches() {
+            let _repo = repo("tbd_regex_repo_with_different_times").unwrap();
+        }
+    }
 }

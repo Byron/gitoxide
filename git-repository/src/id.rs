@@ -100,6 +100,10 @@ pub mod ancestors {
 
     impl<'repo> Id<'repo> {
         /// Obtain a platform for traversing ancestors of this commit.
+        ///
+        /// Note that unless [`error_on_missing_commit()`][Iter::error_on_missing_commit()] is enabled, which be default it is not,
+        /// one will always see an empty iteration even if this id is not a commit, instead of an error.
+        /// If this is undesirable, it's best to check for the correct object type before creating an iterator.
         pub fn ancestors(&self) -> Ancestors<'repo> {
             Ancestors {
                 repo: self.repo,
