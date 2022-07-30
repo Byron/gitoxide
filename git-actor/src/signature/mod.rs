@@ -1,5 +1,5 @@
 mod _ref {
-    use bstr::ByteSlice;
+    use bstr::{BStr, ByteSlice};
 
     use crate::{signature::decode, Signature, SignatureRef};
 
@@ -28,6 +28,11 @@ mod _ref {
                 email: self.email.trim().as_bstr(),
                 time: self.time,
             }
+        }
+
+        /// Return the actor's name and email, effectively exclusing the time stamp of this signature.
+        pub fn actor(&self) -> (&BStr, &BStr) {
+            (self.name, self.email)
         }
     }
 }
