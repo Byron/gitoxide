@@ -30,6 +30,11 @@ pub enum Sorting {
     /// Commits are sorted by their commit time in descending order, that is newest first.
     ///
     /// The sorting applies to all currently queued commit ids and thus is full.
+    ///
+    /// # Performance
+    ///
+    /// This mode benefits greatly from having an object_cache in `find()`
+    /// to avoid having to lookup each commit twice.
     ByCommitTimeNewestFirst,
 }
 
