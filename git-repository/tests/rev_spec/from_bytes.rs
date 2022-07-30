@@ -522,15 +522,19 @@ fn access_blob_through_tree() {
 
 #[test]
 #[cfg(not(feature = "regex"))]
-#[ignore]
 fn using_regex_in_commit_messages_displays_an_error_if_not_compiled_in() {
     let repo = repo("ambiguous_blob_tree_commit").unwrap();
     assert_eq!(
-        rev_parse(":/fail even if no regex syntax is used", &repo).unwrap_err().to_string(),
-        "Short id 0000000000f is ambiguous. Candidates are:\n\t0000000000f8 tag \"v1.0.0\"\n\t0000000000fd tree\n\t0000000000f2 blob",
+        parse_spec_no_baseline(":/fail even if no regex syntax is used", &repo)
+            .unwrap_err()
+            .to_string(),
+        "Cannot use regex based rev-specs unless the `regex` feature is enabled during compilation",
     );
 }
 
 #[test]
+#[cfg(feature = "regex")]
 #[ignore]
-fn find_ref() {}
+fn regex_search_in_commit_message() {
+    let _repo = repo("ambiguous_blob_tree_commit").unwrap();
+}

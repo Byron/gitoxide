@@ -369,7 +369,15 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
 
     fn find(&mut self, _regex: &BStr, _negated: bool) -> Option<()> {
         self.unset_disambiguate_call();
-        todo!()
+        #[cfg(not(feature = "regex"))]
+        {
+            self.err.push(Error::RegexNotCompiledIn);
+            None
+        }
+        #[cfg(feature = "regex")]
+        {
+            todo!()
+        }
     }
 
     fn index_lookup(&mut self, _path: &BStr, _stage: u8) -> Option<()> {
