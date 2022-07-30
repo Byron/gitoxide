@@ -264,5 +264,6 @@ for name in committish treeish tree commit blob; do
       baseline "0000000000"
       baseline "0000000000f"
       baseline "0000000000f^{tree}"
+      baseline "00000000000..00000000000"
   )
 done

@@ -111,18 +111,25 @@ impl<'repo> Delegate<'repo> {
 impl<'repo> parse::Delegate for Delegate<'repo> {
     fn done(&mut self) {
         self.follow_refs_to_objects_if_needed();
-        self.disambiguate_objects_by_fallback_hint();
+        self.disambiguate_objects_by_fallback_hint(
+            self.kind_implies_committish()
+                .then(|| ObjectKindHint::Committish)
+                .or(self.opts.object_kind_hint),
+        );
     }
 }
 
 impl<'repo> Delegate<'repo> {
-    fn disambiguate_objects_by_fallback_hint(&mut self) {
+    fn kind_implies_committish(&self) -> bool {
+        self.kind.unwrap_or(git_revision::spec::Kind::IncludeReachable) != git_revision::spec::Kind::IncludeReachable
+    }
+    fn disambiguate_objects_by_fallback_hint(&mut self, hint: Option<ObjectKindHint>) {
         if self.last_call_was_disambiguate_prefix[self.idx] {
             self.unset_disambiguate_call();
 
             if let Some(objs) = self.objs[self.idx].as_mut() {
                 let repo = self.repo;
-                let errors: Vec<_> = match self.opts.object_kind_hint {
+                let errors: Vec<_> = match hint {
                     Some(kind_hint) => match kind_hint {
                         ObjectKindHint::Treeish | ObjectKindHint::Committish => {
                             let kind = match kind_hint {
@@ -370,13 +377,13 @@ impl<'repo> delegate::Kind for Delegate<'repo> {
         use git_revision::spec::Kind::*;
         self.kind = Some(kind);
 
-        if !matches!(kind, IncludeReachable) && self.opts.object_kind_hint.is_none() {
-            self.opts.object_kind_hint = Some(ObjectKindHint::Committish);
-            self.disambiguate_objects_by_fallback_hint();
+        if self.kind_implies_committish() {
+            self.disambiguate_objects_by_fallback_hint(ObjectKindHint::Committish.into());
         }
         if matches!(kind, RangeBetween | ReachableToMergeBase) {
             self.idx += 1;
         }
+
         Some(())
     }
 }

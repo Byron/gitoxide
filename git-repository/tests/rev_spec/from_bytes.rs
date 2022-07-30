@@ -431,6 +431,16 @@ mod ambiguous {
             "disambiguation might not always work either."
         );
 
+        {
+            let id = hex_to_id("00000000000434887f772f53e14e39497f7747d3");
+            let expected = git_revision::Spec::Range { from: id, to: id }.attach(&r);
+            assert_eq!(
+                rev_parse("00000000000..00000000000", &r).unwrap(),
+                expected,
+                "we know commits are needed here so we don't fall back to repo-config which would look for trees"
+            );
+        }
+
         let r = repo("ambiguous_objects_disambiguation_config_tree").unwrap();
         assert_eq!(
             rev_parse("0000000000f", &r).unwrap(),
