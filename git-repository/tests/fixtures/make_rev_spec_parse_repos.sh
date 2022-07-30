@@ -267,3 +267,60 @@ for name in committish treeish tree commit blob; do
       baseline "00000000000..00000000000"
   )
 done
+
+git init complex_graph
+(
+  cd complex_graph
+
+  echo g > file
+  git add file && git commit -m G
+  git branch g
+
+  git checkout --orphan=h
+  echo h > file
+  git add file && git commit -m H
+
+  git checkout main
+  git merge h --allow-unrelated-histories || :
+  { echo g && echo h && echo d; } > file
+  git add file
+  git commit -m D
+  git branch d
+
+  git checkout --orphan=i
+  echo i > file
+  git add file && git commit -m I
+  git tag -m I-tag i-tag
+
+  git checkout --orphan=j
+  echo j > file
+  git add file && git commit -m J
+
+  git checkout i
+  git merge j --allow-unrelated-histories || :
+  { echo i && echo j && echo f; } > file
+  git add file
+  git commit -m F
+  git branch f
+
+  git checkout --orphan=e
+  echo e > file
+  git add file && git commit -m E
+
+  git checkout main
+  git merge e i --allow-unrelated-histories || :
+  { echo g && echo h && echo i && echo j && echo d && echo e && echo f && echo b; } > file
+  git add file && git commit -m B
+  git tag -m b-tag b-tag && git branch b
+
+  git checkout i
+  echo c >> file
+  git add file && git commit -m C
+  git branch c
+  git reset --hard i-tag
+
+  git checkout main
+  git merge c || :
+  { echo g && echo h && echo i && echo j && echo d && echo e && echo f && echo b && echo c && echo a; } > file
+  git add file && git commit -m A
+)
