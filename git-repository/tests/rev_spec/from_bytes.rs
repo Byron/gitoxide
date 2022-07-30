@@ -256,12 +256,12 @@ mod ambiguous {
             expected,
             "as ranges need a commit, this is assumed when disambiguating"
         );
-        // TODO: resolve direct target object, aka `HEAD`.
-        // assert_eq!(
-        //     parse_spec("000000000..", &repo).unwrap(),
-        //     expected,
-        //     "as ranges need a commit, this is assumed when disambiguating"
-        // );
+
+        assert_eq!(
+            parse_spec("000000000..", &repo).unwrap(),
+            expected,
+            "as ranges need a commit, this is assumed when disambiguating"
+        );
     }
 
     #[test]

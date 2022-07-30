@@ -1,6 +1,6 @@
 use super::{Delegate, Error, ObjectKindHint, RefsHint};
 use crate::bstr::BStr;
-use crate::ext::ObjectIdExt;
+use crate::ext::{ObjectIdExt, ReferenceExt};
 use crate::{object, Repository};
 use git_hash::ObjectId;
 use git_revision::spec::parse;
@@ -169,11 +169,17 @@ impl<'repo> Delegate<'repo> {
     }
     fn follow_refs_to_objects_if_needed(&mut self) -> Option<()> {
         assert_eq!(self.refs.len(), self.objs.len());
+        let repo = self.repo;
         for (r, obj) in self.refs.iter().zip(self.objs.iter_mut()) {
             if let (_ref_opt @ Some(ref_), obj_opt @ None) = (r, obj) {
-                match ref_.target.try_id() {
-                    Some(id) => obj_opt.get_or_insert_with(HashSet::default).insert(id.into()),
-                    None => todo!("follow ref to get direct target object"),
+                if let Some(id) = ref_.target.try_id().map(ToOwned::to_owned).or_else(|| {
+                    ref_.clone()
+                        .attach(repo)
+                        .peel_to_id_in_place()
+                        .ok()
+                        .map(|id| id.detach())
+                }) {
+                    obj_opt.get_or_insert_with(HashSet::default).insert(id);
                 };
             };
         }
