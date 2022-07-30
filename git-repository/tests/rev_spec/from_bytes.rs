@@ -251,17 +251,18 @@ mod ambiguous {
         let id = hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b");
         let expected = git_revision::Spec::Range { from: id, to: id }.attach(&repo);
 
-        assert_eq!(
-            parse_spec("000000000..000000000", &repo).unwrap(),
-            expected,
-            "as ranges need a commit, this is assumed when disambiguating"
-        );
+        for spec in ["000000000..000000000", "..000000000", "000000000.."] {
+            assert_eq!(
+                parse_spec(spec, &repo).unwrap(),
+                expected,
+                "as ranges need a commit, this is assumed when disambiguating"
+            );
+        }
 
-        assert_eq!(
-            parse_spec("000000000..", &repo).unwrap(),
-            expected,
-            "as ranges need a commit, this is assumed when disambiguating"
-        );
+        let expected = git_revision::Spec::Merge { theirs: id, ours: id }.attach(&repo);
+        for spec in ["000000000...000000000", "...000000000", "000000000..."] {
+            assert_eq!(parse_spec(spec, &repo).unwrap(), expected);
+        }
     }
 
     #[test]
