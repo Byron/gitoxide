@@ -61,6 +61,12 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("None of {commits_searched} commits from {oid} matched regex {regex:?}")]
+    NoRegexMatch {
+        regex: BString,
+        oid: git_hash::Prefix,
+        commits_searched: usize,
+    },
     #[error(
 "The short hash {prefix} matched both the reference {} and at least one object", reference.name)]
     AmbiguousRefAndObject {

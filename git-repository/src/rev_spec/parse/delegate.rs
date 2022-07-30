@@ -398,17 +398,21 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
 
                     match id.ancestors().all() {
                         Ok(iter) => {
+                            let mut matched = false;
+                            let mut count = 0;
                             for commit in iter.map(|res| {
                                 res.map_err(Error::from).and_then(|commit_id| {
                                     commit_id.object().map_err(Error::from).map(|obj| obj.into_commit())
                                 })
                             }) {
+                                count += 1;
                                 match commit {
                                     Ok(commit) => match commit.message_raw() {
                                         Ok(message) => {
                                             let matches = matches(message);
                                             if matches && !negated || !matches && negated {
                                                 replacements.push((*oid, commit.id));
+                                                matched = true;
                                                 break;
                                             }
                                         }
@@ -419,6 +423,16 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                     },
                                     Err(err) => errors.push((*oid, err)),
                                 }
+                            }
+                            if !matched {
+                                errors.push((
+                                    *oid,
+                                    Error::NoRegexMatch {
+                                        regex: regex.into(),
+                                        commits_searched: count,
+                                        oid: id.shorten_or_id(),
+                                    },
+                                ))
                             }
                         }
                         Err(err) => errors.push((*oid, err.into())),
