@@ -5,6 +5,7 @@ use crate::{object, Repository};
 use git_hash::ObjectId;
 use git_revision::spec::parse;
 use git_revision::spec::parse::delegate::{self, PeelTo, ReflogLookup, SiblingBranch, Traversal};
+use git_traverse::commit::Sorting;
 use smallvec::SmallVec;
 use std::collections::HashSet;
 
@@ -390,22 +391,12 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                 let mut errors = Vec::new();
                 let mut replacements = SmallVec::<[(ObjectId, ObjectId); 1]>::default();
                 for oid in objs.iter() {
-                    let id = match oid.attach(repo).object().map_err(Error::from).and_then(|obj| {
-                        let actual = obj.kind;
-                        obj.try_into_commit().map_err(|_| Error::ObjectKind {
-                            oid: oid.attach(repo).shorten_or_id(),
-                            actual,
-                            expected: git_object::Kind::Commit,
-                        })
-                    }) {
-                        Ok(commit) => commit.id(),
-                        Err(err) => {
-                            errors.push((*oid, err));
-                            continue;
-                        }
-                    };
-
-                    match id.ancestors().all() {
+                    match oid
+                        .attach(repo)
+                        .ancestors()
+                        .sorting(Sorting::ByCommitTimeNewestFirst)
+                        .all()
+                    {
                         Ok(iter) => {
                             let mut matched = false;
                             let mut count = 0;
@@ -433,7 +424,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                     Error::NoRegexMatch {
                                         regex: regex.into(),
                                         commits_searched: count,
-                                        oid: id.shorten_or_id(),
+                                        oid: oid.attach(repo).shorten_or_id(),
                                     },
                                 ))
                             }
