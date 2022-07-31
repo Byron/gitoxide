@@ -28,7 +28,7 @@ impl<'repo> Platform<'repo> {
 
 /// Produce the iterator
 impl<'repo> Platform<'repo> {
-    /// Return an iterator to traverse all commits in the history of the commit the parent [Id] is pointing to.
+    /// Return an iterator to traverse all commits reachable as configured by the [Platform].
     pub fn all(self) -> Result<revision::Walk<'repo>, git_traverse::commit::ancestors::Error> {
         let Platform {
             repo,
@@ -57,7 +57,7 @@ pub(crate) mod iter {
     use crate::ext::ObjectIdExt;
     use crate::Id;
 
-    /// The iterator returned by [`RevWalk::all()`].
+    /// The iterator returned by [`crate::revision::walk::Platform::all()`].
     pub struct Walk<'repo> {
         pub(crate) repo: &'repo crate::Repository,
         pub(crate) inner:
@@ -66,7 +66,7 @@ pub(crate) mod iter {
         // TODO: tests
         /// After iteration this flag is true if the iteration was stopped prematurely due to missing parent commits.
         /// Note that this flag won't be `Some` if any iteration error occurs, which is the case if
-        /// [`error_on_missing_commit()`][Iter::error_on_missing_commit()] was called.
+        /// [`error_on_missing_commit()`][Walk::error_on_missing_commit()] was called.
         ///
         /// This happens if a repository is a shallow clone.
         /// Note that this value is `None` as long as the iteration isn't complete.
@@ -78,7 +78,7 @@ pub(crate) mod iter {
         /// Once invoked, the iteration will return an error if a commit cannot be found in the object database. This typically happens
         /// when operating on a shallow clone and thus is non-critical by default.
         ///
-        /// Check the [`is_shallow`][Iter::is_shallow] field once the iteration ended otherwise to learn if a shallow commit graph
+        /// Check the [`is_shallow`][Walk::is_shallow] field once the iteration ended otherwise to learn if a shallow commit graph
         /// was encountered.
         pub fn error_on_missing_commit(mut self) -> Self {
             self.error_on_missing_commit = true;

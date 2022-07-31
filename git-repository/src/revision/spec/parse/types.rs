@@ -45,7 +45,7 @@ impl Default for RefsHint {
     }
 }
 
-/// Options for use in [`RevSpec::from_bstr()`][crate::RevSpec::from_bstr()].
+/// Options for use in [`revision::Spec::from_bstr()`][crate::revision::Spec::from_bstr()].
 #[derive(Debug, Default, Copy, Clone)]
 pub struct Options {
     /// What to do if both refs and object names match the same input.
