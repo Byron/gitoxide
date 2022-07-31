@@ -147,6 +147,9 @@ EOF
   baseline "000000000...000000000"    # only one commit is present with this prefix and we prefer these in ranges
   baseline "...000000000"
   baseline "000000000..."
+  baseline "0000000000^{/x}"          # disambiguation thanks to a commit being required
+  baseline "@^{/x}"                   # the same, but with named revision
+  baseline "@^{/^.*x}"                # regex are available in git
 
   cd ..
   git clone ambiguous_blob_tree_commit ambiguous_commits
@@ -271,15 +274,18 @@ done
 git init complex_graph
 (
   cd complex_graph
+  tick
 
   echo g > file
-  git add file && git commit -m G
+  git add file && git commit -m $'G\n\n initial message'
   git branch g
 
+  tick
   git checkout --orphan=h
   echo h > file
   git add file && git commit -m H
 
+  tick
   git checkout main
   git merge h --allow-unrelated-histories || :
   { echo g && echo h && echo d; } > file
@@ -287,15 +293,18 @@ git init complex_graph
   git commit -m D
   git branch d
 
+  tick
   git checkout --orphan=i
   echo i > file
   git add file && git commit -m I
   git tag -m I-tag i-tag
 
+  tick
   git checkout --orphan=j
   echo j > file
   git add file && git commit -m J
 
+  tick
   git checkout i
   git merge j --allow-unrelated-histories || :
   { echo i && echo j && echo f; } > file
@@ -303,24 +312,31 @@ git init complex_graph
   git commit -m F
   git branch f
 
+  tick
   git checkout --orphan=e
   echo e > file
   git add file && git commit -m E
 
+  tick
   git checkout main
   git merge e i --allow-unrelated-histories || :
   { echo g && echo h && echo i && echo j && echo d && echo e && echo f && echo b; } > file
   git add file && git commit -m B
   git tag -m b-tag b-tag && git branch b
 
+  tick
   git checkout i
   echo c >> file
-  git add file && git commit -m C
+  git add file && git commit -m $'C\n\n message recent'
   git branch c
   git reset --hard i-tag
 
+  tick
   git checkout main
   git merge c || :
   { echo g && echo h && echo i && echo j && echo d && echo e && echo f && echo b && echo c && echo a; } > file
   git add file && git commit -m A
+
+  baseline ":/message" # finds 'message recent' instead of 'initial message'
+  baseline ":/mes.age" # regexes work too
 )
