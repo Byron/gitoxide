@@ -463,6 +463,13 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                 references
                                     .peeled()
                                     .filter_map(Result::ok)
+                                    .filter(|r| {
+                                        r.id()
+                                            .object()
+                                            .ok()
+                                            .map(|obj| obj.kind == git_object::Kind::Commit)
+                                            .unwrap_or(false)
+                                    })
                                     .filter_map(|r| r.detach().peeled),
                             )
                             .sorting(Sorting::ByCommitTimeNewestFirst)
