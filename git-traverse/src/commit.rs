@@ -46,6 +46,7 @@ impl Default for Sorting {
 
 ///
 pub mod ancestors {
+    use std::iter::FromIterator;
     use std::{borrow::BorrowMut, collections::VecDeque};
 
     use git_hash::{oid, ObjectId};
@@ -116,6 +117,9 @@ pub mod ancestors {
                     })?;
                     *commit_time = commit_iter.committer()?.time.seconds_since_unix_epoch;
                 }
+                let mut v = Vec::from_iter(std::mem::take(&mut state.next).into_iter());
+                v.sort_by(|a, b| a.1.cmp(&b.1).reverse());
+                state.next = v.into();
             }
             Ok(self)
         }
