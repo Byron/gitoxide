@@ -1,6 +1,6 @@
 use crate::bstr::BStr;
+use crate::revision::Spec;
 use crate::Repository;
-use crate::RevSpec;
 use git_hash::ObjectId;
 use git_revision::spec::parse;
 use std::collections::HashSet;
@@ -11,7 +11,7 @@ pub use types::{Error, ObjectKindHint, Options, RefsHint};
 ///
 pub mod error;
 
-impl<'repo> RevSpec<'repo> {
+impl<'repo> Spec<'repo> {
     /// Parse `spec` and use information from `repo` to resolve it, using `opts` to learn how to deal with ambiguity.
     pub fn from_bstr<'a>(spec: impl Into<&'a BStr>, repo: &'repo Repository, opts: Options) -> Result<Self, Error> {
         let mut delegate = Delegate::new(repo, opts);

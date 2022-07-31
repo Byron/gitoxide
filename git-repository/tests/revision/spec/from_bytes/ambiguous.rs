@@ -4,8 +4,8 @@ use crate::revision::spec::from_bytes::{
     rev_parse,
 };
 use git_repository::prelude::{ObjectIdExt, RevSpecExt};
-use git_repository::rev_spec::parse::{Options, RefsHint};
-use git_repository::RevSpec;
+use git_repository::revision::spec::parse::{Options, RefsHint};
+use git_repository::revision::Spec;
 use git_testtools::hex_to_id;
 
 #[test]
@@ -73,25 +73,25 @@ fn blob_and_tree_can_be_disambiguated_by_type() {
 
     assert_eq!(
         parse_spec("0000000000cdc^{tree}", &repo).unwrap(),
-        RevSpec::from_id(hex_to_id("0000000000cdcf04beb2fab69e65622616294984").attach(&repo)),
+        Spec::from_id(hex_to_id("0000000000cdcf04beb2fab69e65622616294984").attach(&repo)),
         "this is unambiguous anyway, but also asserts for tree which is naturally the case"
     );
 
     assert_eq!(
         parse_spec_better_than_baseline("0000000000^{tree}", &repo).unwrap(),
-        RevSpec::from_id(hex_to_id("0000000000cdcf04beb2fab69e65622616294984").attach(&repo)),
+        Spec::from_id(hex_to_id("0000000000cdcf04beb2fab69e65622616294984").attach(&repo)),
         "the commit refers to the tree which also starts with this prefix, so ultimately the result is unambiguous. Git can't do that yet."
     );
 
     assert_eq!(
         parse_spec("0000000000^{commit}", &repo).unwrap(),
-        RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
+        Spec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
         "disambiguation with committish"
     );
 
     assert_eq!(
         parse_spec("0000000000e", &repo).unwrap(),
-        RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
+        Spec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
         "no disambiguation needed here"
     );
 }
@@ -101,7 +101,7 @@ fn trees_can_be_disambiguated_by_blob_access() {
     let repo = repo("ambiguous_blob_tree_commit").unwrap();
     assert_eq!(
         parse_spec_better_than_baseline("0000000000:a0blgqsjc", &repo).unwrap(),
-        RevSpec::from_id(hex_to_id("0000000000b36b6aa7ea4b75318ed078f55505c3").attach(&repo)),
+        Spec::from_id(hex_to_id("0000000000b36b6aa7ea4b75318ed078f55505c3").attach(&repo)),
         "we can disambiguate by providing a path, but git cannot"
     );
 }
@@ -112,7 +112,7 @@ fn commits_can_be_disambiguated_with_commit_specific_transformations() {
     for spec in ["0000000000^0", "0000000000^{commit}"] {
         assert_eq!(
             parse_spec(spec, &repo).unwrap(),
-            RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo))
+            Spec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo))
         );
     }
 }
@@ -122,7 +122,7 @@ fn tags_can_be_disambiguated_with_commit_specific_transformations() {
     let repo = repo("ambiguous_commits").unwrap();
     assert_eq!(
         parse_spec_better_than_baseline("0000000000^{tag}", &repo).unwrap(),
-        RevSpec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&repo)),
+        Spec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&repo)),
         "disambiguation is possible by type, and git can't do that for some reason"
     );
 }
@@ -150,19 +150,19 @@ fn ambiguous_40hex_refs_are_ignored_and_we_prefer_the_object_of_the_same_name() 
     let spec = "0000000000e4f9fbd19cf1e932319e5ad0d1d00b";
     assert_eq!(
         parse_spec(spec, &repo).unwrap(),
-        RevSpec::from_id(hex_to_id(spec).attach(&repo)),
+        Spec::from_id(hex_to_id(spec).attach(&repo)),
         "git shows an advisory here and ignores the ref, which makes it easy to just ignore it too. We are unable to show anything though, maybe traces?"
     );
 
     assert_eq!(
         parse_spec_opts(spec, &repo, opts_ref_hint(RefsHint::PreferObject)).unwrap(),
-        RevSpec::from_id(hex_to_id(spec).attach(&repo)),
+        Spec::from_id(hex_to_id(spec).attach(&repo)),
         "preferring objects yields the same result here"
     );
 
     assert_eq!(
         parse_spec_no_baseline_opts(spec, &repo, opts_ref_hint(RefsHint::PreferRef)).unwrap(),
-        RevSpec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
+        Spec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
         "we can prefer refs in any case, too"
     );
 
@@ -184,19 +184,19 @@ fn ambiguous_short_refs_are_dereferenced() {
     let spec = "0000000000e";
     assert_eq!(
         parse_spec(spec, &repo).unwrap(),
-        RevSpec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
+        Spec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
         "git shows a warning here and we show nothing but have dials to control how to handle these cases"
     );
 
     assert_eq!(
         parse_spec_opts(spec, &repo, opts_ref_hint(RefsHint::PreferRef)).unwrap(),
-        RevSpec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
+        Spec::from_id(hex_to_id("cc60d25ccfee90e4a4105e73df36059db383d5ce").attach(&repo)),
         "this does the same, but independently of the length of the ref"
     );
 
     assert_eq!(
         parse_spec_no_baseline_opts(spec, &repo, opts_ref_hint(RefsHint::PreferObject)).unwrap(),
-        RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
+        Spec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo)),
         "we can always prefer objects, too"
     );
 
@@ -214,7 +214,7 @@ fn repository_local_disambiguation_hints_disambiguate() {
     let r = repo("ambiguous_objects_disambiguation_config_committish").unwrap();
     assert_eq!(
         rev_parse("0000000000f", &r).unwrap(),
-        RevSpec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&r)),
+        Spec::from_id(hex_to_id("0000000000f8f5507ab27a0d7bd3c75c0f64ffe0").attach(&r)),
         "we read the 'core.disambiguate' value and apply it to auto-disambiguate"
     );
     assert_eq!(
@@ -242,7 +242,7 @@ fn repository_local_disambiguation_hints_disambiguate() {
     let r = repo("ambiguous_objects_disambiguation_config_tree").unwrap();
     assert_eq!(
         rev_parse("0000000000f", &r).unwrap(),
-        RevSpec::from_id(hex_to_id("0000000000fd8bcc566027a4d16bde8434cac1a4").attach(&r)),
+        Spec::from_id(hex_to_id("0000000000fd8bcc566027a4d16bde8434cac1a4").attach(&r)),
         "disambiguation may work precisely even with a simple object type constraint"
     );
 
@@ -259,7 +259,7 @@ fn repository_local_disambiguation_hints_disambiguate() {
     let r = repo("ambiguous_objects_disambiguation_config_blob").unwrap();
     assert_eq!(
         rev_parse("0000000000f", &r).unwrap(),
-        RevSpec::from_id(hex_to_id("0000000000f2fdf63f36c0d76aece18a79ab64f2").attach(&r)),
+        Spec::from_id(hex_to_id("0000000000f2fdf63f36c0d76aece18a79ab64f2").attach(&r)),
     );
 }
 

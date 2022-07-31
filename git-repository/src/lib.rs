@@ -187,7 +187,7 @@ pub(crate) type Config = OwnShared<git_config::File<'static>>;
 ///
 mod types;
 pub use types::{
-    Commit, Head, Id, Object, ObjectDetached, Reference, Repository, RevSpec, Tag, ThreadSafeRepository, Tree, Worktree,
+    Commit, Head, Id, Object, ObjectDetached, Reference, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
 };
 
 pub mod commit;
@@ -303,9 +303,6 @@ pub mod mailmap;
 
 ///
 pub mod worktree;
-
-///
-pub mod rev_spec;
 
 pub mod revision;
 

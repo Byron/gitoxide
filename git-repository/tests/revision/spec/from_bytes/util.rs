@@ -1,4 +1,3 @@
-use git::RevSpec;
 use git_object::bstr;
 use git_object::bstr::BStr;
 use git_ref::bstr::{BString, ByteSlice};
@@ -118,7 +117,7 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
 pub fn parse_spec_no_baseline<'a>(
     spec: &str,
     repo: &'a git::Repository,
-) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
+) -> Result<git::revision::Spec<'a>, git_repository::revision::spec::parse::Error> {
     parse_spec_no_baseline_opts(spec, repo, Default::default())
 }
 
@@ -133,8 +132,8 @@ enum BaselineExpectation {
 pub fn parse_spec_better_than_baseline<'a>(
     spec: &str,
     repo: &'a git::Repository,
-) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
-    let res = RevSpec::from_bstr(spec, repo, Default::default());
+) -> Result<git::revision::Spec<'a>, git_repository::revision::spec::parse::Error> {
+    let res = git::revision::Spec::from_bstr(spec, repo, Default::default());
     compare_with_baseline(&res, repo, spec, BaselineExpectation::GitFailsWeSucceed);
     res
 }
@@ -142,29 +141,32 @@ pub fn parse_spec_better_than_baseline<'a>(
 pub fn parse_spec_no_baseline_opts<'a>(
     spec: &str,
     repo: &'a git::Repository,
-    opts: git::rev_spec::parse::Options,
-) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
-    RevSpec::from_bstr(spec, repo, opts)
+    opts: git_repository::revision::spec::parse::Options,
+) -> Result<git::revision::Spec<'a>, git_repository::revision::spec::parse::Error> {
+    git::revision::Spec::from_bstr(spec, repo, opts)
 }
 
 pub fn parse_spec_opts<'a>(
     spec: &str,
     repo: &'a git::Repository,
-    opts: git::rev_spec::parse::Options,
-) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
-    let res = RevSpec::from_bstr(spec, repo, opts);
+    opts: git_repository::revision::spec::parse::Options,
+) -> Result<git::revision::Spec<'a>, git_repository::revision::spec::parse::Error> {
+    let res = git::revision::Spec::from_bstr(spec, repo, opts);
     compare_with_baseline(&res, repo, spec, BaselineExpectation::Same);
     res
 }
 
-pub fn rev_parse<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
+pub fn rev_parse<'a>(
+    spec: &str,
+    repo: &'a git::Repository,
+) -> Result<git::revision::Spec<'a>, git_repository::revision::spec::parse::Error> {
     let res = repo.rev_parse(spec);
     compare_with_baseline(&res, repo, spec, BaselineExpectation::Same);
     res
 }
 
 fn compare_with_baseline(
-    res: &Result<RevSpec<'_>, git::rev_spec::parse::Error>,
+    res: &Result<git::revision::Spec<'_>, git_repository::revision::spec::parse::Error>,
     repo: &git::Repository,
     spec: &str,
     expectation: BaselineExpectation,
@@ -190,7 +192,10 @@ fn compare_with_baseline(
     }
 }
 
-pub fn parse_spec<'a>(spec: &str, repo: &'a git::Repository) -> Result<RevSpec<'a>, git::rev_spec::parse::Error> {
+pub fn parse_spec<'a>(
+    spec: &str,
+    repo: &'a git::Repository,
+) -> Result<git::revision::Spec<'a>, git_repository::revision::spec::parse::Error> {
     parse_spec_opts(spec, repo, Default::default())
 }
 

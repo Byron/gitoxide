@@ -3,7 +3,7 @@ use std::{convert::TryFrom, path::PathBuf};
 use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
-use crate::rev_spec::parse::ObjectKindHint;
+use crate::revision::spec::parse::ObjectKindHint;
 use crate::{bstr::ByteSlice, repository, repository::identity};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the

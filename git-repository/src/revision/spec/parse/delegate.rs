@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 use std::collections::HashSet;
 
 impl<'repo> Delegate<'repo> {
-    pub fn new(repo: &'repo Repository, opts: crate::rev_spec::parse::Options) -> Self {
+    pub fn new(repo: &'repo Repository, opts: crate::revision::spec::parse::Options) -> Self {
         Delegate {
             refs: Default::default(),
             objs: Default::default(),
@@ -40,7 +40,7 @@ impl<'repo> Delegate<'repo> {
         Error::from_errors(self.err)
     }
 
-    pub fn into_rev_spec(mut self) -> Result<crate::RevSpec<'repo>, Error> {
+    pub fn into_rev_spec(mut self) -> Result<crate::revision::Spec<'repo>, Error> {
         fn zero_or_one_objects_or_ambguity_err(
             mut candidates: [Option<HashSet<ObjectId>>; 2],
             prefix: [Option<git_hash::Prefix>; 2],
@@ -100,7 +100,7 @@ impl<'repo> Delegate<'repo> {
         }
 
         let range = zero_or_one_objects_or_ambguity_err(self.objs, self.prefix, self.err, self.repo)?;
-        Ok(crate::RevSpec {
+        Ok(crate::revision::Spec {
             first_ref: self.refs[0].take(),
             second_ref: self.refs[1].take(),
             inner: kind_to_spec(self.kind, range),

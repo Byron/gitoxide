@@ -1,16 +1,16 @@
 use crate::revision::spec::from_bytes::{parse_spec_no_baseline, repo};
 use git_repository::prelude::ObjectIdExt;
-use git_repository::RevSpec;
 use git_testtools::hex_to_id;
 
 mod with_known_revision {
     use super::*;
+    use git_repository::revision::Spec;
 
     #[test]
     #[cfg(not(feature = "regex"))]
     fn contained_string_matches_in_unanchored_regex_and_disambiguates_automatically() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
-        let expected = RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo));
+        let expected = Spec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo));
 
         assert_eq!(parse_spec_no_baseline("0000000000^{/x}", &repo).unwrap(), expected);
         assert_eq!(
@@ -30,7 +30,7 @@ mod with_known_revision {
     #[cfg(feature = "regex")]
     fn contained_string_matches_in_unanchored_regex_and_disambiguates_automatically() {
         let repo = repo("ambiguous_blob_tree_commit").unwrap();
-        let expected = RevSpec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo));
+        let expected = Spec::from_id(hex_to_id("0000000000e4f9fbd19cf1e932319e5ad0d1d00b").attach(&repo));
 
         assert_eq!(
             parse_spec_no_baseline("0000000000^{/x}", &repo).unwrap(),

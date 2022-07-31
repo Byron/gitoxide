@@ -1,15 +1,14 @@
 use crate::ext::ReferenceExt;
-use crate::{Id, Reference, RevSpec};
-use git_revision::Spec;
+use crate::{revision::Spec, Id, Reference};
 
 ///
 pub mod parse;
 
 mod impls {
-    use crate::RevSpec;
+    use crate::revision::Spec;
     use std::ops::{Deref, DerefMut};
 
-    impl<'repo> Deref for RevSpec<'repo> {
+    impl<'repo> Deref for Spec<'repo> {
         type Target = git_revision::Spec;
 
         fn deref(&self) -> &Self::Target {
@@ -17,26 +16,26 @@ mod impls {
         }
     }
 
-    impl<'repo> DerefMut for RevSpec<'repo> {
+    impl<'repo> DerefMut for Spec<'repo> {
         fn deref_mut(&mut self) -> &mut Self::Target {
             &mut self.inner
         }
     }
 
-    impl<'repo> PartialEq for RevSpec<'repo> {
+    impl<'repo> PartialEq for Spec<'repo> {
         fn eq(&self, other: &Self) -> bool {
             self.inner == other.inner
         }
     }
 
-    impl<'repo> Eq for RevSpec<'repo> {}
+    impl<'repo> Eq for Spec<'repo> {}
 }
 
 /// Initialization
-impl<'repo> RevSpec<'repo> {
+impl<'repo> Spec<'repo> {
     /// Create a single specification which points to `id`.
     pub fn from_id(id: Id<'repo>) -> Self {
-        RevSpec {
+        Spec {
             inner: git_revision::Spec::Include(id.inner),
             repo: id.repo,
             first_ref: None,
@@ -46,7 +45,7 @@ impl<'repo> RevSpec<'repo> {
 }
 
 /// Access
-impl<'repo> RevSpec<'repo> {
+impl<'repo> Spec<'repo> {
     /// Detach the `Repository` from this instance, leaving only plain data that can be moved freely and serialized.
     pub fn detach(self) -> git_revision::Spec {
         self.inner
@@ -69,7 +68,10 @@ impl<'repo> RevSpec<'repo> {
             git_revision::Spec::Include(id) | git_revision::Spec::ExcludeFromParents { from: id } => {
                 Id::from_id(id, self.repo).into()
             }
-            Spec::Exclude(_) | Spec::Range { .. } | Spec::Merge { .. } | Spec::IncludeOnlyParents { .. } => None,
+            git_revision::Spec::Exclude(_)
+            | git_revision::Spec::Range { .. }
+            | git_revision::Spec::Merge { .. }
+            | git_revision::Spec::IncludeOnlyParents { .. } => None,
         }
     }
 }

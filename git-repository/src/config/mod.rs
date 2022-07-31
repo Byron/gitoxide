@@ -1,7 +1,8 @@
 pub use git_config::*;
 use git_features::threading::OnceCell;
 
-use crate::{bstr::BString, permission, repository::identity, rev_spec, Repository};
+use crate::revision::spec;
+use crate::{bstr::BString, permission, repository::identity, Repository};
 
 pub(crate) mod cache;
 mod snapshot;
@@ -60,7 +61,7 @@ pub(crate) struct Cache {
     /// identities for later use, lazy initialization.
     pub personas: OnceCell<identity::Personas>,
     /// The object kind to pick if a prefix is ambiguous.
-    pub object_kind_hint: Option<rev_spec::parse::ObjectKindHint>,
+    pub object_kind_hint: Option<spec::parse::ObjectKindHint>,
     /// If true, we are on a case-insensitive file system.
     #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub ignore_case: bool,
