@@ -1,4 +1,4 @@
-use crate::{bstr, bstr::BStr, Commit, ObjectDetached, Tree};
+use crate::{bstr, bstr::BStr, Commit, ObjectDetached, RevWalk, Tree};
 
 mod error {
     use crate::object;
@@ -19,8 +19,6 @@ mod error {
 }
 
 pub use error::Error;
-
-use crate::id::Ancestors;
 
 impl<'repo> Commit<'repo> {
     /// Create an owned instance of this object, copying our data in the process.
@@ -132,7 +130,7 @@ impl<'repo> Commit<'repo> {
     }
 
     /// Obtain a platform for traversing ancestors of this commit.
-    pub fn ancestors(&self) -> Ancestors<'repo> {
+    pub fn ancestors(&self) -> RevWalk<'repo> {
         self.id().ancestors()
     }
 
