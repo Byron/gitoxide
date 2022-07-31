@@ -488,7 +488,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                                 break;
                                             }
                                         }
-                                        Err(err) => self.err.push(err.into()),
+                                        Err(err) => self.err.push(err),
                                     }
                                 }
                                 if matched {
