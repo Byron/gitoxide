@@ -151,7 +151,6 @@ pub use git_odb as odb;
 #[cfg(all(feature = "unstable", feature = "git-protocol"))]
 pub use git_protocol as protocol;
 pub use git_ref as refs;
-pub use git_revision as revision;
 pub use git_sec as sec;
 #[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
@@ -188,8 +187,7 @@ pub(crate) type Config = OwnShared<git_config::File<'static>>;
 ///
 mod types;
 pub use types::{
-    Commit, Head, Id, Object, ObjectDetached, Reference, Repository, RevSpec, RevWalk, Tag, ThreadSafeRepository, Tree,
-    Worktree,
+    Commit, Head, Id, Object, ObjectDetached, Reference, Repository, RevSpec, Tag, ThreadSafeRepository, Tree, Worktree,
 };
 
 pub mod commit;
@@ -309,8 +307,7 @@ pub mod worktree;
 ///
 pub mod rev_spec;
 
-///
-pub mod rev_walk;
+pub mod revision;
 
 ///
 pub mod init {

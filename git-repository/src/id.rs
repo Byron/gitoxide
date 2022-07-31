@@ -3,7 +3,7 @@ use std::ops::Deref;
 
 use git_hash::{oid, ObjectId};
 
-use crate::{object::find, Id, Object, RevWalk};
+use crate::{object::find, revision, Id, Object};
 
 /// An [object id][ObjectId] infused with `Easy`.
 impl<'repo> Id<'repo> {
@@ -90,8 +90,8 @@ impl<'repo> Id<'repo> {
     /// Note that unless [`error_on_missing_commit()`][Iter::error_on_missing_commit()] is enabled, which be default it is not,
     /// one will always see an empty iteration even if this id is not a commit, instead of an error.
     /// If this is undesirable, it's best to check for the correct object type before creating an iterator.
-    pub fn ancestors(&self) -> RevWalk<'repo> {
-        RevWalk {
+    pub fn ancestors(&self) -> revision::walk::Platform<'repo> {
+        revision::walk::Platform {
             repo: self.repo,
             tips: vec![self.inner],
             sorting: Default::default(),

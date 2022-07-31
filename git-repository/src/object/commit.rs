@@ -1,4 +1,4 @@
-use crate::{bstr, bstr::BStr, Commit, ObjectDetached, RevWalk, Tree};
+use crate::{bstr, bstr::BStr, revision, Commit, ObjectDetached, Tree};
 
 mod error {
     use crate::object;
@@ -130,7 +130,7 @@ impl<'repo> Commit<'repo> {
     }
 
     /// Obtain a platform for traversing ancestors of this commit.
-    pub fn ancestors(&self) -> RevWalk<'repo> {
+    pub fn ancestors(&self) -> revision::walk::Platform<'repo> {
         self.id().ancestors()
     }
 

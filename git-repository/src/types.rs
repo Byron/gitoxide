@@ -175,11 +175,3 @@ pub struct RevSpec<'repo> {
     pub(crate) second_ref: Option<git_ref::Reference>,
     pub(crate) repo: &'repo Repository,
 }
-
-/// A platform to traverse the revision graph by adding starting points as well as points which shouldn't be crossed.
-pub struct RevWalk<'repo> {
-    pub(crate) repo: &'repo Repository,
-    pub(crate) tips: Vec<ObjectId>,
-    pub(crate) sorting: git_traverse::commit::Sorting,
-    pub(crate) parents: git_traverse::commit::Parents,
-}
