@@ -29,6 +29,11 @@ impl<'repo> Platform<'repo> {
 /// Produce the iterator
 impl<'repo> Platform<'repo> {
     /// Return an iterator to traverse all commits reachable as configured by the [Platform].
+    ///
+    /// # Performance
+    ///
+    /// It's highly recommended to set an [`object cache`][Repository::object_cache_size()] on the parent repo
+    /// to greatly speed up performance if the returned id is supposed to be looked up right after.
     pub fn all(self) -> Result<revision::Walk<'repo>, git_traverse::commit::ancestors::Error> {
         let Platform {
             repo,
