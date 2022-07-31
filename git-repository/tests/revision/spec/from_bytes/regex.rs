@@ -59,7 +59,6 @@ mod find_youngest_matching_commit {
 
     #[test]
     #[cfg(not(feature = "regex"))]
-    #[ignore]
     fn contained_string_matches() {
         let repo = repo("complex_graph").unwrap();
 
@@ -67,17 +66,27 @@ mod find_youngest_matching_commit {
             parse_spec(":/message", &repo).unwrap(),
             Spec::from_id(hex_to_id("ef80b4b77b167f326351c93284dc0eb00dd54ff4").attach(&repo))
         );
+
+        assert_eq!(
+            parse_spec_no_baseline(":/messa.e", &repo).unwrap_err().to_string(),
+            "None of 10 commits reached from all references matched text \"messa.e\"",
+            "regex definitely don't work as it's not compiled in"
+        );
     }
 
     #[test]
     #[cfg(feature = "regex")]
-    #[ignore]
     fn regex_matches() {
         let repo = repo("complex_graph").unwrap();
 
         assert_eq!(
             parse_spec(":/mes.age", &repo).unwrap(),
             Spec::from_id(hex_to_id("ef80b4b77b167f326351c93284dc0eb00dd54ff4").attach(&repo))
+        );
+
+        assert_eq!(
+            parse_spec(":/not there", &repo).unwrap_err().to_string(),
+            "None of 10 commits reached from all references matched regex \"not there\""
         );
     }
 }

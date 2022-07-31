@@ -407,11 +407,12 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                         Ok(iter) => {
                             let mut matched = false;
                             let mut count = 0;
-                            for commit in iter.map(|res| {
+                            let commits = iter.map(|res| {
                                 res.map_err(Error::from).and_then(|commit_id| {
                                     commit_id.object().map_err(Error::from).map(|obj| obj.into_commit())
                                 })
-                            }) {
+                            });
+                            for commit in commits {
                                 count += 1;
                                 match commit {
                                     Ok(commit) => {
@@ -467,8 +468,38 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                             .sorting(Sorting::ByCommitTimeNewestFirst)
                             .all()
                         {
-                            Ok(_walk) => {
-                                todo!("walk")
+                            Ok(iter) => {
+                                let mut matched = false;
+                                let mut count = 0;
+                                let commits = iter.map(|res| {
+                                    res.map_err(Error::from).and_then(|commit_id| {
+                                        commit_id.object().map_err(Error::from).map(|obj| obj.into_commit())
+                                    })
+                                });
+                                for commit in commits {
+                                    count += 1;
+                                    match commit {
+                                        Ok(commit) => {
+                                            if matches(commit.message_raw_sloppy()) {
+                                                self.objs[self.idx]
+                                                    .get_or_insert_with(HashSet::default)
+                                                    .insert(commit.id);
+                                                matched = true;
+                                                break;
+                                            }
+                                        }
+                                        Err(err) => self.err.push(err.into()),
+                                    }
+                                }
+                                if matched {
+                                    Some(())
+                                } else {
+                                    self.err.push(Error::NoRegexMatchAllRefs {
+                                        regex: regex.into(),
+                                        commits_searched: count,
+                                    });
+                                    None
+                                }
                             }
                             Err(err) => {
                                 self.err.push(err.into());

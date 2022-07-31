@@ -339,4 +339,5 @@ git init complex_graph
 
   baseline ":/message" # finds 'message recent' instead of 'initial message'
   baseline ":/mes.age" # regexes work too
+  baseline ":/not there" # definitely not in graph
 )

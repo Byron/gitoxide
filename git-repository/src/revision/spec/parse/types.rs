@@ -81,8 +81,17 @@ pub enum Error {
         oid: git_hash::Prefix,
         commits_searched: usize,
     },
+    #[cfg_attr(
+        feature = "regex",
+        error("None of {commits_searched} commits reached from all references matched regex {regex:?}")
+    )]
+    #[cfg_attr(
+        not(feature = "regex"),
+        error("None of {commits_searched} commits reached from all references matched text {regex:?}")
+    )]
+    NoRegexMatchAllRefs { regex: BString, commits_searched: usize },
     #[error(
-"The short hash {prefix} matched both the reference {} and at least one object", reference.name)]
+    "The short hash {prefix} matched both the reference {} and at least one object", reference.name)]
     AmbiguousRefAndObject {
         /// The prefix to look for.
         prefix: git_hash::Prefix,
