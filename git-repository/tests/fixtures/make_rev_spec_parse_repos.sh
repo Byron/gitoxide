@@ -338,6 +338,9 @@ git init complex_graph
   git add file && git commit -m A
 
   baseline ":/message" # finds 'message recent' instead of 'initial message'
+  baseline ":/!-message" # above, negated
   baseline ":/mes.age" # regexes work too
+  baseline ":/!-mes.age" # negated above
   baseline ":/not there" # definitely not in graph
+  baseline "@^{/!-B}"    # negation from branch
 )

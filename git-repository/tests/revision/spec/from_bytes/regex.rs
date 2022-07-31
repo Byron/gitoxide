@@ -68,6 +68,17 @@ mod find_youngest_matching_commit {
         );
 
         assert_eq!(
+            parse_spec("@^{/!-B}", &repo).unwrap(),
+            Spec::from_id(hex_to_id("55e825ebe8fd2ff78cad3826afb696b96b576a7e").attach(&repo)),
+            "negations work as well"
+        );
+
+        assert_eq!(
+            parse_spec(":/!-message", &repo).unwrap(),
+            Spec::from_id(hex_to_id("55e825ebe8fd2ff78cad3826afb696b96b576a7e").attach(&repo))
+        );
+
+        assert_eq!(
             parse_spec_no_baseline(":/messa.e", &repo).unwrap_err().to_string(),
             "None of 10 commits reached from all references matched text \"messa.e\"",
             "regex definitely don't work as it's not compiled in"
@@ -87,6 +98,17 @@ mod find_youngest_matching_commit {
         assert_eq!(
             parse_spec(":/not there", &repo).unwrap_err().to_string(),
             "None of 10 commits reached from all references matched regex \"not there\""
+        );
+
+        assert_eq!(
+            parse_spec(":/!-message", &repo).unwrap(),
+            Spec::from_id(hex_to_id("55e825ebe8fd2ff78cad3826afb696b96b576a7e").attach(&repo))
+        );
+
+        assert_eq!(
+            parse_spec("@^{/!-B}", &repo).unwrap(),
+            Spec::from_id(hex_to_id("55e825ebe8fd2ff78cad3826afb696b96b576a7e").attach(&repo)),
+            "negations work as well"
         );
     }
 }
