@@ -2,7 +2,7 @@
 //!
 //! This module provides utilities to walk graphs of revisions and specify revisions and ranges of revisions.
 
-pub use git_revision::*;
+pub use git_revision as plumbing;
 
 ///
 pub mod walk;

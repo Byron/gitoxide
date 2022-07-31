@@ -2,8 +2,8 @@ use anyhow::bail;
 use git::{
     bstr::{BStr, BString, ByteSlice},
     revision::{
-        spec,
-        spec::parse::{
+        plumbing::spec,
+        plumbing::spec::parse::{
             delegate,
             delegate::{PeelTo, ReflogLookup, SiblingBranch, Traversal},
             Delegate,
@@ -15,7 +15,7 @@ use git_repository as git;
 pub fn explain(spec: std::ffi::OsString, mut out: impl std::io::Write) -> anyhow::Result<()> {
     let mut explain = Explain::new(&mut out);
     let spec = git::path::os_str_into_bstr(&spec)?;
-    git::revision::spec::parse(spec, &mut explain)?;
+    git::revision::plumbing::spec::parse(spec, &mut explain)?;
     if let Some(err) = explain.err {
         bail!(err);
     }
