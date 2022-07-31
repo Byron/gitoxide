@@ -31,10 +31,10 @@ pub mod async_util {
         range: impl Into<Option<ProgressRange>>,
     ) -> (Option<prodash::render::line::JoinHandle>, Option<prodash::tree::Item>) {
         use crate::shared::{self, STANDARD_RANGE};
-        crate::shared::init_env_logger();
+        shared::init_env_logger();
 
         if verbose {
-            let progress = crate::shared::progress_tree();
+            let progress = shared::progress_tree();
             let sub_progress = progress.add_child(name);
             let ui_handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
             (Some(ui_handle), Some(sub_progress))
@@ -53,7 +53,11 @@ pub fn main() -> Result<()> {
     let object_hash = args.object_hash;
     use git_repository as git;
     let repository = args.repository;
-    let repository = move || git::ThreadSafeRepository::discover(repository);
+    let repository = move || {
+        git::ThreadSafeRepository::discover(repository)
+            .map(git::Repository::from)
+            .map(|r| r.apply_environment())
+    };
 
     let progress;
     let progress_keep_open;
@@ -81,7 +85,7 @@ pub fn main() -> Result<()> {
             progress,
             progress_keep_open,
             None,
-            move |_progress, out, _err| core::repository::config::list(repository()?.into(), filter, format, out),
+            move |_progress, out, _err| core::repository::config::list(repository()?, filter, format, out),
         )
         .map(|_| ()),
         Subcommands::Free(subcommands) => match subcommands {
@@ -462,7 +466,7 @@ pub fn main() -> Result<()> {
                                     "Refusing to read from standard input as no path is given, but it's a terminal."
                                 )
                                 }
-                                PathOrRead::Read(Box::new(std::io::stdin()))
+                                PathOrRead::Read(Box::new(stdin()))
                             };
                             core::pack::index::from_pack(
                                 input,
@@ -498,7 +502,7 @@ pub fn main() -> Result<()> {
             core::repository::verify::PROGRESS_RANGE,
             move |progress, out, _err| {
                 core::repository::verify::integrity(
-                    repository()?.into(),
+                    repository()?,
                     out,
                     progress,
                     &should_interrupt,
@@ -528,7 +532,7 @@ pub fn main() -> Result<()> {
                 None,
                 move |_progress, out, _err| {
                     core::repository::revision::parse(
-                        repository()?.into(),
+                        repository()?,
                         spec,
                         out,
                         core::repository::revision::parse::Options { format },
@@ -554,7 +558,7 @@ pub fn main() -> Result<()> {
                 None,
                 move |_progress, out, err| {
                     core::repository::commit::describe(
-                        repository()?.into(),
+                        repository()?,
                         rev_spec.as_deref(),
                         out,
                         err,
@@ -583,14 +587,7 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, _err| {
-                    core::repository::tree::entries(
-                        repository()?.into(),
-                        treeish.as_deref(),
-                        recursive,
-                        extended,
-                        format,
-                        out,
-                    )
+                    core::repository::tree::entries(repository()?, treeish.as_deref(), recursive, extended, format, out)
                 },
             ),
             tree::Subcommands::Info { treeish, extended } => prepare_and_run(
@@ -600,7 +597,7 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, err| {
-                    core::repository::tree::info(repository()?.into(), treeish.as_deref(), extended, format, out, err)
+                    core::repository::tree::info(repository()?, treeish.as_deref(), extended, format, out, err)
                 },
             ),
         },
@@ -611,7 +608,7 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| core::repository::odb::entries(repository()?.into(), format, out),
+                move |_progress, out, _err| core::repository::odb::entries(repository()?, format, out),
             ),
             odb::Subcommands::Info => prepare_and_run(
                 "odb-info",
@@ -619,7 +616,7 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, err| core::repository::odb::info(repository()?.into(), format, out, err),
+                move |_progress, out, err| core::repository::odb::info(repository()?, format, out, err),
             ),
         },
         Subcommands::Mailmap(cmd) => match cmd {
@@ -629,7 +626,7 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, err| core::repository::mailmap::entries(repository()?.into(), format, out, err),
+                move |_progress, out, err| core::repository::mailmap::entries(repository()?, format, out, err),
             ),
         },
         Subcommands::Exclude(cmd) => match cmd {
@@ -646,7 +643,7 @@ pub fn main() -> Result<()> {
                 move |_progress, out, _err| {
                     use git::bstr::ByteSlice;
                     core::repository::exclude::query(
-                        repository()?.into(),
+                        repository()?,
                         if pathspecs.is_empty() {
                             Box::new(
                                 stdin_or_bail()?
@@ -671,7 +668,7 @@ pub fn main() -> Result<()> {
     Ok(())
 }
 
-fn stdin_or_bail() -> anyhow::Result<std::io::BufReader<std::io::Stdin>> {
+fn stdin_or_bail() -> Result<std::io::BufReader<std::io::Stdin>> {
     if atty::is(atty::Stream::Stdin) {
         anyhow::bail!("Refusing to read from standard input while a terminal is connected")
     }
