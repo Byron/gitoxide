@@ -64,7 +64,14 @@ pub enum Error {
     #[cfg(feature = "regex")]
     #[error(transparent)]
     InvalidRegex(#[from] regex::Error),
-    #[error("None of {commits_searched} commits from {oid} matched regex {regex:?}")]
+    #[cfg_attr(
+        feature = "regex",
+        error("None of {commits_searched} commits from {oid} matched regex {regex:?}")
+    )]
+    #[cfg_attr(
+        not(feature = "regex"),
+        error("None of {commits_searched} commits from {oid} matched text {regex:?}")
+    )]
     NoRegexMatch {
         regex: BString,
         oid: git_hash::Prefix,

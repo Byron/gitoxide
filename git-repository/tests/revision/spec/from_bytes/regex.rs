@@ -21,7 +21,7 @@ mod with_known_revision {
 
         assert_eq!(
             parse_spec_no_baseline("@^{/.*x}", &repo).unwrap_err().to_string(),
-            "None of 1 commits from 0000000000e matched regex \".*x\"",
+            "None of 1 commits from 0000000000e matched text \".*x\"",
             "regexes are not actually available"
         );
     }
