@@ -202,7 +202,7 @@ fn repo(name: &str) -> crate::Result<git::Repository> {
 
 mod ambiguous {
     use super::repo;
-    use crate::rev_spec::from_bytes::{
+    use crate::revision::spec::from_bytes::{
         parse_spec, parse_spec_better_than_baseline, parse_spec_no_baseline, parse_spec_no_baseline_opts,
         parse_spec_opts, rev_parse,
     };
@@ -272,7 +272,7 @@ mod ambiguous {
             parse_spec("0000000000", &repo).unwrap_err().to_string(),
             "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"\n\t0000000000c tree\n\t0000000000b blob",
             "in theory one could disambiguate with 0000000000^{{tree}} (which works in git) or 0000000000^{{blob}} which doesn't work for some reason."
-            );
+        );
 
         assert_eq!(
             parse_spec("0000000000cdc^{tree}", &repo).unwrap(),
@@ -375,8 +375,8 @@ mod ambiguous {
                 &repo,
                 opts_ref_hint(RefsHint::Fail)
             )
-            .unwrap_err()
-            .to_string(),
+                .unwrap_err()
+                .to_string(),
             "The short hash 0000000000e4f9fbd19cf1e932319e5ad0d1d00b matched both the reference refs/heads/0000000000e4f9fbd19cf1e932319e5ad0d1d00b and at least one object"
         );
     }
@@ -521,7 +521,7 @@ fn access_blob_through_tree() {
 }
 
 mod regex {
-    use crate::rev_spec::from_bytes::{parse_spec_no_baseline, repo};
+    use crate::revision::spec::from_bytes::{parse_spec_no_baseline, repo};
     use git_repository::prelude::ObjectIdExt;
     use git_repository::RevSpec;
     use git_testtools::hex_to_id;

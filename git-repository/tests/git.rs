@@ -16,4 +16,4 @@ mod reference;
 #[cfg(not(feature = "regex"))]
 mod repository;
 #[cfg(not(feature = "regex"))]
-mod rev_spec;
+mod revision;
