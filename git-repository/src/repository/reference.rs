@@ -183,17 +183,17 @@ impl crate::Repository {
     ///
     /// Also note that the returned id is likely to point to a commit, but could also
     /// point to a tree or blob. It won't, however, point to a tag as these are always peeled.
-    pub fn head_id(&self) -> Result<crate::Id<'_>, crate::reference::head_id::Error> {
+    pub fn head_id(&self) -> Result<crate::Id<'_>, reference::head_id::Error> {
         let mut head = self.head()?;
         head.peel_to_id_in_place()
-            .ok_or_else(|| crate::reference::head_id::Error::Unborn {
+            .ok_or_else(|| reference::head_id::Error::Unborn {
                 name: head.referent_name().expect("unborn").to_owned(),
             })?
             .map_err(Into::into)
     }
 
     /// Return the name to the symbolic reference `HEAD` points to, or `None` if the head is detached.
-    pub fn head_name(&self) -> Result<Option<git_ref::FullName>, crate::reference::find::existing::Error> {
+    pub fn head_name(&self) -> Result<Option<FullName>, reference::find::existing::Error> {
         Ok(self.head()?.referent_name().map(|n| n.to_owned()))
     }
 
@@ -202,7 +202,7 @@ impl crate::Repository {
     /// Note that this may fail for various reasons, most notably because the repository
     /// is freshly initialized and doesn't have any commits yet. It could also fail if the
     /// head does not point to a commit.
-    pub fn head_commit(&self) -> Result<crate::Commit<'_>, crate::reference::head_commit::Error> {
+    pub fn head_commit(&self) -> Result<crate::Commit<'_>, reference::head_commit::Error> {
         Ok(self.head()?.peel_to_commit_in_place()?)
     }
 
@@ -224,8 +224,8 @@ impl crate::Repository {
     ///
     /// Common kinds of iteration are [all][crate::reference::iter::Platform::all()] or [prefixed][crate::reference::iter::Platform::prefixed()]
     /// references.
-    pub fn references(&self) -> Result<crate::reference::iter::Platform<'_>, crate::reference::iter::Error> {
-        Ok(crate::reference::iter::Platform {
+    pub fn references(&self) -> Result<reference::iter::Platform<'_>, reference::iter::Error> {
+        Ok(reference::iter::Platform {
             platform: self.refs.iter()?,
             repo: self,
         })

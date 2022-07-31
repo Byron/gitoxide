@@ -373,16 +373,16 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
         self.follow_refs_to_objects_if_needed()?;
 
         #[cfg(not(feature = "regex"))]
-        let matches = |message: &BStr| -> bool { message.contains_str(regex) };
+        let matches = |message: &BStr| -> bool { message.contains_str(regex) ^ negated };
         #[cfg(feature = "regex")]
         let matches = match regex::bytes::Regex::new(regex.to_str_lossy().as_ref()) {
             Ok(compiled) => {
                 let needs_regex = regex::escape(compiled.as_str()) != regex;
                 move |message: &BStr| -> bool {
                     if needs_regex {
-                        compiled.is_match(message)
+                        compiled.is_match(message) ^ negated
                     } else {
-                        message.contains_str(regex)
+                        message.contains_str(regex) ^ negated
                     }
                 }
             }
@@ -415,8 +415,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                 count += 1;
                                 match commit {
                                     Ok(commit) => {
-                                        let matches = matches(commit.message_raw_sloppy());
-                                        if matches && !negated || !matches && negated {
+                                        if matches(commit.message_raw_sloppy()) {
                                             replacements.push((*oid, commit.id));
                                             matched = true;
                                             break;
@@ -454,7 +453,39 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     Some(())
                 }
             }
-            None => todo!("find youngest match"),
+            None => match self.repo.references() {
+                Ok(references) => match references.all() {
+                    Ok(references) => {
+                        match self
+                            .repo
+                            .rev_walk(
+                                references
+                                    .peeled()
+                                    .filter_map(Result::ok)
+                                    .filter_map(|r| r.detach().peeled),
+                            )
+                            .sorting(Sorting::ByCommitTimeNewestFirst)
+                            .all()
+                        {
+                            Ok(_walk) => {
+                                todo!("walk")
+                            }
+                            Err(err) => {
+                                self.err.push(err.into());
+                                None
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        self.err.push(err.into());
+                        None
+                    }
+                },
+                Err(err) => {
+                    self.err.push(err.into());
+                    None
+                }
+            },
         }
     }
 

@@ -61,6 +61,10 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error(transparent)]
+    RevWalkIterInit(#[from] crate::reference::iter::init::Error),
+    #[error(transparent)]
+    RevWalkAllReferences(#[from] git_ref::packed::buffer::open::Error),
     #[cfg(feature = "regex")]
     #[error(transparent)]
     InvalidRegex(#[from] regex::Error),

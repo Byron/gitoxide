@@ -91,12 +91,7 @@ impl<'repo> Id<'repo> {
     /// one will always see an empty iteration even if this id is not a commit, instead of an error.
     /// If this is undesirable, it's best to check for the correct object type before creating an iterator.
     pub fn ancestors(&self) -> revision::walk::Platform<'repo> {
-        revision::walk::Platform {
-            repo: self.repo,
-            tips: vec![self.inner],
-            sorting: Default::default(),
-            parents: Default::default(),
-        }
+        revision::walk::Platform::new(Some(self.inner), self.repo)
     }
 }
 

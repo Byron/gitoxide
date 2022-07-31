@@ -11,6 +11,17 @@ pub struct Platform<'repo> {
     pub(crate) parents: git_traverse::commit::Parents,
 }
 
+impl<'repo> Platform<'repo> {
+    pub(crate) fn new(tips: impl IntoIterator<Item = impl Into<ObjectId>>, repo: &'repo Repository) -> Self {
+        revision::walk::Platform {
+            repo,
+            tips: tips.into_iter().map(Into::into).collect(),
+            sorting: Default::default(),
+            parents: Default::default(),
+        }
+    }
+}
+
 /// Create-time builder methods
 impl<'repo> Platform<'repo> {
     /// Set the sort mode for commits to the given value. The default is to order by topology.

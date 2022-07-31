@@ -7,23 +7,10 @@ use git_ref::{
     FullName,
 };
 
-use crate::bstr::BStr;
-use crate::{commit, ext::ObjectIdExt, object, revision, tag, Id, Object, Reference};
+use crate::{commit, ext::ObjectIdExt, object, tag, Id, Object, Reference};
 
 /// Methods related to object creation.
 impl crate::Repository {
-    /// Parse a revision specification and turn it into the full id to the object it describes, similar to `git rev-parse`.
-    pub fn rev_parse<'a>(&self, spec: impl Into<&'a BStr>) -> Result<revision::Spec<'_>, revision::spec::parse::Error> {
-        revision::Spec::from_bstr(
-            spec,
-            self,
-            revision::spec::parse::Options {
-                object_kind_hint: self.config.object_kind_hint,
-                ..Default::default()
-            },
-        )
-    }
-
     /// Find the object with `id` in the object database or return an error if it could not be found.
     ///
     /// There are various legitimate reasons for an object to not be present, which is why
