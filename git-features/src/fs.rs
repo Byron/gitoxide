@@ -70,3 +70,95 @@ pub fn open_options_no_follow() -> std::fs::OpenOptions {
     }
     options
 }
+
+#[allow(missing_docs)]
+mod reload_on_demand {
+    use crate::threading::{get_mut, get_ref, MutableOnDemand, OwnShared};
+    use std::ops::Deref;
+
+    pub type ReloadIfChangedStorage<T> = MutableOnDemand<Option<OwnShared<ReloadIfChanged<T>>>>;
+
+    #[derive(Debug)]
+    pub struct ReloadIfChanged<T: std::fmt::Debug> {
+        value: T,
+        modified: std::time::SystemTime,
+    }
+
+    impl<T: std::fmt::Debug> Deref for ReloadIfChanged<T> {
+        type Target = T;
+
+        fn deref(&self) -> &Self::Target {
+            &self.value
+        }
+    }
+
+    impl<T: std::fmt::Debug> ReloadIfChanged<T> {
+        pub fn force_refresh<E>(
+            state: &ReloadIfChangedStorage<T>,
+            open: impl FnOnce() -> Result<(T, std::time::SystemTime), E>,
+        ) -> Result<(), E> {
+            let mut state = get_mut(state);
+            let (value, modified) = open()?;
+            *state = Some(OwnShared::new(ReloadIfChanged { value, modified }));
+            Ok(())
+        }
+
+        pub fn assure_uptodate<E>(
+            state: &ReloadIfChangedStorage<T>,
+            mut current_modification_time: impl FnMut() -> Option<std::time::SystemTime>,
+            open: impl FnOnce() -> Result<T, E>,
+        ) -> Result<Option<OwnShared<ReloadIfChanged<T>>>, E> {
+            let state_opt_lock = get_ref(state);
+            let recent_modification = current_modification_time();
+            let buffer = match (&*state_opt_lock, recent_modification) {
+                (None, None) => (*state_opt_lock).clone(),
+                (Some(_), None) => {
+                    drop(state_opt_lock);
+                    let mut state = get_mut(state);
+                    // Still in the same situation? If so, drop the loaded buffer
+                    if let (Some(_), None) = (&*state, current_modification_time()) {
+                        *state = None;
+                    }
+                    (*state).clone()
+                }
+                (Some(state_shared), Some(modified_time)) => {
+                    if state_shared.modified < modified_time {
+                        drop(state_opt_lock);
+                        let mut state = get_mut(state);
+
+                        // in the common case, we check again and do what we do only if we are
+                        // still in the same situation, writers pile up.
+                        match (&mut *state, current_modification_time()) {
+                            (Some(state), Some(modified_time)) if state.modified < modified_time => {
+                                *state = OwnShared::new(ReloadIfChanged {
+                                    value: open()?,
+                                    modified: modified_time,
+                                });
+                            }
+                            _ => {}
+                        }
+                        (*state).clone()
+                    } else {
+                        // Note that this relies on sub-section precision or else is a race when the packed file was just changed.
+                        // It's nothing we can know though, so… up to the caller unfortunately.
+                        Some(state_shared.clone())
+                    }
+                }
+                (None, Some(_modified_time)) => {
+                    drop(state);
+                    let mut state = get_mut(state);
+                    // Still in the same situation? If so, load the buffer.
+                    if let (None, Some(modified_time)) = (&*state, current_modification_time()) {
+                        *state = Some(OwnShared::new(ReloadIfChanged {
+                            value: open()?,
+                            modified: modified_time,
+                        }));
+                    }
+                    (*state).clone()
+                }
+            };
+            Ok(buffer)
+        }
+    }
+}
+pub use reload_on_demand::{ReloadIfChanged, ReloadIfChangedStorage};
