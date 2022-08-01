@@ -89,6 +89,7 @@ pub(crate) mod modifiable {
         /// but fears the change is not picked up due to lack of precision in fstat mtime calls.
         pub(crate) fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {
             let mut state = get_mut(&self.packed);
+            state.modified = self.packed_refs_path().metadata()?.modified()?.into();
             state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
             Ok(())
         }
