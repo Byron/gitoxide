@@ -105,7 +105,7 @@ mod reload_on_demand {
         pub fn assure_uptodate<E>(
             state: &ReloadIfChangedStorage<T>,
             mut current_modification_time: impl FnMut() -> Option<std::time::SystemTime>,
-            open: impl FnOnce() -> Result<T, E>,
+            open: impl FnOnce() -> Result<Option<T>, E>,
         ) -> Result<Option<OwnShared<ReloadIfChanged<T>>>, E> {
             let state_opt_lock = get_ref(state);
             let recent_modification = current_modification_time();
@@ -128,11 +128,18 @@ mod reload_on_demand {
                         // in the common case, we check again and do what we do only if we are
                         // still in the same situation, writers pile up.
                         match (&mut *state, current_modification_time()) {
-                            (Some(state), Some(modified_time)) if state.modified < modified_time => {
-                                *state = OwnShared::new(ReloadIfChanged {
-                                    value: open()?,
-                                    modified: modified_time,
-                                });
+                            (Some(state_opt), Some(modified_time)) if state_opt.modified < modified_time => {
+                                match open()? {
+                                    Some(value) => {
+                                        *state_opt = OwnShared::new(ReloadIfChanged {
+                                            value,
+                                            modified: modified_time,
+                                        });
+                                    }
+                                    None => {
+                                        *state = None;
+                                    }
+                                }
                             }
                             _ => {}
                         }
@@ -148,10 +155,12 @@ mod reload_on_demand {
                     let mut state = get_mut(state);
                     // Still in the same situation? If so, load the buffer.
                     if let (None, Some(modified_time)) = (&*state, current_modification_time()) {
-                        *state = Some(OwnShared::new(ReloadIfChanged {
-                            value: open()?,
-                            modified: modified_time,
-                        }));
+                        *state = open()?.map(|value| {
+                            OwnShared::new(ReloadIfChanged {
+                                value,
+                                modified: modified_time,
+                            })
+                        });
                     }
                     (*state).clone()
                 }

@@ -94,6 +94,16 @@ pub(crate) mod modifiable {
                     .and_then(|packed| Ok(Some(modified).zip(packed)))
             })
         }
+        pub(crate) fn assure_packed_refs_uptodate2(
+            &self,
+        ) -> Result<Option<OwnShared<git_features::fs::ReloadIfChanged<packed::Buffer>>>, packed::buffer::open::Error>
+        {
+            git_features::fs::ReloadIfChanged::assure_uptodate(
+                &self.packed2,
+                || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok(),
+                || self.open_packed_buffer(),
+            )
+        }
 
         /// Always reload the internally cached packed buffer from disk. This can be necessary if the caller knows something changed
         /// but fears the change is not picked up due to lack of precision in fstat mtime calls.
