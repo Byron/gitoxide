@@ -151,8 +151,8 @@ mod snapshot {
                     }
                     (*state).clone()
                 }
-                (Some(state), Some(modified_time)) => {
-                    if state.modified < modified_time {
+                (Some(snapshot), Some(modified_time)) => {
+                    if snapshot.modified < modified_time {
                         drop(state);
                         let mut state = get_mut(self);
 
@@ -178,7 +178,7 @@ mod snapshot {
                     } else {
                         // Note that this relies on sub-section precision or else is a race when the packed file was just changed.
                         // It's nothing we can know though, so… up to the caller unfortunately.
-                        Some(state.clone())
+                        Some(snapshot.clone())
                     }
                 }
                 (None, Some(_modified_time)) => {
