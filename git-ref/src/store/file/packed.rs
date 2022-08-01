@@ -78,6 +78,8 @@ pub(crate) mod modifiable {
 
     use crate::{file, packed};
 
+    pub(crate) type State2 = git_features::fs::ReloadIfChangedStorage<packed::Buffer>;
+
     #[derive(Debug, Default)]
     pub(crate) struct State {
         buffer: Option<OwnShared<packed::Buffer>>,
@@ -85,6 +87,14 @@ pub(crate) mod modifiable {
     }
 
     impl file::Store {
+        pub(crate) fn force_refresh_packed_buffer2(&self) -> Result<(), packed::buffer::open::Error> {
+            git_features::fs::ReloadIfChanged::force_refresh(&self.packed2, || {
+                let modified = self.packed_refs_path().metadata()?.modified()?;
+                self.open_packed_buffer()
+                    .and_then(|packed| Ok(Some(modified).zip(packed)))
+            })
+        }
+
         /// Always reload the internally cached packed buffer from disk. This can be necessary if the caller knows something changed
         /// but fears the change is not picked up due to lack of precision in fstat mtime calls.
         pub(crate) fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {

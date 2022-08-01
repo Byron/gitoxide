@@ -95,11 +95,10 @@ mod reload_on_demand {
     impl<T: std::fmt::Debug> ReloadIfChanged<T> {
         pub fn force_refresh<E>(
             state: &ReloadIfChangedStorage<T>,
-            open: impl FnOnce() -> Result<(T, std::time::SystemTime), E>,
+            open: impl FnOnce() -> Result<Option<(std::time::SystemTime, T)>, E>,
         ) -> Result<(), E> {
             let mut state = get_mut(state);
-            let (value, modified) = open()?;
-            *state = Some(OwnShared::new(ReloadIfChanged { value, modified }));
+            *state = open()?.map(|(modified, value)| OwnShared::new(ReloadIfChanged { value, modified }));
             Ok(())
         }
 
