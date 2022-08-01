@@ -11,11 +11,12 @@ pub(crate) mod function {
     use std::ffi::OsString;
 
     pub fn parse(
-        repo: git::Repository,
+        mut repo: git::Repository,
         spec: OsString,
         mut out: impl std::io::Write,
         Options { format }: Options,
     ) -> anyhow::Result<()> {
+        repo.object_cache_size_if_unset(1024 * 1024);
         let spec = git::path::os_str_into_bstr(&spec)?;
         let spec = repo.rev_parse(spec)?.detach();
 
