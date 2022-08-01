@@ -75,6 +75,13 @@ mod snapshot {
     use crate::threading::{get_mut, get_ref, MutableOnDemand, OwnShared};
     use std::ops::Deref;
 
+    /// A structure holding enough information to reload a value if its on-disk representation changes as determined by its modified time.
+    #[derive(Debug)]
+    pub struct Snapshot<T: std::fmt::Debug> {
+        value: T,
+        modified: std::time::SystemTime,
+    }
+
     /// A snapshot of a resource which is up-to-date in the moment it is retrieved.
     pub type SharedSnapshot<T> = OwnShared<Snapshot<T>>;
 
@@ -82,14 +89,8 @@ mod snapshot {
     ///
     /// Note that the resource itself is behind another [`OwnShared`] to allow it to be used without holding any kind of lock, hence
     /// without blocking updates while it is used.
-    pub type MutableSnapshot<T> = MutableOnDemand<Option<SharedSnapshot<T>>>;
-
-    /// A structure holding enough information to reload a value if its on-disk representation changes as determined by its modified time.
-    #[derive(Debug)]
-    pub struct Snapshot<T: std::fmt::Debug> {
-        value: T,
-        modified: std::time::SystemTime,
-    }
+    #[derive(Debug, Default)]
+    pub struct MutableSnapshot<T: std::fmt::Debug>(pub MutableOnDemand<Option<SharedSnapshot<T>>>);
 
     impl<T: std::fmt::Debug> Deref for Snapshot<T> {
         type Target = T;
@@ -99,14 +100,29 @@ mod snapshot {
         }
     }
 
-    impl<T: std::fmt::Debug> Snapshot<T> {
+    impl<T: std::fmt::Debug> Deref for MutableSnapshot<T> {
+        type Target = MutableOnDemand<Option<SharedSnapshot<T>>>;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl<T: std::fmt::Debug> MutableSnapshot<T> {
+        /// Create a new instance of this type.
+        ///
+        /// Useful in case `Default::default()` isn't working for some reason.
+        pub fn new() -> Self {
+            MutableSnapshot(MutableOnDemand::new(None))
+        }
+
         /// Refresh `state` forcefully by re-`open`ing the resource. Note that `open()` returns `None` if the resource isn't
         /// present on disk, and that it's critical that the modified time is obtained _before_ opening the resource.
         pub fn force_refresh<E>(
-            state: &MutableSnapshot<T>,
+            &self,
             open: impl FnOnce() -> Result<Option<(std::time::SystemTime, T)>, E>,
         ) -> Result<(), E> {
-            let mut state = get_mut(state);
+            let mut state = get_mut(&self.0);
             *state = open()?.map(|(modified, value)| OwnShared::new(Snapshot { value, modified }));
             Ok(())
         }
@@ -114,31 +130,31 @@ mod snapshot {
         /// Assure that the resource in `state` is up-to-date by comparing the `current_modification_time` with the one we know in `state`
         /// and by acting accordingly.
         /// Returns the potentially updated/reloaded resource if it is still present on disk, which then represents a snapshot that is up-to-date
-        /// in that very moment.
+        /// in that very moment, or `None` if the underlying file doesn't exist.
         ///
         /// Note that it is race-proof.
         pub fn recent_snapshot<E>(
-            state: &MutableSnapshot<T>,
+            &self,
             mut current_modification_time: impl FnMut() -> Option<std::time::SystemTime>,
             open: impl FnOnce() -> Result<Option<T>, E>,
         ) -> Result<Option<SharedSnapshot<T>>, E> {
-            let state_opt_lock = get_ref(state);
+            let state = get_ref(self);
             let recent_modification = current_modification_time();
-            let buffer = match (&*state_opt_lock, recent_modification) {
-                (None, None) => (*state_opt_lock).clone(),
+            let buffer = match (&*state, recent_modification) {
+                (None, None) => (*state).clone(),
                 (Some(_), None) => {
-                    drop(state_opt_lock);
-                    let mut state = get_mut(state);
+                    drop(state);
+                    let mut state = get_mut(self);
                     // Still in the same situation? If so, drop the loaded buffer
                     if let (Some(_), None) = (&*state, current_modification_time()) {
                         *state = None;
                     }
                     (*state).clone()
                 }
-                (Some(state_shared), Some(modified_time)) => {
-                    if state_shared.modified < modified_time {
-                        drop(state_opt_lock);
-                        let mut state = get_mut(state);
+                (Some(state), Some(modified_time)) => {
+                    if state.modified < modified_time {
+                        drop(state);
+                        let mut state = get_mut(self);
 
                         // in the common case, we check again and do what we do only if we are
                         // still in the same situation, writers pile up.
@@ -162,12 +178,12 @@ mod snapshot {
                     } else {
                         // Note that this relies on sub-section precision or else is a race when the packed file was just changed.
                         // It's nothing we can know though, so… up to the caller unfortunately.
-                        Some(state_shared.clone())
+                        Some(state.clone())
                     }
                 }
                 (None, Some(_modified_time)) => {
-                    drop(state_opt_lock);
-                    let mut state = get_mut(state);
+                    drop(state);
+                    let mut state = get_mut(self);
                     // Still in the same situation? If so, load the buffer.
                     if let (None, Some(modified_time)) = (&*state, current_modification_time()) {
                         *state = open()?.map(|value| {
