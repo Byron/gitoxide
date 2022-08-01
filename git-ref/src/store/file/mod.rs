@@ -28,7 +28,7 @@ pub struct Store {
     /// A packed buffer which can be mapped in one version and shared as such.
     /// It's updated only in one spot, which is prior to reading it based on file stamps.
     /// Doing it like this has the benefit of being able to hand snapshots out to people without blocking others from updating it.
-    packed: packed::modifiable::SharedBufferStorage,
+    packed: packed::modifiable::MutableSharedBuffer,
 }
 
 mod access {

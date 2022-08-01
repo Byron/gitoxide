@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-use git_features::threading::OwnShared;
-
 use crate::store_impl::{file, packed};
 
 impl file::Store {
@@ -72,19 +70,19 @@ pub mod transaction {
 }
 
 #[allow(missing_docs)]
-pub type SharedBuffer = OwnShared<git_features::fs::ReloadIfChanged<packed::Buffer>>;
+pub type SharedBuffer = git_features::fs::SharedSnapshot<packed::Buffer>;
 
 pub(crate) mod modifiable {
     use git_features::threading::OwnShared;
 
     use crate::{file, packed};
 
-    pub(crate) type SharedBufferStorage = OwnShared<State>;
-    type State = git_features::fs::ReloadIfChangedStorage<packed::Buffer>;
+    pub(crate) type MutableSharedBuffer = OwnShared<State>;
+    type State = git_features::fs::MutableSnapshot<packed::Buffer>;
 
     impl file::Store {
         pub(crate) fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {
-            git_features::fs::ReloadIfChanged::force_refresh(&self.packed, || {
+            git_features::fs::Snapshot::force_refresh(&self.packed, || {
                 let modified = self.packed_refs_path().metadata()?.modified()?;
                 self.open_packed_buffer()
                     .and_then(|packed| Ok(Some(modified).zip(packed)))
@@ -93,7 +91,7 @@ pub(crate) mod modifiable {
         pub(crate) fn assure_packed_refs_uptodate(
             &self,
         ) -> Result<Option<super::SharedBuffer>, packed::buffer::open::Error> {
-            git_features::fs::ReloadIfChanged::assure_uptodate(
+            git_features::fs::Snapshot::recent_snapshot(
                 &self.packed,
                 || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok(),
                 || self.open_packed_buffer(),
