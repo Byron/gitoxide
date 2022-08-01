@@ -343,4 +343,5 @@ git init complex_graph
   baseline ":/!-mes.age" # negated above
   baseline ":/not there" # definitely not in graph
   baseline "@^{/!-B}"    # negation from branch
+  baseline ":file"      # index lookup, default stage 0
 )

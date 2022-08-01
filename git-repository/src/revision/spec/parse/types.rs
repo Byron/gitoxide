@@ -62,6 +62,8 @@ pub struct Options {
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
+    Index(#[from] crate::worktree::open_index::Error),
+    #[error(transparent)]
     RevWalkIterInit(#[from] crate::reference::iter::init::Error),
     #[error(transparent)]
     RevWalkAllReferences(#[from] git_ref::packed::buffer::open::Error),

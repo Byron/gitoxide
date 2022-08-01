@@ -7,6 +7,32 @@ pub use util::*;
 
 mod ambiguous;
 mod regex;
+mod index {
+    use crate::revision::spec::from_bytes::{parse_spec, repo};
+    use git_repository::prelude::ObjectIdExt;
+    use git_repository::revision::Spec;
+    use git_testtools::hex_to_id;
+
+    #[test]
+    #[ignore]
+    fn at_default_stage() {
+        let repo = repo("complex_graph").unwrap();
+        assert_eq!(
+            parse_spec(":file", &repo).unwrap(),
+            Spec::from_id(hex_to_id("fe27474251f7f8368742f01fbd3bd5666b630a82").attach(&repo))
+        );
+
+        assert_eq!(
+            parse_spec(":1:file", &repo).unwrap_err().to_string(),
+            "give hint as to where to find the file in the index and if it exists on disk",
+        );
+
+        assert_eq!(
+            parse_spec(":foo", &repo).unwrap_err().to_string(),
+            "does not exist (but use same error message as above, as it's parametric)",
+        );
+    }
+}
 
 #[test]
 fn names_are_made_available_via_references() {

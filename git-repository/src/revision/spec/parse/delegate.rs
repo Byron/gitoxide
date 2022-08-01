@@ -525,7 +525,15 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
 
     fn index_lookup(&mut self, _path: &BStr, _stage: u8) -> Option<()> {
         self.unset_disambiguate_call();
-        todo!()
+        match self.repo.index() {
+            Ok(_index) => {
+                todo!("index lookup")
+            }
+            Err(err) => {
+                self.err.push(err.into());
+                None
+            }
+        }
     }
 }
 
