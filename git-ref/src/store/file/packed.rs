@@ -84,8 +84,7 @@ pub(crate) mod modifiable {
         pub(crate) fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {
             git_features::fs::Snapshot::force_refresh(&self.packed, || {
                 let modified = self.packed_refs_path().metadata()?.modified()?;
-                self.open_packed_buffer()
-                    .and_then(|packed| Ok(Some(modified).zip(packed)))
+                self.open_packed_buffer().map(|packed| Some(modified).zip(packed))
             })
         }
         pub(crate) fn assure_packed_refs_uptodate(
