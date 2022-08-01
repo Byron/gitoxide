@@ -6,9 +6,9 @@ impl crate::Repository {
     /// This represents typical usage within git, which also works with what's there without considering a populated mailmap
     /// a reason to abort an operation, considering it optional.
     #[cfg(feature = "git-mailmap")]
-    pub fn load_mailmap(&self) -> git_mailmap::Snapshot {
+    pub fn open_mailmap(&self) -> git_mailmap::Snapshot {
         let mut out = git_mailmap::Snapshot::default();
-        self.load_mailmap_into(&mut out).ok();
+        self.open_mailmap_into(&mut out).ok();
         out
     }
 
@@ -23,7 +23,7 @@ impl crate::Repository {
     /// Only the first error will be reported, and as many source mailmaps will be merged into `target` as possible.
     /// Parsing errors will be ignored.
     #[cfg(feature = "git-mailmap")]
-    pub fn load_mailmap_into(&self, target: &mut git_mailmap::Snapshot) -> Result<(), crate::mailmap::load::Error> {
+    pub fn open_mailmap_into(&self, target: &mut git_mailmap::Snapshot) -> Result<(), crate::mailmap::load::Error> {
         let mut err = None::<crate::mailmap::load::Error>;
         let mut buf = Vec::new();
         let mut blob_id = self
