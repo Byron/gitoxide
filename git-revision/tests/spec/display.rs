@@ -51,7 +51,7 @@ fn merge() {
 #[test]
 fn include_parents() {
     assert_eq!(
-        git_revision::Spec::IncludeOnlyParents { from_exclusive: oid() }.to_string(),
+        git_revision::Spec::IncludeOnlyParents(oid()).to_string(),
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^@"
     );
 }
@@ -59,7 +59,7 @@ fn include_parents() {
 #[test]
 fn exclude_parents() {
     assert_eq!(
-        git_revision::Spec::ExcludeFromParents { from: oid() }.to_string(),
+        git_revision::Spec::ExcludeParents(oid()).to_string(),
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa^!"
     );
 }

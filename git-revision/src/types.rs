@@ -26,13 +26,13 @@ pub enum Spec {
     },
 
     /// The equivalent to [crate::spec::Kind::IncludeReachableFromParents], but with data.
-    IncludeOnlyParents {
+    IncludeOnlyParents(
         /// Include only the parents of this object, but not the object itself.
-        from_exclusive: git_hash::ObjectId,
-    },
+        git_hash::ObjectId,
+    ),
     /// The equivalent to [crate::spec::Kind::ExcludeReachableFromParents], but with data.
-    ExcludeFromParents {
+    ExcludeParents(
         /// Exclude the parents of this object, but not the object itself.
-        from: git_hash::ObjectId,
-    },
+        git_hash::ObjectId,
+    ),
 }

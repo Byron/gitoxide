@@ -34,7 +34,7 @@ impl Spec {
             Spec::Range { .. } => Kind::RangeBetween,
             Spec::Merge { .. } => Kind::ReachableToMergeBase,
             Spec::IncludeOnlyParents { .. } => Kind::IncludeReachableFromParents,
-            Spec::ExcludeFromParents { .. } => Kind::ExcludeReachableFromParents,
+            Spec::ExcludeParents { .. } => Kind::ExcludeReachableFromParents,
         }
     }
 }
@@ -50,8 +50,8 @@ mod _impls {
                 Spec::Exclude(oid) => write!(f, "^{oid}"),
                 Spec::Range { from, to } => write!(f, "{from}..{to}"),
                 Spec::Merge { theirs, ours } => write!(f, "{theirs}...{ours}"),
-                Spec::IncludeOnlyParents { from_exclusive } => write!(f, "{from_exclusive}^@"),
-                Spec::ExcludeFromParents { from } => write!(f, "{from}^!"),
+                Spec::IncludeOnlyParents(from_exclusive) => write!(f, "{from_exclusive}^@"),
+                Spec::ExcludeParents(oid) => write!(f, "{oid}^!"),
             }
         }
     }
