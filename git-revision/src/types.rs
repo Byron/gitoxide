@@ -46,10 +46,3 @@ pub enum Spec {
         git_hash::ObjectId,
     ),
 }
-
-pub enum Kind {
-    /// Include every commit of all parents of `a`, but not `a` itself. Example: `a^@`.
-    IncludeReachableFromParents,
-    /// Exclude every commit of all parents of `a`, but not `a` itself. Example: `a^!`.
-    ExcludeReachableFromParents,
-}
