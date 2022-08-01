@@ -71,6 +71,14 @@ impl<S> Cache<S> {
         self.object_cache = Some(RefCell::new(create()));
         self.new_object_cache = Some(Arc::new(create));
     }
+    /// Return true if an object cache is present.
+    pub fn has_object_cache(&self) -> bool {
+        self.object_cache.is_some()
+    }
+    /// Return true if a pack cache is present.
+    pub fn has_pack_cache(&self) -> bool {
+        self.pack_cache.is_some()
+    }
     /// Remove the current pack cache as well as its constructor from this instance.
     pub fn unset_pack_cache(&mut self) {
         self.pack_cache = None;
