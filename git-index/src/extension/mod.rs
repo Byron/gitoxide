@@ -14,6 +14,7 @@ pub struct Iter<'a> {
 ///
 /// It allows to more quickly build trees by avoiding as it can quickly re-use portions of the index and its associated tree ids
 /// if there was no change to them. Portions of this tree are invalidated as the index is changed.
+#[derive(Clone)]
 pub struct Tree {
     pub name: SmallVec<[u8; 23]>,
     /// The id of the directory tree of the associated tree object.
@@ -24,12 +25,14 @@ pub struct Tree {
     pub children: Vec<Tree>,
 }
 
+#[derive(Clone)]
 pub struct Link {
     pub shared_index_checksum: git_hash::ObjectId,
     pub bitmaps: Option<link::Bitmaps>,
 }
 
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct UntrackedCache {
     /// Something identifying the location and machine that this cache is for.
     /// Should the repository be copied to a different machine, the entire cache can immediately be invalidated.
@@ -47,6 +50,7 @@ pub struct UntrackedCache {
 }
 
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct FsMonitor {
     token: fs_monitor::Token,
     /// if a bit is true, the resepctive entry is NOT valid as per the fs monitor.

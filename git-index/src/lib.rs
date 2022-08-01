@@ -35,6 +35,7 @@ pub enum Version {
 }
 
 /// An entry in the index, identifying a non-tree item on disk.
+#[derive(Clone)]
 pub struct Entry {
     pub stat: entry::Stat,
     pub id: git_hash::ObjectId,
@@ -60,6 +61,7 @@ pub type PathStorageRef = [u8];
 ///
 /// As opposed to a snapshot, it's meant to be altered and eventually be written back to disk or converted into a tree.
 /// We treat index and its state synonymous.
+#[derive(Clone)]
 pub struct State {
     /// The time at which the state was created, indicating its freshness compared to other files on disk.
     ///

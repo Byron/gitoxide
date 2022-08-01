@@ -5,6 +5,7 @@ use crate::{
 
 pub const SIGNATURE: Signature = *b"link";
 
+#[derive(Clone)]
 pub struct Bitmaps {
     pub delete: git_bitmap::ewah::Vec,
     pub replace: git_bitmap::ewah::Vec,

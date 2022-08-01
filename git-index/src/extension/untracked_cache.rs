@@ -9,12 +9,14 @@ use crate::{
     util::{read_u32, split_at_byte_exclusive, split_at_pos, var_int},
 };
 
+#[derive(Clone)]
 pub struct OidStat {
     pub stat: entry::Stat,
     pub id: ObjectId,
 }
 
 /// A directory with information about its untracked files, and its sub-directories
+#[derive(Clone)]
 pub struct Directory {
     /// The directories name, or an empty string if this is the root directory.
     pub name: BString,
