@@ -11,7 +11,7 @@ mod worktree;
 fn size_in_memory() {
     assert_eq!(
         std::mem::size_of::<Repository>(),
-        688,
+        696,
         "size of Repository shouldn't change without us noticing, it's meant to be cloned"
     );
 }

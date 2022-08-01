@@ -7,6 +7,10 @@ use crate::{
     Repository,
 };
 
+pub(crate) type IndexStorage = git_features::threading::OwnShared<git_features::fs::MutableSnapshot<git_index::File>>;
+/// A lazily loaded and auto-updated worktree index.
+pub type Index = git_features::fs::SharedSnapshot<git_index::File>;
+
 /// A stand-in to a worktree as result of a worktree iteration.
 ///
 /// It provides access to typical worktree state, but may not actually point to a valid checkout as the latter has been moved or
@@ -88,6 +92,11 @@ pub mod open_index {
         /// A shortcut to [`crate::Repository::open_index()`].
         pub fn open_index(&self) -> Result<git_index::File, Error> {
             self.parent.open_index()
+        }
+
+        /// A shortcut to [`crate::Repository::index()`].
+        pub fn index(&self) -> Result<crate::worktree::Index, Error> {
+            self.parent.index()
         }
     }
 }

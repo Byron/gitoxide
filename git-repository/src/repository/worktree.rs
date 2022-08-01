@@ -87,7 +87,7 @@ impl crate::Repository {
             })
             .transpose()?;
         git_index::File::at(
-            self.git_dir().join("index"),
+            self.index_path(),
             git_index::decode::Options {
                 object_hash: self.object_hash(),
                 thread_limit,
@@ -95,5 +95,35 @@ impl crate::Repository {
             },
         )
         .map_err(Into::into)
+    }
+
+    /// Return a shared worktree index which is updated automatically if the in-memory snapshot has become stale as the underlying file
+    /// on disk has changed.
+    ///
+    /// The index file is shared across all clones of this repository.
+    pub fn index(&self) -> Result<worktree::Index, worktree::open_index::Error> {
+        self.index
+            .recent_snapshot(
+                || self.index_path().metadata().and_then(|m| m.modified()).ok(),
+                || {
+                    self.open_index().map(Some).or_else(|err| match err {
+                        worktree::open_index::Error::IndexFile(git_index::file::init::Error::Io(err))
+                            if err.kind() == std::io::ErrorKind::NotFound =>
+                        {
+                            Ok(None)
+                        }
+                        err => Err(err),
+                    })
+                },
+            )
+            .and_then(|opt| match opt {
+                Some(index) => Ok(index),
+                None => Err(worktree::open_index::Error::IndexFile(
+                    git_index::file::init::Error::Io(std::io::Error::new(
+                        std::io::ErrorKind::NotFound,
+                        format!("Could not find index file at {:?} for opening.", self.index_path()),
+                    )),
+                )),
+            })
     }
 }
