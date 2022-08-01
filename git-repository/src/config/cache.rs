@@ -242,7 +242,6 @@ impl Cache {
     }
 
     /// Return a path by using the `$XDF_CONFIG_HOME` or `$HOME/.config/…` environment variables locations.
-    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub fn xdg_config_path(
         &self,
         resource_file_name: &str,

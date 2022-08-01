@@ -3,7 +3,7 @@ pub use git_mailmap::*;
 
 ///
 pub mod load {
-    /// The error returned by [`crate::Repository::load_mailmap_into()`].
+    /// The error returned by [`crate::Repository::open_mailmap_into()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

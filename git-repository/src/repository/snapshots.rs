@@ -1,6 +1,6 @@
 impl crate::Repository {
     // TODO: tests
-    /// Similar to [`load_mailmap_into()`][crate::Repository::load_mailmap_into()], but ignores all errors and returns at worst
+    /// Similar to [`open_mailmap_into()`][crate::Repository::open_mailmap_into()], but ignores all errors and returns at worst
     /// an empty mailmap, e.g. if there is no mailmap or if there were errors loading them.
     ///
     /// This represents typical usage within git, which also works with what's there without considering a populated mailmap

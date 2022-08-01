@@ -126,7 +126,7 @@
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
 pub use git_actor as actor;
-#[cfg(all(feature = "unstable", feature = "git-attributes"))]
+#[cfg(all(feature = "unstable"))]
 pub use git_attributes as attrs;
 #[cfg(all(feature = "unstable", feature = "git-credentials"))]
 pub use git_credentials as credentials;
@@ -137,11 +137,11 @@ pub use git_diff as diff;
 use git_features::threading::OwnShared;
 #[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress, threading};
-#[cfg(all(feature = "unstable", feature = "git-glob"))]
+#[cfg(feature = "unstable")]
 pub use git_glob as glob;
 pub use git_hash as hash;
 #[doc(inline)]
-#[cfg(all(feature = "unstable", feature = "git-index"))]
+#[cfg(feature = "unstable")]
 pub use git_index as index;
 pub use git_lock as lock;
 pub use git_object as objs;

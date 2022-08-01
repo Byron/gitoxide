@@ -70,7 +70,6 @@ pub(crate) fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&BSt
 pub mod proxy;
 
 ///
-#[cfg(feature = "git-index")]
 pub mod open_index {
     use crate::bstr::BString;
 
@@ -102,7 +101,6 @@ pub mod open_index {
 }
 
 ///
-#[cfg(feature = "git-index")]
 pub mod excludes {
     use std::path::PathBuf;
 

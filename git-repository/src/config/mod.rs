@@ -63,13 +63,10 @@ pub(crate) struct Cache {
     /// The object kind to pick if a prefix is ambiguous.
     pub object_kind_hint: Option<spec::parse::ObjectKindHint>,
     /// If true, we are on a case-insensitive file system.
-    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub ignore_case: bool,
     /// The path to the user-level excludes file to ignore certain files in the worktree.
-    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub excludes_file: Option<std::path::PathBuf>,
     /// Define how we can use values obtained with `xdg_config(…)` and its `XDG_CONFIG_HOME` variable.
-    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     xdg_config_home_env: permission::env_var::Resource,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.
     home_env: permission::env_var::Resource,
