@@ -93,7 +93,7 @@ static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spe
                 None => {
                     let rev_spec = match kind {
                         git_revision::spec::Kind::ExcludeReachableFromParents => {
-                            git_revision::Spec::ExcludeParents { oid: first_hash }
+                            git_revision::Spec::ExcludeParents(first_hash)
                         }
                         _ => unreachable!(),
                     };

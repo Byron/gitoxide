@@ -21,7 +21,7 @@ pub(crate) mod function {
 
         match format {
             OutputFormat::Human => {
-                writeln!(out, "{spec:?}")?;
+                writeln!(out, "{spec}")?;
             }
             #[cfg(feature = "serde1")]
             OutputFormat::Json => {
