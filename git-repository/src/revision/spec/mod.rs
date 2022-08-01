@@ -65,7 +65,7 @@ impl<'repo> Spec<'repo> {
     /// Return the single included object represented by this instance, or `None` if it is a range of any kind.
     pub fn single(&self) -> Option<Id<'repo>> {
         match self.inner {
-            git_revision::Spec::Include(id) | git_revision::Spec::ExcludeFromParents { from: id } => {
+            git_revision::Spec::Include(id) | git_revision::Spec::ExcludeParents(id) => {
                 Id::from_id(id, self.repo).into()
             }
             git_revision::Spec::Exclude(_)

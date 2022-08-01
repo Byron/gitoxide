@@ -90,12 +90,8 @@ impl<'repo> Delegate<'repo> {
                     theirs: first.expect("set by parser"),
                     ours: second.expect("set by parser"),
                 },
-                IncludeReachableFromParents => git_revision::Spec::IncludeOnlyParents {
-                    from_exclusive: first.expect("set by parser"),
-                },
-                ExcludeReachableFromParents => git_revision::Spec::ExcludeFromParents {
-                    from: first.expect("set by parser"),
-                },
+                IncludeReachableFromParents => git_revision::Spec::IncludeOnlyParents(first.expect("set by parser")),
+                ExcludeReachableFromParents => git_revision::Spec::ExcludeParents(first.expect("set by parser")),
             }
         }
 
