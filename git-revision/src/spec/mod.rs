@@ -39,6 +39,24 @@ impl Spec {
     }
 }
 
+mod _impls {
+    use crate::Spec;
+    use std::fmt::{Display, Formatter};
+
+    impl Display for Spec {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            match self {
+                Spec::Include(oid) => Display::fmt(oid, f),
+                Spec::Exclude(oid) => write!(f, "^{oid}"),
+                Spec::Range { from, to } => write!(f, "{from}..{to}"),
+                Spec::Merge { theirs, ours } => write!(f, "{theirs}...{ours}"),
+                Spec::IncludeOnlyParents { from_exclusive } => write!(f, "{from_exclusive}^@"),
+                Spec::ExcludeFromParents { from } => write!(f, "{from}^!"),
+            }
+        }
+    }
+}
+
 ///
 pub mod parse;
 pub use parse::function::parse;
