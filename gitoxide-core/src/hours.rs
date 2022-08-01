@@ -86,7 +86,7 @@ where
         (commits, is_shallow)
     };
 
-    let mailmap = repo.load_mailmap();
+    let mailmap = repo.open_mailmap();
     let start = Instant::now();
     #[allow(clippy::redundant_closure)]
     let mut all_commits: Vec<actor::Signature> = all_commits

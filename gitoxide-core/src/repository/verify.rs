@@ -43,7 +43,7 @@ pub fn integrity(
             make_pack_lookup_cache: || git_repository::odb::pack::cache::Never,
         },
     )?;
-    if let Some(index) = repo.worktree().map(|wt| wt.open_index()).transpose()? {
+    if let Some(index) = repo.worktree().map(|wt| wt.index()).transpose()? {
         index.verify_integrity()?;
         index.verify_entries()?;
         index.verify_extensions(true, {

@@ -35,7 +35,7 @@ pub fn query(
     let worktree = repo
         .worktree()
         .with_context(|| "Cannot check excludes without a current worktree")?;
-    let index = worktree.open_index()?;
+    let index = worktree.index()?;
     let mut cache = worktree.excludes(
         &index.state,
         Some(git::attrs::MatchGroup::<git::attrs::Ignore>::from_overrides(overrides)),
