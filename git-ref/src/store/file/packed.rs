@@ -34,7 +34,9 @@ impl file::Store {
     ///
     /// Use this to make successive calls to [`file::Store::try_find_packed()`]
     /// or obtain iterators using [`file::Store::iter_packed()`] in a way that assures the packed-refs content won't change.
-    pub fn cached_packed_buffer(&self) -> Result<Option<file::packed::SharedBuffer>, packed::buffer::open::Error> {
+    pub fn cached_packed_buffer(
+        &self,
+    ) -> Result<Option<file::packed::SharedBufferSnapshot>, packed::buffer::open::Error> {
         self.assure_packed_refs_uptodate()
     }
 
@@ -69,29 +71,27 @@ pub mod transaction {
     }
 }
 
-#[allow(missing_docs)]
-pub type SharedBuffer = git_features::fs::SharedSnapshot<packed::Buffer>;
+/// An up-to-date snapshot of the packed refs buffer.
+pub type SharedBufferSnapshot = git_features::fs::SharedSnapshot<packed::Buffer>;
 
 pub(crate) mod modifiable {
     use git_features::threading::OwnShared;
 
     use crate::{file, packed};
 
-    pub(crate) type MutableSharedBuffer = OwnShared<State>;
-    type State = git_features::fs::MutableSnapshot<packed::Buffer>;
+    pub(crate) type MutableSharedBuffer = OwnShared<git_features::fs::MutableSnapshot<packed::Buffer>>;
 
     impl file::Store {
         pub(crate) fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {
-            git_features::fs::Snapshot::force_refresh(&self.packed, || {
+            self.packed.force_refresh(|| {
                 let modified = self.packed_refs_path().metadata()?.modified()?;
                 self.open_packed_buffer().map(|packed| Some(modified).zip(packed))
             })
         }
         pub(crate) fn assure_packed_refs_uptodate(
             &self,
-        ) -> Result<Option<super::SharedBuffer>, packed::buffer::open::Error> {
-            git_features::fs::Snapshot::recent_snapshot(
-                &self.packed,
+        ) -> Result<Option<super::SharedBufferSnapshot>, packed::buffer::open::Error> {
+            self.packed.recent_snapshot(
                 || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok(),
                 || self.open_packed_buffer(),
             )

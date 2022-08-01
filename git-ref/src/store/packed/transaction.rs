@@ -11,7 +11,10 @@ pub(crate) const HEADER_LINE: &[u8] = b"# pack-refs with: peeled fully-peeled so
 
 /// Access and instantiation
 impl packed::Transaction {
-    pub(crate) fn new_from_pack_and_lock(buffer: Option<file::packed::SharedBuffer>, lock: git_lock::File) -> Self {
+    pub(crate) fn new_from_pack_and_lock(
+        buffer: Option<file::packed::SharedBufferSnapshot>,
+        lock: git_lock::File,
+    ) -> Self {
         packed::Transaction {
             buffer,
             edits: None,
@@ -212,7 +215,7 @@ fn write_edit(mut out: impl std::io::Write, edit: &Edit, lines_written: &mut i32
 
 /// Convert this buffer to be used as the basis for a transaction.
 pub(crate) fn buffer_into_transaction(
-    buffer: file::packed::SharedBuffer,
+    buffer: file::packed::SharedBufferSnapshot,
     lock_mode: git_lock::acquire::Fail,
 ) -> Result<packed::Transaction, git_lock::acquire::Error> {
     let lock = git_lock::File::acquire_to_update_resource(&buffer.path, lock_mode, None)?;

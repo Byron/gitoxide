@@ -33,7 +33,7 @@ struct Edit {
 
 /// A transaction for editing packed references
 pub(crate) struct Transaction {
-    buffer: Option<file::packed::SharedBuffer>,
+    buffer: Option<file::packed::SharedBufferSnapshot>,
     edits: Option<Vec<Edit>>,
     lock: Option<git_lock::File>,
     #[allow(dead_code)] // It just has to be kept alive, hence no reads

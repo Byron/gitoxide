@@ -37,7 +37,7 @@ enum IterKind {
 #[must_use = "Iterators should be obtained from this platform"]
 pub struct Platform<'s> {
     store: &'s file::Store,
-    packed: Option<file::packed::SharedBuffer>,
+    packed: Option<file::packed::SharedBufferSnapshot>,
 }
 
 impl<'p, 's> LooseThenPacked<'p, 's> {
