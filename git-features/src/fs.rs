@@ -71,20 +71,27 @@ pub fn open_options_no_follow() -> std::fs::OpenOptions {
     options
 }
 
-#[allow(missing_docs)]
-mod reload_on_demand {
+mod snapshot {
     use crate::threading::{get_mut, get_ref, MutableOnDemand, OwnShared};
     use std::ops::Deref;
 
-    pub type ReloadIfChangedStorage<T> = MutableOnDemand<Option<OwnShared<ReloadIfChanged<T>>>>;
+    /// A snapshot of a resource which is up-to-date in the moment it is retrieved.
+    pub type SharedSnapshot<T> = OwnShared<Snapshot<T>>;
 
+    /// Use this type for fields in structs that are to store the [`Snapshot`], typically behind an [`OwnShared`].
+    ///
+    /// Note that the resource itself is behind another [`OwnShared`] to allow it to be used without holding any kind of lock, hence
+    /// without blocking updates while it is used.
+    pub type MutableSnapshot<T> = MutableOnDemand<Option<SharedSnapshot<T>>>;
+
+    /// A structure holding enough information to reload a value if its on-disk representation changes as determined by its modified time.
     #[derive(Debug)]
-    pub struct ReloadIfChanged<T: std::fmt::Debug> {
+    pub struct Snapshot<T: std::fmt::Debug> {
         value: T,
         modified: std::time::SystemTime,
     }
 
-    impl<T: std::fmt::Debug> Deref for ReloadIfChanged<T> {
+    impl<T: std::fmt::Debug> Deref for Snapshot<T> {
         type Target = T;
 
         fn deref(&self) -> &Self::Target {
@@ -92,21 +99,29 @@ mod reload_on_demand {
         }
     }
 
-    impl<T: std::fmt::Debug> ReloadIfChanged<T> {
+    impl<T: std::fmt::Debug> Snapshot<T> {
+        /// Refresh `state` forcefully by re-`open`ing the resource. Note that `open()` returns `None` if the resource isn't
+        /// present on disk, and that it's critical that the modified time is obtained _before_ opening the resource.
         pub fn force_refresh<E>(
-            state: &ReloadIfChangedStorage<T>,
+            state: &MutableSnapshot<T>,
             open: impl FnOnce() -> Result<Option<(std::time::SystemTime, T)>, E>,
         ) -> Result<(), E> {
             let mut state = get_mut(state);
-            *state = open()?.map(|(modified, value)| OwnShared::new(ReloadIfChanged { value, modified }));
+            *state = open()?.map(|(modified, value)| OwnShared::new(Snapshot { value, modified }));
             Ok(())
         }
 
-        pub fn assure_uptodate<E>(
-            state: &ReloadIfChangedStorage<T>,
+        /// Assure that the resource in `state` is up-to-date by comparing the `current_modification_time` with the one we know in `state`
+        /// and by acting accordingly.
+        /// Returns the potentially updated/reloaded resource if it is still present on disk, which then represents a snapshot that is up-to-date
+        /// in that very moment.
+        ///
+        /// Note that it is race-proof.
+        pub fn recent_snapshot<E>(
+            state: &MutableSnapshot<T>,
             mut current_modification_time: impl FnMut() -> Option<std::time::SystemTime>,
             open: impl FnOnce() -> Result<Option<T>, E>,
-        ) -> Result<Option<OwnShared<ReloadIfChanged<T>>>, E> {
+        ) -> Result<Option<SharedSnapshot<T>>, E> {
             let state_opt_lock = get_ref(state);
             let recent_modification = current_modification_time();
             let buffer = match (&*state_opt_lock, recent_modification) {
@@ -131,7 +146,7 @@ mod reload_on_demand {
                             (Some(state_opt), Some(modified_time)) if state_opt.modified < modified_time => {
                                 match open()? {
                                     Some(value) => {
-                                        *state_opt = OwnShared::new(ReloadIfChanged {
+                                        *state_opt = OwnShared::new(Snapshot {
                                             value,
                                             modified: modified_time,
                                         });
@@ -156,7 +171,7 @@ mod reload_on_demand {
                     // Still in the same situation? If so, load the buffer.
                     if let (None, Some(modified_time)) = (&*state, current_modification_time()) {
                         *state = open()?.map(|value| {
-                            OwnShared::new(ReloadIfChanged {
+                            OwnShared::new(Snapshot {
                                 value,
                                 modified: modified_time,
                             })
@@ -169,4 +184,4 @@ mod reload_on_demand {
         }
     }
 }
-pub use reload_on_demand::{ReloadIfChanged, ReloadIfChangedStorage};
+pub use snapshot::{MutableSnapshot, SharedSnapshot, Snapshot};
