@@ -51,15 +51,28 @@ impl<'repo> Spec<'repo> {
         self.inner
     }
 
-    /// Some revision specifications leave information about reference names which are returned as `(from-ref, to-ref)` here, e.g.
-    /// `HEAD@{-1}..main` might be (`refs/heads/previous-branch`, `refs/heads/main`).
-    // TODO: tests
-    pub fn into_names(self) -> (Option<Reference<'repo>>, Option<Reference<'repo>>) {
+    /// Some revision specifications leave information about references which are returned as `(from-ref, to-ref)` here, e.g.
+    /// `HEAD@{-1}..main` might be `(Some(refs/heads/previous-branch), Some(refs/heads/main))`,
+    /// or `@` returns `(Some(refs/heads/main), None)`.
+    pub fn into_references(self) -> (Option<Reference<'repo>>, Option<Reference<'repo>>) {
         let repo = self.repo;
         (
             self.first_ref.map(|r| r.attach(repo)),
             self.second_ref.map(|r| r.attach(repo)),
         )
+    }
+
+    /// Return the name of the first reference we encountered while resolving the rev-spec, or `None` if a short hash
+    /// was used. For example, `@` might yield `Some(HEAD)`, but `abcd` yields `None`.
+    pub fn first_reference(&self) -> Option<&git_ref::Reference> {
+        self.first_ref.as_ref()
+    }
+
+    /// Return the name of the second reference we encountered while resolving the rev-spec, or `None` if a short hash
+    /// was used or there was no second reference. For example, `..@` might yield `Some(HEAD)`, but `..abcd` or `@`
+    /// yields `None`.
+    pub fn second_reference(&self) -> Option<&git_ref::Reference> {
+        self.second_ref.as_ref()
     }
 
     /// Return the single included object represented by this instance, or `None` if it is a range of any kind.

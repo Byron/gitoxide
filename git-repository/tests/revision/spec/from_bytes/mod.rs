@@ -9,6 +9,30 @@ mod ambiguous;
 mod regex;
 
 #[test]
+fn names_are_made_available_via_references() {
+    let repo = repo("complex_graph").unwrap();
+    let spec = parse_spec_no_baseline("main..g", &repo).unwrap();
+    let (a, b) = spec.clone().into_references();
+    assert_eq!(
+        a.as_ref().map(|r| r.name().as_bstr().to_string()),
+        Some("refs/heads/main".into())
+    );
+    assert_eq!(
+        b.as_ref().map(|r| r.name().as_bstr().to_string()),
+        Some("refs/heads/g".into())
+    );
+    assert_eq!(spec.first_reference(), a.as_ref().map(|r| &r.inner));
+    assert_eq!(spec.second_reference(), b.as_ref().map(|r| &r.inner));
+
+    let spec = parse_spec_no_baseline("@", &repo).unwrap();
+    assert_eq!(spec.second_reference(), None);
+    assert_eq!(
+        spec.first_reference().map(|r| r.name.as_bstr().to_string()),
+        Some("HEAD".into())
+    );
+}
+
+#[test]
 fn bad_objects_are_valid_until_they_are_actually_read_from_the_odb() {
     {
         let repo = repo("blob.bad").unwrap();
