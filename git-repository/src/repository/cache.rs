@@ -18,6 +18,15 @@ impl crate::Repository {
         }
     }
 
+    /// Set an object cache of size `bytes` if none is set.
+    ///
+    /// Use this method to avoid overwriting any existing value while assuring better performance in case no value is set.
+    pub fn object_cache_size_if_unset(&mut self, bytes: usize) {
+        if !self.objects.has_object_cache() {
+            self.object_cache_size(bytes)
+        }
+    }
+
     /// Read well-known environment variables related to caches and apply them to this instance, but not to clones of it - each
     /// needs their own configuration.
     ///
