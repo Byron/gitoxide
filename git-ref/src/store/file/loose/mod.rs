@@ -40,7 +40,6 @@ mod init {
                 write_reflog,
                 namespace: None,
                 packed: Default::default(),
-                packed2: Default::default(),
                 object_hash,
             }
         }
@@ -59,7 +58,6 @@ mod init {
                 write_reflog,
                 namespace: None,
                 packed: Default::default(),
-                packed2: Default::default(),
                 object_hash,
             }
         }

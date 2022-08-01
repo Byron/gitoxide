@@ -151,7 +151,7 @@ mod reload_on_demand {
                     }
                 }
                 (None, Some(_modified_time)) => {
-                    drop(state);
+                    drop(state_opt_lock);
                     let mut state = get_mut(state);
                     // Still in the same situation? If so, load the buffer.
                     if let (None, Some(modified_time)) = (&*state, current_modification_time()) {

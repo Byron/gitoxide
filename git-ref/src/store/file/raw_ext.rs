@@ -74,7 +74,7 @@ impl ReferenceExt for Reference {
         let packed = store.assure_packed_refs_uptodate().map_err(|err| {
             peel::to_id::Error::Follow(file::find::existing::Error::Find(file::find::Error::PackedOpen(err)))
         })?;
-        self.peel_to_id_in_place_packed(store, find, packed.as_deref())
+        self.peel_to_id_in_place_packed(store, find, packed.as_ref().map(|b| &***b))
     }
 
     fn peel_to_id_in_place_packed<E: std::error::Error + Send + Sync + 'static>(
@@ -143,7 +143,7 @@ impl ReferenceExt for Reference {
             Ok(packed) => packed,
             Err(err) => return Some(Err(err)),
         };
-        self.follow_packed(store, packed.as_deref())
+        self.follow_packed(store, packed.as_ref().map(|b| &***b))
     }
 
     fn follow_packed(
