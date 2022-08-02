@@ -310,7 +310,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                             }
                         })
                     }) {
-                        Ok(commit) => match commit.parent_ids().skip(num.saturating_sub(1)).next() {
+                        Ok(commit) => match commit.parent_ids().nth(num.saturating_sub(1)) {
                             Some(id) => replacements.push((commit.id, id.detach())),
                             None => errors.push((
                                 commit.id,
