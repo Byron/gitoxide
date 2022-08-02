@@ -132,7 +132,7 @@ mod snapshot {
         /// Returns the potentially updated/reloaded resource if it is still present on disk, which then represents a snapshot that is up-to-date
         /// in that very moment, or `None` if the underlying file doesn't exist.
         ///
-        /// Note that it is race-proof.
+        /// Note that even though this is racy, each time a request is made there is a chance to see the actual state.
         pub fn recent_snapshot<E>(
             &self,
             mut current_modification_time: impl FnMut() -> Option<std::time::SystemTime>,
@@ -145,10 +145,7 @@ mod snapshot {
                 (Some(_), None) => {
                     drop(state);
                     let mut state = get_mut(self);
-                    // Still in the same situation? If so, drop the loaded buffer
-                    if let (Some(_), None) = (&*state, current_modification_time()) {
-                        *state = None;
-                    }
+                    *state = None;
                     (*state).clone()
                 }
                 (Some(snapshot), Some(modified_time)) => {
@@ -156,24 +153,15 @@ mod snapshot {
                         drop(state);
                         let mut state = get_mut(self);
 
-                        // in the common case, we check again and do what we do only if we are
-                        // still in the same situation, writers pile up.
-                        match (&mut *state, current_modification_time()) {
-                            (Some(state_opt), Some(modified_time)) if state_opt.modified < modified_time => {
-                                match open()? {
-                                    Some(value) => {
-                                        *state_opt = OwnShared::new(Snapshot {
-                                            value,
-                                            modified: modified_time,
-                                        });
-                                    }
-                                    None => {
-                                        *state = None;
-                                    }
-                                }
-                            }
-                            _ => {}
+                        if let (Some(_snapshot), Some(modified_time)) = (&*state, current_modification_time()) {
+                            *state = open()?.map(|value| {
+                                OwnShared::new(Snapshot {
+                                    value,
+                                    modified: modified_time,
+                                })
+                            });
                         }
+
                         (*state).clone()
                     } else {
                         // Note that this relies on sub-section precision or else is a race when the packed file was just changed.
@@ -184,7 +172,8 @@ mod snapshot {
                 (None, Some(_modified_time)) => {
                     drop(state);
                     let mut state = get_mut(self);
-                    // Still in the same situation? If so, load the buffer.
+                    // Still in the same situation? If so, load the buffer. This compensates for the trampling herd
+                    // during lazy-loading at the expense of another mtime check.
                     if let (None, Some(modified_time)) = (&*state, current_modification_time()) {
                         *state = open()?.map(|value| {
                             OwnShared::new(Snapshot {
