@@ -89,7 +89,7 @@ pub mod log {
 
     impl<'repo> Head<'repo> {
         /// Return a platform for obtaining iterators on the reference log associated with the `HEAD` reference.
-        pub fn log_iter(&self) -> git_ref::file::log::iter::Platform<'static, '_> {
+        pub fn log_iter(&self) -> git_ref::file::log::iter::Platform<'static, 'repo> {
             git_ref::file::log::iter::Platform {
                 store: &self.repo.refs,
                 name: "HEAD".try_into().expect("HEAD is always valid"),

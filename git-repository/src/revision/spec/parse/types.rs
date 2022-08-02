@@ -1,5 +1,5 @@
 use crate::bstr::BString;
-use crate::object;
+use crate::{object, reference};
 
 /// A hint to know what to do if refs and object names are equal.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -61,6 +61,10 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Reference {reference:?} does not have a reference log, cannot {action}")]
+    MissingRefLog { reference: BString, action: &'static str },
+    #[error("HEAD has {available} prior checkouts and checkout number {desired} is out of range")]
+    PriorCheckoutOutOfRange { desired: usize, available: usize },
     #[error(
         "Commit {oid} has {available} ancestors along the first parent and ancestor number {desired} is out of range"
     )]
@@ -82,6 +86,8 @@ pub enum Error {
         stage_hint: Option<git_index::entry::Stage>,
         exists: bool,
     },
+    #[error(transparent)]
+    FindHead(#[from] reference::find::existing::Error),
     #[error(transparent)]
     Index(#[from] crate::worktree::open_index::Error),
     #[error(transparent)]

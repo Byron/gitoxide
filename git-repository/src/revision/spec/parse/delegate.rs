@@ -1,5 +1,5 @@
 use super::{Delegate, Error, ObjectKindHint, RefsHint};
-use crate::bstr::{BStr, ByteSlice};
+use crate::bstr::{BStr, BString, ByteSlice};
 use crate::ext::{ObjectIdExt, ReferenceExt};
 use crate::{object, Repository};
 use git_hash::ObjectId;
@@ -276,9 +276,59 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
         todo!()
     }
 
-    fn nth_checked_out_branch(&mut self, _branch_no: usize) -> Option<()> {
+    fn nth_checked_out_branch(&mut self, branch_no: usize) -> Option<()> {
         self.unset_disambiguate_call();
-        todo!()
+        fn prior_checkouts_iter<'a>(
+            platform: &'a mut git_ref::file::log::iter::Platform<'static, '_>,
+        ) -> Result<impl Iterator<Item = (BString, ObjectId)> + 'a, Error> {
+            match platform.rev().ok().flatten() {
+                Some(log) => Ok(log.filter_map(Result::ok).filter_map(|line| {
+                    line.message
+                        .strip_prefix(b"checkout: moving from ")
+                        .and_then(|from_to| from_to.find(" to ").map(|pos| &from_to[..pos]))
+                        .map(|from_branch| (from_branch.into(), line.previous_oid))
+                })),
+                None => Err(Error::MissingRefLog {
+                    reference: "HEAD".into(),
+                    action: "search prior checked out branch",
+                }),
+            }
+        }
+
+        let head = match self.repo.head() {
+            Ok(head) => head,
+            Err(err) => {
+                self.err.push(err.into());
+                return None;
+            }
+        };
+        match prior_checkouts_iter(&mut head.log_iter()).map(|mut it| it.nth(branch_no.saturating_sub(1))) {
+            Ok(Some((ref_name, id))) => {
+                let id = match self.repo.find_reference(ref_name.as_bstr()) {
+                    Ok(mut r) => {
+                        let id = r.peel_to_id_in_place().map(|id| id.detach()).unwrap_or(id);
+                        self.refs[self.idx] = Some(r.detach());
+                        id
+                    }
+                    Err(_) => id,
+                };
+                self.objs[self.idx].get_or_insert_with(HashSet::default).insert(id);
+                Some(())
+            }
+            Ok(None) => {
+                self.err.push(Error::PriorCheckoutOutOfRange {
+                    desired: branch_no,
+                    available: prior_checkouts_iter(&mut head.log_iter())
+                        .map(|it| it.count())
+                        .unwrap_or(0),
+                });
+                None
+            }
+            Err(err) => {
+                self.err.push(err);
+                None
+            }
+        }
     }
 
     fn sibling_branch(&mut self, _kind: SiblingBranch) -> Option<()> {
