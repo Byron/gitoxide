@@ -9,6 +9,8 @@ use git_traverse::commit::Sorting;
 use smallvec::SmallVec;
 use std::collections::HashSet;
 
+type Replacements = SmallVec<[(ObjectId, ObjectId); 1]>;
+
 impl<'repo> Delegate<'repo> {
     pub fn new(repo: &'repo Repository, opts: crate::revision::spec::parse::Options) -> Self {
         Delegate {
@@ -290,7 +292,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
         self.unset_disambiguate_call();
         self.follow_refs_to_objects_if_needed()?;
 
-        let mut replacements = SmallVec::<[(ObjectId, ObjectId); 1]>::default();
+        let mut replacements = Replacements::default();
         let mut errors = Vec::new();
         let objs = self.objs[self.idx].as_mut()?;
         let repo = self.repo;
@@ -326,27 +328,14 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
             }
         }
 
-        if errors.len() == objs.len() {
-            self.err.extend(errors.into_iter().map(|(_, err)| err));
-            None
-        } else {
-            for (obj, err) in errors {
-                objs.remove(&obj);
-                self.err.push(err);
-            }
-            for (find, replace) in replacements {
-                objs.remove(&find);
-                objs.insert(replace);
-            }
-            Some(())
-        }
+        handle_errors_and_replacements(&mut self.err, objs, errors, &mut replacements)
     }
 
     fn peel_until(&mut self, kind: PeelTo<'_>) -> Option<()> {
         self.unset_disambiguate_call();
         self.follow_refs_to_objects_if_needed()?;
 
-        let mut replacements = SmallVec::<[(ObjectId, ObjectId); 1]>::default();
+        let mut replacements = Replacements::default();
         let mut errors = Vec::new();
         let objs = self.objs[self.idx].as_mut()?;
 
@@ -399,20 +388,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
             PeelTo::RecursiveTagObject => todo!("recursive tag object"),
         }
 
-        if errors.len() == objs.len() {
-            self.err.extend(errors.into_iter().map(|(_, err)| err));
-            None
-        } else {
-            for (obj, err) in errors {
-                objs.remove(&obj);
-                self.err.push(err);
-            }
-            for (find, replace) in replacements {
-                objs.remove(&find);
-                objs.insert(replace);
-            }
-            Some(())
-        }
+        handle_errors_and_replacements(&mut self.err, objs, errors, &mut replacements)
     }
 
     fn find(&mut self, regex: &BStr, negated: bool) -> Option<()> {
@@ -443,7 +419,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
             Some(objs) => {
                 let repo = self.repo;
                 let mut errors = Vec::new();
-                let mut replacements = SmallVec::<[(ObjectId, ObjectId); 1]>::default();
+                let mut replacements = Replacements::default();
                 for oid in objs.iter() {
                     match oid
                         .attach(repo)
@@ -486,20 +462,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                         Err(err) => errors.push((*oid, err.into())),
                     }
                 }
-                if errors.len() == objs.len() {
-                    self.err.extend(errors.into_iter().map(|(_, err)| err));
-                    None
-                } else {
-                    for (obj, err) in errors {
-                        objs.remove(&obj);
-                        self.err.push(err);
-                    }
-                    for (find, replace) in replacements {
-                        objs.remove(&find);
-                        objs.insert(replace);
-                    }
-                    Some(())
-                }
+                handle_errors_and_replacements(&mut self.err, objs, errors, &mut replacements)
             }
             None => match self.repo.references() {
                 Ok(references) => match references.all() {
@@ -647,5 +610,27 @@ fn require_object_kind(repo: &Repository, obj: &git_hash::oid, kind: git_object:
             expected: kind,
             oid: obj.id.attach(repo).shorten_or_id(),
         })
+    }
+}
+
+fn handle_errors_and_replacements(
+    destination: &mut Vec<Error>,
+    objs: &mut HashSet<ObjectId>,
+    errors: Vec<(ObjectId, Error)>,
+    replacements: &mut Replacements,
+) -> Option<()> {
+    if errors.len() == objs.len() {
+        destination.extend(errors.into_iter().map(|(_, err)| err));
+        None
+    } else {
+        for (obj, err) in errors {
+            objs.remove(&obj);
+            destination.push(err);
+        }
+        for (find, replace) in replacements {
+            objs.remove(find);
+            objs.insert(*replace);
+        }
+        Some(())
     }
 }
