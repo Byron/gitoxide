@@ -64,10 +64,24 @@ impl State {
     /// `path` and `stage`, or `None`.
     ///
     /// Use the index for accessing multiple stages if they exists, but at least the single matching entry.
-    pub fn entry_by_path_and_stage(&self, path: &BStr, stage: entry::Stage) -> Option<usize> {
+    pub fn entry_index_by_path_and_stage(&self, path: &BStr, stage: entry::Stage) -> Option<usize> {
         self.entries
             .binary_search_by(|e| e.path(self).cmp(path).then_with(|| e.stage().cmp(&stage)))
             .ok()
+    }
+
+    /// Like [`entry_index_by_path_and_stage()`][File::entry_index_by_path_and_stage()],
+    /// but returns the entry instead of the index.
+    pub fn entry_by_path_and_stage(&self, path: &BStr, stage: entry::Stage) -> Option<&Entry> {
+        self.entry_index_by_path_and_stage(path, stage)
+            .map(|idx| &self.entries[idx])
+    }
+
+    /// Return the entry at `idx` or _panic_ if the index is out of bounds.
+    ///
+    /// The `idx` is typically returned by [entry_by_path_and_stage()][File::entry_by_path_and_stage()].
+    pub fn entry(&self, idx: usize) -> &Entry {
+        &self.entries[idx]
     }
 }
 
