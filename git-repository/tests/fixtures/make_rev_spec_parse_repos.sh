@@ -356,4 +356,18 @@ git init complex_graph
   baseline "a^42"
   baseline "a~42"
   baseline "a~3"
+
+  baseline "b"
+  baseline "a^"
+  baseline "c"
+  baseline "a^2"
+  baseline "d"
+  baseline "a^^"
+  baseline "a^1^1"
+  baseline "a~2"
+  baseline "e"
+  baseline "a^^2"
+  baseline "j"
+  baseline "b^3^2"
+  baseline "a^^3^2"
 )
