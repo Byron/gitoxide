@@ -186,7 +186,10 @@ pub mod revision {
         Explain { spec: std::ffi::OsString },
         /// Try to resolve the given revspec and print the object names.
         #[clap(visible_alias = "query")]
-        Parse { spec: std::ffi::OsString },
+        Parse {
+            #[clap(min_values = 1)]
+            specs: Vec<std::ffi::OsString>,
+        },
     }
 }
 

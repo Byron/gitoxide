@@ -12,21 +12,34 @@ pub(crate) mod function {
 
     pub fn parse(
         mut repo: git::Repository,
-        spec: OsString,
+        specs: Vec<OsString>,
         mut out: impl std::io::Write,
         Options { format }: Options,
     ) -> anyhow::Result<()> {
         repo.object_cache_size_if_unset(1024 * 1024);
-        let spec = git::path::os_str_into_bstr(&spec)?;
-        let spec = repo.rev_parse(spec)?.detach();
 
         match format {
             OutputFormat::Human => {
-                writeln!(out, "{spec}")?;
+                for spec in specs {
+                    let spec = git::path::os_str_into_bstr(&spec)?;
+                    let spec = repo.rev_parse(spec)?.detach();
+                    writeln!(out, "{spec}")?;
+                }
             }
             #[cfg(feature = "serde1")]
             OutputFormat::Json => {
-                serde_json::to_writer_pretty(&mut out, &spec)?;
+                serde_json::to_writer_pretty(
+                    &mut out,
+                    &specs
+                        .into_iter()
+                        .map(|spec| {
+                            git::path::os_str_into_bstr(&spec)
+                                .map_err(anyhow::Error::from)
+                                .and_then(|spec| repo.rev_parse(spec).map_err(Into::into))
+                                .map(|spec| spec.detach())
+                        })
+                        .collect::<Result<Vec<_>, _>>()?,
+                )?;
             }
         }
         Ok(())
