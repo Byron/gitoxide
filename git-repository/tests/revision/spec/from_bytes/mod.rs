@@ -7,6 +7,28 @@ pub use util::*;
 
 mod ambiguous;
 mod regex;
+
+mod traverse {
+    use crate::revision::spec::from_bytes::{parse_spec, repo};
+    use git_repository::prelude::ObjectIdExt;
+    use git_repository::revision::Spec;
+    use git_testtools::hex_to_id;
+
+    #[test]
+    fn parent() {
+        let repo = repo("complex_graph").unwrap();
+        assert_eq!(
+            parse_spec("a^1", &repo).unwrap(),
+            Spec::from_id(hex_to_id("5b3f9e24965d0b28780b7ce5daf2b5b7f7e0459f").attach(&repo))
+        );
+        assert_eq!(parse_spec("a", &repo).unwrap(), parse_spec("a^0", &repo).unwrap(),);
+        assert_eq!(
+            parse_spec("a^42", &repo).unwrap_err().to_string(),
+            "Commit 55e825e has 2 parents and parent number 42 is out of range"
+        );
+    }
+}
+
 mod index {
     use crate::revision::spec::from_bytes::{parse_spec, repo};
     use git_repository::prelude::ObjectIdExt;

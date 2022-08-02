@@ -61,6 +61,12 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Commit {oid} has {available} parents and parent number {desired} is out of range")]
+    ParentOutOfRange {
+        oid: git_hash::Prefix,
+        desired: usize,
+        available: usize,
+    },
     #[error("Path {desired_path:?} did not exist in index at stage {desired_stage}{}{}", stage_hint.map(|actual|format!(". It does exist at stage {actual}")).unwrap_or_default(), exists.then(|| ". It exists on disk").unwrap_or(". It does not exist on disk"))]
     IndexLookup {
         desired_path: BString,

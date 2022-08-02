@@ -336,6 +336,7 @@ git init complex_graph
   git merge c || :
   { echo g && echo h && echo i && echo j && echo d && echo e && echo f && echo b && echo c && echo a; } > file
   git add file && git commit -m A
+  git branch a
 
   baseline ":/message" # finds 'message recent' instead of 'initial message'
   baseline ":/!-message" # above, negated
@@ -346,4 +347,9 @@ git init complex_graph
   baseline ":file"      # index lookup, default stage 0
   baseline ":1:file"    # stage 1
   baseline ":foo"       # not found
+  # parents
+  baseline "a"
+  baseline "a^1"
+  baseline "a^0"
+  baseline "a^42"
 )

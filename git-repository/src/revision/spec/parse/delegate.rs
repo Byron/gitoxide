@@ -286,9 +286,60 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
 }
 
 impl<'repo> delegate::Navigate for Delegate<'repo> {
-    fn traverse(&mut self, _kind: Traversal) -> Option<()> {
+    fn traverse(&mut self, kind: Traversal) -> Option<()> {
         self.unset_disambiguate_call();
-        todo!()
+        self.follow_refs_to_objects_if_needed()?;
+
+        let mut replacements = SmallVec::<[(ObjectId, ObjectId); 1]>::default();
+        let mut errors = Vec::new();
+        let objs = self.objs[self.idx].as_mut()?;
+        let repo = self.repo;
+
+        for obj in objs.iter() {
+            match kind {
+                Traversal::NthParent(num) => {
+                    match self.repo.find_object(*obj).map_err(Error::from).and_then(|obj| {
+                        obj.try_into_commit().map_err(|err| {
+                            let object::try_into::Error { actual, expected, id } = err;
+                            Error::ObjectKind {
+                                oid: id.attach(repo).shorten_or_id(),
+                                actual,
+                                expected,
+                            }
+                        })
+                    }) {
+                        Ok(commit) => match commit.parent_ids().skip(num.saturating_sub(1)).next() {
+                            Some(id) => replacements.push((commit.id, id.detach())),
+                            None => errors.push((
+                                commit.id,
+                                Error::ParentOutOfRange {
+                                    oid: commit.id().shorten_or_id(),
+                                    desired: num,
+                                    available: commit.parent_ids().count(),
+                                },
+                            )),
+                        },
+                        Err(err) => errors.push((*obj, err)),
+                    }
+                }
+                Traversal::NthAncestor(_num) => todo!("ancestor"),
+            }
+        }
+
+        if errors.len() == objs.len() {
+            self.err.extend(errors.into_iter().map(|(_, err)| err));
+            None
+        } else {
+            for (obj, err) in errors {
+                objs.remove(&obj);
+                self.err.push(err);
+            }
+            for (find, replace) in replacements {
+                objs.remove(&find);
+                objs.insert(replace);
+            }
+            Some(())
+        }
     }
 
     fn peel_until(&mut self, kind: PeelTo<'_>) -> Option<()> {
