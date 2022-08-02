@@ -37,7 +37,7 @@ pub enum Version {
 }
 
 /// An entry in the index, identifying a non-tree item on disk.
-#[derive(Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Entry {
     pub stat: entry::Stat,
     pub id: git_hash::ObjectId,

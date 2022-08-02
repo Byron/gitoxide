@@ -18,7 +18,7 @@ fn loose_file(name: &str) -> git_index::File {
     let file = git_index::File::at(path, git_index::decode::Options::default()).unwrap();
     verify(file)
 }
-fn file(name: &str) -> git_index::File {
+pub(crate) fn file(name: &str) -> git_index::File {
     let file = git_index::File::at(crate::fixture_index_path(name), git_index::decode::Options::default()).unwrap();
     verify(file)
 }

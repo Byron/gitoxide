@@ -1,5 +1,13 @@
+use crate::index::file::read;
+
 #[test]
-#[ignore]
-fn entry_by_path() {
-    todo!()
+fn entry_by_path_and_stage() {
+    let file = read::file("v4_more_files_IEOT");
+    for entry in file.entries() {
+        let path = entry.path(&file);
+        assert_eq!(
+            file.entry_by_path_and_stage(path, 0).map(|idx| &file.entries()[idx]),
+            Some(entry)
+        );
+    }
 }

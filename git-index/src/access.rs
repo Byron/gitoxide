@@ -1,7 +1,8 @@
 use bstr::{BStr, ByteSlice};
 
-use crate::{extension, Entry, PathStorage, State, Version};
+use crate::{entry, extension, Entry, PathStorage, State, Version};
 
+/// General information and entries
 impl State {
     pub fn version(&self) -> Version {
         self.version
@@ -58,6 +59,20 @@ impl State {
             (e, path)
         })
     }
+
+    /// Find the entry index in [`entries()`][State::entries()] matching the given repository-relative
+    /// `path` and `stage`, or `None`.
+    ///
+    /// Use the index for accessing multiple stages if they exists, but at least the single matching entry.
+    pub fn entry_by_path_and_stage(&self, path: &BStr, stage: entry::Stage) -> Option<usize> {
+        self.entries
+            .binary_search_by(|e| e.path(self).cmp(path).then_with(|| e.stage().cmp(&stage)))
+            .ok()
+    }
+}
+
+/// Extensions
+impl State {
     pub fn tree(&self) -> Option<&extension::Tree> {
         self.tree.as_ref()
     }
