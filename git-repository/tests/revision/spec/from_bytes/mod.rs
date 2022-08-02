@@ -8,7 +8,9 @@ pub use util::*;
 mod ambiguous;
 mod regex;
 
+mod reflog;
 mod traverse;
+
 mod index {
     use crate::revision::spec::from_bytes::{parse_spec, repo};
     use git_repository::prelude::ObjectIdExt;

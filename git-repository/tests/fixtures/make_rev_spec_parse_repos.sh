@@ -370,4 +370,11 @@ git init complex_graph
   baseline "j"
   baseline "b^3^2"
   baseline "a^^3^2"
+
+  baseline "@{-1}"
+  baseline "@{-2}"
+  baseline "@{-3}"
+  baseline "@{-4}"
+  baseline "@{-5}"
+  baseline "@{-6}"
 )
