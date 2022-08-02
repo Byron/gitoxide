@@ -61,6 +61,14 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error(
+        "Commit {oid} has {available} ancestors along the first parent and ancestor number {desired} is out of range"
+    )]
+    AncestorOutOfRange {
+        oid: git_hash::Prefix,
+        desired: usize,
+        available: usize,
+    },
     #[error("Commit {oid} has {available} parents and parent number {desired} is out of range")]
     ParentOutOfRange {
         oid: git_hash::Prefix,

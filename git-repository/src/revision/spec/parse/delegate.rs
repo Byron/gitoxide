@@ -324,7 +324,34 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                         Err(err) => errors.push((*obj, err)),
                     }
                 }
-                Traversal::NthAncestor(_num) => todo!("ancestor"),
+                Traversal::NthAncestor(num) => {
+                    let id = obj.attach(repo);
+                    match id
+                        .ancestors()
+                        .first_parent_only()
+                        .all()
+                        .expect("cannot fail without sorting")
+                        .skip(num)
+                        .filter_map(Result::ok)
+                        .next()
+                    {
+                        Some(id) => replacements.push((*obj, id.detach())),
+                        None => errors.push((
+                            *obj,
+                            Error::AncestorOutOfRange {
+                                oid: id.shorten_or_id(),
+                                desired: num,
+                                available: id
+                                    .ancestors()
+                                    .first_parent_only()
+                                    .all()
+                                    .expect("cannot fail without sorting")
+                                    .skip(1)
+                                    .count(),
+                            },
+                        )),
+                    }
+                }
             }
         }
 

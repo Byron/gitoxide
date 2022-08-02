@@ -350,6 +350,10 @@ git init complex_graph
   # parents
   baseline "a"
   baseline "a^1"
+  baseline "a~1"
   baseline "a^0"
+  baseline "a~0"
   baseline "a^42"
+  baseline "a~42"
+  baseline "a~3"
 )
