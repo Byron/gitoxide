@@ -344,4 +344,6 @@ git init complex_graph
   baseline ":/not there" # definitely not in graph
   baseline "@^{/!-B}"    # negation from branch
   baseline ":file"      # index lookup, default stage 0
+  baseline ":1:file"    # stage 1
+  baseline ":foo"       # not found
 )

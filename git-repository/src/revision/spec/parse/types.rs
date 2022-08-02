@@ -61,6 +61,13 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Path {desired_path:?} did not exist in index at stage {desired_stage}{}{}", stage_hint.map(|actual|format!(". It does exist at stage {actual}")).unwrap_or_default(), exists.then(|| ". It exists on disk").unwrap_or(". It does not exist on disk"))]
+    IndexLookup {
+        desired_path: BString,
+        desired_stage: git_index::entry::Stage,
+        stage_hint: Option<git_index::entry::Stage>,
+        exists: bool,
+    },
     #[error(transparent)]
     Index(#[from] crate::worktree::open_index::Error),
     #[error(transparent)]

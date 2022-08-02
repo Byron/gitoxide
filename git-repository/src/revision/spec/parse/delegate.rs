@@ -523,12 +523,38 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
         }
     }
 
-    fn index_lookup(&mut self, _path: &BStr, _stage: u8) -> Option<()> {
+    fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()> {
         self.unset_disambiguate_call();
         match self.repo.index() {
-            Ok(_index) => {
-                todo!("index lookup")
-            }
+            Ok(index) => match index.entry_by_path_and_stage(path, stage.into()) {
+                Some(entry) => {
+                    self.objs[self.idx]
+                        .get_or_insert_with(HashSet::default)
+                        .insert(entry.id);
+                    Some(())
+                }
+                None => {
+                    let stage_hint = [0, 1, 2]
+                        .iter()
+                        .filter(|our_stage| **our_stage != stage)
+                        .find_map(|stage| {
+                            index
+                                .entry_index_by_path_and_stage(path, (*stage).into())
+                                .map(|_| (*stage).into())
+                        });
+                    let exists = self
+                        .repo
+                        .work_dir()
+                        .map_or(false, |root| root.join(git_path::from_bstr(path)).exists());
+                    self.err.push(Error::IndexLookup {
+                        desired_path: path.into(),
+                        desired_stage: stage.into(),
+                        exists,
+                        stage_hint,
+                    });
+                    None
+                }
+            },
             Err(err) => {
                 self.err.push(err.into());
                 None

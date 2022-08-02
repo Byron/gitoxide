@@ -14,8 +14,7 @@ mod index {
     use git_testtools::hex_to_id;
 
     #[test]
-    #[ignore]
-    fn at_default_stage() {
+    fn at_stages() {
         let repo = repo("complex_graph").unwrap();
         assert_eq!(
             parse_spec(":file", &repo).unwrap(),
@@ -24,12 +23,12 @@ mod index {
 
         assert_eq!(
             parse_spec(":1:file", &repo).unwrap_err().to_string(),
-            "give hint as to where to find the file in the index and if it exists on disk",
+            "Path \"file\" did not exist in index at stage 1. It does exist at stage 0. It exists on disk",
         );
 
         assert_eq!(
             parse_spec(":foo", &repo).unwrap_err().to_string(),
-            "does not exist (but use same error message as above, as it's parametric)",
+            "Path \"foo\" did not exist in index at stage 0. It does not exist on disk",
         );
     }
 }
