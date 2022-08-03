@@ -333,7 +333,10 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
 
     fn sibling_branch(&mut self, _kind: SiblingBranch) -> Option<()> {
         self.unset_disambiguate_call();
-        todo!("once remote handling and ref-specs are fleshed out much more")
+        self.err.push(Error::Planned {
+            dependency: "remote handling and ref-specs are fleshed out more",
+        });
+        None
     }
 }
 

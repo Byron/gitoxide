@@ -11,6 +11,25 @@ mod regex;
 mod reflog;
 mod traverse;
 
+mod sibling_branch {
+    use crate::revision::spec::from_bytes::{parse_spec_no_baseline, repo};
+    use git_repository::revision::spec::parse::Error;
+
+    #[test]
+    fn is_planned_and_delayed_until_remotes_are_sorted() {
+        let repo = repo("complex_graph").unwrap();
+        assert!(matches!(
+            parse_spec_no_baseline("main@{push}", &repo).unwrap_err(),
+            Error::Planned { .. }
+        ));
+
+        assert!(matches!(
+            parse_spec_no_baseline("main@{upstream}", &repo).unwrap_err(),
+            Error::Planned { .. }
+        ));
+    }
+}
+
 mod index {
     use crate::revision::spec::from_bytes::{parse_spec, repo};
     use git_repository::prelude::ObjectIdExt;

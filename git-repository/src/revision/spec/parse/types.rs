@@ -61,6 +61,8 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("This feature will be implemented once {dependency}")]
+    Planned { dependency: &'static str },
     #[error("Reference {reference:?} does not have a reference log, cannot {action}")]
     MissingRefLog { reference: BString, action: &'static str },
     #[error("HEAD has {available} prior checkouts and checkout number {desired} is out of range")]
