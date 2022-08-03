@@ -291,7 +291,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
                 let r = self.refs[self.idx].get_or_insert(head_ref).clone().attach(self.repo);
                 let mut platform = r.log_iter();
                 match platform.rev().ok().flatten() {
-                    Some(mut it) => match it.nth(no).map(Result::ok).flatten() {
+                    Some(mut it) => match it.nth(no).and_then(Result::ok) {
                         Some(line) => {
                             self.objs[self.idx]
                                 .get_or_insert_with(HashSet::default)
