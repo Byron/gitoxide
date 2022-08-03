@@ -12,6 +12,7 @@ pub use walk::iter::Walk;
 pub mod spec;
 
 /// The specification of a revision as parsed from a revision specification like `HEAD@{1}` or `v1.2.3...main`.
+/// It's typically created by [`repo.rev_parse()`][crate::Repository::rev_parse()].
 ///
 /// See the [official git documentation](https://git-scm.com/docs/git-rev-parse#_specifying_revisions) for reference on how
 /// to specify revisions and revision ranges.

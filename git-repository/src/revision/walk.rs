@@ -3,7 +3,8 @@ use git_odb::FindExt;
 
 use crate::{revision, Repository};
 
-/// A platform to traverse the revision graph by adding starting points as well as points which shouldn't be crossed.
+/// A platform to traverse the revision graph by adding starting points as well as points which shouldn't be crossed,
+/// returned by [`Repository::rev_walk()`].
 pub struct Platform<'repo> {
     pub(crate) repo: &'repo Repository,
     pub(crate) tips: Vec<ObjectId>,
