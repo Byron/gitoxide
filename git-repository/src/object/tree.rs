@@ -148,6 +148,19 @@ mod iter {
         }
     }
 
+    impl<'repo, 'a> std::fmt::Display for EntryRef<'repo, 'a> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(
+                f,
+                "{:06o} {:>6} {}\t{}",
+                self.mode() as u32,
+                self.mode().as_str(),
+                self.id().shorten_or_id(),
+                self.filename()
+            )
+        }
+    }
+
     impl<'repo> Tree<'repo> {
         /// Return an iterator over tree entries.
         pub fn iter(&self) -> impl Iterator<Item = Result<EntryRef<'repo, '_>, git_object::decode::Error>> {
