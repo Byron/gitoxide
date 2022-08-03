@@ -516,8 +516,16 @@ pub fn main() -> Result<()> {
             },
         ),
         Subcommands::Revision(cmd) => match cmd {
+            revision::Subcommands::PreviousBranches => prepare_and_run(
+                "revision-previousbranches",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, out, _err| core::repository::revision::previous_branches(repository()?, out, format),
+            ),
             revision::Subcommands::Explain { spec } => prepare_and_run(
-                "commit-describe",
+                "revision-explain",
                 verbose,
                 progress,
                 progress_keep_open,

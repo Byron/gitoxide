@@ -190,6 +190,8 @@ pub mod revision {
             #[clap(min_values = 1)]
             specs: Vec<std::ffi::OsString>,
         },
+        /// Return the names and hashes of all previously checked-out branches.
+        PreviousBranches,
     }
 }
 

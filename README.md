@@ -44,6 +44,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * **revision**
         * [x] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
         * [x] **parse** - Show which objects a revspec resolves to
+        * [x] **previous-branches** - list all previously checked out branches, powered by the ref-log.
     * **free** - no git repository necessary
         * **pack**
           * [x] [verify](https://asciinema.org/a/352942)
