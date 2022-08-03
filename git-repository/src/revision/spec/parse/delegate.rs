@@ -271,9 +271,17 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
         }
     }
 
-    fn reflog(&mut self, _query: ReflogLookup) -> Option<()> {
+    fn reflog(&mut self, query: ReflogLookup) -> Option<()> {
         self.unset_disambiguate_call();
-        todo!()
+        match query {
+            ReflogLookup::Date(_date) => {
+                self.err.push(Error::Planned {
+                    dependency: "remote handling and ref-specs are fleshed out more",
+                });
+                None
+            }
+            ReflogLookup::Entry(_no) => todo!("entry lookup"),
+        }
     }
 
     fn nth_checked_out_branch(&mut self, branch_no: usize) -> Option<()> {

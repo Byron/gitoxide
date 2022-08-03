@@ -1,4 +1,5 @@
-use crate::revision::spec::from_bytes::{parse_spec, repo};
+use crate::revision::spec::from_bytes::{parse_spec, parse_spec_no_baseline, repo};
+use git_repository::revision::spec::parse::Error;
 
 #[test]
 fn nth_prior_checkout() {
@@ -19,4 +20,13 @@ fn nth_prior_checkout() {
         parse_spec("@{-6}", &repo).unwrap_err().to_string(),
         "HEAD has 5 prior checkouts and checkout number 6 is out of range"
     );
+}
+
+#[test]
+fn by_date() {
+    let repo = repo("complex_graph").unwrap();
+    assert!(matches!(
+        parse_spec_no_baseline("main@{1979-02-26 18:30:00}", &repo).unwrap_err(),
+        Error::Planned { .. }
+    ));
 }
