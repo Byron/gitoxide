@@ -112,6 +112,11 @@ impl Flags {
     pub fn stage(&self) -> Stage {
         (*self & Flags::STAGE_MASK).bits >> 12
     }
+
+    pub fn to_storage(&self) -> at_rest::Flags {
+        at_rest::Flags::from_bits(self.bits() as u16).unwrap()
+        // TODO: extended flags / v3
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
@@ -171,5 +176,21 @@ mod _impls {
                 .then_with(|| lhs.len().cmp(&rhs.len()))
                 .then_with(|| self.stage().cmp(&other.stage()))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::entry::at_rest;
+
+    #[test]
+    fn in_mem_flags_to_storage_flags_v2() {
+        let flag_bytes = u16::from_be_bytes(*b"\x00\x01");
+        let flags_at_rest = at_rest::Flags::from_bits(flag_bytes).unwrap();
+        let in_memory_flags = flags_at_rest.to_memory();
+
+        let output = in_memory_flags.to_storage();
+
+        assert_eq!(output.bits(), flag_bytes);
     }
 }
