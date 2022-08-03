@@ -33,19 +33,24 @@ mod version {
                 );
             }
             for (entry_index, entry) in file.iter().enumerate() {
-                let index = file.lookup(entry.oid).expect("id present");
-                assert_eq!(entry.oid.as_ref(), file.oid_at_index(index));
-                assert_eq!(entry.pack_offset, file.pack_offset_at_index(index));
-                assert_eq!(entry.crc32, file.crc32_at_index(index));
+                for mut candidates in [None, Some(0..0)] {
+                    let index = file.lookup(entry.oid).expect("id present");
+                    assert_eq!(entry.oid.as_ref(), file.oid_at_index(index));
+                    assert_eq!(entry.pack_offset, file.pack_offset_at_index(index));
+                    assert_eq!(entry.crc32, file.crc32_at_index(index));
 
-                let hex_len = (entry_index % object_hash.len_in_hex()).max(7);
-                let prefix = git_hash::Prefix::new(entry.oid, hex_len)?;
-                assert_eq!(
-                    file.lookup_prefix(prefix)
-                        .expect("object exists")
-                        .expect("non-ambiguous"),
-                    index
-                );
+                    let hex_len = (entry_index % object_hash.len_in_hex()).max(7);
+                    let prefix = git_hash::Prefix::new(entry.oid, hex_len)?;
+                    assert_eq!(
+                        file.lookup_prefix(prefix, candidates.as_mut())
+                            .expect("object exists")
+                            .expect("non-ambiguous"),
+                        index
+                    );
+                    if let Some(candidates) = candidates {
+                        assert_eq!(candidates, index..index + 1)
+                    }
+                }
             }
             Ok(())
         }
@@ -60,30 +65,45 @@ mod version {
         fn lookup() -> Result<(), Box<dyn std::error::Error>> {
             let object_hash = git_hash::Kind::Sha1;
             let file = index::File::at(&fixture_path(INDEX_V2), object_hash)?;
-            for (id, expected, assertion_message, hex_len) in &[
+            for (id, expected, assertion_message, hex_len) in [
                 (&b"0ead45fc727edcf5cadca25ef922284f32bb6fc1"[..], Some(0), "first", 4),
                 (b"e800b9c207e17f9b11e321cc1fba5dfe08af4222", Some(29), "last", 40),
                 (b"ffffffffffffffffffffffffffffffffffffffff", None, "not in pack", 7),
             ] {
-                let id = git_hash::ObjectId::from_hex(*id)?;
-                assert_eq!(file.lookup(id), *expected, "{}", assertion_message);
-                let expected = expected.map(Ok);
-                assert_eq!(file.lookup_prefix(git_hash::Prefix::new(id, *hex_len)?), expected);
+                for mut candidates in [None, Some(1..1)] {
+                    let id = git_hash::ObjectId::from_hex(id)?;
+                    assert_eq!(file.lookup(id), expected, "{}", assertion_message);
+                    assert_eq!(
+                        file.lookup_prefix(git_hash::Prefix::new(id, hex_len)?, candidates.as_mut()),
+                        expected.map(Ok)
+                    );
+                    if let Some(candidates) = candidates {
+                        match expected {
+                            Some(expected) => assert_eq!(candidates, expected..expected + 1),
+                            None => assert_eq!(candidates, 0..0),
+                        }
+                    }
+                }
             }
             for (entry_index, entry) in file.iter().enumerate() {
-                let index = file.lookup(entry.oid).expect("id present");
-                assert_eq!(entry.oid.as_ref(), file.oid_at_index(index));
-                assert_eq!(entry.pack_offset, file.pack_offset_at_index(index));
-                assert_eq!(entry.crc32, file.crc32_at_index(index), "{} {:?}", index, entry);
+                for mut candidates in [None, Some(0..0)] {
+                    let index = file.lookup(entry.oid).expect("id present");
+                    assert_eq!(entry.oid.as_ref(), file.oid_at_index(index));
+                    assert_eq!(entry.pack_offset, file.pack_offset_at_index(index));
+                    assert_eq!(entry.crc32, file.crc32_at_index(index), "{} {:?}", index, entry);
 
-                let hex_len = (entry_index % object_hash.len_in_hex()).max(7);
-                let prefix = git_hash::Prefix::new(entry.oid, hex_len)?;
-                assert_eq!(
-                    file.lookup_prefix(prefix)
-                        .expect("object exists")
-                        .expect("non-ambiguous"),
-                    index
-                );
+                    let hex_len = (entry_index % object_hash.len_in_hex()).max(7);
+                    let prefix = git_hash::Prefix::new(entry.oid, hex_len)?;
+                    assert_eq!(
+                        file.lookup_prefix(prefix, candidates.as_mut())
+                            .expect("object exists")
+                            .expect("non-ambiguous"),
+                        index
+                    );
+                    if let Some(candidates) = candidates {
+                        assert_eq!(candidates, index..index + 1);
+                    }
+                }
             }
             Ok(())
         }
@@ -216,7 +236,11 @@ mod version {
         fn lookup_missing() {
             let file = index::File::at(&fixture_path(INDEX_V2), git_hash::Kind::Sha1).unwrap();
             let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
-            assert!(file.lookup_prefix(prefix).is_none());
+            assert!(file.lookup_prefix(prefix, None).is_none());
+
+            let mut candidates = 1..1;
+            assert!(file.lookup_prefix(prefix, Some(&mut candidates)).is_none());
+            assert_eq!(candidates, 0..0);
         }
     }
 }
@@ -247,9 +271,9 @@ fn traverse_with_index_and_forward_ref_deltas() {
     assert_eq!(count.load(Ordering::SeqCst), 9, "we traverse all objects");
 }
 
-use common_macros::b_tree_map;
 use git_features::progress;
 use git_pack::{cache, data::decode_entry::Outcome, index};
+use maplit::btreemap;
 
 use crate::pack::{INDEX_V2, PACK_FOR_INDEX_V2};
 
@@ -278,7 +302,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
                     compressed_size: 1725,
                     object_size: 9621,
                 },
-                objects_per_chain_length: b_tree_map! {
+                objects_per_chain_length: btreemap! {
                     0 => 18,
                     1 => 4,
                     2 => 3,
@@ -308,7 +332,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
                     compressed_size: 729,
                     object_size: 2093,
                 },
-                objects_per_chain_length: b_tree_map! {
+                objects_per_chain_length: btreemap! {
                     0 => 64,
                     1 => 3
                 },
@@ -333,7 +357,7 @@ fn pack_lookup() -> Result<(), Box<dyn std::error::Error>> {
                     compressed_size: 85,
                     object_size: 293,
                 },
-                objects_per_chain_length: b_tree_map! {
+                objects_per_chain_length: btreemap! {
                     0 => 30,
                     1 => 6,
                     2 => 6,

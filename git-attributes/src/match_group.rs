@@ -1,10 +1,12 @@
-use crate::{Assignment, MatchGroup, PatternList, PatternMapping};
-use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::{
     ffi::OsString,
     io::Read,
     path::{Path, PathBuf},
 };
+
+use bstr::{BStr, BString, ByteSlice, ByteVec};
+
+use crate::{Assignment, MatchGroup, PatternList, PatternMapping};
 
 fn into_owned_assignments<'a>(
     attrs: impl Iterator<Item = Result<crate::AssignmentRef<'a>, crate::name::Error>>,

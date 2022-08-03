@@ -1,11 +1,7 @@
-#![allow(unused_variables)]
-
-use std::ffi::OsString;
-
 use anyhow::bail;
 use git::{
     bstr::{BStr, BString, ByteSlice},
-    revision::{
+    revision::plumbing::{
         spec,
         spec::parse::{
             delegate,
@@ -16,10 +12,10 @@ use git::{
 };
 use git_repository as git;
 
-pub fn explain(_repo: git::Repository, spec: OsString, mut out: impl std::io::Write) -> anyhow::Result<()> {
+pub fn explain(spec: std::ffi::OsString, mut out: impl std::io::Write) -> anyhow::Result<()> {
     let mut explain = Explain::new(&mut out);
     let spec = git::path::os_str_into_bstr(&spec)?;
-    git::revision::spec::parse(spec, &mut explain)?;
+    git::revision::plumbing::spec::parse(spec, &mut explain)?;
     if let Some(err) = explain.err {
         bail!(err);
     }
@@ -67,10 +63,23 @@ impl<'a> delegate::Revision for Explain<'a> {
         writeln!(self.out, "Lookup the '{}' reference", name).ok()
     }
 
-    fn disambiguate_prefix(&mut self, prefix: git::hash::Prefix) -> Option<()> {
+    fn disambiguate_prefix(&mut self, prefix: git::hash::Prefix, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
         self.prefix()?;
         self.oid_prefix = Some(prefix);
-        writeln!(self.out, "Disambiguate the '{}' object name", prefix).ok()
+        writeln!(
+            self.out,
+            "Disambiguate the '{}' object name ({})",
+            prefix,
+            match hint {
+                None => "any object".to_string(),
+                Some(delegate::PrefixHint::MustBeCommit) => "commit".into(),
+                Some(delegate::PrefixHint::DescribeAnchor { ref_name, generation }) => format!(
+                    "commit {} generations in future of reference {:?}",
+                    generation, ref_name
+                ),
+            }
+        )
+        .ok()
     }
 
     fn reflog(&mut self, query: ReflogLookup) -> Option<()> {
@@ -108,11 +117,6 @@ impl<'a> delegate::Revision for Explain<'a> {
     fn sibling_branch(&mut self, kind: SiblingBranch) -> Option<()> {
         self.prefix()?;
         self.has_implicit_anchor = true;
-        let ref_name: &BStr = self
-            .ref_name
-            .as_ref()
-            .map(|n| n.as_ref())
-            .unwrap_or_else(|| "HEAD".into());
         let ref_info = match self.ref_name.as_ref() {
             Some(ref_name) => format!("'{}'", ref_name),
             None => "behind 'HEAD'".into(),
@@ -151,7 +155,7 @@ impl<'a> delegate::Navigate for Explain<'a> {
             self.out,
             "{}",
             match kind {
-                PeelTo::ExistingObject => "Assure the current object exists".to_string(),
+                PeelTo::ValidObject => "Assure the current object exists".to_string(),
                 PeelTo::RecursiveTagObject => "Follow the current annotated tag until an object is found".into(),
                 PeelTo::ObjectKind(kind) => format!("Peel the current object until it is a {}", kind),
                 PeelTo::Path(path) => format!("Lookup the object at '{}' from the current tree-ish", path),
@@ -213,9 +217,13 @@ impl<'a> delegate::Kind for Explain<'a> {
             self.out,
             "Set revision specification to {} mode",
             match kind {
-                spec::Kind::Range => "range",
-                spec::Kind::MergeBase => "merge-base",
-                spec::Kind::Single => unreachable!("BUG: 'single' mode is implied but cannot be set explicitly"),
+                spec::Kind::RangeBetween => "range",
+                spec::Kind::ReachableToMergeBase => "merge-base",
+                spec::Kind::ExcludeReachable => "exclude",
+                spec::Kind::IncludeReachableFromParents => "include parents",
+                spec::Kind::ExcludeReachableFromParents => "exclude parents",
+                spec::Kind::IncludeReachable =>
+                    unreachable!("BUG: 'single' mode is implied but cannot be set explicitly"),
             }
         )
         .ok()

@@ -46,7 +46,7 @@ prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-cro
 #! These combine common choices of the above features to represent typical builds
 
 ## *fast* + *prodash-render-tui-crossterm* + *prodash-render-line-crossterm* + *http* + *gitoxide-core-tools* + *client-networking*
-max = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure" ]
+max = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line", "prodash-render-tui", "prodash/render-line-autoconfigure", "git-repository/regex" ]
 
 ## *fast* + *prodash-render-line-crossterm* + *gitoxide-core-tools* + *client-networking*.
 lean = ["fast", "pretty-cli", "http-client-curl", "gitoxide-core-tools", "gitoxide-core-blocking-client", "prodash-render-line" ]

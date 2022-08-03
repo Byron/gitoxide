@@ -7,6 +7,10 @@ use crate::{
     Repository,
 };
 
+pub(crate) type IndexStorage = git_features::threading::OwnShared<git_features::fs::MutableSnapshot<git_index::File>>;
+/// A lazily loaded and auto-updated worktree index.
+pub type Index = git_features::fs::SharedSnapshot<git_index::File>;
+
 /// A stand-in to a worktree as result of a worktree iteration.
 ///
 /// It provides access to typical worktree state, but may not actually point to a valid checkout as the latter has been moved or
@@ -66,7 +70,6 @@ pub(crate) fn id(git_dir: &std::path::Path, has_common_dir: bool) -> Option<&BSt
 pub mod proxy;
 
 ///
-#[cfg(feature = "git-index")]
 pub mod open_index {
     use crate::bstr::BString;
 
@@ -89,11 +92,15 @@ pub mod open_index {
         pub fn open_index(&self) -> Result<git_index::File, Error> {
             self.parent.open_index()
         }
+
+        /// A shortcut to [`crate::Repository::index()`].
+        pub fn index(&self) -> Result<crate::worktree::Index, Error> {
+            self.parent.index()
+        }
     }
 }
 
 ///
-#[cfg(feature = "git-index")]
 pub mod excludes {
     use std::path::PathBuf;
 

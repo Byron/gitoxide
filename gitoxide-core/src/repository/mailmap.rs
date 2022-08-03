@@ -39,7 +39,7 @@ pub fn entries(
     }
 
     let mut mailmap = git::mailmap::Snapshot::default();
-    if let Err(e) = repo.load_mailmap_into(&mut mailmap) {
+    if let Err(e) = repo.open_mailmap_into(&mut mailmap) {
         writeln!(err, "Error while loading mailmap, the first error is: {}", e).ok();
     }
 

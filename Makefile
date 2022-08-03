@@ -149,6 +149,8 @@ unit-tests: ## run all unit tests
 	cd git-protocol && cargo test --features blocking-client \
 					&& cargo test --features async-client \
 					&& cargo test
+	cd git-repository && cargo test \
+					&& cargo test --features regex
 	cd gitoxide-core && cargo test --lib
 
 nextest: ## run tests with `cargo nextest` (all unit-tests, no doc-tests, faster)

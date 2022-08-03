@@ -6,8 +6,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use git_features::threading::OwnShared;
-
 use crate::{
     file::{loose, loose::iter::SortedLoosePaths, path_to_name},
     store_impl::{file, packed},
@@ -39,7 +37,7 @@ enum IterKind {
 #[must_use = "Iterators should be obtained from this platform"]
 pub struct Platform<'s> {
     store: &'s file::Store,
-    packed: Option<OwnShared<packed::Buffer>>,
+    packed: Option<file::packed::SharedBufferSnapshot>,
 }
 
 impl<'p, 's> LooseThenPacked<'p, 's> {
@@ -194,14 +192,15 @@ impl<'s> Platform<'s> {
     ///
     /// Errors are returned similarly to what would happen when loose and packed refs where iterated by themeselves.
     pub fn all(&self) -> std::io::Result<LooseThenPacked<'_, '_>> {
-        self.store.iter_packed(self.packed.as_deref())
+        self.store.iter_packed(self.packed.as_ref().map(|b| &***b))
     }
 
     /// As [`iter(…)`][file::Store::iter()], but filters by `prefix`, i.e. "refs/heads".
     ///
     /// Please note that "refs/heads` or "refs\\heads" is equivalent to "refs/heads/"
     pub fn prefixed(&self, prefix: impl AsRef<Path>) -> std::io::Result<LooseThenPacked<'_, '_>> {
-        self.store.iter_prefixed_packed(prefix, self.packed.as_deref())
+        self.store
+            .iter_prefixed_packed(prefix, self.packed.as_ref().map(|b| &***b))
     }
 }
 

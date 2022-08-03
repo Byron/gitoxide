@@ -1,5 +1,6 @@
-use crate::{Name, NameRef};
 use bstr::BString;
+
+use crate::{Name, NameRef};
 
 impl<'a> NameRef<'a> {
     /// Turn this ref into its owned counterpart.

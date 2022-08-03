@@ -1,7 +1,6 @@
-use std::{convert::TryInto, ops::Deref};
+use std::{collections::HashSet, convert::TryInto, ops::Deref};
 
 use git_hash::{oid, ObjectId};
-use git_object::Data;
 use git_pack::{cache::DecodeEntry, data::entry::Location};
 
 use crate::store::{handle, load_index};
@@ -117,6 +116,7 @@ where
 
     /// Given a prefix `candidate` with an object id and an initial `hex_len`, check if it only matches a single
     /// object within the entire object database and increment its `hex_len` by one until it is unambiguous.
+    /// Return `Ok(None)` if no object with that prefix exists.
     pub fn disambiguate_prefix(&self, mut candidate: PotentialPrefix) -> Result<Option<git_hash::Prefix>, Error> {
         let max_hex_len = candidate.id().kind().len_in_hex();
         if candidate.hex_len() == max_hex_len {
@@ -124,7 +124,7 @@ where
         }
 
         while candidate.hex_len() != max_hex_len {
-            let res = self.lookup_prefix(candidate.to_prefix())?;
+            let res = self.lookup_prefix(candidate.to_prefix(), None)?;
             match res {
                 Some(Ok(_id)) => return Ok(Some(candidate.to_prefix())),
                 Some(Err(())) => {
@@ -141,26 +141,37 @@ where
     ///
     /// Return `Ok(None)` if no object matched the `prefix`.
     ///
+    /// Pass `candidates` to obtain the set of all object ids matching `prefix`, with the same return value as
+    /// one would have received if it remained `None`.
+    ///
     /// ### Performance Note
     ///
     /// - Unless the handles refresh mode is set to `Never`, each lookup will trigger a refresh of the object databases files
     ///   on disk if the prefix doesn't lead to ambiguous results.
     /// - Since all objects need to be examined to assure non-amiguous return values, after calling this method all indices will
     ///   be loaded.
-    pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Result<Option<crate::find::PrefixLookupResult>, Error> {
-        let mut candidate: Option<git_hash::ObjectId> = None;
+    /// - If `candidates` is `Some(…)`, the traversal will continue to obtain all candidates, which takes more time
+    ///   as there is no early abort.
+    pub fn lookup_prefix(
+        &self,
+        prefix: git_hash::Prefix,
+        mut candidates: Option<&mut HashSet<git_hash::ObjectId>>,
+    ) -> Result<Option<PrefixLookupResult>, Error> {
+        let mut candidate: Option<ObjectId> = None;
         loop {
             let snapshot = self.snapshot.borrow();
             for index in snapshot.indices.iter() {
-                let lookup_result = index.lookup_prefix(prefix);
-                if !check_candidate(lookup_result, &mut candidate) {
+                #[allow(clippy::needless_option_as_deref)] // needed as it's the equivalent of a reborrow.
+                let lookup_result = index.lookup_prefix(prefix, candidates.as_deref_mut());
+                if candidates.is_none() && !check_candidate(lookup_result, &mut candidate) {
                     return Ok(Some(Err(())));
                 }
             }
 
             for lodb in snapshot.loose_dbs.iter() {
-                let lookup_result = lodb.lookup_prefix(prefix)?;
-                if !check_candidate(lookup_result, &mut candidate) {
+                #[allow(clippy::needless_option_as_deref)] // needed as it's the equivalent of a reborrow.
+                let lookup_result = lodb.lookup_prefix(prefix, candidates.as_deref_mut())?;
+                if candidates.is_none() && !check_candidate(lookup_result, &mut candidate) {
                     return Ok(Some(Err(())));
                 }
             }
@@ -170,7 +181,16 @@ where
                     drop(snapshot);
                     *self.snapshot.borrow_mut() = new_snapshot;
                 }
-                None => return Ok(candidate.map(Ok)),
+                None => {
+                    return match &candidates {
+                        Some(candidates) => match candidates.len() {
+                            0 => Ok(None),
+                            1 => Ok(candidates.iter().cloned().next().map(Ok)),
+                            _ => Ok(Some(Err(()))),
+                        },
+                        None => Ok(candidate.map(Ok)),
+                    };
+                }
             }
         }
 
@@ -189,12 +209,12 @@ where
 
     fn try_find_cached_inner<'a, 'b>(
         &'b self,
-        mut id: &'b git_hash::oid,
+        mut id: &'b oid,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
         snapshot: &mut load_index::Snapshot,
         recursion: Option<error::DeltaBaseRecursion<'_>>,
-    ) -> Result<Option<(Data<'a>, Option<Location>)>, Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<Location>)>, Error> {
         if let Some(r) = recursion {
             if r.depth >= self.max_recursion_depth {
                 return Err(Error::DeltaBaseRecursionLimit {
@@ -433,7 +453,7 @@ where
         id: impl AsRef<oid>,
         buffer: &'a mut Vec<u8>,
         pack_cache: &mut impl DecodeEntry,
-    ) -> Result<Option<(Data<'a>, Option<Location>)>, Self::Error> {
+    ) -> Result<Option<(git_object::Data<'a>, Option<Location>)>, Self::Error> {
         let id = id.as_ref();
         let mut snapshot = self.snapshot.borrow_mut();
         self.try_find_cached_inner(id, buffer, pack_cache, &mut snapshot, None)
@@ -594,7 +614,11 @@ where
         git_pack::Find::contains(self, id)
     }
 
-    fn try_find<'a>(&self, id: impl AsRef<oid>, buffer: &'a mut Vec<u8>) -> Result<Option<Data<'a>>, Self::Error> {
+    fn try_find<'a>(
+        &self,
+        id: impl AsRef<oid>,
+        buffer: &'a mut Vec<u8>,
+    ) -> Result<Option<git_object::Data<'a>>, Self::Error> {
         git_pack::Find::try_find(self, id, buffer).map(|t| t.map(|t| t.0))
     }
 }

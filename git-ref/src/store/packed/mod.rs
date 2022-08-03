@@ -1,11 +1,10 @@
 use std::path::PathBuf;
 
-use git_features::threading::OwnShared;
 use git_hash::ObjectId;
 use git_object::bstr::{BStr, BString};
 use memmap2::Mmap;
 
-use crate::{transaction::RefEdit, FullNameRef};
+use crate::{file, transaction::RefEdit, FullNameRef};
 
 #[derive(Debug)]
 enum Backing {
@@ -34,7 +33,7 @@ struct Edit {
 
 /// A transaction for editing packed references
 pub(crate) struct Transaction {
-    buffer: Option<OwnShared<Buffer>>,
+    buffer: Option<file::packed::SharedBufferSnapshot>,
     edits: Option<Vec<Edit>>,
     lock: Option<git_lock::File>,
     #[allow(dead_code)] // It just has to be kept alive, hence no reads

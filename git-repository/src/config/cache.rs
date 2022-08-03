@@ -3,7 +3,7 @@ use std::{convert::TryFrom, path::PathBuf};
 use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
-use crate::{bstr::ByteSlice, repository, repository::identity};
+use crate::{bstr::ByteSlice, repository, repository::identity, revision::spec::parse::ObjectKindHint};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
@@ -213,10 +213,21 @@ impl Cache {
         let reflog = query_refupdates(&config);
         let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
+        let object_kind_hint = config.string("core", None, "disambiguate").and_then(|value| {
+            Some(match value.as_ref().as_ref() {
+                b"commit" => ObjectKindHint::Commit,
+                b"committish" => ObjectKindHint::Committish,
+                b"tree" => ObjectKindHint::Tree,
+                b"treeish" => ObjectKindHint::Treeish,
+                b"blob" => ObjectKindHint::Blob,
+                _ => return None,
+            })
+        });
         Ok(Cache {
             resolved: config.into(),
             use_multi_pack_index,
             object_hash,
+            object_kind_hint,
             reflog,
             is_bare,
             ignore_case,
@@ -230,7 +241,6 @@ impl Cache {
     }
 
     /// Return a path by using the `$XDF_CONFIG_HOME` or `$HOME/.config/…` environment variables locations.
-    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub fn xdg_config_path(
         &self,
         resource_file_name: &str,

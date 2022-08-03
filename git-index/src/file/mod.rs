@@ -18,5 +18,17 @@ mod impls {
     }
 }
 
+mod impl_ {
+    use std::fmt::Formatter;
+
+    impl std::fmt::Debug for crate::File {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            f.debug_struct("File")
+                .field("path", &self.path.display())
+                .field("checksum", &self.checksum)
+                .finish_non_exhaustive()
+        }
+    }
+}
 pub mod init;
 pub mod verify;

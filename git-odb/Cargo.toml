@@ -47,9 +47,8 @@ git-testtools = { path = "../tests/tools"}
 git-actor = { path = "../git-actor" }
 pretty_assertions = "1.0.0"
 filetime = "0.2.15"
+maplit = "1.0.2"
 
 [package.metadata.docs.rs]
 all-features = true
 features = ["document-features"]
-
-

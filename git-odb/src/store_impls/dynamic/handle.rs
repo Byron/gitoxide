@@ -69,7 +69,7 @@ pub struct IndexForObjectInPack {
 }
 
 pub(crate) mod index_lookup {
-    use std::sync::Arc;
+    use std::{collections::HashSet, sync::Arc};
 
     use git_hash::oid;
 
@@ -141,11 +141,24 @@ pub(crate) mod index_lookup {
         }
 
         /// Call `lookup_prefix(…)` on either index or multi-index, and transform matches into an object id.
-        pub(crate) fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<crate::find::PrefixLookupResult> {
+        pub(crate) fn lookup_prefix(
+            &self,
+            prefix: git_hash::Prefix,
+            candidates: Option<&mut HashSet<git_hash::ObjectId>>,
+        ) -> Option<crate::find::PrefixLookupResult> {
+            let mut candidate_entries = candidates.as_ref().map(|_| 0..0);
             let res = match &self.file {
-                handle::SingleOrMultiIndex::Single { index, .. } => index.lookup_prefix(prefix),
-                handle::SingleOrMultiIndex::Multi { index, .. } => index.lookup_prefix(prefix),
+                handle::SingleOrMultiIndex::Single { index, .. } => {
+                    index.lookup_prefix(prefix, candidate_entries.as_mut())
+                }
+                handle::SingleOrMultiIndex::Multi { index, .. } => {
+                    index.lookup_prefix(prefix, candidate_entries.as_mut())
+                }
             }?;
+
+            if let Some((candidates, entries)) = candidates.zip(candidate_entries) {
+                candidates.extend(entries.map(|entry| self.oid_at_index(entry).to_owned()));
+            }
             Some(res.map(|entry_index| self.oid_at_index(entry_index).to_owned()))
         }
 

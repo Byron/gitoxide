@@ -106,6 +106,7 @@ pub(crate) struct Store {
 /// Indicate that the given BString is a validate reference name or path that can be used as path on disk or written as target
 /// of a symbolic reference
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct FullName(pub(crate) BString);
 
 /// A validated and potentially partial reference name - it can safely be used for common operations.
@@ -183,6 +184,7 @@ pub enum Category<'a> {
 
 /// Denotes a ref target, equivalent to [`Kind`], but with mutable data.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub enum Target {
     /// A ref that points to an object id
     Peeled(ObjectId),

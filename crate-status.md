@@ -85,7 +85,7 @@
     * [x] multi-pack indices
     * [x] perfect scaling with cores
     * [x] support for pack caches, object caches and MRU for best per-thread performance.
-    * [x] prefix/short-id lookup
+    * [x] prefix/short-id lookup, with optional listing of ambiguous objects.
     * [x] object replacements (`git replace`)
 * **sink**
     * [x] write objects and obtain id
@@ -424,9 +424,12 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [x] handle git-common-dir
         * [ ] support for `GIT_CEILING_DIRECTORIES` environment variable
         * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
-    * [ ] rev-parse
-        - **unsupported**
-            * regex 
+    * [x] rev-parse
+        - **deviation**
+            * `@` actually stands for `HEAD`, whereas `git` resolves it to the object pointed to by `HEAD` without making the `HEAD` ref available for lookups.
+    * [x] rev-walk
+      * [x] include tips
+      * [ ] exclude commits
     * [x] instantiation
     * [x] access to refs and objects
     * **traverse** 

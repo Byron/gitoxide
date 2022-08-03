@@ -184,6 +184,23 @@ pub mod revision {
     pub enum Subcommands {
         /// Provide the revision specification like `@~1` to explain.
         Explain { spec: std::ffi::OsString },
+        /// Try to resolve the given revspec and print the object names.
+        #[clap(visible_alias = "query", visible_alias = "parse")]
+        Resolve {
+            /// Instead of resolving a rev-spec, explain what would be done for the first spec.
+            ///
+            /// Equivalent to the `explain` subcommand.
+            #[clap(short = 'e', long)]
+            explain: bool,
+            /// Show the first resulting object similar to how `git cat-file` would, but don't show the resolved spec.
+            #[clap(short = 'c', long, conflicts_with = "explain")]
+            cat_file: bool,
+            /// rev-specs like `@`, `@~1` or `HEAD^2`.
+            #[clap(required = true)]
+            specs: Vec<std::ffi::OsString>,
+        },
+        /// Return the names and hashes of all previously checked-out branches.
+        PreviousBranches,
     }
 }
 

@@ -30,6 +30,11 @@ pub enum Sorting {
     /// Commits are sorted by their commit time in descending order, that is newest first.
     ///
     /// The sorting applies to all currently queued commit ids and thus is full.
+    ///
+    /// # Performance
+    ///
+    /// This mode benefits greatly from having an object_cache in `find()`
+    /// to avoid having to lookup each commit twice.
     ByCommitTimeNewestFirst,
 }
 
@@ -41,7 +46,7 @@ impl Default for Sorting {
 
 ///
 pub mod ancestors {
-    use std::{borrow::BorrowMut, collections::VecDeque};
+    use std::{borrow::BorrowMut, collections::VecDeque, iter::FromIterator};
 
     use git_hash::{oid, ObjectId};
     use git_object::CommitRefIter;
@@ -111,6 +116,9 @@ pub mod ancestors {
                     })?;
                     *commit_time = commit_iter.committer()?.time.seconds_since_unix_epoch;
                 }
+                let mut v = Vec::from_iter(std::mem::take(&mut state.next).into_iter());
+                v.sort_by(|a, b| a.1.cmp(&b.1).reverse());
+                state.next = v.into();
             }
             Ok(self)
         }

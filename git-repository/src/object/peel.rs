@@ -17,8 +17,9 @@ pub mod to_kind {
         pub enum Error {
             #[error(transparent)]
             FindExistingObject(#[from] object::find::existing::OdbError),
-            #[error("Last encountered object kind was {} while trying to peel to {}", .actual, .expected)]
+            #[error("Last encountered object {oid} was {actual} while trying to peel to {expected}")]
             NotFound {
+                oid: git_hash::Prefix,
                 actual: object::Kind,
                 expected: object::Kind,
             },
@@ -36,7 +37,7 @@ impl<'repo> Object<'repo> {
     pub fn peel_to_kind(mut self, kind: Kind) -> Result<Self, peel::to_kind::Error> {
         loop {
             match self.kind {
-                any_kind if kind == any_kind => {
+                our_kind if kind == our_kind => {
                     return Ok(self);
                 }
                 Kind::Commit => {
@@ -45,18 +46,19 @@ impl<'repo> Object<'repo> {
                         .expect("commit")
                         .tree_id()
                         .expect("valid commit");
-                    let access = self.repo;
+                    let repo = self.repo;
                     drop(self);
-                    self = access.find_object(tree_id)?;
+                    self = repo.find_object(tree_id)?;
                 }
                 Kind::Tag => {
                     let target_id = self.to_tag_ref_iter().target_id().expect("valid tag");
-                    let access = self.repo;
+                    let repo = self.repo;
                     drop(self);
-                    self = access.find_object(target_id)?;
+                    self = repo.find_object(target_id)?;
                 }
                 Kind::Tree | Kind::Blob => {
                     return Err(peel::to_kind::Error::NotFound {
+                        oid: self.id().shorten().unwrap_or_else(|_| self.id.into()),
                         actual: self.kind,
                         expected: kind,
                     })
@@ -76,9 +78,9 @@ impl<'repo> Object<'repo> {
                 Kind::Commit | Kind::Tree | Kind::Blob => break Ok(self),
                 Kind::Tag => {
                     let target_id = self.to_tag_ref_iter().target_id().expect("valid tag");
-                    let access = self.repo;
+                    let repo = self.repo;
                     drop(self);
-                    self = access.find_object(target_id)?;
+                    self = repo.find_object(target_id)?;
                 }
             }
         }

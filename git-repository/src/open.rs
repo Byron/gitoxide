@@ -412,6 +412,7 @@ impl ThreadSafeRepository {
             config,
             // used when spawning new repositories off this one when following worktrees
             linked_worktree_options: options,
+            index: git_features::fs::MutableSnapshot::new().into(),
         })
     }
 }

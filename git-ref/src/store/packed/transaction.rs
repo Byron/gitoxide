@@ -1,8 +1,7 @@
 use std::io::Write;
 
-use git_features::threading::OwnShared;
-
 use crate::{
+    file,
     store_impl::{file::transaction::FindObjectFn, packed, packed::Edit},
     transaction::{Change, RefEdit},
     Target,
@@ -12,7 +11,10 @@ pub(crate) const HEADER_LINE: &[u8] = b"# pack-refs with: peeled fully-peeled so
 
 /// Access and instantiation
 impl packed::Transaction {
-    pub(crate) fn new_from_pack_and_lock(buffer: Option<OwnShared<packed::Buffer>>, lock: git_lock::File) -> Self {
+    pub(crate) fn new_from_pack_and_lock(
+        buffer: Option<file::packed::SharedBufferSnapshot>,
+        lock: git_lock::File,
+    ) -> Self {
         packed::Transaction {
             buffer,
             edits: None,
@@ -26,7 +28,7 @@ impl packed::Transaction {
 impl packed::Transaction {
     /// Returns our packed buffer
     pub fn buffer(&self) -> Option<&packed::Buffer> {
-        self.buffer.as_deref()
+        self.buffer.as_ref().map(|b| &***b)
     }
 }
 
@@ -211,20 +213,18 @@ fn write_edit(mut out: impl std::io::Write, edit: &Edit, lines_written: &mut i32
     Ok(())
 }
 
-impl packed::Buffer {
-    /// Convert this buffer to be used as the basis for a transaction.
-    pub(crate) fn into_transaction(
-        self: OwnShared<Self>,
-        lock_mode: git_lock::acquire::Fail,
-    ) -> Result<packed::Transaction, git_lock::acquire::Error> {
-        let lock = git_lock::File::acquire_to_update_resource(&self.path, lock_mode, None)?;
-        Ok(packed::Transaction {
-            buffer: Some(self),
-            lock: Some(lock),
-            closed_lock: None,
-            edits: None,
-        })
-    }
+/// Convert this buffer to be used as the basis for a transaction.
+pub(crate) fn buffer_into_transaction(
+    buffer: file::packed::SharedBufferSnapshot,
+    lock_mode: git_lock::acquire::Fail,
+) -> Result<packed::Transaction, git_lock::acquire::Error> {
+    let lock = git_lock::File::acquire_to_update_resource(&buffer.path, lock_mode, None)?;
+    Ok(packed::Transaction {
+        buffer: Some(buffer),
+        lock: Some(lock),
+        closed_lock: None,
+        edits: None,
+    })
 }
 
 ///

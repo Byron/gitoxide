@@ -1,5 +1,8 @@
 use bitflags::bitflags;
 
+/// The stage of an entry, one of 0 = base, 1 = ours, 2 = theirs
+pub type Stage = u32;
+
 bitflags! {
     pub struct Mode: u32 {
         /// directory (only used for sparse checkouts), equivalent to a tree
@@ -106,12 +109,12 @@ bitflags! {
 }
 
 impl Flags {
-    pub fn stage(&self) -> u32 {
+    pub fn stage(&self) -> Stage {
         (*self & Flags::STAGE_MASK).bits >> 12
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
     /// The amount of seconds elapsed since EPOCH
@@ -120,7 +123,7 @@ pub struct Time {
     pub nsecs: u32,
 }
 
-#[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stat {
     pub mtime: Time,
@@ -136,7 +139,7 @@ pub struct Stat {
 mod access {
     use bstr::{BStr, ByteSlice};
 
-    use crate::{Entry, State};
+    use crate::{entry, Entry, State};
 
     impl Entry {
         pub fn path<'a>(&self, state: &'a State) -> &'a BStr {
@@ -147,7 +150,7 @@ mod access {
             (backing[self.path.clone()]).as_bstr()
         }
 
-        pub fn stage(&self) -> u32 {
+        pub fn stage(&self) -> entry::Stage {
             self.flags.stage()
         }
     }

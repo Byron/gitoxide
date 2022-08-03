@@ -14,20 +14,43 @@ use crate::{
 /// Returns `Ok(())` if all of `input` was consumed, or the error if either the `revspec` syntax was incorrect or
 /// the `delegate` failed to perform the request.
 pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error> {
+    use delegate::{Kind, Revision};
+    let mut delegate = InterceptRev::new(delegate);
     let mut prev_kind = None;
     if let Some(b'^') = input.get(0) {
         input = next(input).1;
-        delegate.kind(spec::Kind::Range).ok_or(Error::Delegate)?;
-        prev_kind = spec::Kind::Range.into();
+        let kind = spec::Kind::ExcludeReachable;
+        delegate.kind(kind).ok_or(Error::Delegate)?;
+        prev_kind = kind.into();
     }
 
-    input = revision(input, delegate)?;
+    let mut found_revision;
+    (input, found_revision) = {
+        let rest = revision(input, &mut delegate)?;
+        (rest, rest != input)
+    };
+    if delegate.done {
+        return if input.is_empty() {
+            Ok(())
+        } else {
+            Err(Error::UnconsumedInput { input: input.into() })
+        };
+    }
     if let Some((rest, kind)) = try_range(input) {
         if let Some(prev_kind) = prev_kind {
             return Err(Error::KindSetTwice { prev_kind, kind });
         }
+        if !found_revision {
+            delegate.find_ref("HEAD".into()).ok_or(Error::Delegate)?;
+        }
         delegate.kind(kind).ok_or(Error::Delegate)?;
-        input = revision(rest.as_bstr(), delegate)?;
+        (input, found_revision) = {
+            let remainder = revision(rest.as_bstr(), &mut delegate)?;
+            (remainder, remainder != rest)
+        };
+        if !found_revision {
+            delegate.find_ref("HEAD".into()).ok_or(Error::Delegate)?;
+        }
     }
 
     if input.is_empty() {
@@ -38,13 +61,142 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
     }
 }
 
-fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr) -> Option<()> {
+mod intercept {
+    use bstr::{BStr, BString};
+
+    use crate::spec::parse::{delegate, Delegate};
+
+    #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+    pub(crate) enum PrefixHintOwned {
+        MustBeCommit,
+        DescribeAnchor { ref_name: BString, generation: usize },
+    }
+
+    impl PrefixHintOwned {
+        pub fn to_ref(&self) -> delegate::PrefixHint<'_> {
+            match self {
+                PrefixHintOwned::MustBeCommit => delegate::PrefixHint::MustBeCommit,
+                PrefixHintOwned::DescribeAnchor { ref_name, generation } => delegate::PrefixHint::DescribeAnchor {
+                    ref_name: ref_name.as_ref(),
+                    generation: *generation,
+                },
+            }
+        }
+    }
+
+    impl<'a> From<delegate::PrefixHint<'a>> for PrefixHintOwned {
+        fn from(v: delegate::PrefixHint<'a>) -> Self {
+            match v {
+                delegate::PrefixHint::MustBeCommit => PrefixHintOwned::MustBeCommit,
+                delegate::PrefixHint::DescribeAnchor { generation, ref_name } => PrefixHintOwned::DescribeAnchor {
+                    ref_name: ref_name.to_owned(),
+                    generation,
+                },
+            }
+        }
+    }
+
+    pub(crate) struct InterceptRev<'a, T> {
+        pub inner: &'a mut T,
+        pub last_ref: Option<BString>, // TODO: smallvec to save the unnecessary allocation? Can't keep ref due to lifetime constraints in traits
+        pub last_prefix: Option<(git_hash::Prefix, Option<PrefixHintOwned>)>,
+        pub done: bool,
+    }
+
+    impl<'a, T> InterceptRev<'a, T>
+    where
+        T: Delegate,
+    {
+        pub fn new(delegate: &'a mut T) -> Self {
+            InterceptRev {
+                inner: delegate,
+                last_ref: None,
+                last_prefix: None,
+                done: false,
+            }
+        }
+    }
+
+    impl<'a, T> Delegate for InterceptRev<'a, T>
+    where
+        T: Delegate,
+    {
+        fn done(&mut self) {
+            self.done = true;
+            self.inner.done()
+        }
+    }
+
+    impl<'a, T> delegate::Revision for InterceptRev<'a, T>
+    where
+        T: Delegate,
+    {
+        fn find_ref(&mut self, name: &BStr) -> Option<()> {
+            self.last_ref = name.to_owned().into();
+            self.inner.find_ref(name)
+        }
+
+        fn disambiguate_prefix(
+            &mut self,
+            prefix: git_hash::Prefix,
+            hint: Option<delegate::PrefixHint<'_>>,
+        ) -> Option<()> {
+            self.last_prefix = Some((prefix, hint.map(Into::into)));
+            self.inner.disambiguate_prefix(prefix, hint)
+        }
+
+        fn reflog(&mut self, query: delegate::ReflogLookup) -> Option<()> {
+            self.inner.reflog(query)
+        }
+
+        fn nth_checked_out_branch(&mut self, branch_no: usize) -> Option<()> {
+            self.inner.nth_checked_out_branch(branch_no)
+        }
+
+        fn sibling_branch(&mut self, kind: delegate::SiblingBranch) -> Option<()> {
+            self.inner.sibling_branch(kind)
+        }
+    }
+
+    impl<'a, T> delegate::Navigate for InterceptRev<'a, T>
+    where
+        T: Delegate,
+    {
+        fn traverse(&mut self, kind: delegate::Traversal) -> Option<()> {
+            self.inner.traverse(kind)
+        }
+
+        fn peel_until(&mut self, kind: delegate::PeelTo<'_>) -> Option<()> {
+            self.inner.peel_until(kind)
+        }
+
+        fn find(&mut self, regex: &BStr, negated: bool) -> Option<()> {
+            self.inner.find(regex, negated)
+        }
+
+        fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()> {
+            self.inner.index_lookup(path, stage)
+        }
+    }
+
+    impl<'a, T> delegate::Kind for InterceptRev<'a, T>
+    where
+        T: Delegate,
+    {
+        fn kind(&mut self, kind: crate::spec::Kind) -> Option<()> {
+            self.inner.kind(kind)
+        }
+    }
+}
+use intercept::InterceptRev;
+
+fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
     git_hash::Prefix::from_hex(hex_name.to_str().expect("hexadecimal only"))
         .ok()
-        .and_then(|prefix| delegate.disambiguate_prefix(prefix))
+        .and_then(|prefix| delegate.disambiguate_prefix(prefix, hint))
 }
 
-fn long_describe_prefix(name: &BStr) -> Option<&BStr> {
+fn long_describe_prefix(name: &BStr) -> Option<(&BStr, delegate::PrefixHint<'_>)> {
     let mut iter = name.rsplit(|b| *b == b'-');
     let candidate = iter.by_ref().find_map(|substr| {
         if substr.get(0)? != &b'g' {
@@ -52,8 +204,30 @@ fn long_describe_prefix(name: &BStr) -> Option<&BStr> {
         };
         let rest = substr.get(1..)?;
         rest.iter().all(|b| b.is_ascii_hexdigit()).then(|| rest.as_bstr())
-    });
-    iter.any(|token| !token.is_empty()).then(|| candidate).flatten()
+    })?;
+
+    let candidate = iter.clone().any(|token| !token.is_empty()).then(|| candidate);
+    let hint = iter
+        .next()
+        .and_then(|gen| gen.to_str().ok().and_then(|gen| usize::from_str(gen).ok()))
+        .and_then(|generation| {
+            iter.next().map(|token| {
+                let last_token_len = token.len();
+                let first_token_ptr = iter.last().map(|token| token.as_ptr()).unwrap_or(token.as_ptr());
+                // SAFETY: both pointers are definitely part of the same object
+                #[allow(unsafe_code)]
+                let prior_tokens_len: usize = unsafe { token.as_ptr().offset_from(first_token_ptr) }
+                    .try_into()
+                    .expect("positive value");
+                delegate::PrefixHint::DescribeAnchor {
+                    ref_name: name[..prior_tokens_len + last_token_len].as_bstr(),
+                    generation,
+                }
+            })
+        })
+        .unwrap_or(delegate::PrefixHint::MustBeCommit);
+
+    candidate.map(|c| (c, hint))
 }
 
 fn short_describe_prefix(name: &BStr) -> Option<&BStr> {
@@ -140,7 +314,11 @@ fn try_parse<T: FromStr + PartialEq + Default>(input: &BStr) -> Result<Option<T>
         .transpose()
 }
 
-fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
+fn revision<'a, T>(mut input: &'a BStr, delegate: &mut InterceptRev<'_, T>) -> Result<&'a BStr, Error>
+where
+    T: Delegate,
+{
+    use delegate::{Navigate, Revision};
     fn consume_all(res: Option<()>) -> Result<&'static BStr, Error> {
         res.ok_or(Error::Delegate).map(|_| "".into())
     }
@@ -149,7 +327,9 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
         [b':', b'/'] => return Err(Error::EmptyTopLevelRegex),
         [b':', b'/', regex @ ..] => {
             let (regex, negated) = parse_regex_prefix(regex.as_bstr())?;
-            assert!(!regex.is_empty(), "This is handled earlier");
+            if regex.is_empty() {
+                return Err(Error::UnconsumedInput { input: input.into() });
+            }
             return consume_all(delegate.find(regex, negated));
         }
         [b':', b'0', b':', path @ ..] => return consume_all(delegate.index_lookup(path.as_bstr(), 0)),
@@ -199,11 +379,13 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
         };
     } else {
         (consecutive_hex_chars.unwrap_or(0) >= git_hash::Prefix::MIN_HEX_LEN)
-            .then(|| try_set_prefix(delegate, name))
+            .then(|| try_set_prefix(delegate, name, None))
             .flatten()
             .or_else(|| {
-                let prefix = long_describe_prefix(name).or_else(|| short_describe_prefix(name))?;
-                try_set_prefix(delegate, prefix)
+                let (prefix, hint) = long_describe_prefix(name)
+                    .map(|(c, h)| (c, Some(h)))
+                    .or_else(|| short_describe_prefix(name).map(|c| (c, None)))?;
+                try_set_prefix(delegate, prefix, hint)
             })
             .or_else(|| {
                 name.is_empty().then(|| ()).or_else(|| {
@@ -269,7 +451,11 @@ fn revision<'a>(mut input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a
     navigate(input, delegate)
 }
 
-fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BStr, Error> {
+fn navigate<'a, T>(input: &'a BStr, delegate: &mut InterceptRev<'_, T>) -> Result<&'a BStr, Error>
+where
+    T: Delegate,
+{
+    use delegate::{Kind, Navigate, Revision};
     let mut cursor = 0;
     while let Some(b) = input.get(cursor) {
         cursor += 1;
@@ -289,14 +475,45 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
             }
             b'^' => {
                 let past_sep = input.get(cursor..);
-                if let Some((number, consumed)) = past_sep
-                    .and_then(|past_sep| try_parse_usize(past_sep.as_bstr()).transpose())
+                if let Some((number, negative, consumed)) = past_sep
+                    .and_then(|past_sep| try_parse_isize(past_sep.as_bstr()).transpose())
                     .transpose()?
                 {
-                    if number == 0 {
+                    if negative {
+                        delegate
+                            .traverse(delegate::Traversal::NthParent(
+                                number
+                                    .checked_mul(-1)
+                                    .ok_or_else(|| Error::InvalidNumber {
+                                        input: past_sep.expect("present").into(),
+                                    })?
+                                    .try_into()
+                                    .expect("non-negative"),
+                            ))
+                            .ok_or(Error::Delegate)?;
+                        delegate.kind(spec::Kind::RangeBetween).ok_or(Error::Delegate)?;
+                        if let Some((prefix, hint)) = delegate.last_prefix.take() {
+                            match hint {
+                                Some(hint) => delegate.disambiguate_prefix(prefix, hint.to_ref().into()),
+                                None => delegate.disambiguate_prefix(prefix, None),
+                            }
+                            .ok_or(Error::Delegate)?;
+                        } else if let Some(name) = delegate.last_ref.take() {
+                            delegate.find_ref(name.as_bstr()).ok_or(Error::Delegate)?;
+                        } else {
+                            return Err(Error::UnconsumedInput {
+                                input: input[cursor..].into(),
+                            });
+                        }
+                        delegate.done();
+                        cursor += consumed;
+                        return Ok(input[cursor..].as_bstr());
+                    } else if number == 0 {
                         delegate.peel_until(delegate::PeelTo::ObjectKind(git_object::Kind::Commit))
                     } else {
-                        delegate.traverse(delegate::Traversal::NthParent(number))
+                        delegate.traverse(delegate::Traversal::NthParent(
+                            number.try_into().expect("positive number"),
+                        ))
                     }
                     .ok_or(Error::Delegate)?;
                     cursor += consumed;
@@ -309,7 +526,7 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                         b"tag" => delegate::PeelTo::ObjectKind(git_object::Kind::Tag),
                         b"tree" => delegate::PeelTo::ObjectKind(git_object::Kind::Tree),
                         b"blob" => delegate::PeelTo::ObjectKind(git_object::Kind::Blob),
-                        b"object" => delegate::PeelTo::ExistingObject,
+                        b"object" => delegate::PeelTo::ValidObject,
                         b"" => delegate::PeelTo::RecursiveTagObject,
                         regex if regex.starts_with(b"/") => {
                             let (regex, negated) = parse_regex_prefix(regex[1..].as_bstr())?;
@@ -321,6 +538,18 @@ fn navigate<'a>(input: &'a BStr, delegate: &mut impl Delegate) -> Result<&'a BSt
                         invalid => return Err(Error::InvalidObject { input: invalid.into() }),
                     };
                     delegate.peel_until(target).ok_or(Error::Delegate)?;
+                } else if past_sep.and_then(|i| i.get(0)) == Some(&b'!') {
+                    delegate
+                        .kind(spec::Kind::ExcludeReachableFromParents)
+                        .ok_or(Error::Delegate)?;
+                    delegate.done();
+                    return Ok(input[cursor + 1..].as_bstr());
+                } else if past_sep.and_then(|i| i.get(0)) == Some(&b'@') {
+                    delegate
+                        .kind(spec::Kind::IncludeReachableFromParents)
+                        .ok_or(Error::Delegate)?;
+                    delegate.done();
+                    return Ok(input[cursor + 1..].as_bstr());
                 } else {
                     delegate
                         .traverse(delegate::Traversal::NthParent(1))
@@ -357,15 +586,33 @@ fn try_parse_usize(input: &BStr) -> Result<Option<(usize, usize)>, Error> {
     if num_digits == 0 {
         return Ok(None);
     }
-    let number = try_parse(&input[..num_digits])?.expect("parse number if only digits");
+    let input = &input[..num_digits];
+    let number = try_parse(input)?.ok_or_else(|| Error::InvalidNumber { input: input.into() })?;
     Ok(Some((number, num_digits)))
+}
+
+fn try_parse_isize(input: &BStr) -> Result<Option<(isize, bool, usize)>, Error> {
+    let mut bytes = input.iter().peekable();
+    if bytes.peek().filter(|&&&b| b == b'+').is_some() {
+        return Err(Error::SignedNumber { input: input.into() });
+    }
+    let negative = bytes.peek() == Some(&&b'-');
+    let num_digits = bytes.take_while(|b| b.is_ascii_digit() || *b == &b'-').count();
+    if num_digits == 0 {
+        return Ok(None);
+    } else if num_digits == 1 && negative {
+        return Ok(Some((-1, negative, num_digits)));
+    }
+    let input = &input[..num_digits];
+    let number = try_parse(input)?.ok_or_else(|| Error::InvalidNumber { input: input.into() })?;
+    Ok(Some((number, negative, num_digits)))
 }
 
 fn try_range(input: &BStr) -> Option<(&[u8], spec::Kind)> {
     input
         .strip_prefix(b"...")
-        .map(|rest| (rest, spec::Kind::MergeBase))
-        .or_else(|| input.strip_prefix(b"..").map(|rest| (rest, spec::Kind::Range)))
+        .map(|rest| (rest, spec::Kind::ReachableToMergeBase))
+        .or_else(|| input.strip_prefix(b"..").map(|rest| (rest, spec::Kind::RangeBetween)))
 }
 
 fn next(i: &BStr) -> (u8, &BStr) {

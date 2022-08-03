@@ -1,33 +1,14 @@
 impl crate::Repository {
     // TODO: tests
-    /// Load the index file of this repository's workspace, if present.
-    ///
-    /// Note that it is loaded into memory each time this method is called, but also is independent of the workspace.
-    #[cfg(feature = "git-index")]
-    pub fn load_index(&self) -> Option<Result<git_index::File, git_index::file::init::Error>> {
-        // TODO: choose better/correct options
-        let opts = git_index::decode::Options {
-            object_hash: self.config.object_hash,
-            thread_limit: None,
-            min_extension_block_in_bytes_for_threading: 1024 * 256,
-        };
-        match git_index::File::at(self.git_dir().join("index"), opts) {
-            Ok(index) => Some(Ok(index)),
-            Err(git_index::file::init::Error::Io(err)) if err.kind() == std::io::ErrorKind::NotFound => None,
-            Err(err) => Some(Err(err)),
-        }
-    }
-
-    // TODO: tests
-    /// Similar to [`load_mailmap_into()`][crate::Repository::load_mailmap_into()], but ignores all errors and returns at worst
+    /// Similar to [`open_mailmap_into()`][crate::Repository::open_mailmap_into()], but ignores all errors and returns at worst
     /// an empty mailmap, e.g. if there is no mailmap or if there were errors loading them.
     ///
     /// This represents typical usage within git, which also works with what's there without considering a populated mailmap
     /// a reason to abort an operation, considering it optional.
     #[cfg(feature = "git-mailmap")]
-    pub fn load_mailmap(&self) -> git_mailmap::Snapshot {
+    pub fn open_mailmap(&self) -> git_mailmap::Snapshot {
         let mut out = git_mailmap::Snapshot::default();
-        self.load_mailmap_into(&mut out).ok();
+        self.open_mailmap_into(&mut out).ok();
         out
     }
 
@@ -42,7 +23,7 @@ impl crate::Repository {
     /// Only the first error will be reported, and as many source mailmaps will be merged into `target` as possible.
     /// Parsing errors will be ignored.
     #[cfg(feature = "git-mailmap")]
-    pub fn load_mailmap_into(&self, target: &mut git_mailmap::Snapshot) -> Result<(), crate::mailmap::load::Error> {
+    pub fn open_mailmap_into(&self, target: &mut git_mailmap::Snapshot) -> Result<(), crate::mailmap::load::Error> {
         let mut err = None::<crate::mailmap::load::Error>;
         let mut buf = Vec::new();
         let mut blob_id = self

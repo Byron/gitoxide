@@ -1,9 +1,28 @@
+use std::path::PathBuf;
+
 use git_path::realpath::MAX_SYMLINKS;
 
 impl crate::Repository {
+    /// Return the path to the repository itself, containing objects, references, configuration, and more.
+    ///
+    /// Synonymous to [`path()`][crate::Repository::path()].
+    pub fn git_dir(&self) -> &std::path::Path {
+        self.refs.git_dir()
+    }
+
+    /// The trust we place in the git-dir, with lower amounts of trust causing access to configuration to be limited.
+    pub fn git_dir_trust(&self) -> git_sec::Trust {
+        self.options.git_dir_trust.expect("definitely set by now")
+    }
+
     /// Returns the main git repository if this is a repository on a linked work-tree, or the `git_dir` itself.
     pub fn common_dir(&self) -> &std::path::Path {
         self.common_dir.as_deref().unwrap_or_else(|| self.git_dir())
+    }
+
+    /// Return the path to the worktree index file, which may or may not exist.
+    pub fn index_path(&self) -> PathBuf {
+        self.git_dir().join("index")
     }
 
     /// The path to the `.git` directory itself, or equivalent if this is a bare repository.
@@ -18,7 +37,7 @@ impl crate::Repository {
 
     // TODO: tests, respect precomposeUnicode
     /// The directory of the binary path of the current process.
-    pub fn install_dir(&self) -> std::io::Result<std::path::PathBuf> {
+    pub fn install_dir(&self) -> std::io::Result<PathBuf> {
         crate::path::install_dir()
     }
 
@@ -26,7 +45,7 @@ impl crate::Repository {
     /// Note that there may be `None` if there is no work tree, even though the `PathBuf` will be empty
     /// if the CWD is at the root of the work tree.
     // TODO: tests, details - there is a lot about environment variables to change things around.
-    pub fn prefix(&self) -> Option<std::io::Result<std::path::PathBuf>> {
+    pub fn prefix(&self) -> Option<std::io::Result<PathBuf>> {
         self.work_tree.as_ref().map(|root| {
             std::env::current_dir().and_then(|cwd| {
                 git_path::realpath_opts(root, &cwd, MAX_SYMLINKS)
@@ -57,17 +76,5 @@ impl crate::Repository {
             },
             None => crate::Kind::Bare,
         }
-    }
-
-    /// Return the path to the repository itself, containing objects, references, configuration, and more.
-    ///
-    /// Synonymous to [`path()`][crate::Repository::path()].
-    pub fn git_dir(&self) -> &std::path::Path {
-        self.refs.git_dir()
-    }
-
-    /// The trust we place in the git-dir, with lower amounts of trust causing access to configuration to be limited.
-    pub fn git_dir_trust(&self) -> git_sec::Trust {
-        self.options.git_dir_trust.expect("definitely set by now")
     }
 }

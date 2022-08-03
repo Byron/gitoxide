@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fs, io::Read, path::PathBuf};
+use std::{cmp::Ordering, collections::HashSet, fs, io::Read, path::PathBuf};
 
 use git_features::zlib;
 
@@ -40,9 +40,13 @@ impl Store {
     /// Finally, if no object matches, the return value is `Ok(None)`.
     ///
     /// The outer `Result` is to indicate errors during file system traversal.
+    ///
+    /// Pass `candidates` to obtain the set of all object ids matching `prefix`, with the same return value as
+    /// one would have received if it remained `None`.
     pub fn lookup_prefix(
         &self,
         prefix: git_hash::Prefix,
+        mut candidates: Option<&mut HashSet<git_hash::ObjectId>>,
     ) -> Result<Option<crate::find::PrefixLookupResult>, crate::loose::iter::Error> {
         let single_directory_iter = crate::loose::Iter {
             inner: git_features::fs::walkdir_new(&self.path.join(prefix.as_oid().to_hex_with_len(2).to_string()))
@@ -62,13 +66,28 @@ impl Store {
                 },
             };
             if prefix.cmp_oid(&oid) == Ordering::Equal {
-                if candidate.is_some() {
-                    return Ok(Some(Err(())));
+                match &mut candidates {
+                    Some(candidates) => {
+                        candidates.insert(oid);
+                    }
+                    None => {
+                        if candidate.is_some() {
+                            return Ok(Some(Err(())));
+                        }
+                        candidate = Some(oid);
+                    }
                 }
-                candidate = Some(oid);
             }
         }
-        Ok(candidate.map(Ok))
+
+        match &mut candidates {
+            Some(candidates) => match candidates.len() {
+                0 => Ok(None),
+                1 => Ok(candidates.iter().next().cloned().map(Ok)),
+                _ => Ok(Some(Err(()))),
+            },
+            None => Ok(candidate.map(Ok)),
+        }
     }
 
     /// Return the object identified by the given [`ObjectId`][git_hash::ObjectId] if present in this database,

@@ -7,6 +7,7 @@ impl Clone for crate::Repository {
             self.common_dir.clone(),
             self.config.clone(),
             self.options.clone(),
+            self.index.clone(),
         )
     }
 }
@@ -38,6 +39,7 @@ impl From<&crate::ThreadSafeRepository> for crate::Repository {
             repo.common_dir.clone(),
             repo.config.clone(),
             repo.linked_worktree_options.clone(),
+            repo.index.clone(),
         )
     }
 }
@@ -51,6 +53,7 @@ impl From<crate::ThreadSafeRepository> for crate::Repository {
             repo.common_dir,
             repo.config,
             repo.linked_worktree_options,
+            repo.index,
         )
     }
 }
@@ -64,6 +67,7 @@ impl From<crate::Repository> for crate::ThreadSafeRepository {
             common_dir: r.common_dir,
             config: r.config,
             linked_worktree_options: r.options,
+            index: r.index,
         }
     }
 }

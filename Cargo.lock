@@ -471,12 +471,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "common_macros"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f3f6d59c71e7dc3af60f0af9db32364d96a16e9310f3f5db2b55ed642162dd35"
-
-[[package]]
 name = "compact_str"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1353,6 +1347,7 @@ dependencies = [
  "git-path",
  "git-quote",
  "git-testtools",
+ "maplit",
  "parking_lot 0.12.1",
  "pretty_assertions",
  "serde",
@@ -1367,7 +1362,6 @@ dependencies = [
  "bstr",
  "bytesize",
  "clru",
- "common_macros",
  "dashmap",
  "document-features",
  "git-chunk",
@@ -1381,6 +1375,7 @@ dependencies = [
  "git-testtools",
  "git-traverse",
  "hash_hasher",
+ "maplit",
  "memmap2",
  "parking_lot 0.12.1",
  "serde",
@@ -1527,11 +1522,15 @@ dependencies = [
  "git-worktree",
  "is_ci",
  "log",
+ "regex",
+ "serde",
  "serial_test 0.8.0",
  "signal-hook",
+ "smallvec",
  "tempfile",
  "thiserror",
  "unicode-normalization",
+ "walkdir",
 ]
 
 [[package]]
@@ -2043,6 +2042,12 @@ dependencies = [
  "libc",
  "pkg-config",
 ]
+
+[[package]]
+name = "maplit"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 
 [[package]]
 name = "matches"

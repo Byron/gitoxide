@@ -553,7 +553,10 @@ mod disambiguate_prefix {
 }
 
 mod lookup_prefix {
+    use std::collections::HashSet;
+
     use git_testtools::hex_to_id;
+    use maplit::hashset;
 
     use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
 
@@ -561,20 +564,39 @@ mod lookup_prefix {
     fn returns_none_for_prefixes_without_any_match() {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
         let prefix = git_hash::Prefix::new(git_hash::ObjectId::null(git_hash::Kind::Sha1), 7).unwrap();
-        assert!(handle.lookup_prefix(prefix).unwrap().is_none());
+        assert!(handle.lookup_prefix(prefix, None).unwrap().is_none());
         assert_all_indices_loaded(&handle, 2, 2);
+
+        let mut candidates = HashSet::default();
+        assert!(handle.lookup_prefix(prefix, Some(&mut candidates)).unwrap().is_none());
+        assert!(candidates.is_empty(), "no candidates available here either");
+        assert_all_indices_loaded(&handle, 3, 2);
     }
 
     #[test]
     fn returns_some_err_for_prefixes_with_more_than_one_match() {
         let (handle, _tmp) = db_with_all_object_sources().unwrap();
-        let prefix = git_hash::Prefix::new(hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23"), 4).unwrap();
+        let input_id = hex_to_id("a7065b5e971a6d8b55875d8cf634a3a37202ab23");
+        let prefix = git_hash::Prefix::new(input_id, 4).unwrap();
         assert_eq!(
-            handle.lookup_prefix(prefix).unwrap(),
+            handle.lookup_prefix(prefix, None).unwrap(),
             Some(Err(())),
             "there are two objects with that prefix"
         );
         assert_all_indices_loaded(&handle, 1, 1);
+
+        let mut candidates = HashSet::default();
+        assert_eq!(
+            handle.lookup_prefix(prefix, Some(&mut candidates)).unwrap(),
+            Some(Err(())),
+            "the error is the same"
+        );
+        assert_eq!(
+            candidates,
+            hashset! {input_id, hex_to_id("a706d7cd20fc8ce71489f34b50cf01011c104193")},
+            "all candidates are returned though"
+        );
+        assert_all_indices_loaded(&handle, 2, 2);
     }
 
     #[test]
@@ -584,16 +606,21 @@ mod lookup_prefix {
 
         let hex_lengths = &[5, 7, 40];
         for (index, oid) in handle.iter().unwrap().map(Result::unwrap).enumerate() {
-            let hex_len = hex_lengths[index % hex_lengths.len()];
-            let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
-            assert_eq!(
-                handle
-                    .lookup_prefix(prefix)
-                    .unwrap()
-                    .expect("object exists")
-                    .expect("unambiguous"),
-                oid
-            );
+            for mut candidates in [None, Some(HashSet::default())] {
+                let hex_len = hex_lengths[index % hex_lengths.len()];
+                let prefix = git_hash::Prefix::new(oid, hex_len).unwrap();
+                assert_eq!(
+                    handle
+                        .lookup_prefix(prefix, candidates.as_mut())
+                        .unwrap()
+                        .expect("object exists")
+                        .expect("unambiguous"),
+                    oid
+                );
+                if let Some(candidates) = candidates {
+                    assert_eq!(candidates, hashset! {oid});
+                }
+            }
         }
         assert_all_indices_loaded(&handle, 1, 2);
     }

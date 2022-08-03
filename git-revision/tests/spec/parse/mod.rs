@@ -8,6 +8,7 @@ use git_revision::{
 struct Options {
     reject_kind: bool,
     reject_prefix: bool,
+    no_internal_assertions: bool,
 }
 
 #[derive(Default, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -15,6 +16,7 @@ struct Recorder {
     // anchors
     find_ref: [Option<BString>; 2],
     prefix: [Option<git_hash::Prefix>; 2],
+    prefix_hint: [Option<PrefixHintOwned>; 2],
     current_branch_reflog_entry: [Option<String>; 2],
     nth_checked_out_branch: [Option<usize>; 2],
     sibling_branch: [Option<String>; 2],
@@ -28,9 +30,24 @@ struct Recorder {
     // range
     kind: Option<spec::Kind>,
 
+    order: Vec<Call>,
     calls: usize,
     opts: Options,
     done: bool,
+}
+
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum Call {
+    FindRef,
+    DisambiguatePrefix,
+    Reflog,
+    NthCheckedOutBranch,
+    SiblingBranch,
+    Traverse,
+    PeelUntil,
+    Find,
+    IndexLookup,
+    Kind,
 }
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -39,6 +56,12 @@ pub enum PeelToOwned {
     ExistingObject,
     RecursiveTagObject,
     Path(BString),
+}
+
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum PrefixHintOwned {
+    MustBeCommit,
+    DescribeAnchor { ref_name: BString, generation: usize },
 }
 
 impl Recorder {
@@ -51,6 +74,11 @@ impl Recorder {
 
     fn get_ref(&self, idx: usize) -> &BStr {
         self.find_ref[idx].as_ref().map(|b| b.as_ref()).unwrap()
+    }
+
+    fn called(&mut self, f: Call) {
+        self.calls += 1;
+        self.order.push(f)
     }
 }
 
@@ -66,20 +94,34 @@ fn set_val<T: std::fmt::Debug>(fn_name: &str, store: &mut [Option<T>; 2], val: T
 
 impl delegate::Revision for Recorder {
     fn find_ref(&mut self, input: &BStr) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::FindRef);
         set_val("find_ref", &mut self.find_ref, input.into())
     }
 
-    fn disambiguate_prefix(&mut self, input: git_hash::Prefix) -> Option<()> {
-        self.calls += 1;
+    fn disambiguate_prefix(&mut self, input: git_hash::Prefix, hint: Option<delegate::PrefixHint<'_>>) -> Option<()> {
+        self.called(Call::DisambiguatePrefix);
         if self.opts.reject_prefix {
             return None;
         }
-        set_val("disambiguate_prefix", &mut self.prefix, input)
+        set_val("disambiguate_prefix", &mut self.prefix, input)?;
+        if let Some(hint) = hint {
+            set_val(
+                "disambiguate_prefix",
+                &mut self.prefix_hint,
+                match hint {
+                    delegate::PrefixHint::DescribeAnchor { ref_name, generation } => PrefixHintOwned::DescribeAnchor {
+                        ref_name: ref_name.into(),
+                        generation,
+                    },
+                    delegate::PrefixHint::MustBeCommit => PrefixHintOwned::MustBeCommit,
+                },
+            )?;
+        }
+        Some(())
     }
 
     fn reflog(&mut self, entry: delegate::ReflogLookup) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::Reflog);
         set_val(
             "current_branch_reflog",
             &mut self.current_branch_reflog_entry,
@@ -96,28 +138,28 @@ impl delegate::Revision for Recorder {
 
     fn nth_checked_out_branch(&mut self, branch: usize) -> Option<()> {
         assert_ne!(branch, 0);
-        self.calls += 1;
+        self.called(Call::NthCheckedOutBranch);
         set_val("nth_checked_out_branch", &mut self.nth_checked_out_branch, branch)
     }
 
     fn sibling_branch(&mut self, kind: delegate::SiblingBranch) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::SiblingBranch);
         set_val("sibling_branch", &mut self.sibling_branch, format!("{:?}", kind))
     }
 }
 
 impl delegate::Navigate for Recorder {
     fn traverse(&mut self, kind: delegate::Traversal) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::Traverse);
         self.traversal.push(kind);
         Some(())
     }
 
     fn peel_until(&mut self, kind: delegate::PeelTo) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::PeelUntil);
         self.peel_to.push(match kind {
             delegate::PeelTo::ObjectKind(kind) => PeelToOwned::ObjectKind(kind),
-            delegate::PeelTo::ExistingObject => PeelToOwned::ExistingObject,
+            delegate::PeelTo::ValidObject => PeelToOwned::ExistingObject,
             delegate::PeelTo::Path(path) => PeelToOwned::Path(path.into()),
             delegate::PeelTo::RecursiveTagObject => PeelToOwned::RecursiveTagObject,
         });
@@ -125,13 +167,13 @@ impl delegate::Navigate for Recorder {
     }
 
     fn find(&mut self, regex: &BStr, negated: bool) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::Find);
         self.patterns.push((regex.into(), negated));
         Some(())
     }
 
     fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::IndexLookup);
         self.index_lookups.push((path.into(), stage));
         Some(())
     }
@@ -139,13 +181,13 @@ impl delegate::Navigate for Recorder {
 
 impl delegate::Kind for Recorder {
     fn kind(&mut self, kind: spec::Kind) -> Option<()> {
-        self.calls += 1;
+        self.called(Call::Kind);
         if self.opts.reject_kind {
             return None;
         }
         if self.kind.is_none() {
             self.kind = Some(kind);
-        } else {
+        } else if !self.opts.no_internal_assertions {
             panic!("called kind more than once with '{:?}'", kind);
         }
         Some(())
@@ -193,6 +235,25 @@ fn all_characters_are_taken_verbatim_which_includes_whitespace() {
     assert_eq!(rec.get_ref(0), spec);
 }
 
+mod fuzz {
+    use crate::spec::parse::{try_parse_opts, Options};
+
+    #[test]
+    fn failures() {
+        for spec in ["|^--", "^^-^", "^^-", ":/!-", "A6a^-09223372036854775808", "^^^^^^-("] {
+            drop(
+                try_parse_opts(
+                    spec,
+                    Options {
+                        no_internal_assertions: true,
+                        ..Default::default()
+                    },
+                )
+                .unwrap_err(),
+            );
+        }
+    }
+}
 mod anchor;
 mod kind;
 mod navigate;

@@ -17,7 +17,12 @@ pub fn describe(
     }: describe::Options,
 ) -> Result<()> {
     let commit = match rev_spec {
-        Some(spec) => repo.rev_parse(spec)?.object()?.try_into_commit()?,
+        Some(spec) => repo
+            .rev_parse(spec)?
+            .single()
+            .context("Need single revision revspec")?
+            .object()?
+            .try_into_commit()?,
         None => repo.head_commit()?,
     };
     use git::commit::describe::SelectRef::*;

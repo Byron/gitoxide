@@ -1,5 +1,5 @@
 use std::{
-    cmp::Ordering,
+    ops::Range,
     path::{Path, PathBuf},
 };
 
@@ -74,59 +74,31 @@ impl File {
     /// If there is more than one object matching the object `Some(Err(())` is returned.
     ///
     /// Finally, if no object matches the index, the return value is `None`.
+    ///
+    /// Pass `candidates` to obtain the set of entry-indices matching `prefix`, with the same return value as
+    /// one would have received if it remained `None`. It will be empty if no object matched the `prefix`.
+    ///
     // NOTE: pretty much the same things as in `index::File::lookup`, change things there
     //       as well.
-    pub fn lookup_prefix(&self, prefix: git_hash::Prefix) -> Option<PrefixLookupResult> {
-        let first_byte = prefix.as_oid().first_byte() as usize;
-        let mut upper_bound = self.fan[first_byte];
-        let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
-
-        // Bisect using indices
-        while lower_bound < upper_bound {
-            let mid = (lower_bound + upper_bound) / 2;
-            let mid_sha = self.oid_at_index(mid);
-
-            use std::cmp::Ordering::*;
-            match prefix.cmp_oid(mid_sha) {
-                Less => upper_bound = mid,
-                Equal => {
-                    let next = mid + 1;
-                    if next < self.num_objects && prefix.cmp_oid(self.oid_at_index(next)) == Ordering::Equal {
-                        return Some(Err(()));
-                    }
-                    if mid != 0 && prefix.cmp_oid(self.oid_at_index(mid - 1)) == Ordering::Equal {
-                        return Some(Err(()));
-                    }
-                    return Some(Ok(mid));
-                }
-                Greater => lower_bound = mid + 1,
-            }
-        }
-        None
+    pub fn lookup_prefix(
+        &self,
+        prefix: git_hash::Prefix,
+        candidates: Option<&mut Range<EntryIndex>>,
+    ) -> Option<PrefixLookupResult> {
+        crate::index::access::lookup_prefix(
+            prefix,
+            candidates,
+            &self.fan,
+            |idx| self.oid_at_index(idx),
+            self.num_objects,
+        )
     }
 
     /// Find the index ranging from 0 to [File::num_objects()] that belongs to data associated with `id`, or `None` if it wasn't found.
     ///
     /// Use this index for finding additional information via [`File::pack_id_and_pack_offset_at_index()`].
     pub fn lookup(&self, id: impl AsRef<git_hash::oid>) -> Option<EntryIndex> {
-        let id = id.as_ref();
-        let first_byte = id.first_byte() as usize;
-        let mut upper_bound = self.fan[first_byte];
-        let mut lower_bound = if first_byte != 0 { self.fan[first_byte - 1] } else { 0 };
-
-        // Bisect using indices
-        while lower_bound < upper_bound {
-            let mid = (lower_bound + upper_bound) / 2;
-            let mid_sha = self.oid_at_index(mid);
-
-            use std::cmp::Ordering::*;
-            match id.cmp(mid_sha) {
-                Less => upper_bound = mid,
-                Equal => return Some(mid),
-                Greater => lower_bound = mid + 1,
-            }
-        }
-        None
+        crate::index::access::lookup(id, &self.fan, |idx| self.oid_at_index(idx))
     }
 
     /// Given the `index` ranging from 0 to [File::num_objects()], return the pack index and its absolute offset into the pack.

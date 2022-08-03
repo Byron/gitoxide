@@ -14,7 +14,9 @@ pub trait Revision {
     fn find_ref(&mut self, name: &BStr) -> Option<()>;
 
     /// An object prefix to disambiguate, returning `None` if it is ambiguous or wasn't found at all.
-    fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix) -> Option<()>;
+    ///
+    /// If `hint` is set, it should be used to disambiguate multiple objects with the same prefix.
+    fn disambiguate_prefix(&mut self, prefix: git_hash::Prefix, hint: Option<PrefixHint<'_>>) -> Option<()>;
 
     /// Lookup the reflog of the previously set reference, or dereference `HEAD` to its reference
     /// to obtain the ref name (as opposed to `HEAD` itself).
@@ -42,7 +44,7 @@ pub trait Kind {
     /// Reject a kind by returning `None` to stop the parsing.
     ///
     /// Note that ranges don't necessarily assure that a second specification will be parsed.
-    /// If `^rev` is given, this method is called with [`spec::Kind::Range`][crate::spec::Kind::Range]
+    /// If `^rev` is given, this method is called with [`spec::Kind::RangeBetween`][crate::spec::Kind::RangeBetween]
     /// and no second specification is provided.
     fn kind(&mut self, kind: crate::spec::Kind) -> Option<()>;
 }
@@ -73,6 +75,21 @@ pub trait Navigate {
     fn index_lookup(&mut self, path: &BStr, stage: u8) -> Option<()>;
 }
 
+/// A hint to make disambiguation when looking up prefixes possible.
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+pub enum PrefixHint<'a> {
+    /// The prefix must be a commit.
+    MustBeCommit,
+    /// The prefix refers to a commit, anchored to a ref and a revision generation in its future.
+    DescribeAnchor {
+        /// The name of the reference, like `v1.2.3` or `main`.
+        ref_name: &'a BStr,
+        /// The future generation of the commit we look for, with 0 meaning the commit is referenced by
+        /// `ref_name` directly.
+        generation: usize,
+    },
+}
+
 /// A lookup into the reflog of a reference.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 pub enum ReflogLookup {
@@ -98,8 +115,10 @@ pub enum Traversal {
 pub enum PeelTo<'a> {
     /// An object of the given kind.
     ObjectKind(git_object::Kind),
-    /// Ensure the object at hand exists, without imposing any restrictions to its type.
-    ExistingObject,
+    /// Ensure the object at hand exists and is valid (actually without peeling it),
+    /// without imposing any restrictions to its type.
+    /// The object needs to be looked up to assure that it is valid, but it doesn't need to be decoded.
+    ValidObject,
     /// Follow an annotated tag object recursively until an object is found.
     RecursiveTagObject,
     /// The path to drill into as seen relative to the current tree-ish.

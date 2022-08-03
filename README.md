@@ -42,7 +42,9 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * **mailmap**
         * [x] **entries** - display all entries of the aggregated mailmap git would use for substitution
     * **revision**
-        * [ ] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
+        * [x] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
+        * [x] **resolve** - show which objects a revspec resolves to, similar to `git rev-parse` but faster and with much better error handling
+        * [x] **previous-branches** - list all previously checked out branches, powered by the ref-log.
     * **free** - no git repository necessary
         * **pack**
           * [x] [verify](https://asciinema.org/a/352942)
@@ -347,31 +349,7 @@ Provide a CLI to for the most basic user journey:
 
 ## Shortcomings & Limitations
 
-* **fetches using protocol V1 and stateful connections, i.e. ssh, git, file, may hang**
-  * This can be fixed by making response parsing.
-  * Note that this does not affect cloning, which works fine.
-* **lean** and **light** and **small** builds don't support non-UTF-8 paths _in the CLI_
-  * This is because they depend on `argh`, which [does not yet support parsing OsStrings](https://github.com/google/argh/issues/33). We however
-    believe it eventually will do so and thus don't move on to [`pico-args`](https://github.com/RazrFalcon/pico-args/blob/master/examples/app.rs).
-  * Only one level of sub-commands are supported due to a limitation of `argh`, which forces porcelain to limit itself as well despite using `clap`.
-    We deem this acceptable for plumbing commands and think that porcelain will be high-level and smart enough to not ever require deeply nested sub-commands.
-* **Packfiles use memory maps**
-  * Even though they are comfortable to use and fast, they squelch IO errors.
-  * _potential remedy_: We could generalize the Pack to make it possible to work on in-memory buffers directly. That way, one
-    would initialize a Pack by reading the whole file into memory, thus not squelching IO errors at the expense of latency as well
-    as memory efficiency.
-* **Packfiles cannot load files bigger than 2^31 or 2^32 on 32 bit systems**
-  * As these systems cannot address more memory than that.
-  * _potential remedy_: implement a sliding window to map and unmap portions of the file as needed.
-    * However, those who need to access big packs on these systems would rather resort to `git` itself, allowing
-      our implementation to be simpler and potentially more performant.
-* **Objects larger than 32 bits cannot be loaded on 32 bit systems**
-  * in-memory representations objects cannot handle objects greater than the amount of addressable memory.
-  * This should not affect git LFS though.
-* **git-url** _might_ be more restrictive than what git allows as for the most part, it uses a browser grade URL parser.
-  * Thus far there is no proof for this, and as _potential remedy_ we could certainly re-implement exactly what git does
-    to handle its URLs.
-* **local time** is currently impeded by [this issue](https://github.com/time-rs/time/issues/293#issuecomment-909158529) but it's planned to resolve it eventually.
+Please take a look at the [`SHORTCOMINGS.md` file](https://github.com/Byron/gitoxide/blob/main/git-lock/SHORTCOMINGS.md) for details.
   
 ## Credits
 

@@ -38,6 +38,18 @@ impl EntryMode {
     pub fn is_no_tree(&self) -> bool {
         *self != EntryMode::Tree
     }
+
+    /// Represent the mode as descriptive string.
+    pub fn as_str(&self) -> &'static str {
+        use EntryMode::*;
+        match self {
+            Tree => "tree",
+            Blob => "blob",
+            BlobExecutable => "exe",
+            Link => "link",
+            Commit => "commit",
+        }
+    }
 }
 
 /// An element of a [`TreeRef`][crate::TreeRef::entries].

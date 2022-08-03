@@ -4,6 +4,7 @@ use crate::{FullName, Target};
 
 /// A fully owned backend agnostic reference
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Reference {
     /// The path to uniquely identify this ref within its store.
     pub name: FullName,

@@ -6,7 +6,6 @@ use crate::head;
 
 /// A worktree checkout containing the files of the repository in consumable form.
 pub struct Worktree<'repo> {
-    #[cfg_attr(not(feature = "git-index"), allow(dead_code))]
     pub(crate) parent: &'repo Repository,
     /// The root path of the checkout.
     pub(crate) path: &'repo std::path::Path,
@@ -95,7 +94,7 @@ impl<'a> Drop for Commit<'a> {
 ///
 /// Use it if an `ObjectRef` should be sent over thread boundaries or stored in collections.
 #[derive(Clone)]
-pub struct DetachedObject {
+pub struct ObjectDetached {
     /// The id of the object
     pub id: ObjectId,
     /// The kind of the object
@@ -136,6 +135,7 @@ pub struct Repository {
     ///
     /// Particularly useful when following linked worktrees and instantiating new equally configured worktree repositories.
     pub(crate) options: crate::open::Options,
+    pub(crate) index: crate::worktree::IndexStorage,
 }
 
 /// An instance with access to everything a git repository entails, best imagined as container implementing `Sync + Send` for _most_
@@ -160,4 +160,6 @@ pub struct ThreadSafeRepository {
     pub(crate) config: crate::config::Cache,
     /// options obtained when instantiating this repository for use when following linked worktrees.
     pub(crate) linked_worktree_options: crate::open::Options,
+    /// The index of this instances worktree.
+    pub(crate) index: crate::worktree::IndexStorage,
 }

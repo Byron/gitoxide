@@ -9,9 +9,10 @@ mod worktree;
 
 #[test]
 fn size_in_memory() {
-    assert_eq!(
-        std::mem::size_of::<Repository>(),
-        688,
-        "size of Repository shouldn't change without us noticing, it's meant to be cloned"
+    let expected = [688, 696];
+    assert!(
+        expected.contains(&std::mem::size_of::<Repository>()),
+        "size of Repository shouldn't change without us noticing, it's meant to be cloned: should have been within {:?}",
+        expected
     );
 }

@@ -67,9 +67,9 @@ pub mod existing_object {
         Find(T),
         #[error(transparent)]
         Decode(git_object::decode::Error),
-        #[error("An object with id {} could not be found", .oid)]
+        #[error("An object with id {oid} could not be found")]
         NotFound { oid: ObjectId },
-        #[error("Expected object of kind {} something else", .expected)]
+        #[error("Expected object of kind {expected}")]
         ObjectKind { expected: git_object::Kind },
     }
 }
@@ -84,9 +84,9 @@ pub mod existing_iter {
     pub enum Error<T: std::error::Error + 'static> {
         #[error(transparent)]
         Find(T),
-        #[error("An object with id {} could not be found", .oid)]
+        #[error("An object with id {oid} could not be found")]
         NotFound { oid: ObjectId },
-        #[error("Expected object of kind {} something else", .expected)]
+        #[error("Expected object of kind {expected}")]
         ObjectKind { expected: git_object::Kind },
     }
 }

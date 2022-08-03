@@ -26,6 +26,8 @@ pub enum Error {
     RefnameNeedsPositiveReflogEntries { nav: BString },
     #[error("Negative or explicitly positive numbers are invalid here: {:?}", .input)]
     SignedNumber { input: BString },
+    #[error("Could not parse number from {input:?}")]
+    InvalidNumber { input: BString },
     #[error("Negative zeroes are invalid: {:?} - remove the '-'", .input)]
     NegativeZero { input: BString },
     #[error("The opening brace in {:?} was not matched", .input)]
@@ -52,7 +54,7 @@ pub trait Delegate: delegate::Revision + delegate::Navigate + delegate::Kind {
     /// Called at the end of a successful parsing operation.
     /// It can be used as a marker to finalize internal data structures.
     ///
-    /// Note that it will not be called if there is inconsumed input.
+    /// Note that it will not be called if there is unconsumed input.
     fn done(&mut self);
 }
 

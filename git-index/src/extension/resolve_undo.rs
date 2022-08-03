@@ -9,6 +9,7 @@ use crate::{
 pub type Paths = Vec<ResolvePath>;
 
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct ResolvePath {
     /// relative to the root of the repository, or what would be stored in the index
     name: BString,
@@ -18,6 +19,7 @@ pub struct ResolvePath {
 }
 
 #[allow(dead_code)]
+#[derive(Clone, Copy)]
 pub struct Stage {
     mode: u32,
     id: ObjectId,

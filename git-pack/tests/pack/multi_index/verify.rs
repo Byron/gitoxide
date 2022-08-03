@@ -1,7 +1,7 @@
 use std::sync::atomic::AtomicBool;
 
-use common_macros::b_tree_map;
 use git_features::progress;
+use maplit::btreemap;
 
 use crate::pack::multi_index::multi_index;
 
@@ -32,7 +32,7 @@ fn integrity() {
                 compressed_size: 46,
                 object_size: 152
             },
-            objects_per_chain_length: b_tree_map! {
+            objects_per_chain_length: btreemap! {
                 0 => 326,
                 1 => 106,
                 2 => 326,

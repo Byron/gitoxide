@@ -132,5 +132,7 @@ features = ["document-features"]
 all-features = true
 
 # Assembly doesn't yet compile on MSVC on windows, but does on GNU, see https://github.com/RustCrypto/asm-hashes/issues/17
-[target.'cfg(not(all(target_os = "windows", target_env = "msvc")))'.dependencies]
+# TODO: potentially include it only for certain architectures
+# [target.'cfg(all(any(target_arch = "x86", target_arch = "x86_64"), not(target_env = "msvc")))'.dependencies]
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
 sha-1 = { version = "0.10.0", optional = true, features = ["asm"] }

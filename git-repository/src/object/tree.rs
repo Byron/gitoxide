@@ -2,8 +2,9 @@ use git_hash::ObjectId;
 use git_object::{bstr::BStr, TreeRefIter};
 use git_odb::FindExt;
 
-use crate::{object::find, Tree};
+use crate::{object::find, Id, Tree};
 
+/// Initialization
 impl<'repo> Tree<'repo> {
     /// Obtain a tree instance by handing in all components that it is made up of.
     pub fn from_data(id: impl Into<ObjectId>, data: Vec<u8>, repo: &'repo crate::Repository) -> Self {
@@ -13,6 +14,15 @@ impl<'repo> Tree<'repo> {
             repo,
         }
     }
+}
+
+/// Access
+impl<'repo> Tree<'repo> {
+    /// Return this tree's identifier.
+    pub fn id(&self) -> Id<'repo> {
+        Id::from_id(self.id, self.repo)
+    }
+
     // TODO: move implementation to git-object, tests.
     /// Follow a sequence of `path` components starting from this instance, and look them up one by one until the last component
     /// is looked up and its tree entry is returned.
@@ -135,6 +145,19 @@ mod iter {
         /// Return the entries id, connected to the underlying repository.
         pub fn id(&self) -> crate::Id<'repo> {
             crate::Id::from_id(self.inner.oid, self.repo)
+        }
+    }
+
+    impl<'repo, 'a> std::fmt::Display for EntryRef<'repo, 'a> {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(
+                f,
+                "{:06o} {:>6} {}\t{}",
+                self.mode() as u32,
+                self.mode().as_str(),
+                self.id().shorten_or_id(),
+                self.filename()
+            )
         }
     }
 

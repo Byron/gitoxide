@@ -4,7 +4,7 @@ use std::convert::TryInto;
 use git_hash::ObjectId;
 pub use git_object::Kind;
 
-use crate::{Commit, DetachedObject, Object, Tag, Tree};
+use crate::{Commit, Id, Object, ObjectDetached, Tag, Tree};
 
 mod errors;
 pub(crate) mod cache {
@@ -31,7 +31,7 @@ pub mod try_into {
     }
 }
 
-impl DetachedObject {
+impl ObjectDetached {
     /// Infuse this owned object with `repo` access.
     pub fn attach(self, repo: &crate::Repository) -> Object<'_> {
         Object {
@@ -43,7 +43,7 @@ impl DetachedObject {
     }
 }
 
-impl std::fmt::Debug for DetachedObject {
+impl std::fmt::Debug for ObjectDetached {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use git_object::Kind::*;
         let type_name = match self.kind {
@@ -118,8 +118,8 @@ impl<'repo> Object<'repo> {
 
 impl<'repo> Object<'repo> {
     /// Create an owned instance of this object, copying our data in the process.
-    pub fn detached(&self) -> DetachedObject {
-        DetachedObject {
+    pub fn detached(&self) -> ObjectDetached {
+        ObjectDetached {
             id: self.id,
             kind: self.kind,
             data: self.data.clone(),
@@ -127,7 +127,7 @@ impl<'repo> Object<'repo> {
     }
 
     /// Sever the connection to the `Repository` and turn this instance into a standalone object.
-    pub fn detach(self) -> DetachedObject {
+    pub fn detach(self) -> ObjectDetached {
         self.into()
     }
 }
@@ -210,5 +210,10 @@ impl<'repo> Object<'repo> {
                 expected: git_object::Kind::Tag,
                 actual: self.kind,
             })
+    }
+
+    /// Return the attached id of this object.
+    pub fn id(&self) -> Id<'repo> {
+        Id::from_id(self.id, self.repo)
     }
 }

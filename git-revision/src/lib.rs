@@ -6,8 +6,7 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![forbid(unsafe_code)]
-#![deny(missing_docs, rust_2018_idioms)]
+#![deny(unsafe_code, missing_docs, rust_2018_idioms)]
 
 /// Access to collections optimized for keys that are already a hash.
 pub use hash_hasher;
@@ -18,3 +17,6 @@ pub use describe::function::describe;
 
 ///
 pub mod spec;
+
+mod types;
+pub use types::Spec;

@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-use git_features::threading::OwnShared;
-
 use crate::store_impl::{file, packed};
 
 impl file::Store {
@@ -36,7 +34,9 @@ impl file::Store {
     ///
     /// Use this to make successive calls to [`file::Store::try_find_packed()`]
     /// or obtain iterators using [`file::Store::iter_packed()`] in a way that assures the packed-refs content won't change.
-    pub fn cached_packed_buffer(&self) -> Result<Option<OwnShared<packed::Buffer>>, packed::buffer::open::Error> {
+    pub fn cached_packed_buffer(
+        &self,
+    ) -> Result<Option<file::packed::SharedBufferSnapshot>, packed::buffer::open::Error> {
         self.assure_packed_refs_uptodate()
     }
 
@@ -71,78 +71,30 @@ pub mod transaction {
     }
 }
 
-pub(crate) mod modifiable {
-    use std::time::SystemTime;
+/// An up-to-date snapshot of the packed refs buffer.
+pub type SharedBufferSnapshot = git_features::fs::SharedSnapshot<packed::Buffer>;
 
-    use git_features::threading::{get_mut, get_ref, OwnShared};
+pub(crate) mod modifiable {
+    use git_features::threading::OwnShared;
 
     use crate::{file, packed};
 
-    #[derive(Debug, Default)]
-    pub(crate) struct State {
-        buffer: Option<OwnShared<packed::Buffer>>,
-        modified: Option<SystemTime>,
-    }
+    pub(crate) type MutableSharedBuffer = OwnShared<git_features::fs::MutableSnapshot<packed::Buffer>>;
 
     impl file::Store {
-        /// Always reload the internally cached packed buffer from disk. This can be necessary if the caller knows something changed
-        /// but fears the change is not picked up due to lack of precision in fstat mtime calls.
         pub(crate) fn force_refresh_packed_buffer(&self) -> Result<(), packed::buffer::open::Error> {
-            let mut state = get_mut(&self.packed);
-            state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
-            Ok(())
+            self.packed.force_refresh(|| {
+                let modified = self.packed_refs_path().metadata()?.modified()?;
+                self.open_packed_buffer().map(|packed| Some(modified).zip(packed))
+            })
         }
         pub(crate) fn assure_packed_refs_uptodate(
             &self,
-        ) -> Result<Option<OwnShared<packed::Buffer>>, packed::buffer::open::Error> {
-            let packed_refs_path = self.packed_refs_path();
-            let packed_refs_modified_time = || packed_refs_path.metadata().and_then(|m| m.modified()).ok();
-            let state = get_ref(&self.packed);
-            let recent_modification = packed_refs_modified_time();
-            let buffer = match (&state.modified, recent_modification) {
-                (None, None) => state.buffer.clone(),
-                (Some(_), None) => {
-                    drop(state);
-                    let mut state = get_mut(&self.packed);
-                    // Still in the same situation? If so, drop the loaded buffer
-                    if let (Some(_), None) = (state.modified, packed_refs_modified_time()) {
-                        state.buffer = None;
-                        state.modified = None;
-                    }
-                    state.buffer.clone()
-                }
-                (Some(cached_time), Some(modified_time)) => {
-                    if *cached_time < modified_time {
-                        drop(state);
-                        let mut state = get_mut(&self.packed);
-                        // in the common case, we check again and do what we do only if we are
-                        // still in the same situation, writers pile up.
-                        match (state.modified, packed_refs_modified_time()) {
-                            (Some(cached_time), Some(modified_time)) if cached_time < modified_time => {
-                                state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
-                                state.modified = Some(modified_time);
-                            }
-                            _ => {}
-                        }
-                        state.buffer.clone()
-                    } else {
-                        // Note that this relies on sub-section precision or else is a race when the packed file was just changed.
-                        // It's nothing we can know though, so… up to the caller unfortunately.
-                        state.buffer.clone()
-                    }
-                }
-                (None, Some(_modified_time)) => {
-                    drop(state);
-                    let mut state = get_mut(&self.packed);
-                    // Still in the same situation? If so, load the buffer.
-                    if let (None, Some(modified_time)) = (state.modified, packed_refs_modified_time()) {
-                        state.buffer = self.open_packed_buffer()?.map(OwnShared::new);
-                        state.modified = Some(modified_time);
-                    }
-                    state.buffer.clone()
-                }
-            };
-            Ok(buffer)
+        ) -> Result<Option<super::SharedBufferSnapshot>, packed::buffer::open::Error> {
+            self.packed.recent_snapshot(
+                || self.packed_refs_path().metadata().and_then(|m| m.modified()).ok(),
+                || self.open_packed_buffer(),
+            )
         }
     }
 }
