@@ -67,6 +67,12 @@ pub enum Error {
     MissingRefLog { reference: BString, action: &'static str },
     #[error("HEAD has {available} prior checkouts and checkout number {desired} is out of range")]
     PriorCheckoutOutOfRange { desired: usize, available: usize },
+    #[error("Reference {:?} has {available} ref-log entries and entry number {desired} is out of range", reference.name.as_bstr())]
+    RefLogEntryOutOfRange {
+        reference: git_ref::Reference,
+        desired: usize,
+        available: usize,
+    },
     #[error(
         "Commit {oid} has {available} ancestors along the first parent and ancestor number {desired} is out of range"
     )]

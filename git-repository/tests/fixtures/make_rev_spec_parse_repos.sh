@@ -377,4 +377,9 @@ git init complex_graph
   baseline "@{-4}"
   baseline "@{-5}"
   baseline "@{-6}"
+
+  baseline "@{0}"
+  baseline "@{3}"
+  baseline "HEAD@{5}"
+  baseline "main@{12345}"
 )

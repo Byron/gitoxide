@@ -280,7 +280,43 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
                 });
                 None
             }
-            ReflogLookup::Entry(_no) => todo!("entry lookup"),
+            ReflogLookup::Entry(no) => {
+                let head_ref = match self.repo.head().map(|head| head.into_referent()) {
+                    Ok(r) => r.detach(),
+                    Err(err) => {
+                        self.err.push(err.into());
+                        return None;
+                    }
+                };
+                let r = self.refs[self.idx].get_or_insert(head_ref).clone().attach(self.repo);
+                let mut platform = r.log_iter();
+                match platform.rev().ok().flatten() {
+                    Some(mut it) => match it.nth(no).map(Result::ok).flatten() {
+                        Some(line) => {
+                            self.objs[self.idx]
+                                .get_or_insert_with(HashSet::default)
+                                .insert(line.new_oid);
+                            Some(())
+                        }
+                        None => {
+                            let available = platform.rev().ok().flatten().map_or(0, |it| it.count());
+                            self.err.push(Error::RefLogEntryOutOfRange {
+                                reference: r.detach(),
+                                desired: no,
+                                available,
+                            });
+                            None
+                        }
+                    },
+                    None => {
+                        self.err.push(Error::MissingRefLog {
+                            reference: r.name().as_bstr().into(),
+                            action: "lookup entry",
+                        });
+                        None
+                    }
+                }
+            }
         }
     }
 
