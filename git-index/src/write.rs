@@ -42,8 +42,8 @@ impl State {
     }
 }
 
-fn header<'a, T: std::io::Write>(
-    out: &mut WriteCounter<'a, T>,
+fn header<T: std::io::Write>(
+    out: &mut WriteCounter<'_, T>,
     version: Version,
     num_entries: u32,
 ) -> Result<u32, std::io::Error> {
@@ -62,8 +62,8 @@ fn header<'a, T: std::io::Write>(
     Ok(out.count)
 }
 
-fn entries<'a, T: std::io::Write>(
-    out: &mut WriteCounter<'a, T>,
+fn entries<T: std::io::Write>(
+    out: &mut WriteCounter<'_, T>,
     state: &State,
     header_size: u32,
 ) -> Result<u32, std::io::Error> {
@@ -98,8 +98,8 @@ fn entries<'a, T: std::io::Write>(
     Ok(out.count)
 }
 
-fn tree<'a, T: std::io::Write>(
-    out: &mut WriteCounter<'a, T>,
+fn tree<T: std::io::Write>(
+    out: &mut WriteCounter<'_, T>,
     tree: Option<&extension::Tree>,
 ) -> Result<u32, std::io::Error> {
     if let Some(tree) = tree {

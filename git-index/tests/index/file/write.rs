@@ -36,7 +36,7 @@ fn roundtrips() {
         assert_eq!(output_index.version(), Version::V2);
         assert_eq!(output_index.entries().len(), actual_index.entries().len());
 
-        if let Some((index, input, expected)) = find_first_nonmatching_byte(&output, &actual_bytes, &fixture_name) {
+        if let Some((index, input, expected)) = find_first_nonmatching_byte(&output, &actual_bytes, fixture_name) {
             panic! {"\n\nRoundtrip failed for index in fixture {:?} at position {:?}\n\
             \t   Input: ...{:?}...\n\
             \tExpected: ...{:?}...\n\n\
