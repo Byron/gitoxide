@@ -64,7 +64,7 @@ fn by_index() {
 }
 
 #[test]
-fn by_date() {
+fn by_date_is_planned_until_git_date_crate_is_implements_parsing() {
     let repo = repo("complex_graph").unwrap();
     assert!(matches!(
         parse_spec_no_baseline("main@{1979-02-26 18:30:00}", &repo).unwrap_err(),

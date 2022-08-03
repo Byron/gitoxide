@@ -462,11 +462,12 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
         let mut replacements = Replacements::default();
         let mut errors = Vec::new();
         let objs = self.objs[self.idx].as_mut()?;
+        let repo = self.repo;
 
         match kind {
             PeelTo::ValidObject => {
                 for obj in objs.iter() {
-                    match self.repo.find_object(*obj) {
+                    match repo.find_object(*obj) {
                         Ok(_) => {}
                         Err(err) => {
                             errors.push((*obj, err.into()));
@@ -475,7 +476,6 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                 }
             }
             PeelTo::ObjectKind(kind) => {
-                let repo = self.repo;
                 let peel = |obj| peel(repo, obj, kind);
                 for obj in objs.iter() {
                     match peel(obj) {
@@ -485,7 +485,6 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                 }
             }
             PeelTo::Path(path) => {
-                let repo = self.repo;
                 let lookup_path = |obj: &ObjectId| {
                     let tree_id = peel(repo, obj, git_object::Kind::Tree)?;
                     let tree = repo.find_object(tree_id)?.into_tree();
@@ -509,7 +508,14 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                     }
                 }
             }
-            PeelTo::RecursiveTagObject => todo!("recursive tag object"),
+            PeelTo::RecursiveTagObject => {
+                for oid in objs.iter() {
+                    match oid.attach(repo).object().and_then(|obj| obj.peel_tags_to_end()) {
+                        Ok(obj) => replacements.push((*oid, obj.id)),
+                        Err(err) => errors.push((*oid, err.into())),
+                    }
+                }
+            }
         }
 
         handle_errors_and_replacements(&mut self.err, objs, errors, &mut replacements)
