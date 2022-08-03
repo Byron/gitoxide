@@ -69,8 +69,7 @@ pub struct IndexForObjectInPack {
 }
 
 pub(crate) mod index_lookup {
-    use std::collections::HashSet;
-    use std::sync::Arc;
+    use std::{collections::HashSet, sync::Arc};
 
     use git_hash::oid;
 

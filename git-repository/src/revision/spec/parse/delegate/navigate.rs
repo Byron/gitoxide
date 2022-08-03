@@ -1,14 +1,21 @@
-use crate::bstr::{BStr, ByteSlice};
-use crate::ext::ObjectIdExt;
-use crate::object;
-use crate::revision::spec::parse::delegate::{handle_errors_and_replacements, peel};
-use crate::revision::spec::parse::Delegate;
-use crate::revision::spec::parse::{delegate::Replacements, Error};
-use git_hash::ObjectId;
-use git_revision::spec::parse::delegate;
-use git_revision::spec::parse::delegate::{PeelTo, Traversal};
-use git_traverse::commit::Sorting;
 use std::collections::HashSet;
+
+use git_hash::ObjectId;
+use git_revision::spec::parse::{
+    delegate,
+    delegate::{PeelTo, Traversal},
+};
+use git_traverse::commit::Sorting;
+
+use crate::{
+    bstr::{BStr, ByteSlice},
+    ext::ObjectIdExt,
+    object,
+    revision::spec::parse::{
+        delegate::{handle_errors_and_replacements, peel, Replacements},
+        Delegate, Error,
+    },
+};
 
 impl<'repo> delegate::Navigate for Delegate<'repo> {
     fn traverse(&mut self, kind: Traversal) -> Option<()> {

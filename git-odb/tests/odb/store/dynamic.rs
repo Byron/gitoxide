@@ -553,9 +553,10 @@ mod disambiguate_prefix {
 }
 
 mod lookup_prefix {
+    use std::collections::HashSet;
+
     use git_testtools::hex_to_id;
     use maplit::hashset;
-    use std::collections::HashSet;
 
     use crate::store::dynamic::{assert_all_indices_loaded, db_with_all_object_sources};
 

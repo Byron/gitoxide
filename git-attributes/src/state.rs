@@ -1,5 +1,6 @@
-use crate::{State, StateRef};
 use bstr::ByteSlice;
+
+use crate::{State, StateRef};
 
 impl<'a> StateRef<'a> {
     /// Turn ourselves into our owned counterpart.

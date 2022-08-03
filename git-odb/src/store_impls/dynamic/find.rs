@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-use std::{convert::TryInto, ops::Deref};
+use std::{collections::HashSet, convert::TryInto, ops::Deref};
 
 use git_hash::{oid, ObjectId};
 use git_pack::{cache::DecodeEntry, data::entry::Location};

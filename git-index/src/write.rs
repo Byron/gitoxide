@@ -1,9 +1,11 @@
-use crate::{extension, State, Version};
-use bstr::ByteVec;
 use std::{
     collections::{hash_map, HashMap},
     ops::Range,
 };
+
+use bstr::ByteVec;
+
+use crate::{extension, State, Version};
 
 impl State {
     pub fn write_to(&self, options: Options) -> Vec<u8> {

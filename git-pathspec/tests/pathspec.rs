@@ -1,11 +1,12 @@
 pub use git_testtools::Result;
 
 mod parse {
+    use std::collections::HashMap;
+
     use bstr::{BStr, BString, ByteSlice};
     use git_attributes::State;
     use git_pathspec::{MagicSignature, MatchMode, Pattern};
     use once_cell::sync::Lazy;
-    use std::collections::HashMap;
 
     #[derive(Debug, Clone, PartialEq, Eq)]
     struct PatternForTesting {
@@ -59,12 +60,13 @@ mod parse {
     }
 
     mod succeed {
+        use git_attributes::State;
+        use git_pathspec::{MagicSignature, MatchMode};
+
         use crate::parse::{
             check_valid_inputs, pat, pat_with_attrs, pat_with_path, pat_with_path_and_sig, pat_with_search_mode,
             pat_with_sig,
         };
-        use git_attributes::State;
-        use git_pathspec::{MagicSignature, MatchMode};
 
         #[test]
         fn there_is_no_pathspec_pathspec() {
@@ -256,8 +258,9 @@ mod parse {
     }
 
     mod fail {
-        use crate::parse::check_against_baseline;
         use git_pathspec::parse::Error;
+
+        use crate::parse::check_against_baseline;
 
         #[test]
         fn empty_input() {

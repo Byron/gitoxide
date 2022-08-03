@@ -1,12 +1,10 @@
-use git_object::bstr;
-use git_object::bstr::BStr;
+use std::{collections::HashMap, path::PathBuf, str::FromStr};
+
+use git_object::{bstr, bstr::BStr};
 use git_ref::bstr::{BString, ByteSlice};
 use git_repository as git;
 use git_revision::spec::Kind;
 use git_testtools::once_cell::sync::Lazy;
-use std::collections::HashMap;
-use std::path::PathBuf;
-use std::str::FromStr;
 
 const FIXTURE_NAME: &str = "make_rev_spec_parse_repos.sh";
 static BASELINE: Lazy<HashMap<PathBuf, HashMap<BString, Option<git_revision::Spec>>>> = Lazy::new(|| {

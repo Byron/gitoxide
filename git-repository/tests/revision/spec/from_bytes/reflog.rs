@@ -1,8 +1,10 @@
-use crate::revision::spec::from_bytes::{parse_spec, parse_spec_no_baseline, repo};
-use git_repository::prelude::ObjectIdExt;
-use git_repository::revision::spec::parse::Error;
-use git_repository::revision::Spec;
+use git_repository::{
+    prelude::ObjectIdExt,
+    revision::{spec::parse::Error, Spec},
+};
 use git_testtools::hex_to_id;
+
+use crate::revision::spec::from_bytes::{parse_spec, parse_spec_no_baseline, repo};
 
 #[test]
 fn nth_prior_checkout() {

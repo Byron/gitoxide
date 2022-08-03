@@ -5,9 +5,10 @@ pub mod parse;
 pub use parse::function::parse;
 
 mod previous_branches {
-    use crate::OutputFormat;
     use anyhow::Context;
     use git_repository as git;
+
+    use crate::OutputFormat;
 
     pub fn function(repo: git::Repository, mut out: impl std::io::Write, format: OutputFormat) -> anyhow::Result<()> {
         let branches = repo

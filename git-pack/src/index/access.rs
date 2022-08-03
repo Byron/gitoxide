@@ -1,5 +1,4 @@
-use std::mem::size_of;
-use std::ops::Range;
+use std::{mem::size_of, ops::Range};
 
 use crate::{
     data,

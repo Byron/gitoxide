@@ -1,12 +1,17 @@
+use git_repository::{
+    prelude::{ObjectIdExt, RevSpecExt},
+    revision::{
+        spec::parse::{Options, RefsHint},
+        Spec,
+    },
+};
+use git_testtools::hex_to_id;
+
 use super::repo;
 use crate::revision::spec::from_bytes::{
     parse_spec, parse_spec_better_than_baseline, parse_spec_no_baseline, parse_spec_no_baseline_opts, parse_spec_opts,
     rev_parse,
 };
-use git_repository::prelude::{ObjectIdExt, RevSpecExt};
-use git_repository::revision::spec::parse::{Options, RefsHint};
-use git_repository::revision::Spec;
-use git_testtools::hex_to_id;
 
 #[test]
 fn prefix() {

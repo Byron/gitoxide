@@ -1,9 +1,9 @@
-use crate::bstr::BStr;
-use crate::revision::Spec;
-use crate::Repository;
+use std::collections::HashSet;
+
 use git_hash::ObjectId;
 use git_revision::spec::parse;
-use std::collections::HashSet;
+
+use crate::{bstr::BStr, revision::Spec, Repository};
 
 mod types;
 pub use types::{Error, ObjectKindHint, Options, RefsHint};

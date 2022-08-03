@@ -40,8 +40,9 @@ impl Spec {
 }
 
 mod _impls {
-    use crate::Spec;
     use std::fmt::{Display, Formatter};
+
+    use crate::Spec;
 
     impl Display for Spec {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

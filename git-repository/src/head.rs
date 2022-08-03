@@ -83,11 +83,14 @@ impl<'repo> Head<'repo> {
 }
 ///
 pub mod log {
-    use crate::bstr::{BString, ByteSlice};
-    use git_hash::ObjectId;
     use std::convert::TryInto;
 
-    use crate::Head;
+    use git_hash::ObjectId;
+
+    use crate::{
+        bstr::{BString, ByteSlice},
+        Head,
+    };
 
     impl<'repo> Head<'repo> {
         /// Return a platform for obtaining iterators on the reference log associated with the `HEAD` reference.

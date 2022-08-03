@@ -72,8 +72,9 @@ pub fn open_options_no_follow() -> std::fs::OpenOptions {
 }
 
 mod snapshot {
-    use crate::threading::{get_mut, get_ref, MutableOnDemand, OwnShared};
     use std::ops::Deref;
+
+    use crate::threading::{get_mut, get_ref, MutableOnDemand, OwnShared};
 
     /// A structure holding enough information to reload a value if its on-disk representation changes as determined by its modified time.
     #[derive(Debug)]

@@ -85,9 +85,10 @@ mod contains {
 }
 
 mod lookup_prefix {
+    use std::collections::HashSet;
+
     use git_testtools::{fixture_path, hex_to_id};
     use maplit::hashset;
-    use std::collections::HashSet;
 
     use crate::store::loose::ldb;
 

@@ -29,8 +29,7 @@ fn delegate_can_refuse_spec_kinds() {
 mod include_parents {
     use git_revision::spec;
 
-    use crate::spec::parse::kind::prefix;
-    use crate::spec::parse::{parse, try_parse, Call};
+    use crate::spec::parse::{kind::prefix, parse, try_parse, Call};
 
     #[test]
     fn trailing_caret_at_symbol() {
@@ -65,8 +64,7 @@ mod include_parents {
 mod exclude_parents {
     use git_revision::spec;
 
-    use crate::spec::parse::kind::prefix;
-    use crate::spec::parse::{parse, try_parse, Call};
+    use crate::spec::parse::{kind::prefix, parse, try_parse, Call};
 
     #[test]
     fn trailing_caret_exclamation_mark() {

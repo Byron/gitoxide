@@ -1,5 +1,7 @@
-use std::ops::Range;
-use std::path::{Path, PathBuf};
+use std::{
+    ops::Range,
+    path::{Path, PathBuf},
+};
 
 use crate::{
     data,

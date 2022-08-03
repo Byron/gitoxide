@@ -1,6 +1,8 @@
-use crate::{MagicSignature, MatchMode, Pattern};
-use bstr::{BStr, BString, ByteSlice, ByteVec};
 use std::borrow::Cow;
+
+use bstr::{BStr, BString, ByteSlice, ByteVec};
+
+use crate::{MagicSignature, MatchMode, Pattern};
 
 /// The error returned by [parse()][crate::parse()].
 #[derive(thiserror::Error, Debug)]

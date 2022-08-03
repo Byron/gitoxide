@@ -1,11 +1,17 @@
-use crate::bstr::{BStr, BString, ByteSlice};
-use crate::ext::ReferenceExt;
-use crate::object;
-use crate::revision::spec::parse::{Delegate, Error, RefsHint};
-use git_hash::ObjectId;
-use git_revision::spec::parse::delegate;
-use git_revision::spec::parse::delegate::{ReflogLookup, SiblingBranch};
 use std::collections::HashSet;
+
+use git_hash::ObjectId;
+use git_revision::spec::parse::{
+    delegate,
+    delegate::{ReflogLookup, SiblingBranch},
+};
+
+use crate::{
+    bstr::{BStr, BString, ByteSlice},
+    ext::ReferenceExt,
+    object,
+    revision::spec::parse::{Delegate, Error, RefsHint},
+};
 
 impl<'repo> delegate::Revision for Delegate<'repo> {
     fn find_ref(&mut self, name: &BStr) -> Option<()> {

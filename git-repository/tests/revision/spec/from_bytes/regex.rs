@@ -1,11 +1,13 @@
-use crate::revision::spec::from_bytes::{parse_spec_no_baseline, repo};
 use git_repository::prelude::ObjectIdExt;
 use git_testtools::hex_to_id;
 
+use crate::revision::spec::from_bytes::{parse_spec_no_baseline, repo};
+
 mod with_known_revision {
+    use git_repository::revision::Spec;
+
     use super::*;
     use crate::revision::spec::from_bytes::parse_spec;
-    use git_repository::revision::Spec;
 
     #[test]
     #[cfg(not(feature = "regex"))]
@@ -53,9 +55,10 @@ mod with_known_revision {
 }
 
 mod find_youngest_matching_commit {
+    use git_repository::revision::Spec;
+
     use super::*;
     use crate::revision::spec::from_bytes::parse_spec;
-    use git_repository::revision::Spec;
 
     #[test]
     #[cfg(not(feature = "regex"))]

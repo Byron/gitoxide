@@ -1,5 +1,4 @@
-use crate::bstr::BStr;
-use crate::revision;
+use crate::{bstr::BStr, revision};
 
 /// Methods for resolving revisions by spec or working with the commit graph.
 impl crate::Repository {

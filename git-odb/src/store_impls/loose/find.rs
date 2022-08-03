@@ -1,5 +1,4 @@
-use std::collections::HashSet;
-use std::{cmp::Ordering, fs, io::Read, path::PathBuf};
+use std::{cmp::Ordering, collections::HashSet, fs, io::Read, path::PathBuf};
 
 use git_features::zlib;
 

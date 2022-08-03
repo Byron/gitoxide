@@ -62,8 +62,9 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
 }
 
 mod intercept {
-    use crate::spec::parse::{delegate, Delegate};
     use bstr::{BStr, BString};
+
+    use crate::spec::parse::{delegate, Delegate};
 
     #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
     pub(crate) enum PrefixHintOwned {

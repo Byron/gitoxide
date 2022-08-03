@@ -1,9 +1,9 @@
 use anyhow::bail;
 use git::{
     bstr::{BStr, BString, ByteSlice},
-    revision::{
-        plumbing::spec,
-        plumbing::spec::parse::{
+    revision::plumbing::{
+        spec,
+        spec::parse::{
             delegate,
             delegate::{PeelTo, ReflogLookup, SiblingBranch, Traversal},
             Delegate,

@@ -5,10 +5,12 @@ pub struct Options {
 }
 
 pub(crate) mod function {
+    use std::ffi::OsString;
+
+    use git_repository as git;
+
     use super::Options;
     use crate::OutputFormat;
-    use git_repository as git;
-    use std::ffi::OsString;
 
     pub fn parse(
         mut repo: git::Repository,

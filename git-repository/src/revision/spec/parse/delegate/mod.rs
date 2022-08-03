@@ -1,11 +1,17 @@
-use super::{Delegate, Error, ObjectKindHint};
-use crate::ext::{ObjectIdExt, ReferenceExt};
-use crate::Repository;
-use git_hash::ObjectId;
-use git_revision::spec::parse;
-use git_revision::spec::parse::delegate::{self};
-use smallvec::SmallVec;
 use std::collections::HashSet;
+
+use git_hash::ObjectId;
+use git_revision::spec::{
+    parse,
+    parse::delegate::{self},
+};
+use smallvec::SmallVec;
+
+use super::{Delegate, Error, ObjectKindHint};
+use crate::{
+    ext::{ObjectIdExt, ReferenceExt},
+    Repository,
+};
 
 type Replacements = SmallVec<[(ObjectId, ObjectId); 1]>;
 

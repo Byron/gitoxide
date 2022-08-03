@@ -1,9 +1,9 @@
-use super::Error;
-use crate::bstr::BString;
-use crate::ext::ObjectIdExt;
-use crate::{bstr, Repository};
-use git_hash::ObjectId;
 use std::collections::HashSet;
+
+use git_hash::ObjectId;
+
+use super::Error;
+use crate::{bstr, bstr::BString, ext::ObjectIdExt, Repository};
 
 /// Additional information about candidates that caused ambiguity.
 #[derive(Debug)]

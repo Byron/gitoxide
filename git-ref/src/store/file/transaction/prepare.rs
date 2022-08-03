@@ -432,7 +432,6 @@ mod error {
     }
 }
 
-use crate::packed::transaction::buffer_into_transaction;
 pub use error::Error;
 
-use crate::transaction::PreviousValue;
+use crate::{packed::transaction::buffer_into_transaction, transaction::PreviousValue};

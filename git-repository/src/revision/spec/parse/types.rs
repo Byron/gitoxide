@@ -1,5 +1,4 @@
-use crate::bstr::BString;
-use crate::{object, reference};
+use crate::{bstr::BString, object, reference};
 
 /// A hint to know what to do if refs and object names are equal.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

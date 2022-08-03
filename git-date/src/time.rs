@@ -1,5 +1,6 @@
-use bstr::BString;
 use std::{convert::TryInto, io, ops::Sub};
+
+use bstr::BString;
 
 use crate::Time;
 

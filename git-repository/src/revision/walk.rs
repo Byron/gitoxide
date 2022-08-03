@@ -71,8 +71,7 @@ impl<'repo> Platform<'repo> {
 }
 
 pub(crate) mod iter {
-    use crate::ext::ObjectIdExt;
-    use crate::Id;
+    use crate::{ext::ObjectIdExt, Id};
 
     /// The iterator returned by [`crate::revision::walk::Platform::all()`].
     pub struct Walk<'repo> {

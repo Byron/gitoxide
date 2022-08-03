@@ -117,8 +117,9 @@ mod parse_ceiling_dirs {
     #[test]
     #[cfg(unix)]
     fn from_environment_format() -> std::io::Result<()> {
-        use super::*;
         use std::{fs, os::unix::fs::symlink};
+
+        use super::*;
 
         // Setup filesystem
         let dir = tempfile::tempdir().expect("success creating temp dir");

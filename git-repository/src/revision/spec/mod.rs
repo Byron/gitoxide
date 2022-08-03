@@ -1,12 +1,12 @@
-use crate::ext::ReferenceExt;
-use crate::{revision::Spec, Id, Reference};
+use crate::{ext::ReferenceExt, revision::Spec, Id, Reference};
 
 ///
 pub mod parse;
 
 mod impls {
-    use crate::revision::Spec;
     use std::ops::{Deref, DerefMut};
+
+    use crate::revision::Spec;
 
     impl<'repo> Deref for Spec<'repo> {
         type Target = git_revision::Spec;

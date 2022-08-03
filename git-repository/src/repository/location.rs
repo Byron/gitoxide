@@ -1,5 +1,6 @@
-use git_path::realpath::MAX_SYMLINKS;
 use std::path::PathBuf;
+
+use git_path::realpath::MAX_SYMLINKS;
 
 impl crate::Repository {
     /// Return the path to the repository itself, containing objects, references, configuration, and more.
