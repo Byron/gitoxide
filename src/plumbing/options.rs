@@ -185,9 +185,14 @@ pub mod revision {
         /// Provide the revision specification like `@~1` to explain.
         Explain { spec: std::ffi::OsString },
         /// Try to resolve the given revspec and print the object names.
-        #[clap(visible_alias = "query")]
-        Parse {
-            #[clap(min_values = 1)]
+        #[clap(visible_alias = "query", visible_alias = "parse")]
+        Resolve {
+            /// If set, instead of resolving a rev-spec, explain what would be done for the first spec.
+            /// Equivalent to the `explain` subcommand.
+            #[clap(short = 'e', long)]
+            explain: bool,
+            /// rev-specs like `@`, `@~1` or `HEAD^2`.
+            #[clap(required = true)]
             specs: Vec<std::ffi::OsString>,
         },
         /// Return the names and hashes of all previously checked-out branches.

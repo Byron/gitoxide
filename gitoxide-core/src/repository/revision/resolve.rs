@@ -2,27 +2,33 @@ use crate::OutputFormat;
 
 pub struct Options {
     pub format: OutputFormat,
+    pub explain: bool,
 }
 
 pub(crate) mod function {
+    use anyhow::bail;
     use std::ffi::OsString;
 
     use git_repository as git;
 
     use super::Options;
+    use crate::repository::revision;
     use crate::OutputFormat;
 
-    pub fn parse(
+    pub fn resolve(
         mut repo: git::Repository,
         specs: Vec<OsString>,
         mut out: impl std::io::Write,
-        Options { format }: Options,
+        Options { format, explain }: Options,
     ) -> anyhow::Result<()> {
         repo.object_cache_size_if_unset(1024 * 1024);
 
         match format {
             OutputFormat::Human => {
                 for spec in specs {
+                    if explain {
+                        return revision::explain(spec, out);
+                    }
                     let spec = git::path::os_str_into_bstr(&spec)?;
                     let spec = repo.rev_parse(spec)?.detach();
                     writeln!(out, "{spec}")?;
@@ -30,6 +36,9 @@ pub(crate) mod function {
             }
             #[cfg(feature = "serde1")]
             OutputFormat::Json => {
+                if explain {
+                    bail!("Explanations are only for human consumption")
+                }
                 serde_json::to_writer_pretty(
                     &mut out,
                     &specs

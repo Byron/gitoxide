@@ -43,7 +43,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
         * [x] **entries** - display all entries of the aggregated mailmap git would use for substitution
     * **revision**
         * [x] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
-        * [x] **parse** - Show which objects a revspec resolves to
+        * [x] **resolve** - show which objects a revspec resolves to, similar to `git rev-parse` but faster and with much better error handling
         * [x] **previous-branches** - list all previously checked out branches, powered by the ref-log.
     * **free** - no git repository necessary
         * **pack**
