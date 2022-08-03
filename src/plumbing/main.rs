@@ -532,7 +532,11 @@ pub fn main() -> Result<()> {
                 None,
                 move |_progress, out, _err| core::repository::revision::explain(spec, out),
             ),
-            revision::Subcommands::Resolve { specs, explain } => prepare_and_run(
+            revision::Subcommands::Resolve {
+                specs,
+                explain,
+                cat_file,
+            } => prepare_and_run(
                 "revision-parse",
                 verbose,
                 progress,
@@ -543,7 +547,11 @@ pub fn main() -> Result<()> {
                         repository()?,
                         specs,
                         out,
-                        core::repository::revision::resolve::Options { format, explain },
+                        core::repository::revision::resolve::Options {
+                            format,
+                            explain,
+                            cat_file,
+                        },
                     )
                 },
             ),
