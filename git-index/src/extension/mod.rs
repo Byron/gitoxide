@@ -14,7 +14,7 @@ pub struct Iter<'a> {
 ///
 /// It allows to more quickly build trees by avoiding as it can quickly re-use portions of the index and its associated tree ids
 /// if there was no change to them. Portions of this tree are invalidated as the index is changed.
-#[derive(Clone)]
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Tree {
     pub name: SmallVec<[u8; 23]>,
     /// The id of the directory tree of the associated tree object.

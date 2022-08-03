@@ -1,6 +1,7 @@
 use crate::{extension, State, Version};
 use std::io::Write;
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Options {
     /// The hash kind to use when writing the index file.
     ///
