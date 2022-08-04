@@ -10,7 +10,7 @@ fn roundtrips() {
         (
             "v2_more_files",
             write::Options {
-                end_of_index_entry: false,
+                end_of_index_entry_extension: false,
                 ..write::Options::default()
             },
         ),
@@ -48,8 +48,8 @@ fn v2_index_no_extensions() {
         let options = write::Options {
             hash_kind: git_hash::Kind::Sha1,
             version: Version::V2,
-            tree_cache: false,
-            end_of_index_entry: false,
+            tree_cache_extension: false,
+            end_of_index_entry_extension: false,
         };
 
         expected.write_to(&mut out, options).unwrap();
@@ -77,8 +77,8 @@ fn v2_index_tree_extensions() {
         let options = write::Options {
             hash_kind: git_hash::Kind::Sha1,
             version: Version::V2,
-            tree_cache: true,
-            end_of_index_entry: false,
+            tree_cache_extension: true,
+            end_of_index_entry_extension: false,
         };
 
         expected.write_to(&mut out, options).unwrap();
@@ -106,8 +106,8 @@ fn v2_index_eoie_extensions() {
         let options = write::Options {
             hash_kind: git_hash::Kind::Sha1,
             version: Version::V2,
-            tree_cache: false,
-            end_of_index_entry: true,
+            tree_cache_extension: false,
+            end_of_index_entry_extension: true,
         };
 
         expected.write_to(&mut out, options).unwrap();
@@ -121,7 +121,7 @@ fn compare_states(generated: &State, expected: &State, options: write::Options, 
     assert_eq!(generated.version(), options.version, "version mismatch in {}", fixture);
     assert_eq!(
         generated.tree(),
-        match options.tree_cache {
+        match options.tree_cache_extension {
             true => expected.tree(),
             false => None,
         },
@@ -148,7 +148,7 @@ fn compare_states(generated: &State, expected: &State, options: write::Options, 
     );
 }
 
-fn compare_raw_bytes<'a, 'b>(generated: &'a [u8], expected: &'b [u8], fixture: &str) {
+fn compare_raw_bytes(generated: &[u8], expected: &[u8], fixture: &str) {
     assert_eq!(generated.len(), expected.len(), "file length mismatch in {}", fixture);
 
     let print_range = 10;

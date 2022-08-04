@@ -1,4 +1,5 @@
 use crate::{extension, State, Version};
+use std::convert::{TryFrom, TryInto};
 use std::io::Write;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -7,9 +8,11 @@ pub struct Options {
     ///
     /// It is not always possible to infer the hash kind when reading an index, so this is required.
     pub hash_kind: git_hash::Kind,
+    /// The index version to write. Note that different versions affect the format and ultimately the size.
     pub version: Version,
-    pub tree_cache: bool,
-    pub end_of_index_entry: bool,
+
+    pub tree_cache_extension: bool,
+    pub end_of_index_entry_extension: bool,
 }
 
 impl Default for Options {
@@ -17,26 +20,46 @@ impl Default for Options {
         Self {
             hash_kind: git_hash::Kind::default(),
             version: Version::V2,
-            tree_cache: true,
-            end_of_index_entry: true,
+            tree_cache_extension: true,
+            end_of_index_entry_extension: true,
         }
     }
 }
 
 impl State {
-    pub fn write_to(&self, out: &mut impl std::io::Write, options: Options) -> std::io::Result<()> {
-        let mut write_counter = WriteCounter::new(out);
-        let num_entries = self.entries().len() as u32;
-        let header_offset = header(&mut write_counter, options.version, num_entries)?;
-        let entries_offset = entries(&mut write_counter, self, header_offset)?;
-        let tree_offset = if options.tree_cache {
-            tree(&mut write_counter, self.tree())?
+    pub fn write_to(
+        &self,
+        out: &mut impl std::io::Write,
+        Options {
+            hash_kind,
+            version,
+            tree_cache_extension,
+            end_of_index_entry_extension,
+        }: Options,
+    ) -> std::io::Result<()> {
+        assert_eq!(
+            version,
+            Version::V2,
+            "can only write V2 at the moment, please come back later"
+        );
+
+        let mut write = CountBytes::new(out);
+        let num_entries = self
+            .entries()
+            .len()
+            .try_into()
+            .expect("definitely not 4billion entries");
+
+        let header_offset = header(&mut write, version, num_entries)?;
+        let entries_offset = entries(&mut write, self, header_offset, version)?;
+        let tree_offset = if tree_cache_extension {
+            tree_ext(&mut write, self.tree())?
         } else {
             entries_offset
         };
 
-        if num_entries > 0 && options.end_of_index_entry {
-            end_of_index_entry(write_counter.inner, options.hash_kind, entries_offset, tree_offset)?;
+        if num_entries > 0 && end_of_index_entry_extension {
+            end_of_index_entry_ext(write.inner, hash_kind, entries_offset, tree_offset)?;
         }
 
         Ok(())
@@ -44,7 +67,7 @@ impl State {
 }
 
 fn header<T: std::io::Write>(
-    out: &mut WriteCounter<'_, T>,
+    out: &mut CountBytes<'_, T>,
     version: Version,
     num_entries: u32,
 ) -> Result<u32, std::io::Error> {
@@ -64,34 +87,42 @@ fn header<T: std::io::Write>(
 }
 
 fn entries<T: std::io::Write>(
-    out: &mut WriteCounter<'_, T>,
+    out: &mut CountBytes<'_, T>,
     state: &State,
     header_size: u32,
+    version: Version,
 ) -> Result<u32, std::io::Error> {
     for entry in state.entries() {
-        out.write_all(&entry.stat.ctime.secs.to_be_bytes())?;
-        out.write_all(&entry.stat.ctime.nsecs.to_be_bytes())?;
-        out.write_all(&entry.stat.mtime.secs.to_be_bytes())?;
-        out.write_all(&entry.stat.mtime.nsecs.to_be_bytes())?;
-        out.write_all(&entry.stat.dev.to_be_bytes())?;
-        out.write_all(&entry.stat.ino.to_be_bytes())?;
+        let stat = entry.stat;
+        out.write_all(&stat.ctime.secs.to_be_bytes())?;
+        out.write_all(&stat.ctime.nsecs.to_be_bytes())?;
+        out.write_all(&stat.mtime.secs.to_be_bytes())?;
+        out.write_all(&stat.mtime.nsecs.to_be_bytes())?;
+        out.write_all(&stat.dev.to_be_bytes())?;
+        out.write_all(&stat.ino.to_be_bytes())?;
         out.write_all(&entry.mode.bits().to_be_bytes())?;
-        out.write_all(&entry.stat.uid.to_be_bytes())?;
-        out.write_all(&entry.stat.gid.to_be_bytes())?;
-        out.write_all(&entry.stat.size.to_be_bytes())?;
+        out.write_all(&stat.uid.to_be_bytes())?;
+        out.write_all(&stat.gid.to_be_bytes())?;
+        out.write_all(&stat.size.to_be_bytes())?;
         out.write_all(entry.id.as_bytes())?;
         let path = entry.path(state);
-        out.write_all(&(entry.flags.to_storage().bits() | path.len() as u16).to_be_bytes())?;
+        let path_len: u16 = path
+            .len()
+            .try_into()
+            .expect("Cannot handle paths longer than 16bits ever");
+        assert!(
+            path_len <= 0xFFF,
+            "Paths can't be longer than 12 bits as they share space with bit flags in a u16"
+        );
+        out.write_all(&(entry.flags.to_storage(version).bits() | path_len).to_be_bytes())?;
         out.write_all(path)?;
         out.write_all(b"\0")?;
 
         match (out.count - header_size) % 8 {
             0 => {}
             n => {
-                let byte_offset = 8 - n;
-                for _ in 0..byte_offset {
-                    out.write_all(b"\0")?;
-                }
+                let eight_null_bytes = [0u8; 8];
+                out.write_all(&eight_null_bytes[n as usize..])?;
             }
         };
     }
@@ -99,62 +130,62 @@ fn entries<T: std::io::Write>(
     Ok(out.count)
 }
 
-fn tree<T: std::io::Write>(
-    out: &mut WriteCounter<'_, T>,
+fn tree_ext<T: std::io::Write>(
+    out: &mut CountBytes<'_, T>,
     tree: Option<&extension::Tree>,
 ) -> Result<u32, std::io::Error> {
+    fn tree_entry(out: &mut impl std::io::Write, tree: &extension::Tree) -> Result<(), std::io::Error> {
+        let num_entries_ascii = tree.num_entries.to_string();
+        let num_children_ascii = tree.children.len().to_string();
+
+        out.write_all(tree.name.as_slice())?;
+        out.write_all(b"\0")?;
+        out.write_all(num_entries_ascii.as_bytes())?;
+        out.write_all(b" ")?;
+        out.write_all(num_children_ascii.as_bytes())?;
+        out.write_all(b"\n")?;
+        out.write_all(tree.id.as_bytes())?;
+
+        for child in &tree.children {
+            tree_entry(out, child)?;
+        }
+
+        Ok(())
+    }
+
     if let Some(tree) = tree {
-        let signature = b"TREE";
+        let signature = extension::tree::SIGNATURE;
 
         let estimated_size = tree.num_entries * (300 + 3 + 1 + 3 + 1 + 20);
         let mut entries: Vec<u8> = Vec::with_capacity(estimated_size as usize);
         tree_entry(&mut entries, tree)?;
 
-        out.write_all(signature)?;
-        out.write_all(&(entries.len() as u32).to_be_bytes())?;
+        out.write_all(&signature)?;
+        out.write_all(&(u32::try_from(entries.len()).expect("less than 4GB tree extension")).to_be_bytes())?;
         out.write_all(&entries)?;
     }
 
     Ok(out.count)
 }
 
-fn tree_entry(out: &mut impl std::io::Write, tree: &extension::Tree) -> Result<(), std::io::Error> {
-    let num_entries_ascii = tree.num_entries.to_string();
-    let num_children_ascii = tree.children.len().to_string();
-
-    out.write_all(tree.name.as_slice())?;
-    out.write_all(b"\0")?;
-    out.write_all(num_entries_ascii.as_bytes())?;
-    out.write_all(b" ")?;
-    out.write_all(num_children_ascii.as_bytes())?;
-    out.write_all(b"\n")?;
-    out.write_all(tree.id.as_bytes())?;
-
-    for child in &tree.children {
-        tree_entry(out, child)?;
-    }
-
-    Ok(())
-}
-
-fn end_of_index_entry(
+fn end_of_index_entry_ext(
     out: &mut impl std::io::Write,
     hash_kind: git_hash::Kind,
     entries_offset: u32,
     tree_offset: u32,
 ) -> Result<(), std::io::Error> {
-    let signature = b"EOIE";
+    let signature = extension::end_of_index_entry::SIGNATURE;
     let extension_size = 4 + hash_kind.len_in_bytes() as u32;
 
     let mut hasher = git_features::hash::hasher(hash_kind);
     let tree_size = (tree_offset - entries_offset).saturating_sub(8);
     if tree_size > 0 {
-        hasher.update(b"TREE");
+        hasher.update(&extension::tree::SIGNATURE);
         hasher.update(&tree_size.to_be_bytes());
     }
     let hash = hasher.digest();
 
-    out.write_all(signature)?;
+    out.write_all(&signature)?;
     out.write_all(&extension_size.to_be_bytes())?;
     out.write_all(&entries_offset.to_be_bytes())?;
     out.write_all(&hash)?;
@@ -162,27 +193,35 @@ fn end_of_index_entry(
     Ok(())
 }
 
-struct WriteCounter<'a, T> {
+struct CountBytes<'a, T> {
     count: u32,
     inner: &'a mut T,
 }
 
-impl<'a, T> WriteCounter<'a, T>
+impl<'a, T> CountBytes<'a, T>
 where
     T: std::io::Write,
 {
     pub fn new(inner: &'a mut T) -> Self {
-        WriteCounter { inner, count: 0 }
+        CountBytes { inner, count: 0 }
     }
 }
 
-impl<'a, T> std::io::Write for WriteCounter<'a, T>
+impl<'a, T> std::io::Write for CountBytes<'a, T>
 where
     T: std::io::Write,
 {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let written = self.inner.write(buf)?;
-        self.count += written as u32;
+        self.count = self
+            .count
+            .checked_add(u32::try_from(written).expect("we don't write 4GB buffers"))
+            .ok_or_else(|| {
+                std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Cannot write indices larger than 4 gigabytes",
+                )
+            })?;
         Ok(written)
     }
 

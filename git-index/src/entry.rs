@@ -1,3 +1,4 @@
+use crate::Version;
 use bitflags::bitflags;
 
 /// The stage of an entry, one of 0 = base, 1 = ours, 2 = theirs
@@ -42,6 +43,13 @@ pub(crate) mod at_rest {
         }
     }
 
+    impl Flags {
+        pub fn to_memory(self) -> super::Flags {
+            super::Flags::from_bits((self & (Flags::PATH_LEN | Flags::STAGE_MASK | Flags::ASSUME_VALID)).bits as u32)
+                .expect("PATHLEN is part of memory representation")
+        }
+    }
+
     bitflags! {
         /// Extended flags - add flags for serialization here and offset them down to u16.
         pub struct FlagsExtended: u16 {
@@ -53,13 +61,6 @@ pub(crate) mod at_rest {
     impl FlagsExtended {
         pub fn to_flags(self) -> Option<super::Flags> {
             super::Flags::from_bits((self.bits as u32) << 16)
-        }
-    }
-
-    impl Flags {
-        pub fn to_memory(self) -> super::Flags {
-            super::Flags::from_bits((self & (Flags::PATH_LEN | Flags::STAGE_MASK | Flags::ASSUME_VALID)).bits as u32)
-                .expect("PATHLEN is part of memory representation")
         }
     }
 
@@ -113,9 +114,9 @@ impl Flags {
         (*self & Flags::STAGE_MASK).bits >> 12
     }
 
-    pub fn to_storage(&self) -> at_rest::Flags {
+    pub fn to_storage(&self, version: Version) -> at_rest::Flags {
+        assert_eq!(version, Version::V2, "Can only encode V2 flags at the moment");
         at_rest::Flags::from_bits(self.bits() as u16).unwrap()
-        // TODO: extended flags / v3
     }
 }
 
@@ -182,6 +183,7 @@ mod _impls {
 #[cfg(test)]
 mod tests {
     use crate::entry::at_rest;
+    use crate::Version;
 
     #[test]
     fn in_mem_flags_to_storage_flags_v2() {
@@ -189,7 +191,7 @@ mod tests {
         let flags_at_rest = at_rest::Flags::from_bits(flag_bytes).unwrap();
         let in_memory_flags = flags_at_rest.to_memory();
 
-        let output = in_memory_flags.to_storage();
+        let output = in_memory_flags.to_storage(Version::V2);
 
         assert_eq!(output.bits(), flag_bytes);
     }
