@@ -7,29 +7,37 @@ fn baseline() {
 }
 
 mod invalid {
-    use git_refspec::{parse, parse::Error, Operation};
+    use crate::parse::try_parse;
+    use git_refspec::{parse::Error, Operation};
 
     #[test]
-    #[ignore]
     fn empty() {
-        assert!(matches!(parse("".into(), Operation::Fetch).unwrap_err(), Error::Empty));
-        assert!(matches!(parse("".into(), Operation::Push).unwrap_err(), Error::Empty));
+        assert!(matches!(try_parse("", Operation::Fetch).unwrap_err(), Error::Empty));
+        assert!(matches!(try_parse("", Operation::Push).unwrap_err(), Error::Empty));
     }
 
     #[test]
-    #[ignore]
     fn negative_with_destination() {
-        assert!(matches!(
-            parse("^a:b".into(), Operation::Fetch).unwrap_err(),
-            Error::NegativeWithDestination
-        ));
-        assert!(matches!(
-            parse("a:b".into(), Operation::Fetch).unwrap_err(),
-            Error::NegativeWithDestination
-        ));
+        for op in [Operation::Fetch, Operation::Push] {
+            for spec in ["^a:b", "^a:", "^:", "^:b"] {
+                assert!(matches!(
+                    try_parse(spec, op).unwrap_err(),
+                    Error::NegativeWithDestination
+                ));
+            }
+        }
     }
 
     mod fetch {}
 
     mod push {}
 }
+
+mod util {
+    use git_refspec::{Operation, RefSpecRef};
+
+    pub fn try_parse(spec: &str, op: Operation) -> Result<RefSpecRef<'_>, git_refspec::parse::Error> {
+        git_refspec::parse(spec.into(), op)
+    }
+}
+pub use util::*;

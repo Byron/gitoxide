@@ -26,6 +26,10 @@ EOF
 baseline push ''
 baseline push '::'
 baseline fetch '::'
+baseline fetch '^a:'
+baseline fetch '^a:b'
+baseline fetch '^:'
+baseline fetch '^:b'
 
 baseline push 'refs/heads/*:refs/remotes/frotz'
 baseline push 'refs/heads:refs/remotes/frotz/*'
