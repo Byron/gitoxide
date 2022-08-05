@@ -162,6 +162,7 @@ members = [
     "git-lock",
     "git-attributes",
     "git-pathspec",
+    "git-refspec",
     "git-path",
     "git-repository",
     "gitoxide-core",

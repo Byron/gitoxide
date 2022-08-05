@@ -1,0 +1,20 @@
+[package]
+name = "git-refspec"
+version = "0.0.0"
+repository = "https://github.com/Byron/gitoxide"
+license = "MIT/Apache-2.0"
+description = "A WIP crate of the gitoxide project for parsing and representing refspecs"
+authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
+edition = "2018"
+
+[lib]
+doctest = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bstr = { version = "0.2.13", default-features = false, features = ["std"]}
+thiserror = "1.0.26"
+
+[dev-dependencies]
+git-testtools = { path = "../tests/tools" }

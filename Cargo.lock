@@ -1485,6 +1485,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-refspec"
+version = "0.0.0"
+dependencies = [
+ "bstr",
+ "git-testtools",
+ "thiserror",
+]
+
+[[package]]
 name = "git-repository"
 version = "0.20.0"
 dependencies = [
