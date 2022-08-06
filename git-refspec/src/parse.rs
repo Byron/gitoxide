@@ -36,10 +36,13 @@ pub(crate) mod function {
                 let src = (!src.is_empty()).then(|| src.as_bstr());
                 let dst = (!dst.is_empty()).then(|| dst.as_bstr());
                 match (src, dst) {
-                    (None, None) => {}
+                    (None, None) => (None, None), // match all
+                    (None, Some(dst)) => match operation {
+                        Operation::Push => (None, Some(dst)),
+                        Operation::Fetch => (Some("HEAD".into()), Some(dst)),
+                    },
                     _ => todo!("src or dst handling"),
-                };
-                (src, dst)
+                }
             }
             None => todo!("no colon"),
         };

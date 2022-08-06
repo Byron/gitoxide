@@ -1,5 +1,5 @@
 use crate::types::Push;
-use crate::{Instruction, Mode, Operation, RefSpec, RefSpecRef};
+use crate::{Fetch, Instruction, Mode, Operation, RefSpec, RefSpecRef};
 use bstr::BStr;
 
 /// Access
@@ -15,14 +15,29 @@ impl RefSpecRef<'_> {
             item.contains(&b'*')
         }
         match (self.op, self.mode, self.src, self.dst) {
+            (Operation::Fetch, Mode::Normal | Mode::Force, Some(src), Some(dst)) => {
+                Instruction::Fetch(Fetch::AndUpdateSingle {
+                    src,
+                    dst,
+                    allow_non_fast_forward: matches!(self.mode, Mode::Force),
+                })
+            }
             (Operation::Push, Mode::Normal | Mode::Force, Some(src), None) => Instruction::Push(Push::Single {
                 src,
                 dst: src,
                 allow_non_fast_forward: matches!(self.mode, Mode::Force),
             }),
+            (Operation::Push, Mode::Normal | Mode::Force, None, Some(dst)) => {
+                Instruction::Push(Push::Delete { ref_or_pattern: dst })
+            }
             (Operation::Push, Mode::Normal | Mode::Force, None, None) => Instruction::Push(Push::AllMatchingBranches {
                 allow_non_fast_forward: matches!(self.mode, Mode::Force),
             }),
+            (Operation::Fetch, Mode::Normal | Mode::Force, None, None) => {
+                Instruction::Fetch(Fetch::AllMatchingBranches {
+                    allow_non_fast_forward: matches!(self.mode, Mode::Force),
+                })
+            }
             (Operation::Push, Mode::Normal | Mode::Force, Some(src), Some(dst)) if has_pattern(src) => {
                 Instruction::Push(Push::MultipleWithGlob {
                     src,

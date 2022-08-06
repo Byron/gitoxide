@@ -84,6 +84,12 @@ baseline fetch 'HEAD:'
 baseline push ':refs/remotes/frotz/deleteme'
 baseline fetch ':refs/remotes/frotz/HEAD-to-me'
 
+baseline push ':a'
+baseline push '+:a'
+
+baseline fetch ':a'
+baseline fetch '+:a'
+
 baseline fetch 'refs/heads/*/for-linus:refs/remotes/mine/*-blah'
 baseline push 'refs/heads/*/for-linus:refs/remotes/mine/*-blah'
 
