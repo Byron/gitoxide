@@ -93,8 +93,12 @@ mod invalid {
     #[test]
     fn both_sides_need_pattern_if_one_uses_it() {
         for op in [Operation::Fetch, Operation::Push] {
-            for spec in ["/*/a", ":a/*", "+:a/*", "a*:b/c", "a:b/*"] {
-                assert!(matches!(try_parse(spec, op).unwrap_err(), Error::PatternUnbalanced));
+            for spec in ["refs/*/a", ":a/*", "+:a/*", "a*:b/c", "a:b/*"] {
+                assert!(
+                    matches!(try_parse(spec, op).unwrap_err(), Error::PatternUnbalanced),
+                    "{}",
+                    spec
+                );
             }
         }
     }

@@ -10,6 +10,8 @@ pub enum Error {
     PatternUnsupported { pattern: bstr::BString },
     #[error("Both sides of the specification need a pattern, like 'a/*:b/*'")]
     PatternUnbalanced,
+    #[error(transparent)]
+    Refname(#[from] git_validate::refname::Error),
 }
 
 pub(crate) mod function {
@@ -19,6 +21,15 @@ pub(crate) mod function {
 
     /// Parse `spec` for use in `operation` and return it if it is valid.
     pub fn parse(mut spec: &BStr, operation: Operation) -> Result<RefSpecRef<'_>, Error> {
+        fn fetch_head_only(mode: Mode) -> RefSpecRef<'static> {
+            RefSpecRef {
+                mode,
+                op: Operation::Fetch,
+                src: Some("HEAD".into()),
+                dst: None,
+            }
+        }
+
         let mode = match spec.get(0) {
             Some(&b'^') => {
                 spec = &spec[1..];
@@ -32,12 +43,7 @@ pub(crate) mod function {
             None => {
                 return match operation {
                     Operation::Push => Err(Error::Empty),
-                    Operation::Fetch => Ok(RefSpecRef {
-                        mode: Mode::Normal,
-                        op: operation,
-                        src: Some("HEAD".into()),
-                        dst: None,
-                    }),
+                    Operation::Fetch => Ok(fetch_head_only(Mode::Normal)),
                 }
             }
         };
@@ -68,7 +74,14 @@ pub(crate) mod function {
                     (Some(src), Some(dst)) => (Some(src), Some(dst)),
                 }
             }
-            None => (Some(spec), None),
+            None => {
+                let src = (!spec.is_empty()).then(|| spec);
+                if Operation::Fetch == operation && src.is_none() {
+                    return Ok(fetch_head_only(mode));
+                } else {
+                    (src, None)
+                }
+            }
         };
 
         let (src, src_had_pattern) = validated(src)?;
@@ -90,6 +103,15 @@ pub(crate) mod function {
                 let glob_count = spec.iter().filter(|b| **b == b'*').take(2).count();
                 if glob_count == 2 {
                     return Err(Error::PatternUnsupported { pattern: spec.into() });
+                }
+                if glob_count == 1 {
+                    let mut buf = smallvec::SmallVec::<[u8; 256]>::with_capacity(spec.len());
+                    buf.extend_from_slice(&spec);
+                    let glob_pos = buf.find_byte(b'*').expect("glob present");
+                    buf[glob_pos] = b'a';
+                    git_validate::reference::name_partial(buf.as_bstr())?;
+                } else {
+                    git_validate::reference::name_partial(spec)?;
                 }
                 Ok((Some(spec), glob_count == 1))
             }

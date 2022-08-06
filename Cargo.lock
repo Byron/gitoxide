@@ -1490,6 +1490,8 @@ version = "0.0.0"
 dependencies = [
  "bstr",
  "git-testtools",
+ "git-validate",
+ "smallvec",
  "thiserror",
 ]
 
