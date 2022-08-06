@@ -31,6 +31,9 @@ baseline fetch '^a:b'
 baseline fetch '^:'
 baseline fetch '^:b'
 
+baseline fetch '^refs/heads/qa/*/*'
+baseline push '^refs/heads/qa/*/*'
+
 baseline push 'refs/heads/*:refs/remotes/frotz'
 baseline push 'refs/heads:refs/remotes/frotz/*'
 
