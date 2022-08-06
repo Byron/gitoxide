@@ -23,35 +23,7 @@ pub struct RefSpec {
     dest: Option<bstr::BString>,
 }
 
+mod spec;
+
 mod types;
-pub use types::{Instruction, Mode, Operation};
-
-mod spec {
-    use crate::{Instruction, Mode, RefSpec, RefSpecRef};
-
-    /// Access
-    impl RefSpecRef<'_> {
-        /// Return the refspec mode.
-        pub fn mode(&self) -> Mode {
-            self.mode
-        }
-
-        /// Transform the state of the refspec into an instruction making clear what to do with it.
-        pub fn instruction(&self) -> Instruction<'_> {
-            todo!()
-        }
-    }
-
-    /// Conversion
-    impl RefSpecRef<'_> {
-        /// Convert this ref into a standalone, owned copy.
-        pub fn to_owned(&self) -> RefSpec {
-            RefSpec {
-                mode: self.mode,
-                op: self.op,
-                src: self.src.map(ToOwned::to_owned),
-                dest: self.dest.map(ToOwned::to_owned),
-            }
-        }
-    }
-}
+pub use types::{Fetch, Instruction, Mode, Operation, Push};

@@ -72,26 +72,35 @@ mod invalid {
 
     mod push {
         use crate::parse::assert_parse;
-        use git_refspec::{Mode, Operation};
+        use git_refspec::{Instruction, Push};
 
         #[test]
         #[ignore]
         fn colon_alone_is_for_pushing_matching_refs() {
-            assert_parse(":", Operation::Push, None, None, Mode::Normal);
+            assert_parse(
+                ":",
+                Instruction::Push(Push::AllMatchingBranches {
+                    allow_non_fast_forward: false,
+                }),
+            );
         }
     }
 }
 
 mod util {
-    use git_refspec::{Mode, Operation, RefSpecRef};
+    use git_refspec::{Instruction, Operation, RefSpecRef};
+
+    // pub fn b(input: &str) -> &bstr::BStr {
+    //     input.into()
+    // }
 
     pub fn try_parse(spec: &str, op: Operation) -> Result<RefSpecRef<'_>, git_refspec::parse::Error> {
         git_refspec::parse(spec.into(), op)
     }
 
-    pub fn assert_parse(spec: &str, op: Operation, _src: Option<&str>, _dest: Option<&str>, mode: Mode) {
-        let spec = try_parse(spec, op).expect("no error");
-        assert_eq!(spec.mode(), mode);
+    pub fn assert_parse(spec: &str, expected: Instruction<'_>) {
+        let spec = try_parse(spec, expected.operation()).expect("no error");
+        assert_eq!(spec.instruction(), expected)
     }
 }
 pub use util::*;

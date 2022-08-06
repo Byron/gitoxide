@@ -20,17 +20,17 @@ pub enum Operation {
     Fetch,
 }
 
+#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Instruction<'a> {
     Push(Push<'a>),
     Fetch(Fetch<'a>),
 }
 
+#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Push<'a> {
-    /// Push a single ref knowing only one ref name.
-    SingleMatching {
-        /// The name of the ref to push from `src` to `dest`.
-        src_and_dest: &'a BStr,
-        /// If true, allow non-fast-forward updates of `dest`.
+    /// Push all local branches to the matching destination on the remote, which has to exist to be updated.
+    AllMatchingBranches {
+        /// If true, allow non-fast-forward updates of the matched destination branch.
         allow_non_fast_forward: bool,
     },
     /// Exclude a single ref.
@@ -63,6 +63,7 @@ pub enum Push<'a> {
     },
 }
 
+#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Fetch<'a> {
     Only {
         /// The ref name to fetch on the remote side, without updating the local side.
@@ -95,4 +96,13 @@ pub enum Fetch<'a> {
         /// If true, allow non-fast-forward updates of `dest`.
         allow_non_fast_forward: bool,
     },
+}
+
+impl Instruction<'_> {
+    pub fn operation(&self) -> Operation {
+        match self {
+            Instruction::Push(_) => Operation::Push,
+            Instruction::Fetch(_) => Operation::Fetch,
+        }
+    }
 }
