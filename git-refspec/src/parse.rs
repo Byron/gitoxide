@@ -73,7 +73,7 @@ pub(crate) mod function {
 
         let (src, src_had_pattern) = validated(src)?;
         let (dst, dst_had_pattern) = validated(dst)?;
-        if src_had_pattern != dst_had_pattern {
+        if mode != Mode::Negative && src_had_pattern != dst_had_pattern {
             return Err(Error::PatternUnbalanced);
         }
         Ok(RefSpecRef {

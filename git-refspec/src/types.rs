@@ -26,6 +26,7 @@ pub enum Instruction<'a> {
     Fetch(Fetch<'a>),
 }
 
+/// Note that all sources can either be a ref-name, partial or full, or a rev-spec. Destinations can only be a partial or full ref name.
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Push<'a> {
     /// Push all local branches to the matching destination on the remote, which has to exist to be updated.
@@ -59,7 +60,7 @@ pub enum Push<'a> {
     },
     /// Push a multiple refs to matching destination refs, with exactly a single glob on both sides.
     MultipleWithGlob {
-        /// The source ref to match against all refs for pushing.
+        /// The source ref to match against all refs for pushing, as pattern with a single `*`.
         src: &'a BStr,
         /// The ref to update with object obtained from `src`, filling in the `*` with the portion that matched in `src`.
         dst: &'a BStr,
@@ -68,10 +69,13 @@ pub enum Push<'a> {
     },
 }
 
+/// Note that any source can either be a ref name (full or partial) or a fully spelled out hex-sha for an object.
+///
+/// Destinations can only be a partial or full ref-name.
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Fetch<'a> {
     Only {
-        /// The ref name to fetch on the remote side, without updating the local side.
+        /// The ref name to fetch on the remote side, without updating the local side. This will write the result into `FETCH_HEAD`.
         src: &'a BStr,
     },
     /// Exclude a single ref.
@@ -94,7 +98,7 @@ pub enum Fetch<'a> {
     },
     /// Similar to `FetchAndUpdate`, but src and destination contain a single glob to fetch and update multiple refs.
     AndUpdateMultipleWithGlob {
-        /// The ref glob to match against all refs on the remote side for fetching.
+        /// The ref glob to match against all refs on the remote side for fetching, as pattern with a single `*`.
         src: &'a BStr,
         /// The local destination to update with what was fetched by replacing the single `*` with the matching portion from `src`.
         dst: &'a BStr,

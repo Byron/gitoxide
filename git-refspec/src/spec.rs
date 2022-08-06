@@ -14,48 +14,60 @@ impl RefSpecRef<'_> {
         fn has_pattern(item: &BStr) -> bool {
             item.contains(&b'*')
         }
-        match (self.op, self.mode, self.src, self.dst) {
-            (Operation::Fetch, Mode::Normal | Mode::Force, Some(src), None) => Instruction::Fetch(Fetch::Only { src }),
-            (Operation::Fetch, Mode::Normal | Mode::Force, Some(src), Some(dst)) => {
-                Instruction::Fetch(Fetch::AndUpdateSingle {
+        match self.op {
+            Operation::Fetch => match (self.mode, self.src, self.dst) {
+                (Mode::Normal | Mode::Force, Some(src), None) => Instruction::Fetch(Fetch::Only { src }),
+                (Mode::Normal | Mode::Force, Some(src), Some(dst)) => Instruction::Fetch(Fetch::AndUpdateSingle {
                     src,
                     dst,
                     allow_non_fast_forward: matches!(self.mode, Mode::Force),
-                })
-            }
-            (Operation::Push, Mode::Normal | Mode::Force, Some(src), None) => Instruction::Push(Push::Single {
-                src,
-                dst: src,
-                allow_non_fast_forward: matches!(self.mode, Mode::Force),
-            }),
-            (Operation::Push, Mode::Normal | Mode::Force, None, Some(dst)) => {
-                Instruction::Push(Push::Delete { ref_or_pattern: dst })
-            }
-            (Operation::Push, Mode::Normal | Mode::Force, None, None) => Instruction::Push(Push::AllMatchingBranches {
-                allow_non_fast_forward: matches!(self.mode, Mode::Force),
-            }),
-            (Operation::Push, Mode::Normal | Mode::Force, Some(src), Some(dst)) if has_pattern(src) => {
-                Instruction::Push(Push::MultipleWithGlob {
+                }),
+                (Mode::Negative, Some(src), None) if has_pattern(src) => {
+                    Instruction::Fetch(Fetch::ExcludeMultipleWithGlob { src })
+                }
+                (Mode::Negative, Some(src), None) => Instruction::Fetch(Fetch::ExcludeSingle { src }),
+                (mode, src, dest) => {
+                    unreachable!(
+                        "BUG: fetch instructions with {:?} {:?} {:?} are not possible",
+                        mode, src, dest
+                    )
+                }
+            },
+            Operation::Push => match (self.mode, self.src, self.dst) {
+                (Mode::Normal | Mode::Force, Some(src), None) => Instruction::Push(Push::Single {
+                    src,
+                    dst: src,
+                    allow_non_fast_forward: matches!(self.mode, Mode::Force),
+                }),
+                (Mode::Normal | Mode::Force, None, Some(dst)) => {
+                    Instruction::Push(Push::Delete { ref_or_pattern: dst })
+                }
+                (Mode::Normal | Mode::Force, None, None) => Instruction::Push(Push::AllMatchingBranches {
+                    allow_non_fast_forward: matches!(self.mode, Mode::Force),
+                }),
+                (Mode::Normal | Mode::Force, Some(src), Some(dst)) if has_pattern(src) => {
+                    Instruction::Push(Push::MultipleWithGlob {
+                        src,
+                        dst,
+                        allow_non_fast_forward: matches!(self.mode, Mode::Force),
+                    })
+                }
+                (Mode::Normal | Mode::Force, Some(src), Some(dst)) => Instruction::Push(Push::Single {
                     src,
                     dst,
                     allow_non_fast_forward: matches!(self.mode, Mode::Force),
-                })
-            }
-            (Operation::Push, Mode::Normal | Mode::Force, Some(src), Some(dst)) => Instruction::Push(Push::Single {
-                src,
-                dst,
-                allow_non_fast_forward: matches!(self.mode, Mode::Force),
-            }),
-            (Operation::Push, Mode::Negative, Some(src), None) if has_pattern(src) => {
-                Instruction::Push(Push::ExcludeMultipleWithGlob { src })
-            }
-            (Operation::Push, Mode::Negative, Some(src), None) => Instruction::Push(Push::ExcludeSingle { src }),
-            (op, mode, src, dest) => {
-                unreachable!(
-                    "BUG: instructions with {:?} {:?} {:?} {:?} are not possible",
-                    op, mode, src, dest
-                )
-            }
+                }),
+                (Mode::Negative, Some(src), None) if has_pattern(src) => {
+                    Instruction::Push(Push::ExcludeMultipleWithGlob { src })
+                }
+                (Mode::Negative, Some(src), None) => Instruction::Push(Push::ExcludeSingle { src }),
+                (mode, src, dest) => {
+                    unreachable!(
+                        "BUG: push instructions with {:?} {:?} {:?} are not possible",
+                        mode, src, dest
+                    )
+                }
+            },
         }
     }
 }

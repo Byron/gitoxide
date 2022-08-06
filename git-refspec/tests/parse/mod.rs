@@ -109,6 +109,19 @@ mod fetch {
     use git_refspec::{Fetch, Instruction, Mode};
 
     #[test]
+    fn exclude_single() {
+        assert_parse("^a", Instruction::Fetch(Fetch::ExcludeSingle { src: b("a") }));
+    }
+
+    #[test]
+    fn exclude_multiple() {
+        assert_parse(
+            "^a*",
+            Instruction::Fetch(Fetch::ExcludeMultipleWithGlob { src: b("a*") }),
+        );
+    }
+
+    #[test]
     fn lhs_colon_empty_fetches_only() {
         assert_parse("src:", Instruction::Fetch(Fetch::Only { src: b("src") }));
         let spec = assert_parse("+src:", Instruction::Fetch(Fetch::Only { src: b("src") }));
@@ -156,6 +169,16 @@ mod fetch {
 mod push {
     use crate::parse::{assert_parse, b};
     use git_refspec::{Instruction, Mode, Push};
+
+    #[test]
+    fn exclude_single() {
+        assert_parse("^a", Instruction::Push(Push::ExcludeSingle { src: b("a") }));
+    }
+
+    #[test]
+    fn exclude_multiple() {
+        assert_parse("^a*", Instruction::Push(Push::ExcludeMultipleWithGlob { src: b("a*") }));
+    }
 
     #[test]
     fn colon_alone_is_for_pushing_matching_refs() {
