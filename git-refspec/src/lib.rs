@@ -11,7 +11,7 @@ pub struct RefSpecRef<'a> {
     mode: Mode,
     op: Operation,
     src: Option<&'a bstr::BStr>,
-    dest: Option<&'a bstr::BStr>,
+    dst: Option<&'a bstr::BStr>,
 }
 
 /// An owned refspec.
@@ -20,7 +20,7 @@ pub struct RefSpec {
     mode: Mode,
     op: Operation,
     src: Option<bstr::BString>,
-    dest: Option<bstr::BString>,
+    dst: Option<bstr::BString>,
 }
 
 mod spec;

@@ -75,12 +75,17 @@ mod invalid {
         use git_refspec::{Instruction, Push};
 
         #[test]
-        #[ignore]
         fn colon_alone_is_for_pushing_matching_refs() {
             assert_parse(
                 ":",
                 Instruction::Push(Push::AllMatchingBranches {
                     allow_non_fast_forward: false,
+                }),
+            );
+            assert_parse(
+                "+:",
+                Instruction::Push(Push::AllMatchingBranches {
+                    allow_non_fast_forward: true,
                 }),
             );
         }

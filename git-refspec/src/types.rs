@@ -33,6 +33,11 @@ pub enum Push<'a> {
         /// If true, allow non-fast-forward updates of the matched destination branch.
         allow_non_fast_forward: bool,
     },
+    /// Delete the destination ref or glob pattern, with only a single `*` allowed.
+    Delete {
+        /// The reference or pattern to delete on the remote.
+        ref_or_pattern: &'a BStr,
+    },
     /// Exclude a single ref.
     ExcludeSingle {
         /// A single full ref name to exclude.
@@ -48,7 +53,7 @@ pub enum Push<'a> {
         /// The source ref or refspec to push.
         src: &'a BStr,
         /// The ref to update with the object from `src`.
-        dest: &'a BStr,
+        dst: &'a BStr,
         /// If true, allow non-fast-forward updates of `dest`.
         allow_non_fast_forward: bool,
     },
@@ -57,7 +62,7 @@ pub enum Push<'a> {
         /// The source ref to match against all refs for pushing.
         src: &'a BStr,
         /// The ref to update with object obtained from `src`, filling in the `*` with the portion that matched in `src`.
-        dest: &'a BStr,
+        dst: &'a BStr,
         /// If true, allow non-fast-forward updates of `dest`.
         allow_non_fast_forward: bool,
     },
@@ -83,7 +88,7 @@ pub enum Fetch<'a> {
         /// The ref name to fetch on the remote side.
         src: &'a BStr,
         /// The local destination to update with what was fetched.
-        dest: &'a BStr,
+        dst: &'a BStr,
         /// If true, allow non-fast-forward updates of `dest`.
         allow_non_fast_forward: bool,
     },
@@ -92,7 +97,7 @@ pub enum Fetch<'a> {
         /// The ref glob to match against all refs on the remote side for fetching.
         src: &'a BStr,
         /// The local destination to update with what was fetched by replacing the single `*` with the matching portion from `src`.
-        dest: &'a BStr,
+        dst: &'a BStr,
         /// If true, allow non-fast-forward updates of `dest`.
         allow_non_fast_forward: bool,
     },

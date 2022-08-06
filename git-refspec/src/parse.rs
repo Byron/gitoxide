@@ -12,25 +12,43 @@ pub(crate) mod function {
     use bstr::{BStr, ByteSlice};
 
     /// Parse `spec` for use in `operation` and return it if it is valid.
-    pub fn parse(mut spec: &BStr, _operation: Operation) -> Result<RefSpecRef<'_>, Error> {
+    pub fn parse(mut spec: &BStr, operation: Operation) -> Result<RefSpecRef<'_>, Error> {
         let mode = match spec.get(0) {
             Some(&b'^') => {
                 spec = &spec[1..];
                 Mode::Negative
             }
+            Some(&b'+') => {
+                spec = &spec[1..];
+                Mode::Force
+            }
             Some(_) => Mode::Normal,
             None => return Err(Error::Empty),
         };
 
-        match spec.find_byte(b':') {
+        let (src, dst) = match spec.find_byte(b':') {
             Some(pos) => {
-                let (_src, _dst) = spec.split_at(pos);
+                let (src, dst) = spec.split_at(pos);
+                let dst = &dst[1..];
                 if mode == Mode::Negative {
                     return Err(Error::NegativeWithDestination);
                 }
-                todo!("with colon")
+                let src = (!src.is_empty()).then(|| src.as_bstr());
+                let dst = (!dst.is_empty()).then(|| dst.as_bstr());
+                match (src, dst) {
+                    (None, None) => {}
+                    _ => todo!("src or dst handling"),
+                };
+                (src, dst)
             }
             None => todo!("no colon"),
-        }
+        };
+
+        Ok(RefSpecRef {
+            op: operation,
+            mode,
+            src,
+            dst,
+        })
     }
 }

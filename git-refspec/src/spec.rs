@@ -14,25 +14,25 @@ impl RefSpecRef<'_> {
         fn has_pattern(item: &BStr) -> bool {
             item.contains(&b'*')
         }
-        match (self.op, self.mode, self.src, self.dest) {
+        match (self.op, self.mode, self.src, self.dst) {
             (Operation::Push, Mode::Normal | Mode::Force, Some(src), None) => Instruction::Push(Push::Single {
                 src,
-                dest: src,
+                dst: src,
                 allow_non_fast_forward: matches!(self.mode, Mode::Force),
             }),
             (Operation::Push, Mode::Normal | Mode::Force, None, None) => Instruction::Push(Push::AllMatchingBranches {
                 allow_non_fast_forward: matches!(self.mode, Mode::Force),
             }),
-            (Operation::Push, Mode::Normal | Mode::Force, Some(src), Some(dest)) if has_pattern(src) => {
+            (Operation::Push, Mode::Normal | Mode::Force, Some(src), Some(dst)) if has_pattern(src) => {
                 Instruction::Push(Push::MultipleWithGlob {
                     src,
-                    dest,
+                    dst,
                     allow_non_fast_forward: matches!(self.mode, Mode::Force),
                 })
             }
-            (Operation::Push, Mode::Normal | Mode::Force, Some(src), Some(dest)) => Instruction::Push(Push::Single {
+            (Operation::Push, Mode::Normal | Mode::Force, Some(src), Some(dst)) => Instruction::Push(Push::Single {
                 src,
-                dest,
+                dst,
                 allow_non_fast_forward: matches!(self.mode, Mode::Force),
             }),
             (Operation::Push, Mode::Negative, Some(src), None) if has_pattern(src) => {
@@ -57,7 +57,7 @@ impl RefSpecRef<'_> {
             mode: self.mode,
             op: self.op,
             src: self.src.map(ToOwned::to_owned),
-            dest: self.dest.map(ToOwned::to_owned),
+            dst: self.dst.map(ToOwned::to_owned),
         }
     }
 }
