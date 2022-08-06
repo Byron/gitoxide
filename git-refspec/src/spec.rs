@@ -34,11 +34,6 @@ impl RefSpecRef<'_> {
             (Operation::Push, Mode::Normal | Mode::Force, None, None) => Instruction::Push(Push::AllMatchingBranches {
                 allow_non_fast_forward: matches!(self.mode, Mode::Force),
             }),
-            (Operation::Fetch, Mode::Normal | Mode::Force, None, None) => {
-                Instruction::Fetch(Fetch::AllMatchingBranches {
-                    allow_non_fast_forward: matches!(self.mode, Mode::Force),
-                })
-            }
             (Operation::Push, Mode::Normal | Mode::Force, Some(src), Some(dst)) if has_pattern(src) => {
                 Instruction::Push(Push::MultipleWithGlob {
                     src,

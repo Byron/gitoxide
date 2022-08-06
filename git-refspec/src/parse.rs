@@ -29,7 +29,17 @@ pub(crate) mod function {
                 Mode::Force
             }
             Some(_) => Mode::Normal,
-            None => return Err(Error::Empty),
+            None => {
+                return match operation {
+                    Operation::Push => Err(Error::Empty),
+                    Operation::Fetch => Ok(RefSpecRef {
+                        mode: Mode::Normal,
+                        op: operation,
+                        src: Some("HEAD".into()),
+                        dst: None,
+                    }),
+                }
+            }
         };
 
         let (src, dst) = match spec.find_byte(b':') {
@@ -43,7 +53,10 @@ pub(crate) mod function {
                 let src = (!src.is_empty()).then(|| src.as_bstr());
                 let dst = (!dst.is_empty()).then(|| dst.as_bstr());
                 match (src, dst) {
-                    (None, None) => (None, None),
+                    (None, None) => match operation {
+                        Operation::Push => (None, None),
+                        Operation::Fetch => (Some("HEAD".into()), None),
+                    },
                     (None, Some(dst)) => match operation {
                         Operation::Push => (None, Some(dst)),
                         Operation::Fetch => (Some("HEAD".into()), Some(dst)),

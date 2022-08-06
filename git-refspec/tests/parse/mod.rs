@@ -33,7 +33,7 @@ fn baseline() {
             Ok(res) => match (res.is_ok(), err_code == 0) {
                 (true, true) | (false, false) => {}
                 _ => {
-                    eprintln!("{res:?} {err_code} {} {:?}", kind.as_bstr(), spec.as_bstr());
+                    eprintln!("{err_code} {res:?} {} {:?}", kind.as_bstr(), spec.as_bstr());
                     mismatch += 1;
                 }
             },
@@ -59,7 +59,6 @@ mod invalid {
 
     #[test]
     fn empty() {
-        assert!(matches!(try_parse("", Operation::Fetch).unwrap_err(), Error::Empty));
         assert!(matches!(try_parse("", Operation::Push).unwrap_err(), Error::Empty));
     }
 
@@ -142,19 +141,15 @@ mod fetch {
     }
 
     #[test]
-    fn colon_alone_is_for_fetching_into_fetchhead() {
-        assert_parse(
-            ":",
-            Instruction::Fetch(Fetch::AllMatchingBranches {
-                allow_non_fast_forward: false,
-            }),
-        );
-        assert_parse(
-            "+:",
-            Instruction::Fetch(Fetch::AllMatchingBranches {
-                allow_non_fast_forward: true,
-            }),
-        );
+    fn colon_alone_is_for_fetching_head_into_fetchhead() {
+        assert_parse(":", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
+        let spec = assert_parse("+:", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
+        assert_eq!(spec.mode(), Mode::Force, "it's set even though it's not useful");
+    }
+
+    #[test]
+    fn empty_refspec_is_enough_for_fetching_head_into_fetchhead() {
+        assert_parse("", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
     }
 }
 

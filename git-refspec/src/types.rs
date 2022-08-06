@@ -70,11 +70,6 @@ pub enum Push<'a> {
 
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Fetch<'a> {
-    /// TODO: figure out what this actually does - it's valid for sure and only fetches HEAD -> FETCH_HEAD apparently
-    AllMatchingBranches {
-        /// Unclear what this does, but it's allowed
-        allow_non_fast_forward: bool,
-    },
     Only {
         /// The ref name to fetch on the remote side, without updating the local side.
         src: &'a BStr,

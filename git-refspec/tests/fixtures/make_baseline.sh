@@ -64,6 +64,7 @@ baseline push ':'
 
 baseline fetch ''
 baseline fetch ':'
+baseline fetch '+'
 baseline push 'refs/heads/main:refs/remotes/frotz/xyzzy'
 baseline push 'refs/heads/*:refs/remotes/frotz/*'
 
