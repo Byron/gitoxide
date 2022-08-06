@@ -1,9 +1,49 @@
+use bstr::ByteSlice;
+use git_refspec::Operation;
 use git_testtools::scripted_fixture_repo_read_only;
+use std::panic::catch_unwind;
 
 #[test]
-#[ignore]
+#[should_panic]
 fn baseline() {
-    let _dir = scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
+    let dir = scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
+    let baseline = std::fs::read(dir.join("baseline.git")).unwrap();
+    let mut lines = baseline.lines();
+    let mut panics = 0;
+    let mut mismatch = 0;
+    let mut count = 0;
+    while let Some(kind_spec) = lines.next() {
+        count += 1;
+        let (kind, spec) = kind_spec.split_at(kind_spec.find_byte(b' ').expect("space between kind and spec"));
+        let err_code: usize = lines
+            .next()
+            .expect("err code")
+            .to_str()
+            .unwrap()
+            .parse()
+            .expect("number");
+        let op = match kind {
+            b"fetch" => Operation::Fetch,
+            b"push" => Operation::Push,
+            _ => unreachable!("{} unexpected", kind.as_bstr()),
+        };
+        let res = catch_unwind(|| try_parse(spec.to_str().unwrap(), op));
+        match res {
+            Ok(res) => match (res.is_ok(), err_code == 0) {
+                (true, true) | (false, false) => {}
+                _ => mismatch += 1,
+            },
+            Err(_) => {
+                panics += 1;
+            }
+        }
+    }
+    if panics != 0 || mismatch != 0 {
+        panic!(
+            "Out of {} baseline entries, got {} mismatches and {} panics",
+            count, mismatch, panics
+        );
+    }
 }
 
 mod invalid {
