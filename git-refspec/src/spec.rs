@@ -17,6 +17,13 @@ impl RefSpecRef<'_> {
         match self.op {
             Operation::Fetch => match (self.mode, self.src, self.dst) {
                 (Mode::Normal | Mode::Force, Some(src), None) => Instruction::Fetch(Fetch::Only { src }),
+                (Mode::Normal | Mode::Force, Some(src), Some(dst)) if has_pattern(src) => {
+                    Instruction::Fetch(Fetch::AndUpdateMultipleWithGlob {
+                        src,
+                        dst,
+                        allow_non_fast_forward: matches!(self.mode, Mode::Force),
+                    })
+                }
                 (Mode::Normal | Mode::Force, Some(src), Some(dst)) => Instruction::Fetch(Fetch::AndUpdateSingle {
                     src,
                     dst,

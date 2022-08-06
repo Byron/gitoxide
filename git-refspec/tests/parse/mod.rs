@@ -31,7 +31,11 @@ fn baseline() {
         let res = catch_unwind(|| try_parse(spec.to_str().unwrap(), op));
         match res {
             Ok(res) => match (res.is_ok(), err_code == 0) {
-                (true, true) | (false, false) => {}
+                (true, true) | (false, false) => {
+                    if let Ok(spec) = res {
+                        spec.instruction(); // should not panic
+                    }
+                }
                 _ => {
                     eprintln!("{err_code} {res:?} {} {:?}", kind.as_bstr(), spec.as_bstr());
                     mismatch += 1;
@@ -133,6 +137,46 @@ mod fetch {
     }
 
     #[test]
+    fn lhs_colon_rhs_updates_single_ref() {
+        assert_parse(
+            "a:b",
+            Instruction::Fetch(Fetch::AndUpdateSingle {
+                src: b("a"),
+                dst: b("b"),
+                allow_non_fast_forward: false,
+            }),
+        );
+        assert_parse(
+            "+a:b",
+            Instruction::Fetch(Fetch::AndUpdateSingle {
+                src: b("a"),
+                dst: b("b"),
+                allow_non_fast_forward: true,
+            }),
+        );
+    }
+
+    #[test]
+    fn lhs_colon_rhs_with_glob_updates_multiple_refs() {
+        assert_parse(
+            "a/*:b/*",
+            Instruction::Fetch(Fetch::AndUpdateMultipleWithGlob {
+                src: b("a/*"),
+                dst: b("b/*"),
+                allow_non_fast_forward: false,
+            }),
+        );
+        assert_parse(
+            "+a/*:b/*",
+            Instruction::Fetch(Fetch::AndUpdateMultipleWithGlob {
+                src: b("a/*"),
+                dst: b("b/*"),
+                allow_non_fast_forward: true,
+            }),
+        );
+    }
+
+    #[test]
     fn empty_lhs_colon_rhs_fetches_head_to_destination() {
         assert_parse(
             ":a",
@@ -178,6 +222,46 @@ mod push {
     #[test]
     fn exclude_multiple() {
         assert_parse("^a*", Instruction::Push(Push::ExcludeMultipleWithGlob { src: b("a*") }));
+    }
+
+    #[test]
+    fn lhs_colon_rhs_pushes_single_ref() {
+        assert_parse(
+            "a:b",
+            Instruction::Push(Push::Single {
+                src: b("a"),
+                dst: b("b"),
+                allow_non_fast_forward: false,
+            }),
+        );
+        assert_parse(
+            "+a:b",
+            Instruction::Push(Push::Single {
+                src: b("a"),
+                dst: b("b"),
+                allow_non_fast_forward: true,
+            }),
+        );
+    }
+
+    #[test]
+    fn lhs_colon_rhs_with_glob_pushes_multiple_refs() {
+        assert_parse(
+            "a/*:b/*",
+            Instruction::Push(Push::MultipleWithGlob {
+                src: b("a/*"),
+                dst: b("b/*"),
+                allow_non_fast_forward: false,
+            }),
+        );
+        assert_parse(
+            "+a/*:b/*",
+            Instruction::Push(Push::MultipleWithGlob {
+                src: b("a/*"),
+                dst: b("b/*"),
+                allow_non_fast_forward: true,
+            }),
+        );
     }
 
     #[test]
