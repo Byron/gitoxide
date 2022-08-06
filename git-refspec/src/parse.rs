@@ -6,6 +6,10 @@ pub enum Error {
     NegativeWithDestination,
     #[error("Cannot push into an empty destination")]
     PushToEmpty,
+    #[error("glob patterns may only involved a single '*' character, found {pattern:?}")]
+    PatternUnsupported { pattern: bstr::BString },
+    #[error("Both sides of the specification need a pattern, like 'a/*:b/*'")]
+    PatternUnbalanced,
 }
 
 pub(crate) mod function {
@@ -48,17 +52,35 @@ pub(crate) mod function {
                         Operation::Push => return Err(Error::PushToEmpty),
                         Operation::Fetch => (Some(src), None),
                     },
-                    _ => todo!("src or dst handling"),
+                    (Some(src), Some(dst)) => (Some(src), Some(dst)),
                 }
             }
-            None => todo!("no colon"),
+            None => (Some(spec), None),
         };
 
+        let (src, src_had_pattern) = validated(src)?;
+        let (dst, dst_had_pattern) = validated(dst)?;
+        if src_had_pattern != dst_had_pattern {
+            return Err(Error::PatternUnbalanced);
+        }
         Ok(RefSpecRef {
             op: operation,
             mode,
             src,
             dst,
         })
+    }
+
+    fn validated(spec: Option<&BStr>) -> Result<(Option<&BStr>, bool), Error> {
+        match spec {
+            Some(spec) => {
+                let glob_count = spec.iter().filter(|b| **b == b'*').take(2).count();
+                if glob_count == 2 {
+                    return Err(Error::PatternUnsupported { pattern: spec.into() });
+                }
+                Ok((Some(spec), glob_count == 1))
+            }
+            None => Ok((None, false)),
+        }
     }
 }

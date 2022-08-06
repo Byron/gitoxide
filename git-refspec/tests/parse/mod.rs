@@ -15,6 +15,7 @@ fn baseline() {
     while let Some(kind_spec) = lines.next() {
         count += 1;
         let (kind, spec) = kind_spec.split_at(kind_spec.find_byte(b' ').expect("space between kind and spec"));
+        let spec = &spec[1..];
         let err_code: usize = lines
             .next()
             .expect("err code")
@@ -32,7 +33,7 @@ fn baseline() {
             Ok(res) => match (res.is_ok(), err_code == 0) {
                 (true, true) | (false, false) => {}
                 _ => {
-                    eprintln!("{res:?} {err_code}");
+                    eprintln!("{res:?} {err_code} {} {:?}", kind.as_bstr(), spec.as_bstr());
                     mismatch += 1;
                 }
             },
@@ -70,6 +71,27 @@ mod invalid {
                     try_parse(spec, op).unwrap_err(),
                     Error::NegativeWithDestination
                 ));
+            }
+        }
+    }
+
+    #[test]
+    fn complex_patterns_with_more_than_one_asterisk() {
+        for op in [Operation::Fetch, Operation::Push] {
+            for spec in ["^*/*", "a/*/c/*", "a**:**b", "+:**/"] {
+                assert!(matches!(
+                    try_parse(spec, op).unwrap_err(),
+                    Error::PatternUnsupported { .. }
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn both_sides_need_pattern_if_one_uses_it() {
+        for op in [Operation::Fetch, Operation::Push] {
+            for spec in ["/*/a", ":a/*", "+:a/*", "a*:b/c", "a:b/*"] {
+                assert!(matches!(try_parse(spec, op).unwrap_err(), Error::PatternUnbalanced));
             }
         }
     }
