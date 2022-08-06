@@ -26,7 +26,8 @@ pub enum Instruction<'a> {
     Fetch(Fetch<'a>),
 }
 
-/// Note that all sources can either be a ref-name, partial or full, or a rev-spec. Destinations can only be a partial or full ref name.
+/// Note that all sources can either be a ref-name, partial or full, or a rev-spec, unless specified otherwise, on the local side.
+/// Destinations can only be a partial or full ref names on the remote side.
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Push<'a> {
     /// Push all local branches to the matching destination on the remote, which has to exist to be updated.
@@ -40,38 +41,24 @@ pub enum Push<'a> {
         ref_or_pattern: &'a BStr,
     },
     /// Exclude a single ref.
-    ExcludeSingle {
-        /// A single full ref name to exclude.
-        src: &'a BStr,
-    },
-    /// Exclude multiple refs with single `*` glob.
-    ExcludeMultipleWithGlob {
-        /// A ref pattern with a single `*`.
+    Exclude {
+        /// A full or partial ref name to exclude, or multiple if a single `*` is used.
         src: &'a BStr,
     },
     /// Push a single ref or refspec to a known destination ref.
-    Single {
-        /// The source ref or refspec to push.
+    Matching {
+        /// The source ref or refspec to push. If pattern, it contains a single `*`.
         src: &'a BStr,
-        /// The ref to update with the object from `src`.
-        dst: &'a BStr,
-        /// If true, allow non-fast-forward updates of `dest`.
-        allow_non_fast_forward: bool,
-    },
-    /// Push a multiple refs to matching destination refs, with exactly a single glob on both sides.
-    MultipleWithGlob {
-        /// The source ref to match against all refs for pushing, as pattern with a single `*`.
-        src: &'a BStr,
-        /// The ref to update with object obtained from `src`, filling in the `*` with the portion that matched in `src`.
+        /// The ref to update with the object from `src`. If `src`  is a pattern, this is a pattern too.
         dst: &'a BStr,
         /// If true, allow non-fast-forward updates of `dest`.
         allow_non_fast_forward: bool,
     },
 }
 
-/// Note that any source can either be a ref name (full or partial) or a fully spelled out hex-sha for an object.
+/// Note that any source can either be a ref name (full or partial) or a fully spelled out hex-sha for an object, on the remote side.
 ///
-/// Destinations can only be a partial or full ref-name.
+/// Destinations can only be a partial or full ref-names on the local side.
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Fetch<'a> {
     Only {
@@ -79,28 +66,15 @@ pub enum Fetch<'a> {
         src: &'a BStr,
     },
     /// Exclude a single ref.
-    ExcludeSingle {
-        /// A single full ref name to exclude.
+    Exclude {
+        /// A single partial or full ref name to exclude on the remote, or a pattern with a single `*`.
         src: &'a BStr,
     },
-    /// Exclude multiple refs with single `*` glob.
-    ExcludeMultipleWithGlob {
-        /// A ref pattern with a single `*`.
+    AndUpdate {
+        /// The ref name to fetch on the remote side, or a pattern with a single `*` to match against.
         src: &'a BStr,
-    },
-    AndUpdateSingle {
-        /// The ref name to fetch on the remote side.
-        src: &'a BStr,
-        /// The local destination to update with what was fetched.
-        dst: &'a BStr,
-        /// If true, allow non-fast-forward updates of `dest`.
-        allow_non_fast_forward: bool,
-    },
-    /// Similar to `FetchAndUpdate`, but src and destination contain a single glob to fetch and update multiple refs.
-    AndUpdateMultipleWithGlob {
-        /// The ref glob to match against all refs on the remote side for fetching, as pattern with a single `*`.
-        src: &'a BStr,
-        /// The local destination to update with what was fetched by replacing the single `*` with the matching portion from `src`.
+        /// The local destination to update with what was fetched, or a pattern whose single `*` will be replaced with the matching portion
+        /// of the `*` from `src`.
         dst: &'a BStr,
         /// If true, allow non-fast-forward updates of `dest`.
         allow_non_fast_forward: bool,
