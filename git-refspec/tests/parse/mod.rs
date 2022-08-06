@@ -4,7 +4,6 @@ use git_testtools::scripted_fixture_repo_read_only;
 use std::panic::catch_unwind;
 
 #[test]
-#[should_panic]
 fn baseline() {
     let dir = scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
     let baseline = std::fs::read(dir.join("baseline.git")).unwrap();

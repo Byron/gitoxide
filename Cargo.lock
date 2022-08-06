@@ -1489,6 +1489,8 @@ name = "git-refspec"
 version = "0.0.0"
 dependencies = [
  "bstr",
+ "git-hash",
+ "git-revision",
  "git-testtools",
  "git-validate",
  "smallvec",

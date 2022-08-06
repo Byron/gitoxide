@@ -11,7 +11,9 @@ pub enum Error {
     #[error("Both sides of the specification need a pattern, like 'a/*:b/*'")]
     PatternUnbalanced,
     #[error(transparent)]
-    Refname(#[from] git_validate::refname::Error),
+    ReferenceName(#[from] git_validate::refname::Error),
+    #[error(transparent)]
+    RevSpec(#[from] git_revision::spec::parse::Error),
 }
 
 pub(crate) mod function {
@@ -84,8 +86,8 @@ pub(crate) mod function {
             }
         };
 
-        let (src, src_had_pattern) = validated(src)?;
-        let (dst, dst_had_pattern) = validated(dst)?;
+        let (src, src_had_pattern) = validated(src, operation == Operation::Push)?;
+        let (dst, dst_had_pattern) = validated(dst, false)?;
         if mode != Mode::Negative && src_had_pattern != dst_had_pattern {
             return Err(Error::PatternUnbalanced);
         }
@@ -97,7 +99,7 @@ pub(crate) mod function {
         })
     }
 
-    fn validated(spec: Option<&BStr>) -> Result<(Option<&BStr>, bool), Error> {
+    fn validated(spec: Option<&BStr>, allow_revspecs: bool) -> Result<(Option<&BStr>, bool), Error> {
         match spec {
             Some(spec) => {
                 let glob_count = spec.iter().filter(|b| **b == b'*').take(2).count();
@@ -111,11 +113,87 @@ pub(crate) mod function {
                     buf[glob_pos] = b'a';
                     git_validate::reference::name_partial(buf.as_bstr())?;
                 } else {
-                    git_validate::reference::name_partial(spec)?;
+                    git_validate::reference::name_partial(spec)
+                        .map_err(Error::from)
+                        .or_else(|err| {
+                            if allow_revspecs {
+                                match git_revision::spec::parse(spec, &mut super::revparse::Noop) {
+                                    Ok(_) => {
+                                        if spec.iter().any(|b| b.is_ascii_whitespace()) {
+                                            Err(err)
+                                        } else {
+                                            Ok(spec)
+                                        }
+                                    }
+                                    Err(err) => Err(err.into()),
+                                }
+                            } else {
+                                Err(err)
+                            }
+                        })?;
                 }
                 Ok((Some(spec), glob_count == 1))
             }
             None => Ok((None, false)),
         }
+    }
+}
+
+mod revparse {
+    use bstr::BStr;
+    use git_revision::spec::parse::delegate::{
+        Kind, Navigate, PeelTo, PrefixHint, ReflogLookup, Revision, SiblingBranch, Traversal,
+    };
+
+    pub(crate) struct Noop;
+
+    impl Revision for Noop {
+        fn find_ref(&mut self, _name: &BStr) -> Option<()> {
+            Some(())
+        }
+
+        fn disambiguate_prefix(&mut self, _prefix: git_hash::Prefix, _hint: Option<PrefixHint<'_>>) -> Option<()> {
+            Some(())
+        }
+
+        fn reflog(&mut self, _query: ReflogLookup) -> Option<()> {
+            Some(())
+        }
+
+        fn nth_checked_out_branch(&mut self, _branch_no: usize) -> Option<()> {
+            Some(())
+        }
+
+        fn sibling_branch(&mut self, _kind: SiblingBranch) -> Option<()> {
+            Some(())
+        }
+    }
+
+    impl Navigate for Noop {
+        fn traverse(&mut self, _kind: Traversal) -> Option<()> {
+            Some(())
+        }
+
+        fn peel_until(&mut self, _kind: PeelTo<'_>) -> Option<()> {
+            Some(())
+        }
+
+        fn find(&mut self, _regex: &BStr, _negated: bool) -> Option<()> {
+            Some(())
+        }
+
+        fn index_lookup(&mut self, _path: &BStr, _stage: u8) -> Option<()> {
+            Some(())
+        }
+    }
+
+    impl Kind for Noop {
+        fn kind(&mut self, _kind: git_revision::spec::Kind) -> Option<()> {
+            Some(())
+        }
+    }
+
+    impl git_revision::spec::parse::Delegate for Noop {
+        fn done(&mut self) {}
     }
 }
