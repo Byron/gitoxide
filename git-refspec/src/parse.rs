@@ -108,7 +108,7 @@ pub(crate) mod function {
                 }
                 if glob_count == 1 {
                     let mut buf = smallvec::SmallVec::<[u8; 256]>::with_capacity(spec.len());
-                    buf.extend_from_slice(&spec);
+                    buf.extend_from_slice(spec);
                     let glob_pos = buf.find_byte(b'*').expect("glob present");
                     buf[glob_pos] = b'a';
                     git_validate::reference::name_partial(buf.as_bstr())?;
