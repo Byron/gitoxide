@@ -74,78 +74,97 @@ mod invalid {
         }
     }
 
-    mod fetch {
-        use crate::parse::{assert_parse, b};
-        use git_refspec::{Fetch, Instruction};
+    #[test]
+    fn push_to_empty() {
+        assert!(matches!(
+            try_parse("HEAD:", Operation::Push).unwrap_err(),
+            Error::PushToEmpty
+        ));
+    }
+}
 
-        #[test]
-        fn empty_lhs_colon_rhs_fetches_head_to_destination() {
-            assert_parse(
-                ":a",
-                Instruction::Fetch(Fetch::AndUpdateSingle {
-                    src: b("HEAD"),
-                    dst: b("a"),
-                    allow_non_fast_forward: false,
-                }),
-            );
+mod fetch {
+    use crate::parse::{assert_parse, b};
+    use git_refspec::{Fetch, Instruction, Mode};
 
-            assert_parse(
-                "+:a",
-                Instruction::Fetch(Fetch::AndUpdateSingle {
-                    src: b("HEAD"),
-                    dst: b("a"),
-                    allow_non_fast_forward: true,
-                }),
-            );
-        }
-
-        #[test]
-        fn colon_alone_is_for_fetching_into_fetchhead() {
-            assert_parse(
-                ":",
-                Instruction::Fetch(Fetch::AllMatchingBranches {
-                    allow_non_fast_forward: false,
-                }),
-            );
-            assert_parse(
-                "+:",
-                Instruction::Fetch(Fetch::AllMatchingBranches {
-                    allow_non_fast_forward: true,
-                }),
-            );
-        }
+    #[test]
+    fn lhs_colon_empty_fetches_only() {
+        assert_parse("src:", Instruction::Fetch(Fetch::Only { src: b("src") }));
+        let spec = assert_parse("+src:", Instruction::Fetch(Fetch::Only { src: b("src") }));
+        assert_eq!(
+            spec.mode(),
+            Mode::Force,
+            "force is set, even though it has no effect in the actual instruction"
+        );
     }
 
-    mod push {
-        use crate::parse::{assert_parse, b};
-        use git_refspec::{Instruction, Mode, Push};
+    #[test]
+    fn empty_lhs_colon_rhs_fetches_head_to_destination() {
+        assert_parse(
+            ":a",
+            Instruction::Fetch(Fetch::AndUpdateSingle {
+                src: b("HEAD"),
+                dst: b("a"),
+                allow_non_fast_forward: false,
+            }),
+        );
 
-        #[test]
-        fn colon_alone_is_for_pushing_matching_refs() {
-            assert_parse(
-                ":",
-                Instruction::Push(Push::AllMatchingBranches {
-                    allow_non_fast_forward: false,
-                }),
-            );
-            assert_parse(
-                "+:",
-                Instruction::Push(Push::AllMatchingBranches {
-                    allow_non_fast_forward: true,
-                }),
-            );
-        }
+        assert_parse(
+            "+:a",
+            Instruction::Fetch(Fetch::AndUpdateSingle {
+                src: b("HEAD"),
+                dst: b("a"),
+                allow_non_fast_forward: true,
+            }),
+        );
+    }
 
-        #[test]
-        fn delete() {
-            assert_parse(":a", Instruction::Push(Push::Delete { ref_or_pattern: b("a") }));
-            let spec = assert_parse("+:a", Instruction::Push(Push::Delete { ref_or_pattern: b("a") }));
-            assert_eq!(
-                spec.mode(),
-                Mode::Force,
-                "force is set, even though it has no effect in the actual instruction"
-            );
-        }
+    #[test]
+    fn colon_alone_is_for_fetching_into_fetchhead() {
+        assert_parse(
+            ":",
+            Instruction::Fetch(Fetch::AllMatchingBranches {
+                allow_non_fast_forward: false,
+            }),
+        );
+        assert_parse(
+            "+:",
+            Instruction::Fetch(Fetch::AllMatchingBranches {
+                allow_non_fast_forward: true,
+            }),
+        );
+    }
+}
+
+mod push {
+    use crate::parse::{assert_parse, b};
+    use git_refspec::{Instruction, Mode, Push};
+
+    #[test]
+    fn colon_alone_is_for_pushing_matching_refs() {
+        assert_parse(
+            ":",
+            Instruction::Push(Push::AllMatchingBranches {
+                allow_non_fast_forward: false,
+            }),
+        );
+        assert_parse(
+            "+:",
+            Instruction::Push(Push::AllMatchingBranches {
+                allow_non_fast_forward: true,
+            }),
+        );
+    }
+
+    #[test]
+    fn delete() {
+        assert_parse(":a", Instruction::Push(Push::Delete { ref_or_pattern: b("a") }));
+        let spec = assert_parse("+:a", Instruction::Push(Push::Delete { ref_or_pattern: b("a") }));
+        assert_eq!(
+            spec.mode(),
+            Mode::Force,
+            "force is set, even though it has no effect in the actual instruction"
+        );
     }
 }
 

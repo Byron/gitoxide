@@ -15,6 +15,7 @@ impl RefSpecRef<'_> {
             item.contains(&b'*')
         }
         match (self.op, self.mode, self.src, self.dst) {
+            (Operation::Fetch, Mode::Normal | Mode::Force, Some(src), None) => Instruction::Fetch(Fetch::Only { src }),
             (Operation::Fetch, Mode::Normal | Mode::Force, Some(src), Some(dst)) => {
                 Instruction::Fetch(Fetch::AndUpdateSingle {
                     src,

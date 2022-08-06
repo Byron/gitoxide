@@ -4,6 +4,8 @@ pub enum Error {
     Empty,
     #[error("Negative refspecs cannot have destinations as they exclude sources")]
     NegativeWithDestination,
+    #[error("Cannot push into an empty destination")]
+    PushToEmpty,
 }
 
 pub(crate) mod function {
@@ -33,13 +35,18 @@ pub(crate) mod function {
                 if mode == Mode::Negative {
                     return Err(Error::NegativeWithDestination);
                 }
+
                 let src = (!src.is_empty()).then(|| src.as_bstr());
                 let dst = (!dst.is_empty()).then(|| dst.as_bstr());
                 match (src, dst) {
-                    (None, None) => (None, None), // match all
+                    (None, None) => (None, None),
                     (None, Some(dst)) => match operation {
                         Operation::Push => (None, Some(dst)),
                         Operation::Fetch => (Some("HEAD".into()), Some(dst)),
+                    },
+                    (Some(src), None) => match operation {
+                        Operation::Push => return Err(Error::PushToEmpty),
+                        Operation::Fetch => (Some(src), None),
                     },
                     _ => todo!("src or dst handling"),
                 }
