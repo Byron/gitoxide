@@ -8,6 +8,28 @@ fn exclude() {
 }
 
 #[test]
+fn ampersand_is_resolved_to_head() {
+    assert_parse(
+        "@",
+        Instruction::Push(Push::Matching {
+            src: b("HEAD"),
+            dst: b("HEAD"),
+            allow_non_fast_forward: false,
+        }),
+    );
+
+    assert_parse(
+        "+@",
+        Instruction::Push(Push::Matching {
+            src: b("HEAD"),
+            dst: b("HEAD"),
+            allow_non_fast_forward: true,
+        }),
+    );
+    assert_parse("^@", Instruction::Push(Push::Exclude { src: b("HEAD") }));
+}
+
+#[test]
 fn lhs_colon_rhs_pushes_single_ref() {
     assert_parse(
         "a:b",

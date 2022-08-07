@@ -50,7 +50,7 @@ pub(crate) mod function {
             }
         };
 
-        let (src, dst) = match spec.find_byte(b':') {
+        let (mut src, dst) = match spec.find_byte(b':') {
             Some(pos) => {
                 let (src, dst) = spec.split_at(pos);
                 let dst = &dst[1..];
@@ -86,6 +86,11 @@ pub(crate) mod function {
             }
         };
 
+        if let Some(spec) = src.as_mut() {
+            if *spec == "@" {
+                *spec = "HEAD".into();
+            }
+        }
         let (src, src_had_pattern) = validated(src, operation == Operation::Push)?;
         let (dst, dst_had_pattern) = validated(dst, false)?;
         if mode != Mode::Negative && src_had_pattern != dst_had_pattern {
@@ -103,10 +108,11 @@ pub(crate) mod function {
         match spec {
             Some(spec) => {
                 let glob_count = spec.iter().filter(|b| **b == b'*').take(2).count();
-                if glob_count == 2 {
+                if glob_count > 1 {
                     return Err(Error::PatternUnsupported { pattern: spec.into() });
                 }
-                if glob_count == 1 {
+                let has_globs = glob_count == 1;
+                if has_globs {
                     let mut buf = smallvec::SmallVec::<[u8; 256]>::with_capacity(spec.len());
                     buf.extend_from_slice(spec);
                     let glob_pos = buf.find_byte(b'*').expect("glob present");
@@ -132,7 +138,7 @@ pub(crate) mod function {
                             }
                         })?;
                 }
-                Ok((Some(spec), glob_count == 1))
+                Ok((Some(spec), has_globs))
             }
             None => Ok((None, false)),
         }

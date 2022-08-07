@@ -8,6 +8,13 @@ fn exclude() {
 }
 
 #[test]
+fn ampersand_is_resolved_to_head() {
+    assert_parse("@", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
+    assert_parse("+@", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
+    assert_parse("^@", Instruction::Fetch(Fetch::Exclude { src: b("HEAD") }));
+}
+
+#[test]
 fn lhs_colon_empty_fetches_only() {
     assert_parse("src:", Instruction::Fetch(Fetch::Only { src: b("src") }));
     let spec = assert_parse("+src:", Instruction::Fetch(Fetch::Only { src: b("src") }));

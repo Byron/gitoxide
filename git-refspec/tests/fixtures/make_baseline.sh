@@ -80,6 +80,12 @@ baseline fetch 'HEAD'
 baseline push '@'
 baseline fetch '@'
 
+baseline push '^@'
+baseline fetch '^@'
+
+baseline push '+@'
+baseline fetch '+@'
+
 baseline fetch 'HEAD:'
 
 baseline push ':refs/remotes/frotz/deleteme'
