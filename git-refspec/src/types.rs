@@ -2,7 +2,7 @@ use bstr::BStr;
 
 /// The way to interpret a refspec.
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
-pub enum Mode {
+pub(crate) enum Mode {
     /// Apply standard rules for refspecs which are including refs with specific rules related to allowing fast forwards of destinations.
     Normal,
     /// Even though according to normal rules a non-fastforward would be denied, override this and reset a ref forcefully in the destination.

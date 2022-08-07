@@ -1,5 +1,5 @@
 use crate::types::Push;
-use crate::{Fetch, Instruction, Mode, Operation, RefSpec, RefSpecRef};
+use crate::{types::Mode, Fetch, Instruction, Operation, RefSpec, RefSpecRef};
 
 /// Conversion. Use the [RefSpecRef][RefSpec::to_ref()] type for more usage options.
 impl RefSpec {
@@ -22,11 +22,6 @@ impl Into<RefSpec> for RefSpecRef<'_> {
 
 /// Access
 impl RefSpecRef<'_> {
-    /// Return the refspec mode.
-    pub fn mode(&self) -> Mode {
-        self.mode
-    }
-
     /// Transform the state of the refspec into an instruction making clear what to do with it.
     pub fn instruction(&self) -> Instruction<'_> {
         match self.op {

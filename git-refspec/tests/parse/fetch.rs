@@ -1,5 +1,5 @@
 use crate::parse::{assert_parse, b, try_parse};
-use git_refspec::{parse::Error, Fetch, Instruction, Mode, Operation};
+use git_refspec::{parse::Error, Fetch, Instruction, Operation};
 
 #[test]
 fn revspecs_are_disallowed() {
@@ -71,12 +71,7 @@ fn ampersand_is_resolved_to_head() {
 #[test]
 fn lhs_colon_empty_fetches_only() {
     assert_parse("src:", Instruction::Fetch(Fetch::Only { src: b("src") }));
-    let spec = assert_parse("+src:", Instruction::Fetch(Fetch::Only { src: b("src") }));
-    assert_eq!(
-        spec.mode(),
-        Mode::Force,
-        "force is set, even though it has no effect in the actual instruction"
-    );
+    assert_parse("+src:", Instruction::Fetch(Fetch::Only { src: b("src") }));
 }
 
 #[test]
@@ -140,8 +135,7 @@ fn empty_lhs_colon_rhs_fetches_head_to_destination() {
 #[test]
 fn colon_alone_is_for_fetching_head_into_fetchhead() {
     assert_parse(":", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
-    let spec = assert_parse("+:", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
-    assert_eq!(spec.mode(), Mode::Force, "it's set even though it's not useful");
+    assert_parse("+:", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
 }
 
 #[test]

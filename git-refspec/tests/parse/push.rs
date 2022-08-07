@@ -1,5 +1,5 @@
 use crate::parse::{assert_parse, b, try_parse};
-use git_refspec::{parse::Error, Instruction, Mode, Operation, Push};
+use git_refspec::{parse::Error, Instruction, Operation, Push};
 
 #[test]
 fn negative_unsupported() {
@@ -123,10 +123,5 @@ fn colon_alone_is_for_pushing_matching_refs() {
 #[test]
 fn delete() {
     assert_parse(":a", Instruction::Push(Push::Delete { ref_or_pattern: b("a") }));
-    let spec = assert_parse("+:a", Instruction::Push(Push::Delete { ref_or_pattern: b("a") }));
-    assert_eq!(
-        spec.mode(),
-        Mode::Force,
-        "force is set, even though it has no effect in the actual instruction"
-    );
+    assert_parse("+:a", Instruction::Push(Push::Delete { ref_or_pattern: b("a") }));
 }

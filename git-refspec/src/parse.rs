@@ -28,7 +28,7 @@ pub enum Error {
 
 pub(crate) mod function {
     use crate::parse::Error;
-    use crate::{Mode, Operation, RefSpecRef};
+    use crate::{types::Mode, Operation, RefSpecRef};
     use bstr::{BStr, ByteSlice};
 
     /// Parse `spec` for use in `operation` and return it if it is valid.

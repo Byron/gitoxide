@@ -9,7 +9,7 @@ pub use parse::function::parse;
 /// A refspec with references to the memory it was parsed from.
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub struct RefSpecRef<'a> {
-    mode: Mode,
+    mode: types::Mode,
     op: Operation,
     src: Option<&'a bstr::BStr>,
     dst: Option<&'a bstr::BStr>,
@@ -18,7 +18,7 @@ pub struct RefSpecRef<'a> {
 /// An owned refspec.
 #[derive(PartialEq, Eq, Clone, Hash, Debug)]
 pub struct RefSpec {
-    mode: Mode,
+    mode: types::Mode,
     op: Operation,
     src: Option<bstr::BString>,
     dst: Option<bstr::BString>,
@@ -27,4 +27,4 @@ pub struct RefSpec {
 mod spec;
 
 mod types;
-pub use types::{Fetch, Instruction, Mode, Operation, Push};
+pub use types::{Fetch, Instruction, Operation, Push};
