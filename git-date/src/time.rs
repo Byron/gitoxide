@@ -1,6 +1,8 @@
 use std::{convert::TryInto, io, ops::Sub};
 
 use bstr::BString;
+use time::format_description::well_known::Iso8601;
+use time::formatting::Formattable;
 
 use crate::Time;
 
@@ -109,11 +111,24 @@ impl Time {
         self.seconds_since_unix_epoch
     }
 
-    /// Serialize this instance into a BString.
+    /// Serialize this instance into a Iso8601 BString.
     pub fn to_bstring(&self) -> BString {
-        let mut buf = Vec::with_capacity(128);
-        self.write_to(&mut buf).expect("enough memory");
-        buf.into()
+        time::OffsetDateTime::from_unix_timestamp(self.seconds_since_unix_epoch as i64)
+            .expect("always valid unix time")
+            .replace_offset(time::UtcOffset::from_whole_seconds(self.offset_in_seconds).expect("valid offset"))
+            .format(&Iso8601::DEFAULT)
+            .unwrap()
+            .into()
+    }
+
+    /// Serialize this instance into a BString, formatting it using the provided `time::format_description`
+    pub fn to_bstring_with_formatter(&self, formatter: &(impl Formattable + ?Sized)) -> BString {
+        time::OffsetDateTime::from_unix_timestamp(self.seconds_since_unix_epoch as i64)
+            .expect("always valid unix time")
+            .replace_offset(time::UtcOffset::from_whole_seconds(self.offset_in_seconds).expect("valid offset"))
+            .format(formatter)
+            .unwrap()
+            .into()
     }
 
     /// Serialize this instance to `out` in a format suitable for use in header fields of serialized git commits or tags.

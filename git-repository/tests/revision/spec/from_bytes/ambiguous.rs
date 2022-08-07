@@ -42,7 +42,7 @@ fn fully_failed_disambiguation_still_yields_an_ambiguity_error() {
     let repo = repo("ambiguous_blob_tree_commit").unwrap();
     assert_eq!(
         parse_spec("0000000000^{tag}", &repo).unwrap_err().to_string(),
-        "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"\n\t0000000000c tree\n\t0000000000b blob",
+        "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000e commit 2005-04-07T22:13:13.000000000-07:00 \"a2onsxbvj\"\n\t0000000000c tree\n\t0000000000b blob",
         "without special treatment, one would see a bunch of failed transformations with the impression that the first of them is the root cause, which isn't correct."
     );
 }
@@ -72,7 +72,7 @@ fn blob_and_tree_can_be_disambiguated_by_type() {
     let repo = repo("ambiguous_blob_tree_commit").unwrap();
     assert_eq!(
         parse_spec("0000000000", &repo).unwrap_err().to_string(),
-        "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"\n\t0000000000c tree\n\t0000000000b blob",
+        "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000e commit 2005-04-07T22:13:13.000000000-07:00 \"a2onsxbvj\"\n\t0000000000c tree\n\t0000000000b blob",
         "in theory one could disambiguate with 0000000000^{{tree}} (which works in git) or 0000000000^{{blob}} which doesn't work for some reason."
     );
 
@@ -137,7 +137,7 @@ fn duplicates_are_deduplicated_across_all_odb_types() {
     let repo = repo("duplicate_ambiguous_objects").unwrap();
     assert_eq!(
         parse_spec_no_baseline("0000000000", &repo).unwrap_err().to_string(),
-        "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000f8 tag \"v1.0.0\"\n\t000000000004 commit 1112912053 -0700 \"czy8f73t\"\n\t00000000006 commit 1112912233 -0700 \"ad2uee\"\n\t00000000008 commit 1112912113 -0700 \"ioiley5o\"\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"\n\t000000000002 tree\n\t00000000005 tree\n\t00000000009 tree\n\t0000000000c tree\n\t0000000000fd tree\n\t00000000001 blob\n\t00000000003 blob\n\t0000000000a blob\n\t0000000000b blob\n\t0000000000f2 blob",
+        "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000f8 tag \"v1.0.0\"\n\t000000000004 commit 2005-04-07T22:14:13.000000000-07:00 \"czy8f73t\"\n\t00000000006 commit 2005-04-07T22:17:13.000000000-07:00 \"ad2uee\"\n\t00000000008 commit 2005-04-07T22:15:13.000000000-07:00 \"ioiley5o\"\n\t0000000000e commit 2005-04-07T22:13:13.000000000-07:00 \"a2onsxbvj\"\n\t000000000002 tree\n\t00000000005 tree\n\t00000000009 tree\n\t0000000000c tree\n\t0000000000fd tree\n\t00000000001 blob\n\t00000000003 blob\n\t0000000000a blob\n\t0000000000b blob\n\t0000000000f2 blob",
         "One day we want to see 16 objects here, and not 32 just because they exist in the loose and the packed odb"
     );
 }
@@ -224,7 +224,7 @@ fn repository_local_disambiguation_hints_disambiguate() {
     );
     assert_eq!(
         rev_parse("0000000000", &r).unwrap_err().to_string(),
-        "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000f8 tag \"v1.0.0\"\n\t000000000004 commit 1112912053 -0700 \"czy8f73t\"\n\t00000000006 commit 1112912233 -0700 \"ad2uee\"\n\t00000000008 commit 1112912113 -0700 \"ioiley5o\"\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"",
+        "Short id 0000000000 is ambiguous. Candidates are:\n\t0000000000f8 tag \"v1.0.0\"\n\t000000000004 commit 2005-04-07T22:14:13.000000000-07:00 \"czy8f73t\"\n\t00000000006 commit 2005-04-07T22:17:13.000000000-07:00 \"ad2uee\"\n\t00000000008 commit 2005-04-07T22:15:13.000000000-07:00 \"ioiley5o\"\n\t0000000000e commit 2005-04-07T22:13:13.000000000-07:00 \"a2onsxbvj\""
     );
 
     let r = repo("ambiguous_objects_disambiguation_config_treeish").unwrap();
@@ -258,7 +258,7 @@ fn repository_local_disambiguation_hints_disambiguate() {
     );
     assert_eq!(
         rev_parse("0000000000", &r).unwrap_err().to_string(),
-        "Short id 0000000000 is ambiguous. Candidates are:\n\t000000000004 commit 1112912053 -0700 \"czy8f73t\"\n\t00000000006 commit 1112912233 -0700 \"ad2uee\"\n\t00000000008 commit 1112912113 -0700 \"ioiley5o\"\n\t0000000000e commit 1112911993 -0700 \"a2onsxbvj\"",
+        "Short id 0000000000 is ambiguous. Candidates are:\n\t000000000004 commit 2005-04-07T22:14:13.000000000-07:00 \"czy8f73t\"\n\t00000000006 commit 2005-04-07T22:17:13.000000000-07:00 \"ad2uee\"\n\t00000000008 commit 2005-04-07T22:15:13.000000000-07:00 \"ioiley5o\"\n\t0000000000e commit 2005-04-07T22:13:13.000000000-07:00 \"a2onsxbvj\""
     );
 
     let r = repo("ambiguous_objects_disambiguation_config_blob").unwrap();
