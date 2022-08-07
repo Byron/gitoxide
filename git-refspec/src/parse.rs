@@ -113,7 +113,7 @@ pub(crate) mod function {
                 *spec = "HEAD".into();
             }
         }
-        let (src, src_had_pattern) = validated(src, operation == Operation::Push)?;
+        let (src, src_had_pattern) = validated(src, operation == Operation::Push && dst.is_some())?;
         let (dst, dst_had_pattern) = validated(dst, false)?;
         if !dst_had_pattern && looks_like_object_hash(dst.unwrap_or_default()) {
             return Err(Error::InvalidFetchDestination);

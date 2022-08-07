@@ -40,6 +40,10 @@ baseline push '^'
 
 baseline fetch '^refs/heads/qa/*/*'
 baseline push '^refs/heads/qa/*/*'
+baseline push 'main~1'
+baseline fetch 'main~1'
+baseline push 'main~1:other~1'
+baseline push ':main~1'
 
 baseline push 'refs/heads/*:refs/remotes/frotz'
 baseline push 'refs/heads:refs/remotes/frotz/*'

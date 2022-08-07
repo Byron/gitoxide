@@ -12,6 +12,42 @@ fn negative_unsupported() {
 }
 
 #[test]
+fn revspecs_with_ref_name_destination() {
+    assert_parse(
+        "main~1:b",
+        Instruction::Push(Push::Matching {
+            src: b("main~1"),
+            dst: b("b"),
+            allow_non_fast_forward: false,
+        }),
+    );
+    assert_parse(
+        "+main~1:b",
+        Instruction::Push(Push::Matching {
+            src: b("main~1"),
+            dst: b("b"),
+            allow_non_fast_forward: true,
+        }),
+    );
+}
+
+#[test]
+fn destinations_must_be_ref_names() {
+    assert!(matches!(
+        try_parse("a~1:b~1", Operation::Push).unwrap_err(),
+        Error::ReferenceName(_)
+    ));
+}
+
+#[test]
+fn single_refs_must_be_refnames() {
+    assert!(matches!(
+        try_parse("a~1", Operation::Push).unwrap_err(),
+        Error::ReferenceName(_)
+    ));
+}
+
+#[test]
 fn ampersand_is_resolved_to_head() {
     assert_parse(
         "@",
