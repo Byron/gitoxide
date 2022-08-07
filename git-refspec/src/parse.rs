@@ -4,6 +4,8 @@ pub enum Error {
     Empty,
     #[error("Negative refspecs cannot have destinations as they exclude sources")]
     NegativeWithDestination,
+    #[error("Negative specs must not be empty")]
+    NegativeEmpty,
     #[error("Cannot push into an empty destination")]
     PushToEmpty,
     #[error("glob patterns may only involved a single '*' character, found {pattern:?}")]
@@ -52,12 +54,12 @@ pub(crate) mod function {
 
         let (mut src, dst) = match spec.find_byte(b':') {
             Some(pos) => {
-                let (src, dst) = spec.split_at(pos);
-                let dst = &dst[1..];
                 if mode == Mode::Negative {
                     return Err(Error::NegativeWithDestination);
                 }
 
+                let (src, dst) = spec.split_at(pos);
+                let dst = &dst[1..];
                 let src = (!src.is_empty()).then(|| src.as_bstr());
                 let dst = (!dst.is_empty()).then(|| dst.as_bstr());
                 match (src, dst) {
@@ -78,13 +80,17 @@ pub(crate) mod function {
             }
             None => {
                 let src = (!spec.is_empty()).then(|| spec);
-                if Operation::Fetch == operation && src.is_none() {
+                if Operation::Fetch == operation && mode != Mode::Negative && src.is_none() {
                     return Ok(fetch_head_only(mode));
                 } else {
                     (src, None)
                 }
             }
         };
+
+        if mode == Mode::Negative && src.is_none() {
+            return Err(Error::NegativeEmpty);
+        }
 
         if let Some(spec) = src.as_mut() {
             if *spec == "@" {
