@@ -17,9 +17,9 @@ impl RefSpec {
 mod impls {
     use crate::{RefSpec, RefSpecRef};
 
-    impl Into<RefSpec> for RefSpecRef<'_> {
-        fn into(self) -> RefSpec {
-            self.to_owned()
+    impl From<RefSpecRef<'_>> for RefSpec {
+        fn from(v: RefSpecRef<'_>) -> Self {
+            v.to_owned()
         }
     }
 }
