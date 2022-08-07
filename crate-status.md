@@ -237,6 +237,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
 ### git-refspec
 * [x] parse
 * [ ] matching of references and object names
+    * [ ] for fetch
+    * [ ] for push
 
 ### git-note
 
@@ -459,9 +461,14 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * **references**
         * [x] peel to end
         * [x] ref-log access
-    * [ ] clone from remote
-        * [ ] shallow
-    * [ ] execute hooks
+    * **remotes**  
+        * [ ] clone 
+          * [ ] shallow
+        * [ ] fetch
+        * [ ] push
+        * [ ] ls-refs
+        * [ ] list, find by name, create in memory.
+  * [ ] execute hooks
     * **refs**
         * [ ] run transaction hooks and handle special repository states like quarantine
         * [ ] support for different backends like `files` and `reftable`
@@ -485,7 +492,6 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
        * [x] read and interpolate trusted paths
        * [x] low-level API for more elaborate access to all details of `git-config` files
        * [ ] a way to make changes to individual configuration files
-    * [ ] remotes with push and pull
     * [x] mailmap   
     * [x] object replacements (`git replace`)
     * [ ] configuration
