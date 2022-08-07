@@ -232,7 +232,11 @@ Check out the [performance discussion][git-traverse-performance] as well.
 
 ### git-pathspec
 * [x] parse
-* [ ] check for match
+* [ ] matching of paths
+
+### git-refspec
+* [x] parse
+* [ ] matching of references and object names
 
 ### git-note
 

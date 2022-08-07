@@ -132,6 +132,7 @@ is usable to some extend.
   * [git-repository](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-repository)
   * [git-attributes](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-attributes)
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
+  * [git-refspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-refspec)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
