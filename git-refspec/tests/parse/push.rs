@@ -1,5 +1,5 @@
 use crate::parse::{assert_parse, b, try_parse};
-use git_refspec::{parse::Error, Instruction, Operation, Push};
+use git_refspec::{instruction::Push, parse::Error, parse::Operation, Instruction};
 
 #[test]
 fn negative_unsupported() {

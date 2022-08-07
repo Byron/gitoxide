@@ -1,5 +1,5 @@
-use crate::types::Push;
-use crate::{types::Mode, Fetch, Instruction, Operation, RefSpec, RefSpecRef};
+use crate::instruction::{Fetch, Push};
+use crate::{parse::Operation, types::Mode, Instruction, RefSpec, RefSpecRef};
 
 /// Conversion. Use the [RefSpecRef][RefSpec::to_ref()] type for more usage options.
 impl RefSpec {
@@ -14,9 +14,13 @@ impl RefSpec {
     }
 }
 
-impl Into<RefSpec> for RefSpecRef<'_> {
-    fn into(self) -> RefSpec {
-        self.to_owned()
+mod impls {
+    use crate::{RefSpec, RefSpecRef};
+
+    impl Into<RefSpec> for RefSpecRef<'_> {
+        fn into(self) -> RefSpec {
+            self.to_owned()
+        }
     }
 }
 

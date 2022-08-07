@@ -26,9 +26,18 @@ pub enum Error {
     RevSpec(#[from] git_revision::spec::parse::Error),
 }
 
+/// Define how the parsed refspec should be used.
+#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
+pub enum Operation {
+    /// The `src` side is local and the `dst` side is remote.
+    Push,
+    /// The `src` side is remote and the `dst` side is local.
+    Fetch,
+}
+
 pub(crate) mod function {
     use crate::parse::Error;
-    use crate::{types::Mode, Operation, RefSpecRef};
+    use crate::{parse::Operation, types::Mode, RefSpecRef};
     use bstr::{BStr, ByteSlice};
 
     /// Parse `spec` for use in `operation` and return it if it is valid.

@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_refspec::Operation;
+use git_refspec::parse::Operation;
 use git_testtools::scripted_fixture_repo_read_only;
 use std::panic::catch_unwind;
 
@@ -61,7 +61,7 @@ mod invalid;
 mod push;
 
 mod util {
-    use git_refspec::{Instruction, Operation, RefSpecRef};
+    use git_refspec::{parse::Operation, Instruction, RefSpecRef};
 
     pub fn b(input: &str) -> &bstr::BStr {
         input.into()

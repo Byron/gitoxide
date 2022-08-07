@@ -1,5 +1,5 @@
 use crate::parse::try_parse;
-use git_refspec::{parse::Error, Operation};
+use git_refspec::{parse::Error, parse::Operation};
 
 #[test]
 fn empty() {
