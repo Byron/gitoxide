@@ -40,11 +40,6 @@ pub enum Push<'a> {
         /// The reference or pattern to delete on the remote.
         ref_or_pattern: &'a BStr,
     },
-    /// Exclude a single ref.
-    Exclude {
-        /// A full or partial ref name to exclude, or multiple if a single `*` is used.
-        src: &'a BStr,
-    },
     /// Push a single ref or refspec to a known destination ref.
     Matching {
         /// The source ref or refspec to push. If pattern, it contains a single `*`.
@@ -67,7 +62,7 @@ pub enum Fetch<'a> {
     },
     /// Exclude a single ref.
     Exclude {
-        /// A single partial or full ref name to exclude on the remote, or a pattern with a single `*`.
+        /// A single partial or full ref name to exclude on the remote, or a pattern with a single `*`. It cannot be a spelled out object hash.
         src: &'a BStr,
     },
     AndUpdate {

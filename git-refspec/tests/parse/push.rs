@@ -2,12 +2,6 @@ use crate::parse::{assert_parse, b};
 use git_refspec::{Instruction, Mode, Push};
 
 #[test]
-fn exclude() {
-    assert_parse("^a", Instruction::Push(Push::Exclude { src: b("a") }));
-    assert_parse("^a*", Instruction::Push(Push::Exclude { src: b("a*") }));
-}
-
-#[test]
 fn ampersand_is_resolved_to_head() {
     assert_parse(
         "@",
@@ -26,7 +20,6 @@ fn ampersand_is_resolved_to_head() {
             allow_non_fast_forward: true,
         }),
     );
-    assert_parse("^@", Instruction::Push(Push::Exclude { src: b("HEAD") }));
 }
 
 #[test]

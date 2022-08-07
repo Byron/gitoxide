@@ -43,7 +43,6 @@ impl RefSpecRef<'_> {
                     dst,
                     allow_non_fast_forward: matches!(self.mode, Mode::Force),
                 }),
-                (Mode::Negative, Some(src), None) => Instruction::Push(Push::Exclude { src }),
                 (mode, src, dest) => {
                     unreachable!(
                         "BUG: push instructions with {:?} {:?} {:?} are not possible",

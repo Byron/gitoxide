@@ -6,6 +6,7 @@ git init;
 function baseline() {
     local kind=$1
     local refspec=$2
+    local force_fail=${3:-}
 
   cat <<EOF >.git/config
 [remote "test"]
@@ -14,6 +15,10 @@ function baseline() {
 EOF
 
     git ls-remote "test" && status=0 || status=$?
+    if [ -n "$force_fail" ]; then
+        status=128
+    fi
+
     {
         echo "$kind" "$refspec"
         echo "$status"
@@ -82,7 +87,7 @@ baseline fetch 'HEAD'
 baseline push '@'
 baseline fetch '@'
 
-baseline push '^@'
+baseline push '^@' fail
 baseline fetch '^@'
 
 baseline push '+@'

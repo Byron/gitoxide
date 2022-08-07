@@ -6,6 +6,8 @@ pub enum Error {
     NegativeWithDestination,
     #[error("Negative specs must not be empty")]
     NegativeEmpty,
+    #[error("Negative specs are only supported when fetching")]
+    NegativeUnsupported,
     #[error("Negative specs must be object hashes")]
     NegativeObjectHash,
     #[error("Cannot push into an empty destination")]
@@ -39,6 +41,9 @@ pub(crate) mod function {
         let mode = match spec.get(0) {
             Some(&b'^') => {
                 spec = &spec[1..];
+                if operation == Operation::Push {
+                    return Err(Error::NegativeUnsupported);
+                }
                 Mode::Negative
             }
             Some(&b'+') => {
