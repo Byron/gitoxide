@@ -20,9 +20,12 @@ pub enum Operation {
     Fetch,
 }
 
+/// Tells what to do and is derived from a [`RefSpec`][RefSpecRef].
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Instruction<'a> {
+    /// An instruction for pushing.
     Push(Push<'a>),
+    /// An instruction for fetching.
     Fetch(Fetch<'a>),
 }
 
@@ -56,6 +59,7 @@ pub enum Push<'a> {
 /// Destinations can only be a partial or full ref-names on the local side.
 #[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Fetch<'a> {
+    /// Fetch a ref or refs and write the result into the `FETCH_HEAD` without updating local branches.
     Only {
         /// The ref name to fetch on the remote side, without updating the local side. This will write the result into `FETCH_HEAD`.
         src: &'a BStr,
@@ -65,6 +69,7 @@ pub enum Fetch<'a> {
         /// A single partial or full ref name to exclude on the remote, or a pattern with a single `*`. It cannot be a spelled out object hash.
         src: &'a BStr,
     },
+    /// Fetch from `src` and update the corresponding destination branches in `dst` accordingly.
     AndUpdate {
         /// The ref name to fetch on the remote side, or a pattern with a single `*` to match against.
         src: &'a BStr,
@@ -77,6 +82,7 @@ pub enum Fetch<'a> {
 }
 
 impl Instruction<'_> {
+    /// Derive the mode of operation from this instruction.
     pub fn operation(&self) -> Operation {
         match self {
             Instruction::Push(_) => Operation::Push,

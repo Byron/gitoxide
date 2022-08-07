@@ -1,7 +1,8 @@
-//! Parse [ref specs]() and represent them.
+//! Parse git ref-specs and represent them.
 #![forbid(unsafe_code, rust_2018_idioms)]
-#![allow(missing_docs)]
+#![deny(missing_docs)]
 
+///
 pub mod parse;
 pub use parse::function::parse;
 

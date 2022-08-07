@@ -1,6 +1,25 @@
 use crate::types::Push;
 use crate::{Fetch, Instruction, Mode, Operation, RefSpec, RefSpecRef};
 
+/// Conversion. Use the [RefSpecRef][RefSpec::to_ref()] type for more usage options.
+impl RefSpec {
+    /// Return ourselves as reference type.
+    pub fn to_ref(&self) -> RefSpecRef<'_> {
+        RefSpecRef {
+            mode: self.mode,
+            op: self.op,
+            src: self.src.as_ref().map(|b| b.as_ref()),
+            dst: self.dst.as_ref().map(|b| b.as_ref()),
+        }
+    }
+}
+
+impl Into<RefSpec> for RefSpecRef<'_> {
+    fn into(self) -> RefSpec {
+        self.to_owned()
+    }
+}
+
 /// Access
 impl RefSpecRef<'_> {
     /// Return the refspec mode.
