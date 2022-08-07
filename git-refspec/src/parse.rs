@@ -10,6 +10,8 @@ pub enum Error {
     NegativeUnsupported,
     #[error("Negative specs must be object hashes")]
     NegativeObjectHash,
+    #[error("Fetch destinations must be ref-names, like 'HEAD:refs/heads/branch'")]
+    InvalidFetchDestination,
     #[error("Cannot push into an empty destination")]
     PushToEmpty,
     #[error("glob patterns may only involved a single '*' character, found {pattern:?}")]
@@ -98,9 +100,7 @@ pub(crate) mod function {
         if mode == Mode::Negative {
             match src {
                 Some(spec) => {
-                    if spec.len() >= git_hash::Kind::shortest().len_in_hex()
-                        && spec.iter().all(|b| b.is_ascii_hexdigit())
-                    {
+                    if looks_like_object_hash(spec) {
                         return Err(Error::NegativeObjectHash);
                     }
                 }
@@ -115,6 +115,9 @@ pub(crate) mod function {
         }
         let (src, src_had_pattern) = validated(src, operation == Operation::Push)?;
         let (dst, dst_had_pattern) = validated(dst, false)?;
+        if !dst_had_pattern && looks_like_object_hash(dst.unwrap_or_default()) {
+            return Err(Error::InvalidFetchDestination);
+        }
         if mode != Mode::Negative && src_had_pattern != dst_had_pattern {
             return Err(Error::PatternUnbalanced);
         }
@@ -124,6 +127,10 @@ pub(crate) mod function {
             src,
             dst,
         })
+    }
+
+    fn looks_like_object_hash(spec: &BStr) -> bool {
+        spec.len() >= git_hash::Kind::shortest().len_in_hex() && spec.iter().all(|b| b.is_ascii_hexdigit())
     }
 
     fn validated(spec: Option<&BStr>, allow_revspecs: bool) -> Result<(Option<&BStr>, bool), Error> {

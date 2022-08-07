@@ -1,5 +1,15 @@
-use crate::parse::{assert_parse, b};
-use git_refspec::{Instruction, Mode, Push};
+use crate::parse::{assert_parse, b, try_parse};
+use git_refspec::{parse::Error, Instruction, Mode, Operation, Push};
+
+#[test]
+fn negative_unsupported() {
+    for spec in ["^a:b", "^a:", "^:", "^:b", "^"] {
+        assert!(matches!(
+            try_parse(spec, Operation::Push).unwrap_err(),
+            Error::NegativeUnsupported
+        ));
+    }
+}
 
 #[test]
 fn ampersand_is_resolved_to_head() {

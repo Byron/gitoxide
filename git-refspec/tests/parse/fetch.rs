@@ -1,5 +1,59 @@
-use crate::parse::{assert_parse, b};
-use git_refspec::{Fetch, Instruction, Mode};
+use crate::parse::{assert_parse, b, try_parse};
+use git_refspec::{parse::Error, Fetch, Instruction, Mode, Operation};
+
+#[test]
+fn revspecs_are_disallowed() {
+    for spec in ["main~1", "^@^{}", "HEAD:main~1"] {
+        assert!(matches!(
+            try_parse(spec, Operation::Fetch).unwrap_err(),
+            Error::ReferenceName(_)
+        ));
+    }
+}
+
+#[test]
+fn object_hash_as_source() {
+    assert_parse(
+        "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391:",
+        Instruction::Fetch(Fetch::Only {
+            src: b("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+        }),
+    );
+}
+
+#[test]
+fn object_hash_destination_is_invalid() {
+    assert!(matches!(
+        try_parse("a:e69de29bb2d1d6434b8b29ae775ad8c2e48c5391", Operation::Fetch).unwrap_err(),
+        Error::InvalidFetchDestination
+    ));
+}
+
+#[test]
+fn negative_must_not_be_empty() {
+    assert!(matches!(
+        try_parse("^", Operation::Fetch).unwrap_err(),
+        Error::NegativeEmpty
+    ));
+}
+
+#[test]
+fn negative_must_not_be_object_hash() {
+    assert!(matches!(
+        try_parse("^e69de29bb2d1d6434b8b29ae775ad8c2e48c5391", Operation::Fetch).unwrap_err(),
+        Error::NegativeObjectHash
+    ));
+}
+
+#[test]
+fn negative_with_destination() {
+    for spec in ["^a:b", "^a:", "^:", "^:b"] {
+        assert!(matches!(
+            try_parse(spec, Operation::Fetch).unwrap_err(),
+            Error::NegativeWithDestination
+        ));
+    }
+}
 
 #[test]
 fn exclude() {
