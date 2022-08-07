@@ -14,6 +14,16 @@ fn negative_must_not_be_empty() {
 }
 
 #[test]
+fn negative_must_not_be_object_hash() {
+    for op in [Operation::Fetch, Operation::Push] {
+        assert!(matches!(
+            try_parse("^e69de29bb2d1d6434b8b29ae775ad8c2e48c5391", op).unwrap_err(),
+            Error::NegativeObjectHash
+        ));
+    }
+}
+
+#[test]
 fn negative_with_destination() {
     for op in [Operation::Fetch, Operation::Push] {
         for spec in ["^a:b", "^a:", "^:", "^:b"] {

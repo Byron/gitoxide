@@ -6,6 +6,8 @@ pub enum Error {
     NegativeWithDestination,
     #[error("Negative specs must not be empty")]
     NegativeEmpty,
+    #[error("Negative specs must be object hashes")]
+    NegativeObjectHash,
     #[error("Cannot push into an empty destination")]
     PushToEmpty,
     #[error("glob patterns may only involved a single '*' character, found {pattern:?}")]
@@ -88,8 +90,17 @@ pub(crate) mod function {
             }
         };
 
-        if mode == Mode::Negative && src.is_none() {
-            return Err(Error::NegativeEmpty);
+        if mode == Mode::Negative {
+            match src {
+                Some(spec) => {
+                    if spec.len() >= git_hash::Kind::shortest().len_in_hex()
+                        && spec.iter().all(|b| b.is_ascii_hexdigit())
+                    {
+                        return Err(Error::NegativeObjectHash);
+                    }
+                }
+                None => return Err(Error::NegativeEmpty),
+            }
         }
 
         if let Some(spec) = src.as_mut() {
