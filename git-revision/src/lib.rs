@@ -1,6 +1,5 @@
-//! Interact with git revisions by parsing them from rev-specs and turning them into rev-specs.
+//! Interact with git revisions by parsing them from rev-specs and describing them in terms of reference names.
 //!
-//! One can also describe revisions using a different algorithm.
 //! ## Feature Flags
 #![cfg_attr(
     feature = "document-features",
