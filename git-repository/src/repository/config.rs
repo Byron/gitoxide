@@ -52,7 +52,10 @@ mod branch {
         /// Returns a reference to the remote associated with the given `short_branch_name`, typically `main` instead of `refs/heads/main`.
         /// Returns `None` if the remote reference was not found.
         /// May return an error if the reference is invalid.
-        pub fn remote_ref(&self, short_branch_name: &str) -> Option<Result<Cow<'_, FullNameRef>, ValidateNameError>> {
+        pub fn branch_remote_ref(
+            &self,
+            short_branch_name: &str,
+        ) -> Option<Result<Cow<'_, FullNameRef>, ValidateNameError>> {
             self.config
                 .resolved
                 .string("branch", Some(short_branch_name), "merge")

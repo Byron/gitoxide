@@ -1,3 +1,4 @@
+use crate::Result;
 use std::path::Path;
 
 use git_repository as git;
@@ -9,7 +10,7 @@ use crate::{named_repo, remote};
 
 #[test]
 fn remote_names() {
-    let repo = named_repo("make_basic_repo.sh").unwrap();
+    let repo = remote::repo("base");
     assert_eq!(repo.remote_names().count(), 0, "there are no remotes");
 
     let repo = remote::repo("clone");
@@ -17,6 +18,32 @@ fn remote_names() {
         repo.remote_names().map(|name| name.to_string()).collect::<Vec<_>>(),
         vec![String::from("origin")]
     );
+}
+
+#[test]
+fn branch_remote() -> Result {
+    let repo = named_repo("make_remote_repo.sh")?;
+
+    assert_eq!(
+        repo.branch_remote_ref("main")
+            .expect("Remote Merge ref exists")
+            .expect("Remote Merge ref is valid")
+            .shorten(),
+        "main"
+    );
+    assert_eq!(
+        repo.branch_remote_name("main").expect("Remote name exists").as_ref(),
+        "remote_repo"
+    );
+
+    assert!(repo
+        .branch_remote_ref("broken")
+        .expect("Remote Merge ref exists")
+        .is_err());
+    assert!(repo.branch_remote_ref("missing").is_none());
+    assert!(repo.branch_remote_name("broken").is_none());
+
+    Ok(())
 }
 
 #[test]
