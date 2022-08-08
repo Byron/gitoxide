@@ -83,6 +83,7 @@ git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-validate = { version = "^0.5.4", path = "../git-validate" }
 git-sec = { version = "^0.3.0", path = "../git-sec", features = ["thiserror"] }
 git-date = { version = "^0.0.2", path = "../git-date" }
+git-refspec = { version = "^0.0.0", path = "../git-refspec" }
 
 git-config = { version = "^0.6.0", path = "../git-config" }
 git-odb = { version = "^0.31.0", path = "../git-odb" }

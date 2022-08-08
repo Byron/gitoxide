@@ -1524,6 +1524,7 @@ dependencies = [
  "git-path",
  "git-protocol",
  "git-ref",
+ "git-refspec",
  "git-revision",
  "git-sec",
  "git-tempfile",

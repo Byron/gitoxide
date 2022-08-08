@@ -468,6 +468,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
         * [ ] push
         * [ ] ls-refs
         * [ ] list, find by name, create in memory.
+        * [ ] groups
   * [ ] execute hooks
     * **refs**
         * [ ] run transaction hooks and handle special repository states like quarantine
