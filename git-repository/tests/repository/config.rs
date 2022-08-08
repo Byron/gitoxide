@@ -5,12 +5,18 @@ use git_sec::{Access, Permission};
 use git_testtools::Env;
 use serial_test::serial;
 
-use crate::named_repo;
+use crate::{named_repo, remote};
 
 #[test]
 fn remote_names() {
     let repo = named_repo("make_basic_repo.sh").unwrap();
     assert_eq!(repo.remote_names().count(), 0, "there are no remotes");
+
+    let repo = remote::repo("clone");
+    assert_eq!(
+        repo.remote_names().map(|name| name.to_string()).collect::<Vec<_>>(),
+        vec![String::from("origin")]
+    );
 }
 
 #[test]

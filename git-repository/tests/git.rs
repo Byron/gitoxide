@@ -14,6 +14,8 @@ mod object;
 #[cfg(not(feature = "regex"))]
 mod reference;
 #[cfg(not(feature = "regex"))]
+mod remote;
+#[cfg(not(feature = "regex"))]
 mod repository;
 #[cfg(not(feature = "regex"))]
 mod revision;
