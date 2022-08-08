@@ -116,11 +116,9 @@ impl crate::Repository {
             .sections_by_name(header_name)
             .map(|it| {
                 let filter = self.filter_config_section();
-                let set: BTreeSet<_> = it
-                    .filter(move |s| filter(s.meta()))
+                it.filter(move |s| filter(s.meta()))
                     .filter_map(|section| section.header().subsection_name().and_then(|b| b.to_str().ok()))
-                    .collect();
-                set.into()
+                    .collect()
             })
             .unwrap_or_default()
     }
