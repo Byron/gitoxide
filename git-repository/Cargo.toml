@@ -40,8 +40,8 @@ blocking-http-transport = ["git-transport/http-client-curl"]
 #! ### Reducing dependencies
 #! The following toggles can be left disabled to save on dependencies.
 
-## Provide additional non-networked functionality like `git-url` and `git-diff`.
-local = [ "git-url", "git-diff" ]
+## Provide additional non-networked functionality.
+local = [ "git-diff" ]
 ## Turns on access to all stable features that are unrelated to networking.
 one-stop-shop = [ "local" ]
 
@@ -94,7 +94,7 @@ git-pack = { version = "^0.21.0", path = "../git-pack", features = ["object-cach
 git-revision = { version = "^0.3.0", path = "../git-revision" }
 
 git-path = { version = "^0.4.0", path = "../git-path" }
-git-url = { version = "^0.7.0", path = "../git-url", optional = true }
+git-url = { version = "^0.7.0", path = "../git-url" }
 git-traverse = { version = "^0.16.0", path = "../git-traverse" }
 git-protocol = { version = "^0.18.0", path = "../git-protocol", optional = true }
 git-transport = { version = "^0.19.0", path = "../git-transport", optional = true }

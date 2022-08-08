@@ -159,10 +159,8 @@ pub use git_sec as sec;
 pub use git_tempfile as tempfile;
 #[cfg(feature = "unstable")]
 pub use git_traverse as traverse;
-#[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;
 #[doc(inline)]
-#[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url::Url;
 pub use hash::{oid, ObjectId};
 
