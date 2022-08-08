@@ -20,22 +20,25 @@ impl crate::Repository {
 }
 
 mod remote {
-    use crate::bstr::BStr;
+    use crate::bstr::ByteSlice;
+    use std::collections::BTreeSet;
 
     impl crate::Repository {
-        /// Returns an iterator over all symbolic names of remotes that we deem [trustworthy][crate::open::Options::filter_config_section()].
-        pub fn remote_names(&self) -> impl Iterator<Item = &BStr> + '_ {
+        /// Returns a sorted list unique of symbolic names of remotes that
+        /// we deem [trustworthy][crate::open::Options::filter_config_section()].
+        pub fn remote_names(&self) -> BTreeSet<&str> {
             self.config
                 .resolved
                 .sections_by_name("remote")
                 .map(|it| {
                     let filter = self.filter_config_section();
-                    Box::new(
-                        it.filter(move |s| filter(s.meta()))
-                            .filter_map(|section| section.header().subsection_name()),
-                    ) as Box<dyn Iterator<Item = &BStr>>
+                    let set: BTreeSet<_> = it
+                        .filter(move |s| filter(s.meta()))
+                        .filter_map(|section| section.header().subsection_name().and_then(|b| b.to_str().ok()))
+                        .collect();
+                    set.into()
                 })
-                .unwrap_or_else(|| Box::new(std::iter::empty()))
+                .unwrap_or_default()
         }
     }
 }
@@ -49,6 +52,11 @@ mod branch {
     use crate::bstr::BStr;
 
     impl crate::Repository {
+        // /// Return a iterator of short branch names for which information custom configuration exists.
+        // pub fn branch_names(&self) -> impl Iterator<Item = &BStr> + '_ {
+        //
+        // }
+
         /// Returns a reference to the remote associated with the given `short_branch_name`, typically `main` instead of `refs/heads/main`.
         /// Returns `None` if the remote reference was not found.
         /// May return an error if the reference is invalid.

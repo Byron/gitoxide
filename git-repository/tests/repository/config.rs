@@ -1,4 +1,5 @@
 use crate::Result;
+use std::iter::FromIterator;
 use std::path::Path;
 
 use git_repository as git;
@@ -11,13 +12,10 @@ use crate::{named_repo, remote};
 #[test]
 fn remote_names() {
     let repo = remote::repo("base");
-    assert_eq!(repo.remote_names().count(), 0, "there are no remotes");
+    assert_eq!(repo.remote_names().len(), 0, "there are no remotes");
 
     let repo = remote::repo("clone");
-    assert_eq!(
-        repo.remote_names().map(|name| name.to_string()).collect::<Vec<_>>(),
-        vec![String::from("origin")]
-    );
+    assert_eq!(Vec::from_iter(repo.remote_names().into_iter()), vec!["origin"]);
 }
 
 #[test]
