@@ -307,6 +307,9 @@ pub mod worktree;
 pub mod revision;
 
 ///
+pub mod remote;
+
+///
 pub mod init {
     use std::path::Path;
 

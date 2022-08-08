@@ -1,3 +1,5 @@
+set -eu -o pipefail
+
 function tick () {
   if test -z "${tick+set}"
   then
@@ -91,3 +93,16 @@ git init base
 )
 
 git clone --shared base clone
+(
+  cd clone
+  git remote add myself .
+)
+
+git clone --shared base push-default
+(
+  cd push-default
+
+  git remote add myself .
+  git remote rename origin new-origin
+  git config remote.pushDefault myself
+)

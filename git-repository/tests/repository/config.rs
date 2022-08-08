@@ -7,6 +7,7 @@ use git_sec::{Access, Permission};
 use git_testtools::Env;
 use serial_test::serial;
 
+use crate::remote::cow_str;
 use crate::{named_repo, remote};
 
 #[test]
@@ -14,10 +15,40 @@ fn remote_and_branch_names() {
     let repo = remote::repo("base");
     assert_eq!(repo.remote_names().len(), 0, "there are no remotes");
     assert_eq!(repo.branch_names().len(), 0, "there are no configured branches");
+    assert_eq!(repo.remote_default_name(git::remote::Direction::Fetch), None);
+    assert_eq!(repo.remote_default_name(git::remote::Direction::Push), None);
 
     let repo = remote::repo("clone");
-    assert_eq!(Vec::from_iter(repo.remote_names().into_iter()), vec!["origin"]);
+    assert_eq!(
+        Vec::from_iter(repo.remote_names().into_iter()),
+        vec!["myself", "origin"]
+    );
+    assert_eq!(
+        repo.remote_default_name(git::remote::Direction::Fetch),
+        Some(cow_str("origin"))
+    );
+    assert_eq!(
+        repo.remote_default_name(git::remote::Direction::Push),
+        Some(cow_str("origin"))
+    );
     assert_eq!(Vec::from_iter(repo.branch_names()), vec!["main"]);
+}
+
+#[test]
+fn remote_default_name() {
+    let repo = remote::repo("push-default");
+
+    assert_eq!(
+        repo.remote_default_name(git::remote::Direction::Push),
+        Some(cow_str("myself")),
+        "overridden via remote.pushDefault"
+    );
+
+    assert_eq!(
+        repo.remote_default_name(git::remote::Direction::Fetch),
+        None,
+        "none if name origin, and there are multiple"
+    );
 }
 
 #[test]

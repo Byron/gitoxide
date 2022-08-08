@@ -22,6 +22,9 @@ impl crate::Repository {
 }
 
 mod remote {
+    use crate::bstr::ByteSlice;
+    use crate::remote;
+    use std::borrow::Cow;
     use std::collections::BTreeSet;
 
     impl crate::Repository {
@@ -29,6 +32,32 @@ mod remote {
         /// we deem [trustworthy][crate::open::Options::filter_config_section()].
         pub fn remote_names(&self) -> BTreeSet<&str> {
             self.subsection_names_of("remote")
+        }
+
+        /// Obtain the branch-independent name for a remote for use in the given `direction`, or `None` if it could not be determined.
+        ///
+        /// For _fetching_, use the only configured remote, or default to `origin` if it exists.
+        /// For _pushing_, use the `remote.pushDefault` trusted configuration key, or fall back to the rules for _fetching_.
+        pub fn remote_default_name(&self, direction: remote::Direction) -> Option<Cow<'_, str>> {
+            let name = (direction == remote::Direction::Push)
+                .then(|| {
+                    self.config
+                        .resolved
+                        .string_filter("remote", None, "pushDefault", &mut self.filter_config_section())
+                        .and_then(|s| match s {
+                            Cow::Borrowed(s) => s.to_str().ok().map(Cow::Borrowed),
+                            Cow::Owned(s) => s.to_str().ok().map(|s| Cow::Owned(s.into())),
+                        })
+                })
+                .flatten();
+            name.or_else(|| {
+                let names = self.remote_names();
+                match names.len() {
+                    0 => None,
+                    1 => names.iter().next().copied().map(Cow::Borrowed),
+                    _more_than_one => names.get("origin").copied().map(Cow::Borrowed),
+                }
+            })
         }
     }
 }
