@@ -10,12 +10,14 @@ use serial_test::serial;
 use crate::{named_repo, remote};
 
 #[test]
-fn remote_names() {
+fn remote_and_branch_names() {
     let repo = remote::repo("base");
     assert_eq!(repo.remote_names().len(), 0, "there are no remotes");
+    assert_eq!(repo.branch_names().len(), 0, "there are no configured branches");
 
     let repo = remote::repo("clone");
     assert_eq!(Vec::from_iter(repo.remote_names().into_iter()), vec!["origin"]);
+    assert_eq!(Vec::from_iter(repo.branch_names()), vec!["main"]);
 }
 
 #[test]
