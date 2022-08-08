@@ -8,8 +8,14 @@ use serial_test::serial;
 use crate::named_repo;
 
 #[test]
+fn remote_names() {
+    let repo = named_repo("make_basic_repo.sh").unwrap();
+    assert_eq!(repo.remote_names().count(), 0, "there are no remotes");
+}
+
+#[test]
 #[serial]
-fn access_values() {
+fn access_values_and_identity() {
     for trust in [git_sec::Trust::Full, git_sec::Trust::Reduced] {
         let repo = named_repo("make_config_repo.sh").unwrap();
         let work_dir = repo.work_dir().expect("present").canonicalize().unwrap();

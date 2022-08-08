@@ -75,11 +75,7 @@ impl<'repo> Snapshot<'repo> {
             key.section_name,
             key.subsection_name,
             key.value_name,
-            &mut self
-                .repo
-                .options
-                .filter_config_section
-                .unwrap_or(crate::config::section::is_trusted),
+            &mut self.repo.filter_config_section(),
         )?;
 
         let install_dir = self.repo.install_dir().ok();

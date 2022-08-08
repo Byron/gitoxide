@@ -19,6 +19,27 @@ impl crate::Repository {
     }
 }
 
+mod remote {
+    use crate::bstr::BStr;
+
+    impl crate::Repository {
+        /// Returns an iterator over all symbolic names of remotes that we deem [trustworthy][crate::open::Options::filter_config_section()].
+        pub fn remote_names(&self) -> impl Iterator<Item = &BStr> + '_ {
+            self.config
+                .resolved
+                .sections_by_name("remote")
+                .map(|it| {
+                    let filter = self.filter_config_section();
+                    Box::new(
+                        it.filter(move |s| filter(s.meta()))
+                            .filter_map(|section| section.header().subsection_name()),
+                    ) as Box<dyn Iterator<Item = &BStr>>
+                })
+                .unwrap_or_else(|| Box::new(std::iter::empty()))
+        }
+    }
+}
+
 mod branch {
     use std::{borrow::Cow, convert::TryInto};
 
@@ -47,5 +68,13 @@ mod branch {
         pub fn branch_remote_name(&self, short_branch_name: &str) -> Option<Cow<'_, BStr>> {
             self.config.resolved.string("branch", Some(short_branch_name), "remote")
         }
+    }
+}
+
+impl crate::Repository {
+    pub(crate) fn filter_config_section(&self) -> fn(&git_config::file::Metadata) -> bool {
+        self.options
+            .filter_config_section
+            .unwrap_or(config::section::is_trusted)
     }
 }
