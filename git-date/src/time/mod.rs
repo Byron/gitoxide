@@ -1,0 +1,55 @@
+use crate::Time;
+
+/// Access
+impl Time {
+    /// Return true if this time has been initialized to anything non-default, i.e. 0.
+    pub fn is_set(&self) -> bool {
+        *self != Self::default()
+    }
+
+    /// Return the passed seconds since epoch since this signature was made.
+    pub fn seconds(&self) -> u32 {
+        self.seconds_since_unix_epoch
+    }
+}
+
+/// Indicates if a number is positive or negative for use in [`Time`].
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[allow(missing_docs)]
+pub enum Sign {
+    Plus,
+    Minus,
+}
+
+mod init;
+mod write;
+
+mod sign {
+    use crate::time::Sign;
+
+    impl From<i32> for Sign {
+        fn from(v: i32) -> Self {
+            if v < 0 {
+                Sign::Minus
+            } else {
+                Sign::Plus
+            }
+        }
+    }
+}
+
+mod impls {
+    use crate::time::Sign;
+    use crate::Time;
+
+    impl Default for Time {
+        fn default() -> Self {
+            Time {
+                seconds_since_unix_epoch: 0,
+                offset_in_seconds: 0,
+                sign: Sign::Plus,
+            }
+        }
+    }
+}
