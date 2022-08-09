@@ -33,12 +33,31 @@ mod errors {
 pub use errors::find;
 
 mod access {
-    use crate::Remote;
+    use crate::{remote, Remote};
+    use git_refspec::RefSpec;
 
     impl Remote<'_> {
         /// Return the name of this remote or `None` if it wasn't persisted to disk yet.
         pub fn name(&self) -> Option<&str> {
             self.name.as_deref()
+        }
+
+        /// Return the set of ref-specs used for `direction`, which may be empty, in order of occurrence in the configuration.
+        pub fn refspecs(&self, direction: remote::Direction) -> &[RefSpec] {
+            match direction {
+                remote::Direction::Fetch => &self.fetch_specs,
+                remote::Direction::Push => &self.push_specs,
+            }
+        }
+
+        /// Return the url used for the given `direction`.
+        /// For pushing, this is the `remote.<name>.pushUrl` or the `remote.<name>.url` used for fetching, and for fetching it's
+        /// the `remote.<name>.url`.
+        pub fn url(&self, direction: remote::Direction) -> Option<&git_url::Url> {
+            match direction {
+                remote::Direction::Fetch => self.url.as_ref(),
+                remote::Direction::Push => self.push_url.as_ref().or_else(|| self.url.as_ref()),
+            }
         }
     }
 }

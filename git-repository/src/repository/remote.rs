@@ -11,11 +11,13 @@ impl crate::Repository {
             .ok_or_else(|| find::existing::Error::NotFound { name: name.into() })??)
     }
 
-    /// Find the remote with the given `name` or return `None` if it doesn't exist.
-    /// Note that there are various error kinds related to partial information or incorrectly formatted URLs or ref-specs.
+    /// Find the remote with the given `name` or return `None` if it doesn't exist, for the purpose of fetching or pushing
+    /// data to a remote.
+    ///
+    /// There are various error kinds related to partial information or incorrectly formatted URLs or ref-specs.
     /// Also note that the created `Remote` may have neither fetch nor push ref-specs set at all.
     ///
-    /// Note that we will include remotes only if we deem them [trustworthy][crate::open::Options::filter_config_section()].
+    /// We will only include information if we deem it [trustworthy][crate::open::Options::filter_config_section()].
     pub fn try_find_remote(&self, name: &str) -> Option<Result<Remote<'_>, find::Error>> {
         let mut filter = self.filter_config_section();
         let mut config_url = |field: &str, kind: &'static str| {
