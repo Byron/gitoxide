@@ -6,7 +6,7 @@ fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, cra
 }
 
 fn assert_url_roundtrip(url: &str, expected: git_url::Url) -> crate::Result {
-    assert_eq!(assert_url_and(url, expected)?.to_string(), url);
+    assert_eq!(assert_url_and(url, expected)?.to_bstring().expect("valid"), url);
     Ok(())
 }
 

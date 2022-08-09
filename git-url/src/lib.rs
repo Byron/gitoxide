@@ -33,20 +33,28 @@ pub enum Scheme {
     Ssh,
     Http,
     Https,
+    // TODO: replace this with custom formats, maybe, get an idea how to do that.
     Radicle,
 }
 
-impl fmt::Display for Scheme {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl Scheme {
+    /// Return ourselves parseable name.
+    pub fn as_str(&self) -> &'static str {
         use Scheme::*;
-        f.write_str(match self {
+        match self {
             File => "file",
             Git => "git",
             Ssh => "ssh",
             Http => "http",
             Https => "https",
             Radicle => "rad",
-        })
+        }
+    }
+}
+
+impl fmt::Display for Scheme {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -81,6 +89,43 @@ impl Default for Url {
     }
 }
 
+/// Serialization
+impl Url {
+    /// Transform ourselves into a binary string, losslessly, or `None` if user and host is strangely configured.
+    pub fn to_bstring(&self) -> Option<bstr::BString> {
+        let mut buf = Vec::with_capacity(
+            (5 + 3)
+                + self.user.as_ref().map(|n| n.len()).unwrap_or_default()
+                + 1
+                + self.host.as_ref().map(|h| h.len()).unwrap_or_default()
+                + self.port.map(|_| 5).unwrap_or_default()
+                + self.path.len(),
+        );
+        buf.extend_from_slice(self.scheme.as_str().as_bytes());
+        buf.extend_from_slice(b"://");
+        match (&self.user, &self.host) {
+            (Some(user), Some(host)) => {
+                buf.extend_from_slice(user.as_bytes());
+                buf.push(b'@');
+                buf.extend_from_slice(host.as_bytes());
+            }
+            (None, Some(host)) => {
+                buf.extend_from_slice(host.as_bytes());
+            }
+            (None, None) => {}
+            _ => return None,
+        };
+        if let Some(port) = &self.port {
+            use std::io::Write;
+            buf.push(b':');
+            let mut numbers = [0u8; 5];
+            write!(numbers.as_mut_slice(), "{}", port).expect("write succeeds as max number fits into buffer");
+            buf.extend(numbers.iter().take_while(|b| **b != 0));
+        }
+        buf.extend_from_slice(&self.path);
+        Some(buf.into())
+    }
+}
 impl fmt::Display for Url {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.scheme.fmt(f)?;
