@@ -9,10 +9,10 @@ cfg_attr(doc, doc = ::document_features::document_features!())
 
 use std::{
     convert::TryFrom,
-    fmt::{self, Write},
+    fmt::{self},
 };
 
-use bstr::{BStr, ByteSlice};
+use bstr::BStr;
 
 ///
 pub mod parse;
@@ -127,23 +127,6 @@ impl Url {
         );
         self.write_to(&mut buf)?;
         Ok(buf.into())
-    }
-}
-impl fmt::Display for Url {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.scheme.fmt(f)?;
-        f.write_str("://")?;
-        match (&self.user, &self.host) {
-            (Some(user), Some(host)) => f.write_fmt(format_args!("{}@{}", user, host)),
-            (None, Some(host)) => f.write_str(host),
-            (None, None) => Ok(()),
-            _ => return Err(fmt::Error),
-        }?;
-        if let Some(port) = &self.port {
-            f.write_char(':')?;
-            f.write_fmt(format_args!("{}", port))?;
-        }
-        f.write_str(self.path.to_str_lossy().as_ref())
     }
 }
 
