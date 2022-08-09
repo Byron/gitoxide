@@ -60,6 +60,18 @@ mod impls {
             self.to_ref().partial_cmp(&other.to_ref())
         }
     }
+
+    impl Ord for RefSpecRef<'_> {
+        fn cmp(&self, other: &Self) -> Ordering {
+            self.instruction().cmp(&other.instruction())
+        }
+    }
+
+    impl Ord for RefSpec {
+        fn cmp(&self, other: &Self) -> Ordering {
+            self.to_ref().cmp(&other.to_ref())
+        }
+    }
 }
 
 /// Access
