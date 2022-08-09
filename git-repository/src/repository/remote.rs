@@ -74,12 +74,12 @@ impl crate::Repository {
                 };
                 let fetch_specs = match fetch_specs {
                     Some(Ok(v)) => v,
-                    Some(Err(err)) => return Some(Err(err.into())),
+                    Some(Err(err)) => return Some(Err(err)),
                     None => Vec::new(),
                 };
                 let push_specs = match push_specs {
                     Some(Ok(v)) => v,
-                    Some(Err(err)) => return Some(Err(err.into())),
+                    Some(Err(err)) => return Some(Err(err)),
                     None => Vec::new(),
                 };
                 Some(Ok(Remote {

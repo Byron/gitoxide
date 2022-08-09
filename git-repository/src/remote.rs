@@ -62,7 +62,7 @@ mod access {
         pub fn url(&self, direction: remote::Direction) -> Option<&git_url::Url> {
             match direction {
                 remote::Direction::Fetch => self.url.as_ref(),
-                remote::Direction::Push => self.push_url.as_ref().or_else(|| self.url.as_ref()),
+                remote::Direction::Push => self.push_url.as_ref().or(self.url.as_ref()),
             }
         }
     }

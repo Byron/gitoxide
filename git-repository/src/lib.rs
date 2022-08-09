@@ -152,7 +152,6 @@ pub use git_odb as odb;
 #[cfg(all(feature = "unstable", feature = "git-protocol"))]
 pub use git_protocol as protocol;
 pub use git_ref as refs;
-#[cfg(all(feature = "unstable"))]
 pub use git_refspec as refspec;
 pub use git_sec as sec;
 #[cfg(feature = "unstable")]
