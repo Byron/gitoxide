@@ -1,3 +1,4 @@
+use std::env::current_dir;
 use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
@@ -355,6 +356,21 @@ impl ThreadSafeRepository {
 
         if bail_if_untrusted && git_dir_trust != git_sec::Trust::Full {
             check_safe_directories(&git_dir, git_install_dir.as_deref(), home.as_deref(), &config)?;
+        }
+
+        // core.worktree might be used to overwrite the worktree directory
+        if !config.is_bare {
+            if let Some(wt) = config.resolved.path_filter(
+                "core",
+                None,
+                "worktree",
+                &mut filter_config_section.unwrap_or(config::section::is_trusted),
+            ) {
+                let wt_path = wt
+                    .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
+                    .map_err(config::Error::PathInterpolation)?;
+                worktree_dir = Some(git_path::absolutize(git_dir.join(wt_path), current_dir().ok()).to_path_buf());
+            }
         }
 
         match worktree_dir {
