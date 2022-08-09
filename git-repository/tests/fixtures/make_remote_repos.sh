@@ -121,3 +121,27 @@ git clone --shared base many-fetchspecs
   git config --add remote.origin.fetch refs/tags/*:refs/tags/*
   git config --add remote.origin.fetch HEAD
 )
+
+git init --bare url-rewriting
+(
+  cd url-rewriting
+  git remote add origin https://github.com/foobar/gitoxide
+  cat <<EOF >> config
+
+[remote "origin"]
+  pushUrl = "file://dev/null"
+
+[url "ssh://"]
+  insteadOf = "https://"
+  pushInsteadOf = "file://"
+
+[url "https://github.com/byron/"]
+  insteadOf = https://github.com/foobar/
+  pushInsteadOf = ssh://example.com/
+EOF
+
+  {
+    git remote get-url origin
+    git remote get-url origin --push
+  } > baseline.git
+)

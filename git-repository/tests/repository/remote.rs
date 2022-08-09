@@ -1,8 +1,10 @@
 mod find_remote {
     use crate::remote;
+    use git_object::bstr::BString;
     use git_repository as git;
     use git_repository::remote::Direction;
     use git_repository::Repository;
+    use std::io::BufRead;
 
     #[test]
     fn typical() {
@@ -60,6 +62,28 @@ mod find_remote {
                 fetchspec("refs/tags/*:refs/tags/*")
             ]
         )
+    }
+
+    #[test]
+    #[ignore]
+    fn instead_of_url_rewriting() -> crate::Result {
+        let repo = remote::repo("url-rewriting");
+
+        let baseline = std::fs::read(repo.git_dir().join("baseline.git"))?;
+        let mut baseline = baseline.lines().filter_map(Result::ok);
+        let expected_fetch_url: BString = baseline.next().expect("fetch").into();
+        let expected_push_url: BString = baseline.next().expect("push").into();
+
+        let remote = repo.find_remote("origin")?;
+        assert_eq!(
+            remote.url(Direction::Fetch).expect("present").to_string(),
+            expected_fetch_url,
+        );
+        assert_eq!(
+            remote.url(Direction::Push).expect("present").to_string(),
+            expected_push_url,
+        );
+        Ok(())
     }
 
     fn fetchspec(spec: &str) -> git_refspec::RefSpec {
