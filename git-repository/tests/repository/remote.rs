@@ -75,12 +75,14 @@ mod find_remote {
     }
 
     fn base_dir(repo: &Repository) -> String {
-        git::path::realpath(repo.work_dir().unwrap())
-            .unwrap()
-            .parent()
-            .unwrap()
-            .join("base")
-            .display()
-            .to_string()
+        git_path::to_unix_separators_on_windows(git::path::into_bstr(
+            git::path::realpath(repo.work_dir().unwrap())
+                .unwrap()
+                .parent()
+                .unwrap()
+                .join("base"),
+        ))
+        .into_owned()
+        .to_string()
     }
 }
