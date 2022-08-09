@@ -1,5 +1,6 @@
 use bstr::ByteSlice;
 use git_date::{time::Sign, Time};
+use time::macros::format_description;
 
 #[test]
 fn is_set() {
@@ -44,4 +45,27 @@ fn write_to() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(output.as_bstr(), expected);
     }
     Ok(())
+}
+
+#[test]
+fn format() {
+    let time = Time {
+        seconds_since_unix_epoch: 500,
+        offset_in_seconds: 9000,
+        sign: Sign::Plus,
+    };
+    assert_eq!("1970-01-01".to_string(), time.format());
+}
+
+#[test]
+fn to_formatted_string() {
+    let time = Time {
+        seconds_since_unix_epoch: 500,
+        offset_in_seconds: 9000,
+        sign: Sign::Plus,
+    };
+    assert_eq!(
+        "1970-01-01 00:08:20".to_string(),
+        time.to_formatted_string(&format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"))
+    );
 }
