@@ -78,7 +78,10 @@ mod branch {
             self.subsection_names_of("branch")
         }
 
-        /// Returns a reference to the remote associated with the given `short_branch_name`, typically `main` instead of `refs/heads/main`.
+        /// Returns a reference to the remote associated with the given `short_branch_name`,
+        /// always `main` instead of `refs/heads/main`.
+        ///
+        /// The remote-ref is the one we track on the remote side for merging and pushing.
         /// Returns `None` if the remote reference was not found.
         /// May return an error if the reference is invalid.
         pub fn branch_remote_ref(

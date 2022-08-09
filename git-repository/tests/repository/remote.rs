@@ -75,9 +75,7 @@ mod find_remote {
     }
 
     fn base_dir(repo: &Repository) -> String {
-        repo.work_dir()
-            .unwrap()
-            .canonicalize()
+        git::path::realpath(repo.work_dir().unwrap())
             .unwrap()
             .parent()
             .unwrap()
