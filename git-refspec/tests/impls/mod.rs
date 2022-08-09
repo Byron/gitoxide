@@ -1,0 +1,27 @@
+use git_refspec::parse::Operation;
+use git_refspec::RefSpec;
+use std::collections::{BTreeSet, HashSet};
+use std::iter::FromIterator;
+
+fn pair() -> Vec<RefSpec> {
+    let lhs = git_refspec::parse("refs/heads/foo".into(), Operation::Push).unwrap();
+    let rhs = git_refspec::parse("refs/heads/foo:refs/heads/foo".into(), Operation::Push).unwrap();
+    vec![lhs.to_owned(), rhs.to_owned()]
+}
+
+#[test]
+fn cmp() {
+    assert_eq!(BTreeSet::from_iter(pair()).len(), 1)
+}
+
+#[test]
+fn hash() {
+    let set: HashSet<_> = pair().into_iter().collect();
+    assert_eq!(set.len(), 1)
+}
+
+#[test]
+fn eq() {
+    let specs = pair();
+    assert_eq!(&specs[0], &specs[1]);
+}
