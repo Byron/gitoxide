@@ -95,69 +95,11 @@ impl crate::Repository {
                     None => Vec::new(),
                 };
 
-                let mut url_alias = None;
-                let mut push_url_alias = None;
-                if let Some(sections) = self.config.resolved.sections_by_name_and_filter("url", &mut filter) {
-                    let mut rewrite_url = None::<(usize, &BStr)>;
-                    let mut rewrite_push_url = None::<(usize, &BStr)>;
-                    let url = url.as_ref().map(|url| url.to_bstring().expect("still valid"));
-                    let push_url = push_url.as_ref().map(|url| url.to_bstring().expect("still valid"));
-                    for section in sections {
-                        let rewrite_with = match section.header().subsection_name() {
-                            Some(base) => base,
-                            None => continue,
-                        };
-                        if let Some(url) = url.as_deref() {
-                            for instead_of in section.values("insteadOf") {
-                                if url.starts_with(instead_of.as_ref()) {
-                                    let (bytes_matched, prev_rewrite_with) =
-                                        rewrite_url.get_or_insert_with(|| (instead_of.len(), rewrite_with));
-                                    if *bytes_matched < instead_of.len() {
-                                        *bytes_matched = instead_of.len();
-                                        *prev_rewrite_with = rewrite_with;
-                                    }
-                                }
-                            }
-                        }
-                        if let Some(url) = push_url.as_deref() {
-                            for instead_of in section.values("pushInsteadOf") {
-                                if url.starts_with(instead_of.as_ref()) {
-                                    let (bytes_matched, prev_rewrite_with) =
-                                        rewrite_push_url.get_or_insert_with(|| (instead_of.len(), rewrite_with));
-                                    if *bytes_matched < instead_of.len() {
-                                        *bytes_matched = instead_of.len();
-                                        *prev_rewrite_with = rewrite_with;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    fn replace_url(
-                        url: Option<BString>,
-                        rewrite: Option<(usize, &BStr)>,
-                        kind: &'static str,
-                    ) -> Option<Result<git_url::Url, find::Error>> {
-                        url.zip(rewrite).map(|(mut url, (bytes_at_start, replace_with))| {
-                            url.replace_range(..bytes_at_start, replace_with);
-                            git_url::parse(&url).map_err(|err| find::Error::RewrittenUrlInvalid {
-                                kind,
-                                source: err,
-                                rewritten_url: url,
-                            })
-                        })
-                    }
-                    url_alias = match replace_url(url, rewrite_url, "fetch") {
-                        Some(Ok(url)) => Some(url),
-                        Some(Err(err)) => return Some(Err(err)),
-                        None => None,
+                let (url_alias, push_url_alias) =
+                    match rewrite_urls(&self.config.resolved, url.as_ref(), push_url.as_ref(), filter) {
+                        Ok(t) => t,
+                        Err(err) => return Some(Err(err)),
                     };
-                    push_url_alias = match replace_url(push_url, rewrite_push_url, "push") {
-                        Some(Ok(url)) => Some(url),
-                        Some(Err(err)) => return Some(Err(err)),
-                        None => None,
-                    };
-                }
                 Some(Ok(Remote {
                     name: name.to_owned().into(),
                     url,
@@ -172,4 +114,70 @@ impl crate::Repository {
             }
         }
     }
+}
+
+fn rewrite_urls(
+    config: &git_config::File<'static>,
+    url: Option<&git_url::Url>,
+    push_url: Option<&git_url::Url>,
+    mut filter: fn(&git_config::file::Metadata) -> bool,
+) -> Result<(Option<git_url::Url>, Option<git_url::Url>), find::Error> {
+    let mut url_alias = None;
+    let mut push_url_alias = None;
+    if let Some(sections) = config.sections_by_name_and_filter("url", &mut filter) {
+        let mut rewrite_url = None::<(usize, &BStr)>;
+        let mut rewrite_push_url = None::<(usize, &BStr)>;
+        let url = url.as_ref().map(|url| url.to_bstring().expect("still valid"));
+        let push_url = push_url.as_ref().map(|url| url.to_bstring().expect("still valid"));
+        for section in sections {
+            let rewrite_with = match section.header().subsection_name() {
+                Some(base) => base,
+                None => continue,
+            };
+            if let Some(url) = url.as_deref() {
+                for instead_of in section.values("insteadOf") {
+                    if url.starts_with(instead_of.as_ref()) {
+                        let (bytes_matched, prev_rewrite_with) =
+                            rewrite_url.get_or_insert_with(|| (instead_of.len(), rewrite_with));
+                        if *bytes_matched < instead_of.len() {
+                            *bytes_matched = instead_of.len();
+                            *prev_rewrite_with = rewrite_with;
+                        }
+                    }
+                }
+            }
+            if let Some(url) = push_url.as_deref() {
+                for instead_of in section.values("pushInsteadOf") {
+                    if url.starts_with(instead_of.as_ref()) {
+                        let (bytes_matched, prev_rewrite_with) =
+                            rewrite_push_url.get_or_insert_with(|| (instead_of.len(), rewrite_with));
+                        if *bytes_matched < instead_of.len() {
+                            *bytes_matched = instead_of.len();
+                            *prev_rewrite_with = rewrite_with;
+                        }
+                    }
+                }
+            }
+        }
+
+        fn replace_url(
+            url: Option<BString>,
+            rewrite: Option<(usize, &BStr)>,
+            kind: &'static str,
+        ) -> Result<Option<git_url::Url>, find::Error> {
+            url.zip(rewrite)
+                .map(|(mut url, (bytes_at_start, replace_with))| {
+                    url.replace_range(..bytes_at_start, replace_with);
+                    git_url::parse(&url).map_err(|err| find::Error::RewrittenUrlInvalid {
+                        kind,
+                        source: err,
+                        rewritten_url: url,
+                    })
+                })
+                .transpose()
+        }
+        url_alias = replace_url(url, rewrite_url, "fetch")?;
+        push_url_alias = replace_url(push_url, rewrite_push_url, "push")?;
+    }
+    Ok((url_alias, push_url_alias))
 }
