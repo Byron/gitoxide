@@ -7,6 +7,13 @@ mod errors {
         pub enum Error {
             #[error(transparent)]
             RefSpec(#[from] git_refspec::parse::Error),
+            #[error("Neither 'url` nor 'pushUrl' fields were set in the remote's configuration.")]
+            UrlMissing,
+            #[error("The {kind} url couldn't be parsed")]
+            UrlInvalid {
+                kind: &'static str,
+                source: git_url::parse::Error,
+            },
         }
 
         ///
