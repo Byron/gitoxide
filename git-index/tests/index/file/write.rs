@@ -1,10 +1,6 @@
 use filetime::FileTime;
-use git_features::hash;
 use git_index::{decode, write, State, Version};
-use std::{
-    cmp::{max, min},
-    io::Write,
-};
+use std::cmp::{max, min};
 
 #[test]
 fn roundtrips() {
@@ -24,16 +20,13 @@ fn roundtrips() {
         let path = crate::fixture_index_path(fixture);
         let expected_index = git_index::File::at(&path, decode::Options::default()).unwrap();
         let expected_bytes = std::fs::read(&path).unwrap();
-        let mut generated_bytes = Vec::<u8>::new();
-        let mut hasher = hash::Write::new(&mut generated_bytes, options.hash_kind);
-        expected_index.state.write_to(&mut hasher, options).unwrap();
-        let hash = hasher.hash.digest();
-        generated_bytes.write_all(&hash).unwrap();
-        let (generated_index, _) =
-            State::from_bytes(&generated_bytes, FileTime::now(), decode::Options::default()).unwrap();
+        let mut out_bytes = Vec::<u8>::new();
 
-        compare_states(&generated_index, &expected_index, options, fixture);
-        compare_raw_bytes(&generated_bytes, &expected_bytes, fixture);
+        expected_index.write_to(&mut out_bytes, options).unwrap();
+        let (out_index, _) = State::from_bytes(&out_bytes, FileTime::now(), decode::Options::default()).unwrap();
+
+        compare_states(&out_index, &expected_index, options, fixture);
+        compare_raw_bytes(&out_bytes, &expected_bytes, fixture);
     }
 }
 
@@ -58,10 +51,8 @@ fn v2_index_no_extensions() {
             tree_cache: false,
             end_of_index_entry: false,
         };
-        let mut hasher = hash::Write::new(&mut out, options.hash_kind);
-        expected.write_to(&mut hasher, options).unwrap();
-        let hash = hasher.hash.digest();
-        out.write_all(&hash).unwrap();
+
+        expected.write_to(&mut out, options).unwrap();
 
         let (generated, _) = State::from_bytes(&out, FileTime::now(), decode::Options::default()).unwrap();
         compare_states(&generated, &expected, options, fixture);
@@ -89,10 +80,8 @@ fn v2_index_tree_extensions() {
             tree_cache: true,
             end_of_index_entry: false,
         };
-        let mut hasher = hash::Write::new(&mut out, options.hash_kind);
-        expected.write_to(&mut hasher, options).unwrap();
-        let hash = hasher.hash.digest();
-        out.write_all(&hash).unwrap();
+
+        expected.write_to(&mut out, options).unwrap();
 
         let (generated, _) = State::from_bytes(&out, FileTime::now(), decode::Options::default()).unwrap();
         compare_states(&generated, &expected, options, fixture);
