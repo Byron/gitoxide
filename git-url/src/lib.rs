@@ -5,7 +5,7 @@ feature = "document-features",
 cfg_attr(doc, doc = ::document_features::document_features!())
 )]
 #![forbid(unsafe_code)]
-#![deny(rust_2018_idioms)]
+#![deny(rust_2018_idioms, missing_docs)]
 
 use std::{
     convert::TryFrom,
@@ -27,6 +27,7 @@ pub use expand_path::expand_path;
 /// A scheme for use in a [`Url`]
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+#[allow(missing_docs)]
 pub enum Scheme {
     File,
     Git,
@@ -91,8 +92,31 @@ impl Default for Url {
 
 /// Serialization
 impl Url {
-    /// Transform ourselves into a binary string, losslessly, or `None` if user and host is strangely configured.
-    pub fn to_bstring(&self) -> Option<bstr::BString> {
+    /// Write this URL losslessly to `out`, ready to be parsed again.
+    pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+        out.write_all(self.scheme.as_str().as_bytes())?;
+        out.write_all(b"://")?;
+        match (&self.user, &self.host) {
+            (Some(user), Some(host)) => {
+                out.write_all(user.as_bytes())?;
+                out.write_all(&[b'@'])?;
+                out.write_all(host.as_bytes())?;
+            }
+            (None, Some(host)) => {
+                out.write_all(host.as_bytes())?;
+            }
+            (None, None) => {}
+            _ => return Err(std::io::Error::new(std::io::ErrorKind::Other, "Malformed URL")),
+        };
+        if let Some(port) = &self.port {
+            write!(&mut out, ":{}", port)?;
+        }
+        out.write_all(&self.path)?;
+        Ok(())
+    }
+
+    /// Transform ourselves into a binary string, losslessly, or fail if the URL is malformed due to host or user parts being incorrect.
+    pub fn to_bstring(&self) -> std::io::Result<bstr::BString> {
         let mut buf = Vec::with_capacity(
             (5 + 3)
                 + self.user.as_ref().map(|n| n.len()).unwrap_or_default()
@@ -101,29 +125,8 @@ impl Url {
                 + self.port.map(|_| 5).unwrap_or_default()
                 + self.path.len(),
         );
-        buf.extend_from_slice(self.scheme.as_str().as_bytes());
-        buf.extend_from_slice(b"://");
-        match (&self.user, &self.host) {
-            (Some(user), Some(host)) => {
-                buf.extend_from_slice(user.as_bytes());
-                buf.push(b'@');
-                buf.extend_from_slice(host.as_bytes());
-            }
-            (None, Some(host)) => {
-                buf.extend_from_slice(host.as_bytes());
-            }
-            (None, None) => {}
-            _ => return None,
-        };
-        if let Some(port) = &self.port {
-            use std::io::Write;
-            buf.push(b':');
-            let mut numbers = [0u8; 5];
-            write!(numbers.as_mut_slice(), "{}", port).expect("write succeeds as max number fits into buffer");
-            buf.extend(numbers.iter().take_while(|b| **b != 0));
-        }
-        buf.extend_from_slice(&self.path);
-        Some(buf.into())
+        self.write_to(&mut buf)?;
+        Ok(buf.into())
     }
 }
 impl fmt::Display for Url {

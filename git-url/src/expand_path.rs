@@ -26,6 +26,7 @@ impl From<ForUser> for Option<BString> {
 quick_error! {
     /// The error used by [`parse()`], [`with()`] and [`expand_path()`].
     #[derive(Debug)]
+    #[allow(missing_docs)]
     pub enum Error {
         IllformedUtf8{path: BString} {
             display("UTF8 conversion on non-unix system failed for path: {}", path)
