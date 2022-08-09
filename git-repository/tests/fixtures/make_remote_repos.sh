@@ -106,3 +106,10 @@ git clone --shared base push-default
   git remote rename origin new-origin
   git config remote.pushDefault myself
 )
+
+git clone --shared base push-url
+(
+  cd push-url
+  git config remote.origin.pushUrl .
+  git config remote.origin.push refs/tags/*:refs/tags/*
+)
