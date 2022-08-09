@@ -1,12 +1,18 @@
 mod errors {
     ///
     pub mod find {
+        use crate::bstr::BString;
+
         /// The error returned by [`Repository::find_remote(…)`][crate::Repository::find_remote()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
-            #[error(transparent)]
-            RefSpec(#[from] git_refspec::parse::Error),
+            #[error("{spec:?} {kind} ref-spec failed to parse")]
+            RefSpec {
+                spec: BString,
+                kind: &'static str,
+                source: git_refspec::parse::Error,
+            },
             #[error("Neither 'url` nor 'pushUrl' fields were set in the remote's configuration.")]
             UrlMissing,
             #[error("The {kind} url couldn't be parsed")]

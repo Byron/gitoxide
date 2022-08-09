@@ -1,4 +1,5 @@
 use crate::remote::find;
+use crate::remote::find::Error;
 use crate::Remote;
 
 impl crate::Repository {
@@ -32,21 +33,25 @@ impl crate::Repository {
         let push_url = config_url("pushUrl", "push");
 
         let mut config_spec = |op: git_refspec::parse::Operation| {
+            let kind = match op {
+                git_refspec::parse::Operation::Fetch => "fetch",
+                git_refspec::parse::Operation::Push => "push",
+            };
             self.config
                 .resolved
-                .strings_filter(
-                    "remote",
-                    name.into(),
-                    match op {
-                        git_refspec::parse::Operation::Fetch => "fetch",
-                        git_refspec::parse::Operation::Push => "push",
-                    },
-                    &mut filter,
-                )
+                .strings_filter("remote", name.into(), kind, &mut filter)
                 .map(|specs| {
                     specs
                         .into_iter()
-                        .map(|spec| git_refspec::parse(spec.as_ref(), op).map(|spec| spec.to_owned()))
+                        .map(|spec| {
+                            git_refspec::parse(spec.as_ref(), op)
+                                .map(|spec| spec.to_owned())
+                                .map_err(|err| Error::RefSpec {
+                                    spec: spec.into_owned(),
+                                    kind,
+                                    source: err,
+                                })
+                        })
                         .collect::<Result<Vec<_>, _>>()
                 })
         };
