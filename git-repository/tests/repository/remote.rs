@@ -21,12 +21,9 @@ mod find_remote {
             let url = git::url::parse(url.as_bytes()).expect("valid");
             assert_eq!(remote.url(Direction::Fetch), Some(&url));
 
-            let refspec = git::refspec::parse(refspec.into(), git::refspec::parse::Operation::Fetch)
-                .expect("valid expectation")
-                .to_owned();
             assert_eq!(
                 remote.refspecs(Direction::Fetch),
-                &[refspec],
+                &[fetchspec(refspec)],
                 "default refspecs are set by git"
             );
             assert_eq!(
@@ -48,10 +45,33 @@ mod find_remote {
         let remote = repo.find_remote("origin").expect("present");
         assert_eq!(remote.url(Direction::Push).unwrap().path, ".");
         assert_eq!(remote.url(Direction::Fetch).unwrap().path, base_dir(&repo));
-        let spec = git::refspec::parse("refs/tags/*:refs/tags/*".into(), git::refspec::parse::Operation::Push)
+        assert_eq!(remote.refspecs(Direction::Push), &[pushspec("refs/tags/*:refs/tags/*")])
+    }
+
+    #[test]
+    fn many_fetchspecs() {
+        let repo = remote::repo("many-fetchspecs");
+        let remote = repo.find_remote("origin").expect("present");
+        assert_eq!(
+            remote.refspecs(Direction::Fetch),
+            &[
+                fetchspec("HEAD"),
+                fetchspec("+refs/heads/*:refs/remotes/origin/*"),
+                fetchspec("refs/tags/*:refs/tags/*")
+            ]
+        )
+    }
+
+    fn fetchspec(spec: &str) -> git_refspec::RefSpec {
+        git::refspec::parse(spec.into(), git::refspec::parse::Operation::Fetch)
             .unwrap()
-            .to_owned();
-        assert_eq!(remote.refspecs(Direction::Push), &[spec])
+            .to_owned()
+    }
+
+    fn pushspec(spec: &str) -> git_refspec::RefSpec {
+        git::refspec::parse(spec.into(), git::refspec::parse::Operation::Push)
+            .unwrap()
+            .to_owned()
     }
 
     fn base_dir(repo: &Repository) -> String {

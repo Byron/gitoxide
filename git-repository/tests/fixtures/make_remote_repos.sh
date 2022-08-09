@@ -113,3 +113,11 @@ git clone --shared base push-url
   git config remote.origin.pushUrl .
   git config remote.origin.push refs/tags/*:refs/tags/*
 )
+
+git clone --shared base many-fetchspecs
+(
+  cd many-fetchspecs
+  git config --add remote.origin.fetch @
+  git config --add remote.origin.fetch refs/tags/*:refs/tags/*
+  git config --add remote.origin.fetch HEAD
+)

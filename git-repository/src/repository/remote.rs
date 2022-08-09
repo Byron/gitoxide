@@ -18,6 +18,9 @@ impl crate::Repository {
     /// There are various error kinds related to partial information or incorrectly formatted URLs or ref-specs.
     /// Also note that the created `Remote` may have neither fetch nor push ref-specs set at all.
     ///
+    /// Note that ref-specs are de-duplicated right away which may change their order. This doesn't affect matching in any way
+    /// as negations/excludes are applied after includes.
+    ///
     /// We will only include information if we deem it [trustworthy][crate::open::Options::filter_config_section()].
     pub fn try_find_remote(&self, name: &str) -> Option<Result<Remote<'_>, find::Error>> {
         let mut filter = self.filter_config_section();
@@ -53,6 +56,11 @@ impl crate::Repository {
                                 })
                         })
                         .collect::<Result<Vec<_>, _>>()
+                        .map(|mut specs| {
+                            specs.sort();
+                            specs.dedup();
+                            specs
+                        })
                 })
         };
         let fetch_specs = config_spec(git_refspec::parse::Operation::Fetch);
