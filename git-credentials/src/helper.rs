@@ -1,3 +1,4 @@
+use bstr::{BStr, BString};
 use std::{
     io::{self, Write},
     process::{Command, Stdio},
@@ -31,11 +32,11 @@ quick_error! {
 #[derive(Clone, Debug)]
 pub enum Action<'a> {
     /// Provide credentials using the given repository URL (as &str) as context.
-    Fill(&'a str),
-    /// Approve the credentials as identified by the previous input as `Vec<u8>`.
-    Approve(Vec<u8>),
-    /// Reject the credentials as identified by the previous input as `Vec<u8>`.
-    Reject(Vec<u8>),
+    Fill(&'a BStr),
+    /// Approve the credentials as identified by the previous input provided as `BString`.
+    Approve(BString),
+    /// Reject the credentials as identified by the previous input provided as `BString`.
+    Reject(BString),
 }
 
 impl<'a> Action<'a> {
@@ -54,7 +55,7 @@ impl<'a> Action<'a> {
 /// A handle to [approve][NextAction::approve()] or [reject][NextAction::reject()] the outcome of the initial action.
 #[derive(Clone, Debug)]
 pub struct NextAction {
-    previous_output: Vec<u8>,
+    previous_output: BString,
 }
 
 impl NextAction {
@@ -134,20 +135,20 @@ pub fn action(action: Action<'_>) -> Result {
                 password: find("password")?,
             },
             next: NextAction {
-                previous_output: stdout,
+                previous_output: stdout.into(),
             },
         }))
     }
 }
 
 /// Encode `url` to `out` for consumption by a `git credentials` helper program.
-pub fn encode_message(url: &str, mut out: impl io::Write) -> io::Result<()> {
+pub fn encode_message(url: &BStr, mut out: impl io::Write) -> io::Result<()> {
     validate(url)?;
     writeln!(out, "url={}\n", url)
 }
 
-fn validate(url: &str) -> io::Result<()> {
-    if url.contains('\u{0}') || url.contains('\n') {
+fn validate(url: &BStr) -> io::Result<()> {
+    if url.contains(&0) || url.contains(&b'\n') {
         return Err(io::Error::new(
             io::ErrorKind::Other,
             "token to encode must not contain newlines or null bytes",
@@ -165,7 +166,9 @@ pub fn decode_message(mut input: impl io::Read) -> io::Result<Vec<(String, Strin
         .map(|l| {
             let mut iter = l.splitn(2, '=').map(|s| s.to_owned());
             match (iter.next(), iter.next()) {
-                (Some(key), Some(value)) => validate(&key).and_then(|_| validate(&value)).map(|_| (key, value)),
+                (Some(key), Some(value)) => validate(key.as_str().into())
+                    .and_then(|_| validate(value.as_str().into()))
+                    .map(|_| (key, value)),
                 _ => Err(io::Error::new(
                     io::ErrorKind::Other,
                     "Invalid format, expecting key=value",
@@ -188,7 +191,7 @@ mod tests {
         #[test]
         fn from_url() -> super::Result {
             let mut out = Vec::new();
-            encode_message("https://github.com/byron/gitoxide", &mut out)?;
+            encode_message("https://github.com/byron/gitoxide".into(), &mut out)?;
             assert_eq!(out.as_bstr(), b"url=https://github.com/byron/gitoxide\n\n".as_bstr());
             Ok(())
         }
@@ -201,14 +204,18 @@ mod tests {
             #[test]
             fn contains_null() {
                 assert_eq!(
-                    encode_message("https://foo\u{0}", Vec::new()).err().map(|e| e.kind()),
+                    encode_message("https://foo\u{0}".into(), Vec::new())
+                        .err()
+                        .map(|e| e.kind()),
                     Some(io::ErrorKind::Other)
                 );
             }
             #[test]
             fn contains_newline() {
                 assert_eq!(
-                    encode_message("https://foo\n", Vec::new()).err().map(|e| e.kind()),
+                    encode_message("https://foo\n".into(), Vec::new())
+                        .err()
+                        .map(|e| e.kind()),
                     Some(io::ErrorKind::Other)
                 );
             }

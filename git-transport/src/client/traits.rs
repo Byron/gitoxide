@@ -1,3 +1,4 @@
+use bstr::BString;
 use std::ops::{Deref, DerefMut};
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
@@ -26,7 +27,7 @@ pub trait TransportWithoutIO {
     /// Returns the canonical URL pointing to the destination of this transport.
     /// Please note that local paths may not be represented correctly, as they will go through a potentially lossy
     /// unicode conversion.
-    fn to_url(&self) -> String;
+    fn to_url(&self) -> BString;
 
     /// If the actually advertised server version is contained in the returned slice or empty, continue as normal,
     /// assume the server's protocol version is desired or acceptable.
@@ -59,7 +60,7 @@ impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for Box<T> {
         self.deref_mut().request(write_mode, on_into_read)
     }
 
-    fn to_url(&self) -> String {
+    fn to_url(&self) -> BString {
         self.deref().to_url()
     }
 
@@ -82,7 +83,7 @@ impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for &mut T {
         self.deref_mut().request(write_mode, on_into_read)
     }
 
-    fn to_url(&self) -> String {
+    fn to_url(&self) -> BString {
         self.deref().to_url()
     }
 

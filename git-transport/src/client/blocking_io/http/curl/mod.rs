@@ -1,3 +1,4 @@
+use bstr::BStr;
 use std::{
     sync::mpsc::{Receiver, SyncSender},
     thread,
@@ -33,7 +34,7 @@ impl Curl {
 
     fn make_request(
         &mut self,
-        url: &str,
+        url: &BStr,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
         upload: bool,
     ) -> Result<http::PostResponse<io::pipe::Reader, io::pipe::Reader, io::pipe::Writer>, http::Error> {
@@ -87,7 +88,7 @@ impl crate::client::http::Http for Curl {
 
     fn get(
         &mut self,
-        url: &str,
+        url: &BStr,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<http::GetResponse<Self::Headers, Self::ResponseBody>, http::Error> {
         self.make_request(url, headers, false).map(Into::into)
@@ -95,7 +96,7 @@ impl crate::client::http::Http for Curl {
 
     fn post(
         &mut self,
-        url: &str,
+        url: &BStr,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<http::PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, http::Error> {
         self.make_request(url, headers, true)

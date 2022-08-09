@@ -51,12 +51,9 @@ pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn T
         #[cfg(not(feature = "http-client-curl"))]
         git_url::Scheme::Https | git_url::Scheme::Http => return Err(Error::CompiledWithoutHttp(url.scheme)),
         #[cfg(feature = "http-client-curl")]
-        git_url::Scheme::Https | git_url::Scheme::Http => {
-            use bstr::ByteSlice;
-            Box::new(
-                crate::client::http::connect(urlb.to_str()?, desired_version)
-                    .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
-            )
-        }
+        git_url::Scheme::Https | git_url::Scheme::Http => Box::new(
+            crate::client::http::connect(urlb.into(), desired_version)
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
+        ),
     })
 }

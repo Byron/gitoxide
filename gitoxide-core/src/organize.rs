@@ -168,17 +168,18 @@ fn handle(
         progress.info(format!(
             "Skipping repository at {:?} whose remote does not have a path: {:?}",
             git_workdir.display(),
-            url.to_string()
+            url.to_bstring()?
         ));
         return Ok(());
     }
 
     let destination = canonicalized_destination
-        .join(
-            url.host
-                .as_ref()
-                .ok_or_else(|| anyhow::Error::msg(format!("Remote URLs must have host names: {}", url)))?,
-        )
+        .join(url.host.as_ref().ok_or_else(|| {
+            anyhow::Error::msg(format!(
+                "Remote URLs must have host names: {}",
+                url.to_bstring().expect("valid URL")
+            ))
+        })?)
         .join(to_relative({
             let mut path = git_url::expand_path(None, url.path.as_bstr())?;
             match kind {

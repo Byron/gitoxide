@@ -104,7 +104,7 @@ pub fn serve_and_connect(
         &server.addr.port(),
         path
     );
-    let client = git_transport::client::http::connect(&url, version)?;
+    let client = git_transport::client::http::connect(url.as_str().into(), version)?;
     assert_eq!(url, client.to_url());
     Ok((server, client))
 }

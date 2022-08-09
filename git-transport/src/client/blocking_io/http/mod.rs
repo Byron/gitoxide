@@ -1,3 +1,4 @@
+use bstr::{BStr, BString};
 use std::{
     borrow::Cow,
     convert::Infallible,
@@ -24,7 +25,7 @@ pub type Impl = curl::Curl;
 
 /// A transport for supporting arbitrary http clients by abstracting interactions with them into the [Http] trait.
 pub struct Transport<H: Http> {
-    url: String,
+    url: BString,
     user_agent_header: &'static str,
     desired_version: crate::Protocol,
     supported_versions: [crate::Protocol; 1],
@@ -37,7 +38,7 @@ pub struct Transport<H: Http> {
 
 impl Transport<Impl> {
     /// Create a new instance to communicate to `url` using the given `desired_version` of the `git` protocol.
-    pub fn new(url: &str, desired_version: crate::Protocol) -> Self {
+    pub fn new(url: &BStr, desired_version: crate::Protocol) -> Self {
         Transport {
             url: url.to_owned(),
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
@@ -87,12 +88,13 @@ impl<H: Http> Transport<H> {
     }
 }
 
-fn append_url(base: &str, suffix: &str) -> String {
-    if base.ends_with('/') {
-        format!("{}{}", base, suffix)
-    } else {
-        format!("{}/{}", base, suffix)
+fn append_url(base: &BStr, suffix: &str) -> BString {
+    let mut buf = base.to_owned();
+    if base.last() != Some(&b'/') {
+        buf.push(b'/');
     }
+    buf.extend_from_slice(suffix.as_bytes());
+    buf
 }
 
 impl<H: Http> client::TransportWithoutIO for Transport<H> {
@@ -107,7 +109,7 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
         on_into_read: client::MessageKind,
     ) -> Result<client::RequestWriter<'_>, client::Error> {
         let service = self.service.expect("handshake() must have been called first");
-        let url = append_url(&self.url, service.as_str());
+        let url = append_url(self.url.as_ref(), service.as_str());
         let static_headers = &[
             Cow::Borrowed(self.user_agent_header),
             Cow::Owned(format!("Content-Type: application/x-{}-request", service.as_str())),
@@ -127,7 +129,9 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
             headers,
             body,
             post_body,
-        } = self.http.post(&url, static_headers.iter().chain(&dynamic_headers))?;
+        } = self
+            .http
+            .post(url.as_ref(), static_headers.iter().chain(&dynamic_headers))?;
         let line_provider = self
             .line_provider
             .as_mut()
@@ -145,8 +149,8 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
         ))
     }
 
-    fn to_url(&self) -> String {
-        self.url.to_owned()
+    fn to_url(&self) -> BString {
+        self.url.clone()
     }
 
     fn supported_protocol_versions(&self) -> &[Protocol] {
@@ -164,7 +168,7 @@ impl<H: Http> client::Transport for Transport<H> {
         service: Service,
         extra_parameters: &'a [(&'a str, Option<&'a str>)],
     ) -> Result<client::SetServiceResponse<'_>, client::Error> {
-        let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
+        let url = append_url(self.url.as_ref(), &format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
         let mut dynamic_headers = Vec::<Cow<'_, str>>::new();
         if self.desired_version != Protocol::V1 || !extra_parameters.is_empty() {
@@ -190,7 +194,9 @@ impl<H: Http> client::Transport for Transport<H> {
             dynamic_headers.push(format!("Git-Protocol: {}", parameters).into());
         }
         self.add_basic_auth_if_present(&mut dynamic_headers)?;
-        let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
+        let GetResponse { headers, body } = self
+            .http
+            .get(url.as_ref(), static_headers.iter().chain(&dynamic_headers))?;
         <Transport<H>>::check_content_type(service, "advertisement", headers)?;
 
         let line_reader = self
@@ -279,6 +285,6 @@ impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H,
 }
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol.
-pub fn connect(url: &str, desired_version: crate::Protocol) -> Result<Transport<Impl>, Infallible> {
+pub fn connect(url: &BStr, desired_version: crate::Protocol) -> Result<Transport<Impl>, Infallible> {
     Ok(Transport::new(url, desired_version))
 }

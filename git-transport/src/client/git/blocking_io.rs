@@ -26,7 +26,7 @@ where
         ))
     }
 
-    fn to_url(&self) -> String {
+    fn to_url(&self) -> BString {
         self.custom_url.as_ref().map_or_else(
             || {
                 git_url::Url {
@@ -36,7 +36,8 @@ where
                     port: None,
                     path: self.path.clone(),
                 }
-                .to_string()
+                .to_bstring()
+                .expect("valid URL which isn't mutated")
             },
             |url| url.clone(),
         )

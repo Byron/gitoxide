@@ -18,6 +18,7 @@ struct Transport<T> {
 
 #[cfg(feature = "blocking-client")]
 mod impls {
+    use bstr::BString;
     use git_transport::{
         client,
         client::{Error, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
@@ -35,7 +36,7 @@ mod impls {
             self.inner.request(write_mode, on_into_read)
         }
 
-        fn to_url(&self) -> String {
+        fn to_url(&self) -> BString {
             self.inner.to_url()
         }
 
@@ -62,6 +63,7 @@ mod impls {
 #[cfg(feature = "async-client")]
 mod impls {
     use async_trait::async_trait;
+    use bstr::BString;
     use git_transport::{
         client,
         client::{Error, MessageKind, RequestWriter, SetServiceResponse, WriteMode},
@@ -78,7 +80,7 @@ mod impls {
             self.inner.request(write_mode, on_into_read)
         }
 
-        fn to_url(&self) -> String {
+        fn to_url(&self) -> BString {
             self.inner.to_url()
         }
 
