@@ -65,7 +65,6 @@ mod find_remote {
     }
 
     #[test]
-    #[ignore]
     fn instead_of_url_rewriting() -> crate::Result {
         let repo = remote::repo("url-rewriting");
 
@@ -76,12 +75,29 @@ mod find_remote {
 
         let remote = repo.find_remote("origin")?;
         assert_eq!(
-            remote.url(Direction::Fetch).expect("present").to_string(),
+            remote.url(Direction::Fetch).expect("present").to_bstring()?,
             expected_fetch_url,
         );
+        {
+            let actual_push_url = remote.url(Direction::Push).expect("present").to_bstring()?;
+            assert_ne!(
+                actual_push_url, expected_push_url,
+                "here we actually resolve something that git doesn't for unknown reason"
+            );
+            assert_eq!(
+                actual_push_url, "ssh://dev/null",
+                "file:// gets replaced actually and it's a valid url"
+            );
+        }
+
+        let remote = remote.apply_url_aliases(false);
         assert_eq!(
-            remote.url(Direction::Push).expect("present").to_string(),
-            expected_push_url,
+            remote.url(Direction::Fetch).expect("present").to_bstring()?,
+            "https://github.com/foobar/gitoxide"
+        );
+        assert_eq!(
+            remote.url(Direction::Push).expect("present").to_bstring()?,
+            "file://dev/null"
         );
         Ok(())
     }

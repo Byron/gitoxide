@@ -172,12 +172,18 @@ pub struct Remote<'repo> {
     /// The url of the host to talk to, after application of replacements. If it is unset, the `push_url` must be set.
     /// and fetches aren't possible.
     pub(crate) url: Option<git_url::Url>,
+    /// The rewritten `url`, if it was rewritten.
+    pub(crate) url_alias: Option<git_url::Url>,
     /// The url to use for pushing specifically.
     pub(crate) push_url: Option<git_url::Url>,
+    /// The rewritten `push_url`, if it was rewritten.
+    pub(crate) push_url_alias: Option<git_url::Url>,
     /// Refspecs for use when fetching.
     pub(crate) fetch_specs: Vec<git_refspec::RefSpec>,
     /// Refspecs for use when pushing.
     pub(crate) push_specs: Vec<git_refspec::RefSpec>,
+    /// If false, default true, we will apply url rewrites.
+    pub(crate) apply_url_aliases: bool,
     // /// Delete local tracking branches that don't exist on the remote anymore.
     // pub(crate) prune: bool,
     // /// Delete tags that don't exist on the remote anymore, equivalent to pruning the refspec `refs/tags/*:refs/tags/*`.
