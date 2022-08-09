@@ -138,7 +138,7 @@ fn rewrite_urls(
                 for instead_of in section.values("insteadOf") {
                     if url.starts_with(instead_of.as_ref()) {
                         let (bytes_matched, prev_rewrite_with) =
-                            rewrite_url.get_or_insert_with(|| (instead_of.len(), rewrite_with));
+                            rewrite_url.get_or_insert((instead_of.len(), rewrite_with));
                         if *bytes_matched < instead_of.len() {
                             *bytes_matched = instead_of.len();
                             *prev_rewrite_with = rewrite_with;
@@ -150,7 +150,7 @@ fn rewrite_urls(
                 for instead_of in section.values("pushInsteadOf") {
                     if url.starts_with(instead_of.as_ref()) {
                         let (bytes_matched, prev_rewrite_with) =
-                            rewrite_push_url.get_or_insert_with(|| (instead_of.len(), rewrite_with));
+                            rewrite_push_url.get_or_insert((instead_of.len(), rewrite_with));
                         if *bytes_matched < instead_of.len() {
                             *bytes_matched = instead_of.len();
                             *prev_rewrite_with = rewrite_with;
