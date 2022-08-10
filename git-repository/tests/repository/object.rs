@@ -123,7 +123,7 @@ mod commit {
             "the commit id is stable"
         );
 
-        let head = repo.head()?.into_referent();
+        let head = repo.head()?.try_into_referent().expect("born");
         assert_eq!(head.name().as_bstr(), "refs/heads/main", "'main' is the default name");
         assert_eq!(
             head.log_iter()

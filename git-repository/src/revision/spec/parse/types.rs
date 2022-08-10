@@ -60,6 +60,8 @@ pub struct Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Unborn heads do not have a reflog yet")]
+    UnbornHeadsHaveNoRefLog,
     #[error("This feature will be implemented once {dependency}")]
     Planned { dependency: &'static str },
     #[error("Reference {reference:?} does not have a reference log, cannot {action}")]

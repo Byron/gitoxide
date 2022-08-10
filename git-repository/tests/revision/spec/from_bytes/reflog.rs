@@ -29,6 +29,16 @@ fn nth_prior_checkout() {
 }
 
 #[test]
+fn by_index_unborn_head() {
+    let repo = &repo("new").unwrap();
+
+    assert_eq!(
+        parse_spec("@{1}", repo).unwrap_err().to_string(),
+        "Unborn heads do not have a reflog yet"
+    );
+}
+
+#[test]
 fn by_index() {
     let repo = &repo("complex_graph").unwrap();
     {

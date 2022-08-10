@@ -14,6 +14,7 @@ pub struct Worktree<'repo> {
 /// The head reference, as created from looking at `.git/HEAD`, able to represent all of its possible states.
 ///
 /// Note that like [`Reference`], this type's data is snapshot of persisted state on disk.
+#[derive(Clone)]
 pub struct Head<'repo> {
     /// One of various possible states for the HEAD reference
     pub kind: head::Kind,
@@ -106,6 +107,7 @@ pub struct ObjectDetached {
 /// A reference that points to an object or reference, with access to its source repository.
 ///
 /// Note that these are snapshots and won't recognize if they are stale.
+#[derive(Clone)]
 pub struct Reference<'r> {
     /// The actual reference data
     pub inner: git_ref::Reference,

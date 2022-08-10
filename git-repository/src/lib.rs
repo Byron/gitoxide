@@ -35,7 +35,7 @@
 //! performance if the cache is not hit in 50% of the time.
 //!
 //! Environment variables can also be used for configuration if the application is calling
-//! [`apply_environment()`][crate::Repository::apply_environment()] on their `Easy*` accordingly.
+//! [`apply_environment()`][crate::Repository::apply_environment()].
 //!
 //! ### Shortcomings & Limitations
 //!

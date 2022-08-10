@@ -10,6 +10,7 @@ use crate::{
 };
 
 /// Represents the kind of `HEAD` reference.
+#[derive(Clone)]
 pub enum Kind {
     /// The existing reference the symbolic HEAD points to.
     ///
@@ -69,15 +70,11 @@ impl<'repo> Head<'repo> {
         }
     }
 
-    /// Force transforming this instance into the symbolic reference that it points to, or panic if it is unborn or detached.
-    ///
-    /// # Panics
-    ///
-    /// If this isn't actually a head pointing to a symbolic reference.
-    pub fn into_referent(self) -> crate::Reference<'repo> {
+    /// Try to transform this instance into the symbolic reference that it points to, or return `None` if head is detached or unborn.
+    pub fn try_into_referent(self) -> Option<crate::Reference<'repo>> {
         match self.kind {
-            Kind::Symbolic(r) => r.attach(self.repo),
-            _ => panic!("BUG: Expected head to be a born symbolic reference"),
+            Kind::Symbolic(r) => r.attach(self.repo).into(),
+            _ => None,
         }
     }
 }
