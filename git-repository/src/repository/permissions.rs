@@ -33,8 +33,6 @@ pub struct Config {
     pub env: bool,
     /// Whether to follow include files are encountered in loaded configuration,
     /// via `include` and `includeIf` sections.
-    ///
-    /// Note that this needs access to `GIT_*` prefixed environment variables.
     pub includes: bool,
 }
 
@@ -82,15 +80,6 @@ impl Environment {
 }
 
 impl Permissions {
-    /// Return permissions similar to what git does when the repository isn't owned by the current user,
-    /// thus refusing all operations in it.
-    pub fn strict() -> Self {
-        Permissions {
-            env: Environment::all(),
-            config: Config::all(),
-        }
-    }
-
     /// Return permissions that will not include configuration files not owned by the current user,
     /// but trust system and global configuration files along with those which are owned by the current user.
     ///
