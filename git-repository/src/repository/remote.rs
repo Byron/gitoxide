@@ -1,6 +1,5 @@
-use crate::bstr::{BStr, BString, ByteVec};
 use crate::remote::find;
-use crate::Remote;
+use crate::{config, remote, Remote};
 
 impl crate::Repository {
     /// Find the remote with the given `name` or report an error, similar to [`try_find_remote(…)`][Self::try_find_remote()].
@@ -95,11 +94,10 @@ impl crate::Repository {
                     None => Vec::new(),
                 };
 
-                let (url_alias, push_url_alias) =
-                    match rewrite_urls(&self.config.resolved, url.as_ref(), push_url.as_ref(), filter) {
-                        Ok(t) => t,
-                        Err(err) => return Some(Err(err)),
-                    };
+                let (url_alias, push_url_alias) = match rewrite_urls(&self.config, url.as_ref(), push_url.as_ref()) {
+                    Ok(t) => t,
+                    Err(err) => return Some(Err(err)),
+                };
                 Some(Ok(Remote {
                     name: name.to_owned().into(),
                     url,
@@ -117,67 +115,27 @@ impl crate::Repository {
 }
 
 fn rewrite_urls(
-    config: &git_config::File<'static>,
+    config: &config::Cache,
     url: Option<&git_url::Url>,
     push_url: Option<&git_url::Url>,
-    mut filter: fn(&git_config::file::Metadata) -> bool,
 ) -> Result<(Option<git_url::Url>, Option<git_url::Url>), find::Error> {
-    let mut url_alias = None;
-    let mut push_url_alias = None;
-    if let Some(sections) = config.sections_by_name_and_filter("url", &mut filter) {
-        let mut rewrite_url = None::<(usize, &BStr)>;
-        let mut rewrite_push_url = None::<(usize, &BStr)>;
-        let url = url.as_ref().map(|url| url.to_bstring().expect("still valid"));
-        let push_url = push_url.as_ref().map(|url| url.to_bstring().expect("still valid"));
-        for section in sections {
-            let rewrite_with = match section.header().subsection_name() {
-                Some(base) => base,
-                None => continue,
-            };
-            if let Some(url) = url.as_deref() {
-                for instead_of in section.values("insteadOf") {
-                    if url.starts_with(instead_of.as_ref()) {
-                        let (bytes_matched, prev_rewrite_with) =
-                            rewrite_url.get_or_insert((instead_of.len(), rewrite_with));
-                        if *bytes_matched < instead_of.len() {
-                            *bytes_matched = instead_of.len();
-                            *prev_rewrite_with = rewrite_with;
-                        }
-                    }
-                }
-            }
-            if let Some(url) = push_url.as_deref() {
-                for instead_of in section.values("pushInsteadOf") {
-                    if url.starts_with(instead_of.as_ref()) {
-                        let (bytes_matched, prev_rewrite_with) =
-                            rewrite_push_url.get_or_insert((instead_of.len(), rewrite_with));
-                        if *bytes_matched < instead_of.len() {
-                            *bytes_matched = instead_of.len();
-                            *prev_rewrite_with = rewrite_with;
-                        }
-                    }
-                }
-            }
-        }
-
-        fn replace_url(
-            url: Option<BString>,
-            rewrite: Option<(usize, &BStr)>,
-            kind: &'static str,
-        ) -> Result<Option<git_url::Url>, find::Error> {
-            url.zip(rewrite)
-                .map(|(mut url, (bytes_at_start, replace_with))| {
-                    url.replace_range(..bytes_at_start, replace_with);
-                    git_url::parse(&url).map_err(|err| find::Error::RewrittenUrlInvalid {
-                        kind,
-                        source: err,
-                        rewritten_url: url,
-                    })
+    let rewrite = |url: Option<&git_url::Url>, direction: remote::Direction| {
+        url.and_then(|url| config.url_rewrite().rewrite_url(url, direction))
+            .map(|url| {
+                git_url::parse(&url).map_err(|err| find::Error::RewrittenUrlInvalid {
+                    kind: match direction {
+                        remote::Direction::Fetch => "fetch",
+                        remote::Direction::Push => "push",
+                    },
+                    source: err,
+                    rewritten_url: url,
                 })
-                .transpose()
-        }
-        url_alias = replace_url(url, rewrite_url, "fetch")?;
-        push_url_alias = replace_url(push_url, rewrite_push_url, "push")?;
-    }
+            })
+            .transpose()
+    };
+
+    let url_alias = rewrite(url, remote::Direction::Fetch)?;
+    let push_url_alias = rewrite(push_url, remote::Direction::Push)?;
+
     Ok((url_alias, push_url_alias))
 }

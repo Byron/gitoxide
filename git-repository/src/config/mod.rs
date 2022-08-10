@@ -1,7 +1,7 @@
 pub use git_config::*;
 use git_features::threading::OnceCell;
 
-use crate::{bstr::BString, permission, repository::identity, revision::spec, Repository};
+use crate::{bstr::BString, permission, remote, repository::identity, revision::spec, Repository};
 
 pub(crate) mod cache;
 mod snapshot;
@@ -44,7 +44,7 @@ pub enum Error {
 }
 
 /// Utility type to keep pre-obtained configuration values.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub(crate) struct Cache {
     pub resolved: crate::Config,
     /// The hex-length to assume when shortening object ids. If `None`, it should be computed based on the approximate object count.
@@ -59,6 +59,10 @@ pub(crate) struct Cache {
     pub reflog: Option<git_ref::store::WriteReflog>,
     /// identities for later use, lazy initialization.
     pub personas: OnceCell<identity::Personas>,
+    /// A lazily loaded rewrite list for remote urls
+    pub url_rewrite: OnceCell<remote::url::Rewrite>,
+    /// The config section filter from the options used to initialize this instance. Keep these in sync!
+    filter_config_section: fn(&git_config::file::Metadata) -> bool,
     /// The object kind to pick if a prefix is ambiguous.
     pub object_kind_hint: Option<spec::parse::ObjectKindHint>,
     /// If true, we are on a case-insensitive file system.

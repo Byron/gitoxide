@@ -66,6 +66,7 @@ pub struct Options {
     pub(crate) replacement_objects: ReplacementObjects,
     pub(crate) permissions: Permissions,
     pub(crate) git_dir_trust: Option<git_sec::Trust>,
+    /// Warning: this one is copied to to config::Cache - don't change it after repo open or keep in sync.
     pub(crate) filter_config_section: Option<fn(&git_config::file::Metadata) -> bool>,
     pub(crate) lossy_config: Option<bool>,
     pub(crate) bail_if_untrusted: bool,
@@ -342,11 +343,13 @@ impl ThreadSafeRepository {
         let home = std::env::var_os("HOME")
             .map(PathBuf::from)
             .and_then(|home| env.home.check(home).ok().flatten());
+
+        let mut filter_config_section = filter_config_section.unwrap_or(config::section::is_trusted);
         let config = config::Cache::from_stage_one(
             repo_config,
             common_dir_ref,
             head.as_ref().and_then(|head| head.target.try_name()),
-            filter_config_section.unwrap_or(config::section::is_trusted),
+            filter_config_section,
             git_install_dir.as_deref(),
             home.as_deref(),
             env.clone(),
@@ -359,12 +362,10 @@ impl ThreadSafeRepository {
 
         // core.worktree might be used to overwrite the worktree directory
         if !config.is_bare {
-            if let Some(wt) = config.resolved.path_filter(
-                "core",
-                None,
-                "worktree",
-                &mut filter_config_section.unwrap_or(config::section::is_trusted),
-            ) {
+            if let Some(wt) = config
+                .resolved
+                .path_filter("core", None, "worktree", &mut filter_config_section)
+            {
                 let wt_path = wt
                     .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
                     .map_err(config::Error::PathInterpolation)?;
