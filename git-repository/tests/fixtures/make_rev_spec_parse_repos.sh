@@ -390,3 +390,8 @@ git init complex_graph
   baseline "@^{tree}"
   baseline "@:"
 )
+
+git init new
+(cd new
+  baseline '@{1}'
+)

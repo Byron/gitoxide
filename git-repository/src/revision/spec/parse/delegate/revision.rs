@@ -104,14 +104,23 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
                 None
             }
             ReflogLookup::Entry(no) => {
-                let head_ref = match self.repo.head().map(|head| head.into_referent()) {
-                    Ok(r) => r.detach(),
-                    Err(err) => {
-                        self.err.push(err.into());
-                        return None;
-                    }
+                let r = match &mut self.refs[self.idx] {
+                    Some(r) => r.clone().attach(self.repo),
+                    val @ None => match self.repo.head().map(|head| head.try_into_referent()) {
+                        Ok(Some(r)) => {
+                            *val = Some(r.clone().detach());
+                            r
+                        }
+                        Ok(None) => {
+                            self.err.push(Error::UnbornHeadsHaveNoRefLog);
+                            return None;
+                        }
+                        Err(err) => {
+                            self.err.push(err.into());
+                            return None;
+                        }
+                    },
                 };
-                let r = self.refs[self.idx].get_or_insert(head_ref).clone().attach(self.repo);
                 let mut platform = r.log_iter();
                 match platform.rev().ok().flatten() {
                     Some(mut it) => match it.nth(no).and_then(Result::ok) {
