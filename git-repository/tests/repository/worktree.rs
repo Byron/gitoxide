@@ -8,38 +8,48 @@ mod with_core_worktree_config {
 
     #[test]
     fn relative() -> crate::Result {
-        let repo = repo("relative-worktree");
+        for (name, is_relative) in [("absolute-worktree", false), ("relative-worktree", true)] {
+            let repo = repo(name);
 
-        assert_eq!(
-            repo.work_dir().unwrap(),
-            repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"),
-            "work_dir is set to core.worktree config value, relative paths are appended to `git_dir() and made absolute`"
-        );
+            if is_relative {
+                assert_eq!(
+                    repo.work_dir().unwrap(),
+                    repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"),
+                    "work_dir is set to core.worktree config value, relative paths are appended to `git_dir() and made absolute`"
+                );
+            } else {
+                assert_eq!(
+                    repo.work_dir().unwrap(),
+                    git_path::realpath(repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"))?,
+                    "absolute workdirs are left untouched"
+                );
+            }
 
-        assert_eq!(
-            repo.worktree().expect("present").base(),
-            repo.work_dir().unwrap(),
-            "current worktree is based on work-tree dir"
-        );
+            assert_eq!(
+                repo.worktree().expect("present").base(),
+                repo.work_dir().unwrap(),
+                "current worktree is based on work-tree dir"
+            );
 
-        let baseline = Baseline::collect(repo.git_dir())?;
-        assert_eq!(baseline.len(), 1, "git lists the main worktree");
-        assert_eq!(
-            baseline[0].root,
-            git_path::realpath(repo.git_dir().parent().unwrap())?,
-            "git lists the original worktree, to which we have no access anymore"
-        );
-        assert_eq!(
-            repo.worktrees()?.len(),
-            0,
-            "we only list linked worktrees, and there are none"
-        );
-        assert_eq!(
-            repo.index()?.entries().len(),
-            count_deleted(repo.git_dir()),
-            "git considers all worktree entries missing as the overridden worktree is an empty dir"
-        );
-        assert_eq!(repo.index()?.entries().len(), 3, "just to be sure");
+            let baseline = Baseline::collect(repo.git_dir())?;
+            assert_eq!(baseline.len(), 1, "git lists the main worktree");
+            assert_eq!(
+                baseline[0].root,
+                git_path::realpath(repo.git_dir().parent().unwrap())?,
+                "git lists the original worktree, to which we have no access anymore"
+            );
+            assert_eq!(
+                repo.worktrees()?.len(),
+                0,
+                "we only list linked worktrees, and there are none"
+            );
+            assert_eq!(
+                repo.index()?.entries().len(),
+                count_deleted(repo.git_dir()),
+                "git considers all worktree entries missing as the overridden worktree is an empty dir"
+            );
+            assert_eq!(repo.index()?.entries().len(), 3, "just to be sure");
+        }
         Ok(())
     }
 

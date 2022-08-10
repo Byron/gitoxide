@@ -3,6 +3,7 @@ set -eu -o pipefail
 
 mkdir worktree
 touch worktree-file
+WORKTREE_ABS="$PWD/worktree"
 
 mkdir base
 (cd base
@@ -21,6 +22,13 @@ mkdir base
 git clone --shared base relative-worktree
 (cd relative-worktree
   git config --local core.worktree ../../worktree
+  git worktree list --porcelain > .git/worktree-list.baseline
+  git status --porcelain > .git/status.baseline
+)
+
+git clone --shared base absolute-worktree
+(cd absolute-worktree
+  git config --local core.worktree "$WORKTREE_ABS"
   git worktree list --porcelain > .git/worktree-list.baseline
   git status --porcelain > .git/status.baseline
 )
