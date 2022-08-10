@@ -368,8 +368,10 @@ impl ThreadSafeRepository {
                 let wt_path = wt
                     .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
                     .map_err(config::Error::PathInterpolation)?;
-                worktree_dir =
-                    Some(git_path::absolutize(git_dir.join(wt_path), None::<std::path::PathBuf>).into_owned())
+                worktree_dir = {
+                    let wt = git_path::absolutize(git_dir.join(wt_path), None::<std::path::PathBuf>).into_owned();
+                    wt.is_dir().then(|| wt)
+                }
             }
         }
 

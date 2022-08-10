@@ -2,6 +2,7 @@
 set -eu -o pipefail
 
 mkdir worktree
+touch worktree-file
 
 mkdir base
 (cd base
@@ -17,12 +18,27 @@ mkdir base
 )
 
 
-git clone --shared base relative-workdir
-(cd relative-workdir
+git clone --shared base relative-worktree
+(cd relative-worktree
   git config --local core.worktree ../../worktree
+  git worktree list --porcelain > .git/worktree-list.baseline
+  git status --porcelain > .git/status.baseline
 )
 
-git clone --bare --shared base bare-relative-workdir
-(cd bare-relative-workdir
+git clone --shared base relative-nonexisting-worktree
+(cd relative-nonexisting-worktree
   git config --local core.worktree ../worktree
+  git status --porcelain || : > .git/status.baseline
+)
+
+git clone --shared base relative-worktree-file
+(cd relative-worktree-file
+  git config --local core.worktree ../worktree-file
+  git status --porcelain || : > .git/status.baseline
+)
+
+git clone --bare --shared base bare-relative-worktree
+(cd bare-relative-worktree
+  git config --local core.worktree ../worktree
+  git worktree list --porcelain > worktree-list.baseline
 )
