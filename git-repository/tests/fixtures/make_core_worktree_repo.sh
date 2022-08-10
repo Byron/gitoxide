@@ -33,12 +33,12 @@ git clone --shared base relative-nonexisting-worktree
 
 git clone --shared base relative-worktree-file
 (cd relative-worktree-file
-  git config --local core.worktree ../worktree-file
+  git config --local core.worktree ../../worktree-file
   git status --porcelain || : > .git/status.baseline
 )
 
 git clone --bare --shared base bare-relative-worktree
 (cd bare-relative-worktree
   git config --local core.worktree ../worktree
-  git worktree list --porcelain > worktree-list.baseline
+  git status --porcelain || : > status.baseline
 )

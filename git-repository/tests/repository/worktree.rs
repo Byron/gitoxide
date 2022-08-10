@@ -26,7 +26,7 @@ mod with_core_worktree_config {
         assert_eq!(baseline.len(), 1, "git lists the main worktree");
         assert_eq!(
             baseline[0].root,
-            git::path::realpath(repo.git_dir().parent().unwrap())?,
+            git_path::realpath(repo.git_dir().parent().unwrap())?,
             "git lists the original worktree, to which we have no access anymore"
         );
         assert_eq!(
@@ -72,14 +72,17 @@ mod with_core_worktree_config {
     }
 
     #[test]
-    #[ignore]
     fn bare_relative() -> crate::Result {
         let repo = repo("bare-relative-worktree");
 
         assert_eq!(
-            repo.work_dir().unwrap(),
-            repo.git_dir().parent().unwrap().join("worktree"),
-            "this actually doesn't work in git, but I think it's fine to allow"
+            count_deleted(repo.git_dir()),
+            0,
+            "git refuses to mix bare with core.worktree"
+        );
+        assert!(
+            repo.work_dir().is_none(),
+            "we simply don't load core.worktree in bare repos either to match this behaviour"
         );
         Ok(())
     }
