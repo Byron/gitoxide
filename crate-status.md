@@ -480,6 +480,9 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
           * [ ] obtain 'prunable' information
        * [x] proper handling of worktree related refs
        * [ ] create, move, remove, and repair
+       * [x] respect `core.worktree` configuration
+          - **deviation**
+             * The delicate interplay between `GIT_COMMON_DIR` and `GIT_WORK_TREE` isn't implemented.
     * **config**
        * [x] read the primitive types `boolean`, `integer`, `string`
        * [x] read and interpolate trusted paths
