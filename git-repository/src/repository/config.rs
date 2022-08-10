@@ -38,6 +38,10 @@ mod remote {
         ///
         /// For _fetching_, use the only configured remote, or default to `origin` if it exists.
         /// For _pushing_, use the `remote.pushDefault` trusted configuration key, or fall back to the rules for _fetching_.
+        ///
+        /// # Notes
+        ///
+        /// It's up to the caller to determine what to do if the current `head` is unborn or detached.
         pub fn remote_default_name(&self, direction: remote::Direction) -> Option<Cow<'_, str>> {
             let name = (direction == remote::Direction::Push)
                 .then(|| {

@@ -6,6 +6,8 @@ use util::*;
 #[cfg(not(feature = "regex"))]
 mod commit;
 #[cfg(not(feature = "regex"))]
+mod head;
+#[cfg(not(feature = "regex"))]
 mod id;
 #[cfg(not(feature = "regex"))]
 mod init;

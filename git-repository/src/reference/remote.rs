@@ -17,10 +17,15 @@ impl<'repo> Reference<'repo> {
     /// - `branch.<name>.pushRemote` falls back to `branch.<name>.remote`.
     pub fn remote_name(&self, direction: remote::Direction) -> Option<Cow<'repo, str>> {
         let name = self.name().shorten().to_str().ok()?;
+        let config = &self.repo.config.resolved;
         (direction == remote::Direction::Push)
-            .then(|| self.repo.config.resolved.string("branch", Some(name), "pushRemote"))
+            .then(|| {
+                config
+                    .string("branch", Some(name), "pushRemote")
+                    .or_else(|| config.string("remote", None, "pushDefault"))
+            })
             .flatten()
-            .or_else(|| self.repo.config.resolved.string("branch", Some(name), "remote"))
+            .or_else(|| config.string("branch", Some(name), "remote"))
             .and_then(|name| match name {
                 Cow::Borrowed(n) => n.to_str().ok().map(Cow::Borrowed),
                 Cow::Owned(n) => Vec::from(n).into_string().ok().map(Cow::Owned),

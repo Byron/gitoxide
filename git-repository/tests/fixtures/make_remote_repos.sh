@@ -105,7 +105,6 @@ git clone --shared base push-default
   git remote add myself .
   git remote rename origin new-origin
   git config remote.pushDefault myself
-  git config branch.main.pushRemote myself
 )
 
 git clone --shared base push-url
@@ -121,6 +120,15 @@ git clone --shared base many-fetchspecs
   git config --add remote.origin.fetch @
   git config --add remote.origin.fetch refs/tags/*:refs/tags/*
   git config --add remote.origin.fetch HEAD
+)
+
+git clone --shared base branch-push-remote
+(
+  cd branch-push-remote
+
+  git remote rename origin new-origin
+  git remote add myself .
+  git config branch.main.pushRemote myself
 )
 
 git init --bare url-rewriting
