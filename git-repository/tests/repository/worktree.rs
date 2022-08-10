@@ -1,6 +1,40 @@
 use git_ref::bstr;
 use git_repository as git;
 
+mod with_core_worktree_config {
+    use git_repository as git;
+
+    #[test]
+    fn relative() -> crate::Result {
+        let repo = repo("relative-workdir");
+
+        assert_eq!(
+            repo.work_dir().unwrap(),
+            repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"),
+            "work_dir is set to core.worktree config value, relative paths are appended to `git_dir() and made absolute`"
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[ignore]
+    fn bare_relative() -> crate::Result {
+        let repo = repo("bare-relative-workdir");
+
+        assert_eq!(
+            repo.work_dir().unwrap(),
+            repo.git_dir().parent().unwrap().join("worktree"),
+            "this actually doesn't work in git, but I think it's fine to allow"
+        );
+        Ok(())
+    }
+
+    fn repo(name: &str) -> git::Repository {
+        let dir = git_testtools::scripted_fixture_repo_read_only("make_core_worktree_repo.sh").unwrap();
+        git::open_opts(dir.join(name), crate::restricted()).unwrap()
+    }
+}
+
 struct Baseline<'a> {
     lines: bstr::Lines<'a>,
 }

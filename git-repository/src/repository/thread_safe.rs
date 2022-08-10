@@ -35,7 +35,7 @@ mod location {
         }
 
         /// Return the path to the working directory if this is not a bare repository.
-        pub fn workdir(&self) -> Option<&std::path::Path> {
+        pub fn work_dir(&self) -> Option<&std::path::Path> {
             self.work_tree.as_deref()
         }
 
