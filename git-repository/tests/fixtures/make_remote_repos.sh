@@ -105,6 +105,7 @@ git clone --shared base push-default
   git remote add myself .
   git remote rename origin new-origin
   git config remote.pushDefault myself
+  git config branch.main.pushRemote myself
 )
 
 git clone --shared base push-url

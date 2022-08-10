@@ -461,6 +461,9 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * **references**
         * [x] peel to end
         * [x] ref-log access
+        * [x] remote name
+        * [x] find remote itself
+            - [ ] respect `branch.<name>.merge` in the returned remote.
     * **remotes**  
         * [ ] clone 
           * [ ] shallow
