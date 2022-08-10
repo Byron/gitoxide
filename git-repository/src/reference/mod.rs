@@ -18,6 +18,20 @@ pub use git_ref::{Category, Kind};
 
 /// Access
 impl<'repo> Reference<'repo> {
+    /// Returns the attached id we point to, or `None` if this is a symbolic ref.
+    pub fn try_id(&self) -> Option<Id<'repo>> {
+        match self.inner.target {
+            git_ref::Target::Symbolic(_) => None,
+            git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.repo).into(),
+        }
+    }
+
+    /// Returns the attached id we point to, or panic if this is a symbolic ref.
+    pub fn id(&self) -> Id<'repo> {
+        self.try_id()
+            .expect("BUG: tries to obtain object id from symbolic target")
+    }
+
     /// Return the target to which this reference points to.
     pub fn target(&self) -> git_ref::TargetRef<'_> {
         self.inner.target.to_ref()
@@ -44,21 +58,9 @@ impl<'repo> Reference<'repo> {
     pub(crate) fn from_ref(reference: git_ref::Reference, repo: &'repo crate::Repository) -> Self {
         Reference { inner: reference, repo }
     }
+}
 
-    /// Returns the attached id we point to, or `None` if this is a symbolic ref.
-    pub fn try_id(&self) -> Option<crate::Id<'repo>> {
-        match self.inner.target {
-            git_ref::Target::Symbolic(_) => None,
-            git_ref::Target::Peeled(oid) => oid.to_owned().attach(self.repo).into(),
-        }
-    }
-
-    /// Returns the attached id we point to, or panic if this is a symbolic ref.
-    pub fn id(&self) -> crate::Id<'repo> {
-        self.try_id()
-            .expect("BUG: tries to obtain object id from symbolic target")
-    }
-
+impl<'repo> Reference<'repo> {
     /// Follow all symbolic targets this reference might point to and peel the underlying object
     /// to the end of the chain, and return it.
     ///
