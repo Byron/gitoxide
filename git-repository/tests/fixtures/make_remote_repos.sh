@@ -93,14 +93,12 @@ git init base
 )
 
 git clone --shared base clone
-(
-  cd clone
+(cd clone
   git remote add myself .
 )
 
 git clone --shared base push-default
-(
-  cd push-default
+(cd push-default
 
   git remote add myself .
   git remote rename origin new-origin
@@ -108,23 +106,20 @@ git clone --shared base push-default
 )
 
 git clone --shared base push-url
-(
-  cd push-url
+(cd push-url
   git config remote.origin.pushUrl .
   git config remote.origin.push refs/tags/*:refs/tags/*
 )
 
 git clone --shared base many-fetchspecs
-(
-  cd many-fetchspecs
+(cd many-fetchspecs
   git config --add remote.origin.fetch @
   git config --add remote.origin.fetch refs/tags/*:refs/tags/*
   git config --add remote.origin.fetch HEAD
 )
 
 git clone --shared base branch-push-remote
-(
-  cd branch-push-remote
+(cd branch-push-remote
 
   git remote rename origin new-origin
   git remote add myself .
@@ -132,8 +127,7 @@ git clone --shared base branch-push-remote
 )
 
 git init --bare url-rewriting
-(
-  cd url-rewriting
+(cd url-rewriting
 
   git remote add origin https://github.com/foobar/gitoxide
   cat <<EOF >> config
@@ -157,8 +151,7 @@ EOF
 )
 
 git init --bare bad-url-rewriting
-(
-  cd bad-url-rewriting
+(cd bad-url-rewriting
 
   git remote add origin https://github.com/foobar/gitoxide
   cat <<EOF >> config
