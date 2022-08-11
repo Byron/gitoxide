@@ -14,11 +14,3 @@ fn missing_path() {
 fn missing_port_despite_indication() {
     assert_failure("ssh://host.xz:", "Paths cannot be empty")
 }
-
-#[test]
-#[ignore]
-fn missing_host_in_ssh_url() {
-    assert_failure("git@hello/world", "foo");
-    assert_failure("ssh://git@path/to/dir", "foo");
-    assert_failure("ssh://path/to/dir", "foo");
-}
