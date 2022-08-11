@@ -18,7 +18,7 @@ impl<'repo> Remote<'repo> {
         );
         let (url_alias, push_url_alias) = rewrite_urls(&repo.config, url.as_ref(), push_url.as_ref())?;
         Ok(Remote {
-            name: name.to_owned().into(),
+            name,
             url,
             url_alias,
             push_url,
