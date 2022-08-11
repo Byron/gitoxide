@@ -4,15 +4,26 @@ use std::convert::TryInto;
 
 /// Builder methods
 impl Remote<'_> {
-    /// By default, `url.<base>.insteadOf|pushInsteadOf` configuration variables will be applied to rewrite fetch and push
-    /// urls unless `toggle` is `false`.
-    pub fn apply_url_aliases(mut self, toggle: bool) -> Self {
-        self.apply_url_aliases = toggle;
-        self
+    /// Set the `url` to be used when pushing data to a remote.
+    pub fn push_url<Url, E>(self, url: Url) -> Result<Self, remote::init::Error>
+    where
+        Url: TryInto<git_url::Url, Error = E>,
+        git_url::parse::Error: From<E>,
+    {
+        self.push_url_inner(url, true)
     }
 
-    /// Set the `push_url` to be used when pushing data to a remote.
-    pub fn push_url<Url, E>(mut self, push_url: Url) -> Result<Self, remote::init::Error>
+    /// Set the `url` to be used when pushing data to a remote, without applying rewrite rules in case these could be faulty,
+    /// eliminating one failure mode.
+    pub fn push_url_without_url_rewrite<Url, E>(self, url: Url) -> Result<Self, remote::init::Error>
+    where
+        Url: TryInto<git_url::Url, Error = E>,
+        git_url::parse::Error: From<E>,
+    {
+        self.push_url_inner(url, false)
+    }
+
+    fn push_url_inner<Url, E>(mut self, push_url: Url, should_rewrite_urls: bool) -> Result<Self, remote::init::Error>
     where
         Url: TryInto<git_url::Url, Error = E>,
         git_url::parse::Error: From<E>,
@@ -22,13 +33,30 @@ impl Remote<'_> {
             .map_err(|err| remote::init::Error::Url(err.into()))?;
         self.push_url = push_url.into();
 
-        let (_, push_url_alias) = remote::create::rewrite_urls(&self.repo.config, None, self.push_url.as_ref())?;
+        let (_, push_url_alias) = should_rewrite_urls
+            .then(|| remote::create::rewrite_urls(&self.repo.config, None, self.push_url.as_ref()))
+            .unwrap_or(Ok((None, None)))?;
         self.push_url_alias = push_url_alias;
 
         Ok(self)
     }
 }
 
+/// Modification
+impl Remote<'_> {
+    /// Read `url.<base>.insteadOf|pushInsteadOf` configuration variables and apply them to our urls, changing them in place.
+    ///
+    /// This happens only once, and none of them is changed even if only one of them has an error.
+    pub fn apply_rewrite_rules(&mut self) -> Result<&mut Self, remote::init::Error> {
+        let (url, push_url) =
+            remote::create::rewrite_urls(&self.repo.config, self.url.as_ref(), self.push_url.as_ref())?;
+        self.url_alias = url;
+        self.push_url_alias = push_url;
+        Ok(self)
+    }
+}
+
+/// Accesss
 impl Remote<'_> {
     /// Return the name of this remote or `None` if it wasn't persisted to disk yet.
     pub fn name(&self) -> Option<&str> {
@@ -51,15 +79,10 @@ impl Remote<'_> {
     /// the push-url isn't used for that.
     pub fn url(&self, direction: remote::Direction) -> Option<&git_url::Url> {
         match direction {
-            remote::Direction::Fetch => self
-                .apply_url_aliases
-                .then(|| self.url_alias.as_ref())
-                .flatten()
-                .or(self.url.as_ref()),
+            remote::Direction::Fetch => self.url_alias.as_ref().or(self.url.as_ref()),
             remote::Direction::Push => self
-                .apply_url_aliases
-                .then(|| self.push_url_alias.as_ref())
-                .flatten()
+                .push_url_alias
+                .as_ref()
                 .or(self.push_url.as_ref())
                 .or_else(|| self.url(remote::Direction::Fetch)),
         }

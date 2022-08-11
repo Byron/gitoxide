@@ -10,13 +10,16 @@ impl<'repo> Remote<'repo> {
         push_url: Option<git_url::Url>,
         fetch_specs: Vec<RefSpec>,
         push_specs: Vec<RefSpec>,
+        should_rewrite_urls: bool,
         repo: &'repo Repository,
     ) -> Result<Self, remote::init::Error> {
         debug_assert!(
             url.is_some() || push_url.is_some(),
             "BUG: fetch or push url must be set at least"
         );
-        let (url_alias, push_url_alias) = rewrite_urls(&repo.config, url.as_ref(), push_url.as_ref())?;
+        let (url_alias, push_url_alias) = should_rewrite_urls
+            .then(|| rewrite_urls(&repo.config, url.as_ref(), push_url.as_ref()))
+            .unwrap_or(Ok((None, None)))?;
         Ok(Remote {
             name,
             url,
@@ -25,18 +28,23 @@ impl<'repo> Remote<'repo> {
             push_url_alias,
             fetch_specs,
             push_specs,
-            apply_url_aliases: true,
             repo,
         })
     }
 
-    pub(crate) fn from_fetch_url<Url, E>(url: Url, repo: &'repo Repository) -> Result<Self, remote::init::Error>
+    pub(crate) fn from_fetch_url<Url, E>(
+        url: Url,
+        should_rewrite_urls: bool,
+        repo: &'repo Repository,
+    ) -> Result<Self, remote::init::Error>
     where
         Url: TryInto<git_url::Url, Error = E>,
         git_url::parse::Error: From<E>,
     {
         let url = url.try_into().map_err(|err| remote::init::Error::Url(err.into()))?;
-        let (url_alias, _) = rewrite_urls(&repo.config, Some(&url), None)?;
+        let (url_alias, _) = should_rewrite_urls
+            .then(|| rewrite_urls(&repo.config, Some(&url), None))
+            .unwrap_or(Ok((None, None)))?;
         Ok(Remote {
             name: None,
             url: Some(url),
@@ -45,7 +53,6 @@ impl<'repo> Remote<'repo> {
             push_url_alias: None,
             fetch_specs: Vec::new(),
             push_specs: Vec::new(),
-            apply_url_aliases: true,
             repo,
         })
     }

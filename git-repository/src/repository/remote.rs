@@ -9,8 +9,20 @@ impl crate::Repository {
         Url: TryInto<git_url::Url, Error = E>,
         git_url::parse::Error: From<E>,
     {
-        Remote::from_fetch_url(url, self)
+        Remote::from_fetch_url(url, true, self)
     }
+
+    /// Create a new remote available at the given `url`, but don't rewrite the url according to rewrite rules.
+    /// This eliminates a failure mode in case the rewritten URL is faulty, allowing to selectively [apply rewrite
+    /// rules][Remote::rewrite_urls()] later and do so non-destructively.
+    pub fn remote_at_without_url_rewrite<Url, E>(&self, url: Url) -> Result<Remote<'_>, remote::init::Error>
+    where
+        Url: TryInto<git_url::Url, Error = E>,
+        git_url::parse::Error: From<E>,
+    {
+        Remote::from_fetch_url(url, false, self)
+    }
+
     /// Find the remote with the given `name` or report an error, similar to [`try_find_remote(…)`][Self::try_find_remote()].
     ///
     /// Note that we will include remotes only if we deem them [trustworthy][crate::open::Options::filter_config_section()].
@@ -31,6 +43,17 @@ impl crate::Repository {
     ///
     /// We will only include information if we deem it [trustworthy][crate::open::Options::filter_config_section()].
     pub fn try_find_remote(&self, name: &str) -> Option<Result<Remote<'_>, find::Error>> {
+        self.try_find_remote_inner(name, true)
+    }
+
+    /// Similar to [try_find_remote()][Self::try_find_remote()], but removes a failure mode if rewritten URLs turn out to be invalid
+    /// as it skips rewriting them.
+    /// Use this in conjunction with [`Remote::rewrite_urls()`] to non-destructively apply the rules and keep the failed urls unchanged.
+    pub fn try_find_remote_without_url_rewrite(&self, name: &str) -> Option<Result<Remote<'_>, find::Error>> {
+        self.try_find_remote_inner(name, false)
+    }
+
+    fn try_find_remote_inner(&self, name: &str, rewrite_urls: bool) -> Option<Result<Remote<'_>, find::Error>> {
         let mut filter = self.filter_config_section();
         let mut config_url = |field: &str, kind: &'static str| {
             self.config
@@ -104,8 +127,16 @@ impl crate::Repository {
                 };
 
                 Some(
-                    Remote::from_preparsed_config(name.to_owned().into(), url, push_url, fetch_specs, push_specs, self)
-                        .map_err(Into::into),
+                    Remote::from_preparsed_config(
+                        name.to_owned().into(),
+                        url,
+                        push_url,
+                        fetch_specs,
+                        push_specs,
+                        rewrite_urls,
+                        self,
+                    )
+                    .map_err(Into::into),
                 )
             }
         }

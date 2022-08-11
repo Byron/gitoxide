@@ -51,6 +51,36 @@ mod remote_at {
         );
         Ok(())
     }
+
+    #[test]
+    fn url_rewrites_can_be_skipped() -> crate::Result {
+        let repo = remote::repo("url-rewriting");
+        let remote = repo.remote_at_without_url_rewrite("https://github.com/foobar/gitoxide")?;
+
+        assert_eq!(remote.name(), None, "anonymous remotes are unnamed");
+        let fetch_url = "https://github.com/foobar/gitoxide";
+        assert_eq!(
+            remote.url(Direction::Fetch).unwrap().to_bstring()?,
+            fetch_url,
+            "fetch was rewritten"
+        );
+        assert_eq!(
+            remote.url(Direction::Push).unwrap().to_bstring()?,
+            fetch_url,
+            "push is the same as fetch was rewritten"
+        );
+
+        let remote = repo
+            .remote_at_without_url_rewrite("https://github.com/foobar/gitoxide".to_owned())?
+            .push_url_without_url_rewrite("file://dev/null".to_owned())?;
+        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring()?, fetch_url);
+        assert_eq!(
+            remote.url(Direction::Push).unwrap().to_bstring()?,
+            "file://dev/null",
+            "push-url rewrite rules are not applied"
+        );
+        Ok(())
+    }
 }
 
 mod find_remote {
@@ -142,12 +172,13 @@ mod find_remote {
             );
         }
 
-        let remote = remote.apply_url_aliases(false);
+        let remote = repo.try_find_remote_without_url_rewrite("origin").expect("exists")?;
         assert_eq!(
             remote.url(Direction::Fetch).unwrap().to_bstring()?,
             "https://github.com/foobar/gitoxide"
         );
         assert_eq!(remote.url(Direction::Push).unwrap().to_bstring()?, "file://dev/null");
+        // TODO: apply after the fact.
         Ok(())
     }
 
