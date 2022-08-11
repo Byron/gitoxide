@@ -88,6 +88,35 @@ fn v2_index_tree_extensions() {
     }
 }
 
+#[test]
+fn v2_index_eoie_extensions() {
+    let input = [
+        "V2_empty",
+        "v2",
+        "v2_more_files",
+        "v2_split_index",
+        "v4_more_files_IEOT",
+    ];
+
+    for fixture in input {
+        let path = crate::fixture_index_path(fixture);
+        let expected = git_index::File::at(&path, decode::Options::default()).unwrap();
+
+        let mut out = Vec::<u8>::new();
+        let options = write::Options {
+            hash_kind: git_hash::Kind::Sha1,
+            version: Version::V2,
+            tree_cache: false,
+            end_of_index_entry: true,
+        };
+
+        expected.write_to(&mut out, options).unwrap();
+
+        let (generated, _) = State::from_bytes(&out, FileTime::now(), decode::Options::default()).unwrap();
+        compare_states(&generated, &expected, options, fixture);
+    }
+}
+
 fn compare_states(generated: &State, expected: &State, options: write::Options, fixture: &str) {
     assert_eq!(generated.version(), options.version, "version mismatch in {}", fixture);
     assert_eq!(

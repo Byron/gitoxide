@@ -147,7 +147,7 @@ fn end_of_index_entry(
     let extension_size = 4 + hash_kind.len_in_bytes() as u32;
 
     let mut hasher = git_features::hash::hasher(hash_kind);
-    let tree_size = tree_offset - 8 - entries_offset;
+    let tree_size = (tree_offset - entries_offset).saturating_sub(8);
     if tree_size > 0 {
         hasher.update(b"TREE");
         hasher.update(&tree_size.to_be_bytes());
