@@ -47,7 +47,7 @@ impl Remote<'_> {
     /// Read `url.<base>.insteadOf|pushInsteadOf` configuration variables and apply them to our urls, changing them in place.
     ///
     /// This happens only once, and none of them is changed even if only one of them has an error.
-    pub fn apply_rewrite_rules(&mut self) -> Result<&mut Self, remote::init::Error> {
+    pub fn rewrite_urls(&mut self) -> Result<&mut Self, remote::init::Error> {
         let (url, push_url) =
             remote::create::rewrite_urls(&self.repo.config, self.url.as_ref(), self.push_url.as_ref())?;
         self.url_alias = url;
@@ -71,8 +71,8 @@ impl Remote<'_> {
         }
     }
 
-    /// Return the url used for the given `direction` with rewrites from `url.<base>.insteadOf|pushInsteadOf` applied unless
-    /// [`apply_url_aliases(false)`][Self::apply_url_aliases()] was called before.
+    /// Return the url used for the given `direction` with rewrites from `url.<base>.insteadOf|pushInsteadOf`, unless the instance
+    /// was created with one of the `_without_url_rewrite()` methods.
     /// For pushing, this is the `remote.<name>.pushUrl` or the `remote.<name>.url` used for fetching, and for fetching it's
     /// the `remote.<name>.url`.
     /// Note that it's possible to only have the push url set, in which case there will be no way to fetch from the remote as
