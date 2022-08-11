@@ -164,21 +164,60 @@ mod find_remote {
             let actual_push_url = remote.url(Direction::Push).unwrap().to_bstring();
             assert_ne!(
                 actual_push_url, expected_push_url,
-                "here we actually resolve something that git doesn't for unknown reason"
+                "here we actually resolve something that git doesn't probably because it's missing the host. Our parser is OK with it for some reason."
             );
-            assert_eq!(
-                actual_push_url, "ssh://dev/null",
-                "file:// gets replaced actually and it's a valid url"
-            );
+            assert_eq!(actual_push_url, "ssh://dev/null", "file:// gets replaced actually");
         }
 
-        let remote = repo.try_find_remote_without_url_rewrite("origin").expect("exists")?;
+        let mut remote = repo.try_find_remote_without_url_rewrite("origin").expect("exists")?;
         assert_eq!(
             remote.url(Direction::Fetch).unwrap().to_bstring(),
             "https://github.com/foobar/gitoxide"
         );
         assert_eq!(remote.url(Direction::Push).unwrap().to_bstring(), "file://dev/null");
-        // TODO: apply after the fact.
+        remote.rewrite_urls()?;
+        assert_eq!(remote.url(Direction::Push).unwrap().to_bstring(), "ssh://dev/null");
+        Ok(())
+    }
+
+    #[test]
+    fn bad_url_rewriting_can_be_handled_much_like_git() -> crate::Result {
+        let repo = remote::repo("bad-url-rewriting");
+
+        let baseline = std::fs::read(repo.git_dir().join("baseline.git"))?;
+        let mut baseline = baseline.lines().filter_map(Result::ok);
+        let expected_fetch_url: BString = baseline.next().expect("fetch").into();
+        let expected_push_url: BString = baseline.next().expect("push").into();
+        assert_eq!(
+            expected_push_url, "file://dev/null",
+            "git leaves the failed one as is without any indication…"
+        );
+        assert_eq!(
+            expected_fetch_url, "https://github.com/byron/gitoxide",
+            "…but is able to replace the fetch url successfully"
+        );
+
+        let expected_err_msg = "The rewritten push url \"foo://dev/null\" failed to parse";
+        assert_eq!(
+            repo.find_remote("origin").unwrap_err().to_string(),
+            expected_err_msg,
+            "this fails by default as rewrites fail"
+        );
+
+        let mut remote = repo.try_find_remote_without_url_rewrite("origin").expect("exists")?;
+        for _round in 0..2 {
+            assert_eq!(
+                remote.url(Direction::Fetch).unwrap().to_bstring(),
+                "https://github.com/foobar/gitoxide",
+                "no rewrite happened"
+            );
+            assert_eq!(remote.url(Direction::Push).unwrap().to_bstring(), "file://dev/null",);
+            assert_eq!(
+                remote.rewrite_urls().unwrap_err().to_string(),
+                expected_err_msg,
+                "rewriting fails, leaves both urls as they were, which diverges from git"
+            );
+        }
         Ok(())
     }
 

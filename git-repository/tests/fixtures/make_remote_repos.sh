@@ -134,6 +134,7 @@ git clone --shared base branch-push-remote
 git init --bare url-rewriting
 (
   cd url-rewriting
+
   git remote add origin https://github.com/foobar/gitoxide
   cat <<EOF >> config
 
@@ -147,6 +148,29 @@ git init --bare url-rewriting
 [url "https://github.com/byron/"]
   insteadOf = https://github.com/foobar/
   pushInsteadOf = ssh://example.com/
+EOF
+
+  {
+    git remote get-url origin
+    git remote get-url origin --push
+  } > baseline.git
+)
+
+git init --bare bad-url-rewriting
+(
+  cd bad-url-rewriting
+
+  git remote add origin https://github.com/foobar/gitoxide
+  cat <<EOF >> config
+
+[remote "origin"]
+  pushUrl = "file://dev/null"
+
+[url "foo://"]
+  pushInsteadOf = "file://"
+
+[url "https://github.com/byron/"]
+  insteadOf = https://github.com/foobar/
 EOF
 
   {
