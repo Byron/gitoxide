@@ -106,8 +106,8 @@ fn tree<T: std::io::Write>(
     if let Some(tree) = tree {
         let signature = b"TREE";
 
-        // TODO: Can this work without allocating?
-        let mut entries: Vec<u8> = Vec::new();
+        let estimated_size = tree.num_entries * (300 + 3 + 1 + 3 + 1 + 20);
+        let mut entries: Vec<u8> = Vec::with_capacity(estimated_size as usize);
         tree_entry(&mut entries, tree)?;
 
         out.write_all(signature)?;
