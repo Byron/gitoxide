@@ -87,15 +87,16 @@ mod async_io {
         desired_version: transport::Protocol,
     ) -> Result<impl client::Transport + Send, Error> {
         let urlb = url;
-        let url = git_repository::url::parse(urlb)?;
+        let mut url = git_repository::url::parse(urlb)?;
         Ok(match url.scheme {
             git_repository::url::Scheme::Git => {
-                if url.user.is_some() {
+                if url.user().is_some() {
                     return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
                 }
+                let path = std::mem::take(&mut url.path);
                 git_connect(
-                    url.host.as_ref().expect("host is present in url"),
-                    url.path,
+                    url.host().expect("host is present in url"),
+                    path,
                     desired_version,
                     url.port,
                 )
