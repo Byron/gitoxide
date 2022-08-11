@@ -9,15 +9,15 @@ mod remote_at {
         let remote = repo.remote_at(fetch_url)?;
 
         assert_eq!(remote.name(), None);
-        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring()?, fetch_url);
-        assert_eq!(remote.url(Direction::Push).unwrap().to_bstring()?, fetch_url);
+        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring(), fetch_url);
+        assert_eq!(remote.url(Direction::Push).unwrap().to_bstring(), fetch_url);
 
         let remote = remote.push_url("user@host.xz:./relative")?;
         assert_eq!(
-            remote.url(Direction::Push).unwrap().to_bstring()?,
+            remote.url(Direction::Push).unwrap().to_bstring(),
             "ssh://user@host.xz/relative"
         );
-        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring()?, fetch_url);
+        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring(), fetch_url);
 
         Ok(())
     }
@@ -30,12 +30,12 @@ mod remote_at {
         assert_eq!(remote.name(), None, "anonymous remotes are unnamed");
         let rewritten_fetch_url = "https://github.com/byron/gitoxide";
         assert_eq!(
-            remote.url(Direction::Fetch).unwrap().to_bstring()?,
+            remote.url(Direction::Fetch).unwrap().to_bstring(),
             rewritten_fetch_url,
             "fetch was rewritten"
         );
         assert_eq!(
-            remote.url(Direction::Push).unwrap().to_bstring()?,
+            remote.url(Direction::Push).unwrap().to_bstring(),
             rewritten_fetch_url,
             "push is the same as fetch was rewritten"
         );
@@ -43,9 +43,9 @@ mod remote_at {
         let remote = repo
             .remote_at("https://github.com/foobar/gitoxide".to_owned())?
             .push_url("file://dev/null".to_owned())?;
-        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring()?, rewritten_fetch_url);
+        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring(), rewritten_fetch_url);
         assert_eq!(
-            remote.url(Direction::Push).unwrap().to_bstring()?,
+            remote.url(Direction::Push).unwrap().to_bstring(),
             "ssh://dev/null",
             "push-url rewrite rules are applied"
         );
@@ -60,12 +60,12 @@ mod remote_at {
         assert_eq!(remote.name(), None, "anonymous remotes are unnamed");
         let fetch_url = "https://github.com/foobar/gitoxide";
         assert_eq!(
-            remote.url(Direction::Fetch).unwrap().to_bstring()?,
+            remote.url(Direction::Fetch).unwrap().to_bstring(),
             fetch_url,
             "fetch was rewritten"
         );
         assert_eq!(
-            remote.url(Direction::Push).unwrap().to_bstring()?,
+            remote.url(Direction::Push).unwrap().to_bstring(),
             fetch_url,
             "push is the same as fetch was rewritten"
         );
@@ -73,9 +73,9 @@ mod remote_at {
         let remote = repo
             .remote_at_without_url_rewrite("https://github.com/foobar/gitoxide".to_owned())?
             .push_url_without_url_rewrite("file://dev/null".to_owned())?;
-        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring()?, fetch_url);
+        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring(), fetch_url);
         assert_eq!(
-            remote.url(Direction::Push).unwrap().to_bstring()?,
+            remote.url(Direction::Push).unwrap().to_bstring(),
             "file://dev/null",
             "push-url rewrite rules are not applied"
         );
@@ -159,9 +159,9 @@ mod find_remote {
         let expected_push_url: BString = baseline.next().expect("push").into();
 
         let remote = repo.find_remote("origin")?;
-        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring()?, expected_fetch_url,);
+        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring(), expected_fetch_url,);
         {
-            let actual_push_url = remote.url(Direction::Push).unwrap().to_bstring()?;
+            let actual_push_url = remote.url(Direction::Push).unwrap().to_bstring();
             assert_ne!(
                 actual_push_url, expected_push_url,
                 "here we actually resolve something that git doesn't for unknown reason"
@@ -174,10 +174,10 @@ mod find_remote {
 
         let remote = repo.try_find_remote_without_url_rewrite("origin").expect("exists")?;
         assert_eq!(
-            remote.url(Direction::Fetch).unwrap().to_bstring()?,
+            remote.url(Direction::Fetch).unwrap().to_bstring(),
             "https://github.com/foobar/gitoxide"
         );
-        assert_eq!(remote.url(Direction::Push).unwrap().to_bstring()?, "file://dev/null");
+        assert_eq!(remote.url(Direction::Push).unwrap().to_bstring(), "file://dev/null");
         // TODO: apply after the fact.
         Ok(())
     }

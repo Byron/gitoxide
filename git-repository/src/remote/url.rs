@@ -66,7 +66,7 @@ impl Rewrite {
         if self.replacements_for(direction).is_empty() {
             None
         } else {
-            let mut url = url.to_bstring().ok()?;
+            let mut url = url.to_bstring();
             self.rewrite_url_in_place(&mut url, direction).then(|| url)
         }
     }
