@@ -50,7 +50,7 @@ impl From<git::Url> for RepositoryUrl {
 
 impl RepositoryUrl {
     pub fn is_github(&self) -> bool {
-        self.inner.host.as_ref().map(|h| h == "github.com").unwrap_or(false)
+        self.inner.host().map(|h| h == "github.com").unwrap_or(false)
     }
 
     fn cleaned_path(&self) -> String {
@@ -59,15 +59,14 @@ impl RepositoryUrl {
     }
 
     pub fn github_https(&self) -> Option<String> {
-        match &self.inner.host {
-            Some(host) if host == "github.com" => match self.inner.scheme {
+        match &self.inner.host() {
+            Some(host) if *host == "github.com" => match self.inner.scheme {
                 Scheme::Http | Scheme::Https | Scheme::Git => {
                     format!("https://github.com{}", self.cleaned_path()).into()
                 }
                 Scheme::Ssh => self
                     .inner
-                    .user
-                    .as_ref()
+                    .user()
                     .map(|user| format!("https://github.com{}/{}", user, self.cleaned_path())),
                 Scheme::Radicle | Scheme::File => None,
             },
