@@ -58,28 +58,32 @@ impl<'repo> Remote<'repo> {
     }
 }
 
+pub(crate) fn rewrite_url(
+    config: &config::Cache,
+    url: Option<&git_url::Url>,
+    direction: remote::Direction,
+) -> Result<Option<git_url::Url>, remote::init::Error> {
+    url.and_then(|url| config.url_rewrite().longest(url, direction))
+        .map(|url| {
+            git_url::parse(&url).map_err(|err| remote::init::Error::RewrittenUrlInvalid {
+                kind: match direction {
+                    remote::Direction::Fetch => "fetch",
+                    remote::Direction::Push => "push",
+                },
+                source: err,
+                rewritten_url: url,
+            })
+        })
+        .transpose()
+}
+
 pub(crate) fn rewrite_urls(
     config: &config::Cache,
     url: Option<&git_url::Url>,
     push_url: Option<&git_url::Url>,
 ) -> Result<(Option<git_url::Url>, Option<git_url::Url>), remote::init::Error> {
-    let rewrite = |url: Option<&git_url::Url>, direction: remote::Direction| {
-        url.and_then(|url| config.url_rewrite().rewrite_url(url, direction))
-            .map(|url| {
-                git_url::parse(&url).map_err(|err| remote::init::Error::RewrittenUrlInvalid {
-                    kind: match direction {
-                        remote::Direction::Fetch => "fetch",
-                        remote::Direction::Push => "push",
-                    },
-                    source: err,
-                    rewritten_url: url,
-                })
-            })
-            .transpose()
-    };
-
-    let url_alias = rewrite(url, remote::Direction::Fetch)?;
-    let push_url_alias = rewrite(push_url, remote::Direction::Push)?;
+    let url_alias = rewrite_url(config, url, remote::Direction::Fetch)?;
+    let push_url_alias = rewrite_url(config, push_url, remote::Direction::Push)?;
 
     Ok((url_alias, push_url_alias))
 }

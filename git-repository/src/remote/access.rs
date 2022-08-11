@@ -46,12 +46,26 @@ impl Remote<'_> {
 impl Remote<'_> {
     /// Read `url.<base>.insteadOf|pushInsteadOf` configuration variables and apply them to our urls, changing them in place.
     ///
-    /// This happens only once, and none of them is changed even if only one of them has an error.
+    /// This happens only once, and one if them may be changed even when reporting an error.
+    /// If both urls fail, only the first error (for fetch urls) is reported.
     pub fn rewrite_urls(&mut self) -> Result<&mut Self, remote::init::Error> {
-        let (url, push_url) =
-            remote::create::rewrite_urls(&self.repo.config, self.url.as_ref(), self.push_url.as_ref())?;
-        self.url_alias = url;
-        self.push_url_alias = push_url;
+        let url_err = match remote::create::rewrite_url(&self.repo.config, self.url.as_ref(), remote::Direction::Fetch)
+        {
+            Ok(url) => {
+                self.url_alias = url;
+                None
+            }
+            Err(err) => err.into(),
+        };
+        let push_url_err =
+            match remote::create::rewrite_url(&self.repo.config, self.push_url.as_ref(), remote::Direction::Push) {
+                Ok(url) => {
+                    self.push_url_alias = url;
+                    None
+                }
+                Err(err) => err.into(),
+            };
+        url_err.or(push_url_err).map(Err::<&mut Self, _>).transpose()?;
         Ok(self)
     }
 }

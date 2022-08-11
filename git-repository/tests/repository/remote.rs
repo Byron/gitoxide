@@ -205,17 +205,25 @@ mod find_remote {
         );
 
         let mut remote = repo.try_find_remote_without_url_rewrite("origin").expect("exists")?;
-        for _round in 0..2 {
-            assert_eq!(
-                remote.url(Direction::Fetch).unwrap().to_bstring(),
-                "https://github.com/foobar/gitoxide",
-                "no rewrite happened"
-            );
+        for round in 1..=2 {
+            if round == 1 {
+                assert_eq!(
+                    remote.url(Direction::Fetch).unwrap().to_bstring(),
+                    "https://github.com/foobar/gitoxide",
+                    "no rewrite happened"
+                );
+            } else {
+                assert_eq!(
+                    remote.url(Direction::Fetch).unwrap().to_bstring(),
+                    "https://github.com/byron/gitoxide",
+                    "it can rewrite a single url like git can"
+                );
+            }
             assert_eq!(remote.url(Direction::Push).unwrap().to_bstring(), "file://dev/null",);
             assert_eq!(
                 remote.rewrite_urls().unwrap_err().to_string(),
                 expected_err_msg,
-                "rewriting fails, leaves both urls as they were, which diverges from git"
+                "rewriting fails, but it will rewrite what it can while reporting a single error."
             );
         }
         Ok(())
