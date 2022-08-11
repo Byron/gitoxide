@@ -1,33 +1,23 @@
 use std::borrow::Cow;
 
 use bstr::ByteSlice;
-use quick_error::quick_error;
 
 use crate::Scheme;
 
-quick_error! {
-    /// The Error returned by [`parse()`]
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        Utf8(err: std::str::Utf8Error) {
-            display("Could not decode URL as UTF8")
-            from()
-            source(err)
-        }
-        Url(err: String) {
-            display("the URL could not be parsed: {}", err)
-        }
-        UnsupportedProtocol(protocol: String) {
-            display("Protocol '{}' is not supported", protocol)
-        }
-        EmptyPath {
-            display("Paths cannot be empty")
-        }
-        RelativeUrl(url: String) {
-            display("Relative URLs are not permitted: '{}'", url)
-        }
-    }
+/// The Error returned by [`parse()`]
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Could not decode URL as UTF8")]
+    Utf8(#[from] std::str::Utf8Error),
+    #[error(transparent)]
+    Url(#[from] url::ParseError),
+    #[error("Protocol {protocol:?} is not supported")]
+    UnsupportedProtocol { protocol: String },
+    #[error("Paths cannot be empty")]
+    EmptyPath,
+    #[error("Relative URLs are not permitted: {url:?}")]
+    RelativeUrl { url: String },
 }
 
 fn str_to_protocol(s: &str) -> Result<Scheme, Error> {
@@ -38,7 +28,7 @@ fn str_to_protocol(s: &str) -> Result<Scheme, Error> {
         "http" => Scheme::Http,
         "https" => Scheme::Https,
         "rad" => Scheme::Radicle,
-        _ => return Err(Error::UnsupportedProtocol(s.into())),
+        _ => return Err(Error::UnsupportedProtocol { protocol: s.into() }),
     })
 }
 
@@ -114,22 +104,20 @@ pub fn parse(bytes: &[u8]) -> Result<crate::Url, Error> {
                 "{}://{}",
                 guessed_protocol,
                 sanitize_for_protocol(guessed_protocol, url_str)
-            ))
-            .map_err(|err| Error::Url(err.to_string()))?
+            ))?
         }
-        Err(err) => return Err(Error::Url(err.to_string())),
+        Err(err) => return Err(err.into()),
     };
     // SCP like URLs without user parse as 'something' with the scheme being the 'host'. Hosts always have dots.
     if url.scheme().find('.').is_some() {
         // try again with prefixed protocol
-        url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))
-            .map_err(|err| Error::Url(err.to_string()))?;
+        url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
     }
     if url.scheme() != "rad" && url.path().is_empty() {
         return Err(Error::EmptyPath);
     }
     if url.cannot_be_a_base() {
-        return Err(Error::RelativeUrl(url.into()));
+        return Err(Error::RelativeUrl { url: url.into() });
     }
 
     to_owned_url(url)
