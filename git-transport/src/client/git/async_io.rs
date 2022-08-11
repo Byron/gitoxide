@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use bstr::BString;
+use bstr::{BString, ByteVec};
 use futures_io::{AsyncRead, AsyncWrite};
 use futures_lite::AsyncWriteExt;
 use git_packetline::PacketLineRef;
@@ -29,15 +29,9 @@ where
     fn to_url(&self) -> BString {
         self.custom_url.as_ref().map_or_else(
             || {
-                git_url::Url {
-                    scheme: git_url::Scheme::File,
-                    user: None,
-                    host: None,
-                    port: None,
-                    path: self.path.clone(),
-                }
-                .to_bstring()
-                .expect("valid and not mutated")
+                let mut buf: BString = "file://".into();
+                buf.push_str(&self.path);
+                buf
             },
             |url| url.clone(),
         )

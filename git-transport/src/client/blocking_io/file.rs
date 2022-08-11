@@ -70,13 +70,7 @@ impl SpawnProcessOnDemand {
     }
     fn new_local(path: BString, version: Protocol) -> SpawnProcessOnDemand {
         SpawnProcessOnDemand {
-            url: git_url::Url {
-                scheme: git_url::Scheme::File,
-                user: None,
-                host: None,
-                port: None,
-                path: path.clone(),
-            },
+            url: git_url::Url::from_parts(git_url::Scheme::File, None, None, None, path.clone()).expect("valid url"),
             path,
             ssh_program: None,
             ssh_args: Vec::new(),
@@ -101,7 +95,7 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
     }
 
     fn to_url(&self) -> BString {
-        self.url.to_bstring().expect("valid as it cannot be altered")
+        self.url.to_bstring()
     }
 
     fn connection_persists_across_multiple_requests(&self) -> bool {

@@ -12,11 +12,11 @@ use crate::client::Transport;
 /// Use `desired_version` to set the desired protocol version to use when connecting, but not that the server may downgrade it.
 pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn Transport + Send>, Error> {
     let urlb = url;
-    let url = git_url::parse(urlb)?;
+    let mut url = git_url::parse(urlb)?;
     Ok(match url.scheme {
         git_url::Scheme::Radicle => return Err(Error::UnsupportedScheme(url.scheme)),
         git_url::Scheme::File => {
-            if url.user.is_some() || url.host.is_some() || url.port.is_some() {
+            if url.user().is_some() || url.host().is_some() || url.port.is_some() {
                 return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
             }
             Box::new(
@@ -24,29 +24,31 @@ pub fn connect(url: &[u8], desired_version: crate::Protocol) -> Result<Box<dyn T
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             )
         }
-        git_url::Scheme::Ssh => Box::new(
+        git_url::Scheme::Ssh => Box::new({
+            let path = std::mem::take(&mut url.path);
             crate::client::blocking_io::ssh::connect(
-                url.host.as_ref().expect("host is present in url"),
-                url.path,
+                url.host().expect("host is present in url"),
+                path,
                 desired_version,
-                url.user.as_deref(),
+                url.user(),
                 url.port,
             )
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
-        ),
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?
+        }),
         git_url::Scheme::Git => {
-            if url.user.is_some() {
+            if url.user().is_some() {
                 return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
             }
-            Box::new(
+            Box::new({
+                let path = std::mem::take(&mut url.path);
                 crate::client::git::connect(
-                    url.host.as_ref().expect("host is present in url"),
-                    url.path,
+                    url.host().expect("host is present in url"),
+                    path,
                     desired_version,
                     url.port,
                 )
-                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
-            )
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?
+            })
         }
         #[cfg(not(feature = "http-client-curl"))]
         git_url::Scheme::Https | git_url::Scheme::Http => return Err(Error::CompiledWithoutHttp(url.scheme)),

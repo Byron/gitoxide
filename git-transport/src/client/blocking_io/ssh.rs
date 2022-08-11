@@ -64,13 +64,14 @@ pub fn connect(
     };
 
     let path = git_url::expand_path::for_shell(path);
-    let url = git_url::Url {
-        scheme: git_url::Scheme::Ssh,
-        user: user.map(Into::into),
-        host: Some(host.clone()),
+    let url = git_url::Url::from_parts(
+        git_url::Scheme::Ssh,
+        user.map(Into::into),
+        Some(host.clone()),
         port,
-        path: path.clone(),
-    };
+        path.clone(),
+    )
+    .expect("valid url");
     Ok(match args_and_env {
         Some((args, envs)) => blocking_io::file::SpawnProcessOnDemand::new_ssh(
             url,

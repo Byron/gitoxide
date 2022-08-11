@@ -29,15 +29,10 @@ where
     fn to_url(&self) -> BString {
         self.custom_url.as_ref().map_or_else(
             || {
-                git_url::Url {
-                    scheme: git_url::Scheme::File,
-                    user: None,
-                    host: None,
-                    port: None,
-                    path: self.path.clone(),
-                }
-                .to_bstring()
-                .expect("valid URL which isn't mutated")
+                use bstr::ByteVec;
+                let mut buf: BString = "file://".into();
+                buf.push_str(&self.path);
+                buf
             },
             |url| url.clone(),
         )
