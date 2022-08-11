@@ -7,8 +7,6 @@ impl File {
         self.state.write_to(&mut hasher, options)?;
 
         let hash = hasher.hash.digest();
-        out.write_all(&hash)?;
-
-        Ok(())
+        out.write_all(&hash)
     }
 }
