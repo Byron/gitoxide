@@ -53,7 +53,7 @@ fn scp_like_without_user() -> crate::Result {
         "host.xz:path/to/git",
         url(Scheme::Ssh, None, "host.xz", None, b"/path/to/git"),
     )?
-    .to_bstring()?;
+    .to_bstring();
     assert_eq!(url, "ssh://host.xz/path/to/git");
     Ok(())
 }
@@ -64,7 +64,7 @@ fn scp_like_without_user_and_username_expansion_without_username() -> crate::Res
         "host.xz:~/to/git",
         url(Scheme::Ssh, None, "host.xz", None, b"/~/to/git"),
     )?
-    .to_bstring()?;
+    .to_bstring();
     assert_eq!(url, "ssh://host.xz/~/to/git");
     Ok(())
 }
@@ -75,7 +75,7 @@ fn scp_like_without_user_and_username_expansion_with_username() -> crate::Result
         "host.xz:~byron/to/git",
         url(Scheme::Ssh, None, "host.xz", None, b"/~byron/to/git"),
     )?
-    .to_bstring()?;
+    .to_bstring();
     assert_eq!(url, "ssh://host.xz/~byron/to/git");
     Ok(())
 }
@@ -86,7 +86,7 @@ fn scp_like_with_user_and_relative_path_turns_into_absolute_path() -> crate::Res
         "user@host.xz:./relative",
         url(Scheme::Ssh, "user", "host.xz", None, b"/relative"),
     )?
-    .to_bstring()?;
+    .to_bstring();
     assert_eq!(url, "ssh://user@host.xz/relative");
     Ok(())
 }

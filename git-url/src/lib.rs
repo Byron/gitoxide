@@ -12,7 +12,7 @@ use std::{
     fmt::{self},
 };
 
-use bstr::BStr;
+use bstr::{BStr, BString};
 
 ///
 pub mod parse;
@@ -69,9 +69,9 @@ pub struct Url {
     /// The URL scheme.
     pub scheme: Scheme,
     /// The user to impersonate on the remote.
-    pub user: Option<String>,
+    user: Option<String>,
     /// The host to which to connect. Localhost is implied if `None`.
-    pub host: Option<String>,
+    host: Option<String>,
     /// The port to use when connecting to a host. If `None`, standard ports depending on `scheme` will be used.
     pub port: Option<u16>,
     /// The path portion of the URL, usually the location of the git repository.
@@ -87,6 +87,52 @@ impl Default for Url {
             port: None,
             path: bstr::BString::default(),
         }
+    }
+}
+
+/// Instantiation
+impl Url {
+    /// Create a new instance from the given parts, which will be validated by parsing them back.
+    pub fn from_parts(
+        scheme: Scheme,
+        user: Option<String>,
+        host: Option<String>,
+        port: Option<u16>,
+        path: BString,
+    ) -> Result<Self, parse::Error> {
+        parse(
+            Url {
+                scheme,
+                user,
+                host,
+                port,
+                path,
+            }
+            .to_bstring()
+            .as_ref(),
+        )
+    }
+}
+
+/// Modification
+impl Url {
+    /// Set the given `user`, with `None` unsetting it. Returns the previous value.
+    pub fn set_user(&mut self, user: Option<String>) -> Option<String> {
+        let prev = self.user.take();
+        self.user = user;
+        prev
+    }
+}
+
+/// Access
+impl Url {
+    /// Returns the user mentioned in the url, if present.
+    pub fn user(&self) -> Option<&str> {
+        self.user.as_deref()
+    }
+    /// Returns the host mentioned in the url, if present.
+    pub fn host(&self) -> Option<&str> {
+        self.host.as_deref()
     }
 }
 
@@ -106,7 +152,7 @@ impl Url {
                 out.write_all(host.as_bytes())?;
             }
             (None, None) => {}
-            _ => return Err(std::io::Error::new(std::io::ErrorKind::Other, "Malformed URL")),
+            (Some(_user), None) => unreachable!("BUG: should not be possible to have a user but no host"),
         };
         if let Some(port) = &self.port {
             write!(&mut out, ":{}", port)?;
@@ -116,7 +162,7 @@ impl Url {
     }
 
     /// Transform ourselves into a binary string, losslessly, or fail if the URL is malformed due to host or user parts being incorrect.
-    pub fn to_bstring(&self) -> std::io::Result<bstr::BString> {
+    pub fn to_bstring(&self) -> bstr::BString {
         let mut buf = Vec::with_capacity(
             (5 + 3)
                 + self.user.as_ref().map(|n| n.len()).unwrap_or_default()
@@ -125,8 +171,8 @@ impl Url {
                 + self.port.map(|_| 5).unwrap_or_default()
                 + self.path.len(),
         );
-        self.write_to(&mut buf)?;
-        Ok(buf.into())
+        self.write_to(&mut buf).expect("io cannot fail in memory");
+        buf.into()
     }
 }
 

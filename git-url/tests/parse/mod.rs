@@ -6,7 +6,7 @@ fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, cra
 }
 
 fn assert_url_roundtrip(url: &str, expected: git_url::Url) -> crate::Result {
-    assert_eq!(assert_url_and(url, expected)?.to_bstring().expect("valid"), url);
+    assert_eq!(assert_url_and(url, expected)?.to_bstring(), url);
     Ok(())
 }
 
@@ -21,13 +21,14 @@ fn url(
     port: impl Into<Option<u16>>,
     path: &'static [u8],
 ) -> git_url::Url {
-    git_url::Url {
-        scheme: protocol,
-        user: user.into().map(Into::into),
-        host: host.into().map(Into::into),
-        port: port.into(),
-        path: path.into(),
-    }
+    git_url::Url::from_parts(
+        protocol,
+        user.into().map(Into::into),
+        host.into().map(Into::into),
+        port.into(),
+        path.into(),
+    )
+    .expect("valid")
 }
 
 mod file;
