@@ -1,7 +1,16 @@
 use crate::remote::find;
-use crate::{config, remote, Remote};
+use crate::{remote, Remote};
+use std::convert::TryInto;
 
 impl crate::Repository {
+    /// Create a new remote available at the given `url`.
+    pub fn remote_at<Url, E>(&self, url: Url) -> Result<Remote<'_>, remote::init::Error>
+    where
+        Url: TryInto<git_url::Url, Error = E>,
+        remote::init::Error: From<E>,
+    {
+        Remote::from_fetch_url(url, self)
+    }
     /// Find the remote with the given `name` or report an error, similar to [`try_find_remote(…)`][Self::try_find_remote()].
     ///
     /// Note that we will include remotes only if we deem them [trustworthy][crate::open::Options::filter_config_section()].
@@ -28,7 +37,7 @@ impl crate::Repository {
                 .resolved
                 .string_filter("remote", name.into(), field, &mut filter)
                 .map(|url| {
-                    git_url::parse::parse(url.as_ref()).map_err(|err| find::Error::UrlInvalid {
+                    git_url::parse::parse(url.as_ref()).map_err(|err| find::Error::Url {
                         kind,
                         url: url.into_owned(),
                         source: err,
@@ -94,48 +103,11 @@ impl crate::Repository {
                     None => Vec::new(),
                 };
 
-                let (url_alias, push_url_alias) = match rewrite_urls(&self.config, url.as_ref(), push_url.as_ref()) {
-                    Ok(t) => t,
-                    Err(err) => return Some(Err(err)),
-                };
-                Some(Ok(Remote {
-                    name: name.to_owned().into(),
-                    url,
-                    url_alias,
-                    push_url,
-                    push_url_alias,
-                    fetch_specs,
-                    push_specs,
-                    apply_url_aliases: true,
-                    repo: self,
-                }))
+                Some(
+                    Remote::from_preparsed_config(name.to_owned().into(), url, push_url, fetch_specs, push_specs, self)
+                        .map_err(Into::into),
+                )
             }
         }
     }
-}
-
-fn rewrite_urls(
-    config: &config::Cache,
-    url: Option<&git_url::Url>,
-    push_url: Option<&git_url::Url>,
-) -> Result<(Option<git_url::Url>, Option<git_url::Url>), find::Error> {
-    let rewrite = |url: Option<&git_url::Url>, direction: remote::Direction| {
-        url.and_then(|url| config.url_rewrite().rewrite_url(url, direction))
-            .map(|url| {
-                git_url::parse(&url).map_err(|err| find::Error::RewrittenUrlInvalid {
-                    kind: match direction {
-                        remote::Direction::Fetch => "fetch",
-                        remote::Direction::Push => "push",
-                    },
-                    source: err,
-                    rewritten_url: url,
-                })
-            })
-            .transpose()
-    };
-
-    let url_alias = rewrite(url, remote::Direction::Fetch)?;
-    let push_url_alias = rewrite(push_url, remote::Direction::Push)?;
-
-    Ok((url_alias, push_url_alias))
 }
