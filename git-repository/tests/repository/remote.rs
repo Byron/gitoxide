@@ -3,6 +3,26 @@ mod remote_at {
     use git_repository::remote::Direction;
 
     #[test]
+    fn url_and_push_url() -> crate::Result {
+        let repo = remote::repo("base");
+        let fetch_url = "https://github.com/byron/gitoxide";
+        let remote = repo.remote_at(fetch_url)?;
+
+        assert_eq!(remote.name(), None);
+        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring()?, fetch_url);
+        assert_eq!(remote.url(Direction::Push).unwrap().to_bstring()?, fetch_url);
+
+        let remote = remote.push_url("user@host.xz:./relative")?;
+        assert_eq!(
+            remote.url(Direction::Push).unwrap().to_bstring()?,
+            "ssh://user@host.xz/relative"
+        );
+        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring()?, fetch_url);
+
+        Ok(())
+    }
+
+    #[test]
     fn url_rewrites_are_respected() -> crate::Result {
         let repo = remote::repo("url-rewriting");
         let remote = repo.remote_at("https://github.com/foobar/gitoxide")?;
@@ -20,18 +40,14 @@ mod remote_at {
             "push is the same as fetch was rewritten"
         );
 
-        // TODO: push-url addition, should be same as this one
-        let expected_url = "file://dev/null";
-        let remote = repo.remote_at(expected_url.to_owned())?;
-        assert_eq!(
-            remote.url(Direction::Fetch).unwrap().to_bstring()?,
-            expected_url,
-            "there is no rule to rewrite this url"
-        );
+        let remote = repo
+            .remote_at("https://github.com/foobar/gitoxide".to_owned())?
+            .push_url("file://dev/null".to_owned())?;
+        assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring()?, rewritten_fetch_url);
         assert_eq!(
             remote.url(Direction::Push).unwrap().to_bstring()?,
-            expected_url,
-            "there is no rule to rewrite this url"
+            "ssh://dev/null",
+            "push-url rewrite rules are applied"
         );
         Ok(())
     }

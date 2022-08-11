@@ -7,7 +7,7 @@ impl crate::Repository {
     pub fn remote_at<Url, E>(&self, url: Url) -> Result<Remote<'_>, remote::init::Error>
     where
         Url: TryInto<git_url::Url, Error = E>,
-        remote::init::Error: From<E>,
+        git_url::parse::Error: From<E>,
     {
         Remote::from_fetch_url(url, self)
     }

@@ -1,5 +1,6 @@
 use crate::{remote, Remote};
 use git_refspec::RefSpec;
+use std::convert::TryInto;
 
 /// Builder methods
 impl Remote<'_> {
@@ -8,6 +9,23 @@ impl Remote<'_> {
     pub fn apply_url_aliases(mut self, toggle: bool) -> Self {
         self.apply_url_aliases = toggle;
         self
+    }
+
+    /// Set the `push_url` to be used when pushing data to a remote.
+    pub fn push_url<Url, E>(mut self, push_url: Url) -> Result<Self, remote::init::Error>
+    where
+        Url: TryInto<git_url::Url, Error = E>,
+        git_url::parse::Error: From<E>,
+    {
+        let push_url = push_url
+            .try_into()
+            .map_err(|err| remote::init::Error::Url(err.into()))?;
+        self.push_url = push_url.into();
+
+        let (_, push_url_alias) = remote::create::rewrite_urls(&self.repo.config, None, self.push_url.as_ref())?;
+        self.push_url_alias = push_url_alias;
+
+        Ok(self)
     }
 }
 
