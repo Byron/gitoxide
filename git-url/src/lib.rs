@@ -137,6 +137,22 @@ impl Url {
     }
 }
 
+impl TryFrom<&str> for Url {
+    type Error = parse::Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Self::from_bytes(value.as_bytes())
+    }
+}
+
+impl TryFrom<String> for Url {
+    type Error = parse::Error;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::from_bytes(value.as_bytes())
+    }
+}
+
 impl TryFrom<&BStr> for Url {
     type Error = parse::Error;
 
