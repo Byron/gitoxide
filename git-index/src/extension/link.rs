@@ -12,19 +12,17 @@ pub struct Bitmaps {
 }
 
 pub mod decode {
-    use quick_error::quick_error;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Corrupt(message: &'static str) {
-                display("{}", message)
-            }
-            BitmapDecode{err: git_bitmap::ewah::decode::Error, kind: &'static str} {
-                display("{} bitmap corrupt", kind)
-                source(err)
-            }
-        }
+    /// The error returned when decoding link extensions.
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("{0}")]
+        Corrupt(&'static str),
+        #[error("{kind} bitmap corrupt")]
+        BitmapDecode {
+            err: git_bitmap::ewah::decode::Error,
+            kind: &'static str,
+        },
     }
 }
 

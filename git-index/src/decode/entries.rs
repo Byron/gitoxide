@@ -61,7 +61,7 @@ pub fn chunk<'a>(
             has_delta_paths,
             prev_path,
         )
-        .ok_or(decode::Error::Entry(idx))?;
+        .ok_or(decode::Error::Entry { index: idx })?;
 
         data = remaining;
         if entry.mode.is_sparse() {

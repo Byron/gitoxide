@@ -7,22 +7,14 @@ use memmap2::Mmap;
 use crate::{decode, extension, File, State};
 
 mod error {
-    use quick_error::quick_error;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Io(err: std::io::Error) {
-                display("An IO error occurred while opening the index")
-                source(err)
-                from()
-            }
-            Decode(err: crate::decode::Error) {
-                display("The file could not be decoded")
-                source(err)
-                from()
-            }
-        }
+    /// The errror returned by [File::at()][super::File::at()].
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("An IO error occurred while opening the index")]
+        Io(#[from] std::io::Error),
+        #[error(transparent)]
+        Decode(#[from] crate::decode::Error),
     }
 }
 

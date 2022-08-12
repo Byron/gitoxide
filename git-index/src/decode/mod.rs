@@ -6,30 +6,19 @@ mod entries;
 pub mod header;
 
 mod error {
-    use quick_error::quick_error;
 
     use crate::{decode, extension};
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Header(err: decode::header::Error) {
-                display("The header could not be decoded")
-                source(err)
-                from()
-            }
-            Entry(index: u32) {
-                display("Could not parse entry at index {}", index)
-            }
-            Extension(err: extension::decode::Error) {
-                display("Mandatory extension wasn't implemented or malformed.")
-                source(err)
-                from()
-            }
-            UnexpectedTrailerLength { expected: usize, actual: usize } {
-                display("Index trailer should have been {} bytes long, but was {}", expected, actual)
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        Header(#[from] decode::header::Error),
+        #[error("Could not parse entry at index {index}")]
+        Entry { index: u32 },
+        #[error("Mandatory extension wasn't implemented or malformed.")]
+        Extension(#[from] extension::decode::Error),
+        #[error("Index trailer should have been {expected} bytes long, but was {actual}")]
+        UnexpectedTrailerLength { expected: usize, actual: usize },
     }
 }
 pub use error::Error;

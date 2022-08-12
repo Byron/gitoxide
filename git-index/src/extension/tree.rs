@@ -12,30 +12,34 @@ pub const SIGNATURE: Signature = *b"TREE";
 
 pub mod verify {
     use bstr::BString;
-    use quick_error::quick_error;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            MissingTreeDirectory { parent_id: git_hash::ObjectId, entry_id: git_hash::ObjectId, name: BString } {
-                display("The entry {} at path '{}' in parent tree {} wasn't found in the nodes children, making it incomplete", entry_id, name, parent_id)
-            }
-            TreeNodeNotFound { oid: git_hash::ObjectId } {
-                display("The tree with id {} wasn't found in the object database", oid)
-            }
-            TreeNodeChildcountMismatch { oid: git_hash::ObjectId, expected_childcount: usize, actual_childcount: usize } {
-                display("The tree with id {} should have {} children, but its cached representation had {} of them", oid, expected_childcount, actual_childcount)
-            }
-            RootWithName { name: BString } {
-                display("The root tree was named '{}', even though it should be empty", name)
-            }
-            EntriesCount {actual: u32, expected: u32 } {
-                display("Expected not more than {} entries to be reachable from the top-level, but actual count was {}", expected, actual)
-            }
-            OutOfOrder { parent_id: git_hash::ObjectId, current_path: BString, previous_path: BString } {
-                display("Parent tree '{}' contained out-of order trees prev = '{}' and next = '{}'", parent_id, previous_path, current_path)
-            }
-        }
+    /// The error returned by [Tree::verify()][super::Tree::verify()].
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("The entry {entry_id} at path '{name}' in parent tree {parent_id} wasn't found in the nodes children, making it incomplete")]
+        MissingTreeDirectory {
+            parent_id: git_hash::ObjectId,
+            entry_id: git_hash::ObjectId,
+            name: BString,
+        },
+        #[error("The tree with id {oid} wasn't found in the object database")]
+        TreeNodeNotFound { oid: git_hash::ObjectId },
+        #[error("The tree with id {oid} should have {expected_childcount} children, but its cached representation had {actual_childcount} of them")]
+        TreeNodeChildcountMismatch {
+            oid: git_hash::ObjectId,
+            expected_childcount: usize,
+            actual_childcount: usize,
+        },
+        #[error("The root tree was named '{name}', even though it should be empty")]
+        RootWithName { name: BString },
+        #[error("Expected not more than {expected} entries to be reachable from the top-level, but actual count was {actual}")]
+        EntriesCount { actual: u32, expected: u32 },
+        #[error("Parent tree '{parent_id}' contained out-of order trees prev = '{previous_path}' and next = '{current_path}'")]
+        OutOfOrder {
+            parent_id: git_hash::ObjectId,
+            current_path: BString,
+            previous_path: BString,
+        },
     }
 }
 

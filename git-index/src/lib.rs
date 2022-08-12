@@ -10,18 +10,24 @@ use std::{ops::Range, path::PathBuf};
 
 use filetime::FileTime;
 
+///
 pub mod file;
 
+///
 pub mod extension;
 
+///
 pub mod entry;
 
 mod access;
 
+///
 pub mod decode;
 
+///
 pub mod verify;
 
+///
 pub mod write;
 
 /// All known versions of a git index file.

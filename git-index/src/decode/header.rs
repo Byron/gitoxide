@@ -3,18 +3,13 @@ pub(crate) const SIZE: usize = 4 /*signature*/ + 4 /*version*/ + 4 /* num entrie
 use crate::{util::from_be_u32, Version};
 
 mod error {
-    use quick_error::quick_error;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Corrupt(message: &'static str) {
-                display("{}", message)
-            }
-            UnsupportedVersion(version: u32) {
-                display("Index version {} is not supported", version)
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("{0}")]
+        Corrupt(&'static str),
+        #[error("Index version {0} is not supported")]
+        UnsupportedVersion(u32),
     }
 }
 

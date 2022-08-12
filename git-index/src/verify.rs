@@ -4,36 +4,31 @@ use crate::State;
 
 pub mod entries {
     use bstr::BString;
-    use quick_error::quick_error;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            OutOfOrder { current_index: usize, current_path: BString, current_stage: u8, previous_path: BString, previous_stage: u8 } {
-                display("Entry '{}' (stage = {}) at index {} should order after prior entry '{}' (stage = {})", current_path, current_stage, current_index, previous_path, previous_stage)
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("Entry '{current_path}' (stage = {current_stage}) at index {current_index} should order after prior entry '{previous_path}' (stage = {previous_stage})")]
+        OutOfOrder {
+            current_index: usize,
+            current_path: BString,
+            current_stage: u8,
+            previous_path: BString,
+            previous_stage: u8,
+        },
     }
 }
 
 pub mod extensions {
-    use quick_error::quick_error;
-
     use crate::extension;
 
     pub fn no_find<'a>(_: &git_hash::oid, _: &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>> {
         None
     }
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Tree(err: extension::tree::verify::Error) {
-                display("The tree extension wasn't valid")
-                source(err)
-                from()
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(transparent)]
+        Tree(#[from] extension::tree::verify::Error),
     }
 }
 

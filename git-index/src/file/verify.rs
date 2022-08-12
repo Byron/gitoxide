@@ -3,20 +3,16 @@ use std::sync::atomic::AtomicBool;
 use crate::File;
 
 mod error {
-    use quick_error::quick_error;
-
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Io(err: std::io::Error) {
-                display("Could not read index file to generate hash")
-                source(err)
-                from()
-            }
-            ChecksumMismatch { actual: git_hash::ObjectId, expected: git_hash::ObjectId }{
-                display("Index checksum should have been {}, but was {}", expected, actual)
-            }
-        }
+    /// The error returned by [File::verify_integrity()][super::File::verify_integrity()].
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("Could not read index file to generate hash")]
+        Io(#[from] std::io::Error),
+        #[error("Index checksum should have been {expected}, but was {actual}")]
+        ChecksumMismatch {
+            actual: git_hash::ObjectId,
+            expected: git_hash::ObjectId,
+        },
     }
 }
 pub use error::Error;
