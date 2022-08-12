@@ -357,6 +357,24 @@ impl ThreadSafeRepository {
             check_safe_directories(&git_dir, git_install_dir.as_deref(), home.as_deref(), &config)?;
         }
 
+        // core.worktree might be used to overwrite the worktree directory
+        if !config.is_bare {
+            if let Some(wt) = config.resolved.path_filter(
+                "core",
+                None,
+                "worktree",
+                &mut filter_config_section.unwrap_or(config::section::is_trusted),
+            ) {
+                let wt_path = wt
+                    .interpolate(interpolate_context(git_install_dir.as_deref(), home.as_deref()))
+                    .map_err(config::Error::PathInterpolation)?;
+                worktree_dir = {
+                    let wt = git_path::absolutize(git_dir.join(wt_path), None::<std::path::PathBuf>).into_owned();
+                    wt.is_dir().then(|| wt)
+                }
+            }
+        }
+
         match worktree_dir {
             None if !config.is_bare => {
                 worktree_dir = Some(git_dir.parent().expect("parent is always available").to_owned());

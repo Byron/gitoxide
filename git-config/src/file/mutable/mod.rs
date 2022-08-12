@@ -9,7 +9,7 @@ pub(crate) mod section;
 pub(crate) mod value;
 
 fn escape_value(value: &BStr) -> BString {
-    let starts_with_whitespace = value.get(0).map_or(false, |b| b.is_ascii_whitespace());
+    let starts_with_whitespace = value.first().map_or(false, |b| b.is_ascii_whitespace());
     let ends_with_whitespace = value
         .get(value.len().saturating_sub(1))
         .map_or(false, |b| b.is_ascii_whitespace());

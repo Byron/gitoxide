@@ -148,7 +148,7 @@ impl crate::Repository {
                             commit.parents.len(),
                         ),
                     },
-                    expected: match commit.parents.get(0).map(|p| Target::Peeled(*p)) {
+                    expected: match commit.parents.first().map(|p| Target::Peeled(*p)) {
                         Some(previous) => {
                             if reference.as_bstr() == "HEAD" {
                                 PreviousValue::MustExistAndMatch(previous)

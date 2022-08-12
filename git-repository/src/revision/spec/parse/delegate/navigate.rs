@@ -120,6 +120,9 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
             PeelTo::Path(path) => {
                 let lookup_path = |obj: &ObjectId| {
                     let tree_id = peel(repo, obj, git_object::Kind::Tree)?;
+                    if path.is_empty() {
+                        return Ok(tree_id);
+                    }
                     let tree = repo.find_object(tree_id)?.into_tree();
                     let entry = tree
                         .lookup_path(git_path::from_bstr(path).components().map(|c| {

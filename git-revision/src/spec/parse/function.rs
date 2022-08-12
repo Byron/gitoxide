@@ -17,7 +17,7 @@ pub fn parse(mut input: &BStr, delegate: &mut impl Delegate) -> Result<(), Error
     use delegate::{Kind, Revision};
     let mut delegate = InterceptRev::new(delegate);
     let mut prev_kind = None;
-    if let Some(b'^') = input.get(0) {
+    if let Some(b'^') = input.first() {
         input = next(input).1;
         let kind = spec::Kind::ExcludeReachable;
         delegate.kind(kind).ok_or(Error::Delegate)?;
@@ -199,7 +199,7 @@ fn try_set_prefix(delegate: &mut impl Delegate, hex_name: &BStr, hint: Option<de
 fn long_describe_prefix(name: &BStr) -> Option<(&BStr, delegate::PrefixHint<'_>)> {
     let mut iter = name.rsplit(|b| *b == b'-');
     let candidate = iter.by_ref().find_map(|substr| {
-        if substr.get(0)? != &b'g' {
+        if substr.first()? != &b'g' {
             return None;
         };
         let rest = substr.get(1..)?;
@@ -240,7 +240,7 @@ fn short_describe_prefix(name: &BStr) -> Option<&BStr> {
 
 type InsideParensRestConsumed<'a> = (std::borrow::Cow<'a, BStr>, &'a BStr, usize);
 fn parens(input: &[u8]) -> Result<Option<InsideParensRestConsumed<'_>>, Error> {
-    if input.get(0) != Some(&b'{') {
+    if input.first() != Some(&b'{') {
         return Ok(None);
     }
     let mut open_braces = 0;
@@ -538,13 +538,13 @@ where
                         invalid => return Err(Error::InvalidObject { input: invalid.into() }),
                     };
                     delegate.peel_until(target).ok_or(Error::Delegate)?;
-                } else if past_sep.and_then(|i| i.get(0)) == Some(&b'!') {
+                } else if past_sep.and_then(|i| i.first()) == Some(&b'!') {
                     delegate
                         .kind(spec::Kind::ExcludeReachableFromParents)
                         .ok_or(Error::Delegate)?;
                     delegate.done();
                     return Ok(input[cursor + 1..].as_bstr());
-                } else if past_sep.and_then(|i| i.get(0)) == Some(&b'@') {
+                } else if past_sep.and_then(|i| i.first()) == Some(&b'@') {
                     delegate
                         .kind(spec::Kind::IncludeReachableFromParents)
                         .ok_or(Error::Delegate)?;
@@ -570,8 +570,8 @@ where
 
 fn parse_regex_prefix(regex: &BStr) -> Result<(&BStr, bool), Error> {
     Ok(match regex.strip_prefix(b"!") {
-        Some(regex) if regex.get(0) == Some(&b'!') => (regex.as_bstr(), false),
-        Some(regex) if regex.get(0) == Some(&b'-') => (regex[1..].as_bstr(), true),
+        Some(regex) if regex.first() == Some(&b'!') => (regex.as_bstr(), false),
+        Some(regex) if regex.first() == Some(&b'-') => (regex[1..].as_bstr(), true),
         Some(_regex) => return Err(Error::UnspecifiedRegexModifier { regex: regex.into() }),
         None => (regex, false),
     })

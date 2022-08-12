@@ -7,7 +7,7 @@ pub struct Options {
 }
 
 pub(crate) mod function {
-    use anyhow::{bail, Context};
+    use anyhow::Context;
     use std::ffi::OsString;
 
     use git_repository as git;
@@ -45,7 +45,7 @@ pub(crate) mod function {
             #[cfg(feature = "serde1")]
             OutputFormat::Json => {
                 if explain {
-                    bail!("Explanations are only for human consumption")
+                    anyhow::bail!("Explanations are only for human consumption")
                 }
                 serde_json::to_writer_pretty(
                     &mut out,

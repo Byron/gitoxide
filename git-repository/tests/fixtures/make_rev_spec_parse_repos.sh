@@ -386,4 +386,12 @@ git init complex_graph
   baseline "@^{}"
   baseline "main^{}"
   baseline "b-tag^{}"
+
+  baseline "@^{tree}"
+  baseline "@:"
+)
+
+git init new
+(cd new
+  baseline '@{1}'
 )

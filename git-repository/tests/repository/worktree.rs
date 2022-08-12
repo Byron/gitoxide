@@ -1,6 +1,117 @@
 use git_ref::bstr;
 use git_repository as git;
 
+mod with_core_worktree_config {
+    use crate::repository::worktree::Baseline;
+    use git_repository as git;
+    use std::io::BufRead;
+
+    #[test]
+    fn relative() -> crate::Result {
+        for (name, is_relative) in [("absolute-worktree", false), ("relative-worktree", true)] {
+            let repo = repo(name);
+
+            if is_relative {
+                assert_eq!(
+                    repo.work_dir().unwrap(),
+                    repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"),
+                    "work_dir is set to core.worktree config value, relative paths are appended to `git_dir() and made absolute`"
+                );
+            } else {
+                assert_eq!(
+                    repo.work_dir().unwrap(),
+                    git_path::realpath(repo.git_dir().parent().unwrap().parent().unwrap().join("worktree"))?,
+                    "absolute workdirs are left untouched"
+                );
+            }
+
+            assert_eq!(
+                repo.worktree().expect("present").base(),
+                repo.work_dir().unwrap(),
+                "current worktree is based on work-tree dir"
+            );
+
+            let baseline = Baseline::collect(repo.git_dir())?;
+            assert_eq!(baseline.len(), 1, "git lists the main worktree");
+            assert_eq!(
+                baseline[0].root,
+                git_path::realpath(repo.git_dir().parent().unwrap())?,
+                "git lists the original worktree, to which we have no access anymore"
+            );
+            assert_eq!(
+                repo.worktrees()?.len(),
+                0,
+                "we only list linked worktrees, and there are none"
+            );
+            assert_eq!(
+                repo.index()?.entries().len(),
+                count_deleted(repo.git_dir()),
+                "git considers all worktree entries missing as the overridden worktree is an empty dir"
+            );
+            assert_eq!(repo.index()?.entries().len(), 3, "just to be sure");
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn non_existing_relative() {
+        let repo = repo("relative-nonexisting-worktree");
+        assert_eq!(
+            count_deleted(repo.git_dir()),
+            0,
+            "git can't chdir into missing worktrees, has no error handling there"
+        );
+
+        assert_eq!(
+            repo.work_dir(),
+            repo.git_dir().parent(),
+            "we just ignore missing configured worktree dirs and fall back to the default one"
+        )
+    }
+
+    #[test]
+    fn relative_file() {
+        let repo = repo("relative-worktree-file");
+        assert_eq!(count_deleted(repo.git_dir()), 0, "git can't chdir into a file");
+
+        assert_eq!(
+            repo.work_dir(),
+            repo.git_dir().parent(),
+            "we just ignore missing configured worktree dirs and fall back to the default one"
+        )
+    }
+
+    #[test]
+    fn bare_relative() -> crate::Result {
+        let repo = repo("bare-relative-worktree");
+
+        assert_eq!(
+            count_deleted(repo.git_dir()),
+            0,
+            "git refuses to mix bare with core.worktree"
+        );
+        assert!(
+            repo.work_dir().is_none(),
+            "we simply don't load core.worktree in bare repos either to match this behaviour"
+        );
+        Ok(())
+    }
+
+    fn repo(name: &str) -> git::Repository {
+        let dir = git_testtools::scripted_fixture_repo_read_only("make_core_worktree_repo.sh").unwrap();
+        git::open_opts(dir.join(name), crate::restricted()).unwrap()
+    }
+
+    fn count_deleted(git_dir: &std::path::Path) -> usize {
+        std::fs::read(git_dir.join("status.baseline"))
+            .unwrap()
+            .lines()
+            .filter_map(Result::ok)
+            .filter(|line| line.contains(" D "))
+            .count()
+    }
+}
+
 struct Baseline<'a> {
     lines: bstr::Lines<'a>,
 }

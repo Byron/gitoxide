@@ -232,7 +232,11 @@ Check out the [performance discussion][git-traverse-performance] as well.
 
 ### git-pathspec
 * [x] parse
-* [ ] check for match
+* [ ] matching of paths
+
+### git-refspec
+* [x] parse
+* [ ] matching of references and object names
 
 ### git-note
 
@@ -313,9 +317,9 @@ Make it the best-performing implementation and the most convenient one.
 ### git-revision
 * [x] `describe()` (similar to `git name-rev`)
 * parse specifications 
-    * [ ] parsing and navigation
+    * [x] parsing and navigation
+    * [x] revision ranges
     * [ ] full date parsing support (depends on `git-date`)
-    * [ ] revision ranges
  
 ### git-submodule
 * CRUD for submodules
@@ -476,6 +480,9 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
           * [ ] obtain 'prunable' information
        * [x] proper handling of worktree related refs
        * [ ] create, move, remove, and repair
+       * [x] respect `core.worktree` configuration
+          - **deviation**
+             * The delicate interplay between `GIT_COMMON_DIR` and `GIT_WORK_TREE` isn't implemented.
     * **config**
        * [x] read the primitive types `boolean`, `integer`, `string`
        * [x] read and interpolate trusted paths

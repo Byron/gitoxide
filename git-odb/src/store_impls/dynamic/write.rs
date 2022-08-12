@@ -32,7 +32,7 @@ where
 
     fn write_stream(&self, kind: Kind, size: u64, from: impl Read) -> Result<ObjectId, Self::Error> {
         let mut snapshot = self.snapshot.borrow_mut();
-        Ok(match snapshot.loose_dbs.get(0) {
+        Ok(match snapshot.loose_dbs.first() {
             Some(ldb) => ldb.write_stream(kind, size, from)?,
             None => {
                 let new_snapshot = self

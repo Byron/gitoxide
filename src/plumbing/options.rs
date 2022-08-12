@@ -180,12 +180,13 @@ pub mod commit {
 
 pub mod revision {
     #[derive(Debug, clap::Subcommand)]
-    #[clap(visible_alias = "rev")]
+    #[clap(visible_alias = "rev", visible_alias = "r")]
     pub enum Subcommands {
         /// Provide the revision specification like `@~1` to explain.
+        #[clap(visible_alias = "e")]
         Explain { spec: std::ffi::OsString },
         /// Try to resolve the given revspec and print the object names.
-        #[clap(visible_alias = "query", visible_alias = "parse")]
+        #[clap(visible_alias = "query", visible_alias = "parse", visible_alias = "p")]
         Resolve {
             /// Instead of resolving a rev-spec, explain what would be done for the first spec.
             ///
@@ -200,6 +201,7 @@ pub mod revision {
             specs: Vec<std::ffi::OsString>,
         },
         /// Return the names and hashes of all previously checked-out branches.
+        #[clap(visible_alias = "prev")]
         PreviousBranches,
     }
 }
