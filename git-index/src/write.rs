@@ -1,5 +1,6 @@
+use crate::write::util::CountBytes;
 use crate::{extension, State, Version};
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryInto;
 use std::io::Write;
 
 /// The options for use when [writing an index][State::write_to()].
@@ -140,39 +141,43 @@ fn end_of_index_entry_ext(
     Ok(())
 }
 
-struct CountBytes<'a, T> {
-    count: u32,
-    inner: &'a mut T,
-}
+mod util {
+    use std::convert::TryFrom;
 
-impl<'a, T> CountBytes<'a, T>
-where
-    T: std::io::Write,
-{
-    pub fn new(inner: &'a mut T) -> Self {
-        CountBytes { inner, count: 0 }
-    }
-}
-
-impl<'a, T> std::io::Write for CountBytes<'a, T>
-where
-    T: std::io::Write,
-{
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let written = self.inner.write(buf)?;
-        self.count = self
-            .count
-            .checked_add(u32::try_from(written).expect("we don't write 4GB buffers"))
-            .ok_or_else(|| {
-                std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Cannot write indices larger than 4 gigabytes",
-                )
-            })?;
-        Ok(written)
+    pub struct CountBytes<'a, T> {
+        pub count: u32,
+        pub inner: &'a mut T,
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
-        self.inner.flush()
+    impl<'a, T> CountBytes<'a, T>
+    where
+        T: std::io::Write,
+    {
+        pub fn new(inner: &'a mut T) -> Self {
+            CountBytes { inner, count: 0 }
+        }
+    }
+
+    impl<'a, T> std::io::Write for CountBytes<'a, T>
+    where
+        T: std::io::Write,
+    {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            let written = self.inner.write(buf)?;
+            self.count = self
+                .count
+                .checked_add(u32::try_from(written).expect("we don't write 4GB buffers"))
+                .ok_or_else(|| {
+                    std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Cannot write indices larger than 4 gigabytes",
+                    )
+                })?;
+            Ok(written)
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            self.inner.flush()
+        }
     }
 }
