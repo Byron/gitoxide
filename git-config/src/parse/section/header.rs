@@ -8,7 +8,7 @@ use crate::parse::{
 };
 
 /// The error returned by [`Header::new(…)`][super::Header::new()].
-#[derive(Debug, PartialOrd, PartialEq, thiserror::Error)]
+#[derive(Debug, PartialOrd, PartialEq, Eq, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
     #[error("section names can only be ascii, '-'")]

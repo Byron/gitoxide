@@ -14,7 +14,7 @@ use git_repository::{
 };
 use quick_error::quick_error;
 
-#[derive(PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug)]
 pub enum SafetyCheck {
     SkipFileChecksumVerification,
     SkipFileAndObjectChecksumVerification,

@@ -609,7 +609,7 @@ fn find_dependency_tables<'r>(
 }
 
 fn req_as_version(req: &VersionReq) -> Option<Version> {
-    req.comparators.get(0).map(|comp| Version {
+    req.comparators.first().map(|comp| Version {
         major: comp.major,
         minor: comp.minor.unwrap_or(0),
         patch: comp.patch.unwrap_or(0),

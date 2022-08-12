@@ -46,7 +46,7 @@ pub mod open {
 
                 let (offset, sorted) = {
                     let data = backing.as_ref();
-                    if *data.get(0).unwrap_or(&b' ') == b'#' {
+                    if *data.first().unwrap_or(&b' ') == b'#' {
                         let (records, header) = packed::decode::header::<()>(data).map_err(|_| Error::HeaderParsing)?;
                         let offset = records.as_ptr() as usize - data.as_ptr() as usize;
                         (offset, header.sorted)
