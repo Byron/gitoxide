@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-#[derive(PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug)]
 pub enum Protocol {
     V1,
     V2,

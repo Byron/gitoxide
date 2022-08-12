@@ -76,7 +76,7 @@ where
             .header
             .write_to(entry.decompressed_size as u64, &mut self.output)?;
         std::io::copy(
-            &mut &*entry
+            &mut entry
                 .compressed
                 .as_deref()
                 .expect("caller must configure generator to keep compressed bytes"),

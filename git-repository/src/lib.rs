@@ -343,7 +343,7 @@ pub mod init {
 /// Not to be confused with 'status'.
 pub mod state {
     /// Tell what operation is currently in progress.
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub enum InProgress {
         /// A mailbox is being applied.
         ApplyMailbox,

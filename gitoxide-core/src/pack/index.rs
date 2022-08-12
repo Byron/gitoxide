@@ -4,7 +4,7 @@ use git_repository::{odb::pack, Progress};
 
 use crate::OutputFormat;
 
-#[derive(PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug)]
 pub enum IterationMode {
     AsIs,
     Verify,

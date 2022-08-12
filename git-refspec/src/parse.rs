@@ -51,7 +51,7 @@ pub(crate) mod function {
             }
         }
 
-        let mode = match spec.get(0) {
+        let mode = match spec.first() {
             Some(&b'^') => {
                 spec = &spec[1..];
                 if operation == Operation::Push {

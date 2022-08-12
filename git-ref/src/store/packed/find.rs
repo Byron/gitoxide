@@ -40,13 +40,11 @@ impl packed::Buffer {
 
     pub(crate) fn try_find_full_name(&self, name: &FullNameRef) -> Result<Option<packed::Reference<'_>>, Error> {
         match self.binary_search_by(name.as_bstr()) {
-            Ok(line_start) => {
-                return Ok(Some(
-                    packed::decode::reference::<()>(&self.as_ref()[line_start..])
-                        .map_err(|_| Error::Parse)?
-                        .1,
-                ))
-            }
+            Ok(line_start) => Ok(Some(
+                packed::decode::reference::<()>(&self.as_ref()[line_start..])
+                    .map_err(|_| Error::Parse)?
+                    .1,
+            )),
             Err((parse_failure, _)) => {
                 if parse_failure {
                     Err(Error::Parse)
