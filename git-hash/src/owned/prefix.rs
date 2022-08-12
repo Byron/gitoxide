@@ -23,7 +23,7 @@ pub mod from_hex {
     use quick_error::quick_error;
     quick_error! {
         /// The error returned by [Prefix::from_hex][super::Prefix::from_hex()].
-        #[derive(Debug, PartialEq)]
+        #[derive(Debug, Eq, PartialEq)]
         #[allow(missing_docs)]
         pub enum Error {
             TooShort { hex_len: usize } {

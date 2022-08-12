@@ -8,13 +8,16 @@ use crate::{
     util::{split_at_byte_exclusive, split_at_pos},
 };
 
+/// The signature for tree extensions
 pub const SIGNATURE: Signature = *b"TREE";
 
+///
 pub mod verify {
     use bstr::BString;
 
     /// The error returned by [Tree::verify()][super::Tree::verify()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("The entry {entry_id} at path '{name}' in parent tree {parent_id} wasn't found in the nodes children, making it incomplete")]
         MissingTreeDirectory {
@@ -44,6 +47,7 @@ pub mod verify {
 }
 
 impl Tree {
+    ///
     pub fn verify<F>(&self, use_find: bool, mut find: F) -> Result<(), verify::Error>
     where
         F: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>>,

@@ -8,8 +8,9 @@ use crate::{decode, extension, File, State};
 
 mod error {
 
-    /// The errror returned by [File::at()][super::File::at()].
+    /// The error returned by [File::at()][super::File::at()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("An IO error occurred while opening the index")]
         Io(#[from] std::io::Error),
@@ -20,7 +21,9 @@ mod error {
 
 pub use error::Error;
 
+/// Initialization
 impl File {
+    /// Open an index file at `path` with `options`.
     pub fn at(path: impl Into<PathBuf>, options: decode::Options) -> Result<Self, Error> {
         let path = path.into();
         let (data, mtime) = {

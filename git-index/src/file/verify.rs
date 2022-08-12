@@ -5,6 +5,7 @@ use crate::File;
 mod error {
     /// The error returned by [File::verify_integrity()][super::File::verify_integrity()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("Could not read index file to generate hash")]
         Io(#[from] std::io::Error),
@@ -18,6 +19,7 @@ mod error {
 pub use error::Error;
 
 impl File {
+    /// Verify the integrity of the index to assure its consistency.
     pub fn verify_integrity(&self) -> Result<(), Error> {
         let num_bytes_to_hash = self.path.metadata()?.len() - self.checksum.as_bytes().len() as u64;
         let should_interrupt = AtomicBool::new(false);
