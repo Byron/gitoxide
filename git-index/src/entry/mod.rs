@@ -8,6 +8,8 @@ mod flags;
 pub(crate) use flags::at_rest;
 pub use flags::Flags;
 
+mod write;
+
 /// The time component in a [`Stat`] struct.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

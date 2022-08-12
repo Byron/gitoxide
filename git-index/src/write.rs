@@ -60,7 +60,7 @@ impl State {
             .expect("definitely not 4billion entries");
 
         let header_offset = header(&mut write, version, num_entries)?;
-        let entries_offset = entries(&mut write, self, header_offset, version)?;
+        let entries_offset = entries(&mut write, self, header_offset)?;
         let tree_offset = tree_cache_extension
             .then(|| self.tree())
             .flatten()
@@ -100,34 +100,9 @@ fn entries<T: std::io::Write>(
     out: &mut CountBytes<'_, T>,
     state: &State,
     header_size: u32,
-    version: Version,
 ) -> Result<u32, std::io::Error> {
     for entry in state.entries() {
-        let stat = entry.stat;
-        out.write_all(&stat.ctime.secs.to_be_bytes())?;
-        out.write_all(&stat.ctime.nsecs.to_be_bytes())?;
-        out.write_all(&stat.mtime.secs.to_be_bytes())?;
-        out.write_all(&stat.mtime.nsecs.to_be_bytes())?;
-        out.write_all(&stat.dev.to_be_bytes())?;
-        out.write_all(&stat.ino.to_be_bytes())?;
-        out.write_all(&entry.mode.bits().to_be_bytes())?;
-        out.write_all(&stat.uid.to_be_bytes())?;
-        out.write_all(&stat.gid.to_be_bytes())?;
-        out.write_all(&stat.size.to_be_bytes())?;
-        out.write_all(entry.id.as_bytes())?;
-        let path = entry.path(state);
-        let path_len: u16 = path
-            .len()
-            .try_into()
-            .expect("Cannot handle paths longer than 16bits ever");
-        assert!(
-            path_len <= 0xFFF,
-            "Paths can't be longer than 12 bits as they share space with bit flags in a u16"
-        );
-        out.write_all(&(entry.flags.to_storage(version).bits() | path_len).to_be_bytes())?;
-        out.write_all(path)?;
-        out.write_all(b"\0")?;
-
+        entry.write_to(&mut *out, state)?;
         match (out.count - header_size) % 8 {
             0 => {}
             n => {
