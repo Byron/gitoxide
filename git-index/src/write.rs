@@ -61,11 +61,12 @@ impl State {
 
         let header_offset = header(&mut write, version, num_entries)?;
         let entries_offset = entries(&mut write, self, header_offset, version)?;
-        let tree_offset = if tree_cache_extension {
-            tree_ext(&mut write, self.tree())?
-        } else {
-            entries_offset
-        };
+        let tree_offset = tree_cache_extension
+            .then(|| self.tree())
+            .flatten()
+            .map(|tree| tree_ext(&mut write, tree))
+            .transpose()?
+            .unwrap_or(entries_offset);
 
         if num_entries > 0 && end_of_index_entry_extension {
             end_of_index_entry_ext(write.inner, hash_kind, entries_offset, tree_offset)?;
@@ -139,10 +140,7 @@ fn entries<T: std::io::Write>(
     Ok(out.count)
 }
 
-fn tree_ext<T: std::io::Write>(
-    out: &mut CountBytes<'_, T>,
-    tree: Option<&extension::Tree>,
-) -> Result<u32, std::io::Error> {
+fn tree_ext<T: std::io::Write>(out: &mut CountBytes<'_, T>, tree: &extension::Tree) -> Result<u32, std::io::Error> {
     fn tree_entry(out: &mut impl std::io::Write, tree: &extension::Tree) -> Result<(), std::io::Error> {
         let num_entries_ascii = tree.num_entries.to_string();
         let num_children_ascii = tree.children.len().to_string();
@@ -162,17 +160,15 @@ fn tree_ext<T: std::io::Write>(
         Ok(())
     }
 
-    if let Some(tree) = tree {
-        let signature = extension::tree::SIGNATURE;
+    let signature = extension::tree::SIGNATURE;
 
-        let estimated_size = tree.num_entries * (300 + 3 + 1 + 3 + 1 + 20);
-        let mut entries: Vec<u8> = Vec::with_capacity(estimated_size as usize);
-        tree_entry(&mut entries, tree)?;
+    let estimated_size = tree.num_entries * (300 + 3 + 1 + 3 + 1 + 20);
+    let mut entries: Vec<u8> = Vec::with_capacity(estimated_size as usize);
+    tree_entry(&mut entries, tree)?;
 
-        out.write_all(&signature)?;
-        out.write_all(&(u32::try_from(entries.len()).expect("less than 4GB tree extension")).to_be_bytes())?;
-        out.write_all(&entries)?;
-    }
+    out.write_all(&signature)?;
+    out.write_all(&(u32::try_from(entries.len()).expect("less than 4GB tree extension")).to_be_bytes())?;
+    out.write_all(&entries)?;
 
     Ok(out.count)
 }
