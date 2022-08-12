@@ -152,7 +152,7 @@ pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<Tree> {
     Some(tree)
 }
 
-pub fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
+fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
     let (path, data) = split_at_byte_exclusive(data, 0)?;
 
     let (entry_count, data) = split_at_byte_exclusive(data, b' ')?;

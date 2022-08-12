@@ -3,13 +3,16 @@ use filetime::FileTime;
 use crate::{entry, extension, Entry, State, Version};
 
 mod entries;
+///
 pub mod header;
 
 mod error {
 
     use crate::{decode, extension};
 
+    /// The error returned by [State::from_bytes()][crate::State::from_bytes()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         Header(#[from] decode::header::Error),
@@ -26,8 +29,10 @@ use git_features::parallel::InOrderIter;
 
 use crate::util::read_u32;
 
+/// Options to define how to decode an index state [from bytes][State::from_bytes()].
 #[derive(Default)]
 pub struct Options {
+    /// The kind of object hash to assume when decoding object ids.
     pub object_hash: git_hash::Kind,
     /// If Some(_), we are allowed to use more than one thread. If Some(N), use no more than N threads. If Some(0)|None, use as many threads
     /// as there are logical cores.
@@ -41,6 +46,7 @@ pub struct Options {
 }
 
 impl State {
+    /// Decode an index state from `data` and store `timestamp` in the resulting instance for pass-through.
     pub fn from_bytes(
         data: &[u8],
         timestamp: FileTime,

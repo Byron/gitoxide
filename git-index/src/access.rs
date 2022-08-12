@@ -4,16 +4,21 @@ use crate::{entry, extension, Entry, PathStorage, State, Version};
 
 /// General information and entries
 impl State {
+    /// Return the version used to store this state's information on disk.
     pub fn version(&self) -> Version {
         self.version
     }
 
+    /// Return our entries
     pub fn entries(&self) -> &[Entry] {
         &self.entries
     }
+    /// Return our path backing, the place which keeps all paths one after another, with entries storing only the range to access them.
     pub fn path_backing(&self) -> &PathStorage {
         &self.path_backing
     }
+    /// Sometimes it's needed to remove the path backing to allow certain mutation to happen in the state while supporting reading the entry's
+    /// path.
     pub fn take_path_backing(&mut self) -> PathStorage {
         assert_eq!(
             self.entries.is_empty(),
@@ -23,14 +28,17 @@ impl State {
         std::mem::take(&mut self.path_backing)
     }
 
+    /// After usage of the storage obtained by [`take_path_backing()`][Self::take_path_backing()], return it here.
+    /// Note that it must not be empty.
     pub fn return_path_backing(&mut self, backing: PathStorage) {
-        assert!(
+        debug_assert!(
             self.path_backing.is_empty(),
             "BUG: return path backing only after taking it, once"
         );
         self.path_backing = backing;
     }
 
+    /// Runs `filter_map` on all entries, returning an iterator over all paths along with the result of `filter_map`.
     pub fn entries_with_paths_by_filter_map<'a, T>(
         &'a self,
         mut filter_map: impl FnMut(&'a BStr, &Entry) -> Option<T> + 'a,
@@ -40,9 +48,11 @@ impl State {
             filter_map(p, e).map(|t| (p, t))
         })
     }
+    /// Return mutable entries in a slice.
     pub fn entries_mut(&mut self) -> &mut [Entry] {
         &mut self.entries
     }
+    /// Return mutable entries along with their paths in an iterator.
     pub fn entries_mut_with_paths(&mut self) -> impl Iterator<Item = (&mut Entry, &BStr)> {
         let paths = &self.path_backing;
         self.entries.iter_mut().map(move |e| {
@@ -50,6 +60,8 @@ impl State {
             (e, path)
         })
     }
+
+    /// Return mutable entries along with their path, as obtained from `backing`.
     pub fn entries_mut_with_paths_in<'state, 'backing>(
         &'state mut self,
         backing: &'backing PathStorage,
@@ -87,18 +99,23 @@ impl State {
 
 /// Extensions
 impl State {
+    /// Access the `tree` extension.
     pub fn tree(&self) -> Option<&extension::Tree> {
         self.tree.as_ref()
     }
+    /// Access the `link` extension.
     pub fn link(&self) -> Option<&extension::Link> {
         self.link.as_ref()
     }
+    /// Obtain the resolve-undo extension.
     pub fn resolve_undo(&self) -> Option<&extension::resolve_undo::Paths> {
         self.resolve_undo.as_ref()
     }
+    /// Obtain the untracked extension.
     pub fn untracked(&self) -> Option<&extension::UntrackedCache> {
         self.untracked.as_ref()
     }
+    /// Obtain the fsmonitor extension.
     pub fn fs_monitor(&self) -> Option<&extension::FsMonitor> {
         self.fs_monitor.as_ref()
     }

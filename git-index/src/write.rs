@@ -2,6 +2,9 @@ use crate::{extension, State, Version};
 use std::convert::{TryFrom, TryInto};
 use std::io::Write;
 
+/// The options for use when [writing an index][State::write_to()].
+///
+/// Note that default options write
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Options {
     /// The hash kind to use when writing the index file.
@@ -11,7 +14,11 @@ pub struct Options {
     /// The index version to write. Note that different versions affect the format and ultimately the size.
     pub version: Version,
 
+    /// If true, write the tree-cache extension, if present.
+    // TODO: should we not write all we have by default to be lossless, but provide options to those who seek them?
     pub tree_cache_extension: bool,
+    /// If true, write the end-of-index-entry extension.
+    // TODO: figure out if this is implied by other options, for instance multi-threading.
     pub end_of_index_entry_extension: bool,
 }
 
@@ -19,6 +26,7 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             hash_kind: git_hash::Kind::default(),
+            /// TODO: make this 'automatic' by default to determine the correct index version - not all versions can represent all in-memory states.
             version: Version::V2,
             tree_cache_extension: true,
             end_of_index_entry_extension: true,
@@ -27,6 +35,7 @@ impl Default for Options {
 }
 
 impl State {
+    /// Serialize this instance to `out` with [`options`][Options].
     pub fn write_to(
         &self,
         out: &mut impl std::io::Write,

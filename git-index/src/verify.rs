@@ -2,10 +2,13 @@ use std::cmp::Ordering;
 
 use crate::State;
 
+///
 pub mod entries {
     use bstr::BString;
 
+    /// The error returned by [State::verify_entries()][crate::State::verify_entries()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("Entry '{current_path}' (stage = {current_stage}) at index {current_index} should order after prior entry '{previous_path}' (stage = {previous_stage})")]
         OutOfOrder {
@@ -18,14 +21,18 @@ pub mod entries {
     }
 }
 
+///
 pub mod extensions {
     use crate::extension;
 
+    /// An implementation of a `find` function that never finds or returns any object, a no-op.
     pub fn no_find<'a>(_: &git_hash::oid, _: &'a mut Vec<u8>) -> Option<git_object::TreeRefIter<'a>> {
         None
     }
 
+    /// The error returned by [State::verify_extensions()][crate::State::verify_extensions()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         Tree(#[from] extension::tree::verify::Error),
@@ -33,6 +40,7 @@ pub mod extensions {
 }
 
 impl State {
+    /// Assure our entries are consistent.
     pub fn verify_entries(&self) -> Result<(), entries::Error> {
         let mut previous = None::<&crate::Entry>;
         for (idx, entry) in self.entries.iter().enumerate() {

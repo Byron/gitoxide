@@ -4,7 +4,9 @@ use crate::{util::from_be_u32, Version};
 
 mod error {
 
+    /// The error produced when failing to decode an index header.
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("{0}")]
         Corrupt(&'static str),
@@ -12,10 +14,9 @@ mod error {
         UnsupportedVersion(u32),
     }
 }
-
 pub use error::Error;
 
-pub(crate) fn decode(data: &[u8], object_hash: git_hash::Kind) -> Result<(crate::Version, u32, &[u8]), Error> {
+pub(crate) fn decode(data: &[u8], object_hash: git_hash::Kind) -> Result<(Version, u32, &[u8]), Error> {
     if data.len() < (3 * 4) + object_hash.len_in_bytes() {
         return Err(Error::Corrupt(
             "File is too small even for header with zero entries and smallest hash",
