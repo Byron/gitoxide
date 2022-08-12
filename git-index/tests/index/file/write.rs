@@ -1,4 +1,5 @@
 use filetime::FileTime;
+use git_index::verify::extensions::no_find;
 use git_index::{decode, write, State, Version};
 use std::cmp::{max, min};
 
@@ -118,6 +119,8 @@ fn v2_index_eoie_extensions() {
 }
 
 fn compare_states(generated: &State, expected: &State, options: write::Options, fixture: &str) {
+    generated.verify_entries().expect("valid");
+    generated.verify_extensions(false, no_find).expect("valid");
     assert_eq!(generated.version(), options.version, "version mismatch in {}", fixture);
     assert_eq!(
         generated.tree(),
