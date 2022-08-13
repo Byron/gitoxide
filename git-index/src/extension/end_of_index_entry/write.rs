@@ -11,7 +11,7 @@ pub fn write_to(
     out: &mut impl std::io::Write,
     hash_kind: git_hash::Kind,
     offset_to_extensions: u32,
-    prior_extensions: &[(Signature, u32)],
+    prior_extensions: impl IntoIterator<Item = (Signature, u32)>,
 ) -> Result<(), std::io::Error> {
     out.write_all(&SIGNATURE)?;
     let extension_size: u32 = 4 + hash_kind.len_in_bytes() as u32;
@@ -21,7 +21,7 @@ pub fn write_to(
 
     let mut hasher = git_features::hash::hasher(hash_kind);
     for (signature, size) in prior_extensions {
-        hasher.update(signature);
+        hasher.update(&signature);
         hasher.update(&size.to_be_bytes());
     }
     out.write_all(&hasher.digest())?;

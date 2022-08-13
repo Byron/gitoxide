@@ -86,7 +86,7 @@ impl State {
         };
 
         if num_entries > 0 && end_of_index_entry_extension && !extensions.is_empty() {
-            extension::end_of_index_entry::write_to(write.inner, hash_kind, offset_to_extensions, &extensions)?
+            extension::end_of_index_entry::write_to(write.inner, hash_kind, offset_to_extensions, extensions)?
         }
 
         Ok(())
