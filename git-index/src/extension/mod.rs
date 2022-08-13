@@ -1,7 +1,8 @@
 use bstr::BString;
 use smallvec::SmallVec;
 
-const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
+/// The size of the smallest possible exstension, which is no more than a signature and a 0 indicating its size.
+pub const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
 
 /// The kind of index extension.
 pub type Signature = [u8; 4];

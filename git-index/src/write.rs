@@ -60,17 +60,24 @@ impl State {
             .try_into()
             .expect("definitely not 4billion entries");
 
-        let header_offset = header(&mut write, version, num_entries)?;
-        let entries_offset = entries(&mut write, self, header_offset)?;
-        let tree_offset = tree_cache_extension
+        let offset_to_entries = header(&mut write, version, num_entries)?;
+        let offset_to_extensions = entries(&mut write, self, offset_to_entries)?;
+
+        let mut extensions = Vec::with_capacity(5);
+        if let Some(offset_past_tree_ext) = tree_cache_extension
             .then(|| self.tree())
             .flatten()
             .map(|tree| tree.write_to(&mut write).map(|_| write.count))
             .transpose()?
-            .unwrap_or(entries_offset);
+        {
+            extensions.push((
+                extension::tree::SIGNATURE,
+                offset_past_tree_ext - offset_to_extensions - (extension::MIN_SIZE as u32),
+            ));
+        }
 
-        if num_entries > 0 && end_of_index_entry_extension {
-            end_of_index_entry_ext(write.inner, hash_kind, entries_offset, tree_offset)?;
+        if num_entries > 0 && end_of_index_entry_extension && !extensions.is_empty() {
+            extension::end_of_index_entry::write_to(write.inner, hash_kind, offset_to_extensions, &extensions)?
         }
 
         Ok(())
@@ -114,31 +121,6 @@ fn entries<T: std::io::Write>(
     }
 
     Ok(out.count)
-}
-
-fn end_of_index_entry_ext(
-    out: &mut impl std::io::Write,
-    hash_kind: git_hash::Kind,
-    entries_offset: u32,
-    tree_offset: u32,
-) -> Result<(), std::io::Error> {
-    let signature = extension::end_of_index_entry::SIGNATURE;
-    let extension_size = 4 + hash_kind.len_in_bytes() as u32;
-
-    let mut hasher = git_features::hash::hasher(hash_kind);
-    let tree_size = (tree_offset - entries_offset).saturating_sub(8);
-    if tree_size > 0 {
-        hasher.update(&extension::tree::SIGNATURE);
-        hasher.update(&tree_size.to_be_bytes());
-    }
-    let hash = hasher.digest();
-
-    out.write_all(&signature)?;
-    out.write_all(&extension_size.to_be_bytes())?;
-    out.write_all(&entries_offset.to_be_bytes())?;
-    out.write_all(&hash)?;
-
-    Ok(())
 }
 
 mod util {

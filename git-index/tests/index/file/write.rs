@@ -6,8 +6,8 @@ use std::cmp::{max, min};
 #[test]
 fn roundtrips() {
     let input = [
-        ("V2_empty", write::Options::default()),
         ("v2", write::Options::default()),
+        ("V2_empty", write::Options::default()),
         (
             "v2_more_files",
             write::Options {
@@ -21,7 +21,7 @@ fn roundtrips() {
         let path = crate::fixture_index_path(fixture);
         let expected_index = git_index::File::at(&path, decode::Options::default()).unwrap();
         let expected_bytes = std::fs::read(&path).unwrap();
-        let mut out_bytes = Vec::<u8>::new();
+        let mut out_bytes = Vec::new();
 
         expected_index.write_to(&mut out_bytes, options).unwrap();
         let (out_index, _) = State::from_bytes(&out_bytes, FileTime::now(), decode::Options::default()).unwrap();
