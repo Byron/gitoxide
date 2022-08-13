@@ -45,3 +45,30 @@ fn write_to() -> Result<(), Box<dyn std::error::Error>> {
     }
     Ok(())
 }
+
+mod format {
+    use git_date::time::Sign;
+    use git_date::Time;
+    use time::macros::format_description;
+
+    #[test]
+    fn year_month_day() {
+        assert_eq!(time().format(git_date::time::format::SHORT), "1970-01-01");
+    }
+
+    #[test]
+    fn custom_compile_time() {
+        assert_eq!(
+            time().format(&format_description!("[year]-[month]-[day] [hour]:[minute]:[second]")),
+            "1970-01-01 00:08:20",
+        );
+    }
+
+    fn time() -> Time {
+        Time {
+            seconds_since_unix_epoch: 500,
+            offset_in_seconds: 9000,
+            sign: Sign::Plus,
+        }
+    }
+}

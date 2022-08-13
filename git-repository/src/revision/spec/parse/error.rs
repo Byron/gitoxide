@@ -38,7 +38,9 @@ impl std::fmt::Display for CandidateInfo {
             CandidateInfo::FindError { source } => write!(f, "lookup error: {}", source),
             CandidateInfo::Tag { name } => write!(f, "tag {:?}", name),
             CandidateInfo::Object { kind } => std::fmt::Display::fmt(kind, f),
-            CandidateInfo::Commit { date, title } => write!(f, "commit {} {:?}", date.to_bstring(), title),
+            CandidateInfo::Commit { date, title } => {
+                write!(f, "commit {} {:?}", date.format(git_date::time::format::SHORT), title)
+            }
         }
     }
 }
