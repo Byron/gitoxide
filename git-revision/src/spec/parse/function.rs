@@ -432,7 +432,11 @@ where
                     Err(Error::SiblingBranchNeedsBranchName { name: (*name).into() })
                 }?
             } else if has_ref_or_implied_name {
-                let time = git_date::parse(nav).ok_or_else(|| Error::Time { input: nav.into() })?;
+                let time = nav
+                    .to_str()
+                    .ok()
+                    .and_then(git_date::parse)
+                    .ok_or_else(|| Error::Time { input: nav.into() })?;
                 delegate
                     .reflog(delegate::ReflogLookup::Date(time))
                     .ok_or(Error::Delegate)?;

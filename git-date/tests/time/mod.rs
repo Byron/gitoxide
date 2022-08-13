@@ -80,7 +80,7 @@ mod parse {
     #[test]
     fn special_time_is_ok_for_now() {
         assert_eq!(
-            git_date::parse("1979-02-26 18:30:00".into()).unwrap(),
+            git_date::parse("1979-02-26 18:30:00").unwrap(),
             Time {
                 seconds_since_unix_epoch: 42,
                 offset_in_seconds: 1800,

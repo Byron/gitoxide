@@ -126,11 +126,15 @@ impl Personas {
         if git_env.eq(&git_sec::Permission::Allow) {
             committer_name = committer_name.or_else(|| env_var("GIT_COMMITTER_NAME"));
             committer_email = committer_email.or_else(|| env_var("GIT_COMMITTER_EMAIL"));
-            committer_date = env_var("GIT_COMMITTER_DATE").and_then(|date| git_date::parse(date.as_ref()));
+            committer_date = std::env::var("GIT_COMMITTER_DATE")
+                .ok()
+                .and_then(|date| git_date::parse(&date));
 
             author_name = author_name.or_else(|| env_var("GIT_AUTHOR_NAME"));
             author_email = author_email.or_else(|| env_var("GIT_AUTHOR_EMAIL"));
-            author_date = env_var("GIT_AUTHOR_DATE").and_then(|date| git_date::parse(date.as_ref()));
+            author_date = std::env::var("GIT_AUTHOR_DATE")
+                .ok()
+                .and_then(|date| git_date::parse(&date));
 
             user_email = user_email.or_else(|| env_var("EMAIL")); // NOTE: we don't have permission for this specific one…
         }
