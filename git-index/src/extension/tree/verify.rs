@@ -2,7 +2,7 @@ use crate::extension::Tree;
 use bstr::{BString, ByteSlice};
 use std::cmp::Ordering;
 
-/// The error returned by [Tree::verify()][super::Tree::verify()].
+/// The error returned by [Tree::verify()][crate::extension::Tree::verify()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
