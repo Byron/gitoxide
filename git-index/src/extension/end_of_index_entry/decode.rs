@@ -1,6 +1,6 @@
 use crate::decode::header;
 use crate::extension;
-use crate::extension::end_of_index_entry::{SIGNATURE, SIZE, SIZE_WITH_HEADER};
+use crate::extension::end_of_index_entry::{MIN_SIZE, MIN_SIZE_WITH_HEADER, SIGNATURE};
 use crate::util::from_be_u32;
 
 /// Decode the end of index entry extension, which is no more than a glorified offset to the first byte of all extensions to allow
@@ -13,15 +13,15 @@ use crate::util::from_be_u32;
 /// If the checksum wasn't matched, we will ignoree this extension entirely.
 pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<usize> {
     let hash_len = object_hash.len_in_bytes();
-    if data.len() < SIZE_WITH_HEADER + hash_len {
+    if data.len() < MIN_SIZE_WITH_HEADER + hash_len {
         return None;
     }
 
-    let start_of_eoie = data.len() - SIZE_WITH_HEADER - hash_len;
+    let start_of_eoie = data.len() - MIN_SIZE_WITH_HEADER - hash_len;
     let ext_data = &data[start_of_eoie..data.len() - hash_len];
 
     let (signature, ext_size, ext_data) = extension::decode::header(ext_data);
-    if signature != SIGNATURE || ext_size as usize != SIZE {
+    if signature != SIGNATURE || ext_size as usize != MIN_SIZE {
         return None;
     }
 
@@ -33,7 +33,7 @@ pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<usize> {
 
     let mut hasher = git_features::hash::hasher(git_hash::Kind::Sha1);
     let mut last_chunk = None;
-    for (signature, chunk) in extension::Iter::new(&data[offset..data.len() - SIZE_WITH_HEADER - hash_len]) {
+    for (signature, chunk) in extension::Iter::new(&data[offset..data.len() - MIN_SIZE_WITH_HEADER - hash_len]) {
         hasher.update(&signature);
         hasher.update(&(chunk.len() as u32).to_be_bytes());
         last_chunk = Some(chunk);

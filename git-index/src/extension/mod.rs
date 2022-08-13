@@ -77,7 +77,8 @@ pub(crate) mod decode;
 ///
 pub mod tree;
 
-pub(crate) mod end_of_index_entry;
+///
+pub mod end_of_index_entry;
 
 pub(crate) mod index_entry_offset_table;
 
