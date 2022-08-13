@@ -57,7 +57,7 @@ impl Tree {
             let mut entries = 0;
             let mut prev = None::<&Tree>;
             for child in children {
-                entries += child.num_entries;
+                entries += child.num_entries.unwrap_or(0);
                 if let Some(prev) = prev {
                     if prev.name.cmp(&child.name) != Ordering::Less {
                         return Err(Error::OutOfOrder {
@@ -98,11 +98,11 @@ impl Tree {
                 // This is actually needed here as it's a mut ref, which isn't copy. We do a re-borrow here.
                 #[allow(clippy::needless_option_as_deref)]
                 let actual_num_entries = verify_recursive(child.id, &child.children, find_buf.as_deref_mut(), find)?;
-                if let Some(actual) = actual_num_entries {
-                    if actual > child.num_entries {
+                if let Some((actual, num_entries)) = actual_num_entries.zip(child.num_entries) {
+                    if actual > num_entries {
                         return Err(Error::EntriesCount {
                             actual,
-                            expected: child.num_entries,
+                            expected: num_entries,
                         });
                     }
                 }
@@ -118,11 +118,11 @@ impl Tree {
 
         let mut buf = Vec::new();
         let declared_entries = verify_recursive(self.id, &self.children, use_find.then(|| &mut buf), &mut find)?;
-        if let Some(actual) = declared_entries {
-            if actual > self.num_entries {
+        if let Some((actual, num_entries)) = declared_entries.zip(self.num_entries) {
+            if actual > num_entries {
                 return Err(Error::EntriesCount {
                     actual,
-                    expected: self.num_entries,
+                    expected: num_entries,
                 });
             }
         }

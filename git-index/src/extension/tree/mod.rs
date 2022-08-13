@@ -16,6 +16,6 @@ mod tests {
 
     #[test]
     fn size_of_tree() {
-        assert_eq!(std::mem::size_of::<crate::extension::Tree>(), 80);
+        assert_eq!(std::mem::size_of::<crate::extension::Tree>(), 88);
     }
 }

@@ -26,7 +26,8 @@ pub struct Tree {
     pub id: git_hash::ObjectId,
     /// The amount of non-tree items in this directory tree, including sub-trees, recursively.
     /// The value of the top-level tree is thus equal to the value of the total amount of entries.
-    pub num_entries: u32,
+    /// If `None`, the tree is considered invalid and needs to be refreshed
+    pub num_entries: Option<u32>,
     /// The child-trees below the current tree.
     pub children: Vec<Tree>,
 }

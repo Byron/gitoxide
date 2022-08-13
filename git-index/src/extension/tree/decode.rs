@@ -1,6 +1,7 @@
 use crate::extension::Tree;
 use crate::util::{split_at_byte_exclusive, split_at_pos};
 use git_hash::ObjectId;
+use std::convert::TryInto;
 
 /// A recursive data structure
 pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<Tree> {
@@ -17,13 +18,20 @@ fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
     let (path, data) = split_at_byte_exclusive(data, 0)?;
 
     let (entry_count, data) = split_at_byte_exclusive(data, b' ')?;
-    let num_entries: u32 = atoi::atoi(entry_count)?;
+    let num_entries: i32 = atoi::atoi(entry_count)?;
 
     let (subtree_count, data) = split_at_byte_exclusive(data, b'\n')?;
     let subtree_count: usize = atoi::atoi(subtree_count)?;
 
-    let (hash, mut data) = split_at_pos(data, hash_len)?;
-    let id = ObjectId::from(hash);
+    let (id, mut data) = if num_entries >= 0 {
+        let (hash, data) = split_at_pos(data, hash_len)?;
+        (ObjectId::from(hash), data)
+    } else {
+        (
+            ObjectId::null(git_hash::Kind::from_hex_len(hash_len * 2).expect("valid hex_len")),
+            data,
+        )
+    };
 
     let mut subtrees = Vec::with_capacity(subtree_count);
     for _ in 0..subtree_count {
@@ -42,7 +50,7 @@ fn one_recursive(data: &[u8], hash_len: usize) -> Option<(Tree, &[u8])> {
     Some((
         Tree {
             id,
-            num_entries,
+            num_entries: num_entries.try_into().ok(),
             name: path.into(),
             children: subtrees,
         },

@@ -12,9 +12,18 @@ fn roundtrips() -> crate::Result {
     }
     use Kind::*;
     let input = [
-        (Loose("very-long-path"), write::Options::default(), false), // unclear why the file is smaller when written back
-        (Generated("v2"), write::Options::default(), true),
-        (Generated("V2_empty"), write::Options::default(), true),
+        (
+            Loose("very-long-path"),
+            write::Options {
+                extensions: write::Extensions::Given {
+                    end_of_index_entry: false,
+                    tree_cache: true,
+                },
+                ..write::Options::default()
+            },
+        ), // tree extension can't be read
+        (Generated("v2"), write::Options::default()),
+        (Generated("V2_empty"), write::Options::default()),
         (
             Generated("v2_more_files"),
             write::Options {
@@ -24,11 +33,10 @@ fn roundtrips() -> crate::Result {
                 },
                 ..write::Options::default()
             },
-            true,
         ),
     ];
 
-    for (fixture, options, compare_byte_by_byte) in input {
+    for (fixture, options) in input {
         let (path, fixture) = match fixture {
             Generated(name) => (crate::fixture_index_path(name), name),
             Loose(name) => (loose_file_path(name), name),
@@ -41,9 +49,7 @@ fn roundtrips() -> crate::Result {
         let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), decode::Options::default())?;
 
         compare_states(&actual, &expected, options, fixture);
-        if compare_byte_by_byte {
-            compare_raw_bytes(&out_bytes, &expected_bytes, fixture);
-        }
+        compare_raw_bytes(&out_bytes, &expected_bytes, fixture);
     }
     Ok(())
 }
@@ -179,7 +185,7 @@ fn compare_raw_bytes(generated: &[u8], expected: &[u8], fixture: &str) {
             let expected = &expected[range_left..range_right];
 
             panic! {"\n\nRoundtrip failed for index in fixture {:?} at position {:?}\n\
-            \t   Input: ... {:?} ...\n\
+            \t  Actual: ... {:?} ...\n\
             \tExpected: ... {:?} ...\n\n\
             ", &fixture, index, generated, expected}
         }
