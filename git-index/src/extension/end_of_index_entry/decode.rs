@@ -1,9 +1,16 @@
-use crate::{decode::header, extension, extension::Signature, util::from_be_u32};
+use crate::decode::header;
+use crate::extension;
+use crate::extension::end_of_index_entry::{SIGNATURE, SIZE, SIZE_WITH_HEADER};
+use crate::util::from_be_u32;
 
-pub const SIGNATURE: Signature = *b"EOIE";
-pub const SIZE: usize = 4 /* offset to extensions */ + git_hash::Kind::Sha1.len_in_bytes();
-pub const SIZE_WITH_HEADER: usize = crate::extension::MIN_SIZE + SIZE;
-
+/// Decode the end of index entry extension, which is no more than a glorified offset to the first byte of all extensions to allow
+/// loading entries and extensions in parallel.
+///
+/// Itself it's located at the end of the index file, which allows its location to be known and thus addressable.
+/// From there it's possible to traverse the chunks of all set extensions, hash them, and compare that hash with all extensions
+/// stored prior to this one to assure they are correct.
+///
+/// If the checksum wasn't matched, we will ignoree this extension entirely.
 pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<usize> {
     let hash_len = object_hash.len_in_bytes();
     if data.len() < SIZE_WITH_HEADER + hash_len {
