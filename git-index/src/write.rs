@@ -64,13 +64,13 @@ impl State {
         let offset_to_extensions = entries(&mut write, self, offset_to_entries)?;
 
         let extensions = {
-            let extensions: &[&dyn Fn(&mut dyn std::io::Write) -> Option<std::io::Result<extension::Signature>>] =
-                &[&|write| {
-                    tree_cache_extension
-                        .then(|| self.tree())
-                        .flatten()
-                        .map(|tree| tree.write_to(write).map(|_| extension::tree::SIGNATURE))
-                }];
+            type WriteExtFn<'a> = &'a dyn Fn(&mut dyn std::io::Write) -> Option<std::io::Result<extension::Signature>>;
+            let extensions: &[WriteExtFn<'_>] = &[&|write| {
+                tree_cache_extension
+                    .then(|| self.tree())
+                    .flatten()
+                    .map(|tree| tree.write_to(write).map(|_| extension::tree::SIGNATURE))
+            }];
 
             let mut offset_to_previous_ext = offset_to_extensions;
             let mut out = Vec::with_capacity(5);
@@ -86,12 +86,7 @@ impl State {
         };
 
         if num_entries > 0 && end_of_index_entry_extension && !extensions.is_empty() {
-            extension::end_of_index_entry::write_to(
-                write.inner,
-                hash_kind,
-                offset_to_extensions,
-                extensions.into_iter(),
-            )?
+            extension::end_of_index_entry::write_to(write.inner, hash_kind, offset_to_extensions, &extensions)?
         }
 
         Ok(())
