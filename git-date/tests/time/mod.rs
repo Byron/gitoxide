@@ -1,6 +1,5 @@
 use bstr::ByteSlice;
 use git_date::{time::Sign, Time};
-use time::macros::format_description;
 
 #[test]
 fn is_set() {
@@ -47,25 +46,34 @@ fn write_to() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[test]
-fn format() {
-    let time = Time {
-        seconds_since_unix_epoch: 500,
-        offset_in_seconds: 9000,
-        sign: Sign::Plus,
-    };
-    assert_eq!("1970-01-01".to_string(), time.format());
-}
+mod format {
+    use git_date::time::Sign;
+    use git_date::Time;
+    use time::macros::format_description;
 
-#[test]
-fn to_formatted_string() {
-    let time = Time {
-        seconds_since_unix_epoch: 500,
-        offset_in_seconds: 9000,
-        sign: Sign::Plus,
-    };
-    assert_eq!(
-        "1970-01-01 00:08:20".to_string(),
-        time.to_formatted_string(&format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"))
-    );
+    #[test]
+    fn year_month_day() {
+        assert_eq!(time().format(git_date::time::format::SHORT), "1970-01-01");
+    }
+
+    #[test]
+    fn custom_string() {
+        assert_eq!(time().format("[year]-[month]-[day]"), "1970-01-01");
+    }
+
+    #[test]
+    fn custom_compile_time() {
+        assert_eq!(
+            time().format(&format_description!("[year]-[month]-[day] [hour]:[minute]:[second]")),
+            "1970-01-01 00:08:20",
+        );
+    }
+
+    fn time() -> Time {
+        Time {
+            seconds_since_unix_epoch: 500,
+            offset_in_seconds: 9000,
+            sign: Sign::Plus,
+        }
+    }
 }

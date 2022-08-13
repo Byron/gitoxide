@@ -1,11 +1,6 @@
 use crate::time::Sign;
 use crate::Time;
 use bstr::BString;
-use time::format_description::FormatItem;
-use time::formatting::Formattable;
-use time::macros::format_description;
-
-const DEFAULT_FORMAT: &[FormatItem<'_>] = format_description!("[year]-[month]-[day]");
 
 /// Serialization with standard `git` format
 impl Time {
@@ -70,26 +65,5 @@ impl Time {
         } else {
             1
         }) + 2 /*space + sign*/ + 2 /*hours*/ + 2 /*minutes*/
-    }
-}
-
-/// Formatting
-impl Time {
-    /// Format this instance as string using the default format -- `[year]-[month]-[day]`.
-    pub fn format(&self) -> String {
-        time::OffsetDateTime::from_unix_timestamp(self.seconds_since_unix_epoch as i64)
-            .expect("always valid unix time")
-            .replace_offset(time::UtcOffset::from_whole_seconds(self.offset_in_seconds).expect("valid offset"))
-            .format(&DEFAULT_FORMAT)
-            .expect("well-known format into memory never fails")
-    }
-
-    /// Format this instance as string using the format.
-    pub fn to_formatted_string(&self, format: &(impl Formattable + ?Sized)) -> String {
-        time::OffsetDateTime::from_unix_timestamp(self.seconds_since_unix_epoch as i64)
-            .expect("always valid unix time")
-            .replace_offset(time::UtcOffset::from_whole_seconds(self.offset_in_seconds).expect("valid offset"))
-            .format(&format)
-            .expect("well-known format into memory never fails")
     }
 }
