@@ -63,21 +63,35 @@ impl State {
         let offset_to_entries = header(&mut write, version, num_entries)?;
         let offset_to_extensions = entries(&mut write, self, offset_to_entries)?;
 
-        let mut extensions = Vec::with_capacity(5);
-        if let Some(offset_past_tree_ext) = tree_cache_extension
-            .then(|| self.tree())
-            .flatten()
-            .map(|tree| tree.write_to(&mut write).map(|_| write.count))
-            .transpose()?
-        {
-            extensions.push((
-                extension::tree::SIGNATURE,
-                offset_past_tree_ext - offset_to_extensions - (extension::MIN_SIZE as u32),
-            ));
-        }
+        let extensions = {
+            let extensions: &[&dyn Fn(&mut dyn std::io::Write) -> Option<std::io::Result<extension::Signature>>] =
+                &[&|write| {
+                    tree_cache_extension
+                        .then(|| self.tree())
+                        .flatten()
+                        .map(|tree| tree.write_to(write).map(|_| extension::tree::SIGNATURE))
+                }];
+
+            let mut offset_to_previous_ext = offset_to_extensions;
+            let mut out = Vec::with_capacity(5);
+            for write_ext in extensions {
+                if let Some(signature) = write_ext(&mut write).transpose()? {
+                    let offset_past_ext = write.count;
+                    let ext_size = offset_past_ext - offset_to_previous_ext - (extension::MIN_SIZE as u32);
+                    offset_to_previous_ext = offset_past_ext;
+                    out.push((signature, ext_size));
+                }
+            }
+            out
+        };
 
         if num_entries > 0 && end_of_index_entry_extension && !extensions.is_empty() {
-            extension::end_of_index_entry::write_to(write.inner, hash_kind, offset_to_extensions, &extensions)?
+            extension::end_of_index_entry::write_to(
+                write.inner,
+                hash_kind,
+                offset_to_extensions,
+                extensions.into_iter(),
+            )?
         }
 
         Ok(())
