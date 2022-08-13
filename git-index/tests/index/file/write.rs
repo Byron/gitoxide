@@ -1,6 +1,6 @@
 use filetime::FileTime;
 use git_index::verify::extensions::no_find;
-use git_index::{decode, write, State, Version};
+use git_index::{decode, extension, write, State, Version};
 use std::cmp::{max, min};
 
 #[test]
@@ -11,7 +11,10 @@ fn roundtrips() {
         (
             "v2_more_files",
             write::Options {
-                end_of_index_entry_extension: false,
+                extensions: write::Extensions::Given {
+                    end_of_index_entry: false,
+                    tree_cache: true,
+                },
                 ..write::Options::default()
             },
         ),
@@ -49,8 +52,7 @@ fn v2_index_no_extensions() {
         let options = write::Options {
             hash_kind: git_hash::Kind::Sha1,
             version: Version::V2,
-            tree_cache_extension: false,
-            end_of_index_entry_extension: false,
+            extensions: write::Extensions::None,
         };
 
         expected.write_to(&mut out, options).unwrap();
@@ -78,8 +80,10 @@ fn v2_index_tree_extensions() {
         let options = write::Options {
             hash_kind: git_hash::Kind::Sha1,
             version: Version::V2,
-            tree_cache_extension: true,
-            end_of_index_entry_extension: false,
+            extensions: write::Extensions::Given {
+                tree_cache: true,
+                end_of_index_entry: false,
+            },
         };
 
         expected.write_to(&mut out, options).unwrap();
@@ -107,8 +111,10 @@ fn v2_index_eoie_extensions() {
         let options = write::Options {
             hash_kind: git_hash::Kind::Sha1,
             version: Version::V2,
-            tree_cache_extension: false,
-            end_of_index_entry_extension: true,
+            extensions: write::Extensions::Given {
+                tree_cache: false,
+                end_of_index_entry: true,
+            },
         };
 
         expected.write_to(&mut out, options).unwrap();
@@ -124,10 +130,10 @@ fn compare_states(generated: &State, expected: &State, options: write::Options, 
     assert_eq!(generated.version(), options.version, "version mismatch in {}", fixture);
     assert_eq!(
         generated.tree(),
-        match options.tree_cache_extension {
-            true => expected.tree(),
-            false => None,
-        },
+        options
+            .extensions
+            .should_write(extension::tree::SIGNATURE)
+            .and_then(|_| expected.tree()),
         "tree extension mismatch in {}",
         fixture
     );

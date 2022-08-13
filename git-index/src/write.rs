@@ -3,10 +3,51 @@ use crate::{extension, State, Version};
 use std::convert::TryInto;
 use std::io::Write;
 
+/// A way to specify which extensions to write.
+#[derive(Debug, Copy, Clone)]
+pub enum Extensions {
+    /// Writes all available extensions to avoid loosing any information, and to allow accelerated reading of the index file.
+    All,
+    /// Only write the given extensions, with each extension being marked by a boolean flag.
+    Given {
+        /// Write the tree-cache extension, if present.
+        tree_cache: bool,
+        /// Write the end-of-index-entry extension.
+        end_of_index_entry: bool,
+    },
+    /// Write no extension at all for what should be the smallest possible index
+    None,
+}
+
+impl Default for Extensions {
+    fn default() -> Self {
+        Extensions::All
+    }
+}
+
+impl Extensions {
+    /// Returns `Some(signature)` if it should be written out.
+    pub fn should_write(&self, signature: extension::Signature) -> Option<extension::Signature> {
+        match self {
+            Extensions::None => None,
+            Extensions::All => Some(signature),
+            Extensions::Given {
+                tree_cache,
+                end_of_index_entry,
+            } => match signature {
+                extension::tree::SIGNATURE => tree_cache,
+                extension::end_of_index_entry::SIGNATURE => end_of_index_entry,
+                _ => &false,
+            }
+            .then(|| signature),
+        }
+    }
+}
+
 /// The options for use when [writing an index][State::write_to()].
 ///
 /// Note that default options write
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Options {
     /// The hash kind to use when writing the index file.
     ///
@@ -15,12 +56,8 @@ pub struct Options {
     /// The index version to write. Note that different versions affect the format and ultimately the size.
     pub version: Version,
 
-    /// If true, write the tree-cache extension, if present.
-    // TODO: should we not write all we have by default to be lossless, but provide options to those who seek them?
-    pub tree_cache_extension: bool,
-    /// If true, write the end-of-index-entry extension.
-    // TODO: figure out if this is implied by other options, for instance multi-threading.
-    pub end_of_index_entry_extension: bool,
+    /// Configures which extensions to write
+    pub extensions: Extensions,
 }
 
 impl Default for Options {
@@ -29,8 +66,7 @@ impl Default for Options {
             hash_kind: git_hash::Kind::default(),
             /// TODO: make this 'automatic' by default to determine the correct index version - not all versions can represent all in-memory states.
             version: Version::V2,
-            tree_cache_extension: true,
-            end_of_index_entry_extension: true,
+            extensions: Default::default(),
         }
     }
 }
@@ -43,8 +79,7 @@ impl State {
         Options {
             hash_kind,
             version,
-            tree_cache_extension,
-            end_of_index_entry_extension,
+            extensions,
         }: Options,
     ) -> std::io::Result<()> {
         assert_eq!(
@@ -63,13 +98,12 @@ impl State {
         let offset_to_entries = header(&mut write, version, num_entries)?;
         let offset_to_extensions = entries(&mut write, self, offset_to_entries)?;
 
-        let extensions = {
+        let extension_toc = {
             type WriteExtFn<'a> = &'a dyn Fn(&mut dyn std::io::Write) -> Option<std::io::Result<extension::Signature>>;
             let extensions: &[WriteExtFn<'_>] = &[&|write| {
-                tree_cache_extension
-                    .then(|| self.tree())
-                    .flatten()
-                    .map(|tree| tree.write_to(write).map(|_| extension::tree::SIGNATURE))
+                extensions
+                    .should_write(extension::tree::SIGNATURE)
+                    .and_then(|signature| self.tree().map(|tree| tree.write_to(write).map(|_| signature)))
             }];
 
             let mut offset_to_previous_ext = offset_to_extensions;
@@ -85,8 +119,13 @@ impl State {
             out
         };
 
-        if num_entries > 0 && end_of_index_entry_extension && !extensions.is_empty() {
-            extension::end_of_index_entry::write_to(write.inner, hash_kind, offset_to_extensions, extensions)?
+        if num_entries > 0
+            && extensions
+                .should_write(extension::end_of_index_entry::SIGNATURE)
+                .is_some()
+            && !extension_toc.is_empty()
+        {
+            extension::end_of_index_entry::write_to(write.inner, hash_kind, offset_to_extensions, extension_toc)?
         }
 
         Ok(())
