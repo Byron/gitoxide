@@ -1,4 +1,4 @@
-use crate::{Entry, State};
+use crate::{entry, Entry, State};
 use std::convert::TryInto;
 
 impl Entry {
@@ -17,14 +17,13 @@ impl Entry {
         out.write_all(&stat.size.to_be_bytes())?;
         out.write_all(self.id.as_bytes())?;
         let path = self.path(state);
-        let path_len: u16 = path
-            .len()
-            .try_into()
-            .expect("Cannot handle paths longer than 16bits ever");
-        assert!(
-            path_len <= 0xFFF,
-            "Paths can't be longer than 12 bits as they share space with bit flags in a u16"
-        );
+        let path_len: u16 = if path.len() >= entry::Flags::PATH_LEN.bits() as usize {
+            entry::Flags::PATH_LEN.bits() as u16
+        } else {
+            path.len()
+                .try_into()
+                .expect("we just checked that the length is smaller than 0xfff")
+        };
         out.write_all(&(self.flags.to_storage().bits() | path_len).to_be_bytes())?;
         out.write_all(path)?;
         out.write_all(b"\0")
