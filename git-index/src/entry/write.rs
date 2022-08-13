@@ -1,8 +1,8 @@
-use crate::{Entry, State, Version};
+use crate::{Entry, State};
 use std::convert::TryInto;
 
 impl Entry {
-    /// Serialize ourselves to `out` with path access via `state`.
+    /// Serialize ourselves to `out` with path access via `state`, without padding.
     pub fn write_to(&self, mut out: impl std::io::Write, state: &State) -> std::io::Result<()> {
         let stat = self.stat;
         out.write_all(&stat.ctime.secs.to_be_bytes())?;
@@ -25,8 +25,7 @@ impl Entry {
             path_len <= 0xFFF,
             "Paths can't be longer than 12 bits as they share space with bit flags in a u16"
         );
-        let version = Version::V2; // TODO: don't hardcode once `to_storage()` can do its work without assertion
-        out.write_all(&(self.flags.to_storage(version).bits() | path_len).to_be_bytes())?;
+        out.write_all(&(self.flags.to_storage().bits() | path_len).to_be_bytes())?;
         out.write_all(path)?;
         out.write_all(b"\0")
     }

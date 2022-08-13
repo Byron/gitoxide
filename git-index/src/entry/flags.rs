@@ -1,5 +1,4 @@
 use crate::entry::Stage;
-use crate::Version;
 use bitflags::bitflags;
 
 bitflags! {
@@ -65,8 +64,11 @@ impl Flags {
 
     /// Transform ourselves to a storage representation to keep all flags which are to be persisted,
     /// with the caller intending to write `version`.
-    pub fn to_storage(&self, version: Version) -> at_rest::Flags {
-        assert_eq!(version, Version::V2, "Can only encode V2 flags at the moment");
+    pub fn to_storage(&self) -> at_rest::Flags {
+        assert!(
+            !self.contains(Self::EXTENDED_FLAGS),
+            "Cannot currently encode extended flags"
+        );
         at_rest::Flags::from_bits(self.bits() as u16).unwrap()
     }
 }

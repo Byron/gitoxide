@@ -1,15 +1,23 @@
+use crate::index::file::read::loose_file_path;
 use filetime::FileTime;
 use git_index::verify::extensions::no_find;
 use git_index::{decode, extension, write, State, Version};
 use std::cmp::{max, min};
 
 #[test]
+#[ignore]
 fn roundtrips() {
+    enum Kind {
+        Generated(&'static str),
+        Loose(&'static str),
+    }
+    use Kind::*;
     let input = [
-        ("v2", write::Options::default()),
-        ("V2_empty", write::Options::default()),
+        (Loose("very-long-path"), write::Options::default()),
+        (Generated("v2"), write::Options::default()),
+        (Generated("V2_empty"), write::Options::default()),
         (
-            "v2_more_files",
+            Generated("v2_more_files"),
             write::Options {
                 extensions: write::Extensions::Given {
                     end_of_index_entry: false,
@@ -21,7 +29,10 @@ fn roundtrips() {
     ];
 
     for (fixture, options) in input {
-        let path = crate::fixture_index_path(fixture);
+        let (path, fixture) = match fixture {
+            Generated(name) => (crate::fixture_index_path(name), name),
+            Loose(name) => (loose_file_path(name), name),
+        };
         let expected_index = git_index::File::at(&path, decode::Options::default()).unwrap();
         let expected_bytes = std::fs::read(&path).unwrap();
         let mut out_bytes = Vec::new();

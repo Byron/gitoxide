@@ -13,8 +13,12 @@ fn verify(index: git_index::File) -> git_index::File {
     index
 }
 
-fn loose_file(name: &str) -> git_index::File {
-    let path = git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"));
+pub(crate) fn loose_file_path(name: &str) -> PathBuf {
+    git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"))
+}
+
+pub(crate) fn loose_file(name: &str) -> git_index::File {
+    let path = loose_file_path(name);
     let file = git_index::File::at(path, git_index::decode::Options::default()).unwrap();
     verify(file)
 }
