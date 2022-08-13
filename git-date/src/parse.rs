@@ -1,3 +1,6 @@
+use crate::Time;
+use bstr::BStr;
+
 #[allow(missing_docs)]
 pub fn parse(input: &BStr) -> Option<Time> {
     // TODO: actual implementation, this is just to not constantly fail
