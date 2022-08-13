@@ -35,7 +35,7 @@ pub fn main() -> Result<()> {
         ),
         Subcommands::Init { directory } => core::repository::init(directory).map(|_| ()),
         #[cfg(feature = "gitoxide-core-tools")]
-        Subcommands::Tools(tool) => match tool {
+        Subcommands::Tool(tool) => match tool {
             crate::porcelain::options::ToolCommands::EstimateHours(crate::porcelain::options::EstimateHours {
                 working_dir,
                 refname,

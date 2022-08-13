@@ -30,35 +30,35 @@ title "Porcelain ${kind}"
   )
   snapshot="$snapshot/porcelain"
   (with_program tree
-    (when "using the 'tools' subcommand"
-      title "gix tools…"
+    (when "using the 'tool' subcommand"
+      title "ein tool"
       (with "a repo with a tiny commit history"
         (small-repo-in-sandbox
-          title "gix tools estimate-hours"
+          title "ein tool estimate-hours"
           (when "running 'estimate-hours'"
             snapshot="$snapshot/estimate-hours"
             (with "no arguments"
               it "succeeds and prints only a summary" && {
                 WITH_SNAPSHOT="$snapshot/no-args-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools estimate-hours 2>/dev/null"
+                expect_run_sh $SUCCESSFULLY "$exe tool estimate-hours 2>/dev/null"
               }
             )
             (with "the show-pii argument"
               it "succeeds and shows information identifying people before the summary" && {
                 WITH_SNAPSHOT="$snapshot/show-pii-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools estimate-hours --show-pii 2>/dev/null"
+                expect_run_sh $SUCCESSFULLY "$exe tool estimate-hours --show-pii 2>/dev/null"
               }
             )
             (with "the omit-unify-identities argument"
               it "succeeds and doesn't show unified identities (in this case there is only one author anyway)" && {
                 WITH_SNAPSHOT="$snapshot/no-unify-identities-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools estimate-hours --omit-unify-identities 2>/dev/null"
+                expect_run_sh $SUCCESSFULLY "$exe t estimate-hours --omit-unify-identities 2>/dev/null"
               }
             )
             (with "a branch name that doesn't exist"
               it "fails and shows a decent enough error message" && {
                 WITH_SNAPSHOT="$snapshot/invalid-branch-name-failure" \
-                expect_run_sh $WITH_FAILURE "$exe -q tools estimate-hours . foobar"
+                expect_run_sh $WITH_FAILURE "$exe -q t estimate-hours . foobar"
               }
             )
           )
@@ -71,25 +71,25 @@ title "Porcelain ${kind}"
           repo-with-remotes special-origin special-name https://example.com/special-origin
           repo-with-remotes no-origin
           repo-with-remotes a-non-bare-repo-with-extension.git origin https://example.com/a-repo-with-extension.git
-          snapshot="$snapshot/tools"
+          snapshot="$snapshot/tool"
 
-          title "gix tools find"
+          title "ein tool find"
           (when "running 'find'"
             snapshot="$snapshot/find"
             (with "no arguments"
               it "succeeds and prints a list of repository work directories" && {
                 WITH_SNAPSHOT="$snapshot/no-args-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools find 2>/dev/null"
+                expect_run_sh $SUCCESSFULLY "$exe tool find 2>/dev/null"
               }
             )
           )
-          title "gix tools organize"
+          title "ein tool organize"
           (when "running 'organize'"
             snapshot="$snapshot/organize"
             (with "no arguments"
               it "succeeds and informs about the operations that it WOULD do" && {
                 WITH_SNAPSHOT="$snapshot/no-args-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools organize 2>/dev/null"
+                expect_run_sh $SUCCESSFULLY "$exe tool organize 2>/dev/null"
               }
 
               it "does not change the directory structure at all" && {
@@ -101,7 +101,7 @@ title "Porcelain ${kind}"
             (with "--execute"
               it "succeeds" && {
                 WITH_SNAPSHOT="$snapshot/execute-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools organize --execute 2>/dev/null"
+                expect_run_sh $SUCCESSFULLY "$exe tool organize --execute 2>/dev/null"
               }
 
               it "changes the directory structure" && {
@@ -113,7 +113,7 @@ title "Porcelain ${kind}"
             (with "--execute again"
               it "succeeds" && {
                 WITH_SNAPSHOT="$snapshot/execute-success" \
-                expect_run_sh $SUCCESSFULLY "$exe tools organize --execute 2>/dev/null"
+                expect_run_sh $SUCCESSFULLY "$exe tool organize --execute 2>/dev/null"
               }
 
               it "does not alter the directory structure as these are already in place" && {
@@ -133,7 +133,7 @@ title "Porcelain ${kind}"
     )
   )
 
-  title "gix init"
+  title "ein init"
   (when "running 'init'"
     snapshot="$snapshot/init"
     (with "no argument"
