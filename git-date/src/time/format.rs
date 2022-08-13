@@ -19,7 +19,7 @@ impl Time {
 }
 
 impl Time {
-    fn to_time(&self) -> time::OffsetDateTime {
+    fn to_time(self) -> time::OffsetDateTime {
         time::OffsetDateTime::from_unix_timestamp(self.seconds_since_unix_epoch as i64)
             .expect("always valid unix time")
             .replace_offset(time::UtcOffset::from_whole_seconds(self.offset_in_seconds).expect("valid offset"))

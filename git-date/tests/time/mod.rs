@@ -57,11 +57,6 @@ mod format {
     }
 
     #[test]
-    fn custom_string() {
-        assert_eq!(time().format("[year]-[month]-[day]"), "1970-01-01");
-    }
-
-    #[test]
     fn custom_compile_time() {
         assert_eq!(
             time().format(&format_description!("[year]-[month]-[day] [hour]:[minute]:[second]")),
