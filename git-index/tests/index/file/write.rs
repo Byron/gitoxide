@@ -17,8 +17,8 @@ fn roundtrips() -> crate::Result {
         (Loose("extended-flags"), all_ext_but_eoie()),
         (Loose("conflicting-file"), all_ext_but_eoie()),
         (Loose("very-long-path"), all_ext_but_eoie()),
-        (Generated("v2"), write::Options::default()),
-        (Generated("V2_empty"), write::Options::default()),
+        (Generated("v2"), Options::default()),
+        (Generated("V2_empty"), Options::default()),
         (Generated("v2_more_files"), all_ext_but_eoie()),
     ];
 
@@ -47,6 +47,46 @@ fn roundtrips() -> crate::Result {
 }
 
 #[test]
+fn state_comparisons_with_various_extension_configurations() {
+    fn options_with(extensions: write::Extensions) -> Options {
+        Options {
+            hash_kind: git_hash::Kind::Sha1,
+            extensions,
+        }
+    }
+
+    for fixture in [
+        "V2_empty",
+        "v2",
+        "v2_more_files",
+        "v2_split_index",
+        "v4_more_files_IEOT",
+    ] {
+        for options in [
+            options_with(write::Extensions::None),
+            options_with(write::Extensions::All),
+            options_with(write::Extensions::Given {
+                tree_cache: true,
+                end_of_index_entry: true,
+            }),
+            options_with(write::Extensions::Given {
+                tree_cache: false,
+                end_of_index_entry: true,
+            }),
+        ] {
+            let path = fixture_index_path(fixture);
+            let expected = git_index::File::at(&path, Default::default()).unwrap();
+
+            let mut out = Vec::<u8>::new();
+            let actual_version = expected.write_to(&mut out, options).unwrap();
+
+            let (actual, _) = State::from_bytes(&out, FileTime::now(), decode::Options::default()).unwrap();
+            compare_states(&actual, actual_version, &expected, options, fixture);
+        }
+    }
+}
+
+#[test]
 fn extended_flags_automatically_upgrade_the_version_to_avoid_data_loss() -> crate::Result {
     let mut expected = git_index::File::at(fixture_index_path("V2"), Default::default())?;
     assert_eq!(expected.version(), Version::V2);
@@ -59,88 +99,7 @@ fn extended_flags_automatically_upgrade_the_version_to_avoid_data_loss() -> crat
     Ok(())
 }
 
-#[test]
-fn v2_index_no_extensions() {
-    let input = [
-        "V2_empty",
-        "v2",
-        "v2_more_files",
-        "v2_split_index",
-        "v4_more_files_IEOT",
-    ];
-
-    for fixture in input {
-        let path = fixture_index_path(fixture);
-        let expected = git_index::File::at(&path, decode::Options::default()).unwrap();
-
-        let mut out = Vec::<u8>::new();
-        let options = write::Options {
-            hash_kind: git_hash::Kind::Sha1,
-            extensions: write::Extensions::None,
-        };
-
-        let actual_version = expected.write_to(&mut out, options).unwrap();
-
-        let (actual, _) = State::from_bytes(&out, FileTime::now(), decode::Options::default()).unwrap();
-        compare_states(&actual, actual_version, &expected, options, fixture);
-    }
-}
-
-#[test]
-fn v2_index_tree_extensions() {
-    let input = [
-        "V2_empty",
-        "v2",
-        "v2_more_files",
-        "v2_split_index",
-        "v4_more_files_IEOT",
-    ];
-
-    for fixture in input {
-        let path = fixture_index_path(fixture);
-        let expected = git_index::File::at(&path, decode::Options::default()).unwrap();
-
-        let mut out = Vec::<u8>::new();
-        let options = all_ext_but_eoie();
-
-        let actual_version = expected.write_to(&mut out, options).unwrap();
-
-        let (actual, _) = State::from_bytes(&out, FileTime::now(), decode::Options::default()).unwrap();
-        compare_states(&actual, actual_version, &expected, options, fixture);
-    }
-}
-
-#[test]
-fn v2_index_eoie_extensions() {
-    let input = [
-        "V2_empty",
-        "v2",
-        "v2_more_files",
-        "v2_split_index",
-        "v4_more_files_IEOT",
-    ];
-
-    for fixture in input {
-        let path = fixture_index_path(fixture);
-        let expected = git_index::File::at(&path, decode::Options::default()).unwrap();
-
-        let mut out = Vec::<u8>::new();
-        let options = write::Options {
-            hash_kind: git_hash::Kind::Sha1,
-            extensions: write::Extensions::Given {
-                tree_cache: false,
-                end_of_index_entry: true,
-            },
-        };
-
-        let version = expected.write_to(&mut out, options).unwrap();
-
-        let (generated, _) = State::from_bytes(&out, FileTime::now(), decode::Options::default()).unwrap();
-        compare_states(&generated, version, &expected, options, fixture);
-    }
-}
-
-fn compare_states(actual: &State, actual_version: Version, expected: &State, options: write::Options, fixture: &str) {
+fn compare_states(actual: &State, actual_version: Version, expected: &State, options: Options, fixture: &str) {
     actual.verify_entries().expect("valid");
     actual.verify_extensions(false, no_find).expect("valid");
 
@@ -189,11 +148,11 @@ fn compare_raw_bytes(generated: &[u8], expected: &[u8], fixture: &str) {
 }
 
 fn all_ext_but_eoie() -> Options {
-    write::Options {
+    Options {
         extensions: write::Extensions::Given {
             end_of_index_entry: false,
             tree_cache: true,
         },
-        ..write::Options::default()
+        ..Options::default()
     }
 }
