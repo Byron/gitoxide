@@ -1,57 +1,71 @@
 use crate::write::util::CountBytes;
-use crate::{extension, State, Version};
+use crate::{entry, extension, State, Version};
 use std::convert::TryInto;
 use std::io::Write;
 
+/// A way to specify which extensions to write.
+#[derive(Debug, Copy, Clone)]
+pub enum Extensions {
+    /// Writes all available extensions to avoid loosing any information, and to allow accelerated reading of the index file.
+    All,
+    /// Only write the given extensions, with each extension being marked by a boolean flag.
+    Given {
+        /// Write the tree-cache extension, if present.
+        tree_cache: bool,
+        /// Write the end-of-index-entry extension.
+        end_of_index_entry: bool,
+    },
+    /// Write no extension at all for what should be the smallest possible index
+    None,
+}
+
+impl Default for Extensions {
+    fn default() -> Self {
+        Extensions::All
+    }
+}
+
+impl Extensions {
+    /// Returns `Some(signature)` if it should be written out.
+    pub fn should_write(&self, signature: extension::Signature) -> Option<extension::Signature> {
+        match self {
+            Extensions::None => None,
+            Extensions::All => Some(signature),
+            Extensions::Given {
+                tree_cache,
+                end_of_index_entry,
+            } => match signature {
+                extension::tree::SIGNATURE => tree_cache,
+                extension::end_of_index_entry::SIGNATURE => end_of_index_entry,
+                _ => &false,
+            }
+            .then(|| signature),
+        }
+    }
+}
+
 /// The options for use when [writing an index][State::write_to()].
 ///
-/// Note that default options write
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+/// Note that default options write either index V2 or V3 depending on the content of the entries.
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Options {
     /// The hash kind to use when writing the index file.
     ///
     /// It is not always possible to infer the hash kind when reading an index, so this is required.
     pub hash_kind: git_hash::Kind,
-    /// The index version to write. Note that different versions affect the format and ultimately the size.
-    pub version: Version,
 
-    /// If true, write the tree-cache extension, if present.
-    // TODO: should we not write all we have by default to be lossless, but provide options to those who seek them?
-    pub tree_cache_extension: bool,
-    /// If true, write the end-of-index-entry extension.
-    // TODO: figure out if this is implied by other options, for instance multi-threading.
-    pub end_of_index_entry_extension: bool,
-}
-
-impl Default for Options {
-    fn default() -> Self {
-        Self {
-            hash_kind: git_hash::Kind::default(),
-            /// TODO: make this 'automatic' by default to determine the correct index version - not all versions can represent all in-memory states.
-            version: Version::V2,
-            tree_cache_extension: true,
-            end_of_index_entry_extension: true,
-        }
-    }
+    /// Configures which extensions to write
+    pub extensions: Extensions,
 }
 
 impl State {
     /// Serialize this instance to `out` with [`options`][Options].
     pub fn write_to(
         &self,
-        out: &mut impl std::io::Write,
-        Options {
-            hash_kind,
-            version,
-            tree_cache_extension,
-            end_of_index_entry_extension,
-        }: Options,
-    ) -> std::io::Result<()> {
-        assert_eq!(
-            version,
-            Version::V2,
-            "can only write V2 at the moment, please come back later"
-        );
+        out: impl std::io::Write,
+        Options { hash_kind, extensions }: Options,
+    ) -> std::io::Result<Version> {
+        let version = self.detect_required_version();
 
         let mut write = CountBytes::new(out);
         let num_entries = self
@@ -60,48 +74,80 @@ impl State {
             .try_into()
             .expect("definitely not 4billion entries");
 
-        let header_offset = header(&mut write, version, num_entries)?;
-        let entries_offset = entries(&mut write, self, header_offset)?;
-        let tree_offset = tree_cache_extension
-            .then(|| self.tree())
-            .flatten()
-            .map(|tree| tree.write_to(&mut write).map(|_| write.count))
-            .transpose()?
-            .unwrap_or(entries_offset);
+        let offset_to_entries = header(&mut write, version, num_entries)?;
+        let offset_to_extensions = entries(&mut write, self, offset_to_entries)?;
+        let (extension_toc, out) = self.write_extensions(write, offset_to_extensions, extensions)?;
 
-        if num_entries > 0 && end_of_index_entry_extension {
-            end_of_index_entry_ext(write.inner, hash_kind, entries_offset, tree_offset)?;
+        if num_entries > 0
+            && extensions
+                .should_write(extension::end_of_index_entry::SIGNATURE)
+                .is_some()
+            && !extension_toc.is_empty()
+        {
+            extension::end_of_index_entry::write_to(out, hash_kind, offset_to_extensions, extension_toc)?
         }
 
-        Ok(())
+        Ok(version)
+    }
+
+    fn write_extensions<T>(
+        &self,
+        mut write: CountBytes<T>,
+        offset_to_extensions: u32,
+        extensions: Extensions,
+    ) -> std::io::Result<(Vec<(extension::Signature, u32)>, T)>
+    where
+        T: std::io::Write,
+    {
+        type WriteExtFn<'a> = &'a dyn Fn(&mut dyn std::io::Write) -> Option<std::io::Result<extension::Signature>>;
+        let extensions: &[WriteExtFn<'_>] = &[&|write| {
+            extensions
+                .should_write(extension::tree::SIGNATURE)
+                .and_then(|signature| self.tree().map(|tree| tree.write_to(write).map(|_| signature)))
+        }];
+
+        let mut offset_to_previous_ext = offset_to_extensions;
+        let mut out = Vec::with_capacity(5);
+        for write_ext in extensions {
+            if let Some(signature) = write_ext(&mut write).transpose()? {
+                let offset_past_ext = write.count;
+                let ext_size = offset_past_ext - offset_to_previous_ext - (extension::MIN_SIZE as u32);
+                offset_to_previous_ext = offset_past_ext;
+                out.push((signature, ext_size));
+            }
+        }
+        Ok((out, write.inner))
+    }
+}
+
+impl State {
+    fn detect_required_version(&self) -> Version {
+        self.entries
+            .iter()
+            .find_map(|e| e.flags.contains(entry::Flags::EXTENDED).then(|| Version::V3))
+            .unwrap_or(Version::V2)
     }
 }
 
 fn header<T: std::io::Write>(
-    out: &mut CountBytes<'_, T>,
+    out: &mut CountBytes<T>,
     version: Version,
     num_entries: u32,
 ) -> Result<u32, std::io::Error> {
-    let signature = b"DIRC";
-
     let version = match version {
         Version::V2 => 2_u32.to_be_bytes(),
         Version::V3 => 3_u32.to_be_bytes(),
         Version::V4 => 4_u32.to_be_bytes(),
     };
 
-    out.write_all(signature)?;
+    out.write_all(crate::decode::header::SIGNATURE)?;
     out.write_all(&version)?;
     out.write_all(&num_entries.to_be_bytes())?;
 
     Ok(out.count)
 }
 
-fn entries<T: std::io::Write>(
-    out: &mut CountBytes<'_, T>,
-    state: &State,
-    header_size: u32,
-) -> Result<u32, std::io::Error> {
+fn entries<T: std::io::Write>(out: &mut CountBytes<T>, state: &State, header_size: u32) -> Result<u32, std::io::Error> {
     for entry in state.entries() {
         entry.write_to(&mut *out, state)?;
         match (out.count - header_size) % 8 {
@@ -116,49 +162,24 @@ fn entries<T: std::io::Write>(
     Ok(out.count)
 }
 
-fn end_of_index_entry_ext(
-    out: &mut impl std::io::Write,
-    hash_kind: git_hash::Kind,
-    entries_offset: u32,
-    tree_offset: u32,
-) -> Result<(), std::io::Error> {
-    let signature = extension::end_of_index_entry::SIGNATURE;
-    let extension_size = 4 + hash_kind.len_in_bytes() as u32;
-
-    let mut hasher = git_features::hash::hasher(hash_kind);
-    let tree_size = (tree_offset - entries_offset).saturating_sub(8);
-    if tree_size > 0 {
-        hasher.update(&extension::tree::SIGNATURE);
-        hasher.update(&tree_size.to_be_bytes());
-    }
-    let hash = hasher.digest();
-
-    out.write_all(&signature)?;
-    out.write_all(&extension_size.to_be_bytes())?;
-    out.write_all(&entries_offset.to_be_bytes())?;
-    out.write_all(&hash)?;
-
-    Ok(())
-}
-
 mod util {
     use std::convert::TryFrom;
 
-    pub struct CountBytes<'a, T> {
+    pub struct CountBytes<T> {
         pub count: u32,
-        pub inner: &'a mut T,
+        pub inner: T,
     }
 
-    impl<'a, T> CountBytes<'a, T>
+    impl<T> CountBytes<T>
     where
         T: std::io::Write,
     {
-        pub fn new(inner: &'a mut T) -> Self {
+        pub fn new(inner: T) -> Self {
             CountBytes { inner, count: 0 }
         }
     }
 
-    impl<'a, T> std::io::Write for CountBytes<'a, T>
+    impl<T> std::io::Write for CountBytes<T>
     where
         T: std::io::Write,
     {

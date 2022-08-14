@@ -5,16 +5,22 @@ impl Tree {
     /// Serialize this instance to `out`.
     pub fn write_to(&self, mut out: impl std::io::Write) -> Result<(), std::io::Error> {
         fn tree_entry(out: &mut impl std::io::Write, tree: &Tree) -> Result<(), std::io::Error> {
-            let num_entries_ascii = tree.num_entries.to_string();
-            let num_children_ascii = tree.children.len().to_string();
+            let mut buf = itoa::Buffer::new();
+            let num_entries = match tree.num_entries {
+                Some(num_entries) => buf.format(num_entries),
+                None => buf.format(-1),
+            };
 
             out.write_all(tree.name.as_slice())?;
             out.write_all(b"\0")?;
-            out.write_all(num_entries_ascii.as_bytes())?;
+            out.write_all(num_entries.as_bytes())?;
             out.write_all(b" ")?;
-            out.write_all(num_children_ascii.as_bytes())?;
+            let num_children = buf.format(tree.children.len());
+            out.write_all(num_children.as_bytes())?;
             out.write_all(b"\n")?;
-            out.write_all(tree.id.as_bytes())?;
+            if tree.num_entries.is_some() {
+                out.write_all(tree.id.as_bytes())?;
+            }
 
             for child in &tree.children {
                 tree_entry(out, child)?;
@@ -25,7 +31,7 @@ impl Tree {
 
         let signature = tree::SIGNATURE;
 
-        let estimated_size = self.num_entries * (300 + 3 + 1 + 3 + 1 + 20);
+        let estimated_size = self.num_entries.unwrap_or(0) * (300 + 3 + 1 + 3 + 1 + 20);
         let mut entries: Vec<u8> = Vec::with_capacity(estimated_size as usize);
         tree_entry(&mut entries, self)?;
 

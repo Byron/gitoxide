@@ -1,7 +1,8 @@
 use bstr::BString;
 use smallvec::SmallVec;
 
-const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
+/// The size of the smallest possible exstension, which is no more than a signature and a 0 indicating its size.
+pub const MIN_SIZE: usize = 4 /* signature */ + 4 /* size */;
 
 /// The kind of index extension.
 pub type Signature = [u8; 4];
@@ -25,7 +26,8 @@ pub struct Tree {
     pub id: git_hash::ObjectId,
     /// The amount of non-tree items in this directory tree, including sub-trees, recursively.
     /// The value of the top-level tree is thus equal to the value of the total amount of entries.
-    pub num_entries: u32,
+    /// If `None`, the tree is considered invalid and needs to be refreshed
+    pub num_entries: Option<u32>,
     /// The child-trees below the current tree.
     pub children: Vec<Tree>,
 }
@@ -77,7 +79,8 @@ pub(crate) mod decode;
 ///
 pub mod tree;
 
-pub(crate) mod end_of_index_entry;
+///
+pub mod end_of_index_entry;
 
 pub(crate) mod index_entry_offset_table;
 

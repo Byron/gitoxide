@@ -13,8 +13,12 @@ fn verify(index: git_index::File) -> git_index::File {
     index
 }
 
-fn loose_file(name: &str) -> git_index::File {
-    let path = git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"));
+pub(crate) fn loose_file_path(name: &str) -> PathBuf {
+    git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"))
+}
+
+pub(crate) fn loose_file(name: &str) -> git_index::File {
+    let path = loose_file_path(name);
     let file = git_index::File::at(path, git_index::decode::Options::default()).unwrap();
     verify(file)
 }
@@ -48,7 +52,7 @@ fn v2_with_single_entry_tree_and_eoie_ext() {
         assert_eq!(entry.path(&file.state), "a");
 
         let tree = file.tree().unwrap();
-        assert_eq!(tree.num_entries, 1);
+        assert_eq!(tree.num_entries.unwrap_or_default(), 1);
         assert_eq!(tree.id, hex_to_id("496d6428b9cf92981dc9495211e6e1120fb6f2ba"));
         assert!(tree.name.is_empty());
         assert!(tree.children.is_empty());
@@ -60,7 +64,7 @@ fn v2_empty() {
     assert_eq!(file.version(), Version::V2);
     assert_eq!(file.entries().len(), 0);
     let tree = file.tree().unwrap();
-    assert_eq!(tree.num_entries, 0);
+    assert_eq!(tree.num_entries.unwrap_or_default(), 0);
     assert!(tree.name.is_empty());
     assert!(tree.children.is_empty());
     assert_eq!(tree.id, hex_to_id("4b825dc642cb6eb9a060e54bf8d69288fbee4904"));
@@ -82,13 +86,13 @@ fn v2_with_multiple_entries_without_eoie_ext() {
 
     let tree = file.tree().unwrap();
     assert_eq!(tree.id, hex_to_id("c9b29c3168d8e677450cc650238b23d9390801fb"));
-    assert_eq!(tree.num_entries, 6);
+    assert_eq!(tree.num_entries.unwrap_or_default(), 6);
     assert!(tree.name.is_empty());
     assert_eq!(tree.children.len(), 1);
 
     let tree = &tree.children[0];
     assert_eq!(tree.id, hex_to_id("765b32c65d38f04c4f287abda055818ec0f26912"));
-    assert_eq!(tree.num_entries, 3);
+    assert_eq!(tree.num_entries.unwrap_or_default(), 3);
     assert_eq!(tree.name.as_bstr(), "d");
 }
 
@@ -139,6 +143,15 @@ fn v2_very_long_path() {
             .chain(std::iter::once('q'))
             .collect::<String>()
     );
+    assert!(
+        file.tree().is_some(),
+        "Tree has invalid entries, but that shouldn't prevent us from loading it"
+    );
+    let tree = file.tree().expect("present");
+    assert_eq!(tree.num_entries, None, "root tree has invalid entries actually");
+    assert_eq!(tree.name.as_bstr(), "");
+    assert_eq!(tree.num_entries, None, "it's marked invalid actually");
+    assert!(tree.id.is_null(), "there is no id for the root")
 }
 
 #[test]
