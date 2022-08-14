@@ -1,6 +1,7 @@
 use crate::index::file::read::loose_file_path;
 use filetime::FileTime;
 use git_index::verify::extensions::no_find;
+use git_index::write::Options;
 use git_index::{decode, extension, write, State, Version};
 use std::cmp::{max, min};
 
@@ -12,28 +13,10 @@ fn roundtrips() -> crate::Result {
     }
     use Kind::*;
     let input = [
-        (
-            Loose("very-long-path"),
-            write::Options {
-                extensions: write::Extensions::Given {
-                    end_of_index_entry: false,
-                    tree_cache: true,
-                },
-                ..write::Options::default()
-            },
-        ), // tree extension can't be read
+        (Loose("very-long-path"), v2_all_ext_but_eoie()),
         (Generated("v2"), write::Options::default()),
         (Generated("V2_empty"), write::Options::default()),
-        (
-            Generated("v2_more_files"),
-            write::Options {
-                extensions: write::Extensions::Given {
-                    end_of_index_entry: false,
-                    tree_cache: true,
-                },
-                ..write::Options::default()
-            },
-        ),
+        (Generated("v2_more_files"), v2_all_ext_but_eoie()),
     ];
 
     for (fixture, options) in input {
@@ -97,14 +80,7 @@ fn v2_index_tree_extensions() {
         let expected = git_index::File::at(&path, decode::Options::default()).unwrap();
 
         let mut out = Vec::<u8>::new();
-        let options = write::Options {
-            hash_kind: git_hash::Kind::Sha1,
-            version: Version::V2,
-            extensions: write::Extensions::Given {
-                tree_cache: true,
-                end_of_index_entry: false,
-            },
-        };
+        let options = v2_all_ext_but_eoie();
 
         expected.write_to(&mut out, options).unwrap();
 
@@ -189,5 +165,15 @@ fn compare_raw_bytes(generated: &[u8], expected: &[u8], fixture: &str) {
             \tExpected: ... {:?} ...\n\n\
             ", &fixture, index, generated, expected}
         }
+    }
+}
+
+fn v2_all_ext_but_eoie() -> Options {
+    write::Options {
+        extensions: write::Extensions::Given {
+            end_of_index_entry: false,
+            tree_cache: true,
+        },
+        ..write::Options::default()
     }
 }
