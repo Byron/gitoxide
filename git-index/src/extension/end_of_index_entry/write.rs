@@ -8,7 +8,7 @@ use crate::extension::Signature;
 ///
 /// Even if there are no `prior_extensions`, this extension will be written unconditionally.
 pub fn write_to(
-    out: &mut impl std::io::Write,
+    mut out: impl std::io::Write,
     hash_kind: git_hash::Kind,
     offset_to_extensions: u32,
     prior_extensions: impl IntoIterator<Item = (Signature, u32)>,

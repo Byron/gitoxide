@@ -62,7 +62,7 @@ impl State {
     /// Serialize this instance to `out` with [`options`][Options].
     pub fn write_to(
         &self,
-        out: &mut impl std::io::Write,
+        out: impl std::io::Write,
         Options { hash_kind, extensions }: Options,
     ) -> std::io::Result<Version> {
         let version = self.detect_required_version();
@@ -76,7 +76,7 @@ impl State {
 
         let offset_to_entries = header(&mut write, version, num_entries)?;
         let offset_to_extensions = entries(&mut write, self, offset_to_entries)?;
-        let extension_toc = self.write_extensions(write, offset_to_extensions, extensions)?;
+        let (extension_toc, out) = self.write_extensions(write, offset_to_extensions, extensions)?;
 
         if num_entries > 0
             && extensions
@@ -90,12 +90,15 @@ impl State {
         Ok(version)
     }
 
-    fn write_extensions(
+    fn write_extensions<T>(
         &self,
-        mut write: CountBytes<'_, impl std::io::Write + Sized>,
+        mut write: CountBytes<T>,
         offset_to_extensions: u32,
         extensions: Extensions,
-    ) -> std::io::Result<Vec<(extension::Signature, u32)>> {
+    ) -> std::io::Result<(Vec<(extension::Signature, u32)>, T)>
+    where
+        T: std::io::Write,
+    {
         type WriteExtFn<'a> = &'a dyn Fn(&mut dyn std::io::Write) -> Option<std::io::Result<extension::Signature>>;
         let extensions: &[WriteExtFn<'_>] = &[&|write| {
             extensions
@@ -113,7 +116,7 @@ impl State {
                 out.push((signature, ext_size));
             }
         }
-        Ok(out)
+        Ok((out, write.inner))
     }
 }
 
@@ -127,7 +130,7 @@ impl State {
 }
 
 fn header<T: std::io::Write>(
-    out: &mut CountBytes<'_, T>,
+    out: &mut CountBytes<T>,
     version: Version,
     num_entries: u32,
 ) -> Result<u32, std::io::Error> {
@@ -144,11 +147,7 @@ fn header<T: std::io::Write>(
     Ok(out.count)
 }
 
-fn entries<T: std::io::Write>(
-    out: &mut CountBytes<'_, T>,
-    state: &State,
-    header_size: u32,
-) -> Result<u32, std::io::Error> {
+fn entries<T: std::io::Write>(out: &mut CountBytes<T>, state: &State, header_size: u32) -> Result<u32, std::io::Error> {
     for entry in state.entries() {
         entry.write_to(&mut *out, state)?;
         match (out.count - header_size) % 8 {
@@ -166,21 +165,21 @@ fn entries<T: std::io::Write>(
 mod util {
     use std::convert::TryFrom;
 
-    pub struct CountBytes<'a, T> {
+    pub struct CountBytes<T> {
         pub count: u32,
-        pub inner: &'a mut T,
+        pub inner: T,
     }
 
-    impl<'a, T> CountBytes<'a, T>
+    impl<T> CountBytes<T>
     where
         T: std::io::Write,
     {
-        pub fn new(inner: &'a mut T) -> Self {
+        pub fn new(inner: T) -> Self {
             CountBytes { inner, count: 0 }
         }
     }
 
-    impl<'a, T> std::io::Write for CountBytes<'a, T>
+    impl<T> std::io::Write for CountBytes<T>
     where
         T: std::io::Write,
     {
