@@ -25,6 +25,13 @@ impl Entry {
                 .expect("we just checked that the length is smaller than 0xfff")
         };
         out.write_all(&(self.flags.to_storage().bits() | path_len).to_be_bytes())?;
+        if self.flags.contains(entry::Flags::EXTENDED) {
+            out.write_all(
+                &entry::at_rest::FlagsExtended::from_flags(self.flags)
+                    .bits()
+                    .to_be_bytes(),
+            )?;
+        }
         out.write_all(path)?;
         out.write_all(b"\0")
     }

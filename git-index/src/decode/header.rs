@@ -2,6 +2,8 @@ pub(crate) const SIZE: usize = 4 /*signature*/ + 4 /*version*/ + 4 /* num entrie
 
 use crate::{util::from_be_u32, Version};
 
+pub(crate) const SIGNATURE: &[u8] = b"DIRC";
+
 mod error {
 
     /// The error produced when failing to decode an index header.
@@ -23,7 +25,6 @@ pub(crate) fn decode(data: &[u8], object_hash: git_hash::Kind) -> Result<(Versio
         ));
     }
 
-    const SIGNATURE: &[u8] = b"DIRC";
     let (signature, data) = data.split_at(4);
     if signature != SIGNATURE {
         return Err(Error::Corrupt(

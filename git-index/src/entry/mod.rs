@@ -82,6 +82,3 @@ mod _impls {
         }
     }
 }
-
-#[cfg(test)]
-mod tests;

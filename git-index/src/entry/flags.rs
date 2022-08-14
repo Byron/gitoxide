@@ -6,6 +6,8 @@ bitflags! {
     pub struct Flags: u32 {
         /// The mask to apply to obtain the stage number of an entry.
         const STAGE_MASK = 0x3000;
+        /// If set, additional bits need to be written to storage.
+        const EXTENDED = 0x4000;
         // TODO: could we use the pathlen ourselves to save 8 bytes? And how to handle longer paths than that? 0 as sentinel maybe?
         /// The mask to obtain the length of the path associated with this entry.
         const PATH_LEN = 0x0fff;
@@ -48,9 +50,6 @@ bitflags! {
         /// Stored at rest
         const SKIP_WORKTREE = 1 << 30;
 
-        /// flags that need to be stored on disk in a V3 formatted index.
-        const EXTENDED_FLAGS = 1 << 29 | 1 << 30;
-
         /// For future extension
         const EXTENDED_2 = 1 << 31;
     }
@@ -63,13 +62,17 @@ impl Flags {
     }
 
     /// Transform ourselves to a storage representation to keep all flags which are to be persisted,
-    /// with the caller intending to write `version`.
-    pub fn to_storage(&self) -> at_rest::Flags {
-        assert!(
-            !self.contains(Self::EXTENDED_FLAGS),
-            "Cannot currently encode extended flags"
-        );
-        at_rest::Flags::from_bits(self.bits() as u16).unwrap()
+    /// skipping all extended flags. Note that the caller has to check for the `EXTENDED` bit to be present
+    /// and write extended flags as well if so.
+    pub fn to_storage(mut self) -> at_rest::Flags {
+        at_rest::Flags::from_bits(
+            {
+                self.remove(Self::PATH_LEN);
+                self
+            }
+            .bits() as u16,
+        )
+        .unwrap()
     }
 }
 
@@ -91,8 +94,7 @@ pub(crate) mod at_rest {
 
     impl Flags {
         pub fn to_memory(self) -> super::Flags {
-            super::Flags::from_bits((self & (Flags::PATH_LEN | Flags::STAGE_MASK | Flags::ASSUME_VALID)).bits as u32)
-                .expect("PATHLEN is part of memory representation")
+            super::Flags::from_bits(self.bits as u32).expect("PATHLEN is part of memory representation")
         }
     }
 
@@ -105,6 +107,10 @@ pub(crate) mod at_rest {
     }
 
     impl FlagsExtended {
+        pub fn from_flags(flags: super::Flags) -> Self {
+            Self::from_bits(((flags & (super::Flags::INTENT_TO_ADD | super::Flags::SKIP_WORKTREE)).bits >> 16) as u16)
+                .expect("valid")
+        }
         pub fn to_flags(self) -> Option<super::Flags> {
             super::Flags::from_bits((self.bits as u32) << 16)
         }

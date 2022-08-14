@@ -3,7 +3,6 @@ use filetime::FileTime;
 use git_index::verify::extensions::no_find;
 use git_index::write::Options;
 use git_index::{decode, extension, write, State, Version};
-use std::cmp::{max, min};
 
 #[test]
 fn roundtrips() -> crate::Result {
@@ -13,6 +12,7 @@ fn roundtrips() -> crate::Result {
     }
     use Kind::*;
     let input = [
+        (Loose("extended-flags"), v3_all_ext_but_eoie()),
         (Loose("very-long-path"), v2_all_ext_but_eoie()),
         (Generated("v2"), write::Options::default()),
         (Generated("V2_empty"), write::Options::default()),
@@ -155,8 +155,8 @@ fn compare_raw_bytes(generated: &[u8], expected: &[u8], fixture: &str) {
     let print_range = 10;
     for (index, (a, b)) in generated.iter().zip(expected.iter()).enumerate() {
         if a != b {
-            let range_left = max(index - print_range, 0);
-            let range_right = min(index + print_range, generated.len());
+            let range_left = index.saturating_sub(print_range);
+            let range_right = (index + print_range).min(generated.len());
             let generated = &generated[range_left..range_right];
             let expected = &expected[range_left..range_right];
 
@@ -168,12 +168,21 @@ fn compare_raw_bytes(generated: &[u8], expected: &[u8], fixture: &str) {
     }
 }
 
-fn v2_all_ext_but_eoie() -> Options {
+fn all_ext_but_eoie(version: git_index::Version) -> Options {
     write::Options {
+        version,
         extensions: write::Extensions::Given {
             end_of_index_entry: false,
             tree_cache: true,
         },
         ..write::Options::default()
     }
+}
+
+fn v2_all_ext_but_eoie() -> Options {
+    all_ext_but_eoie(Version::V2)
+}
+
+fn v3_all_ext_but_eoie() -> Options {
+    all_ext_but_eoie(Version::V3)
 }

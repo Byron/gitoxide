@@ -82,10 +82,10 @@ impl State {
             extensions,
         }: Options,
     ) -> std::io::Result<()> {
-        assert_eq!(
+        assert_ne!(
             version,
-            Version::V2,
-            "can only write V2 at the moment, please come back later"
+            Version::V4,
+            "can only write V2/3 at the moment, please come back later"
         );
 
         let mut write = CountBytes::new(out);
@@ -137,15 +137,13 @@ fn header<T: std::io::Write>(
     version: Version,
     num_entries: u32,
 ) -> Result<u32, std::io::Error> {
-    let signature = b"DIRC";
-
     let version = match version {
         Version::V2 => 2_u32.to_be_bytes(),
         Version::V3 => 3_u32.to_be_bytes(),
         Version::V4 => 4_u32.to_be_bytes(),
     };
 
-    out.write_all(signature)?;
+    out.write_all(crate::decode::header::SIGNATURE)?;
     out.write_all(&version)?;
     out.write_all(&num_entries.to_be_bytes())?;
 
