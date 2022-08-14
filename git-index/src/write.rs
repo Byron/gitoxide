@@ -1,5 +1,5 @@
 use crate::write::util::CountBytes;
-use crate::{extension, State, Version};
+use crate::{entry, extension, State, Version};
 use std::convert::TryInto;
 use std::io::Write;
 
@@ -46,15 +46,13 @@ impl Extensions {
 
 /// The options for use when [writing an index][State::write_to()].
 ///
-/// Note that default options write
+/// Note that default options write either index V2 or V3 depending on the content of the entries.
 #[derive(Debug, Clone, Copy)]
 pub struct Options {
     /// The hash kind to use when writing the index file.
     ///
     /// It is not always possible to infer the hash kind when reading an index, so this is required.
     pub hash_kind: git_hash::Kind,
-    /// The index version to write. Note that different versions affect the format and ultimately the size.
-    pub version: Version,
 
     /// Configures which extensions to write
     pub extensions: Extensions,
@@ -64,8 +62,6 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             hash_kind: git_hash::Kind::default(),
-            /// TODO: make this 'automatic' by default to determine the correct index version - not all versions can represent all in-memory states.
-            version: Version::V2,
             extensions: Default::default(),
         }
     }
@@ -76,17 +72,9 @@ impl State {
     pub fn write_to(
         &self,
         out: &mut impl std::io::Write,
-        Options {
-            hash_kind,
-            version,
-            extensions,
-        }: Options,
-    ) -> std::io::Result<()> {
-        assert_ne!(
-            version,
-            Version::V4,
-            "can only write V2/3 at the moment, please come back later"
-        );
+        Options { hash_kind, extensions }: Options,
+    ) -> std::io::Result<Version> {
+        let version = self.detect_required_version();
 
         let mut write = CountBytes::new(out);
         let num_entries = self
@@ -128,7 +116,16 @@ impl State {
             extension::end_of_index_entry::write_to(write.inner, hash_kind, offset_to_extensions, extension_toc)?
         }
 
-        Ok(())
+        Ok(version)
+    }
+}
+
+impl State {
+    fn detect_required_version(&self) -> Version {
+        self.entries
+            .iter()
+            .find_map(|e| e.flags.contains(entry::Flags::EXTENDED).then(|| Version::V3))
+            .unwrap_or(Version::V2)
     }
 }
 
