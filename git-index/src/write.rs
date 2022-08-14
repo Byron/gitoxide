@@ -47,7 +47,7 @@ impl Extensions {
 /// The options for use when [writing an index][State::write_to()].
 ///
 /// Note that default options write either index V2 or V3 depending on the content of the entries.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Options {
     /// The hash kind to use when writing the index file.
     ///
@@ -56,15 +56,6 @@ pub struct Options {
 
     /// Configures which extensions to write
     pub extensions: Extensions,
-}
-
-impl Default for Options {
-    fn default() -> Self {
-        Self {
-            hash_kind: git_hash::Kind::default(),
-            extensions: Default::default(),
-        }
-    }
 }
 
 impl State {
