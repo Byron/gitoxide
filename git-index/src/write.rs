@@ -76,27 +76,7 @@ impl State {
 
         let offset_to_entries = header(&mut write, version, num_entries)?;
         let offset_to_extensions = entries(&mut write, self, offset_to_entries)?;
-
-        let extension_toc = {
-            type WriteExtFn<'a> = &'a dyn Fn(&mut dyn std::io::Write) -> Option<std::io::Result<extension::Signature>>;
-            let extensions: &[WriteExtFn<'_>] = &[&|write| {
-                extensions
-                    .should_write(extension::tree::SIGNATURE)
-                    .and_then(|signature| self.tree().map(|tree| tree.write_to(write).map(|_| signature)))
-            }];
-
-            let mut offset_to_previous_ext = offset_to_extensions;
-            let mut out = Vec::with_capacity(5);
-            for write_ext in extensions {
-                if let Some(signature) = write_ext(&mut write).transpose()? {
-                    let offset_past_ext = write.count;
-                    let ext_size = offset_past_ext - offset_to_previous_ext - (extension::MIN_SIZE as u32);
-                    offset_to_previous_ext = offset_past_ext;
-                    out.push((signature, ext_size));
-                }
-            }
-            out
-        };
+        let extension_toc = self.write_extensions(write, offset_to_extensions, extensions)?;
 
         if num_entries > 0
             && extensions
@@ -104,10 +84,36 @@ impl State {
                 .is_some()
             && !extension_toc.is_empty()
         {
-            extension::end_of_index_entry::write_to(write.inner, hash_kind, offset_to_extensions, extension_toc)?
+            extension::end_of_index_entry::write_to(out, hash_kind, offset_to_extensions, extension_toc)?
         }
 
         Ok(version)
+    }
+
+    fn write_extensions(
+        &self,
+        mut write: CountBytes<'_, impl std::io::Write + Sized>,
+        offset_to_extensions: u32,
+        extensions: Extensions,
+    ) -> std::io::Result<Vec<(extension::Signature, u32)>> {
+        type WriteExtFn<'a> = &'a dyn Fn(&mut dyn std::io::Write) -> Option<std::io::Result<extension::Signature>>;
+        let extensions: &[WriteExtFn<'_>] = &[&|write| {
+            extensions
+                .should_write(extension::tree::SIGNATURE)
+                .and_then(|signature| self.tree().map(|tree| tree.write_to(write).map(|_| signature)))
+        }];
+
+        let mut offset_to_previous_ext = offset_to_extensions;
+        let mut out = Vec::with_capacity(5);
+        for write_ext in extensions {
+            if let Some(signature) = write_ext(&mut write).transpose()? {
+                let offset_past_ext = write.count;
+                let ext_size = offset_past_ext - offset_to_previous_ext - (extension::MIN_SIZE as u32);
+                offset_to_previous_ext = offset_past_ext;
+                out.push((signature, ext_size));
+            }
+        }
+        Ok(out)
     }
 }
 
