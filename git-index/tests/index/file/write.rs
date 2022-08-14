@@ -55,12 +55,25 @@ fn state_comparisons_with_various_extension_configurations() {
         }
     }
 
+    enum Kind {
+        Generated(&'static str),
+        Loose(&'static str),
+    }
+    use Kind::*;
+
     for fixture in [
-        "V2_empty",
-        "v2",
-        "v2_more_files",
-        "v2_split_index",
-        "v4_more_files_IEOT",
+        Loose("extended-flags"),
+        Loose("conflicting-file"),
+        Loose("very-long-path"),
+        Loose("FSMN"),
+        Loose("REUC"),
+        Loose("UNTR-with-oids"),
+        Loose("UNTR"),
+        Generated("V2_empty"),
+        Generated("v2"),
+        Generated("v2_more_files"),
+        Generated("v2_split_index"),
+        Generated("v4_more_files_IEOT"),
     ] {
         for options in [
             options_with(write::Extensions::None),
@@ -74,7 +87,10 @@ fn state_comparisons_with_various_extension_configurations() {
                 end_of_index_entry: true,
             }),
         ] {
-            let path = fixture_index_path(fixture);
+            let (path, fixture) = match fixture {
+                Generated(name) => (fixture_index_path(name), name),
+                Loose(name) => (loose_file_path(name), name),
+            };
             let expected = git_index::File::at(&path, Default::default()).unwrap();
 
             let mut out = Vec::<u8>::new();
