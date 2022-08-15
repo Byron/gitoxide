@@ -18,12 +18,31 @@ pub mod walkdir {
 
     /// Instantiate a new directory iterator which will not skip hidden files.
     pub fn walkdir_new(root: impl AsRef<Path>) -> WalkDir {
-        WalkDir::new(root).skip_hidden(false)
+        #[cfg(not(feature = "fs-walkdir-single-threaded"))]
+        {
+            WalkDir::new(root).skip_hidden(false)
+        }
+        #[cfg(feature = "fs-walkdir-single-threaded")]
+        {
+            WalkDir::new(root)
+                .skip_hidden(false)
+                .parallelism(jwalk::Parallelism::Serial)
+        }
     }
 
     /// Instantiate a new directory iterator which will not skip hidden files and is sorted
     pub fn walkdir_sorted_new(root: impl AsRef<Path>) -> WalkDir {
-        WalkDir::new(root).sort(true)
+        #[cfg(not(feature = "fs-walkdir-single-threaded"))]
+        {
+            WalkDir::new(root).skip_hidden(false).sort(true)
+        }
+        #[cfg(feature = "fs-walkdir-single-threaded")]
+        {
+            WalkDir::new(root)
+                .skip_hidden(false)
+                .sort(true)
+                .parallelism(jwalk::Parallelism::Serial)
+        }
     }
 
     /// The Iterator yielding directory items
