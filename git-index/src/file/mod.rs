@@ -30,5 +30,9 @@ mod impl_ {
         }
     }
 }
+///
 pub mod init;
+///
 pub mod verify;
+///
+pub mod write;

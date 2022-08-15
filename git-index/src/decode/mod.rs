@@ -3,33 +3,25 @@ use filetime::FileTime;
 use crate::{entry, extension, Entry, State, Version};
 
 mod entries;
+///
 pub mod header;
 
 mod error {
-    use quick_error::quick_error;
 
     use crate::{decode, extension};
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Header(err: decode::header::Error) {
-                display("The header could not be decoded")
-                source(err)
-                from()
-            }
-            Entry(index: u32) {
-                display("Could not parse entry at index {}", index)
-            }
-            Extension(err: extension::decode::Error) {
-                display("Mandatory extension wasn't implemented or malformed.")
-                source(err)
-                from()
-            }
-            UnexpectedTrailerLength { expected: usize, actual: usize } {
-                display("Index trailer should have been {} bytes long, but was {}", expected, actual)
-            }
-        }
+    /// The error returned by [State::from_bytes()][crate::State::from_bytes()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Header(#[from] decode::header::Error),
+        #[error("Could not parse entry at index {index}")]
+        Entry { index: u32 },
+        #[error("Mandatory extension wasn't implemented or malformed.")]
+        Extension(#[from] extension::decode::Error),
+        #[error("Index trailer should have been {expected} bytes long, but was {actual}")]
+        UnexpectedTrailerLength { expected: usize, actual: usize },
     }
 }
 pub use error::Error;
@@ -37,8 +29,10 @@ use git_features::parallel::InOrderIter;
 
 use crate::util::read_u32;
 
+/// Options to define how to decode an index state [from bytes][State::from_bytes()].
 #[derive(Default)]
 pub struct Options {
+    /// The kind of object hash to assume when decoding object ids.
     pub object_hash: git_hash::Kind,
     /// If Some(_), we are allowed to use more than one thread. If Some(N), use no more than N threads. If Some(0)|None, use as many threads
     /// as there are logical cores.
@@ -52,6 +46,7 @@ pub struct Options {
 }
 
 impl State {
+    /// Decode an index state from `data` and store `timestamp` in the resulting instance for pass-through.
     pub fn from_bytes(
         data: &[u8],
         timestamp: FileTime,

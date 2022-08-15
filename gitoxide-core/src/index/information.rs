@@ -14,7 +14,7 @@ mod serde_only {
             /// The id of the directory tree of the associated tree object.
             id: String,
             /// The amount of non-tree entries contained within, and definitely not zero.
-            num_entries: u32,
+            num_entries: Option<u32>,
             children: Vec<Tree>,
         }
 

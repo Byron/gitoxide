@@ -3,6 +3,7 @@ use std::convert::TryInto;
 use crate::{extension, extension::Iter, util::from_be_u32};
 
 impl<'a> Iter<'a> {
+    /// Create a new extension iterator at the entrypoint for extensions until the end of the extensions.
     pub fn new(data_at_beginning_of_extensions_and_truncated: &'a [u8]) -> Self {
         Iter {
             data: data_at_beginning_of_extensions_and_truncated,
@@ -10,6 +11,8 @@ impl<'a> Iter<'a> {
         }
     }
 
+    /// Create a new iterator at with a data block to the end of the file, and we automatically remove the trailing
+    /// hash of type `object_hash`.
     pub fn new_without_checksum(
         data_at_beginning_of_extensions: &'a [u8],
         object_hash: git_hash::Kind,

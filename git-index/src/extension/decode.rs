@@ -9,21 +9,18 @@ pub fn header(data: &[u8]) -> (Signature, u32, &[u8]) {
 }
 
 mod error {
-    use quick_error::quick_error;
-
     use crate::extension;
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            MandatoryUnimplemented(signature: extension::Signature) {
-                display("Encountered mandatory extension '{}' which isn't implemented yet", String::from_utf8_lossy(signature))
-            }
-            Link(err: extension::link::decode::Error) {
-                display("Could not parse mandatory link extension")
-                source(err)
-                from()
-            }
-        }
+
+    /// The error returned by [extension::decode::all()][extension::decode::all()].
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error(
+            "Encountered mandatory extension '{}' which isn't implemented yet",
+            String::from_utf8_lossy(signature)
+        )]
+        MandatoryUnimplemented { signature: extension::Signature },
+        #[error("Could not parse mandatory link extension")]
+        Link(#[from] extension::link::decode::Error),
     }
 }
 pub use error::Error;
@@ -56,11 +53,11 @@ pub fn all(maybe_beginning_of_extensions: &[u8], object_hash: git_hash::Kind) ->
                 extension::sparse::SIGNATURE => {
                     if !ext_data.is_empty() {
                         // only used as a marker, if this changes we need this implementation.
-                        return Err(Error::MandatoryUnimplemented(mandatory));
+                        return Err(Error::MandatoryUnimplemented { signature: mandatory });
                     }
                     ext.is_sparse = true
                 }
-                unknown => return Err(Error::MandatoryUnimplemented(unknown)),
+                unknown => return Err(Error::MandatoryUnimplemented { signature: unknown }),
             },
             _unknown => {} // skip unknown extensions, too
         }

@@ -202,7 +202,12 @@ fn scripted_fixture_repo_read_only_with_args_inner(
         .or_insert_with(|| {
             let crc_value = crc::Crc::<u32>::new(&crc::CRC_32_CKSUM);
             let mut crc_digest = crc_value.digest();
-            crc_digest.update(&std::fs::read(&script_path).expect("file can be read entirely"));
+            crc_digest.update(&std::fs::read(&script_path).unwrap_or_else(|err| {
+                panic!(
+                    "file {script_path:?} in CWD {:?} could not be read: {err}",
+                    std::env::current_dir().expect("valid cwd"),
+                )
+            }));
             for arg in args.iter() {
                 crc_digest.update(arg.as_bytes());
             }

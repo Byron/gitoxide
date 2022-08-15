@@ -4,24 +4,29 @@
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
 #![deny(unsafe_code, missing_docs, rust_2018_idioms)]
-#![allow(missing_docs)]
 
 use std::{ops::Range, path::PathBuf};
 
 use filetime::FileTime;
 
+///
 pub mod file;
 
+///
 pub mod extension;
 
+///
 pub mod entry;
 
 mod access;
 
+///
 pub mod decode;
 
+///
 pub mod verify;
 
+///
 pub mod write;
 
 /// All known versions of a git index file.
@@ -39,16 +44,24 @@ pub enum Version {
 /// An entry in the index, identifying a non-tree item on disk.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Entry {
+    /// The filesystem stat information for the file on disk.
     pub stat: entry::Stat,
+    /// The object id for this entry's ODB representation (assuming it's up-to-date with it).
     pub id: git_hash::ObjectId,
+    /// Additional flags for use in algorithms and for efficiently storing stage information.
     pub flags: entry::Flags,
+    /// The kind of item this entry represents - it's not all blobs in the index anymore.
     pub mode: entry::Mode,
+    /// The range to lookup in the path backing to obtain the entry path relative to the repository.
+    /// This costs additional memory but is probably worth it given that paths can stay in one big allocation.
     path: Range<usize>,
 }
 
 /// An index file whose state was read from a file on disk.
 pub struct File {
+    /// The state containing the actual index data.
     pub state: State,
+    /// The path from which the index was read or to which it is supposed to be written.
     pub path: PathBuf,
     /// The checksum of all bytes prior to the checksum itself.
     pub checksum: git_hash::ObjectId,

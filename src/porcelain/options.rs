@@ -35,7 +35,7 @@ pub enum Subcommands {
     #[cfg(feature = "gitoxide-core-tools")]
     /// A selection of useful tools
     #[clap(subcommand)]
-    Tools(ToolCommands),
+    Tool(ToolCommands),
     #[cfg(debug_assertions)]
     Panic,
 }

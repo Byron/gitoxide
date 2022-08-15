@@ -1,8 +1,5 @@
 use std::borrow::Cow;
 
-use git_actor::SignatureRef;
-use git_config::File;
-
 use crate::{bstr::BString, permission};
 
 /// Identity handling.
@@ -15,8 +12,8 @@ impl crate::Repository {
     /// # Note
     ///
     /// The values are cached when the repository is instantiated.
-    pub fn user_default(&self) -> SignatureRef<'_> {
-        SignatureRef {
+    pub fn user_default(&self) -> git_actor::SignatureRef<'_> {
+        git_actor::SignatureRef {
             name: "gitoxide".into(),
             email: "gitoxide@localhost".into(),
             time: git_date::Time::now_local_or_utc(),
@@ -105,7 +102,7 @@ impl Personas {
         fn env_var(name: &str) -> Option<BString> {
             std::env::var_os(name).map(|value| git_path::into_bstr(Cow::Owned(value.into())).into_owned())
         }
-        fn entity_in_section(name: &str, config: &File<'_>) -> (Option<BString>, Option<BString>) {
+        fn entity_in_section(name: &str, config: &git_config::File<'_>) -> (Option<BString>, Option<BString>) {
             config
                 .section(name, None)
                 .map(|section| {
@@ -126,11 +123,15 @@ impl Personas {
         if git_env.eq(&git_sec::Permission::Allow) {
             committer_name = committer_name.or_else(|| env_var("GIT_COMMITTER_NAME"));
             committer_email = committer_email.or_else(|| env_var("GIT_COMMITTER_EMAIL"));
-            committer_date = env_var("GIT_COMMITTER_DATE").and_then(|date| git_date::parse(date.as_ref()));
+            committer_date = std::env::var("GIT_COMMITTER_DATE")
+                .ok()
+                .and_then(|date| git_date::parse(&date));
 
             author_name = author_name.or_else(|| env_var("GIT_AUTHOR_NAME"));
             author_email = author_email.or_else(|| env_var("GIT_AUTHOR_EMAIL"));
-            author_date = env_var("GIT_AUTHOR_DATE").and_then(|date| git_date::parse(date.as_ref()));
+            author_date = std::env::var("GIT_AUTHOR_DATE")
+                .ok()
+                .and_then(|date| git_date::parse(&date));
 
             user_email = user_email.or_else(|| env_var("EMAIL")); // NOTE: we don't have permission for this specific one…
         }

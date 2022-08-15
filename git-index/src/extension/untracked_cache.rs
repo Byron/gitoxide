@@ -9,9 +9,12 @@ use crate::{
     util::{read_u32, split_at_byte_exclusive, split_at_pos, var_int},
 };
 
+/// A structure to track filesystem stat information along with an object id, linking a worktree file with what's in our ODB.
 #[derive(Clone)]
 pub struct OidStat {
+    /// The file system stat information
     pub stat: entry::Stat,
+    /// The id of the file in our ODB.
     pub id: ObjectId,
 }
 
@@ -36,7 +39,8 @@ pub struct Directory {
 /// Only used as an indicator
 pub const SIGNATURE: Signature = *b"UNTR";
 
-#[allow(unused)]
+// #[allow(unused)]
+/// Decode an untracked cache extension from `data`, assuming object hashes are of type `object_hash`.
 pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<UntrackedCache> {
     if !data.last().map(|b| *b == 0).unwrap_or(false) {
         return None;

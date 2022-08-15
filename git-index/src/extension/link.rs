@@ -3,28 +3,32 @@ use crate::{
     util::split_at_pos,
 };
 
+/// The signature of the link extension.
 pub const SIGNATURE: Signature = *b"link";
 
+/// Bitmaps to know which entries to delete or replace, even though details are still unknown.
 #[derive(Clone)]
 pub struct Bitmaps {
+    /// A bitmap to signal which entries to delete, maybe.
     pub delete: git_bitmap::ewah::Vec,
+    /// A bitmap to signal which entries to replace, maybe.
     pub replace: git_bitmap::ewah::Vec,
 }
 
+///
 pub mod decode {
-    use quick_error::quick_error;
 
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Corrupt(message: &'static str) {
-                display("{}", message)
-            }
-            BitmapDecode{err: git_bitmap::ewah::decode::Error, kind: &'static str} {
-                display("{} bitmap corrupt", kind)
-                source(err)
-            }
-        }
+    /// The error returned when decoding link extensions.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("{0}")]
+        Corrupt(&'static str),
+        #[error("{kind} bitmap corrupt")]
+        BitmapDecode {
+            err: git_bitmap::ewah::decode::Error,
+            kind: &'static str,
+        },
     }
 }
 
