@@ -8,6 +8,6 @@ mod traits;
 pub use traits::{SetServiceResponse, Transport, TransportV2Ext};
 
 ///
-pub mod connect {
-    pub use crate::client::non_io_types::connect::Error;
-}
+pub mod connect;
+#[cfg(any(feature = "async-std"))]
+pub use connect::function::connect;

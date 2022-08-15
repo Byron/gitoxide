@@ -55,7 +55,10 @@ impl Service {
 pub mod client;
 
 #[doc(inline)]
-#[cfg(feature = "blocking-client")]
+#[cfg(any(
+    feature = "blocking-client",
+    all(feature = "async-client", any(feature = "async-std"))
+))]
 pub use client::connect;
 
 #[cfg(all(feature = "async-client", feature = "blocking-client"))]

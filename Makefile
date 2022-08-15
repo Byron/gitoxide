@@ -109,6 +109,7 @@ check: ## Build all code in suitable configurations
 	cd git-transport && cargo check \
 					 && cargo check --features blocking-client \
 					 && cargo check --features async-client \
+					 && cargo check --features async-client,async-std \
 					 && cargo check --features http-client-curl
 	cd git-transport && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-protocol && cargo check \

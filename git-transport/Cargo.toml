@@ -70,6 +70,10 @@ curl = { version = "0.4", optional = true, features = ["static-curl", "static-ss
 thiserror = "1.0.26"
 base64 = { version = "0.13.0", optional = true }
 
+## If used in conjunction with `async-client`, the `connect()` method will be come available along with supporting the git protocol over TCP,
+## where the TCP stream is created using this crate.
+async-std = { version = "1.12.0", optional = true }
+
 document-features = { version = "0.2.0", optional = true }
 
 [dev-dependencies]

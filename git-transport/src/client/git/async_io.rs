@@ -119,3 +119,37 @@ where
         }
     }
 }
+
+#[cfg(feature = "async-std")]
+mod async_net {
+    use crate::client::git;
+    use crate::client::Error;
+    use async_std::net::TcpStream;
+    use std::time::Duration;
+
+    impl git::Connection<TcpStream, TcpStream> {
+        /// Create a new TCP connection using the `git` protocol of `desired_version`, and make a connection to `host`
+        /// at `port` for accessing the repository at `path` on the server side.
+        pub async fn new_tcp(
+            host: &str,
+            port: Option<u16>,
+            path: bstr::BString,
+            desired_version: crate::Protocol,
+        ) -> Result<git::Connection<TcpStream, TcpStream>, Error> {
+            let read = async_std::io::timeout(
+                Duration::from_secs(5),
+                TcpStream::connect(&(host, port.unwrap_or(9418))),
+            )
+            .await?;
+            let write = read.clone();
+            Ok(git::Connection::new(
+                read,
+                write,
+                desired_version,
+                path,
+                None::<(String, _)>,
+                git::ConnectMode::Daemon,
+            ))
+        }
+    }
+}
