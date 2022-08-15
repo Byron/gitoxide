@@ -91,7 +91,10 @@ mod async_io {
         Ok(match url.scheme {
             git_repository::url::Scheme::Git => {
                 if url.user().is_some() {
-                    return Err(Error::UnsupportedUrlTokens(urlb.into(), url.scheme));
+                    return Err(Error::UnsupportedUrlTokens {
+                        url: urlb.into(),
+                        scheme: url.scheme,
+                    });
                 }
                 let path = std::mem::take(&mut url.path);
                 git_connect(
