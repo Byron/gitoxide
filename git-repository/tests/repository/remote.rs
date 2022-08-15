@@ -12,12 +12,28 @@ mod remote_at {
         assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring(), fetch_url);
         assert_eq!(remote.url(Direction::Push).unwrap().to_bstring(), fetch_url);
 
-        let remote = remote.push_url("user@host.xz:./relative")?;
+        let mut remote = remote.push_url("user@host.xz:./relative")?;
         assert_eq!(
             remote.url(Direction::Push).unwrap().to_bstring(),
             "ssh://user@host.xz/relative"
         );
         assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring(), fetch_url);
+
+        for (spec, direction) in [
+            ("refs/heads/push", Direction::Push),
+            ("refs/heads/fetch", Direction::Fetch),
+        ] {
+            assert_eq!(
+                remote.refspecs(direction),
+                &[],
+                "no specs are preset for newly created remotes"
+            );
+            remote = remote.with_refspec(spec, direction)?;
+            assert_eq!(remote.refspecs(direction).len(), 1, "the new refspec was added");
+
+            remote = remote.with_refspec(spec, direction)?;
+            assert_eq!(remote.refspecs(direction).len(), 1, "duplicates are disallowed");
+        }
 
         Ok(())
     }

@@ -1,3 +1,4 @@
+use crate::bstr::BStr;
 use crate::{remote, Remote};
 use std::convert::TryInto;
 
@@ -37,6 +38,31 @@ impl Remote<'_> {
             .unwrap_or(Ok((None, None)))?;
         self.push_url_alias = push_url_alias;
 
+        Ok(self)
+    }
+
+    /// Add `spec` as refspec for `direction` to our list if it's unique.
+    pub fn with_refspec<'a>(
+        mut self,
+        spec: impl Into<&'a BStr>,
+        direction: remote::Direction,
+    ) -> Result<Self, git_refspec::parse::Error> {
+        use remote::Direction::*;
+        let spec = git_refspec::parse(
+            spec.into(),
+            match direction {
+                Push => git_refspec::parse::Operation::Push,
+                Fetch => git_refspec::parse::Operation::Fetch,
+            },
+        )?
+        .to_owned();
+        let specs = match direction {
+            Push => &mut self.push_specs,
+            Fetch => &mut self.fetch_specs,
+        };
+        if !specs.contains(&spec) {
+            specs.push(spec);
+        }
         Ok(self)
     }
 }
