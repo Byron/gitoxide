@@ -7,6 +7,7 @@ pub enum Direction {
     Fetch,
 }
 
+mod build;
 mod create;
 mod errors;
 pub use errors::{find, init};
