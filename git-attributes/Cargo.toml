@@ -18,7 +18,7 @@ serde1 = ["serde", "bstr/serde1", "git-glob/serde1", "compact_str/serde"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-features = { version = "^0.22.0", path = "../git-features" }
+git-features = { version = "^0.22.1", path = "../git-features" }
 git-path = { version = "^0.4.0", path = "../git-path" }
 git-quote = { version = "^0.2.0", path = "../git-quote" }
 git-glob = { version = "^0.3.1", path = "../git-glob" }

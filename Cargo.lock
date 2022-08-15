@@ -1214,7 +1214,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "bstr",
  "bytes",
@@ -1253,7 +1253,7 @@ dependencies = [
 
 [[package]]
 name = "git-hash"
-version = "0.9.6"
+version = "0.9.7"
 dependencies = [
  "document-features",
  "git-testtools",

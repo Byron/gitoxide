@@ -32,8 +32,8 @@ internal-testing-to-avoid-being-run-by-cargo-test-all = []
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-features = { version = "^0.22.0", path = "../git-features", features = ["rustsha1", "progress"] }
-git-hash = { version = "^0.9.6", path = "../git-hash" }
+git-features = { version = "^0.22.1", path = "../git-features", features = ["rustsha1", "progress"] }
+git-hash = { version = "^0.9.7", path = "../git-hash" }
 git-bitmap = { version = "^0.1.0", path = "../git-bitmap" }
 git-object = { version = "^0.20.0", path = "../git-object" }
 
