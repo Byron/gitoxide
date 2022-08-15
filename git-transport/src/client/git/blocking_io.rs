@@ -1,4 +1,4 @@
-use std::{io, io::Write};
+use std::io::Write;
 
 use bstr::BString;
 use git_packetline::PacketLineRef;
@@ -10,8 +10,8 @@ use crate::{
 
 impl<R, W> client::TransportWithoutIO for git::Connection<R, W>
 where
-    R: io::Read,
-    W: io::Write,
+    R: std::io::Read,
+    W: std::io::Write,
 {
     fn request(
         &mut self,
@@ -57,8 +57,8 @@ where
 
 impl<R, W> client::Transport for git::Connection<R, W>
 where
-    R: io::Read,
-    W: io::Write,
+    R: std::io::Read,
+    W: std::io::Write,
 {
     fn handshake<'a>(
         &mut self,
@@ -92,8 +92,8 @@ where
 
 impl<R, W> git::Connection<R, W>
 where
-    R: io::Read,
-    W: io::Write,
+    R: std::io::Read,
+    W: std::io::Write,
 {
     /// Create a connection from the given `read` and `write`, asking for `desired_version` as preferred protocol
     /// and the transfer of the repository at `repository_path`.
@@ -137,29 +137,19 @@ where
 
 ///
 pub mod connect {
-    use std::{
-        io,
-        net::{TcpStream, ToSocketAddrs},
-    };
+    use std::net::{TcpStream, ToSocketAddrs};
 
     use bstr::BString;
-    use quick_error::quick_error;
 
     use crate::client::git;
-    quick_error! {
-        /// The error used in [`connect()`].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Io(err: io::Error){
-                display("An IO error occurred when connecting to the server")
-                from()
-                source(err)
-            }
-            VirtualHostInvalid(host: String) {
-                display("Could not parse '{}' as virtual host with format <host>[:port]", host)
-            }
-        }
+    /// The error used in [`connect()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("An IO error occurred when connecting to the server")]
+        Io(#[from] std::io::Error),
+        #[error("Could not parse {host:?} as virtual host with format <host>[:port]")]
+        VirtualHostInvalid { host: String },
     }
 
     fn parse_host(input: String) -> Result<(String, Option<u16>), Error> {
@@ -168,7 +158,7 @@ pub mod connect {
             (Some(host), None) => (host.to_owned(), None),
             (Some(host), Some(port)) => (
                 host.to_owned(),
-                Some(port.parse().map_err(|_| Error::VirtualHostInvalid(input))?),
+                Some(port.parse().map_err(|_| Error::VirtualHostInvalid { host: input })?),
             ),
             _ => unreachable!("we expect at least one token, the original string"),
         })

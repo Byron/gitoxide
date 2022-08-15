@@ -1646,7 +1646,6 @@ dependencies = [
  "git-url",
  "maybe-async",
  "pin-project-lite",
- "quick-error",
  "serde",
  "thiserror",
 ]

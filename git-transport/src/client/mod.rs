@@ -18,7 +18,7 @@ pub use blocking_io::{
 };
 #[cfg(feature = "blocking-client")]
 #[doc(inline)]
-pub use connect::connect;
+pub use connect::function::connect;
 
 ///
 pub mod capabilities;

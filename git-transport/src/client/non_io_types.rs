@@ -29,39 +29,28 @@ pub enum MessageKind {
     Text(&'static [u8]),
 }
 
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub(crate) mod connect {
-    use quick_error::quick_error;
-    quick_error! {
-        /// The error used in [`connect()`][crate::connect()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Url(err: git_url::parse::Error) {
-                display("The URL could not be parsed")
-                from()
-                source(err)
-            }
-            PathConversion(err: bstr::Utf8Error) {
-                display("The git repository paths could not be converted to UTF8")
-                from()
-                source(err)
-            }
-            Connection(err: Box<dyn std::error::Error + Send + Sync>) {
-                display("connection failed")
-                from()
-                source(&**err)
-            }
-            UnsupportedUrlTokens(url: bstr::BString, scheme: git_url::Scheme) {
-                display("The url '{}' contains information that would not be used by the '{}' protocol", url, scheme)
-            }
-            UnsupportedScheme(scheme: git_url::Scheme) {
-                display("The '{}' protocol is currently unsupported", scheme)
-            }
-            #[cfg(not(feature = "http-client-curl"))]
-            CompiledWithoutHttp(scheme: git_url::Scheme) {
-                display("'{}' is not compiled in. Compile with the 'http-client-curl' cargo feature", scheme)
-            }
-        }
+    /// The error used in [`connect()`][crate::connect()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Url(#[from] git_url::parse::Error),
+        #[error("The git repository path could not be converted to UTF8")]
+        PathConversion(#[from] bstr::Utf8Error),
+        #[error("connection failed")]
+        Connection(#[from] Box<dyn std::error::Error + Send + Sync>),
+        #[error("The url {url:?} contains information that would not be used by the {scheme} protocol")]
+        UnsupportedUrlTokens {
+            url: bstr::BString,
+            scheme: git_url::Scheme,
+        },
+        #[error("The '{0}' protocol is currently unsupported")]
+        UnsupportedScheme(git_url::Scheme),
+        #[cfg(not(feature = "http-client-curl"))]
+        #[error("'{0}' is not compiled in. Compile with the 'http-client-curl' cargo feature")]
+        CompiledWithoutHttp(git_url::Scheme),
     }
 }
 

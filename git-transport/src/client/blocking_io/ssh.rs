@@ -1,19 +1,15 @@
 use std::borrow::Cow;
 
 use bstr::BString;
-use quick_error::quick_error;
 
 use crate::{client::blocking_io, Protocol};
 
-quick_error! {
-    /// The error used in [`connect()`].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        UnsupportedSshCommand(command: String) {
-            display("The ssh command '{}' is not currently supported", command)
-        }
-    }
+/// The error used in [`connect()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("The ssh command {0:?} is not currently supported")]
+    UnsupportedSshCommand(String),
 }
 
 /// Connect to `host` using the ssh program to obtain data from the repository at `path` on the remote.
