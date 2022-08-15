@@ -150,6 +150,8 @@ unit-tests: ## run all unit tests
 					&& cargo test --features async-client \
 					&& cargo test
 	cd git-repository && cargo test \
+					&& cargo test --features async-network-client \
+					&& cargo test --features blocking-network-client \
 					&& cargo test --features regex
 	cd gitoxide-core && cargo test --lib
 
