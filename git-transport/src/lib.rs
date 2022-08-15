@@ -10,6 +10,7 @@
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 
+pub use bstr;
 pub use git_packetline as packetline;
 
 /// The version of the way client and server communicate.
@@ -17,8 +18,17 @@ pub use git_packetline as packetline;
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum Protocol {
+    /// Version 1 was the first one conceived, is stateful, and our implementation was seen to cause deadlocks. Prefer V2
     V1 = 1,
+    /// A command-based and stateless protocol with clear semantics, and the one to use assuming the server isn't very old.
+    /// This is the default.
     V2 = 2,
+}
+
+impl Default for Protocol {
+    fn default() -> Self {
+        Protocol::V2
+    }
 }
 
 /// The kind of service to invoke on the client or the server side.

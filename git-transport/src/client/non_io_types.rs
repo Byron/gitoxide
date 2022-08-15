@@ -32,7 +32,7 @@ pub enum MessageKind {
 pub(crate) mod connect {
     use quick_error::quick_error;
     quick_error! {
-        /// The error used in [`connect()`].
+        /// The error used in [`connect()`][crate::connect()].
         #[derive(Debug)]
         #[allow(missing_docs)]
         pub enum Error {
