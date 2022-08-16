@@ -4,7 +4,6 @@ pub use crate::client::non_io_types::connect::Error;
 pub(crate) mod function {
     use crate::client::git;
     use crate::client::non_io_types::connect::Error;
-    use bstr::BStr;
     use std::convert::TryInto;
 
     /// A general purpose connector connecting to a repository identified by the given `url`.
@@ -14,7 +13,7 @@ pub(crate) mod function {
     ///
     /// Use `desired_version` to set the desired protocol version to use when connecting, but note that the server may downgrade it.
     pub async fn connect<Url, E>(
-        url: &BStr,
+        url: Url,
         desired_version: crate::Protocol,
     ) -> Result<impl crate::client::Transport + Send, Error>
     where
@@ -26,7 +25,7 @@ pub(crate) mod function {
             git_url::Scheme::Git => {
                 if url.user().is_some() {
                     return Err(Error::UnsupportedUrlTokens {
-                        url: urlb.into(),
+                        url: url.to_bstring(),
                         scheme: url.scheme,
                     });
                 }
