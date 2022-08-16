@@ -5,7 +5,7 @@ use git_transport::client;
 use crate::fetch::handshake;
 use crate::fetch::{refs, response};
 
-/// The error used in [`fetch()`][super::fetch].
+/// The error used in [`fetch()`][crate::fetch()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -15,8 +15,6 @@ pub enum Error {
     Io(#[from] io::Error),
     #[error(transparent)]
     Transport(#[from] client::Error),
-    #[error("A symref 'capability' is expected to have a value")]
-    SymrefWithoutValue,
     #[error(transparent)]
     Refs(#[from] refs::Error),
     #[error(transparent)]

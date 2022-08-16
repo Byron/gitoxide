@@ -3,7 +3,7 @@ use bstr::BString;
 mod error {
     use crate::fetch::refs::parse;
 
-    /// The error returned by [refs()][super::refs()].
+    /// The error returned by [refs()][crate::fetch::refs()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

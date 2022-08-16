@@ -16,7 +16,7 @@ mod error {
     use crate::fetch::refs;
     use git_transport::client;
 
-    /// The error returned by [`handshake()`][super::handshake()].
+    /// The error returned by [`handshake()`][crate::fetch::handshake()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
