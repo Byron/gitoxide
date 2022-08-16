@@ -29,12 +29,12 @@ pub async fn refs(
     );
 
     let ls_refs = Command::LsRefs;
-    let mut ls_features = ls_refs.default_features(protocol_version, &capabilities);
+    let mut ls_features = ls_refs.default_features(protocol_version, capabilities);
     let mut ls_args = ls_refs.initial_arguments(&ls_features);
-    let refs = match prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features) {
+    let refs = match prepare_ls_refs(capabilities, &mut ls_args, &mut ls_features) {
         Ok(LsRefsAction::Skip) => Vec::new(),
         Ok(LsRefsAction::Continue) => {
-            ls_refs.validate_argument_prefixes_or_panic(protocol_version, &capabilities, &ls_args, &ls_features);
+            ls_refs.validate_argument_prefixes_or_panic(protocol_version, capabilities, &ls_args, &ls_features);
 
             progress.step();
             progress.set_name("list refs");
