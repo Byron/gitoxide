@@ -25,5 +25,10 @@ pub use refs::Ref;
 pub mod response;
 pub use response::Response;
 
+///
+pub mod handshake;
+
+pub use handshake::function::handshake;
+
 #[cfg(test)]
 mod tests;
