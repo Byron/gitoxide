@@ -10,6 +10,11 @@
 #![forbid(unsafe_code)]
 #![deny(rust_2018_idioms, missing_docs)]
 
+#[cfg(feature = "async-trait")]
+pub use async_trait;
+#[cfg(feature = "futures-io")]
+pub use futures_io;
+
 pub use bstr;
 pub use git_packetline as packetline;
 
