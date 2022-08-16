@@ -1,48 +1,28 @@
 use std::io;
 
 use git_transport::client;
-use quick_error::quick_error;
 
 use crate::{
     credentials,
     fetch::{refs, response},
 };
 
-quick_error! {
-    /// The error used in [`fetch()`][super::fetch].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        Io(err: io::Error) {
-            display("Could not access repository or failed to read streaming pack file")
-            from()
-            source(err)
-        }
-        Credentials(err: credentials::helper::Error) {
-            display("Failed to obtain, approve or reject credentials")
-            from()
-            source(err)
-        }
-        Transport(err: client::Error) {
-            display("An error occurred on the transport layer while fetching data")
-            from()
-            source(err)
-        }
-        SymrefWithoutValue {
-            display("A symref 'capability' is expected to have a value")
-        }
-        TransportProtocolPolicyViolation{actual_version: git_transport::Protocol} {
-            display("The transport didn't accept the advertised server version {:?} and closed the connection client side", actual_version)
-        }
-        Ref(err: refs::Error) {
-            display("A reference could not be parsed or invariants were not met")
-            from()
-            source(err)
-        }
-        Response(err: response::Error) {
-            display("The server response could not be parsed")
-            from()
-            source(err)
-        }
-    }
+/// The error used in [`fetch()`][super::fetch].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Could not access repository or failed to read streaming pack file")]
+    Io(#[from] io::Error),
+    #[error(transparent)]
+    Credentials(#[from] credentials::helper::Error),
+    #[error(transparent)]
+    Transport(#[from] client::Error),
+    #[error("A symref 'capability' is expected to have a value")]
+    SymrefWithoutValue,
+    #[error("The transport didn't accept the advertised server version {actual_version:?} and closed the connection client side")]
+    TransportProtocolPolicyViolation { actual_version: git_transport::Protocol },
+    #[error(transparent)]
+    Ref(#[from] refs::Error),
+    #[error(transparent)]
+    Response(#[from] response::Error),
 }

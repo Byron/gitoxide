@@ -1,39 +1,25 @@
 use std::io;
 
 use bstr::BString;
-use quick_error::quick_error;
 
-quick_error! {
-    /// The error returned when parsing References/refs from the server response.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        Io(err: io::Error) {
-            display("An IO error occurred while reading refs from the server")
-            from()
-            source(err)
-        }
-        Id(err: git_hash::decode::Error) {
-            display("Failed to hex-decode object hash")
-            from()
-            source(err)
-        }
-        MalformedSymref(symref: BString) {
-            display("'{}' could not be parsed. A symref is expected to look like <NAME>:<target>.", symref)
-        }
-        MalformedV1RefLine(line: String) {
-            display("'{}' could not be parsed. A V1 ref line should be '<hex-hash> <path>'.", line)
-        }
-        MalformedV2RefLine(line: String) {
-            display("'{}' could not be parsed. A V2 ref line should be '<hex-hash> <path>[ (peeled|symref-target):<value>'.", line)
-        }
-        UnkownAttribute(attribute: String, line: String) {
-            display("The ref attribute '{}' is unknown. Found in line '{}'", attribute, line)
-        }
-        InvariantViolation(message: &'static str) {
-            display("{}", message)
-        }
-    }
+/// The error returned when parsing References/refs from the server response.
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    Io(#[from] io::Error),
+    #[error(transparent)]
+    Id(#[from] git_hash::decode::Error),
+    #[error("{symref:?} could not be parsed. A symref is expected to look like <NAME>:<target>.")]
+    MalformedSymref { symref: BString },
+    #[error("{0:?} could not be parsed. A V1 ref line should be '<hex-hash> <path>'.")]
+    MalformedV1RefLine(String),
+    #[error("{0:?} could not be parsed. A V2 ref line should be '<hex-hash> <path>[ (peeled|symref-target):<value>'.")]
+    MalformedV2RefLine(String),
+    #[error("The ref attribute {attribute:?} is unknown. Found in line {line:?}")]
+    UnkownAttribute { attribute: String, line: String },
+    #[error("{message}")]
+    InvariantViolation { message: &'static str },
 }
 
 /// A git reference, commonly referred to as 'ref', as returned by a git server before sending a pack.
@@ -158,13 +144,14 @@ pub(crate) mod shared {
             }
         });
         for symref in symref_values {
-            let (left, right) = symref.split_at(
-                symref
-                    .find_byte(b':')
-                    .ok_or_else(|| refs::Error::MalformedSymref(symref.to_owned()))?,
-            );
+            let (left, right) =
+                symref.split_at(symref.find_byte(b':').ok_or_else(|| refs::Error::MalformedSymref {
+                    symref: symref.to_owned(),
+                })?);
             if left.is_empty() || right.is_empty() {
-                return Err(refs::Error::MalformedSymref(symref.to_owned()));
+                return Err(refs::Error::MalformedSymref {
+                    symref: symref.to_owned(),
+                });
             }
             out_refs.push(InternalRef::SymbolicForLookup {
                 path: left.into(),
@@ -198,13 +185,13 @@ pub(crate) mod shared {
                     out_refs
                         .pop()
                         .and_then(InternalRef::unpack_direct)
-                        .ok_or(refs::Error::InvariantViolation(
-                            "Expecting peeled refs to be preceded by direct refs",
-                        ))?;
+                        .ok_or(refs::Error::InvariantViolation {
+                            message: "Expecting peeled refs to be preceded by direct refs",
+                        })?;
                 if previous_path != stripped {
-                    return Err(refs::Error::InvariantViolation(
-                        "Expecting peeled refs to have the same base path as the previous, unpeeled one",
-                    ));
+                    return Err(refs::Error::InvariantViolation {
+                        message: "Expecting peeled refs to have the same base path as the previous, unpeeled one",
+                    });
                 }
                 out_refs.push(InternalRef::Peeled {
                     path: previous_path,
@@ -271,7 +258,10 @@ pub(crate) mod shared {
                                     },
                                 },
                                 _ => {
-                                    return Err(refs::Error::UnkownAttribute(attribute.to_owned(), trimmed.to_owned()))
+                                    return Err(refs::Error::UnkownAttribute {
+                                        attribute: attribute.to_owned(),
+                                        line: trimmed.to_owned(),
+                                    })
                                 }
                             }
                         }

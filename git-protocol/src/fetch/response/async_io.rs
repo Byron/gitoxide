@@ -121,7 +121,7 @@ impl Response {
                             // what follows is the packfile itself, which can be read with a sideband enabled reader
                             break 'section true;
                         }
-                        _ => return Err(response::Error::UnknownSectionHeader(line)),
+                        _ => return Err(response::Error::UnknownSectionHeader { header: line }),
                     }
                 };
                 Ok(Response {

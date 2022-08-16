@@ -1445,7 +1445,6 @@ dependencies = [
  "git-transport",
  "maybe-async",
  "nom",
- "quick-error",
  "serde",
  "thiserror",
 ]
