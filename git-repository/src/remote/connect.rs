@@ -1,8 +1,7 @@
 #![allow(missing_docs)]
 
 use crate::remote::Connection;
-use crate::{remote, Remote};
-use git_protocol::transport;
+use crate::Remote;
 use git_protocol::transport::client::Transport;
 
 mod error {
@@ -42,7 +41,7 @@ impl<'repo> Remote<'repo> {
     #[cfg(feature = "blocking-network-client")]
     pub fn into_connection(
         self,
-        direction: remote::Direction,
+        direction: crate::remote::Direction,
     ) -> Result<Connection<'repo, Box<dyn Transport + Send>>, Error> {
         use git_protocol::transport::Protocol;
         let protocol = self
@@ -65,7 +64,7 @@ impl<'repo> Remote<'repo> {
             })?;
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
-        let transport = transport::connect(url, protocol)?;
+        let transport = git_protocol::transport::connect(url, protocol)?;
         Ok(self.into_connection_with_transport(transport))
     }
 }
