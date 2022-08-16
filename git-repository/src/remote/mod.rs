@@ -18,8 +18,10 @@ impl Direction {
 }
 
 mod build;
-mod create;
 mod errors;
+///
+pub mod init;
+
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
 pub mod connect {
     #![allow(missing_docs)]
@@ -108,7 +110,7 @@ mod connection {
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
 pub use connection::Connection;
 
-pub use errors::{find, init};
+pub use errors::find;
 
 mod access;
 pub(crate) mod url;

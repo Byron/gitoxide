@@ -1,23 +1,4 @@
 ///
-pub mod init {
-    use crate::bstr::BString;
-
-    /// The error returned by [`Repository::remote_at(…)`][crate::Repository::remote_at()].
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        Url(#[from] git_url::parse::Error),
-        #[error("The rewritten {kind} url {rewritten_url:?} failed to parse")]
-        RewrittenUrlInvalid {
-            kind: &'static str,
-            rewritten_url: BString,
-            source: git_url::parse::Error,
-        },
-    }
-}
-
-///
 pub mod find {
     use crate::bstr::BString;
     use crate::remote;

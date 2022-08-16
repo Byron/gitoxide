@@ -34,7 +34,7 @@ impl Remote<'_> {
         self.push_url = push_url.into();
 
         let (_, push_url_alias) = should_rewrite_urls
-            .then(|| remote::create::rewrite_urls(&self.repo.config, None, self.push_url.as_ref()))
+            .then(|| remote::init::rewrite_urls(&self.repo.config, None, self.push_url.as_ref()))
             .unwrap_or(Ok((None, None)))?;
         self.push_url_alias = push_url_alias;
 

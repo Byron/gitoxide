@@ -41,8 +41,7 @@ impl Remote<'_> {
     /// This happens only once, and one if them may be changed even when reporting an error.
     /// If both urls fail, only the first error (for fetch urls) is reported.
     pub fn rewrite_urls(&mut self) -> Result<&mut Self, remote::init::Error> {
-        let url_err = match remote::create::rewrite_url(&self.repo.config, self.url.as_ref(), remote::Direction::Fetch)
-        {
+        let url_err = match remote::init::rewrite_url(&self.repo.config, self.url.as_ref(), remote::Direction::Fetch) {
             Ok(url) => {
                 self.url_alias = url;
                 None
@@ -50,7 +49,7 @@ impl Remote<'_> {
             Err(err) => err.into(),
         };
         let push_url_err =
-            match remote::create::rewrite_url(&self.repo.config, self.push_url.as_ref(), remote::Direction::Push) {
+            match remote::init::rewrite_url(&self.repo.config, self.push_url.as_ref(), remote::Direction::Push) {
                 Ok(url) => {
                     self.push_url_alias = url;
                     None
