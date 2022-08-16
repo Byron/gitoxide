@@ -1,6 +1,6 @@
 use bstr::{BString, ByteSlice};
 
-use crate::fetch::{refs, Ref};
+use crate::fetch::{refs::parse::Error, Ref};
 
 impl From<InternalRef> for Ref {
     fn from(v: InternalRef) -> Self {
@@ -63,7 +63,7 @@ impl InternalRef {
 
 pub(crate) fn from_capabilities<'a>(
     capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
-) -> Result<Vec<InternalRef>, refs::Error> {
+) -> Result<Vec<InternalRef>, Error> {
     let mut out_refs = Vec::new();
     let symref_values = capabilities.filter_map(|c| {
         if c.name() == b"symref".as_bstr() {
@@ -73,11 +73,11 @@ pub(crate) fn from_capabilities<'a>(
         }
     });
     for symref in symref_values {
-        let (left, right) = symref.split_at(symref.find_byte(b':').ok_or_else(|| refs::Error::MalformedSymref {
+        let (left, right) = symref.split_at(symref.find_byte(b':').ok_or_else(|| Error::MalformedSymref {
             symref: symref.to_owned(),
         })?);
         if left.is_empty() || right.is_empty() {
-            return Err(refs::Error::MalformedSymref {
+            return Err(Error::MalformedSymref {
                 symref: symref.to_owned(),
             });
         }
@@ -96,16 +96,16 @@ pub(in crate::fetch::refs) fn parse_v1(
     num_initial_out_refs: usize,
     out_refs: &mut Vec<InternalRef>,
     line: &str,
-) -> Result<(), refs::Error> {
+) -> Result<(), Error> {
     let trimmed = line.trim_end();
     let (hex_hash, path) = trimmed.split_at(
         trimmed
             .find(' ')
-            .ok_or_else(|| refs::Error::MalformedV1RefLine(trimmed.to_owned()))?,
+            .ok_or_else(|| Error::MalformedV1RefLine(trimmed.to_owned()))?,
     );
     let path = &path[1..];
     if path.is_empty() {
-        return Err(refs::Error::MalformedV1RefLine(trimmed.to_owned()));
+        return Err(Error::MalformedV1RefLine(trimmed.to_owned()));
     }
     match path.strip_suffix("^{}") {
         Some(stripped) => {
@@ -113,11 +113,11 @@ pub(in crate::fetch::refs) fn parse_v1(
                 out_refs
                     .pop()
                     .and_then(InternalRef::unpack_direct)
-                    .ok_or(refs::Error::InvariantViolation {
+                    .ok_or(Error::InvariantViolation {
                         message: "Expecting peeled refs to be preceded by direct refs",
                     })?;
             if previous_path != stripped {
-                return Err(refs::Error::InvariantViolation {
+                return Err(Error::InvariantViolation {
                     message: "Expecting peeled refs to have the same base path as the previous, unpeeled one",
                 });
             }
@@ -152,21 +152,21 @@ pub(in crate::fetch::refs) fn parse_v1(
     Ok(())
 }
 
-pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, refs::Error> {
+pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
     let trimmed = line.trim_end();
     let mut tokens = trimmed.splitn(3, ' ');
     match (tokens.next(), tokens.next()) {
         (Some(hex_hash), Some(path)) => {
             let id = git_hash::ObjectId::from_hex(hex_hash.as_bytes())?;
             if path.is_empty() {
-                return Err(refs::Error::MalformedV2RefLine(trimmed.to_owned()));
+                return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
             }
             Ok(if let Some(attribute) = tokens.next() {
                 let mut tokens = attribute.splitn(2, ':');
                 match (tokens.next(), tokens.next()) {
                     (Some(attribute), Some(value)) => {
                         if value.is_empty() {
-                            return Err(refs::Error::MalformedV2RefLine(trimmed.to_owned()));
+                            return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
                         }
                         match attribute {
                             "peeled" => Ref::Peeled {
@@ -186,14 +186,14 @@ pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, refs::Error> {
                                 },
                             },
                             _ => {
-                                return Err(refs::Error::UnkownAttribute {
+                                return Err(Error::UnkownAttribute {
                                     attribute: attribute.to_owned(),
                                     line: trimmed.to_owned(),
                                 })
                             }
                         }
                     }
-                    _ => return Err(refs::Error::MalformedV2RefLine(trimmed.to_owned())),
+                    _ => return Err(Error::MalformedV2RefLine(trimmed.to_owned())),
                 }
             } else {
                 Ref::Direct {
@@ -202,6 +202,6 @@ pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, refs::Error> {
                 }
             })
         }
-        _ => Err(refs::Error::MalformedV2RefLine(trimmed.to_owned())),
+        _ => Err(Error::MalformedV2RefLine(trimmed.to_owned())),
     }
 }

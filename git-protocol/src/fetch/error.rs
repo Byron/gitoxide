@@ -18,7 +18,7 @@ pub enum Error {
     #[error("A symref 'capability' is expected to have a value")]
     SymrefWithoutValue,
     #[error(transparent)]
-    Ref(#[from] refs::Error),
+    Ref(#[from] refs::parse::Error),
     #[error(transparent)]
     Response(#[from] response::Error),
 }

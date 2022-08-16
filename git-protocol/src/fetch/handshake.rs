@@ -27,7 +27,7 @@ mod error {
         #[error("The transport didn't accept the advertised server version {actual_version:?} and closed the connection client side")]
         TransportProtocolPolicyViolation { actual_version: git_transport::Protocol },
         #[error(transparent)]
-        ParseRefs(#[from] refs::Error),
+        ParseRefs(#[from] refs::parse::Error),
     }
 }
 pub use error::Error;

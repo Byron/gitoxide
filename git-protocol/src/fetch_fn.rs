@@ -121,7 +121,7 @@ where
             return if matches!(protocol_version, git_transport::Protocol::V1)
                 || matches!(fetch_mode, FetchConnection::TerminateOnSuccessfulCompletion)
             {
-                indicate_end_of_interaction(transport).await
+                indicate_end_of_interaction(transport).await.map_err(Into::into)
             } else {
                 Ok(())
             };
@@ -174,7 +174,9 @@ where
 }
 
 #[maybe_async]
-async fn indicate_end_of_interaction(mut transport: impl client::Transport) -> Result<(), Error> {
+pub(crate) async fn indicate_end_of_interaction(
+    mut transport: impl client::Transport,
+) -> Result<(), git_transport::client::Error> {
     // An empty request marks the (early) end of the interaction. Only relevant in stateful transports though.
     if transport.connection_persists_across_multiple_requests() {
         transport

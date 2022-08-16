@@ -1,25 +1,47 @@
-use std::io;
-
 use bstr::BString;
 
-/// The error returned when parsing References/refs from the server response.
-#[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
-pub enum Error {
-    #[error(transparent)]
-    Io(#[from] io::Error),
-    #[error(transparent)]
-    Id(#[from] git_hash::decode::Error),
-    #[error("{symref:?} could not be parsed. A symref is expected to look like <NAME>:<target>.")]
-    MalformedSymref { symref: BString },
-    #[error("{0:?} could not be parsed. A V1 ref line should be '<hex-hash> <path>'.")]
-    MalformedV1RefLine(String),
-    #[error("{0:?} could not be parsed. A V2 ref line should be '<hex-hash> <path>[ (peeled|symref-target):<value>'.")]
-    MalformedV2RefLine(String),
-    #[error("The ref attribute {attribute:?} is unknown. Found in line {line:?}")]
-    UnkownAttribute { attribute: String, line: String },
-    #[error("{message}")]
-    InvariantViolation { message: &'static str },
+mod error {
+    use crate::fetch::refs::parse;
+
+    /// The error returned by [refs()][super::refs()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Io(#[from] std::io::Error),
+        #[error(transparent)]
+        Transport(#[from] git_transport::client::Error),
+        #[error(transparent)]
+        Parse(#[from] parse::Error),
+    }
+}
+pub use error::Error;
+
+///
+pub mod parse {
+    use bstr::BString;
+
+    /// The error returned when parsing References/refs from the server response.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Io(#[from] std::io::Error),
+        #[error(transparent)]
+        Id(#[from] git_hash::decode::Error),
+        #[error("{symref:?} could not be parsed. A symref is expected to look like <NAME>:<target>.")]
+        MalformedSymref { symref: BString },
+        #[error("{0:?} could not be parsed. A V1 ref line should be '<hex-hash> <path>'.")]
+        MalformedV1RefLine(String),
+        #[error(
+            "{0:?} could not be parsed. A V2 ref line should be '<hex-hash> <path>[ (peeled|symref-target):<value>'."
+        )]
+        MalformedV2RefLine(String),
+        #[error("The ref attribute {attribute:?} is unknown. Found in line {line:?}")]
+        UnkownAttribute { attribute: String, line: String },
+        #[error("{message}")]
+        InvariantViolation { message: &'static str },
+    }
 }
 
 /// A git reference, commonly referred to as 'ref', as returned by a git server before sending a pack.
@@ -66,6 +88,9 @@ impl Ref {
         }
     }
 }
+
+pub(crate) mod function;
+pub use function::refs;
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub(crate) mod shared;

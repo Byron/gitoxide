@@ -1,10 +1,10 @@
 use futures_io::AsyncBufRead;
 use futures_lite::AsyncBufReadExt;
 
-use crate::fetch::{refs, Ref};
+use crate::fetch::{refs, refs::parse::Error, Ref};
 
 /// Parse refs from the given input line by line. Protocol V2 is required for this to succeed.
-pub async fn from_v2_refs(in_refs: &mut (dyn AsyncBufRead + Unpin)) -> Result<Vec<Ref>, refs::Error> {
+pub async fn from_v2_refs(in_refs: &mut (dyn AsyncBufRead + Unpin)) -> Result<Vec<Ref>, Error> {
     let mut out_refs = Vec::new();
     let mut line = String::new();
     loop {
@@ -29,7 +29,7 @@ pub async fn from_v2_refs(in_refs: &mut (dyn AsyncBufRead + Unpin)) -> Result<Ve
 pub async fn from_v1_refs_received_as_part_of_handshake_and_capabilities<'a>(
     in_refs: &mut (dyn AsyncBufRead + Unpin),
     capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
-) -> Result<Vec<Ref>, refs::Error> {
+) -> Result<Vec<Ref>, refs::parse::Error> {
     let mut out_refs = refs::shared::from_capabilities(capabilities)?;
     let number_of_possible_symbolic_refs_for_lookup = out_refs.len();
     let mut line = String::new();

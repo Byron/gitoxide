@@ -1,9 +1,10 @@
 use std::io;
 
+use crate::fetch::refs::parse::Error;
 use crate::fetch::{refs, Ref};
 
 /// Parse refs from the given input line by line. Protocol V2 is required for this to succeed.
-pub fn from_v2_refs(in_refs: &mut dyn io::BufRead) -> Result<Vec<Ref>, refs::Error> {
+pub fn from_v2_refs(in_refs: &mut dyn io::BufRead) -> Result<Vec<Ref>, Error> {
     let mut out_refs = Vec::new();
     let mut line = String::new();
     loop {
@@ -28,7 +29,7 @@ pub fn from_v2_refs(in_refs: &mut dyn io::BufRead) -> Result<Vec<Ref>, refs::Err
 pub fn from_v1_refs_received_as_part_of_handshake_and_capabilities<'a>(
     in_refs: &mut dyn io::BufRead,
     capabilities: impl Iterator<Item = git_transport::client::capabilities::Capability<'a>>,
-) -> Result<Vec<Ref>, refs::Error> {
+) -> Result<Vec<Ref>, Error> {
     let mut out_refs = refs::shared::from_capabilities(capabilities)?;
     let number_of_possible_symbolic_refs_for_lookup = out_refs.len();
     let mut line = String::new();
