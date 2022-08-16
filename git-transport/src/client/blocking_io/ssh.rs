@@ -100,7 +100,7 @@ mod tests {
             ("ssh://host.xy/~/repo", "~/repo"),
             ("ssh://host.xy/~username/repo", "~username/repo"),
         ] {
-            let url = git_url::parse(url.as_bytes()).expect("valid url");
+            let url = git_url::parse((*url).into()).expect("valid url");
             let cmd = connect("host", url.path, Protocol::V1, None, None).expect("parse success");
             assert_eq!(
                 cmd.path,

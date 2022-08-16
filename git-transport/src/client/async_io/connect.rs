@@ -4,6 +4,7 @@ pub use crate::client::non_io_types::connect::Error;
 pub(crate) mod function {
     use crate::client::git;
     use crate::client::non_io_types::connect::Error;
+    use bstr::BStr;
 
     /// A general purpose connector connecting to a repository identified by the given `url`.
     ///
@@ -12,7 +13,7 @@ pub(crate) mod function {
     ///
     /// Use `desired_version` to set the desired protocol version to use when connecting, but note that the server may downgrade it.
     pub async fn connect(
-        url: &[u8],
+        url: &BStr,
         desired_version: crate::Protocol,
     ) -> Result<impl crate::client::Transport + Send, Error> {
         let urlb = url;
