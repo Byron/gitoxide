@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::convert::Infallible;
 
 use bstr::{BStr, ByteSlice};
 
@@ -19,6 +20,12 @@ pub enum Error {
     EmptyPath,
     #[error("Relative URLs are not permitted: {url:?}")]
     RelativeUrl { url: String },
+}
+
+impl From<Infallible> for Error {
+    fn from(_: Infallible) -> Self {
+        unreachable!("Cannot actually happen, but it seems there can't be a blanket impl for this")
+    }
 }
 
 fn str_to_protocol(s: &str) -> Result<Scheme, Error> {

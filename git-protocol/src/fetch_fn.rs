@@ -21,10 +21,10 @@ pub enum FetchConnection {
     /// When indicating the end-of-fetch, this flag is only relevant in protocol V2.
     /// Generally it only applies when using persistent transports.
     ///
-    /// In most explicit client side failures modes the end-of-operation' notification will be sent to the server automatically.
+    /// In most explicit client side failure modes the end-of-operation' notification will be sent to the server automatically.
     TerminateOnSuccessfulCompletion,
 
-    /// Indicate that persistent transport connections can be reused by not sending an 'end-of-operation' notification to the server.
+    /// Indicate that persistent transport connections can be reused by _not_ sending an 'end-of-operation' notification to the server.
     /// This is useful if multiple `fetch(…)` calls are used in succession.
     ///
     /// Note that this has no effect in case of non-persistent connections, like the ones over HTTP.
