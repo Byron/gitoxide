@@ -29,7 +29,7 @@ pub fn list(
     progress: impl Progress,
     ctx: Context<impl io::Write>,
 ) -> anyhow::Result<()> {
-    let transport = net::connect(url.into(), protocol.unwrap_or_default().into())?;
+    let transport = net::connect(url, protocol.unwrap_or_default().into())?;
     let mut delegate = LsRemotes::default();
     protocol::fetch(
         transport,
