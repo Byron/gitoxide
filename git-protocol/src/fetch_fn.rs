@@ -1,11 +1,11 @@
 use git_features::progress::Progress;
-use git_transport::{client, client::TransportV2Ext};
+use git_transport::client;
 use maybe_async::maybe_async;
 
 use crate::fetch::handshake;
 use crate::{
     credentials,
-    fetch::{refs, Action, Arguments, Command, Delegate, Error, LsRefsAction, Response},
+    fetch::{Action, Arguments, Command, Delegate, Error, Response},
 };
 
 /// A way to indicate how to treat the connection underlying the transport, potentially allowing to reuse it.
@@ -72,45 +72,14 @@ where
     let refs = match refs {
         Some(refs) => refs,
         None => {
-            assert_eq!(
+            crate::fetch::refs(
+                &mut transport,
                 protocol_version,
-                git_transport::Protocol::V2,
-                "Only V2 needs a separate request to get specific refs"
-            );
-
-            let ls_refs = Command::LsRefs;
-            let mut ls_features = ls_refs.default_features(protocol_version, &capabilities);
-            let mut ls_args = ls_refs.initial_arguments(&ls_features);
-            match delegate.prepare_ls_refs(&capabilities, &mut ls_args, &mut ls_features) {
-                Ok(LsRefsAction::Skip) => Vec::new(),
-                Ok(LsRefsAction::Continue) => {
-                    ls_refs.validate_argument_prefixes_or_panic(
-                        protocol_version,
-                        &capabilities,
-                        &ls_args,
-                        &ls_features,
-                    );
-
-                    progress.step();
-                    progress.set_name("list refs");
-                    let mut remote_refs = transport
-                        .invoke(
-                            ls_refs.as_str(),
-                            ls_features.into_iter(),
-                            if ls_args.is_empty() {
-                                None
-                            } else {
-                                Some(ls_args.into_iter())
-                            },
-                        )
-                        .await?;
-                    refs::from_v2_refs(&mut remote_refs).await?
-                }
-                Err(err) => {
-                    indicate_end_of_interaction(transport).await?;
-                    return Err(err.into());
-                }
-            }
+                &capabilities,
+                |a, b, c| delegate.prepare_ls_refs(a, b, c),
+                &mut progress,
+            )
+            .await?
         }
     };
 

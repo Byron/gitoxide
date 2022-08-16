@@ -90,7 +90,6 @@ impl Ref {
 }
 
 pub(crate) mod function;
-pub use function::refs;
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub(crate) mod shared;
