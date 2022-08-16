@@ -3,7 +3,7 @@ pub use crate::client::non_io_types::connect::Error;
 pub(crate) mod function {
     use crate::client::non_io_types::connect::Error;
     use crate::client::Transport;
-    use bstr::BStr;
+    use std::convert::TryInto;
 
     /// A general purpose connector connecting to a repository identified by the given `url`.
     ///
@@ -14,15 +14,18 @@ pub(crate) mod function {
     /// and if compiled in connections to [git repositories over https][crate::client::http::connect()].
     ///
     /// Use `desired_version` to set the desired protocol version to use when connecting, but note that the server may downgrade it.
-    pub fn connect(url: &BStr, desired_version: crate::Protocol) -> Result<Box<dyn Transport + Send>, Error> {
-        let urlb = url;
-        let mut url = git_url::parse(urlb)?;
+    pub fn connect<Url, E>(url: Url, desired_version: crate::Protocol) -> Result<Box<dyn Transport + Send>, Error>
+    where
+        Url: TryInto<git_url::Url, Error = E>,
+        git_url::parse::Error: From<E>,
+    {
+        let mut url = url.try_into().map_err(git_url::parse::Error::from)?;
         Ok(match url.scheme {
             git_url::Scheme::Radicle => return Err(Error::UnsupportedScheme(url.scheme)),
             git_url::Scheme::File => {
                 if url.user().is_some() || url.host().is_some() || url.port.is_some() {
                     return Err(Error::UnsupportedUrlTokens {
-                        url: urlb.into(),
+                        url: url.to_bstring(),
                         scheme: url.scheme,
                     });
                 }
@@ -45,7 +48,7 @@ pub(crate) mod function {
             git_url::Scheme::Git => {
                 if url.user().is_some() {
                     return Err(Error::UnsupportedUrlTokens {
-                        url: urlb.into(),
+                        url: url.to_bstring(),
                         scheme: url.scheme,
                     });
                 }
@@ -64,7 +67,7 @@ pub(crate) mod function {
             git_url::Scheme::Https | git_url::Scheme::Http => return Err(Error::CompiledWithoutHttp(url.scheme)),
             #[cfg(feature = "http-client-curl")]
             git_url::Scheme::Https | git_url::Scheme::Http => Box::new(
-                crate::client::http::connect(urlb, desired_version)
+                crate::client::http::connect(&url.to_bstring().to_string(), desired_version)
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
             ),
         })

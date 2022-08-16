@@ -26,13 +26,12 @@ where
         ))
     }
 
-    fn to_url(&self) -> BString {
+    fn to_url(&self) -> String {
         self.custom_url.as_ref().map_or_else(
             || {
-                use bstr::ByteVec;
-                let mut buf: BString = "file://".into();
-                buf.push_str(&self.path);
-                buf
+                let mut possibly_lossy_url = self.path.to_string();
+                possibly_lossy_url.insert_str(0, "file://");
+                possibly_lossy_url
             },
             |url| url.clone(),
         )

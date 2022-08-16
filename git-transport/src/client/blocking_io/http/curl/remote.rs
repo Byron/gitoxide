@@ -1,4 +1,3 @@
-use bstr::{BString, ByteSlice};
 use std::{
     io,
     io::{Read, Write},
@@ -90,7 +89,7 @@ impl curl::easy::Handler for Handler {
 }
 
 pub struct Request {
-    pub url: BString,
+    pub url: String,
     pub headers: curl::easy::List,
     pub upload: bool,
 }
@@ -112,7 +111,7 @@ pub fn new() -> (
         let mut handle = Easy2::new(Handler::default());
 
         for Request { url, headers, upload } in req_recv {
-            handle.url(&url.to_str_lossy())?;
+            handle.url(&url)?;
 
             // GitHub sends 'chunked' to avoid unknown clients to choke on the data, I suppose
             handle.post(upload)?;

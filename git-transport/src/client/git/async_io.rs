@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use bstr::{BString, ByteVec};
+use bstr::BString;
 use futures_io::{AsyncRead, AsyncWrite};
 use futures_lite::AsyncWriteExt;
 use git_packetline::PacketLineRef;
@@ -26,12 +26,12 @@ where
             on_into_read,
         ))
     }
-    fn to_url(&self) -> BString {
+    fn to_url(&self) -> String {
         self.custom_url.as_ref().map_or_else(
             || {
-                let mut buf: BString = "file://".into();
-                buf.push_str(&self.path);
-                buf
+                let mut possibly_lossy_url = self.path.to_string();
+                possibly_lossy_url.insert_str(0, "file://");
+                possibly_lossy_url
             },
             |url| url.clone(),
         )

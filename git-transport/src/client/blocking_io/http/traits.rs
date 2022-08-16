@@ -1,5 +1,3 @@
-use bstr::BStr;
-
 /// The error used by the [Http] trait.
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -54,7 +52,7 @@ pub trait Http {
     /// The `headers` are provided verbatim and include both the key as well as the value.
     fn get(
         &mut self,
-        url: &BStr,
+        url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<GetResponse<Self::Headers, Self::ResponseBody>, Error>;
 
@@ -66,7 +64,7 @@ pub trait Http {
     /// to prevent deadlocks.
     fn post(
         &mut self,
-        url: &BStr,
+        url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, Error>;
 }
