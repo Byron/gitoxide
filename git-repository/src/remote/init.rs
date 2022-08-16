@@ -84,7 +84,7 @@ pub(crate) fn rewrite_url(
 ) -> Result<Option<git_url::Url>, Error> {
     url.and_then(|url| config.url_rewrite().longest(url, direction))
         .map(|url| {
-            git_url::parse(&url).map_err(|err| Error::RewrittenUrlInvalid {
+            git_url::parse(url.as_ref()).map_err(|err| Error::RewrittenUrlInvalid {
                 kind: match direction {
                     remote::Direction::Fetch => "fetch",
                     remote::Direction::Push => "push",

@@ -31,7 +31,7 @@ pub async fn list(
     ctx: Context<impl io::Write + Send + 'static>,
 ) -> anyhow::Result<()> {
     let url = url.to_owned();
-    let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into()).await?;
+    let transport = net::connect(url.as_str().into(), protocol.unwrap_or_default().into()).await?;
     blocking::unblock(
         // `blocking` really needs a way to unblock futures, which is what it does internally anyway.
         // Both fetch() needs unblocking as it executes blocking code within the future, and the other

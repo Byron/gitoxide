@@ -151,7 +151,7 @@ mod blocking_io {
         progress: P,
         ctx: Context<W>,
     ) -> anyhow::Result<()> {
-        let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
+        let transport = net::connect(url.into(), protocol.unwrap_or_default().into())?;
         let delegate = CloneDelegate {
             ctx,
             directory,
@@ -219,7 +219,7 @@ mod async_io {
         progress: P,
         ctx: Context<W>,
     ) -> anyhow::Result<()> {
-        let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into()).await?;
+        let transport = net::connect(url.into(), protocol.unwrap_or_default().into()).await?;
         let mut delegate = CloneDelegate {
             ctx,
             directory,

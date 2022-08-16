@@ -27,6 +27,7 @@ pub mod connect {
     #![allow(missing_docs)]
     use crate::remote::Connection;
     use crate::{remote, Remote};
+    // use git_protocol::transport;
     use git_protocol::transport::client::Transport;
 
     mod error {
@@ -45,6 +46,7 @@ pub mod connect {
     }
     pub use error::Error;
 
+    /// Establishing connections to remote hosts
     impl<'repo> Remote<'repo> {
         /// Create a new connection into `direction` using `transport` to communicate.
         ///

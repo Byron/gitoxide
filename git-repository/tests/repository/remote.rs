@@ -121,7 +121,7 @@ mod find_remote {
             let remote = repo.find_remote(name).expect("no error");
             assert_eq!(remote.name(), Some(name));
 
-            let url = git::url::parse(url.as_bytes()).expect("valid");
+            let url = git::url::parse(url.into()).expect("valid");
             assert_eq!(remote.url(Direction::Fetch).unwrap(), &url);
 
             assert_eq!(
