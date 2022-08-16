@@ -34,7 +34,8 @@ mod refs {
     where
         T: Transport,
     {
-        /// List all references on the remote that have been filtered through our remote's [`fetch_specs`].
+        /// List all references on the remote that have been filtered through our remote's [`refspecs`][crate::Remote::refspecs()]
+        /// for _fetching_.
         ///
         /// This comes in the form of information of all matching tips on the remote and the object they point to, along with
         /// with the local tracking branch of these tips (if available).
