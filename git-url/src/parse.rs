@@ -1,8 +1,9 @@
 use std::borrow::Cow;
 
-use bstr::ByteSlice;
+use bstr::{BStr, ByteSlice};
 
 use crate::Scheme;
+pub use bstr;
 
 /// The Error returned by [`parse()`]
 #[derive(Debug, thiserror::Error)]
@@ -84,17 +85,17 @@ fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
 ///
 /// We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
 /// For file-paths, we don't expect UTF8 encoding either.
-pub fn parse(bytes: &[u8]) -> Result<crate::Url, Error> {
-    let guessed_protocol = guess_protocol(bytes);
-    if possibly_strip_file_protocol(bytes) != bytes || (has_no_explicit_protocol(bytes) && guessed_protocol == "file") {
+pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
+    let guessed_protocol = guess_protocol(input);
+    if possibly_strip_file_protocol(input) != input || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
         return Ok(crate::Url {
             scheme: Scheme::File,
-            path: possibly_strip_file_protocol(bytes).into(),
+            path: possibly_strip_file_protocol(input).into(),
             ..Default::default()
         });
     }
 
-    let url_str = std::str::from_utf8(bytes)?;
+    let url_str = std::str::from_utf8(input)?;
     let mut url = match url::Url::parse(url_str) {
         Ok(url) => url,
         Err(::url::ParseError::RelativeUrlWithoutBase) => {

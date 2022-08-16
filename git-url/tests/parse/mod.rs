@@ -1,7 +1,7 @@
 use git_url::Scheme;
 
 fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
-    assert_eq!(git_url::parse(url.as_bytes())?, expected);
+    assert_eq!(git_url::parse(url.into())?, expected);
     Ok(expected)
 }
 
@@ -11,7 +11,7 @@ fn assert_url_roundtrip(url: &str, expected: git_url::Url) -> crate::Result {
 }
 
 fn assert_failure(url: &str, expected_err: &str) {
-    assert_eq!(git_url::parse(url.as_bytes()).unwrap_err().to_string(), expected_err);
+    assert_eq!(git_url::parse(url.into()).unwrap_err().to_string(), expected_err);
 }
 
 fn url(

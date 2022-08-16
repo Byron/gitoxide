@@ -178,7 +178,7 @@ impl Url {
 
 impl Url {
     /// Parse a URL from `bytes`
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, parse::Error> {
+    pub fn from_bytes(bytes: &BStr) -> Result<Self, parse::Error> {
         parse(bytes)
     }
 }
@@ -187,7 +187,7 @@ impl TryFrom<&str> for Url {
     type Error = parse::Error;
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Self::from_bytes(value.as_bytes())
+        Self::from_bytes(value.into())
     }
 }
 
@@ -195,7 +195,7 @@ impl TryFrom<String> for Url {
     type Error = parse::Error;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        Self::from_bytes(value.as_bytes())
+        Self::from_bytes(value.as_str().into())
     }
 }
 
