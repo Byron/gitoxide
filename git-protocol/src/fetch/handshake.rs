@@ -51,13 +51,13 @@ pub(crate) mod function {
         mut transport: T,
         mut authenticate: AuthFn,
         extra_parameters: Vec<(String, Option<String>)>,
-        mut progress: impl Progress,
+        progress: &mut impl Progress,
     ) -> Result<Outcome, Error>
     where
         AuthFn: FnMut(credentials::helper::Action<'_>) -> credentials::helper::Result,
         T: client::Transport,
     {
-        let (protocol_version, refs, capabilities) = {
+        let (server_protocol_version, refs, capabilities) = {
             progress.init(None, progress::steps());
             progress.set_name("handshake");
             progress.step();
@@ -131,7 +131,7 @@ pub(crate) mod function {
         }; // this scope is needed, see https://github.com/rust-lang/rust/issues/76149
 
         Ok(Outcome {
-            server_protocol_version: protocol_version,
+            server_protocol_version,
             refs,
             capabilities,
         })
