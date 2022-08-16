@@ -18,7 +18,10 @@ impl Direction {
 }
 
 mod build;
+
 mod errors;
+pub use errors::find;
+
 ///
 pub mod init;
 
@@ -26,21 +29,9 @@ pub mod init;
 pub mod connect;
 
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
-mod connection {
-    #![allow(missing_docs, dead_code)]
-    use crate::remote;
-    use crate::Remote;
-
-    pub struct Connection<'repo, T> {
-        pub(crate) remote: Remote<'repo>,
-        pub(crate) direction: remote::Direction,
-        pub(crate) transport: T,
-    }
-}
+mod connection;
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
 pub use connection::Connection;
-
-pub use errors::find;
 
 mod access;
 pub(crate) mod url;

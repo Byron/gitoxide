@@ -24,17 +24,16 @@ pub use error::Error;
 
 /// Establishing connections to remote hosts
 impl<'repo> Remote<'repo> {
-    /// Create a new connection into `direction` using `transport` to communicate.
+    /// Create a new connection using `transport` to communicate.
     ///
     /// Note that this method expects the `transport` to be created by the user, which would involve the [`url()`][Self::url()].
     /// It's meant to be used when async operation is needed with runtimes of the user's choice.
-    pub fn into_connection_with_transport<T>(self, transport: T, direction: remote::Direction) -> Connection<'repo, T>
+    pub fn into_connection_with_transport<T>(self, transport: T) -> Connection<'repo, T>
     where
         T: Transport,
     {
         Connection {
             remote: self,
-            direction,
             transport,
         }
     }
@@ -67,6 +66,6 @@ impl<'repo> Remote<'repo> {
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
         let transport = transport::connect(url, protocol)?;
-        Ok(self.into_connection_with_transport(transport, direction))
+        Ok(self.into_connection_with_transport(transport))
     }
 }
