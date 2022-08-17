@@ -26,8 +26,8 @@ pub struct Config {
     /// Whether to use the user configuration.
     /// This is usually `~/.gitconfig` on unix.
     pub user: bool,
-    /// Whether to use worktree configuration from `config.worktree`.
     // TODO: figure out how this really applies and provide more information here.
+    // Whether to use worktree configuration from `config.worktree`.
     // pub worktree: bool,
     /// Whether to use the configuration from environment variables.
     pub env: bool,
@@ -98,6 +98,27 @@ impl Permissions {
         Permissions {
             env: Environment::all(),
             config: Config::all(),
+        }
+    }
+
+    /// Don't read any but the local git configuration and deny reading any environment variables.
+    pub fn isolated() -> Self {
+        Permissions {
+            config: Config {
+                system: false,
+                git: false,
+                user: false,
+                env: false,
+                includes: false,
+            },
+            env: {
+                let deny = permission::env_var::Resource::resource(git_sec::Permission::Deny);
+                Environment {
+                    xdg_config_home: deny.clone(),
+                    home: deny.clone(),
+                    git_prefix: deny,
+                }
+            },
         }
     }
 }
