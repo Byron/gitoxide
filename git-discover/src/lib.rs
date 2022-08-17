@@ -24,8 +24,8 @@ pub mod is_git {
         MisplacedHead { name: bstr::BString },
         #[error("Expected an objects directory at '{}'", .missing.display())]
         MissingObjectsDirectory { missing: PathBuf },
-        #[error("The worktree's private repo is missing its commondir file at '{}' or it could not be read", .missing.display())]
-        MissingCommonDir { missing: PathBuf },
+        #[error("The worktree's private repo's commondir file at '{}' or it could not be read", .missing.display())]
+        MissingCommonDir { missing: PathBuf, source: std::io::Error },
         #[error("Expected a refs directory at '{}'", .missing.display())]
         MissingRefsDirectory { missing: PathBuf },
         #[error(transparent)]

@@ -264,7 +264,6 @@ fn do_not_shorten_absolute_paths() -> crate::Result {
 
 mod submodules {
     #[test]
-    #[ignore]
     fn by_their_worktree_checkout() -> crate::Result {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_submodules.sh")?;
         let parent = dir.join("with-submodules");
@@ -278,13 +277,12 @@ mod submodules {
                 submodule_m1_workdir
             );
 
-            let submodule_m1_subdir = submodule_m1_workdir.join("subdir");
-            let (path, _trust) = git_discover::upwards(&submodule_m1_subdir)?;
+            let (path, _trust) = git_discover::upwards(&submodule_m1_workdir.join("subdir"))?;
             assert!(
-                matches!(path, git_discover::repository::Path::WorkTree(ref dir) if dir == &submodule_m1_subdir),
+                matches!(path, git_discover::repository::Path::WorkTree(ref dir) if dir == &submodule_m1_workdir),
                 "{:?} should match {:?}",
                 path,
-                submodule_m1_subdir
+                submodule_m1_workdir
             );
         }
         Ok(())

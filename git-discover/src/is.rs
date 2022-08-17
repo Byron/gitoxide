@@ -41,17 +41,27 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
     let (dot_git, common_dir, kind) = match crate::path::from_gitdir_file(git_dir) {
         Ok(private_git_dir) => {
             let common_dir = private_git_dir.join("commondir");
-            let common_dir = crate::path::from_plain_file(&common_dir)
-                .ok_or_else(|| crate::is_git::Error::MissingCommonDir {
-                    missing: common_dir.clone(),
-                })?
-                .map_err(|_| crate::is_git::Error::MissingCommonDir { missing: common_dir })?;
-            let common_dir = private_git_dir.join(common_dir);
-            (
-                Cow::Owned(private_git_dir),
-                Cow::Owned(common_dir),
-                Kind::LinkedWorkTreeDir,
-            )
+            match crate::path::from_plain_file(&common_dir) {
+                Some(Err(err)) => {
+                    return Err(crate::is_git::Error::MissingCommonDir {
+                        missing: common_dir,
+                        source: err,
+                    })
+                }
+                Some(Ok(common_dir)) => {
+                    let common_dir = private_git_dir.join(common_dir);
+                    (
+                        Cow::Owned(private_git_dir),
+                        Cow::Owned(common_dir),
+                        Kind::LinkedWorkTreeDir,
+                    )
+                }
+                None => (
+                    Cow::Owned(private_git_dir.clone()),
+                    Cow::Owned(private_git_dir),
+                    Kind::MaybeRepo,
+                ),
+            }
         }
         Err(crate::path::from_gitdir_file::Error::Io(err)) if is_directory(&err) => {
             let common_dir = git_dir.join("commondir");
