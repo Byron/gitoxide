@@ -148,12 +148,10 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
         Kind::MaybeRepo => {
             if bare(git_dir) {
                 crate::repository::Kind::Bare
+            } else if submodule_git_dir(git_dir) {
+                crate::repository::Kind::SubmoduleGitDir
             } else {
-                if submodule_git_dir(git_dir) {
-                    crate::repository::Kind::SubmoduleGitDir
-                } else {
-                    crate::repository::Kind::WorkTree { linked_git_dir: None }
-                }
+                crate::repository::Kind::WorkTree { linked_git_dir: None }
             }
         }
     })
