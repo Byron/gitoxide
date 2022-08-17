@@ -10,13 +10,11 @@ default-run = "gix"
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 resolver = "2"
 
-
 [[bin]]
 name = "ein"
 path = "src/ein.rs"
 test = false
 doctest = false
-
 
 [[bin]]
 name = "gix"

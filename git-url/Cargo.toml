@@ -15,8 +15,6 @@ doctest = false
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 git-features = { version = "^0.22.1", path = "../git-features" }

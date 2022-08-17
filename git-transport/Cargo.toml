@@ -47,8 +47,6 @@ name = "async-transport"
 path = "tests/async-transport.rs"
 required-features = ["async-client"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 git-features = { version = "^0.22.1", path = "../git-features" }
 git-url = { version = "^0.7.1", path = "../git-url" }

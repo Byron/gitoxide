@@ -10,8 +10,6 @@ license = "MIT OR Apache-2.0"
 name = "jtt"
 path = "src/main.rs"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 git-hash = { version = "^0.9.7", path = "../../git-hash" }
 git-lock = { version = "^2.0.0", path = "../../git-lock" }
