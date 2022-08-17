@@ -1,6 +1,6 @@
 use std::{borrow::Cow, ffi::OsStr, path::Path};
 
-use crate::DOT_GIT_DIR;
+use crate::{DOT_GIT_DIR, MODULES};
 
 /// Returns true if the given `git_dir` seems to be a bare repository.
 ///
@@ -8,6 +8,23 @@ use crate::DOT_GIT_DIR;
 pub fn bare(git_dir_candidate: impl AsRef<Path>) -> bool {
     let git_dir = git_dir_candidate.as_ref();
     !(git_dir.join("index").exists() || (git_dir.file_name() == Some(OsStr::new(DOT_GIT_DIR)) && git_dir.is_file()))
+}
+
+/// Returns true if `git_dir` is is located within a `.git/modules` directory, indicating it's a submodule clone.
+pub fn submodule_git_dir(git_dir: impl AsRef<Path>) -> bool {
+    let git_dir = git_dir.as_ref();
+
+    let mut last_comp = None;
+    git_dir.file_name() != Some(OsStr::new(DOT_GIT_DIR))
+        && git_dir.components().rev().any(|c| {
+            if c.as_os_str() == OsStr::new(DOT_GIT_DIR) {
+                true
+            } else {
+                last_comp = Some(c.as_os_str());
+                false
+            }
+        })
+        && last_comp == Some(OsStr::new(MODULES))
 }
 
 /// What constitutes a valid git repository, returning the guessed repository kind
@@ -132,18 +149,7 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
             if bare(git_dir) {
                 crate::repository::Kind::Bare
             } else {
-                let mut last_comp = None;
-                if git_dir.file_name() != Some(OsStr::new(DOT_GIT_DIR))
-                    && git_dir.components().rev().any(|c| {
-                        if c.as_os_str() == OsStr::new(DOT_GIT_DIR) {
-                            true
-                        } else {
-                            last_comp = Some(c.as_os_str());
-                            false
-                        }
-                    })
-                    && last_comp == Some(OsStr::new("modules"))
-                {
+                if submodule_git_dir(git_dir) {
                     crate::repository::Kind::SubmoduleGitDir
                 } else {
                     crate::repository::Kind::WorkTree { linked_git_dir: None }

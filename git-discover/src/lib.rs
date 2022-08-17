@@ -7,6 +7,9 @@
 /// The name of the `.git` directory.
 pub const DOT_GIT_DIR: &str = ".git";
 
+/// The name of the `modules` sub-directory within a `.git` directory for keeping submodule checkouts.
+pub const MODULES: &str = "modules";
+
 ///
 pub mod repository;
 
@@ -34,7 +37,7 @@ pub mod is_git {
 }
 
 mod is;
-pub use is::{bare as is_bare, git as is_git};
+pub use is::{bare as is_bare, git as is_git, submodule_git_dir as is_submodule_git_dir};
 
 ///
 pub mod upwards;
