@@ -54,7 +54,10 @@ pub fn main() -> Result<()> {
     use git_repository as git;
     let repository = args.repository;
     let repository = move || {
-        git::ThreadSafeRepository::discover(repository)
+        let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
+        mapping.full = mapping.full.strict_config(true);
+        mapping.reduced = mapping.reduced.strict_config(true);
+        git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
             .map(git::Repository::from)
             .map(|r| r.apply_environment())
     };

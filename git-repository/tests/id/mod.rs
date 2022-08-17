@@ -31,14 +31,15 @@ fn prefix() -> crate::Result {
 
     assert!(
         matches!(
-            git_repository::open(worktree_dir.path()).unwrap_err(),
+            git_repository::open_opts(worktree_dir.path(), git::open::Options::isolated().strict_config(true))
+                .unwrap_err(),
             git::open::Error::Config(git::config::Error::EmptyValue { .. })
         ),
         "an empty core.abbrev fails the open operation in strict config mode, emulating git behaviour"
     );
     assert!(
-        git_repository::open_opts(worktree_dir.path(), git::open::Options::isolated().lenient_config(true)).is_ok(),
-        "but it can be made to work when we are lenient (good for APIs)"
+        git_repository::open(worktree_dir.path()).is_ok(),
+        "By default gitoxide acts like `libgit2` here and we prefer to be lenient when possible"
     );
     Ok(())
 }

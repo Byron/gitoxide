@@ -60,7 +60,7 @@ impl ReplacementObjects {
 }
 
 /// The options used in [`ThreadSafeRepository::open_opts`]
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Options {
     pub(crate) object_store_slots: git_odb::store::init::Slots,
     pub(crate) replacement_objects: ReplacementObjects,
@@ -70,6 +70,21 @@ pub struct Options {
     pub(crate) lossy_config: Option<bool>,
     pub(crate) lenient_config: bool,
     pub(crate) bail_if_untrusted: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            object_store_slots: Default::default(),
+            replacement_objects: Default::default(),
+            permissions: Default::default(),
+            git_dir_trust: None,
+            filter_config_section: None,
+            lossy_config: None,
+            lenient_config: true,
+            bail_if_untrusted: false,
+        }
+    }
 }
 
 #[derive(Default, Clone)]
@@ -182,13 +197,12 @@ impl Options {
         self
     }
 
-    /// If set, default is false, invalid configuration values will be defaulted to acceptable values where when possible,
-    /// instead of yielding an error during startup.
+    /// If set, default is false, invalid configuration values will cause an error even if these can safely be defaulted.
     ///
-    /// This is recommended for all applications that prefer usability over correctness. `git` itslef by default is not lenient
-    /// towards malconfigured repositories.
-    pub fn lenient_config(mut self, toggle: bool) -> Self {
-        self.lenient_config = toggle;
+    /// This is recommended for all applications that prefer correctness over usability.
+    /// `git` itself by defaults to strict configuration mode to let you know if configuration is incorrect.
+    pub fn strict_config(mut self, toggle: bool) -> Self {
+        self.lenient_config = !toggle;
         self
     }
 
@@ -209,7 +223,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 filter_config_section: Some(config::section::is_trusted),
                 lossy_config: None,
                 bail_if_untrusted: false,
-                lenient_config: false,
+                lenient_config: true,
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
@@ -218,7 +232,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 git_dir_trust: git_sec::Trust::Reduced.into(),
                 filter_config_section: Some(config::section::is_trusted),
                 bail_if_untrusted: false,
-                lenient_config: false,
+                lenient_config: true,
                 lossy_config: None,
             },
         }
