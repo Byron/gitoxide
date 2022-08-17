@@ -118,7 +118,22 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
             if bare(git_dir) {
                 crate::repository::Kind::Bare
             } else {
-                crate::repository::Kind::WorkTree { linked_git_dir: None }
+                let mut last_comp = None;
+                if git_dir.file_name() != Some(OsStr::new(DOT_GIT_DIR))
+                    && git_dir.components().rev().any(|c| {
+                        if c.as_os_str() == OsStr::new(DOT_GIT_DIR) {
+                            true
+                        } else {
+                            last_comp = Some(c.as_os_str());
+                            false
+                        }
+                    })
+                    && last_comp == Some(OsStr::new("modules"))
+                {
+                    crate::repository::Kind::Bare
+                } else {
+                    crate::repository::Kind::WorkTree { linked_git_dir: None }
+                }
             }
         }
     })

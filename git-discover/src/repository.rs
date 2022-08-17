@@ -98,6 +98,7 @@ pub enum Kind {
     /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
     ///
     /// Note that this is merely a guess at this point as we didn't read the configuration yet.
+    /// It might also be the clone of a submodule in `.git/modules` which has its worktree configured with `core.worktree`.
     Bare,
     /// A `git` repository along with a checked out files in a work tree.
     WorkTree {

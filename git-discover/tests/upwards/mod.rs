@@ -291,7 +291,6 @@ mod submodules {
     }
 
     #[test]
-    #[ignore]
     fn by_their_module_git_dir() -> crate::Result {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_submodules.sh")?;
         let modules = dir.join("with-submodules").join(".git").join("modules");
