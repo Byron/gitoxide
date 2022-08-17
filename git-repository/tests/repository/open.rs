@@ -31,7 +31,6 @@ mod submodules {
     fn discover_repo(name: impl AsRef<Path>) -> crate::Result<git::Repository> {
         let dir = git_testtools::scripted_fixture_repo_read_only("make_submodules.sh")?;
         let repo_dir = dir.join(name);
-        dbg!(&repo_dir);
         Ok(git::ThreadSafeRepository::discover_opts(
             repo_dir,
             Default::default(),
