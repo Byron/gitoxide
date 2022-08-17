@@ -105,11 +105,11 @@ pub(crate) mod function {
                         Some(trust) => {
                             // TODO: test this more, it definitely doesn't always find the shortest path to a directory
                             let path = if dir_made_absolute {
-                                shorten_path_with_cwd(cursor, cwd)
+                                shorten_path_with_cwd(cursor, cwd.as_deref())
                             } else {
                                 cursor
                             };
-                            break 'outer Ok((crate::repository::Path::from_dot_git_dir(path, kind), trust));
+                            break 'outer Ok((crate::repository::Path::from_dot_git_dir_inner(path, kind, cwd), trust));
                         }
                         None => {
                             break 'outer Err(Error::NoTrustedGitRepository {

@@ -46,36 +46,7 @@ mod path {
         /// Instantiate a new path from `dir` which is expected to be the `.git` directory, with `kind` indicating
         /// whether it's a bare repository or not.
         pub fn from_dot_git_dir(dir: impl Into<PathBuf>, kind: Kind) -> Self {
-            fn absolutize_on_trailing_dot_dot(dir: PathBuf) -> PathBuf {
-                if !matches!(dir.components().rev().next(), Some(std::path::Component::ParentDir)) {
-                    dir
-                } else {
-                    git_path::absolutize(&dir, std::env::current_dir().ok()).into_owned()
-                }
-            }
-
-            let dir = dir.into();
-            match kind {
-                Kind::Submodule { git_dir } => Path::LinkedWorkTree {
-                    git_dir: git_path::absolutize(git_dir, std::env::current_dir().ok()).into_owned(),
-                    work_dir: without_dot_git_dir(absolutize_on_trailing_dot_dot(dir)),
-                },
-                Kind::SubmoduleGitDir => Path::Repository(dir),
-                Kind::WorkTreeGitDir { work_dir } => Path::LinkedWorkTree { git_dir: dir, work_dir },
-                Kind::WorkTree { linked_git_dir } => match linked_git_dir {
-                    Some(git_dir) => Path::LinkedWorkTree {
-                        git_dir,
-                        work_dir: without_dot_git_dir(absolutize_on_trailing_dot_dot(dir)),
-                    },
-                    None => {
-                        let mut dir = absolutize_on_trailing_dot_dot(dir);
-                        dir.pop(); // ".git" suffix
-                        let work_dir = dir.as_os_str().is_empty().then(|| PathBuf::from(".")).unwrap_or(dir);
-                        Path::WorkTree(work_dir)
-                    }
-                },
-                Kind::Bare => Path::Repository(dir),
-            }
+            Self::from_dot_git_dir_inner(dir, kind, std::env::current_dir().ok())
         }
         /// Returns the [kind][Kind] of this repository path.
         pub fn kind(&self) -> Kind {
@@ -97,6 +68,45 @@ mod path {
             }
         }
     }
+
+    impl Path {
+        pub(crate) fn from_dot_git_dir_inner(
+            dir: impl Into<PathBuf>,
+            kind: Kind,
+            current_dir: Option<PathBuf>,
+        ) -> Self {
+            let absolutize_on_trailing_dot_dot = |dir: PathBuf| -> PathBuf {
+                if !matches!(dir.components().rev().next(), Some(std::path::Component::ParentDir)) {
+                    dir
+                } else {
+                    git_path::absolutize(&dir, current_dir.as_deref()).into_owned()
+                }
+            };
+
+            let dir = dir.into();
+            match kind {
+                Kind::Submodule { git_dir } => Path::LinkedWorkTree {
+                    git_dir: git_path::absolutize(git_dir, current_dir.as_deref()).into_owned(),
+                    work_dir: without_dot_git_dir(absolutize_on_trailing_dot_dot(dir)),
+                },
+                Kind::SubmoduleGitDir => Path::Repository(dir),
+                Kind::WorkTreeGitDir { work_dir } => Path::LinkedWorkTree { git_dir: dir, work_dir },
+                Kind::WorkTree { linked_git_dir } => match linked_git_dir {
+                    Some(git_dir) => Path::LinkedWorkTree {
+                        git_dir,
+                        work_dir: without_dot_git_dir(absolutize_on_trailing_dot_dot(dir)),
+                    },
+                    None => {
+                        let mut dir = absolutize_on_trailing_dot_dot(dir);
+                        dir.pop(); // ".git" suffix
+                        let work_dir = dir.as_os_str().is_empty().then(|| PathBuf::from(".")).unwrap_or(dir);
+                        Path::WorkTree(work_dir)
+                    }
+                },
+                Kind::Bare => Path::Repository(dir),
+            }
+        }
+    }
 }
 
 /// The kind of repository path.
@@ -105,7 +115,6 @@ pub enum Kind {
     /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
     ///
     /// Note that this is merely a guess at this point as we didn't read the configuration yet.
-    /// It might also be the clone of a submodule in `.git/modules` which has its worktree configured with `core.worktree`.
     Bare,
     /// A `git` repository along with a checked out files in a work tree.
     WorkTree {
