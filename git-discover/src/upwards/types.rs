@@ -5,7 +5,7 @@ use std::{env, path::PathBuf};
 
 use bstr::ByteVec;
 
-/// The error returned by [git_discover::discover()][function::discover()].
+/// The error returned by [git_discover::upwards()][crate::upwards()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -33,7 +33,7 @@ pub enum Error {
     },
 }
 
-/// Options to help guide the [discovery][function::discover()] of repositories, along with their options
+/// Options to help guide the [discovery][crate::upwards()] of repositories, along with their options
 /// when instantiated.
 pub struct Options {
     /// When discovering a repository, assure it has at least this trust level or ignore it otherwise.
