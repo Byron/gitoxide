@@ -187,7 +187,7 @@ pub(crate) type Config = OwnShared<git_config::File<'static>>;
 ///
 mod types;
 pub use types::{
-    Commit, Head, Id, Object, ObjectDetached, Reference, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
+    Commit, Head, Id, Kind, Object, ObjectDetached, Reference, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
 };
 
 pub mod commit;
@@ -197,27 +197,6 @@ pub mod object;
 pub mod reference;
 mod repository;
 pub mod tag;
-
-/// The kind of repository path.
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum Kind {
-    /// A submodule worktree, whose `git` repository lives in `.git/modules/**/<name>` of the parent repository.
-    Submodule,
-    /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
-    Bare,
-    /// A `git` repository along with a checked out files in a work tree.
-    WorkTree {
-        /// If true, this is the git dir associated with this _linked_ worktree, otherwise it is a repository with _main_ worktree.
-        is_linked: bool,
-    },
-}
-
-impl Kind {
-    /// Returns true if this is a bare repository, one without a work tree.
-    pub fn is_bare(&self) -> bool {
-        matches!(self, Kind::Bare)
-    }
-}
 
 /// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, discover::Error> {
@@ -381,3 +360,5 @@ pub mod env {
         })
     }
 }
+
+mod kind;

@@ -4,6 +4,20 @@ use git_hash::ObjectId;
 
 use crate::head;
 
+/// The kind of repository.
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum Kind {
+    /// A submodule worktree, whose `git` repository lives in `.git/modules/**/<name>` of the parent repository.
+    Submodule,
+    /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
+    Bare,
+    /// A `git` repository along with a checked out files in a work tree.
+    WorkTree {
+        /// If true, this is the git dir associated with this _linked_ worktree, otherwise it is a repository with _main_ worktree.
+        is_linked: bool,
+    },
+}
+
 /// A worktree checkout containing the files of the repository in consumable form.
 pub struct Worktree<'repo> {
     pub(crate) parent: &'repo Repository,
