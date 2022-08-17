@@ -262,6 +262,54 @@ fn do_not_shorten_absolute_paths() -> crate::Result {
     Ok(())
 }
 
+mod submodules {
+    #[test]
+    fn by_their_worktree_checkout() -> crate::Result {
+        let dir = git_testtools::scripted_fixture_repo_read_only("make_submodules.sh")?;
+        let parent = dir.join("with-submodules");
+        let modules = parent.join(".git").join("modules");
+        for module in ["m1", "dir/m1"] {
+            let submodule_m1_workdir = parent.join(module);
+            let submodule_m1_gitdir = modules.join(module);
+            let (path, _trust) = git_discover::upwards(&submodule_m1_workdir)?;
+            assert!(
+                matches!(path, git_discover::repository::Path::LinkedWorkTree{ref work_dir, ref git_dir} if work_dir == &submodule_m1_workdir && git_dir == &submodule_m1_gitdir),
+                "{:?} should match {:?} {:?}",
+                path,
+                submodule_m1_workdir,
+                submodule_m1_gitdir
+            );
+
+            let (path, _trust) = git_discover::upwards(&submodule_m1_workdir.join("subdir"))?;
+            assert!(
+                matches!(path, git_discover::repository::Path::LinkedWorkTree{ref work_dir, ref git_dir} if work_dir == &submodule_m1_workdir && git_dir == &submodule_m1_gitdir),
+                "{:?} should match {:?} {:?}",
+                path,
+                submodule_m1_workdir,
+                submodule_m1_gitdir
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn by_their_module_git_dir() -> crate::Result {
+        let dir = git_testtools::scripted_fixture_repo_read_only("make_submodules.sh")?;
+        let modules = dir.join("with-submodules").join(".git").join("modules");
+        for module in ["m1", "dir/m1"] {
+            let submodule_m1_gitdir = modules.join(module);
+            let (path, _trust) = git_discover::upwards(&submodule_m1_gitdir)?;
+            assert!(
+                matches!(path, git_discover::repository::Path::Repository(ref dir) if dir == &submodule_m1_gitdir),
+                "{:?} should match {:?}",
+                path,
+                submodule_m1_gitdir
+            );
+        }
+        Ok(())
+    }
+}
+
 fn repo_path() -> crate::Result<PathBuf> {
     git_testtools::scripted_fixture_repo_read_only("make_basic_repo.sh")
 }
