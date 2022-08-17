@@ -5,6 +5,99 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-6d8d5e6198dfb4d648061807ed4f96868a36ee52/> `Stage::entry_index_by_path_and_stage()`, now with `::entry_by_path_and_stage()`
+ - <csr-id-55363ea650001b7717545b4d2968419707a3b8c6/> `State::entry_by_path_and_stage()` to find entries.
+ - <csr-id-40e6bde125778e3b50999331c4ed5a4b119937fa/> `Debug` and `Clone` for `File`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 59 commits contributed to the release over the course of 22 calendar days.
+ - 26 days passed between releases.
+ - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#427](https://github.com/Byron/gitoxide/issues/427), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 5 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - make fmt ([`4b320e7`](https://github.com/Byron/gitoxide/commit/4b320e773368ac5e8c38dd8a779ef3d6d2d024ec))
+    - fix docs ([`5a0d6b7`](https://github.com/Byron/gitoxide/commit/5a0d6b76205d6e021348a930a5a17820e5dc4458))
+    - `Stage::entry_index_by_path_and_stage()`, now with `::entry_by_path_and_stage()` ([`6d8d5e6`](https://github.com/Byron/gitoxide/commit/6d8d5e6198dfb4d648061807ed4f96868a36ee52))
+    - `State::entry_by_path_and_stage()` to find entries. ([`55363ea`](https://github.com/Byron/gitoxide/commit/55363ea650001b7717545b4d2968419707a3b8c6))
+    - refactor; prepare for entry-lookup by path ([`92de081`](https://github.com/Byron/gitoxide/commit/92de081dc9ab5660cb18fa750452345dd63550ea))
+    - `Debug` and `Clone` for `File` ([`40e6bde`](https://github.com/Byron/gitoxide/commit/40e6bde125778e3b50999331c4ed5a4b119937fa))
+ * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
+    - add tests to run into long-paths special case ([`d7a8a7d`](https://github.com/Byron/gitoxide/commit/d7a8a7dfe3089e35fca249af7a3482a893f91111))
+ * **Uncategorized**
+    - Release git-hash v0.9.7, git-features v0.22.1 ([`232784a`](https://github.com/Byron/gitoxide/commit/232784a59ded3e8016e4257c7e146ad385cdd64a))
+    - fix CI for good ([`e0c0b8c`](https://github.com/Byron/gitoxide/commit/e0c0b8c7c1898b2bc11a915e8e4fb8426295ccbb))
+    - fix CI ([`2433be1`](https://github.com/Byron/gitoxide/commit/2433be173c2145198f7891dc7a1f7c4acf215b11))
+    - refactor ([`3af5121`](https://github.com/Byron/gitoxide/commit/3af5121330ae96aec32d0360c8b2e24a8860a2e8))
+    - refactor ([`b41d93a`](https://github.com/Byron/gitoxide/commit/b41d93ac604b9807c24d93c6849f852489f512c0))
+    - thanks clippy ([`4390c32`](https://github.com/Byron/gitoxide/commit/4390c32f9ea0683561a78349456c87329fef3b41))
+    - run tests against all input files we have ([`de8abe6`](https://github.com/Byron/gitoxide/commit/de8abe6923b01563db812ba007ea65b7f193082d))
+    - combine more tests into one to reduce duplication ([`933ad9e`](https://github.com/Byron/gitoxide/commit/933ad9e8ff0d58ad2590907cf84b43bc424e3219))
+    - Assure that extended flags receive version 3; make `version` an implementation detail ([`6d810a1`](https://github.com/Byron/gitoxide/commit/6d810a135eeb71b8b04f7d9cb6c5f115587c2a63))
+    - Support for extended flags, and V3 as it's a requirements. ([`417d90e`](https://github.com/Byron/gitoxide/commit/417d90eb267dd74a5372f1c7d8feb7cb4e98d2a1))
+    - refcator ([`27993c0`](https://github.com/Byron/gitoxide/commit/27993c01a1533d561629635336c5cedf53dd0efc))
+    - fix tree ext reading and writing; round-trip with long path works now ([`f93febe`](https://github.com/Byron/gitoxide/commit/f93febe2d2c55938ac8f698b57144583caab54ef))
+    - first PoC for writing long paths, even though it doens't produce the entire file yet ([`581cbd7`](https://github.com/Byron/gitoxide/commit/581cbd7afeac0f7654611c83deacae802ef5da6f))
+    - Merge branch 'format_git_date_time' ([`99e12be`](https://github.com/Byron/gitoxide/commit/99e12bee16ab3f344c71818bfd1c95cf50e1721b))
+    - Make it more explicit to write all available extensions by default ([`fbe9815`](https://github.com/Byron/gitoxide/commit/fbe981519446e55c4020e95841e7bff7e54e358e))
+    - fix docs ([`9861a6c`](https://github.com/Byron/gitoxide/commit/9861a6ce8abc438a1e0739aa6d55ced450a4465b))
+    - thanks clippy ([`834be93`](https://github.com/Byron/gitoxide/commit/834be93e6db84bb9160dd4677b7e9d63213c23cd))
+    - thanks clippy ([`9b3a940`](https://github.com/Byron/gitoxide/commit/9b3a940d9f4694912f32cb86752f3f7507882010))
+    - generalize extension writing so that writing more will be easier ([`8ef5378`](https://github.com/Byron/gitoxide/commit/8ef5378dfaefe2d562d16b861fb4bb0fa4fdfe93))
+    - generalize EOIE exstension writing ([`18b722e`](https://github.com/Byron/gitoxide/commit/18b722e06bfb8bbbf0ada7438266e31a4317f2d4))
+    - provide a stand-alone way of writing end-of-index extensions ([`7ca297a`](https://github.com/Byron/gitoxide/commit/7ca297af400e50d42cffcaab54b1684f6810eb4f))
+    - refactor ([`a5b2ef9`](https://github.com/Byron/gitoxide/commit/a5b2ef9a33720312a6b30b7cdae564bf759b0218))
+    - additional validation ([`ee7b5bb`](https://github.com/Byron/gitoxide/commit/ee7b5bba09bc20e1531cb733b5b2aac8232e7674))
+    - refactor ([`e35aac6`](https://github.com/Byron/gitoxide/commit/e35aac66079464a9494744c201355ab2faa0a2b3))
+    - refactor ([`52386f4`](https://github.com/Byron/gitoxide/commit/52386f4a8ee11b0d2858412b4b5ec4b73544ba30))
+    - refactor ([`75a2338`](https://github.com/Byron/gitoxide/commit/75a2338fe9cfac478164b7b575c0f3c2b910111d))
+    - refactor ([`f6f2861`](https://github.com/Byron/gitoxide/commit/f6f2861f57be8ad4c795c90ae6fc7e568aeb12da))
+    - refactor ([`6cf9277`](https://github.com/Byron/gitoxide/commit/6cf92776b0349bf735c28b6275fdf551ce236d4d))
+    - refactor ([`a6354c0`](https://github.com/Byron/gitoxide/commit/a6354c076b2967ff31feb30e7b73f0a6eb92a459))
+    - Merge branch 'main' into write-index-v2 ([`a938986`](https://github.com/Byron/gitoxide/commit/a938986877302c197d1aed087594c5605416fe5f))
+    - Fill in all remaining documentation, raise `git-index` to 'usable' state ([`3568ae3`](https://github.com/Byron/gitoxide/commit/3568ae3a1ed7c2d0c9b7e1dc690b055b4f43bdd2))
+    - first step towards everything being documented ([`919923c`](https://github.com/Byron/gitoxide/commit/919923c08b641ca148c2f25d193d65bb068cc787))
+    - remove quickerror in favor of thiserror ([`dd7ce3f`](https://github.com/Byron/gitoxide/commit/dd7ce3f77c868f81196103b021957ace54ca2b9c))
+    - refactor ([`618736b`](https://github.com/Byron/gitoxide/commit/618736b614330d9576e58c5bb9b3696de3f76d84))
+    - refactor ([`4dda27e`](https://github.com/Byron/gitoxide/commit/4dda27e716927a506e16da9d6cd50547de1fc84e))
+    - added test for eoie extension ([`a433c0d`](https://github.com/Byron/gitoxide/commit/a433c0d7feebebdf17e9d362894a6fa38221b402))
+    - estimate vector size for tree entries ([`74455e6`](https://github.com/Byron/gitoxide/commit/74455e65e3ef48ce55fa40b7d9ef050a8e0e9b84))
+    - implemented File::write_to for hashed write ([`6b6db34`](https://github.com/Byron/gitoxide/commit/6b6db340b351836f055d8ab74ed3d3f370cca7be))
+    - refactor and add more tests ([`6b32bcf`](https://github.com/Byron/gitoxide/commit/6b32bcfde1af3ada67a6fa0448611d0ecca2f605))
+    - Merge branch 'write-index-files' into write-index-v2 ([`cddc2ca`](https://github.com/Byron/gitoxide/commit/cddc2ca06f63f66e887ff821452d1f56fb08fe6a))
+    - thanks clippy ([`a66403c`](https://github.com/Byron/gitoxide/commit/a66403c8e14716023455d606e1c63787ac40f4f4))
+    - write wrapper to count written bytes ([`b147090`](https://github.com/Byron/gitoxide/commit/b147090bafd22da07f475a167bb921f3e0fa0017))
+    - refactor test ([`33a3009`](https://github.com/Byron/gitoxide/commit/33a3009c4d851fae9156cb3bdb664c05118ef442))
+    - refactor... ([`81eef35`](https://github.com/Byron/gitoxide/commit/81eef353f8f2add26720e3dd3981ce1b790f996c))
+    - refactor tests... ([`3a9b51b`](https://github.com/Byron/gitoxide/commit/3a9b51b0fe812d454378c8ac887bba11740a81ee))
+    - convert 'in-memory' flags to 'storage' flags ([`017377d`](https://github.com/Byron/gitoxide/commit/017377d8c49c236bb3ab240794dbd7a714efb7e1))
+    - Merge branch 'write-index-files' into rev-parse-delegate ([`370110d`](https://github.com/Byron/gitoxide/commit/370110d3356528af38150c2280ed505354ceca5b))
+    - small improvements ([`e5cb6d9`](https://github.com/Byron/gitoxide/commit/e5cb6d94ef31e007847a6072ead8962b16eba105))
+    - fix pathname in test ([`1f18e19`](https://github.com/Byron/gitoxide/commit/1f18e19fd3c07b540d56c86afa4cb708ad1126ac))
+    - thanks clippy ([`3f72180`](https://github.com/Byron/gitoxide/commit/3f7218044fdc9d24693c04e0c1c97069c9a3f698))
+    - sucesfully writing the first basic index files ([`a9c6f22`](https://github.com/Byron/gitoxide/commit/a9c6f2260e96928d678b29a765c26e88f0ff5908))
+    - Merge pull request #2 from SidneyDouw/main ([`ce885ad`](https://github.com/Byron/gitoxide/commit/ce885ad4c3324c09c83751c32e014f246c748766))
+</details>
+
 ## 0.4.0 (2022-07-22)
 
 This is a maintenance release with no functional changes.
@@ -13,7 +106,7 @@ This is a maintenance release with no functional changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 5 commits contributed to the release over the course of 2 calendar days.
  - 64 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -25,8 +118,11 @@ This is a maintenance release with no functional changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0 ([`aa639d8`](https://github.com/Byron/gitoxide/commit/aa639d8c43f3098cc4a5b50614c5ae94a8156928))
     - Release git-hash v0.9.6, git-features v0.22.0, git-date v0.0.2, git-actor v0.11.0, git-glob v0.3.1, git-path v0.4.0, git-attributes v0.3.0, git-tempfile v2.0.2, git-object v0.20.0, git-ref v0.15.0, git-sec v0.3.0, git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0, safety bump 22 crates ([`4737b1e`](https://github.com/Byron/gitoxide/commit/4737b1eea1d4c9a8d5a69fb63ecac5aa5d378ae5))
     - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
+    - setup and refactor tests ([`7eed237`](https://github.com/Byron/gitoxide/commit/7eed2375a3f076e6fdf9dde4673733e85d5612aa))
+    - generate index header ([`f1d7c1c`](https://github.com/Byron/gitoxide/commit/f1d7c1c137c712ecca76b8e69b11481bf0f1a860))
 </details>
 
 ## 0.3.0 (2022-05-18)

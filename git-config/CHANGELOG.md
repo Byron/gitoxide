@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+A maintenance release without user facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 25 calendar days.
+ - 26 days passed between releases.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#482](https://github.com/Byron/gitoxide/issues/482)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#482](https://github.com/Byron/gitoxide/issues/482)**
+    - refactor ([`1ee9918`](https://github.com/Byron/gitoxide/commit/1ee991847a5adeaaeb6e80ae626c28b0ba89e0af))
+ * **Uncategorized**
+    - Release git-hash v0.9.7, git-features v0.22.1 ([`232784a`](https://github.com/Byron/gitoxide/commit/232784a59ded3e8016e4257c7e146ad385cdd64a))
+    - Merge branch 'format_git_date_time' ([`99e12be`](https://github.com/Byron/gitoxide/commit/99e12bee16ab3f344c71818bfd1c95cf50e1721b))
+    - thanks clippy ([`4bd747c`](https://github.com/Byron/gitoxide/commit/4bd747cb3e126fe5b1d540270cfbd731cffd42ef))
+    - commit strange changes to be able to do anything. ([`237b21d`](https://github.com/Byron/gitoxide/commit/237b21da8465200dcb8b5f7dc324a97bf653a23d))
+    - commit strange crlf-file that makes everything impossible ([`1dd9f9a`](https://github.com/Byron/gitoxide/commit/1dd9f9a9320813fe5b40578ee4826a1da575c05c))
+    - make fmt ([`47724c0`](https://github.com/Byron/gitoxide/commit/47724c0edb382c036a3fc99884becfd2b0740d4b))
+    - Fix typos ([`e9fcb70`](https://github.com/Byron/gitoxide/commit/e9fcb70e429edb2974afa3f58d181f3ef14c3da3))
+</details>
+
 ## 0.6.0 (2022-07-22)
 
 <csr-id-32d5b3c695d868ba93755123a25b276bfbe55e0a/>
@@ -229,7 +266,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 314 commits contributed to the release over the course of 33 calendar days.
+ - 316 commits contributed to the release over the course of 33 calendar days.
  - 39 days passed between releases.
  - 93 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
@@ -487,6 +524,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - conforming subsection parsing handling backslashes like git ([`6366148`](https://github.com/Byron/gitoxide/commit/6366148f538ee03314dd866e083157de810d4ad4))
     - Only copy pattern if required ([`b3a752a`](https://github.com/Byron/gitoxide/commit/b3a752a0a873cf9d685e1893c8d35255d7f7323a))
  * **Uncategorized**
+    - Release git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0 ([`aa639d8`](https://github.com/Byron/gitoxide/commit/aa639d8c43f3098cc4a5b50614c5ae94a8156928))
     - Release git-hash v0.9.6, git-features v0.22.0, git-date v0.0.2, git-actor v0.11.0, git-glob v0.3.1, git-path v0.4.0, git-attributes v0.3.0, git-tempfile v2.0.2, git-object v0.20.0, git-ref v0.15.0, git-sec v0.3.0, git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0, safety bump 22 crates ([`4737b1e`](https://github.com/Byron/gitoxide/commit/4737b1eea1d4c9a8d5a69fb63ecac5aa5d378ae5))
     - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
     - thanks clippy ([`fddc720`](https://github.com/Byron/gitoxide/commit/fddc7206476423a6964d61acd060305572ecd02b))
@@ -527,6 +565,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Take GitEnv by ref. ([`937d7ee`](https://github.com/Byron/gitoxide/commit/937d7eea84e92467fcc8a6a72c78fe6c060dd95d))
     - remove leftover debug printing ([`7d1cf34`](https://github.com/Byron/gitoxide/commit/7d1cf34e4535721db97f566734f68014ebc7c3e8))
     - auto-normalize string values to support quote removal in case of strings. ([`1e71e71`](https://github.com/Byron/gitoxide/commit/1e71e71c984289f0d7e0a39379ee6728918b7dc5))
+    - refactor ([`02fba2c`](https://github.com/Byron/gitoxide/commit/02fba2c124f3665112102469d41d476b6cf48dcd))
     - refactor ([`1d6ba9b`](https://github.com/Byron/gitoxide/commit/1d6ba9bd719ad01ce22573cabd8022ddb675c5fc))
     - avoid unwrap() more as the test code matures ([`c2d7e80`](https://github.com/Byron/gitoxide/commit/c2d7e800abe022f5a2663176f0f6b3ac90eacf0e))
     - refactor ([`b5c0b30`](https://github.com/Byron/gitoxide/commit/b5c0b3011d2c0e63c933be42753aea65b88ca569))

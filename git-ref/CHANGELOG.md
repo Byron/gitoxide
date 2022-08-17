@@ -5,11 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Bug Fixes
+
+ - <csr-id-1d2003519e3b0f745af1524a32f2816475024b31/> always update modification date when packed refs are forcefully reloaded.
+   The latter happens right after the file was written, which means we
+   definitely have to update our modification date or else the buffer
+   will be read again next time somebody asks for an up-to-date version.
+   
+   The ordering of operations is such that at worst, the buffer is loaded
+   again instead of keeping an outdated version of it, which would happen
+   if the metadata is read afterwards.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 16 commits contributed to the release over the course of 25 calendar days.
+ - 26 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 2 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - make fmt ([`4b320e7`](https://github.com/Byron/gitoxide/commit/4b320e773368ac5e8c38dd8a779ef3d6d2d024ec))
+    - adapt to changes in git-features ([`777b40c`](https://github.com/Byron/gitoxide/commit/777b40cc33f0cc952bc2a7cbb01c0c3c1b261e5b))
+    - Adjust to changes in `git-features` ([`07168c7`](https://github.com/Byron/gitoxide/commit/07168c704c1f8ba1eeb4dcec65b7d34ddca3e147))
+    - Use generalized reload-on-demand in `git-ref` ([`8d0cce7`](https://github.com/Byron/gitoxide/commit/8d0cce7d1521374d5199552fc69a417a957519bc))
+    - Now it's possible to update packed refs using the shared code ([`78222c2`](https://github.com/Byron/gitoxide/commit/78222c2e39aa24c84852e999448c042f2fd37db4))
+    - The first step towards using the generalized `ReloadIfChanged` in git-ref ([`e8de0ef`](https://github.com/Byron/gitoxide/commit/e8de0ef38db2f2d83cb277ed101464f23c0e98e4))
+    - always update modification date when packed refs are forcefully reloaded. ([`1d20035`](https://github.com/Byron/gitoxide/commit/1d2003519e3b0f745af1524a32f2816475024b31))
+ * **Uncategorized**
+    - Release git-hash v0.9.7, git-features v0.22.1 ([`232784a`](https://github.com/Byron/gitoxide/commit/232784a59ded3e8016e4257c7e146ad385cdd64a))
+    - Merge branch 'format_git_date_time' ([`99e12be`](https://github.com/Byron/gitoxide/commit/99e12bee16ab3f344c71818bfd1c95cf50e1721b))
+    - thanks clippy ([`4bd747c`](https://github.com/Byron/gitoxide/commit/4bd747cb3e126fe5b1d540270cfbd731cffd42ef))
+    - Merge branch 'write-index-files' into write-index-v2 ([`cddc2ca`](https://github.com/Byron/gitoxide/commit/cddc2ca06f63f66e887ff821452d1f56fb08fe6a))
+    - Merge branch 'write-index-files' into rev-parse-delegate ([`370110d`](https://github.com/Byron/gitoxide/commit/370110d3356528af38150c2280ed505354ceca5b))
+    - thanks clippy ([`763cec8`](https://github.com/Byron/gitoxide/commit/763cec829da1e49830a9a52d25a45c07d3d0dba5))
+    - Merge branch 'main' into rev-parse-delegate ([`4ae2bed`](https://github.com/Byron/gitoxide/commit/4ae2bedfc25d1881d58ebdc54aca0936c68d4859))
+    - Merge branch 'main' into rev-parse-delegate ([`6da8250`](https://github.com/Byron/gitoxide/commit/6da82507588d3bc849217c11d9a1d398b67f2ed6))
+    - Fix typos ([`e9fcb70`](https://github.com/Byron/gitoxide/commit/e9fcb70e429edb2974afa3f58d181f3ef14c3da3))
+</details>
+
 ## 0.15.0 (2022-07-22)
 
 ### New Features
 
  - <csr-id-4607a18e24b8270c182663a434b79dff8761db0e/> Add `store::WriteRefLog::Always` to unconditionally write reflogs.
+ - <csr-id-f3c609f0af00aa280649975b0705a3cfaad8a0e5/> Allow `Reference` to be serialized/deserialized with `serde`.
 
 ### Changed (BREAKING)
 
@@ -21,10 +76,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 33 calendar days.
+ - 12 commits contributed to the release over the course of 36 calendar days.
  - 39 days passed between releases.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
+ - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#331](https://github.com/Byron/gitoxide/issues/331), [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Thanks Clippy
 
@@ -41,7 +96,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#331](https://github.com/Byron/gitoxide/issues/331)**
     - `Target(Ref)?::try_name()` now returns `Option<&FullNameRef>`. ([`0f753e9`](https://github.com/Byron/gitoxide/commit/0f753e922e313f735ed267f913366771e9de1111))
     - Add `store::WriteRefLog::Always` to unconditionally write reflogs. ([`4607a18`](https://github.com/Byron/gitoxide/commit/4607a18e24b8270c182663a434b79dff8761db0e))
+ * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - Allow `Reference` to be serialized/deserialized with `serde`. ([`f3c609f`](https://github.com/Byron/gitoxide/commit/f3c609f0af00aa280649975b0705a3cfaad8a0e5))
  * **Uncategorized**
+    - Release git-hash v0.9.6, git-features v0.22.0, git-date v0.0.2, git-actor v0.11.0, git-glob v0.3.1, git-path v0.4.0, git-attributes v0.3.0, git-tempfile v2.0.2, git-object v0.20.0, git-ref v0.15.0, git-sec v0.3.0, git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0, safety bump 22 crates ([`4737b1e`](https://github.com/Byron/gitoxide/commit/4737b1eea1d4c9a8d5a69fb63ecac5aa5d378ae5))
     - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
     - assure document-features are available in all 'usable' and 'early' crates ([`238581c`](https://github.com/Byron/gitoxide/commit/238581cc46c7288691eed37dc7de5069e3d86721))
     - Merge branch 'main' into cont_include_if ([`daa71c3`](https://github.com/Byron/gitoxide/commit/daa71c3b753c6d76a3d652c29237906b3e28728f))
