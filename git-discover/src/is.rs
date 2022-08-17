@@ -25,6 +25,7 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
     #[derive(Eq, PartialEq)]
     enum Kind {
         MaybeRepo,
+        Submodule,
         LinkedWorkTreeDir,
         WorkTreeGitDir { work_dir: std::path::PathBuf },
     }
@@ -59,7 +60,7 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
                 None => (
                     Cow::Owned(private_git_dir.clone()),
                     Cow::Owned(private_git_dir),
-                    Kind::MaybeRepo,
+                    Kind::Submodule,
                 ),
             }
         }
@@ -124,6 +125,9 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
             linked_git_dir: Some(dot_git.into_owned()),
         },
         Kind::WorkTreeGitDir { work_dir } => crate::repository::Kind::WorkTreeGitDir { work_dir },
+        Kind::Submodule => crate::repository::Kind::Submodule {
+            git_dir: dot_git.into_owned(),
+        },
         Kind::MaybeRepo => {
             if bare(git_dir) {
                 crate::repository::Kind::Bare
@@ -140,7 +144,7 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
                     })
                     && last_comp == Some(OsStr::new("modules"))
                 {
-                    crate::repository::Kind::Bare
+                    crate::repository::Kind::SubmoduleGitDir
                 } else {
                     crate::repository::Kind::WorkTree { linked_git_dir: None }
                 }
