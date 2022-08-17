@@ -20,7 +20,7 @@ mod impls;
 ///
 pub mod includes;
 mod meta;
-mod utils;
+mod util;
 
 ///
 pub mod section;
