@@ -40,5 +40,6 @@ windows = { version = "0.37.0", features = [ "alloc",
 tempfile = "3.3.0"
 
 [package.metadata.docs.rs]
-features = ["document-features"]
 all-features = true
+features = ["document-features"]
+rustdoc-args = ["--cfg", "docsrs"]

@@ -49,5 +49,6 @@ harness = false
 path = "./benches/large_config_file.rs"
 
 [package.metadata.docs.rs]
-features = ["document-features"]
 all-features = true
+features = ["document-features"]
+rustdoc-args = ["--cfg", "docsrs"]

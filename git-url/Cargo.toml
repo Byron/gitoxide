@@ -27,5 +27,6 @@ home = "0.5.3"
 document-features = { version = "0.2.0", optional = true }
 
 [package.metadata.docs.rs]
-features = ["document-features"]
 all-features = true
+features = ["document-features"]
+rustdoc-args = ["--cfg", "docsrs"]

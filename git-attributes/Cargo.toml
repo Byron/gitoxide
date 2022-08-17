@@ -34,4 +34,5 @@ git-testtools = { path = "../tests/tools"}
 
 [package.metadata.docs.rs]
 all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 features = ["document-features"]

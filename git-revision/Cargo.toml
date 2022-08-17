@@ -33,3 +33,4 @@ git-repository = { path = "../git-repository", default-features = false, feature
 [package.metadata.docs.rs]
 all-features = true
 features = ["document-features"]
+rustdoc-args = ["--cfg", "docsrs"]

@@ -56,4 +56,5 @@ async-std = { version = "1.9.0", features = ["attributes"] }
 maybe-async = "0.2.6"
 
 [package.metadata.docs.rs]
-features = ["document-features", "blocking-io"]
+features = ["document-features", "blocking-io", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

@@ -39,7 +39,6 @@ pretty-cli = [ "gitoxide-core/serde1", "prodash/progress-tree", "prodash/progres
 ## that appears after a short duration.
 prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "atty", "crosstermion"]
 
-
 #! ### Convenience Features
 #! These combine common choices of the above features to represent typical builds
 
@@ -181,3 +180,4 @@ exclude = ["cargo-smart-release/tests/fixtures/tri-depth-workspace/a",
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]
+rustdoc-args = ["--cfg", "docsrs"]

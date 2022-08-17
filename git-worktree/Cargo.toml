@@ -55,3 +55,4 @@ tempfile = "3.2.0"
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]
