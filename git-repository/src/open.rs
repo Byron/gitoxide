@@ -248,7 +248,7 @@ pub enum Error {
     #[error(transparent)]
     NotARepository(#[from] git_discover::is_git::Error),
     #[error(transparent)]
-    ObjectStoreInitialization(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
     #[error("The git directory at '{}' is considered unsafe as it's not owned by the current user.", .path.display())]
     UnsafeGitDir { path: PathBuf },
     #[error(transparent)]
