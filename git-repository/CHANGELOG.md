@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.21.0 (2022-08-17)
+
+<csr-id-b38a212459e2646ab97ad7b5c24e54d962aae960/>
 
 ### Changed
 
@@ -81,7 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 131 commits contributed to the release over the course of 25 calendar days.
+ - 132 commits contributed to the release over the course of 26 calendar days.
  - 26 days passed between releases.
  - 22 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#427](https://github.com/Byron/gitoxide/issues/427), [#482](https://github.com/Byron/gitoxide/issues/482)
@@ -195,6 +197,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Add archive for submodule test ([`7ab3279`](https://github.com/Byron/gitoxide/commit/7ab32793b7eb70a5d5c47da456dc37d788a0e58b))
     - test showing that submodules dirs can't be opened right now ([`5a9c537`](https://github.com/Byron/gitoxide/commit/5a9c537ab00c9acfde201a3296a64c96c8c18424))
  * **Uncategorized**
+    - prepare changelogs prior to reelase ([`c06ae1c`](https://github.com/Byron/gitoxide/commit/c06ae1c606b6af9c2a12021103d99c2810750d60))
     - Invert behaviour to `open::Options::strict_config()`, with lenient being the default. ([`0235111`](https://github.com/Byron/gitoxide/commit/0235111a4fcc40c7b57d973bfce27a66eddea901))
     - `open::Options::lenient_config(…)` to default otherwise invalid configuration values where possible ([`067c334`](https://github.com/Byron/gitoxide/commit/067c3342f3564dd7f152a720e93e3aa590ae6524))
     - Release git-hash v0.9.7, git-features v0.22.1 ([`232784a`](https://github.com/Byron/gitoxide/commit/232784a59ded3e8016e4257c7e146ad385cdd64a))

@@ -1,6 +1,6 @@
 [package]
 name = "git-object"
-version = "0.20.0"
+version = "0.20.1"
 description = "Immutable and mutable git objects with decoding and encoding support"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
@@ -24,7 +24,7 @@ verbose-object-parsing-errors = ["nom/std"]
 git-features = { version = "^0.22.1", path = "../git-features", features = ["rustsha1"] }
 git-hash = { version = "^0.9.7", path = "../git-hash" }
 git-validate = { version = "^0.5.4", path = "../git-validate" }
-git-actor = { version = "^0.11.0", path = "../git-actor" }
+git-actor = { version = "^0.11.1", path = "../git-actor" }
 
 btoi = "0.4.2"
 itoa = "1.0.1"

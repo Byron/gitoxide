@@ -1,6 +1,6 @@
 [package]
 name = "git-discover"
-version = "0.3.0"
+version = "0.4.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Discover git repositories and check if a directory is a git repository"
@@ -16,7 +16,7 @@ doctest = false
 [dependencies]
 git-sec = { version = "^0.3.0", path = "../git-sec", features = ["thiserror"] }
 git-path = { version = "^0.4.0", path = "../git-path" }
-git-ref = { version = "^0.15.0", path = "../git-ref" }
+git-ref = { version = "^0.15.1", path = "../git-ref" }
 git-hash = { version = "^0.9.7", path = "../git-hash" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std", "unicode"] }
