@@ -1110,7 +1110,7 @@ dependencies = [
 
 [[package]]
 name = "git-commitgraph"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "bstr",
  "document-features",
