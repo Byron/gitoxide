@@ -57,15 +57,15 @@ pub(crate) fn find_ceiling_height(search_dir: &Path, ceiling_dirs: &[PathBuf], c
         .min()
 }
 
-#[cfg(target_os = "linux")]
 /// Returns the device ID of the directory.
+#[cfg(target_os = "linux")]
 pub(crate) fn device_id(m: &std::fs::Metadata) -> u64 {
     use std::os::linux::fs::MetadataExt;
     m.st_dev()
 }
 
-#[cfg(all(unix, not(target_os = "linux")))]
 /// Returns the device ID of the directory.
+#[cfg(all(unix, not(target_os = "linux")))]
 pub(crate) fn device_id(m: &std::fs::Metadata) -> u64 {
     use std::os::unix::fs::MetadataExt;
     m.dev()

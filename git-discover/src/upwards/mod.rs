@@ -9,7 +9,9 @@ pub(crate) mod function {
     use git_sec::Trust;
 
     use super::{Error, Options};
-    use crate::upwards::util::{device_id, find_ceiling_height, shorten_path_with_cwd};
+    #[cfg(unix)]
+    use crate::upwards::util::device_id;
+    use crate::upwards::util::{find_ceiling_height, shorten_path_with_cwd};
     use crate::{is_git, DOT_GIT_DIR};
 
     /// Find the location of the git repository directly in `directory` or in any of its parent directories and provide
