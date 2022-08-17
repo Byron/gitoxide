@@ -262,6 +262,33 @@ fn do_not_shorten_absolute_paths() -> crate::Result {
     Ok(())
 }
 
+#[test]
+#[ignore]
+fn submodules() -> crate::Result {
+    let dir = git_testtools::scripted_fixture_repo_read_only("make_submodules.sh")?;
+    let parent = dir.join("with-submodules");
+    for module in ["m1", "dir/m1"] {
+        let submodule_m1_workdir = parent.join(module);
+        let (path, _trust) = git_discover::upwards(&submodule_m1_workdir)?;
+        assert!(
+            matches!(path, git_discover::repository::Path::WorkTree(ref dir) if dir == &submodule_m1_workdir),
+            "{:?} should match {:?}",
+            path,
+            submodule_m1_workdir
+        );
+
+        let submodule_m1_subdir = submodule_m1_workdir.join("subdir");
+        let (path, _trust) = git_discover::upwards(&submodule_m1_subdir)?;
+        assert!(
+            matches!(path, git_discover::repository::Path::WorkTree(ref dir) if dir == &submodule_m1_subdir),
+            "{:?} should match {:?}",
+            path,
+            submodule_m1_subdir
+        );
+    }
+    Ok(())
+}
+
 fn repo_path() -> crate::Result<PathBuf> {
     git_testtools::scripted_fixture_repo_read_only("make_basic_repo.sh")
 }
