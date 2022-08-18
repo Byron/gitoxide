@@ -7,6 +7,6 @@ mod blocking {
     fn ls_refs() {
         let repo = remote::repo("clone");
         let remote = repo.find_remote("origin").unwrap();
-        let _connection = remote.into_connection(Fetch).unwrap();
+        let _connection = remote.connect(Fetch).unwrap();
     }
 }

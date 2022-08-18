@@ -27,7 +27,7 @@ impl<'repo> Remote<'repo> {
     ///
     /// Note that this method expects the `transport` to be created by the user, which would involve the [`url()`][Self::url()].
     /// It's meant to be used when async operation is needed with runtimes of the user's choice.
-    pub fn into_connection_with_transport<T>(self, transport: T) -> Connection<'repo, T>
+    pub fn to_connection_with_transport<T>(&self, transport: T) -> Connection<'_, 'repo, T>
     where
         T: Transport,
     {
@@ -39,10 +39,10 @@ impl<'repo> Remote<'repo> {
 
     /// Connect to the url suitable for `direction` and return a handle through which operations can be performed.
     #[cfg(feature = "blocking-network-client")]
-    pub fn into_connection(
-        self,
+    pub fn connect(
+        &self,
         direction: crate::remote::Direction,
-    ) -> Result<Connection<'repo, Box<dyn Transport + Send>>, Error> {
+    ) -> Result<Connection<'_, 'repo, Box<dyn Transport + Send>>, Error> {
         use git_protocol::transport::Protocol;
         let protocol = self
             .repo
@@ -65,6 +65,6 @@ impl<'repo> Remote<'repo> {
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
         let transport = git_protocol::transport::connect(url, protocol)?;
-        Ok(self.into_connection_with_transport(transport))
+        Ok(self.to_connection_with_transport(transport))
     }
 }

@@ -2,8 +2,8 @@
 
 use crate::Remote;
 
-pub struct Connection<'repo, T> {
-    pub(crate) remote: Remote<'repo>,
+pub struct Connection<'a, 'repo, T> {
+    pub(crate) remote: &'a Remote<'repo>,
     pub(crate) transport: T,
 }
 
@@ -11,16 +11,15 @@ mod access {
     use crate::remote::Connection;
     use crate::Remote;
 
-    /// Conversion
-    impl<'repo, T> Connection<'repo, T> {
-        /// Dissolve this instance into its parts, `(Remote, Transport)`, the inverse of
-        /// [`into_connection_with_transport()`][Remote::into_connection_with_transport()].
-        pub fn into_parts(self) -> (Remote<'repo>, T) {
-            (self.remote, self.transport)
+    /// Access and conversion
+    impl<'a, 'repo, T> Connection<'a, 'repo, T> {
+        /// Obtain the transport from this instance.
+        pub fn into_transport(self) -> T {
+            self.transport
         }
 
         /// Drop the transport and additional state to regain the original remote.
-        pub fn into_remote(self) -> Remote<'repo> {
+        pub fn remote(&self) -> &Remote<'repo> {
             self.remote
         }
     }
