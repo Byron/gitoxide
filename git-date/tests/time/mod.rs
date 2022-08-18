@@ -57,6 +57,30 @@ mod format {
     }
 
     #[test]
+    fn iso8601() {
+        assert_eq!(
+            time().format(git_date::time::format::ISO8601),
+            "1970-01-01 00:08:20 +0230"
+        );
+    }
+
+    #[test]
+    fn rfc2822() {
+        assert_eq!(
+            time().format(git_date::time::format::RFC2822),
+            "Thu, 01 Jan 1970 00:08:20 +0230"
+        );
+    }
+
+    #[test]
+    fn default() {
+        assert_eq!(
+            time().format(git_date::time::format::DEFAULT),
+            "Thu 01 Jan 1970 00:08:20 +0230"
+        );
+    }
+
+    #[test]
     fn custom_compile_time() {
         assert_eq!(
             time().format(&format_description!("[year]-[month]-[day] [hour]:[minute]:[second]")),

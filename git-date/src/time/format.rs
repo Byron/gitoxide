@@ -6,6 +6,20 @@ use time::macros::format_description;
 /// E.g. `2018-12-24`
 pub const SHORT: &[FormatItem<'_>] = format_description!("[year]-[month]-[day]");
 
+/// E.g `Thu, 18 Aug 2022 12:45:06 +0800`
+pub const RFC2822: &[FormatItem<'_>] = format_description!(
+    "[weekday repr:short], [day] [month repr:short] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"
+);
+
+/// E.g `2022-08-17 22:04:58 +0200`
+pub const ISO8601: &[FormatItem<'_>] =
+    format_description!("[year]-[month]-[day] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]");
+
+/// E.g `Thu 04 Sep 2022 10:45:06 -0400`
+pub const DEFAULT: &[FormatItem<'_>] = format_description!(
+    "[weekday repr:short] [day] [month repr:short] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"
+);
+
 /// Formatting
 impl Time {
     /// Format this instance according to the given `format`.
