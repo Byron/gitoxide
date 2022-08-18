@@ -182,7 +182,12 @@ pub mod describe {
         /// if one was found.
         ///
         /// The outcome provides additional information, but leaves the caller with the burden
-        pub fn try_resolve(&self) -> Result<Option<crate::commit::describe::Resolution<'repo>>, Error> {
+        ///
+        /// # Performance
+        ///
+        /// It is greatly recommended to [assure an object cache is set][crate::Repository::object_cache_size_if_unset()]
+        /// to save ~40% of time.
+        pub fn try_resolve(&self) -> Result<Option<Resolution<'repo>>, Error> {
             // TODO: dirty suffix with respective dirty-detection
             let outcome = git_revision::describe(
                 &self.id,
