@@ -2,7 +2,7 @@
 name = "git-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.22.0"
+version = "0.22.1"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 edition = "2018"
@@ -17,6 +17,10 @@ default = []
 ## Provide traits and utilities for providing progress information. These can then be rendered
 ## using facilities of the `prodash` crate.
 progress = ["prodash"]
+
+## If set, and with the `parallel` feature set, walkdir iterators will be single-threaded.
+## This feature exists to avoid [certain side-effects](https://github.com/starship/starship/issues/4251) of rayong threadpool configuration with `jwalk`.
+fs-walkdir-single-threaded = []
 
 ## Use scoped threads and channels to parallelize common workloads on multiple objects. If enabled, it is used everywhere
 ## where it makes sense.
@@ -84,7 +88,7 @@ required-features = ["io-pipe"]
 [dependencies]
 #! ### Optional Dependencies
 
-git-hash = { version = "^0.9.6", path = "../git-hash" }
+git-hash = { version = "^0.9.7", path = "../git-hash" }
 
 
 

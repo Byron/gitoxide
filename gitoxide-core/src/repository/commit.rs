@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use git_repository as git;
 
 pub fn describe(
-    repo: git::Repository,
+    mut repo: git::Repository,
     rev_spec: Option<&str>,
     mut out: impl std::io::Write,
     mut err: impl std::io::Write,
@@ -16,6 +16,7 @@ pub fn describe(
         long_format,
     }: describe::Options,
 ) -> Result<()> {
+    repo.object_cache_size_if_unset(4 * 1024 * 1024);
     let commit = match rev_spec {
         Some(spec) => repo
             .rev_parse(spec)?

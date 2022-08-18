@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.3.1 (2022-08-17)
+
+A maintenance release without user facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 24 calendar days.
+ - 26 days passed between releases.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - make fmt ([`4b320e7`](https://github.com/Byron/gitoxide/commit/4b320e773368ac5e8c38dd8a779ef3d6d2d024ec))
+ * **Uncategorized**
+    - prepare changelogs prior to reelase ([`c06ae1c`](https://github.com/Byron/gitoxide/commit/c06ae1c606b6af9c2a12021103d99c2810750d60))
+    - Release git-hash v0.9.7, git-features v0.22.1 ([`232784a`](https://github.com/Byron/gitoxide/commit/232784a59ded3e8016e4257c7e146ad385cdd64a))
+    - Merge branch 'write-index-files' into write-index-v2 ([`cddc2ca`](https://github.com/Byron/gitoxide/commit/cddc2ca06f63f66e887ff821452d1f56fb08fe6a))
+    - improve docs and use 'new-style' in error messages. ([`e36d83e`](https://github.com/Byron/gitoxide/commit/e36d83e62eb7969726e7c8b3d25dbb743a508f8a))
+    - Add docs for `git-attributes` ([`0eabea9`](https://github.com/Byron/gitoxide/commit/0eabea9772ce67f70442bc8ded02a7e82f5c17cc))
+    - refactor ([`1cbc142`](https://github.com/Byron/gitoxide/commit/1cbc142d37599f4d7bfaf9cb07de41ee4b3f4c24))
+    - Merge branch 'main' into pathspec ([`7b61506`](https://github.com/Byron/gitoxide/commit/7b615060712565f515515e35a3e8346278ad770c))
+</details>
+
 ## 0.3.0 (2022-07-22)
 
 This is a maintenance release with no functional changes.
@@ -13,7 +44,7 @@ This is a maintenance release with no functional changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 33 calendar days.
+ - 20 commits contributed to the release over the course of 33 calendar days.
  - 39 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -25,8 +56,25 @@ This is a maintenance release with no functional changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-hash v0.9.6, git-features v0.22.0, git-date v0.0.2, git-actor v0.11.0, git-glob v0.3.1, git-path v0.4.0, git-attributes v0.3.0, git-tempfile v2.0.2, git-object v0.20.0, git-ref v0.15.0, git-sec v0.3.0, git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0, safety bump 22 crates ([`4737b1e`](https://github.com/Byron/gitoxide/commit/4737b1eea1d4c9a8d5a69fb63ecac5aa5d378ae5))
     - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
+    - refactor ([`63baa75`](https://github.com/Byron/gitoxide/commit/63baa752901388a46a4211c70f3b3a64aa36d4ec))
+    - refactor of `Name` and `Assignment` ([`6449e77`](https://github.com/Byron/gitoxide/commit/6449e77e11ef0d25c2990f1c29e9fbea3c97fb0a))
+    - refactor ([`e83879c`](https://github.com/Byron/gitoxide/commit/e83879cee1666ba927a95c05c714d132a109eeef))
+    - impl '.as_ref()' for State ([`82074d5`](https://github.com/Byron/gitoxide/commit/82074d5e026c31b382cf97eade22eeca1bce3390))
+    - use "to_owned" instead of "into" ([`35c6d38`](https://github.com/Byron/gitoxide/commit/35c6d38088e09d88b30e12538e175a4a286980cd))
     - assure document-features are available in all 'usable' and 'early' crates ([`238581c`](https://github.com/Byron/gitoxide/commit/238581cc46c7288691eed37dc7de5069e3d86721))
+    - refactor ([`3be7a2d`](https://github.com/Byron/gitoxide/commit/3be7a2dc3cb8f476184555a1c62e230b7703db54))
+    - fix build ([`1838f3d`](https://github.com/Byron/gitoxide/commit/1838f3db13eae6d278264dcdbc48d202de992349))
+    - refactor ([`957356b`](https://github.com/Byron/gitoxide/commit/957356b4e5ea30ff5fa4390859f9e91093df9feb))
+    - fix rust fmt issue ([`a9cb68b`](https://github.com/Byron/gitoxide/commit/a9cb68b5e04e11dc1bd7a4dc152001f26a87a445))
+    - implement name::error for git-attributes ([`0849ebf`](https://github.com/Byron/gitoxide/commit/0849ebf4bc2052d7886f9425800a547bf530e967))
+    - Merge branch 'main' into pathspec ([`f4fe879`](https://github.com/Byron/gitoxide/commit/f4fe879ab3161fdb135354939b85408197d8a953))
+    - Merge branch 'main' into pathspec ([`89ea12b`](https://github.com/Byron/gitoxide/commit/89ea12b558bcc056b892193ee8fb44b8664b5da4))
+    - refactor ([`9945ceb`](https://github.com/Byron/gitoxide/commit/9945ceb0a99c1343cb6e652e44900b36d3786e22))
+    - refactor ([`3b2bab8`](https://github.com/Byron/gitoxide/commit/3b2bab89172b86068bda9704bc9d69690bcfb2ba))
+    - quickerror to thiserror ([`da84b67`](https://github.com/Byron/gitoxide/commit/da84b675d3e825d2f815957fbed9928a0480ea4a))
+    - protected attribute name via "AttributeName" type ([`7bb408e`](https://github.com/Byron/gitoxide/commit/7bb408e631138854a6dff85ce356da96f61367de))
     - Release git-path v0.3.0, safety bump 14 crates ([`400c9be`](https://github.com/Byron/gitoxide/commit/400c9bec49e4ec5351dc9357b246e7677a63ea35))
 </details>
 

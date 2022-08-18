@@ -53,8 +53,16 @@ pub fn main() -> Result<()> {
     let object_hash = args.object_hash;
     use git_repository as git;
     let repository = args.repository;
-    let repository = move || {
-        git::ThreadSafeRepository::discover(repository)
+    enum Mode {
+        Strict,
+        Lenient,
+    }
+    let repository = move |mode: Mode| {
+        let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
+        let toggle = matches!(mode, Mode::Strict);
+        mapping.full = mapping.full.strict_config(toggle);
+        mapping.reduced = mapping.reduced.strict_config(toggle);
+        git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
             .map(git::Repository::from)
             .map(|r| r.apply_environment())
     };
@@ -85,7 +93,7 @@ pub fn main() -> Result<()> {
             progress,
             progress_keep_open,
             None,
-            move |_progress, out, _err| core::repository::config::list(repository()?, filter, format, out),
+            move |_progress, out, _err| core::repository::config::list(repository(Mode::Lenient)?, filter, format, out),
         )
         .map(|_| ()),
         Subcommands::Free(subcommands) => match subcommands {
@@ -502,7 +510,7 @@ pub fn main() -> Result<()> {
             core::repository::verify::PROGRESS_RANGE,
             move |progress, out, _err| {
                 core::repository::verify::integrity(
-                    repository()?,
+                    repository(Mode::Strict)?,
                     out,
                     progress,
                     &should_interrupt,
@@ -522,7 +530,9 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| core::repository::revision::previous_branches(repository()?, out, format),
+                move |_progress, out, _err| {
+                    core::repository::revision::previous_branches(repository(Mode::Lenient)?, out, format)
+                },
             ),
             revision::Subcommands::Explain { spec } => prepare_and_run(
                 "revision-explain",
@@ -544,7 +554,7 @@ pub fn main() -> Result<()> {
                 None,
                 move |_progress, out, _err| {
                     core::repository::revision::resolve(
-                        repository()?,
+                        repository(Mode::Strict)?,
                         specs,
                         out,
                         core::repository::revision::resolve::Options {
@@ -574,7 +584,7 @@ pub fn main() -> Result<()> {
                 None,
                 move |_progress, out, err| {
                     core::repository::commit::describe(
-                        repository()?,
+                        repository(Mode::Strict)?,
                         rev_spec.as_deref(),
                         out,
                         err,
@@ -603,7 +613,14 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, _err| {
-                    core::repository::tree::entries(repository()?, treeish.as_deref(), recursive, extended, format, out)
+                    core::repository::tree::entries(
+                        repository(Mode::Strict)?,
+                        treeish.as_deref(),
+                        recursive,
+                        extended,
+                        format,
+                        out,
+                    )
                 },
             ),
             tree::Subcommands::Info { treeish, extended } => prepare_and_run(
@@ -613,7 +630,14 @@ pub fn main() -> Result<()> {
                 progress_keep_open,
                 None,
                 move |_progress, out, err| {
-                    core::repository::tree::info(repository()?, treeish.as_deref(), extended, format, out, err)
+                    core::repository::tree::info(
+                        repository(Mode::Strict)?,
+                        treeish.as_deref(),
+                        extended,
+                        format,
+                        out,
+                        err,
+                    )
                 },
             ),
         },
@@ -624,7 +648,7 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| core::repository::odb::entries(repository()?, format, out),
+                move |_progress, out, _err| core::repository::odb::entries(repository(Mode::Strict)?, format, out),
             ),
             odb::Subcommands::Info => prepare_and_run(
                 "odb-info",
@@ -632,7 +656,7 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, err| core::repository::odb::info(repository()?, format, out, err),
+                move |_progress, out, err| core::repository::odb::info(repository(Mode::Strict)?, format, out, err),
             ),
         },
         Subcommands::Mailmap(cmd) => match cmd {
@@ -642,7 +666,9 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, err| core::repository::mailmap::entries(repository()?, format, out, err),
+                move |_progress, out, err| {
+                    core::repository::mailmap::entries(repository(Mode::Lenient)?, format, out, err)
+                },
             ),
         },
         Subcommands::Exclude(cmd) => match cmd {
@@ -659,7 +685,7 @@ pub fn main() -> Result<()> {
                 move |_progress, out, _err| {
                     use git::bstr::ByteSlice;
                     core::repository::exclude::query(
-                        repository()?,
+                        repository(Mode::Strict)?,
                         if pathspecs.is_empty() {
                             Box::new(
                                 stdin_or_bail()?

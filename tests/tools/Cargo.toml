@@ -1,7 +1,7 @@
 [package]
 name = "git-testtools"
 description = "Shared code for gitoxide crates to facilitate testing"
-version = "0.7.1"
+version = "0.8.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -13,11 +13,11 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-git-hash = { version = "^0.9.6", path = "../../git-hash" }
+git-hash = { version = "^0.9.7", path = "../../git-hash" }
 git-lock = { version = "^2.0.0", path = "../../git-lock" }
-git-discover = { version = "^0.3.0", path = "../../git-discover" }
-git-attributes = { version = "^0.3.0", path = "../../git-attributes" }
-git-worktree = { version = "^0.4.0", path = "../../git-worktree" }
+git-discover = { version = "^0.4.0", path = "../../git-discover" }
+git-attributes = { version = "^0.3.1", path = "../../git-attributes" }
+git-worktree = { version = "^0.4.1", path = "../../git-worktree" }
 
 nom = { version = "7", default-features = false, features = ["std"]}
 bstr = "0.2.15"

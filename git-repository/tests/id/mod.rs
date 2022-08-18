@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
 use git_testtools::hex_to_id;
 
@@ -22,6 +23,24 @@ fn prefix() -> crate::Result {
     let prefix = id.shorten()?;
     assert_eq!(prefix.cmp_oid(&id), Ordering::Equal);
     assert_eq!(prefix.hex_len(), 5, "preconfigured via core.abbrev in the repo file");
+
+    assert!(
+        git_testtools::run_git(worktree_dir.path(), &["config", "core.abbrev", ""])?.success(),
+        "set core abbrev value to empty successfully"
+    );
+
+    assert!(
+        matches!(
+            git_repository::open_opts(worktree_dir.path(), git::open::Options::isolated().strict_config(true))
+                .unwrap_err(),
+            git::open::Error::Config(git::config::Error::EmptyValue { .. })
+        ),
+        "an empty core.abbrev fails the open operation in strict config mode, emulating git behaviour"
+    );
+    assert!(
+        git_repository::open(worktree_dir.path()).is_ok(),
+        "By default gitoxide acts like `libgit2` here and we prefer to be lenient when possible"
+    );
     Ok(())
 }
 

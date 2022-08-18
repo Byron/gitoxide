@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
 
-use crate::{config, config::cache::interpolate_context, permission, permissions, Permissions, ThreadSafeRepository};
+use crate::{config, config::cache::interpolate_context, permission, Permissions, ThreadSafeRepository};
 
 /// A way to configure the usage of replacement objects, see `git replace`.
 #[derive(Debug, Clone)]
@@ -60,7 +60,7 @@ impl ReplacementObjects {
 }
 
 /// The options used in [`ThreadSafeRepository::open_opts`]
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Options {
     pub(crate) object_store_slots: git_odb::store::init::Slots,
     pub(crate) replacement_objects: ReplacementObjects,
@@ -69,7 +69,23 @@ pub struct Options {
     /// Warning: this one is copied to to config::Cache - don't change it after repo open or keep in sync.
     pub(crate) filter_config_section: Option<fn(&git_config::file::Metadata) -> bool>,
     pub(crate) lossy_config: Option<bool>,
+    pub(crate) lenient_config: bool,
     pub(crate) bail_if_untrusted: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            object_store_slots: Default::default(),
+            replacement_objects: Default::default(),
+            permissions: Default::default(),
+            git_dir_trust: None,
+            filter_config_section: None,
+            lossy_config: None,
+            lenient_config: true,
+            bail_if_untrusted: false,
+        }
+    }
 }
 
 #[derive(Default, Clone)]
@@ -104,23 +120,7 @@ impl Options {
     /// Options configured to prevent accessing anything else than the repository configuration file, prohibiting
     /// accessing the environment or spreading beyond the git repository location.
     pub fn isolated() -> Self {
-        Options::default().permissions(Permissions {
-            config: permissions::Config {
-                system: false,
-                git: false,
-                user: false,
-                env: false,
-                includes: false,
-            },
-            env: {
-                let deny = permission::env_var::Resource::resource(git_sec::Permission::Deny);
-                permissions::Environment {
-                    xdg_config_home: deny.clone(),
-                    home: deny.clone(),
-                    git_prefix: deny,
-                }
-            },
-        })
+        Options::default().permissions(Permissions::isolated())
     }
 }
 
@@ -191,9 +191,19 @@ impl Options {
     /// By default, in release mode configuration will be read without retaining non-essential information like
     /// comments or whitespace to optimize lookup performance.
     ///
-    /// Some application might want to toggle this to false in they want to display or edit configuration losslessly.
+    /// Some application might want to toggle this to false in they want to display or edit configuration losslessly
+    /// with all whitespace and comments included.
     pub fn lossy_config(mut self, toggle: bool) -> Self {
         self.lossy_config = toggle.into();
+        self
+    }
+
+    /// If set, default is false, invalid configuration values will cause an error even if these can safely be defaulted.
+    ///
+    /// This is recommended for all applications that prefer correctness over usability.
+    /// `git` itself by defaults to strict configuration mode to let you know if configuration is incorrect.
+    pub fn strict_config(mut self, toggle: bool) -> Self {
+        self.lenient_config = !toggle;
         self
     }
 
@@ -214,6 +224,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 filter_config_section: Some(config::section::is_trusted),
                 lossy_config: None,
                 bail_if_untrusted: false,
+                lenient_config: true,
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
@@ -222,6 +233,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 git_dir_trust: git_sec::Trust::Reduced.into(),
                 filter_config_section: Some(config::section::is_trusted),
                 bail_if_untrusted: false,
+                lenient_config: true,
                 lossy_config: None,
             },
         }
@@ -232,12 +244,12 @@ impl git_sec::trust::DefaultForLevel for Options {
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error(transparent)]
+    #[error("Failed to load the git configuration")]
     Config(#[from] config::Error),
     #[error(transparent)]
     NotARepository(#[from] git_discover::is_git::Error),
     #[error(transparent)]
-    ObjectStoreInitialization(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
     #[error("The git directory at '{}' is considered unsafe as it's not owned by the current user.", .path.display())]
     UnsafeGitDir { path: PathBuf },
     #[error(transparent)]
@@ -315,6 +327,7 @@ impl ThreadSafeRepository {
             filter_config_section,
             ref replacement_objects,
             lossy_config,
+            lenient_config,
             bail_if_untrusted,
             permissions: Permissions { ref env, config },
         } = options;
@@ -329,7 +342,7 @@ impl ThreadSafeRepository {
             .map(|cd| git_dir.join(cd));
         let common_dir_ref = common_dir.as_deref().unwrap_or(&git_dir);
 
-        let repo_config = config::cache::StageOne::new(common_dir_ref, git_dir_trust, lossy_config)?;
+        let repo_config = config::cache::StageOne::new(common_dir_ref, git_dir_trust, lossy_config, lenient_config)?;
         let mut refs = {
             let reflog = repo_config.reflog.unwrap_or(git_ref::store::WriteReflog::Disable);
             let object_hash = repo_config.object_hash;
@@ -354,6 +367,7 @@ impl ThreadSafeRepository {
             home.as_deref(),
             env.clone(),
             config,
+            lenient_config,
         )?;
 
         if bail_if_untrusted && git_dir_trust != git_sec::Trust::Full {

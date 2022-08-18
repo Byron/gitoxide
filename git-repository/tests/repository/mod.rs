@@ -2,6 +2,7 @@ use git_repository::Repository;
 
 mod config;
 mod object;
+mod open;
 mod reference;
 mod remote;
 mod state;

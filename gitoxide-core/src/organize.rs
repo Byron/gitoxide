@@ -181,6 +181,9 @@ fn handle(
         .join(to_relative({
             let mut path = git_url::expand_path(None, url.path.as_bstr())?;
             match kind {
+                git::Kind::Submodule => {
+                    unreachable!("BUG: We should not try to relocated submodules and not find them the first place")
+                }
                 git::Kind::Bare => path,
                 git::Kind::WorkTree { .. } => {
                     if let Some(ext) = path.extension() {
