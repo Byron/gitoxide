@@ -18,7 +18,6 @@ mod error {
         UnknownProtocol { given: BString },
     }
 }
-
 pub use error::Error;
 
 /// Establishing connections to remote hosts

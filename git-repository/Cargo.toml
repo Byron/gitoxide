@@ -31,11 +31,11 @@ default = ["max-performance", "one-stop-shop"]
 #! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
 
 ## Make `git-protocol` available along with an async client.
-async-network-client = ["git-protocol/async-client"]
+async-network-client = ["git-protocol/async-client", "unstable"]
 ## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers.
 async-network-client-async-std = ["async-std", "async-network-client", "git-transport/async-std"]
 ## Make `git-protocol` available along with a blocking client.
-blocking-network-client = ["git-protocol/blocking-client"]
+blocking-network-client = ["git-protocol/blocking-client", "unstable"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S, and implies blocking networking as a whole.
 blocking-http-transport = ["git-transport/http-client-curl"]
 

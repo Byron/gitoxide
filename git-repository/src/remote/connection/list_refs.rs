@@ -33,7 +33,8 @@ where
                     git_protocol::credentials::helper,
                     Vec::new(),
                     &mut self.progress,
-                )?;
+                )
+                .await?;
                 let refs = match outcome.refs.take() {
                     Some(refs) => refs,
                     None => {
@@ -48,9 +49,12 @@ where
                     }
                 };
                 self.state = State::HandshakeWithRefs { outcome, refs };
-                self.list_refs()
+                match &self.state {
+                    State::HandshakeWithRefs { refs, .. } => Ok(refs),
+                    _ => unreachable!(),
+                }
             }
-            State::HandshakeWithRefs { ref refs, .. } => Ok(&refs),
+            State::HandshakeWithRefs { ref refs, .. } => Ok(refs),
         }
     }
 
