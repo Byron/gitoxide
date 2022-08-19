@@ -38,6 +38,28 @@ fn fallback_if_configured_in_options_but_no_candidate() -> crate::Result {
     .expect("fallback activated");
     assert!(res.name.is_none(), "no name can be found");
     assert_eq!(res.depth, 0, "just a default, not relevant as there is no name");
+    assert_eq!(res.commits_seen, 8, "a traversal is performed");
+    assert_eq!(res.into_format(7).to_string(), "01ec18a");
+    Ok(())
+}
+
+#[test]
+fn fallback_if_configured_in_options_and_max_candidates_zero() -> crate::Result {
+    let repo = repo();
+    let commit = repo.head_commit()?;
+    let res = git_revision::describe(
+        &commit.id,
+        |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
+        describe::Options {
+            fallback_to_oid: true,
+            max_candidates: 0,
+            ..Default::default()
+        },
+    )?
+    .expect("fallback activated");
+    assert!(res.name.is_none(), "no name can be found");
+    assert_eq!(res.depth, 0, "just a default, not relevant as there is no name");
+    assert_eq!(res.commits_seen, 0, "we don't do any traversal");
     assert_eq!(res.into_format(7).to_string(), "01ec18a");
     Ok(())
 }

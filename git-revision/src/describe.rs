@@ -186,7 +186,21 @@ pub(crate) mod function {
                 commits_seen: 0,
             }));
         }
+
         max_candidates = max_candidates.min(MAX_CANDIDATES);
+        if max_candidates == 0 {
+            return if fallback_to_oid {
+                Ok(Some(Outcome {
+                    id: commit.to_owned(),
+                    name: None,
+                    name_by_oid,
+                    depth: 0,
+                    commits_seen: 0,
+                }))
+            } else {
+                Ok(None)
+            };
+        }
 
         let mut buf = Vec::new();
         let mut parent_buf = Vec::new();
