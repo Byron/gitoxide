@@ -1,6 +1,6 @@
+use crate::time::Format;
 use crate::Time;
 use time::format_description::FormatItem;
-use time::formatting::Formattable;
 use time::macros::format_description;
 
 /// E.g. `2018-12-24`
@@ -24,16 +24,30 @@ pub const DEFAULT: &[FormatItem<'_>] = format_description!(
     "[weekday repr:short] [month repr:short] [day] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"
 );
 
+mod format_impls {
+    use crate::time::Format;
+    use time::format_description::FormatItem;
+
+    impl<'a> From<&'a [FormatItem<'a>]> for Format<'a> {
+        fn from(f: &'a [FormatItem<'a>]) -> Self {
+            Format::Custom(f)
+        }
+    }
+}
+
 /// Formatting
 impl Time {
     /// Format this instance according to the given `format`.
     ///
     /// Use the [`format_description`](https://time-rs.github.io/book/api/format-description.html) macro to create and
     /// validate formats at compile time, courtesy of the [`time`] crate.
-    pub fn format(&self, format: &(impl Formattable + ?Sized)) -> String {
-        self.to_time()
-            .format(&format)
-            .expect("well-known format into memory never fails")
+    pub fn format<'a>(&self, format: impl Into<Format<'a>>) -> String {
+        match format.into() {
+            Format::Custom(format) => self
+                .to_time()
+                .format(&format)
+                .expect("well-known format into memory never fails"),
+        }
     }
 }
 

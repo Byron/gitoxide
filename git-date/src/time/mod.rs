@@ -22,6 +22,12 @@ pub enum Sign {
     Minus,
 }
 
+/// Various ways to describe a time format.
+pub enum Format<'a> {
+    /// A custom format typically defined with the [`format_description`][time::format_description] macro.
+    Custom(&'a [time::format_description::FormatItem<'a>]),
+}
+
 ///
 pub mod format;
 mod init;

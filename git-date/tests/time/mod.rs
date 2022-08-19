@@ -91,7 +91,7 @@ mod format {
     #[test]
     fn custom_compile_time() {
         assert_eq!(
-            time().format(&format_description!("[year]-[month]-[day] [hour]:[minute]:[second]")),
+            time().format(format_description!("[year]-[month]-[day] [hour]:[minute]:[second]")),
             "1973-11-29 21:33:09",
         );
     }
