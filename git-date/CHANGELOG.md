@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.0.4 (2022-08-19)
+## Unreleased
 
 ### New Features
 
@@ -28,13 +28,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - prepare for release of git-repository ([`bec3388`](https://github.com/Byron/gitoxide/commit/bec33882fdce9c78f803b15da969116941fc976b))
+    - prepare for release of git-repository ([`8aa5389`](https://github.com/Byron/gitoxide/commit/8aa5389d5a1bdd3a07f1caa1c2f55c8af4f9844a))
     - Raw and Unix formats. ([`8f7f9ce`](https://github.com/Byron/gitoxide/commit/8f7f9ce2b06ec884220b8cd5010b3df04b1ff0bc))
     - Foundation for custom formats that aren't easily done with `time` formatting ([`b74eaf8`](https://github.com/Byron/gitoxide/commit/b74eaf85d41e1ec67d8c84cc8484702514c3e7cd))
     - Add ISO-strict format ([`4b0c219`](https://github.com/Byron/gitoxide/commit/4b0c2198f9d5b28584c717123c7cfb1b27724605))
     - refinements ([`b1fea0f`](https://github.com/Byron/gitoxide/commit/b1fea0fe76bd94850c7da34ee9504525ad667748))
     - Add common git date formats. ([`090795b`](https://github.com/Byron/gitoxide/commit/090795b4040e2dad995390e502f87c2ced8045f8))
 </details>
+
+## 0.0.4 (2022-08-19)
+
+### New Features
+
+ - <csr-id-8f7f9ce2b06ec884220b8cd5010b3df04b1ff0bc/> Raw and Unix formats.
+ - <csr-id-4b0c2198f9d5b28584c717123c7cfb1b27724605/> Add ISO-strict format
 
 ## 0.0.3 (2022-08-17)
 
