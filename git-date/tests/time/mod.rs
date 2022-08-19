@@ -53,14 +53,14 @@ mod format {
 
     #[test]
     fn year_month_day() {
-        assert_eq!(time().format(git_date::time::format::SHORT), "1970-01-01");
+        assert_eq!(time().format(git_date::time::format::SHORT), "1973-11-29");
     }
 
     #[test]
     fn iso8601() {
         assert_eq!(
             time().format(git_date::time::format::ISO8601),
-            "1970-01-01 00:08:20 +0230"
+            "1973-11-29 21:33:09 +0230"
         );
     }
 
@@ -68,7 +68,7 @@ mod format {
     fn rfc2822() {
         assert_eq!(
             time().format(git_date::time::format::RFC2822),
-            "Thu, 01 Jan 1970 00:08:20 +0230"
+            "Thu, 29 Nov 1973 21:33:09 +0230"
         );
     }
 
@@ -76,7 +76,7 @@ mod format {
     fn default() {
         assert_eq!(
             time().format(git_date::time::format::DEFAULT),
-            "Thu 01 Jan 1970 00:08:20 +0230"
+            "Thu Nov 29 1973 21:33:09 +0230"
         );
     }
 
@@ -84,13 +84,13 @@ mod format {
     fn custom_compile_time() {
         assert_eq!(
             time().format(&format_description!("[year]-[month]-[day] [hour]:[minute]:[second]")),
-            "1970-01-01 00:08:20",
+            "1973-11-29 21:33:09",
         );
     }
 
     fn time() -> Time {
         Time {
-            seconds_since_unix_epoch: 500,
+            seconds_since_unix_epoch: 123456789,
             offset_in_seconds: 9000,
             sign: Sign::Plus,
         }
