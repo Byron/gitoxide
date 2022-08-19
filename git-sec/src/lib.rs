@@ -5,6 +5,7 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 // `unsafe_code` not forbidden because we need to interact with the libc
 #![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
