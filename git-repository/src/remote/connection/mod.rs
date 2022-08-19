@@ -2,9 +2,19 @@
 
 use crate::Remote;
 
-pub struct Connection<'a, 'repo, T> {
+pub(crate) enum State {
+    Connected,
+    HandshakeWithRefs {
+        outcome: git_protocol::fetch::handshake::Outcome,
+        refs: Vec<git_protocol::fetch::Ref>,
+    },
+}
+
+pub struct Connection<'a, 'repo, T, P> {
     pub(crate) remote: &'a Remote<'repo>,
     pub(crate) transport: T,
+    pub(crate) progress: P,
+    pub(crate) state: State,
 }
 
 mod access {
@@ -12,7 +22,7 @@ mod access {
     use crate::Remote;
 
     /// Access and conversion
-    impl<'a, 'repo, T> Connection<'a, 'repo, T> {
+    impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
         /// Obtain the transport from this instance.
         pub fn into_transport(self) -> T {
             self.transport
@@ -25,4 +35,4 @@ mod access {
     }
 }
 
-mod refs;
+mod list_refs;

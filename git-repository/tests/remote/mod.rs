@@ -11,4 +11,4 @@ pub(crate) fn cow_str(s: &str) -> Cow<str> {
     Cow::Borrowed(s)
 }
 
-mod connect;
+mod list_refs;

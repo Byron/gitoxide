@@ -1,7 +1,7 @@
 #![allow(missing_docs)]
 
-use crate::remote::Connection;
-use crate::Remote;
+use crate::remote::{connection, Connection};
+use crate::{Progress, Remote};
 use git_protocol::transport::client::Transport;
 
 mod error {
@@ -23,27 +23,34 @@ pub use error::Error;
 
 /// Establishing connections to remote hosts
 impl<'repo> Remote<'repo> {
-    /// Create a new connection using `transport` to communicate.
+    /// Create a new connection using `transport` to communicate, with `progress` to indicate changes.
     ///
     /// Note that this method expects the `transport` to be created by the user, which would involve the [`url()`][Self::url()].
     /// It's meant to be used when async operation is needed with runtimes of the user's choice.
-    pub fn to_connection_with_transport<T>(&self, transport: T) -> Connection<'_, 'repo, T>
+    pub fn to_connection_with_transport<T, P>(&self, transport: T, progress: P) -> Connection<'_, 'repo, T, P>
     where
         T: Transport,
+        P: Progress,
     {
         Connection {
             remote: self,
             transport,
+            progress,
+            state: connection::State::Connected,
         }
     }
 
     /// Connect to the url suitable for `direction` and return a handle through which operations can be performed.
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
     #[git_protocol::maybe_async::maybe_async]
-    pub async fn connect(
+    pub async fn connect<P>(
         &self,
         direction: crate::remote::Direction,
-    ) -> Result<Connection<'_, 'repo, Box<dyn Transport + Send>>, Error> {
+        progress: P,
+    ) -> Result<Connection<'_, 'repo, Box<dyn Transport + Send>, P>, Error>
+    where
+        P: Progress,
+    {
         use git_protocol::transport::Protocol;
         let protocol = self
             .repo
@@ -66,6 +73,6 @@ impl<'repo> Remote<'repo> {
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
         let transport = git_protocol::transport::connect(url, protocol).await?;
-        Ok(self.to_connection_with_transport(transport))
+        Ok(self.to_connection_with_transport(transport, progress))
     }
 }

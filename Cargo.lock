@@ -1538,7 +1538,6 @@ dependencies = [
  "git-worktree",
  "is_ci",
  "log",
- "maybe-async",
  "regex",
  "serde",
  "serial_test 0.8.0",
