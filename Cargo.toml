@@ -84,7 +84,7 @@ anyhow = "1.0.42"
 
 gitoxide-core = { version = "^0.16.0", path = "gitoxide-core" }
 git-features = { version = "^0.22.1", path = "git-features" }
-git-repository = { version = "^0.21.0", path = "git-repository", default-features = false }
+git-repository = { version = "^0.21.1", path = "git-repository", default-features = false }
 
 git-transport-for-configuration-only = { package = "git-transport", optional = true, version = "^0.19.1", path = "git-transport" }
 
