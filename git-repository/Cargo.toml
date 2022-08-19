@@ -3,7 +3,7 @@ name = "git-repository"
 repository = "https://github.com/Byron/gitoxide"
 description = "Abstractions for git repositories"
 license = "MIT/Apache-2.0"
-version = "0.21.0"
+version = "0.21.1"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 include = ["src/**/*", "CHANGELOG.md"]
@@ -82,7 +82,7 @@ git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-validate = { version = "^0.5.4", path = "../git-validate" }
 git-sec = { version = "^0.3.0", path = "../git-sec", features = ["thiserror"] }
-git-date = { version = "^0.0.3", path = "../git-date" }
+git-date = { version = "^0.0.4", path = "../git-date" }
 
 git-config = { version = "^0.6.1", path = "../git-config" }
 git-odb = { version = "^0.31.1", path = "../git-odb" }
@@ -90,7 +90,7 @@ git-hash = { version = "^0.9.7", path = "../git-hash" }
 git-object = { version = "^0.20.1", path = "../git-object" }
 git-actor = { version = "^0.11.1", path = "../git-actor" }
 git-pack = { version = "^0.21.1", path = "../git-pack", features = ["object-cache-dynamic"] }
-git-revision = { version = "^0.4.0", path = "../git-revision" }
+git-revision = { version = "^0.4.1", path = "../git-revision" }
 
 git-path = { version = "^0.4.0", path = "../git-path" }
 git-url = { version = "^0.7.1", path = "../git-url", optional = true }

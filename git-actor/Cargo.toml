@@ -17,7 +17,7 @@ serde1 = ["serde", "bstr/serde1", "git-date/serde1"]
 
 [dependencies]
 git-features = { version = "^0.22.1", path = "../git-features", optional = true }
-git-date = { version = "^0.0.3", path = "../git-date" }
+git-date = { version = "^0.0.4", path = "../git-date" }
 
 quick-error = "2.0.0"
 btoi = "0.4.2"
