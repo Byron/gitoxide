@@ -88,7 +88,7 @@ git-config = { version = "^0.6.1", path = "../git-config" }
 git-odb = { version = "^0.31.1", path = "../git-odb" }
 git-hash = { version = "^0.9.7", path = "../git-hash" }
 git-object = { version = "^0.20.1", path = "../git-object" }
-git-actor = { version = "^0.11.1", path = "../git-actor" }
+git-actor = { version = "^0.11.2", path = "../git-actor" }
 git-pack = { version = "^0.21.1", path = "../git-pack", features = ["object-cache-dynamic"] }
 git-revision = { version = "^0.4.1", path = "../git-revision" }
 

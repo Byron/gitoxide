@@ -25,7 +25,7 @@ A maintenance release that speeds up `commit.describe()` performance if `max_can
 <details><summary>view details</summary>
 
  * **Uncategorized**
-    - prepare for release of git-repository ([`bec3388`](https://github.com/Byron/gitoxide/commit/bec33882fdce9c78f803b15da969116941fc976b))
+    - prepare for release of git-repository ([`8aa5389`](https://github.com/Byron/gitoxide/commit/8aa5389d5a1bdd3a07f1caa1c2f55c8af4f9844a))
     - greatly improve `gix commit describe` performance by adding an object cache ([`d07daaa`](https://github.com/Byron/gitoxide/commit/d07daaae8ed33161097f3007057c9993546ceb75))
 </details>
 
