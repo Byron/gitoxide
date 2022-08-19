@@ -14,6 +14,7 @@
 pub use async_trait;
 #[cfg(feature = "futures-io")]
 pub use futures_io;
+pub use maybe_async;
 
 pub use git_credentials as credentials;
 /// A convenience export allowing users of git-protocol to use the transport layer without their own cargo dependency.
