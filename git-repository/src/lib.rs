@@ -120,7 +120,7 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their

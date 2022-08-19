@@ -1,6 +1,6 @@
 //! Parse git ref-specs and represent them.
-#![forbid(unsafe_code, rust_2018_idioms)]
-#![deny(missing_docs)]
+#![deny(missing_docs, rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 ///
 pub mod parse;

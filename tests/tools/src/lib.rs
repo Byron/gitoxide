@@ -1,5 +1,6 @@
 //! Utilities for testing `gitoxide` crates, many of which might be useful for testing programs that use `git` in general.
 #![deny(missing_docs)]
+
 use std::{
     collections::BTreeMap,
     convert::Infallible,

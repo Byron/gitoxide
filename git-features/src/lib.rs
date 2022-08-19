@@ -1,5 +1,3 @@
-#![forbid(rust_2018_idioms)]
-#![deny(unsafe_code, missing_docs)]
 //! A crate providing foundational capabilities to other `git-*` crates with trade-offs between compile time, binary size or speed
 //! selectable using cargo feature toggles.
 //!
@@ -13,6 +11,7 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 ///
 pub mod cache;

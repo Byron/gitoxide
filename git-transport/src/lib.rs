@@ -7,8 +7,8 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
+#![deny(missing_docs, rust_2018_idioms)]
 #![forbid(unsafe_code)]
-#![deny(rust_2018_idioms, missing_docs)]
 
 pub use git_packetline as packetline;
 

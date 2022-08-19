@@ -5,8 +5,8 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![forbid(unsafe_code)]
 #![deny(missing_docs, rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 ///
 pub mod helper;

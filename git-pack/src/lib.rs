@@ -1,5 +1,3 @@
-#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
-
 //! Git stores all of its data as _Objects_, which are data along with a hash over all data. Storing objects efficiently
 //! is what git packs are concerned about.
 //!
@@ -17,6 +15,7 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 ///
 pub mod bundle;

@@ -1,11 +1,11 @@
 //! A library implementing a URL for use in git with access to its special capabilities.
 //! ## Feature Flags
 #![cfg_attr(
-feature = "document-features",
-cfg_attr(doc, doc = ::document_features::document_features!())
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![forbid(unsafe_code)]
 #![deny(rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 use std::{
     convert::TryFrom,

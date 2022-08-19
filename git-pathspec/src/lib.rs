@@ -1,7 +1,7 @@
 //! Parse [path specifications](https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddefpathspecapathspec) and
 //! see if a path matches.
-#![forbid(unsafe_code, rust_2018_idioms)]
-#![deny(missing_docs)]
+#![deny(missing_docs, rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 use bitflags::bitflags;
 use bstr::BString;

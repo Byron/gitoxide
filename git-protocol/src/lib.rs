@@ -7,8 +7,7 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![deny(unsafe_code)]
-#![deny(rust_2018_idioms, missing_docs)]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 pub use git_credentials as credentials;
 /// A convenience export allowing users of git-protocol to use the transport layer without their own cargo dependency.
