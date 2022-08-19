@@ -65,6 +65,14 @@ mod format {
     }
 
     #[test]
+    fn iso8601_strict() {
+        assert_eq!(
+            time().format(git_date::time::format::ISO8601_STRICT),
+            "1973-11-29T21:33:09+02:30"
+        );
+    }
+
+    #[test]
     fn rfc2822() {
         assert_eq!(
             time().format(git_date::time::format::RFC2822),
