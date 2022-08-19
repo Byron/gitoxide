@@ -23,9 +23,14 @@ pub enum Sign {
 }
 
 /// Various ways to describe a time format.
+#[derive(Debug, Clone, Copy)]
 pub enum Format<'a> {
     /// A custom format typically defined with the [`format_description`][time::format_description] macro.
     Custom(&'a [time::format_description::FormatItem<'a>]),
+    /// The seconds since 1970, also known as unix epoch, like `1660874655 +0800`.
+    Unix,
+    /// The seconds since 1970, followed by the offset, like `1660874655 +0800`
+    Raw,
 }
 
 ///

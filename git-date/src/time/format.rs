@@ -19,6 +19,12 @@ pub const ISO8601: &[FormatItem<'_>] =
 pub const ISO8601_STRICT: &[FormatItem<'_>] =
     format_description!("[year]-[month]-[day]T[hour]:[minute]:[second][offset_hour sign:mandatory]:[offset_minute]");
 
+/// E.g. `123456789`
+pub const UNIX: Format<'static> = Format::Unix;
+
+/// E.g. `1660874655 +0800`
+pub const RAW: Format<'static> = Format::Raw;
+
 /// E.g. `Thu Sep 04 2022 10:45:06 -0400`
 pub const DEFAULT: &[FormatItem<'_>] = format_description!(
     "[weekday repr:short] [month repr:short] [day] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"
@@ -47,6 +53,8 @@ impl Time {
                 .to_time()
                 .format(&format)
                 .expect("well-known format into memory never fails"),
+            Format::Unix => self.seconds_since_unix_epoch.to_string(),
+            Format::Raw => self.to_bstring().to_string(),
         }
     }
 }
