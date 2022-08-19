@@ -119,6 +119,7 @@ check: ## Build all code in suitable configurations
 	cd git-protocol && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-repository && cargo check --no-default-features --features local \
 					  && cargo check --no-default-features --features async-network-client \
+					  && cargo check --no-default-features --features async-network-client-async-std \
 					  && cargo check --no-default-features --features blocking-network-client \
 					  && cargo check --no-default-features --features blocking-network-client,blocking-http-transport \
 					  && cargo check --no-default-features --features one-stop-shop \

@@ -1503,6 +1503,7 @@ name = "git-repository"
 version = "0.21.0"
 dependencies = [
  "anyhow",
+ "async-std",
  "byte-unit",
  "clru",
  "document-features",
@@ -1537,6 +1538,7 @@ dependencies = [
  "git-worktree",
  "is_ci",
  "log",
+ "maybe-async",
  "regex",
  "serde",
  "serial_test 0.8.0",

@@ -38,8 +38,9 @@ impl<'repo> Remote<'repo> {
     }
 
     /// Connect to the url suitable for `direction` and return a handle through which operations can be performed.
-    #[cfg(feature = "blocking-network-client")]
-    pub fn connect(
+    #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
+    #[git_protocol::maybe_async::maybe_async]
+    pub async fn connect(
         &self,
         direction: crate::remote::Direction,
     ) -> Result<Connection<'_, 'repo, Box<dyn Transport + Send>>, Error> {
@@ -64,7 +65,7 @@ impl<'repo> Remote<'repo> {
             })?;
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
-        let transport = git_protocol::transport::connect(url, protocol)?;
+        let transport = git_protocol::transport::connect(url, protocol).await?;
         Ok(self.to_connection_with_transport(transport))
     }
 }
