@@ -15,7 +15,7 @@ pub(crate) mod function {
     pub async fn connect<Url, E>(
         url: Url,
         desired_version: crate::Protocol,
-    ) -> Result<impl crate::client::Transport + Send, Error>
+    ) -> Result<Box<dyn crate::client::Transport + Send>, Error>
     where
         Url: TryInto<git_url::Url, Error = E>,
         git_url::parse::Error: From<E>,
@@ -30,14 +30,16 @@ pub(crate) mod function {
                     });
                 }
                 let path = std::mem::take(&mut url.path);
-                git::Connection::new_tcp(
-                    url.host().expect("host is present in url"),
-                    url.port,
-                    path,
-                    desired_version,
+                Box::new(
+                    git::Connection::new_tcp(
+                        url.host().expect("host is present in url"),
+                        url.port,
+                        path,
+                        desired_version,
+                    )
+                    .await
+                    .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
                 )
-                .await
-                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?
             }
             scheme => return Err(Error::UnsupportedScheme(scheme)),
         })
