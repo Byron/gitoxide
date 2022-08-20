@@ -349,7 +349,7 @@ Provide a CLI to for the most basic user journey:
 
 ## Shortcomings & Limitations
 
-Please take a look at the [`SHORTCOMINGS.md` file](https://github.com/Byron/gitoxide/blob/main/git-lock/SHORTCOMINGS.md) for details.
+Please take a look at the [`SHORTCOMINGS.md` file](https://github.com/Byron/gitoxide/blob/main/SHORTCOMINGS.md) for details.
   
 ## Credits
 
