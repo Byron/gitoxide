@@ -11,13 +11,12 @@
 # The key here is that we create the release only once.
 
 name: release
+
 on:
   push:
     # Enable when testing release infrastructure on a branch.
-    # branches:
-    # - ag/release
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+    # branches: [ 'ag/release' ]
+    tags: [ "v[0-9]+.[0-9]+.[0-9]+" ]
 jobs:
   create-release:
     name: create-release
@@ -60,14 +59,14 @@ jobs:
 
   build-release:
     name: build-release
-    needs: ["create-release"]
+    needs: [ "create-release" ]
     runs-on: ${{ matrix.os }}
     env:
       # For some builds, we use cross to test on 32-bit and big-endian
       # systems.
       CARGO: cargo
       # When CARGO is set to CROSS, this is set to `--target matrix.target`.
-      TARGET_FLAGS:
+      TARGET_FLAGS: ""
       # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
       TARGET_DIR: ./target
       # Emit backtraces on panics.
@@ -76,9 +75,9 @@ jobs:
       EXE_NAME: ein
     strategy:
       matrix:
-#         build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
-        build: [linux, macos, win-msvc, win-gnu, win32-msvc]
-        feature: ["small", "lean", "max"]
+#         build: [ linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc ]
+        build: [ linux, macos, win-msvc, win-gnu, win32-msvc ]
+        feature: [ "small", "lean", "max" ]
         include:
           - build: linux
             os: ubuntu-18.04

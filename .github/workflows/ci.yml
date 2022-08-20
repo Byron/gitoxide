@@ -3,7 +3,7 @@ name: ci
 on:
   push:
     branches: [ main ]
-    tags-ignore: '*'
+    tags-ignore: [ '*' ]
     paths:
       - '.github/**'
       - 'ci/**'

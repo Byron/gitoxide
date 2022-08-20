@@ -1,15 +1,13 @@
+name: Minimum Supported Rust Version
+
 on:
   # Trigger the workflow on push to master or any pull request
   # Ignore all tags
   push:
-    branches:
-      - main
-    tags-ignore: '*'
+    branches: [ main ]
+    tags-ignore: [ '*' ]
   pull_request:
-    branches:
-      - 'main'
-
-name: Minimum Supported Rust Version
+    branches: [ main ]
 
 jobs:
   rustfmt:
