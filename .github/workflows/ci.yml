@@ -33,7 +33,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: Swatinem/rust-cache@v1
     - name: Setup dependencies
       run:
@@ -51,7 +51,7 @@ jobs:
           - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - run: rustup set auto-self-update disable
         if: contains(runner.os, 'windows')
         shell: bash
@@ -91,7 +91,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: default
@@ -122,7 +122,7 @@ jobs:
     continue-on-error: ${{ matrix.checks == 'advisories' }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: EmbarkStudios/cargo-deny-action@v1
       with:
         command: check ${{ matrix.checks }}
