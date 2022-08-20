@@ -1,6 +1,7 @@
 //! Utilities for testing `gitoxide` crates, many of which might be useful for testing programs that use `git` in general.
 #![deny(missing_docs)]
 
+use std::str::FromStr;
 use std::{
     collections::BTreeMap,
     convert::Infallible,
@@ -64,6 +65,8 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache<'static>>>> = Lazy
     })();
     Mutex::new(cache)
 });
+/// The major, minor and patch level of the git version on the system.
+pub static GIT_VERSION: Lazy<(u8, u8, u8)> = Lazy::new(|| parse_git_version().unwrap());
 
 /// Define how [scripted_fixture_repo_writable_with_args()] uses produces the writable copy.
 pub enum Creation {
@@ -72,6 +75,41 @@ pub enum Creation {
     CopyFromReadOnly,
     /// Run the script in the writable location. That way, absolute paths match the location.
     ExecuteScript,
+}
+
+/// Returns true if the given `major`, `minor` and `patch` is smaller than the actual git version on the system
+/// to facilitate skipping a test on the caller.
+/// Will never return true on CI which is expected to have a recent enough git version.
+///
+/// # Panics
+///
+/// If `git` cannot be executed or if its version output cannot be parsed.
+pub fn should_skip_as_git_version_is_smaller_than(major: u8, minor: u8, patch: u8) -> bool {
+    if is_ci::cached() {
+        return false; // CI should be made to use a recent git version, it should run there.
+    }
+    *GIT_VERSION < (major, minor, patch)
+}
+
+fn parse_git_version() -> Result<(u8, u8, u8)> {
+    let git_program = cfg!(windows).then(|| "git.exe").unwrap_or("git");
+    let output = std::process::Command::new(git_program).arg("--version").output()?;
+
+    let mut numbers = output
+        .stdout
+        .split(|b| *b == b' ')
+        .nth(2)
+        .expect("git version <version>")
+        .split(|b| *b == b'.')
+        .take(3)
+        .map(|n| std::str::from_utf8(n).expect("valid utf8 in version number"))
+        .map(|num| u8::from_str(num));
+
+    Ok((
+        numbers.next().expect("major")?,
+        numbers.next().expect("minor")?,
+        numbers.next().expect("patch")?,
+    ))
 }
 
 /// Run `git` in `working_dir` with all provided `args`.
