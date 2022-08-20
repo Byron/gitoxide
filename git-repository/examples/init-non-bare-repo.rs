@@ -28,6 +28,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
     println!("new commit id with empty tree: {:?}", id);
 
-    tmp.into_path();
+    let _persisted = tmp.into_path();
     Ok(())
 }
