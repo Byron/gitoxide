@@ -1,7 +1,7 @@
 #![allow(missing_docs)]
 
 use crate::remote::{connection, Connection};
-use crate::{Progress, Remote};
+use crate::{remote, Progress, Remote};
 use git_protocol::transport::client::Transport;
 
 mod error {
@@ -46,7 +46,7 @@ impl<'repo> Remote<'repo> {
     #[git_protocol::maybe_async::maybe_async]
     pub async fn connect<P>(
         &self,
-        direction: crate::remote::Direction,
+        direction: remote::Direction,
         progress: P,
     ) -> Result<Connection<'_, 'repo, Box<dyn Transport + Send>, P>, Error>
     where
@@ -72,6 +72,12 @@ impl<'repo> Remote<'repo> {
                 })
             })?;
 
+        let url = self.processed_url(direction)?;
+        let transport = git_protocol::transport::connect(url, protocol).await?;
+        Ok(self.to_connection_with_transport(transport, progress))
+    }
+
+    fn processed_url(&self, direction: remote::Direction) -> Result<git_url::Url, Error> {
         let mut url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
         if url.scheme == git_url::Scheme::File {
             let mut dir = git_path::from_bstr(url.path.as_ref());
@@ -83,7 +89,6 @@ impl<'repo> Remote<'repo> {
                 .into_repository_and_work_tree_directories();
             url.path = git_path::into_bstr(git_dir).into_owned();
         }
-        let transport = git_protocol::transport::connect(url, protocol).await?;
-        Ok(self.to_connection_with_transport(transport, progress))
+        Ok(url)
     }
 }
