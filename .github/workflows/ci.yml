@@ -60,10 +60,7 @@ jobs:
           brew install tree openssl gnu-sed
       - name: "cargo check default features"
         if: startsWith(matrix.os, 'windows')
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all --bins --examples
+        run: cargo check --all --bins --examples
       - run: git lfs fetch && git lfs checkout
       - uses: taiki-e/install-action@v1
         with:
@@ -76,10 +73,7 @@ jobs:
         if: startsWith(matrix.os, 'windows')
       - name: "Installation from crates.io"
         if: startsWith(matrix.os, 'windows')
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: "--force gitoxide cargo-smart-release"
+        run: cargo install --force gitoxide cargo-smart-release
 
   lint:
     runs-on: ubuntu-latest
