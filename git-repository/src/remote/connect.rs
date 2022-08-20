@@ -1,5 +1,3 @@
-#![allow(missing_docs)]
-
 use crate::remote::{connection, Connection};
 use crate::{remote, Progress, Remote};
 use git_protocol::transport::client::Transport;
@@ -8,7 +6,9 @@ mod error {
     use crate::bstr::BString;
     use crate::remote;
 
+    /// The error returned by [connect()][crate::Remote::connect()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
         Connect(#[from] git_protocol::transport::client::connect::Error),

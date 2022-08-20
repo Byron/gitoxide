@@ -1,15 +1,18 @@
-#![allow(missing_docs, dead_code)]
-
 use crate::Remote;
 
 pub(crate) enum State {
     Connected,
     HandshakeWithRefs {
+        #[allow(dead_code)]
         outcome: git_protocol::fetch::handshake::Outcome,
         refs: Vec<git_protocol::fetch::Ref>,
     },
 }
 
+/// A type to represent an ongoing connection to a remote host, typically with the connection already established.
+///
+/// It can be used to perform a variety of operations with the remote without worrying about protocol details,
+/// much like a remote procedure call.
 pub struct Connection<'a, 'repo, T, P>
 where
     T: git_protocol::transport::client::Transport,
