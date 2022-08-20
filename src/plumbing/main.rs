@@ -13,6 +13,7 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
+use crate::plumbing::options::remote;
 use crate::{
     plumbing::options::{commit, config, exclude, free, mailmap, odb, revision, tree, Args, Subcommands},
     shared::pretty::prepare_and_run,
@@ -87,6 +88,20 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Remote(remote::Platform { name: _, cmd }) => match cmd {
+            remote::Subcommands::Refs => prepare_and_run(
+                "config-list",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, _out, _err| {
+                    Ok(())
+                    // core::repository::remote::refs(repository(Mode::Lenient)?, name, format, out)
+                },
+            ),
+        }
+        .map(|_| ()),
         Subcommands::Config(config::Platform { filter }) => prepare_and_run(
             "config-list",
             verbose,

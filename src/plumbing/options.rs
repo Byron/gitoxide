@@ -72,6 +72,8 @@ pub enum Subcommands {
     /// Interact with the mailmap.
     #[clap(subcommand)]
     Mailmap(mailmap::Subcommands),
+    /// Interact with the remote hosts.
+    Remote(remote::Platform),
     /// Interact with the exclude files like .gitignore.
     #[clap(subcommand)]
     Exclude(exclude::Subcommands),
@@ -91,6 +93,26 @@ pub mod config {
         /// Typical filters are `branch` or `remote.origin` or `remote.or*` - git-style globs are supported
         /// and comparisons are case-insensitive.
         pub filter: Vec<String>,
+    }
+}
+
+pub mod remote {
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        /// The name of the remote to connect to.
+        #[clap(long, short = 'n', default_value = "origin")]
+        pub name: String,
+
+        /// Subcommands
+        #[clap(subcommand)]
+        pub cmd: Subcommands,
+    }
+
+    #[derive(Debug, clap::Subcommand)]
+    #[clap(visible_alias = "remotes")]
+    pub enum Subcommands {
+        /// Print all references available on the remote
+        Refs,
     }
 }
 

@@ -14,18 +14,12 @@ pub fn init(directory: Option<PathBuf>) -> Result<git::discover::repository::Pat
     .with_context(|| "Repository initialization failed")
 }
 
-pub mod config;
-
-pub mod tree;
-
 pub mod commit;
-
-pub mod revision;
-
-pub mod verify;
-
-pub mod odb;
-
-pub mod mailmap;
-
+pub mod config;
 pub mod exclude;
+pub mod mailmap;
+pub mod odb;
+pub mod remote;
+pub mod revision;
+pub mod tree;
+pub mod verify;
