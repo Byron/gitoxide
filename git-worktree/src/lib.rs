@@ -3,8 +3,8 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![deny(unsafe_code)]
-#![deny(rust_2018_idioms, missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 /// file system related utilities
 pub mod fs;

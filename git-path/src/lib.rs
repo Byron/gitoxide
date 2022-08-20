@@ -1,5 +1,3 @@
-#![forbid(unsafe_code, rust_2018_idioms)]
-#![deny(missing_docs)]
 //! This crate contains an assortment of utilities to deal with paths and their conversions.
 //!
 //! Generally `git` treats paths as bytes, but inherently assumes non-illformed UTF-8 as encoding on windows. Internally, it expects
@@ -48,6 +46,8 @@
 //! Callers may `.expect()` on the result to indicate they don't wish to handle this special and rare case. Note that servers should not
 //! ever get into a code-path which does panic though.
 //! </details>
+#![deny(missing_docs, rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 /// A dummy type to represent path specs and help finding all spots that take path specs once it is implemented.
 

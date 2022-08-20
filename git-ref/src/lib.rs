@@ -20,7 +20,8 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![deny(unsafe_code, missing_docs, rust_2018_idioms)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 use std::borrow::Cow;
 

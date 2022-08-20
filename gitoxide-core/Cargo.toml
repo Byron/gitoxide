@@ -68,3 +68,4 @@ document-features = { version = "0.2.0", optional = true }
 
 [package.metadata.docs.rs]
 features = ["document-features", "blocking-client", "organize", "estimate-hours", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

@@ -47,8 +47,6 @@ name = "async-transport"
 path = "tests/async-transport.rs"
 required-features = ["async-client"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 git-features = { version = "^0.22.1", path = "../git-features" }
 git-url = { version = "^0.7.1", path = "../git-url" }
@@ -81,4 +79,5 @@ maybe-async = "0.2.6"
 blocking = "1.0.2"
 
 [package.metadata.docs.rs]
-features = ["http-client-curl", "document-features"]
+features = ["http-client-curl", "document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]
