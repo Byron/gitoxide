@@ -1,5 +1,5 @@
-use crate::remote::{connection, Connection};
-use crate::{remote, Progress, Remote};
+use crate::remote::Connection;
+use crate::{Progress, Remote};
 use git_protocol::transport::client::Transport;
 
 mod error {
@@ -37,7 +37,6 @@ impl<'repo> Remote<'repo> {
             remote: self,
             transport,
             progress,
-            state: connection::State::Connected,
         }
     }
 
@@ -46,13 +45,27 @@ impl<'repo> Remote<'repo> {
     #[git_protocol::maybe_async::maybe_async]
     pub async fn connect<P>(
         &self,
-        direction: remote::Direction,
+        direction: crate::remote::Direction,
         progress: P,
     ) -> Result<Connection<'_, 'repo, Box<dyn Transport + Send>, P>, Error>
     where
         P: Progress,
     {
         use git_protocol::transport::Protocol;
+        fn sanitize(mut url: git_url::Url) -> Result<git_url::Url, Error> {
+            if url.scheme == git_url::Scheme::File {
+                let mut dir = git_path::from_bstr(url.path.as_ref());
+                let kind = git_discover::is_git(dir.as_ref()).or_else(|_| {
+                    dir.to_mut().push(git_discover::DOT_GIT_DIR);
+                    git_discover::is_git(dir.as_ref())
+                })?;
+                let (git_dir, _work_dir) = git_discover::repository::Path::from_dot_git_dir(dir.into_owned(), kind)
+                    .into_repository_and_work_tree_directories();
+                url.path = git_path::into_bstr(git_dir).into_owned();
+            }
+            Ok(url)
+        }
+
         let protocol = self
             .repo
             .config
@@ -72,23 +85,8 @@ impl<'repo> Remote<'repo> {
                 })
             })?;
 
-        let url = self.processed_url(direction)?;
-        let transport = git_protocol::transport::connect(url, protocol).await?;
+        let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
+        let transport = git_protocol::transport::connect(sanitize(url)?, protocol).await?;
         Ok(self.to_connection_with_transport(transport, progress))
-    }
-
-    fn processed_url(&self, direction: remote::Direction) -> Result<git_url::Url, Error> {
-        let mut url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
-        if url.scheme == git_url::Scheme::File {
-            let mut dir = git_path::from_bstr(url.path.as_ref());
-            let kind = git_discover::is_git(dir.as_ref()).or_else(|_| {
-                dir.to_mut().push(git_discover::DOT_GIT_DIR);
-                git_discover::is_git(dir.as_ref())
-            })?;
-            let (git_dir, _work_dir) = git_discover::repository::Path::from_dot_git_dir(dir.into_owned(), kind)
-                .into_repository_and_work_tree_directories();
-            url.path = git_path::into_bstr(git_dir).into_owned();
-        }
-        Ok(url)
     }
 }
