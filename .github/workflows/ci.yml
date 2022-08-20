@@ -52,14 +52,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - run: rustup set auto-self-update disable
-        if: contains(runner.os, 'windows')
-        shell: bash
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: default
-          toolchain: stable
-          override: true
+      - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Setup dependencies (macos)
         if: startsWith(matrix.os, 'macos')
@@ -92,11 +85,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: default
           toolchain: stable
-          override: true
+          components: clippy,rustfmt
       - name: Run cargo clippy
         run: cargo clippy --all --tests
       - name: Run cargo fmt

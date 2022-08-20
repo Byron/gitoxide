@@ -120,17 +120,11 @@ jobs:
         run: |
           ci/macos-install-packages
 
-      - run: rustup set auto-self-update disable
-        if: contains(runner.os, 'windows')
-        shell: bash
-
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          profile: minimal
-          override: true
-          target: ${{ matrix.target }}
+          targets: ${{ matrix.target }}
 
       - name: Use Cross
         # if: matrix.os != 'windows-2019'
