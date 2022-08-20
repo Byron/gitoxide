@@ -103,7 +103,7 @@ fn parse_git_version() -> Result<(u8, u8, u8)> {
         .split(|b| *b == b'.')
         .take(3)
         .map(|n| std::str::from_utf8(n).expect("valid utf8 in version number"))
-        .map(|num| u8::from_str(num));
+        .map(u8::from_str);
 
     Ok((
         numbers.next().expect("major")?,
