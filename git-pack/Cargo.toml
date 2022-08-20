@@ -67,6 +67,6 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 maplit = "1.0.2"
 
 [package.metadata.docs.rs]
-features = ["document-features"]
 all-features = true
-
+features = ["document-features", "pack-cache-lru-dynamic", "object-cache-dynamic", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

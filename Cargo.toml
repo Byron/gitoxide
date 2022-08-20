@@ -10,13 +10,11 @@ default-run = "gix"
 include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 resolver = "2"
 
-
 [[bin]]
 name = "ein"
 path = "src/ein.rs"
 test = false
 doctest = false
-
 
 [[bin]]
 name = "gix"
@@ -40,7 +38,6 @@ pretty-cli = [ "gitoxide-core/serde1", "prodash/progress-tree", "prodash/progres
 ## The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
 ## that appears after a short duration.
 prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "atty", "crosstermion"]
-
 
 #! ### Convenience Features
 #! These combine common choices of the above features to represent typical builds
@@ -183,3 +180,4 @@ exclude = ["cargo-smart-release/tests/fixtures/tri-depth-workspace/a",
 
 [package.metadata.docs.rs]
 features = ["document-features", "max"]
+rustdoc-args = ["--cfg", "docsrs"]

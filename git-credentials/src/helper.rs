@@ -77,16 +77,6 @@ pub struct Outcome {
     pub next: NextAction,
 }
 
-#[cfg(windows)]
-fn git_program() -> &'static str {
-    "git.exe"
-}
-
-#[cfg(not(windows))]
-fn git_program() -> &'static str {
-    "git"
-}
-
 // TODO(sec): reimplement helper execution so it won't use the `git credential` anymore to allow enforcing our own security model.
 //            Currently we support more flexible configuration than downright not working at all.
 /// Call the `git` credentials helper program performing the given `action`.
@@ -94,7 +84,7 @@ fn git_program() -> &'static str {
 /// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
 /// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
 pub fn action(action: Action<'_>) -> Result {
-    let mut cmd = Command::new(git_program());
+    let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
     cmd.arg("credential")
         .arg(action.as_str())
         .stdin(Stdio::piped())

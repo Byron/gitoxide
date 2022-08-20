@@ -21,7 +21,6 @@ name = "single-threaded"
 path = "tests/worktree-single-threaded.rs"
 required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
-
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = [ "serde", "bstr/serde1", "git-index/serde1", "git-hash/serde1", "git-object/serde1" ]
@@ -56,3 +55,4 @@ tempfile = "3.2.0"
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

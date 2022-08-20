@@ -24,7 +24,7 @@
 //!   but not others. Any other operation dealing with the tempfile suffers from the same issue.
 //!
 //! [signal-hook]: https://docs.rs/signal-hook
-#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 use std::{
     io,

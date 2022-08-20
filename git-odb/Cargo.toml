@@ -50,5 +50,5 @@ filetime = "0.2.15"
 maplit = "1.0.2"
 
 [package.metadata.docs.rs]
-all-features = true
-features = ["document-features"]
+features = ["document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

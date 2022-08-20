@@ -26,7 +26,7 @@
 //! to understand which cache levels exist and how to leverage them.
 //!
 //! When accessing an object, the first cache that's queried is a  memory-capped LRU object cache, mapping their id to data and kind.
-//! On miss, the object is looked up and if ia pack is hit, there is a small fixed-size cache for delta-base objects.
+//! On miss, the object is looked up and if a pack is hit, there is a small fixed-size cache for delta-base objects.
 //!
 //! In scenarios where the same objects are accessed multiple times, an object cache can be useful and is to be configured specifically
 //! using the [`object_cache_size(…)`][crate::Repository::object_cache_size()] method.
@@ -121,7 +121,8 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their

@@ -1,8 +1,7 @@
 //! Low-level access to reading and writing chunk file based formats.
 //!
 //! See the [git documentation](https://github.com/git/git/blob/seen/Documentation/technical/chunk-format.txt) for details.
-#![deny(unsafe_code)]
-#![deny(rust_2018_idioms, missing_docs)]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 /// An identifier to describe the kind of chunk, unique within a chunk file, typically in ASCII
 pub type Id = [u8; 4];

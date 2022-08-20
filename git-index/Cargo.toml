@@ -29,8 +29,6 @@ serde1 = ["serde", "smallvec/serde", "git-hash/serde1"]
 internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 git-features = { version = "^0.22.1", path = "../git-features", features = ["rustsha1", "progress"] }
 git-hash = { version = "^0.9.7", path = "../git-hash" }
@@ -55,4 +53,4 @@ git-testtools = { path = "../tests/tools"}
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde1"]
-
+rustdoc-args = ["--cfg", "docsrs"]

@@ -1,5 +1,3 @@
-#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
-
 //! # `git_config`
 //!
 //! This crate is a high performance `git-config` file reader and writer. It
@@ -36,6 +34,8 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 pub mod file;
 
