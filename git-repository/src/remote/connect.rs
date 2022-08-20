@@ -16,6 +16,8 @@ mod error {
         MissingUrl { direction: remote::Direction },
         #[error("Protocol named {given:?} is not a valid protocol. Choose between 1 and 2")]
         UnknownProtocol { given: BString },
+        #[error("Could not verify that file:// url is a valid git directory before attempting to use it")]
+        FileUrl(#[from] git_discover::is_git::Error),
     }
 }
 pub use error::Error;
@@ -70,7 +72,17 @@ impl<'repo> Remote<'repo> {
                 })
             })?;
 
-        let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
+        let mut url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
+        if url.scheme == git_url::Scheme::File {
+            let mut dir = git_path::from_bstr(url.path.as_ref());
+            let kind = git_discover::is_git(dir.as_ref()).or_else(|_| {
+                dir.to_mut().push(git_discover::DOT_GIT_DIR);
+                git_discover::is_git(dir.as_ref())
+            })?;
+            let (git_dir, _work_dir) = git_discover::repository::Path::from_dot_git_dir(dir.into_owned(), kind)
+                .into_repository_and_work_tree_directories();
+            url.path = git_path::into_bstr(git_dir).into_owned();
+        }
         let transport = git_protocol::transport::connect(url, protocol).await?;
         Ok(self.to_connection_with_transport(transport, progress))
     }

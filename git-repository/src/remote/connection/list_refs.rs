@@ -1,4 +1,6 @@
+use crate::remote::connection::State;
 use crate::remote::{Connection, Direction};
+use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
 
 mod error {
@@ -10,9 +12,7 @@ mod error {
         ListRefs(#[from] git_protocol::fetch::refs::Error),
     }
 }
-use crate::remote::connection::State;
 pub use error::Error;
-use git_features::progress::Progress;
 
 impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P>
 where
