@@ -1,7 +1,6 @@
 use super::Error;
 use crate::fetch::refs::from_v2_refs;
-use crate::fetch::{Command, LsRefsAction, Ref};
-use crate::fetch_fn::indicate_end_of_interaction;
+use crate::fetch::{indicate_end_of_interaction, Command, LsRefsAction, Ref};
 use bstr::BString;
 use git_features::progress::Progress;
 use git_transport::client::{Capabilities, Transport, TransportV2Ext};

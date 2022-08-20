@@ -2,7 +2,7 @@ use git_features::progress::Progress;
 use git_transport::client;
 use maybe_async::maybe_async;
 
-use crate::fetch::handshake;
+use crate::fetch::{handshake, indicate_end_of_interaction};
 use crate::{
     credentials,
     fetch::{Action, Arguments, Command, Delegate, Error, Response},
@@ -138,20 +138,6 @@ where
         && matches!(fetch_mode, FetchConnection::TerminateOnSuccessfulCompletion)
     {
         indicate_end_of_interaction(transport).await?;
-    }
-    Ok(())
-}
-
-#[maybe_async]
-pub(crate) async fn indicate_end_of_interaction(
-    mut transport: impl client::Transport,
-) -> Result<(), git_transport::client::Error> {
-    // An empty request marks the (early) end of the interaction. Only relevant in stateful transports though.
-    if transport.connection_persists_across_multiple_requests() {
-        transport
-            .request(client::WriteMode::Binary, client::MessageKind::Flush)?
-            .into_read()
-            .await?;
     }
     Ok(())
 }
