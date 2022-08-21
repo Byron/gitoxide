@@ -175,13 +175,12 @@ jobs:
       - name: Build archive
         shell: bash
         run: |
-          staging="${{ env.EXE_NAME }}-${{ matrix.feature }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
+          staging="gitoxide-${{ matrix.feature }}-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir -p "$staging"
 
           cp {README.md,LICENSE-*,CHANGELOG.md} "$staging/"
 
           if [ "${{ matrix.os }}" = "windows-2019" ]; then
-            # cp target/${{ matrix.target }}/release/${{ env.EXE_NAME }}.exe "$staging/"
             cp target/release/${{ env.EXE_NAME }}.exe target/release/gix.exe "$staging/"
             7z a "$staging.zip" "$staging"
             echo "ASSET=$staging.zip" >> $GITHUB_ENV
