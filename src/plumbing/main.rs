@@ -91,6 +91,7 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        #[cfg_attr(feature = "small", allow(unused_variables))]
         Subcommands::Remote(remote::Platform { name, cmd }) => match cmd {
             #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
             remote::Subcommands::Refs => {
@@ -120,8 +121,7 @@ pub fn main() -> Result<()> {
                     ))
                 }
             }
-        }
-        .map(|_| ()),
+        },
         Subcommands::Config(config::Platform { filter }) => prepare_and_run(
             "config-list",
             verbose,
