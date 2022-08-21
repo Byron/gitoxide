@@ -1,15 +1,13 @@
+name: Minimum Supported Rust Version
+
 on:
   # Trigger the workflow on push to master or any pull request
   # Ignore all tags
   push:
-    branches:
-      - main
-    tags-ignore: '*'
+    branches: [ main ]
+    tags-ignore: [ '*' ]
   pull_request:
-    branches:
-      - 'main'
-
-name: Minimum Supported Rust Version
+    branches: [ main ]
 
 jobs:
   rustfmt:
@@ -21,15 +19,8 @@ jobs:
           - ubuntu-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
-      - run: rustup set auto-self-update disable
-        if: contains(runner.os, 'windows')
-        shell: bash
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: "1.59.0" # dictated by `windows` crates effectively, IMPORTANT: adjust etc/msrv-badge.svg as well
-          override: true
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@1.59.0 # dictated by `windows` crates effectively, IMPORTANT: adjust etc/msrv-badge.svg as well
       - run: make check-msrv-on-ci
         continue-on-error: true # TODO: turn this off once the toolchain gets updated. There is a strange error preventing cargo to select the correct libgit2 version
                                 #       like it doesn't exist.

@@ -3,7 +3,7 @@ name: ci
 on:
   push:
     branches: [ main ]
-    tags-ignore: '*'
+    tags-ignore: [ '*' ]
     paths:
       - '.github/**'
       - 'ci/**'
@@ -33,8 +33,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: Swatinem/rust-cache@v1
+    - uses: actions/checkout@v3
+    - uses: Swatinem/rust-cache@v2
     - name: Setup dependencies
       run:
         sudo apt-get install tree
@@ -51,26 +51,16 @@ jobs:
           - macos-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v1
-      - run: rustup set auto-self-update disable
-        if: contains(runner.os, 'windows')
-        shell: bash
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: default
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v1
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - name: Setup dependencies (macos)
         if: startsWith(matrix.os, 'macos')
         run:
           brew install tree openssl gnu-sed
       - name: "cargo check default features"
         if: startsWith(matrix.os, 'windows')
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all --bins --examples
+        run: cargo check --all --bins --examples
       - run: git lfs fetch && git lfs checkout
       - uses: taiki-e/install-action@v1
         with:
@@ -83,20 +73,16 @@ jobs:
         if: startsWith(matrix.os, 'windows')
       - name: "Installation from crates.io"
         if: startsWith(matrix.os, 'windows')
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: "--force gitoxide cargo-smart-release"
+        run: cargo install --force gitoxide cargo-smart-release
 
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: default
           toolchain: stable
-          override: true
+          components: clippy,rustfmt
       - name: Run cargo clippy
         run: cargo clippy --all --tests
       - name: Run cargo fmt
@@ -122,7 +108,7 @@ jobs:
     continue-on-error: ${{ matrix.checks == 'advisories' }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - uses: EmbarkStudios/cargo-deny-action@v1
       with:
         command: check ${{ matrix.checks }}

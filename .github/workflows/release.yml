@@ -11,13 +11,12 @@
 # The key here is that we create the release only once.
 
 name: release
+
 on:
   push:
     # Enable when testing release infrastructure on a branch.
-    # branches:
-    # - ag/release
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+    # branches: [ 'ag/release' ]
+    tags: [ "v[0-9]+.[0-9]+.[0-9]+" ]
 jobs:
   create-release:
     name: create-release
@@ -53,21 +52,21 @@ jobs:
         run: echo "${{ env.ARTIFACT_VERSION }}" > artifacts/release-version
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v3
         with:
           name: artifacts
           path: artifacts
 
   build-release:
     name: build-release
-    needs: ["create-release"]
+    needs: [ "create-release" ]
     runs-on: ${{ matrix.os }}
     env:
       # For some builds, we use cross to test on 32-bit and big-endian
       # systems.
       CARGO: cargo
       # When CARGO is set to CROSS, this is set to `--target matrix.target`.
-      TARGET_FLAGS:
+      TARGET_FLAGS: ""
       # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
       TARGET_DIR: ./target
       # Emit backtraces on panics.
@@ -76,9 +75,9 @@ jobs:
       EXE_NAME: ein
     strategy:
       matrix:
-#         build: [linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc]
-        build: [linux, macos, win-msvc, win-gnu, win32-msvc]
-        feature: ["small", "lean", "max"]
+#         build: [ linux, linux-arm, macos, win-msvc, win-gnu, win32-msvc ]
+        build: [ linux, macos, win-msvc, win-gnu, win32-msvc ]
+        feature: [ "small", "lean", "max" ]
         include:
           - build: linux
             os: ubuntu-18.04
@@ -107,7 +106,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
@@ -121,17 +120,11 @@ jobs:
         run: |
           ci/macos-install-packages
 
-      - run: rustup set auto-self-update disable
-        if: contains(runner.os, 'windows')
-        shell: bash
-
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          profile: minimal
-          override: true
-          target: ${{ matrix.target }}
+          targets: ${{ matrix.target }}
 
       - name: Use Cross
         # if: matrix.os != 'windows-2019'
@@ -148,7 +141,7 @@ jobs:
           echo "target dir is: ${{ env.TARGET_DIR }}"
 
       - name: Get release download URL
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v3
         with:
           name: artifacts
           path: artifacts
