@@ -1,9 +1,14 @@
-// cargo run -p git-repository --example new
+// creates a repo with user-specified path (which must not exist)
+// adds initial commit with empty tree
 
 use anyhow::Context;
 use git_repository as git;
 
 fn main() -> anyhow::Result<()> {
+    // Note use of args_os:
+    // paths may not be UTF-8 encoded and thus can't be forced into a String.
+    // gitoxide does not assume encodings that aren't there
+    // to match the way git does it as a bare minimum and be just as flexible.
     let work_dir = std::env::args_os()
         .nth(1)
         .context("First argument needs to be the directory to initialize the repository in")?;
