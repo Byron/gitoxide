@@ -112,6 +112,7 @@ pub mod remote {
     #[clap(visible_alias = "remotes")]
     pub enum Subcommands {
         /// Print all references available on the remote
+        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Refs,
     }
 }
