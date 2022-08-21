@@ -1,10 +1,12 @@
 // cargo run -p git-repository --example new
 
+use anyhow::Context;
 use git_repository as git;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let tmp = tempfile::TempDir::new()?;
-    let work_dir = tmp.path().join("repo-non-bare");
+fn main() -> anyhow::Result<()> {
+    let work_dir = std::env::args_os()
+        .nth(1)
+        .context("First argument needs to be the directory to initialize the repository in")?;
     let repo = git::init(work_dir)?;
 
     println!(
@@ -27,7 +29,5 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         git::commit::NO_PARENT_IDS,
     )?;
     println!("new commit id with empty tree: {:?}", id);
-
-    let _persisted = tmp.into_path();
     Ok(())
 }
