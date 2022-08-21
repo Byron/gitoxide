@@ -85,6 +85,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 
 Follow linked crate name for detailed status. Please note that all crates follow [semver] as well as the [stability guide].
 
+[semver]: https://semver.org
+
 ### Production Grade
 
 * **Stability Tier 1**
