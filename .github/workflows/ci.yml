@@ -73,7 +73,7 @@ jobs:
         if: startsWith(matrix.os, 'windows')
       - name: "Installation from crates.io"
         if: startsWith(matrix.os, 'windows')
-        run: cargo install --force gitoxide cargo-smart-release
+        run: cargo install --debug --force gitoxide cargo-smart-release
 
   lint:
     runs-on: ubuntu-latest
