@@ -86,7 +86,7 @@ impl<'repo> Remote<'repo> {
                         })
                     })
             },
-            |version| Ok(version),
+            Ok,
         )?;
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
