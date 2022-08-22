@@ -1,7 +1,7 @@
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod net {
     use crate::OutputFormat;
-    use anyhow::Context;
+    use anyhow::{bail, Context};
     use git_repository as git;
     use git_repository::protocol::fetch;
 
@@ -9,16 +9,19 @@ mod net {
     pub async fn refs(
         repo: git::Repository,
         name: Option<&str>,
+        url: Option<git::Url>,
         format: OutputFormat,
         mut progress: impl git::Progress,
         out: impl std::io::Write,
     ) -> anyhow::Result<()> {
-        let remote = match name {
-            Some(name) => repo.find_remote(name)?,
-            None => repo
+        let remote = match (name, url) {
+            (Some(name), None) => repo.find_remote(name)?,
+            (None, None) => repo
                 .head()?
                 .into_remote(git::remote::Direction::Fetch)
                 .context("Cannot find a remote for unborn branch")??,
+            (None, Some(url)) => repo.remote_at(url)?,
+            (Some(_), Some(_)) => bail!("Must not set both the remote name and the url - they are mutually exclusive"),
         };
         progress.info(format!(
             "Connecting to {:?}",

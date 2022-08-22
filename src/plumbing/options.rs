@@ -97,6 +97,8 @@ pub mod config {
 }
 
 pub mod remote {
+    use git_repository as git;
+
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
         /// The name of the remote to connect to.
@@ -104,6 +106,10 @@ pub mod remote {
         /// If unset, the current branch will determine the remote.
         #[clap(long, short = 'n')]
         pub name: Option<String>,
+
+        /// Connect directly to the given URL, forgoing any configuration from the repository.
+        #[clap(long, short = 'u', conflicts_with("name"), parse(try_from_os_str = std::convert::TryFrom::try_from))]
+        pub url: Option<git::Url>,
 
         /// Subcommands
         #[clap(subcommand)]

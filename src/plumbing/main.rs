@@ -92,7 +92,7 @@ pub fn main() -> Result<()> {
 
     match cmd {
         #[cfg_attr(feature = "small", allow(unused_variables))]
-        Subcommands::Remote(remote::Platform { name, cmd }) => match cmd {
+        Subcommands::Remote(remote::Platform { name, url, cmd }) => match cmd {
             #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
             remote::Subcommands::Refs => {
                 #[cfg(feature = "gitoxide-core-blocking-client")]
@@ -107,6 +107,7 @@ pub fn main() -> Result<()> {
                             core::repository::remote::refs(
                                 repository(Mode::Lenient)?,
                                 name.as_deref(),
+                                url,
                                 format,
                                 progress,
                                 out,
@@ -121,6 +122,7 @@ pub fn main() -> Result<()> {
                     futures_lite::future::block_on(core::repository::remote::refs(
                         repository(Mode::Lenient)?,
                         name.as_deref(),
+                        url,
                         format,
                         progress,
                         std::io::stdout(),
