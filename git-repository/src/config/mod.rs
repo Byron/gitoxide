@@ -5,6 +5,7 @@ use crate::{bstr::BString, permission, remote, repository::identity, revision::s
 
 pub(crate) mod cache;
 mod snapshot;
+pub use snapshot::apply_cli_overrides;
 
 /// A platform to access configuration values as read from disk.
 ///

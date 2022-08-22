@@ -345,7 +345,8 @@ pub mod discover;
 
 ///
 pub mod env {
-    use std::ffi::OsString;
+    use crate::bstr::{BString, ByteVec};
+    use std::ffi::{OsStr, OsString};
 
     /// Equivalent to `std::env::args_os()`, but with precomposed unicode on MacOS and other apple platforms.
     #[cfg(not(target_vendor = "apple"))]
@@ -363,6 +364,13 @@ pub mod env {
             Some(arg) => arg.nfc().collect::<String>().into(),
             None => arg,
         })
+    }
+
+    /// Convert the given `input` into a `BString`, useful as `parse(try_from_os_str = <me>)` function.
+    pub fn os_str_to_bstring(input: &OsStr) -> Result<BString, String> {
+        Vec::from_os_string(input.into())
+            .map(Into::into)
+            .map_err(|_| input.to_string_lossy().into_owned())
     }
 }
 
