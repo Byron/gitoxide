@@ -1,0 +1,62 @@
+use crate::{remote, Remote};
+use git_refspec::RefSpec;
+
+/// Access
+impl Remote<'_> {
+    /// Return the name of this remote or `None` if it wasn't persisted to disk yet.
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
+    }
+
+    /// Return the set of ref-specs used for `direction`, which may be empty, in order of occurrence in the configuration.
+    pub fn refspecs(&self, direction: remote::Direction) -> &[RefSpec] {
+        match direction {
+            remote::Direction::Fetch => &self.fetch_specs,
+            remote::Direction::Push => &self.push_specs,
+        }
+    }
+
+    /// Return the url used for the given `direction` with rewrites from `url.<base>.insteadOf|pushInsteadOf`, unless the instance
+    /// was created with one of the `_without_url_rewrite()` methods.
+    /// For pushing, this is the `remote.<name>.pushUrl` or the `remote.<name>.url` used for fetching, and for fetching it's
+    /// the `remote.<name>.url`.
+    /// Note that it's possible to only have the push url set, in which case there will be no way to fetch from the remote as
+    /// the push-url isn't used for that.
+    pub fn url(&self, direction: remote::Direction) -> Option<&git_url::Url> {
+        match direction {
+            remote::Direction::Fetch => self.url_alias.as_ref().or(self.url.as_ref()),
+            remote::Direction::Push => self
+                .push_url_alias
+                .as_ref()
+                .or(self.push_url.as_ref())
+                .or_else(|| self.url(remote::Direction::Fetch)),
+        }
+    }
+}
+
+/// Modification
+impl Remote<'_> {
+    /// Read `url.<base>.insteadOf|pushInsteadOf` configuration variables and apply them to our urls, changing them in place.
+    ///
+    /// This happens only once, and one if them may be changed even when reporting an error.
+    /// If both urls fail, only the first error (for fetch urls) is reported.
+    pub fn rewrite_urls(&mut self) -> Result<&mut Self, remote::init::Error> {
+        let url_err = match remote::init::rewrite_url(&self.repo.config, self.url.as_ref(), remote::Direction::Fetch) {
+            Ok(url) => {
+                self.url_alias = url;
+                None
+            }
+            Err(err) => err.into(),
+        };
+        let push_url_err =
+            match remote::init::rewrite_url(&self.repo.config, self.push_url.as_ref(), remote::Direction::Push) {
+                Ok(url) => {
+                    self.push_url_alias = url;
+                    None
+                }
+                Err(err) => err.into(),
+            };
+        url_err.or(push_url_err).map(Err::<&mut Self, _>).transpose()?;
+        Ok(self)
+    }
+}

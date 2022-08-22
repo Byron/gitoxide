@@ -1,38 +1,25 @@
-use std::io;
-
 use bstr::{BStr, BString, ByteSlice};
-use quick_error::quick_error;
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 use crate::client;
 use crate::Protocol;
 
-quick_error! {
-    /// The error used in [`Capabilities::from_bytes()`] and [`Capabilities::from_lines()`].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        MissingDelimitingNullByte {
-            display("Capabilities were missing entirely as there was no 0 byte")
-        }
-        NoCapabilities {
-            display("there was not a single capability behind the delimiter")
-        }
-        MissingVersionLine {
-            display("a version line was expected, but none was retrieved")
-        }
-        MalformattedVersionLine(actual: String) {
-            display("expected 'version X', got '{}'", actual)
-        }
-        UnsupportedVersion(wanted: Protocol, got: String) {
-            display("Got unsupported version '{}', expected '{}'", got, *wanted as usize)
-        }
-        Io(err: io::Error) {
-            display("An IO error occurred while reading V2 lines")
-            from()
-            source(err)
-        }
-    }
+/// The error used in [`Capabilities::from_bytes()`] and [`Capabilities::from_lines()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Capabilities were missing entirely as there was no 0 byte")]
+    MissingDelimitingNullByte,
+    #[error("there was not a single capability behind the delimiter")]
+    NoCapabilities,
+    #[error("a version line was expected, but none was retrieved")]
+    MissingVersionLine,
+    #[error("expected 'version X', got {0:?}")]
+    MalformattedVersionLine(String),
+    #[error("Got unsupported version '{}', expected {actual:?}", *desired as u8)]
+    UnsupportedVersion { desired: Protocol, actual: String },
+    #[error("An IO error occurred while reading V2 lines")]
+    Io(#[from] std::io::Error),
 }
 
 /// A structure to represent multiple [capabilities][Capability] or features supported by the server.
@@ -113,7 +100,10 @@ impl Capabilities {
             return Err(Error::MalformattedVersionLine(version_line));
         }
         if value != " 2" {
-            return Err(Error::UnsupportedVersion(Protocol::V2, value.to_owned()));
+            return Err(Error::UnsupportedVersion {
+                desired: Protocol::V2,
+                actual: value.to_owned(),
+            });
         }
         Ok(Capabilities {
             value_sep: b'\n',
@@ -181,7 +171,7 @@ pub mod recv {
         ///
         /// This is `Some` only when protocol v1 is used. The [`io::BufRead`] must be exhausted by
         /// the caller.
-        pub refs: Option<Box<dyn io::BufRead + 'a>>,
+        pub refs: Option<Box<dyn std::io::BufRead + 'a>>,
         /// The [`Protocol`] the remote advertised.
         pub protocol: Protocol,
     }

@@ -1,0 +1,6 @@
+error: Found argument 'refs' which wasn't expected, or isn't valid in this context
+
+USAGE:
+    gix remote [OPTIONS]
+
+For more information try --help

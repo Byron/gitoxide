@@ -110,6 +110,7 @@ check: ## Build all code in suitable configurations
 	cd git-transport && cargo check \
 					 && cargo check --features blocking-client \
 					 && cargo check --features async-client \
+					 && cargo check --features async-client,async-std \
 					 && cargo check --features http-client-curl
 	cd git-transport && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-protocol && cargo check \
@@ -118,6 +119,7 @@ check: ## Build all code in suitable configurations
 	cd git-protocol && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-repository && cargo check --no-default-features --features local \
 					  && cargo check --no-default-features --features async-network-client \
+					  && cargo check --no-default-features --features async-network-client-async-std \
 					  && cargo check --no-default-features --features blocking-network-client \
 					  && cargo check --no-default-features --features blocking-network-client,blocking-http-transport \
 					  && cargo check --no-default-features --features one-stop-shop \
@@ -151,6 +153,8 @@ unit-tests: ## run all unit tests
 					&& cargo test --features async-client \
 					&& cargo test
 	cd git-repository && cargo test \
+					&& cargo test --features async-network-client \
+					&& cargo test --features blocking-network-client \
 					&& cargo test --features regex
 	cd gitoxide-core && cargo test --lib
 

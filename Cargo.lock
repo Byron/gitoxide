@@ -1446,8 +1446,8 @@ dependencies = [
  "git-transport",
  "maybe-async",
  "nom",
- "quick-error",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -1504,6 +1504,7 @@ name = "git-repository"
 version = "0.21.1"
 dependencies = [
  "anyhow",
+ "async-std",
  "byte-unit",
  "clru",
  "document-features",
@@ -1526,6 +1527,7 @@ dependencies = [
  "git-path",
  "git-protocol",
  "git-ref",
+ "git-refspec",
  "git-revision",
  "git-sec",
  "git-tempfile",
@@ -1646,7 +1648,6 @@ dependencies = [
  "git-url",
  "maybe-async",
  "pin-project-lite",
- "quick-error",
  "serde",
  "thiserror",
 ]
@@ -1676,8 +1677,8 @@ dependencies = [
  "git-features",
  "git-path",
  "home",
- "quick-error",
  "serde",
+ "thiserror",
  "url",
 ]
 
@@ -1765,6 +1766,7 @@ dependencies = [
  "git-features",
  "git-pack",
  "git-repository",
+ "git-transport",
  "git-url",
  "itertools",
  "jwalk",

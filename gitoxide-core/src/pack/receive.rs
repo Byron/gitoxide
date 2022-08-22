@@ -18,7 +18,7 @@ use git_repository::{
     Progress,
 };
 
-use crate::{remote::refs::JsonRef, OutputFormat};
+use crate::OutputFormat;
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
@@ -151,7 +151,7 @@ mod blocking_io {
         progress: P,
         ctx: Context<W>,
     ) -> anyhow::Result<()> {
-        let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into())?;
+        let transport = net::connect(url, protocol.unwrap_or_default().into())?;
         let delegate = CloneDelegate {
             ctx,
             directory,
@@ -219,7 +219,7 @@ mod async_io {
         progress: P,
         ctx: Context<W>,
     ) -> anyhow::Result<()> {
-        let transport = net::connect(url.as_bytes(), protocol.unwrap_or_default().into()).await?;
+        let transport = net::connect(url.to_string(), protocol.unwrap_or_default().into()).await?;
         let mut delegate = CloneDelegate {
             ctx,
             directory,
@@ -272,7 +272,7 @@ pub struct JsonOutcome {
     pub index_path: Option<PathBuf>,
     pub data_path: Option<PathBuf>,
 
-    pub refs: Vec<JsonRef>,
+    pub refs: Vec<crate::repository::remote::JsonRef>,
 }
 
 impl JsonOutcome {
@@ -298,7 +298,7 @@ fn print(out: &mut impl io::Write, res: pack::bundle::write::Outcome, refs: &[Re
     print_hash_and_path(out, "index", res.index.index_hash, res.index_path)?;
     print_hash_and_path(out, "pack", res.index.data_hash, res.data_path)?;
     writeln!(out)?;
-    crate::remote::refs::print(out, refs)?;
+    crate::repository::remote::refs::print(out, refs)?;
     Ok(())
 }
 

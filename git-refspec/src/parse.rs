@@ -27,7 +27,7 @@ pub enum Error {
 }
 
 /// Define how the parsed refspec should be used.
-#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
+#[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Operation {
     /// The `src` side is local and the `dst` side is remote.
     Push,

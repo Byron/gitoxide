@@ -108,6 +108,7 @@
 //! * [`traverse`]
 //! * [`diff`]
 //! * [`parallel`]
+//! * [`refspec`]
 //! * [`Progress`]
 //! * [`progress`]
 //! * [`interrupt`]
@@ -152,15 +153,14 @@ pub use git_odb as odb;
 #[cfg(all(feature = "unstable", feature = "git-protocol"))]
 pub use git_protocol as protocol;
 pub use git_ref as refs;
+pub use git_refspec as refspec;
 pub use git_sec as sec;
 #[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
 #[cfg(feature = "unstable")]
 pub use git_traverse as traverse;
-#[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;
 #[doc(inline)]
-#[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url::Url;
 pub use hash::{oid, ObjectId};
 
@@ -188,7 +188,8 @@ pub(crate) type Config = OwnShared<git_config::File<'static>>;
 ///
 mod types;
 pub use types::{
-    Commit, Head, Id, Kind, Object, ObjectDetached, Reference, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
+    Commit, Head, Id, Kind, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree,
+    Worktree,
 };
 
 pub mod commit;
@@ -277,6 +278,9 @@ pub mod worktree;
 pub mod revision;
 
 ///
+pub mod remote;
+
+///
 pub mod init {
     use std::path::Path;
 
@@ -341,7 +345,8 @@ pub mod discover;
 
 ///
 pub mod env {
-    use std::ffi::OsString;
+    use crate::bstr::{BString, ByteVec};
+    use std::ffi::{OsStr, OsString};
 
     /// Equivalent to `std::env::args_os()`, but with precomposed unicode on MacOS and other apple platforms.
     #[cfg(not(target_vendor = "apple"))]
@@ -359,6 +364,13 @@ pub mod env {
             Some(arg) => arg.nfc().collect::<String>().into(),
             None => arg,
         })
+    }
+
+    /// Convert the given `input` into a `BString`, useful as `parse(try_from_os_str = <me>)` function.
+    pub fn os_str_to_bstring(input: &OsStr) -> Result<BString, String> {
+        Vec::from_os_string(input.into())
+            .map(Into::into)
+            .map_err(|_| input.to_string_lossy().into_owned())
     }
 }
 

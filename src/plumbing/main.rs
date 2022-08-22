@@ -7,12 +7,13 @@ use std::{
     },
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Parser;
 use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
+use crate::plumbing::options::remote;
 use crate::{
     plumbing::options::{commit, config, exclude, free, mailmap, odb, revision, tree, Args, Subcommands},
     shared::pretty::prepare_and_run,
@@ -29,7 +30,10 @@ pub mod async_util {
         verbose: bool,
         name: &str,
         range: impl Into<Option<ProgressRange>>,
-    ) -> (Option<prodash::render::line::JoinHandle>, Option<prodash::tree::Item>) {
+    ) -> (
+        Option<prodash::render::line::JoinHandle>,
+        git_features::progress::DoOrDiscard<prodash::tree::Item>,
+    ) {
         use crate::shared::{self, STANDARD_RANGE};
         shared::init_env_logger();
 
@@ -37,9 +41,9 @@ pub mod async_util {
             let progress = shared::progress_tree();
             let sub_progress = progress.add_child(name);
             let ui_handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
-            (Some(ui_handle), Some(sub_progress))
+            (Some(ui_handle), Some(sub_progress).into())
         } else {
-            (None, None)
+            (None, None.into())
         }
     }
 }
@@ -51,20 +55,27 @@ pub fn main() -> Result<()> {
     let format = args.format;
     let cmd = args.cmd;
     let object_hash = args.object_hash;
+    let config = args.config;
     use git_repository as git;
     let repository = args.repository;
     enum Mode {
         Strict,
         Lenient,
     }
-    let repository = move |mode: Mode| {
+    let repository = move |mode: Mode| -> Result<git::Repository> {
         let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
         let toggle = matches!(mode, Mode::Strict);
         mapping.full = mapping.full.strict_config(toggle);
         mapping.reduced = mapping.reduced.strict_config(toggle);
-        git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
+        let mut repo = git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
             .map(git::Repository::from)
-            .map(|r| r.apply_environment())
+            .map(|r| r.apply_environment())?;
+        if !config.is_empty() {
+            repo.config_snapshot_mut()
+                .apply_cli_overrides(config)
+                .context("Unable to parse command-line configuration")?;
+        }
+        Ok(repo)
     };
 
     let progress;
@@ -87,6 +98,44 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        #[cfg_attr(feature = "small", allow(unused_variables))]
+        Subcommands::Remote(remote::Platform { name, url, cmd }) => match cmd {
+            #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
+            remote::Subcommands::Refs => {
+                #[cfg(feature = "gitoxide-core-blocking-client")]
+                {
+                    prepare_and_run(
+                        "remote-refs",
+                        verbose,
+                        progress,
+                        progress_keep_open,
+                        core::repository::remote::refs::PROGRESS_RANGE,
+                        move |progress, out, _err| {
+                            core::repository::remote::refs(
+                                repository(Mode::Lenient)?,
+                                progress,
+                                out,
+                                core::repository::remote::refs::Context { name, url, format },
+                            )
+                        },
+                    )
+                }
+                #[cfg(feature = "gitoxide-core-async-client")]
+                {
+                    let (_handle, progress) = async_util::prepare(
+                        verbose,
+                        "remote-refs",
+                        Some(core::repository::remote::refs::PROGRESS_RANGE),
+                    );
+                    futures_lite::future::block_on(core::repository::remote::refs(
+                        repository(Mode::Lenient)?,
+                        progress,
+                        std::io::stdout(),
+                        core::repository::remote::refs::Context { name, url, format },
+                    ))
+                }
+            }
+        },
         Subcommands::Config(config::Platform { filter }) => prepare_and_run(
             "config-list",
             verbose,
@@ -97,45 +146,6 @@ pub fn main() -> Result<()> {
         )
         .map(|_| ()),
         Subcommands::Free(subcommands) => match subcommands {
-            #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-            free::Subcommands::Remote(subcommands) => match subcommands {
-                #[cfg(feature = "gitoxide-core-async-client")]
-                free::remote::Subcommands::RefList { protocol, url } => {
-                    let (_handle, progress) =
-                        async_util::prepare(verbose, "remote-ref-list", Some(core::remote::refs::PROGRESS_RANGE));
-                    let fut = core::remote::refs::list(
-                        protocol,
-                        &url,
-                        git_features::progress::DoOrDiscard::from(progress),
-                        core::remote::refs::Context {
-                            thread_limit,
-                            format,
-                            out: std::io::stdout(),
-                        },
-                    );
-                    return futures_lite::future::block_on(fut);
-                }
-                #[cfg(feature = "gitoxide-core-blocking-client")]
-                free::remote::Subcommands::RefList { protocol, url } => prepare_and_run(
-                    "remote-ref-list",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    core::remote::refs::PROGRESS_RANGE,
-                    move |progress, out, _err| {
-                        core::remote::refs::list(
-                            protocol,
-                            &url,
-                            progress,
-                            core::remote::refs::Context {
-                                thread_limit,
-                                format,
-                                out,
-                            },
-                        )
-                    },
-                ),
-            },
             free::Subcommands::CommitGraph(subcommands) => match subcommands {
                 free::commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
                     "commitgraph-verify",
@@ -298,7 +308,7 @@ pub fn main() -> Result<()> {
                         directory,
                         refs_directory,
                         refs.into_iter().map(|s| s.into()).collect(),
-                        git_features::progress::DoOrDiscard::from(progress),
+                        progress,
                         core::pack::receive::Context {
                             thread_limit,
                             format,

@@ -44,7 +44,7 @@ git-transport = { version = "^0.19.1", path = "../git-transport" }
 git-hash = { version = "^0.9.7", path = "../git-hash" }
 git-credentials = { version = "^0.3.0", path = "../git-credentials" }
 
-quick-error = "2.0.0"
+thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 nom = { version = "7", default-features = false, features = ["std"]}

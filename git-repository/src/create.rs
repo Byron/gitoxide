@@ -183,13 +183,13 @@ pub fn into(
             let caps = fs_capabilities.unwrap_or_else(|| git_worktree::fs::Capabilities::probe(&dot_git));
             let mut core = config.new_section("core", None).expect("valid section name");
 
-            core.push(key("repositoryformatversion"), "0");
-            core.push(key("filemode"), bool(caps.executable_bit));
-            core.push(key("bare"), bool(bare));
-            core.push(key("logallrefupdates"), bool(!bare));
-            core.push(key("symlinks"), bool(caps.symlink));
-            core.push(key("ignorecase"), bool(caps.ignore_case));
-            core.push(key("precomposeunicode"), bool(caps.precompose_unicode));
+            core.push(key("repositoryformatversion"), Some("0".into()));
+            core.push(key("filemode"), Some(bool(caps.executable_bit).into()));
+            core.push(key("bare"), Some(bool(bare).into()));
+            core.push(key("logallrefupdates"), Some(bool(!bare).into()));
+            core.push(key("symlinks"), Some(bool(caps.symlink).into()));
+            core.push(key("ignorecase"), Some(bool(caps.ignore_case).into()));
+            core.push(key("precomposeunicode"), Some(bool(caps.precompose_unicode).into()));
         }
         let mut cursor = PathCursor(&mut dot_git);
         let config_path = cursor.at("config");

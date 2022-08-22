@@ -179,3 +179,28 @@ pub struct ThreadSafeRepository {
     /// The index of this instances worktree.
     pub(crate) index: crate::worktree::IndexStorage,
 }
+
+/// A remote which represents a way to interact with hosts for remote clones of the parent repository.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Remote<'repo> {
+    /// The remotes symbolic name, only present if persisted in git configuration files.
+    pub(crate) name: Option<String>,
+    /// The url of the host to talk to, after application of replacements. If it is unset, the `push_url` must be set.
+    /// and fetches aren't possible.
+    pub(crate) url: Option<git_url::Url>,
+    /// The rewritten `url`, if it was rewritten.
+    pub(crate) url_alias: Option<git_url::Url>,
+    /// The url to use for pushing specifically.
+    pub(crate) push_url: Option<git_url::Url>,
+    /// The rewritten `push_url`, if it was rewritten.
+    pub(crate) push_url_alias: Option<git_url::Url>,
+    /// Refspecs for use when fetching.
+    pub(crate) fetch_specs: Vec<git_refspec::RefSpec>,
+    /// Refspecs for use when pushing.
+    pub(crate) push_specs: Vec<git_refspec::RefSpec>,
+    // /// Delete local tracking branches that don't exist on the remote anymore.
+    // pub(crate) prune: bool,
+    // /// Delete tags that don't exist on the remote anymore, equivalent to pruning the refspec `refs/tags/*:refs/tags/*`.
+    // pub(crate) prune_tags: bool,
+    pub(crate) repo: &'repo Repository,
+}

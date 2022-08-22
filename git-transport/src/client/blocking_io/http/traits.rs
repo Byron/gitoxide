@@ -1,21 +1,11 @@
-use std::io;
-
-use quick_error::quick_error;
-
-quick_error! {
-    /// The error used by the [Http] trait.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        Detail(description: String) {
-            display("{}", description)
-        }
-        PostBody(err: io::Error) {
-            display("An IO error occurred while uploading the body of a POST request")
-            from()
-            source(err)
-        }
-    }
+/// The error used by the [Http] trait.
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("{description}")]
+    Detail { description: String },
+    #[error("An IO error occurred while uploading the body of a POST request")]
+    PostBody(#[from] std::io::Error),
 }
 
 /// The return value of [Http::get()].
@@ -51,11 +41,11 @@ impl<A, B, C> From<PostResponse<A, B, C>> for GetResponse<A, B> {
 #[allow(clippy::type_complexity)]
 pub trait Http {
     /// A type providing headers line by line.
-    type Headers: io::BufRead + Unpin;
+    type Headers: std::io::BufRead + Unpin;
     /// A type providing the response.
-    type ResponseBody: io::BufRead;
+    type ResponseBody: std::io::BufRead;
     /// A type allowing to write the content to post.
-    type PostBody: io::Write;
+    type PostBody: std::io::Write;
 
     /// Initiate a `GET` request to `url` provided the given `headers`.
     ///

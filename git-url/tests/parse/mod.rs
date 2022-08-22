@@ -1,17 +1,17 @@
 use git_url::Scheme;
 
 fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
-    assert_eq!(git_url::parse(url.as_bytes())?, expected);
+    assert_eq!(git_url::parse(url.into())?, expected);
     Ok(expected)
 }
 
 fn assert_url_roundtrip(url: &str, expected: git_url::Url) -> crate::Result {
-    assert_eq!(assert_url_and(url, expected)?.to_string(), url);
+    assert_eq!(assert_url_and(url, expected)?.to_bstring(), url);
     Ok(())
 }
 
 fn assert_failure(url: &str, expected_err: &str) {
-    assert_eq!(git_url::parse(url.as_bytes()).unwrap_err().to_string(), expected_err);
+    assert_eq!(git_url::parse(url.into()).unwrap_err().to_string(), expected_err);
 }
 
 fn url(
@@ -21,13 +21,14 @@ fn url(
     port: impl Into<Option<u16>>,
     path: &'static [u8],
 ) -> git_url::Url {
-    git_url::Url {
-        scheme: protocol,
-        user: user.into().map(Into::into),
-        host: host.into().map(Into::into),
-        port: port.into(),
-        path: path.into(),
-    }
+    git_url::Url::from_parts(
+        protocol,
+        user.into().map(Into::into),
+        host.into().map(Into::into),
+        port.into(),
+        path.into(),
+    )
+    .expect("valid")
 }
 
 mod file;

@@ -40,7 +40,7 @@ impl<'event> File<'event> {
     /// let config = r#"
     ///     [core]
     ///         a = 10k
-    ///         c
+    ///         c = false
     /// "#;
     /// let git_config = git_config::File::try_from(config)?;
     /// // You can either use the turbofish to determine the type...
@@ -103,13 +103,13 @@ impl<'event> File<'event> {
     ///     a_value,
     ///     vec![
     ///         Boolean(true),
-    ///         Boolean(true),
+    ///         Boolean(false),
     ///         Boolean(false),
     ///     ]
     /// );
     /// // ... or explicitly declare the type to avoid the turbofish
     /// let c_value: Vec<Boolean> = git_config.values("core", None, "c").unwrap();
-    /// assert_eq!(c_value, vec![Boolean(true)]);
+    /// assert_eq!(c_value, vec![Boolean(false)]);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     ///

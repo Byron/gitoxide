@@ -16,10 +16,11 @@ doctest = false
 serde1 = ["serde", "bstr/serde1"]
 
 [dependencies]
-serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 git-features = { version = "^0.22.1", path = "../git-features" }
 git-path = { version = "^0.4.0", path = "../git-path" }
-quick-error = "2.0.0"
+
+serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
+thiserror = "1.0.32"
 url = "2.1.1"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 home = "0.5.3"

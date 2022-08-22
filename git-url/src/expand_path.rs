@@ -2,7 +2,6 @@
 use std::path::{Path, PathBuf};
 
 use bstr::{BStr, BString, ByteSlice};
-use quick_error::quick_error;
 
 /// Whether a repository is resolving for the current user, or the given one.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
@@ -23,17 +22,14 @@ impl From<ForUser> for Option<BString> {
     }
 }
 
-quick_error! {
-    /// The error used by [`parse()`], [`with()`] and [`expand_path()`].
-    #[derive(Debug)]
-    pub enum Error {
-        IllformedUtf8{path: BString} {
-            display("UTF8 conversion on non-unix system failed for path: {}", path)
-        }
-        MissingHome(user: Option<BString>) {
-            display("Home directory could not be obtained for {}", match user {Some(user) => format!("user '{}'", user), None => "current user".into()})
-        }
-    }
+/// The error used by [`parse()`], [`with()`] and [`expand_path()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("UTF8 conversion on non-unix system failed for path: {path:?}")]
+    IllformedUtf8 { path: BString },
+    #[error("Home directory could not be obtained for {}", match user {Some(user) => format!("user '{}'", user), None => "current user".into()})]
+    MissingHome { user: Option<BString> },
 }
 
 fn path_segments(path: &BStr) -> Option<impl Iterator<Item = &[u8]>> {
@@ -109,7 +105,9 @@ pub fn with(
     let path = git_path::try_from_byte_slice(path).map_err(|_| Error::IllformedUtf8 { path: path.to_owned() })?;
     Ok(match user {
         Some(user) => home_for_user(user)
-            .ok_or_else(|| Error::MissingHome(user.to_owned().into()))?
+            .ok_or_else(|| Error::MissingHome {
+                user: user.to_owned().into(),
+            })?
             .join(make_relative(path)),
         None => path.into(),
     })

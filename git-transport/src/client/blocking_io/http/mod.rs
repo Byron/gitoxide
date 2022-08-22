@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     convert::Infallible,
-    io::{self, BufRead, Read},
+    io::{BufRead, Read},
 };
 
 use git_packetline::PacketLineRef;
@@ -26,9 +26,9 @@ pub type Impl = curl::Curl;
 pub struct Transport<H: Http> {
     url: String,
     user_agent_header: &'static str,
-    desired_version: crate::Protocol,
-    supported_versions: [crate::Protocol; 1],
-    actual_version: crate::Protocol,
+    desired_version: Protocol,
+    supported_versions: [Protocol; 1],
+    actual_version: Protocol,
     http: H,
     service: Option<Service>,
     line_provider: Option<git_packetline::StreamingPeekableIter<H::ResponseBody>>,
@@ -37,7 +37,7 @@ pub struct Transport<H: Http> {
 
 impl Transport<Impl> {
     /// Create a new instance to communicate to `url` using the given `desired_version` of the `git` protocol.
-    pub fn new(url: &str, desired_version: crate::Protocol) -> Self {
+    pub fn new(url: &str, desired_version: Protocol) -> Self {
         Transport {
             url: url.to_owned(),
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
@@ -61,10 +61,12 @@ impl<H: Http> Transport<H> {
             .iter()
             .any(|l| l == &wanted_content_type)
         {
-            return Err(client::Error::Http(Error::Detail(format!(
-                "Didn't find '{}' header to indicate 'smart' protocol, and 'dumb' protocol is not supported.",
-                wanted_content_type
-            ))));
+            return Err(client::Error::Http(Error::Detail {
+                description: format!(
+                    "Didn't find '{}' header to indicate 'smart' protocol, and 'dumb' protocol is not supported.",
+                    wanted_content_type
+                ),
+            }));
         }
         Ok(())
     }
@@ -88,11 +90,12 @@ impl<H: Http> Transport<H> {
 }
 
 fn append_url(base: &str, suffix: &str) -> String {
-    if base.ends_with('/') {
-        format!("{}{}", base, suffix)
-    } else {
-        format!("{}/{}", base, suffix)
+    let mut buf = base.to_owned();
+    if base.as_bytes().last() != Some(&b'/') {
+        buf.push('/');
     }
+    buf.push_str(suffix);
+    buf
 }
 
 impl<H: Http> client::TransportWithoutIO for Transport<H> {
@@ -104,8 +107,8 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
     fn request(
         &mut self,
         write_mode: client::WriteMode,
-        on_into_read: client::MessageKind,
-    ) -> Result<client::RequestWriter<'_>, client::Error> {
+        on_into_read: MessageKind,
+    ) -> Result<RequestWriter<'_>, client::Error> {
         let service = self.service.expect("handshake() must have been called first");
         let url = append_url(&self.url, service.as_str());
         let static_headers = &[
@@ -146,7 +149,7 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
     }
 
     fn to_url(&self) -> String {
-        self.url.to_owned()
+        self.url.clone()
     }
 
     fn supported_protocol_versions(&self) -> &[Protocol] {
@@ -164,7 +167,7 @@ impl<H: Http> client::Transport for Transport<H> {
         service: Service,
         extra_parameters: &'a [(&'a str, Option<&'a str>)],
     ) -> Result<client::SetServiceResponse<'_>, client::Error> {
-        let url = append_url(&self.url, &format!("info/refs?service={}", service.as_str()));
+        let url = append_url(self.url.as_ref(), &format!("info/refs?service={}", service.as_str()));
         let static_headers = [Cow::Borrowed(self.user_agent_header)];
         let mut dynamic_headers = Vec::<Cow<'_, str>>::new();
         if self.desired_version != Protocol::V1 || !extra_parameters.is_empty() {
@@ -190,7 +193,9 @@ impl<H: Http> client::Transport for Transport<H> {
             dynamic_headers.push(format!("Git-Protocol: {}", parameters).into());
         }
         self.add_basic_auth_if_present(&mut dynamic_headers)?;
-        let GetResponse { headers, body } = self.http.get(&url, static_headers.iter().chain(&dynamic_headers))?;
+        let GetResponse { headers, body } = self
+            .http
+            .get(url.as_ref(), static_headers.iter().chain(&dynamic_headers))?;
         <Transport<H>>::check_content_type(service, "advertisement", headers)?;
 
         let line_reader = self
@@ -201,11 +206,13 @@ impl<H: Http> client::Transport for Transport<H> {
         line_reader.as_read().read_to_string(&mut announced_service)?;
         let expected_service_announcement = format!("# service={}", service.as_str());
         if announced_service.trim() != expected_service_announcement {
-            return Err(client::Error::Http(Error::Detail(format!(
-                "Expected to see {:?}, but got {:?}",
-                expected_service_announcement,
-                announced_service.trim()
-            ))));
+            return Err(client::Error::Http(Error::Detail {
+                description: format!(
+                    "Expected to see {:?}, but got {:?}",
+                    expected_service_announcement,
+                    announced_service.trim()
+                ),
+            }));
         }
 
         let capabilities::recv::Outcome {
@@ -230,24 +237,24 @@ struct HeadersThenBody<H: Http, B: Unpin> {
 }
 
 impl<H: Http, B: Unpin> HeadersThenBody<H, B> {
-    fn handle_headers(&mut self) -> io::Result<()> {
+    fn handle_headers(&mut self) -> std::io::Result<()> {
         if let Some(headers) = self.headers.take() {
             <Transport<H>>::check_content_type(self.service, "result", headers)
-                .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?
+                .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?
         }
         Ok(())
     }
 }
 
-impl<H: Http, B: ExtendedBufRead + Unpin> io::Read for HeadersThenBody<H, B> {
-    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+impl<H: Http, B: ExtendedBufRead + Unpin> Read for HeadersThenBody<H, B> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         self.handle_headers()?;
         self.body.read(buf)
     }
 }
 
-impl<H: Http, B: ExtendedBufRead + Unpin> io::BufRead for HeadersThenBody<H, B> {
-    fn fill_buf(&mut self) -> io::Result<&[u8]> {
+impl<H: Http, B: ExtendedBufRead + Unpin> BufRead for HeadersThenBody<H, B> {
+    fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
         self.handle_headers()?;
         self.body.fill_buf()
     }
@@ -262,7 +269,7 @@ impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H,
         self.body.set_progress_handler(handle_progress)
     }
 
-    fn peek_data_line(&mut self) -> Option<io::Result<Result<&[u8], client::Error>>> {
+    fn peek_data_line(&mut self) -> Option<std::io::Result<Result<&[u8], client::Error>>> {
         if let Err(err) = self.handle_headers() {
             return Some(Err(err));
         }
@@ -279,6 +286,6 @@ impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H,
 }
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol.
-pub fn connect(url: &str, desired_version: crate::Protocol) -> Result<Transport<Impl>, Infallible> {
+pub fn connect(url: &str, desired_version: Protocol) -> Result<Transport<Impl>, Infallible> {
     Ok(Transport::new(url, desired_version))
 }

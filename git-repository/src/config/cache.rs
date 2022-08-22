@@ -3,7 +3,7 @@ use std::{convert::TryFrom, path::PathBuf};
 use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
-use crate::{bstr::ByteSlice, repository, repository::identity, revision::spec::parse::ObjectKindHint};
+use crate::{bstr::ByteSlice, remote, repository, repository::identity, revision::spec::parse::ObjectKindHint};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
@@ -218,10 +218,12 @@ impl Cache {
             is_bare,
             ignore_case,
             hex_len,
+            filter_config_section,
             excludes_file,
             xdg_config_home_env,
             home_env,
             personas: Default::default(),
+            url_rewrite: Default::default(),
             git_prefix,
         })
     }
@@ -252,11 +254,22 @@ impl Cache {
     }
 }
 
+impl std::fmt::Debug for Cache {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Cache").finish_non_exhaustive()
+    }
+}
+
 /// Access
 impl Cache {
-    pub fn personas(&self) -> &identity::Personas {
+    pub(crate) fn personas(&self) -> &identity::Personas {
         self.personas
             .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved, &self.git_prefix))
+    }
+
+    pub(crate) fn url_rewrite(&self) -> &remote::url::Rewrite {
+        self.url_rewrite
+            .get_or_init(|| remote::url::Rewrite::from_config(&self.resolved, self.filter_config_section))
     }
 }
 

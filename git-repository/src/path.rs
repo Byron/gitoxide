@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-#[cfg(all(feature = "unstable"))]
 pub use git_path::*;
 
 pub(crate) fn install_dir() -> std::io::Result<PathBuf> {

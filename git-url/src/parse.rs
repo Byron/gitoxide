@@ -1,32 +1,30 @@
 use std::borrow::Cow;
+use std::convert::Infallible;
 
-use bstr::ByteSlice;
-use quick_error::quick_error;
+use bstr::{BStr, ByteSlice};
 
 use crate::Scheme;
+pub use bstr;
 
-quick_error! {
-    /// The Error returned by [`parse()`]
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        Utf8(err: std::str::Utf8Error) {
-            display("Could not decode URL as UTF8")
-            from()
-            source(err)
-        }
-        Url(err: String) {
-            display("the URL could not be parsed: {}", err)
-        }
-        UnsupportedProtocol(protocol: String) {
-            display("Protocol '{}' is not supported", protocol)
-        }
-        EmptyPath {
-            display("Paths cannot be empty")
-        }
-        RelativeUrl(url: String) {
-            display("Relative URLs are not permitted: '{}'", url)
-        }
+/// The Error returned by [`parse()`]
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Could not decode URL as UTF8")]
+    Utf8(#[from] std::str::Utf8Error),
+    #[error(transparent)]
+    Url(#[from] url::ParseError),
+    #[error("Protocol {protocol:?} is not supported")]
+    UnsupportedProtocol { protocol: String },
+    #[error("Paths cannot be empty")]
+    EmptyPath,
+    #[error("Relative URLs are not permitted: {url:?}")]
+    RelativeUrl { url: String },
+}
+
+impl From<Infallible> for Error {
+    fn from(_: Infallible) -> Self {
+        unreachable!("Cannot actually happen, but it seems there can't be a blanket impl for this")
     }
 }
 
@@ -38,7 +36,7 @@ fn str_to_protocol(s: &str) -> Result<Scheme, Error> {
         "http" => Scheme::Http,
         "https" => Scheme::Https,
         "rad" => Scheme::Radicle,
-        _ => return Err(Error::UnsupportedProtocol(s.into())),
+        _ => return Err(Error::UnsupportedProtocol { protocol: s.into() }),
     })
 }
 
@@ -94,17 +92,17 @@ fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
 ///
 /// We cannot and should never have to deal with UTF-16 encoded windows strings, so bytes input is acceptable.
 /// For file-paths, we don't expect UTF8 encoding either.
-pub fn parse(bytes: &[u8]) -> Result<crate::Url, Error> {
-    let guessed_protocol = guess_protocol(bytes);
-    if possibly_strip_file_protocol(bytes) != bytes || (has_no_explicit_protocol(bytes) && guessed_protocol == "file") {
+pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
+    let guessed_protocol = guess_protocol(input);
+    if possibly_strip_file_protocol(input) != input || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
         return Ok(crate::Url {
             scheme: Scheme::File,
-            path: possibly_strip_file_protocol(bytes).into(),
+            path: possibly_strip_file_protocol(input).into(),
             ..Default::default()
         });
     }
 
-    let url_str = std::str::from_utf8(bytes)?;
+    let url_str = std::str::from_utf8(input)?;
     let mut url = match url::Url::parse(url_str) {
         Ok(url) => url,
         Err(::url::ParseError::RelativeUrlWithoutBase) => {
@@ -114,22 +112,20 @@ pub fn parse(bytes: &[u8]) -> Result<crate::Url, Error> {
                 "{}://{}",
                 guessed_protocol,
                 sanitize_for_protocol(guessed_protocol, url_str)
-            ))
-            .map_err(|err| Error::Url(err.to_string()))?
+            ))?
         }
-        Err(err) => return Err(Error::Url(err.to_string())),
+        Err(err) => return Err(err.into()),
     };
     // SCP like URLs without user parse as 'something' with the scheme being the 'host'. Hosts always have dots.
     if url.scheme().find('.').is_some() {
         // try again with prefixed protocol
-        url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))
-            .map_err(|err| Error::Url(err.to_string()))?;
+        url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
     }
     if url.scheme() != "rad" && url.path().is_empty() {
         return Err(Error::EmptyPath);
     }
     if url.cannot_be_a_base() {
-        return Err(Error::RelativeUrl(url.into()));
+        return Err(Error::RelativeUrl { url: url.into() });
     }
 
     to_owned_url(url)
