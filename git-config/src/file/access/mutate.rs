@@ -29,19 +29,34 @@ impl<'event> File<'event> {
             .expect("BUG: Section did not have id from lookup")
             .to_mut(nl))
     }
-
-    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_.
+    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_, or create a new section.
     pub fn section_mut_or_create_new<'a>(
         &'a mut self,
         name: impl AsRef<str>,
         subsection_name: Option<&str>,
     ) -> Result<SectionMut<'a, 'event>, section::header::Error> {
+        self.section_mut_or_create_new_filter(name, subsection_name, &mut |_| true)
+    }
+
+    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_ **and** passes `filter`, or create
+    /// a new section.
+    pub fn section_mut_or_create_new_filter<'a>(
+        &'a mut self,
+        name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        filter: &mut MetadataFilter,
+    ) -> Result<SectionMut<'a, 'event>, section::header::Error> {
         let name = name.as_ref();
         match self
             .section_ids_by_name_and_subname(name.as_ref(), subsection_name)
-            .map(|it| it.rev().next().expect("BUG: Section lookup vec was empty"))
-        {
-            Ok(id) => {
+            .ok()
+            .and_then(|it| {
+                it.rev().find(|id| {
+                    let s = &self.sections[id];
+                    filter(s.meta())
+                })
+            }) {
+            Some(id) => {
                 let nl = self.detect_newline_style_smallvec();
                 Ok(self
                     .sections
@@ -49,7 +64,7 @@ impl<'event> File<'event> {
                     .expect("BUG: Section did not have id from lookup")
                     .to_mut(nl))
             }
-            Err(_) => self.new_section(name.to_owned(), subsection_name.map(|n| Cow::Owned(n.to_owned()))),
+            None => self.new_section(name.to_owned(), subsection_name.map(|n| Cow::Owned(n.to_owned()))),
         }
     }
 

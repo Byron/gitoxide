@@ -10,7 +10,21 @@ fn section_mut_or_create_new_is_infallible() -> crate::Result {
     let section = config.section_mut_or_create_new("name", Some("subsection"))?;
     assert_eq!(section.header().name(), "name");
     assert_eq!(section.header().subsection_name().expect("set"), "subsection");
-    assert_eq!(section.to_bstring(), "[name \"subsection\"]\n");
+    Ok(())
+}
+
+#[test]
+fn section_mut_or_create_new_filter_may_reject_existing_sections() -> crate::Result {
+    let mut config = multi_value_section();
+    let section = config.section_mut_or_create_new_filter("a", None, &mut |_| false)?;
+    assert_eq!(section.header().name(), "a");
+    assert_eq!(section.header().subsection_name(), None);
+    assert_eq!(section.to_bstring(), "[a]\n");
+    assert_eq!(
+        section.meta(),
+        &git_config::file::Metadata::api(),
+        "new sections are of source 'API'"
+    );
     Ok(())
 }
 
