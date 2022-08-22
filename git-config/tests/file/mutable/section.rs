@@ -124,7 +124,8 @@ mod push {
         let mut file = git_config::File::default();
         let mut section = file.section_mut_or_create_new("a", Some("sub"))?;
         section.push("key".try_into()?, None);
-        assert_eq!(file.to_bstring(), "[a \"sub\"]\n\tkey\n");
+        let expected = format!("[a \"sub\"]{nl}\tkey{nl}", nl = section.newline());
+        assert_eq!(file.to_bstring(), expected);
         Ok(())
     }
 
