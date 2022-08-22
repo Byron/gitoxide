@@ -3,17 +3,14 @@ use git_repository::Reference;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut repo = git::discover(".")?.apply_environment();
-    println!(
-        "Repo: {}",
-        repo.work_dir().as_deref().unwrap_or(repo.git_dir()).display()
-    );
+    println!("Repo: {}", repo.work_dir().unwrap_or_else(|| repo.git_dir()).display());
     let mut max_commit_size = 0;
     let mut avg_commit_size = 0;
     repo.object_cache_size(32 * 1024);
     let commit_ids = repo
         .head()?
         .into_fully_peeled_id()
-        .ok_or_else(|| "There are no commits - nothing to do here.")??
+        .ok_or("There are no commits - nothing to do here.")??
         .ancestors()
         .all()?
         .inspect(|id| {
