@@ -83,7 +83,7 @@ impl<'repo> Snapshot<'repo> {
 
 ///
 pub mod apply_cli_overrides {
-    use crate::bstr::{BString, ByteSlice};
+    use crate::bstr::{BStr, BString, ByteSlice};
     use crate::config::SnapshotMut;
     use std::convert::TryFrom;
 
@@ -105,13 +105,13 @@ pub mod apply_cli_overrides {
     impl SnapshotMut<'_> {
         /// Apply configuration values of the form `core.abbrev=5` or `remote.origin.url = foo` or `core.bool-implicit-true`
         /// to the repository configuration, marked with [source CLI][git_config::Source::Cli].
-        pub fn apply_cli_overrides(
+        pub fn apply_cli_overrides<'a>(
             &mut self,
-            values: impl IntoIterator<Item = impl Into<BString>>,
+            values: impl IntoIterator<Item = impl AsRef<BStr>>,
         ) -> Result<(), Error> {
             let mut file = git_config::File::new(git_config::file::Metadata::from(git_config::Source::Cli));
             for key_value in values {
-                let key_value = key_value.into();
+                let key_value = key_value.as_ref();
                 let mut tokens = key_value.splitn(2, |b| *b == b'=').map(|v| v.trim());
                 let key = tokens.next().expect("always one value").as_bstr();
                 let value = tokens.next();

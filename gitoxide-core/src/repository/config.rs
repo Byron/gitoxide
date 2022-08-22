@@ -1,18 +1,21 @@
 use anyhow::{bail, Result};
 use git_repository as git;
+use git_repository::bstr::BString;
 
 use crate::OutputFormat;
 
 pub fn list(
     repo: git::Repository,
     filters: Vec<String>,
+    overrides: Vec<BString>,
     format: OutputFormat,
     mut out: impl std::io::Write,
 ) -> Result<()> {
     if format != OutputFormat::Human {
         bail!("Only human output format is supported at the moment");
     }
-    let repo = git::open_opts(repo.git_dir(), repo.open_options().clone().lossy_config(false))?;
+    let mut repo = git::open_opts(repo.git_dir(), repo.open_options().clone().lossy_config(false))?;
+    repo.config_snapshot_mut().apply_cli_overrides(overrides.into_iter())?;
     let config = repo.config_snapshot();
     let config = config.plumbing();
     if let Some(frontmatter) = config.frontmatter() {

@@ -62,20 +62,24 @@ pub fn main() -> Result<()> {
         Strict,
         Lenient,
     }
-    let repository = move |mode: Mode| -> Result<git::Repository> {
-        let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
-        let toggle = matches!(mode, Mode::Strict);
-        mapping.full = mapping.full.strict_config(toggle);
-        mapping.reduced = mapping.reduced.strict_config(toggle);
-        let mut repo = git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
-            .map(git::Repository::from)
-            .map(|r| r.apply_environment())?;
-        if !config.is_empty() {
-            repo.config_snapshot_mut()
-                .apply_cli_overrides(config)
-                .context("Unable to parse command-line configuration")?;
+
+    let repository = {
+        let config = config.clone();
+        move |mode: Mode| -> Result<git::Repository> {
+            let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
+            let toggle = matches!(mode, Mode::Strict);
+            mapping.full = mapping.full.strict_config(toggle);
+            mapping.reduced = mapping.reduced.strict_config(toggle);
+            let mut repo = git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
+                .map(git::Repository::from)
+                .map(|r| r.apply_environment())?;
+            if !config.is_empty() {
+                repo.config_snapshot_mut()
+                    .apply_cli_overrides(config.iter())
+                    .context("Unable to parse command-line configuration")?;
+            }
+            Ok(repo)
         }
-        Ok(repo)
     };
 
     let progress;
@@ -142,7 +146,9 @@ pub fn main() -> Result<()> {
             progress,
             progress_keep_open,
             None,
-            move |_progress, out, _err| core::repository::config::list(repository(Mode::Lenient)?, filter, format, out),
+            move |_progress, out, _err| {
+                core::repository::config::list(repository(Mode::Lenient)?, filter, config, format, out)
+            },
         )
         .map(|_| ()),
         Subcommands::Free(subcommands) => match subcommands {
