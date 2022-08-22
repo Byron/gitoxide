@@ -1,21 +1,30 @@
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod net {
     use crate::OutputFormat;
-    use anyhow::{bail, Context};
+    use anyhow::bail;
     use git_repository as git;
     use git_repository::protocol::fetch;
 
+    pub mod refs {
+        use crate::OutputFormat;
+
+        pub struct Context {
+            pub format: OutputFormat,
+            pub name: Option<String>,
+            pub url: Option<git_repository::Url>,
+        }
+    }
+
     #[git::protocol::maybe_async::maybe_async]
-    pub async fn refs(
+    pub async fn refs_fn(
         repo: git::Repository,
-        name: Option<&str>,
-        url: Option<git::Url>,
-        format: OutputFormat,
         mut progress: impl git::Progress,
         out: impl std::io::Write,
+        refs::Context { format, name, url }: refs::Context,
     ) -> anyhow::Result<()> {
+        use anyhow::Context;
         let remote = match (name, url) {
-            (Some(name), None) => repo.find_remote(name)?,
+            (Some(name), None) => repo.find_remote(&name)?,
             (None, None) => repo
                 .head()?
                 .into_remote(git::remote::Direction::Fetch)
@@ -101,4 +110,4 @@ mod net {
     }
 }
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
-pub use net::refs;
+pub use net::{refs, refs_fn as refs};

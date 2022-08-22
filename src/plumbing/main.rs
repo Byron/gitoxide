@@ -106,11 +106,9 @@ pub fn main() -> Result<()> {
                         move |progress, out, _err| {
                             core::repository::remote::refs(
                                 repository(Mode::Lenient)?,
-                                name.as_deref(),
-                                url,
-                                format,
                                 progress,
                                 out,
+                                core::repository::remote::refs::Context { name, url, format },
                             )
                         },
                     )
@@ -121,11 +119,9 @@ pub fn main() -> Result<()> {
                         async_util::prepare(verbose, "remote-refs", Some(core::remote::refs::PROGRESS_RANGE));
                     futures_lite::future::block_on(core::repository::remote::refs(
                         repository(Mode::Lenient)?,
-                        name.as_deref(),
-                        url,
-                        format,
                         progress,
                         std::io::stdout(),
+                        core::repository::remote::refs::Context { name, url, format },
                     ))
                 }
             }
