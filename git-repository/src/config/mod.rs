@@ -13,6 +13,16 @@ pub struct Snapshot<'repo> {
     pub(crate) repo: &'repo Repository,
 }
 
+/// A platform to access configuration values and modify them in memory, while making them available when this platform is dropped.
+/// Note that the values will only affect this instance of the parent repository, and not other clones that may exist.
+///
+/// Note that these values won't update even if the underlying file(s) change.
+// TODO: make it possible to load snapshots with reloading via .config() and write mutated snapshots back to disk.
+pub struct SnapshotMut<'repo> {
+    pub(crate) repo: &'repo mut Repository,
+    pub(crate) config: git_config::File<'static>,
+}
+
 pub(crate) mod section {
     pub fn is_trusted(meta: &git_config::file::Metadata) -> bool {
         meta.trust == git_sec::Trust::Full || meta.source.kind() != git_config::source::Kind::Repository

@@ -200,3 +200,36 @@ fn access_values_and_identity() {
         }
     }
 }
+
+#[test]
+fn config_snapshot_mut() {
+    let mut repo = named_repo("make_config_repo.sh").unwrap();
+    let repo_clone = repo.clone();
+    let key = "hallo.welt";
+    let key_subsection = "hallo.unter.welt";
+    assert_eq!(repo.config_snapshot().boolean(key), None, "no value there just yet");
+    assert_eq!(repo.config_snapshot().string(key_subsection), None);
+
+    {
+        let mut config = repo.config_snapshot_mut();
+        config.set_raw_value("hallo", None, "welt", "true").unwrap();
+        config.set_raw_value("hallo", Some("unter"), "welt", "value").unwrap();
+    }
+
+    assert_eq!(
+        repo.config_snapshot().boolean(key),
+        Some(true),
+        "value was set and applied"
+    );
+    assert_eq!(
+        repo.config_snapshot().string(key_subsection).as_deref(),
+        Some("value".into())
+    );
+
+    assert_eq!(
+        repo_clone.config_snapshot().boolean(key),
+        None,
+        "values are not written back automatically nor are they shared between clones"
+    );
+    assert_eq!(repo_clone.config_snapshot().string(key_subsection), None);
+}

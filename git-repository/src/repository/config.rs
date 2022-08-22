@@ -4,10 +4,15 @@ use std::collections::BTreeSet;
 
 /// General Configuration
 impl crate::Repository {
-    /// Return
     /// Return a snapshot of the configuration as seen upon opening the repository.
     pub fn config_snapshot(&self) -> config::Snapshot<'_> {
         config::Snapshot { repo: self }
+    }
+
+    /// Return a mutable snapshot of the configuration as seen upon opening the repository.
+    pub fn config_snapshot_mut(&mut self) -> config::SnapshotMut<'_> {
+        let config = self.config.resolved.as_ref().clone();
+        config::SnapshotMut { repo: self, config }
     }
 
     /// The options used to open the repository.
