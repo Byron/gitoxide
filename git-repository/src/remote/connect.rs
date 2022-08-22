@@ -66,24 +66,28 @@ impl<'repo> Remote<'repo> {
             Ok(url)
         }
 
-        let protocol = self
-            .repo
-            .config
-            .resolved
-            .integer("protocol", None, "version")
-            .unwrap_or(Ok(2))
-            .map_err(|err| Error::UnknownProtocol { given: err.input })
-            .and_then(|num| {
-                Ok(match num {
-                    1 => Protocol::V1,
-                    2 => Protocol::V2,
-                    num => {
-                        return Err(Error::UnknownProtocol {
-                            given: num.to_string().into(),
+        let protocol = self.force_protocol.map_or_else(
+            || {
+                self.repo
+                    .config
+                    .resolved
+                    .integer("protocol", None, "version")
+                    .unwrap_or(Ok(2))
+                    .map_err(|err| Error::UnknownProtocol { given: err.input })
+                    .and_then(|num| {
+                        Ok(match num {
+                            1 => Protocol::V1,
+                            2 => Protocol::V2,
+                            num => {
+                                return Err(Error::UnknownProtocol {
+                                    given: num.to_string().into(),
+                                })
+                            }
                         })
-                    }
-                })
-            })?;
+                    })
+            },
+            |version| Ok(version),
+        )?;
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
         let transport = git_protocol::transport::connect(sanitize(url)?, protocol).await?;

@@ -4,6 +4,11 @@ use std::convert::TryInto;
 
 /// Builder methods
 impl Remote<'_> {
+    /// Force the transport protocol version to the given version, instead of loading it from the configuration.
+    pub fn force_transport_protocol(mut self, version: impl Into<Option<git_protocol::transport::Protocol>>) -> Self {
+        self.force_protocol = version.into();
+        self
+    }
     /// Set the `url` to be used when pushing data to a remote.
     pub fn push_url<Url, E>(self, url: Url) -> Result<Self, remote::init::Error>
     where

@@ -20,7 +20,7 @@ mod access {
     use crate::remote::Connection;
     use crate::Remote;
 
-    /// Access and conversion
+    /// Access
     impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
         /// Drop the transport and additional state to regain the original remote.
         pub fn remote(&self) -> &Remote<'repo> {

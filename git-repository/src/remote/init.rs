@@ -40,6 +40,7 @@ impl<'repo> Remote<'repo> {
             .then(|| rewrite_urls(&repo.config, url.as_ref(), push_url.as_ref()))
             .unwrap_or(Ok((None, None)))?;
         Ok(Remote {
+            force_protocol: None,
             name,
             url,
             url_alias,
@@ -65,6 +66,7 @@ impl<'repo> Remote<'repo> {
             .then(|| rewrite_urls(&repo.config, Some(&url), None))
             .unwrap_or(Ok((None, None)))?;
         Ok(Remote {
+            force_protocol: None,
             name: None,
             url: Some(url),
             url_alias,
