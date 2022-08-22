@@ -243,10 +243,9 @@ mod config_section_mut {
         repo.config_snapshot_mut().apply_cli_overrides([
             "a.b=c",
             "remote.origin.url = url",
-            "implicit.bool-false = ",
             "implicit.bool-true",
+            "implicit.bool-false = ",
         ])?;
-        // TODO: fix printing - reversing order of bool-true/false prints wrongly, making round-tripping impossible.
 
         let config = repo.config_snapshot();
         assert_eq!(config.string("a.b").expect("present").as_ref(), "c");
