@@ -1,3 +1,19 @@
+#[test]
+fn section_mut_must_exist_as_section_is_not_created_automatically() {
+    let mut config = multi_value_section();
+    assert!(config.section_mut("foo", None).is_err());
+}
+
+#[test]
+fn section_mut_or_create_new_is_infallible() -> crate::Result {
+    let mut config = multi_value_section();
+    let section = config.section_mut_or_create_new("name", Some("subsection"))?;
+    assert_eq!(section.header().name(), "name");
+    assert_eq!(section.header().subsection_name().expect("set"), "subsection");
+    assert_eq!(section.to_bstring(), "[name \"subsection\"]\n");
+    Ok(())
+}
+
 mod remove {
     use super::multi_value_section;
 

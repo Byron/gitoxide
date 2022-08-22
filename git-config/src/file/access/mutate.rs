@@ -11,7 +11,7 @@ use crate::{
 
 /// Mutating low-level access methods.
 impl<'event> File<'event> {
-    /// Returns an mutable section with a given `name` and optional `subsection_name`.
+    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_.
     pub fn section_mut<'a>(
         &'a mut self,
         name: impl AsRef<str>,
@@ -30,7 +30,30 @@ impl<'event> File<'event> {
             .to_mut(nl))
     }
 
-    /// Returns the last found mutable section with a given `name` and optional `subsection_name`, that matches `filter`.
+    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_.
+    pub fn section_mut_or_create_new<'a>(
+        &'a mut self,
+        name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+    ) -> Result<SectionMut<'a, 'event>, section::header::Error> {
+        let name = name.as_ref();
+        match self
+            .section_ids_by_name_and_subname(name.as_ref(), subsection_name)
+            .map(|it| it.rev().next().expect("BUG: Section lookup vec was empty"))
+        {
+            Ok(id) => {
+                let nl = self.detect_newline_style_smallvec();
+                Ok(self
+                    .sections
+                    .get_mut(&id)
+                    .expect("BUG: Section did not have id from lookup")
+                    .to_mut(nl))
+            }
+            Err(_) => self.new_section(name.to_owned(), subsection_name.map(|n| Cow::Owned(n.to_owned()))),
+        }
+    }
+
+    /// Returns the last found mutable section with a given `name` and optional `subsection_name`, that matches `filter`, _if it exists_.
     ///
     /// If there are sections matching `section_name` and `subsection_name` but the `filter` rejects all of them, `Ok(None)`
     /// is returned.
