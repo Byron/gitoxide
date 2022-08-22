@@ -39,7 +39,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
         body.push(Event::SectionKey(key));
         if let Some(value) = value {
             body.extend(self.whitespace.key_value_separators());
-            body.push(Event::Value(escape_value(value.into()).into()));
+            body.push(Event::Value(escape_value(value).into()));
         }
         if self.implicit_newline {
             body.push(Event::Newline(BString::from(self.newline.to_vec()).into()));
