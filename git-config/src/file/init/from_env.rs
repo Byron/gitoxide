@@ -1,4 +1,4 @@
-use std::{borrow::Cow, convert::TryFrom};
+use std::convert::TryFrom;
 
 use crate::{file, file::init, parse, parse::section, path::interpolate, File};
 
@@ -58,18 +58,12 @@ impl File<'static> {
                 key_val: key.to_string(),
             })?;
 
-            let mut section = match config.section_mut(key.section_name, key.subsection_name) {
-                Ok(section) => section,
-                Err(_) => config.new_section(
-                    key.section_name.to_owned(),
-                    key.subsection_name.map(|subsection| Cow::Owned(subsection.to_owned())),
-                )?,
-            };
-
-            section.push(
-                section::Key::try_from(key.value_name.to_owned())?,
-                git_path::os_str_into_bstr(&value).expect("no illformed UTF-8").as_ref(),
-            );
+            config
+                .section_mut_or_create_new(key.section_name, key.subsection_name)?
+                .push(
+                    section::Key::try_from(key.value_name.to_owned())?,
+                    git_path::os_str_into_bstr(&value).expect("no illformed UTF-8").as_ref(),
+                );
         }
 
         let mut buf = Vec::new();
