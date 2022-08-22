@@ -98,23 +98,29 @@ pub fn main() -> Result<()> {
                 #[cfg(feature = "gitoxide-core-blocking-client")]
                 {
                     prepare_and_run(
-                        "config-list",
+                        "remote-refs",
                         verbose,
                         progress,
                         progress_keep_open,
                         None,
                         move |progress, out, _err| {
-                            core::repository::remote::refs(repository(Mode::Lenient)?, &name, format, progress, out)
+                            core::repository::remote::refs(
+                                repository(Mode::Lenient)?,
+                                name.as_deref(),
+                                format,
+                                progress,
+                                out,
+                            )
                         },
                     )
                 }
                 #[cfg(feature = "gitoxide-core-async-client")]
                 {
                     let (_handle, progress) =
-                        async_util::prepare(verbose, "remote-ref-list", Some(core::remote::refs::PROGRESS_RANGE));
+                        async_util::prepare(verbose, "remote-refs", Some(core::remote::refs::PROGRESS_RANGE));
                     futures_lite::future::block_on(core::repository::remote::refs(
                         repository(Mode::Lenient)?,
-                        &name,
+                        name.as_deref(),
                         format,
                         progress,
                         std::io::stdout(),

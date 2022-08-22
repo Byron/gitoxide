@@ -100,8 +100,10 @@ pub mod remote {
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
         /// The name of the remote to connect to.
-        #[clap(long, short = 'n', default_value = "origin")]
-        pub name: String,
+        ///
+        /// If unset, the current branch will determine the remote.
+        #[clap(long, short = 'n')]
+        pub name: Option<String>,
 
         /// Subcommands
         #[clap(subcommand)]

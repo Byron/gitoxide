@@ -1,17 +1,100 @@
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod net {
     use crate::OutputFormat;
+    use anyhow::Context;
     use git_repository as git;
+    use git_repository::protocol::fetch;
 
     #[git::protocol::maybe_async::maybe_async]
     pub async fn refs(
-        _repo: git::Repository,
-        _name: &str,
-        _format: OutputFormat,
-        _progress: impl git::Progress,
-        _out: impl std::io::Write,
+        repo: git::Repository,
+        name: Option<&str>,
+        format: OutputFormat,
+        mut progress: impl git::Progress,
+        out: impl std::io::Write,
     ) -> anyhow::Result<()> {
-        todo!()
+        let remote = match name {
+            Some(name) => repo.find_remote(name)?,
+            None => repo
+                .head()?
+                .into_remote(git::remote::Direction::Fetch)
+                .context("Cannot find a remote for unborn branch")??,
+        };
+        progress.info(format!(
+            "Connecting to {:?}",
+            remote
+                .url(git::remote::Direction::Fetch)
+                .context("Remote didn't have a URL to connect to")?
+                .to_bstring()
+        ));
+        let refs = remote
+            .connect(git::remote::Direction::Fetch, progress)
+            .await?
+            .list_refs()
+            .await?;
+
+        match format {
+            OutputFormat::Human => drop(print(out, &refs)),
+            #[cfg(feature = "serde1")]
+            OutputFormat::Json => {
+                serde_json::to_writer_pretty(out, &refs.into_iter().map(JsonRef::from).collect::<Vec<_>>())?
+            }
+        };
+        Ok(())
+    }
+
+    #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+    pub enum JsonRef {
+        Peeled {
+            path: String,
+            tag: String,
+            object: String,
+        },
+        Direct {
+            path: String,
+            object: String,
+        },
+        Symbolic {
+            path: String,
+            target: String,
+            object: String,
+        },
+    }
+
+    impl From<fetch::Ref> for JsonRef {
+        fn from(value: fetch::Ref) -> Self {
+            match value {
+                fetch::Ref::Direct { path, object } => JsonRef::Direct {
+                    path: path.to_string(),
+                    object: object.to_string(),
+                },
+                fetch::Ref::Symbolic { path, target, object } => JsonRef::Symbolic {
+                    path: path.to_string(),
+                    target: target.to_string(),
+                    object: object.to_string(),
+                },
+                fetch::Ref::Peeled { path, tag, object } => JsonRef::Peeled {
+                    path: path.to_string(),
+                    tag: tag.to_string(),
+                    object: object.to_string(),
+                },
+            }
+        }
+    }
+
+    pub(crate) fn print(mut out: impl std::io::Write, refs: &[fetch::Ref]) -> std::io::Result<()> {
+        for r in refs {
+            match r {
+                fetch::Ref::Direct { path, object } => writeln!(&mut out, "{} {}", object.to_hex(), path),
+                fetch::Ref::Peeled { path, object, tag } => {
+                    writeln!(&mut out, "{} {} tag:{}", object.to_hex(), path, tag)
+                }
+                fetch::Ref::Symbolic { path, target, object } => {
+                    writeln!(&mut out, "{} {} symref-target:{}", object.to_hex(), path, target)
+                }
+            }?;
+        }
+        Ok(())
     }
 }
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]

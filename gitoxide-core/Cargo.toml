@@ -27,7 +27,7 @@ estimate-hours = ["itertools", "rayon", "fs-err"]
 blocking-client = ["git-repository/blocking-network-client"]
 ## The client to connect to git servers will be async, while supporting only the 'git' transport itself.
 ## It's the most limited and can be seen as example on how to use custom transports for custom servers.
-async-client = ["git-repository/async-network-client", "git-transport-configuration-only/async-std", "async-trait", "futures-io", "async-net", "async-io", "futures-lite", "blocking"]
+async-client = ["git-repository/async-network-client-async-std", "git-transport-configuration-only/async-std", "async-trait", "futures-io", "async-net", "async-io", "futures-lite", "blocking"]
 
 #! ### Other
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
