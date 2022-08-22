@@ -22,6 +22,12 @@
 //! - Legacy headers like `[section.subsection]` are supposed to be turned into to lower case and compared
 //!   case-sensitively. We keep its case and compare case-insensitively.
 //!
+//! # Limitations
+//!
+//! - Keys like `a.b` are interpreted as true but `a.b = ` are interpreted as false in `git`.
+//!   This library, however, considers both to be true due to its inability to differentiate them at present.
+//!   Even to though the information is available, the API doesn't expose it.
+//!
 //! [^1]: When read values do not need normalization and it wasn't parsed in 'owned' mode.
 //!
 //! [`git-config` files]: https://git-scm.com/docs/git-config#_configuration_file

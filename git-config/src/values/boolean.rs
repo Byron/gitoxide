@@ -69,12 +69,12 @@ impl serde::Serialize for Boolean {
 }
 
 fn parse_true(value: &BStr) -> bool {
-    value.eq_ignore_ascii_case(b"yes")
-        || value.eq_ignore_ascii_case(b"on")
-        || value.eq_ignore_ascii_case(b"true")
-        || value.is_empty()
+    value.eq_ignore_ascii_case(b"yes") || value.eq_ignore_ascii_case(b"on") || value.eq_ignore_ascii_case(b"true")
 }
 
 fn parse_false(value: &BStr) -> bool {
-    value.eq_ignore_ascii_case(b"no") || value.eq_ignore_ascii_case(b"off") || value.eq_ignore_ascii_case(b"false")
+    value.eq_ignore_ascii_case(b"no")
+        || value.eq_ignore_ascii_case(b"off")
+        || value.eq_ignore_ascii_case(b"false")
+        || value.is_empty()
 }

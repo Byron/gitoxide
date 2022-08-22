@@ -10,6 +10,7 @@ fn from_str_false() -> crate::Result {
     assert!(!Boolean::try_from(b("off"))?.0);
     assert!(!Boolean::try_from(b("false"))?.0);
     assert!(!Boolean::try_from(b("0"))?.0);
+    assert!(!Boolean::try_from(b(""))?.0);
     Ok(())
 }
 
@@ -18,7 +19,6 @@ fn from_str_true() -> crate::Result {
     assert_eq!(Boolean::try_from(b("yes")).map(Into::into), Ok(true));
     assert_eq!(Boolean::try_from(b("on")), Ok(Boolean(true)));
     assert_eq!(Boolean::try_from(b("true")), Ok(Boolean(true)));
-    assert_eq!(Boolean::try_from(b("")).map(|b| b.is_true()), Ok(true));
     assert!(Boolean::try_from(b("1"))?.0);
     assert!(Boolean::try_from(b("+10"))?.0);
     assert!(Boolean::try_from(b("-1"))?.0);

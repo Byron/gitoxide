@@ -288,6 +288,7 @@ fn config_value<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResul
         let (i, newlines) = value_impl(i, dispatch)?;
         Ok((i, newlines))
     } else {
+        // TODO: remove this and fix everything, or else we can't fix the boolean limitation
         dispatch(Event::Value(Cow::Borrowed("".into())));
         Ok((i, 0))
     }

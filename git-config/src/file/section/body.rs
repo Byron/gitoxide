@@ -14,10 +14,12 @@ pub struct Body<'event>(pub(crate) crate::parse::section::Events<'event>);
 /// Access
 impl<'event> Body<'event> {
     /// Retrieves the last matching value in a section with the given key, if present.
+    ///
+    /// Note that we consider values without key separator `=` non-existing.
     #[must_use]
     pub fn value(&self, key: impl AsRef<str>) -> Option<Cow<'_, BStr>> {
         let key = Key::from_str_unchecked(key.as_ref());
-        let (_, range) = self.key_and_value_range_by(&key)?;
+        let (_key_range, range) = self.key_and_value_range_by(&key)?;
         let mut concatenated = BString::default();
 
         for event in &self.0[range] {
