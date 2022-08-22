@@ -415,7 +415,24 @@ impl<'event> File<'event> {
         Key: TryInto<section::Key<'event>, Error = E>,
         section::key::Error: From<E>,
     {
-        let mut section = self.section_mut_or_create_new(section_name, subsection_name)?;
+        self.set_raw_value_filter(section_name, subsection_name, key, new_value, &mut |_| true)
+    }
+
+    /// Similar to [`set_raw_value()`][Self::set_raw_value()], but only sets existing values in sections matching
+    /// `filter`, creating a new section otherwise.
+    pub fn set_raw_value_filter<'b, Key, E>(
+        &mut self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: Key,
+        new_value: impl Into<&'b BStr>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Option<Cow<'event, BStr>>, crate::file::set_raw_value::Error>
+    where
+        Key: TryInto<section::Key<'event>, Error = E>,
+        section::key::Error: From<E>,
+    {
+        let mut section = self.section_mut_or_create_new_filter(section_name, subsection_name, filter)?;
         Ok(section.set(key.try_into().map_err(section::key::Error::from)?, new_value))
     }
 
