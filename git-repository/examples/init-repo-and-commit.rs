@@ -2,6 +2,8 @@
 // adds initial commit with empty tree
 
 use anyhow::Context;
+use git::objs::tree;
+use git_odb::Write;
 use git_repository as git;
 
 fn main() -> anyhow::Result<()> {
@@ -19,13 +21,16 @@ fn main() -> anyhow::Result<()> {
         repo.work_dir().expect("non-bare repositories have a work-dir")
     );
 
-    let empty_tree_id = repo.write_object(git::objs::Tree::empty())?;
+    let mut tree = git::objs::Tree::empty();
+    //let empty_tree_id = repo.write_object(git::objs::Tree::empty())?;
+    let empty_tree_id = repo.write_object(&tree)?;
+
     let author = git::actor::SignatureRef {
         name: "Maria Sanchez".into(),
         email: "maria@example.com".into(),
         time: git_date::Time::now_local_or_utc(),
     };
-    let id = repo.commit(
+    let initial_commit_id = repo.commit(
         "HEAD",
         author,
         author,
@@ -33,6 +38,32 @@ fn main() -> anyhow::Result<()> {
         empty_tree_id,
         git::commit::NO_PARENT_IDS,
     )?;
-    println!("new commit id with empty tree: {:?}", id);
+
+    println!("initial commit id with empty tree: {:?}", initial_commit_id);
+
+    let blob_id = repo
+        .objects
+        .write_buf(git_object::Kind::Blob, "hello world".as_bytes())?;
+
+    let entry = tree::Entry {
+        mode: tree::EntryMode::Blob,
+        oid: blob_id,
+        filename: "hello.txt".into(),
+    };
+
+    tree.entries.push(entry);
+    let hello_tree_id = repo.write_object(&tree)?;
+
+    let blob_commit_id = repo.commit(
+        "HEAD",
+        author,
+        author,
+        "hello commit",
+        hello_tree_id,
+        [initial_commit_id],
+    )?;
+
+    println!("commit id for 'hello world' blob: {:?}", blob_commit_id);
+
     Ok(())
 }
