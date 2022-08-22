@@ -8,11 +8,15 @@ mod net {
     pub mod refs {
         use crate::OutputFormat;
 
+        pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
+
         pub struct Context {
             pub format: OutputFormat,
             pub name: Option<String>,
             pub url: Option<git_repository::Url>,
         }
+
+        pub(crate) use super::print;
     }
 
     #[git::protocol::maybe_async::maybe_async]
@@ -110,4 +114,4 @@ mod net {
     }
 }
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
-pub use net::{refs, refs_fn as refs};
+pub use net::{refs, refs_fn as refs, JsonRef};

@@ -251,10 +251,6 @@ pub mod free {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "no-repo")]
     pub enum Subcommands {
-        /// Subcommands for interacting with git remote server.
-        #[clap(subcommand)]
-        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-        Remote(remote::Subcommands),
         /// Subcommands for interacting with commit-graphs
         #[clap(subcommand)]
         CommitGraph(commitgraph::Subcommands),
@@ -268,30 +264,6 @@ pub mod free {
         Pack(pack::Subcommands),
         /// Subcommands for interacting with a worktree index, typically at .git/index
         Index(index::Platform),
-    }
-
-    ///
-    #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-    pub mod remote {
-        use gitoxide_core as core;
-
-        #[derive(Debug, clap::Subcommand)]
-        pub enum Subcommands {
-            /// List remote references from a remote identified by a url.
-            ///
-            /// This is the plumbing equivalent of `git ls-remote`.
-            /// Supported URLs are documented here: <https://www.git-scm.com/docs/git-clone#_git_urls>
-            RefList {
-                /// The protocol version to use. Valid values are 1 and 2
-                #[clap(long, short = 'p')]
-                protocol: Option<core::net::Protocol>,
-
-                /// the URLs or path from which to receive references
-                ///
-                /// See here for a list of supported URLs: <https://www.git-scm.com/docs/git-clone#_git_urls>
-                url: String,
-            },
-        }
     }
 
     ///

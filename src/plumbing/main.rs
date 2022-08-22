@@ -109,7 +109,7 @@ pub fn main() -> Result<()> {
                         verbose,
                         progress,
                         progress_keep_open,
-                        None,
+                        core::repository::remote::refs::PROGRESS_RANGE,
                         move |progress, out, _err| {
                             core::repository::remote::refs(
                                 repository(Mode::Lenient)?,
@@ -122,8 +122,11 @@ pub fn main() -> Result<()> {
                 }
                 #[cfg(feature = "gitoxide-core-async-client")]
                 {
-                    let (_handle, progress) =
-                        async_util::prepare(verbose, "remote-refs", Some(core::remote::refs::PROGRESS_RANGE));
+                    let (_handle, progress) = async_util::prepare(
+                        verbose,
+                        "remote-refs",
+                        Some(core::repository::remote::refs::PROGRESS_RANGE),
+                    );
                     futures_lite::future::block_on(core::repository::remote::refs(
                         repository(Mode::Lenient)?,
                         progress,
@@ -143,44 +146,6 @@ pub fn main() -> Result<()> {
         )
         .map(|_| ()),
         Subcommands::Free(subcommands) => match subcommands {
-            #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-            free::Subcommands::Remote(subcommands) => match subcommands {
-                #[cfg(feature = "gitoxide-core-async-client")]
-                free::remote::Subcommands::RefList { protocol, url } => {
-                    let (_handle, progress) =
-                        async_util::prepare(verbose, "remote-ref-list", Some(core::remote::refs::PROGRESS_RANGE));
-                    futures_lite::future::block_on(core::remote::refs::list(
-                        protocol,
-                        &url,
-                        progress,
-                        core::remote::refs::Context {
-                            thread_limit,
-                            format,
-                            out: std::io::stdout(),
-                        },
-                    ))
-                }
-                #[cfg(feature = "gitoxide-core-blocking-client")]
-                free::remote::Subcommands::RefList { protocol, url } => prepare_and_run(
-                    "remote-ref-list",
-                    verbose,
-                    progress,
-                    progress_keep_open,
-                    core::remote::refs::PROGRESS_RANGE,
-                    move |progress, out, _err| {
-                        core::remote::refs::list(
-                            protocol,
-                            &url,
-                            progress,
-                            core::remote::refs::Context {
-                                thread_limit,
-                                format,
-                                out,
-                            },
-                        )
-                    },
-                ),
-            },
             free::Subcommands::CommitGraph(subcommands) => match subcommands {
                 free::commitgraph::Subcommands::Verify { path, statistics } => prepare_and_run(
                     "commitgraph-verify",
