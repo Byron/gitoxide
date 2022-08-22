@@ -92,7 +92,8 @@ impl<'a, 'event> SectionMut<'a, 'event> {
                 self.push(key, Some(value.into()));
                 None
             }
-            Some((_, value_range)) => {
+            Some((key_range, value_range)) => {
+                let value_range = value_range.unwrap_or(key_range.end - 1..key_range.end);
                 let range_start = value_range.start;
                 let ret = self.remove_internal(value_range);
                 self.section

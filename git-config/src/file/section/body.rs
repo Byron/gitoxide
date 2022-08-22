@@ -20,6 +20,7 @@ impl<'event> Body<'event> {
     pub fn value(&self, key: impl AsRef<str>) -> Option<Cow<'_, BStr>> {
         let key = Key::from_str_unchecked(key.as_ref());
         let (_key_range, range) = self.key_and_value_range_by(&key)?;
+        let range = range?;
         let mut concatenated = BString::default();
 
         for event in &self.0[range] {
@@ -109,9 +110,10 @@ impl<'event> Body<'event> {
         &self.0
     }
 
-    /// Returns the the range containing the value events for the `key`.
-    /// If the value is not found, then this returns an empty range.
-    pub(crate) fn key_and_value_range_by(&self, key: &Key<'_>) -> Option<(Range<usize>, Range<usize>)> {
+    /// Returns the the range containing the value events for the `key`, with value range being `None` if there is no key-value separator
+    /// and only a 'fake' Value event with an empty string in side.
+    /// If the value is not found, `None` is returned.
+    pub(crate) fn key_and_value_range_by(&self, key: &Key<'_>) -> Option<(Range<usize>, Option<Range<usize>>)> {
         let mut value_range = Range::default();
         let mut key_start = None;
         for (i, e) in self.0.iter().enumerate().rev() {
@@ -140,7 +142,8 @@ impl<'event> Body<'event> {
             // value end needs to be offset by one so that the last value's index
             // is included in the range
             let value_range = value_range.start..value_range.end + 1;
-            (key_start..value_range.end, value_range)
+            let key_range = key_start..value_range.end;
+            (key_range, (value_range.start != key_start + 1).then(|| value_range))
         })
     }
 }

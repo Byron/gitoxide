@@ -41,12 +41,12 @@ fn get_value_for_all_provided_values() -> crate::Result {
         assert!(!config.boolean("core", None, "bool-explicit").expect("exists")?);
 
         assert!(
-            !config.value::<Boolean>("core", None, "bool-implicit")?.0,
+            config.value::<Boolean>("core", None, "bool-implicit").is_err(),
             "this cannot work like in git as the value isn't there for us"
         );
         assert!(
-            !config.boolean("core", None, "bool-implicit").expect("present")?,
-            "this should work, but doesn't yet"
+            config.boolean("core", None, "bool-implicit").expect("present")?,
+            "this should work"
         );
 
         assert_eq!(config.string("doesnt", None, "exist"), None);
@@ -177,11 +177,11 @@ fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
 
 #[test]
 fn section_names_are_case_insensitive() -> crate::Result {
-    let config = "[core] bool-implicit";
+    let config = "[core] a=true";
     let file = File::try_from(config)?;
     assert_eq!(
-        file.value::<Boolean>("core", None, "bool-implicit").unwrap(),
-        file.value::<Boolean>("CORE", None, "bool-implicit").unwrap()
+        file.value::<Boolean>("core", None, "a").unwrap(),
+        file.value::<Boolean>("CORE", None, "a").unwrap()
     );
 
     Ok(())
@@ -209,13 +209,13 @@ fn single_section() {
     assert_eq!(first_value, cow_str("b"));
 
     assert!(
-        config.raw_value("core", None, "c").is_ok(),
-        "value is considered false as it is without '=', so it's like not present, BUT this parses strangely which needs fixing (see TODO nom parse)"
+        config.raw_value("core", None, "c").is_err(),
+        "value is considered false as it is without '=', so it's like not present"
     );
 
     assert!(
-        !config.boolean("core", None, "c").expect("present").unwrap(),
-        "asking for a boolean is true true, as per git rules, but doesn't work yet"
+        config.boolean("core", None, "c").expect("present").unwrap(),
+        "asking for a boolean is true true, as per git rules"
     );
 }
 

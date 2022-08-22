@@ -40,7 +40,7 @@ impl<'event> File<'event> {
     /// let config = r#"
     ///     [core]
     ///         a = 10k
-    ///         c
+    ///         c = false
     /// "#;
     /// let git_config = git_config::File::try_from(config)?;
     /// // You can either use the turbofish to determine the type...
