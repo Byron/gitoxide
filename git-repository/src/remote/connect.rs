@@ -41,6 +41,9 @@ impl<'repo> Remote<'repo> {
     }
 
     /// Connect to the url suitable for `direction` and return a handle through which operations can be performed.
+    ///
+    /// Note that the `protocol.version` configuration key affects the transport protocol used to connect,
+    /// with `2` being the default.
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
     #[git_protocol::maybe_async::maybe_async]
     pub async fn connect<P>(
@@ -66,28 +69,24 @@ impl<'repo> Remote<'repo> {
             Ok(url)
         }
 
-        let protocol = self.force_protocol.map_or_else(
-            || {
-                self.repo
-                    .config
-                    .resolved
-                    .integer("protocol", None, "version")
-                    .unwrap_or(Ok(2))
-                    .map_err(|err| Error::UnknownProtocol { given: err.input })
-                    .and_then(|num| {
-                        Ok(match num {
-                            1 => Protocol::V1,
-                            2 => Protocol::V2,
-                            num => {
-                                return Err(Error::UnknownProtocol {
-                                    given: num.to_string().into(),
-                                })
-                            }
+        let protocol = self
+            .repo
+            .config
+            .resolved
+            .integer("protocol", None, "version")
+            .unwrap_or(Ok(2))
+            .map_err(|err| Error::UnknownProtocol { given: err.input })
+            .and_then(|num| {
+                Ok(match num {
+                    1 => Protocol::V1,
+                    2 => Protocol::V2,
+                    num => {
+                        return Err(Error::UnknownProtocol {
+                            given: num.to_string().into(),
                         })
-                    })
-            },
-            Ok,
-        )?;
+                    }
+                })
+            })?;
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
         let transport = git_protocol::transport::connect(sanitize(url)?, protocol).await?;
