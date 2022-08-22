@@ -62,7 +62,12 @@ impl File<'static> {
                 .section_mut_or_create_new(key.section_name, key.subsection_name)?
                 .push(
                     section::Key::try_from(key.value_name.to_owned())?,
-                    git_path::os_str_into_bstr(&value).expect("no illformed UTF-8").as_ref(),
+                    Some(
+                        git_path::os_str_into_bstr(&value)
+                            .expect("no illformed UTF-8")
+                            .as_ref()
+                            .into(),
+                    ),
                 );
         }
 

@@ -115,9 +115,18 @@ mod set {
 }
 
 mod push {
-    use std::convert::TryFrom;
+    use std::convert::{TryFrom, TryInto};
 
     use git_config::parse::section::Key;
+
+    #[test]
+    fn none_as_value_omits_the_key_value_separator() -> crate::Result {
+        let mut file = git_config::File::default();
+        let mut section = file.section_mut_or_create_new("a", Some("sub"))?;
+        section.push("key".try_into()?, None);
+        assert_eq!(file.to_bstring(), "[a \"sub\"]\n\tkey\n");
+        Ok(())
+    }
 
     #[test]
     fn whitespace_is_derived_from_whitespace_before_first_value() -> crate::Result {
@@ -169,7 +178,7 @@ mod push {
             let mut config = git_config::File::default();
             let mut section = config.new_section("a", None).unwrap();
             section.set_implicit_newline(false);
-            section.push(Key::try_from("k").unwrap(), value);
+            section.push(Key::try_from("k").unwrap(), Some(value.into()));
             let expected = expected
                 .replace("$head", &format!("[a]{nl}", nl = section.newline()))
                 .replace("$nl", &section.newline().to_string());
@@ -193,7 +202,7 @@ mod set_leading_whitespace {
 
         let nl = section.newline().to_owned();
         section.set_leading_whitespace(Some(Cow::Owned(BString::from(format!("{nl}\t")))));
-        section.push(Key::try_from("a")?, "v");
+        section.push(Key::try_from("a")?, Some("v".into()));
 
         assert_eq!(config.to_string(), format!("[core]{nl}{nl}\ta = v{nl}"));
         Ok(())

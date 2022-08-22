@@ -116,7 +116,7 @@ impl<'event> File<'event> {
     /// # use git_config::parse::section;
     /// let mut git_config = git_config::File::default();
     /// let mut section = git_config.new_section("hello", Some("world".into()))?;
-    /// section.push(section::Key::try_from("a")?, "b");
+    /// section.push(section::Key::try_from("a")?, Some("b".into()));
     /// let nl = section.newline().to_owned();
     /// assert_eq!(git_config.to_string(), format!("[hello \"world\"]{nl}\ta = b{nl}"));
     /// let _section = git_config.new_section("core", None);
