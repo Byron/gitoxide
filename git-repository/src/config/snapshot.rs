@@ -87,7 +87,7 @@ pub mod apply_cli_overrides {
     use crate::config::SnapshotMut;
     use std::convert::TryFrom;
 
-    /// The error returned by [SnapshotMut::apply_cli_overrides()][super::SnapshotMut::apply_cli_overrides].
+    /// The error returned by [SnapshotMut::apply_cli_overrides()][crate::config::SnapshotMut::apply_cli_overrides()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
