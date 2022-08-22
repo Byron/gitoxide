@@ -1,3 +1,5 @@
+use git_repository as git;
+use git_repository::bstr::BString;
 use std::path::PathBuf;
 
 use gitoxide_core as core;
@@ -10,6 +12,13 @@ pub struct Args {
     /// The repository to access.
     #[clap(short = 'r', long, default_value = ".")]
     pub repository: PathBuf,
+
+    /// Add these values to the configuration in the form of `key=value` or `key`.
+    ///
+    /// For example, if `key` is `core.abbrev`, set configuration like `[core] abbrev = key`,
+    /// or `remote.origin.url = foo` to set `[remote "origin"] url = foo`.
+    #[clap(long, short = 'c', parse(try_from_os_str = git::env::os_str_to_bstring))]
+    pub config: Vec<BString>,
 
     #[clap(long, short = 't')]
     /// The amount of threads to use for some operations.

@@ -7,7 +7,7 @@ use std::{
     },
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use clap::Parser;
 use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
@@ -55,20 +55,27 @@ pub fn main() -> Result<()> {
     let format = args.format;
     let cmd = args.cmd;
     let object_hash = args.object_hash;
+    let config = args.config;
     use git_repository as git;
     let repository = args.repository;
     enum Mode {
         Strict,
         Lenient,
     }
-    let repository = move |mode: Mode| {
+    let repository = move |mode: Mode| -> Result<git::Repository> {
         let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
         let toggle = matches!(mode, Mode::Strict);
         mapping.full = mapping.full.strict_config(toggle);
         mapping.reduced = mapping.reduced.strict_config(toggle);
-        git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
+        let mut repo = git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
             .map(git::Repository::from)
-            .map(|r| r.apply_environment())
+            .map(|r| r.apply_environment())?;
+        if !config.is_empty() {
+            repo.config_snapshot_mut()
+                .apply_cli_overrides(config)
+                .context("Unable to parse command-line configuration")?;
+        }
+        Ok(repo)
     };
 
     let progress;
