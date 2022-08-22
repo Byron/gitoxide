@@ -8,6 +8,7 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
+use std::path::PathBuf;
 use std::{
     convert::TryFrom,
     fmt::{self},
@@ -197,6 +198,15 @@ impl TryFrom<String> for Url {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         Self::from_bytes(value.as_str().into())
+    }
+}
+
+impl TryFrom<PathBuf> for Url {
+    type Error = parse::Error;
+
+    fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
+        use std::convert::TryInto;
+        git_path::into_bstr(value).try_into()
     }
 }
 
