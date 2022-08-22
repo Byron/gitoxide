@@ -40,6 +40,7 @@ impl<'repo> Remote<'repo> {
             .then(|| rewrite_urls(&repo.config, url.as_ref(), push_url.as_ref()))
             .unwrap_or(Ok((None, None)))?;
         Ok(Remote {
+            #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
             force_protocol: None,
             name,
             url,
@@ -66,6 +67,7 @@ impl<'repo> Remote<'repo> {
             .then(|| rewrite_urls(&repo.config, Some(&url), None))
             .unwrap_or(Ok((None, None)))?;
         Ok(Remote {
+            #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
             force_protocol: None,
             name: None,
             url: Some(url),

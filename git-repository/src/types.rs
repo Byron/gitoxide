@@ -199,6 +199,7 @@ pub struct Remote<'repo> {
     /// Refspecs for use when pushing.
     pub(crate) push_specs: Vec<git_refspec::RefSpec>,
     /// The protocol to use when connecting, if explicitly overridden.
+    #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
     pub(crate) force_protocol: Option<git_protocol::transport::Protocol>,
     // /// Delete local tracking branches that don't exist on the remote anymore.
     // pub(crate) prune: bool,

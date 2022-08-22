@@ -5,6 +5,7 @@ use std::convert::TryInto;
 /// Builder methods
 impl Remote<'_> {
     /// Force the transport protocol version to the given version, instead of loading it from the configuration.
+    #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
     pub fn force_transport_protocol(mut self, version: impl Into<Option<git_protocol::transport::Protocol>>) -> Self {
         self.force_protocol = version.into();
         self
