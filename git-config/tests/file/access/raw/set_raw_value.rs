@@ -4,7 +4,7 @@ fn file(input: &str) -> git_config::File<'static> {
 
 fn assert_set_value(value: &str) {
     let mut file = file("[a]k=b\n[a]\nk=c\nk=d");
-    file.set_raw_value("a", None, "k", value.into()).unwrap();
+    file.set_existing_raw_value("a", None, "k", value.into()).unwrap();
     assert_eq!(file.raw_value("a", None, "k").unwrap().as_ref(), value);
 
     let file: git_config::File = file.to_string().parse().unwrap();

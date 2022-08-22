@@ -330,6 +330,8 @@ impl<'event> File<'event> {
     }
 
     /// Sets a value in a given section, optional subsection, and key value.
+    /// Note sections named `section_name` and `subsection_name` (if not `None`)
+    /// must exist for this method to work.
     ///
     /// # Examples
     ///
@@ -351,7 +353,7 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// git_config.set_raw_value("core", None, "a", "e".into())?;
+    /// git_config.set_existing_raw_value("core", None, "a", "e".into())?;
     /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::<BStr>::Borrowed("e".into()));
     /// assert_eq!(
     ///     git_config.raw_values("core", None, "a")?,
@@ -363,7 +365,7 @@ impl<'event> File<'event> {
     /// );
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn set_raw_value(
+    pub fn set_existing_raw_value(
         &mut self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
@@ -413,7 +415,7 @@ impl<'event> File<'event> {
     ///     "y",
     ///     "z",
     /// ];
-    /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
+    /// git_config.set_existing_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_values("core", None, "a")?;
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
@@ -433,7 +435,7 @@ impl<'event> File<'event> {
     ///     "x",
     ///     "y",
     /// ];
-    /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
+    /// git_config.set_existing_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_values("core", None, "a")?;
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
@@ -454,11 +456,11 @@ impl<'event> File<'event> {
     ///     "z",
     ///     "discarded",
     /// ];
-    /// git_config.set_raw_multi_value("core", None, "a", new_values)?;
+    /// git_config.set_existing_raw_multi_value("core", None, "a", new_values)?;
     /// assert!(!git_config.raw_values("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
-    pub fn set_raw_multi_value<'a, Iter, Item>(
+    pub fn set_existing_raw_multi_value<'a, Iter, Item>(
         &mut self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
