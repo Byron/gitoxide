@@ -45,6 +45,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
         * [x] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
         * [x] **resolve** - show which objects a revspec resolves to, similar to `git rev-parse` but faster and with much better error handling
         * [x] **previous-branches** - list all previously checked out branches, powered by the ref-log.
+    * **remote**    
+        * [x] **refs** - list all references available on the remote based on the current remote configuration.
     * **free** - no git repository necessary
         * **pack**
           * [x] [verify](https://asciinema.org/a/352942)
@@ -74,8 +76,6 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
                 * [x] detailed information about the TREE extension
                 * [ ] …other extensions details aren't implemented yet
             * [x] **checkout-exclusive** - a predecessor of `git worktree`, providing flexible options to evaluate checkout performance from an index and/or an object database.
-        * **remote**
-            * [ref-list](https://asciinema.org/a/359320) - list all (or given) references from a remote at the given URL
 
 [skim]: https://github.com/lotabout/skim
 [git-hours]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
