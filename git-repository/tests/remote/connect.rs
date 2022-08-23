@@ -3,29 +3,28 @@ mod blocking_io {
     mod protocol_allow {
         use crate::remote;
         use git_features::progress;
+        use git_repository as git;
         use git_repository::remote::Direction::Fetch;
         use serial_test::serial;
 
         #[test]
-        #[ignore]
         fn deny() {
             for name in ["protocol_denied", "protocol_file_denied"] {
                 let repo = remote::repo(name);
                 let remote = repo.find_remote("origin").unwrap();
-                assert_eq!(
-                    remote
-                        .connect(Fetch, progress::Discard)
-                        .err()
-                        .map(|err| err.to_string())
-                        .unwrap(),
-                    "a nice error message or maybe match against it"
-                );
+                assert!(matches!(
+                    remote.connect(Fetch, progress::Discard).err(),
+                    Some(git::remote::connect::Error::ProtocolDenied {
+                        url: _,
+                        scheme: git::url::Scheme::File
+                    })
+                ));
             }
         }
 
         #[test]
-        #[ignore]
         #[serial]
+        #[ignore]
         fn user() {
             for (env_value, should_allow) in [(None, true), (Some("0"), false), (Some("1"), true)] {
                 let _env = env_value.map(|value| git_testtools::Env::new().set("GIT_PROTOCOL_FROM_USER", value));

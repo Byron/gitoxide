@@ -6,7 +6,6 @@ mod blocking_io {
     use git_repository::remote::Direction::Fetch;
 
     #[test]
-    #[ignore]
     fn all() -> crate::Result {
         for version in [
             None,

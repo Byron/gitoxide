@@ -276,8 +276,9 @@ impl Cache {
     pub(crate) fn url_scheme(
         &self,
     ) -> Result<&remote::url::SchemePermission, remote::url::scheme_permission::init::Error> {
-        self.url_scheme
-            .get_or_try_init(|| remote::url::SchemePermission::from_config(&self.resolved, &self.git_prefix))
+        self.url_scheme.get_or_try_init(|| {
+            remote::url::SchemePermission::from_config(&self.resolved, &self.git_prefix, self.filter_config_section)
+        })
     }
 }
 
