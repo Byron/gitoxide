@@ -213,7 +213,7 @@ pub fn absolutize<'a>(path: impl Into<Cow<'a, Path>>, mut current_dir: Option<im
     let mut path = PathBuf::from_iter(components.next());
     for component in components {
         if let ParentDir = component {
-            if !path.pop() && path.as_os_str().is_empty() {
+            if path.as_os_str() == "." || (!path.pop() && path.as_os_str().is_empty()) {
                 if let Some(cwd) = current_dir.take() {
                     path = cwd.into();
                     path.pop();
