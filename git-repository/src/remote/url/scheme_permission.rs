@@ -13,10 +13,7 @@ pub mod init {
     #[derive(Debug, thiserror::Error)]
     pub enum Error {
         #[error("{value:?} must be allow|deny|user in configuration key protocol{0}.allow", scheme.as_ref().map(|s| format!(".{}", s)).unwrap_or_default())]
-        InvalidConfiguration {
-            scheme: Option<&'static str>,
-            value: BString,
-        },
+        InvalidConfiguration { scheme: Option<String>, value: BString },
     }
 }
 
@@ -91,7 +88,7 @@ impl SchemePermission {
                         .map(Allow::try_from)
                         .transpose()
                         .map_err(|invalid| init::Error::InvalidConfiguration {
-                            scheme: Some(scheme.as_str()),
+                            scheme: Some(scheme.as_str().into()),
                             value: invalid,
                         })?
                     {
@@ -112,7 +109,7 @@ impl SchemePermission {
 
 /// Access
 impl SchemePermission {
-    pub fn allow(&self, scheme: git_url::Scheme) -> bool {
+    pub fn allow(&self, scheme: &git_url::Scheme) -> bool {
         self.allow_per_scheme.get(&scheme).or(self.allow.as_ref()).map_or_else(
             || {
                 use git_url::Scheme::*;

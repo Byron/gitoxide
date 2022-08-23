@@ -93,10 +93,10 @@ impl<'repo> Remote<'repo> {
             })?;
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
-        if !self.repo.config.url_scheme()?.allow(url.scheme) {
+        if !self.repo.config.url_scheme()?.allow(&url.scheme) {
             return Err(Error::ProtocolDenied {
                 url: url.to_bstring(),
-                scheme: url.scheme,
+                scheme: url.scheme.clone(),
             });
         }
         let transport = git_protocol::transport::connect(sanitize(url)?, version).await?;
