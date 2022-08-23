@@ -8,11 +8,8 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
+use std::convert::TryFrom;
 use std::path::PathBuf;
-use std::{
-    convert::TryFrom,
-    fmt::{self},
-};
 
 use bstr::{BStr, BString};
 
@@ -26,39 +23,8 @@ pub mod expand_path;
 #[doc(inline)]
 pub use expand_path::expand_path;
 
-/// A scheme for use in a [`Url`]
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[allow(missing_docs)]
-pub enum Scheme {
-    File,
-    Git,
-    Ssh,
-    Http,
-    Https,
-    Ext(&'static str),
-}
-
-impl Scheme {
-    /// Return ourselves parseable name.
-    pub fn as_str(&self) -> &'static str {
-        use Scheme::*;
-        match self {
-            File => "file",
-            Git => "git",
-            Ssh => "ssh",
-            Http => "http",
-            Https => "https",
-            Ext(name) => name,
-        }
-    }
-}
-
-impl fmt::Display for Scheme {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.as_str())
-    }
-}
+mod scheme;
+pub use scheme::Scheme;
 
 /// A URL with support for specialized git related capabilities.
 ///
