@@ -10,7 +10,7 @@ mod worktree;
 
 #[test]
 fn size_in_memory() {
-    let expected = [744, 800];
+    let expected = [760, 800];
     let actual_size = std::mem::size_of::<Repository>();
     assert!(
         expected.contains(&actual_size),

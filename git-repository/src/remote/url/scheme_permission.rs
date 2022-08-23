@@ -110,7 +110,7 @@ impl SchemePermission {
 /// Access
 impl SchemePermission {
     pub fn allow(&self, scheme: &git_url::Scheme) -> bool {
-        self.allow_per_scheme.get(&scheme).or(self.allow.as_ref()).map_or_else(
+        self.allow_per_scheme.get(scheme).or(self.allow.as_ref()).map_or_else(
             || {
                 use git_url::Scheme::*;
                 match scheme {

@@ -2,6 +2,7 @@ use crate::remote::Connection;
 use crate::{Progress, Remote};
 use git_protocol::transport::client::Transport;
 
+#[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod error {
     use crate::bstr::BString;
     use crate::remote;
@@ -24,6 +25,7 @@ mod error {
         FileUrl(#[from] git_discover::is_git::Error),
     }
 }
+#[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 pub use error::Error;
 
 /// Establishing connections to remote hosts
@@ -96,7 +98,7 @@ impl<'repo> Remote<'repo> {
         if !self.repo.config.url_scheme()?.allow(&url.scheme) {
             return Err(Error::ProtocolDenied {
                 url: url.to_bstring(),
-                scheme: url.scheme.clone(),
+                scheme: url.scheme,
             });
         }
         let transport = git_protocol::transport::connect(sanitize(url)?, version).await?;

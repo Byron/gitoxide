@@ -1,6 +1,6 @@
 use std::convert::TryFrom;
 
-/// A scheme for use in a [`Url`]
+/// A scheme for use in a [`Url`][crate::Url].
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
