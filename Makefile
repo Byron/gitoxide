@@ -124,6 +124,7 @@ check: ## Build all code in suitable configurations
 					  && cargo check --no-default-features --features blocking-network-client,blocking-http-transport \
 					  && cargo check --no-default-features --features one-stop-shop \
 					  && cargo check --no-default-features --features max-performance \
+					  && cargo check --no-default-features --features max-performance-safe \
 					  && cargo check --no-default-features
 	cd git-odb && cargo check --features serde1
 	cd cargo-smart-release && cargo check --all

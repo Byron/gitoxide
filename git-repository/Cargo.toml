@@ -61,14 +61,23 @@ serde1 = [  "serde",
             "git-mailmap/serde1",
             "git-attributes/serde1",
             "git-revision/serde1"]
-## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
-## **Note** that
 
-max-performance = [ "git-features/fast-sha1",
-                    "git-features/parallel",
-                    "git-features/zlib-ng-compat",
-                    "git-pack/pack-cache-lru-static",
-                    "git-pack/pack-cache-lru-dynamic"]
+## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
+## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
+max-performance = [ "fast-sha1", "max-performance-safe" ]
+
+## If enabled, use assembly versions of sha1 on supported platforms.
+## This might cause compile failures as well which is why it can be turned off separately.
+fast-sha1 = [ "git-features/fast-sha1" ]
+
+## Activate features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases, skipping the ones known to cause compile failures
+## on some platforms.
+max-performance-safe = [
+    "git-features/parallel",
+    "git-features/zlib-ng-compat",
+    "git-pack/pack-cache-lru-static",
+    "git-pack/pack-cache-lru-dynamic"
+]
 ## Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
 ## Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
 unstable = ["git-mailmap", "git-credentials"]
