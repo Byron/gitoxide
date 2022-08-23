@@ -41,10 +41,9 @@ impl crate::Repository {
     /// `try_find_object()` operations from succeeding while alive.
     /// To bypass this limit, clone this `sync::Handle` instance.
     pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::OdbError> {
-        let state = self;
         let id = id.into();
 
-        let mut buf = state.free_buf();
+        let mut buf = self.free_buf();
         match self.objects.try_find(&id, &mut buf)? {
             Some(obj) => {
                 let kind = obj.kind;
@@ -58,9 +57,7 @@ impl crate::Repository {
     pub fn write_object(&self, object: impl git_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
         use git_odb::Write;
 
-        let state = self;
-        state
-            .objects
+        self.objects
             .write(object)
             .map(|oid| oid.attach(self))
             .map_err(Into::into)
