@@ -3,7 +3,7 @@ use crate::remote::Direction;
 use git_features::threading::OwnShared;
 
 #[derive(Debug, Clone)]
-pub(crate) struct Replace {
+struct Replace {
     find: BString,
     with: OwnShared<BString>,
 }

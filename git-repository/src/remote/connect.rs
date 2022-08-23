@@ -10,6 +10,8 @@ mod error {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error("Protocol {scheme:?} of url {url:?} is denied per configuration")]
+        ProtocolDenied { url: BString, scheme: git_url::Scheme },
         #[error(transparent)]
         Connect(#[from] git_protocol::transport::client::connect::Error),
         #[error("The {} url was missing - don't know where to establish a connection to", direction.as_str())]
@@ -69,7 +71,7 @@ impl<'repo> Remote<'repo> {
             Ok(url)
         }
 
-        let protocol = self
+        let version = self
             .repo
             .config
             .resolved
@@ -89,7 +91,13 @@ impl<'repo> Remote<'repo> {
             })?;
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
-        let transport = git_protocol::transport::connect(sanitize(url)?, protocol).await?;
+        if !self.repo.config.url_scheme().allow(url.scheme) {
+            return Err(Error::ProtocolDenied {
+                url: url.to_bstring(),
+                scheme: url.scheme,
+            });
+        }
+        let transport = git_protocol::transport::connect(sanitize(url)?, version).await?;
         Ok(self.to_connection_with_transport(transport, progress))
     }
 }

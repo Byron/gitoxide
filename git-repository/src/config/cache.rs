@@ -224,6 +224,7 @@ impl Cache {
             home_env,
             personas: Default::default(),
             url_rewrite: Default::default(),
+            url_scheme: Default::default(),
             git_prefix,
         })
     }
@@ -270,6 +271,11 @@ impl Cache {
     pub(crate) fn url_rewrite(&self) -> &remote::url::Rewrite {
         self.url_rewrite
             .get_or_init(|| remote::url::Rewrite::from_config(&self.resolved, self.filter_config_section))
+    }
+
+    pub(crate) fn url_scheme(&self) -> &remote::url::Scheme {
+        self.url_scheme
+            .get_or_init(|| remote::url::Scheme::from_config(&self.resolved, &self.git_prefix))
     }
 }
 
