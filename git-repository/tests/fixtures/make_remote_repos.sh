@@ -171,3 +171,19 @@ EOF
     git remote get-url origin --push
   } > baseline.git
 )
+
+git clone --shared base protocol_denied
+(cd protocol_denied
+    git config protocol.allow never
+)
+
+git clone --shared base protocol_file_denied
+(cd protocol_file_denied
+    git config protocol.file.allow never
+)
+
+git clone --shared base protocol_file_user
+(cd protocol_file_user
+    git config protocol.file.allow user
+)
+
