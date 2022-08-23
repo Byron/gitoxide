@@ -17,7 +17,7 @@ pub mod init {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 enum Allow {
     Always,
     Never,
@@ -72,6 +72,8 @@ impl SchemePermission {
                 value: invalid,
                 scheme: None,
             })?;
+
+        let mut saw_user = allow.map_or(false, |allow| allow == Allow::User);
         let allow_per_scheme = match config.sections_by_name_and_filter("protocol", &mut filter) {
             Some(it) => {
                 let mut map = BTreeMap::default();
@@ -92,6 +94,7 @@ impl SchemePermission {
                             value: invalid,
                         })?
                     {
+                        saw_user |= value == Allow::User;
                         map.insert(scheme, value);
                     }
                 }
@@ -99,10 +102,16 @@ impl SchemePermission {
             }
             None => Default::default(),
         };
+
+        let user_allowed = saw_user.then(|| {
+            std::env::var_os("GIT_PROTOCOL_FROM_USER")
+                .and_then(|val| git_prefix.check(val).ok().flatten())
+                .map_or(true, |val| val == "1")
+        });
         Ok(SchemePermission {
             allow,
             allow_per_scheme,
-            user_allowed: None,
+            user_allowed,
         })
     }
 }
