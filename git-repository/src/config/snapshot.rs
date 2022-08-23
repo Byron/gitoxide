@@ -105,10 +105,7 @@ pub mod apply_cli_overrides {
     impl SnapshotMut<'_> {
         /// Apply configuration values of the form `core.abbrev=5` or `remote.origin.url = foo` or `core.bool-implicit-true`
         /// to the repository configuration, marked with [source CLI][git_config::Source::Cli].
-        pub fn apply_cli_overrides<'a>(
-            &mut self,
-            values: impl IntoIterator<Item = impl AsRef<BStr>>,
-        ) -> Result<(), Error> {
+        pub fn apply_cli_overrides(&mut self, values: impl IntoIterator<Item = impl AsRef<BStr>>) -> Result<(), Error> {
             let mut file = git_config::File::new(git_config::file::Metadata::from(git_config::Source::Cli));
             for key_value in values {
                 let key_value = key_value.as_ref();

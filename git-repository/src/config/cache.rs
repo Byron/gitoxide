@@ -224,6 +224,7 @@ impl Cache {
             home_env,
             personas: Default::default(),
             url_rewrite: Default::default(),
+            #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
             url_scheme: Default::default(),
             git_prefix,
         })
@@ -273,6 +274,7 @@ impl Cache {
             .get_or_init(|| remote::url::Rewrite::from_config(&self.resolved, self.filter_config_section))
     }
 
+    #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
     pub(crate) fn url_scheme(
         &self,
     ) -> Result<&remote::url::SchemePermission, remote::url::scheme_permission::init::Error> {

@@ -28,7 +28,7 @@ enum Allow {
 }
 
 impl Allow {
-    pub fn to_bool(&self, user_allowed: Option<bool>) -> bool {
+    pub fn to_bool(self, user_allowed: Option<bool>) -> bool {
         match self {
             Allow::Always => true,
             Allow::Never => false,
