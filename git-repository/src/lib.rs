@@ -299,10 +299,20 @@ pub mod init {
         /// won't mind if the `directory` otherwise is non-empty.
         pub fn init(directory: impl AsRef<Path>, options: crate::create::Options) -> Result<Self, Error> {
             use git_sec::trust::DefaultForLevel;
-            let path = crate::create::into(directory.as_ref(), options)?;
+            let open_options = crate::open::Options::default_for_level(git_sec::Trust::Full);
+            Self::init_opts(directory, options, open_options)
+        }
+
+        /// Similar to [`init`][Self::init()], but allows to determine how exactly to open the newly created repository.
+        pub fn init_opts(
+            directory: impl AsRef<Path>,
+            create_options: crate::create::Options,
+            mut open_options: crate::open::Options,
+        ) -> Result<Self, Error> {
+            let path = crate::create::into(directory.as_ref(), create_options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-            let options = crate::open::Options::default_for_level(git_sec::Trust::Full);
-            ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
+            open_options.git_dir_trust = Some(git_sec::Trust::Full);
+            ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, open_options).map_err(Into::into)
         }
     }
 }

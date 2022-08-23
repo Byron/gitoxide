@@ -3,7 +3,6 @@
 
 use anyhow::Context;
 use git::objs::tree;
-use git_odb::Write;
 use git_repository as git;
 
 fn main() -> anyhow::Result<()> {
@@ -37,8 +36,7 @@ fn main() -> anyhow::Result<()> {
 
     println!("initial commit id with empty tree: {:?}", initial_commit_id);
 
-    let blob_id = repo.objects.write_buf(git_object::Kind::Blob, b"hello world")?;
-
+    let blob_id = repo.write_blob("hello world")?.into();
     let entry = tree::Entry {
         mode: tree::EntryMode::Blob,
         oid: blob_id,

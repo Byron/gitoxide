@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use git_hash::{oid, ObjectId};
-use git_odb::{Find, FindExt};
+use git_odb::{Find, FindExt, Write};
 use git_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
@@ -55,12 +55,31 @@ impl crate::Repository {
 
     /// Write the given object into the object database and return its object id.
     pub fn write_object(&self, object: impl git_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
-        use git_odb::Write;
-
         self.objects
             .write(object)
             .map(|oid| oid.attach(self))
             .map_err(Into::into)
+    }
+
+    /// Write a blob from the given `bytes`.
+    pub fn write_blob(&self, bytes: impl AsRef<[u8]>) -> Result<Id<'_>, object::write::Error> {
+        self.objects
+            .write_buf(git_object::Kind::Blob, bytes.as_ref())
+            .map(|oid| oid.attach(self))
+    }
+
+    /// Write a blob from the given `Read` implementation.
+    pub fn write_blob_stream(
+        &self,
+        mut bytes: impl std::io::Read + std::io::Seek,
+    ) -> Result<Id<'_>, object::write::Error> {
+        let current = bytes.stream_position()?;
+        let len = bytes.seek(std::io::SeekFrom::End(0))? - current;
+        bytes.seek(std::io::SeekFrom::Start(current))?;
+
+        self.objects
+            .write_stream(git_object::Kind::Blob, len, bytes)
+            .map(|oid| oid.attach(self))
     }
 
     /// Create a tag reference named `name` (without `refs/tags/` prefix) pointing to a newly created tag object

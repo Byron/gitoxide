@@ -1,13 +1,54 @@
+use git_repository as git;
+
 mod write_object {
+    use crate::repository::object::empty_bare_repo;
+
     #[test]
     fn empty_tree() -> crate::Result {
-        let tmp = tempfile::tempdir()?;
-        let repo = git_repository::init_bare(&tmp)?;
+        let (_tmp, repo) = empty_bare_repo()?;
         let oid = repo.write_object(&git_repository::objs::TreeRef::empty())?;
         assert_eq!(
             oid,
             git_repository::hash::ObjectId::empty_tree(repo.object_hash()),
             "it produces a well-known empty tree id"
+        );
+        Ok(())
+    }
+}
+
+mod write_blob {
+    use crate::repository::object::empty_bare_repo;
+    use git_testtools::hex_to_id;
+    use std::io::{Seek, SeekFrom};
+
+    #[test]
+    fn from_slice() -> crate::Result {
+        let (_tmp, repo) = empty_bare_repo()?;
+        let oid = repo.write_blob(b"hello world")?;
+        assert_eq!(oid, hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f"));
+        Ok(())
+    }
+
+    #[test]
+    fn from_stream() -> crate::Result {
+        let (_tmp, repo) = empty_bare_repo()?;
+        let mut cursor = std::io::Cursor::new(b"hello world");
+        let mut seek_cursor = cursor.clone();
+        let oid = repo.write_blob_stream(&mut cursor)?;
+        assert_eq!(oid, hex_to_id("95d09f2b10159347eece71399a7e2e907ea3df4f"));
+
+        seek_cursor.seek(SeekFrom::Start(6))?;
+        let oid = repo.write_blob_stream(&mut seek_cursor)?;
+        assert_eq!(
+            oid,
+            hex_to_id("04fea06420ca60892f73becee3614f6d023a4b7f"),
+            "it computes the object size correctly"
+        );
+
+        assert_eq!(
+            oid.object()?.data,
+            &b"world"[..],
+            "the seek position is taken into account, so only part of the input data is written"
         );
         Ok(())
     }
@@ -214,4 +255,18 @@ mod commit {
         );
         Ok(())
     }
+}
+
+fn empty_bare_repo() -> crate::Result<(tempfile::TempDir, git::Repository)> {
+    let tmp = tempfile::tempdir()?;
+    let repo = git::ThreadSafeRepository::init_opts(
+        tmp.path(),
+        git::create::Options {
+            bare: true,
+            fs_capabilities: None,
+        },
+        git::open::Options::isolated(),
+    )?
+    .into();
+    Ok((tmp, repo))
 }
