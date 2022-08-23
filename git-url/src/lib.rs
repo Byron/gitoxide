@@ -36,8 +36,7 @@ pub enum Scheme {
     Ssh,
     Http,
     Https,
-    // TODO: replace this with custom formats, maybe, get an idea how to do that.
-    Radicle,
+    Ext(&'static str),
 }
 
 impl Scheme {
@@ -50,7 +49,7 @@ impl Scheme {
             Ssh => "ssh",
             Http => "http",
             Https => "https",
-            Radicle => "rad",
+            Ext(name) => name,
         }
     }
 }

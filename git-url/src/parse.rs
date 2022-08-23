@@ -35,7 +35,7 @@ fn str_to_protocol(s: &str) -> Result<Scheme, Error> {
         "git" => Scheme::Git,
         "http" => Scheme::Http,
         "https" => Scheme::Https,
-        "rad" => Scheme::Radicle,
+        "rad" => Scheme::Ext("rad"),
         _ => return Err(Error::UnsupportedProtocol { protocol: s.into() }),
     })
 }
