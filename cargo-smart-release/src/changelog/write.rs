@@ -68,7 +68,7 @@ impl RepositoryUrl {
                     .inner
                     .user()
                     .map(|user| format!("https://github.com{}/{}", user, self.cleaned_path())),
-                Scheme::Radicle | Scheme::File => None,
+                Scheme::Ext(_) | Scheme::File => None,
             },
             None | Some(_) => None,
         }
