@@ -26,12 +26,12 @@ mod relative {
     use time::{Duration, OffsetDateTime};
 
     pub(crate) fn parse(input: &str) -> Option<OffsetDateTime> {
-        let split: Vec<&str> = input.split_whitespace().collect();
-        if split.len() != 3 || *split.last().expect("slice has length 3") != "ago" {
+        let mut split = input.split_whitespace();
+        let multiplier = i64::from_str(split.next()?).ok()?;
+        let period = period_to_seconds(split.next()?)?;
+        if split.next()? != "ago" {
             return None;
         }
-        let multiplier = i64::from_str(split[0]).ok()?;
-        let period = period_to_seconds(split[1])?;
         Some(OffsetDateTime::now_utc().checked_sub(Duration::seconds(multiplier * period))?)
     }
 
