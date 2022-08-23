@@ -10,6 +10,8 @@ mod error {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
+        #[error(transparent)]
+        SchemePermission(#[from] remote::url::scheme_permission::init::Error),
         #[error("Protocol {scheme:?} of url {url:?} is denied per configuration")]
         ProtocolDenied { url: BString, scheme: git_url::Scheme },
         #[error(transparent)]
@@ -91,7 +93,7 @@ impl<'repo> Remote<'repo> {
             })?;
 
         let url = self.url(direction).ok_or(Error::MissingUrl { direction })?.to_owned();
-        if !self.repo.config.url_scheme().allow(url.scheme) {
+        if !self.repo.config.url_scheme()?.allow(url.scheme) {
             return Err(Error::ProtocolDenied {
                 url: url.to_bstring(),
                 scheme: url.scheme,

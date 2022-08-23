@@ -2,6 +2,17 @@
 use crate::permission;
 use std::collections::BTreeMap;
 
+///
+pub mod init {
+    use crate::bstr::BString;
+
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("{value:?} must be allow|deny|user in configuration key protocol{0}.allow", scheme.as_ref().map(|s| format!(".{}", s)).unwrap_or_default())]
+        InvalidConfiguration { scheme: Option<BString>, value: BString },
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 enum Allow {
     Always,
@@ -20,7 +31,7 @@ impl Allow {
 }
 
 #[derive(Debug, Clone)]
-pub struct Scheme {
+pub(crate) struct SchemePermission {
     /// `None`, env-var is unset or wasn't queried, otherwise true if `GIT_PROTOCOL_FROM_USER` is `1`.
     user_allowed: Option<bool>,
     /// The general allow value from `protocol.allow`.
@@ -30,14 +41,17 @@ pub struct Scheme {
 }
 
 /// Init
-impl Scheme {
-    pub fn from_config(config: &git_config::File<'static>, git_prefix: &permission::env_var::Resource) -> Self {
+impl SchemePermission {
+    pub fn from_config(
+        config: &git_config::File<'static>,
+        git_prefix: &permission::env_var::Resource,
+    ) -> Result<Self, init::Error> {
         todo!()
     }
 }
 
 /// Access
-impl Scheme {
+impl SchemePermission {
     pub fn allow(&self, scheme: git_url::Scheme) -> bool {
         self.allow_per_scheme.get(&scheme).or(self.allow.as_ref()).map_or_else(
             || {

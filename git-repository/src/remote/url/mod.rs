@@ -1,4 +1,5 @@
 mod rewrite;
-mod scheme;
+///
+pub mod scheme_permission;
 pub(crate) use rewrite::Rewrite;
-pub(crate) use scheme::Scheme;
+pub(crate) use scheme_permission::SchemePermission;
