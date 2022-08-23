@@ -13,7 +13,7 @@ doctest = false
 
 [dependencies]
 git-sec = { version = "^0.3.0", path = "../git-sec", features = ["thiserror"] }
-git-path = { version = "^0.4.0", path = "../git-path" }
+git-path = { version = "^0.4.1", path = "../git-path" }
 git-ref = { version = "^0.15.1", path = "../git-ref" }
 git-hash = { version = "^0.9.7", path = "../git-hash" }
 
