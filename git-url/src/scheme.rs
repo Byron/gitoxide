@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 
 /// A scheme for use in a [`Url`]
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 #[allow(missing_docs)]
 pub enum Scheme {
@@ -10,7 +10,7 @@ pub enum Scheme {
     Ssh,
     Http,
     Https,
-    Ext(&'static str),
+    Ext(String),
 }
 
 impl<'a> TryFrom<&'a str> for Scheme {
@@ -23,7 +23,7 @@ impl<'a> TryFrom<&'a str> for Scheme {
             "git" => Scheme::Git,
             "http" => Scheme::Http,
             "https" => Scheme::Https,
-            "rad" => Scheme::Ext("rad"),
+            "rad" => Scheme::Ext("rad".into()),
             unknown => return Err(unknown),
         })
     }
@@ -31,7 +31,7 @@ impl<'a> TryFrom<&'a str> for Scheme {
 
 impl Scheme {
     /// Return ourselves parseable name.
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &str {
         use Scheme::*;
         match self {
             File => "file",
@@ -39,7 +39,7 @@ impl Scheme {
             Ssh => "ssh",
             Http => "http",
             Https => "https",
-            Ext(name) => name,
+            Ext(name) => name.as_str(),
         }
     }
 }
