@@ -1,3 +1,30 @@
+mod context {
+    use git_credentials::helper::Context;
+
+    #[test]
+    fn encode_decode_roundtrip() {
+        for ctx in [
+            Context {
+                protocol: Some("https".into()),
+                host: Some("github.com".into()),
+                path: Some("byron/gitoxide".into()),
+                username: Some("user".into()),
+                password: Some("pass".into()),
+                url: Some("https://github.com/byron/gitoxide".into()),
+            },
+            Context::default(),
+            Context {
+                url: Some("/path/to/repo".into()),
+                ..Context::default()
+            },
+        ] {
+            let mut buf = Vec::<u8>::new();
+            ctx.write_to(&mut buf).unwrap();
+            let actual = Context::from_bytes(&buf).unwrap();
+            assert_eq!(actual, ctx, "ctx should encode itself losslessly");
+        }
+    }
+}
 mod message {
     mod encode {
         use bstr::ByteSlice;
