@@ -36,12 +36,16 @@ crc32 = ["crc32fast"]
 #! ### Mutually Exclusive ZLIB
 
 ## Enable the usage of zlib related utilities to compress or decompress data.
-## By default it uses a pure rust implementation which is slower than the **zlib-ng-compat** version, but might be relevant if you prefer a pure-rust build
-## and reduced performance is acceptable. Note that a competitive Zlib implementation is critical to `gitoxide's` object database performance.
+## By default it uses a pure rust implementation which is slower than the **zlib-ng-compat** or **zlib-stock** versions, but might be relevant if you prefer a pure-rust build
+## and reduced performance is acceptable. **zlib-stock** can be used if dynamic linking of an external zlib library is desired or if cmake is not available.
+## Note that a competitive Zlib implementation is critical to `gitoxide's` object database performance.
 ## Additional backends are supported, each of which overriding the default Rust backend.
 zlib = ["flate2", "flate2/rust_backend", "quick-error"]
-## Use a C-based backend which can compress and decompress significantly faster.
+## Use a C-based backend which can compress and decompress significantly faster than the other options.
 zlib-ng-compat = ["flate2/zlib-ng-compat"]
+## Use a slower C-based backend which can compress and decompress significantly faster than the rust version.
+## Unlike `zlib-ng-compat`, this allows using dynamic linking with system `zlib` libraries and doesn't require cmake.
+zlib-stock = ["flate2/zlib"]
 ## available for completeness even though it's the default - it may be chosen for more specific feature flag names, instead of a bare `zlib`.
 zlib-rust-backend = ["flate2/rust_backend"]
 
