@@ -102,7 +102,7 @@ git-hash = { opt-level = 3 }
 git-actor = { opt-level = 3 }
 git-config = { opt-level = 3 }
 miniz_oxide = { opt-level = 3 }
-sha-1 = { opt-level = 3 }
+sha1 = { opt-level = 3 }
 sha1_smol = { opt-level = 3 }
 
 [profile.release]
