@@ -6,6 +6,10 @@ pub enum Kind {
     GitCredential,
 }
 
+/// Additional context to be passed to the credentials helper.
+// TODO: fill in what's needed per configuration
+pub struct Context;
+
 mod error {
     /// The error used in the [credentials helper][crate::helper()].
     #[derive(Debug, thiserror::Error)]
@@ -15,8 +19,8 @@ mod error {
         Io(#[from] std::io::Error),
         #[error("Could not find {name:?} in output of credentials helper")]
         KeyNotFound { name: String },
-        #[error("Credentials helper program failed with status code {code:?}")]
-        CredentialsHelperFailed { code: Option<i32> },
+        #[error(transparent)]
+        CredentialsHelperFailed { source: std::io::Error },
     }
 }
 pub use error::Error;
@@ -80,7 +84,7 @@ pub struct Outcome {
 }
 
 pub(crate) mod function {
-    use crate::helper::{message, Action, Error, NextAction, Outcome, Result};
+    use crate::helper::{message, Action, Context, Error, NextAction, Outcome, Result};
     use std::io::Read;
     use std::process::{Command, Stdio};
 
@@ -125,7 +129,9 @@ pub(crate) mod function {
             .transpose()?;
         let status = child.wait()?;
         if !status.success() {
-            return Err(Error::CredentialsHelperFailed { code: status.code() });
+            return Err(Error::CredentialsHelperFailed {
+                source: std::io::Error::new(std::io::ErrorKind::Other, "credentials helper failed"),
+            });
         }
 
         match stdout {
@@ -150,7 +156,52 @@ pub(crate) mod function {
             }
         }
     }
+
+    /// Invoke the given `helper` with `action` in `context`.
+    ///
+    /// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
+    /// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
+    pub fn invoke(mut helper: impl crate::Helper, action: Action<'_>, _context: Context) -> Result {
+        let (stdin, stdout) = helper.start(&action)?;
+        action.send(stdin)?;
+        let stdout = stdout
+            .map(|mut stdout| {
+                let mut buf = Vec::new();
+                stdout.read_to_end(&mut buf).map(|_| buf)
+            })
+            .transpose()?;
+        helper.finish().map_err(|err| {
+            if err.kind() == std::io::ErrorKind::Other {
+                Error::CredentialsHelperFailed { source: err }
+            } else {
+                err.into()
+            }
+        })?;
+
+        match stdout {
+            None => Ok(None),
+            Some(stdout) => {
+                let kvs = message::decode(stdout.as_slice())?;
+                let find = |name: &str| {
+                    kvs.iter()
+                        .find(|(k, _)| k == name)
+                        .ok_or_else(|| Error::KeyNotFound { name: name.into() })
+                        .map(|(_, n)| n.to_owned())
+                };
+                Ok(Some(Outcome {
+                    identity: git_sec::identity::Account {
+                        username: find("username")?,
+                        password: find("password")?,
+                    },
+                    next: NextAction {
+                        previous_output: stdout.into(),
+                    },
+                }))
+            }
+        }
+    }
 }
+pub use function::invoke;
 
 ///
 pub mod message {
