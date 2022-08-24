@@ -15,7 +15,7 @@ fn special_time_is_ok_for_now() {
 }
 
 #[test]
-fn parse() {
+fn short() {
     assert_eq!(
         git_date::parse("1979-02-26"),
         Some(Time {
@@ -25,7 +25,10 @@ fn parse() {
         }),
         "could not parse with SHORT format"
     );
+}
 
+#[test]
+fn rfc2822() {
     assert_eq!(
         git_date::parse("Thu, 18 Aug 2022 12:45:06 +0800"),
         Some(Time {
@@ -35,7 +38,10 @@ fn parse() {
         }),
         "could not parse with RFC2822 format"
     );
+}
 
+#[test]
+fn relative() {
     let two_weeks_ago = git_date::parse("2 weeks ago").expect("valid time");
     assert_eq!(Sign::Plus, two_weeks_ago.sign);
     assert_eq!(0, two_weeks_ago.offset_in_seconds);
