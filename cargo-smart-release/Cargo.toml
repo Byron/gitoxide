@@ -24,7 +24,7 @@ test = false
 cache-efficiency-debug = ["git-repository/cache-efficiency-debug"]
 
 [dependencies]
-git-repository = { version = "^0.22.0", path = "../git-repository", features = ["unstable"] }
+git-repository = { version = "^0.22.0", path = "../git-repository", default-features = false, features = ["unstable", "max-performance-safe"] }
 anyhow = "1.0.42"
 clap = { version = "3.2.5", features = ["derive", "cargo"] }
 env_logger = { version = "0.9.0", default-features = false, features = ["humantime", "termcolor", "atty"] }

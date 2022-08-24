@@ -97,7 +97,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: "Install prerequisites"
         run: vcpkg install  zlib:x64-windows-static-md
-      - name: "Installation from crates.io"
+      - name: "Installation from crates.io: cargo-smart-release"
         run: cargo install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force gitoxide cargo-smart-release
 
   lint:
