@@ -1,12 +1,15 @@
-#![allow(missing_docs)]
 use bstr::BString;
 use std::convert::TryFrom;
 use std::ffi::OsString;
 
+/// The action passed to the credential helper implementation in [`main()`][crate::helper::main()].
 #[derive(Debug, Copy, Clone)]
 pub enum Action {
+    /// Get credentials for a url.
     Get,
+    /// Store credentials provided in the given context.
     Store,
+    /// Erase credentials identified by the given context.
     Erase,
 }
 
@@ -23,7 +26,9 @@ impl TryFrom<OsString> for Action {
     }
 }
 
+/// The error of [`main()`][crate::helper::main()].
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("Action named {name:?} is invalid, need 'get', 'store', 'erase' or 'fill', 'approve', 'reject'")]
     ActionInvalid { name: OsString },
