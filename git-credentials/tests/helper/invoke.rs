@@ -1,8 +1,8 @@
 use crate::helper::invoke::util::MockHelper;
-use git_credentials::helper::invoke;
+use bstr::BString;
+use git_credentials::helper::{invoke, Context};
 
 #[test]
-#[ignore]
 fn get() {
     let mut helper = MockHelper::default();
     let outcome = git_credentials::helper::invoke(
@@ -20,12 +20,34 @@ fn get() {
     );
     assert_eq!(
         outcome.next.store().payload().unwrap(),
-        "url=https://github.com/byron/gitoxide\nusername=user\npass=pass\n"
+        "url=https://github.com/byron/gitoxide\nusername=user\npassword=pass\n"
     );
+}
+
+#[test]
+fn store_and_reject() {
+    let mut helper = MockHelper::default();
+    let ctx = Context {
+        url: Some("https://github.com/byron/gitoxide".into()),
+        ..Default::default()
+    };
+    let ctxbuf = || -> BString {
+        let mut buf = Vec::<u8>::new();
+        ctx.write_to(&mut buf).expect("cannot fail");
+        buf.into()
+    };
+    for action in [invoke::Action::Store(ctxbuf()), invoke::Action::Erase(ctxbuf())] {
+        let outcome = git_credentials::helper::invoke(&mut helper, action).unwrap();
+        assert!(
+            outcome.is_none(),
+            "store and erase have no outcome, they just shouln't fail"
+        );
+    }
 }
 
 mod util {
     use git_credentials::helper::invoke::Action;
+    use git_credentials::helper::{main, Context};
 
     #[derive(Default)]
     pub struct MockHelper {
@@ -37,16 +59,31 @@ mod util {
         type Receive = git_features::io::pipe::Reader;
 
         fn start(&mut self, action: &Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
-            let ((them_send, us_receive), output) = match action {
-                Action::Get(_) => (git_features::io::pipe::unidirectional(128), None),
-                Action::Erase(_) | Action::Store(_) => (
-                    git_features::io::pipe::unidirectional(128),
-                    git_features::io::pipe::unidirectional(128).into(),
-                ),
-            };
-            let (us_send, them_receive) = output.map(|(tx, rx)| (Some(tx), Some(rx))).unwrap_or_default();
-            self.handle = std::thread::spawn(move || todo!("thread main")).into();
-            Ok((them_send, them_receive))
+            let ((them_send, us_receive), (us_send, them_receive)) = (
+                git_features::io::pipe::unidirectional(128),
+                git_features::io::pipe::unidirectional(128),
+            );
+            let action_name = action.as_helper_arg(true).into();
+            self.handle = std::thread::spawn(move || {
+                git_credentials::helper::main(
+                    Some(action_name),
+                    us_receive,
+                    us_send,
+                    |action, context| -> std::io::Result<_> {
+                        match action {
+                            main::Action::Get => Ok(Some(Context {
+                                username: Some("user".into()),
+                                password: Some("pass".into()),
+                                ..context
+                            })),
+                            main::Action::Store | main::Action::Erase => Ok(None),
+                        }
+                    },
+                )
+                .expect("cannot fail")
+            })
+            .into();
+            Ok((them_send, them_receive.into()))
         }
 
         fn finish(self) -> std::io::Result<()> {

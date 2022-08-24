@@ -118,6 +118,9 @@ pub(crate) mod function {
     /// is expected.
     pub fn invoke(mut helper: impl crate::Helper, action: Action) -> Result {
         let (stdin, stdout) = helper.start(&action)?;
+        if let (Action::Get(_), None) = (&action, &stdout) {
+            panic!("BUG: `Helper` impls must return an output handle to read output from if Action::Get is provided")
+        }
         action.send(stdin)?;
         let stdout = stdout
             .map(|mut stdout| {
@@ -133,7 +136,7 @@ pub(crate) mod function {
             }
         })?;
 
-        match stdout {
+        match matches!(action, Action::Get(_)).then(|| stdout).flatten() {
             None => Ok(None),
             Some(stdout) => {
                 let ctx = Context::from_bytes(stdout.as_slice())?;

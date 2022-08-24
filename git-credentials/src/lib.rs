@@ -17,6 +17,7 @@ pub trait Helper {
     type Receive: std::io::Read;
 
     /// Start the helper and provide handles to send and receive from it.
+    /// If `Action::Get` is provided, it's valid to return `None` for the receive half.
     fn start(&mut self, action: &helper::invoke::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)>;
     /// Stop the helper and provide a way to determine it's successful.
     fn finish(self) -> std::io::Result<()>;
