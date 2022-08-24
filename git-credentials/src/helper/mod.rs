@@ -8,17 +8,33 @@ pub enum Kind {
 
 /// Additional context to be passed to the credentials helper.
 // TODO: fill in what's needed per configuration
-#[derive(Debug, Default)]
-pub struct Context;
+#[derive(Debug, Default, Clone)]
+pub struct Context {
+    /// The protocol over which the credential will be used (e.g., https).
+    pub protocol: Option<String>,
+    /// The remote hostname for a network credential. This includes the port number if one was specified (e.g., "example.com:8088").
+    pub host: Option<String>,
+    /// The path with which the credential will be used. E.g., for accessing a remote https repository, this will be the repository’s path on the server.
+    /// It can also be a path on the file system.
+    pub path: Option<BString>,
+    /// The credential’s username, if we already have one (e.g., from a URL, the configuration, the user, or from a previously run helper).
+    pub username: Option<String>,
+    /// The credential’s password, if we are asking it to be stored.
+    pub password: Option<String>,
+    /// When this special attribute is read by git credential, the value is parsed as a URL and treated as if its constituent
+    /// parts were read (e.g., url=https://example.com would behave as if
+    /// protocol=https and host=example.com had been provided). This can help callers avoid parsing URLs themselves.
+    pub url: Option<BString>,
+}
 
 /// The action to perform by the credentials [helper][`crate::helper()`].
 #[derive(Clone, Debug)]
 pub enum Action<'a> {
-    /// Provide credentials using the given repository URL (as &str) as context.
+    /// Provide credentials using the given repository URL (as &str) as context and pre-parsed url information as seen in [`Context`].
     Fill(&'a BStr),
-    /// Approve the credentials as identified by the previous input provided as `BString`.
+    /// Approve the credentials as identified by the previous input provided as `BString`, containing information from [`Context`].
     Approve(BString),
-    /// Reject the credentials as identified by the previous input provided as `BString`.
+    /// Reject the credentials as identified by the previous input provided as `BString`. containing information from [`Context`].
     Reject(BString),
 }
 
