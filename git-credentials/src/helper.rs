@@ -68,7 +68,7 @@ pub struct Outcome {
 
 pub(crate) mod function {
     use crate::helper::{message, Action, Error, NextAction, Outcome, Result};
-    use std::io::Write;
+    use std::io::{Read, Write};
     use std::process::{Command, Stdio};
 
     // TODO(sec): reimplement helper execution so it won't use the `git credential` anymore to allow enforcing our own security model.
@@ -89,6 +89,7 @@ pub(crate) mod function {
             });
         let mut child = cmd.spawn()?;
         let mut stdin = child.stdin.take().expect("stdin to be configured");
+        let stdout = child.stdout.take();
 
         match action {
             Action::Fill(url) => message::encode(url, stdin)?,
@@ -97,33 +98,37 @@ pub(crate) mod function {
                 stdin.write_all(&[b'\n'])?
             }
         }
+        let stdout = stdout
+            .map(|mut stdout| {
+                let mut buf = Vec::new();
+                stdout.read_to_end(&mut buf).map(|_| buf)
+            })
+            .transpose()?;
 
-        let output = child.wait_with_output()?;
-        if !output.status.success() {
-            return Err(Error::CredentialsHelperFailed {
-                code: output.status.code(),
-            });
+        let status = child.wait()?;
+        if !status.success() {
+            return Err(Error::CredentialsHelperFailed { code: status.code() });
         }
-        let stdout = output.stdout;
-        if stdout.is_empty() {
-            Ok(None)
-        } else {
-            let kvs = message::decode(stdout.as_slice())?;
-            let find = |name: &str| {
-                kvs.iter()
-                    .find(|(k, _)| k == name)
-                    .ok_or_else(|| Error::KeyNotFound { name: name.into() })
-                    .map(|(_, n)| n.to_owned())
-            };
-            Ok(Some(Outcome {
-                identity: git_sec::identity::Account {
-                    username: find("username")?,
-                    password: find("password")?,
-                },
-                next: NextAction {
-                    previous_output: stdout.into(),
-                },
-            }))
+        match stdout {
+            None => Ok(None),
+            Some(stdout) => {
+                let kvs = message::decode(stdout.as_slice())?;
+                let find = |name: &str| {
+                    kvs.iter()
+                        .find(|(k, _)| k == name)
+                        .ok_or_else(|| Error::KeyNotFound { name: name.into() })
+                        .map(|(_, n)| n.to_owned())
+                };
+                Ok(Some(Outcome {
+                    identity: git_sec::identity::Account {
+                        username: find("username")?,
+                        password: find("password")?,
+                    },
+                    next: NextAction {
+                        previous_output: stdout.into(),
+                    },
+                }))
+            }
         }
     }
 }
