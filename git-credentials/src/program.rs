@@ -1,6 +1,13 @@
 use crate::{helper, Helper, Program};
 use std::process::{Command, Stdio};
 
+impl Program {
+    /// Create a new program of the given `kind`.
+    pub fn from_kind(kind: helper::Kind) -> Self {
+        Program { kind, child: None }
+    }
+}
+
 impl Helper for Program {
     type Send = std::process::ChildStdin;
     type Receive = std::process::ChildStdout;

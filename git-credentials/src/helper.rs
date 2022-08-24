@@ -8,6 +8,7 @@ pub enum Kind {
 
 /// Additional context to be passed to the credentials helper.
 // TODO: fill in what's needed per configuration
+#[derive(Debug, Default)]
 pub struct Context;
 
 mod error {
@@ -84,9 +85,8 @@ pub struct Outcome {
 }
 
 pub(crate) mod function {
-    use crate::helper::{message, Action, Context, Error, NextAction, Outcome, Result};
+    use crate::helper::{message, Action, Context, Error, Kind, NextAction, Outcome, Result};
     use std::io::Read;
-    use std::process::{Command, Stdio};
 
     impl Action<'_> {
         /// Send ourselves to the given `write` which is expected to be credentials-helper compatible
@@ -101,60 +101,15 @@ pub(crate) mod function {
         }
     }
 
-    /// Call the `git` credentials helper program performing the given `action`.
+    /// Call the `git` credentials helper program performing the given `action`, without any context from git configuration.
     ///
-    /// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
-    /// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
+    /// See [`invoke()`] for a more flexible implementation.
     pub fn helper(action: Action<'_>) -> Result {
-        let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
-        cmd.arg("credential")
-            .arg(action.as_helper_arg(false))
-            .stdin(Stdio::piped())
-            .stdout(if action.expects_output() {
-                Stdio::piped()
-            } else {
-                Stdio::null()
-            });
-        let mut child = cmd.spawn()?;
-        let mut stdin = child.stdin.take().expect("stdin to be configured");
-        let stdout = child.stdout.take();
-
-        action.send(&mut stdin)?;
-
-        let stdout = stdout
-            .map(|mut stdout| {
-                let mut buf = Vec::new();
-                stdout.read_to_end(&mut buf).map(|_| buf)
-            })
-            .transpose()?;
-        let status = child.wait()?;
-        if !status.success() {
-            return Err(Error::CredentialsHelperFailed {
-                source: std::io::Error::new(std::io::ErrorKind::Other, "credentials helper failed"),
-            });
-        }
-
-        match stdout {
-            None => Ok(None),
-            Some(stdout) => {
-                let kvs = message::decode(stdout.as_slice())?;
-                let find = |name: &str| {
-                    kvs.iter()
-                        .find(|(k, _)| k == name)
-                        .ok_or_else(|| Error::KeyNotFound { name: name.into() })
-                        .map(|(_, n)| n.to_owned())
-                };
-                Ok(Some(Outcome {
-                    identity: git_sec::identity::Account {
-                        username: find("username")?,
-                        password: find("password")?,
-                    },
-                    next: NextAction {
-                        previous_output: stdout.into(),
-                    },
-                }))
-            }
-        }
+        invoke(
+            crate::Program::from_kind(Kind::GitCredential),
+            action,
+            Context::default(),
+        )
     }
 
     /// Invoke the given `helper` with `action` in `context`.
