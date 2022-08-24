@@ -1,13 +1,7 @@
 use bstr::{BStr, BString};
-use std::{
-    io::{self, Write},
-    process::{Command, Stdio},
-};
+use std::io;
 
 use quick_error::quick_error;
-
-/// The result used in [`action()`].
-pub type Result = std::result::Result<Option<Outcome>, Error>;
 
 quick_error! {
     /// The error used in the [credentials helper][action()].
@@ -77,57 +71,63 @@ pub struct Outcome {
     pub next: NextAction,
 }
 
-// TODO(sec): reimplement helper execution so it won't use the `git credential` anymore to allow enforcing our own security model.
-//            Currently we support more flexible configuration than downright not working at all.
-/// Call the `git` credentials helper program performing the given `action`.
-///
-/// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
-/// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
-pub fn action(action: Action<'_>) -> Result {
-    let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
-    cmd.arg("credential")
-        .arg(action.as_str())
-        .stdin(Stdio::piped())
-        .stdout(if action.is_fill() {
-            Stdio::piped()
-        } else {
-            Stdio::null()
-        });
-    let mut child = cmd.spawn()?;
-    let mut stdin = child.stdin.take().expect("stdin to be configured");
+pub(crate) mod function {
+    use crate::helper::{message, Action, Error, NextAction, Outcome};
+    use std::io::Write;
+    use std::process::{Command, Stdio};
 
-    match action {
-        Action::Fill(url) => message::encode(url, stdin)?,
-        Action::Approve(last) | Action::Reject(last) => {
-            stdin.write_all(&last)?;
-            stdin.write_all(&[b'\n'])?
+    // TODO(sec): reimplement helper execution so it won't use the `git credential` anymore to allow enforcing our own security model.
+    //            Currently we support more flexible configuration than downright not working at all.
+    /// Call the `git` credentials helper program performing the given `action`.
+    ///
+    /// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
+    /// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
+    pub fn helper(action: Action<'_>) -> std::result::Result<Option<Outcome>, Error> {
+        let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
+        cmd.arg("credential")
+            .arg(action.as_str())
+            .stdin(Stdio::piped())
+            .stdout(if action.is_fill() {
+                Stdio::piped()
+            } else {
+                Stdio::null()
+            });
+        let mut child = cmd.spawn()?;
+        let mut stdin = child.stdin.take().expect("stdin to be configured");
+
+        match action {
+            Action::Fill(url) => message::encode(url, stdin)?,
+            Action::Approve(last) | Action::Reject(last) => {
+                stdin.write_all(&last)?;
+                stdin.write_all(&[b'\n'])?
+            }
         }
-    }
 
-    let output = child.wait_with_output()?;
-    if !output.status.success() {
-        return Err(Error::CredentialsHelperFailed(output.status.code()));
-    }
-    let stdout = output.stdout;
-    if stdout.is_empty() {
-        Ok(None)
-    } else {
-        let kvs = message::decode(stdout.as_slice())?;
-        let find = |name: &str| {
-            kvs.iter()
-                .find(|(k, _)| k == name)
-                .ok_or_else(|| Error::KeyNotFound(name.into()))
-                .map(|(_, n)| n.to_owned())
-        };
-        Ok(Some(Outcome {
-            identity: git_sec::identity::Account {
-                username: find("username")?,
-                password: find("password")?,
-            },
-            next: NextAction {
-                previous_output: stdout.into(),
-            },
-        }))
+        let output = child.wait_with_output()?;
+        if !output.status.success() {
+            return Err(Error::CredentialsHelperFailed(output.status.code()));
+        }
+        let stdout = output.stdout;
+        if stdout.is_empty() {
+            Ok(None)
+        } else {
+            let kvs = message::decode(stdout.as_slice())?;
+            let find = |name: &str| {
+                kvs.iter()
+                    .find(|(k, _)| k == name)
+                    .ok_or_else(|| Error::KeyNotFound(name.into()))
+                    .map(|(_, n)| n.to_owned())
+            };
+            Ok(Some(Outcome {
+                identity: git_sec::identity::Account {
+                    username: find("username")?,
+                    password: find("password")?,
+                },
+                next: NextAction {
+                    previous_output: stdout.into(),
+                },
+            }))
+        }
     }
 }
 
