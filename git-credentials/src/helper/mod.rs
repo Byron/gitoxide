@@ -40,6 +40,18 @@ pub enum Action {
     Erase(BString),
 }
 
+/// Initialization
+impl Action {
+    /// Create a `Get` action with context containing the given URL
+    pub fn get_for_url(url: impl Into<BString>) -> Action {
+        Action::Get(Context {
+            url: Some(url.into()),
+            ..Default::default()
+        })
+    }
+}
+
+/// Access
 impl Action {
     /// Returns true if this action expects output from the helper.
     pub fn expects_output(&self) -> bool {
