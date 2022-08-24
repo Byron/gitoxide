@@ -1,7 +1,7 @@
 use bstr::{BStr, BString};
 
 mod error {
-    /// The error used in the [credentials helper][action()].
+    /// The error used in the [credentials helper][crate::helper()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -17,7 +17,7 @@ pub use error::Error;
 /// The Result type used in [`helper()`][crate::helper()].
 pub type Result = std::result::Result<Option<Outcome>, Error>;
 
-/// The action to perform by the credentials [`action()`].
+/// The action to perform by the credentials [helper][`crate::helper()`].
 #[derive(Clone, Debug)]
 pub enum Action<'a> {
     /// Provide credentials using the given repository URL (as &str) as context.
@@ -58,11 +58,11 @@ impl NextAction {
     }
 }
 
-/// The outcome of [`action()`].
+/// The outcome of the credentials [`helper`][crate::helper()].
 pub struct Outcome {
     /// The obtained identity.
     pub identity: git_sec::identity::Account,
-    /// A handle to the action to perform next using another call to [`action()`].
+    /// A handle to the action to perform next in another call to [`helper()`][crate::helper()].
     pub next: NextAction,
 }
 
