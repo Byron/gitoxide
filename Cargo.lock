@@ -1061,7 +1061,7 @@ dependencies = [
 
 [[package]]
 name = "git-actor"
-version = "0.11.3"
+version = "0.11.4"
 dependencies = [
  "bstr",
  "btoi",
@@ -1110,7 +1110,7 @@ dependencies = [
 
 [[package]]
 name = "git-commitgraph"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "bstr",
  "document-features",
@@ -1174,7 +1174,7 @@ dependencies = [
 
 [[package]]
 name = "git-date"
-version = "0.0.5"
+version = "0.1.0"
 dependencies = [
  "bstr",
  "document-features",
@@ -1501,7 +1501,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1552,7 +1552,7 @@ dependencies = [
 
 [[package]]
 name = "git-revision"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "bstr",
  "document-features",

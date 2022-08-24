@@ -5,6 +5,86 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.11.0 (2022-08-24)
+
+<csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/>
+
+### Chore
+
+ - <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
+
+### Bug Fixes
+
+ - <csr-id-376749cc49c6dafcc314b8435d6feac81482b3f5/> allow dependency edits to apply to `target.<cfg>.*dependencies`.
+   Previously these would be skipped, which would cause the publish to
+   abort due to invalid manifests - some dependencies would still refer
+   to an outdated but incompatible version.
+ - <csr-id-988c61e07bdb52870794e70e94b925de7acb402e/> List any dependency update that is caused by other crates in preview.
+   Previously it was possible that crates there were about to be published
+   didn't show up in the list of crates that received a safety version
+   bump.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 34 commits contributed to the release over the course of 77 calendar days.
+ - 88 days passed between releases.
+ - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 unique issues were worked on: [#331](https://github.com/Byron/gitoxide/issues/331), [#427](https://github.com/Byron/gitoxide/issues/427), [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#331](https://github.com/Byron/gitoxide/issues/331)**
+    - make fmt ([`a7d7751`](https://github.com/Byron/gitoxide/commit/a7d7751822a1a8ac89930031707af57ad95d9cbd))
+ * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - Implement :<path> parsing ([`74e7a46`](https://github.com/Byron/gitoxide/commit/74e7a46199d3ae13d8bc3616d285c238942c2cad))
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - adapt to changes in `git-url` ([`60bfd6d`](https://github.com/Byron/gitoxide/commit/60bfd6d457d75fb4b342e08f329dadc8373de266))
+ * **Uncategorized**
+    - update changelogs prior to release ([`23cb58f`](https://github.com/Byron/gitoxide/commit/23cb58f02043e0e5027136fd6e8e724c03a2efbe))
+    - Improve performance configuration of smart-release, allowing it to build on msvc by default ([`3923893`](https://github.com/Byron/gitoxide/commit/3923893c638d92c713def0a244f07b9718397fc3))
+    - Release git-date v0.0.5, git-hash v0.9.8, git-features v0.22.2, git-actor v0.11.3, git-glob v0.3.2, git-quote v0.2.1, git-attributes v0.3.2, git-tempfile v2.0.4, git-lock v2.1.1, git-validate v0.5.5, git-object v0.20.2, git-ref v0.15.2, git-sec v0.3.1, git-config v0.7.0, git-credentials v0.4.0, git-diff v0.17.2, git-discover v0.4.1, git-bitmap v0.1.2, git-index v0.4.2, git-mailmap v0.3.2, git-chunk v0.3.1, git-traverse v0.16.2, git-pack v0.21.2, git-odb v0.31.2, git-packetline v0.12.7, git-url v0.7.2, git-transport v0.19.2, git-protocol v0.19.0, git-revision v0.4.2, git-refspec v0.1.0, git-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
+    - Merge branch 'example-write-blob' ([`afedd7f`](https://github.com/Byron/gitoxide/commit/afedd7f86ec8ea18a8165f71698ecc886f5cf643))
+    - Merge pull request #494 from ultrasaurus/patch-1 ([`86fe22c`](https://github.com/Byron/gitoxide/commit/86fe22cb1aad5944a229bc2a5252b36ef1fd59ef))
+    - Merge branch 'main' into remote-ls-refs ([`95f2f4f`](https://github.com/Byron/gitoxide/commit/95f2f4f17f7eae174a64c7d9f6a1513d73b21bbb))
+    - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
+    - Merge branch 'main' into remote-ls-refs ([`e2ee3de`](https://github.com/Byron/gitoxide/commit/e2ee3ded97e5c449933712883535b30d151c7c78))
+    - remove default link to cargo doc everywhere ([`533e887`](https://github.com/Byron/gitoxide/commit/533e887e80c5f7ede8392884562e1c5ba56fb9a8))
+    - Merge branch 'main' into remote-ls-refs ([`c82bbfa`](https://github.com/Byron/gitoxide/commit/c82bbfaddc45bf9b5b55f056613046d977d9ef09))
+    - prepare for release of git-repository ([`8aa5389`](https://github.com/Byron/gitoxide/commit/8aa5389d5a1bdd3a07f1caa1c2f55c8af4f9844a))
+    - Merge branch 'main' into remote-ls-refs ([`bd5f3e8`](https://github.com/Byron/gitoxide/commit/bd5f3e8db7e0bb4abfb7b0f79f585ab82c3a14ab))
+    - Release git-date v0.0.3, git-actor v0.11.1, git-attributes v0.3.1, git-tempfile v2.0.3, git-object v0.20.1, git-ref v0.15.1, git-config v0.6.1, git-diff v0.17.1, git-discover v0.4.0, git-bitmap v0.1.1, git-index v0.4.1, git-mailmap v0.3.1, git-traverse v0.16.1, git-pack v0.21.1, git-odb v0.31.1, git-packetline v0.12.6, git-url v0.7.1, git-transport v0.19.1, git-protocol v0.18.1, git-revision v0.4.0, git-worktree v0.4.1, git-repository v0.21.0, safety bump 5 crates ([`c96473d`](https://github.com/Byron/gitoxide/commit/c96473dce21c3464aacbc0a62d520c1a33172611))
+    - Merge branch 'main' into remote-ls-refs ([`c4bf958`](https://github.com/Byron/gitoxide/commit/c4bf9585d815bc342e5fb383336cc654280dd34f))
+    - Merge branch 'format_git_date_time' ([`99e12be`](https://github.com/Byron/gitoxide/commit/99e12bee16ab3f344c71818bfd1c95cf50e1721b))
+    - Merge branch 'main' into remote-ls-refs ([`de61c4d`](https://github.com/Byron/gitoxide/commit/de61c4db7855d6925d66961f62ae3d12cc4acf78))
+    - thanks clippy ([`4bd747c`](https://github.com/Byron/gitoxide/commit/4bd747cb3e126fe5b1d540270cfbd731cffd42ef))
+    - Fix typos ([`e9fcb70`](https://github.com/Byron/gitoxide/commit/e9fcb70e429edb2974afa3f58d181f3ef14c3da3))
+    - fix build after changes to `git-url` and `git-config` ([`1f02420`](https://github.com/Byron/gitoxide/commit/1f0242034071ce317743df75cc685e7428b604b0))
+    - Merge branch 'normalize-values' ([`4e8cc7a`](https://github.com/Byron/gitoxide/commit/4e8cc7a5b447656c744cd84e6521e620d0479acb))
+    - thanks clippy ([`e1003d5`](https://github.com/Byron/gitoxide/commit/e1003d5fdee5d4439c0cf0286c67dec9b5e34f53))
+    - Release git-path v0.3.0, safety bump 14 crates ([`400c9be`](https://github.com/Byron/gitoxide/commit/400c9bec49e4ec5351dc9357b246e7677a63ea35))
+    - Use clap 3.2.5 to be able to opt-in to deprecations ([`aaf1cde`](https://github.com/Byron/gitoxide/commit/aaf1cdedf7bd181977faa66ef21f7ee75627bf9f))
+    - thanks clippy ([`f6c2f94`](https://github.com/Byron/gitoxide/commit/f6c2f94a6270dd71523a90796fd0e3ac49b03a8f))
+    - Fix smart-release journey tests ([`6c852b8`](https://github.com/Byron/gitoxide/commit/6c852b8896ce7ec8175faa05176fc30e0705df1d))
+    - Adjust cargo-smart-release to use latest `git-repository` version ([`1e1fabd`](https://github.com/Byron/gitoxide/commit/1e1fabd31fbe11fb9a9422ceb474fd2724d0c320))
+    - allow dependency edits to apply to `target.<cfg>.*dependencies`. ([`376749c`](https://github.com/Byron/gitoxide/commit/376749cc49c6dafcc314b8435d6feac81482b3f5))
+    - Make it possible (in theory) to find versions in `target` dependencies. ([`34d0744`](https://github.com/Byron/gitoxide/commit/34d074473c75a395501be20654373f70f7d2acb7))
+    - List any dependency update that is caused by other crates in preview. ([`988c61e`](https://github.com/Byron/gitoxide/commit/988c61e07bdb52870794e70e94b925de7acb402e))
+    - more useful debug output for `traverse::Dependency`. ([`0aff709`](https://github.com/Byron/gitoxide/commit/0aff7091adbedc53448b56d2363fad17408d8f4e))
+    - Also remove cargo-smart-release from workspace ([`8ef5197`](https://github.com/Byron/gitoxide/commit/8ef5197178f879bdd5d191dba331ac318626bfb5))
+</details>
+
 ## 0.10.2 (2022-05-27)
 
 ### Bug Fixes
@@ -21,7 +101,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 3 calendar days.
+ - 4 commits contributed to the release over the course of 3 calendar days.
  - 3 days passed between releases.
  - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#429](https://github.com/Byron/gitoxide/issues/429)
@@ -36,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Adjust changelogs prior to release ([`7397805`](https://github.com/Byron/gitoxide/commit/7397805fd032a752d6c2f2c2c28ac11ddecc7193))
     - Avoid running into the `default-members` trap with 'cargo publish'. ([`64b951c`](https://github.com/Byron/gitoxide/commit/64b951cade24c69d522a76ad217bea70a4afe45a))
  * **Uncategorized**
+    - Release git-sec v0.1.2, git-discover v0.1.3, cargo-smart-release v0.10.2 ([`6cd365e`](https://github.com/Byron/gitoxide/commit/6cd365e2cf6851f5cdecc22f3b1667440ad011b0))
     - Merge branch 'davidkna-admin-sec' ([`3d0e2c2`](https://github.com/Byron/gitoxide/commit/3d0e2c2d4ebdbe3dff01846aac3375128353a2e1))
 </details>
 
