@@ -24,6 +24,28 @@ mod context {
             assert_eq!(actual, ctx, "ctx should encode itself losslessly");
         }
     }
+
+    #[test]
+    fn null_bytes_when_decoding() {
+        let err = Context::from_bytes(b"url=https://foo\0").unwrap_err();
+        assert!(matches!(
+            err,
+            git_credentials::helper::context::decode::Error::Encoding(_)
+        ));
+    }
+
+    #[test]
+    fn null_bytes_and_newlines_are_invalid_during_encoding() {
+        for input in [&b"https://foo\0"[..], b"https://foo\n"] {
+            let ctx = Context {
+                url: Some(input.into()),
+                ..Default::default()
+            };
+            let mut buf = Vec::<u8>::new();
+            let err = ctx.write_to(&mut buf).unwrap_err();
+            assert_eq!(err.kind(), std::io::ErrorKind::Other);
+        }
+    }
 }
 mod message {
     mod encode {
