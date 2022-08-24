@@ -17,7 +17,7 @@ pub trait Helper {
     type Receive: std::io::Read;
 
     /// Start the helper and provide handles to send and receive from it.
-    fn start(&mut self, action: &helper::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)>;
+    fn start(&mut self, action: &helper::invoke::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)>;
     /// Stop the helper and provide a way to determine it's successful.
     fn finish(self) -> std::io::Result<()>;
 }
@@ -38,6 +38,6 @@ pub mod helper;
 /// Call the `git` credentials helper program performing the given `action`, without any context from git configuration.
 ///
 /// See [`invoke()`][helper::invoke()] for a more flexible implementation.
-pub fn helper(action: helper::Action) -> helper::invoke::Result {
+pub fn helper(action: helper::invoke::Action) -> helper::invoke::Result {
     helper::invoke(Program::from_kind(helper::Kind::GitCredential), action)
 }

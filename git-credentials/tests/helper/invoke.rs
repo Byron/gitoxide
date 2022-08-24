@@ -1,14 +1,16 @@
 use crate::helper::invoke::util::MockHelper;
-use git_credentials::helper::Action;
+use git_credentials::helper::invoke;
 
 #[test]
 #[ignore]
 fn get() {
     let mut helper = MockHelper::default();
-    let outcome =
-        git_credentials::helper::invoke(&mut helper, Action::get_for_url("https://github.com/byron/gitoxide"))
-            .unwrap()
-            .expect("mock provides credentials");
+    let outcome = git_credentials::helper::invoke(
+        &mut helper,
+        invoke::Action::get_for_url("https://github.com/byron/gitoxide"),
+    )
+    .unwrap()
+    .expect("mock provides credentials");
     assert_eq!(
         outcome.identity,
         git_sec::identity::Account {
@@ -23,7 +25,7 @@ fn get() {
 }
 
 mod util {
-    use git_credentials::helper::Action;
+    use git_credentials::helper::invoke::Action;
 
     #[derive(Default)]
     pub struct MockHelper {

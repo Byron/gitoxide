@@ -1,4 +1,5 @@
-use crate::helper::NextAction;
+use crate::helper::Context;
+use bstr::{BStr, BString};
 
 /// The outcome of the credentials [`helper`][crate::helper()].
 pub struct Outcome {
@@ -25,8 +26,76 @@ pub enum Error {
     CredentialsHelperFailed { source: std::io::Error },
 }
 
+/// The action to perform by the credentials [helper][`crate::helper()`].
+#[derive(Clone, Debug)]
+pub enum Action {
+    /// Provide credentials using the given repository context, which must include the repository url.
+    Get(Context),
+    /// Approve the credentials as identified by the previous input provided as `BString`, containing information from [`Context`].
+    Store(BString),
+    /// Reject the credentials as identified by the previous input provided as `BString`. containing information from [`Context`].
+    Erase(BString),
+}
+
+/// Initialization
+impl Action {
+    /// Create a `Get` action with context containing the given URL
+    pub fn get_for_url(url: impl Into<BString>) -> Action {
+        Action::Get(Context {
+            url: Some(url.into()),
+            ..Default::default()
+        })
+    }
+}
+
+/// Access
+impl Action {
+    /// Return the payload of store or erase actions.
+    pub fn payload(&self) -> Option<&BStr> {
+        use bstr::ByteSlice;
+        match self {
+            Action::Get(_) => None,
+            Action::Store(p) | Action::Erase(p) => Some(p.as_bstr()),
+        }
+    }
+    /// Returns true if this action expects output from the helper.
+    pub fn expects_output(&self) -> bool {
+        matches!(self, Action::Get(_))
+    }
+    /// The name of the argument to describe this action. If `is_custom` is true, the target program is
+    /// a custom credentials helper, not a built-in one.
+    pub fn as_helper_arg(&self, is_custom: bool) -> &str {
+        match self {
+            Action::Get(_) if is_custom => "get",
+            Action::Get(_) => "fill",
+            Action::Store(_) if is_custom => "store",
+            Action::Store(_) => "approve",
+            Action::Erase(_) if is_custom => "erase",
+            Action::Erase(_) => "reject",
+        }
+    }
+}
+
+/// A handle to [store][NextAction::store()] or [erase][NextAction::erase()] the outcome of the initial action.
+#[derive(Clone, Debug)]
+pub struct NextAction {
+    previous_output: BString,
+}
+
+impl NextAction {
+    /// Approve the result of the previous [Action] and store for lookup.
+    pub fn store(self) -> Action {
+        Action::Store(self.previous_output)
+    }
+    /// Reject the result of the previous [Action] and erase it as to not be returned when being looked up.
+    pub fn erase(self) -> Action {
+        Action::Erase(self.previous_output)
+    }
+}
+
 pub(crate) mod function {
-    use crate::helper::{invoke::Error, invoke::Outcome, invoke::Result, Action, Context, NextAction};
+    use crate::helper::invoke::{Action, NextAction};
+    use crate::helper::{invoke::Error, invoke::Outcome, invoke::Result, Context};
     use std::io::Read;
 
     impl Action {
