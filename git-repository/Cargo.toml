@@ -3,7 +3,7 @@ name = "git-repository"
 repository = "https://github.com/Byron/gitoxide"
 description = "Abstractions for git repositories"
 license = "MIT/Apache-2.0"
-version = "0.22.0"
+version = "0.22.1"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 include = ["src/**/*", "CHANGELOG.md"]
@@ -100,9 +100,9 @@ git-config = { version = "^0.7.0", path = "../git-config" }
 git-odb = { version = "^0.31.2", path = "../git-odb" }
 git-hash = { version = "^0.9.8", path = "../git-hash" }
 git-object = { version = "^0.20.2", path = "../git-object" }
-git-actor = { version = "^0.11.3", path = "../git-actor" }
+git-actor = { version = "^0.11.4", path = "../git-actor" }
 git-pack = { version = "^0.21.2", path = "../git-pack", features = ["object-cache-dynamic"] }
-git-revision = { version = "^0.4.2", path = "../git-revision" }
+git-revision = { version = "^0.4.3", path = "../git-revision" }
 
 git-path = { version = "^0.4.1", path = "../git-path" }
 git-url = { version = "^0.7.2", path = "../git-url" }
