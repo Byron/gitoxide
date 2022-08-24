@@ -15,26 +15,25 @@ pub type Result = std::result::Result<Option<Outcome>, Error>;
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
-    #[error("Cannot handle usernames or passwords in illformed UTF-8 encoding")]
-    IllformedUtf8InUsernameOrPassword,
+    #[error(transparent)]
+    Context(#[from] crate::helper::context::decode::Error),
     #[error("An IO error occurred while communicating to the credentials helper")]
     Io(#[from] std::io::Error),
     #[error("Could not find {name:?} in output of credentials helper")]
-    KeyNotFound { name: String },
+    KeyNotFound { name: &'static str },
     #[error(transparent)]
     CredentialsHelperFailed { source: std::io::Error },
 }
 
 pub(crate) mod function {
-    use crate::helper::{invoke::Error, invoke::Outcome, invoke::Result, message, Action, Context, NextAction};
-    use bstr::ByteVec;
+    use crate::helper::{invoke::Error, invoke::Outcome, invoke::Result, Action, Context, NextAction};
     use std::io::Read;
 
-    impl Action<'_> {
+    impl Action {
         /// Send ourselves to the given `write` which is expected to be credentials-helper compatible
         pub fn send(&self, mut write: impl std::io::Write) -> std::io::Result<()> {
             match self {
-                Action::Fill(url) => message::encode(url, write),
+                Action::Fill(ctx) => ctx.write_to(write),
                 Action::Approve(last) | Action::Reject(last) => {
                     write.write_all(last)?;
                     write.write_all(&[b'\n'])
@@ -47,7 +46,7 @@ pub(crate) mod function {
     ///
     /// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
     /// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
-    pub fn invoke(mut helper: impl crate::Helper, action: Action<'_>, _context: Context) -> Result {
+    pub fn invoke(mut helper: impl crate::Helper, action: Action) -> Result {
         let (stdin, stdout) = helper.start(&action)?;
         action.send(stdin)?;
         let stdout = stdout
@@ -67,22 +66,11 @@ pub(crate) mod function {
         match stdout {
             None => Ok(None),
             Some(stdout) => {
-                let kvs = message::decode(stdout.as_slice())?;
-                let find = |name: &str| {
-                    kvs.iter()
-                        .find(|(k, _)| k == name)
-                        .ok_or_else(|| Error::KeyNotFound { name: name.into() })
-                        .map(|(_, n)| n.to_vec())
-                };
+                let ctx = Context::from_bytes(stdout.as_slice())?;
+                let username = ctx.username.ok_or_else(|| Error::KeyNotFound { name: "username" })?;
+                let password = ctx.password.ok_or_else(|| Error::KeyNotFound { name: "password" })?;
                 Ok(Some(Outcome {
-                    identity: git_sec::identity::Account {
-                        username: find("username")?
-                            .into_string()
-                            .map_err(|_| Error::IllformedUtf8InUsernameOrPassword)?,
-                        password: find("password")?
-                            .into_string()
-                            .map_err(|_| Error::IllformedUtf8InUsernameOrPassword)?,
-                    },
+                    identity: git_sec::identity::Account { username, password },
                     next: NextAction {
                         previous_output: stdout.into(),
                     },

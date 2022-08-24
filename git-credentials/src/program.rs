@@ -12,7 +12,7 @@ impl Helper for Program {
     type Send = std::process::ChildStdin;
     type Receive = std::process::ChildStdout;
 
-    fn start(&mut self, action: &helper::Action<'_>) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
+    fn start(&mut self, action: &helper::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
         match self {
             Program::Ready(kind) => {
                 let (mut cmd, is_custom) = match kind {
