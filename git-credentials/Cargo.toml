@@ -22,6 +22,9 @@ bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 
 document-features = { version = "0.2.1", optional = true }
 
+[dev-dependencies]
+git-testtools = { path = "../tests/tools"}
+
 [package.metadata.docs.rs]
 all-features = true
 features = ["document-features"]
