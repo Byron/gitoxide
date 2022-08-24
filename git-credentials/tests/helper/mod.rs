@@ -57,7 +57,7 @@ this=is-skipped-past-empty-line"
                     ("password", "secr3t")
                 ]
                 .iter()
-                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .map(|(k, v)| (k.to_string(), (*v).into()))
                 .collect::<Vec<_>>()
             );
             Ok(())
