@@ -87,12 +87,12 @@ pub(crate) mod function {
                     progress.set_name("handshake (authenticated)");
                     match transport.handshake(Service::UploadPack, &extra_parameters).await {
                         Ok(v) => {
-                            authenticate(next.approve())?;
+                            authenticate(next.store())?;
                             Ok(v)
                         }
                         // Still no permission? Reject the credentials.
                         Err(client::Error::Io { err }) if err.kind() == std::io::ErrorKind::PermissionDenied => {
-                            authenticate(next.reject())?;
+                            authenticate(next.erase())?;
                             Err(client::Error::Io { err })
                         }
                         // Otherwise, do nothing, as we don't know if it actually got to try the credentials.
