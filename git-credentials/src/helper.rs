@@ -14,6 +14,8 @@ mod error {
     }
 }
 pub use error::Error;
+/// The Result type used in [`helper()`][crate::helper()].
+pub type Result = std::result::Result<Option<Outcome>, Error>;
 
 /// The action to perform by the credentials [`action()`].
 #[derive(Clone, Debug)]
@@ -65,7 +67,7 @@ pub struct Outcome {
 }
 
 pub(crate) mod function {
-    use crate::helper::{message, Action, Error, NextAction, Outcome};
+    use crate::helper::{message, Action, Error, NextAction, Outcome, Result};
     use std::io::Write;
     use std::process::{Command, Stdio};
 
@@ -75,7 +77,7 @@ pub(crate) mod function {
     ///
     /// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
     /// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
-    pub fn helper(action: Action<'_>) -> std::result::Result<Option<Outcome>, Error> {
+    pub fn helper(action: Action<'_>) -> Result {
         let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
         cmd.arg("credential")
             .arg(action.as_str())
