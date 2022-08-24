@@ -54,7 +54,7 @@ pub(crate) mod function {
         progress: &mut impl Progress,
     ) -> Result<Outcome, Error>
     where
-        AuthFn: FnMut(credentials::helper::Action<'_>) -> credentials::helper::invoke::Result,
+        AuthFn: FnMut(credentials::helper::Action) -> credentials::helper::invoke::Result,
         T: client::Transport,
     {
         let (server_protocol_version, refs, capabilities) = {
@@ -80,7 +80,7 @@ pub(crate) mod function {
                     let url = transport.to_url();
                     progress.set_name("authentication");
                     let credentials::helper::invoke::Outcome { identity, next } =
-                        authenticate(credentials::helper::Action::Fill(url.as_str().into()))?
+                        authenticate(credentials::helper::Action::get_for_url(url))?
                             .expect("FILL provides an identity");
                     transport.set_identity(identity)?;
                     progress.step();
