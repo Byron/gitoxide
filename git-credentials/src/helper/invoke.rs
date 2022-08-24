@@ -33,8 +33,8 @@ pub(crate) mod function {
         /// Send ourselves to the given `write` which is expected to be credentials-helper compatible
         pub fn send(&self, mut write: impl std::io::Write) -> std::io::Result<()> {
             match self {
-                Action::Fill(ctx) => ctx.write_to(write),
-                Action::Approve(last) | Action::Reject(last) => {
+                Action::Get(ctx) => ctx.write_to(write),
+                Action::Store(last) | Action::Erase(last) => {
                     write.write_all(last)?;
                     write.write_all(&[b'\n'])
                 }

@@ -33,28 +33,28 @@ pub mod context;
 #[derive(Clone, Debug)]
 pub enum Action {
     /// Provide credentials using the given repository context, which must include the repository url.
-    Fill(Context),
+    Get(Context),
     /// Approve the credentials as identified by the previous input provided as `BString`, containing information from [`Context`].
-    Approve(BString),
+    Store(BString),
     /// Reject the credentials as identified by the previous input provided as `BString`. containing information from [`Context`].
-    Reject(BString),
+    Erase(BString),
 }
 
 impl Action {
     /// Returns true if this action expects output from the helper.
     pub fn expects_output(&self) -> bool {
-        matches!(self, Action::Fill(_))
+        matches!(self, Action::Get(_))
     }
     /// The name of the argument to describe this action. If `is_custom` is true, the target program is
     /// a custom credentials helper, not a built-in one.
     pub fn as_helper_arg(&self, is_custom: bool) -> &str {
         match self {
-            Action::Fill(_) if is_custom => "get",
-            Action::Fill(_) => "fill",
-            Action::Approve(_) if is_custom => "store",
-            Action::Approve(_) => "approve",
-            Action::Reject(_) if is_custom => "erase",
-            Action::Reject(_) => "reject",
+            Action::Get(_) if is_custom => "get",
+            Action::Get(_) => "fill",
+            Action::Store(_) if is_custom => "store",
+            Action::Store(_) => "approve",
+            Action::Erase(_) if is_custom => "erase",
+            Action::Erase(_) => "reject",
         }
     }
 }
@@ -68,11 +68,11 @@ pub struct NextAction {
 impl NextAction {
     /// Approve the result of the previous [Action].
     pub fn approve(self) -> Action {
-        Action::Approve(self.previous_output)
+        Action::Store(self.previous_output)
     }
     /// Reject the result of the previous [Action].
     pub fn reject(self) -> Action {
-        Action::Reject(self.previous_output)
+        Action::Erase(self.previous_output)
     }
 }
 
