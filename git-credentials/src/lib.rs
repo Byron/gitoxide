@@ -37,7 +37,7 @@ pub mod helper;
 
 /// Call the `git` credentials helper program performing the given `action`, without any context from git configuration.
 ///
-/// See [`invoke()`] for a more flexible implementation.
+/// See [`invoke()`][helper::invoke()] for a more flexible implementation.
 pub fn helper(action: helper::Action) -> helper::invoke::Result {
     helper::invoke(Program::from_kind(helper::Kind::GitCredential), action)
 }

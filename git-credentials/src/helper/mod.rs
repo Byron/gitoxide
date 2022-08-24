@@ -22,7 +22,7 @@ pub struct Context {
     /// The credential’s password, if we are asking it to be stored.
     pub password: Option<String>,
     /// When this special attribute is read by git credential, the value is parsed as a URL and treated as if its constituent
-    /// parts were read (e.g., url=https://example.com would behave as if
+    /// parts were read (e.g., url=<https://example.com> would behave as if
     /// protocol=https and host=example.com had been provided). This can help callers avoid parsing URLs themselves.
     pub url: Option<BString>,
 }
