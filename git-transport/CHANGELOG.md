@@ -5,18 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.19.1 (2022-08-17)
+## 0.19.2 (2022-08-24)
 
-A maintenance release without user facing changes.
+### Chore
+
+ - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+ - <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
+
+### New Features
+
+ - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
+ - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
+
+### Bug Fixes
+
+ - <csr-id-5220f9a59fb699e111342b076145a6899d36d433/> Make async `conenct()` signature compatible with the blocking implementation.
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 26 calendar days.
- - 26 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 12 commits contributed to the release over the course of 5 calendar days.
+ - 6 days passed between releases.
+ - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
 
 ### Commit Details
 
@@ -24,9 +36,79 @@ A maintenance release without user facing changes.
 
 <details><summary>view details</summary>
 
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - Make async `conenct()` signature compatible with the blocking implementation. ([`5220f9a`](https://github.com/Byron/gitoxide/commit/5220f9a59fb699e111342b076145a6899d36d433))
  * **Uncategorized**
+    - Merge branch 'example-write-blob' ([`afedd7f`](https://github.com/Byron/gitoxide/commit/afedd7f86ec8ea18a8165f71698ecc886f5cf643))
+    - Merge pull request #494 from ultrasaurus/patch-1 ([`86fe22c`](https://github.com/Byron/gitoxide/commit/86fe22cb1aad5944a229bc2a5252b36ef1fd59ef))
+    - Merge branch 'main' into remote-ls-refs ([`95f2f4f`](https://github.com/Byron/gitoxide/commit/95f2f4f17f7eae174a64c7d9f6a1513d73b21bbb))
+    - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
+    - Merge branch 'main' into remote-ls-refs ([`e2ee3de`](https://github.com/Byron/gitoxide/commit/e2ee3ded97e5c449933712883535b30d151c7c78))
+    - use docsrs feature in code to show what is feature-gated automatically on docs.rs ([`b1c40b0`](https://github.com/Byron/gitoxide/commit/b1c40b0364ef092cd52d03b34f491b254816b18d))
+    - uniformize deny attributes ([`f7f136d`](https://github.com/Byron/gitoxide/commit/f7f136dbe4f86e7dee1d54835c420ec07c96cd78))
+    - pass --cfg docsrs when compiling for https://docs.rs ([`5176771`](https://github.com/Byron/gitoxide/commit/517677147f1c17304c62cf97a1dd09f232ebf5db))
+    - remove default link to cargo doc everywhere ([`533e887`](https://github.com/Byron/gitoxide/commit/533e887e80c5f7ede8392884562e1c5ba56fb9a8))
+    - Merge branch 'main' into remote-ls-refs ([`c82bbfa`](https://github.com/Byron/gitoxide/commit/c82bbfaddc45bf9b5b55f056613046d977d9ef09))
+    - Merge branch 'main' into remote-ls-refs ([`bd5f3e8`](https://github.com/Byron/gitoxide/commit/bd5f3e8db7e0bb4abfb7b0f79f585ab82c3a14ab))
+</details>
+
+## 0.19.1 (2022-08-17)
+
+A maintenance release without user facing changes.
+
+### Changed (BREAKING)
+
+ - <csr-id-9509ce4faeca8b4e1527bac625370403495bb03c/> `client::connect()` supports anything that parses into a `git_url::Url`; turn http url back to &str
+   The http url is always valid UTF-8 and doesn't contain invalid paths,
+   thus we should have the type system reflect that.
+ - <csr-id-52e8c149ff17ce894cc30d03ead1988f52f0663e/> `client::connect()` now takes a `&BStr` as URL
+ - <csr-id-71a43d0bc12661efcb9c94697c704f700a3be488/> use `thiserror` instead of `quickerror`
+ - <csr-id-12589cc6f08e4d7aabae30bcdadaa0c2b4850229/> adapt to changes in `git-url` and use `BString` to represent URLs.
+   They can contain paths, which is why `String` can't repsent a URL
+   losslessly.
+   
+   For HTTP urls these are ultimately UTF-8 strings though.
+
+### New Features
+
+ - <csr-id-f6a6a499f20e12e2bcca734bdf3c8599d37f6a6f/> `connect()` method is available in when `async-std` feature is set along with `async-client`
+   This makes some async support available even trough the base crate,
+   which otherwise would require establishing a connection (with a runtime
+   of choice) by hand.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 17 commits contributed to the release over the course of 26 calendar days.
+ - 26 days passed between releases.
+ - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - sketch of simple delegate to collect listed refs ([`1c5f561`](https://github.com/Byron/gitoxide/commit/1c5f5617940efe818a5e2aca5afe2cbd7f4ad940))
+    - adjust to changes in `git-transport` ([`94a623b`](https://github.com/Byron/gitoxide/commit/94a623b57e8fa2876731f74224b406ac56838edc))
+    - fix async `connect()` to match new signature ([`eb15a79`](https://github.com/Byron/gitoxide/commit/eb15a7971f864bfe02073a21d545ce9ac3dc58e5))
+    - `client::connect()` supports anything that parses into a `git_url::Url`; turn http url back to &str ([`9509ce4`](https://github.com/Byron/gitoxide/commit/9509ce4faeca8b4e1527bac625370403495bb03c))
+    - `client::connect()` now takes a `&BStr` as URL ([`52e8c14`](https://github.com/Byron/gitoxide/commit/52e8c149ff17ce894cc30d03ead1988f52f0663e))
+    - `connect()` method is available in when `async-std` feature is set along with `async-client` ([`f6a6a49`](https://github.com/Byron/gitoxide/commit/f6a6a499f20e12e2bcca734bdf3c8599d37f6a6f))
+    - use `thiserror` instead of `quickerror` ([`71a43d0`](https://github.com/Byron/gitoxide/commit/71a43d0bc12661efcb9c94697c704f700a3be488))
+    - better docs for `git-transport` ([`30b7b67`](https://github.com/Byron/gitoxide/commit/30b7b67740f80b9954c7fe77d7007722cb95d673))
+    - adapt to changes in `git-url` ([`9456146`](https://github.com/Byron/gitoxide/commit/9456146531226e5efc6e1e4e2e89b03683f8a422))
+    - adapt to changes in `git-url` and use `BString` to represent URLs. ([`12589cc`](https://github.com/Byron/gitoxide/commit/12589cc6f08e4d7aabae30bcdadaa0c2b4850229))
+ * **Uncategorized**
+    - Release git-date v0.0.3, git-actor v0.11.1, git-attributes v0.3.1, git-tempfile v2.0.3, git-object v0.20.1, git-ref v0.15.1, git-config v0.6.1, git-diff v0.17.1, git-discover v0.4.0, git-bitmap v0.1.1, git-index v0.4.1, git-mailmap v0.3.1, git-traverse v0.16.1, git-pack v0.21.1, git-odb v0.31.1, git-packetline v0.12.6, git-url v0.7.1, git-transport v0.19.1, git-protocol v0.18.1, git-revision v0.4.0, git-worktree v0.4.1, git-repository v0.21.0, safety bump 5 crates ([`c96473d`](https://github.com/Byron/gitoxide/commit/c96473dce21c3464aacbc0a62d520c1a33172611))
     - prepare changelogs prior to reelase ([`c06ae1c`](https://github.com/Byron/gitoxide/commit/c06ae1c606b6af9c2a12021103d99c2810750d60))
     - Release git-hash v0.9.7, git-features v0.22.1 ([`232784a`](https://github.com/Byron/gitoxide/commit/232784a59ded3e8016e4257c7e146ad385cdd64a))
+    - Merge branch 'main' into remote-ls-refs ([`c4bf958`](https://github.com/Byron/gitoxide/commit/c4bf9585d815bc342e5fb383336cc654280dd34f))
+    - Merge branch 'main' into remote-ls-refs ([`de61c4d`](https://github.com/Byron/gitoxide/commit/de61c4db7855d6925d66961f62ae3d12cc4acf78))
+    - Merge branch 'main' into remote-ls-refs ([`e8fc89d`](https://github.com/Byron/gitoxide/commit/e8fc89d36ab17a66e799bdec3ed71388b9730266))
     - Fix typos ([`e9fcb70`](https://github.com/Byron/gitoxide/commit/e9fcb70e429edb2974afa3f58d181f3ef14c3da3))
 </details>
 
