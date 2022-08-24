@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.22.0 (2022-08-24)
 
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+
 ### Chore
 
  - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
@@ -36,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 42 commits contributed to the release over the course of 4 calendar days.
+ - 43 commits contributed to the release over the course of 4 calendar days.
  - 4 days passed between releases.
  - 8 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#488](https://github.com/Byron/gitoxide/issues/488)
@@ -72,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#488](https://github.com/Byron/gitoxide/issues/488)**
     - Don't fail worktree tests if the system's git version is not supporting required features ([`ff71730`](https://github.com/Byron/gitoxide/commit/ff71730b4e3635533d9969d9dd44c0f3c75c6648))
  * **Uncategorized**
+    - Release git-date v0.0.5, git-hash v0.9.8, git-features v0.22.2, git-actor v0.11.3, git-glob v0.3.2, git-quote v0.2.1, git-attributes v0.3.2, git-tempfile v2.0.4, git-lock v2.1.1, git-validate v0.5.5, git-object v0.20.2, git-ref v0.15.2, git-sec v0.3.1, git-config v0.7.0, git-credentials v0.4.0, git-diff v0.17.2, git-discover v0.4.1, git-bitmap v0.1.2, git-index v0.4.2, git-mailmap v0.3.2, git-chunk v0.3.1, git-traverse v0.16.2, git-pack v0.21.2, git-odb v0.31.2, git-packetline v0.12.7, git-url v0.7.2, git-transport v0.19.2, git-protocol v0.19.0, git-revision v0.4.2, git-refspec v0.1.0, git-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
     - support avoiding usage of `fast-sha1` in git-features separately. ([`c28bcec`](https://github.com/Byron/gitoxide/commit/c28bcec19b5526acf888f928e6ddc4671873368e))
     - Release git-path v0.4.1 ([`5e82346`](https://github.com/Byron/gitoxide/commit/5e823462b3deb904f5d6154a7bf114cef1988224))
     - Merge branch 'example-write-blob' ([`afedd7f`](https://github.com/Byron/gitoxide/commit/afedd7f86ec8ea18a8165f71698ecc886f5cf643))
