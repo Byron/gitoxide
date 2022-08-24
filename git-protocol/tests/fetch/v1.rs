@@ -3,7 +3,7 @@ use git_features::progress;
 use git_protocol::{fetch, FetchConnection};
 use git_transport::Protocol;
 
-use crate::fetch::{oid, transport, CloneDelegate, LsRemoteDelegate};
+use crate::fetch::{helper_unused, oid, transport, CloneDelegate, LsRemoteDelegate};
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn clone() -> crate::Result {
@@ -17,7 +17,7 @@ async fn clone() -> crate::Result {
             git_transport::client::git::ConnectMode::Daemon,
         ),
         &mut dlg,
-        git_protocol::credentials::helper,
+        helper_unused,
         progress::Discard,
         FetchConnection::TerminateOnSuccessfulCompletion,
     )
@@ -39,7 +39,7 @@ async fn ls_remote() -> crate::Result {
     git_protocol::fetch(
         &mut transport,
         &mut delegate,
-        git_protocol::credentials::helper,
+        helper_unused,
         progress::Discard,
         FetchConnection::AllowReuse,
     )
@@ -80,7 +80,7 @@ async fn ls_remote_handshake_failure_due_to_downgrade() -> crate::Result {
             git_transport::client::git::ConnectMode::Process,
         ),
         delegate,
-        git_protocol::credentials::helper,
+        helper_unused,
         progress::Discard,
         FetchConnection::AllowReuse,
     )
