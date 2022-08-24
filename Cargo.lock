@@ -1174,7 +1174,7 @@ dependencies = [
 
 [[package]]
 name = "git-date"
-version = "0.0.5"
+version = "0.1.0"
 dependencies = [
  "bstr",
  "document-features",
