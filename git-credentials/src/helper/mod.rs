@@ -1,4 +1,4 @@
-use bstr::BString;
+use bstr::{BStr, BString, ByteSlice};
 
 /// The kind of helper program to use.
 pub enum Kind {
@@ -53,6 +53,13 @@ impl Action {
 
 /// Access
 impl Action {
+    /// Return the payload of store or erase actions.
+    pub fn payload(&self) -> Option<&BStr> {
+        match self {
+            Action::Get(_) => None,
+            Action::Store(p) | Action::Erase(p) => Some(p.as_bstr()),
+        }
+    }
     /// Returns true if this action expects output from the helper.
     pub fn expects_output(&self) -> bool {
         matches!(self, Action::Get(_))
