@@ -50,7 +50,7 @@ zlib-rust-backend = ["flate2/rust_backend"]
 ## A multi-crate implementation that can use hardware acceleration, thus bearing the potential for up to 2Gb/s throughput on
 ## CPUs that support it, like AMD Ryzen or Intel Core i3, as well as Apple Silicon like M1.
 ## Takes precedence over `rustsha1` if both are specified.
-fast-sha1 = ["sha-1"]
+fast-sha1 = ["sha1"]
 ## A standard and well performing pure Rust implementation of Sha1. Will significantly slow down various git operations.
 rustsha1 = ["sha1_smol"]
 
@@ -106,7 +106,7 @@ walkdir = { version = "2.3.2", optional = true } # used when parallel is off
 # hashing and 'fast-sha1' feature
 sha1_smol = { version = "1.0.0", optional = true }
 crc32fast = { version = "1.2.1", optional = true }
-sha-1 = { version = "0.10.0", optional = true }
+sha1 = { version = "0.10.0", optional = true }
 
 # progress
 prodash = { version = "19.0.0", optional = true, default-features = false, features = ["unit-bytes", "unit-human"] }
@@ -133,10 +133,9 @@ bstr = { version = "0.2.15", default-features = false }
 
 
 # Assembly doesn't yet compile on MSVC on windows, but does on GNU, see https://github.com/RustCrypto/asm-hashes/issues/17
-# TODO: potentially include it only for certain architectures
-# [target.'cfg(all(any(target_arch = "x86", target_arch = "x86_64"), not(target_env = "msvc")))'.dependencies]
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-sha-1 = { version = "0.10.0", optional = true, features = ["asm"] }
+# At this time, only aarch64, x86 and x86_64 are supported.
+[target.'cfg(all(any(target_arch = "aarch64", target_arch = "x86", target_arch = "x86_64"), not(target_env = "msvc")))'.dependencies]
+sha1 = { version = "0.10.0", optional = true, features = ["asm"] }
 
 [package.metadata.docs.rs]
 all-features = true
