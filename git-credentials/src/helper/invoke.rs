@@ -4,7 +4,7 @@ use crate::helper::NextAction;
 pub struct Outcome {
     /// The obtained identity.
     pub identity: git_sec::identity::Account,
-    /// A handle to the action to perform next in another call to [`helper()`][crate::helper()].
+    /// A handle to the action to perform next in another call to [`helper::invoke()`][crate::helper::invoke()].
     pub next: NextAction,
 }
 
@@ -44,8 +44,9 @@ pub(crate) mod function {
 
     /// Invoke the given `helper` with `action` in `context`.
     ///
-    /// Usually the first call is performed with [`Action::Get`] to obtain an identity, which subsequently can be used.
-    /// On successful usage, use [`NextAction::store()`], otherwise [`NextAction::erase()`].
+    /// Usually the first call is performed with [`Action::Get`] to obtain `Some` identity, which subsequently can be used.
+    /// On successful usage, use [`NextAction::store()`], otherwise [`NextAction::erase()`], which returns `Ok(None)` as no outcome
+    /// is expected.
     pub fn invoke(mut helper: impl crate::Helper, action: Action) -> Result {
         let (stdin, stdout) = helper.start(&action)?;
         action.send(stdin)?;
