@@ -1,5 +1,11 @@
 use bstr::{BStr, BString};
 
+/// The kind of helper program to use.
+pub enum Kind {
+    /// The built-in git-credential helper program, part of any git distribution.
+    GitCredential,
+}
+
 mod error {
     /// The error used in the [credentials helper][crate::helper()].
     #[derive(Debug, thiserror::Error)]
@@ -14,6 +20,7 @@ mod error {
     }
 }
 pub use error::Error;
+
 /// The Result type used in [`helper()`][crate::helper()].
 pub type Result = std::result::Result<Option<Outcome>, Error>;
 
@@ -29,13 +36,19 @@ pub enum Action<'a> {
 }
 
 impl<'a> Action<'a> {
-    fn is_fill(&self) -> bool {
+    /// Returns true if this action expects output from the helper.
+    pub fn expects_output(&self) -> bool {
         matches!(self, Action::Fill(_))
     }
-    fn as_str(&self) -> &str {
+    /// The name of the argument to describe this action. If `is_custom` is true, the target program is
+    /// a custom credentials helper, not a built-in one.
+    pub fn as_helper_arg(&self, is_custom: bool) -> &str {
         match self {
-            Action::Approve(_) => "approve",
+            Action::Fill(_) if is_custom => "get",
             Action::Fill(_) => "fill",
+            Action::Approve(_) if is_custom => "store",
+            Action::Approve(_) => "approve",
+            Action::Reject(_) if is_custom => "erase",
             Action::Reject(_) => "reject",
         }
     }
@@ -68,11 +81,22 @@ pub struct Outcome {
 
 pub(crate) mod function {
     use crate::helper::{message, Action, Error, NextAction, Outcome, Result};
-    use std::io::{Read, Write};
+    use std::io::Read;
     use std::process::{Command, Stdio};
 
-    // TODO(sec): reimplement helper execution so it won't use the `git credential` anymore to allow enforcing our own security model.
-    //            Currently we support more flexible configuration than downright not working at all.
+    impl Action<'_> {
+        /// Send ourselves to the given `write` which is expected to be credentials-helper compatible
+        pub fn send(&self, mut write: impl std::io::Write) -> std::io::Result<()> {
+            match self {
+                Action::Fill(url) => message::encode(url, write),
+                Action::Approve(last) | Action::Reject(last) => {
+                    write.write_all(&last)?;
+                    write.write_all(&[b'\n'])
+                }
+            }
+        }
+    }
+
     /// Call the `git` credentials helper program performing the given `action`.
     ///
     /// Usually the first call is performed with [`Action::Fill`] to obtain an identity, which subsequently can be used.
@@ -80,9 +104,9 @@ pub(crate) mod function {
     pub fn helper(action: Action<'_>) -> Result {
         let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
         cmd.arg("credential")
-            .arg(action.as_str())
+            .arg(action.as_helper_arg(false))
             .stdin(Stdio::piped())
-            .stdout(if action.is_fill() {
+            .stdout(if action.expects_output() {
                 Stdio::piped()
             } else {
                 Stdio::null()
@@ -91,24 +115,19 @@ pub(crate) mod function {
         let mut stdin = child.stdin.take().expect("stdin to be configured");
         let stdout = child.stdout.take();
 
-        match action {
-            Action::Fill(url) => message::encode(url, stdin)?,
-            Action::Approve(last) | Action::Reject(last) => {
-                stdin.write_all(&last)?;
-                stdin.write_all(&[b'\n'])?
-            }
-        }
+        action.send(&mut stdin)?;
+
         let stdout = stdout
             .map(|mut stdout| {
                 let mut buf = Vec::new();
                 stdout.read_to_end(&mut buf).map(|_| buf)
             })
             .transpose()?;
-
         let status = child.wait()?;
         if !status.success() {
             return Err(Error::CredentialsHelperFailed { code: status.code() });
         }
+
         match stdout {
             None => Ok(None),
             Some(stdout) => {
