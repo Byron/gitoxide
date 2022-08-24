@@ -97,7 +97,7 @@ pub fn action(action: Action<'_>) -> Result {
     let mut stdin = child.stdin.take().expect("stdin to be configured");
 
     match action {
-        Action::Fill(url) => encode_message(url, stdin)?,
+        Action::Fill(url) => message::encode(url, stdin)?,
         Action::Approve(last) | Action::Reject(last) => {
             stdin.write_all(&last)?;
             stdin.write_all(&[b'\n'])?
@@ -112,7 +112,7 @@ pub fn action(action: Action<'_>) -> Result {
     if stdout.is_empty() {
         Ok(None)
     } else {
-        let kvs = decode_message(stdout.as_slice())?;
+        let kvs = message::decode(stdout.as_slice())?;
         let find = |name: &str| {
             kvs.iter()
                 .find(|(k, _)| k == name)
@@ -131,39 +131,44 @@ pub fn action(action: Action<'_>) -> Result {
     }
 }
 
-/// Encode `url` to `out` for consumption by a `git credentials` helper program.
-pub fn encode_message(url: &BStr, mut out: impl io::Write) -> io::Result<()> {
-    validate(url)?;
-    writeln!(out, "url={}\n", url)
-}
+///
+pub mod message {
+    use bstr::BStr;
 
-fn validate(url: &BStr) -> io::Result<()> {
-    if url.contains(&0) || url.contains(&b'\n') {
-        return Err(io::Error::new(
-            io::ErrorKind::Other,
-            "token to encode must not contain newlines or null bytes",
-        ));
+    /// Encode `url` to `out` for consumption by a `git credentials` helper program.
+    pub fn encode(url: &BStr, mut out: impl std::io::Write) -> std::io::Result<()> {
+        validate(url)?;
+        writeln!(out, "url={}\n", url)
     }
-    Ok(())
-}
 
-/// Decode all lines in `input` as key-value pairs produced by a `git credentials` helper program.
-pub fn decode_message(mut input: impl io::Read) -> io::Result<Vec<(String, String)>> {
-    let mut buf = String::new();
-    input.read_to_string(&mut buf)?;
-    buf.lines()
-        .take_while(|l| !l.is_empty())
-        .map(|l| {
-            let mut iter = l.splitn(2, '=').map(|s| s.to_owned());
-            match (iter.next(), iter.next()) {
-                (Some(key), Some(value)) => validate(key.as_str().into())
-                    .and_then(|_| validate(value.as_str().into()))
-                    .map(|_| (key, value)),
-                _ => Err(io::Error::new(
-                    io::ErrorKind::Other,
-                    "Invalid format, expecting key=value",
-                )),
-            }
-        })
-        .collect::<io::Result<Vec<_>>>()
+    fn validate(url: &BStr) -> std::io::Result<()> {
+        if url.contains(&0) || url.contains(&b'\n') {
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "token to encode must not contain newlines or null bytes",
+            ));
+        }
+        Ok(())
+    }
+
+    /// Decode all lines in `input` as key-value pairs produced by a `git credentials` helper program.
+    pub fn decode(mut input: impl std::io::Read) -> std::io::Result<Vec<(String, String)>> {
+        let mut buf = String::new();
+        input.read_to_string(&mut buf)?;
+        buf.lines()
+            .take_while(|l| !l.is_empty())
+            .map(|l| {
+                let mut iter = l.splitn(2, '=').map(|s| s.to_owned());
+                match (iter.next(), iter.next()) {
+                    (Some(key), Some(value)) => validate(key.as_str().into())
+                        .and_then(|_| validate(value.as_str().into()))
+                        .map(|_| (key, value)),
+                    _ => Err(std::io::Error::new(
+                        std::io::ErrorKind::Other,
+                        "Invalid format, expecting key=value",
+                    )),
+                }
+            })
+            .collect::<std::io::Result<Vec<_>>>()
+    }
 }
