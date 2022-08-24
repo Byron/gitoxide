@@ -94,7 +94,7 @@ pub(crate) mod function {
             match self {
                 Action::Fill(url) => message::encode(url, write),
                 Action::Approve(last) | Action::Reject(last) => {
-                    write.write_all(&last)?;
+                    write.write_all(last)?;
                     write.write_all(&[b'\n'])
                 }
             }
