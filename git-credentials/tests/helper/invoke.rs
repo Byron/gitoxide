@@ -87,7 +87,8 @@ mod util {
         }
 
         fn finish(self) -> std::io::Result<()> {
-            Ok(self.handle.take().expect("started").join().unwrap())
+            self.handle.take().expect("started").join().unwrap();
+            Ok(())
         }
     }
 }
