@@ -45,7 +45,7 @@ pub(crate) mod function {
     /// Invoke the given `helper` with `action` in `context`.
     ///
     /// Usually the first call is performed with [`Action::Get`] to obtain an identity, which subsequently can be used.
-    /// On successful usage, use [`NextAction::approve()`], otherwise [`NextAction::reject()`].
+    /// On successful usage, use [`NextAction::store()`], otherwise [`NextAction::erase()`].
     pub fn invoke(mut helper: impl crate::Helper, action: Action) -> Result {
         let (stdin, stdout) = helper.start(&action)?;
         action.send(stdin)?;

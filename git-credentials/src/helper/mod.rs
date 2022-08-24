@@ -71,19 +71,19 @@ impl Action {
     }
 }
 
-/// A handle to [approve][NextAction::approve()] or [reject][NextAction::reject()] the outcome of the initial action.
+/// A handle to [store][NextAction::store()] or [erase][NextAction::erase()] the outcome of the initial action.
 #[derive(Clone, Debug)]
 pub struct NextAction {
     previous_output: BString,
 }
 
 impl NextAction {
-    /// Approve the result of the previous [Action].
-    pub fn approve(self) -> Action {
+    /// Approve the result of the previous [Action] and store for lookup.
+    pub fn store(self) -> Action {
         Action::Store(self.previous_output)
     }
-    /// Reject the result of the previous [Action].
-    pub fn reject(self) -> Action {
+    /// Reject the result of the previous [Action] and erase it as to not be returned when being looked up.
+    pub fn erase(self) -> Action {
         Action::Erase(self.previous_output)
     }
 }
