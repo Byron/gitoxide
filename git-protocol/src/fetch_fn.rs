@@ -53,7 +53,7 @@ pub async fn fetch<F, D, T>(
     fetch_mode: FetchConnection,
 ) -> Result<(), Error>
 where
-    F: FnMut(credentials::helper::Action<'_>) -> credentials::helper::Result,
+    F: FnMut(credentials::helper::Action<'_>) -> credentials::helper::invoke::Result,
     D: Delegate,
     T: client::Transport,
 {

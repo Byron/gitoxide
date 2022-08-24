@@ -21,7 +21,7 @@ mod error {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Credentials(#[from] credentials::helper::Error),
+        Credentials(#[from] credentials::helper::invoke::Error),
         #[error(transparent)]
         Transport(#[from] client::Error),
         #[error("The transport didn't accept the advertised server version {actual_version:?} and closed the connection client side")]
@@ -54,7 +54,7 @@ pub(crate) mod function {
         progress: &mut impl Progress,
     ) -> Result<Outcome, Error>
     where
-        AuthFn: FnMut(credentials::helper::Action<'_>) -> credentials::helper::Result,
+        AuthFn: FnMut(credentials::helper::Action<'_>) -> credentials::helper::invoke::Result,
         T: client::Transport,
     {
         let (server_protocol_version, refs, capabilities) = {
@@ -79,7 +79,7 @@ pub(crate) mod function {
                     drop(result); // needed to workaround this: https://github.com/rust-lang/rust/issues/76149
                     let url = transport.to_url();
                     progress.set_name("authentication");
-                    let credentials::helper::Outcome { identity, next } =
+                    let credentials::helper::invoke::Outcome { identity, next } =
                         authenticate(credentials::helper::Action::Fill(url.as_str().into()))?
                             .expect("FILL provides an identity");
                     transport.set_identity(identity)?;
