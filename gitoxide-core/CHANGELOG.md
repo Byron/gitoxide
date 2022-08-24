@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+
+### New Features
+
+ - <csr-id-5d6d5ca305615568dfedbcc10ea86294c0a0472d/> `gix remote refs` to list all remote references of a suitable remote.
+   This takes into account either a named remote, or the remote associated
+   with the current branch, or the default remote it could deduce or obtain
+   from the configuration.
+ - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
+ - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
+
+### Changed (BREAKING)
+
+ - <csr-id-dda995790c260131048484a11e66185b9c841311/> remove `gix free remote ref-list` in favor of `gix remote refs`
+   The functinality is the same, but the latter is built on top of a
+   repository which is slightly less flexible, but preferable over
+   maintaining a non-repo version.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 19 commits contributed to the release over the course of 5 calendar days.
+ - 6 days passed between releases.
+ - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - remove `gix free remote ref-list` in favor of `gix remote refs` ([`dda9957`](https://github.com/Byron/gitoxide/commit/dda995790c260131048484a11e66185b9c841311))
+    - refactor ([`e0be6e9`](https://github.com/Byron/gitoxide/commit/e0be6e9558add3255de63f3785306daace2707a6))
+    - Add support for passing urls directly to bypass all remote repository logic. ([`df3cf18`](https://github.com/Byron/gitoxide/commit/df3cf18a6ac1e4f35f6d11d62184a43722397bbe))
+    - `gix remote refs` to list all remote references of a suitable remote. ([`5d6d5ca`](https://github.com/Byron/gitoxide/commit/5d6d5ca305615568dfedbcc10ea86294c0a0472d))
+    - Try to use maybe async for the simplest of possibly blocking remote interactions ([`db4df25`](https://github.com/Byron/gitoxide/commit/db4df250d7e58518015bed0b9a1e3391b209cb29))
+    - basic parsing of `gix remote refs` without any implementation. ([`f8f1249`](https://github.com/Byron/gitoxide/commit/f8f124943f73bacf816c6d0055f0b66659fd3906))
+ * **Uncategorized**
+    - Release git-date v0.0.5, git-hash v0.9.8, git-features v0.22.2, git-actor v0.11.3, git-glob v0.3.2, git-quote v0.2.1, git-attributes v0.3.2, git-tempfile v2.0.4, git-lock v2.1.1, git-validate v0.5.5, git-object v0.20.2, git-ref v0.15.2, git-sec v0.3.1, git-config v0.7.0, git-credentials v0.4.0, git-diff v0.17.2, git-discover v0.4.1, git-bitmap v0.1.2, git-index v0.4.2, git-mailmap v0.3.2, git-chunk v0.3.1, git-traverse v0.16.2, git-pack v0.21.2, git-odb v0.31.2, git-packetline v0.12.7, git-url v0.7.2, git-transport v0.19.2, git-protocol v0.19.0, git-revision v0.4.2, git-refspec v0.1.0, git-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
+    - Merge branch 'example-write-blob' ([`afedd7f`](https://github.com/Byron/gitoxide/commit/afedd7f86ec8ea18a8165f71698ecc886f5cf643))
+    - Merge pull request #494 from ultrasaurus/patch-1 ([`86fe22c`](https://github.com/Byron/gitoxide/commit/86fe22cb1aad5944a229bc2a5252b36ef1fd59ef))
+    - Merge branch 'main' into remote-ls-refs ([`95f2f4f`](https://github.com/Byron/gitoxide/commit/95f2f4f17f7eae174a64c7d9f6a1513d73b21bbb))
+    - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
+    - Merge branch 'main' into remote-ls-refs ([`e2ee3de`](https://github.com/Byron/gitoxide/commit/e2ee3ded97e5c449933712883535b30d151c7c78))
+    - use docsrs feature in code to show what is feature-gated automatically on docs.rs ([`b1c40b0`](https://github.com/Byron/gitoxide/commit/b1c40b0364ef092cd52d03b34f491b254816b18d))
+    - uniformize deny attributes ([`f7f136d`](https://github.com/Byron/gitoxide/commit/f7f136dbe4f86e7dee1d54835c420ec07c96cd78))
+    - pass --cfg docsrs when compiling for https://docs.rs ([`5176771`](https://github.com/Byron/gitoxide/commit/517677147f1c17304c62cf97a1dd09f232ebf5db))
+    - Merge branch 'main' into remote-ls-refs ([`c82bbfa`](https://github.com/Byron/gitoxide/commit/c82bbfaddc45bf9b5b55f056613046d977d9ef09))
+    - prepare for release of git-repository ([`8aa5389`](https://github.com/Byron/gitoxide/commit/8aa5389d5a1bdd3a07f1caa1c2f55c8af4f9844a))
+    - Merge branch 'main' into remote-ls-refs ([`bd5f3e8`](https://github.com/Byron/gitoxide/commit/bd5f3e8db7e0bb4abfb7b0f79f585ab82c3a14ab))
+    - greatly improve `gix commit describe` performance by adding an object cache ([`d07daaa`](https://github.com/Byron/gitoxide/commit/d07daaae8ed33161097f3007057c9993546ceb75))
+</details>
+
 ## 0.16.0 (2022-08-17)
 
 ### New Features
@@ -18,6 +78,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-4fd096840ba27da6ce86678a85ede33e3be974ff/> `git_revision` is now available in `revision::plumbing`.
    That way it won't clash with the higher-level constructs on top of it
    which use the same names.
+ - <csr-id-12589cc6f08e4d7aabae30bcdadaa0c2b4850229/> adapt to changes in `git-url` and use `BString` to represent URLs.
+   They can contain paths, which is why `String` can't repsent a URL
+   losslessly.
+   
+   For HTTP urls these are ultimately UTF-8 strings though.
 
 ### New Features (BREAKING)
 
@@ -31,9 +96,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 31 commits contributed to the release over the course of 26 calendar days.
+ - 42 commits contributed to the release over the course of 26 calendar days.
  - 26 days passed between releases.
- - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 7 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#427](https://github.com/Byron/gitoxide/issues/427), [#450](https://github.com/Byron/gitoxide/issues/450), [#482](https://github.com/Byron/gitoxide/issues/482)
 
 ### Thanks Clippy
@@ -66,16 +131,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `gix rev parse` now uses `Repository::rev_parse()` ([`e191681`](https://github.com/Byron/gitoxide/commit/e191681a9e700d8a49e2ab6ffb19cfc5f43312a5))
     - `Repository::rev_parse()` returns a `RevSpec`. ([`e2aff28`](https://github.com/Byron/gitoxide/commit/e2aff28e818951785d933f4b55b2f1b882729cb6))
  * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - adjust to changes in `git-transport` ([`94a623b`](https://github.com/Byron/gitoxide/commit/94a623b57e8fa2876731f74224b406ac56838edc))
+    - adapt to changes in `git-transport` and `git-url ([`4ae2390`](https://github.com/Byron/gitoxide/commit/4ae2390578e086705c640fa74d273e1f82c9ab62))
+    - use `git-transport` async-std support and connect ([`bb90741`](https://github.com/Byron/gitoxide/commit/bb9074140f6b79097001692c06a64ad5c76fddef))
+    - adjust to changes in `git-transport` ([`3a024ed`](https://github.com/Byron/gitoxide/commit/3a024ed2bbab19c613349e88abc41502c5cfa8e2))
+    - refactor ([`9d9fe6c`](https://github.com/Byron/gitoxide/commit/9d9fe6c75de3a8cacdb47e42a1829ec8c732f94f))
+    - adapt to changes in `git-url` ([`624b180`](https://github.com/Byron/gitoxide/commit/624b1807600344f6969402f5bd193443ec1f1bd6))
+    - adapt to changes in `git-url` and use `BString` to represent URLs. ([`12589cc`](https://github.com/Byron/gitoxide/commit/12589cc6f08e4d7aabae30bcdadaa0c2b4850229))
     - first successful test for returning a refspec. ([`6e5bd5c`](https://github.com/Byron/gitoxide/commit/6e5bd5c152403d76ba1cf3da2b984689cb6fe8c5))
  * **[#482](https://github.com/Byron/gitoxide/issues/482)**
     - Bring back conversion from discovery kind to `git-repository::Kind` ([`ebb5bee`](https://github.com/Byron/gitoxide/commit/ebb5bee7b71272013f43f18a5a7ce48eccb587a0))
  * **Uncategorized**
+    - Release git-commitgraph v0.8.1, gitoxide-core v0.16.0, gitoxide v0.14.0 ([`183c048`](https://github.com/Byron/gitoxide/commit/183c0488a808ef760a9f6795f5c040e73926c3a8))
     - prepare for gitoxide release ([`6305d52`](https://github.com/Byron/gitoxide/commit/6305d52236c094c412b221967f59eb264c2c3038))
     - Release git-date v0.0.3, git-actor v0.11.1, git-attributes v0.3.1, git-tempfile v2.0.3, git-object v0.20.1, git-ref v0.15.1, git-config v0.6.1, git-diff v0.17.1, git-discover v0.4.0, git-bitmap v0.1.1, git-index v0.4.1, git-mailmap v0.3.1, git-traverse v0.16.1, git-pack v0.21.1, git-odb v0.31.1, git-packetline v0.12.6, git-url v0.7.1, git-transport v0.19.1, git-protocol v0.18.1, git-revision v0.4.0, git-worktree v0.4.1, git-repository v0.21.0, safety bump 5 crates ([`c96473d`](https://github.com/Byron/gitoxide/commit/c96473dce21c3464aacbc0a62d520c1a33172611))
     - Release git-hash v0.9.7, git-features v0.22.1 ([`232784a`](https://github.com/Byron/gitoxide/commit/232784a59ded3e8016e4257c7e146ad385cdd64a))
+    - Merge branch 'main' into remote-ls-refs ([`c4bf958`](https://github.com/Byron/gitoxide/commit/c4bf9585d815bc342e5fb383336cc654280dd34f))
     - fix tree ext reading and writing; round-trip with long path works now ([`f93febe`](https://github.com/Byron/gitoxide/commit/f93febe2d2c55938ac8f698b57144583caab54ef))
     - Merge branch 'format_git_date_time' ([`99e12be`](https://github.com/Byron/gitoxide/commit/99e12bee16ab3f344c71818bfd1c95cf50e1721b))
+    - Merge branch 'main' into remote-ls-refs ([`de61c4d`](https://github.com/Byron/gitoxide/commit/de61c4db7855d6925d66961f62ae3d12cc4acf78))
     - thanks clippy ([`4bd747c`](https://github.com/Byron/gitoxide/commit/4bd747cb3e126fe5b1d540270cfbd731cffd42ef))
+    - Merge branch 'main' into remote-ls-refs ([`e8fc89d`](https://github.com/Byron/gitoxide/commit/e8fc89d36ab17a66e799bdec3ed71388b9730266))
     - Merge branch 'write-index-files' into write-index-v2 ([`cddc2ca`](https://github.com/Byron/gitoxide/commit/cddc2ca06f63f66e887ff821452d1f56fb08fe6a))
     - Merge branch 'write-index-files' into rev-parse-delegate ([`370110d`](https://github.com/Byron/gitoxide/commit/370110d3356528af38150c2280ed505354ceca5b))
     - Merge branch 'main' into rev-parse-delegate ([`4ae2bed`](https://github.com/Byron/gitoxide/commit/4ae2bedfc25d1881d58ebdc54aca0936c68d4859))

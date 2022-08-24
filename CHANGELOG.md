@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Chore
+
+ - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+
+### New Features
+
+ - <csr-id-45a30f0f31a99cda5cf105408e9c3905f43071f2/> Support for `-c/--config` in `gix`
+ - <csr-id-5d6d5ca305615568dfedbcc10ea86294c0a0472d/> `gix remote refs` to list all remote references of a suitable remote.
+   This takes into account either a named remote, or the remote associated
+   with the current branch, or the default remote it could deduce or obtain
+   from the configuration.
+ - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
+
+### Changed (BREAKING)
+
+ - <csr-id-dda995790c260131048484a11e66185b9c841311/> remove `gix free remote ref-list` in favor of `gix remote refs`
+   The functinality is the same, but the latter is built on top of a
+   repository which is slightly less flexible, but preferable over
+   maintaining a non-repo version.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 14 commits contributed to the release over the course of 3 calendar days.
+ - 6 days passed between releases.
+ - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - remove `gix free remote ref-list` in favor of `gix remote refs` ([`dda9957`](https://github.com/Byron/gitoxide/commit/dda995790c260131048484a11e66185b9c841311))
+    - Support for `-c/--config` in `gix` ([`45a30f0`](https://github.com/Byron/gitoxide/commit/45a30f0f31a99cda5cf105408e9c3905f43071f2))
+    - refactor ([`e0be6e9`](https://github.com/Byron/gitoxide/commit/e0be6e9558add3255de63f3785306daace2707a6))
+    - Add support for passing urls directly to bypass all remote repository logic. ([`df3cf18`](https://github.com/Byron/gitoxide/commit/df3cf18a6ac1e4f35f6d11d62184a43722397bbe))
+    - `gix remote refs` to list all remote references of a suitable remote. ([`5d6d5ca`](https://github.com/Byron/gitoxide/commit/5d6d5ca305615568dfedbcc10ea86294c0a0472d))
+    - Try to use maybe async for the simplest of possibly blocking remote interactions ([`db4df25`](https://github.com/Byron/gitoxide/commit/db4df250d7e58518015bed0b9a1e3391b209cb29))
+    - basic parsing of `gix remote refs` without any implementation. ([`f8f1249`](https://github.com/Byron/gitoxide/commit/f8f124943f73bacf816c6d0055f0b66659fd3906))
+ * **Uncategorized**
+    - Merge branch 'example-write-blob' ([`afedd7f`](https://github.com/Byron/gitoxide/commit/afedd7f86ec8ea18a8165f71698ecc886f5cf643))
+    - Merge pull request #494 from ultrasaurus/patch-1 ([`86fe22c`](https://github.com/Byron/gitoxide/commit/86fe22cb1aad5944a229bc2a5252b36ef1fd59ef))
+    - Merge branch 'main' into remote-ls-refs ([`95f2f4f`](https://github.com/Byron/gitoxide/commit/95f2f4f17f7eae174a64c7d9f6a1513d73b21bbb))
+    - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
+    - thanks clippy ([`bb6813a`](https://github.com/Byron/gitoxide/commit/bb6813abf365728d9851ee205b2c25b925a0f06a))
+    - use docsrs feature in code to show what is feature-gated automatically on docs.rs ([`b1c40b0`](https://github.com/Byron/gitoxide/commit/b1c40b0364ef092cd52d03b34f491b254816b18d))
+    - uniformize deny attributes ([`f7f136d`](https://github.com/Byron/gitoxide/commit/f7f136dbe4f86e7dee1d54835c420ec07c96cd78))
+</details>
+
 ## 0.14.0 (2022-08-17)
 
 ### Changed
