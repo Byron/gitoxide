@@ -67,8 +67,8 @@ pub(crate) mod function {
             None => Ok(None),
             Some(stdout) => {
                 let ctx = Context::from_bytes(stdout.as_slice())?;
-                let username = ctx.username.ok_or_else(|| Error::KeyNotFound { name: "username" })?;
-                let password = ctx.password.ok_or_else(|| Error::KeyNotFound { name: "password" })?;
+                let username = ctx.username.ok_or(Error::KeyNotFound { name: "username" })?;
+                let password = ctx.password.ok_or(Error::KeyNotFound { name: "password" })?;
                 Ok(Some(Outcome {
                     identity: git_sec::identity::Account { username, password },
                     next: NextAction {

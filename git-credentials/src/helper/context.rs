@@ -25,7 +25,7 @@ mod serde {
                             .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                         out.write_all(key.as_bytes())?;
                         out.write_all(b"=")?;
-                        out.write_all(&value)?;
+                        out.write_all(value)?;
                         out.write_all(b"\n")?;
                     }
                 }
