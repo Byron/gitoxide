@@ -1,6 +1,6 @@
 [package]
 name = "git-bitmap"
-version = "0.1.1"
+version = "0.1.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated implementing the standard git bitmap format"

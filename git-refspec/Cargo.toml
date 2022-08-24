@@ -12,9 +12,9 @@ include = ["src/**/*", "CHANGELOG.md", "README.md"]
 doctest = false
 
 [dependencies]
-git-revision = { version = "^0.4.1", path = "../git-revision" }
-git-validate = { version = "^0.5.4", path = "../git-validate" }
-git-hash = { version = "^0.9.7", path = "../git-hash" }
+git-revision = { version = "^0.4.2", path = "../git-revision" }
+git-validate = { version = "^0.5.5", path = "../git-validate" }
+git-hash = { version = "^0.9.8", path = "../git-hash" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 thiserror = "1.0.26"

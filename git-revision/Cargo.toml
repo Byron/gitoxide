@@ -1,6 +1,6 @@
 [package]
 name = "git-revision"
-version = "0.4.1"
+version = "0.4.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dealing with finding names for revisions and parsing specifications"
@@ -16,9 +16,9 @@ doctest = false
 serde1 = [ "serde", "git-hash/serde1", "git-object/serde1" ]
 
 [dependencies]
-git-hash = { version = "^0.9.7", path = "../git-hash" }
-git-object = { version = "^0.20.1", path = "../git-object" }
-git-date = { version = "^0.0.4", path = "../git-date" }
+git-hash = { version = "^0.9.8", path = "../git-hash" }
+git-object = { version = "^0.20.2", path = "../git-object" }
+git-date = { version = "^0.1.0", path = "../git-date" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 hash_hasher = "2.0.3"

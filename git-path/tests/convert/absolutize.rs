@@ -18,6 +18,15 @@ fn no_change_if_there_are_no_trailing_relative_components() {
 fn special_cases_around_cwd() -> crate::Result {
     let cwd = std::env::current_dir()?;
     assert_eq!(
+        absolutize(p("./../../.git/modules/src/llvm-project"), Some(&cwd)),
+        cwd.parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .join(".git/modules/src/llvm-project"),
+        ". is handled specifically to not fail to swap in the CWD"
+    );
+    assert_eq!(
         absolutize(p("a/.."), None::<&Path>),
         p("."),
         "empty paths are never returned as they are invalid"
