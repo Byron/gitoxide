@@ -1,26 +1,19 @@
 use bstr::{BStr, BString};
-use std::io;
 
-use quick_error::quick_error;
-
-quick_error! {
+mod error {
     /// The error used in the [credentials helper][action()].
-    #[derive(Debug)]
+    #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
-        Io(err: io::Error) {
-            display("An IO error occurred while communicating to the credentials helper")
-            from()
-            source(err)
-        }
-        KeyNotFound(name: String) {
-            display("Could not find '{}' in output of git credentials helper", name)
-        }
-        CredentialsHelperFailed(code: Option<i32>) {
-            display("Credentials helper program failed with status code {:?}", code)
-        }
+        #[error("An IO error occurred while communicating to the credentials helper")]
+        Io(#[from] std::io::Error),
+        #[error("Could not find {name:?} in output of credentials helper")]
+        KeyNotFound { name: String },
+        #[error("Credentials helper program failed with status code {code:?}")]
+        CredentialsHelperFailed { code: Option<i32> },
     }
 }
+pub use error::Error;
 
 /// The action to perform by the credentials [`action()`].
 #[derive(Clone, Debug)]
@@ -105,7 +98,9 @@ pub(crate) mod function {
 
         let output = child.wait_with_output()?;
         if !output.status.success() {
-            return Err(Error::CredentialsHelperFailed(output.status.code()));
+            return Err(Error::CredentialsHelperFailed {
+                code: output.status.code(),
+            });
         }
         let stdout = output.stdout;
         if stdout.is_empty() {
@@ -115,7 +110,7 @@ pub(crate) mod function {
             let find = |name: &str| {
                 kvs.iter()
                     .find(|(k, _)| k == name)
-                    .ok_or_else(|| Error::KeyNotFound(name.into()))
+                    .ok_or_else(|| Error::KeyNotFound { name: name.into() })
                     .map(|(_, n)| n.to_owned())
             };
             Ok(Some(Outcome {

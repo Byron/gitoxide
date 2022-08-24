@@ -1169,8 +1169,8 @@ dependencies = [
  "document-features",
  "git-sec",
  "git-testtools",
- "quick-error",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
