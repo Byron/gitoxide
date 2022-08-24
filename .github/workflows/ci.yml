@@ -68,12 +68,37 @@ jobs:
           version: 0.9
       - name: "Test (nextest)"
         run: cargo nextest run --all --no-fail-fast
+
+  installation:
+    strategy:
+      matrix:
+        build: [ win-msvc, win-gnu, win32-msvc ]
+        include:
+          - build: win-msvc
+            os: windows-2019
+            rust: stable
+            target: x86_64-pc-windows-msvc
+          - build: win-gnu
+            os: windows-2019
+            rust: nightly-x86_64-gnu
+            target: x86_64-pc-windows-gnu
+          - build: win32-msvc
+            os: windows-2019
+            rust: nightly
+            target: i686-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
       - name: "Install prerequisites"
         run: vcpkg install  zlib:x64-windows-static-md
-        if: startsWith(matrix.os, 'windows')
       - name: "Installation from crates.io"
-        if: startsWith(matrix.os, 'windows')
-        run: cargo install --target-dir install-artifacts --debug --force gitoxide cargo-smart-release
+        run: cargo install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force gitoxide cargo-smart-release
 
   lint:
     runs-on: ubuntu-latest
