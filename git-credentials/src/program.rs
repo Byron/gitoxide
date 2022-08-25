@@ -43,7 +43,7 @@ impl Program {
                     .map_or(input.as_slice(), |pos| &input[..pos])
                     .as_bstr(),
             );
-            if path.is_absolute() {
+            if path.is_absolute() || input.first() == Some(&b'/') {
                 Kind::CustomPath { path_and_args: input }
             } else {
                 input.insert_str(0, "git credential-");
