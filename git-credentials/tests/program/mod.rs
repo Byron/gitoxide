@@ -2,11 +2,11 @@ use git_credentials::helper::{invoke, Kind};
 use git_credentials::Program;
 
 #[test]
-fn git_credentials() {
+fn builtin() {
     assert!(
         matches!(
             git_credentials::helper::invoke(
-                Program::from_kind(Kind::GitCredential),
+                Program::from_kind(Kind::Builtin),
                 invoke::Action::get_for_url("/path/without/scheme/fails/with/error"),
             )
             .unwrap_err(),

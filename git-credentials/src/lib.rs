@@ -40,5 +40,5 @@ pub mod helper;
 ///
 /// See [`invoke()`][helper::invoke()] for a more flexible implementation.
 pub fn helper(action: helper::invoke::Action) -> helper::invoke::Result {
-    helper::invoke(Program::from_kind(helper::Kind::GitCredential), action)
+    helper::invoke(Program::from_kind(helper::Kind::Builtin), action)
 }

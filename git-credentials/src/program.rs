@@ -16,11 +16,18 @@ impl Helper for Program {
         match self {
             Program::Ready(kind) => {
                 let (mut cmd, is_custom) = match kind {
-                    helper::Kind::GitCredential => {
+                    helper::Kind::Builtin => {
                         let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
                         cmd.arg("credential");
                         (cmd, false)
                     }
+                    helper::Kind::Script(for_shell)
+                    | helper::Kind::CustomName {
+                        name_and_args: for_shell,
+                    }
+                    | helper::Kind::CustomPath {
+                        path_and_args: for_shell,
+                    } => todo!("name and args: {for_shell:?}"),
                 };
                 cmd.arg(action.as_helper_arg(is_custom))
                     .stdin(Stdio::piped())
