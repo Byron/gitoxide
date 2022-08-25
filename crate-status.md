@@ -240,6 +240,9 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] for fetch
     * [ ] for push
 
+### git-command
+* [ ] execute commands with `sh`
+
 ### git-note
 
 A mechanism to associate metadata with any object, and keep revisions of it using git itself.

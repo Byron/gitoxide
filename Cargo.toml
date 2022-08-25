@@ -126,6 +126,7 @@ members = [
     "git-hash",
     "git-validate",
     "git-ref",
+    "git-command",
     "git-config",
     "git-discover",
     "git-features",

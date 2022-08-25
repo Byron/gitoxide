@@ -1109,6 +1109,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-command"
+version = "0.0.0"
+
+[[package]]
 name = "git-commitgraph"
 version = "0.8.2"
 dependencies = [

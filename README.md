@@ -141,6 +141,7 @@ is usable to some extend.
   * [git-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-worktree)
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
   * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
+  * [git-command](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-command)
 * **idea** _(just a name placeholder)_
   * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
   * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)
