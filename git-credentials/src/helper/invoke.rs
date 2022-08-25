@@ -2,6 +2,7 @@ use crate::helper::Context;
 use bstr::{BStr, BString};
 
 /// The outcome of the credentials [`helper`][crate::helper()].
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Outcome {
     /// The obtained identity.
     pub identity: git_sec::identity::Account,
@@ -77,7 +78,7 @@ impl Action {
 }
 
 /// A handle to [store][NextAction::store()] or [erase][NextAction::erase()] the outcome of the initial action.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct NextAction {
     previous_output: BString,
 }
