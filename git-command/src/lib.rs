@@ -1,8 +1,10 @@
-#![deny(rust_2018_idioms)]
+//! Launch commands very similarly to `std::process::Command`, but with `git` specific capabilities and adjustments.
+#![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
 use std::ffi::OsString;
 
+/// A structure to keep settings to use when invoking a command via [`spawn()`][Prepare::spawn()], after creating it with [`prepare()`].
 pub struct Prepare {
     command: OsString,
     stdin: std::process::Stdio,
@@ -45,6 +47,7 @@ mod prepare {
 
     /// Finalization
     impl Prepare {
+        /// Spawn the command as configured.
         pub fn spawn(self) -> std::io::Result<std::process::Child> {
             let mut cmd = if self.use_shell {
                 let mut cmd = std::process::Command::new(if cfg!(windows) { "sh" } else { "/bin/sh" });
