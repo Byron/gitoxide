@@ -61,24 +61,24 @@ mod prepare {
         }
     }
 
-    impl Into<Command> for Prepare {
-        fn into(mut self) -> Command {
-            let mut cmd = if self.use_shell {
+    impl From<Prepare> for Command {
+        fn from(mut prep: Prepare) -> Command {
+            let mut cmd = if prep.use_shell {
                 let mut cmd = Command::new(if cfg!(windows) { "sh" } else { "/bin/sh" });
                 cmd.arg("-c");
-                if !self.args.is_empty() {
-                    self.command.push(" \"$@\"")
+                if !prep.args.is_empty() {
+                    prep.command.push(" \"$@\"")
                 }
-                cmd.arg(self.command);
+                cmd.arg(prep.command);
                 cmd.arg("--");
                 cmd
             } else {
-                Command::new(self.command)
+                Command::new(prep.command)
             };
-            cmd.stdin(self.stdin)
-                .stdout(self.stdout)
-                .stderr(self.stderr)
-                .args(self.args);
+            cmd.stdin(prep.stdin)
+                .stdout(prep.stdout)
+                .stderr(prep.stderr)
+                .args(prep.args);
             cmd
         }
     }
