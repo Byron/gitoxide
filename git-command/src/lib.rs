@@ -1,4 +1,4 @@
-//! Launch commands very similarly to `std::process::Command`, but with `git` specific capabilities and adjustments.
+//! Launch commands very similarly to `Command`, but with `git` specific capabilities and adjustments.
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
@@ -15,7 +15,7 @@ pub struct Prepare {
 
 mod prepare {
     use crate::Prepare;
-    use std::process::Stdio;
+    use std::process::{Command, Stdio};
 
     /// Builder
     impl Prepare {
@@ -49,16 +49,23 @@ mod prepare {
     impl Prepare {
         /// Spawn the command as configured.
         pub fn spawn(self) -> std::io::Result<std::process::Child> {
+            let mut cmd: Command = self.into();
+            cmd.spawn()
+        }
+    }
+
+    impl Into<Command> for Prepare {
+        fn into(self) -> Command {
             let mut cmd = if self.use_shell {
-                let mut cmd = std::process::Command::new(if cfg!(windows) { "sh" } else { "/bin/sh" });
+                let mut cmd = Command::new(if cfg!(windows) { "sh" } else { "/bin/sh" });
                 cmd.arg("-c");
                 cmd.arg(self.command);
                 cmd
             } else {
-                std::process::Command::new(self.command)
+                Command::new(self.command)
             };
             cmd.stdin(self.stdin).stdout(self.stdout).stderr(self.stderr);
-            cmd.spawn()
+            cmd
         }
     }
 }
