@@ -46,8 +46,9 @@ fn store_and_reject() {
 }
 
 mod program {
+    use bstr::ByteVec;
     use git_credentials::helper::invoke;
-    use git_credentials::{program::Kind, Program};
+    use git_credentials::{program, program::Kind, Program};
 
     #[test]
     fn builtin() {
@@ -82,6 +83,49 @@ mod program {
             }
         );
     }
+
+    #[cfg(unix)] // needs executable bits to work
+    #[test]
+    fn path_to_helper_script() -> crate::Result {
+        assert_eq!(
+            git_credentials::helper::invoke(
+                Program::from_custom_definition(
+                    git_path::into_bstr(git_path::realpath(git_testtools::fixture_path("custom-helper.sh"))?)
+                        .into_owned()
+                ),
+                invoke::Action::get_for_url("/does/not/matter"),
+            )?
+            .expect("present")
+            .identity,
+            git_sec::identity::Account {
+                username: "user-script".into(),
+                password: "pass-script".into()
+            }
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn path_to_helper_as_script_to_workaround_executable_bits() -> crate::Result {
+        let mut helper = git_path::to_unix_separators_on_windows(git_path::into_bstr(git_testtools::fixture_path(
+            "custom-helper.sh",
+        )))
+        .into_owned();
+        helper.insert_str(0, "sh ");
+        assert_eq!(
+            git_credentials::helper::invoke(
+                Program::Ready(program::Kind::CustomScript(helper)),
+                invoke::Action::get_for_url("/does/not/matter"),
+            )?
+            .expect("present")
+            .identity,
+            git_sec::identity::Account {
+                username: "user-script".into(),
+                password: "pass-script".into()
+            }
+        );
+        Ok(())
+    }
 }
 
 mod util {
@@ -99,8 +143,8 @@ mod util {
 
         fn start(&mut self, action: &Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
             let ((them_send, us_receive), (us_send, them_receive)) = (
-                git_features::io::pipe::unidirectional(128),
-                git_features::io::pipe::unidirectional(128),
+                git_features::io::pipe::unidirectional(None),
+                git_features::io::pipe::unidirectional(None),
             );
             let action_name = action.as_helper_arg(true).into();
             self.handle = std::thread::spawn(move || {

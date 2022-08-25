@@ -267,6 +267,11 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
  
 ### git-credentials
 * [x] launch git credentials helpers with a given action
+  - [x] built-in `git credential` program
+  - [x] as scripts
+  - [x] as absolute paths to programs with optional arguments
+  - [x] program name with optional arguments, transformed into `git credential-<name>`
+* [x] `helper::main()` for easy custom credential helper programs written in Rust
 
 ### git-filter
 
