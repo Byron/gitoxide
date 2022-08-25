@@ -1,5 +1,5 @@
 use crate::{helper, Helper, Program};
-use bstr::{BString, ByteSlice};
+use bstr::{BString, ByteSlice, ByteVec};
 use std::process::{Command, Stdio};
 
 /// The kind of helper program to use.
@@ -46,6 +46,7 @@ impl Program {
             if path.is_absolute() {
                 Kind::CustomPath { path_and_args: input }
             } else {
+                input.insert_str(0, "git credential-");
                 Kind::CustomName { name_and_args: input }
             }
         })
