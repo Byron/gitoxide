@@ -10,6 +10,7 @@ pub struct Prepare {
     stdin: std::process::Stdio,
     stdout: std::process::Stdio,
     stderr: std::process::Stdio,
+    args: Vec<OsString>,
     use_shell: bool,
 }
 
@@ -43,6 +44,12 @@ mod prepare {
             self.stderr = stdio;
             self
         }
+
+        /// Add `arg` to the list of arguments to call the command with.
+        pub fn arg(mut self, arg: impl Into<std::ffi::OsString>) -> Self {
+            self.args.push(arg.into());
+            self
+        }
     }
 
     /// Finalization
@@ -55,16 +62,23 @@ mod prepare {
     }
 
     impl Into<Command> for Prepare {
-        fn into(self) -> Command {
+        fn into(mut self) -> Command {
             let mut cmd = if self.use_shell {
                 let mut cmd = Command::new(if cfg!(windows) { "sh" } else { "/bin/sh" });
                 cmd.arg("-c");
+                if !self.args.is_empty() {
+                    self.command.push(" \"$@\"")
+                }
                 cmd.arg(self.command);
+                cmd.arg("--");
                 cmd
             } else {
                 Command::new(self.command)
             };
-            cmd.stdin(self.stdin).stdout(self.stdout).stderr(self.stderr);
+            cmd.stdin(self.stdin)
+                .stdout(self.stdout)
+                .stderr(self.stderr)
+                .args(self.args);
             cmd
         }
     }
@@ -83,6 +97,7 @@ pub fn prepare(cmd: impl Into<OsString>) -> Prepare {
         stdin: std::process::Stdio::null(),
         stdout: std::process::Stdio::piped(),
         stderr: std::process::Stdio::null(),
+        args: Vec::new(),
         use_shell: false,
     }
 }
