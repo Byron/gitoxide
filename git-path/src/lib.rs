@@ -58,6 +58,9 @@ pub struct Spec(bstr::BString);
 mod convert;
 pub use convert::*;
 
+mod util;
+pub use util::is_absolute;
+
 mod spec;
 
 ///
