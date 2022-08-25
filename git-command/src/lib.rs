@@ -75,13 +75,14 @@ mod prepare {
 /// Note that the default IO is configured for typical API usage, that is
 ///
 /// - `stdin` is null
-/// - `stdout` and `stderr` are captured.
+/// - `stdout` is captured.
+/// - `stderr` is null
 pub fn prepare(cmd: impl Into<OsString>) -> Prepare {
     Prepare {
         command: cmd.into(),
         stdin: std::process::Stdio::null(),
         stdout: std::process::Stdio::piped(),
-        stderr: std::process::Stdio::piped(),
+        stderr: std::process::Stdio::null(),
         use_shell: false,
     }
 }
