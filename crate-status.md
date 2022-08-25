@@ -241,7 +241,9 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] for push
 
 ### git-command
-* [ ] execute commands with `sh`
+* [x] execute commands directly
+* [x] execute commands with `sh`
+* [ ] support for `GIT_EXEC_PATH` environment variable with `git-sec` filter
 
 ### git-note
 
