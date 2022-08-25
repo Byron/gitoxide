@@ -60,7 +60,26 @@ mod program {
                 .unwrap_err(),
                 invoke::Error::CredentialsHelperFailed { .. }
             ),
-            "this failure indicates we could launch the helper, even though it wasn't happy which is fine"
+            "this failure indicates we could launch the helper, even though it wasn't happy which is fine. It doesn't like the URL"
+        );
+    }
+
+    #[test]
+    fn script() {
+        assert_eq!(
+            git_credentials::helper::invoke(
+                Program::from_custom_definition(
+                    "!f() { test \"$1\" = get && echo \"password=pass\" && echo \"username=user\"; }; f"
+                ),
+                invoke::Action::get_for_url("/does/not/matter"),
+            )
+            .unwrap()
+            .expect("present")
+            .identity,
+            git_sec::identity::Account {
+                username: "user".into(),
+                password: "pass".into()
+            }
         );
     }
 }

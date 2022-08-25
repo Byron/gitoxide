@@ -60,11 +60,13 @@ impl Helper for Program {
     fn start(&mut self, action: &helper::invoke::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
         match self {
             Program::Ready(kind) => {
-                let (mut cmd, is_custom) = match kind {
+                let mut cmd = match kind {
                     Kind::Builtin => {
                         let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
-                        cmd.arg("credential");
-                        (cmd, false)
+                        cmd.arg("credential")
+                            .stderr(Stdio::null())
+                            .arg(action.as_helper_arg(false));
+                        cmd
                     }
                     Kind::CustomScript(for_shell)
                     | Kind::CustomName {
@@ -72,15 +74,16 @@ impl Helper for Program {
                     }
                     | Kind::CustomPath {
                         path_and_args: for_shell,
-                    } => todo!("name and args: {for_shell:?}"),
+                    } => git_command::prepare(git_path::from_bstr(for_shell.as_bstr()).as_ref())
+                        .with_shell()
+                        .arg(action.as_helper_arg(true))
+                        .into(),
                 };
-                cmd.arg(action.as_helper_arg(is_custom))
-                    .stdin(Stdio::piped())
-                    .stdout(if action.expects_output() {
-                        Stdio::piped()
-                    } else {
-                        Stdio::null()
-                    });
+                cmd.stdin(Stdio::piped()).stdout(if action.expects_output() {
+                    Stdio::piped()
+                } else {
+                    Stdio::null()
+                });
                 let mut child = cmd.spawn()?;
                 let stdin = child.stdin.take().expect("stdin to be configured");
                 let stdout = child.stdout.take();

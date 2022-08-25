@@ -63,6 +63,7 @@ impl Action {
     pub fn expects_output(&self) -> bool {
         matches!(self, Action::Get(_))
     }
+
     /// The name of the argument to describe this action. If `is_custom` is true, the target program is
     /// a custom credentials helper, not a built-in one.
     pub fn as_helper_arg(&self, is_custom: bool) -> &str {
