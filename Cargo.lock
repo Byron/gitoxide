@@ -1168,6 +1168,7 @@ dependencies = [
  "bstr",
  "document-features",
  "git-features",
+ "git-path",
  "git-sec",
  "git-testtools",
  "serde",

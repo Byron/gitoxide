@@ -1,4 +1,6 @@
 use crate::{helper, Helper, Program};
+use bstr::{BString, ByteSlice};
+use std::process::{Command, Stdio};
 
 /// The kind of helper program to use.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -18,16 +20,35 @@ pub enum Kind {
         path_and_args: BString,
     },
     /// A script to execute with `sh`.
-    Script(BString),
+    CustomScript(BString),
 }
-
-use bstr::BString;
-use std::process::{Command, Stdio};
 
 impl Program {
     /// Create a new program of the given `kind`.
     pub fn from_kind(kind: Kind) -> Self {
         Program::Ready(kind)
+    }
+
+    /// Parse the given input as per the custom helper definition, supporting `!<script>`, `name` and `/absolute/name`, the latter two
+    /// also support arguments which are ignored here.
+    pub fn from_custom_definition(input: impl Into<BString>) -> Self {
+        let mut input = input.into();
+        Program::Ready(if input.starts_with(b"!") {
+            input.remove(0);
+            Kind::CustomScript(input)
+        } else {
+            let path = git_path::from_bstr(
+                input
+                    .find_byte(b' ')
+                    .map_or(input.as_slice(), |pos| &input[..pos])
+                    .as_bstr(),
+            );
+            if path.is_absolute() {
+                Kind::CustomPath { path_and_args: input }
+            } else {
+                Kind::CustomName { name_and_args: input }
+            }
+        })
     }
 }
 
@@ -44,7 +65,7 @@ impl Helper for Program {
                         cmd.arg("credential");
                         (cmd, false)
                     }
-                    Kind::Script(for_shell)
+                    Kind::CustomScript(for_shell)
                     | Kind::CustomName {
                         name_and_args: for_shell,
                     }

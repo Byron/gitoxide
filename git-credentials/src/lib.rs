@@ -24,6 +24,7 @@ pub trait Helper {
 }
 
 /// A program/executable implementing the credential helper protocol.
+#[derive(Debug)]
 pub enum Program {
     /// The kind of program, ready for launch
     Ready(program::Kind),
