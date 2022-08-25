@@ -1111,6 +1111,9 @@ dependencies = [
 [[package]]
 name = "git-command"
 version = "0.0.0"
+dependencies = [
+ "git-testtools",
+]
 
 [[package]]
 name = "git-commitgraph"
