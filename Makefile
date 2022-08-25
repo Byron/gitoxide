@@ -102,6 +102,8 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features crc32 \
 			   && cargo check --features zlib \
 			   && cargo check --features zlib,zlib-ng-compat \
+			   && cargo check --features zlib-stock \
+			   && cargo check --features zlib,zlib-stock \
 			   && cargo check --features cache-efficiency-debug
 	cd git-commitgraph && cargo check --all-features \
 			   && cargo check
