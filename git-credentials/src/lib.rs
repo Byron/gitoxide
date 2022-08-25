@@ -26,12 +26,13 @@ pub trait Helper {
 /// A program/executable implementing the credential helper protocol.
 pub enum Program {
     /// The kind of program, ready for launch
-    Ready(helper::Kind),
+    Ready(program::Kind),
     /// The process is running.
     Started(std::process::Child),
 }
 
-mod program;
+///
+pub mod program;
 
 ///
 pub mod helper;
@@ -40,5 +41,5 @@ pub mod helper;
 ///
 /// See [`invoke()`][helper::invoke()] for a more flexible implementation.
 pub fn helper(action: helper::invoke::Action) -> helper::invoke::Result {
-    helper::invoke(Program::from_kind(helper::Kind::Builtin), action)
+    helper::invoke(Program::from_kind(program::Kind::Builtin), action)
 }

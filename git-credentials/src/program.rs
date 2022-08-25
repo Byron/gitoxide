@@ -1,9 +1,32 @@
 use crate::{helper, Helper, Program};
+
+/// The kind of helper program to use.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum Kind {
+    /// The built-in `git credential` helper program, part of any git distribution.
+    Builtin,
+    /// A custom credentials helper, as identified just by the name with optional arguments
+    CustomName {
+        /// The name like `foo` along with optional args, like `foo --arg --bar="a b"`, with arguments using `sh` shell quoting rules.
+        /// The program executed will be `git-credential-foo` if `name_and_args` starts with `foo`.
+        name_and_args: BString,
+    },
+    /// A custom credentials helper, as identified just by the absolute path to the program and optional arguments. The program is executed through a shell.
+    CustomPath {
+        /// The absolute path to the executable, like `/path/to/exe` along with optional args, like `/path/to/exe --arg --bar="a b"`, with arguments using `sh`
+        /// shell quoting rules.
+        path_and_args: BString,
+    },
+    /// A script to execute with `sh`.
+    Script(BString),
+}
+
+use bstr::BString;
 use std::process::{Command, Stdio};
 
 impl Program {
     /// Create a new program of the given `kind`.
-    pub fn from_kind(kind: helper::Kind) -> Self {
+    pub fn from_kind(kind: Kind) -> Self {
         Program::Ready(kind)
     }
 }
@@ -16,16 +39,16 @@ impl Helper for Program {
         match self {
             Program::Ready(kind) => {
                 let (mut cmd, is_custom) = match kind {
-                    helper::Kind::Builtin => {
+                    Kind::Builtin => {
                         let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
                         cmd.arg("credential");
                         (cmd, false)
                     }
-                    helper::Kind::Script(for_shell)
-                    | helper::Kind::CustomName {
+                    Kind::Script(for_shell)
+                    | Kind::CustomName {
                         name_and_args: for_shell,
                     }
-                    | helper::Kind::CustomPath {
+                    | Kind::CustomPath {
                         path_and_args: for_shell,
                     } => todo!("name and args: {for_shell:?}"),
                 };

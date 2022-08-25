@@ -1,5 +1,5 @@
-use git_credentials::helper::{invoke, Kind};
-use git_credentials::Program;
+use git_credentials::helper::invoke;
+use git_credentials::{program::Kind, Program};
 
 #[test]
 fn builtin() {
