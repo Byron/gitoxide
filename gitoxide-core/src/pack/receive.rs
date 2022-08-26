@@ -162,7 +162,7 @@ mod blocking_io {
         protocol::fetch(
             transport,
             delegate,
-            protocol::credentials::helper,
+            protocol::credentials::git,
             progress,
             protocol::FetchConnection::TerminateOnSuccessfulCompletion,
         )?;
@@ -231,7 +231,7 @@ mod async_io {
             futures_lite::future::block_on(protocol::fetch(
                 transport,
                 delegate,
-                protocol::credentials::helper,
+                protocol::credentials::git,
                 progress,
                 protocol::FetchConnection::TerminateOnSuccessfulCompletion,
             ))

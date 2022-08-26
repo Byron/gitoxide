@@ -35,7 +35,7 @@ where
     async fn fetch_refs(&mut self) -> Result<HandshakeWithRefs, Error> {
         let mut outcome = git_protocol::fetch::handshake(
             &mut self.transport,
-            git_protocol::credentials::helper,
+            git_protocol::credentials::git,
             Vec::new(),
             &mut self.progress,
         )
