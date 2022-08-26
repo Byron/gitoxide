@@ -41,9 +41,10 @@ pub mod program;
 ///
 pub mod protocol;
 
-/// Call the `git credential` helper program performing the given `action`, which reads all context from the git configuration.
+/// Call the `git credential` helper program performing the given `action`, which reads all context from the git configuration
+/// and does everything `git` typically does.
 ///
-/// See [`invoke()`][helper::invoke()] for a more flexible implementation.
+/// If more control is required, use the [`Cascade`][program::Cascade] type.
 pub fn builtin(action: helper::Action) -> protocol::Result {
     protocol::helper_outcome_to_result(
         helper::invoke(Program::from_kind(program::Kind::Builtin), &action)?,
