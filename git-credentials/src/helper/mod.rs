@@ -1,5 +1,27 @@
 use bstr::BString;
 
+/// The outcome of the credentials top-level functions to obtain a complete identity.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Outcome {
+    /// The identity provide by the helper.
+    pub identity: git_sec::identity::Account,
+    /// A handle to the action to perform next in another call to [`helper::invoke()`][crate::helper::invoke()].
+    pub next: invoke::NextAction,
+}
+
+/// The Result type used in credentials top-level functions to obtain a complete identity.
+pub type Result = std::result::Result<Option<Outcome>, Error>;
+
+/// The error returned top-level credential functions.
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    Invoke(#[from] invoke::Error),
+    #[error("Could not obtain identity for context: {}", { let mut buf = Vec::<u8>::new(); context.write_to(&mut buf).ok(); String::from_utf8_lossy(&buf).into_owned() })]
+    IdentityMissing { context: Context },
+}
+
 /// Additional context to be passed to the credentials helper.
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct Context {

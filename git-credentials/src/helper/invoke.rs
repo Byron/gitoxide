@@ -134,7 +134,7 @@ pub(crate) mod function {
     /// Note that it may also only contain the username or password.
     /// On successful usage, use [`NextAction::store()`], otherwise [`NextAction::erase()`], which returns `Ok(None)` as no outcome
     /// is expected.
-    pub fn invoke(mut helper: impl crate::Helper, action: Action) -> Result {
+    pub fn invoke(mut helper: impl crate::Helper, action: &Action) -> Result {
         let (stdin, stdout) = helper.start(&action)?;
         if let (Action::Get(_), None) = (&action, &stdout) {
             panic!("BUG: `Helper` impls must return an output handle to read output from if Action::Get is provided")
