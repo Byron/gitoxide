@@ -11,7 +11,7 @@ type Cursor = std::io::Cursor<Vec<u8>>;
 #[cfg(feature = "async-client")]
 type Cursor = futures_lite::io::Cursor<Vec<u8>>;
 
-fn helper_unused(_action: git_credentials::helper::invoke::Action) -> git_credentials::helper::Result {
+fn helper_unused(_action: git_credentials::helper::Action) -> git_credentials::protocol::Result {
     panic!("Call to credentials helper is unexpected")
 }
 
