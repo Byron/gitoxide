@@ -81,6 +81,28 @@ username=bob";
     }
 
     #[test]
+    fn quit_supports_git_config_boolean_values() {
+        for true_value in ["1", "42", "-42", "true", "on", "yes"] {
+            let input = format!("quit={}", true_value);
+            assert_eq!(
+                Context::from_bytes(input.as_bytes()).unwrap().quit,
+                Some(true),
+                "{}",
+                input
+            )
+        }
+        for false_value in ["0", "false", "off", "no"] {
+            let input = format!("quit={}", false_value);
+            assert_eq!(
+                Context::from_bytes(input.as_bytes()).unwrap().quit,
+                Some(false),
+                "{}",
+                input
+            )
+        }
+    }
+
+    #[test]
     fn null_bytes_when_decoding() {
         let err = Context::from_bytes(b"url=https://foo\0").unwrap_err();
         assert!(matches!(

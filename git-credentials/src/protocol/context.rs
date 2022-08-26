@@ -131,6 +131,7 @@ mod serde {
         value.eq_ignore_ascii_case(b"no")
             || value.eq_ignore_ascii_case(b"off")
             || value.eq_ignore_ascii_case(b"false")
+            || value == "0"
             || value.is_empty()
     }
 
