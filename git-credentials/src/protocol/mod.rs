@@ -51,9 +51,15 @@ pub struct Context {
 
 /// Convert the outcome of a helper invocation to a helper result, assuring that the identity is complete in the process.
 pub fn helper_outcome_to_result(outcome: Option<helper::Outcome>, action: helper::Action) -> Result {
+    fn redact(mut ctx: Context) -> Context {
+        if let Some(pw) = ctx.password.as_mut() {
+            *pw = "<redacted>".into()
+        }
+        ctx
+    }
     match (action, outcome) {
-        (helper::Action::Get(context), None) => Err(Error::IdentityMissing { context }),
-        (helper::Action::Get(context), Some(mut outcome)) => match outcome.consume_identity() {
+        (helper::Action::Get(ctx), None) => Err(Error::IdentityMissing { context: redact(ctx) }),
+        (helper::Action::Get(ctx), Some(mut outcome)) => match outcome.consume_identity() {
             Some(identity) => Ok(Some(Outcome {
                 identity,
                 next: outcome.next,
@@ -61,7 +67,7 @@ pub fn helper_outcome_to_result(outcome: Option<helper::Outcome>, action: helper
             None => Err(if outcome.quit {
                 Error::Quit
             } else {
-                Error::IdentityMissing { context }
+                Error::IdentityMissing { context: redact(ctx) }
             }),
         },
         (helper::Action::Store(_) | helper::Action::Erase(_), _ignore) => Ok(None),

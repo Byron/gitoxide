@@ -17,6 +17,15 @@ mod invoke {
         assert_eq!(actual.identity, identity("user", "pass"));
     }
 
+    #[test]
+    #[ignore]
+    fn failing_helpers_for_filling_dont_interrupt() {
+        let actual = invoke_cascade(["fail", "custom-helper"], Action::get_for_url("does/not/matter"))
+            .unwrap()
+            .expect("credentials");
+        assert_eq!(actual.identity, identity("user-script", "pass-script"));
+    }
+
     fn identity(user: &str, pass: &str) -> Account {
         Account {
             username: user.into(),
