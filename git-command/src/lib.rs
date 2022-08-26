@@ -32,6 +32,17 @@ mod prepare {
             self
         }
 
+        /// If called, `stdin` and `stderr` are set to be inheritted from the calling process.
+        ///
+        /// That way, if these are connected to a terminal, user prompts may happen.
+        /// Note that `stdout` is always collected as it's typically the output we are interested in.
+        /// Note that some programs connect via `/dev/tty` so their actual `stdin`/`stdout` handles don't matter.
+        pub fn allow_prompts(mut self) -> Self {
+            self.stdin = Stdio::inherit();
+            self.stderr = Stdio::inherit();
+            self
+        }
+
         /// Configure the process to use `stdio` for _stdin.
         pub fn stdin(mut self, stdio: Stdio) -> Self {
             self.stdin = stdio;
