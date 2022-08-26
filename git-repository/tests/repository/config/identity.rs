@@ -1,85 +1,13 @@
-use crate::Result;
-use std::iter::FromIterator;
-use std::path::Path;
-
+use crate::named_repo;
 use git_repository as git;
 use git_sec::{Access, Permission};
 use git_testtools::Env;
 use serial_test::serial;
-
-use crate::remote::cow_str;
-use crate::{named_repo, remote};
-
-#[test]
-fn remote_and_branch_names() {
-    let repo = remote::repo("base");
-    assert_eq!(repo.remote_names().len(), 0, "there are no remotes");
-    assert_eq!(repo.branch_names().len(), 0, "there are no configured branches");
-    assert_eq!(repo.remote_default_name(git::remote::Direction::Fetch), None);
-    assert_eq!(repo.remote_default_name(git::remote::Direction::Push), None);
-
-    let repo = remote::repo("clone");
-    assert_eq!(
-        Vec::from_iter(repo.remote_names().into_iter()),
-        vec!["myself", "origin"]
-    );
-    assert_eq!(
-        repo.remote_default_name(git::remote::Direction::Fetch),
-        Some(cow_str("origin"))
-    );
-    assert_eq!(
-        repo.remote_default_name(git::remote::Direction::Push),
-        Some(cow_str("origin"))
-    );
-    assert_eq!(Vec::from_iter(repo.branch_names()), vec!["main"]);
-}
-
-#[test]
-fn remote_default_name() {
-    let repo = remote::repo("push-default");
-
-    assert_eq!(
-        repo.remote_default_name(git::remote::Direction::Push),
-        Some(cow_str("myself")),
-        "overridden via remote.pushDefault"
-    );
-
-    assert_eq!(
-        repo.remote_default_name(git::remote::Direction::Fetch),
-        None,
-        "none if name origin, and there are multiple"
-    );
-}
-
-#[test]
-fn branch_remote() -> Result {
-    let repo = named_repo("make_remote_repo.sh")?;
-
-    assert_eq!(
-        repo.branch_remote_ref("main")
-            .expect("Remote Merge ref exists")
-            .expect("Remote Merge ref is valid")
-            .shorten(),
-        "main"
-    );
-    assert_eq!(
-        repo.branch_remote_name("main").expect("Remote name exists").as_ref(),
-        "remote_repo"
-    );
-
-    assert!(repo
-        .branch_remote_ref("broken")
-        .expect("Remote Merge ref exists")
-        .is_err());
-    assert!(repo.branch_remote_ref("missing").is_none());
-    assert!(repo.branch_remote_name("broken").is_none());
-
-    Ok(())
-}
+use std::path::Path;
 
 #[test]
 #[serial]
-fn access_values_and_identity() {
+fn author_and_committer_and_fallback() {
     for trust in [git_sec::Trust::Full, git_sec::Trust::Reduced] {
         let repo = named_repo("make_config_repo.sh").unwrap();
         let work_dir = repo.work_dir().expect("present").canonicalize().unwrap();
@@ -198,79 +126,5 @@ fn access_values_and_identity() {
                 "trusted paths need full trust"
             );
         }
-    }
-}
-
-mod config_section_mut {
-    use crate::named_repo;
-
-    #[test]
-    fn values_are_set_in_memory_only() {
-        let mut repo = named_repo("make_config_repo.sh").unwrap();
-        let repo_clone = repo.clone();
-        let key = "hallo.welt";
-        let key_subsection = "hallo.unter.welt";
-        assert_eq!(repo.config_snapshot().boolean(key), None, "no value there just yet");
-        assert_eq!(repo.config_snapshot().string(key_subsection), None);
-
-        {
-            let mut config = repo.config_snapshot_mut();
-            config.set_raw_value("hallo", None, "welt", "true").unwrap();
-            config.set_raw_value("hallo", Some("unter"), "welt", "value").unwrap();
-        }
-
-        assert_eq!(
-            repo.config_snapshot().boolean(key),
-            Some(true),
-            "value was set and applied"
-        );
-        assert_eq!(
-            repo.config_snapshot().string(key_subsection).as_deref(),
-            Some("value".into())
-        );
-
-        assert_eq!(
-            repo_clone.config_snapshot().boolean(key),
-            None,
-            "values are not written back automatically nor are they shared between clones"
-        );
-        assert_eq!(repo_clone.config_snapshot().string(key_subsection), None);
-    }
-
-    #[test]
-    fn apply_cli_overrides() -> crate::Result {
-        let mut repo = named_repo("make_config_repo.sh").unwrap();
-        repo.config_snapshot_mut().apply_cli_overrides([
-            "a.b=c",
-            "remote.origin.url = url",
-            "implicit.bool-true",
-            "implicit.bool-false = ",
-        ])?;
-
-        let config = repo.config_snapshot();
-        assert_eq!(config.string("a.b").expect("present").as_ref(), "c");
-        assert_eq!(config.string("remote.origin.url").expect("present").as_ref(), "url");
-        assert_eq!(
-            config.string("implicit.bool-true"),
-            None,
-            "no keysep is interpreted as 'not present' as we don't make up values"
-        );
-        assert_eq!(
-            config.string("implicit.bool-false").expect("present").as_ref(),
-            "",
-            "empty values are fine"
-        );
-        assert_eq!(
-            config.boolean("implicit.bool-false"),
-            Some(false),
-            "empty values are boolean true"
-        );
-        assert_eq!(
-            config.boolean("implicit.bool-true"),
-            Some(true),
-            "values without key-sep are true"
-        );
-
-        Ok(())
     }
 }

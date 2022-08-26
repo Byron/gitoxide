@@ -48,7 +48,7 @@ fn store_and_reject() {
 mod program {
     use bstr::ByteVec;
     use git_credentials::helper::invoke;
-    use git_credentials::{program, program::Kind, Program};
+    use git_credentials::{program::Kind, Program};
 
     #[test]
     fn builtin() {
