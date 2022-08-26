@@ -87,7 +87,7 @@ mod prepare {
     }
 }
 
-/// Prepare `cmd` for [spawning][Process::spawn()] by configuring it with various builder methods.
+/// Prepare `cmd` for [spawning][std::process::Command::spawn()] by configuring it with various builder methods.
 ///
 /// Note that the default IO is configured for typical API usage, that is
 ///

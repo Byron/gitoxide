@@ -1,7 +1,7 @@
 use crate::helper::Context;
 use bstr::{BStr, BString};
 
-/// The outcome of the credentials [`helper`][crate::helper()].
+/// The outcome of the credentials helper [invocation][crate::helper::invoke()].
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Outcome {
     /// The username to use in the identity, if set.
@@ -27,10 +27,10 @@ impl Outcome {
     }
 }
 
-/// The Result type used in [`helper()`][crate::helper()].
+/// The Result type used in [`invoke()`][crate::helper::invoke()].
 pub type Result = std::result::Result<Option<Outcome>, Error>;
 
-/// The error used in the [credentials helper][crate::helper::invoke()].
+/// The error used in the [credentials helper invocation][crate::helper::invoke()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -42,7 +42,7 @@ pub enum Error {
     CredentialsHelperFailed { source: std::io::Error },
 }
 
-/// The action to perform by the credentials [helper][`crate::helper()`].
+/// The action to perform by the credentials [helper][`crate::helper::invoke()`].
 #[derive(Clone, Debug)]
 pub enum Action {
     /// Provide credentials using the given repository context, which must include the repository url.
