@@ -29,7 +29,7 @@ pub enum Program {
     /// The kind of program, ready for launch
     Ready(program::Kind),
     /// The process is running.
-    Started(std::process::Child),
+    Started((std::process::Child, program::Kind)),
 }
 
 ///

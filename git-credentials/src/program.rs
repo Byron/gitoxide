@@ -1,5 +1,7 @@
+use crate::helper::invoke::Action;
 use crate::{helper, Helper, Program};
 use bstr::{BString, ByteSlice, ByteVec};
+use std::ops::DerefMut;
 use std::process::{Command, Stdio};
 
 /// The kind of helper program to use.
@@ -58,9 +60,10 @@ impl Helper for Program {
     type Receive = std::process::ChildStdout;
 
     fn start(&mut self, action: &helper::invoke::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
-        match self {
+        let state = std::mem::replace(self, Program::Ready(Kind::Builtin));
+        match state {
             Program::Ready(kind) => {
-                let mut cmd = match kind {
+                let mut cmd = match &kind {
                     Kind::Builtin => {
                         let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
                         cmd.arg("credential")
@@ -88,16 +91,31 @@ impl Helper for Program {
                 let stdin = child.stdin.take().expect("stdin to be configured");
                 let stdout = child.stdout.take();
 
-                *self = Program::Started(child);
+                *self = Program::Started((child, kind));
                 Ok((stdin, stdout))
             }
             Program::Started(_) => panic!("BUG: must not call `start()` twice"),
         }
     }
 
+    fn finish(mut self) -> std::io::Result<()> {
+        (&mut self).finish()
+    }
+}
+
+impl Helper for &mut Program {
+    type Send = std::process::ChildStdin;
+    type Receive = std::process::ChildStdout;
+
+    fn start(&mut self, action: &Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
+        self.deref_mut().start(action)
+    }
+
     fn finish(self) -> std::io::Result<()> {
-        match self {
-            Program::Started(mut child) => child.wait().and_then(|status| {
+        let state = std::mem::replace(self, Program::Ready(Kind::Builtin));
+        match state {
+            Program::Started((mut child, kind)) => child.wait().and_then(|status| {
+                *self = Program::Ready(kind);
                 if status.success() {
                     Ok(())
                 } else {

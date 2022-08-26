@@ -69,7 +69,7 @@ mod program {
     fn script() {
         assert_eq!(
             git_credentials::helper::invoke(
-                Program::from_custom_definition(
+                &mut Program::from_custom_definition(
                     "!f() { test \"$1\" = get && echo \"password=pass\" && echo \"username=user\"; }; f"
                 ),
                 invoke::Action::get_for_url("/does/not/matter"),
@@ -89,7 +89,7 @@ mod program {
     fn path_to_helper_script() -> crate::Result {
         assert_eq!(
             git_credentials::helper::invoke(
-                Program::from_custom_definition(
+                &mut Program::from_custom_definition(
                     git_path::into_bstr(git_path::realpath(git_testtools::fixture_path("custom-helper.sh"))?)
                         .into_owned()
                 ),
@@ -115,7 +115,7 @@ mod program {
         helper.insert_str(0, "sh ");
         assert_eq!(
             git_credentials::helper::invoke(
-                Program::Ready(program::Kind::CustomScript(helper)),
+                Program::Ready(Kind::CustomScript(helper)),
                 invoke::Action::get_for_url("/does/not/matter"),
             )?
             .expect("present")
