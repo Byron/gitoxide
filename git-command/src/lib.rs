@@ -16,6 +16,7 @@ pub struct Prepare {
 
 mod prepare {
     use crate::Prepare;
+    use git_testtools::bstr::ByteSlice;
     use std::process::{Command, Stdio};
 
     /// Builder
@@ -25,7 +26,9 @@ mod prepare {
         /// This also allows to pass shell scripts as command, or use commands that contain arguments which are subsequently
         /// parsed by `sh`.
         pub fn with_shell(mut self) -> Self {
-            self.use_shell = true;
+            self.use_shell = self.command.to_str().map_or(true, |cmd| {
+                cmd.as_bytes().find_byteset(b"|&;<>()$`\\\"' \t\n*?[#~=%").is_some()
+            });
             self
         }
 
