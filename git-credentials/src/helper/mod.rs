@@ -65,6 +65,13 @@ pub fn invoke_outcome_to_helper_result(outcome: Option<invoke::Outcome>, action:
     }
 }
 
+/// A list of helper programs to run in order to obtain credentials.
+#[allow(dead_code)]
+pub struct Cascade {
+    /// the programs to run in order.
+    run: Vec<crate::Program>,
+}
+
 ///
 pub mod context;
 
