@@ -1182,6 +1182,7 @@ dependencies = [
  "itoa 1.0.3",
  "once_cell",
  "serde",
+ "thiserror",
  "time",
 ]
 

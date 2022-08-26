@@ -1,8 +1,22 @@
 use crate::time::format::{DEFAULT, ISO8601, ISO8601_STRICT, RFC2822, SHORT};
 use crate::time::Sign;
 use crate::Time;
+use std::num::ParseIntError;
 use std::str::FromStr;
 use time::{Date, OffsetDateTime};
+
+#[derive(thiserror::Error, Debug)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Date string can not be parsed")]
+    InvalidDateString,
+    #[error("Timezone offset can not be parsed")]
+    InvalidTzOffset,
+    #[error("Relative period can not be parsed")]
+    InvalidPeriod,
+    #[error("Integer string can not be parsed")]
+    InvalidInteger(#[from] ParseIntError),
+}
 
 #[allow(missing_docs)]
 pub fn parse(input: &str) -> Option<Time> {
@@ -27,7 +41,7 @@ pub fn parse(input: &str) -> Option<Time> {
         } else if let Ok(val) = parse_raw(input) {
             // Format::Raw
             Some(val)
-        } else if let Some(val) = relative::parse(input) {
+        } else if let Ok(val) = relative::parse(input) {
             Some(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
         } else {
             None
@@ -35,16 +49,16 @@ pub fn parse(input: &str) -> Option<Time> {
     }
 }
 
-fn parse_raw(input: &str) -> Result<Time, ()> {
+fn parse_raw(input: &str) -> Result<Time, Error> {
     let mut split = input.split_whitespace();
-    let seconds_since_unix_epoch: u32 = split.next().ok_or(())?.parse().map_err(|_| ())?;
-    let offset = split.next().ok_or(())?;
+    let seconds_since_unix_epoch: u32 = split.next().ok_or(Error::InvalidDateString)?.parse()?;
+    let offset = split.next().ok_or(Error::InvalidDateString)?;
     if offset.len() != 5 {
-        return Err(());
+        return Err(Error::InvalidTzOffset);
     }
     let sign = if &offset[..1] == "-" { Sign::Plus } else { Sign::Minus };
-    let hours: i32 = offset[1..3].parse().map_err(|_| ())?;
-    let minutes: i32 = offset[3..5].parse().map_err(|_| ())?;
+    let hours: i32 = offset[1..3].parse()?;
+    let minutes: i32 = offset[3..5].parse()?;
     let offset_in_seconds = hours * 3600 + minutes * 60;
     let time = Time {
         seconds_since_unix_epoch,
@@ -55,29 +69,32 @@ fn parse_raw(input: &str) -> Result<Time, ()> {
 }
 
 mod relative {
+    use crate::parse::Error;
     use std::str::FromStr;
     use time::{Duration, OffsetDateTime};
 
-    pub(crate) fn parse(input: &str) -> Option<OffsetDateTime> {
+    pub(crate) fn parse(input: &str) -> Result<OffsetDateTime, Error> {
         let mut split = input.split_whitespace();
-        let multiplier = i64::from_str(split.next()?).ok()?;
-        let period = period_to_seconds(split.next()?)?;
-        if split.next()? != "ago" {
-            return None;
+        let multiplier = i64::from_str(split.next().ok_or(Error::InvalidDateString)?)?;
+        let period = period_to_seconds(split.next().ok_or(Error::InvalidDateString)?)?;
+        if split.next().ok_or(Error::InvalidDateString)? != "ago" {
+            return Err(Error::InvalidDateString);
         }
-        Some(OffsetDateTime::now_utc().checked_sub(Duration::seconds(multiplier * period))?)
+        Ok(OffsetDateTime::now_utc()
+            .checked_sub(Duration::seconds(multiplier * period))
+            .ok_or(Error::InvalidDateString)?)
     }
 
-    fn period_to_seconds(period: &str) -> Option<i64> {
+    fn period_to_seconds(period: &str) -> Result<i64, Error> {
         let period = period.strip_suffix("s").unwrap_or(period);
         return match period {
-            "second" => Some(1),
-            "minute" => Some(60),
-            "hour" => Some(60 * 60),
-            "day" => Some(24 * 60 * 60),
-            "week" => Some(7 * 24 * 60 * 60),
+            "second" => Ok(1),
+            "minute" => Ok(60),
+            "hour" => Ok(60 * 60),
+            "day" => Ok(24 * 60 * 60),
+            "week" => Ok(7 * 24 * 60 * 60),
             // TODO months & years
-            _ => None,
+            _ => Err(Error::InvalidPeriod),
         };
     }
 }
