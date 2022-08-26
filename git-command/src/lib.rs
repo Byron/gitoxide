@@ -91,15 +91,15 @@ mod prepare {
 ///
 /// Note that the default IO is configured for typical API usage, that is
 ///
-/// - `stdin` is null
-/// - `stdout` is captured.
-/// - `stderr` is null
+/// - `stdin` is null to prevent blocking unexpectedly on consumption of stdin
+/// - `stdout` is captured for consumption by the caller
+/// - `stderr` is inherited to allow the command to provide context to the user
 pub fn prepare(cmd: impl Into<OsString>) -> Prepare {
     Prepare {
         command: cmd.into(),
         stdin: std::process::Stdio::null(),
         stdout: std::process::Stdio::piped(),
-        stderr: std::process::Stdio::null(),
+        stderr: std::process::Stdio::inherit(),
         args: Vec::new(),
         use_shell: false,
     }
