@@ -9,6 +9,8 @@ use std::process::{Command, Stdio};
 pub struct Cascade {
     /// The programs to run in order to obtain credentials
     pub programs: Vec<Program>,
+    /// If true, stderr is enabled when `programs` are run, which is the default.
+    pub stderr: bool,
 }
 
 mod cascade;
@@ -34,10 +36,15 @@ pub enum Kind {
     ExternalShellScript(BString),
 }
 
+/// Initialization
 impl Program {
     /// Create a new program of the given `kind`.
     pub fn from_kind(kind: Kind) -> Self {
-        Program { kind, child: None }
+        Program {
+            kind,
+            child: None,
+            stderr: true,
+        }
     }
 
     /// Parse the given input as per the custom helper definition, supporting `!<script>`, `name` and `/absolute/name`, the latter two
@@ -61,7 +68,20 @@ impl Program {
                 Kind::ExternalName { name_and_args: input }
             }
         };
-        Program { kind, child: None }
+        Program {
+            kind,
+            child: None,
+            stderr: true,
+        }
+    }
+}
+
+/// Builder
+impl Program {
+    /// By default `stderr` of programs is inherited and typically displayed in the terminal.
+    pub fn suppress_stderr(mut self) -> Self {
+        self.stderr = false;
+        self
     }
 }
 
@@ -88,11 +108,13 @@ impl Helper for Program {
                 .arg(action.as_arg(true))
                 .into(),
         };
-        cmd.stdin(Stdio::piped()).stdout(if action.expects_output() {
-            Stdio::piped()
-        } else {
-            Stdio::null()
-        });
+        cmd.stdin(Stdio::piped())
+            .stdout(if action.expects_output() {
+                Stdio::piped()
+            } else {
+                Stdio::null()
+            })
+            .stderr(if self.stderr { Stdio::inherit() } else { Stdio::null() });
         let mut child = cmd.spawn()?;
         let stdin = child.stdin.take().expect("stdin to be configured");
         let stdout = child.stdout.take();

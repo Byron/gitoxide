@@ -21,7 +21,7 @@ impl Cascade {
         .map(|name| vec![Program::from_custom_definition(name)])
         .unwrap_or_default();
 
-        Cascade { programs }
+        Cascade { programs, stderr: true }
     }
 }
 
@@ -59,6 +59,7 @@ impl Cascade {
         };
 
         for program in &mut self.programs {
+            program.stderr = self.stderr;
             match helper::invoke(program, &action) {
                 Ok(None) => {}
                 Ok(Some(outcome)) => {

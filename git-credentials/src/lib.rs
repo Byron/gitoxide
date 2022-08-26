@@ -26,9 +26,11 @@ pub trait Helper {
 /// A program/executable implementing the credential helper protocol.
 #[derive(Debug)]
 pub struct Program {
-    /// The kind of program, ready for launch
+    /// The kind of program, ready for launch.
     pub kind: program::Kind,
-    /// Set if the process is running.
+    /// If true, stderr is enabled, which is the default.
+    pub stderr: bool,
+    /// `Some(…)` if the process is running.
     child: Option<std::process::Child>,
 }
 

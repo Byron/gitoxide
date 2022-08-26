@@ -55,7 +55,7 @@ mod program {
         assert!(
             matches!(
                 git_credentials::helper::invoke(
-                    Program::from_kind(Kind::Builtin),
+                    Program::from_kind(Kind::Builtin).suppress_stderr(),
                     &helper::Action::get_for_url("/path/without/scheme/fails/with/error"),
                 )
                 .unwrap_err(),
