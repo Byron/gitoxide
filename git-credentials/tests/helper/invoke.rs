@@ -53,7 +53,7 @@ mod program {
         assert!(
             matches!(
                 git_credentials::helper::invoke(
-                    Program::from_kind(Kind::Builtin).suppress_stderr(),
+                    &mut Program::from_kind(Kind::Builtin).suppress_stderr(),
                     &helper::Action::get_for_url("/path/without/scheme/fails/with/error"),
                 )
                 .unwrap_err(),
@@ -109,7 +109,7 @@ mod program {
     fn path_to_helper_as_script_to_workaround_executable_bits() -> crate::Result {
         assert_eq!(
             git_credentials::helper::invoke(
-                script_helper("custom-helper"),
+                &mut script_helper("custom-helper"),
                 &helper::Action::get_for_url("/does/not/matter")
             )?
             .expect("present")

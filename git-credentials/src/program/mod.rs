@@ -1,6 +1,5 @@
-use crate::{helper, Helper, Program};
+use crate::{helper, Program};
 use bstr::{BString, ByteSlice, ByteVec};
-use std::ops::DerefMut;
 use std::process::{Command, Stdio};
 
 /// A list of helper programs to run in order to obtain credentials.
@@ -85,11 +84,11 @@ impl Program {
     }
 }
 
-impl Helper for Program {
-    type Send = std::process::ChildStdin;
-    type Receive = std::process::ChildStdout;
-
-    fn start(&mut self, action: &helper::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
+impl Program {
+    pub(crate) fn start(
+        &mut self,
+        action: &helper::Action,
+    ) -> std::io::Result<(std::process::ChildStdin, Option<std::process::ChildStdout>)> {
         assert!(self.child.is_none(), "BUG: must not call `start()` twice");
         let mut cmd = match &self.kind {
             Kind::Builtin => {
@@ -123,20 +122,7 @@ impl Helper for Program {
         Ok((stdin, stdout))
     }
 
-    fn finish(mut self) -> std::io::Result<()> {
-        (&mut self).finish()
-    }
-}
-
-impl Helper for &mut Program {
-    type Send = std::process::ChildStdin;
-    type Receive = std::process::ChildStdout;
-
-    fn start(&mut self, action: &helper::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
-        self.deref_mut().start(action)
-    }
-
-    fn finish(self) -> std::io::Result<()> {
+    pub(crate) fn finish(&mut self) -> std::io::Result<()> {
         let mut child = self.child.take().expect("Call `start()` before calling finish()");
         let status = child.wait()?;
         if status.success() {

@@ -21,7 +21,7 @@ impl Action {
 /// Note that it may also only contain the username or password, and should start out with everything the helper needs.
 /// On successful usage, use [`NextAction::store()`], otherwise [`NextAction::erase()`], which returns `Ok(None)` as no outcome
 /// is expected.
-pub fn invoke(helper: impl crate::Helper, action: &Action) -> Result {
+pub fn invoke(helper: &mut crate::Program, action: &Action) -> Result {
     match raw(helper, action)? {
         None => Ok(None),
         Some(stdout) => {
@@ -38,7 +38,7 @@ pub fn invoke(helper: impl crate::Helper, action: &Action) -> Result {
     }
 }
 
-pub(crate) fn raw(mut helper: impl crate::Helper, action: &Action) -> std::result::Result<Option<Vec<u8>>, Error> {
+pub(crate) fn raw(helper: &mut crate::Program, action: &Action) -> std::result::Result<Option<Vec<u8>>, Error> {
     let (stdin, stdout) = helper.start(action)?;
     if let (Action::Get(_), None) = (&action, &stdout) {
         panic!("BUG: `Helper` impls must return an output handle to read output from if Action::Get is provided")
