@@ -15,18 +15,23 @@ mod serde {
     mod write {
         use crate::helper::context::serde::validate;
         use crate::helper::Context;
+        use bstr::BStr;
 
         impl Context {
             /// Write ourselves to `out` such that [`from_bytes()`][Self::from_bytes()] can decode it losslessly.
             pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
+                use bstr::ByteSlice;
+                fn write_key(out: &mut impl std::io::Write, key: &str, value: &BStr) -> std::io::Result<()> {
+                    out.write_all(key.as_bytes())?;
+                    out.write_all(b"=")?;
+                    out.write_all(value)?;
+                    out.write_all(b"\n")
+                }
                 for (key, value) in [("url", &self.url), ("path", &self.path)] {
                     if let Some(value) = value {
                         validate(key, value.as_slice().into())
                             .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-                        out.write_all(key.as_bytes())?;
-                        out.write_all(b"=")?;
-                        out.write_all(value)?;
-                        out.write_all(b"\n")?;
+                        write_key(&mut out, key, value.as_ref())?;
                     }
                 }
                 for (key, value) in [
@@ -38,11 +43,15 @@ mod serde {
                     if let Some(value) = value {
                         validate(key, value.as_str().into())
                             .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-                        out.write_all(key.as_bytes())?;
-                        out.write_all(b"=")?;
-                        out.write_all(value.as_bytes())?;
-                        out.write_all(b"\n")?;
+                        write_key(&mut out, key, value.as_bytes().as_bstr())?;
                     }
+                }
+                if let Some(quit) = self.quit {
+                    write_key(
+                        &mut out,
+                        "quit",
+                        quit.then(|| &b"true"[..]).unwrap_or(b"false").as_bstr(),
+                    )?;
                 }
                 Ok(())
             }
@@ -52,7 +61,7 @@ mod serde {
     ///
     pub mod decode {
         use crate::helper::context;
-        use crate::helper::context::serde::validate;
+        use crate::helper::context::serde::{parse_false, parse_true, validate};
         use crate::helper::Context;
         use bstr::{BString, ByteSlice};
 
@@ -98,12 +107,31 @@ mod serde {
                         }
                         "url" => ctx.url = Some(value),
                         "path" => ctx.path = Some(value),
+                        "quit" => {
+                            ctx.quit = Some(if parse_true(value.as_ref()) {
+                                true
+                            } else {
+                                !parse_false(value.as_ref())
+                            })
+                        }
                         _ => {}
                     }
                 }
                 Ok(ctx)
             }
         }
+    }
+    // Copied from git-config/value/boolean.rs
+    fn parse_true(value: &BStr) -> bool {
+        value.eq_ignore_ascii_case(b"yes") || value.eq_ignore_ascii_case(b"on") || value.eq_ignore_ascii_case(b"true")
+    }
+
+    // Copied from git-config/value/boolean.rs
+    fn parse_false(value: &BStr) -> bool {
+        value.eq_ignore_ascii_case(b"no")
+            || value.eq_ignore_ascii_case(b"off")
+            || value.eq_ignore_ascii_case(b"false")
+            || value.is_empty()
     }
 
     fn validate(key: &str, value: &BStr) -> Result<(), Error> {

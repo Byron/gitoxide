@@ -18,6 +18,8 @@ pub struct Context {
     /// parts were read (e.g., url=<https://example.com> would behave as if
     /// protocol=https and host=example.com had been provided). This can help callers avoid parsing URLs themselves.
     pub url: Option<BString>,
+    /// If true, the caller should stop asking for credentials immediately without calling more credential helpers in the chain.
+    pub quit: Option<bool>,
 }
 ///
 pub mod context;

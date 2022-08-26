@@ -10,8 +10,13 @@ fn encode_decode_roundtrip() {
             username: Some("user".into()),
             password: Some("pass".into()),
             url: Some("https://github.com/byron/gitoxide".into()),
+            quit: Some(true),
         },
         Context::default(),
+        Context {
+            quit: Some(false),
+            ..Context::default()
+        },
         Context {
             url: Some("/path/to/repo".into()),
             ..Context::default()
