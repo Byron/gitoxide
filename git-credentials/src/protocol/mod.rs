@@ -1,3 +1,4 @@
+use crate::helper;
 use bstr::BString;
 
 /// The outcome of the credentials top-level functions to obtain a complete identity.
@@ -6,7 +7,7 @@ pub struct Outcome {
     /// The identity provide by the helper.
     pub identity: git_sec::identity::Account,
     /// A handle to the action to perform next in another call to [`helper::invoke()`][crate::helper::invoke()].
-    pub next: invoke::NextAction,
+    pub next: helper::NextAction,
 }
 
 /// The Result type used in credentials top-level functions to obtain a complete identity.
@@ -17,7 +18,7 @@ pub type Result = std::result::Result<Option<Outcome>, Error>;
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    Invoke(#[from] invoke::Error),
+    InvokeHelper(#[from] helper::Error),
     #[error("Could not obtain identity for context: {}", { let mut buf = Vec::<u8>::new(); context.write_to(&mut buf).ok(); String::from_utf8_lossy(&buf).into_owned() })]
     IdentityMissing { context: Context },
     #[error("The handler asked to stop trying to obtain credentials")]
@@ -47,10 +48,10 @@ pub struct Context {
 }
 
 /// Convert the outcome of a helper invocation to a helper result, assuring that the identity is complete in the process.
-pub fn invoke_outcome_to_helper_result(outcome: Option<invoke::Outcome>, action: invoke::Action) -> Result {
+pub fn helper_outcome_to_result(outcome: Option<helper::Outcome>, action: helper::Action) -> Result {
     match (action, outcome) {
-        (invoke::Action::Get(context), None) => Err(Error::IdentityMissing { context }),
-        (invoke::Action::Get(context), Some(mut outcome)) => match outcome.consume_identity() {
+        (helper::Action::Get(context), None) => Err(Error::IdentityMissing { context }),
+        (helper::Action::Get(context), Some(mut outcome)) => match outcome.consume_identity() {
             Some(identity) => Ok(Some(Outcome {
                 identity,
                 next: outcome.next,
@@ -61,7 +62,7 @@ pub fn invoke_outcome_to_helper_result(outcome: Option<invoke::Outcome>, action:
                 Error::IdentityMissing { context }
             }),
         },
-        (invoke::Action::Store(_) | invoke::Action::Erase(_), _ignore) => Ok(None),
+        (helper::Action::Store(_) | helper::Action::Erase(_), _ignore) => Ok(None),
     }
 }
 
@@ -74,7 +75,3 @@ pub struct Cascade {
 
 ///
 pub mod context;
-
-///
-pub mod invoke;
-pub use invoke::function::invoke;

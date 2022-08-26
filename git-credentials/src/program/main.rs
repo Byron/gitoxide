@@ -41,7 +41,7 @@ pub enum Error {
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]
-    Context(#[from] crate::helper::context::decode::Error),
+    Context(#[from] crate::protocol::context::decode::Error),
     #[error("Credentials for {url:?} could not be obtained")]
     CredentialsMissing { url: BString },
     #[error("The url wasn't provided in input - the git credentials protocol mandates this")]
@@ -49,8 +49,8 @@ pub enum Error {
 }
 
 pub(crate) mod function {
-    use crate::helper::Context;
     use crate::program::main::{Action, Error};
+    use crate::protocol::Context;
     use std::convert::TryInto;
     use std::ffi::OsString;
 

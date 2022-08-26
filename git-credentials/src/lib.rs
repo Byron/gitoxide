@@ -18,7 +18,7 @@ pub trait Helper {
 
     /// Start the helper and provide handles to send and receive from it.
     /// If `Action::Get` is provided, it's valid to return `None` for the receive half.
-    fn start(&mut self, action: &helper::invoke::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)>;
+    fn start(&mut self, action: &helper::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)>;
     /// Stop the helper and provide a way to determine it's successful.
     fn finish(self) -> std::io::Result<()>;
 }
@@ -33,16 +33,19 @@ pub enum Program {
 }
 
 ///
+pub mod helper;
+
+///
 pub mod program;
 
 ///
-pub mod helper;
+pub mod protocol;
 
 /// Call the `git credential` helper program performing the given `action`, which reads all context from the git configuration.
 ///
 /// See [`invoke()`][helper::invoke()] for a more flexible implementation.
-pub fn builtin(action: helper::invoke::Action) -> helper::Result {
-    helper::invoke_outcome_to_helper_result(
+pub fn builtin(action: helper::Action) -> protocol::Result {
+    protocol::helper_outcome_to_result(
         helper::invoke(Program::from_kind(program::Kind::Builtin), &action)?,
         action,
     )

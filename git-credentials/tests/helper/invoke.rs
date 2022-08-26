@@ -1,13 +1,14 @@
 use crate::helper::invoke::util::MockHelper;
 use bstr::BString;
-use git_credentials::helper::{invoke, Context};
+use git_credentials::helper;
+use git_credentials::protocol::Context;
 
 #[test]
 fn get() {
     let mut helper = MockHelper::default();
     let mut outcome = git_credentials::helper::invoke(
         &mut helper,
-        &invoke::Action::get_for_url("https://github.com/byron/gitoxide"),
+        &helper::Action::get_for_url("https://github.com/byron/gitoxide"),
     )
     .unwrap()
     .expect("mock provides credentials");
@@ -36,7 +37,7 @@ fn store_and_reject() {
         ctx.write_to(&mut buf).expect("cannot fail");
         buf.into()
     };
-    for action in [invoke::Action::Store(ctxbuf()), invoke::Action::Erase(ctxbuf())] {
+    for action in [helper::Action::Store(ctxbuf()), helper::Action::Erase(ctxbuf())] {
         let outcome = git_credentials::helper::invoke(&mut helper, &action).unwrap();
         assert!(
             outcome.is_none(),
@@ -47,8 +48,7 @@ fn store_and_reject() {
 
 mod program {
     use bstr::ByteVec;
-    use git_credentials::helper::invoke;
-    use git_credentials::{program::Kind, Program};
+    use git_credentials::{helper, program::Kind, Program};
 
     #[test]
     fn builtin() {
@@ -56,10 +56,10 @@ mod program {
             matches!(
                 git_credentials::helper::invoke(
                     Program::from_kind(Kind::Builtin),
-                    &invoke::Action::get_for_url("/path/without/scheme/fails/with/error"),
+                    &helper::Action::get_for_url("/path/without/scheme/fails/with/error"),
                 )
                 .unwrap_err(),
-                invoke::Error::CredentialsHelperFailed { .. }
+                helper::Error::CredentialsHelperFailed { .. }
             ),
             "this failure indicates we could launch the helper, even though it wasn't happy which is fine. It doesn't like the URL"
         );
@@ -72,7 +72,7 @@ mod program {
                 &mut Program::from_custom_definition(
                     "!f() { test \"$1\" = get && echo \"password=pass\" && echo \"username=user\"; }; f"
                 ),
-                &invoke::Action::get_for_url("/does/not/matter"),
+                &helper::Action::get_for_url("/does/not/matter"),
             )
             .unwrap()
             .expect("present")
@@ -94,7 +94,7 @@ mod program {
                     git_path::into_bstr(git_path::realpath(git_testtools::fixture_path("custom-helper.sh"))?)
                         .into_owned()
                 ),
-                &invoke::Action::get_for_url("/does/not/matter"),
+                &helper::Action::get_for_url("/does/not/matter"),
             )?
             .expect("present")
             .consume_identity()
@@ -118,7 +118,7 @@ mod program {
         assert_eq!(
             git_credentials::helper::invoke(
                 Program::Ready(Kind::ExternalShellScript(helper)),
-                &invoke::Action::get_for_url("/does/not/matter"),
+                &helper::Action::get_for_url("/does/not/matter"),
             )?
             .expect("present")
             .consume_identity()
@@ -133,9 +133,9 @@ mod program {
 }
 
 mod util {
-    use git_credentials::helper::invoke::Action;
-    use git_credentials::helper::Context;
+    use git_credentials::helper;
     use git_credentials::program::main;
+    use git_credentials::protocol::Context;
 
     #[derive(Default)]
     pub struct MockHelper {
@@ -146,7 +146,7 @@ mod util {
         type Send = git_features::io::pipe::Writer;
         type Receive = git_features::io::pipe::Reader;
 
-        fn start(&mut self, action: &Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
+        fn start(&mut self, action: &helper::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
             let ((them_send, us_receive), (us_send, them_receive)) = (
                 git_features::io::pipe::unidirectional(None),
                 git_features::io::pipe::unidirectional(None),

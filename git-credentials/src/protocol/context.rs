@@ -9,12 +9,12 @@ pub enum Error {
 }
 
 mod serde {
-    use crate::helper::context::Error;
+    use crate::protocol::context::Error;
     use bstr::BStr;
 
     mod write {
-        use crate::helper::context::serde::validate;
-        use crate::helper::Context;
+        use crate::protocol::context::serde::validate;
+        use crate::protocol::Context;
         use bstr::BStr;
 
         impl Context {
@@ -60,9 +60,9 @@ mod serde {
 
     ///
     pub mod decode {
-        use crate::helper::context;
-        use crate::helper::context::serde::{parse_false, parse_true, validate};
-        use crate::helper::Context;
+        use crate::protocol::context;
+        use crate::protocol::context::serde::{parse_false, parse_true, validate};
+        use crate::protocol::Context;
         use bstr::{BString, ByteSlice};
 
         /// The error returned by [`from_bytes()`][Context::from_bytes()].

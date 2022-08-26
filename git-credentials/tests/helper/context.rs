@@ -1,4 +1,4 @@
-use git_credentials::helper::Context;
+use git_credentials::protocol::Context;
 
 #[test]
 fn encode_decode_roundtrip() {
@@ -30,7 +30,7 @@ fn encode_decode_roundtrip() {
 }
 
 mod write_to {
-    use git_credentials::helper::Context;
+    use git_credentials::protocol::Context;
 
     #[test]
     fn null_bytes_and_newlines_are_invalid() {
@@ -47,7 +47,7 @@ mod write_to {
 }
 
 mod from_bytes {
-    use git_credentials::helper::Context;
+    use git_credentials::protocol::Context;
 
     #[test]
     fn empty_newlines_cause_skipping_remaining_input() {
@@ -85,7 +85,7 @@ username=bob";
         let err = Context::from_bytes(b"url=https://foo\0").unwrap_err();
         assert!(matches!(
             err,
-            git_credentials::helper::context::decode::Error::Encoding(_)
+            git_credentials::protocol::context::decode::Error::Encoding(_)
         ));
     }
 }

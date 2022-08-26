@@ -1,4 +1,4 @@
-use crate::helper::Context;
+use crate::protocol::Context;
 use bstr::{BStr, BString};
 
 /// The outcome of the credentials helper [invocation][crate::helper::invoke()].
@@ -37,7 +37,7 @@ pub type Result = std::result::Result<Option<Outcome>, Error>;
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    Context(#[from] crate::helper::context::decode::Error),
+    Context(#[from] crate::protocol::context::decode::Error),
     #[error("An IO error occurred while communicating to the credentials helper")]
     Io(#[from] std::io::Error),
     #[error(transparent)]
@@ -121,10 +121,9 @@ impl NextAction {
         Action::Erase(self.previous_output)
     }
 }
-
 pub(crate) mod function {
-    use crate::helper::invoke::{Action, NextAction};
-    use crate::helper::{invoke::Error, invoke::Outcome, invoke::Result, Context};
+    use crate::helper::{Action, NextAction};
+    use crate::helper::{Context, Error, Outcome, Result};
     use std::io::Read;
 
     impl Action {
@@ -183,3 +182,4 @@ pub(crate) mod function {
         }
     }
 }
+pub use function::invoke;

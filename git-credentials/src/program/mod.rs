@@ -1,4 +1,3 @@
-use crate::helper::invoke::Action;
 use crate::{helper, Helper, Program};
 use bstr::{BString, ByteSlice, ByteVec};
 use std::ops::DerefMut;
@@ -59,7 +58,7 @@ impl Helper for Program {
     type Send = std::process::ChildStdin;
     type Receive = std::process::ChildStdout;
 
-    fn start(&mut self, action: &helper::invoke::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
+    fn start(&mut self, action: &helper::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
         let state = std::mem::replace(self, Program::Ready(Kind::Builtin));
         match state {
             Program::Ready(kind) => {
@@ -107,7 +106,7 @@ impl Helper for &mut Program {
     type Send = std::process::ChildStdin;
     type Receive = std::process::ChildStdout;
 
-    fn start(&mut self, action: &Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
+    fn start(&mut self, action: &helper::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
         self.deref_mut().start(action)
     }
 

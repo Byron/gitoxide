@@ -1,4 +1,4 @@
-use git_credentials::{helper, program};
+use git_credentials::{program, protocol};
 
 /// Run like this `echo url=https://example.com | cargo run --example custom-helper -- get`
 pub fn main() -> Result<(), git_credentials::program::main::Error> {
@@ -8,7 +8,7 @@ pub fn main() -> Result<(), git_credentials::program::main::Error> {
         std::io::stdout(),
         |action, credentials| -> std::io::Result<_> {
             match action {
-                program::main::Action::Get => Ok(Some(helper::Context {
+                program::main::Action::Get => Ok(Some(protocol::Context {
                     username: Some("user".into()),
                     password: Some("pass".into()),
                     ..credentials
