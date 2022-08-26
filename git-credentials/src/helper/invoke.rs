@@ -129,7 +129,8 @@ pub(crate) mod function {
                 let mut buf = Vec::new();
                 stdout.read_to_end(&mut buf).map(|_| buf)
             })
-            .transpose()?;
+            .transpose()
+            .map_err(|err| Error::CredentialsHelperFailed { source: err })?;
         helper.finish().map_err(|err| {
             if err.kind() == std::io::ErrorKind::Other {
                 Error::CredentialsHelperFailed { source: err }
