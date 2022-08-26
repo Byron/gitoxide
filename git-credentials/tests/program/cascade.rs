@@ -20,6 +20,7 @@ mod invoke {
     }
 
     #[test]
+    #[cfg(not(target_os = "linux"))]
     fn failing_helpers_for_filling_dont_interrupt() {
         let actual = invoke_cascade(["fail", "custom-helper"], action_get())
             .unwrap()
@@ -28,6 +29,7 @@ mod invoke {
     }
 
     #[test]
+    #[cfg(not(target_os = "linux"))]
     fn urls_are_split_in_get_to_support_scripts() {
         let actual = invoke_cascade(
             ["reflect", "custom-helper"],
@@ -43,6 +45,7 @@ mod invoke {
     }
 
     #[test]
+    #[cfg(not(target_os = "linux"))]
     fn urls_are_split_in_get_but_can_skip_the_path_in_host_only_urls() {
         let actual = invoke_cascade(["reflect", "custom-helper"], Action::get_for_url("http://example.com"))
             .unwrap()

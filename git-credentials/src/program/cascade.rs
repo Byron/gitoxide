@@ -6,7 +6,7 @@ use bstr::ByteSlice;
 /// Initialization
 impl Cascade {
     /// Return an instance configured to run the `git credential-<platform>` program for the current platform first, followed
-    /// by additional programs pushed onto [`programs`][Self::prorgams].
+    /// by additional programs pushed onto [`programs`][Self::programs].
     ///
     /// It's the basis for adding more programs according to the caller which run in succession.
     pub fn platform_builtin() -> Self {
