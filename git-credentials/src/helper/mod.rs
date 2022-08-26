@@ -1,6 +1,7 @@
 use crate::protocol;
 use crate::protocol::Context;
 use bstr::{BStr, BString};
+use std::convert::TryFrom;
 
 /// The outcome of the credentials helper [invocation][crate::helper::invoke()].
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -110,6 +111,14 @@ impl Action {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct NextAction {
     previous_output: BString,
+}
+
+impl TryFrom<&NextAction> for Context {
+    type Error = protocol::context::decode::Error;
+
+    fn try_from(value: &NextAction) -> std::result::Result<Self, Self::Error> {
+        Context::from_bytes(value.previous_output.as_ref())
+    }
 }
 
 impl From<Context> for NextAction {

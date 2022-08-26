@@ -1,10 +1,12 @@
 mod invoke {
-    use bstr::ByteVec;
+    use bstr::{ByteSlice, ByteVec};
     use git_credentials::helper::Action;
     use git_credentials::program::Cascade;
+    use git_credentials::protocol::Context;
     use git_credentials::{program, protocol, Program};
     use git_sec::identity::Account;
     use git_testtools::fixture_path;
+    use std::convert::TryInto;
 
     #[test]
     fn credentials_are_filled_in_one_by_one_and_stop_when_complete() {
@@ -19,10 +21,41 @@ mod invoke {
 
     #[test]
     fn failing_helpers_for_filling_dont_interrupt() {
-        let actual = invoke_cascade(["fail", "custom-helper"], Action::get_for_url("does/not/matter"))
+        let actual = invoke_cascade(["fail", "custom-helper"], action_get())
             .unwrap()
             .expect("credentials");
         assert_eq!(actual.identity, identity("user-script", "pass-script"));
+    }
+
+    #[test]
+    fn urls_are_split_in_get_to_support_scripts() {
+        let actual = invoke_cascade(
+            ["reflect", "custom-helper"],
+            Action::get_for_url("https://example.com:8080/path/git"),
+        )
+        .unwrap()
+        .expect("credentials");
+
+        let ctx: Context = (&actual.next).try_into().unwrap();
+        assert_eq!(ctx.protocol.as_deref().expect("protocol"), "https");
+        assert_eq!(ctx.host.as_deref().expect("host"), "example.com:8080");
+        assert_eq!(ctx.path.as_deref().expect("path").as_bstr(), "/path/git");
+    }
+
+    #[test]
+    fn urls_are_split_in_get_but_can_skip_the_path_in_host_only_urls() {
+        let actual = invoke_cascade(["reflect", "custom-helper"], Action::get_for_url("http://example.com"))
+            .unwrap()
+            .expect("credentials");
+
+        let ctx: Context = (&actual.next).try_into().unwrap();
+        assert_eq!(ctx.protocol.as_deref().expect("protocol"), "http");
+        assert_eq!(ctx.host.as_deref().expect("host"), "example.com");
+        assert_eq!(ctx.path, None);
+    }
+
+    fn action_get() -> Action {
+        Action::get_for_url("does/not/matter")
     }
 
     fn identity(user: &str, pass: &str) -> Account {

@@ -41,7 +41,7 @@ pub struct Url {
     host: Option<String>,
     /// The port to use when connecting to a host. If `None`, standard ports depending on `scheme` will be used.
     pub port: Option<u16>,
-    /// The path portion of the URL, usually the location of the git repository.
+    /// The path portion of the URL, usually the location of the git repository, and at least `/`
     pub path: bstr::BString,
 }
 

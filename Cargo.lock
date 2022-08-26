@@ -1179,6 +1179,7 @@ dependencies = [
  "git-path",
  "git-sec",
  "git-testtools",
+ "git-url",
  "serde",
  "thiserror",
 ]

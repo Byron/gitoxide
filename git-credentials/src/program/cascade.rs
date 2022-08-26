@@ -41,10 +41,22 @@ impl Cascade {
     /// When _getting_ credentials, all programs are asked until the credentials are complete, stopping the cascade.
     /// When _storing_ or _erasing_ all programs are instructed in order.
     pub fn invoke(&mut self, mut action: helper::Action) -> protocol::Result {
-        let mut fill_ctx = action
-            .expects_output()
-            .then(|| action.context().map(ToOwned::to_owned))
-            .flatten();
+        let mut fill_ctx = match &mut action {
+            helper::Action::Get(ctx) => {
+                let url = git_url::parse(ctx.url.as_ref().ok_or(protocol::Error::UrlMissing)?.as_ref())?;
+                ctx.protocol = Some(url.scheme.as_str().into());
+                ctx.host = url.host().map(ToOwned::to_owned).map(|mut host| {
+                    if let Some(port) = url.port {
+                        host.push_str(&format!(":{}", port));
+                    }
+                    host
+                });
+                ctx.path = if url.path == "/" { None } else { url.path.into() };
+                Some(ctx.clone())
+            }
+            _ => None,
+        };
+
         for program in &mut self.programs {
             match helper::invoke(program, &action) {
                 Ok(None) => {}
