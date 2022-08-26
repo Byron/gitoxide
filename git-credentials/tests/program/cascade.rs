@@ -31,7 +31,7 @@ mod invoke {
     fn urls_are_split_in_get_to_support_scripts() {
         let actual = invoke_cascade(
             ["reflect", "custom-helper"],
-            Action::get_for_url("https://example.com:8080/path/git"),
+            Action::get_for_url("https://example.com:8080/path/git/"),
         )
         .unwrap()
         .expect("credentials");
@@ -39,7 +39,7 @@ mod invoke {
         let ctx: Context = (&actual.next).try_into().unwrap();
         assert_eq!(ctx.protocol.as_deref().expect("protocol"), "https");
         assert_eq!(ctx.host.as_deref().expect("host"), "example.com:8080");
-        assert_eq!(ctx.path.as_deref().expect("path").as_bstr(), "/path/git");
+        assert_eq!(ctx.path.as_deref().expect("path").as_bstr(), "path/git");
     }
 
     #[test]
@@ -52,6 +52,22 @@ mod invoke {
         assert_eq!(ctx.protocol.as_deref().expect("protocol"), "http");
         assert_eq!(ctx.host.as_deref().expect("host"), "example.com");
         assert_eq!(ctx.path, None);
+    }
+
+    #[test]
+    #[ignore]
+    fn helpers_can_set_any_context_value() {
+        let actual = invoke_cascade(
+            ["all-but-credentials", "custom-helper"],
+            Action::get_for_url("http://github.com"),
+        )
+        .unwrap()
+        .expect("credentials");
+
+        let ctx: Context = (&actual.next).try_into().unwrap();
+        assert_eq!(ctx.protocol.as_deref().expect("protocol"), "ftp");
+        assert_eq!(ctx.host.as_deref().expect("host"), "example.com:8080");
+        assert_eq!(ctx.path.expect("set by helper"), "path/to/git");
     }
 
     fn action_get() -> Action {

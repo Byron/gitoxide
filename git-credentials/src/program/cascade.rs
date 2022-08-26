@@ -1,6 +1,7 @@
 use crate::helper::Action;
 use crate::program::Cascade;
 use crate::{helper, protocol, Program};
+use bstr::ByteSlice;
 
 /// Initialization
 impl Cascade {
@@ -52,7 +53,8 @@ impl Cascade {
                     }
                     host
                 });
-                ctx.path = if url.path == "/" { None } else { url.path.into() };
+                let path = url.path.trim_with(|b| b == '/');
+                ctx.path = (!path.is_empty()).then(|| path.into());
                 Some(ctx.clone())
             }
             _ => None,
