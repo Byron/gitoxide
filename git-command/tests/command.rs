@@ -44,7 +44,10 @@ mod spawn {
                 .spawn()?
                 .wait_with_output()?;
             assert!(out.status.success());
+            #[cfg(not(windows))]
             assert_eq!(out.stdout.as_bstr(), "1\n");
+            #[cfg(windows)]
+            assert_eq!(out.stdout.as_bstr(), "1\r\n");
             Ok(())
         }
 
@@ -57,7 +60,10 @@ mod spawn {
                 .spawn()?
                 .wait_with_output()?;
             assert!(out.status.success());
+            #[cfg(not(windows))]
             assert_eq!(out.stdout.as_bstr(), "1 2\n");
+            #[cfg(windows)]
+            assert_eq!(out.stdout.as_bstr(), "1 2\r\n");
             Ok(())
         }
     }
