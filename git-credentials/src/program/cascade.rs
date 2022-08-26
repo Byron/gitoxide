@@ -43,22 +43,18 @@ impl Cascade {
     /// When _getting_ credentials, all programs are asked until the credentials are complete, stopping the cascade.
     /// When _storing_ or _erasing_ all programs are instructed in order.
     pub fn invoke(&mut self, mut action: helper::Action) -> protocol::Result {
-        let mut fill_ctx = match &mut action {
-            helper::Action::Get(ctx) => {
-                let url = git_url::parse(ctx.url.as_ref().ok_or(protocol::Error::UrlMissing)?.as_ref())?;
-                ctx.protocol = Some(url.scheme.as_str().into());
-                ctx.host = url.host().map(ToOwned::to_owned).map(|mut host| {
-                    if let Some(port) = url.port {
-                        use std::fmt::Write;
-                        write!(host, ":{}", port).expect("infallible");
-                    }
-                    host
-                });
-                let path = url.path.trim_with(|b| b == '/');
-                ctx.path = (!path.is_empty()).then(|| path.into());
-                Some(ctx.clone())
-            }
-            _ => None,
+        if let Some(ctx) = action.context_mut() {
+            let url = git_url::parse(ctx.url.as_ref().ok_or(protocol::Error::UrlMissing)?.as_ref())?;
+            ctx.protocol = Some(url.scheme.as_str().into());
+            ctx.host = url.host().map(ToOwned::to_owned).map(|mut host| {
+                if let Some(port) = url.port {
+                    use std::fmt::Write;
+                    write!(host, ":{}", port).expect("infallible");
+                }
+                host
+            });
+            let path = url.path.trim_with(|b| b == '/');
+            ctx.path = (!path.is_empty()).then(|| path.into());
         };
 
         for program in &mut self.programs {
@@ -67,49 +63,49 @@ impl Cascade {
                 Ok(None) => {}
                 Ok(Some(stdout)) => {
                     let ctx = Context::from_bytes(&stdout)?;
-                    if let Some(fill_ctx) = fill_ctx.as_mut() {
+                    if let Some(dst_ctx) = action.context_mut() {
                         let mut action_needs_update = false;
-                        for (src, dst) in [(ctx.path, &mut fill_ctx.path), (ctx.url, &mut fill_ctx.url)] {
+                        for (src, dst) in [(ctx.path, &mut dst_ctx.path), (ctx.url, &mut dst_ctx.url)] {
                             if let Some(src) = src {
                                 *dst = Some(src);
                                 action_needs_update = true;
                             }
                         }
                         for (src, dst) in [
-                            (ctx.protocol, &mut fill_ctx.protocol),
-                            (ctx.host, &mut fill_ctx.host),
-                            (ctx.username, &mut fill_ctx.username),
-                            (ctx.password, &mut fill_ctx.password),
+                            (ctx.protocol, &mut dst_ctx.protocol),
+                            (ctx.host, &mut dst_ctx.host),
+                            (ctx.username, &mut dst_ctx.username),
+                            (ctx.password, &mut dst_ctx.password),
                         ] {
                             if let Some(src) = src {
                                 *dst = Some(src);
                                 action_needs_update = true;
                             }
                         }
-                        if fill_ctx.username.is_some() && fill_ctx.password.is_some() {
+                        if dst_ctx.username.is_some() && dst_ctx.password.is_some() {
                             break;
                         }
                         if ctx.quit.unwrap_or_default() {
-                            fill_ctx.quit = ctx.quit;
+                            dst_ctx.quit = ctx.quit;
                             break;
                         }
                         if action_needs_update {
-                            action = Action::Get(fill_ctx.clone());
+                            action = Action::Get(dst_ctx.clone());
                         }
                     }
                 }
                 Err(helper::Error::CredentialsHelperFailed { .. }) => continue, // ignore helpers that we can't call
-                Err(err) if fill_ctx.is_some() => return Err(err.into()), // communication errors are fatal when getting credentials
+                Err(err) if action.context().is_some() => return Err(err.into()), // communication errors are fatal when getting credentials
                 Err(_) => {} // for other actions, ignore everything, try the operation
             }
         }
 
         protocol::helper_outcome_to_result(
-            fill_ctx.map(|ctx| helper::Outcome {
+            action.context().map(|ctx| helper::Outcome {
                 username: ctx.username.clone(),
                 password: ctx.password.clone(),
                 quit: ctx.quit.unwrap_or(false),
-                next: ctx.into(),
+                next: ctx.to_owned().into(),
             }),
             action,
         )

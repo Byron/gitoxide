@@ -88,6 +88,14 @@ impl Action {
         }
     }
 
+    /// Return the mutable context of a get operation, or `None`.
+    pub fn context_mut(&mut self) -> Option<&mut Context> {
+        match self {
+            Action::Get(ctx) => Some(ctx),
+            Action::Erase(_) | Action::Store(_) => None,
+        }
+    }
+
     /// Returns true if this action expects output from the helper.
     pub fn expects_output(&self) -> bool {
         matches!(self, Action::Get(_))
