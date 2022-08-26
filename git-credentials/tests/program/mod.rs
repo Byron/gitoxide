@@ -5,7 +5,7 @@ mod from_custom_definition {
     #[test]
     fn script() {
         assert!(
-            matches!(Program::from_custom_definition("!exe"), Program::Ready(Kind::CustomScript(script)) if script == "exe")
+            matches!(Program::from_custom_definition("!exe"), Program::Ready(Kind::ExternalShellScript(script)) if script == "exe")
         );
     }
 
@@ -14,7 +14,7 @@ mod from_custom_definition {
         let input = "name --arg --bar=\"a b\"";
         let expected = "git credential-name --arg --bar=\"a b\"";
         assert!(
-            matches!(Program::from_custom_definition(input), Program::Ready(Kind::CustomName{name_and_args}) if name_and_args == expected)
+            matches!(Program::from_custom_definition(input), Program::Ready(Kind::ExternalName{name_and_args}) if name_and_args == expected)
         );
     }
 
@@ -23,7 +23,7 @@ mod from_custom_definition {
         let input = "name";
         let expected = "git credential-name";
         assert!(
-            matches!(Program::from_custom_definition(input), Program::Ready(Kind::CustomName{name_and_args}) if name_and_args == expected)
+            matches!(Program::from_custom_definition(input), Program::Ready(Kind::ExternalName{name_and_args}) if name_and_args == expected)
         );
     }
 
@@ -31,7 +31,7 @@ mod from_custom_definition {
     fn path_with_args() {
         let input = "/abs/name --arg --bar=\"a b\"";
         assert!(
-            matches!(Program::from_custom_definition(input), Program::Ready(Kind::CustomPath{path_and_args}) if path_and_args == input)
+            matches!(Program::from_custom_definition(input), Program::Ready(Kind::ExternalPath{path_and_args}) if path_and_args == input)
         );
     }
 
@@ -39,7 +39,7 @@ mod from_custom_definition {
     fn path() {
         let input = "/abs/name";
         assert!(
-            matches!(Program::from_custom_definition(input), Program::Ready(Kind::CustomPath{path_and_args}) if path_and_args == input)
+            matches!(Program::from_custom_definition(input), Program::Ready(Kind::ExternalPath{path_and_args}) if path_and_args == input)
         );
     }
 }

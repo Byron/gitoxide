@@ -7,22 +7,22 @@ use std::process::{Command, Stdio};
 /// The kind of helper program to use.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Kind {
-    /// The built-in `git credential` helper program, part of any git distribution.
+    /// The built-in `git credential` helper program, part of any `git` distribution.
     Builtin,
     /// A custom credentials helper, as identified just by the name with optional arguments
-    CustomName {
+    ExternalName {
         /// The name like `foo` along with optional args, like `foo --arg --bar="a b"`, with arguments using `sh` shell quoting rules.
         /// The program executed will be `git-credential-foo` if `name_and_args` starts with `foo`.
         name_and_args: BString,
     },
     /// A custom credentials helper, as identified just by the absolute path to the program and optional arguments. The program is executed through a shell.
-    CustomPath {
+    ExternalPath {
         /// The absolute path to the executable, like `/path/to/exe` along with optional args, like `/path/to/exe --arg --bar="a b"`, with arguments using `sh`
         /// shell quoting rules.
         path_and_args: BString,
     },
     /// A script to execute with `sh`.
-    CustomScript(BString),
+    ExternalShellScript(BString),
 }
 
 impl Program {
@@ -37,7 +37,7 @@ impl Program {
         let mut input = input.into();
         Program::Ready(if input.starts_with(b"!") {
             input.remove(0);
-            Kind::CustomScript(input)
+            Kind::ExternalShellScript(input)
         } else {
             let path = git_path::from_bstr(
                 input
@@ -46,10 +46,10 @@ impl Program {
                     .as_bstr(),
             );
             if git_path::is_absolute(path) {
-                Kind::CustomPath { path_and_args: input }
+                Kind::ExternalPath { path_and_args: input }
             } else {
                 input.insert_str(0, "git credential-");
-                Kind::CustomName { name_and_args: input }
+                Kind::ExternalName { name_and_args: input }
             }
         })
     }
@@ -71,11 +71,11 @@ impl Helper for Program {
                             .arg(action.as_helper_arg(false));
                         cmd
                     }
-                    Kind::CustomScript(for_shell)
-                    | Kind::CustomName {
+                    Kind::ExternalShellScript(for_shell)
+                    | Kind::ExternalName {
                         name_and_args: for_shell,
                     }
-                    | Kind::CustomPath {
+                    | Kind::ExternalPath {
                         path_and_args: for_shell,
                     } => git_command::prepare(git_path::from_bstr(for_shell.as_bstr()).as_ref())
                         .with_shell()
