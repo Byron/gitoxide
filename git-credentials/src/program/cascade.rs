@@ -43,7 +43,7 @@ impl Cascade {
     /// When _getting_ credentials, all programs are asked until the credentials are complete, stopping the cascade.
     /// When _storing_ or _erasing_ all programs are instructed in order.
     pub fn invoke(&mut self, mut action: helper::Action) -> protocol::Result {
-        if let Some(ctx) = action.context_mut() {
+        fn store_url_parts(ctx: &mut Context) -> Result<(), protocol::Error> {
             let url = git_url::parse(ctx.url.as_ref().ok_or(protocol::Error::UrlMissing)?.as_ref())?;
             ctx.protocol = Some(url.scheme.as_str().into());
             ctx.host = url.host().map(ToOwned::to_owned).map(|mut host| {
@@ -55,7 +55,9 @@ impl Cascade {
             });
             let path = url.path.trim_with(|b| b == '/');
             ctx.path = (!path.is_empty()).then(|| path.into());
-        };
+            Ok(())
+        }
+        action.context_mut().map(store_url_parts).transpose()?;
 
         for program in &mut self.programs {
             program.stderr = self.stderr;
@@ -65,11 +67,9 @@ impl Cascade {
                     let ctx = Context::from_bytes(&stdout)?;
                     if let Some(dst_ctx) = action.context_mut() {
                         let mut action_needs_update = false;
-                        for (src, dst) in [(ctx.path, &mut dst_ctx.path), (ctx.url, &mut dst_ctx.url)] {
-                            if let Some(src) = src {
-                                *dst = Some(src);
-                                action_needs_update = true;
-                            }
+                        if let Some(src) = ctx.path {
+                            dst_ctx.path = Some(src);
+                            action_needs_update = true;
                         }
                         for (src, dst) in [
                             (ctx.protocol, &mut dst_ctx.protocol),
@@ -81,6 +81,11 @@ impl Cascade {
                                 *dst = Some(src);
                                 action_needs_update = true;
                             }
+                        }
+                        if let Some(src) = ctx.url {
+                            dst_ctx.url = Some(src);
+                            store_url_parts(dst_ctx)?;
+                            action_needs_update = true;
                         }
                         if dst_ctx.username.is_some() && dst_ctx.password.is_some() {
                             break;
