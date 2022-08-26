@@ -129,3 +129,7 @@ impl Helper for &mut Program {
         }
     }
 }
+
+///
+pub mod main;
+pub use main::function::main;

@@ -134,7 +134,8 @@ mod program {
 
 mod util {
     use git_credentials::helper::invoke::Action;
-    use git_credentials::helper::{main, Context};
+    use git_credentials::helper::Context;
+    use git_credentials::program::main;
 
     #[derive(Default)]
     pub struct MockHelper {
@@ -152,7 +153,7 @@ mod util {
             );
             let action_name = action.as_helper_arg(true).into();
             self.handle = std::thread::spawn(move || {
-                git_credentials::helper::main(
+                git_credentials::program::main(
                     Some(action_name),
                     us_receive,
                     us_send,

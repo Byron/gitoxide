@@ -2,7 +2,7 @@ use bstr::BString;
 use std::convert::TryFrom;
 use std::ffi::OsString;
 
-/// The action passed to the credential helper implementation in [`main()`][crate::helper::main()].
+/// The action passed to the credential helper implementation in [`main()`][crate::program::main()].
 #[derive(Debug, Copy, Clone)]
 pub enum Action {
     /// Get credentials for a url.
@@ -26,7 +26,7 @@ impl TryFrom<OsString> for Action {
     }
 }
 
-/// The error of [`main()`][crate::helper::main()].
+/// The error of [`main()`][crate::program::main()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -49,8 +49,8 @@ pub enum Error {
 }
 
 pub(crate) mod function {
-    use crate::helper::main::{Action, Error};
     use crate::helper::Context;
+    use crate::program::main::{Action, Error};
     use std::convert::TryInto;
     use std::ffi::OsString;
 
