@@ -21,7 +21,24 @@ impl Action {
 /// Note that it may also only contain the username or password.
 /// On successful usage, use [`NextAction::store()`], otherwise [`NextAction::erase()`], which returns `Ok(None)` as no outcome
 /// is expected.
-pub fn invoke(mut helper: impl crate::Helper, action: &Action) -> Result {
+pub fn invoke(helper: impl crate::Helper, action: &Action) -> Result {
+    match raw(helper, action)? {
+        None => Ok(None),
+        Some(stdout) => {
+            let ctx = Context::from_bytes(stdout.as_slice())?;
+            Ok(Some(Outcome {
+                username: ctx.username,
+                password: ctx.password,
+                quit: ctx.quit.unwrap_or(false),
+                next: NextAction {
+                    previous_output: stdout.into(),
+                },
+            }))
+        }
+    }
+}
+
+pub(crate) fn raw(mut helper: impl crate::Helper, action: &Action) -> std::result::Result<Option<Vec<u8>>, Error> {
     let (stdin, stdout) = helper.start(action)?;
     if let (Action::Get(_), None) = (&action, &stdout) {
         panic!("BUG: `Helper` impls must return an output handle to read output from if Action::Get is provided")
@@ -44,16 +61,6 @@ pub fn invoke(mut helper: impl crate::Helper, action: &Action) -> Result {
 
     match matches!(action, Action::Get(_)).then(|| stdout).flatten() {
         None => Ok(None),
-        Some(stdout) => {
-            let ctx = Context::from_bytes(stdout.as_slice())?;
-            Ok(Some(Outcome {
-                username: ctx.username,
-                password: ctx.password,
-                quit: ctx.quit.unwrap_or(false),
-                next: NextAction {
-                    previous_output: stdout.into(),
-                },
-            }))
-        }
+        Some(stdout) => Ok(Some(stdout)),
     }
 }

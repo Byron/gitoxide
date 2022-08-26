@@ -1,5 +1,6 @@
 use crate::helper::Action;
 use crate::program::Cascade;
+use crate::protocol::Context;
 use crate::{helper, protocol, Program};
 use bstr::ByteSlice;
 
@@ -62,25 +63,35 @@ impl Cascade {
 
         for program in &mut self.programs {
             program.stderr = self.stderr;
-            match helper::invoke(program, &action) {
+            match helper::invoke::raw(program, &action) {
                 Ok(None) => {}
-                Ok(Some(outcome)) => {
+                Ok(Some(stdout)) => {
+                    let ctx = Context::from_bytes(&stdout)?;
                     if let Some(fill_ctx) = fill_ctx.as_mut() {
                         let mut action_needs_update = false;
-                        if let v @ None = &mut fill_ctx.username {
-                            *v = outcome.username;
-                            action_needs_update = true;
-                        }
-                        if let v @ None = &mut fill_ctx.password {
-                            *v = outcome.password;
-                            action_needs_update = true;
-                        }
-                        if let v @ None = &mut fill_ctx.quit {
-                            if outcome.quit {
-                                *v = outcome.quit.into();
-                                break;
+                        for (src, dst) in [(ctx.path, &mut fill_ctx.path), (ctx.url, &mut fill_ctx.url)] {
+                            if let Some(src) = src {
+                                *dst = Some(src);
+                                action_needs_update = true;
                             }
-                            action_needs_update = true;
+                        }
+                        for (src, dst) in [
+                            (ctx.protocol, &mut fill_ctx.protocol),
+                            (ctx.host, &mut fill_ctx.host),
+                            (ctx.username, &mut fill_ctx.username),
+                            (ctx.password, &mut fill_ctx.password),
+                        ] {
+                            if let Some(src) = src {
+                                *dst = Some(src);
+                                action_needs_update = true;
+                            }
+                        }
+                        if fill_ctx.username.is_some() && fill_ctx.password.is_some() {
+                            break;
+                        }
+                        if ctx.quit.unwrap_or_default() {
+                            fill_ctx.quit = ctx.quit;
+                            break;
                         }
                         if action_needs_update {
                             action = Action::Get(fill_ctx.clone());

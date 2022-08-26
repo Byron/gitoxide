@@ -58,7 +58,7 @@ mod invoke {
     }
 
     #[test]
-    #[ignore]
+    #[cfg(not(target_os = "linux"))]
     fn helpers_can_set_any_context_value() {
         let actual = invoke_cascade(
             ["all-but-credentials", "custom-helper"],
@@ -70,7 +70,11 @@ mod invoke {
         let ctx: Context = (&actual.next).try_into().unwrap();
         assert_eq!(ctx.protocol.as_deref().expect("protocol"), "ftp");
         assert_eq!(ctx.host.as_deref().expect("host"), "example.com:8080");
-        assert_eq!(ctx.path.expect("set by helper"), "path/to/git");
+        assert_eq!(
+            ctx.path.expect("set by helper"),
+            "/path/to/git/",
+            "values are passed verbatim even if they would otherwise look different"
+        );
     }
 
     fn action_get() -> Action {
