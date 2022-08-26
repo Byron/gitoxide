@@ -7,7 +7,7 @@ fn get() {
     let mut helper = MockHelper::default();
     let mut outcome = git_credentials::helper::invoke(
         &mut helper,
-        invoke::Action::get_for_url("https://github.com/byron/gitoxide"),
+        &invoke::Action::get_for_url("https://github.com/byron/gitoxide"),
     )
     .unwrap()
     .expect("mock provides credentials");
@@ -37,7 +37,7 @@ fn store_and_reject() {
         buf.into()
     };
     for action in [invoke::Action::Store(ctxbuf()), invoke::Action::Erase(ctxbuf())] {
-        let outcome = git_credentials::helper::invoke(&mut helper, action).unwrap();
+        let outcome = git_credentials::helper::invoke(&mut helper, &action).unwrap();
         assert!(
             outcome.is_none(),
             "store and erase have no outcome, they just shouln't fail"
@@ -56,7 +56,7 @@ mod program {
             matches!(
                 git_credentials::helper::invoke(
                     Program::from_kind(Kind::Builtin),
-                    invoke::Action::get_for_url("/path/without/scheme/fails/with/error"),
+                    &invoke::Action::get_for_url("/path/without/scheme/fails/with/error"),
                 )
                 .unwrap_err(),
                 invoke::Error::CredentialsHelperFailed { .. }
@@ -72,7 +72,7 @@ mod program {
                 &mut Program::from_custom_definition(
                     "!f() { test \"$1\" = get && echo \"password=pass\" && echo \"username=user\"; }; f"
                 ),
-                invoke::Action::get_for_url("/does/not/matter"),
+                &invoke::Action::get_for_url("/does/not/matter"),
             )
             .unwrap()
             .expect("present")
@@ -94,7 +94,7 @@ mod program {
                     git_path::into_bstr(git_path::realpath(git_testtools::fixture_path("custom-helper.sh"))?)
                         .into_owned()
                 ),
-                invoke::Action::get_for_url("/does/not/matter"),
+                &invoke::Action::get_for_url("/does/not/matter"),
             )?
             .expect("present")
             .consume_identity()
@@ -118,7 +118,7 @@ mod program {
         assert_eq!(
             git_credentials::helper::invoke(
                 Program::Ready(Kind::CustomScript(helper)),
-                invoke::Action::get_for_url("/does/not/matter"),
+                &invoke::Action::get_for_url("/does/not/matter"),
             )?
             .expect("present")
             .consume_identity()
