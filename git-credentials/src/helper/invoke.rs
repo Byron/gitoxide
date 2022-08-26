@@ -8,6 +8,8 @@ pub struct Outcome {
     pub username: Option<String>,
     /// The username to use in the identity, if set.
     pub password: Option<String>,
+    /// If set, the helper asked to stop the entire process, whether the identity is complete or not.
+    pub quit: bool,
     /// A handle to the action to perform next in another call to [`helper::invoke()`][crate::helper::invoke()].
     pub next: NextAction,
 }
@@ -99,6 +101,16 @@ pub struct NextAction {
     previous_output: BString,
 }
 
+impl From<Context> for NextAction {
+    fn from(ctx: Context) -> Self {
+        let mut buf = Vec::<u8>::new();
+        ctx.write_to(&mut buf).expect("cannot fail");
+        NextAction {
+            previous_output: buf.into(),
+        }
+    }
+}
+
 impl NextAction {
     /// Approve the result of the previous [Action] and store for lookup.
     pub fn store(self) -> Action {
@@ -162,6 +174,7 @@ pub(crate) mod function {
                 Ok(Some(Outcome {
                     username: ctx.username,
                     password: ctx.password,
+                    quit: ctx.quit.unwrap_or(false),
                     next: NextAction {
                         previous_output: stdout.into(),
                     },

@@ -20,6 +20,8 @@ pub enum Error {
     Invoke(#[from] invoke::Error),
     #[error("Could not obtain identity for context: {}", { let mut buf = Vec::<u8>::new(); context.write_to(&mut buf).ok(); String::from_utf8_lossy(&buf).into_owned() })]
     IdentityMissing { context: Context },
+    #[error("The handler asked to stop trying to obtain credentials")]
+    Quit,
 }
 
 /// Additional context to be passed to the credentials helper.
@@ -43,6 +45,26 @@ pub struct Context {
     /// If true, the caller should stop asking for credentials immediately without calling more credential helpers in the chain.
     pub quit: Option<bool>,
 }
+
+/// Convert the outcome of a helper invocation to a helper result, assuring that the identity is complete in the process.
+pub fn invoke_outcome_to_helper_result(outcome: Option<invoke::Outcome>, action: invoke::Action) -> Result {
+    match (action, outcome) {
+        (invoke::Action::Get(context), None) => Err(Error::IdentityMissing { context }),
+        (invoke::Action::Get(context), Some(mut outcome)) => match outcome.consume_identity() {
+            Some(identity) => Ok(Some(Outcome {
+                identity,
+                next: outcome.next,
+            })),
+            None => Err(if outcome.quit {
+                Error::Quit
+            } else {
+                Error::IdentityMissing { context }
+            }),
+        },
+        (invoke::Action::Store(_) | invoke::Action::Erase(_), _ignore) => Ok(None),
+    }
+}
+
 ///
 pub mod context;
 

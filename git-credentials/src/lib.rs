@@ -42,25 +42,8 @@ pub mod helper;
 ///
 /// See [`invoke()`][helper::invoke()] for a more flexible implementation.
 pub fn builtin(action: helper::invoke::Action) -> helper::Result {
-    invoke_outcome_to_helper_result(
+    helper::invoke_outcome_to_helper_result(
         helper::invoke(Program::from_kind(program::Kind::Builtin), &action)?,
         action,
     )
-}
-
-fn invoke_outcome_to_helper_result(
-    outcome: Option<helper::invoke::Outcome>,
-    action: helper::invoke::Action,
-) -> helper::Result {
-    match (action, outcome) {
-        (helper::invoke::Action::Get(context), None) => Err(helper::Error::IdentityMissing { context }),
-        (helper::invoke::Action::Get(context), Some(mut outcome)) => match outcome.consume_identity() {
-            Some(identity) => Ok(Some(helper::Outcome {
-                identity,
-                next: outcome.next,
-            })),
-            None => Err(helper::Error::IdentityMissing { context }),
-        },
-        (helper::invoke::Action::Store(_) | helper::invoke::Action::Erase(_), _ignore) => Ok(None),
-    }
 }
