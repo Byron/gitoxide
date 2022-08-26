@@ -5,14 +5,14 @@ use git_credentials::helper::{invoke, Context};
 #[test]
 fn get() {
     let mut helper = MockHelper::default();
-    let outcome = git_credentials::helper::invoke(
+    let mut outcome = git_credentials::helper::invoke(
         &mut helper,
         invoke::Action::get_for_url("https://github.com/byron/gitoxide"),
     )
     .unwrap()
     .expect("mock provides credentials");
     assert_eq!(
-        outcome.identity,
+        outcome.consume_identity().expect("complete"),
         git_sec::identity::Account {
             username: "user".into(),
             password: "pass".into()
@@ -76,7 +76,8 @@ mod program {
             )
             .unwrap()
             .expect("present")
-            .identity,
+            .consume_identity()
+            .expect("complete"),
             git_sec::identity::Account {
                 username: "user".into(),
                 password: "pass".into()
@@ -96,7 +97,8 @@ mod program {
                 invoke::Action::get_for_url("/does/not/matter"),
             )?
             .expect("present")
-            .identity,
+            .consume_identity()
+            .expect("complete"),
             git_sec::identity::Account {
                 username: "user-script".into(),
                 password: "pass-script".into()
@@ -119,7 +121,8 @@ mod program {
                 invoke::Action::get_for_url("/does/not/matter"),
             )?
             .expect("present")
-            .identity,
+            .consume_identity()
+            .expect("complete"),
             git_sec::identity::Account {
                 username: "user-script".into(),
                 password: "pass-script".into()

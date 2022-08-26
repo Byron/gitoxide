@@ -4,10 +4,27 @@ use bstr::{BStr, BString};
 /// The outcome of the credentials [`helper`][crate::helper()].
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Outcome {
-    /// The obtained identity.
-    pub identity: git_sec::identity::Account,
+    /// The username to use in the identity, if set.
+    pub username: Option<String>,
+    /// The username to use in the identity, if set.
+    pub password: Option<String>,
     /// A handle to the action to perform next in another call to [`helper::invoke()`][crate::helper::invoke()].
     pub next: NextAction,
+}
+
+impl Outcome {
+    /// Try to fetch username _and_ password to form an identity. This will fail if one of them is not set.
+    ///
+    /// This does nothing if only one of the fields is set, or consume both.
+    pub fn consume_identity(&mut self) -> Option<git_sec::identity::Account> {
+        if self.username.is_none() || self.password.is_none() {
+            return None;
+        }
+        self.username
+            .take()
+            .zip(self.password.take())
+            .map(|(username, password)| git_sec::identity::Account { username, password })
+    }
 }
 
 /// The Result type used in [`helper()`][crate::helper()].
@@ -21,8 +38,6 @@ pub enum Error {
     Context(#[from] crate::helper::context::decode::Error),
     #[error("An IO error occurred while communicating to the credentials helper")]
     Io(#[from] std::io::Error),
-    #[error("Could not find {name:?} field for identity in output of credentials helper: {output:?}")]
-    IdentityFieldNotFound { name: &'static str, output: BString },
     #[error(transparent)]
     CredentialsHelperFailed { source: std::io::Error },
 }
@@ -115,7 +130,8 @@ pub(crate) mod function {
 
     /// Invoke the given `helper` with `action` in `context`.
     ///
-    /// Usually the first call is performed with [`Action::Get`] to obtain `Some` identity, which subsequently can be used.
+    /// Usually the first call is performed with [`Action::Get`] to obtain `Some` identity, which subsequently can be used if it is complete.
+    /// Note that it may also only contain the username or password.
     /// On successful usage, use [`NextAction::store()`], otherwise [`NextAction::erase()`], which returns `Ok(None)` as no outcome
     /// is expected.
     pub fn invoke(mut helper: impl crate::Helper, action: Action) -> Result {
@@ -143,16 +159,9 @@ pub(crate) mod function {
             None => Ok(None),
             Some(stdout) => {
                 let ctx = Context::from_bytes(stdout.as_slice())?;
-                let password = ctx.password.ok_or_else(|| Error::IdentityFieldNotFound {
-                    name: "password",
-                    output: stdout.clone().into(),
-                })?;
-                let username = ctx.username.ok_or_else(|| Error::IdentityFieldNotFound {
-                    name: "username",
-                    output: stdout.clone().into(),
-                })?;
                 Ok(Some(Outcome {
-                    identity: git_sec::identity::Account { username, password },
+                    username: ctx.username,
+                    password: ctx.password,
                     next: NextAction {
                         previous_output: stdout.into(),
                     },
