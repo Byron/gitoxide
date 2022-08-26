@@ -81,7 +81,7 @@ pub(crate) mod function {
                     progress.set_name("authentication");
                     let credentials::helper::invoke::Outcome { identity, next } =
                         authenticate(credentials::helper::invoke::Action::get_for_url(url))?
-                            .expect("FILL provides an identity");
+                            .expect("FILL provides an identity or errors");
                     transport.set_identity(identity)?;
                     progress.step();
                     progress.set_name("handshake (authenticated)");

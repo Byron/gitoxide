@@ -21,8 +21,8 @@ pub enum Error {
     Context(#[from] crate::helper::context::decode::Error),
     #[error("An IO error occurred while communicating to the credentials helper")]
     Io(#[from] std::io::Error),
-    #[error("Could not find {name:?} in output of credentials helper")]
-    KeyNotFound { name: &'static str },
+    #[error("Could not find {name:?} field for identity in output of credentials helper: {output:?}")]
+    IdentityFieldNotFound { name: &'static str, output: BString },
     #[error(transparent)]
     CredentialsHelperFailed { source: std::io::Error },
 }
@@ -142,8 +142,14 @@ pub(crate) mod function {
             None => Ok(None),
             Some(stdout) => {
                 let ctx = Context::from_bytes(stdout.as_slice())?;
-                let username = ctx.username.ok_or(Error::KeyNotFound { name: "username" })?;
-                let password = ctx.password.ok_or(Error::KeyNotFound { name: "password" })?;
+                let password = ctx.password.ok_or_else(|| Error::IdentityFieldNotFound {
+                    name: "password",
+                    output: stdout.clone().into(),
+                })?;
+                let username = ctx.username.ok_or_else(|| Error::IdentityFieldNotFound {
+                    name: "username",
+                    output: stdout.clone().into(),
+                })?;
                 Ok(Some(Outcome {
                     identity: git_sec::identity::Account { username, password },
                     next: NextAction {
