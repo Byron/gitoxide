@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu -o pipefail
+set -eu
 
 echo username=user-last
 echo password=pass-last

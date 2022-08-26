@@ -20,7 +20,6 @@ mod invoke {
     }
 
     #[test]
-    #[cfg(not(target_os = "linux"))]
     fn failing_helpers_for_filling_dont_interrupt() {
         let actual = invoke_cascade(["fail", "custom-helper"], action_get())
             .unwrap()
@@ -29,7 +28,6 @@ mod invoke {
     }
 
     #[test]
-    #[cfg(not(target_os = "linux"))]
     fn urls_are_split_in_get_to_support_scripts() {
         let actual = invoke_cascade(
             ["reflect", "custom-helper"],
@@ -45,7 +43,6 @@ mod invoke {
     }
 
     #[test]
-    #[cfg(not(target_os = "linux"))]
     fn urls_are_split_in_get_but_can_skip_the_path_in_host_only_urls() {
         let actual = invoke_cascade(["reflect", "custom-helper"], Action::get_for_url("http://example.com"))
             .unwrap()
@@ -58,7 +55,6 @@ mod invoke {
     }
 
     #[test]
-    #[cfg(not(target_os = "linux"))]
     fn helpers_can_set_any_context_value() {
         let actual = invoke_cascade(
             ["all-but-credentials", "custom-helper"],
@@ -78,7 +74,6 @@ mod invoke {
     }
 
     #[test]
-    #[cfg(not(target_os = "linux"))]
     fn helpers_can_set_any_context_value_using_the_url_only() {
         let actual = invoke_cascade(["url", "custom-helper"], Action::get_for_url("http://github.com"))
             .unwrap()
@@ -99,7 +94,6 @@ mod invoke {
     }
 
     #[test]
-    #[cfg(not(target_os = "linux"))]
     fn helpers_can_quit_and_their_creds_are_taken_if_complete() {
         let actual = invoke_cascade(["last-pass", "custom-helper"], Action::get_for_url("http://github.com"))
             .unwrap()

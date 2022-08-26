@@ -107,7 +107,6 @@ mod program {
         Ok(())
     }
 
-    #[cfg(not(target_os = "linux"))]
     #[test]
     fn path_to_helper_as_script_to_workaround_executable_bits() -> crate::Result {
         let mut helper = git_path::to_unix_separators_on_windows(git_path::into_bstr(git_testtools::fixture_path(

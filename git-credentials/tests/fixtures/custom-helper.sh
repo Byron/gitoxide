@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eu -o pipefail
+set -eu
 
 test "$1" = get && \
 echo username=user-script && \
