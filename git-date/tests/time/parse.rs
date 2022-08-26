@@ -1,6 +1,39 @@
+use bstr::{BString, ByteSlice};
 use git_date::time::Sign;
 use git_date::Time;
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use time::OffsetDateTime;
+
+type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+static BASELINE: Lazy<HashMap<BString, usize>> = Lazy::new(|| {
+    let base = git_testtools::scripted_fixture_repo_read_only("generate_git_date_baseline.sh").unwrap();
+
+    (|| -> Result<_> {
+        let mut map = HashMap::new();
+        let baseline = std::fs::read(base.join("baseline.git"))?;
+        let mut lines = baseline.lines();
+        while let Some(date_str) = lines.next() {
+            let exit_code = lines.next().expect("two lines per baseline").to_str()?.parse()?;
+            map.insert(date_str.into(), exit_code);
+        }
+        Ok(map)
+    })()
+    .unwrap()
+});
+
+#[test]
+fn baseline() {
+    for (pattern, exit_code) in BASELINE.iter() {
+        let res = git_date::parse(pattern.to_str().expect("valid pattern"));
+        assert_eq!(
+            res.is_some(),
+            *exit_code == 0,
+            "{pattern:?} disagrees with baseline: {res:?}"
+        )
+    }
+}
 
 #[test]
 fn special_time_is_ok_for_now() {
