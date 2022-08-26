@@ -47,7 +47,8 @@ impl Cascade {
                 ctx.protocol = Some(url.scheme.as_str().into());
                 ctx.host = url.host().map(ToOwned::to_owned).map(|mut host| {
                     if let Some(port) = url.port {
-                        host.push_str(&format!(":{}", port));
+                        use std::fmt::Write;
+                        write!(host, ":{}", port).expect("infallible");
                     }
                     host
                 });
