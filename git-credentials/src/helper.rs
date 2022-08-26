@@ -81,15 +81,15 @@ impl Action {
         matches!(self, Action::Get(_))
     }
 
-    /// The name of the argument to describe this action. If `is_custom` is true, the target program is
+    /// The name of the argument to describe this action. If `is_external` is true, the target program is
     /// a custom credentials helper, not a built-in one.
-    pub fn as_helper_arg(&self, is_custom: bool) -> &str {
+    pub fn as_arg(&self, is_external: bool) -> &str {
         match self {
-            Action::Get(_) if is_custom => "get",
+            Action::Get(_) if is_external => "get",
             Action::Get(_) => "fill",
-            Action::Store(_) if is_custom => "store",
+            Action::Store(_) if is_external => "store",
             Action::Store(_) => "approve",
-            Action::Erase(_) if is_custom => "erase",
+            Action::Erase(_) if is_external => "erase",
             Action::Erase(_) => "reject",
         }
     }

@@ -151,7 +151,7 @@ mod util {
                 git_features::io::pipe::unidirectional(None),
                 git_features::io::pipe::unidirectional(None),
             );
-            let action_name = action.as_helper_arg(true).into();
+            let action_name = action.as_arg(true).into();
             self.handle = std::thread::spawn(move || {
                 git_credentials::program::main(
                     Some(action_name),

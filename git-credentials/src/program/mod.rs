@@ -100,9 +100,7 @@ impl Helper for Program {
                 let mut cmd = match &kind {
                     Kind::Builtin => {
                         let mut cmd = Command::new(cfg!(windows).then(|| "git.exe").unwrap_or("git"));
-                        cmd.arg("credential")
-                            .stderr(Stdio::null())
-                            .arg(action.as_helper_arg(false));
+                        cmd.arg("credential").stderr(Stdio::null()).arg(action.as_arg(false));
                         cmd
                     }
                     Kind::ExternalShellScript(for_shell)
@@ -113,7 +111,7 @@ impl Helper for Program {
                         path_and_args: for_shell,
                     } => git_command::prepare(git_path::from_bstr(for_shell.as_bstr()).as_ref())
                         .with_shell()
-                        .arg(action.as_helper_arg(true))
+                        .arg(action.as_arg(true))
                         .into(),
                 };
                 cmd.stdin(Stdio::piped()).stdout(if action.expects_output() {
