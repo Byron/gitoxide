@@ -37,7 +37,7 @@ pub type Result = std::result::Result<Option<Outcome>, Error>;
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
-    Context(#[from] crate::protocol::context::decode::Error),
+    ContextDecode(#[from] protocol::context::decode::Error),
     #[error("An IO error occurred while communicating to the credentials helper")]
     Io(#[from] std::io::Error),
     #[error(transparent)]
@@ -76,6 +76,16 @@ impl Action {
             Action::Store(p) | Action::Erase(p) => Some(p.as_bstr()),
         }
     }
+    /// Return the context of a get operation, or `None`.
+    ///
+    /// The opposite of [`payload`][Action::payload()].
+    pub fn context(&self) -> Option<&Context> {
+        match self {
+            Action::Get(ctx) => Some(ctx),
+            Action::Erase(_) | Action::Store(_) => None,
+        }
+    }
+
     /// Returns true if this action expects output from the helper.
     pub fn expects_output(&self) -> bool {
         matches!(self, Action::Get(_))
@@ -182,4 +192,5 @@ pub(crate) mod function {
         }
     }
 }
+use crate::protocol;
 pub use function::invoke;

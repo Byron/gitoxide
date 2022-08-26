@@ -18,6 +18,8 @@ pub type Result = std::result::Result<Option<Outcome>, Error>;
 #[allow(missing_docs)]
 pub enum Error {
     #[error(transparent)]
+    ContextDecode(#[from] context::decode::Error),
+    #[error(transparent)]
     InvokeHelper(#[from] helper::Error),
     #[error("Could not obtain identity for context: {}", { let mut buf = Vec::<u8>::new(); context.write_to(&mut buf).ok(); String::from_utf8_lossy(&buf).into_owned() })]
     IdentityMissing { context: Context },

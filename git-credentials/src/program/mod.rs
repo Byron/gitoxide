@@ -11,32 +11,7 @@ pub struct Cascade {
     pub programs: Vec<Program>,
 }
 
-mod cascade {
-    use crate::program::Cascade;
-    use crate::Program;
-
-    /// Initialization
-    impl Cascade {
-        /// Return an instance configured to run the `git credential-<platform>` program for the current platform.
-        ///
-        /// It's the basis for adding more programs according to the caller which run in succession.
-        pub fn platform_builtin() -> Self {
-            let programs = if cfg!(target_os = "macos") {
-                Some("osxkeychain")
-            } else if cfg!(target_os = "linux") {
-                Some("libsecret")
-            } else if cfg!(target_os = "windows") {
-                Some("wincred")
-            } else {
-                None
-            }
-            .map(|name| vec![Program::from_custom_definition(name)])
-            .unwrap_or_default();
-
-            Cascade { programs }
-        }
-    }
-}
+mod cascade;
 
 /// The kind of helper program to use.
 #[derive(Debug, Clone, Eq, PartialEq)]
