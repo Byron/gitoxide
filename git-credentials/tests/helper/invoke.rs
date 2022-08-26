@@ -117,7 +117,7 @@ mod program {
         helper.insert_str(0, "sh ");
         assert_eq!(
             git_credentials::helper::invoke(
-                Program::Ready(Kind::ExternalShellScript(helper)),
+                Program::from_kind(Kind::ExternalShellScript(helper)),
                 &helper::Action::get_for_url("/does/not/matter"),
             )?
             .expect("present")

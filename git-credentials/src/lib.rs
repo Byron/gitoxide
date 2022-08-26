@@ -25,11 +25,11 @@ pub trait Helper {
 
 /// A program/executable implementing the credential helper protocol.
 #[derive(Debug)]
-pub enum Program {
+pub struct Program {
     /// The kind of program, ready for launch
-    Ready(program::Kind),
-    /// The process is running.
-    Started((std::process::Child, program::Kind)),
+    pub kind: program::Kind,
+    /// Set if the process is running.
+    child: Option<std::process::Child>,
 }
 
 ///
