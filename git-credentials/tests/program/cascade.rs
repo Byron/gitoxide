@@ -99,7 +99,7 @@ mod invoke {
             .unwrap()
             .expect("credentials");
 
-        assert_eq!(actual.identity, identity("user-last", "pass-last"));
+        assert_eq!(actual.identity, identity("user", "pass"));
     }
 
     fn action_get() -> Action {

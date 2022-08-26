@@ -1,13 +1,12 @@
-use crate::helper::invoke::util::MockHelper;
-use bstr::BString;
-use git_credentials::helper;
+use bstr::{BString, ByteVec};
 use git_credentials::protocol::Context;
+use git_credentials::{helper, Program};
+use git_testtools::fixture_path;
 
 #[test]
 fn get() {
-    let mut helper = MockHelper::default();
     let mut outcome = git_credentials::helper::invoke(
-        &mut helper,
+        &mut script_helper("last-pass"),
         &helper::Action::get_for_url("https://github.com/byron/gitoxide"),
     )
     .unwrap()
@@ -21,13 +20,12 @@ fn get() {
     );
     assert_eq!(
         outcome.next.store().payload().unwrap(),
-        "url=https://github.com/byron/gitoxide\nusername=user\npassword=pass\n"
+        "username=user\npassword=pass\nquit=1\n"
     );
 }
 
 #[test]
 fn store_and_reject() {
-    let mut helper = MockHelper::default();
     let ctx = Context {
         url: Some("https://github.com/byron/gitoxide".into()),
         ..Default::default()
@@ -38,7 +36,7 @@ fn store_and_reject() {
         buf.into()
     };
     for action in [helper::Action::Store(ctxbuf()), helper::Action::Erase(ctxbuf())] {
-        let outcome = git_credentials::helper::invoke(&mut helper, &action).unwrap();
+        let outcome = git_credentials::helper::invoke(&mut script_helper("last-pass"), &action).unwrap();
         assert!(
             outcome.is_none(),
             "store and erase have no outcome, they just shouln't fail"
@@ -47,7 +45,7 @@ fn store_and_reject() {
 }
 
 mod program {
-    use bstr::ByteVec;
+    use crate::helper::invoke::script_helper;
     use git_credentials::{helper, program::Kind, Program};
 
     #[test]
@@ -109,15 +107,10 @@ mod program {
 
     #[test]
     fn path_to_helper_as_script_to_workaround_executable_bits() -> crate::Result {
-        let mut helper = git_path::to_unix_separators_on_windows(git_path::into_bstr(git_testtools::fixture_path(
-            "custom-helper.sh",
-        )))
-        .into_owned();
-        helper.insert_str(0, "sh ");
         assert_eq!(
             git_credentials::helper::invoke(
-                Program::from_kind(Kind::ExternalShellScript(helper)),
-                &helper::Action::get_for_url("/does/not/matter"),
+                script_helper("custom-helper"),
+                &helper::Action::get_for_url("/does/not/matter")
             )?
             .expect("present")
             .consume_identity()
@@ -131,51 +124,11 @@ mod program {
     }
 }
 
-mod util {
-    use git_credentials::helper;
-    use git_credentials::program::main;
-    use git_credentials::protocol::Context;
-
-    #[derive(Default)]
-    pub struct MockHelper {
-        handle: Option<std::thread::JoinHandle<()>>,
-    }
-
-    impl git_credentials::Helper for &mut MockHelper {
-        type Send = git_features::io::pipe::Writer;
-        type Receive = git_features::io::pipe::Reader;
-
-        fn start(&mut self, action: &helper::Action) -> std::io::Result<(Self::Send, Option<Self::Receive>)> {
-            let ((them_send, us_receive), (us_send, them_receive)) = (
-                git_features::io::pipe::unidirectional(None),
-                git_features::io::pipe::unidirectional(None),
-            );
-            let action_name = action.as_arg(true).into();
-            self.handle = std::thread::spawn(move || {
-                git_credentials::program::main(
-                    Some(action_name),
-                    us_receive,
-                    us_send,
-                    |action, context| -> std::io::Result<_> {
-                        match action {
-                            main::Action::Get => Ok(Some(Context {
-                                username: Some("user".into()),
-                                password: Some("pass".into()),
-                                ..context
-                            })),
-                            main::Action::Store | main::Action::Erase => Ok(None),
-                        }
-                    },
-                )
-                .expect("cannot fail")
-            })
-            .into();
-            Ok((them_send, them_receive.into()))
-        }
-
-        fn finish(self) -> std::io::Result<()> {
-            self.handle.take().expect("started").join().unwrap();
-            Ok(())
-        }
-    }
+pub fn script_helper(name: &str) -> Program {
+    let mut script = git_path::to_unix_separators_on_windows(git_path::into_bstr(
+        git_path::realpath(fixture_path(format!("{}.sh", name))).unwrap(),
+    ))
+    .into_owned();
+    script.insert_str(0, "sh ");
+    Program::from_kind(git_credentials::program::Kind::ExternalShellScript(script))
 }

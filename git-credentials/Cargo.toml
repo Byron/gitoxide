@@ -28,7 +28,6 @@ document-features = { version = "0.2.1", optional = true }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools" }
-git-features = { path = "../git-features", features = ["io-pipe"] }
 git-sec = { path = "../git-sec" }
 
 [package.metadata.docs.rs]

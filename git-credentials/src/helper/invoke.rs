@@ -18,7 +18,7 @@ impl Action {
 /// Invoke the given `helper` with `action` in `context`.
 ///
 /// Usually the first call is performed with [`Action::Get`] to obtain `Some` identity, which subsequently can be used if it is complete.
-/// Note that it may also only contain the username or password.
+/// Note that it may also only contain the username or password, and should start out with everything the helper needs.
 /// On successful usage, use [`NextAction::store()`], otherwise [`NextAction::erase()`], which returns `Ok(None)` as no outcome
 /// is expected.
 pub fn invoke(helper: impl crate::Helper, action: &Action) -> Result {
