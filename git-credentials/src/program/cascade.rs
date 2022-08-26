@@ -50,21 +50,22 @@ impl Cascade {
                 Ok(None) => {}
                 Ok(Some(outcome)) => {
                     if let Some(fill_ctx) = fill_ctx.as_mut() {
-                        let action_needs_update = if let v @ None = &mut fill_ctx.username {
+                        let mut action_needs_update = false;
+                        if let v @ None = &mut fill_ctx.username {
                             *v = outcome.username;
-                            true
-                        } else if let v @ None = &mut fill_ctx.password {
+                            action_needs_update = true;
+                        }
+                        if let v @ None = &mut fill_ctx.password {
                             *v = outcome.password;
-                            true
-                        } else if let v @ None = &mut fill_ctx.quit {
+                            action_needs_update = true;
+                        }
+                        if let v @ None = &mut fill_ctx.quit {
                             if outcome.quit {
                                 *v = outcome.quit.into();
                                 break;
                             }
-                            true
-                        } else {
-                            false
-                        };
+                            action_needs_update = true;
+                        }
                         if action_needs_update {
                             action = Action::Get(fill_ctx.clone());
                         }

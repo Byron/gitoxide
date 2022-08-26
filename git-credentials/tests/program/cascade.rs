@@ -18,7 +18,6 @@ mod invoke {
     }
 
     #[test]
-    #[ignore]
     fn failing_helpers_for_filling_dont_interrupt() {
         let actual = invoke_cascade(["fail", "custom-helper"], Action::get_for_url("does/not/matter"))
             .unwrap()
