@@ -1214,7 +1214,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.22.2"
+version = "0.22.3"
 dependencies = [
  "bstr",
  "bytes",
@@ -1552,7 +1552,7 @@ dependencies = [
 
 [[package]]
 name = "git-revision"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "bstr",
  "document-features",

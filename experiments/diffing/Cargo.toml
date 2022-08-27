@@ -10,6 +10,6 @@ publish = false
 [dependencies]
 anyhow = "1"
 git-repository = { version = "^0.22.1", path = "../../git-repository", features = ["unstable"] }
-git-features-for-config = { package = "git-features", version = "^0.22.2", path = "../../git-features", features = ["cache-efficiency-debug"] }
+git-features-for-config = { package = "git-features", version = "^0.22.3", path = "../../git-features", features = ["cache-efficiency-debug"] }
 git2 = "0.14"
 rayon = "1.5.0"

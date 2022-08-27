@@ -23,7 +23,7 @@ path = "tests/refs-parallel.rs"
 required-features = ["internal-testing-git-features-parallel"]
 
 [dependencies]
-git-features = { version = "^0.22.2", path = "../git-features", features = ["walkdir"]}
+git-features = { version = "^0.22.3", path = "../git-features", features = ["walkdir"]}
 git-path = { version = "^0.4.1", path = "../git-path" }
 git-hash = { version = "^0.9.8", path = "../git-hash" }
 git-object = { version = "^0.20.2", path = "../git-object" }

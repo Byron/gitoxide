@@ -41,7 +41,7 @@ git-pack-for-configuration-only = { package = "git-pack", version = "^0.21.2", p
 git-transport-configuration-only = { package = "git-transport", version = "^0.19.2", path = "../git-transport", default-features = false }
 git-commitgraph = { version = "^0.8.2", path = "../git-commitgraph" }
 git-config = { version = "^0.7.0", path = "../git-config" }
-git-features = { version = "^0.22.2", path = "../git-features" }
+git-features = { version = "^0.22.3", path = "../git-features" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.42"
 quick-error = "2.0.0"

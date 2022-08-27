@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.22.3 (2022-08-27)
 
 ### Fix
 
@@ -15,10 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 2 calendar days.
+ - 4 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 1 unique issue was worked on: [#503](https://github.com/Byron/gitoxide/issues/503)
 
 ### Commit Details
 
@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <details><summary>view details</summary>
 
+ * **[#503](https://github.com/Byron/gitoxide/issues/503)**
+    - prepare changelog ([`3c99e7f`](https://github.com/Byron/gitoxide/commit/3c99e7f02ada72a171856ffc5b870da83fffc703))
  * **Uncategorized**
     - Merge branch 'zlib-sys' ([`7b48297`](https://github.com/Byron/gitoxide/commit/7b482977a556d28f5d9759e1be33cdf3d85c8665))
     - restrict `sha1` `asm` to supported archs ([`b383fab`](https://github.com/Byron/gitoxide/commit/b383fabbe10868317be51b99cfdd9b0981816042))

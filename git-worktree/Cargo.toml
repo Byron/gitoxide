@@ -35,7 +35,7 @@ git-object = { version = "^0.20.2", path = "../git-object" }
 git-glob = { version = "^0.3.2", path = "../git-glob" }
 git-path = { version = "^0.4.1", path = "../git-path" }
 git-attributes = { version = "^0.3.2", path = "../git-attributes" }
-git-features = { version = "^0.22.2", path = "../git-features" }
+git-features = { version = "^0.22.3", path = "../git-features" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
