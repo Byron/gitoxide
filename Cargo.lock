@@ -1078,7 +1078,7 @@ dependencies = [
 
 [[package]]
 name = "git-attributes"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "bstr",
  "compact_str",
@@ -1264,7 +1264,7 @@ dependencies = [
 
 [[package]]
 name = "git-index"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "atoi",
  "bitflags",
@@ -1465,7 +1465,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-ref"
-version = "0.15.2"
+version = "0.15.3"
 dependencies = [
  "document-features",
  "git-actor",
@@ -1693,7 +1693,7 @@ dependencies = [
 
 [[package]]
 name = "git-worktree"
-version = "0.4.2"
+version = "0.4.3"
 dependencies = [
  "bstr",
  "document-features",

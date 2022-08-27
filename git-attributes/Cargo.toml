@@ -1,6 +1,6 @@
 [package]
 name = "git-attributes"
-version = "0.3.2"
+version = "0.3.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dealing .gitattributes files"
