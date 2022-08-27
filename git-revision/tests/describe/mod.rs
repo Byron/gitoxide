@@ -113,13 +113,18 @@ fn typical_usecases() {
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "shouldn't be called")),
         describe::Options {
             name_by_oid: vec![(commit.id, name.clone())].into_iter().collect(),
+            max_candidates: 0,
             ..Default::default()
         },
     )
     .unwrap()
     .expect("found a candidate");
 
-    assert_eq!(res.name, Some(name), "this is an exact match");
+    assert_eq!(
+        res.name,
+        Some(name),
+        "this is an exact match, and it's found despite max-candidates being 0 (one lookup is always performed)"
+    );
     assert_eq!(res.id, commit.id);
     assert_eq!(res.depth, 0);
 
