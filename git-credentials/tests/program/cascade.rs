@@ -20,6 +20,14 @@ mod invoke {
     }
 
     #[test]
+    fn partial_credentials_can_be_overwritten_by_complete_ones() {
+        let actual = invoke_cascade(["username", "custom-helper"], Action::get_for_url("does/not/matter"))
+            .unwrap()
+            .expect("credentials");
+        assert_eq!(actual.identity, identity("user-script", "pass-script"));
+    }
+
+    #[test]
     fn failing_helpers_for_filling_dont_interrupt() {
         let actual = invoke_cascade(["fail", "custom-helper"], action_get())
             .unwrap()
