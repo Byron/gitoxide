@@ -111,16 +111,17 @@ impl<'repo> Commit<'repo> {
 
     /// Parse the commit and return the the tree object it points to.
     pub fn tree(&self) -> Result<Tree<'repo>, Error> {
-        let tree_id = self.tree_id()?;
-        match self.repo.find_object(tree_id)?.try_into_tree() {
+        match self.tree_id()?.object()?.try_into_tree() {
             Ok(tree) => Ok(tree),
             Err(crate::object::try_into::Error { actual, expected, .. }) => Err(Error::ObjectKind { actual, expected }),
         }
     }
 
     /// Parse the commit and return the the tree id it points to.
-    pub fn tree_id(&self) -> Result<git_hash::ObjectId, git_object::decode::Error> {
-        git_object::CommitRefIter::from_bytes(&self.data).tree_id()
+    pub fn tree_id(&self) -> Result<crate::Id<'repo>, git_object::decode::Error> {
+        git_object::CommitRefIter::from_bytes(&self.data)
+            .tree_id()
+            .map(|id| crate::Id::from_id(id, self.repo))
     }
 
     /// Return our id own id with connection to this repository.

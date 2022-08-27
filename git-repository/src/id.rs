@@ -128,6 +128,12 @@ mod impls {
         }
     }
 
+    impl<'repo> PartialEq<Id<'repo>> for ObjectId {
+        fn eq(&self, other: &Id<'repo>) -> bool {
+            self == &other.inner
+        }
+    }
+
     impl<'repo> PartialEq<oid> for Id<'repo> {
         fn eq(&self, other: &oid) -> bool {
             self.inner == other
