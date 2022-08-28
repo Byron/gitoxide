@@ -67,13 +67,21 @@ mod find {
 }
 
 #[test]
-fn set_target() {
+fn set_target_id() {
     let (repo, _tmp) = repo_rw("make_basic_repo.sh").unwrap();
     let mut head_ref = repo.head_ref().unwrap().expect("present");
     let target_id = repo.rev_parse(":/c1").unwrap().single().unwrap();
-    assert_ne!(head_ref.id(), target_id, "we don't point to the target id yet");
+    let prev_id = head_ref.id();
+    assert_ne!(prev_id, target_id, "we don't point to the target id yet");
     head_ref.set_target_id(target_id, "reflog message").unwrap();
     assert_eq!(head_ref.id(), target_id, "the id was set and is observable right away");
+
+    head_ref.delete().unwrap();
+    assert!(head_ref
+        .set_target_id(prev_id, "fails")
+        .unwrap_err()
+        .to_string()
+        .starts_with(" Reference 'refs/heads/main' was supposed to exist"));
 }
 
 mod remote {
