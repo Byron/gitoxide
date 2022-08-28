@@ -1193,7 +1193,7 @@ dependencies = [
  "git-odb",
  "git-testtools",
  "git-traverse",
- "quick-error",
+ "thiserror",
 ]
 
 [[package]]

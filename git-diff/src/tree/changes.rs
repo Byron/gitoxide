@@ -1,30 +1,22 @@
 use std::{borrow::BorrowMut, collections::VecDeque};
 
 use git_hash::{oid, ObjectId};
-use quick_error::quick_error;
 
 use crate::{
     tree,
     tree::{visit::Change, TreeInfoPair},
 };
 
-quick_error! {
-    /// The error returned by [tree::Changes::needed_to_obtain()].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        NotFound { oid: ObjectId } {
-            display("The object {} referenced by the tree or the tree itself was not found in the database", oid)
-        }
-        Cancelled {
-            display("The delegate cancelled the operation")
-        }
-        EntriesDecode(err: git_object::decode::Error) {
-            display("tree entries could not be decoded.")
-            from()
-            source(err)
-        }
-    }
+/// The error returned by [tree::Changes::needed_to_obtain()].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("The object {oid} referenced by the tree or the tree itself was not found in the database")]
+    NotFound { oid: ObjectId },
+    #[error("The delegate cancelled the operation")]
+    Cancelled,
+    #[error(transparent)]
+    EntriesDecode(#[from] git_object::decode::Error),
 }
 
 impl<'a> tree::Changes<'a> {
