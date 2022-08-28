@@ -1,3 +1,5 @@
+use crate::repo_rw;
+
 mod log {
     use git_repository as git;
 
@@ -62,6 +64,12 @@ mod find {
         assert_eq!(symbolic_ref.into_fully_peeled_id()?, the_commit, "idempotency");
         Ok(())
     }
+}
+
+#[test]
+fn set_target() {
+    let (repo, _tmp) = repo_rw("make_basic_repo.sh").unwrap();
+    let _head_ref = repo.head_ref().unwrap();
 }
 
 mod remote {
