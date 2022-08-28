@@ -12,7 +12,10 @@ use crate::{
 #[allow(missing_docs)]
 pub enum Error {
     #[error("The object {oid} referenced by the tree or the tree itself was not found in the database")]
-    NotFound { oid: ObjectId },
+    FindExisting {
+        oid: ObjectId,
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+    },
     #[error("The delegate cancelled the operation")]
     Cancelled,
     #[error(transparent)]
@@ -43,7 +46,7 @@ impl<'a> tree::Changes<'a> {
     ///
     /// [git_cmp_c]: https://github.com/git/git/blob/311531c9de557d25ac087c1637818bd2aad6eb3a/tree-diff.c#L49:L65
     /// [git_cmp_rs]: https://github.com/Byron/gitoxide/blob/a4d5f99c8dc99bf814790928a3bf9649cd99486b/git-object/src/mutable/tree.rs#L52-L55
-    pub fn needed_to_obtain<FindFn, R, StateMut>(
+    pub fn needed_to_obtain<FindFn, R, StateMut, E>(
         mut self,
         other: git_object::TreeRefIter<'_>,
         mut state: StateMut,
@@ -51,7 +54,8 @@ impl<'a> tree::Changes<'a> {
         delegate: &mut R,
     ) -> Result<(), Error>
     where
-        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<git_object::TreeRefIter<'b>>,
+        FindFn: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_object::TreeRefIter<'b>, E>,
+        E: std::error::Error + Send + Sync + 'static,
         R: tree::Visit,
         StateMut: BorrowMut<tree::State>,
     {
@@ -72,16 +76,28 @@ impl<'a> tree::Changes<'a> {
                     match state.trees.pop_front() {
                         Some((None, Some(rhs))) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            rhs_entries = peekable(find(&rhs, &mut state.buf2).ok_or(Error::NotFound { oid: rhs })?);
+                            rhs_entries = peekable(find(&rhs, &mut state.buf2).map_err(|err| Error::FindExisting {
+                                oid: rhs,
+                                source: err.into(),
+                            })?);
                         }
                         Some((Some(lhs), Some(rhs))) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            lhs_entries = peekable(find(&lhs, &mut state.buf1).ok_or(Error::NotFound { oid: lhs })?);
-                            rhs_entries = peekable(find(&rhs, &mut state.buf2).ok_or(Error::NotFound { oid: rhs })?);
+                            lhs_entries = peekable(find(&lhs, &mut state.buf1).map_err(|err| Error::FindExisting {
+                                oid: lhs,
+                                source: err.into(),
+                            })?);
+                            rhs_entries = peekable(find(&rhs, &mut state.buf2).map_err(|err| Error::FindExisting {
+                                oid: rhs,
+                                source: err.into(),
+                            })?);
                         }
                         Some((Some(lhs), None)) => {
                             delegate.pop_front_tracked_path_and_set_current();
-                            lhs_entries = peekable(find(&lhs, &mut state.buf1).ok_or(Error::NotFound { oid: lhs })?);
+                            lhs_entries = peekable(find(&lhs, &mut state.buf1).map_err(|err| Error::FindExisting {
+                                oid: lhs,
+                                source: err.into(),
+                            })?);
                         }
                         Some((None, None)) => unreachable!("BUG: it makes no sense to fill the stack with empties"),
                         None => return Ok(()),
