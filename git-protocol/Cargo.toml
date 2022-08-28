@@ -1,6 +1,6 @@
 [package]
 name = "git-protocol"
-version = "0.19.0"
+version = "0.19.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project for implementing git protocols"
@@ -40,7 +40,7 @@ required-features = ["async-client"]
 
 [dependencies]
 git-features = { version = "^0.22.3", path = "../git-features", features = ["progress"] }
-git-transport = { version = "^0.19.2", path = "../git-transport" }
+git-transport = { version = "^0.19.3", path = "../git-transport" }
 git-hash = { version = "^0.9.8", path = "../git-hash" }
 git-credentials = { version = "^0.4.0", path = "../git-credentials" }
 

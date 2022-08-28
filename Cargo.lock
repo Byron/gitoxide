@@ -310,7 +310,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1125,7 +1125,7 @@ dependencies = [
 
 [[package]]
 name = "git-config"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "bitflags",
  "bstr",
@@ -1186,7 +1186,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.17.2"
+version = "0.18.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1315,7 +1315,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-object"
-version = "0.20.2"
+version = "0.20.3"
 dependencies = [
  "bstr",
  "btoi",
@@ -1336,7 +1336,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.31.2"
+version = "0.32.0"
 dependencies = [
  "arc-swap",
  "document-features",
@@ -1359,7 +1359,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.21.2"
+version = "0.22.0"
 dependencies = [
  "bstr",
  "bytesize",
@@ -1429,7 +1429,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.19.0"
+version = "0.19.1"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1465,7 +1465,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-ref"
-version = "0.15.3"
+version = "0.15.4"
 dependencies = [
  "document-features",
  "git-actor",
@@ -1488,7 +1488,7 @@ dependencies = [
 
 [[package]]
 name = "git-refspec"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bstr",
  "git-hash",
@@ -1501,7 +1501,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.22.1"
+version = "0.23.0"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1629,7 +1629,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-transport"
-version = "0.19.2"
+version = "0.19.3"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1654,7 +1654,7 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.16.2"
+version = "0.16.3"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1670,7 +1670,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "bstr",
  "document-features",
@@ -1731,7 +1731,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide"
-version = "0.15.0"
+version = "0.16.0"
 dependencies = [
  "anyhow",
  "atty",
@@ -1749,7 +1749,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "anyhow",
  "async-io",

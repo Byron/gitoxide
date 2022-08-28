@@ -1,6 +1,6 @@
 [package]
 name = "git-traverse"
-version = "0.16.2"
+version = "0.16.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project"
@@ -13,7 +13,7 @@ doctest = false
 
 [dependencies]
 git-hash = { version = "^0.9.8", path = "../git-hash" }
-git-object = { version = "^0.20.2", path = "../git-object" }
+git-object = { version = "^0.20.3", path = "../git-object" }
 thiserror = "1.0.32"
 hash_hasher = "2.0.3"
 
