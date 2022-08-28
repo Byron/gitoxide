@@ -61,7 +61,7 @@ fn main() -> anyhow::Result<()> {
                 .to_cache()
                 .with_pack_cache(|| Box::new(odb::pack::cache::lru::MemoryCappedHashmap::new(cache_size())))
                 .with_object_cache(|| Box::new(odb::pack::cache::object::MemoryCappedHashmap::new(cache_size())));
-            move |oid, buf: &mut Vec<u8>| handle.find(oid, buf).ok()
+            move |oid, buf: &mut Vec<u8>| handle.find(oid, buf)
         },
         Computation::MultiThreaded,
     )?;
@@ -84,7 +84,7 @@ fn main() -> anyhow::Result<()> {
             let handle = db
                 .to_cache()
                 .with_object_cache(|| Box::new(odb::pack::cache::object::MemoryCappedHashmap::new(cache_size())));
-            move |oid, buf: &mut Vec<u8>| handle.find(oid, buf).ok()
+            move |oid, buf: &mut Vec<u8>| handle.find(oid, buf)
         },
         Computation::MultiThreaded,
     )?;
@@ -106,7 +106,7 @@ fn main() -> anyhow::Result<()> {
             let handle = db
                 .to_cache()
                 .with_object_cache(|| Box::new(odb::pack::cache::object::MemoryCappedHashmap::new(cache_size())));
-            move |oid, buf: &mut Vec<u8>| handle.find(oid, buf).ok()
+            move |oid, buf: &mut Vec<u8>| handle.find(oid, buf)
         },
         Computation::SingleThreaded,
     )?;
@@ -185,10 +185,11 @@ fn do_libgit2_treediff(commits: &[ObjectId], repo_dir: &std::path::Path, mode: C
     })
 }
 
-fn do_gitoxide_tree_diff<C, L>(commits: &[ObjectId], make_find: C, mode: Computation) -> anyhow::Result<usize>
+fn do_gitoxide_tree_diff<C, L, E>(commits: &[ObjectId], make_find: C, mode: Computation) -> anyhow::Result<usize>
 where
     C: Fn() -> L + Sync,
-    L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Option<git_repository::objs::Data<'b>>,
+    L: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<git_repository::objs::Data<'b>, E>,
+    E: std::error::Error + Send + Sync + 'static,
 {
     let changes: usize = match mode {
         Computation::MultiThreaded => {
@@ -205,11 +206,16 @@ where
                 |(state, buf1, buf2, find), pair| {
                     let (ca, cb) = (pair[0], pair[1]);
                     let (ta, tb) = (
-                        tree_iter_by_commit(&ca, buf1, &mut *find),
-                        tree_iter_by_commit(&cb, buf2, &mut *find),
+                        tree_iter_by_commit_res(&ca, buf1, &mut *find),
+                        tree_iter_by_commit_res(&cb, buf2, &mut *find),
                     );
                     let mut count = Count::default();
-                    ta.changes_needed(tb, state, |id, buf| find_tree_iter(id, buf, &mut *find), &mut count)?;
+                    diff::tree::Changes::from(ta).needed_to_obtain(
+                        tb,
+                        state,
+                        |id, buf| find_tree_iter_res(id, buf, &mut *find),
+                        &mut count,
+                    )?;
                     changes.fetch_add(count.0, std::sync::atomic::Ordering::Relaxed);
                     Ok(())
                 },
@@ -226,27 +232,34 @@ where
             for pair in commits.windows(2) {
                 let (ca, cb) = (pair[0], pair[1]);
                 let (ta, tb) = (
-                    tree_iter_by_commit(&ca, &mut buf, &mut find),
-                    tree_iter_by_commit(&cb, &mut buf2, &mut find),
+                    tree_iter_by_commit_res(&ca, &mut buf, &mut find),
+                    tree_iter_by_commit_res(&cb, &mut buf2, &mut find),
                 );
                 let mut count = Count::default();
-                ta.changes_needed(tb, &mut state, |id, buf| find_tree_iter(id, buf, &mut find), &mut count)?;
+                diff::tree::Changes::from(ta).needed_to_obtain(
+                    tb,
+                    &mut state,
+                    |id, buf| find_tree_iter_res(id, buf, &mut find),
+                    &mut count,
+                )?;
                 changes += count.0;
             }
             changes
         }
     };
 
-    fn find_tree_iter<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Option<TreeRefIter<'b>>
+    fn find_tree_iter_res<'b, L, E>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> Result<TreeRefIter<'b>, E>
     where
-        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_repository::objs::Data<'a>>,
+        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_repository::objs::Data<'a>, E>,
+        E: std::error::Error + Send + Sync + 'static,
     {
-        find(id, buf).and_then(|o| o.try_into_tree_iter())
+        find(id, buf).map(|o| o.try_into_tree_iter().expect("trees only"))
     }
 
-    fn tree_iter_by_commit<'b, L>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> TreeRefIter<'b>
+    fn tree_iter_by_commit_res<'b, L, E>(id: &oid, buf: &'b mut Vec<u8>, mut find: L) -> TreeRefIter<'b>
     where
-        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Option<git_repository::objs::Data<'a>>,
+        L: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<git_repository::objs::Data<'a>, E>,
+        E: std::error::Error + Send + Sync + 'static,
     {
         let tid = find(id, buf)
             .expect("commit present")
@@ -254,7 +267,7 @@ where
             .expect("a commit")
             .tree_id()
             .expect("tree id present and decodable");
-        find_tree_iter(&tid, buf, find).expect("tree available")
+        find_tree_iter_res(&tid, buf, find).expect("tree available")
     }
 
     #[derive(Default)]
