@@ -28,6 +28,14 @@ impl crate::Repository {
     /// Loose object could be partially decoded, even though that's not implemented.
     pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<Object<'_>, object::find::existing::Error> {
         let id = id.into();
+        if id == git_hash::ObjectId::empty_tree(self.object_hash()) {
+            return Ok(Object {
+                id,
+                kind: git_object::Kind::Tree,
+                data: Vec::new(),
+                repo: self,
+            });
+        }
         let mut buf = self.free_buf();
         let kind = self.objects.find(&id, &mut buf)?.kind;
         Ok(Object::from_data(id, kind, buf, self))
@@ -42,6 +50,14 @@ impl crate::Repository {
     /// To bypass this limit, clone this `sync::Handle` instance.
     pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::Error> {
         let id = id.into();
+        if id == git_hash::ObjectId::empty_tree(self.object_hash()) {
+            return Ok(Some(Object {
+                id,
+                kind: git_object::Kind::Tree,
+                data: Vec::new(),
+                repo: self,
+            }));
+        }
 
         let mut buf = self.free_buf();
         match self.objects.try_find(&id, &mut buf)? {

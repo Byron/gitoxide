@@ -55,10 +55,13 @@ mod write_blob {
 }
 
 mod find {
+    use crate::basic_repo;
+    use git_pack::Find;
+    use git_repository as git;
 
     #[test]
     fn find_and_try_find_with_and_without_object_cache() -> crate::Result {
-        let mut repo = crate::basic_repo()?;
+        let mut repo = basic_repo()?;
 
         assert_eq!(
             repo.worktrees()?.len(),
@@ -84,6 +87,28 @@ mod find {
                 assert_eq!(commit.try_object()?.expect("exists").kind, git_object::Kind::Commit,);
             }
         }
+        Ok(())
+    }
+
+    #[test]
+    fn empty_tree_can_always_be_found() -> crate::Result {
+        let repo = basic_repo()?;
+        let empty_tree = git::hash::ObjectId::empty_tree(repo.object_hash());
+        assert_eq!(repo.find_object(empty_tree)?.into_tree().iter().count(), 0);
+        assert_eq!(
+            repo.try_find_object(empty_tree)?
+                .expect("present")
+                .into_tree()
+                .iter()
+                .count(),
+            0
+        );
+
+        let mut buf = Vec::new();
+        assert!(
+            repo.objects.try_find(empty_tree, &mut buf)?.is_none(),
+            "the lower level has no such special case so one can determine if this object exists or not"
+        );
         Ok(())
     }
 }
