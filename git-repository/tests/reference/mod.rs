@@ -81,7 +81,7 @@ fn set_target_id() {
         .set_target_id(prev_id, "fails")
         .unwrap_err()
         .to_string()
-        .starts_with(" Reference 'refs/heads/main' was supposed to exist"));
+        .starts_with("Reference 'refs/heads/main' was supposed to exist"));
 }
 
 mod remote {

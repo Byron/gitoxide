@@ -12,7 +12,7 @@ impl<'repo> Id<'repo> {
     /// # Note
     ///
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
-    pub fn object(&self) -> Result<Object<'repo>, find::existing::OdbError> {
+    pub fn object(&self) -> Result<Object<'repo>, find::existing::Error> {
         self.repo.find_object(self.inner)
     }
 
@@ -21,7 +21,7 @@ impl<'repo> Id<'repo> {
     /// # Note
     ///
     /// There can only be one `ObjectRef` per `Easy`. To increase that limit, clone the `Easy`.
-    pub fn try_object(&self) -> Result<Option<Object<'repo>>, find::OdbError> {
+    pub fn try_object(&self) -> Result<Option<Object<'repo>>, find::Error> {
         self.repo.try_find_object(self.inner)
     }
 
@@ -42,8 +42,8 @@ impl<'repo> Id<'repo> {
         self.repo
             .objects
             .disambiguate_prefix(prefix)
-            .map_err(find::existing::OdbError::Find)?
-            .ok_or(find::existing::OdbError::NotFound { oid: self.inner })
+            .map_err(find::existing::Error::Find)?
+            .ok_or(find::existing::Error::NotFound { oid: self.inner })
     }
 
     /// Turn this object id into a shortened id with a length in hex as configured by `core.abbrev`, or default
@@ -62,7 +62,7 @@ fn calculate_auto_hex_len(num_packed_objects: u64) -> usize {
 ///
 pub mod shorten {
     /// Returned by [`Id::prefix()`][super::Id::shorten()].
-    pub type Error = crate::object::find::existing::OdbError;
+    pub type Error = crate::object::find::existing::Error;
 }
 
 impl<'repo> Deref for Id<'repo> {

@@ -11,7 +11,7 @@ mod error {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        FindExistingObject(#[from] object::find::existing::OdbError),
+        FindExistingObject(#[from] object::find::existing::Error),
         #[error(transparent)]
         PeelReference(#[from] reference::peel::Error),
     }

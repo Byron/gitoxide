@@ -7,7 +7,7 @@ mod error {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        FindExistingObject(#[from] object::find::existing::OdbError),
+        FindExistingObject(#[from] object::find::existing::Error),
         #[error("The commit could not be decoded fully or partially")]
         Decode(#[from] git_object::decode::Error),
         #[error("Expected object of type {}, but got {}", .expected, .actual)]

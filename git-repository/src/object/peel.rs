@@ -16,7 +16,7 @@ pub mod to_kind {
         #[allow(missing_docs)]
         pub enum Error {
             #[error(transparent)]
-            FindExistingObject(#[from] object::find::existing::OdbError),
+            FindExistingObject(#[from] object::find::existing::Error),
             #[error("Last encountered object {oid} was {actual} while trying to peel to {expected}")]
             NotFound {
                 oid: git_hash::Prefix,
@@ -72,7 +72,7 @@ impl<'repo> Object<'repo> {
     ///
     /// Note that this method is different from [`peel_to_kind(…)`][Object::peel_to_kind()] as it won't
     /// peel commits to their tree, but handles tags only.
-    pub fn peel_tags_to_end(mut self) -> Result<Self, object::find::existing::OdbError> {
+    pub fn peel_tags_to_end(mut self) -> Result<Self, object::find::existing::Error> {
         loop {
             match self.kind {
                 Kind::Commit | Kind::Tree | Kind::Blob => break Ok(self),
