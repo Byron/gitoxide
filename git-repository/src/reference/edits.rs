@@ -8,7 +8,7 @@ pub mod set_target_id {
     mod error {
         use git_ref::FullName;
 
-        /// The error returned by [`Reference::set_target_id()`].
+        /// The error returned by [`Reference::set_target_id()`][super::Reference::set_target_id()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -56,7 +56,7 @@ pub mod delete {
     use git_ref::transaction::{Change, PreviousValue, RefEdit, RefLog};
 
     mod error {
-        /// The error returned by [`Reference::delete()`].
+        /// The error returned by [`Reference::delete()`][super::Reference::delete()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
