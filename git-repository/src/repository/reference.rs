@@ -91,9 +91,9 @@ impl crate::Repository {
     ) -> Result<Reference<'_>, reference::edit::Error>
     where
         Name: TryInto<FullName, Error = E>,
-        reference::edit::Error: From<E>,
+        git_validate::reference::name::Error: From<E>,
     {
-        let name = name.try_into()?;
+        let name = name.try_into().map_err(git_validate::reference::name::Error::from)?;
         let id = target.into();
         let mut edits = self.edit_reference(
             RefEdit {

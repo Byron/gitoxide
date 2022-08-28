@@ -81,3 +81,52 @@ impl<'repo> Reference<'repo> {
         self.peel_to_id_in_place()
     }
 }
+
+mod set_target_id {
+    use crate::bstr::BString;
+    use crate::Reference;
+    use git_ref::transaction::PreviousValue;
+    use git_ref::Target;
+
+    mod error {
+        use git_ref::FullName;
+
+        /// The error returned by [`Reference::set_target_id()`].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("Cannot change symbolic reference {name:?} into a direct one by setting it to an id")]
+            SymbolicReference { name: FullName },
+            #[error(transparent)]
+            ReferenceEdit(#[from] crate::reference::edit::Error),
+        }
+    }
+    pub use error::Error;
+
+    impl<'repo> Reference<'repo> {
+        /// Set the id of this direct reference to `id` and use `reflog_message` for the reflog (if enabled in the repository).
+        ///
+        /// Note that the operation will fail on symbolic references, to change their type use the lower level reference database.
+        /// Furthermore, refrain from using this method for more than a one-off change as it creates a transaction for each invocation.
+        /// If multiple reference should be changed, use a transaction of the lower level reference database instead.
+        pub fn set_target_id(
+            &mut self,
+            id: impl Into<git_hash::ObjectId>,
+            reflog_message: impl Into<BString>,
+        ) -> Result<(), Error> {
+            match &self.inner.target {
+                Target::Symbolic(name) => return Err(Error::SymbolicReference { name: name.clone() }),
+                Target::Peeled(current_id) => {
+                    let changed = self.repo.reference(
+                        self.name(),
+                        id,
+                        PreviousValue::ExistingMustMatch(Target::Peeled(current_id.to_owned())),
+                        reflog_message,
+                    )?;
+                    *self = changed;
+                }
+            }
+            Ok(())
+        }
+    }
+}
