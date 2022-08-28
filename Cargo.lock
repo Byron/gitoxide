@@ -1661,7 +1661,7 @@ dependencies = [
  "git-odb",
  "git-testtools",
  "hash_hasher",
- "quick-error",
+ "thiserror",
 ]
 
 [[package]]
