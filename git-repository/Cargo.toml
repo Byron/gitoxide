@@ -25,9 +25,9 @@ required-features = ["regex"]
 
 [features]
 
-default = ["max-performance", "one-stop-shop"]
+default = ["max-performance"]
 
-#! ### Mutually Exclusive Client
+#! ### Mutually Exclusive Network Client
 #! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
 
 ## Make `git-protocol` available along with an async client.
@@ -39,13 +39,6 @@ blocking-network-client = ["git-protocol/blocking-client", "unstable"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S, and implies blocking networking as a whole.
 blocking-http-transport = ["git-transport/http-client-curl"]
 
-#! ### Reducing dependencies
-#! The following toggles can be left disabled to save on dependencies.
-
-## Provide additional non-networked functionality.
-local = [ "git-diff" ]
-## Turns on access to all stable features that are unrelated to networking.
-one-stop-shop = [ "local" ]
 
 #! ### Other
 
@@ -109,7 +102,7 @@ git-url = { version = "^0.7.2", path = "../git-url" }
 git-traverse = { version = "^0.16.2", path = "../git-traverse" }
 git-protocol = { version = "^0.19.0", path = "../git-protocol", optional = true }
 git-transport = { version = "^0.19.2", path = "../git-transport", optional = true }
-git-diff = { version = "^0.17.2", path = "../git-diff", optional = true }
+git-diff = { version = "^0.17.2", path = "../git-diff" }
 git-mailmap = { version = "^0.3.2", path = "../git-mailmap", optional = true }
 git-features = { version = "^0.22.3", path = "../git-features", features = ["progress", "once_cell"] }
 
@@ -149,5 +142,5 @@ walkdir = "2.3.2"
 serial_test = "0.8.0"
 
 [package.metadata.docs.rs]
-features = ["document-features", "max-performance", "one-stop-shop", "unstable", "blocking-network-client", "serde1"]
+features = ["document-features", "max-performance", "unstable", "blocking-network-client", "serde1"]
 rustdoc-args = ["--cfg", "docsrs"]

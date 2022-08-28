@@ -134,7 +134,6 @@ pub use git_attributes as attrs;
 pub use git_credentials as credentials;
 #[cfg(feature = "unstable")]
 pub use git_date as date;
-#[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
 use git_features::threading::OwnShared;
 #[cfg(feature = "unstable")]

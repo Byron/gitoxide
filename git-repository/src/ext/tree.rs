@@ -14,7 +14,6 @@ pub trait TreeIterExt: Sealed {
     ///
     /// The `delegate` implements a way to store the desired information about the traversal, allowing to pay only for what is needed.
     /// It is also expected to store the result of the comparison, hence _unit_ is returned.
-    #[cfg(feature = "git-diff")]
     fn changes_needed<FindFn, R, StateMut>(
         &self,
         other: TreeRefIter<'_>,
@@ -47,7 +46,6 @@ pub trait TreeIterExt: Sealed {
 impl<'d> Sealed for TreeRefIter<'d> {}
 
 impl<'d> TreeIterExt for TreeRefIter<'d> {
-    #[cfg(feature = "git-diff")]
     fn changes_needed<FindFn, R, StateMut>(
         &self,
         other: TreeRefIter<'_>,
