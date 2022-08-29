@@ -1,7 +1,8 @@
 use crate::time::format::{DEFAULT, ISO8601, ISO8601_STRICT, RFC2822, SHORT};
 use crate::time::Sign;
 use crate::Time;
-use std::num::ParseIntError;
+use std::convert::TryInto;
+use std::num::TryFromIntError;
 use std::str::FromStr;
 use time::{Date, OffsetDateTime};
 
@@ -10,13 +11,10 @@ use time::{Date, OffsetDateTime};
 pub enum Error {
     #[error("Date string can not be parsed")]
     InvalidDateString,
-
-    #[error("Timezone offset can not be parsed")]
-    InvalidTzOffset,
     #[error("Relative period can not be parsed")]
     InvalidPeriod,
-    #[error("Integer string can not be parsed")]
-    InvalidInteger(#[from] ParseIntError),
+    #[error("Dates past 2038 can not be represented.")]
+    InvalidDate(#[from] TryFromIntError),
 }
 
 #[allow(missing_docs)]
@@ -27,15 +25,30 @@ pub fn parse(input: &str) -> Result<Time, Error> {
     } else {
         return if let Ok(val) = Date::parse(input, SHORT) {
             let val = val.with_hms(0, 0, 0).expect("date is in range").assume_utc();
-            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(Time::new(
+                val.unix_timestamp().try_into()?,
+                val.offset().whole_seconds(),
+            ))
         } else if let Ok(val) = OffsetDateTime::parse(input, RFC2822) {
-            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(Time::new(
+                val.unix_timestamp().try_into()?,
+                val.offset().whole_seconds(),
+            ))
         } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601) {
-            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(Time::new(
+                val.unix_timestamp().try_into()?,
+                val.offset().whole_seconds(),
+            ))
         } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601_STRICT) {
-            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(Time::new(
+                val.unix_timestamp().try_into()?,
+                val.offset().whole_seconds(),
+            ))
         } else if let Ok(val) = OffsetDateTime::parse(input, DEFAULT) {
-            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(Time::new(
+                val.unix_timestamp().try_into()?,
+                val.offset().whole_seconds(),
+            ))
         } else if let Ok(val) = u32::from_str(input) {
             // Format::Unix
             Ok(Time::new(val, 0))
