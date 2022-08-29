@@ -2,6 +2,7 @@ mod ask {
     use std::process::Command;
 
     #[test]
+    #[cfg(unix)]
     fn username_password() {
         let mut cmd = Command::new(env!("CARGO"));
         cmd.args(["run", "--example", "credentials"]);
@@ -12,4 +13,9 @@ mod ask {
         p.expect(expectrl::Eof).unwrap();
         p.wait().unwrap();
     }
+
+    #[test]
+    #[cfg(not(unix))]
+    #[ignore]
+    fn username_password_not_available() {}
 }
