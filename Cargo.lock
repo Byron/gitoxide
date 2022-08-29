@@ -1188,6 +1188,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-config-value"
+version = "0.7.0"
+
+[[package]]
 name = "git-conventional"
 version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

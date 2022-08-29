@@ -409,18 +409,20 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-tempfile/REA
 
 See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md).
 
+### git-config-value
+* **parse** 
+    * [x] boolean
+    * [x] integer
+    * [x] color
+       * [ ] ANSI code output for terminal colors
+    * [x] path (incl. resolution)
+    * [ ] date
+    * [ ] [permission][https://github.com/git/git/blob/71a8fab31b70c417e8f5b5f716581f89955a7082/setup.c#L1526:L1526]
+    
 ### git-config
 * [x] read
     * zero-copy parsing with event emission
-    * [x] decode value
-        * [x] boolean
-        * [x] integer
-        * [x] color
-           * [ ] ANSI code output for terminal colors
-        * [x] path (incl. resolution)
-        * [ ] date
-        * [ ] [permission][https://github.com/git/git/blob/71a8fab31b70c417e8f5b5f716581f89955a7082/setup.c#L1526:L1526]
-        * [x] include
+    * all config values as per the `git-config-value` crate  
     * **includeIf**
       * [x] `gitdir`,  `gitdir/i`, and `onbranch`
       * [ ] `hasconfig`
@@ -431,8 +433,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
 * [x] cascaded loading of various configuration files into one
     * [x] load from environment variables
-    * [ ] load from well-known sources for global configuration
-    * [ ] load repository configuration with all known sources
+    * [x] load from well-known sources for global configuration
+    * [x] load repository configuration with all known sources
 * [x] API documentation
     * [x] Some examples
 
