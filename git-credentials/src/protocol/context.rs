@@ -89,9 +89,10 @@ mod serde {
     ///
     pub mod decode {
         use crate::protocol::context;
-        use crate::protocol::context::serde::{parse_false, parse_true, validate};
+        use crate::protocol::context::serde::validate;
         use crate::protocol::Context;
         use bstr::{BString, ByteSlice};
+        use std::convert::TryFrom;
 
         /// The error returned by [`from_bytes()`][Context::from_bytes()].
         #[derive(Debug, thiserror::Error)]
@@ -136,11 +137,9 @@ mod serde {
                         "url" => ctx.url = Some(value),
                         "path" => ctx.path = Some(value),
                         "quit" => {
-                            ctx.quit = Some(if parse_true(value.as_ref()) {
-                                true
-                            } else {
-                                !parse_false(value.as_ref())
-                            })
+                            ctx.quit = git_config_value::Boolean::try_from(value.as_ref())
+                                .ok()
+                                .map(|b| b.into());
                         }
                         _ => {}
                     }
@@ -148,19 +147,6 @@ mod serde {
                 Ok(ctx)
             }
         }
-    }
-    // Copied from git-config/value/boolean.rs
-    fn parse_true(value: &BStr) -> bool {
-        value.eq_ignore_ascii_case(b"yes") || value.eq_ignore_ascii_case(b"on") || value.eq_ignore_ascii_case(b"true")
-    }
-
-    // Copied from git-config/value/boolean.rs
-    fn parse_false(value: &BStr) -> bool {
-        value.eq_ignore_ascii_case(b"no")
-            || value.eq_ignore_ascii_case(b"off")
-            || value.eq_ignore_ascii_case(b"false")
-            || value == "0"
-            || value.is_empty()
     }
 
     fn validate(key: &str, value: &BStr) -> Result<(), Error> {

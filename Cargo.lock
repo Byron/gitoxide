@@ -1217,6 +1217,7 @@ dependencies = [
  "bstr",
  "document-features",
  "git-command",
+ "git-config-value",
  "git-path",
  "git-prompt",
  "git-sec",
