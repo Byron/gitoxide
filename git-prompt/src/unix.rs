@@ -27,7 +27,7 @@ pub(crate) mod imp {
             buf_read.read_line(&mut out)?;
 
             out.pop();
-            if out.ends_with("\r") {
+            if out.ends_with('\r') {
                 out.pop();
             }
             restore.now()?;

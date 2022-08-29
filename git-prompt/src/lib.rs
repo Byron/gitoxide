@@ -37,22 +37,10 @@ pub use imp::ask;
 
 /// Ask for information typed by the user into the terminal after showing the prompt`, like `"Username: `.
 pub fn openly(prompt: impl AsRef<str>) -> Result<String, Error> {
-    imp::ask(
-        prompt.as_ref(),
-        Options {
-            secret: false,
-            ..Default::default()
-        },
-    )
+    imp::ask(prompt.as_ref(), Options { secret: false })
 }
 
 /// Ask for information _securely_ after showing the `prompt` (like `"password: "`) by not showing what's typed.
 pub fn securely(prompt: impl AsRef<str>) -> Result<String, Error> {
-    imp::ask(
-        prompt.as_ref(),
-        Options {
-            secret: true,
-            ..Default::default()
-        },
-    )
+    imp::ask(prompt.as_ref(), Options { secret: true })
 }
