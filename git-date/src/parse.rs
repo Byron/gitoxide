@@ -10,6 +10,7 @@ use time::{Date, OffsetDateTime};
 pub enum Error {
     #[error("Date string can not be parsed")]
     InvalidDateString,
+
     #[error("Timezone offset can not be parsed")]
     InvalidTzOffset,
     #[error("Relative period can not be parsed")]
@@ -19,53 +20,53 @@ pub enum Error {
 }
 
 #[allow(missing_docs)]
-pub fn parse(input: &str) -> Option<Time> {
+pub fn parse(input: &str) -> Result<Time, Error> {
     // TODO: actual implementation, this is just to not constantly fail
     if input == "1979-02-26 18:30:00" {
-        Some(Time::new(42, 1800))
+        Ok(Time::new(42, 1800))
     } else {
         return if let Ok(val) = Date::parse(input, SHORT) {
             let val = val.with_hms(0, 0, 0).expect("date is in range").assume_utc();
-            Some(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
         } else if let Ok(val) = OffsetDateTime::parse(input, RFC2822) {
-            Some(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
         } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601) {
-            Some(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
         } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601_STRICT) {
-            Some(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
         } else if let Ok(val) = OffsetDateTime::parse(input, DEFAULT) {
-            Some(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
         } else if let Ok(val) = u32::from_str(input) {
             // Format::Unix
-            Some(Time::new(val, 0))
-        } else if let Ok(val) = parse_raw(input) {
+            Ok(Time::new(val, 0))
+        } else if let Some(val) = parse_raw(input) {
             // Format::Raw
-            Some(val)
-        } else if let Ok(val) = relative::parse(input) {
-            Some(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+            Ok(val)
+        } else if let Some(val) = relative::parse(input) {
+            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
         } else {
-            None
+            Err(Error::InvalidDateString)
         };
     }
 }
 
-fn parse_raw(input: &str) -> Result<Time, Error> {
+fn parse_raw(input: &str) -> Option<Time> {
     let mut split = input.split_whitespace();
-    let seconds_since_unix_epoch: u32 = split.next().ok_or(Error::InvalidDateString)?.parse()?;
-    let offset = split.next().ok_or(Error::InvalidDateString)?;
+    let seconds_since_unix_epoch: u32 = split.next()?.parse().ok()?;
+    let offset = split.next()?;
     if offset.len() != 5 {
-        return Err(Error::InvalidTzOffset);
+        return None;
     }
     let sign = if &offset[..1] == "-" { Sign::Plus } else { Sign::Minus };
-    let hours: i32 = offset[1..3].parse()?;
-    let minutes: i32 = offset[3..5].parse()?;
+    let hours: i32 = offset[1..3].parse().ok()?;
+    let minutes: i32 = offset[3..5].parse().ok()?;
     let offset_in_seconds = hours * 3600 + minutes * 60;
     let time = Time {
         seconds_since_unix_epoch,
         offset_in_seconds,
         sign,
     };
-    Ok(time)
+    Some(time)
 }
 
 mod relative {
@@ -73,16 +74,14 @@ mod relative {
     use std::str::FromStr;
     use time::{Duration, OffsetDateTime};
 
-    pub(crate) fn parse(input: &str) -> Result<OffsetDateTime, Error> {
+    pub(crate) fn parse(input: &str) -> Option<OffsetDateTime> {
         let mut split = input.split_whitespace();
-        let multiplier = i64::from_str(split.next().ok_or(Error::InvalidDateString)?)?;
-        let period = period_to_seconds(split.next().ok_or(Error::InvalidDateString)?)?;
-        if split.next().ok_or(Error::InvalidDateString)? != "ago" {
-            return Err(Error::InvalidDateString);
+        let multiplier = i64::from_str(split.next()?).ok()?;
+        let period = period_to_seconds(split.next()?).ok()?;
+        if split.next()? != "ago" {
+            return None;
         }
-        Ok(OffsetDateTime::now_utc()
-            .checked_sub(Duration::seconds(multiplier * period))
-            .ok_or(Error::InvalidDateString)?)
+        OffsetDateTime::now_utc().checked_sub(Duration::seconds(multiplier * period))
     }
 
     fn period_to_seconds(period: &str) -> Result<i64, Error> {

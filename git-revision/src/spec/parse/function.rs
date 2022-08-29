@@ -435,7 +435,7 @@ where
                 let time = nav
                     .to_str()
                     .ok()
-                    .and_then(git_date::parse)
+                    .and_then(|v| git_date::parse(v).ok())
                     .ok_or_else(|| Error::Time { input: nav.into() })?;
                 delegate
                     .reflog(delegate::ReflogLookup::Date(time))

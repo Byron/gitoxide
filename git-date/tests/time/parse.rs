@@ -30,14 +30,14 @@ fn baseline() {
     for (pattern, (exit_code, output)) in BASELINE.iter() {
         let res = git_date::parse(pattern.to_str().expect("valid pattern"));
         assert_eq!(
-            res.is_some(),
+            res.is_ok(),
             *exit_code == 0,
             "{pattern:?} disagrees with baseline: {res:?}"
         );
         if *exit_code == 0 {
             let actual = res.unwrap().seconds_since_unix_epoch;
             let expected = u32::from_str(output.to_str().expect("valid utf")).expect("valid epoch value");
-            assert_eq!(actual, expected, "{pattern:?} disagrees with baseline: {res:?}")
+            assert_eq!(actual, expected, "{pattern:?} disagrees with baseline: {actual:?}")
         }
     }
 }
@@ -57,12 +57,12 @@ fn special_time_is_ok_for_now() {
 #[test]
 fn short() {
     assert_eq!(
-        git_date::parse("1979-02-26"),
-        Some(Time {
+        git_date::parse("1979-02-26").expect("parsed date"),
+        Time {
             seconds_since_unix_epoch: 288835200,
             offset_in_seconds: 0,
             sign: Sign::Plus,
-        }),
+        },
         "could not parse with SHORT format"
     );
 }
@@ -70,12 +70,12 @@ fn short() {
 #[test]
 fn rfc2822() {
     assert_eq!(
-        git_date::parse("Thu, 18 Aug 2022 12:45:06 +0800"),
-        Some(Time {
+        git_date::parse("Thu, 18 Aug 2022 12:45:06 +0800").expect("parsed rfc2822 string"),
+        Time {
             seconds_since_unix_epoch: 1660797906,
             offset_in_seconds: 28800,
             sign: Sign::Plus,
-        }),
+        },
         "could not parse with RFC2822 format"
     );
 }
