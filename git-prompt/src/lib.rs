@@ -36,13 +36,15 @@ use unix::imp;
 mod imp {
     use crate::{Error, Options};
 
-    /// Not implemented on this platform
-    pub fn ask(_prompt: &str, _opts: Options) -> Result<String, Error> {
+    pub(crate) fn ask(_prompt: &str, _opts: Options) -> Result<String, Error> {
         Err(Error::UnsupportedPlatform)
     }
 }
-#[cfg(not(unix))]
-pub use imp::ask;
+
+/// Ask the user given a `prompt`, returning the result.
+pub fn ask(prompt: &str, opts: Options) -> Result<String, Error> {
+    imp::ask(prompt, opts)
+}
 
 /// Ask for information typed by the user into the terminal after showing the prompt`, like `"Username: `.
 pub fn openly(prompt: impl AsRef<str>) -> Result<String, Error> {

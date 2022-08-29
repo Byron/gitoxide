@@ -15,7 +15,7 @@ pub(crate) mod imp {
     static TERM_STATE: Mutex<Option<Termios>> = Mutex::new(None);
 
     /// Ask the user given a `prompt`, returning the result.
-    pub fn ask(prompt: &str, Options { secret }: Options) -> Result<String, Error> {
+    pub(crate) fn ask(prompt: &str, Options { secret }: Options) -> Result<String, Error> {
         if secret {
             let state = TERM_STATE.lock();
             let mut in_out = std::fs::OpenOptions::new().write(true).read(true).open(TTY_PATH)?;
