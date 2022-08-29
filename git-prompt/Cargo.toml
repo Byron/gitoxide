@@ -14,5 +14,8 @@ doctest = false
 thiserror = "1.0.32"
 bstr = { version = "0.2.17", default-features = false, features = ["std"] }
 
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
 [dev-dependencies]
 expectrl = "0.5.2"
