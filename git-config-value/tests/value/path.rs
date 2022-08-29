@@ -93,7 +93,7 @@ mod interpolate {
     fn tilde_with_given_user_is_unsupported_on_windows() {
         assert!(matches!(
             interpolate_without_context("~baz/foo/bar"),
-            Err(Error::UserInterpolationUnsupported)
+            Err(git_config_value::path::interpolate::Error::UserInterpolationUnsupported)
         ));
     }
 
