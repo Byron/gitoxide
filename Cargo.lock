@@ -1190,6 +1190,15 @@ dependencies = [
 [[package]]
 name = "git-config-value"
 version = "0.7.0"
+dependencies = [
+ "bitflags",
+ "bstr",
+ "document-features",
+ "git-path",
+ "libc",
+ "serde",
+ "thiserror",
+]
 
 [[package]]
 name = "git-conventional"
