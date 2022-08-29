@@ -285,7 +285,7 @@ mod expand {
                                                 &mut tree_diff_state,
                                                 |oid, buf| {
                                                     stats.decoded_objects += 1;
-                                                    db.find_tree_iter(oid, buf).ok().map(|t| t.0)
+                                                    db.find_tree_iter(oid, buf).map(|t| t.0)
                                                 },
                                                 &mut changes_delegate,
                                             )

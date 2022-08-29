@@ -161,7 +161,7 @@ pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
 ///
 /// The latter is useful if the the script's output is platform specific.
 pub fn scripted_fixture_repo_read_only(script_name: impl AsRef<Path>) -> Result<PathBuf> {
-    scripted_fixture_repo_read_only_with_args(script_name, None)
+    scripted_fixture_repo_read_only_with_args(script_name, None::<String>)
 }
 
 /// Run the executable at `script_name`, like `make_repo.sh` to produce a writable directory to which
@@ -169,14 +169,14 @@ pub fn scripted_fixture_repo_read_only(script_name: impl AsRef<Path>) -> Result<
 ///
 /// Note that `script_name` is only executed once, so the data can be copied from its read-only location.
 pub fn scripted_fixture_repo_writable(script_name: &str) -> Result<tempfile::TempDir> {
-    scripted_fixture_repo_writable_with_args(script_name, None, Creation::CopyFromReadOnly)
+    scripted_fixture_repo_writable_with_args(script_name, None::<String>, Creation::CopyFromReadOnly)
 }
 
 /// Like [`scripted_fixture_repo_writable()`], but passes `args` to `script_name` while providing control over
 /// the way files are created with `mode`.
 pub fn scripted_fixture_repo_writable_with_args(
     script_name: &str,
-    args: impl IntoIterator<Item = &'static str>,
+    args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
 ) -> Result<tempfile::TempDir> {
     let dst = tempfile::TempDir::new()?;
@@ -215,14 +215,14 @@ pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: im
 /// Like `scripted_fixture_repo_read_only()`], but passes `args` to `script_name`.
 pub fn scripted_fixture_repo_read_only_with_args(
     script_name: impl AsRef<Path>,
-    args: impl IntoIterator<Item = &'static str>,
+    args: impl IntoIterator<Item = impl Into<String>>,
 ) -> Result<PathBuf> {
     scripted_fixture_repo_read_only_with_args_inner(script_name, args, None)
 }
 
 fn scripted_fixture_repo_read_only_with_args_inner(
     script_name: impl AsRef<Path>,
-    args: impl IntoIterator<Item = &'static str>,
+    args: impl IntoIterator<Item = impl Into<String>>,
     destination_dir: Option<&Path>,
 ) -> Result<PathBuf> {
     // Assure tempfiles get removed when aborting the test.

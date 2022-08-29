@@ -178,6 +178,16 @@ pub(crate) mod function {
         E: std::error::Error + Send + Sync + 'static,
     {
         max_candidates = max_candidates.min(MAX_CANDIDATES);
+        if let Some(name) = name_by_oid.get(commit) {
+            return Ok(Some(Outcome {
+                name: name.clone().into(),
+                id: commit.to_owned(),
+                depth: 0,
+                name_by_oid,
+                commits_seen: 0,
+            }));
+        }
+
         if max_candidates == 0 || name_by_oid.is_empty() {
             return if fallback_to_oid {
                 Ok(Some(Outcome {
@@ -190,16 +200,6 @@ pub(crate) mod function {
             } else {
                 Ok(None)
             };
-        }
-
-        if let Some(name) = name_by_oid.get(commit) {
-            return Ok(Some(Outcome {
-                name: name.clone().into(),
-                id: commit.to_owned(),
-                depth: 0,
-                name_by_oid,
-                commits_seen: 0,
-            }));
         }
 
         let mut buf = Vec::new();

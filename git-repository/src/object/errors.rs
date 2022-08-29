@@ -17,11 +17,13 @@ pub mod conversion {
 
 ///
 pub mod find {
-    pub(crate) type OdbError = git_odb::store::find::Error;
+    /// Indicate that an error occoured when trying to find an object.
+    pub type Error = git_odb::store::find::Error;
 
     ///
     pub mod existing {
-        pub(crate) type OdbError = git_odb::find::existing::Error<git_odb::store::find::Error>;
+        /// An object could not be found in the database, or an error occurred when trying to obtain it.
+        pub type Error = git_odb::find::existing::Error<git_odb::store::find::Error>;
     }
 }
 

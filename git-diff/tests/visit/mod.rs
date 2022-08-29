@@ -52,10 +52,9 @@ mod changes {
                 rhs_tree,
                 git_diff::tree::State::default(),
                 |oid, buf| {
-                    db.try_find(oid, buf)
-                        .ok()
-                        .flatten()
-                        .and_then(|obj| obj.0.try_into_tree_iter())
+                    use git_odb::pack::FindExt;
+                    db.find(oid, buf)
+                        .map(|obj| obj.0.try_into_tree_iter().expect("only called for trees"))
                 },
                 &mut recorder,
             )?;
@@ -100,10 +99,9 @@ mod changes {
                 current_tree,
                 &mut git_diff::tree::State::default(),
                 |oid, buf| {
-                    db.try_find(oid, buf)
-                        .ok()
-                        .flatten()
-                        .and_then(|(obj, _)| obj.try_into_tree_iter())
+                    use git_odb::pack::FindExt;
+                    db.find(oid, buf)
+                        .map(|(obj, _)| obj.try_into_tree_iter().expect("only called for trees"))
                 },
                 &mut recorder,
             )?;

@@ -42,7 +42,7 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
         self.prefix[self.idx] = Some(prefix);
         match self.repo.objects.lookup_prefix(prefix, candidates.as_mut()) {
             Err(err) => {
-                self.err.push(object::find::existing::OdbError::Find(err).into());
+                self.err.push(object::find::existing::Error::Find(err).into());
                 None
             }
             Ok(None) => {

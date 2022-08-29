@@ -1,6 +1,6 @@
 [package]
 name = "git-ref"
-version = "0.15.2"
+version = "0.15.4"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate to handle git references"
@@ -23,10 +23,10 @@ path = "tests/refs-parallel.rs"
 required-features = ["internal-testing-git-features-parallel"]
 
 [dependencies]
-git-features = { version = "^0.22.2", path = "../git-features", features = ["walkdir"]}
+git-features = { version = "^0.22.3", path = "../git-features", features = ["walkdir"]}
 git-path = { version = "^0.4.1", path = "../git-path" }
 git-hash = { version = "^0.9.8", path = "../git-hash" }
-git-object = { version = "^0.20.2", path = "../git-object" }
+git-object = { version = "^0.20.3", path = "../git-object" }
 git-validate = { version = "^0.5.5", path = "../git-validate" }
 git-actor = { version = "^0.11.3", path = "../git-actor" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }

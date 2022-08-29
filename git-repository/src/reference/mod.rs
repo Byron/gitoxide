@@ -81,3 +81,6 @@ impl<'repo> Reference<'repo> {
         self.peel_to_id_in_place()
     }
 }
+
+mod edits;
+pub use edits::{delete, set_target_id};

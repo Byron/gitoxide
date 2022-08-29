@@ -1,25 +1,17 @@
 use std::collections::VecDeque;
 
 use git_hash::ObjectId;
-use quick_error::quick_error;
 
-quick_error! {
-    /// The error is part of the item returned by the [`traverse()`] function.
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        NotFound{oid: ObjectId} {
-            display("The tree {} could not be found", oid)
-        }
-        Cancelled {
-            display("The delegate cancelled the operation")
-        }
-        ObjectDecode(err: git_object::decode::Error) {
-            display("An object could not be decoded")
-            source(err)
-            from()
-        }
-    }
+/// The error is part of the item returned by the [`traverse()`] function.
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("The tree {oid} could not be found")]
+    NotFound { oid: ObjectId },
+    #[error("The delegate cancelled the operation")]
+    Cancelled,
+    #[error(transparent)]
+    ObjectDecode(#[from] git_object::decode::Error),
 }
 
 /// The state used and potentially shared by multiple tree traversals.

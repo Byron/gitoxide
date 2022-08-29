@@ -1,6 +1,6 @@
 [package]
 name = "git-index"
-version = "0.4.2"
+version = "0.4.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A work-in-progress crate of the gitoxide project dedicated implementing the git index file"
@@ -30,7 +30,7 @@ internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
-git-features = { version = "^0.22.2", path = "../git-features", features = ["rustsha1", "progress"] }
+git-features = { version = "^0.22.3", path = "../git-features", features = ["rustsha1", "progress"] }
 git-hash = { version = "^0.9.8", path = "../git-hash" }
 git-bitmap = { version = "^0.1.2", path = "../git-bitmap" }
 git-object = { version = "^0.20.2", path = "../git-object" }

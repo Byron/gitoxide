@@ -10,7 +10,7 @@ use crate::{data, find};
 /// [issue]: https://github.com/rust-lang/rust/issues/44265
 pub trait Find {
     /// The error returned by [`try_find()`][Find::try_find()]
-    type Error: std::error::Error + 'static;
+    type Error: std::error::Error + Send + Sync + 'static;
 
     /// Returns true if the object exists in the database.
     fn contains(&self, id: impl AsRef<git_hash::oid>) -> bool;

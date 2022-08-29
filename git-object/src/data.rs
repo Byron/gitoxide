@@ -14,10 +14,10 @@ impl<'a> Data<'a> {
     /// using [`crate::ObjectRef::into_owned()`].
     pub fn decode(&self) -> Result<ObjectRef<'a>, crate::decode::Error> {
         Ok(match self.kind {
-            crate::Kind::Tree => ObjectRef::Tree(TreeRef::from_bytes(self.data)?),
-            crate::Kind::Blob => ObjectRef::Blob(BlobRef { data: self.data }),
-            crate::Kind::Commit => ObjectRef::Commit(CommitRef::from_bytes(self.data)?),
-            crate::Kind::Tag => ObjectRef::Tag(TagRef::from_bytes(self.data)?),
+            Kind::Tree => ObjectRef::Tree(TreeRef::from_bytes(self.data)?),
+            Kind::Blob => ObjectRef::Blob(BlobRef { data: self.data }),
+            Kind::Commit => ObjectRef::Commit(CommitRef::from_bytes(self.data)?),
+            Kind::Tag => ObjectRef::Tag(TagRef::from_bytes(self.data)?),
         })
     }
 
@@ -25,7 +25,7 @@ impl<'a> Data<'a> {
     /// `None` if this is not a tree object.
     pub fn try_into_tree_iter(self) -> Option<TreeRefIter<'a>> {
         match self.kind {
-            crate::Kind::Tree => Some(TreeRefIter::from_bytes(self.data)),
+            Kind::Tree => Some(TreeRefIter::from_bytes(self.data)),
             _ => None,
         }
     }
@@ -34,7 +34,7 @@ impl<'a> Data<'a> {
     /// `None` if this is not a commit object.
     pub fn try_into_commit_iter(self) -> Option<CommitRefIter<'a>> {
         match self.kind {
-            crate::Kind::Commit => Some(CommitRefIter::from_bytes(self.data)),
+            Kind::Commit => Some(CommitRefIter::from_bytes(self.data)),
             _ => None,
         }
     }
@@ -43,7 +43,7 @@ impl<'a> Data<'a> {
     /// `None` if this is not a tag object.
     pub fn try_into_tag_iter(self) -> Option<TagRefIter<'a>> {
         match self.kind {
-            crate::Kind::Tag => Some(TagRefIter::from_bytes(self.data)),
+            Kind::Tag => Some(TagRefIter::from_bytes(self.data)),
             _ => None,
         }
     }

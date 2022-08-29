@@ -11,7 +11,7 @@ pub enum CandidateInfo {
     /// An error occurred when looking up the object in the database.
     FindError {
         /// The reported error.
-        source: crate::object::find::existing::OdbError,
+        source: crate::object::find::existing::Error,
     },
     /// The candidate is an object of the given `kind`.
     Object {
