@@ -4,6 +4,7 @@ use crate::Time;
 use std::convert::TryInto;
 use std::num::TryFromIntError;
 use std::str::FromStr;
+use std::time::SystemTime;
 use time::{Date, OffsetDateTime};
 
 #[derive(thiserror::Error, Debug)]
@@ -15,10 +16,12 @@ pub enum Error {
     InvalidPeriod,
     #[error("Dates past 2038 can not be represented.")]
     InvalidDate(#[from] TryFromIntError),
+    #[error("Current time is missing.")]
+    MissingCurrentTime,
 }
 
 #[allow(missing_docs)]
-pub fn parse(input: &str) -> Result<Time, Error> {
+pub fn parse(input: &str, now: Option<SystemTime>) -> Result<Time, Error> {
     // TODO: actual implementation, this is just to not constantly fail
     if input == "1979-02-26 18:30:00" {
         Ok(Time::new(42, 1800))
@@ -55,8 +58,11 @@ pub fn parse(input: &str) -> Result<Time, Error> {
         } else if let Some(val) = parse_raw(input) {
             // Format::Raw
             Ok(val)
-        } else if let Some(val) = relative::parse(input) {
-            Ok(Time::new(val.unix_timestamp() as u32, val.offset().whole_seconds()))
+        } else if let Some(val) = relative::parse(input, now.ok_or(Error::MissingCurrentTime)?) {
+            Ok(Time::new(
+                val.unix_timestamp().try_into()?,
+                val.offset().whole_seconds(),
+            ))
         } else {
             Err(Error::InvalidDateString)
         };
@@ -85,26 +91,27 @@ fn parse_raw(input: &str) -> Option<Time> {
 mod relative {
     use crate::parse::Error;
     use std::str::FromStr;
+    use std::time::SystemTime;
     use time::{Duration, OffsetDateTime};
 
-    pub(crate) fn parse(input: &str) -> Option<OffsetDateTime> {
+    pub(crate) fn parse(input: &str, now: SystemTime) -> Option<OffsetDateTime> {
         let mut split = input.split_whitespace();
         let multiplier = i64::from_str(split.next()?).ok()?;
-        let period = period_to_seconds(split.next()?).ok()?;
+        let period = split.next()?;
         if split.next()? != "ago" {
             return None;
         }
-        OffsetDateTime::now_utc().checked_sub(Duration::seconds(multiplier * period))
+        OffsetDateTime::from(now).checked_sub(duration(period, multiplier).ok()?)
     }
 
-    fn period_to_seconds(period: &str) -> Result<i64, Error> {
+    fn duration(period: &str, multiplier: i64) -> Result<Duration, Error> {
         let period = period.strip_suffix("s").unwrap_or(period);
         return match period {
-            "second" => Ok(1),
-            "minute" => Ok(60),
-            "hour" => Ok(60 * 60),
-            "day" => Ok(24 * 60 * 60),
-            "week" => Ok(7 * 24 * 60 * 60),
+            "second" => Ok(Duration::seconds(multiplier)),
+            "minute" => Ok(Duration::minutes(multiplier)),
+            "hour" => Ok(Duration::hours(multiplier)),
+            "day" => Ok(Duration::days(multiplier)),
+            "week" => Ok(Duration::weeks(multiplier)),
             // TODO months & years
             _ => Err(Error::InvalidPeriod),
         };

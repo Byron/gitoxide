@@ -1,3 +1,4 @@
+use std::time::SystemTime;
 use std::{convert::TryInto, str::FromStr};
 
 use bstr::{BStr, BString, ByteSlice, ByteVec};
@@ -435,7 +436,7 @@ where
                 let time = nav
                     .to_str()
                     .ok()
-                    .and_then(|v| git_date::parse(v).ok())
+                    .and_then(|v| git_date::parse(v, Some(SystemTime::now())).ok())
                     .ok_or_else(|| Error::Time { input: nav.into() })?;
                 delegate
                     .reflog(delegate::ReflogLookup::Date(time))
