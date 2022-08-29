@@ -108,6 +108,8 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features cache-efficiency-debug
 	cd git-commitgraph && cargo check --all-features \
 			   && cargo check
+	cd git-config-value && cargo check --all-features \
+				 && cargo check
 	cd git-config && cargo check --all-features \
 				 && cargo check
 	cd git-transport && cargo check \

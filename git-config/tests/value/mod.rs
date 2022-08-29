@@ -1,5 +1,4 @@
-/// Converts string to a bstr
-pub fn b(s: &str) -> &bstr::BStr {
+pub(crate) fn b(s: &str) -> &bstr::BStr {
     s.into()
 }
 
