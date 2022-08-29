@@ -1473,7 +1473,6 @@ dependencies = [
 name = "git-prompt"
 version = "0.0.0"
 dependencies = [
- "bstr",
  "expectrl",
  "libc",
  "thiserror",

@@ -5,20 +5,21 @@ pub const TTY_PATH: &str = "/dev/tty";
 pub(crate) mod imp {
     use crate::unix::TTY_PATH;
     use crate::{Error, Options};
-    use bstr::{BStr, BString};
     use std::io::Write;
 
     /// Ask the user given a `prompt`, returning the result.
-    pub fn ask(prompt: &BStr, Options { secret }: Options) -> Result<BString, Error> {
+    pub fn ask(prompt: &str, Options { secret }: Options) -> Result<String, Error> {
         if secret {
             todo!("hide input")
         } else {
-            let mut out = std::fs::OpenOptions::new()
-                .write(true)
-                .open(TTY_PATH)
-                .map_err(|err| Error::TtyWrite { source: err })?;
-            out.write_all(prompt).map_err(|err| Error::TtyWrite { source: err })?;
+            let mut in_out = std::fs::OpenOptions::new().write(true).read(true).open(TTY_PATH)?;
+            in_out.write_all(prompt.as_bytes())?;
+
+            use std::io::BufRead;
+            let mut buf_read = std::io::BufReader::with_capacity(64, in_out);
+            let mut out = String::with_capacity(64);
+            buf_read.read_line(&mut out)?;
+            Ok(out)
         }
-        todo!("read line back")
     }
 }
