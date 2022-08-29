@@ -7,18 +7,25 @@ function baseline() {
     local test_date=$1 # first argument is the date to test
 
     git -c section.key="$test_date" config --type=expiry-date section.key && status=0 || status=$?
-#    git ls-files "$pathspec" && status=0 || status=$?
     {
         echo "$test_date"
         echo "$status"
+        if [ $status == 0 ]
+        then
+          git -c section.key="$test_date" config --type=expiry-date section.key
+        else
+          echo "-1"
+        fi
     } >> baseline.git
 }
 
 # success
 
 # date formats following to https://git-scm.com/docs/git-log#Documentation/git-log.txt---dateltformatgt
+
 # short
-baseline '2022-08-22'
+# ODO
+#baseline '2022-08-22'
 # rfc2822
 baseline 'Thu, 18 Aug 2022 12:45:06 +0800'
 # iso8601

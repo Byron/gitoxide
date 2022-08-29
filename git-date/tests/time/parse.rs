@@ -3,11 +3,12 @@ use git_date::time::Sign;
 use git_date::Time;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
+use std::str::FromStr;
 use time::OffsetDateTime;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-static BASELINE: Lazy<HashMap<BString, usize>> = Lazy::new(|| {
+static BASELINE: Lazy<HashMap<BString, (usize, BString)>> = Lazy::new(|| {
     let base = git_testtools::scripted_fixture_repo_read_only("generate_git_date_baseline.sh").unwrap();
 
     (|| -> Result<_> {
@@ -15,8 +16,9 @@ static BASELINE: Lazy<HashMap<BString, usize>> = Lazy::new(|| {
         let baseline = std::fs::read(base.join("baseline.git"))?;
         let mut lines = baseline.lines();
         while let Some(date_str) = lines.next() {
-            let exit_code = lines.next().expect("two lines per baseline").to_str()?.parse()?;
-            map.insert(date_str.into(), exit_code);
+            let exit_code = lines.next().expect("three lines per baseline").to_str()?.parse()?;
+            let output = lines.next().expect("three lines per baseline").into();
+            map.insert(date_str.into(), (exit_code, output));
         }
         Ok(map)
     })()
@@ -25,13 +27,18 @@ static BASELINE: Lazy<HashMap<BString, usize>> = Lazy::new(|| {
 
 #[test]
 fn baseline() {
-    for (pattern, exit_code) in BASELINE.iter() {
+    for (pattern, (exit_code, output)) in BASELINE.iter() {
         let res = git_date::parse(pattern.to_str().expect("valid pattern"));
         assert_eq!(
             res.is_some(),
             *exit_code == 0,
             "{pattern:?} disagrees with baseline: {res:?}"
-        )
+        );
+        if *exit_code == 0 {
+            let actual = res.unwrap().seconds_since_unix_epoch;
+            let expected = u32::from_str(output.to_str().expect("valid utf")).expect("valid epoch value");
+            assert_eq!(actual, expected, "{pattern:?} disagrees with baseline: {res:?}")
+        }
     }
 }
 
