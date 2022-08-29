@@ -1164,10 +1164,10 @@ dependencies = [
 name = "git-config"
 version = "0.7.1"
 dependencies = [
- "bitflags",
  "bstr",
  "criterion",
  "document-features",
+ "git-config-value",
  "git-features",
  "git-glob",
  "git-path",
@@ -1175,7 +1175,6 @@ dependencies = [
  "git-repository",
  "git-sec",
  "git-testtools",
- "libc",
  "memchr",
  "nom",
  "serde",

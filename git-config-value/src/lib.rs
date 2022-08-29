@@ -20,7 +20,8 @@ pub struct Error {
 }
 
 impl Error {
-    pub(crate) fn new(message: &'static str, input: impl Into<bstr::BString>) -> Self {
+    /// Create a new value error from `message`, with `input` being what's causing the error.
+    pub fn new(message: &'static str, input: impl Into<bstr::BString>) -> Self {
         Error {
             message,
             input: input.into(),
