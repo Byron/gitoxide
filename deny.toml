@@ -22,7 +22,7 @@ yanked = "warn"
 # 2019-12-17 there are no security notice advisories in
 # https://github.com/rustsec/advisory-db
 notice = "warn"
-ignore = [ ]
+ignore = ["expectrl"]
 
 
 

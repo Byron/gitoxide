@@ -7,6 +7,9 @@ pub enum Error {
     UnsupportedPlatform,
     #[error("Failed to open terminal at {:?} for writing prompt, or to write it", unix::TTY_PATH)]
     TtyIo(#[from] std::io::Error),
+    #[cfg(unix)]
+    #[error("Failed to obtain or set terminal configuration")]
+    TerminalConfiguration(#[from] nix::errno::Errno),
 }
 
 #[derive(Default, Copy, Clone)]

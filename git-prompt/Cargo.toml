@@ -12,9 +12,10 @@ doctest = false
 
 [dependencies]
 thiserror = "1.0.32"
+parking_lot = "0.12.1"
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2"
+nix = { version = "0.25.0", default-features = false, features = ["term"] }
 
 [dev-dependencies]
 expectrl = "0.5.2"

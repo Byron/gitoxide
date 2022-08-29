@@ -10,6 +10,9 @@ mod ask {
         p.expect("Username: ").unwrap();
         p.send_line(" user with space ").unwrap();
         p.expect("\" user with space\"").unwrap();
+        p.expect("Password: ").unwrap();
+        p.send_line(" password with space ").unwrap();
+        p.expect("\" password with space \"").unwrap();
         p.expect(expectrl::Eof).unwrap();
         p.wait().unwrap();
     }
