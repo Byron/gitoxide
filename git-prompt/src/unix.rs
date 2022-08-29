@@ -5,6 +5,7 @@ pub const TTY_PATH: &str = "/dev/tty";
 pub(crate) mod imp {
     use crate::unix::TTY_PATH;
     use crate::{Error, Options};
+    use nix::sys::termios;
     use nix::sys::termios::Termios;
     use parking_lot::lock_api::MutexGuard;
     use parking_lot::{Mutex, RawMutex};
@@ -52,7 +53,7 @@ pub(crate) mod imp {
     impl<'a> RestoreTerminalStateOnDrop<'a> {
         fn now(mut self) -> Result<(), Error> {
             let state = self.state.take().expect("BUG: we exist only if something is saved");
-            nix::sys::termios::tcsetattr(self.fd, nix::sys::termios::SetArg::TCSAFLUSH, &state)?;
+            termios::tcsetattr(self.fd, termios::SetArg::TCSAFLUSH, &state)?;
             Ok(())
         }
     }
@@ -60,7 +61,7 @@ pub(crate) mod imp {
     impl<'a> Drop for RestoreTerminalStateOnDrop<'a> {
         fn drop(&mut self) {
             if let Some(state) = self.state.take() {
-                nix::sys::termios::tcsetattr(self.fd, nix::sys::termios::SetArg::TCSAFLUSH, &state).ok();
+                termios::tcsetattr(self.fd, termios::SetArg::TCSAFLUSH, &state).ok();
             }
         }
     }
@@ -73,7 +74,15 @@ pub(crate) mod imp {
             state.is_none(),
             "BUG: recursive calls are not possible and we restore afterwards"
         );
-        *state = nix::sys::termios::tcgetattr(fd)?.into();
+
+        let prev = termios::tcgetattr(fd)?;
+        let mut new = prev.clone();
+        *state = prev.into();
+
+        new.local_flags &= !termios::LocalFlags::ECHO;
+        new.local_flags |= termios::LocalFlags::ECHONL;
+        termios::tcsetattr(fd, termios::SetArg::TCSAFLUSH, &new)?;
+
         Ok(RestoreTerminalStateOnDrop { fd, state })
     }
 }
