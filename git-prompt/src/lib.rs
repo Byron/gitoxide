@@ -1,7 +1,15 @@
-#![deny(rust_2018_idioms)]
+//! Git style prompting with support for `GIT_ASKPASS` and `askpass` program configuration.
+//!
+//! ### Compatibility
+//!
+//! This is a unix-only crate which will return with an error when trying to obtain any prompt on other platforms.
+//! On those platforms it is common to have helpers which perform this task so it shouldn't be a problem.
+#![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
+/// The error returned by [ask()].
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("The current platform has no implementation for prompting in the terminal")]
     UnsupportedPlatform,
@@ -12,6 +20,7 @@ pub enum Error {
     TerminalConfiguration(#[from] nix::errno::Errno),
 }
 
+/// The options used in `[ask()]`.
 #[derive(Default, Copy, Clone)]
 pub struct Options {
     /// If true, what's prompted is a secret and thus should be hidden.

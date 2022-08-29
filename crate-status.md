@@ -246,9 +246,10 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [ ] support for `GIT_EXEC_PATH` environment variable with `git-sec` filter
 
 ### git-prompt
-* [ ] open prompts for usernames for example
-* [ ] secure prompts for password
+* [x] open prompts for usernames for example
+* [x] secure prompts for password
 * [ ] use `askpass` program if available
+* [ ] windows prompts for `cmd.exe` and mingw terminals
 
 ### git-note
 
