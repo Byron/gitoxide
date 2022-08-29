@@ -15,7 +15,7 @@ doctest = false
 serde1 = ["serde", "bstr/serde1"]
 
 [dependencies]
-git-path = { version = "^0.4.1", path = "../git-path" }
+git-path = { version = "^0.4.2", path = "../git-path" }
 
 thiserror = "1.0.32"
 bstr = "0.2.17"

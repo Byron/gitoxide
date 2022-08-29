@@ -97,7 +97,7 @@ git-actor = { version = "^0.11.4", path = "../git-actor" }
 git-pack = { version = "^0.22.0", path = "../git-pack", features = ["object-cache-dynamic"] }
 git-revision = { version = "^0.4.4", path = "../git-revision" }
 
-git-path = { version = "^0.4.1", path = "../git-path" }
+git-path = { version = "^0.4.2", path = "../git-path" }
 git-url = { version = "^0.7.3", path = "../git-url" }
 git-traverse = { version = "^0.16.3", path = "../git-traverse" }
 git-protocol = { version = "^0.19.1", path = "../git-protocol", optional = true }
