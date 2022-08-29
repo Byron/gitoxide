@@ -8,6 +8,9 @@ use crate::{SignalHandlerMode, NEXT_MAP_INDEX, REGISTER, SIGNAL_HANDLER_MODE};
 /// # Safety
 /// Note that Mutexes of any kind are not allowed, and so aren't allocation or deallocation of memory.
 /// We are using lock-free datastructures and sprinkle in `std::mem::forget` to avoid deallocating.
+/// Most importantly, we use `try_lock()` which uses an atomic int only without waiting, making our register safe to use,
+/// at the expense of possibly missing a lock file if another thread wants to obtain it or put it back
+/// (i.e. mutates the register shard).
 pub fn cleanup_tempfiles() {
     let current_pid = std::process::id();
     let one_past_last_index = NEXT_MAP_INDEX.load(Ordering::SeqCst);
