@@ -1495,6 +1495,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-prompt"
+version = "0.0.0"
+
+[[package]]
 name = "git-protocol"
 version = "0.19.1"
 dependencies = [

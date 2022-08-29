@@ -245,6 +245,11 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] execute commands with `sh`
 * [ ] support for `GIT_EXEC_PATH` environment variable with `git-sec` filter
 
+### git-prompt
+* [ ] open prompts for usernames for example
+* [ ] secure prompts for password
+* [ ] use `askpass` program if available
+
 ### git-note
 
 A mechanism to associate metadata with any object, and keep revisions of it using git itself.
