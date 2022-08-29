@@ -19,7 +19,7 @@ pub(crate) mod imp {
             let mut buf_read = std::io::BufReader::with_capacity(64, in_out);
             let mut out = String::with_capacity(64);
             buf_read.read_line(&mut out)?;
-            Ok(out)
+            Ok(out.trim_end().to_owned())
         }
     }
 }
