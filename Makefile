@@ -72,7 +72,8 @@ check: ## Build all code in suitable configurations
 	cd git-object && cargo check --all-features \
                   && cargo check --features verbose-object-parsing-errors
 	cd git-index && cargo check --features serde1
-	cd git-credentials && cargo check --features serde1
+	cd git-credentials && cargo check --features serde1 \
+						&& cargo check --features prompt
 	cd git-sec && cargo check --features serde1
 	cd git-revision && cargo check --features serde1
 	cd git-attributes && cargo check --features serde1

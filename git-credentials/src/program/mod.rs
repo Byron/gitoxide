@@ -10,6 +10,9 @@ pub struct Cascade {
     pub programs: Vec<Program>,
     /// If true, stderr is enabled when `programs` are run, which is the default.
     pub stderr: bool,
+    /// If true, default true, we may prompt the user to fill in missing username or password.
+    #[cfg(feature = "prompt")]
+    prompt: bool,
 }
 
 mod cascade;

@@ -13,6 +13,8 @@ doctest = false
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1", "git-sec/serde1"]
+## Enable prompting the user for credentials when using the cascading helper implementation (similar to `git credential`).
+prompt = ["rustyline"]
 
 [dependencies]
 git-sec = { version = "^0.3.1", path = "../git-sec" }
@@ -23,6 +25,7 @@ git-command = { version = "0.1.0", path = "../git-command" }
 thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 bstr = { version = "0.2.13", default-features = false, features = ["std"]}
+rustyline = { version = "10.0.0", optional = true }
 
 document-features = { version = "0.2.1", optional = true }
 

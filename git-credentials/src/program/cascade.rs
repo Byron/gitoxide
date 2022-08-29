@@ -1,4 +1,3 @@
-use crate::helper::Action;
 use crate::program::Cascade;
 use crate::protocol::Context;
 use crate::{helper, protocol, Program};
@@ -23,12 +22,23 @@ impl Cascade {
         .map(|name| vec![Program::from_custom_definition(name)])
         .unwrap_or_default();
 
-        Cascade { programs, stderr: true }
+        Cascade {
+            programs,
+            stderr: true,
+            prompt: true,
+        }
     }
 }
 
 /// Builder
 impl Cascade {
+    /// Disable prompting to assure we only interact with stored or already present credentials.
+    ///
+    /// Note that this is only meaningful with the `prompt` feature enabled.
+    pub fn disable_prompt(mut self) -> Self {
+        self.prompt = false;
+        self
+    }
     /// Extend the list of programs to run `programs`.
     pub fn extend(mut self, programs: impl IntoIterator<Item = Program>) -> Self {
         self.programs.extend(programs);
@@ -66,10 +76,8 @@ impl Cascade {
                 Ok(Some(stdout)) => {
                     let ctx = Context::from_bytes(&stdout)?;
                     if let Some(dst_ctx) = action.context_mut() {
-                        let mut action_needs_update = false;
                         if let Some(src) = ctx.path {
                             dst_ctx.path = Some(src);
-                            action_needs_update = true;
                         }
                         for (src, dst) in [
                             (ctx.protocol, &mut dst_ctx.protocol),
@@ -79,13 +87,11 @@ impl Cascade {
                         ] {
                             if let Some(src) = src {
                                 *dst = Some(src);
-                                action_needs_update = true;
                             }
                         }
                         if let Some(src) = ctx.url {
                             dst_ctx.url = Some(src);
                             store_url_parts(dst_ctx)?;
-                            action_needs_update = true;
                         }
                         if dst_ctx.username.is_some() && dst_ctx.password.is_some() {
                             break;
@@ -93,9 +99,6 @@ impl Cascade {
                         if ctx.quit.unwrap_or_default() {
                             dst_ctx.quit = ctx.quit;
                             break;
-                        }
-                        if action_needs_update {
-                            action = Action::Get(dst_ctx.clone());
                         }
                     }
                 }
