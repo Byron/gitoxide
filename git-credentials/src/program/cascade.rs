@@ -127,11 +127,11 @@ impl Cascade {
         #[cfg(feature = "prompt")]
         if self.prompt {
             if let Some(ctx) = action.context_mut() {
-                if let username @ None = &mut ctx.username {
-                    *username = git_prompt::openly("Username: ")?.into();
+                if ctx.username.is_none() {
+                    ctx.username = git_prompt::openly(ctx.to_prompt("Username"))?.into();
                 }
-                if let password @ None = &mut ctx.password {
-                    *password = git_prompt::securely("Password: ")?.into();
+                if ctx.password.is_none() {
+                    ctx.password = git_prompt::securely(ctx.to_prompt("Password"))?.into();
                 }
             }
         }

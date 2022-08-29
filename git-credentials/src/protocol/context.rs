@@ -15,9 +15,37 @@ mod serde {
     mod write {
         use crate::protocol::context::serde::validate;
         use crate::protocol::Context;
-        use bstr::BStr;
+        use bstr::{BStr, BString};
 
         impl Context {
+            /// Convert all relevant fields into a URL for consumption.
+            pub fn to_url(&self) -> Option<BString> {
+                use bstr::{ByteSlice, ByteVec};
+                let mut buf: BString = self.protocol.clone()?.into();
+                buf.push_str(b"://");
+                if let Some(user) = &self.username {
+                    buf.push_str(user);
+                    buf.push(b'@');
+                }
+                if let Some(host) = &self.host {
+                    buf.push_str(host);
+                }
+                if let Some(path) = &self.path {
+                    if !path.starts_with_str("/") {
+                        buf.push(b'/');
+                    }
+                    buf.push_str(path);
+                }
+                buf.into()
+            }
+            /// Compute a prompt to obtain the given value.
+            pub fn to_prompt(&self, field: &str) -> String {
+                match self.to_url() {
+                    Some(url) => format!("{field} for {url}: "),
+                    None => format!("{field}: "),
+                }
+            }
+
             /// Write ourselves to `out` such that [`from_bytes()`][Self::from_bytes()] can decode it losslessly.
             pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
                 use bstr::ByteSlice;
