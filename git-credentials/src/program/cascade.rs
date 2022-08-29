@@ -8,6 +8,7 @@ impl Default for Cascade {
         Cascade {
             programs: Vec::new(),
             stderr: true,
+            #[cfg(feature = "prompt")]
             prompt: true,
         }
     }
@@ -127,10 +128,10 @@ impl Cascade {
         if self.prompt {
             if let Some(ctx) = action.context_mut() {
                 if let username @ None = &mut ctx.username {
-                    *username = crate::program::prompt::openly("Username: ")?.into();
+                    *username = git_prompt::openly("Username: ")?.into();
                 }
                 if let password @ None = &mut ctx.password {
-                    *password = crate::program::prompt::securely("Password: ")?.into();
+                    *password = git_prompt::securely("Password: ")?.into();
                 }
             }
         }

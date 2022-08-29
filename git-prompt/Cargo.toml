@@ -11,3 +11,4 @@ edition = "2018"
 doctest = false
 
 [dependencies]
+thiserror = "1.0.32"

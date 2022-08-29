@@ -31,7 +31,7 @@ pub enum Error {
     Quit,
     #[cfg(feature = "prompt")]
     #[error(transparent)]
-    Prompt(#[from] rustyline::error::ReadlineError),
+    Prompt(#[from] git_prompt::Error),
 }
 
 /// Additional context to be passed to the credentials helper.
