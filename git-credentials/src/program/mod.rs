@@ -16,6 +16,9 @@ pub struct Cascade {
 }
 
 mod cascade;
+#[cfg(feature = "prompt")]
+///
+pub mod prompt;
 
 /// The kind of helper program to use.
 #[derive(Debug, Clone, Eq, PartialEq)]

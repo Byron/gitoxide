@@ -25,6 +25,7 @@ impl Cascade {
         Cascade {
             programs,
             stderr: true,
+            #[cfg(feature = "prompt")]
             prompt: true,
         }
     }
@@ -35,8 +36,12 @@ impl Cascade {
     /// Disable prompting to assure we only interact with stored or already present credentials.
     ///
     /// Note that this is only meaningful with the `prompt` feature enabled.
+    #[cfg_attr(not(feature = "prompt"), allow(unused_mut))]
     pub fn disable_prompt(mut self) -> Self {
-        self.prompt = false;
+        #[cfg(feature = "prompt")]
+        {
+            self.prompt = false;
+        }
         self
     }
     /// Extend the list of programs to run `programs`.
@@ -105,6 +110,18 @@ impl Cascade {
                 Err(helper::Error::CredentialsHelperFailed { .. }) => continue, // ignore helpers that we can't call
                 Err(err) if action.context().is_some() => return Err(err.into()), // communication errors are fatal when getting credentials
                 Err(_) => {} // for other actions, ignore everything, try the operation
+            }
+        }
+
+        #[cfg(feature = "prompt")]
+        if self.prompt {
+            if let Some(ctx) = action.context_mut() {
+                if let username @ None = &mut ctx.username {
+                    *username = crate::program::prompt::openly("Username: ")?.into();
+                }
+                if let password @ None = &mut ctx.password {
+                    *password = crate::program::prompt::securely("Password: ")?.into();
+                }
             }
         }
 

@@ -29,6 +29,9 @@ pub enum Error {
     IdentityMissing { context: Context },
     #[error("The handler asked to stop trying to obtain credentials")]
     Quit,
+    #[cfg(feature = "prompt")]
+    #[error(transparent)]
+    Prompt(#[from] rustyline::error::ReadlineError),
 }
 
 /// Additional context to be passed to the credentials helper.
