@@ -4,7 +4,7 @@ use std::process::{Command, Stdio};
 
 /// A list of helper programs to run in order to obtain credentials.
 #[allow(dead_code)]
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Cascade {
     /// The programs to run in order to obtain credentials
     pub programs: Vec<Program>,

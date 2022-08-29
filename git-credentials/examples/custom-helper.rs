@@ -6,12 +6,12 @@ pub fn main() -> Result<(), git_credentials::program::main::Error> {
         std::env::args_os().skip(1),
         std::io::stdin(),
         std::io::stdout(),
-        |action, credentials| -> std::io::Result<_> {
+        |action, context| -> std::io::Result<_> {
             match action {
                 program::main::Action::Get => Ok(Some(protocol::Context {
                     username: Some("user".into()),
                     password: Some("pass".into()),
-                    ..credentials
+                    ..context
                 })),
                 program::main::Action::Erase => Err(std::io::Error::new(
                     std::io::ErrorKind::Other,

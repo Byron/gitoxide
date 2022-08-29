@@ -10,6 +10,11 @@ edition = "2018"
 [lib]
 doctest = false
 
+[[example]]
+name = "git-credential-lite"
+path = "examples/git-credential-lite.rs"
+required-features = ["prompt"]
+
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1", "git-sec/serde1"]
@@ -26,11 +31,8 @@ thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 
-## For the 'prompt' feature
 rustyline = { version = "10.0.0", optional = true, default-features = false }
-## For the 'prompt' feature
 rustyline-derive = { version = "0.7.0", optional = true }
-## For the 'prompt' feature
 unicode-width = { version = "0.1.9", optional = true }
 
 

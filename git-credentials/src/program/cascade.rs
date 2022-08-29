@@ -3,6 +3,16 @@ use crate::protocol::Context;
 use crate::{helper, protocol, Program};
 use bstr::ByteSlice;
 
+impl Default for Cascade {
+    fn default() -> Self {
+        Cascade {
+            programs: Vec::new(),
+            stderr: true,
+            prompt: true,
+        }
+    }
+}
+
 /// Initialization
 impl Cascade {
     /// Return an instance configured to run the `git credential-<platform>` program for the current platform first, followed
