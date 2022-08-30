@@ -39,9 +39,7 @@ where
             match self.credentials.as_mut() {
                 Some(f) => f,
                 None => {
-                    // TODO: actually fetch this from configuration
-                    credentials_storage = Box::new(git_protocol::credentials::builtin)
-                        as Box<dyn FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result>;
+                    credentials_storage = Self::configured_credentials();
                     &mut credentials_storage
                 }
             },
