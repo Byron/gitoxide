@@ -21,4 +21,6 @@ parking_lot = "0.12.1"
 nix = { version = "0.25.0", default-features = false, features = ["term"] }
 
 [dev-dependencies]
+git-testtools = { path = "../tests/tools"}
+serial_test = "0.9.0"
 expectrl = "0.5.2"

@@ -21,7 +21,7 @@ pub enum Error {
 }
 
 /// The way the user is prompted.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Mode {
     /// Visibly show user input.
     Visible,
