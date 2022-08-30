@@ -559,10 +559,6 @@ mod tests {
 
     #[test]
     fn parse_version_with_trailing_newline() {
-        assert_eq!(
-            git_version_from_bytes(b"git version 2.37.2\n").unwrap(), 
-            (2, 37, 2)
-        );
+        assert_eq!(git_version_from_bytes(b"git version 2.37.2\n").unwrap(), (2, 37, 2));
     }
-
 }
