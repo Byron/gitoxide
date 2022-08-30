@@ -33,9 +33,18 @@ where
 
     #[git_protocol::maybe_async::maybe_async]
     async fn fetch_refs(&mut self) -> Result<HandshakeWithRefs, Error> {
+        let mut credentials_storage;
         let mut outcome = git_protocol::fetch::handshake(
             &mut self.transport,
-            git_protocol::credentials::builtin,
+            match self.credentials.as_mut() {
+                Some(f) => f,
+                None => {
+                    // TODO: actually fetch this from configuration
+                    credentials_storage = Box::new(git_protocol::credentials::builtin)
+                        as Box<dyn FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result>;
+                    &mut credentials_storage
+                }
+            },
             Vec::new(),
             &mut self.progress,
         )

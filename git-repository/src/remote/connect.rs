@@ -41,6 +41,7 @@ impl<'repo> Remote<'repo> {
     {
         Connection {
             remote: self,
+            credentials: None,
             transport,
             progress,
         }

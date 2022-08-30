@@ -12,6 +12,8 @@ pub(crate) struct HandshakeWithRefs {
 /// much like a remote procedure call.
 pub struct Connection<'a, 'repo, T, P> {
     pub(crate) remote: &'a Remote<'repo>,
+    pub(crate) credentials:
+        Option<Box<dyn FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + 'a>>,
     pub(crate) transport: T,
     pub(crate) progress: P,
 }
@@ -19,6 +21,24 @@ pub struct Connection<'a, 'repo, T, P> {
 mod access {
     use crate::remote::Connection;
     use crate::Remote;
+
+    /// Builder
+    impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
+        /// Set a custom credentials callback to provide credentials if the remotes require authentication.
+        ///
+        /// Otherwise we will use the git configuration to perform the same task as the `git credential` helper program,
+        /// which is calling other helper programs in succession while resorting to a prompt to obtain credentials from the
+        /// user.
+        ///
+        /// A custom function may also be used to prevent accessing resources with authentication.
+        pub fn credentials(
+            mut self,
+            helper: impl FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + 'a,
+        ) -> Self {
+            self.credentials = Some(Box::new(helper));
+            self
+        }
+    }
 
     /// Access
     impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
