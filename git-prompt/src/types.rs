@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::path::Path;
 
-/// The error returned by [ask()].
+/// The error returned by [ask()][crate::ask()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -27,7 +27,7 @@ pub enum Mode {
     Visible,
     /// Do not show user input, suitable for sensitive data.
     Hidden,
-    /// Do not prompt the user at all but rather abort with an error. This is useful in conjunction with [Option::askpass].
+    /// Do not prompt the user at all but rather abort with an error. This is useful in conjunction with [Options::askpass].
     Disable,
 }
 

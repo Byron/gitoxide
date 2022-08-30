@@ -8,7 +8,6 @@ impl Default for Cascade {
         Cascade {
             programs: Vec::new(),
             stderr: true,
-            #[cfg(feature = "prompt")]
             prompt: true,
         }
     }
@@ -36,7 +35,6 @@ impl Cascade {
         Cascade {
             programs,
             stderr: true,
-            #[cfg(feature = "prompt")]
             prompt: true,
         }
     }
@@ -47,12 +45,8 @@ impl Cascade {
     /// Disable prompting to assure we only interact with stored or already present credentials.
     ///
     /// Note that this is only meaningful with the `prompt` feature enabled.
-    #[cfg_attr(not(feature = "prompt"), allow(unused_mut))]
     pub fn disable_prompt(mut self) -> Self {
-        #[cfg(feature = "prompt")]
-        {
-            self.prompt = false;
-        }
+        self.prompt = false;
         self
     }
     /// Extend the list of programs to run `programs`.
@@ -124,7 +118,6 @@ impl Cascade {
             }
         }
 
-        #[cfg(feature = "prompt")]
         if self.prompt {
             if let Some(ctx) = action.context_mut() {
                 if ctx.username.is_none() {

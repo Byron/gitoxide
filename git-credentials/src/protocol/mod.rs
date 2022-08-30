@@ -29,7 +29,6 @@ pub enum Error {
     IdentityMissing { context: Context },
     #[error("The handler asked to stop trying to obtain credentials")]
     Quit,
-    #[cfg(feature = "prompt")]
     #[error("Couldn't obtain {prompt}")]
     Prompt { prompt: String, source: git_prompt::Error },
 }

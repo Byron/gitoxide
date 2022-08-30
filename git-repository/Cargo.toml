@@ -108,7 +108,7 @@ git-features = { version = "^0.22.3", path = "../git-features", features = ["pro
 
 git-attributes = { version = "^0.3.3", path = "../git-attributes" }
 git-glob = { version = "^0.3.2", path = "../git-glob" }
-git-credentials = { version = "^0.4.0", path = "../git-credentials", optional = true, features = ["prompt"] }
+git-credentials = { version = "^0.4.0", path = "../git-credentials", optional = true }
 git-index = { version = "^0.4.3", path = "../git-index" }
 git-worktree = { version = "^0.4.3", path = "../git-worktree" }
 

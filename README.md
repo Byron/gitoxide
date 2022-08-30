@@ -137,13 +137,13 @@ is usable to some extend.
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
   * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
+  * [git-command](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-command)
+  * [git-prompt](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-prompt)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
   * [git-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-worktree)
   * [git-bitmap](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-bitmap)
   * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
-  * [git-command](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-command)
-  * [git-prompt](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-prompt)
 * **idea** _(just a name placeholder)_
   * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
   * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)

@@ -248,7 +248,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
 ### git-prompt
 * [x] open prompts for usernames for example
 * [x] secure prompts for password
-* [ ] use `askpass` program if available
+* [x] use `askpass` program if available
+* [ ] signal handling (resetting and restoring terminal settings)
 * [ ] windows prompts for `cmd.exe` and mingw terminals
 
 ### git-note
