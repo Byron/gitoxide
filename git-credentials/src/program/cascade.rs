@@ -1,5 +1,5 @@
 use crate::program::Cascade;
-use crate::protocol::{Context, Error};
+use crate::protocol::Context;
 use crate::{helper, protocol, Program};
 use bstr::ByteSlice;
 
@@ -130,13 +130,13 @@ impl Cascade {
                 if ctx.username.is_none() {
                     let prompt = ctx.to_prompt("Username");
                     ctx.username = git_prompt::openly(&prompt)
-                        .map_err(|err| Error::Prompt { prompt, source: err })?
+                        .map_err(|err| protocol::Error::Prompt { prompt, source: err })?
                         .into();
                 }
                 if ctx.password.is_none() {
                     let prompt = ctx.to_prompt("Password");
                     ctx.password = git_prompt::securely(&prompt)
-                        .map_err(|err| Error::Prompt { prompt, source: err })?
+                        .map_err(|err| protocol::Error::Prompt { prompt, source: err })?
                         .into();
                 }
             }
