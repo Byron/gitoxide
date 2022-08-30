@@ -30,8 +30,8 @@ pub enum Error {
     #[error("The handler asked to stop trying to obtain credentials")]
     Quit,
     #[cfg(feature = "prompt")]
-    #[error(transparent)]
-    Prompt(#[from] git_prompt::Error),
+    #[error("Couldn't obtain {prompt}")]
+    Prompt { prompt: String, source: git_prompt::Error },
 }
 
 /// Additional context to be passed to the credentials helper.
