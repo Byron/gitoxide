@@ -67,8 +67,9 @@ impl RepositoryUrl {
                 Scheme::Ssh => self
                     .inner
                     .user()
-                    .map(|user| format!("https://github.com{}/{}", user, self.cleaned_path())),
-                Scheme::Radicle | Scheme::File => None,
+                    .filter(|user| *user == "git")
+                    .map(|_git| format!("https://github.com{}", self.cleaned_path())),
+                _ => None,
             },
             None | Some(_) => None,
         }
