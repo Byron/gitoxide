@@ -5,11 +5,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pass = git_prompt::ask(
         "Password: ",
         Options {
-            askpass: Some(Cow::Owned(
-                std::env::var_os("ASKPASS_PROGRAM")
-                    .ok_or("Please set the ASKPASS_PROGRAM environment variable")?
-                    .into(),
-            )),
+            askpass: Some(Cow::Owned(std::env::current_exe()?.parent().unwrap().join("askpass"))),
             mode: Mode::Disable,
         },
     )?;
