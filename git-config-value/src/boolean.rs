@@ -1,3 +1,4 @@
+use std::ffi::OsString;
 use std::{borrow::Cow, convert::TryFrom, fmt::Display};
 
 use bstr::{BStr, BString, ByteSlice};
@@ -9,6 +10,16 @@ fn bool_err(input: impl Into<BString>) -> Error {
         "Booleans need to be 'no', 'off', 'false', '' or 'yes', 'on', 'true' or any number",
         input,
     )
+}
+
+impl TryFrom<OsString> for Boolean {
+    type Error = Error;
+
+    fn try_from(value: OsString) -> Result<Self, Self::Error> {
+        let value = git_path::os_str_into_bstr(&value)
+            .map_err(|_| Error::new("Illformed UTF-8", std::path::Path::new(&value).display().to_string()))?;
+        Self::try_from(value)
+    }
 }
 
 impl TryFrom<&BStr> for Boolean {
