@@ -1,9 +1,9 @@
 [package]
 name = "git-prompt"
-version = "0.0.0"
+version = "0.1.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
-description = "A WIP crate of the gitoxide project for handling prompts in the terminal"
+description = "A crate of the gitoxide project for handling prompts in the terminal"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 include = ["src/**/*", "README.md", "CHANGELOG.md"]

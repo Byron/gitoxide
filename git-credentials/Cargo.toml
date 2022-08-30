@@ -27,7 +27,7 @@ git-url = { version = "^0.7.2", path = "../git-url" }
 git-path = { version = "^0.4.2", path = "../git-path" }
 git-command = { version = "0.1.0", path = "../git-command" }
 git-config-value = { version = "^0.7.0", path = "../git-config-value" }
-git-prompt = { version = "0.0.0", path = "../git-prompt", optional = true }
+git-prompt = { version = "0.1.0", path = "../git-prompt", optional = true }
 
 thiserror = "1.0.32"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
