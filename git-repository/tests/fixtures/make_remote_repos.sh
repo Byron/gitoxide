@@ -187,3 +187,34 @@ git clone --shared base protocol_file_user
     git config protocol.file.allow user
 )
 
+git clone --shared base credential-helpers
+(cd credential-helpers
+    export GIT_TERMINAL_PROMPT=0
+    git=$(which git)
+    function baseline() {
+      local url=${1:?need url}
+      {
+        echo $url
+        echo url=$url | GIT_TRACE=1 $git credential fill 2>&1 | grep -E '^[a-z]+:' || :
+      } >> baseline.git
+    }
+
+    git config credential.helper ''
+    git config credential.helper global
+    git config credential.https://example.com:8080.helper example-with-port
+    git config credential.https://example.com:8080/path.helper example-with-port-and-path
+    git config credential.https://example.com:8080/path.usehttppath 1
+    git config credential.ssh://host:21/path.helper ssh-with-path
+    git config credential.git://host.org.helper git-without-path
+
+    git config credential.https://dev.azure.com.usehttppath true
+
+    baseline "https://hit-global.helper"
+    baseline "https://example.com:8080/other/path"
+    baseline "https://example.com:8080/path"
+    baseline "ssh://host:21/path"
+    baseline "ssh://host:21"
+    baseline "ssh://host"
+    baseline "git://host.org"
+)
+
