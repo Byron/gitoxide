@@ -22,13 +22,19 @@ pub enum Error {
 
 /// The options used in `[ask()]`.
 #[derive(Default, Copy, Clone)]
-pub struct Options {
+pub struct Options<'a> {
+    /// The path or name (for lookup in `PATH`) to the askpass program to call before prompting the user.
+    ///
+    /// It's called like this `askpass <prompt>`, but note that it won't know if the input should be hidden or not.
+    pub askpass: Option<&'a Path>,
     /// If true, what's prompted is a secret and thus should be hidden.
     pub secret: bool,
 }
 
 ///
 pub mod unix;
+
+use std::path::Path;
 #[cfg(unix)]
 use unix::imp;
 
@@ -36,22 +42,38 @@ use unix::imp;
 mod imp {
     use crate::{Error, Options};
 
-    pub(crate) fn ask(_prompt: &str, _opts: Options) -> Result<String, Error> {
+    pub(crate) fn ask(_prompt: &str, _opts: Options<'_>) -> Result<String, Error> {
         Err(Error::UnsupportedPlatform)
     }
 }
 
 /// Ask the user given a `prompt`, returning the result.
-pub fn ask(prompt: &str, opts: Options) -> Result<String, Error> {
+pub fn ask(prompt: &str, opts: Options<'_>) -> Result<String, Error> {
     imp::ask(prompt, opts)
 }
 
 /// Ask for information typed by the user into the terminal after showing the prompt`, like `"Username: `.
+///
+/// Use [`ask()`] for more control.
 pub fn openly(prompt: impl AsRef<str>) -> Result<String, Error> {
-    imp::ask(prompt.as_ref(), Options { secret: false })
+    imp::ask(
+        prompt.as_ref(),
+        Options {
+            secret: false,
+            askpass: None,
+        },
+    )
 }
 
 /// Ask for information _securely_ after showing the `prompt` (like `"password: "`) by not showing what's typed.
+///
+/// Use [`ask()`] for more control.
 pub fn securely(prompt: impl AsRef<str>) -> Result<String, Error> {
-    imp::ask(prompt.as_ref(), Options { secret: true })
+    imp::ask(
+        prompt.as_ref(),
+        Options {
+            secret: true,
+            askpass: None,
+        },
+    )
 }
