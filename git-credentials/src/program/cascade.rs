@@ -13,18 +13,17 @@ impl Default for Cascade {
 
 /// Initialization
 impl Cascade {
-    /// Return an instance configured to run the `git credential-<platform>` program for the current platform first, followed
-    /// by additional programs pushed onto [`programs`][Self::programs].
+    /// Return the programs to run for the current platform.
     ///
-    /// It's the basis for adding more programs according to the caller which run in succession.
+    /// These are typically used as basis for all credential cascade invocations, with configured programs following afterwards.
     ///
     /// # Note
     ///
     /// These defaults emulate what typical git installations may use these days, as in fact it's a configurable which comes
     /// from installation-specific configuration files which we cannot know (or guess at best).
     /// This seems like an acceptable trade-off as helpers are ignored if they fail or are not existing.
-    pub fn platform_builtin() -> Self {
-        let programs = if cfg!(target_os = "macos") {
+    pub fn platform_builtin() -> Vec<Program> {
+        if cfg!(target_os = "macos") {
             Some("osxkeychain")
         } else if cfg!(target_os = "linux") {
             Some("libsecret")
@@ -34,9 +33,7 @@ impl Cascade {
             None
         }
         .map(|name| vec![Program::from_custom_definition(name)])
-        .unwrap_or_default();
-
-        Cascade { programs, stderr: true }
+        .unwrap_or_default()
     }
 }
 
