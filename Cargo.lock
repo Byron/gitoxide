@@ -1487,6 +1487,7 @@ name = "git-prompt"
 version = "0.0.0"
 dependencies = [
  "expectrl",
+ "git-config-value",
  "nix 0.25.0",
  "parking_lot 0.12.1",
  "thiserror",
