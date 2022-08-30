@@ -4,7 +4,7 @@ use std::borrow::Cow;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pass = git_prompt::ask(
         "Password: ",
-        Options {
+        &Options {
             askpass: Some(Cow::Owned(std::env::current_exe()?.parent().unwrap().join("askpass"))),
             mode: Mode::Disable,
         },

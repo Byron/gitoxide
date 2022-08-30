@@ -19,13 +19,13 @@ use unix::imp;
 mod imp {
     use crate::{Error, Options};
 
-    pub(crate) fn ask(_prompt: &str, _opts: Options<'_>) -> Result<String, Error> {
+    pub(crate) fn ask(_prompt: &str, _opts: &Options<'_>) -> Result<String, Error> {
         Err(Error::UnsupportedPlatform)
     }
 }
 
 /// Ask the user given a `prompt`, returning the result.
-pub fn ask(prompt: &str, opts: Options<'_>) -> Result<String, Error> {
+pub fn ask(prompt: &str, opts: &Options<'_>) -> Result<String, Error> {
     if let Some(askpass) = opts.askpass.as_deref() {
         match git_command::prepare(askpass).arg(&prompt).spawn() {
             Ok(cmd) => {
@@ -55,7 +55,7 @@ pub fn ask(prompt: &str, opts: Options<'_>) -> Result<String, Error> {
 pub fn openly(prompt: impl AsRef<str>) -> Result<String, Error> {
     imp::ask(
         prompt.as_ref(),
-        Options {
+        &Options {
             mode: Mode::Visible,
             askpass: None,
         },
@@ -68,7 +68,7 @@ pub fn openly(prompt: impl AsRef<str>) -> Result<String, Error> {
 pub fn securely(prompt: impl AsRef<str>) -> Result<String, Error> {
     imp::ask(
         prompt.as_ref(),
-        Options {
+        &Options {
             mode: Mode::Hidden,
             askpass: None,
         },

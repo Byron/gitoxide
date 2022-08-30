@@ -15,7 +15,7 @@ pub(crate) mod imp {
     static TERM_STATE: Mutex<Option<Termios>> = Mutex::new(None);
 
     /// Ask the user given a `prompt`, returning the result.
-    pub(crate) fn ask(prompt: &str, Options { mode, .. }: Options<'_>) -> Result<String, Error> {
+    pub(crate) fn ask(prompt: &str, Options { mode, .. }: &Options<'_>) -> Result<String, Error> {
         match mode {
             Mode::Disable => Err(Error::Disabled),
             Mode::Hidden => {
