@@ -66,7 +66,7 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache<'static>>>> = Lazy
     Mutex::new(cache)
 });
 /// The major, minor and patch level of the git version on the system.
-pub static GIT_VERSION: Lazy<(u8, u8, u8)> = Lazy::new(|| parse_git_version().unwrap());
+pub static GIT_VERSION: Lazy<(u8, u8, u8)> = Lazy::new(|| parse_git_version().expect("git version to be parsable"));
 
 /// Define how [scripted_fixture_repo_writable_with_args()] uses produces the writable copy.
 pub enum Creation {
@@ -105,11 +105,20 @@ fn parse_git_version() -> Result<(u8, u8, u8)> {
         .map(|n| std::str::from_utf8(n).expect("valid utf8 in version number"))
         .map(u8::from_str);
 
-    Ok((
-        numbers.next().expect("major")?,
-        numbers.next().expect("minor")?,
-        numbers.next().expect("patch")?,
-    ))
+    Ok((|| -> Result<_> {
+        Ok((
+            numbers.next().expect("major")?,
+            numbers.next().expect("minor")?,
+            numbers.next().expect("patch")?,
+        ))
+    })()
+    .map_err(|err| {
+        format!(
+            "Could not parse version from output of 'git --version' ({:?}) with error: {}",
+            output.stdout.to_str_lossy(),
+            err
+        )
+    })?)
 }
 
 /// Run `git` in `working_dir` with all provided `args`.
