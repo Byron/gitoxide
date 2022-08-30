@@ -5,6 +5,22 @@ mod ask {
 
     #[test]
     #[cfg(unix)]
+    #[ignore]
+    fn askpass_only() {
+        let mut cmd = Command::new(env!("CARGO"));
+        cmd.args(["build", "--example", "use-askpass"]);
+        cmd.spawn().unwrap().wait().expect("example builds OK");
+
+        let mut p = expectrl::spawn("../target/debug/examples/use-askpass").unwrap();
+        p.expect("Password: ").unwrap();
+        p.send_line(" password with space ").unwrap();
+        p.expect("\" password with space \"").unwrap();
+        p.expect(expectrl::Eof).unwrap();
+        p.wait().unwrap();
+    }
+
+    #[test]
+    #[cfg(unix)]
     fn username_password() {
         let mut cmd = Command::new(env!("CARGO"));
         cmd.args(["build", "--example", "credentials"]);
