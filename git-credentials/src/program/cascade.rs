@@ -17,13 +17,19 @@ impl Cascade {
     /// by additional programs pushed onto [`programs`][Self::programs].
     ///
     /// It's the basis for adding more programs according to the caller which run in succession.
+    ///
+    /// # Note
+    ///
+    /// These defaults emulate what typical git installations may use these days, as in fact it's a configurable which comes
+    /// from installation-specific configuration files which we cannot know (or guess at best).
+    /// This seems like an acceptable trade-off as helpers are ignored if they fail or are not existing.
     pub fn platform_builtin() -> Self {
         let programs = if cfg!(target_os = "macos") {
             Some("osxkeychain")
         } else if cfg!(target_os = "linux") {
             Some("libsecret")
         } else if cfg!(target_os = "windows") {
-            Some("wincred")
+            Some("manager-core")
         } else {
             None
         }
