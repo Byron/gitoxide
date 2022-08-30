@@ -10,6 +10,9 @@ license = "MIT OR Apache-2.0"
 name = "jtt"
 path = "src/main.rs"
 
+[lib]
+doctest = false
+
 [dependencies]
 git-hash = { version = "^0.9.8", path = "../../git-hash" }
 git-lock = { version = "^2.0.0", path = "../../git-lock" }
