@@ -4,7 +4,7 @@ pub const TTY_PATH: &str = "/dev/tty";
 #[cfg(unix)]
 pub(crate) mod imp {
     use crate::unix::TTY_PATH;
-    use crate::{Error, Options};
+    use crate::{Error, Mode, Options};
     use nix::sys::termios;
     use nix::sys::termios::Termios;
     use parking_lot::lock_api::MutexGuard;
@@ -15,31 +15,35 @@ pub(crate) mod imp {
     static TERM_STATE: Mutex<Option<Termios>> = Mutex::new(None);
 
     /// Ask the user given a `prompt`, returning the result.
-    pub(crate) fn ask(prompt: &str, Options { secret, .. }: Options<'_>) -> Result<String, Error> {
-        if secret {
-            let state = TERM_STATE.lock();
-            let mut in_out = std::fs::OpenOptions::new().write(true).read(true).open(TTY_PATH)?;
-            let restore = save_term_state_and_disable_echo(state, in_out.as_raw_fd())?;
-            in_out.write_all(prompt.as_bytes())?;
+    pub(crate) fn ask(prompt: &str, Options { mode, .. }: Options<'_>) -> Result<String, Error> {
+        match mode {
+            Mode::Disable => Err(Error::Disabled),
+            Mode::Hidden => {
+                let state = TERM_STATE.lock();
+                let mut in_out = std::fs::OpenOptions::new().write(true).read(true).open(TTY_PATH)?;
+                let restore = save_term_state_and_disable_echo(state, in_out.as_raw_fd())?;
+                in_out.write_all(prompt.as_bytes())?;
 
-            let mut buf_read = std::io::BufReader::with_capacity(64, in_out);
-            let mut out = String::with_capacity(64);
-            buf_read.read_line(&mut out)?;
+                let mut buf_read = std::io::BufReader::with_capacity(64, in_out);
+                let mut out = String::with_capacity(64);
+                buf_read.read_line(&mut out)?;
 
-            out.pop();
-            if out.ends_with('\r') {
                 out.pop();
+                if out.ends_with('\r') {
+                    out.pop();
+                }
+                restore.now()?;
+                Ok(out)
             }
-            restore.now()?;
-            Ok(out)
-        } else {
-            let mut in_out = std::fs::OpenOptions::new().write(true).read(true).open(TTY_PATH)?;
-            in_out.write_all(prompt.as_bytes())?;
+            Mode::Visible => {
+                let mut in_out = std::fs::OpenOptions::new().write(true).read(true).open(TTY_PATH)?;
+                in_out.write_all(prompt.as_bytes())?;
 
-            let mut buf_read = std::io::BufReader::with_capacity(64, in_out);
-            let mut out = String::with_capacity(64);
-            buf_read.read_line(&mut out)?;
-            Ok(out.trim_end().to_owned())
+                let mut buf_read = std::io::BufReader::with_capacity(64, in_out);
+                let mut out = String::with_capacity(64);
+                buf_read.read_line(&mut out)?;
+                Ok(out.trim_end().to_owned())
+            }
         }
     }
 

@@ -11,6 +11,8 @@
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Terminal prompts are disabled")]
+    Disabled,
     #[error("The current platform has no implementation for prompting in the terminal")]
     UnsupportedPlatform,
     #[error("Failed to open terminal at {:?} for writing prompt, or to write it", unix::TTY_PATH)]
@@ -20,6 +22,23 @@ pub enum Error {
     TerminalConfiguration(#[from] nix::errno::Errno),
 }
 
+/// The way the user is prompted.
+#[derive(Copy, Clone)]
+pub enum Mode {
+    /// Visibly show user input.
+    Visible,
+    /// Do not show user input, suitable for sensitive data.
+    Hidden,
+    /// Do not prompt the user at all but rather abort with an error. This is useful in conjunction with [Option::askpass].
+    Disable,
+}
+
+impl Default for Mode {
+    fn default() -> Self {
+        Mode::Hidden
+    }
+}
+
 /// The options used in `[ask()]`.
 #[derive(Default, Copy, Clone)]
 pub struct Options<'a> {
@@ -27,8 +46,8 @@ pub struct Options<'a> {
     ///
     /// It's called like this `askpass <prompt>`, but note that it won't know if the input should be hidden or not.
     pub askpass: Option<&'a Path>,
-    /// If true, what's prompted is a secret and thus should be hidden.
-    pub secret: bool,
+    /// The way the user is prompted.
+    pub mode: Mode,
 }
 
 ///
@@ -59,7 +78,7 @@ pub fn openly(prompt: impl AsRef<str>) -> Result<String, Error> {
     imp::ask(
         prompt.as_ref(),
         Options {
-            secret: false,
+            mode: Mode::Visible,
             askpass: None,
         },
     )
@@ -72,7 +91,7 @@ pub fn securely(prompt: impl AsRef<str>) -> Result<String, Error> {
     imp::ask(
         prompt.as_ref(),
         Options {
-            secret: true,
+            mode: Mode::Hidden,
             askpass: None,
         },
     )
