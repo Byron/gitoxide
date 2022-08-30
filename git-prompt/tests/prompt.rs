@@ -11,7 +11,9 @@ mod ask {
         cmd.args(["build", "--example", "use-askpass"]);
         cmd.spawn().unwrap().wait().expect("example builds OK");
 
-        let mut p = expectrl::spawn("../target/debug/examples/use-askpass").unwrap();
+        let mut cmd = Command::new("../target/debug/examples/use-askpass");
+        cmd.env("ASKPASS_PROGRAM", format!("examples/askpass.sh"));
+        let mut p = expectrl::Session::spawn(cmd).unwrap();
         p.expect("Password: ").unwrap();
         p.send_line(" password with space ").unwrap();
         p.expect("\" password with space \"").unwrap();

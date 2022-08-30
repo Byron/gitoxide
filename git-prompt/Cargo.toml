@@ -12,6 +12,7 @@ include = ["src/**/*", "README.md", "CHANGELOG.md"]
 doctest = false
 
 [dependencies]
+git-command = { version = "^0.1.0", path = "../git-command" }
 git-config-value = { version = "^0.7.0", path = "../git-config-value" }
 
 thiserror = "1.0.32"
