@@ -100,7 +100,7 @@ fn parse_git_version() -> Result<(u8, u8, u8)> {
 
 fn git_version_from_bytes(bytes: &[u8]) -> Result<(u8, u8, u8)> {
     let mut numbers = bytes
-        .split(|b| *b == b' ')
+        .split(|b| *b == b' ' || *b == b'\n')
         .nth(2)
         .expect("git version <version>")
         .split(|b| *b == b'.')
@@ -556,4 +556,13 @@ mod tests {
             (2, 32, 1)
         );
     }
+
+    #[test]
+    fn parse_version_with_trailing_newline() {
+        assert_eq!(
+            git_version_from_bytes(b"git version 2.37.2\n").unwrap(), 
+            (2, 37, 2)
+        );
+    }
+
 }
