@@ -9,10 +9,13 @@ pub fn main() -> Result<(), git_credentials::program::main::Error> {
         |action, context| {
             use git_credentials::program::main::Action::*;
             git_credentials::program::Cascade::default()
-                .invoke(match action {
-                    Get => git_credentials::helper::Action::Get(context),
-                    Erase | Store => todo!(),
-                })
+                .invoke(
+                    match action {
+                        Get => git_credentials::helper::Action::Get(context),
+                        Erase | Store => todo!(),
+                    },
+                    git_prompt::Options::default().apply_environment(true, true, true),
+                )
                 .map(|outcome| outcome.and_then(|outcome| (&outcome.next).try_into().ok()))
         },
     )

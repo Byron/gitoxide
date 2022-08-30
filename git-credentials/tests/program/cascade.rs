@@ -122,10 +122,13 @@ mod invoke {
     }
 
     fn invoke_cascade<'a>(names: impl IntoIterator<Item = &'a str>, action: Action) -> protocol::Result {
-        Cascade::default()
-            .extend(fixtures(names))
-            .disable_prompt()
-            .invoke(action)
+        Cascade::default().extend(fixtures(names)).invoke(
+            action,
+            git_prompt::Options {
+                mode: git_prompt::Mode::Disable,
+                askpass: None,
+            },
+        )
     }
 
     fn fixtures<'a>(names: impl IntoIterator<Item = &'a str>) -> Vec<Program> {

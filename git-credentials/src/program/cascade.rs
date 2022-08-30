@@ -7,7 +7,6 @@ impl Default for Cascade {
         Cascade {
             programs: Vec::new(),
             stderr: true,
-            prompt: true,
         }
     }
 }
@@ -31,23 +30,12 @@ impl Cascade {
         .map(|name| vec![Program::from_custom_definition(name)])
         .unwrap_or_default();
 
-        Cascade {
-            programs,
-            stderr: true,
-            prompt: true,
-        }
+        Cascade { programs, stderr: true }
     }
 }
 
 /// Builder
 impl Cascade {
-    /// Disable prompting to assure we only interact with stored or already present credentials.
-    ///
-    /// Note that this is only meaningful with the `prompt` feature enabled.
-    pub fn disable_prompt(mut self) -> Self {
-        self.prompt = false;
-        self
-    }
     /// Extend the list of programs to run `programs`.
     pub fn extend(mut self, programs: impl IntoIterator<Item = Program>) -> Self {
         self.programs.extend(programs);
@@ -57,11 +45,12 @@ impl Cascade {
 
 /// Finalize
 impl Cascade {
-    /// Invoke the cascade by `invoking` each program with `action`.
+    /// Invoke the cascade by `invoking` each program with `action`, and configuring potential prompts with `prompt` options.
+    /// The latter can also be used to disable the prompt entirely when setting the `mode` to [`Disable`][git_prompt::Mode::Disable];=.
     ///
     /// When _getting_ credentials, all programs are asked until the credentials are complete, stopping the cascade.
     /// When _storing_ or _erasing_ all programs are instructed in order.
-    pub fn invoke(&mut self, mut action: helper::Action) -> protocol::Result {
+    pub fn invoke(&mut self, mut action: helper::Action, mut prompt: git_prompt::Options<'_>) -> protocol::Result {
         action.context_mut().map(Context::destructure_url).transpose()?;
 
         for program in &mut self.programs {
@@ -103,18 +92,26 @@ impl Cascade {
             }
         }
 
-        if self.prompt {
+        if prompt.mode != git_prompt::Mode::Disable {
             if let Some(ctx) = action.context_mut() {
                 if ctx.username.is_none() {
-                    let prompt = ctx.to_prompt("Username");
-                    ctx.username = git_prompt::openly(&prompt)
-                        .map_err(|err| protocol::Error::Prompt { prompt, source: err })?
+                    let message = ctx.to_prompt("Username");
+                    prompt.mode = git_prompt::Mode::Visible;
+                    ctx.username = git_prompt::ask(&message, &prompt)
+                        .map_err(|err| protocol::Error::Prompt {
+                            prompt: message,
+                            source: err,
+                        })?
                         .into();
                 }
                 if ctx.password.is_none() {
-                    let prompt = ctx.to_prompt("Password");
-                    ctx.password = git_prompt::securely(&prompt)
-                        .map_err(|err| protocol::Error::Prompt { prompt, source: err })?
+                    let message = ctx.to_prompt("Password");
+                    prompt.mode = git_prompt::Mode::Hidden;
+                    ctx.password = git_prompt::ask(&message, &prompt)
+                        .map_err(|err| protocol::Error::Prompt {
+                            prompt: message,
+                            source: err,
+                        })?
                         .into();
                 }
             }
