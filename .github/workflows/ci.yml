@@ -101,8 +101,6 @@ jobs:
         run: cargo install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force gitoxide
       - name: "Installation from crates.io: cargo-smart-release"
         run: cargo install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force cargo-smart-release
-      - name: "Installation from crates.io: starship"
-        run: cargo install --target ${{ matrix.target }} --target-dir install-artifacts --debug --force starship
 
   lint:
     runs-on: ubuntu-latest
