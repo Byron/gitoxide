@@ -94,7 +94,7 @@ impl<'repo> Snapshot<'repo> {
     ///
     /// These can be invoked to obtain credentials. Note that the `url` is expected to be the one used
     /// to connect to a remote, and thus should already have passed the url-rewrite engine.
-    pub fn config_helper(&self, _url: &git_url::Url) -> git_credentials::program::Cascade {
+    pub fn credential_helpers(&self, _url: &git_url::Url) -> git_credentials::program::Cascade {
         todo!()
     }
 }
