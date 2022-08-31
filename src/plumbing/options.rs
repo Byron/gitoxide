@@ -222,6 +222,9 @@ pub mod revision {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "rev", visible_alias = "r")]
     pub enum Subcommands {
+        /// List all commits reachable from the given rev-spec.
+        #[clap(visible_alias = "l")]
+        List { spec: std::ffi::OsString },
         /// Provide the revision specification like `@~1` to explain.
         #[clap(visible_alias = "e")]
         Explain { spec: std::ffi::OsString },

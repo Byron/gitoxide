@@ -3,7 +3,11 @@ use git_repository as git;
 
 use crate::OutputFormat;
 
-pub fn function(repo: git::Repository, mut out: impl std::io::Write, format: OutputFormat) -> anyhow::Result<()> {
+pub fn previous_branches(
+    repo: git::Repository,
+    mut out: impl std::io::Write,
+    format: OutputFormat,
+) -> anyhow::Result<()> {
     let branches = repo
         .head()?
         .prior_checked_out_branches()?
