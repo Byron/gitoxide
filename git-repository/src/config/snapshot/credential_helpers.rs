@@ -30,7 +30,7 @@ impl Snapshot<'_> {
     pub fn credential_helpers(
         &self,
         mut url: git_url::Url,
-    ) -> Result<(git_credentials::program::Cascade, git_credentials::helper::Action), Error> {
+    ) -> Result<(git_credentials::helper::Cascade, git_credentials::helper::Action), Error> {
         let mut programs = Vec::new();
         let mut use_http_path = false;
         let url_had_user_initially = url.user().is_some();
@@ -76,7 +76,7 @@ impl Snapshot<'_> {
         }
 
         Ok((
-            git_credentials::program::Cascade {
+            git_credentials::helper::Cascade {
                 programs,
                 use_http_path,
                 ..Default::default()
