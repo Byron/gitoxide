@@ -3,6 +3,9 @@ mod access;
 ///
 pub mod apply_cli_overrides;
 
+///
+pub mod credential_helpers;
+
 mod _impls {
     use crate::config::{Snapshot, SnapshotMut};
     use std::fmt::{Debug, Formatter};

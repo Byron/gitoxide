@@ -120,7 +120,8 @@ mod credential_helpers {
             let repo = remote::repo("credential-helpers");
             let cascade = repo
                 .config_snapshot()
-                .credential_helpers(&git::url::parse(url.into()).expect("valid input URL"));
+                .credential_helpers(&git::url::parse(url.into()).expect("valid input URL"))
+                .unwrap();
 
             let actual_helpers: Vec<_> = cascade
                 .programs
