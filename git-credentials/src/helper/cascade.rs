@@ -62,10 +62,11 @@ impl Cascade {
     /// When _getting_ credentials, all programs are asked until the credentials are complete, stopping the cascade.
     /// When _storing_ or _erasing_ all programs are instructed in order.
     pub fn invoke(&mut self, mut action: helper::Action, mut prompt: git_prompt::Options<'_>) -> protocol::Result {
-        action
+        let mut url = action
             .context_mut()
             .map(|ctx| ctx.destructure_url_in_place(self.use_http_path))
-            .transpose()?;
+            .transpose()?
+            .and_then(|ctx| ctx.url.take());
 
         for program in &mut self.programs {
             program.stderr = self.stderr;
@@ -89,7 +90,7 @@ impl Cascade {
                         }
                         if let Some(src) = ctx.url {
                             dst_ctx.url = Some(src);
-                            dst_ctx.destructure_url_in_place(self.use_http_path)?;
+                            url = dst_ctx.destructure_url_in_place(self.use_http_path)?.url.take();
                         }
                         if dst_ctx.username.is_some() && dst_ctx.password.is_some() {
                             break;
@@ -108,6 +109,7 @@ impl Cascade {
 
         if prompt.mode != git_prompt::Mode::Disable {
             if let Some(ctx) = action.context_mut() {
+                ctx.url = url;
                 if ctx.username.is_none() {
                     let message = ctx.to_prompt("Username");
                     prompt.mode = git_prompt::Mode::Visible;
