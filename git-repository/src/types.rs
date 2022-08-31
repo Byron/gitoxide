@@ -165,10 +165,7 @@ pub struct ThreadSafeRepository {
     /// A store for references to point at objects
     pub refs: crate::RefStore,
     /// A store for objects that contain data
-    #[cfg(feature = "unstable")]
     pub objects: git_features::threading::OwnShared<git_odb::Store>,
-    #[cfg(not(feature = "unstable"))]
-    pub(crate) objects: git_features::threading::OwnShared<git_odb::Store>,
     /// The path to the worktree at which to find checked out files
     pub work_tree: Option<PathBuf>,
     /// The path to the common directory if this is a linked worktree repository or it is otherwise set.

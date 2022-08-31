@@ -77,8 +77,6 @@
 //!
 //! # Cargo-features
 //!
-//! ## With the optional "unstable" cargo feature
-//!
 //! To make using  _sub-crates_ easier these are re-exported into the root of this crate. Note that these may change their major version
 //! even if this crate doesn't, hence breaking downstream.
 //!
@@ -128,35 +126,26 @@
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
 pub use git_actor as actor;
-#[cfg(all(feature = "unstable"))]
 pub use git_attributes as attrs;
-#[cfg(all(feature = "unstable", feature = "git-credentials"))]
 pub use git_credentials as credentials;
-#[cfg(feature = "unstable")]
 pub use git_date as date;
 pub use git_diff as diff;
 use git_features::threading::OwnShared;
-#[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress, threading};
-#[cfg(feature = "unstable")]
 pub use git_glob as glob;
 pub use git_hash as hash;
 #[doc(inline)]
-#[cfg(feature = "unstable")]
 pub use git_index as index;
 pub use git_lock as lock;
 pub use git_object as objs;
 pub use git_object::bstr;
-#[cfg(feature = "unstable")]
 pub use git_odb as odb;
-#[cfg(all(feature = "unstable", feature = "git-protocol"))]
+#[cfg(all(feature = "git-protocol"))]
 pub use git_protocol as protocol;
 pub use git_ref as refs;
 pub use git_refspec as refspec;
 pub use git_sec as sec;
-#[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
-#[cfg(feature = "unstable")]
 pub use git_traverse as traverse;
 pub use git_url as url;
 #[doc(inline)]

@@ -31,11 +31,11 @@ default = ["max-performance"]
 #! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
 
 ## Make `git-protocol` available along with an async client.
-async-network-client = ["git-protocol/async-client", "unstable"]
+async-network-client = ["git-protocol/async-client"]
 ## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers.
 async-network-client-async-std = ["async-std", "async-network-client", "git-transport/async-std"]
 ## Make `git-protocol` available along with a blocking client.
-blocking-network-client = ["git-protocol/blocking-client", "unstable"]
+blocking-network-client = ["git-protocol/blocking-client"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S, and implies blocking networking as a whole.
 blocking-http-transport = ["git-transport/http-client-curl"]
 
@@ -71,9 +71,6 @@ max-performance-safe = [
     "git-pack/pack-cache-lru-static",
     "git-pack/pack-cache-lru-dynamic"
 ]
-## Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
-## Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
-unstable = ["git-mailmap", "git-credentials"]
 ## Print debugging information about usage of object database caches, useful for tuning cache sizes.
 cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 
@@ -103,12 +100,12 @@ git-traverse = { version = "^0.16.3", path = "../git-traverse" }
 git-protocol = { version = "^0.19.1", path = "../git-protocol", optional = true }
 git-transport = { version = "^0.19.3", path = "../git-transport", optional = true }
 git-diff = { version = "^0.18.0", path = "../git-diff" }
-git-mailmap = { version = "^0.3.2", path = "../git-mailmap", optional = true }
+git-mailmap = { version = "^0.3.2", path = "../git-mailmap" }
 git-features = { version = "^0.22.3", path = "../git-features", features = ["progress", "once_cell"] }
 
 git-attributes = { version = "^0.3.3", path = "../git-attributes" }
 git-glob = { version = "^0.3.2", path = "../git-glob" }
-git-credentials = { version = "^0.4.0", path = "../git-credentials", optional = true }
+git-credentials = { version = "^0.4.0", path = "../git-credentials" }
 git-index = { version = "^0.4.3", path = "../git-index" }
 git-worktree = { version = "^0.4.3", path = "../git-worktree" }
 
@@ -141,5 +138,5 @@ walkdir = "2.3.2"
 serial_test = "0.8.0"
 
 [package.metadata.docs.rs]
-features = ["document-features", "max-performance", "unstable", "blocking-network-client", "serde1"]
+features = ["document-features", "max-performance", "blocking-network-client", "serde1"]
 rustdoc-args = ["--cfg", "docsrs"]
