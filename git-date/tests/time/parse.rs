@@ -71,7 +71,7 @@ fn short() {
 #[test]
 fn rfc2822() {
     assert_eq!(
-        git_date::parse("Thu, 18 Aug 2022 12:45:06 +0800", Some(SystemTime::now())).expect("parsed rfc2822 string"),
+        git_date::parse("Thu, 18 Aug 2022 12:45:06 +0800", None).expect("parsed rfc2822 string"),
         Time {
             seconds_since_unix_epoch: 1660797906,
             offset_in_seconds: 28800,

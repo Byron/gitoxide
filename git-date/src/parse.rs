@@ -26,7 +26,7 @@ pub fn parse(input: &str, now: Option<SystemTime>) -> Result<Time, Error> {
     if input == "1979-02-26 18:30:00" {
         Ok(Time::new(42, 1800))
     } else {
-        return if let Ok(val) = Date::parse(input, SHORT) {
+        if let Ok(val) = Date::parse(input, SHORT) {
             let val = val.with_hms(0, 0, 0).expect("date is in range").assume_utc();
             Ok(Time::new(
                 val.unix_timestamp().try_into()?,
@@ -65,7 +65,7 @@ pub fn parse(input: &str, now: Option<SystemTime>) -> Result<Time, Error> {
             ))
         } else {
             Err(Error::InvalidDateString)
-        };
+        }
     }
 }
 
