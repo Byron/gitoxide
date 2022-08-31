@@ -1,4 +1,5 @@
 use crate::config::Snapshot;
+use std::borrow::Cow;
 
 use std::convert::TryFrom;
 
@@ -16,16 +17,23 @@ mod error {
         },
     }
 }
+use crate::bstr::ByteVec;
 pub use error::Error;
 
 impl Snapshot<'_> {
-    /// Returns the configuration for all git-credential helpers that apply to the given `url`.
+    /// Returns the configuration for all git-credential helpers that apply to the given `url` along with an action
+    /// preconfigured to invoke the cascade with. This includes `url` which may be altered to contain a user-name
+    /// as configured.
     ///
     /// These can be invoked to obtain credentials. Note that the `url` is expected to be the one used
     /// to connect to a remote, and thus should already have passed the url-rewrite engine.
-    pub fn credential_helpers(&self, _url: &git_url::Url) -> Result<git_credentials::program::Cascade, Error> {
+    pub fn credential_helpers(
+        &self,
+        mut url: git_url::Url,
+    ) -> Result<(git_credentials::program::Cascade, git_credentials::helper::Action), Error> {
         let mut programs = Vec::new();
         let mut use_http_path = false;
+        let url_had_user_initially = url.user().is_some();
 
         if let Some(credential_sections) = self
             .repo
@@ -39,6 +47,14 @@ impl Snapshot<'_> {
                     None => {
                         for value in section.values("helper") {
                             programs.push(git_credentials::Program::from_custom_definition(value.into_owned()));
+                        }
+                        if let Some(Some(user)) = (!url_had_user_initially).then(|| {
+                            section.value("username").and_then(|n| {
+                                let n: Vec<_> = Cow::into_owned(n).into();
+                                n.into_string().ok()
+                            })
+                        }) {
+                            url.set_user(Some(user));
                         }
                         if let Some(toggle) = section
                             .value("useHttpPath")
@@ -59,10 +75,13 @@ impl Snapshot<'_> {
             }
         }
 
-        Ok(git_credentials::program::Cascade {
-            programs,
-            use_http_path,
-            ..Default::default()
-        })
+        Ok((
+            git_credentials::program::Cascade {
+                programs,
+                use_http_path,
+                ..Default::default()
+            },
+            git_credentials::helper::Action::get_for_url(url.to_bstring()),
+        ))
     }
 }

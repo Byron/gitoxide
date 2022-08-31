@@ -116,11 +116,11 @@ mod credential_helpers {
         });
 
         use git_repository as git;
-        pub fn agrees_with(url: &str, prompt_url: Option<&str>) {
+        pub fn agrees_with(url: &str) {
             let repo = remote::repo("credential-helpers");
-            let cascade = repo
+            let (cascade, mut action) = repo
                 .config_snapshot()
-                .credential_helpers(&git::url::parse(url.into()).expect("valid input URL"))
+                .credential_helpers(git::url::parse(url.into()).expect("valid input URL"))
                 .unwrap();
 
             let actual_helpers: Vec<_> = cascade
@@ -137,18 +137,15 @@ mod credential_helpers {
                 .unwrap_or_else(|| panic!("Url {} must be in baseline.", url));
             assert_eq!(actual_helpers, expected.helpers);
 
-            let mut ctx = git::credentials::protocol::Context {
-                url: Some(url.into()),
-                ..Default::default()
-            };
+            let ctx = action.context_mut().expect("get/fill");
             ctx.destructure_url_in_place(cascade.use_http_path).unwrap();
-            assert_eq!(ctx.to_url().expect("parts complete"), prompt_url.unwrap_or(url));
+            assert_eq!(ctx.to_url().expect("parts complete"), expected.prompt_url);
         }
     }
 
     #[test]
     #[ignore]
     fn any_url_calls_global() {
-        baseline::agrees_with("https://hit-global.helper", None);
+        baseline::agrees_with("https://hit-global.helper");
     }
 }
