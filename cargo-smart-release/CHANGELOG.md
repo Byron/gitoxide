@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fix
+
+- Use correct English in `Commit Details`, see [#513](https://github.com/Byron/gitoxide/issues/513) for details.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#513](https://github.com/Byron/gitoxide/issues/513)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#513](https://github.com/Byron/gitoxide/issues/513)**
+    - Improve the English skills of cargo-smart-release and fix a typo. ([`a0835c5`](https://github.com/Byron/gitoxide/commit/a0835c5906eee1f7c9270fcbce5842c24c0f66e9))
+ * **Uncategorized**
+    - update dependencies and assure we get the right version of `crates-index` ([`60a5272`](https://github.com/Byron/gitoxide/commit/60a527223965351f7c2164d4c827007fec4ec0ff))
+    - fix depreaction warning ([`47264d4`](https://github.com/Byron/gitoxide/commit/47264d41a65f00911a1b503a191b1974f4e222f8))
+</details>
+
 ## 0.12.0 (2022-08-30)
 
 ### Bug Fixes
@@ -15,9 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 2 calendar days.
+ - 3 commits contributed to the release over the course of 2 calendar days.
  - 6 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#512](https://github.com/Byron/gitoxide/issues/512)
 
 ### Commit Details
@@ -29,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#512](https://github.com/Byron/gitoxide/issues/512)**
     - Assure `git@github.com/user/repo` urls transform into https urls correctly. ([`fcbea05`](https://github.com/Byron/gitoxide/commit/fcbea050d04f0b763adef80d9de829f171dda571))
  * **Uncategorized**
+    - Release cargo-smart-release v0.12.0 ([`5cfd1b6`](https://github.com/Byron/gitoxide/commit/5cfd1b6ce2cd21c435193a52f0f90a9e9fdc45fd))
     - Release git-object v0.20.3, git-ref v0.15.4, git-config v0.7.1, git-diff v0.18.0, git-traverse v0.16.3, git-pack v0.22.0, git-odb v0.32.0, git-url v0.7.3, git-transport v0.19.3, git-protocol v0.19.1, git-refspec v0.1.1, git-repository v0.23.0, safety bump 6 crates ([`85a3bed`](https://github.com/Byron/gitoxide/commit/85a3bedd68d2e5f36592a2f691c977dc55298279))
 </details>
 
@@ -57,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 35 commits contributed to the release over the course of 77 calendar days.
  - 88 days passed between releases.
- - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#331](https://github.com/Byron/gitoxide/issues/331), [#427](https://github.com/Byron/gitoxide/issues/427), [#450](https://github.com/Byron/gitoxide/issues/450)
 
 ### Thanks Clippy
@@ -131,7 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 4 commits contributed to the release over the course of 3 calendar days.
  - 3 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#429](https://github.com/Byron/gitoxide/issues/429)
 
 ### Commit Details
@@ -163,7 +191,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 3 commits contributed to the release over the course of 1 calendar day.
  - 1 day passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -194,7 +222,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 13 commits contributed to the release over the course of 46 calendar days.
  - 48 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#422](https://github.com/Byron/gitoxide/issues/422)
 
 ### Commit Details
@@ -262,7 +290,7 @@ A quality-of-life release which should make publishing of inter-dependent crates
 
  - 22 commits contributed to the release over the course of 69 calendar days.
  - 69 days passed between releases.
- - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#317](https://github.com/Byron/gitoxide/issues/317), [#318](https://github.com/Byron/gitoxide/issues/318), [#364](https://github.com/Byron/gitoxide/issues/364)
 
 ### Thanks Clippy
@@ -344,7 +372,7 @@ A quality-of-life release which should make publishing of inter-dependent crates
 
  - 35 commits contributed to the release over the course of 51 calendar days.
  - 55 days passed between releases.
- - 7 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#266](https://github.com/Byron/gitoxide/issues/266), [#270](https://github.com/Byron/gitoxide/issues/270), [#274](https://github.com/Byron/gitoxide/issues/274), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#308](https://github.com/Byron/gitoxide/issues/308)
 
 ### Thanks Clippy
@@ -419,7 +447,7 @@ A quality-of-life release which should make publishing of inter-dependent crates
 
  - 7 commits contributed to the release over the course of 11 calendar days.
  - 12 days passed between releases.
- - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#259](https://github.com/Byron/gitoxide/issues/259), [#262](https://github.com/Byron/gitoxide/issues/262)
 
 ### Commit Details
@@ -472,7 +500,7 @@ A quality-of-life release which should make publishing of inter-dependent crates
 
  - 12 commits contributed to the release over the course of 26 calendar days.
  - 26 days passed between releases.
- - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#228](https://github.com/Byron/gitoxide/issues/228), [#234](https://github.com/Byron/gitoxide/issues/234), [#241](https://github.com/Byron/gitoxide/issues/241)
 
 ### Commit Details
@@ -510,7 +538,7 @@ A quality-of-life release which should make publishing of inter-dependent crates
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#228](https://github.com/Byron/gitoxide/issues/228)
 
 ### Commit Details
@@ -550,7 +578,7 @@ This helps to handle changelogs with slightly different styles as well.
 <csr-read-only-do-not-edit/>
 
  - 5 commits contributed to the release.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#228](https://github.com/Byron/gitoxide/issues/228)
 
 ### Commit Details
@@ -579,7 +607,7 @@ This helps to handle changelogs with slightly different styles as well.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#227](https://github.com/Byron/gitoxide/issues/227)
 
 ### Commit Details
@@ -606,7 +634,7 @@ This helps to handle changelogs with slightly different styles as well.
 <csr-read-only-do-not-edit/>
 
  - 4 commits contributed to the release.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com/Byron/gitoxide/issues/222)
 
 ### Commit Details
@@ -654,7 +682,7 @@ for all successful publishes.
 <csr-read-only-do-not-edit/>
 
  - 7 commits contributed to the release.
- - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com/Byron/gitoxide/issues/222)
 
 ### Commit Details
@@ -710,7 +738,7 @@ This release contains an important bugfix which may have caused panics when the 
 <csr-read-only-do-not-edit/>
 
  - 7 commits contributed to the release.
- - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com/Byron/gitoxide/issues/222)
 
 ### Commit Details
@@ -809,7 +837,7 @@ and make future improvements easier.
 
  - 82 commits contributed to the release over the course of 3 calendar days.
  - 3 days passed between releases.
- - 11 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#198](https://github.com/Byron/gitoxide/issues/198), [#221](https://github.com/Byron/gitoxide/issues/221), [#222](https://github.com/Byron/gitoxide/issues/222), [#224](https://github.com/Byron/gitoxide/issues/224)
 
 ### Thanks Clippy
@@ -1144,7 +1172,7 @@ For more information, run `cargo changelog -h`.
 
  - 281 commits contributed to the release over the course of 36 calendar days.
  - 38 days passed between releases.
- - 63 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 63 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 6 unique issues were worked on: [#192](https://github.com/Byron/gitoxide/issues/192), [#197](https://github.com/Byron/gitoxide/issues/197), [#198](https://github.com/Byron/gitoxide/issues/198), [#200](https://github.com/Byron/gitoxide/issues/200), [#213](https://github.com/Byron/gitoxide/issues/213), [#67](https://github.com/Byron/gitoxide/issues/67)
 
 ### Thanks Clippy
@@ -1457,7 +1485,7 @@ For more information, run `cargo changelog -h`.
 
  - 4 commits contributed to the release over the course of 2 calendar days.
  - 10 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -1489,7 +1517,7 @@ For more information, run `cargo changelog -h`.
 
  - 49 commits contributed to the release over the course of 11 calendar days.
  - 11 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -1565,7 +1593,7 @@ For more information, run `cargo changelog -h`.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -1589,7 +1617,7 @@ For more information, run `cargo changelog -h`.
 <csr-read-only-do-not-edit/>
 
  - 7 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -1624,7 +1652,7 @@ For more information, run `cargo changelog -h`.
 
  - 1 commit contributed to the release.
  - 1 day passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -1644,7 +1672,7 @@ For more information, run `cargo changelog -h`.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -1665,7 +1693,7 @@ For more information, run `cargo changelog -h`.
 <csr-read-only-do-not-edit/>
 
  - 7 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -1705,7 +1733,7 @@ For more information, run `cargo changelog -h`.
 <csr-read-only-do-not-edit/>
 
  - 45 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
