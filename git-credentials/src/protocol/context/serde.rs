@@ -16,10 +16,12 @@ mod write {
                 out.write_all(value)?;
                 out.write_all(b"\n")
             }
-            if let Some(value) = &self.path {
-                validate("path", value.as_slice().into())
-                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-                write_key(&mut out, "path", value.as_ref())?;
+            for (key, value) in [("url", &self.url), ("path", &self.path)] {
+                if let Some(value) = value {
+                    validate(key, value.as_slice().into())
+                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+                    write_key(&mut out, key, value.as_ref())?;
+                }
             }
             for (key, value) in [
                 ("protocol", &self.protocol),

@@ -9,6 +9,7 @@ fn encode_decode_roundtrip_works_only_for_serializing_fields() {
             path: Some("byron/gitoxide".into()),
             username: Some("user".into()),
             password: Some("pass".into()),
+            url: Some("https://github.com/byron/gitoxide".into()),
             ..Default::default()
         },
         Context::default(),
@@ -24,10 +25,9 @@ mod write_to {
     use git_credentials::protocol::Context;
 
     #[test]
-    fn url_and_quit_are_not_serialized_but_can_be_parsed() {
+    fn quit_is_not_serialized_but_can_be_parsed() {
         let mut buf = Vec::<u8>::new();
         Context {
-            url: Some("https://github.com/byron/gitoxide".into()),
             quit: Some(true),
             ..Default::default()
         }
