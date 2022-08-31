@@ -30,6 +30,8 @@ pub use scheme::Scheme;
 ///
 /// Additionally there is support for [deserialization][Url::from_bytes()] and serialization
 /// (_see the `Display::fmt()` implementation_).
+///
+/// Note that we do not support passing the password using the URL as it's likely leading to accidents.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Url {

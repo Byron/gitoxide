@@ -143,7 +143,9 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] convert URL to string
 * [x] API documentation
     * [ ] Some examples
-
+- **deviation**
+    * URLs may not contain passwords, which cannot be represent here and if present, will be ignored.
+    
 ### git-protocol
 * _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
 * [x] **credentials**
