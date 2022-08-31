@@ -2,20 +2,6 @@ use crate::{helper, Program};
 use bstr::{BString, ByteSlice, ByteVec};
 use std::process::{Command, Stdio};
 
-/// A list of helper programs to run in order to obtain credentials.
-#[allow(dead_code)]
-#[derive(Debug)]
-pub struct Cascade {
-    /// The programs to run in order to obtain credentials
-    pub programs: Vec<Program>,
-    /// If true, stderr is enabled when `programs` are run, which is the default.
-    pub stderr: bool,
-    /// If true, http(s) urls will take their path portion into account when obtaining credentials. Default is false.
-    pub use_http_path: bool,
-}
-
-mod cascade;
-
 /// The kind of helper program to use.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Kind {

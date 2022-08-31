@@ -1,7 +1,7 @@
 mod invoke {
     use bstr::{ByteSlice, ByteVec};
     use git_credentials::helper::Action;
-    use git_credentials::program::Cascade;
+    use git_credentials::helper::Cascade;
     use git_credentials::protocol::Context;
     use git_credentials::{program, protocol, Program};
     use git_sec::identity::Account;

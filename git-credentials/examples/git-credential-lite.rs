@@ -8,7 +8,7 @@ pub fn main() -> Result<(), git_credentials::program::main::Error> {
         std::io::stdout(),
         |action, context| {
             use git_credentials::program::main::Action::*;
-            git_credentials::program::Cascade::default()
+            git_credentials::helper::Cascade::default()
                 .invoke(
                     match action {
                         Get => git_credentials::helper::Action::Get(context),
