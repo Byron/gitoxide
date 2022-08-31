@@ -16,12 +16,10 @@ mod write {
                 out.write_all(value)?;
                 out.write_all(b"\n")
             }
-            for (key, value) in [("url", &self.url), ("path", &self.path)] {
-                if let Some(value) = value {
-                    validate(key, value.as_slice().into())
-                        .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
-                    write_key(&mut out, key, value.as_ref())?;
-                }
+            if let Some(value) = &self.path {
+                validate("path", value.as_slice().into())
+                    .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
+                write_key(&mut out, "path", value.as_ref())?;
             }
             for (key, value) in [
                 ("protocol", &self.protocol),
@@ -34,13 +32,6 @@ mod write {
                         .map_err(|err| std::io::Error::new(std::io::ErrorKind::Other, err))?;
                     write_key(&mut out, key, value.as_bytes().as_bstr())?;
                 }
-            }
-            if let Some(quit) = self.quit {
-                write_key(
-                    &mut out,
-                    "quit",
-                    quit.then(|| &b"true"[..]).unwrap_or(b"false").as_bstr(),
-                )?;
             }
             Ok(())
         }

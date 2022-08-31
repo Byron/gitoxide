@@ -1,7 +1,7 @@
 use git_credentials::protocol::Context;
 
 #[test]
-fn encode_decode_roundtrip() {
+fn encode_decode_roundtrip_works_only_for_serializing_fields() {
     for ctx in [
         Context {
             protocol: Some("https".into()),
@@ -9,18 +9,9 @@ fn encode_decode_roundtrip() {
             path: Some("byron/gitoxide".into()),
             username: Some("user".into()),
             password: Some("pass".into()),
-            url: Some("https://github.com/byron/gitoxide".into()),
-            quit: Some(true),
+            ..Default::default()
         },
         Context::default(),
-        Context {
-            quit: Some(false),
-            ..Context::default()
-        },
-        Context {
-            url: Some("/path/to/repo".into()),
-            ..Context::default()
-        },
     ] {
         let mut buf = Vec::<u8>::new();
         ctx.write_to(&mut buf).unwrap();
@@ -33,10 +24,31 @@ mod write_to {
     use git_credentials::protocol::Context;
 
     #[test]
+    fn url_and_quit_are_not_serialized_but_can_be_parsed() {
+        let mut buf = Vec::<u8>::new();
+        Context {
+            url: Some("https://github.com/byron/gitoxide".into()),
+            quit: Some(true),
+            ..Default::default()
+        }
+        .write_to(&mut buf)
+        .unwrap();
+        assert_eq!(Context::from_bytes(&buf).unwrap(), Context::default());
+        assert_eq!(
+            Context::from_bytes(b"quit=true\nurl=https://example.com").unwrap(),
+            Context {
+                quit: Some(true),
+                url: Some("https://example.com".into()),
+                ..Default::default()
+            }
+        );
+    }
+
+    #[test]
     fn null_bytes_and_newlines_are_invalid() {
-        for input in [&b"https://foo\0"[..], b"https://foo\n"] {
+        for input in [&b"foo\0"[..], b"foo\n"] {
             let ctx = Context {
-                url: Some(input.into()),
+                path: Some(input.into()),
                 ..Default::default()
             };
             let mut buf = Vec::<u8>::new();
