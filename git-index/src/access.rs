@@ -22,7 +22,11 @@ impl State {
         // TODO: estimate size
         let mut path_backing: PathStorage = Vec::new();
 
-        let mut entries = delegate
+        // TODO: insert entries directly into the correct position
+        // TODO: double check this way of sorting is actually the right one
+        delegate.records.sort_by(|a, b| a.filepath.cmp(&b.filepath));
+
+        let entries = delegate
             .records
             .into_iter()
             .filter_map(|file| {
@@ -39,6 +43,7 @@ impl State {
                         let path_start = path_backing.len();
                         path_backing.extend_from_slice(&file.filepath);
                         Some(Entry {
+                            // TODO: represent uninitialized state
                             stat: Stat {
                                 mtime: Time { secs: 0, nsecs: 0 },
                                 ctime: Time { secs: 0, nsecs: 0 },
@@ -58,12 +63,6 @@ impl State {
                 }
             })
             .collect::<Vec<Entry>>();
-
-        // TODO: insert entries directly into the correct position
-        entries.sort_by(|a, b| match a.id.cmp(&b.id) {
-            std::cmp::Ordering::Equal => a.flags.stage().cmp(&b.flags.stage()),
-            ord => ord,
-        });
 
         Ok(State {
             timestamp: filetime::FileTime::now(),
