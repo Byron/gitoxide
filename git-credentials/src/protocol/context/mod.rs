@@ -51,10 +51,12 @@ mod mutate {
     /// In-place mutation
     impl Context {
         /// Destructure the url at our `url` field into parts like protocol, host, username and path and store
-        /// them in our respective fields.
-        pub fn destructure_url(&mut self) -> Result<(), protocol::Error> {
+        /// them in our respective fields. If `use_http_path` is set, http paths are significant even though
+        /// normally this isn't the case.
+        pub fn destructure_url_in_place(&mut self, use_http_path: bool) -> Result<(), protocol::Error> {
             let url = git_url::parse(self.url.as_ref().ok_or(protocol::Error::UrlMissing)?.as_ref())?;
             self.protocol = Some(url.scheme.as_str().into());
+            self.username = url.user().map(ToOwned::to_owned);
             self.host = url.host().map(ToOwned::to_owned).map(|mut host| {
                 if let Some(port) = url.port {
                     use std::fmt::Write;
@@ -62,8 +64,10 @@ mod mutate {
                 }
                 host
             });
-            let path = url.path.trim_with(|b| b == '/');
-            self.path = (!path.is_empty()).then(|| path.into());
+            if !matches!(url.scheme, git_url::Scheme::Http | git_url::Scheme::Https) || use_http_path {
+                let path = url.path.trim_with(|b| b == '/');
+                self.path = (!path.is_empty()).then(|| path.into());
+            }
             Ok(())
         }
     }

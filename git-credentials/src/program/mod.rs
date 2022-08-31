@@ -10,6 +10,8 @@ pub struct Cascade {
     pub programs: Vec<Program>,
     /// If true, stderr is enabled when `programs` are run, which is the default.
     pub stderr: bool,
+    /// If true, http(s) urls will take their path portion into account when obtaining credentials. Default is false.
+    pub use_http_path: bool,
 }
 
 mod cascade;

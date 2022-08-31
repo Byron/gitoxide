@@ -1,4 +1,70 @@
 mod context {
+    mod desctructure_url_in_place {
+        use git_credentials::protocol::Context;
+
+        fn url_ctx(url: &str) -> Context {
+            Context {
+                url: Some(url.into()),
+                ..Default::default()
+            }
+        }
+
+        fn assert_eq_parts(
+            url: &str,
+            proto: &str,
+            user: impl Into<Option<&'static str>>,
+            host: &str,
+            path: impl Into<Option<&'static str>>,
+            use_http_path: bool,
+        ) {
+            let mut ctx = url_ctx(url);
+            ctx.destructure_url_in_place(use_http_path).expect("splitting works");
+            assert_eq!(ctx.protocol.expect("set proto"), proto);
+            match user.into() {
+                Some(expected) => assert_eq!(ctx.username.expect("set user"), expected),
+                None => assert!(ctx.username.is_none()),
+            }
+            assert_eq!(ctx.host.expect("set host"), host);
+            match path.into() {
+                Some(expected) => assert_eq!(ctx.path.expect("set path"), expected),
+                None => assert!(ctx.path.is_none()),
+            }
+        }
+
+        #[test]
+        fn parts_are_verbatim_with_non_http_url() {
+            // path is always used for non-http
+            assert_eq_parts("ssh://user@host:21/path", "ssh", "user", "host:21", "path", false);
+            assert_eq_parts("ssh://host.org/path", "ssh", None, "host.org", "path", true);
+        }
+        #[test]
+        fn http_and_https_ignore_the_path_by_default() {
+            assert_eq_parts(
+                "http://user@example.com/path",
+                "http",
+                Some("user"),
+                "example.com",
+                None,
+                false,
+            );
+            assert_eq_parts(
+                "https://github.com/byron/gitoxide",
+                "https",
+                None,
+                "github.com",
+                None,
+                false,
+            );
+            assert_eq_parts(
+                "https://github.com/byron/gitoxide/",
+                "https",
+                None,
+                "github.com",
+                "byron/gitoxide",
+                true,
+            );
+        }
+    }
     mod to_prompt {
         use git_credentials::protocol::Context;
 

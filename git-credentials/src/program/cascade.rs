@@ -7,6 +7,7 @@ impl Default for Cascade {
         Cascade {
             programs: Vec::new(),
             stderr: true,
+            use_http_path: false,
         }
     }
 }
@@ -44,6 +45,13 @@ impl Cascade {
         self.programs.extend(programs);
         self
     }
+    /// If `toggle` is true, http(s) urls will use the path portions of the url to obtain a credential for.
+    ///
+    /// Otherwise, they will only take the user name into account.
+    pub fn use_http_path(mut self, toggle: bool) -> Self {
+        self.use_http_path = toggle;
+        self
+    }
 }
 
 /// Finalize
@@ -54,7 +62,10 @@ impl Cascade {
     /// When _getting_ credentials, all programs are asked until the credentials are complete, stopping the cascade.
     /// When _storing_ or _erasing_ all programs are instructed in order.
     pub fn invoke(&mut self, mut action: helper::Action, mut prompt: git_prompt::Options<'_>) -> protocol::Result {
-        action.context_mut().map(Context::destructure_url).transpose()?;
+        action
+            .context_mut()
+            .map(|ctx| ctx.destructure_url_in_place(self.use_http_path))
+            .transpose()?;
 
         for program in &mut self.programs {
             program.stderr = self.stderr;
@@ -78,7 +89,7 @@ impl Cascade {
                         }
                         if let Some(src) = ctx.url {
                             dst_ctx.url = Some(src);
-                            dst_ctx.destructure_url()?;
+                            dst_ctx.destructure_url_in_place(self.use_http_path)?;
                         }
                         if dst_ctx.username.is_some() && dst_ctx.password.is_some() {
                             break;
