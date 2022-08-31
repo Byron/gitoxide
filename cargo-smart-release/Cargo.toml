@@ -1,6 +1,6 @@
 [package]
 name = "cargo-smart-release"
-version = "0.12.0"
+version = "0.12.1"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
 description = "Cargo subcommand for fearlessly releasing crates in workspaces."
@@ -32,7 +32,7 @@ cargo_metadata = "0.14.0"
 log = "0.4.14"
 toml_edit = "0.14.0"
 semver = "1.0.4"
-crates-index = "0.18.1"
+crates-index = "0.18.9"
 cargo_toml = "0.11.4"
 nom = { version = "7", default-features = false, features = ["std"]}
 git-conventional = "0.11.1"

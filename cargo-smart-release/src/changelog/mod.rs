@@ -6,6 +6,8 @@ pub mod init;
 mod merge;
 mod parse;
 pub mod section;
+#[cfg(test)]
+mod tests;
 pub mod write;
 
 pub const DEFAULT_HEADING_LEVEL: usize = 2;

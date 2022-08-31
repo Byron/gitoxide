@@ -1,8 +1,6 @@
 ---
 source: cargo-smart-release/tests/changelog/write_and_parse/mod.rs
-assertion_line: 183
 expression: buf
-
 ---
 #### 1.0.2-beta.2 (1970-01-01)
 
@@ -21,7 +19,7 @@ expression: buf
 
  - 100 commits contributed to the release over the course of 32 calendar days.
  - 60 days passed between releases.
- - 20 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 20 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: #1, Uncategorized, #42
 
 ##### Commit Details

@@ -95,9 +95,12 @@ fn parse_git_version() -> Result<(u8, u8, u8)> {
     let git_program = cfg!(windows).then(|| "git.exe").unwrap_or("git");
     let output = std::process::Command::new(git_program).arg("--version").output()?;
 
-    let mut numbers = output
-        .stdout
-        .split(|b| *b == b' ')
+    git_version_from_bytes(&output.stdout)
+}
+
+fn git_version_from_bytes(bytes: &[u8]) -> Result<(u8, u8, u8)> {
+    let mut numbers = bytes
+        .split(|b| *b == b' ' || *b == b'\n')
         .nth(2)
         .expect("git version <version>")
         .split(|b| *b == b'.')
@@ -115,7 +118,7 @@ fn parse_git_version() -> Result<(u8, u8, u8)> {
     .map_err(|err| {
         format!(
             "Could not parse version from output of 'git --version' ({:?}) with error: {}",
-            output.stdout.to_str_lossy(),
+            bytes.to_str_lossy(),
             err
         )
     })?)
@@ -538,5 +541,24 @@ impl<'a> Drop for Env<'a> {
                 None => std::env::remove_var(var),
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_version() {
+        assert_eq!(git_version_from_bytes(b"git version 2.37.2").unwrap(), (2, 37, 2));
+        assert_eq!(
+            git_version_from_bytes(b"git version 2.32.1 (Apple Git-133)").unwrap(),
+            (2, 32, 1)
+        );
+    }
+
+    #[test]
+    fn parse_version_with_trailing_newline() {
+        assert_eq!(git_version_from_bytes(b"git version 2.37.2\n").unwrap(), (2, 37, 2));
     }
 }

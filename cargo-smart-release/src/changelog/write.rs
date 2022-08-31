@@ -67,8 +67,9 @@ impl RepositoryUrl {
                 Scheme::Ssh => self
                     .inner
                     .user()
-                    .map(|user| format!("https://github.com{}/{}", user, self.cleaned_path())),
-                Scheme::Ext(_) | Scheme::File => None,
+                    .filter(|user| *user == "git")
+                    .map(|_git| format!("https://github.com{}", self.cleaned_path())),
+                _ => None,
             },
             None | Some(_) => None,
         }
@@ -320,9 +321,10 @@ impl section::Segment {
                 }
                 writeln!(
                     out,
-                    " - {} {} where understood as [conventional](https://www.conventionalcommits.org).",
+                    " - {} {} {} understood as [conventional](https://www.conventionalcommits.org).",
                     conventional_count,
-                    if *conventional_count == 1 { "commit" } else { "commits" }
+                    if *conventional_count == 1 { "commit" } else { "commits" },
+                    if *conventional_count == 1 { "was" } else { "were" }
                 )?;
                 if unique_issues.is_empty() {
                     writeln!(out, " - 0 issues like '(#ID)' where seen in commit messages")?;
