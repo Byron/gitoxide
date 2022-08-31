@@ -1,5 +1,6 @@
 use anyhow::{bail, Context};
 use git_repository as git;
+use git_repository::prelude::ObjectIdExt;
 use std::ffi::OsString;
 
 use crate::OutputFormat;
@@ -20,7 +21,13 @@ pub fn list(
         .rev_parse(spec)?
         .single()
         .context("Only single revisions are currently supported")?;
-    for commit in id.ancestors().all()? {
+    let commit_id = id
+        .object()?
+        .peel_to_kind(git::object::Kind::Commit)
+        .context("Need commitish as starting point")?
+        .id
+        .attach(&repo);
+    for commit in commit_id.ancestors().all()? {
         writeln!(out, "{}", commit?.to_hex())?;
     }
     Ok(())
