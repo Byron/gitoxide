@@ -5,6 +5,124 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.15.0 (2022-08-24)
+
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+
+### Chore
+
+ - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+
+### New Features
+
+ - <csr-id-45a30f0f31a99cda5cf105408e9c3905f43071f2/> Support for `-c/--config` in `gix`
+ - <csr-id-5d6d5ca305615568dfedbcc10ea86294c0a0472d/> `gix remote refs` to list all remote references of a suitable remote.
+   This takes into account either a named remote, or the remote associated
+   with the current branch, or the default remote it could deduce or obtain
+   from the configuration.
+ - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
+
+### Changed (BREAKING)
+
+ - <csr-id-dda995790c260131048484a11e66185b9c841311/> remove `gix free remote ref-list` in favor of `gix remote refs`
+   The functinality is the same, but the latter is built on top of a
+   repository which is slightly less flexible, but preferable over
+   maintaining a non-repo version.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 14 commits contributed to the release over the course of 3 calendar days.
+ - 6 days passed between releases.
+ - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - remove `gix free remote ref-list` in favor of `gix remote refs` ([`dda9957`](https://github.com/Byron/gitoxide/commit/dda995790c260131048484a11e66185b9c841311))
+    - Support for `-c/--config` in `gix` ([`45a30f0`](https://github.com/Byron/gitoxide/commit/45a30f0f31a99cda5cf105408e9c3905f43071f2))
+    - refactor ([`e0be6e9`](https://github.com/Byron/gitoxide/commit/e0be6e9558add3255de63f3785306daace2707a6))
+    - Add support for passing urls directly to bypass all remote repository logic. ([`df3cf18`](https://github.com/Byron/gitoxide/commit/df3cf18a6ac1e4f35f6d11d62184a43722397bbe))
+    - `gix remote refs` to list all remote references of a suitable remote. ([`5d6d5ca`](https://github.com/Byron/gitoxide/commit/5d6d5ca305615568dfedbcc10ea86294c0a0472d))
+    - Try to use maybe async for the simplest of possibly blocking remote interactions ([`db4df25`](https://github.com/Byron/gitoxide/commit/db4df250d7e58518015bed0b9a1e3391b209cb29))
+    - basic parsing of `gix remote refs` without any implementation. ([`f8f1249`](https://github.com/Byron/gitoxide/commit/f8f124943f73bacf816c6d0055f0b66659fd3906))
+ * **Uncategorized**
+    - Merge branch 'example-write-blob' ([`afedd7f`](https://github.com/Byron/gitoxide/commit/afedd7f86ec8ea18a8165f71698ecc886f5cf643))
+    - Merge pull request #494 from ultrasaurus/patch-1 ([`86fe22c`](https://github.com/Byron/gitoxide/commit/86fe22cb1aad5944a229bc2a5252b36ef1fd59ef))
+    - Merge branch 'main' into remote-ls-refs ([`95f2f4f`](https://github.com/Byron/gitoxide/commit/95f2f4f17f7eae174a64c7d9f6a1513d73b21bbb))
+    - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
+    - thanks clippy ([`bb6813a`](https://github.com/Byron/gitoxide/commit/bb6813abf365728d9851ee205b2c25b925a0f06a))
+    - use docsrs feature in code to show what is feature-gated automatically on docs.rs ([`b1c40b0`](https://github.com/Byron/gitoxide/commit/b1c40b0364ef092cd52d03b34f491b254816b18d))
+    - uniformize deny attributes ([`f7f136d`](https://github.com/Byron/gitoxide/commit/f7f136dbe4f86e7dee1d54835c420ec07c96cd78))
+</details>
+
+## 0.14.0 (2022-08-17)
+
+### Changed
+
+ - <csr-id-0235111a4fcc40c7b57d973bfce27a66eddea901/> Invert behaviour to `open::Options::strict_config()`, with lenient being the default.
+   This means API users will get libgit2 behaviour but commands like `gix` can
+   change options to emulate `git` behaviour.
+
+### New Features
+
+ - <csr-id-b83f6bdf7f8d8f5cef2a57fa3932b6a0e0988db1/> `--cat-file` flag for `gix rev parse` to cat instead of resolving.
+ - <csr-id-e972aad020d3653a53b20fa6e535d5759e239a45/> `gix rev previous-branches` subcommand
+
+### Changed (BREAKING)
+
+ - <csr-id-edf73dd4db5b0f5d9309c95bf366e11ea6723885/> `ein tools` to `ein tool` for as it's more intuitive
+
+### New Features (BREAKING)
+
+ - <csr-id-c5846e05aa54f0601ac7b8e2e59bcf1ffaa305f1/> `gix rev resolve --explain`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 15 commits contributed to the release over the course of 26 calendar days.
+ - 26 days passed between releases.
+ - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - `--cat-file` flag for `gix rev parse` to cat instead of resolving. ([`b83f6bd`](https://github.com/Byron/gitoxide/commit/b83f6bdf7f8d8f5cef2a57fa3932b6a0e0988db1))
+    - `gix rev resolve --explain` ([`c5846e0`](https://github.com/Byron/gitoxide/commit/c5846e05aa54f0601ac7b8e2e59bcf1ffaa305f1))
+    - `gix rev previous-branches` subcommand ([`e972aad`](https://github.com/Byron/gitoxide/commit/e972aad020d3653a53b20fa6e535d5759e239a45))
+    - support for parsing multiple specs in one invocation ([`84b5448`](https://github.com/Byron/gitoxide/commit/84b5448deb7b87f67a1b7461f00793e7ae33ef31))
+    - support overriding cache settings with environment variables in `gix` ([`b838202`](https://github.com/Byron/gitoxide/commit/b8382026cb5b979a5c563ea40d1d8e483c1ca23a))
+ * **Uncategorized**
+    - Control which command is lenient or not. That way `gix-config` can be lenient. ([`6a9c58f`](https://github.com/Byron/gitoxide/commit/6a9c58fde7ca4a52fa1c3225974a2019e7d93168))
+    - Invert behaviour to `open::Options::strict_config()`, with lenient being the default. ([`0235111`](https://github.com/Byron/gitoxide/commit/0235111a4fcc40c7b57d973bfce27a66eddea901))
+    - `ein tools` to `ein tool` for as it's more intuitive ([`edf73dd`](https://github.com/Byron/gitoxide/commit/edf73dd4db5b0f5d9309c95bf366e11ea6723885))
+    - add aliases to make revision sub-commands more accessible ([`a6d79e3`](https://github.com/Byron/gitoxide/commit/a6d79e38cb0dd7e87d00a098030bbcaa614f259d))
+    - Merge branch 'write-index-files' into write-index-v2 ([`cddc2ca`](https://github.com/Byron/gitoxide/commit/cddc2ca06f63f66e887ff821452d1f56fb08fe6a))
+    - Merge branch 'write-index-files' into rev-parse-delegate ([`370110d`](https://github.com/Byron/gitoxide/commit/370110d3356528af38150c2280ed505354ceca5b))
+    - Merge branch 'main' into rev-parse-delegate ([`4ae2bed`](https://github.com/Byron/gitoxide/commit/4ae2bedfc25d1881d58ebdc54aca0936c68d4859))
+    - Merge branch 'main' into rev-parse-delegate ([`6da8250`](https://github.com/Byron/gitoxide/commit/6da82507588d3bc849217c11d9a1d398b67f2ed6))
+    - make fmt ([`47724c0`](https://github.com/Byron/gitoxide/commit/47724c0edb382c036a3fc99884becfd2b0740d4b))
+    - Fix typos ([`e9fcb70`](https://github.com/Byron/gitoxide/commit/e9fcb70e429edb2974afa3f58d181f3ef14c3da3))
+</details>
+
 ## 0.13.0 (2022-07-22)
 
 ### New Features
@@ -17,8 +135,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 37 commits contributed to the release over the course of 101 calendar days.
- - 107 days passed between releases.
+ - 38 commits contributed to the release over the course of 101 calendar days.
+ - 108 days passed between releases.
  - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#427](https://github.com/Byron/gitoxide/issues/427)
 
@@ -64,6 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - make obvious what plumbing and porcelain really are ([`faaf791`](https://github.com/Byron/gitoxide/commit/faaf791cc960c37b180ddef9792dfabc7d106138))
     - adjustments due to breaking changes in `git_path` ([`4420ae9`](https://github.com/Byron/gitoxide/commit/4420ae932d5b20a9662a6d36353a27111b5cd672))
  * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - Add rough but working version of `rev-parse` ([`f3f176d`](https://github.com/Byron/gitoxide/commit/f3f176db42cef4036cc7c0ced1ee68f247424896))
     - basic infrastructure for delegate implementation ([`d3c0bc6`](https://github.com/Byron/gitoxide/commit/d3c0bc6e8d7764728f4e10500bb895152ccd0b0b))
     - Hookup explain command ([`1049b00`](https://github.com/Byron/gitoxide/commit/1049b00eaa261a67f060eaca4eb50dcda831eafd))
     - frame for `gix repo rev explain` ([`12e6277`](https://github.com/Byron/gitoxide/commit/12e6277a65a6572a0e43e8324d2d1dfb23d0bb40))

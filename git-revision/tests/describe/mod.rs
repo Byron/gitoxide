@@ -24,7 +24,7 @@ fn option_none_if_no_tag_found() -> crate::Result {
 }
 
 #[test]
-fn fallback_if_configured_in_options_but_no_candidate() -> crate::Result {
+fn fallback_if_configured_in_options_but_no_candidate_or_names() -> crate::Result {
     let repo = repo();
     let commit = repo.head_commit()?;
     let res = git_revision::describe(
@@ -38,6 +38,31 @@ fn fallback_if_configured_in_options_but_no_candidate() -> crate::Result {
     .expect("fallback activated");
     assert!(res.name.is_none(), "no name can be found");
     assert_eq!(res.depth, 0, "just a default, not relevant as there is no name");
+    assert_eq!(
+        res.commits_seen, 0,
+        "a traversal is isn't performed as name map is empty, and that's the whole point"
+    );
+    assert_eq!(res.into_format(7).to_string(), "01ec18a");
+    Ok(())
+}
+
+#[test]
+fn fallback_if_configured_in_options_and_max_candidates_zero() -> crate::Result {
+    let repo = repo();
+    let commit = repo.head_commit()?;
+    let res = git_revision::describe(
+        &commit.id,
+        |id, buf| repo.objects.find_commit_iter(id, buf).map(Some),
+        describe::Options {
+            fallback_to_oid: true,
+            max_candidates: 0,
+            ..Default::default()
+        },
+    )?
+    .expect("fallback activated");
+    assert!(res.name.is_none(), "no name can be found");
+    assert_eq!(res.depth, 0, "just a default, not relevant as there is no name");
+    assert_eq!(res.commits_seen, 0, "we don't do any traversal");
     assert_eq!(res.into_format(7).to_string(), "01ec18a");
     Ok(())
 }
@@ -69,6 +94,7 @@ fn not_enough_candidates() -> crate::Result {
 
     assert_eq!(res.name, Some(name), "it finds the youngest/most-recent name");
     assert_eq!(res.id, commit.id);
+    assert_eq!(res.commits_seen, 6, "it has to traverse commits");
     assert_eq!(
         res.depth, 3,
         "it calculates the final number of commits even though it aborted early"
@@ -87,13 +113,18 @@ fn typical_usecases() {
         |_, _| Err(std::io::Error::new(std::io::ErrorKind::Other, "shouldn't be called")),
         describe::Options {
             name_by_oid: vec![(commit.id, name.clone())].into_iter().collect(),
+            max_candidates: 0,
             ..Default::default()
         },
     )
     .unwrap()
     .expect("found a candidate");
 
-    assert_eq!(res.name, Some(name), "this is an exact match");
+    assert_eq!(
+        res.name,
+        Some(name),
+        "this is an exact match, and it's found despite max-candidates being 0 (one lookup is always performed)"
+    );
     assert_eq!(res.id, commit.id);
     assert_eq!(res.depth, 0);
 
@@ -124,6 +155,7 @@ fn typical_usecases() {
     );
     assert_eq!(res.id, commit.id);
     assert_eq!(res.depth, 3);
+    assert_eq!(res.commits_seen, 6);
 
     let res = git_revision::describe(
         &commit.id,

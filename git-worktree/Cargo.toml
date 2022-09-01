@@ -1,6 +1,6 @@
 [package]
 name = "git-worktree"
-version = "0.4.0"
+version = "0.4.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated implementing everything around working trees and git excludes"
@@ -21,7 +21,6 @@ name = "single-threaded"
 path = "tests/worktree-single-threaded.rs"
 required-features = ["internal-testing-to-avoid-being-run-by-cargo-test-all"]
 
-
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = [ "serde", "bstr/serde1", "git-index/serde1", "git-hash/serde1", "git-object/serde1" ]
@@ -30,13 +29,13 @@ internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
 [dependencies]
-git-index = { version = "^0.4.0", path = "../git-index" }
-git-hash = { version = "^0.9.7", path = "../git-hash" }
-git-object = { version = "^0.20.0", path = "../git-object" }
-git-glob = { version = "^0.3.1", path = "../git-glob" }
-git-path = { version = "^0.4.0", path = "../git-path" }
-git-attributes = { version = "^0.3.0", path = "../git-attributes" }
-git-features = { version = "^0.22.1", path = "../git-features" }
+git-index = { version = "^0.4.3", path = "../git-index" }
+git-hash = { version = "^0.9.8", path = "../git-hash" }
+git-object = { version = "^0.20.2", path = "../git-object" }
+git-glob = { version = "^0.3.2", path = "../git-glob" }
+git-path = { version = "^0.4.1", path = "../git-path" }
+git-attributes = { version = "^0.3.3", path = "../git-attributes" }
+git-features = { version = "^0.22.3", path = "../git-features" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 
@@ -56,3 +55,4 @@ tempfile = "3.2.0"
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

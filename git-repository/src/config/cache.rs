@@ -3,7 +3,7 @@ use std::{convert::TryFrom, path::PathBuf};
 use git_config::{Boolean, Integer};
 
 use super::{Cache, Error};
-use crate::{bstr::ByteSlice, repository, repository::identity, revision::spec::parse::ObjectKindHint};
+use crate::{bstr::ByteSlice, remote, repository, repository::identity, revision::spec::parse::ObjectKindHint};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
@@ -20,7 +20,12 @@ pub(crate) struct StageOne {
 
 /// Initialization
 impl StageOne {
-    pub fn new(git_dir: &std::path::Path, git_dir_trust: git_sec::Trust, lossy: Option<bool>) -> Result<Self, Error> {
+    pub fn new(
+        git_dir: &std::path::Path,
+        git_dir_trust: git_sec::Trust,
+        lossy: Option<bool>,
+        lenient: bool,
+    ) -> Result<Self, Error> {
         let mut buf = Vec::with_capacity(512);
         let config = {
             let config_path = git_dir.join("config");
@@ -38,7 +43,7 @@ impl StageOne {
             )?
         };
 
-        let is_bare = config_bool(&config, "core.bare", false)?;
+        let is_bare = config_bool(&config, "core.bare", false, lenient)?;
         let repo_format_version = config
             .value::<Integer>("core", None, "repositoryFormatVersion")
             .map_or(0, |v| v.to_decimal().unwrap_or_default());
@@ -99,6 +104,7 @@ impl Cache {
             env: use_env,
             includes: use_includes,
         }: repository::permissions::Config,
+        lenient_config: bool,
     ) -> Result<Self, Error> {
         let options = git_config::file::init::Options {
             includes: if use_includes {
@@ -174,45 +180,25 @@ impl Cache {
             globals
         };
 
-        let excludes_file = config
+        let excludes_file = match config
             .path_filter("core", None, "excludesFile", &mut filter_config_section)
             .map(|p| p.interpolate(options.includes.interpolate).map(|p| p.into_owned()))
-            .transpose()?;
+            .transpose()
+        {
+            Ok(f) => f,
+            Err(_err) if lenient_config => None,
+            Err(err) => return Err(err.into()),
+        };
 
-        let mut hex_len = None;
-        if let Some(hex_len_str) = config.string("core", None, "abbrev") {
-            if hex_len_str.trim().is_empty() {
-                return Err(Error::EmptyValue { key: "core.abbrev" });
-            }
-            if !hex_len_str.eq_ignore_ascii_case(b"auto") {
-                let value_bytes = hex_len_str.as_ref();
-                if let Ok(false) = Boolean::try_from(value_bytes).map(Into::into) {
-                    hex_len = object_hash.len_in_hex().into();
-                } else {
-                    let value = Integer::try_from(value_bytes)
-                        .map_err(|_| Error::CoreAbbrev {
-                            value: hex_len_str.clone().into_owned(),
-                            max: object_hash.len_in_hex() as u8,
-                        })?
-                        .to_decimal()
-                        .ok_or_else(|| Error::CoreAbbrev {
-                            value: hex_len_str.clone().into_owned(),
-                            max: object_hash.len_in_hex() as u8,
-                        })?;
-                    if value < 4 || value as usize > object_hash.len_in_hex() {
-                        return Err(Error::CoreAbbrev {
-                            value: hex_len_str.clone().into_owned(),
-                            max: object_hash.len_in_hex() as u8,
-                        });
-                    }
-                    hex_len = Some(value as usize);
-                }
-            }
-        }
+        let hex_len = match parse_core_abbrev(&config, object_hash) {
+            Ok(v) => v,
+            Err(_err) if lenient_config => None,
+            Err(err) => return Err(err),
+        };
 
         let reflog = query_refupdates(&config);
-        let ignore_case = config_bool(&config, "core.ignoreCase", false)?;
-        let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true)?;
+        let ignore_case = config_bool(&config, "core.ignoreCase", false, lenient_config)?;
+        let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true, lenient_config)?;
         let object_kind_hint = config.string("core", None, "disambiguate").and_then(|value| {
             Some(match value.as_ref().as_ref() {
                 b"commit" => ObjectKindHint::Commit,
@@ -232,10 +218,12 @@ impl Cache {
             is_bare,
             ignore_case,
             hex_len,
+            filter_config_section,
             excludes_file,
             xdg_config_home_env,
             home_env,
             personas: Default::default(),
+            url_rewrite: Default::default(),
             git_prefix,
         })
     }
@@ -266,11 +254,22 @@ impl Cache {
     }
 }
 
+impl std::fmt::Debug for Cache {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Cache").finish_non_exhaustive()
+    }
+}
+
 /// Access
 impl Cache {
-    pub fn personas(&self) -> &identity::Personas {
+    pub(crate) fn personas(&self) -> &identity::Personas {
         self.personas
             .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved, &self.git_prefix))
+    }
+
+    pub(crate) fn url_rewrite(&self) -> &remote::url::Rewrite {
+        self.url_rewrite
+            .get_or_init(|| remote::url::Rewrite::from_config(&self.resolved, self.filter_config_section))
     }
 }
 
@@ -292,15 +291,19 @@ fn base_options(lossy: Option<bool>) -> git_config::file::init::Options<'static>
     }
 }
 
-fn config_bool(config: &git_config::File<'_>, key: &str, default: bool) -> Result<bool, Error> {
+fn config_bool(config: &git_config::File<'_>, key: &str, default: bool, lenient: bool) -> Result<bool, Error> {
     let (section, key) = key.split_once('.').expect("valid section.key format");
-    config
+    match config
         .boolean(section, None, key)
         .unwrap_or(Ok(default))
         .map_err(|err| Error::DecodeBoolean {
             value: err.input,
             key: key.into(),
-        })
+        }) {
+        Ok(v) => Ok(v),
+        Err(_err) if lenient => Ok(default),
+        Err(err) => Err(err),
+    }
 }
 
 fn query_refupdates(config: &git_config::File<'static>) -> Option<git_ref::store::WriteReflog> {
@@ -314,4 +317,41 @@ fn query_refupdates(config: &git_config::File<'static>) -> Option<git_ref::store
             })
             .unwrap_or(git_ref::store::WriteReflog::Disable)
     })
+}
+
+fn parse_core_abbrev(config: &git_config::File<'static>, object_hash: git_hash::Kind) -> Result<Option<usize>, Error> {
+    match config.string("core", None, "abbrev") {
+        Some(hex_len_str) => {
+            if hex_len_str.trim().is_empty() {
+                return Err(Error::EmptyValue { key: "core.abbrev" });
+            }
+            if hex_len_str.trim().eq_ignore_ascii_case(b"auto") {
+                Ok(None)
+            } else {
+                let value_bytes = hex_len_str.as_ref();
+                if let Ok(false) = Boolean::try_from(value_bytes).map(Into::into) {
+                    Ok(object_hash.len_in_hex().into())
+                } else {
+                    let value = Integer::try_from(value_bytes)
+                        .map_err(|_| Error::CoreAbbrev {
+                            value: hex_len_str.clone().into_owned(),
+                            max: object_hash.len_in_hex() as u8,
+                        })?
+                        .to_decimal()
+                        .ok_or_else(|| Error::CoreAbbrev {
+                            value: hex_len_str.clone().into_owned(),
+                            max: object_hash.len_in_hex() as u8,
+                        })?;
+                    if value < 4 || value as usize > object_hash.len_in_hex() {
+                        return Err(Error::CoreAbbrev {
+                            value: hex_len_str.clone().into_owned(),
+                            max: object_hash.len_in_hex() as u8,
+                        });
+                    }
+                    Ok(Some(value as usize))
+                }
+            }
+        }
+        None => Ok(None),
+    }
 }

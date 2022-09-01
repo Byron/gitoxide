@@ -77,7 +77,7 @@ pub enum Change {
         /// If a previous ref existed, this value will be filled in automatically as `MustExistAndMatch(actual_value)` and
         /// can be accessed if the transaction was committed successfully.
         expected: PreviousValue,
-        /// How to thread the reference log during deletion.
+        /// How to treat the reference log during deletion.
         log: RefLog,
     },
 }

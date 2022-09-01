@@ -3,7 +3,8 @@ use std::path::PathBuf;
 /// A repository path which either points to a work tree or the `.git` repository itself.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum Path {
-    /// The currently checked out linked worktree along with its connected and existing git directory.
+    /// The currently checked out linked worktree along with its connected and existing git directory, or the worktree checkout of a
+    /// submodule.
     LinkedWorkTree {
         /// The base of the work tree.
         work_dir: PathBuf,
@@ -14,7 +15,8 @@ pub enum Path {
     WorkTree(PathBuf),
     /// The git repository itself, typically bare and without known worktree.
     ///
-    /// Note that it might still have linked work-trees which can be accessed later, weather bare or not.
+    /// Note that it might still have linked work-trees which can be accessed later, weather bare or not, or it might be a
+    /// submodule git directory in the `.git/modules/**/<name>` directory of the parent repository.
     Repository(PathBuf),
 }
 
@@ -44,31 +46,7 @@ mod path {
         /// Instantiate a new path from `dir` which is expected to be the `.git` directory, with `kind` indicating
         /// whether it's a bare repository or not.
         pub fn from_dot_git_dir(dir: impl Into<PathBuf>, kind: Kind) -> Self {
-            fn absolutize_on_trailing_parent(dir: PathBuf) -> PathBuf {
-                if !matches!(dir.components().rev().next(), Some(std::path::Component::ParentDir)) {
-                    dir
-                } else {
-                    git_path::absolutize(&dir, std::env::current_dir().ok()).into_owned()
-                }
-            }
-
-            let dir = dir.into();
-            match kind {
-                Kind::WorkTreeGitDir { work_dir } => Path::LinkedWorkTree { git_dir: dir, work_dir },
-                Kind::WorkTree { linked_git_dir } => match linked_git_dir {
-                    Some(git_dir) => Path::LinkedWorkTree {
-                        git_dir,
-                        work_dir: without_dot_git_dir(absolutize_on_trailing_parent(dir)),
-                    },
-                    None => {
-                        let mut dir = absolutize_on_trailing_parent(dir);
-                        dir.pop(); // ".git" suffix
-                        let work_dir = dir.as_os_str().is_empty().then(|| PathBuf::from(".")).unwrap_or(dir);
-                        Path::WorkTree(work_dir)
-                    }
-                },
-                Kind::Bare => Path::Repository(dir),
-            }
+            Self::from_dot_git_dir_inner(dir, kind, std::env::current_dir().ok())
         }
         /// Returns the [kind][Kind] of this repository path.
         pub fn kind(&self) -> Kind {
@@ -87,6 +65,45 @@ mod path {
                 Path::LinkedWorkTree { work_dir, git_dir } => (git_dir, Some(work_dir)),
                 Path::WorkTree(working_tree) => (working_tree.join(DOT_GIT_DIR), Some(working_tree)),
                 Path::Repository(repository) => (repository, None),
+            }
+        }
+    }
+
+    impl Path {
+        pub(crate) fn from_dot_git_dir_inner(
+            dir: impl Into<PathBuf>,
+            kind: Kind,
+            current_dir: Option<PathBuf>,
+        ) -> Self {
+            let absolutize_on_trailing_dot_dot = |dir: PathBuf| -> PathBuf {
+                if !matches!(dir.components().rev().next(), Some(std::path::Component::ParentDir)) {
+                    dir
+                } else {
+                    git_path::absolutize(&dir, current_dir.as_deref()).into_owned()
+                }
+            };
+
+            let dir = dir.into();
+            match kind {
+                Kind::Submodule { git_dir } => Path::LinkedWorkTree {
+                    git_dir: git_path::absolutize(git_dir, current_dir.as_deref()).into_owned(),
+                    work_dir: without_dot_git_dir(absolutize_on_trailing_dot_dot(dir)),
+                },
+                Kind::SubmoduleGitDir => Path::Repository(dir),
+                Kind::WorkTreeGitDir { work_dir } => Path::LinkedWorkTree { git_dir: dir, work_dir },
+                Kind::WorkTree { linked_git_dir } => match linked_git_dir {
+                    Some(git_dir) => Path::LinkedWorkTree {
+                        git_dir,
+                        work_dir: without_dot_git_dir(absolutize_on_trailing_dot_dot(dir)),
+                    },
+                    None => {
+                        let mut dir = absolutize_on_trailing_dot_dot(dir);
+                        dir.pop(); // ".git" suffix
+                        let work_dir = dir.as_os_str().is_empty().then(|| PathBuf::from(".")).unwrap_or(dir);
+                        Path::WorkTree(work_dir)
+                    }
+                },
+                Kind::Bare => Path::Repository(dir),
             }
         }
     }
@@ -110,6 +127,14 @@ pub enum Kind {
         /// Path to the worktree directory.
         work_dir: PathBuf,
     },
+    /// The directory is a `.git` dir file of a submodule worktree.
+    Submodule {
+        /// The git repository itself that is referenced by the `.git` dir file, typically in the `.git/modules/**/<name>` directory of the parent
+        /// repository.
+        git_dir: PathBuf,
+    },
+    /// The git directory in the `.git/modules/**/<name>` directory tree of the parent repository
+    SubmoduleGitDir,
 }
 
 impl Kind {

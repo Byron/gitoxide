@@ -1,5 +1,7 @@
 //! Utilities for testing `gitoxide` crates, many of which might be useful for testing programs that use `git` in general.
 #![deny(missing_docs)]
+
+use std::str::FromStr;
 use std::{
     collections::BTreeMap,
     convert::Infallible,
@@ -63,6 +65,8 @@ static EXCLUDE_LUT: Lazy<Mutex<Option<git_worktree::fs::Cache<'static>>>> = Lazy
     })();
     Mutex::new(cache)
 });
+/// The major, minor and patch level of the git version on the system.
+pub static GIT_VERSION: Lazy<(u8, u8, u8)> = Lazy::new(|| parse_git_version().expect("git version to be parsable"));
 
 /// Define how [scripted_fixture_repo_writable_with_args()] uses produces the writable copy.
 pub enum Creation {
@@ -71,6 +75,53 @@ pub enum Creation {
     CopyFromReadOnly,
     /// Run the script in the writable location. That way, absolute paths match the location.
     ExecuteScript,
+}
+
+/// Returns true if the given `major`, `minor` and `patch` is smaller than the actual git version on the system
+/// to facilitate skipping a test on the caller.
+/// Will never return true on CI which is expected to have a recent enough git version.
+///
+/// # Panics
+///
+/// If `git` cannot be executed or if its version output cannot be parsed.
+pub fn should_skip_as_git_version_is_smaller_than(major: u8, minor: u8, patch: u8) -> bool {
+    if is_ci::cached() {
+        return false; // CI should be made to use a recent git version, it should run there.
+    }
+    *GIT_VERSION < (major, minor, patch)
+}
+
+fn parse_git_version() -> Result<(u8, u8, u8)> {
+    let git_program = cfg!(windows).then(|| "git.exe").unwrap_or("git");
+    let output = std::process::Command::new(git_program).arg("--version").output()?;
+
+    git_version_from_bytes(&output.stdout)
+}
+
+fn git_version_from_bytes(bytes: &[u8]) -> Result<(u8, u8, u8)> {
+    let mut numbers = bytes
+        .split(|b| *b == b' ' || *b == b'\n')
+        .nth(2)
+        .expect("git version <version>")
+        .split(|b| *b == b'.')
+        .take(3)
+        .map(|n| std::str::from_utf8(n).expect("valid utf8 in version number"))
+        .map(u8::from_str);
+
+    Ok((|| -> Result<_> {
+        Ok((
+            numbers.next().expect("major")?,
+            numbers.next().expect("minor")?,
+            numbers.next().expect("patch")?,
+        ))
+    })()
+    .map_err(|err| {
+        format!(
+            "Could not parse version from output of 'git --version' ({:?}) with error: {}",
+            bytes.to_str_lossy(),
+            err
+        )
+    })?)
 }
 
 /// Run `git` in `working_dir` with all provided `args`.
@@ -122,7 +173,7 @@ pub fn fixture_bytes(path: impl AsRef<Path>) -> Vec<u8> {
 ///
 /// The latter is useful if the the script's output is platform specific.
 pub fn scripted_fixture_repo_read_only(script_name: impl AsRef<Path>) -> Result<PathBuf> {
-    scripted_fixture_repo_read_only_with_args(script_name, None)
+    scripted_fixture_repo_read_only_with_args(script_name, None::<String>)
 }
 
 /// Run the executable at `script_name`, like `make_repo.sh` to produce a writable directory to which
@@ -130,14 +181,14 @@ pub fn scripted_fixture_repo_read_only(script_name: impl AsRef<Path>) -> Result<
 ///
 /// Note that `script_name` is only executed once, so the data can be copied from its read-only location.
 pub fn scripted_fixture_repo_writable(script_name: &str) -> Result<tempfile::TempDir> {
-    scripted_fixture_repo_writable_with_args(script_name, None, Creation::CopyFromReadOnly)
+    scripted_fixture_repo_writable_with_args(script_name, None::<String>, Creation::CopyFromReadOnly)
 }
 
 /// Like [`scripted_fixture_repo_writable()`], but passes `args` to `script_name` while providing control over
 /// the way files are created with `mode`.
 pub fn scripted_fixture_repo_writable_with_args(
     script_name: &str,
-    args: impl IntoIterator<Item = &'static str>,
+    args: impl IntoIterator<Item = impl Into<String>>,
     mode: Creation,
 ) -> Result<tempfile::TempDir> {
     let dst = tempfile::TempDir::new()?;
@@ -176,14 +227,14 @@ pub fn copy_recursively_into_existing_dir(src_dir: impl AsRef<Path>, dst_dir: im
 /// Like `scripted_fixture_repo_read_only()`], but passes `args` to `script_name`.
 pub fn scripted_fixture_repo_read_only_with_args(
     script_name: impl AsRef<Path>,
-    args: impl IntoIterator<Item = &'static str>,
+    args: impl IntoIterator<Item = impl Into<String>>,
 ) -> Result<PathBuf> {
     scripted_fixture_repo_read_only_with_args_inner(script_name, args, None)
 }
 
 fn scripted_fixture_repo_read_only_with_args_inner(
     script_name: impl AsRef<Path>,
-    args: impl IntoIterator<Item = &'static str>,
+    args: impl IntoIterator<Item = impl Into<String>>,
     destination_dir: Option<&Path>,
 ) -> Result<PathBuf> {
     // Assure tempfiles get removed when aborting the test.
@@ -490,5 +541,24 @@ impl<'a> Drop for Env<'a> {
                 None => std::env::remove_var(var),
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_version() {
+        assert_eq!(git_version_from_bytes(b"git version 2.37.2").unwrap(), (2, 37, 2));
+        assert_eq!(
+            git_version_from_bytes(b"git version 2.32.1 (Apple Git-133)").unwrap(),
+            (2, 32, 1)
+        );
+    }
+
+    #[test]
+    fn parse_version_with_trailing_newline() {
+        assert_eq!(git_version_from_bytes(b"git version 2.37.2\n").unwrap(), (2, 37, 2));
     }
 }

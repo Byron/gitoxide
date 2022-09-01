@@ -288,6 +288,9 @@ fn config_value<'a>(i: &'a [u8], dispatch: &mut impl FnMut(Event<'a>)) -> IResul
         let (i, newlines) = value_impl(i, dispatch)?;
         Ok((i, newlines))
     } else {
+        // This is a special way of denoting 'empty' values which a lot of code depends on.
+        // Hence, rather to fix this everywhere else, leave it here and fix it where it matters, namely
+        // when it's about differentiating between a missing key-vaue separator, and one followed by emptiness.
         dispatch(Event::Value(Cow::Borrowed("".into())));
         Ok((i, 0))
     }

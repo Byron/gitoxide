@@ -1,3 +1,5 @@
+use crate::repo_rw;
+
 mod log {
     use git_repository as git;
 
@@ -60,6 +62,98 @@ mod find {
         let expected: &FullNameRef = "refs/remotes/origin/multi-link-target3".try_into()?;
         assert_eq!(symbolic_ref.name(), expected, "it follows symbolic refs, too");
         assert_eq!(symbolic_ref.into_fully_peeled_id()?, the_commit, "idempotency");
+        Ok(())
+    }
+}
+
+#[test]
+fn set_target_id() {
+    let (repo, _tmp) = repo_rw("make_basic_repo.sh").unwrap();
+    let mut head_ref = repo.head_ref().unwrap().expect("present");
+    let target_id = repo.rev_parse(":/c1").unwrap().single().unwrap();
+    let prev_id = head_ref.id();
+    assert_ne!(prev_id, target_id, "we don't point to the target id yet");
+    head_ref.set_target_id(target_id, "reflog message").unwrap();
+    assert_eq!(head_ref.id(), target_id, "the id was set and is observable right away");
+
+    head_ref.delete().unwrap();
+    assert!(head_ref
+        .set_target_id(prev_id, "fails")
+        .unwrap_err()
+        .to_string()
+        .starts_with("Reference 'refs/heads/main' was supposed to exist"));
+}
+
+mod remote {
+    use crate::remote;
+    use git_repository as git;
+
+    #[test]
+    fn push_defaults_to_fetch() -> crate::Result {
+        let repo = remote::repo("many-fetchspecs");
+        let head = repo.head()?;
+        let branch = head.clone().try_into_referent().expect("history");
+        assert_eq!(
+            branch
+                .remote_name(git::remote::Direction::Push)
+                .expect("fallback to fetch"),
+            branch.remote_name(git::remote::Direction::Fetch).expect("configured"),
+            "push falls back to fetch"
+        );
+        assert_eq!(
+            branch
+                .remote(git::remote::Direction::Push)
+                .expect("configured")?
+                .name()
+                .expect("set"),
+            "origin"
+        );
+        assert_eq!(
+            head.into_remote(git::remote::Direction::Push)
+                .expect("same with branch")?
+                .name()
+                .expect("set"),
+            "origin"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn separate_push_and_fetch() -> crate::Result {
+        for name in ["push-default", "branch-push-remote"] {
+            let repo = remote::repo(name);
+            let head = repo.head()?;
+            let branch = head.clone().try_into_referent().expect("history");
+
+            assert_eq!(branch.remote_name(git::remote::Direction::Push).expect("set"), "myself");
+            assert_eq!(
+                branch.remote_name(git::remote::Direction::Fetch).expect("set"),
+                "new-origin"
+            );
+
+            assert_ne!(
+                branch.remote(git::remote::Direction::Push).transpose()?,
+                branch.remote(git::remote::Direction::Fetch).transpose()?
+            );
+            assert_ne!(
+                head.clone().into_remote(git::remote::Direction::Push).transpose()?,
+                head.into_remote(git::remote::Direction::Fetch).transpose()?
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn not_configured() -> crate::Result {
+        let repo = remote::repo("base");
+        let head = repo.head()?;
+        let branch = head.clone().try_into_referent().expect("history");
+
+        assert_eq!(branch.remote_name(git::remote::Direction::Push), None);
+        assert_eq!(branch.remote_name(git::remote::Direction::Fetch), None);
+        assert_eq!(branch.remote(git::remote::Direction::Fetch).transpose()?, None);
+        assert_eq!(head.into_remote(git::remote::Direction::Fetch).transpose()?, None);
+
         Ok(())
     }
 }

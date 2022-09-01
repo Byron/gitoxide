@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::{borrow::Cow, collections::HashMap};
 
 use bstr::BStr;
@@ -329,7 +330,9 @@ impl<'event> File<'event> {
         }
     }
 
-    /// Sets a value in a given section, optional subsection, and key value.
+    /// Sets a value in a given `section_name`, optional `subsection_name`, and `key`.
+    /// Note sections named `section_name` and `subsection_name` (if not `None`)
+    /// must exist for this method to work.
     ///
     /// # Examples
     ///
@@ -351,7 +354,7 @@ impl<'event> File<'event> {
     /// # use bstr::BStr;
     /// # use std::convert::TryFrom;
     /// # let mut git_config = git_config::File::try_from("[core]a=b\n[core]\na=c\na=d").unwrap();
-    /// git_config.set_raw_value("core", None, "a", "e".into())?;
+    /// git_config.set_existing_raw_value("core", None, "a", "e")?;
     /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::<BStr>::Borrowed("e".into()));
     /// assert_eq!(
     ///     git_config.raw_values("core", None, "a")?,
@@ -363,15 +366,74 @@ impl<'event> File<'event> {
     /// );
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    pub fn set_raw_value(
+    pub fn set_existing_raw_value<'b>(
         &mut self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&str>,
         key: impl AsRef<str>,
-        new_value: &BStr,
+        new_value: impl Into<&'b BStr>,
     ) -> Result<(), lookup::existing::Error> {
         self.raw_value_mut(section_name, subsection_name, key.as_ref())
             .map(|mut entry| entry.set(new_value))
+    }
+
+    /// Sets a value in a given `section_name`, optional `subsection_name`, and `key`.
+    /// Creates the section if necessary and the key as well, or overwrites the last existing value otherwise.
+    ///
+    /// # Examples
+    ///
+    /// Given the config,
+    ///
+    /// ```text
+    /// [core]
+    ///     a = b
+    /// ```
+    ///
+    /// Setting a new value to the key `core.a` will yield the following:
+    ///
+    /// ```
+    /// # use git_config::File;
+    /// # use std::borrow::Cow;
+    /// # use bstr::BStr;
+    /// # use std::convert::TryFrom;
+    /// # let mut git_config = git_config::File::try_from("[core]a=b").unwrap();
+    /// let prev = git_config.set_raw_value("core", None, "a", "e")?;
+    /// git_config.set_raw_value("core", None, "b", "f")?;
+    /// assert_eq!(prev.expect("present").as_ref(), "b");
+    /// assert_eq!(git_config.raw_value("core", None, "a")?, Cow::<BStr>::Borrowed("e".into()));
+    /// assert_eq!(git_config.raw_value("core", None, "b")?, Cow::<BStr>::Borrowed("f".into()));
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn set_raw_value<'b, Key, E>(
+        &mut self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: Key,
+        new_value: impl Into<&'b BStr>,
+    ) -> Result<Option<Cow<'event, BStr>>, crate::file::set_raw_value::Error>
+    where
+        Key: TryInto<section::Key<'event>, Error = E>,
+        section::key::Error: From<E>,
+    {
+        self.set_raw_value_filter(section_name, subsection_name, key, new_value, &mut |_| true)
+    }
+
+    /// Similar to [`set_raw_value()`][Self::set_raw_value()], but only sets existing values in sections matching
+    /// `filter`, creating a new section otherwise.
+    pub fn set_raw_value_filter<'b, Key, E>(
+        &mut self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: Key,
+        new_value: impl Into<&'b BStr>,
+        filter: &mut MetadataFilter,
+    ) -> Result<Option<Cow<'event, BStr>>, crate::file::set_raw_value::Error>
+    where
+        Key: TryInto<section::Key<'event>, Error = E>,
+        section::key::Error: From<E>,
+    {
+        let mut section = self.section_mut_or_create_new_filter(section_name, subsection_name, filter)?;
+        Ok(section.set(key.try_into().map_err(section::key::Error::from)?, new_value))
     }
 
     /// Sets a multivar in a given section, optional subsection, and key value.
@@ -413,7 +475,7 @@ impl<'event> File<'event> {
     ///     "y",
     ///     "z",
     /// ];
-    /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
+    /// git_config.set_existing_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_values("core", None, "a")?;
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
@@ -433,7 +495,7 @@ impl<'event> File<'event> {
     ///     "x",
     ///     "y",
     /// ];
-    /// git_config.set_raw_multi_value("core", None, "a", new_values.into_iter())?;
+    /// git_config.set_existing_raw_multi_value("core", None, "a", new_values.into_iter())?;
     /// let fetched_config = git_config.raw_values("core", None, "a")?;
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("x".into())));
     /// assert!(fetched_config.contains(&Cow::<BStr>::Borrowed("y".into())));
@@ -454,11 +516,11 @@ impl<'event> File<'event> {
     ///     "z",
     ///     "discarded",
     /// ];
-    /// git_config.set_raw_multi_value("core", None, "a", new_values)?;
+    /// git_config.set_existing_raw_multi_value("core", None, "a", new_values)?;
     /// assert!(!git_config.raw_values("core", None, "a")?.contains(&Cow::<BStr>::Borrowed("discarded".into())));
     /// # Ok::<(), git_config::lookup::existing::Error>(())
     /// ```
-    pub fn set_raw_multi_value<'a, Iter, Item>(
+    pub fn set_existing_raw_multi_value<'a, Iter, Item>(
         &mut self,
         section_name: impl AsRef<str>,
         subsection_name: Option<&str>,

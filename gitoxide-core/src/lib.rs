@@ -3,9 +3,10 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![forbid(unsafe_code)]
-#![deny(rust_2018_idioms)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![cfg_attr(feature = "async-client", allow(unused))]
+#![deny(rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 use std::str::FromStr;
 
@@ -50,8 +51,6 @@ pub mod mailmap;
 #[cfg(feature = "organize")]
 pub mod organize;
 pub mod pack;
-#[cfg(any(feature = "async-client", feature = "blocking-client"))]
-pub mod remote;
 pub mod repository;
 
 #[cfg(all(feature = "async-client", feature = "blocking-client"))]

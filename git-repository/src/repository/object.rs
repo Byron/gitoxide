@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use git_hash::{oid, ObjectId};
-use git_odb::{Find, FindExt};
+use git_odb::{Find, FindExt, Write};
 use git_ref::{
     transaction::{LogChange, PreviousValue, RefLog},
     FullName,
@@ -26,8 +26,16 @@ impl crate::Repository {
     ///
     /// In order to get the kind of the object, is must be fully decoded from storage if it is packed with deltas.
     /// Loose object could be partially decoded, even though that's not implemented.
-    pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<Object<'_>, object::find::existing::OdbError> {
+    pub fn find_object(&self, id: impl Into<ObjectId>) -> Result<Object<'_>, object::find::existing::Error> {
         let id = id.into();
+        if id == git_hash::ObjectId::empty_tree(self.object_hash()) {
+            return Ok(Object {
+                id,
+                kind: git_object::Kind::Tree,
+                data: Vec::new(),
+                repo: self,
+            });
+        }
         let mut buf = self.free_buf();
         let kind = self.objects.find(&id, &mut buf)?.kind;
         Ok(Object::from_data(id, kind, buf, self))
@@ -40,11 +48,18 @@ impl crate::Repository {
     /// As a shared buffer is written to back the object data, the returned `ObjectRef` will prevent other
     /// `try_find_object()` operations from succeeding while alive.
     /// To bypass this limit, clone this `sync::Handle` instance.
-    pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::OdbError> {
-        let state = self;
+    pub fn try_find_object(&self, id: impl Into<ObjectId>) -> Result<Option<Object<'_>>, object::find::Error> {
         let id = id.into();
+        if id == git_hash::ObjectId::empty_tree(self.object_hash()) {
+            return Ok(Some(Object {
+                id,
+                kind: git_object::Kind::Tree,
+                data: Vec::new(),
+                repo: self,
+            }));
+        }
 
-        let mut buf = state.free_buf();
+        let mut buf = self.free_buf();
         match self.objects.try_find(&id, &mut buf)? {
             Some(obj) => {
                 let kind = obj.kind;
@@ -56,14 +71,31 @@ impl crate::Repository {
 
     /// Write the given object into the object database and return its object id.
     pub fn write_object(&self, object: impl git_object::WriteTo) -> Result<Id<'_>, object::write::Error> {
-        use git_odb::Write;
-
-        let state = self;
-        state
-            .objects
+        self.objects
             .write(object)
             .map(|oid| oid.attach(self))
             .map_err(Into::into)
+    }
+
+    /// Write a blob from the given `bytes`.
+    pub fn write_blob(&self, bytes: impl AsRef<[u8]>) -> Result<Id<'_>, object::write::Error> {
+        self.objects
+            .write_buf(git_object::Kind::Blob, bytes.as_ref())
+            .map(|oid| oid.attach(self))
+    }
+
+    /// Write a blob from the given `Read` implementation.
+    pub fn write_blob_stream(
+        &self,
+        mut bytes: impl std::io::Read + std::io::Seek,
+    ) -> Result<Id<'_>, object::write::Error> {
+        let current = bytes.stream_position()?;
+        let len = bytes.seek(std::io::SeekFrom::End(0))? - current;
+        bytes.seek(std::io::SeekFrom::Start(current))?;
+
+        self.objects
+            .write_stream(git_object::Kind::Blob, len, bytes)
+            .map(|oid| oid.attach(self))
     }
 
     /// Create a tag reference named `name` (without `refs/tags/` prefix) pointing to a newly created tag object

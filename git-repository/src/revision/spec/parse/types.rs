@@ -141,7 +141,7 @@ pub enum Error {
     #[error(transparent)]
     FindReference(#[from] git_ref::file::find::existing::Error),
     #[error(transparent)]
-    FindObject(#[from] object::find::existing::OdbError),
+    FindObject(#[from] object::find::existing::Error),
     #[error(transparent)]
     PeelToKind(#[from] object::peel::to_kind::Error),
     #[error("Object {oid} was a {actual}, but needed it to be a {expected}")]

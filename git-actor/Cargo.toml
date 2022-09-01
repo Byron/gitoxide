@@ -1,6 +1,6 @@
 [package]
 name = "git-actor"
-version = "0.11.0"
+version = "0.11.4"
 description = "A way to identify git actors"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
@@ -16,8 +16,8 @@ doctest = false
 serde1 = ["serde", "bstr/serde1", "git-date/serde1"]
 
 [dependencies]
-git-features = { version = "^0.22.1", path = "../git-features", optional = true }
-git-date = { version = "^0.0.2", path = "../git-date" }
+git-features = { version = "^0.22.2", path = "../git-features", optional = true }
+git-date = { version = "^0.1.0", path = "../git-date" }
 
 quick-error = "2.0.0"
 btoi = "0.4.2"
@@ -33,5 +33,6 @@ pretty_assertions = "1.0.0"
 git-testtools = { path = "../tests/tools"}
 
 [package.metadata.docs.rs]
-features = ["document-features"]
 all-features = true
+features = ["document-features"]
+rustdoc-args = ["--cfg", "docsrs"]

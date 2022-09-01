@@ -1,5 +1,3 @@
-#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
-
 //! Git stores all of its data as _Objects_, which are data along with a hash over all data. Thus it's an
 //! object store indexed by the signature of data itself with inherent deduplication: the same data will have the same hash,
 //! and thus occupy the same space within the store.
@@ -14,6 +12,8 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 use std::{
     cell::RefCell,

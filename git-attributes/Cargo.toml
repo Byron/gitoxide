@@ -1,6 +1,6 @@
 [package]
 name = "git-attributes"
-version = "0.3.0"
+version = "0.3.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dealing .gitattributes files"
@@ -15,13 +15,11 @@ doctest = false
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
 serde1 = ["serde", "bstr/serde1", "git-glob/serde1", "compact_str/serde"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-git-features = { version = "^0.22.1", path = "../git-features" }
-git-path = { version = "^0.4.0", path = "../git-path" }
-git-quote = { version = "^0.2.0", path = "../git-quote" }
-git-glob = { version = "^0.3.1", path = "../git-glob" }
+git-features = { version = "^0.22.3", path = "../git-features" }
+git-path = { version = "^0.4.1", path = "../git-path" }
+git-quote = { version = "^0.2.1", path = "../git-quote" }
+git-glob = { version = "^0.3.2", path = "../git-glob" }
 
 bstr = { version = "0.2.13", default-features = false, features = ["std"]}
 unicode-bom = "1.1.4"
@@ -36,4 +34,5 @@ git-testtools = { path = "../tests/tools"}
 
 [package.metadata.docs.rs]
 all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 features = ["document-features"]

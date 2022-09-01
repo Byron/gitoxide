@@ -1,6 +1,6 @@
 [package]
 name = "git-quote"
-version = "0.2.0"
+version = "0.2.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dealing with various quotations used by git"
@@ -9,8 +9,6 @@ edition = "2018"
 
 [lib]
 doctest = false
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 bstr = { version = "0.2.13", default-features = false, features = ["std"]}

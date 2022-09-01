@@ -1,3 +1,5 @@
+use git_repository as git;
+use git_repository::bstr::BString;
 use std::path::PathBuf;
 
 use gitoxide_core as core;
@@ -10,6 +12,13 @@ pub struct Args {
     /// The repository to access.
     #[clap(short = 'r', long, default_value = ".")]
     pub repository: PathBuf,
+
+    /// Add these values to the configuration in the form of `key=value` or `key`.
+    ///
+    /// For example, if `key` is `core.abbrev`, set configuration like `[core] abbrev = key`,
+    /// or `remote.origin.url = foo` to set `[remote "origin"] url = foo`.
+    #[clap(long, short = 'c', parse(try_from_os_str = git::env::os_str_to_bstring))]
+    pub config: Vec<BString>,
 
     #[clap(long, short = 't')]
     /// The amount of threads to use for some operations.
@@ -72,6 +81,8 @@ pub enum Subcommands {
     /// Interact with the mailmap.
     #[clap(subcommand)]
     Mailmap(mailmap::Subcommands),
+    /// Interact with the remote hosts.
+    Remote(remote::Platform),
     /// Interact with the exclude files like .gitignore.
     #[clap(subcommand)]
     Exclude(exclude::Subcommands),
@@ -91,6 +102,35 @@ pub mod config {
         /// Typical filters are `branch` or `remote.origin` or `remote.or*` - git-style globs are supported
         /// and comparisons are case-insensitive.
         pub filter: Vec<String>,
+    }
+}
+
+pub mod remote {
+    use git_repository as git;
+
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        /// The name of the remote to connect to.
+        ///
+        /// If unset, the current branch will determine the remote.
+        #[clap(long, short = 'n')]
+        pub name: Option<String>,
+
+        /// Connect directly to the given URL, forgoing any configuration from the repository.
+        #[clap(long, short = 'u', conflicts_with("name"), parse(try_from_os_str = std::convert::TryFrom::try_from))]
+        pub url: Option<git::Url>,
+
+        /// Subcommands
+        #[clap(subcommand)]
+        pub cmd: Subcommands,
+    }
+
+    #[derive(Debug, clap::Subcommand)]
+    #[clap(visible_alias = "remotes")]
+    pub enum Subcommands {
+        /// Print all references available on the remote
+        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
+        Refs,
     }
 }
 
@@ -182,6 +222,9 @@ pub mod revision {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "rev", visible_alias = "r")]
     pub enum Subcommands {
+        /// List all commits reachable from the given rev-spec.
+        #[clap(visible_alias = "l")]
+        List { spec: std::ffi::OsString },
         /// Provide the revision specification like `@~1` to explain.
         #[clap(visible_alias = "e")]
         Explain { spec: std::ffi::OsString },
@@ -211,10 +254,6 @@ pub mod free {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "no-repo")]
     pub enum Subcommands {
-        /// Subcommands for interacting with git remote server.
-        #[clap(subcommand)]
-        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-        Remote(remote::Subcommands),
         /// Subcommands for interacting with commit-graphs
         #[clap(subcommand)]
         CommitGraph(commitgraph::Subcommands),
@@ -228,30 +267,6 @@ pub mod free {
         Pack(pack::Subcommands),
         /// Subcommands for interacting with a worktree index, typically at .git/index
         Index(index::Platform),
-    }
-
-    ///
-    #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-    pub mod remote {
-        use gitoxide_core as core;
-
-        #[derive(Debug, clap::Subcommand)]
-        pub enum Subcommands {
-            /// List remote references from a remote identified by a url.
-            ///
-            /// This is the plumbing equivalent of `git ls-remote`.
-            /// Supported URLs are documented here: <https://www.git-scm.com/docs/git-clone#_git_urls>
-            RefList {
-                /// The protocol version to use. Valid values are 1 and 2
-                #[clap(long, short = 'p')]
-                protocol: Option<core::net::Protocol>,
-
-                /// the URLs or path from which to receive references
-                ///
-                /// See here for a list of supported URLs: <https://www.git-scm.com/docs/git-clone#_git_urls>
-                url: String,
-            },
-        }
     }
 
     ///

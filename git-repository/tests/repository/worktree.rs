@@ -192,6 +192,9 @@ mod baseline {
 
 #[test]
 fn from_bare_parent_repo() {
+    if git_testtools::should_skip_as_git_version_is_smaller_than(2, 31, 0) {
+        return;
+    }
     let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_worktree_repo.sh", ["bare"]).unwrap();
     let repo = git::open(dir.join("repo.git")).unwrap();
 
@@ -200,6 +203,9 @@ fn from_bare_parent_repo() {
 
 #[test]
 fn from_nonbare_parent_repo() {
+    if git_testtools::should_skip_as_git_version_is_smaller_than(2, 31, 0) {
+        return;
+    }
     let dir = git_testtools::scripted_fixture_repo_read_only("make_worktree_repo.sh").unwrap();
     let repo = git::open(dir.join("repo")).unwrap();
 

@@ -1,19 +1,15 @@
 use std::borrow::Cow;
 
 use bstr::BString;
-use quick_error::quick_error;
 
 use crate::{client::blocking_io, Protocol};
 
-quick_error! {
-    /// The error used in [`connect()`].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        UnsupportedSshCommand(command: String) {
-            display("The ssh command '{}' is not currently supported", command)
-        }
-    }
+/// The error used in [`connect()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("The ssh command {0:?} is not currently supported")]
+    UnsupportedSshCommand(String),
 }
 
 /// Connect to `host` using the ssh program to obtain data from the repository at `path` on the remote.
@@ -64,13 +60,14 @@ pub fn connect(
     };
 
     let path = git_url::expand_path::for_shell(path);
-    let url = git_url::Url {
-        scheme: git_url::Scheme::Ssh,
-        user: user.map(Into::into),
-        host: Some(host.clone()),
+    let url = git_url::Url::from_parts(
+        git_url::Scheme::Ssh,
+        user.map(Into::into),
+        Some(host.clone()),
         port,
-        path: path.clone(),
-    };
+        path.clone(),
+    )
+    .expect("valid url");
     Ok(match args_and_env {
         Some((args, envs)) => blocking_io::file::SpawnProcessOnDemand::new_ssh(
             url,
@@ -103,7 +100,7 @@ mod tests {
             ("ssh://host.xy/~/repo", "~/repo"),
             ("ssh://host.xy/~username/repo", "~username/repo"),
         ] {
-            let url = git_url::parse(url.as_bytes()).expect("valid url");
+            let url = git_url::parse((*url).into()).expect("valid url");
             let cmd = connect("host", url.path, Protocol::V1, None, None).expect("parse success");
             assert_eq!(
                 cmd.path,

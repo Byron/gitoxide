@@ -131,11 +131,11 @@ async fn ls_remote_abort_in_prep_ls_refs() -> crate::Result {
         b"0044git-upload-pack does/not/matter\x00\x00version=2\x00value-only\x00key=value\x000000".as_bstr()
     );
     match err {
-        fetch::Error::Io(err) => {
+        fetch::Error::Refs(fetch::refs::Error::Io(err)) => {
             assert_eq!(err.kind(), std::io::ErrorKind::Other);
             assert_eq!(err.get_ref().expect("other error").to_string(), "hello world");
         }
-        _ => panic!("should not have another error here"),
+        err => panic!("should not have another error here, got: {}", err),
     }
     Ok(())
 }

@@ -3,11 +3,11 @@
 //! These are provided in borrowed versions as well as owned ones.
 //! ## Feature Flags
 #![cfg_attr(
-feature = "document-features",
-cfg_attr(doc, doc = ::document_features::document_features!())
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![deny(unsafe_code)]
-#![deny(rust_2018_idioms, missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 mod borrowed;
 

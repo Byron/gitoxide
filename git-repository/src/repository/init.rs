@@ -15,11 +15,11 @@ impl crate::Repository {
             work_tree,
             common_dir,
             objects: {
-                #[cfg(feature = "max-performance")]
+                #[cfg(feature = "max-performance-safe")]
                 {
                     objects.with_pack_cache(|| Box::new(git_pack::cache::lru::StaticLinkedList::<64>::default()))
                 }
-                #[cfg(not(feature = "max-performance"))]
+                #[cfg(not(feature = "max-performance-safe"))]
                 {
                     objects
                 }

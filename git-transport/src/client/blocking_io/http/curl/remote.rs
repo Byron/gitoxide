@@ -181,6 +181,8 @@ pub fn new() -> (
 
 impl From<curl::Error> for http::Error {
     fn from(err: curl::Error) -> Self {
-        http::Error::Detail(err.to_string())
+        http::Error::Detail {
+            description: err.to_string(),
+        }
     }
 }

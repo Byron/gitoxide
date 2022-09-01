@@ -2,7 +2,7 @@ use crate::parse::assert_failure;
 
 #[test]
 fn unknown_protocol() {
-    assert_failure("foo://host.xz/path/to/repo.git/", "Protocol 'foo' is not supported")
+    assert_failure("foo://host.xz/path/to/repo.git/", "Protocol \"foo\" is not supported")
 }
 
 #[test]

@@ -3,7 +3,7 @@ name = "git-repository"
 repository = "https://github.com/Byron/gitoxide"
 description = "Abstractions for git repositories"
 license = "MIT/Apache-2.0"
-version = "0.20.0"
+version = "0.23.1"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 include = ["src/**/*", "CHANGELOG.md"]
@@ -25,25 +25,20 @@ required-features = ["regex"]
 
 [features]
 
-default = ["max-performance", "one-stop-shop"]
+default = ["max-performance"]
 
-#! ### Mutually Exclusive Client
+#! ### Mutually Exclusive Network Client
 #! Either `async-*` or `blocking-*` versions of these toggles may be enabled at a time.
 
 ## Make `git-protocol` available along with an async client.
-async-network-client = ["git-protocol/async-client"]
+async-network-client = ["git-protocol/async-client", "unstable"]
+## Use this if your crate uses `async-std` as runtime, and enable basic runtime integration when connecting to remote servers.
+async-network-client-async-std = ["async-std", "async-network-client", "git-transport/async-std"]
 ## Make `git-protocol` available along with a blocking client.
-blocking-network-client = ["git-protocol/blocking-client"]
+blocking-network-client = ["git-protocol/blocking-client", "unstable"]
 ## Stacks with `blocking-network-client` to provide support for HTTP/S, and implies blocking networking as a whole.
 blocking-http-transport = ["git-transport/http-client-curl"]
 
-#! ### Reducing dependencies
-#! The following toggles can be left disabled to save on dependencies.
-
-## Provide additional non-networked functionality like `git-url` and `git-diff`.
-local = [ "git-url", "git-diff" ]
-## Turns on access to all stable features that are unrelated to networking.
-one-stop-shop = [ "local" ]
 
 #! ### Other
 
@@ -59,14 +54,22 @@ serde1 = [  "serde",
             "git-mailmap/serde1",
             "git-attributes/serde1",
             "git-revision/serde1"]
-## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
-## **Note** that
 
-max-performance = [ "git-features/fast-sha1",
-                    "git-features/parallel",
-                    "git-features/zlib-ng-compat",
-                    "git-pack/pack-cache-lru-static",
-                    "git-pack/pack-cache-lru-dynamic"]
+## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
+## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
+max-performance = [ "git-features/zlib-ng-compat", "fast-sha1", "max-performance-safe" ]
+
+## If enabled, use assembly versions of sha1 on supported platforms.
+## This might cause compile failures as well which is why it can be turned off separately.
+fast-sha1 = [ "git-features/fast-sha1" ]
+
+## Activate features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases, skipping the ones known to cause compile failures
+## on some platforms.
+max-performance-safe = [
+    "git-features/parallel",
+    "git-pack/pack-cache-lru-static",
+    "git-pack/pack-cache-lru-dynamic"
+]
 ## Re-export stability tier 2 crates for convenience and make `Repository` struct fields with types from these crates publicly accessible.
 ## Doing so is less stable than the stability tier 1 that `git-repository` is a member of.
 unstable = ["git-mailmap", "git-credentials"]
@@ -76,37 +79,38 @@ cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 
 
 [dependencies]
-git-ref = { version = "^0.15.0", path = "../git-ref" }
-git-discover = { version = "^0.3.0", path = "../git-discover" }
+git-ref = { version = "^0.15.4", path = "../git-ref" }
+git-discover = { version = "^0.4.2", path = "../git-discover" }
 git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
-git-validate = { version = "^0.5.4", path = "../git-validate" }
-git-sec = { version = "^0.3.0", path = "../git-sec", features = ["thiserror"] }
-git-date = { version = "^0.0.2", path = "../git-date" }
+git-validate = { version = "^0.5.5", path = "../git-validate" }
+git-sec = { version = "^0.3.1", path = "../git-sec", features = ["thiserror"] }
+git-date = { version = "^0.1.0", path = "../git-date" }
+git-refspec = { version = "^0.1.1", path = "../git-refspec" }
 
-git-config = { version = "^0.6.0", path = "../git-config" }
-git-odb = { version = "^0.31.0", path = "../git-odb" }
-git-hash = { version = "^0.9.7", path = "../git-hash" }
-git-object = { version = "^0.20.0", path = "../git-object" }
-git-actor = { version = "^0.11.0", path = "../git-actor" }
-git-pack = { version = "^0.21.0", path = "../git-pack", features = ["object-cache-dynamic"] }
-git-revision = { version = "^0.3.0", path = "../git-revision" }
+git-config = { version = "^0.7.1", path = "../git-config" }
+git-odb = { version = "^0.32.0", path = "../git-odb" }
+git-hash = { version = "^0.9.8", path = "../git-hash" }
+git-object = { version = "^0.20.3", path = "../git-object" }
+git-actor = { version = "^0.11.4", path = "../git-actor" }
+git-pack = { version = "^0.22.0", path = "../git-pack", features = ["object-cache-dynamic"] }
+git-revision = { version = "^0.4.4", path = "../git-revision" }
 
-git-path = { version = "^0.4.0", path = "../git-path" }
-git-url = { version = "^0.7.0", path = "../git-url", optional = true }
-git-traverse = { version = "^0.16.0", path = "../git-traverse" }
-git-protocol = { version = "^0.18.0", path = "../git-protocol", optional = true }
-git-transport = { version = "^0.19.0", path = "../git-transport", optional = true }
-git-diff = { version = "^0.17.0", path = "../git-diff", optional = true }
-git-mailmap = { version = "^0.3.0", path = "../git-mailmap", optional = true }
-git-features = { version = "^0.22.1", path = "../git-features", features = ["progress", "once_cell"] }
+git-path = { version = "^0.4.1", path = "../git-path" }
+git-url = { version = "^0.7.3", path = "../git-url" }
+git-traverse = { version = "^0.16.4", path = "../git-traverse" }
+git-protocol = { version = "^0.19.1", path = "../git-protocol", optional = true }
+git-transport = { version = "^0.19.3", path = "../git-transport", optional = true }
+git-diff = { version = "^0.18.1", path = "../git-diff" }
+git-mailmap = { version = "^0.3.2", path = "../git-mailmap", optional = true }
+git-features = { version = "^0.22.3", path = "../git-features", features = ["progress", "once_cell"] }
 
 # unstable only
-git-attributes = { version = "^0.3.0", path = "../git-attributes" }
-git-glob = { version = "^0.3.1", path = "../git-glob" }
-git-credentials = { version = "^0.3.0", path = "../git-credentials", optional = true }
-git-index = { version = "^0.4.0", path = "../git-index" }
-git-worktree = { version = "^0.4.0", path = "../git-worktree" }
+git-attributes = { version = "^0.3.3", path = "../git-attributes" }
+git-glob = { version = "^0.3.2", path = "../git-glob" }
+git-credentials = { version = "^0.4.0", path = "../git-credentials", optional = true }
+git-index = { version = "^0.4.3", path = "../git-index" }
+git-worktree = { version = "^0.4.3", path = "../git-worktree" }
 
 signal-hook = { version = "0.3.9", default-features = false }
 thiserror = "1.0.26"
@@ -115,6 +119,7 @@ byte-unit = "4.0"
 log = "0.4.14"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 smallvec = "1.9.0"
+async-std = { version = "1.12.0", optional = true }
 
 ## For use in rev-parse, which provides searching commits by running a regex on their message.
 ##
@@ -136,5 +141,5 @@ walkdir = "2.3.2"
 serial_test = "0.8.0"
 
 [package.metadata.docs.rs]
-features = ["document-features", "max-performance", "one-stop-shop", "unstable", "blocking-network-client"]
-
+features = ["document-features", "max-performance", "unstable", "blocking-network-client", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

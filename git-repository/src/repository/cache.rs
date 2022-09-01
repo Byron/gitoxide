@@ -41,9 +41,9 @@ impl crate::Repository {
     /// Use the `GITOXIDE_OBJECT_CACHE_MEMORY=16mb` to set the given amount of memory to store full objects, on a per-thread basis.
     pub fn apply_environment(self) -> Self {
         // We have no cache types available without this flag currently. Maybe this should change at some point.
-        #[cfg(not(feature = "max-performance"))]
+        #[cfg(not(feature = "max-performance-safe"))]
         return self;
-        #[cfg(feature = "max-performance")]
+        #[cfg(feature = "max-performance-safe")]
         {
             let pack_cache_disabled = std::env::var_os("GITOXIDE_DISABLE_PACK_CACHE").is_some();
             let mut this = self;
@@ -69,7 +69,7 @@ impl crate::Repository {
     }
 }
 
-#[cfg(feature = "max-performance")]
+#[cfg(feature = "max-performance-safe")]
 fn parse_bytes_from_var(name: &str) -> Option<usize> {
     std::env::var(name)
         .ok()

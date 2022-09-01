@@ -1,7 +1,13 @@
-#![forbid(unsafe_code)]
-#![deny(rust_2018_idioms, missing_docs)]
 //! [Parse][parse()] .mailmap files as used in git repositories and remap names and emails
 //! using an [accelerated data-structure][Snapshot].
+//! ## Feature Flags
+#![cfg_attr(
+    feature = "document-features",
+    cfg_attr(doc, doc = ::document_features::document_features!())
+)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(missing_docs, rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 use bstr::BStr;
 

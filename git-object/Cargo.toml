@@ -1,6 +1,6 @@
 [package]
 name = "git-object"
-version = "0.20.0"
+version = "0.20.3"
 description = "Immutable and mutable git objects with decoding and encoding support"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 repository = "https://github.com/Byron/gitoxide"
@@ -21,10 +21,10 @@ serde1 = ["serde", "bstr/serde1", "smallvec/serde", "git-hash/serde1", "git-acto
 verbose-object-parsing-errors = ["nom/std"]
 
 [dependencies]
-git-features = { version = "^0.22.1", path = "../git-features", features = ["rustsha1"] }
-git-hash = { version = "^0.9.7", path = "../git-hash" }
-git-validate = { version = "^0.5.4", path = "../git-validate" }
-git-actor = { version = "^0.11.0", path = "../git-actor" }
+git-features = { version = "^0.22.2", path = "../git-features", features = ["rustsha1"] }
+git-hash = { version = "^0.9.8", path = "../git-hash" }
+git-validate = { version = "^0.5.5", path = "../git-validate" }
+git-actor = { version = "^0.11.3", path = "../git-actor" }
 
 btoi = "0.4.2"
 itoa = "1.0.1"
@@ -42,6 +42,7 @@ pretty_assertions = "1.0.0"
 git-testtools = { path = "../tests/tools"}
 
 [package.metadata.docs.rs]
-features = ["document-features"]
 all-features = true
+features = ["document-features"]
+rustdoc-args = ["--cfg", "docsrs"]
 

@@ -1,11 +1,14 @@
 //! Find git repositories or search them upwards from a starting point, or determine if a directory looks like a git repository.
 //!
 //! Note that detection methods are educated guesses using the presence of files, without looking too much into the details.
-#![forbid(unsafe_code, rust_2018_idioms)]
-#![deny(missing_docs)]
+#![deny(missing_docs, rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 /// The name of the `.git` directory.
 pub const DOT_GIT_DIR: &str = ".git";
+
+/// The name of the `modules` sub-directory within a `.git` directory for keeping submodule checkouts.
+pub const MODULES: &str = "modules";
 
 ///
 pub mod repository;
@@ -24,17 +27,19 @@ pub mod is_git {
         MisplacedHead { name: bstr::BString },
         #[error("Expected an objects directory at '{}'", .missing.display())]
         MissingObjectsDirectory { missing: PathBuf },
-        #[error("The worktree's private repo is missing its commondir file at '{}' or it could not be read", .missing.display())]
-        MissingCommonDir { missing: PathBuf },
+        #[error("The worktree's private repo's commondir file at '{}' or it could not be read", .missing.display())]
+        MissingCommonDir { missing: PathBuf, source: std::io::Error },
         #[error("Expected a refs directory at '{}'", .missing.display())]
         MissingRefsDirectory { missing: PathBuf },
         #[error(transparent)]
         GitFile(#[from] crate::path::from_gitdir_file::Error),
+        #[error("Could not retrieve metadata")]
+        Metadata(#[from] std::io::Error),
     }
 }
 
 mod is;
-pub use is::{bare as is_bare, git as is_git};
+pub use is::{bare as is_bare, git as is_git, submodule_git_dir as is_submodule_git_dir};
 
 ///
 pub mod upwards;

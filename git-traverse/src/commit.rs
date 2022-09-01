@@ -50,25 +50,20 @@ pub mod ancestors {
 
     use git_hash::{oid, ObjectId};
     use git_object::CommitRefIter;
-    use quick_error::quick_error;
 
     use crate::commit::{Ancestors, Parents, Sorting};
 
-    quick_error! {
-        /// The error is part of the item returned by the [Ancestors] iterator.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            FindExisting{oid: ObjectId, err: Box<dyn std::error::Error + Send + Sync + 'static> } {
-                display("The commit {} could not be found", oid)
-                source(&**err)
-            }
-            ObjectDecode(err: git_object::decode::Error) {
-                display("An object could not be decoded")
-                source(err)
-                from()
-            }
-        }
+    /// The error is part of the item returned by the [Ancestors] iterator.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The commit {oid} could not be found")]
+        FindExisting {
+            oid: ObjectId,
+            source: Box<dyn std::error::Error + Send + Sync + 'static>,
+        },
+        #[error(transparent)]
+        ObjectDecode(#[from] git_object::decode::Error),
     }
 
     type TimeInSeconds = u32;
@@ -112,7 +107,7 @@ pub mod ancestors {
                 for (commit_id, commit_time) in state.next.iter_mut() {
                     let commit_iter = (self.find)(commit_id, &mut state.buf).map_err(|err| Error::FindExisting {
                         oid: *commit_id,
-                        err: err.into(),
+                        source: err.into(),
                     })?;
                     *commit_time = commit_iter.committer()?.time.seconds_since_unix_epoch;
                 }
@@ -266,7 +261,12 @@ pub mod ancestors {
                         }
                     }
                 }
-                Err(err) => return Some(Err(Error::FindExisting { oid, err: err.into() })),
+                Err(err) => {
+                    return Some(Err(Error::FindExisting {
+                        oid,
+                        source: err.into(),
+                    }))
+                }
             }
             Some(Ok(oid))
         }
@@ -301,7 +301,12 @@ pub mod ancestors {
                         }
                     }
                 }
-                Err(err) => return Some(Err(Error::FindExisting { oid, err: err.into() })),
+                Err(err) => {
+                    return Some(Err(Error::FindExisting {
+                        oid,
+                        source: err.into(),
+                    }))
+                }
             }
             Some(Ok(oid))
         }

@@ -1,6 +1,6 @@
 [package]
 name = "git-ref"
-version = "0.15.0"
+version = "0.15.4"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A crate to handle git references"
@@ -22,15 +22,13 @@ name = "refs-parallel-fs-traversal"
 path = "tests/refs-parallel.rs"
 required-features = ["internal-testing-git-features-parallel"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-git-features = { version = "^0.22.1", path = "../git-features", features = ["walkdir"]}
-git-path = { version = "^0.4.0", path = "../git-path" }
-git-hash = { version = "^0.9.7", path = "../git-hash" }
-git-object = { version = "^0.20.0", path = "../git-object" }
-git-validate = { version = "^0.5.4", path = "../git-validate" }
-git-actor = { version = "^0.11.0", path = "../git-actor" }
+git-features = { version = "^0.22.3", path = "../git-features", features = ["walkdir"]}
+git-path = { version = "^0.4.1", path = "../git-path" }
+git-hash = { version = "^0.9.8", path = "../git-hash" }
+git-object = { version = "^0.20.3", path = "../git-object" }
+git-validate = { version = "^0.5.5", path = "../git-validate" }
+git-actor = { version = "^0.11.3", path = "../git-actor" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 
@@ -51,5 +49,5 @@ tempfile = "3.2.0"
 
 
 [package.metadata.docs.rs]
-features = ["document-features"]
-all-features = true
+features = ["document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

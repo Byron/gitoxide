@@ -13,7 +13,7 @@ impl Instruction<'_> {
 
 /// Note that all sources can either be a ref-name, partial or full, or a rev-spec, unless specified otherwise, on the local side.
 /// Destinations can only be a partial or full ref names on the remote side.
-#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
+#[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Push<'a> {
     /// Push all local branches to the matching destination on the remote, which has to exist to be updated.
     AllMatchingBranches {
@@ -39,7 +39,7 @@ pub enum Push<'a> {
 /// Any source can either be a ref name (full or partial) or a fully spelled out hex-sha for an object, on the remote side.
 ///
 /// Destinations can only be a partial or full ref-names on the local side.
-#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
+#[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Fetch<'a> {
     /// Fetch a ref or refs and write the result into the `FETCH_HEAD` without updating local branches.
     Only {

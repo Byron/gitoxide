@@ -49,7 +49,7 @@ doc: ## Run cargo doc on all crates
 	cargo doc --features=max,lean,small
 
 clippy: ## Run cargo clippy on all crates
-	cargo clippy --all --tests
+	cargo clippy --all --tests --examples
 	cargo clippy --all --no-default-features --features small
 	cargo clippy --all --no-default-features --features lean-async --tests
 
@@ -102,6 +102,8 @@ check: ## Build all code in suitable configurations
 			   && cargo check --features crc32 \
 			   && cargo check --features zlib \
 			   && cargo check --features zlib,zlib-ng-compat \
+			   && cargo check --features zlib-stock \
+			   && cargo check --features zlib,zlib-stock \
 			   && cargo check --features cache-efficiency-debug
 	cd git-commitgraph && cargo check --all-features \
 			   && cargo check
@@ -110,18 +112,19 @@ check: ## Build all code in suitable configurations
 	cd git-transport && cargo check \
 					 && cargo check --features blocking-client \
 					 && cargo check --features async-client \
+					 && cargo check --features async-client,async-std \
 					 && cargo check --features http-client-curl
 	cd git-transport && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-protocol && cargo check \
 					&& cargo check --features blocking-client \
 					&& cargo check --features async-client
 	cd git-protocol && if cargo check --all-features 2>/dev/null; then false; else true; fi
-	cd git-repository && cargo check --no-default-features --features local \
-					  && cargo check --no-default-features --features async-network-client \
+	cd git-repository && cargo check --no-default-features --features async-network-client \
+					  && cargo check --no-default-features --features async-network-client-async-std \
 					  && cargo check --no-default-features --features blocking-network-client \
 					  && cargo check --no-default-features --features blocking-network-client,blocking-http-transport \
-					  && cargo check --no-default-features --features one-stop-shop \
 					  && cargo check --no-default-features --features max-performance \
+					  && cargo check --no-default-features --features max-performance-safe \
 					  && cargo check --no-default-features
 	cd git-odb && cargo check --features serde1
 	cd cargo-smart-release && cargo check --all
@@ -151,6 +154,8 @@ unit-tests: ## run all unit tests
 					&& cargo test --features async-client \
 					&& cargo test
 	cd git-repository && cargo test \
+					&& cargo test --features async-network-client \
+					&& cargo test --features blocking-network-client \
 					&& cargo test --features regex
 	cd gitoxide-core && cargo test --lib
 

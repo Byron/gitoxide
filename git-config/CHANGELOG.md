@@ -5,6 +5,161 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.7.1 (2022-08-28)
+
+Maintenance release without user-facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release over the course of 1 calendar day.
+ - 4 days passed between releases.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
+    - prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
+ * **Uncategorized**
+    - Release git-attributes v0.3.3, git-ref v0.15.3, git-index v0.4.3, git-worktree v0.4.3, git-testtools v0.8.0 ([`baad4ce`](https://github.com/Byron/gitoxide/commit/baad4ce51fe0e8c0c1de1b08148d8303878ca37b))
+    - Release git-features v0.22.3, git-revision v0.4.4 ([`c2660e2`](https://github.com/Byron/gitoxide/commit/c2660e2503323531ba02519eaa51124ee22fec51))
+</details>
+
+## 0.7.0 (2022-08-24)
+
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+<csr-id-69ec5940d3f37eb4dace8f1ed7616b5988984d15/>
+
+### Chore
+
+ - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+
+### New Features
+
+ - <csr-id-9937d0e00df3a523484c7ae2850be2712a1a4c9a/> `File::set_raw_value_filter()` to set values only in sections passing a filter.
+ - <csr-id-17455c9d93ad38bfee2560f5a4e60324dee3b4e5/> `File::section_mut_or_create_new_filter()` to allow chosing which sections to add values to.
+ - <csr-id-5902f54b93101a6290fcf89f9f13fdbea3678e00/> `File::section_mut_or_create_new(…)` to obtain an existing or new section for mutation.
+ - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
+ - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
+
+### Bug Fixes
+
+ - <csr-id-08c50a47fa901457194539c7db74ad47ab2f8b60/> Properly handle boolean values such that `a` is true but `a=` is false.
+   This is even consistent when no booleans are used, such that `a` has no
+   value as if it is not present, it's only available for booleans which
+   must be specified.
+ - <csr-id-7c585162454c476fe93f032c8a2329cffd7c054f/> Keep track of a severe limitation and prepare tests for fixing it.
+   This also changes behaviour, but merely removes a hack in `Boolean`
+   which considered empty strings true, even though they are supposed to be
+   false.
+
+### Changed (BREAKING)
+
+ - <csr-id-2b2357e9cc54539e0dbe7c0e22802f2b884160d8/> Add `File::set_raw_value()` to unconditionally set single values, and make the value itself easier to provide.
+
+### New Features (BREAKING)
+
+ - <csr-id-b6cd6ace412b0c0df4bacbe7ed7ef6608f27909c/> `file::SectionMut::push()` now supports values without key-value separator.
+   These make a difference as those without `=` are considered boolean
+   true.
+   Currently pushing onto a section is the only way to write them.
+
+### Other (BREAKING)
+
+ - <csr-id-69ec5940d3f37eb4dace8f1ed7616b5988984d15/> `File::set_raw_[multi_]value()` to `::set_existing_raw_[multi_]value`.
+   This makes clear that the method will fail if the value doesn't yet
+   exist.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 20 commits contributed to the release over the course of 3 calendar days.
+ - 6 days passed between releases.
+ - 11 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - Properly handle boolean values such that `a` is true but `a=` is false. ([`08c50a4`](https://github.com/Byron/gitoxide/commit/08c50a47fa901457194539c7db74ad47ab2f8b60))
+    - fix config tests on windows ([`7a871c2`](https://github.com/Byron/gitoxide/commit/7a871c2a5691ae973804ff66af9608070733b366))
+    - Keep track of a severe limitation and prepare tests for fixing it. ([`7c58516`](https://github.com/Byron/gitoxide/commit/7c585162454c476fe93f032c8a2329cffd7c054f))
+    - `file::SectionMut::push()` now supports values without key-value separator. ([`b6cd6ac`](https://github.com/Byron/gitoxide/commit/b6cd6ace412b0c0df4bacbe7ed7ef6608f27909c))
+    - refactor ([`5415449`](https://github.com/Byron/gitoxide/commit/541544953c52ff3df8c8e21f6aca366840faca3e))
+    - `File::set_raw_value_filter()` to set values only in sections passing a filter. ([`9937d0e`](https://github.com/Byron/gitoxide/commit/9937d0e00df3a523484c7ae2850be2712a1a4c9a))
+    - `File::section_mut_or_create_new_filter()` to allow chosing which sections to add values to. ([`17455c9`](https://github.com/Byron/gitoxide/commit/17455c9d93ad38bfee2560f5a4e60324dee3b4e5))
+    - Add `File::set_raw_value()` to unconditionally set single values, and make the value itself easier to provide. ([`2b2357e`](https://github.com/Byron/gitoxide/commit/2b2357e9cc54539e0dbe7c0e22802f2b884160d8))
+    - `File::section_mut_or_create_new(…)` to obtain an existing or new section for mutation. ([`5902f54`](https://github.com/Byron/gitoxide/commit/5902f54b93101a6290fcf89f9f13fdbea3678e00))
+    - `File::set_raw_[multi_]value()` to `::set_existing_raw_[multi_]value`. ([`69ec594`](https://github.com/Byron/gitoxide/commit/69ec5940d3f37eb4dace8f1ed7616b5988984d15))
+ * **Uncategorized**
+    - Release git-date v0.0.5, git-hash v0.9.8, git-features v0.22.2, git-actor v0.11.3, git-glob v0.3.2, git-quote v0.2.1, git-attributes v0.3.2, git-tempfile v2.0.4, git-lock v2.1.1, git-validate v0.5.5, git-object v0.20.2, git-ref v0.15.2, git-sec v0.3.1, git-config v0.7.0, git-credentials v0.4.0, git-diff v0.17.2, git-discover v0.4.1, git-bitmap v0.1.2, git-index v0.4.2, git-mailmap v0.3.2, git-chunk v0.3.1, git-traverse v0.16.2, git-pack v0.21.2, git-odb v0.31.2, git-packetline v0.12.7, git-url v0.7.2, git-transport v0.19.2, git-protocol v0.19.0, git-revision v0.4.2, git-refspec v0.1.0, git-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
+    - Release git-path v0.4.1 ([`5e82346`](https://github.com/Byron/gitoxide/commit/5e823462b3deb904f5d6154a7bf114cef1988224))
+    - Merge branch 'example-write-blob' ([`afedd7f`](https://github.com/Byron/gitoxide/commit/afedd7f86ec8ea18a8165f71698ecc886f5cf643))
+    - Merge pull request #494 from ultrasaurus/patch-1 ([`86fe22c`](https://github.com/Byron/gitoxide/commit/86fe22cb1aad5944a229bc2a5252b36ef1fd59ef))
+    - thanks clippy ([`2770431`](https://github.com/Byron/gitoxide/commit/2770431f8742d6249574f53f06ec0026f9d241d6))
+    - Merge branch 'main' into remote-ls-refs ([`95f2f4f`](https://github.com/Byron/gitoxide/commit/95f2f4f17f7eae174a64c7d9f6a1513d73b21bbb))
+    - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
+    - use docsrs feature in code to show what is feature-gated automatically on docs.rs ([`b1c40b0`](https://github.com/Byron/gitoxide/commit/b1c40b0364ef092cd52d03b34f491b254816b18d))
+    - uniformize deny attributes ([`f7f136d`](https://github.com/Byron/gitoxide/commit/f7f136dbe4f86e7dee1d54835c420ec07c96cd78))
+    - pass --cfg docsrs when compiling for https://docs.rs ([`5176771`](https://github.com/Byron/gitoxide/commit/517677147f1c17304c62cf97a1dd09f232ebf5db))
+</details>
+
+## 0.6.1 (2022-08-17)
+
+A maintenance release without user facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release over the course of 26 calendar days.
+ - 26 days passed between releases.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#482](https://github.com/Byron/gitoxide/issues/482)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#482](https://github.com/Byron/gitoxide/issues/482)**
+    - refactor ([`1ee9918`](https://github.com/Byron/gitoxide/commit/1ee991847a5adeaaeb6e80ae626c28b0ba89e0af))
+ * **Uncategorized**
+    - Release git-date v0.0.3, git-actor v0.11.1, git-attributes v0.3.1, git-tempfile v2.0.3, git-object v0.20.1, git-ref v0.15.1, git-config v0.6.1, git-diff v0.17.1, git-discover v0.4.0, git-bitmap v0.1.1, git-index v0.4.1, git-mailmap v0.3.1, git-traverse v0.16.1, git-pack v0.21.1, git-odb v0.31.1, git-packetline v0.12.6, git-url v0.7.1, git-transport v0.19.1, git-protocol v0.18.1, git-revision v0.4.0, git-worktree v0.4.1, git-repository v0.21.0, safety bump 5 crates ([`c96473d`](https://github.com/Byron/gitoxide/commit/c96473dce21c3464aacbc0a62d520c1a33172611))
+    - prepare changelogs prior to reelase ([`c06ae1c`](https://github.com/Byron/gitoxide/commit/c06ae1c606b6af9c2a12021103d99c2810750d60))
+    - Release git-hash v0.9.7, git-features v0.22.1 ([`232784a`](https://github.com/Byron/gitoxide/commit/232784a59ded3e8016e4257c7e146ad385cdd64a))
+    - Merge branch 'format_git_date_time' ([`99e12be`](https://github.com/Byron/gitoxide/commit/99e12bee16ab3f344c71818bfd1c95cf50e1721b))
+    - thanks clippy ([`4bd747c`](https://github.com/Byron/gitoxide/commit/4bd747cb3e126fe5b1d540270cfbd731cffd42ef))
+    - commit strange changes to be able to do anything. ([`237b21d`](https://github.com/Byron/gitoxide/commit/237b21da8465200dcb8b5f7dc324a97bf653a23d))
+    - commit strange crlf-file that makes everything impossible ([`1dd9f9a`](https://github.com/Byron/gitoxide/commit/1dd9f9a9320813fe5b40578ee4826a1da575c05c))
+    - make fmt ([`47724c0`](https://github.com/Byron/gitoxide/commit/47724c0edb382c036a3fc99884becfd2b0740d4b))
+    - Fix typos ([`e9fcb70`](https://github.com/Byron/gitoxide/commit/e9fcb70e429edb2974afa3f58d181f3ef14c3da3))
+</details>
+
 ## 0.6.0 (2022-07-22)
 
 <csr-id-32d5b3c695d868ba93755123a25b276bfbe55e0a/>
@@ -229,7 +384,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 314 commits contributed to the release over the course of 33 calendar days.
+ - 316 commits contributed to the release over the course of 33 calendar days.
  - 39 days passed between releases.
  - 93 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
@@ -487,6 +642,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - conforming subsection parsing handling backslashes like git ([`6366148`](https://github.com/Byron/gitoxide/commit/6366148f538ee03314dd866e083157de810d4ad4))
     - Only copy pattern if required ([`b3a752a`](https://github.com/Byron/gitoxide/commit/b3a752a0a873cf9d685e1893c8d35255d7f7323a))
  * **Uncategorized**
+    - Release git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0 ([`aa639d8`](https://github.com/Byron/gitoxide/commit/aa639d8c43f3098cc4a5b50614c5ae94a8156928))
     - Release git-hash v0.9.6, git-features v0.22.0, git-date v0.0.2, git-actor v0.11.0, git-glob v0.3.1, git-path v0.4.0, git-attributes v0.3.0, git-tempfile v2.0.2, git-object v0.20.0, git-ref v0.15.0, git-sec v0.3.0, git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0, safety bump 22 crates ([`4737b1e`](https://github.com/Byron/gitoxide/commit/4737b1eea1d4c9a8d5a69fb63ecac5aa5d378ae5))
     - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
     - thanks clippy ([`fddc720`](https://github.com/Byron/gitoxide/commit/fddc7206476423a6964d61acd060305572ecd02b))
@@ -527,6 +683,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Take GitEnv by ref. ([`937d7ee`](https://github.com/Byron/gitoxide/commit/937d7eea84e92467fcc8a6a72c78fe6c060dd95d))
     - remove leftover debug printing ([`7d1cf34`](https://github.com/Byron/gitoxide/commit/7d1cf34e4535721db97f566734f68014ebc7c3e8))
     - auto-normalize string values to support quote removal in case of strings. ([`1e71e71`](https://github.com/Byron/gitoxide/commit/1e71e71c984289f0d7e0a39379ee6728918b7dc5))
+    - refactor ([`02fba2c`](https://github.com/Byron/gitoxide/commit/02fba2c124f3665112102469d41d476b6cf48dcd))
     - refactor ([`1d6ba9b`](https://github.com/Byron/gitoxide/commit/1d6ba9bd719ad01ce22573cabd8022ddb675c5fc))
     - avoid unwrap() more as the test code matures ([`c2d7e80`](https://github.com/Byron/gitoxide/commit/c2d7e800abe022f5a2663176f0f6b3ac90eacf0e))
     - refactor ([`b5c0b30`](https://github.com/Byron/gitoxide/commit/b5c0b3011d2c0e63c933be42753aea65b88ca569))

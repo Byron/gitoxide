@@ -1,6 +1,6 @@
 [package]
 name = "git-diff"
-version = "0.17.0"
+version = "0.18.1"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Calculate differences between various git objects"
@@ -11,12 +11,10 @@ include = ["src/**/*"]
 [lib]
 doctest = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-git-hash = { version = "^0.9.7", path = "../git-hash" }
-git-object = { version = "^0.20.0", path = "../git-object" }
-quick-error = "2.0.0"
+git-hash = { version = "^0.9.8", path = "../git-hash" }
+git-object = { version = "^0.20.3", path = "../git-object" }
+thiserror = "1.0.32"
 
 [dev-dependencies]
 git-odb = { path = "../git-odb" }

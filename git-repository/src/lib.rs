@@ -26,7 +26,7 @@
 //! to understand which cache levels exist and how to leverage them.
 //!
 //! When accessing an object, the first cache that's queried is a  memory-capped LRU object cache, mapping their id to data and kind.
-//! On miss, the object is looked up and if ia pack is hit, there is a small fixed-size cache for delta-base objects.
+//! On miss, the object is looked up and if a pack is hit, there is a small fixed-size cache for delta-base objects.
 //!
 //! In scenarios where the same objects are accessed multiple times, an object cache can be useful and is to be configured specifically
 //! using the [`object_cache_size(…)`][crate::Repository::object_cache_size()] method.
@@ -108,6 +108,7 @@
 //! * [`traverse`]
 //! * [`diff`]
 //! * [`parallel`]
+//! * [`refspec`]
 //! * [`Progress`]
 //! * [`progress`]
 //! * [`interrupt`]
@@ -120,7 +121,8 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 // Re-exports to make this a potential one-stop shop crate avoiding people from having to reference various crates themselves.
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
@@ -132,7 +134,6 @@ pub use git_attributes as attrs;
 pub use git_credentials as credentials;
 #[cfg(feature = "unstable")]
 pub use git_date as date;
-#[cfg(all(feature = "unstable", feature = "git-diff"))]
 pub use git_diff as diff;
 use git_features::threading::OwnShared;
 #[cfg(feature = "unstable")]
@@ -151,15 +152,14 @@ pub use git_odb as odb;
 #[cfg(all(feature = "unstable", feature = "git-protocol"))]
 pub use git_protocol as protocol;
 pub use git_ref as refs;
+pub use git_refspec as refspec;
 pub use git_sec as sec;
 #[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
 #[cfg(feature = "unstable")]
 pub use git_traverse as traverse;
-#[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url as url;
 #[doc(inline)]
-#[cfg(all(feature = "unstable", feature = "git-url"))]
 pub use git_url::Url;
 pub use hash::{oid, ObjectId};
 
@@ -187,7 +187,8 @@ pub(crate) type Config = OwnShared<git_config::File<'static>>;
 ///
 mod types;
 pub use types::{
-    Commit, Head, Id, Object, ObjectDetached, Reference, Repository, Tag, ThreadSafeRepository, Tree, Worktree,
+    Commit, Head, Id, Kind, Object, ObjectDetached, Reference, Remote, Repository, Tag, ThreadSafeRepository, Tree,
+    Worktree,
 };
 
 pub mod commit;
@@ -197,37 +198,6 @@ pub mod object;
 pub mod reference;
 mod repository;
 pub mod tag;
-
-/// The kind of repository path.
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub enum Kind {
-    /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
-    Bare,
-    /// A `git` repository along with a checked out files in a work tree.
-    WorkTree {
-        /// If true, this is the git dir associated with this _linked_ worktree, otherwise it is a repository with _main_ worktree.
-        is_linked: bool,
-    },
-}
-
-impl Kind {
-    /// Returns true if this is a bare repository, one without a work tree.
-    pub fn is_bare(&self) -> bool {
-        matches!(self, Kind::Bare)
-    }
-}
-
-impl From<git_discover::repository::Kind> for Kind {
-    fn from(v: git_discover::repository::Kind) -> Self {
-        match v {
-            git_discover::repository::Kind::Bare => Kind::Bare,
-            git_discover::repository::Kind::WorkTreeGitDir { .. } => Kind::WorkTree { is_linked: true },
-            git_discover::repository::Kind::WorkTree { linked_git_dir } => Kind::WorkTree {
-                is_linked: linked_git_dir.is_some(),
-            },
-        }
-    }
-}
 
 /// See [ThreadSafeRepository::discover()], but returns a [`Repository`] instead.
 pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, discover::Error> {
@@ -307,6 +277,9 @@ pub mod worktree;
 pub mod revision;
 
 ///
+pub mod remote;
+
+///
 pub mod init {
     use std::path::Path;
 
@@ -329,10 +302,20 @@ pub mod init {
         /// won't mind if the `directory` otherwise is non-empty.
         pub fn init(directory: impl AsRef<Path>, options: crate::create::Options) -> Result<Self, Error> {
             use git_sec::trust::DefaultForLevel;
-            let path = crate::create::into(directory.as_ref(), options)?;
+            let open_options = crate::open::Options::default_for_level(git_sec::Trust::Full);
+            Self::init_opts(directory, options, open_options)
+        }
+
+        /// Similar to [`init`][Self::init()], but allows to determine how exactly to open the newly created repository.
+        pub fn init_opts(
+            directory: impl AsRef<Path>,
+            create_options: crate::create::Options,
+            mut open_options: crate::open::Options,
+        ) -> Result<Self, Error> {
+            let path = crate::create::into(directory.as_ref(), create_options)?;
             let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-            let options = crate::open::Options::default_for_level(git_sec::Trust::Full);
-            ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, options).map_err(Into::into)
+            open_options.git_dir_trust = Some(git_sec::Trust::Full);
+            ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, open_options).map_err(Into::into)
         }
     }
 }
@@ -371,7 +354,8 @@ pub mod discover;
 
 ///
 pub mod env {
-    use std::ffi::OsString;
+    use crate::bstr::{BString, ByteVec};
+    use std::ffi::{OsStr, OsString};
 
     /// Equivalent to `std::env::args_os()`, but with precomposed unicode on MacOS and other apple platforms.
     #[cfg(not(target_vendor = "apple"))]
@@ -390,4 +374,13 @@ pub mod env {
             None => arg,
         })
     }
+
+    /// Convert the given `input` into a `BString`, useful as `parse(try_from_os_str = <me>)` function.
+    pub fn os_str_to_bstring(input: &OsStr) -> Result<BString, String> {
+        Vec::from_os_string(input.into())
+            .map(Into::into)
+            .map_err(|_| input.to_string_lossy().into_owned())
+    }
 }
+
+mod kind;

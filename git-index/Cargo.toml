@@ -1,6 +1,6 @@
 [package]
 name = "git-index"
-version = "0.4.0"
+version = "0.4.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A work-in-progress crate of the gitoxide project dedicated implementing the git index file"
@@ -29,13 +29,11 @@ serde1 = ["serde", "smallvec/serde", "git-hash/serde1"]
 internal-testing-git-features-parallel = ["git-features/parallel"]
 internal-testing-to-avoid-being-run-by-cargo-test-all = []
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-git-features = { version = "^0.22.1", path = "../git-features", features = ["rustsha1", "progress"] }
-git-hash = { version = "^0.9.7", path = "../git-hash" }
-git-bitmap = { version = "^0.1.0", path = "../git-bitmap" }
-git-object = { version = "^0.20.0", path = "../git-object" }
+git-features = { version = "^0.22.3", path = "../git-features", features = ["rustsha1", "progress"] }
+git-hash = { version = "^0.9.8", path = "../git-hash" }
+git-bitmap = { version = "^0.1.2", path = "../git-bitmap" }
+git-object = { version = "^0.20.2", path = "../git-object" }
 git-traverse = { version = "^0.16.0", path = "../git-traverse" }
 
 thiserror = "1.0.32"
@@ -57,4 +55,4 @@ git-repository = { path = "../git-repository"}
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde1"]
-
+rustdoc-args = ["--cfg", "docsrs"]

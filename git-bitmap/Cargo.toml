@@ -1,6 +1,6 @@
 [package]
 name = "git-bitmap"
-version = "0.1.0"
+version = "0.1.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated implementing the standard git bitmap format"
@@ -10,8 +10,6 @@ edition = "2018"
 [lib]
 doctest = false
 test = true
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 quick-error = "2.0.0"

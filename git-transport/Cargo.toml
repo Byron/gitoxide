@@ -1,6 +1,6 @@
 [package]
 name = "git-transport"
-version = "0.19.0"
+version = "0.19.3"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dedicated to implementing the git transport layer"
@@ -47,16 +47,13 @@ name = "async-transport"
 path = "tests/async-transport.rs"
 required-features = ["async-client"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-git-features = { version = "^0.22.1", path = "../git-features" }
-git-url = { version = "^0.7.0", path = "../git-url" }
-git-sec = { version = "^0.3.0", path = "../git-sec" }
-git-packetline = { version = "^0.12.5", path = "../git-packetline" }
+git-features = { version = "^0.22.3", path = "../git-features" }
+git-url = { version = "^0.7.3", path = "../git-url" }
+git-sec = { version = "^0.3.1", path = "../git-sec" }
+git-packetline = { version = "^0.12.7", path = "../git-packetline" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
-quick-error = "2.0.0"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 
 # for async-client
@@ -71,6 +68,10 @@ curl = { version = "0.4", optional = true, features = ["static-curl", "static-ss
 thiserror = "1.0.26"
 base64 = { version = "0.13.0", optional = true }
 
+## If used in conjunction with `async-client`, the `connect()` method will be come available along with supporting the git protocol over TCP,
+## where the TCP stream is created using this crate.
+async-std = { version = "1.12.0", optional = true }
+
 document-features = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
@@ -81,4 +82,5 @@ maybe-async = "0.2.6"
 blocking = "1.0.2"
 
 [package.metadata.docs.rs]
-features = ["http-client-curl", "document-features"]
+features = ["http-client-curl", "document-features", "serde1"]
+rustdoc-args = ["--cfg", "docsrs"]

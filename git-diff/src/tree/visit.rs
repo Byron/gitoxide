@@ -27,7 +27,7 @@ pub enum Change {
 
         /// The mode of the entry after the modification.
         entry_mode: tree::EntryMode,
-        /// The object id of the after before the modification.
+        /// The object id after the modification.
         oid: ObjectId,
     },
 }

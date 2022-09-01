@@ -1,8 +1,8 @@
-#![deny(unsafe_code, missing_docs, rust_2018_idioms)]
-#![allow(missing_docs)]
 //! An implementation of the shared parts of git bitmaps used in `git-pack`, `git-index` and `git-worktree`.
 //!
 //! Note that many tests are performed indirectly by tests in the aforementioned consumer crates.
+#![deny(rust_2018_idioms, unsafe_code)]
+#![allow(missing_docs)]
 
 /// Bitmap utilities for the advanced word-aligned hybrid bitmap
 pub mod ewah;

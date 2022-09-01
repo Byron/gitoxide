@@ -11,7 +11,7 @@ use crate::{
 
 /// Mutating low-level access methods.
 impl<'event> File<'event> {
-    /// Returns an mutable section with a given `name` and optional `subsection_name`.
+    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_.
     pub fn section_mut<'a>(
         &'a mut self,
         name: impl AsRef<str>,
@@ -29,8 +29,46 @@ impl<'event> File<'event> {
             .expect("BUG: Section did not have id from lookup")
             .to_mut(nl))
     }
+    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_, or create a new section.
+    pub fn section_mut_or_create_new<'a>(
+        &'a mut self,
+        name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+    ) -> Result<SectionMut<'a, 'event>, section::header::Error> {
+        self.section_mut_or_create_new_filter(name, subsection_name, &mut |_| true)
+    }
 
-    /// Returns the last found mutable section with a given `name` and optional `subsection_name`, that matches `filter`.
+    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_ **and** passes `filter`, or create
+    /// a new section.
+    pub fn section_mut_or_create_new_filter<'a>(
+        &'a mut self,
+        name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        filter: &mut MetadataFilter,
+    ) -> Result<SectionMut<'a, 'event>, section::header::Error> {
+        let name = name.as_ref();
+        match self
+            .section_ids_by_name_and_subname(name.as_ref(), subsection_name)
+            .ok()
+            .and_then(|it| {
+                it.rev().find(|id| {
+                    let s = &self.sections[id];
+                    filter(s.meta())
+                })
+            }) {
+            Some(id) => {
+                let nl = self.detect_newline_style_smallvec();
+                Ok(self
+                    .sections
+                    .get_mut(&id)
+                    .expect("BUG: Section did not have id from lookup")
+                    .to_mut(nl))
+            }
+            None => self.new_section(name.to_owned(), subsection_name.map(|n| Cow::Owned(n.to_owned()))),
+        }
+    }
+
+    /// Returns the last found mutable section with a given `name` and optional `subsection_name`, that matches `filter`, _if it exists_.
     ///
     /// If there are sections matching `section_name` and `subsection_name` but the `filter` rejects all of them, `Ok(None)`
     /// is returned.
@@ -78,7 +116,7 @@ impl<'event> File<'event> {
     /// # use git_config::parse::section;
     /// let mut git_config = git_config::File::default();
     /// let mut section = git_config.new_section("hello", Some("world".into()))?;
-    /// section.push(section::Key::try_from("a")?, "b");
+    /// section.push(section::Key::try_from("a")?, Some("b".into()));
     /// let nl = section.newline().to_owned();
     /// assert_eq!(git_config.to_string(), format!("[hello \"world\"]{nl}\ta = b{nl}"));
     /// let _section = git_config.new_section("core", None);

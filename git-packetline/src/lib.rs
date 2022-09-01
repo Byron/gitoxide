@@ -6,7 +6,8 @@
     feature = "document-features",
     cfg_attr(doc, doc = ::document_features::document_features!())
 )]
-#![deny(unsafe_code, rust_2018_idioms, missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 const U16_HEX_BYTES: usize = 4;
 const MAX_DATA_LEN: usize = 65516;

@@ -13,7 +13,7 @@
 //!
 //! * As the lock file is separate from the actual resource, locking is merely a convention rather than being enforced.
 //! * The limitations of `git-tempfile` apply.
-#![deny(missing_docs, unsafe_code, rust_2018_idioms)]
+#![deny(missing_docs, rust_2018_idioms, unsafe_code)]
 
 use std::path::PathBuf;
 

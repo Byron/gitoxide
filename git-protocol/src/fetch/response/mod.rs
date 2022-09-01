@@ -1,50 +1,35 @@
-use std::io;
-
 use bstr::BString;
 use git_transport::{client, Protocol};
-use quick_error::quick_error;
 
 use crate::fetch::command::Feature;
 
-quick_error! {
-    /// The error used in the [response module][crate::fetch::response].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        Io(err: io::Error) {
-            display("Failed to read from line reader")
-            source(err)
-        }
-        UploadPack(err: git_transport::packetline::read::Error) {
-            display("Upload pack reported an error")
-            source(err)
-        }
-        Transport(err: client::Error) {
-            display("An error occurred when decoding a line")
-            from()
-            source(err)
-        }
-        MissingServerCapability(feature: &'static str) {
-            display("Currently we require feature '{}', which is not supported by the server", feature)
-        }
-        UnknownLineType(line: String) {
-            display("Encountered an unknown line prefix in '{}'", line)
-        }
-        UnknownSectionHeader(header: String) {
-            display("Unknown or unsupported header: '{}'", header)
-        }
-    }
+/// The error returned in the [response module][crate::fetch::response].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Failed to read from line reader")]
+    Io(std::io::Error),
+    #[error(transparent)]
+    UploadPack(#[from] git_transport::packetline::read::Error),
+    #[error(transparent)]
+    Transport(#[from] client::Error),
+    #[error("Currently we require feature {feature:?}, which is not supported by the server")]
+    MissingServerCapability { feature: &'static str },
+    #[error("Encountered an unknown line prefix in {line:?}")]
+    UnknownLineType { line: String },
+    #[error("Unknown or unsupported header: {header:?}")]
+    UnknownSectionHeader { header: String },
 }
 
 impl From<std::io::Error> for Error {
-    fn from(err: io::Error) -> Self {
-        if err.kind() == io::ErrorKind::Other {
+    fn from(err: std::io::Error) -> Self {
+        if err.kind() == std::io::ErrorKind::Other {
             match err.into_inner() {
                 Some(err) => match err.downcast::<git_transport::packetline::read::Error>() {
                     Ok(err) => Error::UploadPack(*err),
-                    Err(err) => Error::Io(io::Error::new(io::ErrorKind::Other, err)),
+                    Err(err) => Error::Io(std::io::Error::new(std::io::ErrorKind::Other, err)),
                 },
-                None => Error::Io(io::ErrorKind::Other.into()),
+                None => Error::Io(std::io::ErrorKind::Other.into()),
             }
         } else {
             Error::Io(err)
@@ -89,15 +74,15 @@ impl ShallowUpdate {
     pub fn from_line(line: &str) -> Result<ShallowUpdate, Error> {
         match line.trim_end().split_once(' ') {
             Some((prefix, id)) => {
-                let id =
-                    git_hash::ObjectId::from_hex(id.as_bytes()).map_err(|_| Error::UnknownLineType(line.to_owned()))?;
+                let id = git_hash::ObjectId::from_hex(id.as_bytes())
+                    .map_err(|_| Error::UnknownLineType { line: line.to_owned() })?;
                 Ok(match prefix {
                     "shallow" => ShallowUpdate::Shallow(id),
                     "unshallow" => ShallowUpdate::Unshallow(id),
-                    _ => return Err(Error::UnknownLineType(line.to_owned())),
+                    _ => return Err(Error::UnknownLineType { line: line.to_owned() }),
                 })
             }
-            None => Err(Error::UnknownLineType(line.to_owned())),
+            None => Err(Error::UnknownLineType { line: line.to_owned() }),
         }
     }
 }
@@ -113,21 +98,21 @@ impl Acknowledgement {
                 "ACK" => {
                     let id = match id {
                         Some(id) => git_hash::ObjectId::from_hex(id.as_bytes())
-                            .map_err(|_| Error::UnknownLineType(line.to_owned()))?,
-                        None => return Err(Error::UnknownLineType(line.to_owned())),
+                            .map_err(|_| Error::UnknownLineType { line: line.to_owned() })?,
+                        None => return Err(Error::UnknownLineType { line: line.to_owned() }),
                     };
                     if let Some(description) = description {
                         match description {
                             "common" => {}
                             "ready" => return Ok(Acknowledgement::Ready),
-                            _ => return Err(Error::UnknownLineType(line.to_owned())),
+                            _ => return Err(Error::UnknownLineType { line: line.to_owned() }),
                         }
                     }
                     Acknowledgement::Common(id)
                 }
-                _ => return Err(Error::UnknownLineType(line.to_owned())),
+                _ => return Err(Error::UnknownLineType { line: line.to_owned() }),
             }),
-            (None, _, _) => Err(Error::UnknownLineType(line.to_owned())),
+            (None, _, _) => Err(Error::UnknownLineType { line: line.to_owned() }),
         }
     }
     /// Returns the hash of the acknowledged object if this instance acknowledges a common one.
@@ -144,11 +129,11 @@ impl WantedRef {
     pub fn from_line(line: &str) -> Result<WantedRef, Error> {
         match line.trim_end().split_once(' ') {
             Some((id, path)) => {
-                let id =
-                    git_hash::ObjectId::from_hex(id.as_bytes()).map_err(|_| Error::UnknownLineType(line.to_owned()))?;
+                let id = git_hash::ObjectId::from_hex(id.as_bytes())
+                    .map_err(|_| Error::UnknownLineType { line: line.to_owned() })?;
                 Ok(WantedRef { id, path: path.into() })
             }
-            None => Err(Error::UnknownLineType(line.to_owned())),
+            None => Err(Error::UnknownLineType { line: line.to_owned() }),
         }
     }
 }
@@ -177,14 +162,18 @@ impl Response {
                 let has = |name: &str| features.iter().any(|f| f.0 == name);
                 // Let's focus on V2 standards, and simply not support old servers to keep our code simpler
                 if !has("multi_ack_detailed") {
-                    return Err(Error::MissingServerCapability("multi_ack_detailed"));
+                    return Err(Error::MissingServerCapability {
+                        feature: "multi_ack_detailed",
+                    });
                 }
                 // It's easy to NOT do sideband for us, but then again, everyone supports it.
                 // CORRECTION: If side-band is off, it would send the packfile without packet line encoding,
                 // which is nothing we ever want to deal with (despite it being more efficient). In V2, this
                 // is not even an option anymore, sidebands are always present.
                 if !has("side-band") && !has("side-band-64k") {
-                    return Err(Error::MissingServerCapability("side-band OR side-band-64k"));
+                    return Err(Error::MissingServerCapability {
+                        feature: "side-band OR side-band-64k",
+                    });
                 }
             }
             Protocol::V2 => {}

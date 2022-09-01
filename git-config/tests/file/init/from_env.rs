@@ -35,19 +35,21 @@ fn parse_error_with_invalid_count() {
 
 #[test]
 #[serial]
-fn single_key_value_pair() {
+fn single_key_value_pair() -> crate::Result {
     let _env = Env::new()
         .set("GIT_CONFIG_COUNT", "1")
         .set("GIT_CONFIG_KEY_0", "core.key")
         .set("GIT_CONFIG_VALUE_0", "value");
 
-    let config = File::from_env(Default::default()).unwrap().unwrap();
+    let config = File::from_env(Default::default())?.unwrap();
+    assert_eq!(config.raw_value("core", None, "key")?, Cow::<[u8]>::Borrowed(b"value"));
     assert_eq!(
-        config.raw_value("core", None, "key").unwrap(),
-        Cow::<[u8]>::Borrowed(b"value")
+        config.section("core", None)?.meta(),
+        &git_config::file::Metadata::from(git_config::Source::Env),
+        "source if configured correctly"
     );
-
     assert_eq!(config.num_values(), 1);
+    Ok(())
 }
 
 #[test]

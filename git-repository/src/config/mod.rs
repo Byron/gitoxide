@@ -1,16 +1,27 @@
 pub use git_config::*;
 use git_features::threading::OnceCell;
 
-use crate::{bstr::BString, permission, repository::identity, revision::spec, Repository};
+use crate::{bstr::BString, permission, remote, repository::identity, revision::spec, Repository};
 
 pub(crate) mod cache;
 mod snapshot;
+pub use snapshot::apply_cli_overrides;
 
 /// A platform to access configuration values as read from disk.
 ///
 /// Note that these values won't update even if the underlying file(s) change.
 pub struct Snapshot<'repo> {
     pub(crate) repo: &'repo Repository,
+}
+
+/// A platform to access configuration values and modify them in memory, while making them available when this platform is dropped.
+/// Note that the values will only affect this instance of the parent repository, and not other clones that may exist.
+///
+/// Note that these values won't update even if the underlying file(s) change.
+// TODO: make it possible to load snapshots with reloading via .config() and write mutated snapshots back to disk.
+pub struct SnapshotMut<'repo> {
+    pub(crate) repo: &'repo mut Repository,
+    pub(crate) config: git_config::File<'static>,
 }
 
 pub(crate) mod section {
@@ -44,7 +55,7 @@ pub enum Error {
 }
 
 /// Utility type to keep pre-obtained configuration values.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub(crate) struct Cache {
     pub resolved: crate::Config,
     /// The hex-length to assume when shortening object ids. If `None`, it should be computed based on the approximate object count.
@@ -59,6 +70,10 @@ pub(crate) struct Cache {
     pub reflog: Option<git_ref::store::WriteReflog>,
     /// identities for later use, lazy initialization.
     pub personas: OnceCell<identity::Personas>,
+    /// A lazily loaded rewrite list for remote urls
+    pub url_rewrite: OnceCell<remote::url::Rewrite>,
+    /// The config section filter from the options used to initialize this instance. Keep these in sync!
+    filter_config_section: fn(&git_config::file::Metadata) -> bool,
     /// The object kind to pick if a prefix is ambiguous.
     pub object_kind_hint: Option<spec::parse::ObjectKindHint>,
     /// If true, we are on a case-insensitive file system.

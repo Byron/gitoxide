@@ -42,6 +42,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * **mailmap**
         * [x] **entries** - display all entries of the aggregated mailmap git would use for substitution
     * **revision**
+        * [x] **list** - list plain revision hashes from a starting point, similar to a very simple version of `git rev-list`.
         * [x] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
         * [x] **resolve** - show which objects a revspec resolves to, similar to `git rev-parse` but faster and with much better error handling
         * [x] **previous-branches** - list all previously checked out branches, powered by the ref-log.
@@ -84,6 +85,8 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
 ### Crates
 
 Follow linked crate name for detailed status. Please note that all crates follow [semver] as well as the [stability guide].
+
+[semver]: https://semver.org
 
 ### Production Grade
 
@@ -349,7 +352,7 @@ Provide a CLI to for the most basic user journey:
 
 ## Shortcomings & Limitations
 
-Please take a look at the [`SHORTCOMINGS.md` file](https://github.com/Byron/gitoxide/blob/main/git-lock/SHORTCOMINGS.md) for details.
+Please take a look at the [`SHORTCOMINGS.md` file](https://github.com/Byron/gitoxide/blob/main/SHORTCOMINGS.md) for details.
   
 ## Credits
 

@@ -1,6 +1,6 @@
 //! Parse git ref-specs and represent them.
-#![forbid(unsafe_code, rust_2018_idioms)]
-#![deny(missing_docs)]
+#![deny(missing_docs, rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 ///
 pub mod parse;
@@ -10,7 +10,7 @@ pub use parse::function::parse;
 pub mod instruction;
 
 /// A refspec with references to the memory it was parsed from.
-#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
+#[derive(Eq, Copy, Clone, Debug)]
 pub struct RefSpecRef<'a> {
     mode: types::Mode,
     op: parse::Operation,
@@ -19,7 +19,7 @@ pub struct RefSpecRef<'a> {
 }
 
 /// An owned refspec.
-#[derive(PartialEq, Eq, Clone, Hash, Debug)]
+#[derive(Eq, Clone, Debug)]
 pub struct RefSpec {
     mode: types::Mode,
     op: parse::Operation,

@@ -4,6 +4,20 @@ use git_hash::ObjectId;
 
 use crate::head;
 
+/// The kind of repository.
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum Kind {
+    /// A submodule worktree, whose `git` repository lives in `.git/modules/**/<name>` of the parent repository.
+    Submodule,
+    /// A bare repository does not have a work tree, that is files on disk beyond the `git` repository itself.
+    Bare,
+    /// A `git` repository along with a checked out files in a work tree.
+    WorkTree {
+        /// If true, this is the git dir associated with this _linked_ worktree, otherwise it is a repository with _main_ worktree.
+        is_linked: bool,
+    },
+}
+
 /// A worktree checkout containing the files of the repository in consumable form.
 pub struct Worktree<'repo> {
     pub(crate) parent: &'repo Repository,
@@ -164,4 +178,29 @@ pub struct ThreadSafeRepository {
     pub(crate) linked_worktree_options: crate::open::Options,
     /// The index of this instances worktree.
     pub(crate) index: crate::worktree::IndexStorage,
+}
+
+/// A remote which represents a way to interact with hosts for remote clones of the parent repository.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Remote<'repo> {
+    /// The remotes symbolic name, only present if persisted in git configuration files.
+    pub(crate) name: Option<String>,
+    /// The url of the host to talk to, after application of replacements. If it is unset, the `push_url` must be set.
+    /// and fetches aren't possible.
+    pub(crate) url: Option<git_url::Url>,
+    /// The rewritten `url`, if it was rewritten.
+    pub(crate) url_alias: Option<git_url::Url>,
+    /// The url to use for pushing specifically.
+    pub(crate) push_url: Option<git_url::Url>,
+    /// The rewritten `push_url`, if it was rewritten.
+    pub(crate) push_url_alias: Option<git_url::Url>,
+    /// Refspecs for use when fetching.
+    pub(crate) fetch_specs: Vec<git_refspec::RefSpec>,
+    /// Refspecs for use when pushing.
+    pub(crate) push_specs: Vec<git_refspec::RefSpec>,
+    // /// Delete local tracking branches that don't exist on the remote anymore.
+    // pub(crate) prune: bool,
+    // /// Delete tags that don't exist on the remote anymore, equivalent to pruning the refspec `refs/tags/*:refs/tags/*`.
+    // pub(crate) prune_tags: bool,
+    pub(crate) repo: &'repo Repository,
 }

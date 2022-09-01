@@ -177,6 +177,7 @@ pub(crate) mod function {
         Find: for<'b> FnMut(&oid, &'b mut Vec<u8>) -> Result<Option<CommitRefIter<'b>>, E>,
         E: std::error::Error + Send + Sync + 'static,
     {
+        max_candidates = max_candidates.min(MAX_CANDIDATES);
         if let Some(name) = name_by_oid.get(commit) {
             return Ok(Some(Outcome {
                 name: name.clone().into(),
@@ -186,7 +187,20 @@ pub(crate) mod function {
                 commits_seen: 0,
             }));
         }
-        max_candidates = max_candidates.min(MAX_CANDIDATES);
+
+        if max_candidates == 0 || name_by_oid.is_empty() {
+            return if fallback_to_oid {
+                Ok(Some(Outcome {
+                    id: commit.to_owned(),
+                    name: None,
+                    name_by_oid,
+                    depth: 0,
+                    commits_seen: 0,
+                }))
+            } else {
+                Ok(None)
+            };
+        }
 
         let mut buf = Vec::new();
         let mut parent_buf = Vec::new();

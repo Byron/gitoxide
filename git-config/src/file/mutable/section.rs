@@ -28,16 +28,19 @@ pub struct SectionMut<'a, 'event> {
 
 /// Mutating methods.
 impl<'a, 'event> SectionMut<'a, 'event> {
-    /// Adds an entry to the end of this section name `key` and `value`.
-    pub fn push<'b>(&mut self, key: Key<'event>, value: impl Into<&'b BStr>) {
+    /// Adds an entry to the end of this section name `key` and `value`. If `value` is None`, no equal sign will be written leaving
+    /// just the key. This is useful for boolean values which are true if merely the key exists.
+    pub fn push<'b>(&mut self, key: Key<'event>, value: Option<&'b BStr>) {
         let body = &mut self.section.body.0;
         if let Some(ws) = &self.whitespace.pre_key {
             body.push(Event::Whitespace(ws.clone()));
         }
 
         body.push(Event::SectionKey(key));
-        body.extend(self.whitespace.key_value_separators());
-        body.push(Event::Value(escape_value(value.into()).into()));
+        if let Some(value) = value {
+            body.extend(self.whitespace.key_value_separators());
+            body.push(Event::Value(escape_value(value).into()));
+        }
         if self.implicit_newline {
             body.push(Event::Newline(BString::from(self.newline.to_vec()).into()));
         }
@@ -86,10 +89,11 @@ impl<'a, 'event> SectionMut<'a, 'event> {
     pub fn set<'b>(&mut self, key: Key<'event>, value: impl Into<&'b BStr>) -> Option<Cow<'event, BStr>> {
         match self.key_and_value_range_by(&key) {
             None => {
-                self.push(key, value);
+                self.push(key, Some(value.into()));
                 None
             }
-            Some((_, value_range)) => {
+            Some((key_range, value_range)) => {
+                let value_range = value_range.unwrap_or(key_range.end - 1..key_range.end);
                 let range_start = value_range.start;
                 let ret = self.remove_internal(value_range);
                 self.section

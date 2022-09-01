@@ -12,7 +12,7 @@ use git_tempfile::{handle::Writable, AutoRemove, ContainingDirectory, Handle};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let secs_to_run: usize = std::env::args()
         .nth(1)
-        .ok_or_else(|| "the first argument is the amount of seconds to run")?
+        .ok_or("the first argument is the amount of seconds to run")?
         .parse()?;
     let suspected_dashmap_block_size = 64;
     let tmp = tempfile::TempDir::new()?;
@@ -31,12 +31,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Cause it to be repeatedly fetched from the registry for writing, causing high contention on the write lock
                 // of the dashmap block it should be in.
                 loop {
-                    if tfile
+                    let failed_to_mutably_access_file = tfile
                         .with_mut(|_| {
                             tempfiles_registry_locked.fetch_add(1, Ordering::SeqCst);
                         })
-                        .is_err()
-                    {
+                        .is_err();
+                    if failed_to_mutably_access_file {
                         // The cleanup handler runs continuously, so we create a new file once our current one is removed
                         // This test is clearly limited by IOPS
                         tfile = tempfile_for_thread_or_panic(tid, &tmp, &tempfiles_created);

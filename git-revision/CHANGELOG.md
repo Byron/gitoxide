@@ -5,6 +5,214 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.4 (2022-08-27)
+
+### Bug Fixes
+
+ - <csr-id-4788270853d42be8405465a6b9b612783ae9ef6e/> decscribe() won't abort before the first name check if max-candidates is 0
+   A test was missing too, which is now fixed.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release.
+ - 3 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#503](https://github.com/Byron/gitoxide/issues/503)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#503](https://github.com/Byron/gitoxide/issues/503)**
+    - prepare changelog ([`3c99e7f`](https://github.com/Byron/gitoxide/commit/3c99e7f02ada72a171856ffc5b870da83fffc703))
+    - decscribe() won't abort before the first name check if max-candidates is 0 ([`4788270`](https://github.com/Byron/gitoxide/commit/4788270853d42be8405465a6b9b612783ae9ef6e))
+</details>
+
+## 0.4.3 (2022-08-24)
+
+A maintenance release without user facing changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release git-date v0.1.0, git-actor v0.11.4, git-revision v0.4.3, git-repository v0.22.1, cargo-smart-release v0.11.0, git-commitgraph v0.8.2, gitoxide-core v0.17.0, gitoxide v0.15.0 ([`1fb931a`](https://github.com/Byron/gitoxide/commit/1fb931a7ea59f1cf895a6c1392fd8615b723c743))
+    - update changelogs prior to release ([`23cb58f`](https://github.com/Byron/gitoxide/commit/23cb58f02043e0e5027136fd6e8e724c03a2efbe))
+    - adjust to new version of git-date ([`b3fe26b`](https://github.com/Byron/gitoxide/commit/b3fe26bf03db7e1babb5ffbc89d71bf9614e3df3))
+</details>
+
+## 0.4.2 (2022-08-24)
+
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+<csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/>
+
+### Chore
+
+ - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
+ - <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
+
+### New Features
+
+ - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
+ - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
+ - <csr-id-df62f5081291f65f994b2aa66f0599f47eea8d4d/> `describe()` aborts search early if there is no input name in the name map.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 7 commits contributed to the release over the course of 4 calendar days.
+ - 4 days passed between releases.
+ - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release git-date v0.0.5, git-hash v0.9.8, git-features v0.22.2, git-actor v0.11.3, git-glob v0.3.2, git-quote v0.2.1, git-attributes v0.3.2, git-tempfile v2.0.4, git-lock v2.1.1, git-validate v0.5.5, git-object v0.20.2, git-ref v0.15.2, git-sec v0.3.1, git-config v0.7.0, git-credentials v0.4.0, git-diff v0.17.2, git-discover v0.4.1, git-bitmap v0.1.2, git-index v0.4.2, git-mailmap v0.3.2, git-chunk v0.3.1, git-traverse v0.16.2, git-pack v0.21.2, git-odb v0.31.2, git-packetline v0.12.7, git-url v0.7.2, git-transport v0.19.2, git-protocol v0.19.0, git-revision v0.4.2, git-refspec v0.1.0, git-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
+    - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
+    - use docsrs feature in code to show what is feature-gated automatically on docs.rs ([`b1c40b0`](https://github.com/Byron/gitoxide/commit/b1c40b0364ef092cd52d03b34f491b254816b18d))
+    - uniformize deny attributes ([`f7f136d`](https://github.com/Byron/gitoxide/commit/f7f136dbe4f86e7dee1d54835c420ec07c96cd78))
+    - pass --cfg docsrs when compiling for https://docs.rs ([`5176771`](https://github.com/Byron/gitoxide/commit/517677147f1c17304c62cf97a1dd09f232ebf5db))
+    - remove default link to cargo doc everywhere ([`533e887`](https://github.com/Byron/gitoxide/commit/533e887e80c5f7ede8392884562e1c5ba56fb9a8))
+    - `describe()` aborts search early if there is no input name in the name map. ([`df62f50`](https://github.com/Byron/gitoxide/commit/df62f5081291f65f994b2aa66f0599f47eea8d4d))
+</details>
+
+## 0.4.1 (2022-08-19)
+
+### New Features
+
+ - <csr-id-ca6651234a8c0d4718554323b197a49266b60a61/> revision describe can now short-cut what effectively is only a name-to-id lookup
+   This makes situations easier where `max-candidates` is provided by the user or by
+   configuration.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 1 day passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' where seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Release git-date v0.0.4, git-actor v0.11.2, git-revision v0.4.1, git-repository v0.21.1 ([`2f9dc84`](https://github.com/Byron/gitoxide/commit/2f9dc847e0d54f4181ce35ddadd9286ba80ca01f))
+    - prepare for release of git-repository ([`8aa5389`](https://github.com/Byron/gitoxide/commit/8aa5389d5a1bdd3a07f1caa1c2f55c8af4f9844a))
+    - revision describe can now short-cut what effectively is only a name-to-id lookup ([`ca66512`](https://github.com/Byron/gitoxide/commit/ca6651234a8c0d4718554323b197a49266b60a61))
+</details>
+
+## 0.4.0 (2022-08-17)
+
+### New Features
+
+ - <csr-id-36c70e1f4ce07bf69d7064de1b6f0516d13d8acf/> `Spec` with `Display` implementation to reproduce itself.
+   That way it can be parsed back perfectly after displaying itself, and
+   will work normally when used in backticks in the shell for simple
+   include patterns.
+ - <csr-id-5038ffab6a0f83e0566f99e3c92ae2dea266e10b/> Add `Spec` data strcuture to fully represent a revision specification
+ - <csr-id-4bb200300b1665cab49b780ae13c277630b70f51/> Add support for `r1^@`
+ - <csr-id-7e5d31cb253f994ef19b15978c5df0f3a7ccebb1/> Add support for `r1^!`
+ - <csr-id-fa1615da63594acbe92c3c4a13e2aeb7c1ee1d94/> support for `<rev>^-<n>` and `<rev>^-`
+
+### Changed (BREAKING)
+
+ - <csr-id-42aea42c1f6c2a9681688825a9e31966bca1896c/> More intuitive variants for `Spec`.
+ - <csr-id-487941ce557182c7ad02958e011959acb2dd5607/> rename various `Kind` variants to be more descrptive.
+ - <csr-id-baf34c486f54e4699f88b06a0f8cbb10f0582bd0/> Rename `Kind::Single` to `Include` and add `Exclude` kind.
+   So far I got ranges pretty wrong and was degenerating the `^rev` case
+   due to misinterpretation of the docs.
+   This summary corrected that: https://git-scm.com/docs/git-rev-parse#_revision_range_summary
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 39 commits contributed to the release over the course of 23 calendar days.
+ - 26 days passed between releases.
+ - 8 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#427](https://github.com/Byron/gitoxide/issues/427), [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 3 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - make fmt ([`4b320e7`](https://github.com/Byron/gitoxide/commit/4b320e773368ac5e8c38dd8a779ef3d6d2d024ec))
+    - remove unused type ([`ad3475d`](https://github.com/Byron/gitoxide/commit/ad3475d473109649eb904786db7847a4e61d0e89))
+    - Better docs for `Spec` and `spec::Kind` ([`6b76c06`](https://github.com/Byron/gitoxide/commit/6b76c06c1e9e2317f6ee1ff26c3cc57c46ec0b69))
+    - More intuitive variants for `Spec`. ([`42aea42`](https://github.com/Byron/gitoxide/commit/42aea42c1f6c2a9681688825a9e31966bca1896c))
+    - `Spec` with `Display` implementation to reproduce itself. ([`36c70e1`](https://github.com/Byron/gitoxide/commit/36c70e1f4ce07bf69d7064de1b6f0516d13d8acf))
+    - More fuzz success ([`f239796`](https://github.com/Byron/gitoxide/commit/f239796aaffce59eb30527dc3635356ca0bab699))
+    - fix panics discovered by fuzzer input ([`0f9e959`](https://github.com/Byron/gitoxide/commit/0f9e959a98d7a15ad2b0eeeea8e21bde89ed6a42))
+    - Add fuzz target ([`54108f4`](https://github.com/Byron/gitoxide/commit/54108f4e00155e96a450daace6721f174743026c))
+    - Add support for `r1^@` ([`4bb2003`](https://github.com/Byron/gitoxide/commit/4bb200300b1665cab49b780ae13c277630b70f51))
+    - Add support for `r1^!` ([`7e5d31c`](https://github.com/Byron/gitoxide/commit/7e5d31cb253f994ef19b15978c5df0f3a7ccebb1))
+    - refactor ([`dd1a208`](https://github.com/Byron/gitoxide/commit/dd1a20824c43ab55cd8ab260a2fa381b276146f1))
+    - the first test for @^! syntax ([`b97677c`](https://github.com/Byron/gitoxide/commit/b97677cecb5efa01445769ba10835ba4d8d263e5))
+    - rename various `Kind` variants to be more descrptive. ([`487941c`](https://github.com/Byron/gitoxide/commit/487941ce557182c7ad02958e011959acb2dd5607))
+    - Add all remainiing rev-spec kinds. ([`fcc737d`](https://github.com/Byron/gitoxide/commit/fcc737dbca587747bb9ba1d4b3376b5e455177c9))
+    - Assure parsing ends after special syntax sugar ([`661bf29`](https://github.com/Byron/gitoxide/commit/661bf2992baf184224c16ca80172a132bee9129a))
+    - support for `<rev>^-<n>` and `<rev>^-` ([`fa1615d`](https://github.com/Byron/gitoxide/commit/fa1615da63594acbe92c3c4a13e2aeb7c1ee1d94))
+    - a way to intercept which ref or prefix was set ([`b7a823b`](https://github.com/Byron/gitoxide/commit/b7a823b246b6c10c5a191bde22a88678909ff4fd))
+    - first steps toward implementing ^-n ([`4b105f8`](https://github.com/Byron/gitoxide/commit/4b105f88a1429108653238e7407fd3829af939c5))
+    - tests for `r1^-`  and `r1^-n` syntactic sugar ([`5d983c6`](https://github.com/Byron/gitoxide/commit/5d983c631172a87fba646d62cc102a80ab7da17f))
+    - Adjust RevSpec::range() to match changes in `git-revision` ([`05ea453`](https://github.com/Byron/gitoxide/commit/05ea45337e85583db5e57f14e995be49ba888ee1))
+    - Omitted revisions after or before ../... are automatically defaulted to `HEAD`. ([`d6f481d`](https://github.com/Byron/gitoxide/commit/d6f481d0eee39d5b7e8ad7885f52b07ea876388e))
+    - make it possible to see the ordering of calls ([`b04614c`](https://github.com/Byron/gitoxide/commit/b04614c8bdf85c4f8025daeba6d6b0794699104b))
+    - Rename `Kind::Single` to `Include` and add `Exclude` kind. ([`baf34c4`](https://github.com/Byron/gitoxide/commit/baf34c486f54e4699f88b06a0f8cbb10f0582bd0))
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - add fuzz target and basic docs on how to run it ([`febf070`](https://github.com/Byron/gitoxide/commit/febf0706b83b36a71efbe669ee760c2d4ef14b72))
+ * **Uncategorized**
+    - Release git-date v0.0.3, git-actor v0.11.1, git-attributes v0.3.1, git-tempfile v2.0.3, git-object v0.20.1, git-ref v0.15.1, git-config v0.6.1, git-diff v0.17.1, git-discover v0.4.0, git-bitmap v0.1.1, git-index v0.4.1, git-mailmap v0.3.1, git-traverse v0.16.1, git-pack v0.21.1, git-odb v0.31.1, git-packetline v0.12.6, git-url v0.7.1, git-transport v0.19.1, git-protocol v0.18.1, git-revision v0.4.0, git-worktree v0.4.1, git-repository v0.21.0, safety bump 5 crates ([`c96473d`](https://github.com/Byron/gitoxide/commit/c96473dce21c3464aacbc0a62d520c1a33172611))
+    - prepare changelogs prior to reelase ([`c06ae1c`](https://github.com/Byron/gitoxide/commit/c06ae1c606b6af9c2a12021103d99c2810750d60))
+    - Release git-hash v0.9.7, git-features v0.22.1 ([`232784a`](https://github.com/Byron/gitoxide/commit/232784a59ded3e8016e4257c7e146ad385cdd64a))
+    - Merge branch 'index-write-refactor' ([`805f432`](https://github.com/Byron/gitoxide/commit/805f432bf8e9d2dd9ede56caf959de386d5d80c7))
+    - adjust `git_date::parsea(str)` to use a str ([`0f8680a`](https://github.com/Byron/gitoxide/commit/0f8680a60913556b7fbd7543fda6a409ac05b121))
+    - Merge branch 'format_git_date_time' ([`99e12be`](https://github.com/Byron/gitoxide/commit/99e12bee16ab3f344c71818bfd1c95cf50e1721b))
+    - thanks clippy ([`4bd747c`](https://github.com/Byron/gitoxide/commit/4bd747cb3e126fe5b1d540270cfbd731cffd42ef))
+    - raise `git-revision` to the status of 'usable' ([`09eb1a6`](https://github.com/Byron/gitoxide/commit/09eb1a6e1eb5888b66b211500c73d72951058685))
+    - Merge branch 'write-index-files' into write-index-v2 ([`cddc2ca`](https://github.com/Byron/gitoxide/commit/cddc2ca06f63f66e887ff821452d1f56fb08fe6a))
+    - Merge branch 'write-index-files' into rev-parse-delegate ([`370110d`](https://github.com/Byron/gitoxide/commit/370110d3356528af38150c2280ed505354ceca5b))
+    - Add `Spec` data strcuture to fully represent a revision specification ([`5038ffa`](https://github.com/Byron/gitoxide/commit/5038ffab6a0f83e0566f99e3c92ae2dea266e10b))
+    - Merge branch 'main' into rev-parse-delegate ([`4ae2bed`](https://github.com/Byron/gitoxide/commit/4ae2bedfc25d1881d58ebdc54aca0936c68d4859))
+    - thanks clippy ([`ca82265`](https://github.com/Byron/gitoxide/commit/ca82265abfcce644265af64afc499d2de88c3cba))
+    - thanks clippy ([`19db44a`](https://github.com/Byron/gitoxide/commit/19db44a97d42f4fa77c681263cf509ee91f8fa6c))
+    - Merge branch 'main' into rev-parse-delegate ([`6da8250`](https://github.com/Byron/gitoxide/commit/6da82507588d3bc849217c11d9a1d398b67f2ed6))
+</details>
+
 ## 0.3.0 (2022-07-22)
 
 This is a maintenance release with no functional changes.
@@ -13,7 +221,7 @@ This is a maintenance release with no functional changes.
 
 <csr-read-only-do-not-edit/>
 
- - 9 commits contributed to the release over the course of 38 calendar days.
+ - 15 commits contributed to the release over the course of 38 calendar days.
  - 39 days passed between releases.
  - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
@@ -31,10 +239,16 @@ This is a maintenance release with no functional changes.
 <details><summary>view details</summary>
 
  * **[#427](https://github.com/Byron/gitoxide/issues/427)**
+    - provide better hints for parsing describe output ([`fb0b8ca`](https://github.com/Byron/gitoxide/commit/fb0b8ca6dfde391c28c83494e7280b2ea7e933da))
+    - improve describe hinting to allow hinting with describe-anchors as well ([`d993992`](https://github.com/Byron/gitoxide/commit/d99399287966ba2adf143222c3bd9ccdb4d135f9))
+    - support disambiguation of describe prefixes ([`637dcb0`](https://github.com/Byron/gitoxide/commit/637dcb09771c8df83436dc48d6a72804b400c5e1))
+    - First implementation of object peeling ([`b1ef03a`](https://github.com/Byron/gitoxide/commit/b1ef03abc8342adb4a0b67d7c86136720ee600e2))
+    - explicitly support leading `..` and `...` ([`723e803`](https://github.com/Byron/gitoxide/commit/723e8034eba511e5d98d559949ef6552a7ac7d27))
     - Support for explaining all navitation ([`ace9c89`](https://github.com/Byron/gitoxide/commit/ace9c8953bebc4a808c639e365010ed53c031622))
     - Handle lonely tilde gracefully ([`6fb834e`](https://github.com/Byron/gitoxide/commit/6fb834e06639febbe67a46e702cd523c4e7bd2a7))
     - refactor ([`1a15e12`](https://github.com/Byron/gitoxide/commit/1a15e120a75d29b3d3f7615af1a66a033dfd3c8b))
  * **Uncategorized**
+    - Release git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0 ([`aa639d8`](https://github.com/Byron/gitoxide/commit/aa639d8c43f3098cc4a5b50614c5ae94a8156928))
     - Release git-hash v0.9.6, git-features v0.22.0, git-date v0.0.2, git-actor v0.11.0, git-glob v0.3.1, git-path v0.4.0, git-attributes v0.3.0, git-tempfile v2.0.2, git-object v0.20.0, git-ref v0.15.0, git-sec v0.3.0, git-config v0.6.0, git-credentials v0.3.0, git-diff v0.17.0, git-discover v0.3.0, git-index v0.4.0, git-mailmap v0.3.0, git-traverse v0.16.0, git-pack v0.21.0, git-odb v0.31.0, git-url v0.7.0, git-transport v0.19.0, git-protocol v0.18.0, git-revision v0.3.0, git-worktree v0.4.0, git-repository v0.20.0, git-commitgraph v0.8.0, gitoxide-core v0.15.0, gitoxide v0.13.0, safety bump 22 crates ([`4737b1e`](https://github.com/Byron/gitoxide/commit/4737b1eea1d4c9a8d5a69fb63ecac5aa5d378ae5))
     - prepare changelog prior to release ([`3c50625`](https://github.com/Byron/gitoxide/commit/3c50625fa51350ec885b0f38ec9e92f9444df0f9))
     - make fmt ([`0700b09`](https://github.com/Byron/gitoxide/commit/0700b09d6828849fa2470df89af1f75a67bfb27d))
