@@ -1,12 +1,10 @@
 mod options;
 
 mod ask {
-    use std::process::Command;
-
     #[test]
     #[cfg(unix)]
     fn askpass_only() {
-        let mut cmd = Command::new(env!("CARGO"));
+        let mut cmd = std::process::Command::new(env!("CARGO"));
         cmd.args(["build", "--example", "use-askpass", "--example", "askpass"]);
         cmd.spawn().unwrap().wait().expect("example builds OK");
 
@@ -21,7 +19,7 @@ mod ask {
     #[test]
     #[cfg(unix)]
     fn username_password() {
-        let mut cmd = Command::new(env!("CARGO"));
+        let mut cmd = std::process::Command::new(env!("CARGO"));
         cmd.args(["build", "--example", "credentials"]);
         cmd.spawn().unwrap().wait().expect("example builds OK");
 
