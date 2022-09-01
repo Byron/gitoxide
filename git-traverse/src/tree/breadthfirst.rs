@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use git_hash::ObjectId;
 
-/// The error is part of the item returned by the [`traverse()`] function.
+/// The error is part of the item returned by the [`traverse()`][impl_::traverse()] function.
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

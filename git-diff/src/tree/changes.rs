@@ -28,7 +28,7 @@ impl<'a> tree::Changes<'a> {
     /// * The `state` maybe owned or mutably borrowed to allow reuses allocated data structures through multiple runs.
     /// * `locate` is a function `f(object_id, &mut buffer) -> Option<TreeIter>` to return a `TreeIter` for the given object id backing
     ///   its data in the given buffer. Returning `None` is unexpected as these trees are obtained during iteration, and in a typical
-    ///   database errors are not expected either which is why the error case is omitted. To allow proper error reporting, [`Error::NotFound`]
+    ///   database errors are not expected either which is why the error case is omitted. To allow proper error reporting, [`Error::FindExisting`]
     ///   should be converted into a more telling error.
     /// * `delegate` will receive the computed changes, see the [`Visit`][`tree::Visit`] trait for more information on what to expect.
     ///
