@@ -116,6 +116,19 @@ mod credential_helpers {
         });
 
         use git_repository as git;
+        pub fn works_but_we_dont_parse_invalid_url(url: &str) {
+            assert!(
+                git::url::parse(url.into()).is_err(),
+                "{:?} should not be parseable",
+                url
+            );
+            assert!(
+                BASELINE.get(url).is_some(),
+                "Url {} must be in baseline, whether it's valid or not",
+                url
+            );
+        }
+
         pub fn agrees_with(url: &str) {
             let repo = remote::repo("credential-helpers");
             let (cascade, mut action) = repo
@@ -148,5 +161,10 @@ mod credential_helpers {
     #[test]
     fn any_url_calls_global() {
         baseline::agrees_with("https://hit-global.helper");
+    }
+
+    #[test]
+    fn invalid_urls_are_rejected_early() {
+        baseline::works_but_we_dont_parse_invalid_url("ssh://host");
     }
 }
