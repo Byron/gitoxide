@@ -46,9 +46,8 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
         LinkedWorkTreeDir,
         WorkTreeGitDir { work_dir: std::path::PathBuf },
     }
-    let metadata = git_dir.as_ref().metadata().map_err(crate::is_git::Error::Metadata)?;
     let git_dir = git_dir.as_ref();
-    let (dot_git, common_dir, kind) = if metadata.is_file() {
+    let (dot_git, common_dir, kind) = if git_dir.metadata()?.is_file() {
         let private_git_dir = crate::path::from_gitdir_file(git_dir)?;
         let common_dir = private_git_dir.join("commondir");
         match crate::path::from_plain_file(&common_dir) {

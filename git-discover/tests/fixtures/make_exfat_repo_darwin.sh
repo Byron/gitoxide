@@ -3,12 +3,14 @@ set -eu -o pipefail
 
 [[ $(uname) == Darwin ]] || exit 1
 
-hdiutil create -size 10m -fs exfat -volname "test" exfat_repo.dmg
-mkdir exfat_mount
-hdiutil attach exfat_repo.dmg -nobrowse -mountpoint exfat_mount
+dmg_file=exfat_repo.dmg
+hdiutil create -size 10m -fs exfat -volname "test" $dmg_file
 
-(
-  cd exfat_mount
+mount=exfat_mount
+mkdir $mount
+hdiutil attach $dmg_file -nobrowse -mountpoint $mount
+
+(cd $mount
   git init -q
   git checkout -b main
   touch this
@@ -16,5 +18,5 @@ hdiutil attach exfat_repo.dmg -nobrowse -mountpoint exfat_mount
   git commit -q -m c1
 )
 
-hdiutil detach exfat_mount
-rm -R exfat_mount
+hdiutil detach $mount
+rm -R $mount

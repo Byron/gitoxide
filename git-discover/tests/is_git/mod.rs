@@ -16,7 +16,7 @@ fn verify_on_exfat() -> crate::Result<()> {
             .status()?;
 
         // Ensure that the mount point is always cleaned up
-        let cleanup = defer::defer({
+        defer::defer({
             let mount_point = mount_point.path().to_owned();
             move || {
                 Command::new("hdiutil")
@@ -25,8 +25,7 @@ fn verify_on_exfat() -> crate::Result<()> {
                     .status()
                     .expect("detach temporary test dmg filesystem successfully");
             }
-        });
-        cleanup
+        })
     };
 
     let is_git = git_discover::is_git(mount_point.path().join(".git"));
