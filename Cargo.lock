@@ -1185,7 +1185,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.18.0"
+version = "0.18.1"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1197,7 +1197,7 @@ dependencies = [
 
 [[package]]
 name = "git-discover"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "bstr",
  "defer",
@@ -1500,7 +1500,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.23.0"
+version = "0.23.1"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1653,7 +1653,7 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.16.3"
+version = "0.16.4"
 dependencies = [
  "git-hash",
  "git-object",
