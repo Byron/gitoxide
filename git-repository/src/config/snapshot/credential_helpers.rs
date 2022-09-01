@@ -17,7 +17,7 @@ mod error {
         },
     }
 }
-use crate::bstr::ByteVec;
+use crate::bstr::{ByteSlice, ByteVec};
 pub use error::Error;
 
 impl Snapshot<'_> {
@@ -45,14 +45,17 @@ impl Snapshot<'_> {
                 match section.header().subsection_name() {
                     Some(_) => {}
                     None => {
-                        for value in section.values("helper") {
+                        for value in section.values("helper").into_iter().filter(|v| !v.trim().is_empty()) {
                             programs.push(git_credentials::Program::from_custom_definition(value.into_owned()));
                         }
                         if let Some(Some(user)) = (!url_had_user_initially).then(|| {
-                            section.value("username").and_then(|n| {
-                                let n: Vec<_> = Cow::into_owned(n).into();
-                                n.into_string().ok()
-                            })
+                            section
+                                .value("username")
+                                .filter(|n| !n.trim().is_empty())
+                                .and_then(|n| {
+                                    let n: Vec<_> = Cow::into_owned(n).into();
+                                    n.into_string().ok()
+                                })
                         }) {
                             url.set_user(Some(user));
                         }
