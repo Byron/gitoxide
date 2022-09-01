@@ -46,64 +46,51 @@ pub fn git(git_dir: impl AsRef<Path>) -> Result<crate::repository::Kind, crate::
         LinkedWorkTreeDir,
         WorkTreeGitDir { work_dir: std::path::PathBuf },
     }
-    #[cfg(not(windows))]
-    fn is_directory(err: &std::io::Error) -> bool {
-        err.raw_os_error() == Some(21)
-    }
-    // TODO: use ::IsDirectory as well when stabilized, but it's permission denied on windows
-    #[cfg(windows)]
-    fn is_directory(err: &std::io::Error) -> bool {
-        err.kind() == std::io::ErrorKind::PermissionDenied
-    }
     let git_dir = git_dir.as_ref();
-    let (dot_git, common_dir, kind) = match crate::path::from_gitdir_file(git_dir) {
-        Ok(private_git_dir) => {
-            let common_dir = private_git_dir.join("commondir");
-            match crate::path::from_plain_file(&common_dir) {
-                Some(Err(err)) => {
-                    return Err(crate::is_git::Error::MissingCommonDir {
-                        missing: common_dir,
-                        source: err,
-                    })
-                }
-                Some(Ok(common_dir)) => {
-                    let common_dir = private_git_dir.join(common_dir);
-                    (
-                        Cow::Owned(private_git_dir),
-                        Cow::Owned(common_dir),
-                        Kind::LinkedWorkTreeDir,
-                    )
-                }
-                None => (
-                    Cow::Owned(private_git_dir.clone()),
+    let (dot_git, common_dir, kind) = if git_dir.metadata()?.is_file() {
+        let private_git_dir = crate::path::from_gitdir_file(git_dir)?;
+        let common_dir = private_git_dir.join("commondir");
+        match crate::path::from_plain_file(&common_dir) {
+            Some(Err(err)) => {
+                return Err(crate::is_git::Error::MissingCommonDir {
+                    missing: common_dir,
+                    source: err,
+                })
+            }
+            Some(Ok(common_dir)) => {
+                let common_dir = private_git_dir.join(common_dir);
+                (
                     Cow::Owned(private_git_dir),
-                    Kind::Submodule,
-                ),
+                    Cow::Owned(common_dir),
+                    Kind::LinkedWorkTreeDir,
+                )
             }
+            None => (
+                Cow::Owned(private_git_dir.clone()),
+                Cow::Owned(private_git_dir),
+                Kind::Submodule,
+            ),
         }
-        Err(crate::path::from_gitdir_file::Error::Io(err)) if is_directory(&err) => {
-            let common_dir = git_dir.join("commondir");
-            let worktree_and_common_dir =
-                crate::path::from_plain_file(common_dir)
+    } else {
+        let common_dir = git_dir.join("commondir");
+        let worktree_and_common_dir = crate::path::from_plain_file(common_dir)
+            .and_then(Result::ok)
+            .and_then(|cd| {
+                crate::path::from_plain_file(git_dir.join("gitdir"))
                     .and_then(Result::ok)
-                    .and_then(|cd| {
-                        crate::path::from_plain_file(git_dir.join("gitdir"))
-                            .and_then(Result::ok)
-                            .map(|worktree_gitfile| (crate::path::without_dot_git_dir(worktree_gitfile), cd))
-                    });
-            match worktree_and_common_dir {
-                Some((work_dir, common_dir)) => {
-                    let common_dir = git_dir.join(common_dir);
-                    (
-                        Cow::Borrowed(git_dir),
-                        Cow::Owned(common_dir),
-                        Kind::WorkTreeGitDir { work_dir },
-                    )
-                }
-                None => (Cow::Borrowed(git_dir), Cow::Borrowed(git_dir), Kind::MaybeRepo),
+                    .map(|worktree_gitfile| (crate::path::without_dot_git_dir(worktree_gitfile), cd))
+            });
+        match worktree_and_common_dir {
+            Some((work_dir, common_dir)) => {
+                let common_dir = git_dir.join(common_dir);
+                (
+                    Cow::Borrowed(git_dir),
+                    Cow::Owned(common_dir),
+                    Kind::WorkTreeGitDir { work_dir },
+                )
             }
+            None => (Cow::Borrowed(git_dir), Cow::Borrowed(git_dir), Kind::MaybeRepo),
         }
-        Err(err) => return Err(err.into()),
     };
 
     {

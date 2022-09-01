@@ -1,6 +1,6 @@
 [package]
 name = "git-discover"
-version = "0.4.1"
+version = "0.4.2"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "Discover git repositories and check if a directory is a git repository"

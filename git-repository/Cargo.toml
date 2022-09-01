@@ -3,7 +3,7 @@ name = "git-repository"
 repository = "https://github.com/Byron/gitoxide"
 description = "Abstractions for git repositories"
 license = "MIT/Apache-2.0"
-version = "0.23.0"
+version = "0.23.1"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 include = ["src/**/*", "CHANGELOG.md"]
@@ -57,7 +57,7 @@ serde1 = [  "serde",
 
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
 ## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
-max-performance = [ "fast-sha1", "max-performance-safe" ]
+max-performance = [ "git-features/zlib-ng-compat", "fast-sha1", "max-performance-safe" ]
 
 ## If enabled, use assembly versions of sha1 on supported platforms.
 ## This might cause compile failures as well which is why it can be turned off separately.
@@ -67,7 +67,6 @@ fast-sha1 = [ "git-features/fast-sha1" ]
 ## on some platforms.
 max-performance-safe = [
     "git-features/parallel",
-    "git-features/zlib-ng-compat",
     "git-pack/pack-cache-lru-static",
     "git-pack/pack-cache-lru-dynamic"
 ]
@@ -78,7 +77,7 @@ cache-efficiency-debug = ["git-features/cache-efficiency-debug"]
 
 [dependencies]
 git-ref = { version = "^0.15.4", path = "../git-ref" }
-git-discover = { version = "^0.4.1", path = "../git-discover" }
+git-discover = { version = "^0.4.2", path = "../git-discover" }
 git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-validate = { version = "^0.5.5", path = "../git-validate" }
@@ -96,10 +95,10 @@ git-revision = { version = "^0.4.4", path = "../git-revision" }
 
 git-path = { version = "^0.4.2", path = "../git-path" }
 git-url = { version = "^0.7.3", path = "../git-url" }
-git-traverse = { version = "^0.16.3", path = "../git-traverse" }
+git-traverse = { version = "^0.16.4", path = "../git-traverse" }
 git-protocol = { version = "^0.19.1", path = "../git-protocol", optional = true }
 git-transport = { version = "^0.19.3", path = "../git-transport", optional = true }
-git-diff = { version = "^0.18.0", path = "../git-diff" }
+git-diff = { version = "^0.18.1", path = "../git-diff" }
 git-mailmap = { version = "^0.3.2", path = "../git-mailmap" }
 git-features = { version = "^0.22.3", path = "../git-features", features = ["progress", "once_cell"] }
 

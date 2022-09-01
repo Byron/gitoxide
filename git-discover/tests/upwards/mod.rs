@@ -202,8 +202,11 @@ fn cross_fs() -> crate::Result {
             .arg(&dmg_file)
             .status()?;
 
+        // Symlink the mount point into the repo
+        symlink(mount_point.path(), top_level_repo.path().join("remote"))?;
+
         // Ensure that the mount point is always cleaned up
-        let cleanup = defer::defer({
+        defer::defer({
             let arg = mount_point.path().to_owned();
             move || {
                 Command::new("hdiutil")
@@ -212,11 +215,7 @@ fn cross_fs() -> crate::Result {
                     .status()
                     .expect("detach temporary test dmg filesystem successfully");
             }
-        });
-
-        // Symlink the mount point into the repo
-        symlink(mount_point.path(), top_level_repo.path().join("remote"))?;
-        cleanup
+        })
     };
 
     let res = git_discover::upwards(top_level_repo.path().join("remote"))

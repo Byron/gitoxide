@@ -36,7 +36,7 @@ serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serd
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
-git-repository = { version = "^0.23.0", path = "../git-repository", default-features = false }
+git-repository = { version = "^0.23.1", path = "../git-repository", default-features = false }
 git-pack-for-configuration-only = { package = "git-pack", version = "^0.22.0", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
 git-transport-configuration-only = { package = "git-transport", version = "^0.19.3", path = "../git-transport", default-features = false }
 git-commitgraph = { version = "^0.8.2", path = "../git-commitgraph" }

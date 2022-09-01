@@ -33,6 +33,8 @@ pub mod is_git {
         MissingRefsDirectory { missing: PathBuf },
         #[error(transparent)]
         GitFile(#[from] crate::path::from_gitdir_file::Error),
+        #[error("Could not retrieve metadata")]
+        Metadata(#[from] std::io::Error),
     }
 }
 
