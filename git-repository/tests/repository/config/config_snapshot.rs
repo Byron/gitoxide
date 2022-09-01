@@ -136,12 +136,12 @@ mod credential_helpers {
                 .credential_helpers(git::url::parse(url.into()).expect("valid input URL"))
                 .unwrap();
 
-            let actual_helpers: Vec<_> = cascade
+            let actual_helpers: Vec<BString> = cascade
                 .programs
                 .iter()
                 .map(|p| match &p.kind {
                     git_credentials::program::Kind::ExternalName { name_and_args } => {
-                        name_and_args.strip_prefix(b"git ").expect("resolved name").to_owned()
+                        name_and_args.strip_prefix(b"git ").expect("resolved name").into()
                     }
                     _ => panic!("need name helper"),
                 })
@@ -164,7 +164,15 @@ mod credential_helpers {
     }
 
     #[test]
+    #[ignore]
+    fn ssh_host_and_port_with_path_via_url_match() {
+        baseline::agrees_with("ssh://host:21/path");
+    }
+
+    #[test]
     fn invalid_urls_are_rejected_early() {
         baseline::works_but_we_dont_parse_invalid_url("ssh://host");
+        baseline::works_but_we_dont_parse_invalid_url("ssh://host:21");
+        baseline::works_but_we_dont_parse_invalid_url("git://host.org");
     }
 }
