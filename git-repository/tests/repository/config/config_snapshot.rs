@@ -127,7 +127,9 @@ mod credential_helpers {
                 .programs
                 .iter()
                 .map(|p| match &p.kind {
-                    git_credentials::program::Kind::ExternalName { name_and_args } => name_and_args.to_owned(),
+                    git_credentials::program::Kind::ExternalName { name_and_args } => {
+                        name_and_args.strip_prefix(b"git ").expect("resolved name").to_owned()
+                    }
                     _ => panic!("need name helper"),
                 })
                 .collect();
@@ -144,7 +146,6 @@ mod credential_helpers {
     }
 
     #[test]
-    #[ignore]
     fn any_url_calls_global() {
         baseline::agrees_with("https://hit-global.helper");
     }

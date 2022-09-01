@@ -43,7 +43,7 @@ impl Snapshot<'_> {
         {
             for section in credential_sections {
                 match section.header().subsection_name() {
-                    Some(_) => todo!("url matching"),
+                    Some(_) => {}
                     None => {
                         for value in section.values("helper") {
                             programs.push(git_credentials::Program::from_custom_definition(value.into_owned()));
