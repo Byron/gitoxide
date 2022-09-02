@@ -90,7 +90,7 @@ git-refspec = { version = "^0.1.1", path = "../git-refspec" }
 
 git-config = { version = "^0.7.1", path = "../git-config" }
 git-odb = { version = "^0.32.0", path = "../git-odb" }
-git-hash = { version = "^0.9.8", path = "../git-hash" }
+git-hash = { version = "^0.9.9", path = "../git-hash" }
 git-object = { version = "^0.20.3", path = "../git-object" }
 git-actor = { version = "^0.11.4", path = "../git-actor" }
 git-pack = { version = "^0.22.0", path = "../git-pack", features = ["object-cache-dynamic"] }
