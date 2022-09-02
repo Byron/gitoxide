@@ -14,7 +14,7 @@ mod borrowed;
 pub use borrowed::oid;
 
 mod object_id;
-pub use object_id::ObjectId;
+pub use object_id::{decode, ObjectId};
 
 ///
 pub mod prefix;
@@ -26,50 +26,6 @@ pub mod prefix;
 pub struct Prefix {
     bytes: ObjectId,
     hex_len: usize,
-}
-
-#[allow(missing_docs)]
-pub mod decode {
-    use std::str::FromStr;
-
-    use quick_error::quick_error;
-
-    use crate::object_id::ObjectId;
-
-    quick_error! {
-        /// An error returned by [`ObjectId::from_40_bytes_in_hex()`]
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            InvalidHexEncodingLength(length: usize) {
-                display("A hash sized {} hexadecimal characters is invalid", length)
-            }
-        }
-    }
-
-    /// Hash decoding
-    impl ObjectId {
-        /// Create an instance from a `buffer` of 40 bytes encoded with hexadecimal notation.
-        ///
-        /// Such a buffer can be obtained using [`oid::write_hex_to(buffer)`][super::oid::write_hex_to()]
-        pub fn from_hex(buffer: &[u8]) -> Result<ObjectId, Error> {
-            use hex::FromHex;
-            match buffer.len() {
-                40 => Ok(ObjectId::Sha1(
-                    <[u8; 20]>::from_hex(buffer).expect("our length check is correct thus we can decode hex"),
-                )),
-                len => Err(Error::InvalidHexEncodingLength(len)),
-            }
-        }
-    }
-
-    impl FromStr for ObjectId {
-        type Err = Error;
-
-        fn from_str(s: &str) -> Result<Self, Self::Err> {
-            Self::from_hex(s.as_bytes())
-        }
-    }
 }
 
 /// The size of a SHA1 hash digest in bytes
