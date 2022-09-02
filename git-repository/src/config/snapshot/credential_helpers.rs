@@ -34,6 +34,7 @@ impl Snapshot<'_> {
         let mut programs = Vec::new();
         let mut use_http_path = false;
         let url_had_user_initially = url.user().is_some();
+        let mut url_str = None;
 
         if let Some(credential_sections) = self
             .repo
@@ -42,37 +43,42 @@ impl Snapshot<'_> {
             .sections_by_name_and_filter("credential", &mut self.repo.filter_config_section())
         {
             for section in credential_sections {
-                match section.header().subsection_name() {
-                    Some(_) => {}
-                    None => {
-                        for value in section.values("helper").into_iter().filter(|v| !v.trim().is_empty()) {
-                            programs.push(git_credentials::Program::from_custom_definition(value.into_owned()));
-                        }
-                        if let Some(Some(user)) = (!url_had_user_initially).then(|| {
-                            section
-                                .value("username")
-                                .filter(|n| !n.trim().is_empty())
-                                .and_then(|n| {
-                                    let n: Vec<_> = Cow::into_owned(n).into();
-                                    n.into_string().ok()
-                                })
-                        }) {
-                            url.set_user(Some(user));
-                        }
-                        if let Some(toggle) = section
-                            .value("useHttpPath")
-                            .map(|val| {
-                                git_config::Boolean::try_from(val)
-                                    .map_err(|err| Error::InvalidUseHttpPath {
-                                        source: err,
-                                        section: section.header().to_bstring(),
-                                    })
-                                    .map(|b| b.0)
+                let section = match section.header().subsection_name() {
+                    Some(pattern) => {
+                        let url = url_str.get_or_insert_with(|| url.to_bstring());
+                        git_glob::wildmatch(pattern, url.as_ref(), git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL)
+                            .then(|| section)
+                    }
+                    None => Some(section),
+                };
+                if let Some(section) = section {
+                    for value in section.values("helper").into_iter().filter(|v| !v.trim().is_empty()) {
+                        programs.push(git_credentials::Program::from_custom_definition(value.into_owned()));
+                    }
+                    if let Some(Some(user)) = (!url_had_user_initially).then(|| {
+                        section
+                            .value("username")
+                            .filter(|n| !n.trim().is_empty())
+                            .and_then(|n| {
+                                let n: Vec<_> = Cow::into_owned(n).into();
+                                n.into_string().ok()
                             })
-                            .transpose()?
-                        {
-                            use_http_path = toggle;
-                        }
+                    }) {
+                        url.set_user(Some(user));
+                    }
+                    if let Some(toggle) = section
+                        .value("useHttpPath")
+                        .map(|val| {
+                            git_config::Boolean::try_from(val)
+                                .map_err(|err| Error::InvalidUseHttpPath {
+                                    source: err,
+                                    section: section.header().to_bstring(),
+                                })
+                                .map(|b| b.0)
+                        })
+                        .transpose()?
+                    {
+                        use_http_path = toggle;
                     }
                 }
             }

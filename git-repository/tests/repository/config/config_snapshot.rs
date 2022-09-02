@@ -164,7 +164,11 @@ mod credential_helpers {
     }
 
     #[test]
-    #[ignore]
+    fn ssh_host_with_path_via_url_match() {
+        baseline::agrees_with("ssh://host/path");
+    }
+
+    #[test]
     fn ssh_host_and_port_with_path_via_url_match() {
         baseline::agrees_with("ssh://host:21/path");
     }
