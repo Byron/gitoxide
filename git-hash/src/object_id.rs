@@ -16,7 +16,7 @@ pub mod decode {
 
     use crate::object_id::ObjectId;
 
-    /// An error returned by [`ObjectId::from_40_bytes_in_hex()`]
+    /// An error returned by [`ObjectId::from_40_bytes_in_hex()`][crate::ObjectId::from_40_bytes_in_hex()]
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
