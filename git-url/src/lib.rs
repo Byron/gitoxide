@@ -92,6 +92,20 @@ impl Url {
     pub fn path_is_root(&self) -> bool {
         self.path == "/"
     }
+    /// Returns the actual or default port for use according to the url scheme.
+    /// Note that there may be no default port either.
+    pub fn port_or_default(&self) -> Option<u16> {
+        self.port.or_else(|| {
+            use Scheme::*;
+            Some(match self.scheme {
+                Http => 80,
+                Https => 443,
+                Ssh => 21,
+                Git => 9418,
+                File | Ext(_) => return None,
+            })
+        })
+    }
 }
 
 /// Serialization
