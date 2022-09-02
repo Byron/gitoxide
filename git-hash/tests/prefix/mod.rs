@@ -74,7 +74,8 @@ mod new {
 mod try_from {
     use std::{cmp::Ordering, convert::TryFrom};
 
-    use git_hash::{prefix::from_hex::Error, Prefix};
+    use git_hash::prefix::from_hex::Error;
+    use git_hash::Prefix;
     use git_testtools::hex_to_id;
 
     #[test]

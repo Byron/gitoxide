@@ -2,18 +2,6 @@ use std::{borrow::Borrow, convert::TryInto, fmt, ops::Deref};
 
 use crate::{borrowed::oid, Kind, SIZE_OF_SHA1_DIGEST};
 
-/// An partial owned hash possibly identifying an object uniquely,
-/// whose non-prefix bytes are zeroed.
-#[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy, Debug)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Prefix {
-    bytes: ObjectId,
-    hex_len: usize,
-}
-
-///
-pub mod prefix;
-
 /// An owned hash identifying objects, most commonly Sha1
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
