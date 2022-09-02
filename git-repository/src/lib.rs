@@ -114,9 +114,6 @@
 //!   * [`transport`][protocol::transport]
 //!     * [`packetline`][protocol::transport::packetline]
 //!
-//! # Deviation
-//!
-//! - Invalid urls can't be used to obtain credential helpers as they are rejected early.
 //!
 //! ## Feature Flags
 #![cfg_attr(

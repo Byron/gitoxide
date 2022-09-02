@@ -201,6 +201,8 @@ git clone --shared base credential-helpers
 
     git config credential.helper ""
     git config --add credential.helper global
+    git config credential.https://*.helper all-https
+    git config credential.http://*.helper all-http
     git config credential.https://example.com:8080.helper example-with-port
     git config credential.https://example.com:8080/path.helper example-with-port-and-path
     git config credential.https://example.com:8080/path.usehttppath 1

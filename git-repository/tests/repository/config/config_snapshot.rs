@@ -164,6 +164,12 @@ mod credential_helpers {
     }
 
     #[test]
+    fn http_urls_always_match_verbatim_without_special_rules() {
+        baseline::agrees_with("https://example.com:8080/other/path");
+        baseline::agrees_with("https://example.com:8080/path");
+    }
+
+    #[test]
     fn ssh_host_with_path_via_url_match() {
         baseline::agrees_with("ssh://host/path");
     }

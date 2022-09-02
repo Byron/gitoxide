@@ -27,6 +27,10 @@ impl Snapshot<'_> {
     ///
     /// These can be invoked to obtain credentials. Note that the `url` is expected to be the one used
     /// to connect to a remote, and thus should already have passed the url-rewrite engine.
+    ///
+    /// # Deviation
+    ///
+    /// - Invalid urls can't be used to obtain credential helpers as they are rejected early when creating a valid `url` here.
     pub fn credential_helpers(
         &self,
         mut url: git_url::Url,
@@ -45,9 +49,27 @@ impl Snapshot<'_> {
             for section in credential_sections {
                 let section = match section.header().subsection_name() {
                     Some(pattern) => {
-                        let url = url_str.get_or_insert_with(|| url.to_bstring());
-                        git_glob::wildmatch(pattern, url.as_ref(), git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL)
-                            .then(|| section)
+                        let url_str = url_str.get_or_insert_with(|| url.to_bstring());
+                        if git_glob::wildmatch(
+                            pattern,
+                            url_str.as_ref(),
+                            git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
+                        ) {
+                            Some(section)
+                        } else {
+                            git_url::parse(pattern)
+                                .ok()
+                                .filter(|pattern| {
+                                    if matches!(pattern.scheme, git_url::Scheme::Https | git_url::Scheme::Http)
+                                        && pattern.path_is_root()
+                                    {
+                                        pattern.host() == url.host()
+                                    } else {
+                                        pattern == &url
+                                    }
+                                })
+                                .map(|_| section)
+                        }
                     }
                     None => Some(section),
                 };
