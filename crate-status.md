@@ -449,16 +449,21 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [x] discovery
         * [x] option to not cross file systems (default)
         * [x] handle git-common-dir
-        * [ ] support for `GIT_CEILING_DIRECTORIES` environment variable
+        * [x] support for `GIT_CEILING_DIRECTORIES` environment variable
         * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
     * [x] rev-parse
-        - **deviation**
-            * `@` actually stands for `HEAD`, whereas `git` resolves it to the object pointed to by `HEAD` without making the `HEAD` ref available for lookups.
     * [x] rev-walk
       * [x] include tips
       * [ ] exclude commits
     * [x] instantiation
     * [x] access to refs and objects
+    * **credentials**
+      * [x] run `git credential` directly
+      * [x] use credential helper configuration and to obtain credentials with `git_credential::helper::Cascade`
+          - [ ] perfectly reproduce the `url-match` algorithm
+    * **config**
+      * [ ] facilities to apply the [url-match](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httplturlgt) algorithm and to
+            [normalize urls](https://github.com/git/git/blob/be1a02a17ede4082a86dfbfee0f54f345e8b43ac/urlmatch.c#L109:L109) before comparison.
     * **traverse** 
       * [x] commit graphs
       * [ ] make [git-notes](https://git-scm.com/docs/git-notes) accessible
@@ -490,8 +495,10 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
           * [ ] shallow
         * [ ] fetch
         * [ ] push
-        * [ ] ls-refs
-        * [ ] list, find by name, create in memory.
+        * [x] ls-refs
+        * [ ] ls-refs with ref-spec filter
+        * [ ] list, find by name
+        * [x] create in memory
         * [ ] groups
         * [ ] [remote and branch files](https://github.com/git/git/blob/master/remote.c#L300)
   * [ ] execute hooks
