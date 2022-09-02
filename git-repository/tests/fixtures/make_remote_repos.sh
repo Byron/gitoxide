@@ -203,6 +203,8 @@ git clone --shared base credential-helpers
     git config --add credential.helper global
     git config credential.https://*.helper all-https
     git config credential.http://*.helper all-http
+    git config credential.http://example.com:80.helper http-example-with-default-port
+    git config credential.http://example.com:8080.helper http-example-with-port
     git config credential.https://example.com:8080.helper example-with-port
     git config credential.https://example.com:8080/path.helper example-with-port-and-path
     git config credential.https://example.com:8080/path.usehttppath 1
@@ -213,6 +215,10 @@ git clone --shared base credential-helpers
     git config credential.https://dev.azure.com.usehttppath true
 
     baseline "https://hit-global.helper"
+    baseline "http://example.com:80"
+    baseline "http://example.com:80/"
+    baseline "http://example.com"
+    baseline "http://example.com:8080/other/path"
     baseline "https://example.com:8080/other/path"
     baseline "https://example.com:8080/path"
     baseline "ssh://host/path"

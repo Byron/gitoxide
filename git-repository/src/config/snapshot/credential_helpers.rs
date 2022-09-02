@@ -31,6 +31,8 @@ impl Snapshot<'_> {
     /// # Deviation
     ///
     /// - Invalid urls can't be used to obtain credential helpers as they are rejected early when creating a valid `url` here.
+    /// - Parsed urls will automatically drop the port if it's the default, i.e. `http://host:80` becomes `http://host` when parsed.
+    ///   This affects the prompt provided to the user, so that git will use the verbatim url, whereas we use `http://host`.
     pub fn credential_helpers(
         &self,
         mut url: git_url::Url,
@@ -63,7 +65,9 @@ impl Snapshot<'_> {
                                     if matches!(pattern.scheme, git_url::Scheme::Https | git_url::Scheme::Http)
                                         && pattern.path_is_root()
                                     {
-                                        pattern.host() == url.host()
+                                        pattern.scheme == url.scheme
+                                            && pattern.host() == url.host()
+                                            && pattern.port_or_default() == url.port_or_default()
                                     } else {
                                         pattern == &url
                                     }

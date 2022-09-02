@@ -129,7 +129,7 @@ mod credential_helpers {
             );
         }
 
-        pub fn agrees_with(url: &str) {
+        fn agrees_with_inner(url: &str, ignore_expected_prompt_port: bool) {
             let repo = remote::repo("credential-helpers");
             let (cascade, mut action) = repo
                 .config_snapshot()
@@ -154,7 +154,24 @@ mod credential_helpers {
 
             let ctx = action.context_mut().expect("get/fill");
             ctx.destructure_url_in_place(cascade.use_http_path).unwrap();
-            assert_eq!(ctx.to_url().expect("parts complete"), expected.prompt_url);
+            if ignore_expected_prompt_port {
+                assert_eq!(
+                    ctx.to_url().expect("parts complete"),
+                    expected
+                        .prompt_url
+                        .trim_end_matches(|b: char| b == ':' || b.is_numeric())
+                );
+            } else {
+                assert_eq!(ctx.to_url().expect("parts complete"), expected.prompt_url);
+            }
+        }
+
+        pub fn agrees_with(url: &str) {
+            agrees_with_inner(url, false)
+        }
+
+        pub fn agrees_with_but_drops_default_port(url: &str) {
+            agrees_with_inner(url, true)
         }
     }
 
@@ -164,9 +181,17 @@ mod credential_helpers {
     }
 
     #[test]
-    fn http_urls_always_match_verbatim_without_special_rules() {
+    fn https_urls_match_the_host_without_path_as_well() {
         baseline::agrees_with("https://example.com:8080/other/path");
         baseline::agrees_with("https://example.com:8080/path");
+    }
+
+    #[test]
+    fn http_urls_match_the_host_without_path_as_well() {
+        baseline::agrees_with("http://example.com:8080/other/path");
+        baseline::agrees_with_but_drops_default_port("http://example.com:80/");
+        baseline::agrees_with_but_drops_default_port("http://example.com:80");
+        baseline::agrees_with("http://example.com");
     }
 
     #[test]
