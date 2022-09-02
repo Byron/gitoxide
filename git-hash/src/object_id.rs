@@ -14,22 +14,16 @@ pub enum ObjectId {
 pub mod decode {
     use std::str::FromStr;
 
-    use quick_error::quick_error;
-
     use crate::object_id::ObjectId;
 
-    quick_error! {
-        /// An error returned by [`ObjectId::from_40_bytes_in_hex()`]
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            InvalidHexEncodingLength(length: usize) {
-                display("A hash sized {} hexadecimal characters is invalid", length)
-            }
-            Invalid { c: char, index: usize } {
-                display("Invalid character {} at position {}", c, index)
-            }
-        }
+    /// An error returned by [`ObjectId::from_40_bytes_in_hex()`]
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("A hash sized {0} hexadecimal characters is invalid")]
+        InvalidHexEncodingLength(usize),
+        #[error("Invalid character {c} at position {index}")]
+        Invalid { c: char, index: usize },
     }
 
     /// Hash decoding

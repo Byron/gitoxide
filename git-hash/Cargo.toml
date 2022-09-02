@@ -17,7 +17,7 @@ test = false
 serde1 = ["serde"]
 
 [dependencies]
-quick-error = "2.0.0"
+thiserror = "1.0.33"
 hex = "0.4.2"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 

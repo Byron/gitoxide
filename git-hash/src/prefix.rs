@@ -1,41 +1,35 @@
 use std::{cmp::Ordering, convert::TryFrom};
 
-use quick_error::quick_error;
-
 use crate::{oid, ObjectId, Prefix};
 
-quick_error! {
-    /// The error returned by [Prefix::try_from_id()][super::Prefix::try_from_id()].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        TooShort { hex_len: usize } {
-            display("The minimum hex length of a short object id is {}, got {}", Prefix::MIN_HEX_LEN, hex_len)
-        }
-        TooLong { object_kind: crate::Kind, hex_len: usize } {
-            display("An object of kind {} cannot be larger than {} in hex, but {} was requested", object_kind, object_kind.len_in_hex(), hex_len)
-        }
-    }
+/// The error returned by [Prefix::try_from_id()][super::Prefix::try_from_id()].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(
+        "The minimum hex length of a short object id is {}, got {hex_len}",
+        Prefix::MIN_HEX_LEN
+    )]
+    TooShort { hex_len: usize },
+    #[error("An object of kind {} cannot be larger than {object_kind} in hex, but {hex_len} was requested")]
+    TooLong { object_kind: crate::Kind, hex_len: usize },
 }
 
 ///
 pub mod from_hex {
-    use quick_error::quick_error;
-    quick_error! {
-        /// The error returned by [Prefix::from_hex][super::Prefix::from_hex()].
-        #[derive(Debug, Eq, PartialEq)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            TooShort { hex_len: usize } {
-                display("The minimum hex length of a short object id is {}, got {}", super::Prefix::MIN_HEX_LEN, hex_len)
-            }
-            TooLong { hex_len: usize } {
-                display("An id cannot be larger than {} chars in hex, but {} was requested", crate::Kind::longest().len_in_hex(), hex_len)
-            }
-            Invalid { c: char, index: usize } {
-                display("Invalid character {} at position {}", c, index)
-            }
-        }
+    /// The error returned by [Prefix::from_hex][super::Prefix::from_hex()].
+    #[derive(Debug, Eq, PartialEq, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(
+            "The minimum hex length of a short object id is {}, got {hex_len}",
+            super::Prefix::MIN_HEX_LEN
+        )]
+        TooShort { hex_len: usize },
+        #[error("An id cannot be larger than {} chars in hex, but {hex_len} was requested", crate::Kind::longest().len_in_hex())]
+        TooLong { hex_len: usize },
+        #[error("Invalid character {c} at position {index}")]
+        Invalid { c: char, index: usize },
     }
 }
 
