@@ -1,7 +1,19 @@
+use bstr::ByteSlice;
 use git_url::Scheme;
 
 fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
-    assert_eq!(git_url::parse(url.into())?, expected);
+    let actual = git_url::parse(url.into())?;
+    assert_eq!(actual, expected);
+    if actual.scheme.as_str().starts_with("http") {
+        assert!(
+            actual.path.starts_with_str("/"),
+            "paths are never empty and at least '/': {:?}",
+            actual.path
+        );
+        if actual.path.len() < 2 {
+            assert!(actual.path_is_root())
+        }
+    }
     Ok(expected)
 }
 

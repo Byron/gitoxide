@@ -8,9 +8,6 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
-use std::convert::TryFrom;
-use std::path::PathBuf;
-
 use bstr::{BStr, BString};
 
 ///
@@ -43,20 +40,8 @@ pub struct Url {
     host: Option<String>,
     /// The port to use when connecting to a host. If `None`, standard ports depending on `scheme` will be used.
     pub port: Option<u16>,
-    /// The path portion of the URL, usually the location of the git repository, and at least `/`
+    /// The path portion of the URL, usually the location of the git repository.
     pub path: bstr::BString,
-}
-
-impl Default for Url {
-    fn default() -> Self {
-        Url {
-            scheme: Scheme::Ssh,
-            user: None,
-            host: None,
-            port: None,
-            path: bstr::BString::default(),
-        }
-    }
 }
 
 /// Instantiation
@@ -102,6 +87,10 @@ impl Url {
     /// Returns the host mentioned in the url, if present.
     pub fn host(&self) -> Option<&str> {
         self.host.as_deref()
+    }
+    /// Returns true if the path portion of the url is `/`.
+    pub fn path_is_root(&self) -> bool {
+        self.path == "/"
     }
 }
 
@@ -152,54 +141,4 @@ impl Url {
     }
 }
 
-impl TryFrom<&str> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Self::from_bytes(value.into())
-    }
-}
-
-impl TryFrom<String> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        Self::from_bytes(value.as_str().into())
-    }
-}
-
-impl TryFrom<PathBuf> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
-        use std::convert::TryInto;
-        git_path::into_bstr(value).try_into()
-    }
-}
-
-impl TryFrom<&std::ffi::OsStr> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: &std::ffi::OsStr) -> Result<Self, Self::Error> {
-        use std::convert::TryInto;
-        git_path::os_str_into_bstr(value)
-            .expect("no illformed UTF-8 on Windows")
-            .try_into()
-    }
-}
-
-impl TryFrom<&BStr> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: &BStr) -> Result<Self, Self::Error> {
-        Self::from_bytes(value)
-    }
-}
-
-impl<'a> TryFrom<std::borrow::Cow<'a, BStr>> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: std::borrow::Cow<'a, BStr>) -> Result<Self, Self::Error> {
-        Self::try_from(&*value)
-    }
-}
+mod impls;
