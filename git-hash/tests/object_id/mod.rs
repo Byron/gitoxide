@@ -1,5 +1,19 @@
 mod from_hex {
 
+    mod valid {
+        use git_hash::ObjectId;
+
+        #[test]
+        fn twenty_hex_chars_lowercase() {
+            assert!(ObjectId::from_hex(b"1234567890abcdefaaaaaaaaaaaaaaaaaaaaaaaa").is_ok());
+        }
+
+        #[test]
+        fn twenty_hex_chars_uppercase() {
+            assert!(ObjectId::from_hex(b"1234567890ABCDEFAAAAAAAAAAAAAAAAAAAAAAAA").is_ok());
+        }
+    }
+
     mod invalid {
         use git_hash::{decode, ObjectId};
 
