@@ -5,7 +5,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.9.9 (2022-09-02)
+
+### Bug Fixes
+
+ - <csr-id-aaed7eaf4887d5e499437d45c8284bc8941da2ac/> don't assume hex-only characters in `ObjectId::from_hex(…)`.
+
+
+### Refactor
+
+ - <csr-id-7926f47ebc34e11c769acfd3441ab391fc1b9b36/> replace `quickerror` with `thiserror`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release.
+ - 9 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#522](https://github.com/Byron/gitoxide/issues/522)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#522](https://github.com/Byron/gitoxide/issues/522)**
+    - don't assume hex-only characters in `ObjectId::from_hex(…)`. ([`aaed7ea`](https://github.com/Byron/gitoxide/commit/aaed7eaf4887d5e499437d45c8284bc8941da2ac))
+    - refactor ([`f3bcddf`](https://github.com/Byron/gitoxide/commit/f3bcddff931e50472e7a3e8c2c60f3cd565bfa56))
+    - refactor ([`0f0de2b`](https://github.com/Byron/gitoxide/commit/0f0de2ba7837e2044e22a16b6d5e20b3137e9691))
+ * **Uncategorized**
+    - fix docs ([`71cb9ea`](https://github.com/Byron/gitoxide/commit/71cb9eaefb792656b6380fdcc760c2234f9b9fa7))
+    - replace `quickerror` with `thiserror` ([`7926f47`](https://github.com/Byron/gitoxide/commit/7926f47ebc34e11c769acfd3441ab391fc1b9b36))
+    - some more tests ([`400c6cb`](https://github.com/Byron/gitoxide/commit/400c6cb14fe24b5e947f0c7f3a105deecd3b2f84))
+</details>
+
 ## 0.9.8 (2022-08-24)
+
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
 
 ### Chore
 
@@ -20,9 +58,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 3 calendar days.
+ - 5 commits contributed to the release over the course of 3 calendar days.
  - 8 days passed between releases.
- - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -32,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-date v0.0.5, git-hash v0.9.8, git-features v0.22.2, git-actor v0.11.3, git-glob v0.3.2, git-quote v0.2.1, git-attributes v0.3.2, git-tempfile v2.0.4, git-lock v2.1.1, git-validate v0.5.5, git-object v0.20.2, git-ref v0.15.2, git-sec v0.3.1, git-config v0.7.0, git-credentials v0.4.0, git-diff v0.17.2, git-discover v0.4.1, git-bitmap v0.1.2, git-index v0.4.2, git-mailmap v0.3.2, git-chunk v0.3.1, git-traverse v0.16.2, git-pack v0.21.2, git-odb v0.31.2, git-packetline v0.12.7, git-url v0.7.2, git-transport v0.19.2, git-protocol v0.19.0, git-revision v0.4.2, git-refspec v0.1.0, git-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
     - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
     - use docsrs feature in code to show what is feature-gated automatically on docs.rs ([`b1c40b0`](https://github.com/Byron/gitoxide/commit/b1c40b0364ef092cd52d03b34f491b254816b18d))
     - uniformize deny attributes ([`f7f136d`](https://github.com/Byron/gitoxide/commit/f7f136dbe4f86e7dee1d54835c420ec07c96cd78))
@@ -53,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 9 commits contributed to the release over the course of 19 calendar days.
  - 24 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Thanks Clippy
@@ -91,7 +130,7 @@ This is a maintenance release with no functional changes.
 
  - 3 commits contributed to the release over the course of 12 calendar days.
  - 39 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -120,7 +159,7 @@ This is a maintenance release with no functional changes.
 
  - 3 commits contributed to the release over the course of 5 calendar days.
  - 25 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Commit Details
@@ -151,7 +190,7 @@ This is a maintenance release with no functional changes.
 
  - 10 commits contributed to the release over the course of 46 calendar days.
  - 46 days passed between releases.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#413](https://github.com/Byron/gitoxide/issues/413)
 
 ### Commit Details
@@ -194,7 +233,7 @@ This is a maintenance release with no functional changes.
 
  - 17 commits contributed to the release over the course of 54 calendar days.
  - 59 days passed between releases.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#331](https://github.com/Byron/gitoxide/issues/331)
 
 ### Commit Details
@@ -243,7 +282,7 @@ A automated maintenance release without impact to the public API.
 
  - 4 commits contributed to the release over the course of 8 calendar days.
  - 8 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#298](https://github.com/Byron/gitoxide/issues/298)
 
 ### Commit Details
@@ -315,7 +354,7 @@ A automated maintenance release without impact to the public API.
 
  - 3 commits contributed to the release over the course of 3 calendar days.
  - 4 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -381,7 +420,7 @@ A automated maintenance release without impact to the public API.
 
  - 25 commits contributed to the release over the course of 30 calendar days.
  - 92 days passed between releases.
- - 16 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 16 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#293](https://github.com/Byron/gitoxide/issues/293)
 
 ### Commit Details
@@ -433,7 +472,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 
  - 5 commits contributed to the release over the course of 3 calendar days.
  - 3 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com/Byron/gitoxide/issues/222)
 
 ## v0.7.0 (2021-10-15)
@@ -452,7 +491,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 
  - 16 commits contributed to the release over the course of 11 calendar days.
  - 38 days passed between releases.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#198](https://github.com/Byron/gitoxide/issues/198)
 
 ### Commit Details
@@ -494,7 +533,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 
  - 2 commits contributed to the release over the course of 1 calendar day.
  - 20 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -516,7 +555,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 
  - 2 commits contributed to the release over the course of 1 calendar day.
  - 6 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -538,7 +577,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 
  - 10 commits contributed to the release over the course of 74 calendar days.
  - 102 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -574,7 +613,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 
  - 5 commits contributed to the release over the course of 16 calendar days.
  - 21 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -599,7 +638,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 
  - 20 commits contributed to the release over the course of 1 calendar day.
  - 86 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#63](https://github.com/Byron/gitoxide/issues/63)
 
 ### Commit Details
@@ -640,7 +679,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 
  - 3 commits contributed to the release over the course of 26 calendar days.
  - 27 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -662,7 +701,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -683,7 +722,7 @@ A maintenance release due to reset the entire crate graph to new minor releases.
 <csr-read-only-do-not-edit/>
 
  - 1 commit contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details

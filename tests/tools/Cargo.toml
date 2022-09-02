@@ -14,7 +14,7 @@ path = "src/main.rs"
 doctest = false
 
 [dependencies]
-git-hash = { version = "^0.9.8", path = "../../git-hash" }
+git-hash = { version = "^0.9.9", path = "../../git-hash" }
 git-lock = { version = "^2.0.0", path = "../../git-lock" }
 git-discover = { version = "^0.4.2", path = "../../git-discover" }
 git-attributes = { version = "^0.3.3", path = "../../git-attributes" }

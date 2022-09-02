@@ -2,18 +2,6 @@ use std::{borrow::Borrow, convert::TryInto, fmt, ops::Deref};
 
 use crate::{borrowed::oid, Kind, SIZE_OF_SHA1_DIGEST};
 
-/// An partial owned hash possibly identifying an object uniquely,
-/// whose non-prefix bytes are zeroed.
-#[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy, Debug)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Prefix {
-    bytes: ObjectId,
-    hex_len: usize,
-}
-
-///
-pub mod prefix;
-
 /// An owned hash identifying objects, most commonly Sha1
 #[derive(PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -22,15 +10,49 @@ pub enum ObjectId {
     Sha1([u8; SIZE_OF_SHA1_DIGEST]),
 }
 
-impl std::fmt::Debug for ObjectId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ObjectId::Sha1(_hash) => f.write_str("Sha1(")?,
+#[allow(missing_docs)]
+pub mod decode {
+    use std::str::FromStr;
+
+    use crate::object_id::ObjectId;
+
+    /// An error returned by [`ObjectId::from_40_bytes_in_hex()`][crate::ObjectId::from_40_bytes_in_hex()]
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("A hash sized {0} hexadecimal characters is invalid")]
+        InvalidHexEncodingLength(usize),
+        #[error("Invalid character {c} at position {index}")]
+        Invalid { c: char, index: usize },
+    }
+
+    /// Hash decoding
+    impl ObjectId {
+        /// Create an instance from a `buffer` of 40 bytes encoded with hexadecimal notation.
+        ///
+        /// Such a buffer can be obtained using [`oid::write_hex_to(buffer)`][super::oid::write_hex_to()]
+        pub fn from_hex(buffer: &[u8]) -> Result<ObjectId, Error> {
+            use hex::FromHex;
+            match buffer.len() {
+                40 => Ok(ObjectId::Sha1(<[u8; 20]>::from_hex(buffer).map_err(
+                    |err| match err {
+                        hex::FromHexError::InvalidHexCharacter { c, index } => Error::Invalid { c, index },
+                        hex::FromHexError::OddLength | hex::FromHexError::InvalidStringLength => {
+                            unreachable!("BUG: This is already checked")
+                        }
+                    },
+                )?)),
+                len => Err(Error::InvalidHexEncodingLength(len)),
+            }
         }
-        for b in self.as_bytes() {
-            write!(f, "{:02x}", b)?;
+    }
+
+    impl FromStr for ObjectId {
+        type Err = Error;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            Self::from_hex(s.as_bytes())
         }
-        f.write_str(")")
     }
 }
 
@@ -107,6 +129,18 @@ impl ObjectId {
     #[inline]
     pub(crate) const fn null_sha1() -> ObjectId {
         ObjectId::Sha1([0u8; 20])
+    }
+}
+
+impl std::fmt::Debug for ObjectId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ObjectId::Sha1(_hash) => f.write_str("Sha1(")?,
+        }
+        for b in self.as_bytes() {
+            write!(f, "{:02x}", b)?;
+        }
+        f.write_str(")")
     }
 }
 
