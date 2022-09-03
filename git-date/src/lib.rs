@@ -13,8 +13,9 @@
 ///
 pub mod time;
 
-mod parse;
-pub use parse::parse;
+///
+pub mod parse;
+pub use parse::function::parse;
 
 /// A timestamp with timezone.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]

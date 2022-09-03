@@ -1179,7 +1179,9 @@ dependencies = [
  "document-features",
  "git-testtools",
  "itoa 1.0.3",
+ "once_cell",
  "serde",
+ "thiserror",
  "time",
 ]
 

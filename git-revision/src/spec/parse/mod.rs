@@ -17,7 +17,10 @@ pub enum Error {
     #[error("Cannot peel to {:?} - unknown target.", .input)]
     InvalidObject { input: BString },
     #[error("Could not parse time {:?} for revlog lookup.", .input)]
-    Time { input: BString },
+    Time {
+        input: BString,
+        source: Option<git_date::parse::Error>,
+    },
     #[error("Sibling branches like 'upstream' or 'push' require a branch name with remote configuration, got {:?}", .name)]
     SiblingBranchNeedsBranchName { name: BString },
     #[error("Reflog entries require a ref name, got {:?}", .name)]

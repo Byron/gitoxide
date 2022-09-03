@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::time::SystemTime;
 
 use crate::{bstr::BString, permission};
 
@@ -125,13 +126,13 @@ impl Personas {
             committer_email = committer_email.or_else(|| env_var("GIT_COMMITTER_EMAIL"));
             committer_date = std::env::var("GIT_COMMITTER_DATE")
                 .ok()
-                .and_then(|date| git_date::parse(&date));
+                .and_then(|date| git_date::parse(&date, Some(SystemTime::now())).ok());
 
             author_name = author_name.or_else(|| env_var("GIT_AUTHOR_NAME"));
             author_email = author_email.or_else(|| env_var("GIT_AUTHOR_EMAIL"));
             author_date = std::env::var("GIT_AUTHOR_DATE")
                 .ok()
-                .and_then(|date| git_date::parse(&date));
+                .and_then(|date| git_date::parse(&date, Some(SystemTime::now())).ok());
 
             user_email = user_email.or_else(|| env_var("EMAIL")); // NOTE: we don't have permission for this specific one…
         }
