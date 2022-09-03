@@ -2,7 +2,7 @@ use crate::bstr::{BStr, ByteSlice, ByteVec};
 use crate::{remote, Reference};
 use std::borrow::Cow;
 
-/// The name of a remote, either interpreted as symbol like `origin` or as url.
+/// The name of a remote, either interpreted as symbol like `origin` or as url as returned by [`Reference::remote_name()`].
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Name<'repo> {
     /// A symbolic name, like `origin`
@@ -61,7 +61,7 @@ impl<'repo> Reference<'repo> {
                         Cow::Borrowed(n) => n.to_str().ok().map(Cow::Borrowed),
                         Cow::Owned(n) => Vec::from(n).into_string().ok().map(Cow::Owned),
                     }
-                    .map(|name| Name::Symbol(name))
+                    .map(Name::Symbol)
                 }
             })
     }
