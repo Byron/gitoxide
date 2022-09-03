@@ -41,7 +41,7 @@ impl<'repo> Reference<'repo> {
         name_or_url
             .contains(&b'/')
             .then(|| {
-                git_url::parse(name_or_url.as_ref().into())
+                git_url::parse(name_or_url.as_ref())
                     .map_err(Into::into)
                     .and_then(|url| {
                         self.repo
