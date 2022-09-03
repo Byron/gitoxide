@@ -40,7 +40,6 @@ impl Snapshot<'_> {
         let mut programs = Vec::new();
         let mut use_http_path = false;
         let url_had_user_initially = url.user().is_some();
-        let mut url_str = None;
 
         if let Some(credential_sections) = self
             .repo
@@ -50,31 +49,20 @@ impl Snapshot<'_> {
         {
             for section in credential_sections {
                 let section = match section.header().subsection_name() {
-                    Some(pattern) => {
-                        let url_str = url_str.get_or_insert_with(|| url.to_bstring());
-                        if git_glob::wildmatch(
-                            pattern,
-                            url_str.as_ref(),
-                            git_glob::wildmatch::Mode::NO_MATCH_SLASH_LITERAL,
-                        ) {
-                            Some(section)
-                        } else {
-                            git_url::parse(pattern)
-                                .ok()
-                                .filter(|pattern| {
-                                    if matches!(pattern.scheme, git_url::Scheme::Https | git_url::Scheme::Http)
-                                        && pattern.path_is_root()
-                                    {
-                                        pattern.scheme == url.scheme
-                                            && pattern.host() == url.host()
-                                            && pattern.port_or_default() == url.port_or_default()
-                                    } else {
-                                        pattern == &url
-                                    }
-                                })
-                                .map(|_| section)
-                        }
-                    }
+                    Some(pattern) => git_url::parse(pattern)
+                        .ok()
+                        .filter(|pattern| {
+                            if matches!(pattern.scheme, git_url::Scheme::Https | git_url::Scheme::Http)
+                                && pattern.path_is_root()
+                            {
+                                pattern.scheme == url.scheme
+                                    && pattern.host() == url.host()
+                                    && pattern.port_or_default() == url.port_or_default()
+                            } else {
+                                pattern == &url
+                            }
+                        })
+                        .map(|_| section),
                     None => Some(section),
                 };
                 if let Some(section) = section {
