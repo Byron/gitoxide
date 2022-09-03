@@ -88,14 +88,18 @@ mod relative {
     use std::time::SystemTime;
     use time::{Duration, OffsetDateTime};
 
-    pub(crate) fn parse(input: &str, now: Option<SystemTime>) -> Option<Result<OffsetDateTime, Error>> {
+    fn parse_inner(input: &str) -> Option<Duration> {
         let mut split = input.split_whitespace();
         let multiplier = i64::from_str(split.next()?).ok()?;
         let period = split.next()?;
         if split.next()? != "ago" {
             return None;
         }
-        duration(period, multiplier).map(|offset| {
+        duration(period, multiplier)
+    }
+
+    pub(crate) fn parse(input: &str, now: Option<SystemTime>) -> Option<Result<OffsetDateTime, Error>> {
+        parse_inner(input).map(|offset| {
             let offset = std::time::Duration::from_secs(offset.whole_seconds().try_into().expect("positive value"));
             now.ok_or(Error::MissingCurrentTime).map(|now| {
                 now.checked_sub(offset.into())
@@ -116,5 +120,15 @@ mod relative {
             // TODO months & years
             _ => return None,
         })
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn two_weeks_ago() {
+            assert_eq!(parse_inner("2 weeks ago"), Some(Duration::weeks(2)));
+        }
     }
 }
