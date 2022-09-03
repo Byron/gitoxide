@@ -2,7 +2,7 @@ use std::{cmp::Ordering, convert::TryFrom};
 
 use crate::{oid, ObjectId, Prefix};
 
-/// The error returned by [Prefix::try_from_id()].
+/// The error returned by [Prefix::new()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
