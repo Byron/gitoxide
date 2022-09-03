@@ -436,8 +436,16 @@ where
                 let time = nav
                     .to_str()
                     .ok()
-                    .and_then(|v| git_date::parse(v, Some(SystemTime::now())).ok())
-                    .ok_or_else(|| Error::Time { input: nav.into() })?;
+                    .map(|v| {
+                        git_date::parse(v, Some(SystemTime::now())).map_err(|err| Error::Time {
+                            input: nav.into(),
+                            source: err.into(),
+                        })
+                    })
+                    .ok_or_else(|| Error::Time {
+                        input: nav.into(),
+                        source: None,
+                    })??;
                 delegate
                     .reflog(delegate::ReflogLookup::Date(time))
                     .ok_or(Error::Delegate)?;
