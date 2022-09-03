@@ -25,7 +25,13 @@ mod baseline {
                     .and_then(|line| line.strip_prefix("git: '"))
                     .map(|h| &h[..h.find('\'').expect("closing")])
                 {
-                    helpers.push(helper.to_owned().into());
+                    helpers.push(
+                        helper
+                            .strip_prefix("credential-")
+                            .expect("helpers start with 'credential-'")
+                            .to_owned()
+                            .into(),
+                    );
                     lines.next();
                 }
                 let line = lines.next().expect("fatal:");
@@ -67,9 +73,10 @@ mod baseline {
             .programs
             .iter()
             .map(|p| match &p.kind {
-                git_credentials::program::Kind::ExternalName { name_and_args } => {
-                    name_and_args.strip_prefix(b"git ").expect("resolved name").into()
-                }
+                git_credentials::program::Kind::ExternalName { name_and_args } => name_and_args
+                    .strip_prefix(b"git credential-")
+                    .expect("resolved name")
+                    .into(),
                 _ => panic!("need name helper"),
             })
             .collect();
@@ -128,6 +135,18 @@ fn empty_helper_clears_helper_list() {
 }
 
 #[test]
+#[ignore]
+fn subdomain_globs_match_on_their_level() {
+    baseline::agrees_with("http://a.example.com");
+    baseline::agrees_with("http://b.example.com");
+    baseline::agrees_with("http://c.example.com");
+    baseline::agrees_with("http://a.a.example.com:80/path");
+    baseline::agrees_with("http://a.b.example.com/path");
+    baseline::agrees_with("http://b.a.example.com/path");
+}
+
+#[test]
+#[ignore]
 fn http_urls_match_the_host_without_path_as_well() {
     baseline::agrees_with("http://example.com:8080/other/path");
     baseline::agrees_with_but_drops_default_port_in_prompt("http://example.com:80/");
