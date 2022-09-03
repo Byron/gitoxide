@@ -3,8 +3,6 @@
 pub enum Error {
     #[error("Date string can not be parsed")]
     InvalidDateString,
-    #[error("Relative period can not be parsed")]
-    InvalidPeriod,
     #[error("Dates past 2038 can not be represented.")]
     InvalidDate(#[from] std::num::TryFromIntError),
     #[error("Current time is missing.")]
@@ -59,10 +57,10 @@ pub(crate) mod function {
             } else if let Some(val) = parse_raw(input) {
                 // Format::Raw
                 Ok(val)
-            } else if let Some(val) = relative::parse(input, now.ok_or(Error::MissingCurrentTime)?) {
+            } else if let Some(time) = relative::parse(input, now).transpose()? {
                 Ok(Time::new(
-                    val.unix_timestamp().try_into()?,
-                    val.offset().whole_seconds(),
+                    time.unix_timestamp().try_into()?,
+                    time.offset().whole_seconds(),
                 ))
             } else {
                 Err(Error::InvalidDateString)
@@ -92,30 +90,38 @@ pub(crate) mod function {
 
 mod relative {
     use crate::parse::Error;
+    use std::convert::TryInto;
     use std::str::FromStr;
     use std::time::SystemTime;
     use time::{Duration, OffsetDateTime};
 
-    pub(crate) fn parse(input: &str, now: SystemTime) -> Option<OffsetDateTime> {
+    pub(crate) fn parse(input: &str, now: Option<SystemTime>) -> Option<Result<OffsetDateTime, Error>> {
         let mut split = input.split_whitespace();
         let multiplier = i64::from_str(split.next()?).ok()?;
         let period = split.next()?;
         if split.next()? != "ago" {
             return None;
         }
-        OffsetDateTime::from(now).checked_sub(duration(period, multiplier).ok()?)
+        duration(period, multiplier).map(|offset| {
+            let offset = std::time::Duration::from_secs(offset.whole_seconds().try_into().expect("positive value"));
+            now.ok_or(Error::MissingCurrentTime).map(|now| {
+                now.checked_sub(offset.into())
+                    .expect("BUG: values can't be large enough to cause underflow")
+                    .into()
+            })
+        })
     }
 
-    fn duration(period: &str, multiplier: i64) -> Result<Duration, Error> {
+    fn duration(period: &str, multiplier: i64) -> Option<Duration> {
         let period = period.strip_suffix("s").unwrap_or(period);
-        return match period {
-            "second" => Ok(Duration::seconds(multiplier)),
-            "minute" => Ok(Duration::minutes(multiplier)),
-            "hour" => Ok(Duration::hours(multiplier)),
-            "day" => Ok(Duration::days(multiplier)),
-            "week" => Ok(Duration::weeks(multiplier)),
+        Some(match period {
+            "second" => Duration::seconds(multiplier),
+            "minute" => Duration::minutes(multiplier),
+            "hour" => Duration::hours(multiplier),
+            "day" => Duration::days(multiplier),
+            "week" => Duration::weeks(multiplier),
             // TODO months & years
-            _ => Err(Error::InvalidPeriod),
-        };
+            _ => return None,
+        })
     }
 }
