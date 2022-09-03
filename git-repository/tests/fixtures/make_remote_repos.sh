@@ -208,6 +208,7 @@ git clone --shared base credential-helpers
     git config 'credential.http://example.?om.helper' 'http://example.?om'
     git config 'credential.http://*.example.com.helper' 'http://*.example.com'
     git config 'credential.http://a.*.example.com.helper' 'http://a.*.example.com'
+    git config 'credential.HTTPS://example.com.helper' 'HTTPS://example.com'
     git config credential.http://example.com:80.helper http://example.com:80
     git config credential.https://example.com:443.helper https://example.com:443
     git config credential.http://example.com:8080.helper http://example.com:8080
@@ -238,12 +239,16 @@ git clone --shared base credential-helpers
     baseline "http://a.b.example.com/path"
     baseline "http://b.a.example.com/path"
     baseline "https://example.com"
+    baseline "https://EXAMPLE.com"
+    baseline "HTTPS://example.com"
+    baseline "https://example.COM"
     baseline "https://example.com/"
     baseline "https://example.com:443"
     baseline "https://example.com:443/"
     baseline "http://example.com:8080/other/path"
     baseline "https://example.com:8080/other/path"
     baseline "https://example.com:8080/path"
+    baseline "https://example.com:8080/PATH"
     baseline "https://example.com:8080/path/"
     baseline "https://example.com:8080/clear"
     baseline "https://example.com/with-user"
@@ -251,6 +256,7 @@ git clone --shared base credential-helpers
     baseline "ssh://host/with-user"
     baseline "ssh://user@host/with-user"
     baseline "ssh://host/path"
+    baseline "ssh://host/PATH"
     baseline "ssh://host:21/path"
     baseline "ssh://host:21"
     baseline "ssh://host"

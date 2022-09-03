@@ -62,7 +62,7 @@ mod baseline {
         );
     }
 
-    fn agrees_with_inner(url: &str, ignore_expected_prompt_port: bool) {
+    fn agrees_with_inner(url: &str, ignore_expected_prompt_port: bool, lowercase_prompt_host: bool) {
         let repo = remote::repo("credential-helpers");
         let (cascade, mut action) = repo
             .config_snapshot()
@@ -88,24 +88,28 @@ mod baseline {
 
         let ctx = action.context_mut().expect("get/fill");
         ctx.destructure_url_in_place(cascade.use_http_path).unwrap();
+        let expected_prompt = lowercase_prompt_host
+            .then(|| expected.prompt_url.to_ascii_lowercase())
+            .unwrap_or_else(|| expected.prompt_url.to_owned());
         if ignore_expected_prompt_port {
             assert_eq!(
                 ctx.to_url().expect("parts complete"),
-                expected
-                    .prompt_url
-                    .trim_end_matches(|b: char| b == ':' || b.is_numeric())
+                expected_prompt.trim_end_matches(|b: char| b == ':' || b.is_numeric())
             );
         } else {
-            assert_eq!(ctx.to_url().expect("parts complete"), expected.prompt_url);
+            assert_eq!(ctx.to_url().expect("parts complete"), expected_prompt);
         }
     }
 
     pub fn agrees_with(url: &str) {
-        agrees_with_inner(url, false)
+        agrees_with_inner(url, false, false)
     }
 
     pub fn agrees_with_but_drops_default_port_in_prompt(url: &str) {
-        agrees_with_inner(url, true)
+        agrees_with_inner(url, true, false)
+    }
+    pub fn agrees_with_but_lowercases_scheme_and_host(url: &str) {
+        agrees_with_inner(url, false, true)
     }
 }
 
@@ -126,6 +130,7 @@ fn http_port_defaulting() {
 fn https_urls_match_the_host_without_path_as_well() {
     baseline::agrees_with("https://example.com:8080/other/path");
     baseline::agrees_with("https://example.com:8080/path");
+    baseline::agrees_with("https://example.com:8080/PATH");
     baseline::agrees_with("https://example.com:8080/path/");
 }
 
@@ -137,6 +142,13 @@ fn empty_helper_clears_helper_list() {
 #[test]
 fn host_globs_match_as_well() {
     baseline::agrees_with("http://host");
+}
+
+#[test]
+fn case_sensitive_host_matching() {
+    baseline::agrees_with_but_lowercases_scheme_and_host("https://EXAMPLE.com");
+    baseline::agrees_with_but_lowercases_scheme_and_host("https://example.COM");
+    baseline::agrees_with_but_lowercases_scheme_and_host("HTTPS://example.com");
 }
 
 #[test]
@@ -168,6 +180,7 @@ fn user_rules_only_match_urls_with_user() {
 #[test]
 fn ssh_host_with_path_via_url_match() {
     baseline::agrees_with("ssh://host/path");
+    baseline::agrees_with("ssh://host/PATH");
 }
 
 #[test]
