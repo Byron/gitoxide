@@ -460,7 +460,6 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * **credentials**
       * [x] run `git credential` directly
       * [x] use credential helper configuration and to obtain credentials with `git_credential::helper::Cascade`
-          - [ ] perfectly reproduce the `url-match` algorithm
     * **config**
       * [ ] facilities to apply the [url-match](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httplturlgt) algorithm and to
             [normalize urls](https://github.com/git/git/blob/be1a02a17ede4082a86dfbfee0f54f345e8b43ac/urlmatch.c#L109:L109) before comparison.

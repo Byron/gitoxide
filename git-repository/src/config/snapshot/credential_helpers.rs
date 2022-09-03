@@ -1,6 +1,7 @@
+use crate::bstr::{ByteSlice, ByteVec};
 use crate::config::Snapshot;
+pub use error::Error;
 use std::borrow::Cow;
-
 use std::convert::TryFrom;
 
 mod error {
@@ -17,9 +18,6 @@ mod error {
         },
     }
 }
-use crate::bstr::{ByteSlice, ByteVec};
-pub use error::Error;
-use git_url::Url;
 
 impl Snapshot<'_> {
     /// Returns the configuration for all git-credential helpers that apply to the given `url` along with an action
@@ -34,6 +32,8 @@ impl Snapshot<'_> {
     /// - Invalid urls can't be used to obtain credential helpers as they are rejected early when creating a valid `url` here.
     /// - Parsed urls will automatically drop the port if it's the default, i.e. `http://host:80` becomes `http://host` when parsed.
     ///   This affects the prompt provided to the user, so that git will use the verbatim url, whereas we use `http://host`.
+    /// - Upper-case scheme and host will be lower-cased automatically when parsing into a url, so prompts differ compared to git.
+    // TODO: when dealing with `http.*.*` configuration, generalize this algorithm as needed and support precedence.
     pub fn credential_helpers(
         &self,
         mut url: git_url::Url,
@@ -58,7 +58,7 @@ impl Snapshot<'_> {
                         let host = pattern.host();
                         let ports = is_http
                             .then(|| (pattern.port_or_default(), url.port_or_default()))
-                            .unwrap_or_else(|| (pattern.port, url.port));
+                            .unwrap_or((pattern.port, url.port));
                         let path = (!(is_http && pattern.path_is_root())).then(|| &pattern.path);
 
                         if !path.map_or(true, |path| path == &url.path) {
@@ -134,7 +134,7 @@ fn host_matches(pattern: Option<&str>, host: Option<&str>) -> bool {
                         None => return false,
                     }
                 }
-                tokens.next().map_or(true, |_| false)
+                tokens.next().is_none()
             } else {
                 pattern == host
             }
@@ -144,7 +144,7 @@ fn host_matches(pattern: Option<&str>, host: Option<&str>) -> bool {
     }
 }
 
-fn normalize(url: &mut Url) {
+fn normalize(url: &mut git_url::Url) {
     if !url.path_is_root() && url.path.ends_with(b"/") {
         url.path.pop();
     }
