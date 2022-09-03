@@ -6,6 +6,7 @@ license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project parsing dates the way git does"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
+include = ["src/**/*", "CHANGELOG.md"]
 
 [lib]
 doctest = false
