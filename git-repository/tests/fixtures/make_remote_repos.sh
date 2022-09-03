@@ -204,6 +204,7 @@ git clone --shared base credential-helpers
     git config 'credential.https://*.helper' all-https-does-not-match
     git config 'credential.http://*.helper' all-http-does-not-match
     git config credential.http://example.com:80.helper http://example.com:80
+    git config credential.https://example.com:443.helper https://example.com:443
     git config credential.http://example.com:8080.helper http://example.com:8080
     git config credential.https://example.com:8080.helper https://example.com:8080
     git config credential.https://example.com:8080/path.helper https://example.com:8080/path
@@ -224,6 +225,10 @@ git clone --shared base credential-helpers
     baseline "http://example.com:80"
     baseline "http://example.com:80/"
     baseline "http://example.com"
+    baseline "https://example.com"
+    baseline "https://example.com/"
+    baseline "https://example.com:443"
+    baseline "https://example.com:443/"
     baseline "http://example.com:8080/other/path"
     baseline "https://example.com:8080/other/path"
     baseline "https://example.com:8080/path"

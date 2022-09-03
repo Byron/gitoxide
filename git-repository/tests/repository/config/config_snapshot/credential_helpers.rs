@@ -108,6 +108,14 @@ fn any_url_calls_global() {
 }
 
 #[test]
+fn http_port_defaulting() {
+    baseline::agrees_with("https://example.com");
+    baseline::agrees_with("https://example.com/");
+    baseline::agrees_with_but_drops_default_port_in_prompt("https://example.com:443");
+    baseline::agrees_with_but_drops_default_port_in_prompt("https://example.com:443/");
+}
+
+#[test]
 fn https_urls_match_the_host_without_path_as_well() {
     baseline::agrees_with("https://example.com:8080/other/path");
     baseline::agrees_with("https://example.com:8080/path");
