@@ -125,9 +125,12 @@ mod remote {
             let head = repo.head()?;
             let branch = head.clone().try_into_referent().expect("history");
 
-            assert_eq!(branch.remote_name(git::remote::Direction::Push).expect("set"), "myself");
             assert_eq!(
-                branch.remote_name(git::remote::Direction::Fetch).expect("set"),
+                branch.remote_name(git::remote::Direction::Push).expect("set").as_ref(),
+                "myself"
+            );
+            assert_eq!(
+                branch.remote_name(git::remote::Direction::Fetch).expect("set").as_ref(),
                 "new-origin"
             );
 
