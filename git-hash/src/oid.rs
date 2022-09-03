@@ -51,15 +51,10 @@ impl fmt::Debug for oid {
     }
 }
 
-use quick_error::quick_error;
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        InvalidByteSliceLength(length: usize) {
-            display("Cannot instantiate git hash from a digest of length {}", length)
-        }
-    }
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Cannot instantiate git hash from a digest of length {0}")]
+    InvalidByteSliceLength(usize),
 }
 
 /// Conversion

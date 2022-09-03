@@ -43,7 +43,7 @@ fn reflog_by_date_for_current_branch() {
 #[test]
 fn reflog_by_date_with_date_parse_failure() {
     let err = try_parse("@{foo}").unwrap_err();
-    assert!(matches!(err, spec::parse::Error::Time {input} if input == "foo"));
+    assert!(matches!(err, spec::parse::Error::Time {input, source} if input == "foo" && source.is_some()));
 }
 
 #[test]
