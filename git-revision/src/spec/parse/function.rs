@@ -435,17 +435,16 @@ where
             } else if has_ref_or_implied_name {
                 let time = nav
                     .to_str()
-                    .ok()
-                    .map(|v| {
-                        git_date::parse(v, Some(SystemTime::now())).map_err(|err| Error::Time {
+                    .map_err(|_| Error::Time {
+                        input: nav.into(),
+                        source: None,
+                    })
+                    .and_then(|date| {
+                        git_date::parse(date, Some(SystemTime::now())).map_err(|err| Error::Time {
                             input: nav.into(),
                             source: err.into(),
                         })
-                    })
-                    .ok_or_else(|| Error::Time {
-                        input: nav.into(),
-                        source: None,
-                    })??;
+                    })?;
                 delegate
                     .reflog(delegate::ReflogLookup::Date(time))
                     .ok_or(Error::Delegate)?;
