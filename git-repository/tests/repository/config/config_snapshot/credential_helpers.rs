@@ -77,7 +77,7 @@ mod baseline {
         let expected = BASELINE
             .get(url)
             .unwrap_or_else(|| panic!("Url {} must be in baseline.", url));
-        assert_eq!(actual_helpers, expected.helpers);
+        assert_eq!(actual_helpers, expected.helpers, "{}", url);
 
         let ctx = action.context_mut().expect("get/fill");
         ctx.destructure_url_in_place(cascade.use_http_path).unwrap();
@@ -111,6 +111,12 @@ fn any_url_calls_global() {
 fn https_urls_match_the_host_without_path_as_well() {
     baseline::agrees_with("https://example.com:8080/other/path");
     baseline::agrees_with("https://example.com:8080/path");
+    baseline::agrees_with("https://example.com:8080/path/");
+}
+
+#[test]
+fn empty_helper_clears_helper_list() {
+    baseline::agrees_with("https://example.com:8080/clear");
 }
 
 #[test]

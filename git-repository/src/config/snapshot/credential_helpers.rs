@@ -19,6 +19,7 @@ mod error {
 }
 use crate::bstr::{ByteSlice, ByteVec};
 pub use error::Error;
+use git_url::Url;
 
 impl Snapshot<'_> {
     /// Returns the configuration for all git-credential helpers that apply to the given `url` along with an action
@@ -40,6 +41,7 @@ impl Snapshot<'_> {
         let mut programs = Vec::new();
         let mut use_http_path = false;
         let url_had_user_initially = url.user().is_some();
+        normalize(&mut url);
 
         if let Some(credential_sections) = self
             .repo
@@ -49,25 +51,28 @@ impl Snapshot<'_> {
         {
             for section in credential_sections {
                 let section = match section.header().subsection_name() {
-                    Some(pattern) => git_url::parse(pattern)
-                        .ok()
-                        .filter(|pattern| {
-                            if matches!(pattern.scheme, git_url::Scheme::Https | git_url::Scheme::Http)
-                                && pattern.path_is_root()
-                            {
-                                pattern.scheme == url.scheme
-                                    && pattern.host() == url.host()
-                                    && pattern.port_or_default() == url.port_or_default()
-                            } else {
-                                pattern == &url
-                            }
-                        })
-                        .map(|_| section),
+                    Some(pattern) => git_url::parse(pattern).ok().and_then(|mut pattern| {
+                        normalize(&mut pattern);
+                        let matches = if matches!(pattern.scheme, git_url::Scheme::Https | git_url::Scheme::Http)
+                            && pattern.path_is_root()
+                        {
+                            pattern.scheme == url.scheme
+                                && pattern.host() == url.host()
+                                && pattern.port_or_default() == url.port_or_default()
+                        } else {
+                            pattern == url
+                        };
+                        matches.then(|| section)
+                    }),
                     None => Some(section),
                 };
                 if let Some(section) = section {
-                    for value in section.values("helper").into_iter().filter(|v| !v.trim().is_empty()) {
-                        programs.push(git_credentials::Program::from_custom_definition(value.into_owned()));
+                    for value in section.values("helper") {
+                        if value.trim().is_empty() {
+                            programs.clear();
+                        } else {
+                            programs.push(git_credentials::Program::from_custom_definition(value.into_owned()));
+                        }
                     }
                     if let Some(Some(user)) = (!url_had_user_initially).then(|| {
                         section
@@ -106,5 +111,11 @@ impl Snapshot<'_> {
             },
             git_credentials::helper::Action::get_for_url(url.to_bstring()),
         ))
+    }
+}
+
+fn normalize(url: &mut Url) {
+    if !url.path_is_root() && url.path.ends_with(b"/") {
+        url.path.pop();
     }
 }
