@@ -39,11 +39,19 @@ fn separate_push_and_fetch() -> crate::Result {
         let branch = head.clone().try_into_referent().expect("history");
 
         assert_eq!(
-            branch.remote_name(git::remote::Direction::Push).expect("set").as_ref(),
+            branch
+                .remote_name(git::remote::Direction::Push)
+                .expect("set")
+                .as_symbol()
+                .unwrap(),
             "myself"
         );
         assert_eq!(
-            branch.remote_name(git::remote::Direction::Fetch).expect("set").as_ref(),
+            branch
+                .remote_name(git::remote::Direction::Fetch)
+                .expect("set")
+                .as_symbol()
+                .unwrap(),
             "new-origin"
         );
 
@@ -79,12 +87,20 @@ fn url_as_remote_name() -> crate::Result {
     let branch = repo.head_ref()?.expect("history");
 
     assert_eq!(
-        branch.remote_name(git::remote::Direction::Push).expect("set").as_ref(),
+        branch
+            .remote_name(git::remote::Direction::Push)
+            .expect("set")
+            .as_url()
+            .unwrap(),
         "https://example.com/push-path.git",
         "remote names can also be urls"
     );
     assert_eq!(
-        branch.remote_name(git::remote::Direction::Fetch).expect("set").as_ref(),
+        branch
+            .remote_name(git::remote::Direction::Fetch)
+            .expect("set")
+            .as_url()
+            .unwrap(),
         "https://example.com/fetch-path.git"
     );
     {

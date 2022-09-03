@@ -6,7 +6,8 @@ use git_ref::file::ReferenceExt;
 use crate::{Id, Reference};
 
 pub mod iter;
-mod remote;
+///
+pub mod remote;
 
 mod errors;
 pub use errors::{edit, find, head_commit, head_id, peel};
