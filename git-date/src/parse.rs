@@ -1,6 +1,8 @@
 #[derive(thiserror::Error, Debug)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Cannot represent times before UNIX epoch at timestamp {timestamp}")]
+    TooEarly { timestamp: i64 },
     #[error("Date string can not be parsed")]
     InvalidDateString,
     #[error("Dates past 2038 can not be represented.")]
@@ -44,10 +46,19 @@ pub(crate) mod function {
             // Format::Raw
             val
         } else if let Some(time) = relative::parse(input, now).transpose()? {
-            Time::new(time.unix_timestamp().try_into()?, time.offset().whole_seconds())
+            Time::new(timestamp(time)?, time.offset().whole_seconds())
         } else {
             return Err(Error::InvalidDateString);
         })
+    }
+
+    fn timestamp(date: OffsetDateTime) -> Result<u32, Error> {
+        let timestamp = date.unix_timestamp();
+        if timestamp < 0 {
+            Err(Error::TooEarly { timestamp })
+        } else {
+            Ok(timestamp.try_into()?)
+        }
     }
 
     fn parse_raw(input: &str) -> Option<Time> {

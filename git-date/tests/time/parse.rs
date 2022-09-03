@@ -89,6 +89,7 @@ fn invalid_dates_can_be_produced_without_current_time() {
 }
 
 mod relative {
+    use git_date::parse::Error;
     use git_date::time::Sign;
     use std::time::SystemTime;
     use time::{Duration, OffsetDateTime};
@@ -101,8 +102,14 @@ mod relative {
 
     #[test]
     #[should_panic] // TODO: fix
-    fn large_ffsets_can_panic_elsewhere() {
+    fn large_offsets_can_panic_elsewhere() {
         git_date::parse("9999999999 weeks ago", Some(std::time::UNIX_EPOCH)).ok();
+    }
+
+    #[test]
+    fn offset_leading_to_before_unix_epoch_cannot_be_represented() {
+        let err = git_date::parse("1 second ago", Some(std::time::UNIX_EPOCH)).unwrap_err();
+        assert!(matches!(err, Error::TooEarly{timestamp} if timestamp == -1));
     }
 
     #[test]
