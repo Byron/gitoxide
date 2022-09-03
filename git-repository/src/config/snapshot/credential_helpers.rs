@@ -33,6 +33,8 @@ impl Snapshot<'_> {
     /// - Parsed urls will automatically drop the port if it's the default, i.e. `http://host:80` becomes `http://host` when parsed.
     ///   This affects the prompt provided to the user, so that git will use the verbatim url, whereas we use `http://host`.
     /// - Upper-case scheme and host will be lower-cased automatically when parsing into a url, so prompts differ compared to git.
+    /// - A **difference in prompt might affect the matching of getting existing stored credentials**, and it's a question of this being
+    ///   a feature or a bug.
     // TODO: when dealing with `http.*.*` configuration, generalize this algorithm as needed and support precedence.
     pub fn credential_helpers(
         &self,
@@ -122,22 +124,14 @@ impl Snapshot<'_> {
 fn host_matches(pattern: Option<&str>, host: Option<&str>) -> bool {
     match (pattern, host) {
         (Some(pattern), Some(host)) => {
-            if pattern.contains('*') {
-                let mut tokens = host.split('.');
-                for (pattern, value) in pattern.split('.').map(|level| (level, tokens.next())) {
-                    match value {
-                        Some(value) => {
-                            if !git_glob::wildmatch(pattern.into(), value.into(), git_glob::wildmatch::Mode::empty()) {
-                                return false;
-                            }
-                        }
-                        None => return false,
-                    }
-                }
-                tokens.next().is_none()
-            } else {
-                pattern == host
+            let lfields = pattern.split('.');
+            let rfields = host.split('.');
+            if lfields.clone().count() != rfields.clone().count() {
+                return false;
             }
+            lfields
+                .zip(rfields)
+                .all(|(pat, value)| git_glob::wildmatch(pat.into(), value.into(), git_glob::wildmatch::Mode::empty()))
         }
         (None, None) => true,
         (Some(_), None) | (None, Some(_)) => false,
