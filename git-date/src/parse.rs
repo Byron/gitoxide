@@ -102,7 +102,7 @@ mod relative {
         parse_inner(input).map(|offset| {
             let offset = std::time::Duration::from_secs(offset.whole_seconds().try_into().expect("positive value"));
             now.ok_or(Error::MissingCurrentTime).map(|now| {
-                now.checked_sub(offset.into())
+                now.checked_sub(offset)
                     .expect("BUG: values can't be large enough to cause underflow")
                     .into()
             })
@@ -110,7 +110,7 @@ mod relative {
     }
 
     fn duration(period: &str, multiplier: i64) -> Option<Duration> {
-        let period = period.strip_suffix("s").unwrap_or(period);
+        let period = period.strip_suffix('s').unwrap_or(period);
         Some(match period {
             "second" => Duration::seconds(multiplier),
             "minute" => Duration::minutes(multiplier),
