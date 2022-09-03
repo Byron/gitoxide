@@ -28,10 +28,10 @@ mod baseline {
                     helpers.push(helper.to_owned().into());
                     lines.next();
                 }
-                let prompt_url = lines
-                    .next()
-                    .expect("fatal:")
+                let line = lines.next().expect("fatal:");
+                let prompt_url = line
                     .strip_prefix("fatal: could not read Username for '")
+                    .or_else(|| line.strip_prefix("fatal: could not read Password for '"))
                     .map(|url| &url[..url.find('\'').expect("closing")])
                     .unwrap()
                     .to_owned();
@@ -125,6 +125,13 @@ fn http_urls_match_the_host_without_path_as_well() {
     baseline::agrees_with_but_drops_default_port_in_prompt("http://example.com:80/");
     baseline::agrees_with_but_drops_default_port_in_prompt("http://example.com:80");
     baseline::agrees_with("http://example.com");
+}
+
+#[test]
+#[ignore]
+fn user_rules_only_match_urls_with_user() {
+    baseline::agrees_with("https://example.com/with-user");
+    baseline::agrees_with("https://user@example.com/with-user");
 }
 
 #[test]

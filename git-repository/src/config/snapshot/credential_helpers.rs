@@ -53,16 +53,22 @@ impl Snapshot<'_> {
                 let section = match section.header().subsection_name() {
                     Some(pattern) => git_url::parse(pattern).ok().and_then(|mut pattern| {
                         normalize(&mut pattern);
-                        let matches = if matches!(pattern.scheme, git_url::Scheme::Https | git_url::Scheme::Http)
-                            && pattern.path_is_root()
-                        {
-                            pattern.scheme == url.scheme
-                                && pattern.host() == url.host()
-                                && pattern.port_or_default() == url.port_or_default()
-                        } else {
-                            pattern == url
-                        };
-                        matches.then(|| section)
+                        let is_http = matches!(pattern.scheme, git_url::Scheme::Https | git_url::Scheme::Http);
+                        let scheme = &pattern.scheme;
+                        let host = pattern.host();
+                        let ports = is_http
+                            .then(|| (pattern.port_or_default(), url.port_or_default()))
+                            .unwrap_or_else(|| (pattern.port, url.port));
+                        let path = (!(is_http && pattern.path_is_root())).then(|| &pattern.path);
+
+                        if !path.map_or(true, |path| path == &url.path) {
+                            return None;
+                        }
+                        // if pattern.user().is_some() && pattern.user() == url.user()
+                        if !pattern.user().zip(url.user()).map_or(true, |(lhs, rhs)| lhs == rhs) {
+                            return None;
+                        }
+                        (scheme == &url.scheme && host == url.host() && ports.0 == ports.1).then(|| section)
                     }),
                     None => Some(section),
                 };

@@ -203,16 +203,18 @@ git clone --shared base credential-helpers
     git config --add credential.helper global
     git config 'credential.https://*.helper' all-https-does-not-match
     git config 'credential.http://*.helper' all-http-does-not-match
-    git config credential.http://example.com:80.helper http-example-with-default-port
-    git config credential.http://example.com:8080.helper http-example-with-port
-    git config credential.https://example.com:8080.helper example-with-port
-    git config credential.https://example.com:8080/path.helper example-with-port-and-path
+    git config credential.http://example.com:80.helper http://example.com:80
+    git config credential.http://example.com:8080.helper http://example.com:8080
+    git config credential.https://example.com:8080.helper https://example.com:8080
+    git config credential.https://example.com:8080/path.helper https://example.com:8080/path
     git config credential.https://example.com:8080/path.usehttppath 1
     git config credential.https://example.com:8080/clear.helper ""
-    git config --add credential.https://example.com:8080/clear.helper first-after-helper-cleared
-    git config credential.ssh://host:21/path.helper ssh-port-with-path
-    git config credential.ssh://host/path.helper ssh-with-path
-    git config credential.git://host.org.helper git-without-path
+    git config --add credential.https://example.com:8080/clear.helper credential.https://example.com:8080/clear
+    git config credential.https://user@example.com/with-user.helper https://user@example.com/with-user
+    git config credential.https://user@example.com.helper https://user@example.com
+    git config credential.ssh://host:21/path.helper ssh://host:21/path
+    git config credential.ssh://host/path.helper ssh://host/path
+    git config credential.git://host.org.helper git://host.org
 
     git config credential.https://dev.azure.com.usehttppath true
 
@@ -225,6 +227,8 @@ git clone --shared base credential-helpers
     baseline "https://example.com:8080/path"
     baseline "https://example.com:8080/path/"
     baseline "https://example.com:8080/clear"
+    baseline "https://example.com/with-user"
+    baseline "https://user@example.com/with-user"
     baseline "ssh://host/path"
     baseline "ssh://host:21/path"
     baseline "ssh://host:21"
