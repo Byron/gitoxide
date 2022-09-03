@@ -82,6 +82,15 @@ fn rfc2822() {
 }
 
 #[test]
+#[ignore]
+fn invalid_dates_can_be_produced_without_current_time() {
+    assert!(matches!(
+        git_date::parse("foobar", None).unwrap_err(),
+        git_date::parse::Error::InvalidDateString
+    ));
+}
+
+#[test]
 fn relative() {
     let now = Some(SystemTime::now());
     let two_weeks_ago = git_date::parse("2 weeks ago", now).expect("valid time");
