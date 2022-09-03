@@ -33,6 +33,8 @@ pub mod find {
         pub enum Error {
             #[error(transparent)]
             Find(#[from] super::Error),
+            #[error("remote name could not be parsed as URL")]
+            UrlParse(#[from] git_url::parse::Error),
             #[error("The remote named {name:?} did not exist")]
             NotFound { name: String },
         }

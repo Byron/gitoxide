@@ -187,6 +187,17 @@ git clone --shared base protocol_file_user
     git config protocol.file.allow user
 )
 
+git clone --shared base remote-as-url
+(cd remote-as-url
+  cat <<EOF >> .git/config
+[branch "main"]
+  remote = https://example.com/fetch-path.git
+  pushRemote = https://example.com/push-path.git
+EOF
+)
+
+
+
 git clone --shared base credential-helpers
 (cd credential-helpers
     export GIT_TERMINAL_PROMPT=0

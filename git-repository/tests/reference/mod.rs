@@ -156,4 +156,50 @@ mod remote {
 
         Ok(())
     }
+
+    #[test]
+    fn url_as_remote_name() -> crate::Result {
+        let repo = remote::repo("remote-as-url");
+        let branch = repo.head_ref()?.expect("history");
+
+        assert_eq!(
+            branch.remote_name(git::remote::Direction::Push).expect("set").as_ref(),
+            "https://example.com/push-path.git",
+            "remote names can also be urls"
+        );
+        assert_eq!(
+            branch.remote_name(git::remote::Direction::Fetch).expect("set").as_ref(),
+            "https://example.com/fetch-path.git"
+        );
+        {
+            let remote = branch
+                .remote(git::remote::Direction::Push)
+                .transpose()?
+                .expect("present");
+            assert_eq!(remote.name(), None, "It's a url after all, anonymous");
+            assert_eq!(remote.url(git::remote::Direction::Push).unwrap().path, "/push-path.git");
+            assert_eq!(
+                remote.url(git::remote::Direction::Fetch).unwrap().path,
+                "/push-path.git",
+                "this is an anonymous remote with just a single url configured"
+            );
+        }
+        {
+            let remote = branch
+                .remote(git::remote::Direction::Fetch)
+                .transpose()?
+                .expect("present");
+            assert_eq!(remote.name(), None, "It's a url after all, anonymous");
+            assert_eq!(
+                remote.url(git::remote::Direction::Fetch).unwrap().path,
+                "/fetch-path.git",
+                "anonymous remotes have a single url only"
+            );
+            assert_eq!(
+                remote.url(git::remote::Direction::Push).unwrap().path,
+                "/fetch-path.git"
+            );
+        }
+        Ok(())
+    }
 }
