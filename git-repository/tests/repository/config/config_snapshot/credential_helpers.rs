@@ -128,10 +128,11 @@ fn http_urls_match_the_host_without_path_as_well() {
 }
 
 #[test]
-#[ignore]
 fn user_rules_only_match_urls_with_user() {
-    baseline::agrees_with("https://example.com/with-user");
     baseline::agrees_with("https://user@example.com/with-user");
+    baseline::agrees_with("https://example.com/with-user");
+    baseline::agrees_with("ssh://user@host/with-user");
+    baseline::agrees_with("ssh://host/with-user");
 }
 
 #[test]

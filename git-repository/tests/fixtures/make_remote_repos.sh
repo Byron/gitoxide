@@ -212,6 +212,8 @@ git clone --shared base credential-helpers
     git config --add credential.https://example.com:8080/clear.helper credential.https://example.com:8080/clear
     git config credential.https://user@example.com/with-user.helper https://user@example.com/with-user
     git config credential.https://user@example.com.helper https://user@example.com
+    git config credential.ssh://user@host/with-user.helper ssh://user@host/with-user
+    git config credential.ssh://host/with-user.helper ssh://host/with-user
     git config credential.ssh://host:21/path.helper ssh://host:21/path
     git config credential.ssh://host/path.helper ssh://host/path
     git config credential.git://host.org.helper git://host.org
@@ -229,6 +231,8 @@ git clone --shared base credential-helpers
     baseline "https://example.com:8080/clear"
     baseline "https://example.com/with-user"
     baseline "https://user@example.com/with-user"
+    baseline "ssh://host/with-user"
+    baseline "ssh://user@host/with-user"
     baseline "ssh://host/path"
     baseline "ssh://host:21/path"
     baseline "ssh://host:21"

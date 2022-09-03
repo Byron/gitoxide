@@ -64,8 +64,7 @@ impl Snapshot<'_> {
                         if !path.map_or(true, |path| path == &url.path) {
                             return None;
                         }
-                        // if pattern.user().is_some() && pattern.user() == url.user()
-                        if !pattern.user().zip(url.user()).map_or(true, |(lhs, rhs)| lhs == rhs) {
+                        if pattern.user().is_some() && pattern.user() != url.user() {
                             return None;
                         }
                         (scheme == &url.scheme && host == url.host() && ports.0 == ports.1).then(|| section)
