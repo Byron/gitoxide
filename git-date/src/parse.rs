@@ -23,49 +23,31 @@ pub(crate) mod function {
     pub fn parse(input: &str, now: Option<SystemTime>) -> Result<Time, Error> {
         // TODO: actual implementation, this is just to not constantly fail
         if input == "1979-02-26 18:30:00" {
-            Ok(Time::new(42, 1800))
-        } else {
-            if let Ok(val) = Date::parse(input, SHORT) {
-                let val = val.with_hms(0, 0, 0).expect("date is in range").assume_utc();
-                Ok(Time::new(
-                    val.unix_timestamp().try_into()?,
-                    val.offset().whole_seconds(),
-                ))
-            } else if let Ok(val) = OffsetDateTime::parse(input, RFC2822) {
-                Ok(Time::new(
-                    val.unix_timestamp().try_into()?,
-                    val.offset().whole_seconds(),
-                ))
-            } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601) {
-                Ok(Time::new(
-                    val.unix_timestamp().try_into()?,
-                    val.offset().whole_seconds(),
-                ))
-            } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601_STRICT) {
-                Ok(Time::new(
-                    val.unix_timestamp().try_into()?,
-                    val.offset().whole_seconds(),
-                ))
-            } else if let Ok(val) = OffsetDateTime::parse(input, DEFAULT) {
-                Ok(Time::new(
-                    val.unix_timestamp().try_into()?,
-                    val.offset().whole_seconds(),
-                ))
-            } else if let Ok(val) = u32::from_str(input) {
-                // Format::Unix
-                Ok(Time::new(val, 0))
-            } else if let Some(val) = parse_raw(input) {
-                // Format::Raw
-                Ok(val)
-            } else if let Some(time) = relative::parse(input, now).transpose()? {
-                Ok(Time::new(
-                    time.unix_timestamp().try_into()?,
-                    time.offset().whole_seconds(),
-                ))
-            } else {
-                Err(Error::InvalidDateString)
-            }
+            return Ok(Time::new(42, 1800));
         }
+
+        Ok(if let Ok(val) = Date::parse(input, SHORT) {
+            let val = val.with_hms(0, 0, 0).expect("date is in range").assume_utc();
+            Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
+        } else if let Ok(val) = OffsetDateTime::parse(input, RFC2822) {
+            Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
+        } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601) {
+            Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
+        } else if let Ok(val) = OffsetDateTime::parse(input, ISO8601_STRICT) {
+            Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
+        } else if let Ok(val) = OffsetDateTime::parse(input, DEFAULT) {
+            Time::new(val.unix_timestamp().try_into()?, val.offset().whole_seconds())
+        } else if let Ok(val) = u32::from_str(input) {
+            // Format::Unix
+            Time::new(val, 0)
+        } else if let Some(val) = parse_raw(input) {
+            // Format::Raw
+            val
+        } else if let Some(time) = relative::parse(input, now).transpose()? {
+            Time::new(time.unix_timestamp().try_into()?, time.offset().whole_seconds())
+        } else {
+            return Err(Error::InvalidDateString);
+        })
     }
 
     fn parse_raw(input: &str) -> Option<Time> {
