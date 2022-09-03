@@ -67,7 +67,7 @@ impl Snapshot<'_> {
                         if pattern.user().is_some() && pattern.user() != url.user() {
                             return None;
                         }
-                        (scheme == &url.scheme && host == url.host() && ports.0 == ports.1).then(|| section)
+                        (scheme == &url.scheme && host_matches(host, url.host()) && ports.0 == ports.1).then(|| section)
                     }),
                     None => Some(section),
                 };
@@ -116,6 +116,31 @@ impl Snapshot<'_> {
             },
             git_credentials::helper::Action::get_for_url(url.to_bstring()),
         ))
+    }
+}
+
+fn host_matches(pattern: Option<&str>, host: Option<&str>) -> bool {
+    match (pattern, host) {
+        (Some(pattern), Some(host)) => {
+            if pattern.contains('*') {
+                let mut tokens = host.split('.');
+                for (pattern, value) in pattern.split('.').map(|level| (level, tokens.next())) {
+                    match value {
+                        Some(value) => {
+                            if !git_glob::wildmatch(pattern.into(), value.into(), git_glob::wildmatch::Mode::empty()) {
+                                return false;
+                            }
+                        }
+                        None => return false,
+                    }
+                }
+                tokens.next().map_or(true, |_| false)
+            } else {
+                pattern == host
+            }
+        }
+        (None, None) => true,
+        (Some(_), None) | (None, Some(_)) => false,
     }
 }
 

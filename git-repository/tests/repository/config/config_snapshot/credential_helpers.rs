@@ -135,18 +135,21 @@ fn empty_helper_clears_helper_list() {
 }
 
 #[test]
-#[ignore]
+fn host_globs_match_as_well() {
+    baseline::agrees_with("http://host");
+}
+
+#[test]
 fn subdomain_globs_match_on_their_level() {
     baseline::agrees_with("http://a.example.com");
-    baseline::agrees_with("http://b.example.com");
-    baseline::agrees_with("http://c.example.com");
-    baseline::agrees_with("http://a.a.example.com:80/path");
+    baseline::agrees_with("http://b.example.com/path");
+    baseline::agrees_with_but_drops_default_port_in_prompt("http://c.example.com:80/path");
+    baseline::agrees_with_but_drops_default_port_in_prompt("http://a.a.example.com:80/path");
     baseline::agrees_with("http://a.b.example.com/path");
     baseline::agrees_with("http://b.a.example.com/path");
 }
 
 #[test]
-#[ignore]
 fn http_urls_match_the_host_without_path_as_well() {
     baseline::agrees_with("http://example.com:8080/other/path");
     baseline::agrees_with_but_drops_default_port_in_prompt("http://example.com:80/");

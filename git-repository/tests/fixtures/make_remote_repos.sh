@@ -201,10 +201,11 @@ git clone --shared base credential-helpers
 
     git config credential.helper ""
     git config --add credential.helper global
-    git config 'credential.https://*.helper' all-https-does-not-match
-    git config 'credential.http://*.helper' all-http-does-not-match
+    git config 'credential.https://*.helper' 'https://*'
+    git config 'credential.http://*.helper' 'http://*'
     git config 'credential.http://*.com.helper' 'http://*.com'
     git config 'credential.http://example.*.helper' 'http://example.*'
+    git config 'credential.http://example.?om.helper' 'http://example.?om'
     git config 'credential.http://*.example.com.helper' 'http://*.example.com'
     git config 'credential.http://a.*.example.com.helper' 'http://a.*.example.com'
     git config credential.http://example.com:80.helper http://example.com:80
@@ -226,6 +227,7 @@ git clone --shared base credential-helpers
     git config credential.https://dev.azure.com.usehttppath true
 
     baseline "https://hit-global.helper"
+    baseline "http://host"
     baseline "http://example.com:80"
     baseline "http://example.com:80/"
     baseline "http://example.com"
