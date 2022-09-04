@@ -53,7 +53,8 @@ serde1 = [  "serde",
             "git-index/serde1",
             "git-mailmap/serde1",
             "git-attributes/serde1",
-            "git-revision/serde1"]
+            "git-revision/serde1",
+            "git-credentials/serde1" ]
 
 ## Activate other features that maximize performance, like usage of threads, `zlib-ng` and access to caching in object databases.
 ## Note that some platforms might suffer from compile failures, which is when `max-performance-safe` should be used.
@@ -105,6 +106,7 @@ git-features = { version = "^0.22.4", path = "../git-features", features = ["pro
 git-attributes = { version = "^0.3.3", path = "../git-attributes" }
 git-glob = { version = "^0.3.2", path = "../git-glob" }
 git-credentials = { version = "^0.4.0", path = "../git-credentials" }
+git-prompt = { version = "0.1.0", path = "../git-prompt" }
 git-index = { version = "^0.4.3", path = "../git-index" }
 git-worktree = { version = "^0.4.3", path = "../git-worktree" }
 

@@ -92,6 +92,7 @@
 //! * [`glob`]
 //! * [`path`]
 //! * [`credentials`]
+//! * [`prompt`]
 //! * [`sec`]
 //! * [`worktree`]
 //! * [`mailmap`]
@@ -141,6 +142,7 @@ pub use git_lock as lock;
 pub use git_object as objs;
 pub use git_object::bstr;
 pub use git_odb as odb;
+pub use git_prompt as prompt;
 #[cfg(all(feature = "git-protocol"))]
 pub use git_protocol as protocol;
 pub use git_ref as refs;
