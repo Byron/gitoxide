@@ -4,7 +4,7 @@ use bstr::BStr;
 mod write {
     use crate::protocol::context::serde::validate;
     use crate::protocol::Context;
-    use bstr::BStr;
+    use bstr::{BStr, BString};
 
     impl Context {
         /// Write ourselves to `out` such that [`from_bytes()`][Self::from_bytes()] can decode it losslessly.
@@ -36,6 +36,13 @@ mod write {
                 }
             }
             Ok(())
+        }
+
+        /// Like [`write_to()`][Self::write_to()], but writes infallibly into memory.
+        pub fn to_bstring(&self) -> BString {
+            let mut buf = Vec::<u8>::new();
+            self.write_to(&mut buf).expect("infallible");
+            buf.into()
         }
     }
 }

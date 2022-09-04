@@ -12,7 +12,8 @@ pub fn main() -> Result<(), git_credentials::program::main::Error> {
                 .invoke(
                     match action {
                         Get => git_credentials::helper::Action::Get(context),
-                        Erase | Store => todo!(),
+                        Erase => git_credentials::helper::Action::Erase(context.to_bstring()),
+                        Store => git_credentials::helper::Action::Store(context.to_bstring()),
                     },
                     git_prompt::Options::default().apply_environment(true, true, true),
                 )
