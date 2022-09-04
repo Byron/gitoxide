@@ -36,12 +36,12 @@ serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serd
 
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
-git-repository = { version = "^0.23.1", path = "../git-repository", default-features = false, features = ["unstable"]} # TODO: eventually 'unstable' shouldn't be needed anymore
+git-repository = { version = "^0.24.0", path = "../git-repository", default-features = false, features = ["unstable"]} # TODO: eventually 'unstable' shouldn't be needed anymore
 git-pack-for-configuration-only = { package = "git-pack", version = "^0.22.0", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
-git-transport-configuration-only = { package = "git-transport", version = "^0.19.3", path = "../git-transport", default-features = false }
+git-transport-configuration-only = { package = "git-transport", version = "^0.20.0", path = "../git-transport", default-features = false }
 git-commitgraph = { version = "^0.8.2", path = "../git-commitgraph" }
 git-config = { version = "^0.7.1", path = "../git-config" }
-git-features = { version = "^0.22.3", path = "../git-features" }
+git-features = { version = "^0.22.4", path = "../git-features" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.42"
 quick-error = "2.0.0"
@@ -58,7 +58,7 @@ futures-io = { version = "0.3.16", optional = true }
 blocking = { version = "1.0.2", optional = true }
 
 # for 'organize' functionality
-git-url = { version = "^0.7.3", path = "../git-url", optional = true }
+git-url = { version = "^0.8.0", path = "../git-url", optional = true }
 jwalk = { version = "0.6.0", optional = true }
 
 rayon = { version = "1.5.0", optional = true }

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.8.0 (2022-09-04)
 
 A major release to properly introduce the signature change that happened in 0.7.2, which effectively
 broke compilation for users of `parse()` in 0.7.1.
@@ -20,7 +20,7 @@ broke compilation for users of `parse()` in 0.7.1.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 1 calendar day.
+ - 3 commits contributed to the release over the course of 1 calendar day.
  - 7 days passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#524](https://github.com/Byron/gitoxide/issues/524)
@@ -32,6 +32,7 @@ broke compilation for users of `parse()` in 0.7.1.
 <details><summary>view details</summary>
 
  * **[#524](https://github.com/Byron/gitoxide/issues/524)**
+    - prepare changelogs prior to release ([`6446b39`](https://github.com/Byron/gitoxide/commit/6446b395d5926565ef899b0c923f35468ccf1921))
     - Introduce `parse(&BStr)` (previously it took `&[u8]`) ([`653ebc5`](https://github.com/Byron/gitoxide/commit/653ebc52f97116e9c72e985eda0d76f566e8c74d))
  * **Uncategorized**
     - Merge branch 'git_date_parse' ([`75591fb`](https://github.com/Byron/gitoxide/commit/75591fb108ce440ba2f920bebf99158b407e3046))
