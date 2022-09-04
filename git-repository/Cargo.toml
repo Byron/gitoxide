@@ -3,7 +3,7 @@ name = "git-repository"
 repository = "https://github.com/Byron/gitoxide"
 description = "Abstractions for git repositories"
 license = "MIT/Apache-2.0"
-version = "0.23.1"
+version = "0.24.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 include = ["src/**/*", "CHANGELOG.md"]
@@ -94,13 +94,13 @@ git-pack = { version = "^0.22.0", path = "../git-pack", features = ["object-cach
 git-revision = { version = "^0.4.4", path = "../git-revision" }
 
 git-path = { version = "^0.4.2", path = "../git-path" }
-git-url = { version = "^0.7.3", path = "../git-url" }
+git-url = { version = "^0.8.0", path = "../git-url" }
 git-traverse = { version = "^0.16.4", path = "../git-traverse" }
-git-protocol = { version = "^0.19.1", path = "../git-protocol", optional = true }
-git-transport = { version = "^0.19.3", path = "../git-transport", optional = true }
+git-protocol = { version = "^0.20.0", path = "../git-protocol", optional = true }
+git-transport = { version = "^0.20.0", path = "../git-transport", optional = true }
 git-diff = { version = "^0.18.1", path = "../git-diff" }
 git-mailmap = { version = "^0.3.2", path = "../git-mailmap" }
-git-features = { version = "^0.22.3", path = "../git-features", features = ["progress", "once_cell"] }
+git-features = { version = "^0.22.4", path = "../git-features", features = ["progress", "once_cell"] }
 
 git-attributes = { version = "^0.3.3", path = "../git-attributes" }
 git-glob = { version = "^0.3.2", path = "../git-glob" }

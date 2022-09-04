@@ -320,7 +320,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-smart-release"
-version = "0.12.1"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "bitflags",
@@ -1270,7 +1270,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.22.3"
+version = "0.22.4"
 dependencies = [
  "bstr",
  "bytes",
@@ -1499,7 +1499,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.19.1"
+version = "0.20.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1571,7 +1571,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.23.1"
+version = "0.24.0"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1699,7 +1699,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-transport"
-version = "0.19.3"
+version = "0.20.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1740,7 +1740,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.7.3"
+version = "0.8.0"
 dependencies = [
  "bstr",
  "document-features",
