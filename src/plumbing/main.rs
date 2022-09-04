@@ -15,7 +15,7 @@ use gitoxide_core::pack::verify;
 
 use crate::plumbing::options::remote;
 use crate::{
-    plumbing::options::{commit, config, exclude, free, mailmap, odb, revision, tree, Args, Subcommands},
+    plumbing::options::{commit, config, credential, exclude, free, mailmap, odb, revision, tree, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 
@@ -102,6 +102,23 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Credential(cmd) => prepare_and_run(
+            "credential",
+            verbose,
+            progress,
+            progress_keep_open,
+            None,
+            move |_progress, _out, _err| {
+                core::repository::credential(
+                    repository(Mode::Strict)?,
+                    match cmd {
+                        credential::Subcommands::Fill => git::credentials::program::main::Action::Get,
+                        credential::Subcommands::Approve => git::credentials::program::main::Action::Store,
+                        credential::Subcommands::Reject => git::credentials::program::main::Action::Erase,
+                    },
+                )
+            },
+        ),
         #[cfg_attr(feature = "small", allow(unused_variables))]
         Subcommands::Remote(remote::Platform { name, url, cmd }) => match cmd {
             #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]

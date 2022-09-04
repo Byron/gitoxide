@@ -1595,6 +1595,7 @@ dependencies = [
  "git-odb",
  "git-pack",
  "git-path",
+ "git-prompt",
  "git-protocol",
  "git-ref",
  "git-refspec",

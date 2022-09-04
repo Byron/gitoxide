@@ -16,6 +16,8 @@ pub fn init(directory: Option<PathBuf>) -> Result<git::discover::repository::Pat
 
 pub mod commit;
 pub mod config;
+mod credential;
+pub use credential::function as credential;
 pub mod exclude;
 pub mod mailmap;
 pub mod odb;
