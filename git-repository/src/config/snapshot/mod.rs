@@ -7,9 +7,12 @@ pub mod apply_cli_overrides;
 pub mod credential_helpers;
 
 mod _impls {
+    use std::{
+        fmt::{Debug, Formatter},
+        ops::{Deref, DerefMut},
+    };
+
     use crate::config::{Snapshot, SnapshotMut};
-    use std::fmt::{Debug, Formatter};
-    use std::ops::{Deref, DerefMut};
 
     impl Debug for Snapshot<'_> {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

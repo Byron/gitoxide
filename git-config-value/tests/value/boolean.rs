@@ -1,6 +1,8 @@
-use crate::b;
-use git_config_value::Boolean;
 use std::convert::TryFrom;
+
+use git_config_value::Boolean;
+
+use crate::b;
 
 #[test]
 fn from_str_false() -> crate::Result {

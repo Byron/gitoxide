@@ -1,10 +1,12 @@
-use std::borrow::Cow;
-use std::convert::{Infallible, TryFrom};
+use std::{
+    borrow::Cow,
+    convert::{Infallible, TryFrom},
+};
 
+pub use bstr;
 use bstr::{BStr, ByteSlice};
 
 use crate::Scheme;
-pub use bstr;
 
 /// The Error returned by [`parse()`]
 #[derive(Debug, thiserror::Error)]

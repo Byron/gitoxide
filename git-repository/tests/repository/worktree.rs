@@ -2,9 +2,11 @@ use git_ref::bstr;
 use git_repository as git;
 
 mod with_core_worktree_config {
-    use crate::repository::worktree::Baseline;
-    use git_repository as git;
     use std::io::BufRead;
+
+    use git_repository as git;
+
+    use crate::repository::worktree::Baseline;
 
     #[test]
     fn relative() -> crate::Result {

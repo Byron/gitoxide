@@ -17,9 +17,11 @@ mod write_object {
 }
 
 mod write_blob {
-    use crate::repository::object::empty_bare_repo;
-    use git_testtools::hex_to_id;
     use std::io::{Seek, SeekFrom};
+
+    use git_testtools::hex_to_id;
+
+    use crate::repository::object::empty_bare_repo;
 
     #[test]
     fn from_slice() -> crate::Result {
@@ -55,9 +57,10 @@ mod write_blob {
 }
 
 mod find {
-    use crate::basic_repo;
     use git_pack::Find;
     use git_repository as git;
+
+    use crate::basic_repo;
 
     #[test]
     fn find_and_try_find_with_and_without_object_cache() -> crate::Result {

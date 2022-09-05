@@ -1,9 +1,10 @@
 mod interpolate {
-    use git_config_value::path;
     use std::{
         borrow::Cow,
         path::{Path, PathBuf},
     };
+
+    use git_config_value::path;
 
     use crate::{b, cow_str};
 

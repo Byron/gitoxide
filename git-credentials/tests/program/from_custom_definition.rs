@@ -1,5 +1,4 @@
-use git_credentials::program::Kind;
-use git_credentials::Program;
+use git_credentials::{program::Kind, Program};
 
 #[test]
 fn script() {

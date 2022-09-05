@@ -1,7 +1,7 @@
-use super::{interpolate_context, util, Error, StageOne};
-use crate::config::Cache;
-use crate::{repository, revision::spec::parse::ObjectKindHint};
 use std::path::PathBuf;
+
+use super::{interpolate_context, util, Error, StageOne};
+use crate::{config::Cache, repository, revision::spec::parse::ObjectKindHint};
 
 /// Initialization
 impl Cache {

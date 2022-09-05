@@ -1,9 +1,10 @@
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod net {
-    use crate::OutputFormat;
     use anyhow::bail;
     use git_repository as git;
     use git_repository::protocol::fetch;
+
+    use crate::OutputFormat;
 
     pub mod refs {
         use crate::OutputFormat;

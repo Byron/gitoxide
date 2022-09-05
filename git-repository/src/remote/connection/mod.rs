@@ -20,9 +20,10 @@ pub struct Connection<'a, 'repo, T, P> {
 }
 
 mod access {
-    use crate::remote::connection::CredentialsFn;
-    use crate::remote::Connection;
-    use crate::Remote;
+    use crate::{
+        remote::{connection::CredentialsFn, Connection},
+        Remote,
+    };
 
     /// Builder
     impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {

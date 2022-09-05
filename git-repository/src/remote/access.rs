@@ -1,5 +1,6 @@
-use crate::{remote, Remote};
 use git_refspec::RefSpec;
+
+use crate::{remote, Remote};
 
 /// Access
 impl Remote<'_> {

@@ -1,6 +1,6 @@
+use std::{convert::TryFrom, str::FromStr};
+
 use crate::{oid, Kind, ObjectId};
-use std::convert::TryFrom;
-use std::str::FromStr;
 
 impl Default for Kind {
     fn default() -> Self {

@@ -1,7 +1,8 @@
+use std::panic::catch_unwind;
+
 use bstr::ByteSlice;
 use git_refspec::parse::Operation;
 use git_testtools::scripted_fixture_repo_read_only;
-use std::panic::catch_unwind;
 
 #[test]
 fn baseline() {

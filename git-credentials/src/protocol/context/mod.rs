@@ -9,8 +9,9 @@ pub enum Error {
 }
 
 mod access {
-    use crate::protocol::Context;
     use bstr::BString;
+
+    use crate::protocol::Context;
 
     impl Context {
         /// Convert all relevant fields into a URL for consumption.
@@ -44,9 +45,9 @@ mod access {
 }
 
 mod mutate {
-    use crate::protocol;
-    use crate::protocol::Context;
     use bstr::ByteSlice;
+
+    use crate::{protocol, protocol::Context};
 
     /// In-place mutation
     impl Context {

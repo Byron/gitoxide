@@ -1,7 +1,7 @@
+use std::{borrow::Cow, path::PathBuf};
+
 use git_repository as git;
 use git_testtools::scripted_fixture_repo_read_only;
-use std::borrow::Cow;
-use std::path::PathBuf;
 
 pub(crate) fn repo_path(name: &str) -> PathBuf {
     let dir = scripted_fixture_repo_read_only("make_remote_repos.sh").unwrap();

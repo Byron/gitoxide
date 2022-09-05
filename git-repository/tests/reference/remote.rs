@@ -1,5 +1,6 @@
-use crate::remote;
 use git_repository as git;
+
+use crate::remote;
 
 #[test]
 fn push_defaults_to_fetch() -> crate::Result {

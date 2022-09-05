@@ -1,7 +1,9 @@
-use crate::decode::header;
-use crate::extension;
-use crate::extension::end_of_index_entry::{MIN_SIZE, MIN_SIZE_WITH_HEADER, SIGNATURE};
-use crate::util::from_be_u32;
+use crate::{
+    decode::header,
+    extension,
+    extension::end_of_index_entry::{MIN_SIZE, MIN_SIZE_WITH_HEADER, SIGNATURE},
+    util::from_be_u32,
+};
 
 /// Decode the end of index entry extension, which is no more than a glorified offset to the first byte of all extensions to allow
 /// loading entries and extensions in parallel.

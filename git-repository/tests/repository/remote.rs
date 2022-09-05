@@ -1,6 +1,7 @@
 mod remote_at {
-    use crate::remote;
     use git_repository::remote::Direction;
+
+    use crate::remote;
 
     #[test]
     fn url_and_push_url() -> crate::Result {
@@ -100,12 +101,13 @@ mod remote_at {
 }
 
 mod find_remote {
-    use crate::remote;
+    use std::io::BufRead;
+
     use git_object::bstr::BString;
     use git_repository as git;
-    use git_repository::remote::Direction;
-    use git_repository::Repository;
-    use std::io::BufRead;
+    use git_repository::{remote::Direction, Repository};
+
+    use crate::remote;
 
     #[test]
     fn typical() {

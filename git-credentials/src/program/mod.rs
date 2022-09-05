@@ -1,6 +1,8 @@
-use crate::{helper, Program};
-use bstr::{BString, ByteSlice, ByteVec};
 use std::process::{Command, Stdio};
+
+use bstr::{BString, ByteSlice, ByteVec};
+
+use crate::{helper, Program};
 
 /// The kind of helper program to use.
 #[derive(Debug, Clone, Eq, PartialEq)]

@@ -1,5 +1,4 @@
-use std::borrow::Cow;
-use std::time::SystemTime;
+use std::{borrow::Cow, time::SystemTime};
 
 use crate::{bstr::BString, permission};
 

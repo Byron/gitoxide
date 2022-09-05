@@ -53,8 +53,7 @@ mod sign {
 }
 
 mod impls {
-    use crate::time::Sign;
-    use crate::Time;
+    use crate::{time::Sign, Time};
 
     impl Default for Time {
         fn default() -> Self {

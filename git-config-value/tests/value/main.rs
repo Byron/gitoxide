@@ -1,5 +1,6 @@
-use bstr::{BStr, ByteSlice};
 use std::borrow::Cow;
+
+use bstr::{BStr, ByteSlice};
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 fn b(s: &str) -> &bstr::BStr {

@@ -1,9 +1,8 @@
 ///
 pub mod set_target_id {
-    use crate::bstr::BString;
-    use crate::Reference;
-    use git_ref::transaction::PreviousValue;
-    use git_ref::Target;
+    use git_ref::{transaction::PreviousValue, Target};
+
+    use crate::{bstr::BString, Reference};
 
     mod error {
         use git_ref::FullName;
@@ -52,8 +51,9 @@ pub mod set_target_id {
 
 ///
 pub mod delete {
-    use crate::Reference;
     use git_ref::transaction::{Change, PreviousValue, RefEdit, RefLog};
+
+    use crate::Reference;
 
     mod error {
         /// The error returned by [`Reference::delete()`][super::Reference::delete()].

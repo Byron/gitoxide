@@ -1,13 +1,13 @@
 //! Utilities for testing `gitoxide` crates, many of which might be useful for testing programs that use `git` in general.
 #![deny(missing_docs)]
 
-use std::str::FromStr;
 use std::{
     collections::BTreeMap,
     convert::Infallible,
     ffi::OsString,
     io::Read,
     path::{Path, PathBuf},
+    str::FromStr,
     time::Duration,
 };
 

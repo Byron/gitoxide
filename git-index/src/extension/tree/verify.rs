@@ -1,6 +1,8 @@
-use crate::extension::Tree;
-use bstr::{BString, ByteSlice};
 use std::cmp::Ordering;
+
+use bstr::{BString, ByteSlice};
+
+use crate::extension::Tree;
 
 /// The error returned by [Tree::verify()][crate::extension::Tree::verify()].
 #[derive(Debug, thiserror::Error)]

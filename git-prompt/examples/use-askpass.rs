@@ -1,5 +1,6 @@
-use git_prompt::{Mode, Options};
 use std::borrow::Cow;
+
+use git_prompt::{Mode, Options};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let pass = git_prompt::ask(

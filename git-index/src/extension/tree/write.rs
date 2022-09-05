@@ -1,5 +1,6 @@
-use crate::extension::{tree, Tree};
 use std::convert::TryFrom;
+
+use crate::extension::{tree, Tree};
 
 impl Tree {
     /// Serialize this instance to `out`.

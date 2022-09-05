@@ -2,8 +2,7 @@ use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
 
-use crate::parse::section;
-use crate::{file::MetadataFilter, lookup, value, File};
+use crate::{file::MetadataFilter, lookup, parse::section, value, File};
 
 /// Comfortable API for accessing values
 impl<'event> File<'event> {

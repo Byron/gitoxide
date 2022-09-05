@@ -2,10 +2,9 @@ use git_features::progress::Progress;
 use git_transport::client;
 use maybe_async::maybe_async;
 
-use crate::fetch::{handshake, indicate_end_of_interaction};
 use crate::{
     credentials,
-    fetch::{Action, Arguments, Command, Delegate, Error, Response},
+    fetch::{handshake, indicate_end_of_interaction, Action, Arguments, Command, Delegate, Error, Response},
 };
 
 /// A way to indicate how to treat the connection underlying the transport, potentially allowing to reuse it.

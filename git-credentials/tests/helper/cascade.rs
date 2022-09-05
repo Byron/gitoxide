@@ -1,12 +1,15 @@
 mod invoke {
+    use std::convert::TryInto;
+
     use bstr::{ByteSlice, ByteVec};
-    use git_credentials::helper::Action;
-    use git_credentials::helper::Cascade;
-    use git_credentials::protocol::Context;
-    use git_credentials::{program, protocol, Program};
+    use git_credentials::{
+        helper::{Action, Cascade},
+        program, protocol,
+        protocol::Context,
+        Program,
+    };
     use git_sec::identity::Account;
     use git_testtools::fixture_path;
-    use std::convert::TryInto;
 
     #[test]
     fn credentials_are_filled_in_one_by_one_and_stop_when_complete() {

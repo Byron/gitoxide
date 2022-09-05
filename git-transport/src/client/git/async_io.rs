@@ -122,10 +122,11 @@ where
 
 #[cfg(feature = "async-std")]
 mod async_net {
-    use crate::client::git;
-    use crate::client::Error;
-    use async_std::net::TcpStream;
     use std::time::Duration;
+
+    use async_std::net::TcpStream;
+
+    use crate::client::{git, Error};
 
     impl git::Connection<TcpStream, TcpStream> {
         /// Create a new TCP connection using the `git` protocol of `desired_version`, and make a connection to `host`

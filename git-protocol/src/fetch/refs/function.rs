@@ -1,11 +1,13 @@
-use super::Error;
-use crate::fetch::refs::from_v2_refs;
-use crate::fetch::{indicate_end_of_interaction, Command, LsRefsAction, Ref};
 use bstr::BString;
 use git_features::progress::Progress;
-use git_transport::client::{Capabilities, Transport, TransportV2Ext};
-use git_transport::Protocol;
+use git_transport::{
+    client::{Capabilities, Transport, TransportV2Ext},
+    Protocol,
+};
 use maybe_async::maybe_async;
+
+use super::Error;
+use crate::fetch::{indicate_end_of_interaction, refs::from_v2_refs, Command, LsRefsAction, Ref};
 
 /// Invoke an ls-refs command on `transport`  (assuming `protocol_version` 2 or panic), which requires a prior handshake that yielded
 /// server `capabilities`. `prepare_ls_refs(arguments, features)` can be used to alter the _ls-refs_. `progress` is used to provide feedback.

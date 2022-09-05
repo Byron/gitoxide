@@ -20,8 +20,7 @@ mod error;
 pub use error::Error;
 ///
 pub mod refs;
-pub use refs::function::refs;
-pub use refs::Ref;
+pub use refs::{function::refs, Ref};
 ///
 pub mod response;
 pub use response::Response;

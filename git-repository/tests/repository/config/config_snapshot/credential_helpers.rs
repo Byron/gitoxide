@@ -1,10 +1,12 @@
 use git_testtools::Env;
 
 mod baseline {
-    use crate::remote;
+    use std::collections::HashMap;
+
     use git_object::bstr::BString;
     use git_testtools::once_cell::sync::Lazy;
-    use std::collections::HashMap;
+
+    use crate::remote;
 
     #[derive(Debug, Eq, PartialEq)]
     struct Helpers {

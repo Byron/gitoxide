@@ -1,7 +1,7 @@
-use crate::remote::connection::HandshakeWithRefs;
-use crate::remote::{Connection, Direction};
 use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
+
+use crate::remote::{connection::HandshakeWithRefs, Connection, Direction};
 
 mod error {
     #[derive(Debug, thiserror::Error)]

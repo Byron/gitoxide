@@ -1,11 +1,10 @@
-use crate::remote::Connection;
-use crate::{Progress, Remote};
 use git_protocol::transport::client::Transport;
+
+use crate::{remote::Connection, Progress, Remote};
 
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod error {
-    use crate::bstr::BString;
-    use crate::remote;
+    use crate::{bstr::BString, remote};
 
     /// The error returned by [connect()][crate::Remote::connect()].
     #[derive(Debug, thiserror::Error)]

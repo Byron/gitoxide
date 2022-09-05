@@ -1,5 +1,6 @@
-use git_repository as git;
 use std::convert::TryInto;
+
+use git_repository as git;
 
 #[derive(Debug, thiserror::Error)]
 enum Error {

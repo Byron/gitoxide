@@ -1,5 +1,4 @@
-use std::time::SystemTime;
-use std::{convert::TryInto, str::FromStr};
+use std::{convert::TryInto, str::FromStr, time::SystemTime};
 
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 

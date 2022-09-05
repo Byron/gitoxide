@@ -1,6 +1,9 @@
-use crate::bstr::{BStr, BString, ByteVec};
-use crate::remote::Direction;
 use git_features::threading::OwnShared;
+
+use crate::{
+    bstr::{BStr, BString, ByteVec},
+    remote::Direction,
+};
 
 #[derive(Debug, Clone)]
 struct Replace {

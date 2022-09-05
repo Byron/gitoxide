@@ -1,6 +1,6 @@
+use std::{convert::TryFrom, ffi::OsString};
+
 use bstr::BString;
-use std::convert::TryFrom;
-use std::ffi::OsString;
 
 /// The action passed to the credential helper implementation in [`main()`][crate::program::main()].
 #[derive(Debug, Copy, Clone)]
@@ -60,10 +60,12 @@ pub enum Error {
 }
 
 pub(crate) mod function {
-    use crate::program::main::{Action, Error};
-    use crate::protocol::Context;
-    use std::convert::TryInto;
-    use std::ffi::OsString;
+    use std::{convert::TryInto, ffi::OsString};
+
+    use crate::{
+        program::main::{Action, Error},
+        protocol::Context,
+    };
 
     /// Invoke a custom credentials helper which receives program `args`, with the first argument being the
     /// action to perform (as opposed to the program name).

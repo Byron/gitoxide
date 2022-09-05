@@ -1,9 +1,9 @@
 mod apply_environment {
+    use std::{borrow::Cow, path::Path};
+
     use git_prompt::{Mode, Options};
     use git_testtools::Env;
     use serial_test::serial;
-    use std::borrow::Cow;
-    use std::path::Path;
 
     #[test]
     #[serial]

@@ -1,7 +1,6 @@
 use std::io;
 
-use crate::fetch::refs::parse::Error;
-use crate::fetch::{refs, Ref};
+use crate::fetch::{refs, refs::parse::Error, Ref};
 
 /// Parse refs from the given input line by line. Protocol V2 is required for this to succeed.
 pub fn from_v2_refs(in_refs: &mut dyn io::BufRead) -> Result<Vec<Ref>, Error> {

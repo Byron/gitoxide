@@ -1,5 +1,6 @@
-use crate::{parse::Operation, Instruction};
 use bstr::BStr;
+
+use crate::{parse::Operation, Instruction};
 
 impl Instruction<'_> {
     /// Derive the mode of operation from this instruction.

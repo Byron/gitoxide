@@ -1,7 +1,6 @@
-use crate::time::Sign;
-use crate::Time;
-use std::convert::TryInto;
-use std::ops::Sub;
+use std::{convert::TryInto, ops::Sub};
+
+use crate::{time::Sign, Time};
 
 /// Instantiation
 impl Time {

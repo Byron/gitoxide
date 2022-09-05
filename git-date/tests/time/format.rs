@@ -1,5 +1,7 @@
-use git_date::time::{format, Format, Sign};
-use git_date::Time;
+use git_date::{
+    time::{format, Format, Sign},
+    Time,
+};
 use time::macros::format_description;
 
 #[test]

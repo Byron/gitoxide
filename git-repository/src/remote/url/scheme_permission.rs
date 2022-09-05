@@ -1,10 +1,11 @@
 #![allow(dead_code, unused_variables)]
 
-use crate::bstr::{BStr, BString, ByteSlice};
-use crate::permission;
-use std::borrow::Cow;
-use std::collections::BTreeMap;
-use std::convert::TryFrom;
+use std::{borrow::Cow, collections::BTreeMap, convert::TryFrom};
+
+use crate::{
+    bstr::{BStr, BString, ByteSlice},
+    permission,
+};
 
 ///
 pub mod init {

@@ -1,9 +1,10 @@
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
-    use crate::remote;
     use git_features::progress;
     use git_repository as git;
     use git_repository::remote::Direction::Fetch;
+
+    use crate::remote;
 
     #[test]
     fn all() -> crate::Result {

@@ -1,7 +1,7 @@
-use git_repository as git;
-use git_repository::bstr::BString;
 use std::path::PathBuf;
 
+use git_repository as git;
+use git_repository::bstr::BString;
 use gitoxide_core as core;
 
 #[derive(Debug, clap::Parser)]

@@ -1,6 +1,5 @@
 use bstr::{BString, ByteVec};
-use git_credentials::protocol::Context;
-use git_credentials::{helper, Program};
+use git_credentials::{helper, protocol::Context, Program};
 use git_testtools::fixture_path;
 
 #[test]
@@ -45,8 +44,9 @@ fn store_and_reject() {
 }
 
 mod program {
-    use crate::helper::invoke::script_helper;
     use git_credentials::{helper, program::Kind, Program};
+
+    use crate::helper::invoke::script_helper;
 
     #[test]
     fn builtin() {

@@ -1,7 +1,8 @@
-use crate::protocol::Context;
-use crate::{protocol, Program};
-use bstr::{BStr, BString};
 use std::convert::TryFrom;
+
+use bstr::{BStr, BString};
+
+use crate::{protocol, protocol::Context, Program};
 
 /// A list of helper programs to run in order to obtain credentials.
 #[allow(dead_code)]

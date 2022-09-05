@@ -1,7 +1,6 @@
-use crate::time::Format;
-use crate::Time;
-use time::format_description::FormatItem;
-use time::macros::format_description;
+use time::{format_description::FormatItem, macros::format_description};
+
+use crate::{time::Format, Time};
 
 /// E.g. `2018-12-24`
 pub const SHORT: &[FormatItem<'_>] = format_description!("[year]-[month]-[day]");
@@ -31,8 +30,9 @@ pub const DEFAULT: &[FormatItem<'_>] = format_description!(
 );
 
 mod format_impls {
-    use crate::time::Format;
     use time::format_description::FormatItem;
+
+    use crate::time::Format;
 
     impl<'a> From<&'a [FormatItem<'a>]> for Format<'a> {
         fn from(f: &'a [FormatItem<'a>]) -> Self {

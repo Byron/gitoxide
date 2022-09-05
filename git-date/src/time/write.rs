@@ -1,6 +1,6 @@
-use crate::time::Sign;
-use crate::Time;
 use bstr::BString;
+
+use crate::{time::Sign, Time};
 
 /// Serialization with standard `git` format
 impl Time {

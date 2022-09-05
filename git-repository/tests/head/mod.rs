@@ -1,6 +1,7 @@
 mod remote {
-    use crate::remote;
     use git_repository as git;
+
+    use crate::remote;
 
     #[test]
     fn unborn_is_none() -> crate::Result {

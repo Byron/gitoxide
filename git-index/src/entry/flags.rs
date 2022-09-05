@@ -1,5 +1,6 @@
-use crate::entry::Stage;
 use bitflags::bitflags;
+
+use crate::entry::Stage;
 
 bitflags! {
     /// In-memory flags

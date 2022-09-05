@@ -1,7 +1,6 @@
-use crate::write::util::CountBytes;
-use crate::{entry, extension, State, Version};
-use std::convert::TryInto;
-use std::io::Write;
+use std::{convert::TryInto, io::Write};
+
+use crate::{entry, extension, write::util::CountBytes, State, Version};
 
 /// A way to specify which extensions to write.
 #[derive(Debug, Copy, Clone)]

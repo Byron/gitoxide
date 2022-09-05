@@ -3,14 +3,15 @@ pub const TTY_PATH: &str = "/dev/tty";
 
 #[cfg(unix)]
 pub(crate) mod imp {
-    use crate::unix::TTY_PATH;
-    use crate::{Error, Mode, Options};
-    use nix::sys::termios;
-    use nix::sys::termios::Termios;
-    use parking_lot::lock_api::MutexGuard;
-    use parking_lot::{Mutex, RawMutex};
-    use std::io::{BufRead, Write};
-    use std::os::unix::io::{AsRawFd, RawFd};
+    use std::{
+        io::{BufRead, Write},
+        os::unix::io::{AsRawFd, RawFd},
+    };
+
+    use nix::sys::{termios, termios::Termios};
+    use parking_lot::{lock_api::MutexGuard, Mutex, RawMutex};
+
+    use crate::{unix::TTY_PATH, Error, Mode, Options};
 
     static TERM_STATE: Mutex<Option<Termios>> = Mutex::new(None);
 

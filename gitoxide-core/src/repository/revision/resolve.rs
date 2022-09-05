@@ -7,14 +7,13 @@ pub struct Options {
 }
 
 pub(crate) mod function {
-    use anyhow::Context;
     use std::ffi::OsString;
 
+    use anyhow::Context;
     use git_repository as git;
 
     use super::Options;
-    use crate::repository::revision;
-    use crate::OutputFormat;
+    use crate::{repository::revision, OutputFormat};
 
     pub fn resolve(
         mut repo: git::Repository,

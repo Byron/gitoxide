@@ -12,14 +12,18 @@ pub enum Error {
 }
 
 pub(crate) mod function {
-    use crate::parse::{relative, Error};
-    use crate::time::format::{DEFAULT, ISO8601, ISO8601_STRICT, RFC2822, SHORT};
-    use crate::time::Sign;
-    use crate::Time;
-    use std::convert::TryInto;
-    use std::str::FromStr;
-    use std::time::SystemTime;
+    use std::{convert::TryInto, str::FromStr, time::SystemTime};
+
     use time::{Date, OffsetDateTime};
+
+    use crate::{
+        parse::{relative, Error},
+        time::{
+            format::{DEFAULT, ISO8601, ISO8601_STRICT, RFC2822, SHORT},
+            Sign,
+        },
+        Time,
+    };
 
     #[allow(missing_docs)]
     pub fn parse(input: &str, now: Option<SystemTime>) -> Result<Time, Error> {
@@ -82,11 +86,11 @@ pub(crate) mod function {
 }
 
 mod relative {
-    use crate::parse::Error;
-    use std::convert::TryInto;
-    use std::str::FromStr;
-    use std::time::SystemTime;
+    use std::{convert::TryInto, str::FromStr, time::SystemTime};
+
     use time::{Duration, OffsetDateTime};
+
+    use crate::parse::Error;
 
     fn parse_inner(input: &str) -> Option<Duration> {
         let mut split = input.split_whitespace();

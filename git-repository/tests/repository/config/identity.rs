@@ -1,9 +1,11 @@
-use crate::named_repo;
+use std::path::Path;
+
 use git_repository as git;
 use git_sec::{Access, Permission};
 use git_testtools::Env;
 use serial_test::serial;
-use std::path::Path;
+
+use crate::named_repo;
 
 #[test]
 #[serial]

@@ -1,6 +1,7 @@
+use std::convert::TryFrom;
+
 use super::Error;
 use crate::bstr::ByteSlice;
-use std::convert::TryFrom;
 
 pub(crate) fn interpolate_context<'a>(
     git_install_dir: Option<&'a std::path::Path>,

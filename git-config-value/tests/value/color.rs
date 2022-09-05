@@ -1,6 +1,7 @@
 mod name {
-    use git_config_value::color::Name;
     use std::str::FromStr;
+
+    use git_config_value::color::Name;
 
     #[test]
     fn non_bright() {

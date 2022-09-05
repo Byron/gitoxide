@@ -1,7 +1,9 @@
-use git_refspec::parse::Operation;
-use git_refspec::RefSpec;
-use std::collections::{BTreeSet, HashSet};
-use std::iter::FromIterator;
+use std::{
+    collections::{BTreeSet, HashSet},
+    iter::FromIterator,
+};
+
+use git_refspec::{parse::Operation, RefSpec};
 
 fn pair() -> Vec<RefSpec> {
     let lhs = git_refspec::parse("refs/heads/foo".into(), Operation::Push).unwrap();

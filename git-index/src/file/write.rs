@@ -1,5 +1,6 @@
-use crate::{write, File, Version};
 use git_features::hash;
+
+use crate::{write, File, Version};
 
 impl File {
     /// Write the index to `out` with `options`, to be readable by [`File::at()`], returning the version that was actually written

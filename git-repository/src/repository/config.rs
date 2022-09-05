@@ -1,6 +1,6 @@
-use crate::bstr::ByteSlice;
-use crate::config;
 use std::collections::BTreeSet;
+
+use crate::{bstr::ByteSlice, config};
 
 /// General Configuration
 impl crate::Repository {
@@ -27,10 +27,9 @@ impl crate::Repository {
 }
 
 mod remote {
-    use crate::bstr::ByteSlice;
-    use crate::remote;
-    use std::borrow::Cow;
-    use std::collections::BTreeSet;
+    use std::{borrow::Cow, collections::BTreeSet};
+
+    use crate::{bstr::ByteSlice, remote};
 
     impl crate::Repository {
         /// Returns a sorted list unique of symbolic names of remotes that
@@ -72,8 +71,7 @@ mod remote {
 }
 
 mod branch {
-    use std::collections::BTreeSet;
-    use std::{borrow::Cow, convert::TryInto};
+    use std::{borrow::Cow, collections::BTreeSet, convert::TryInto};
 
     use git_ref::FullNameRef;
     use git_validate::reference::name::Error as ValidateNameError;

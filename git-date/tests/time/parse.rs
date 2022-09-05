@@ -1,10 +1,8 @@
+use std::{collections::HashMap, str::FromStr, time::SystemTime};
+
 use bstr::{BString, ByteSlice};
-use git_date::time::Sign;
-use git_date::Time;
+use git_date::{time::Sign, Time};
 use once_cell::sync::Lazy;
-use std::collections::HashMap;
-use std::str::FromStr;
-use std::time::SystemTime;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -89,9 +87,9 @@ fn invalid_dates_can_be_produced_without_current_time() {
 }
 
 mod relative {
-    use git_date::parse::Error;
-    use git_date::time::Sign;
     use std::time::SystemTime;
+
+    use git_date::{parse::Error, time::Sign};
     use time::{Duration, OffsetDateTime};
 
     #[test]

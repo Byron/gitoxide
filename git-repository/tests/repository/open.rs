@@ -1,6 +1,7 @@
 mod submodules {
-    use git_repository as git;
     use std::path::Path;
+
+    use git_repository as git;
 
     #[test]
     fn by_their_worktree_checkout_and_git_modules_dir() {

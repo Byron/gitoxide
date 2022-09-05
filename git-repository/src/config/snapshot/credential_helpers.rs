@@ -1,8 +1,11 @@
-use crate::bstr::{ByteSlice, ByteVec};
-use crate::config::Snapshot;
+use std::{borrow::Cow, convert::TryFrom};
+
 pub use error::Error;
-use std::borrow::Cow;
-use std::convert::TryFrom;
+
+use crate::{
+    bstr::{ByteSlice, ByteVec},
+    config::Snapshot,
+};
 
 mod error {
     use crate::bstr::BString;

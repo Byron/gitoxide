@@ -1,5 +1,6 @@
-use crate::helper;
 use bstr::BString;
+
+use crate::helper;
 
 /// The outcome of the credentials top-level functions to obtain a complete identity.
 #[derive(Debug, Clone, Eq, PartialEq)]

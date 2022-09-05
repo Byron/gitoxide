@@ -1,7 +1,8 @@
-use crate::{parse, Scheme, Url};
+use std::{convert::TryFrom, path::PathBuf};
+
 use bstr::BStr;
-use std::convert::TryFrom;
-use std::path::PathBuf;
+
+use crate::{parse, Scheme, Url};
 
 impl Default for Url {
     fn default() -> Self {

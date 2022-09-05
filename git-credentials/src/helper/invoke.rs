@@ -1,6 +1,6 @@
-use crate::helper::{Action, NextAction};
-use crate::helper::{Context, Error, Outcome, Result};
 use std::io::Read;
+
+use crate::helper::{Action, Context, Error, NextAction, Outcome, Result};
 
 impl Action {
     /// Send ourselves to the given `write` which is expected to be credentials-helper compatible

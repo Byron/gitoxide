@@ -1,5 +1,6 @@
-use crate::bstr::{BString, ByteVec};
 use std::ffi::{OsStr, OsString};
+
+use crate::bstr::{BString, ByteVec};
 
 /// Equivalent to `std::env::args_os()`, but with precomposed unicode on MacOS and other apple platforms.
 #[cfg(not(target_vendor = "apple"))]
@@ -28,8 +29,9 @@ pub fn os_str_to_bstring(input: &OsStr) -> Result<BString, String> {
 
 /// Environment information involving the `git` program itself.
 pub mod git {
-    use crate::bstr::{BStr, BString, ByteSlice};
     use std::process::{Command, Stdio};
+
+    use crate::bstr::{BStr, BString, ByteSlice};
 
     /// Returns the file that contains git configuration coming with the installation of the `git` file in the current `PATH`, or `None`
     /// if no `git` executable was found or there were other errors during execution.

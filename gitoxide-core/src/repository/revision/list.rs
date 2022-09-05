@@ -1,7 +1,8 @@
+use std::ffi::OsString;
+
 use anyhow::{bail, Context};
 use git_repository as git;
 use git_repository::prelude::ObjectIdExt;
-use std::ffi::OsString;
 
 use crate::OutputFormat;
 

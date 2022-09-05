@@ -1,6 +1,8 @@
-use crate::{config, remote, Remote, Repository};
-use git_refspec::RefSpec;
 use std::convert::TryInto;
+
+use git_refspec::RefSpec;
+
+use crate::{config, remote, Remote, Repository};
 
 mod error {
     use crate::bstr::BString;

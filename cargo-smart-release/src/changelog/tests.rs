@@ -1,6 +1,7 @@
 mod repository_url {
-    use crate::changelog::write::RepositoryUrl;
     use git_repository as git;
+
+    use crate::changelog::write::RepositoryUrl;
 
     #[test]
     fn github_https_url() {

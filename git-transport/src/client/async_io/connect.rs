@@ -2,9 +2,9 @@ pub use crate::client::non_io_types::connect::Error;
 
 #[cfg(any(feature = "async-std"))]
 pub(crate) mod function {
-    use crate::client::git;
-    use crate::client::non_io_types::connect::Error;
     use std::convert::TryInto;
+
+    use crate::client::{git, non_io_types::connect::Error};
 
     /// A general purpose connector connecting to a repository identified by the given `url`.
     ///

@@ -1,5 +1,6 @@
-use crate::{entry, Entry, State};
 use std::convert::TryInto;
+
+use crate::{entry, Entry, State};
 
 impl Entry {
     /// Serialize ourselves to `out` with path access via `state`, without padding.

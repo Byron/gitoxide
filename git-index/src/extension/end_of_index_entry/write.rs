@@ -1,5 +1,4 @@
-use crate::extension::end_of_index_entry::SIGNATURE;
-use crate::extension::Signature;
+use crate::extension::{end_of_index_entry::SIGNATURE, Signature};
 
 /// Write this extension to out and generate a hash of `hash_kind` over all `prior_extensions` which are specified as `(signature, size)`
 /// pair. `one_past_entries` is the offset to the first byte past the entries, which is also the first byte of the signature of the

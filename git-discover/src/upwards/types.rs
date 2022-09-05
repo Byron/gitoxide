@@ -1,9 +1,6 @@
-use bstr::ByteSlice;
-use std::borrow::Cow;
+use std::{borrow::Cow, env, path::PathBuf};
 
-use std::{env, path::PathBuf};
-
-use bstr::ByteVec;
+use bstr::{ByteSlice, ByteVec};
 
 /// The error returned by [git_discover::upwards()][crate::upwards()].
 #[derive(Debug, thiserror::Error)]

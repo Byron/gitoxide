@@ -1,6 +1,6 @@
-use crate::bstr::BStr;
-use crate::{remote, Remote};
 use std::convert::TryInto;
+
+use crate::{bstr::BStr, remote, Remote};
 
 /// Builder methods
 impl Remote<'_> {

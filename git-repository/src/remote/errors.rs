@@ -1,7 +1,6 @@
 ///
 pub mod find {
-    use crate::bstr::BString;
-    use crate::remote;
+    use crate::{bstr::BString, remote};
 
     /// The error returned by [`Repository::find_remote(…)`][crate::Repository::find_remote()].
     #[derive(Debug, thiserror::Error)]

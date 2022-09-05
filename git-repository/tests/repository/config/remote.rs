@@ -1,10 +1,8 @@
-use crate::Result;
 use std::iter::FromIterator;
 
 use git_repository as git;
 
-use crate::remote::cow_str;
-use crate::{named_repo, remote};
+use crate::{named_repo, remote, remote::cow_str, Result};
 
 #[test]
 fn remote_and_branch_names() {

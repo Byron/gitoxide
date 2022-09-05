@@ -1,5 +1,6 @@
-use crate::fetch::Ref;
 use git_transport::client::Capabilities;
+
+use crate::fetch::Ref;
 
 /// The result of the [`handshake()`][super::handshake()] function.
 pub struct Outcome {
@@ -12,9 +13,9 @@ pub struct Outcome {
 }
 
 mod error {
-    use crate::credentials;
-    use crate::fetch::refs;
     use git_transport::client;
+
+    use crate::{credentials, fetch::refs};
 
     /// The error returned by [`handshake()`][crate::fetch::handshake()].
     #[derive(Debug, thiserror::Error)]
@@ -33,14 +34,12 @@ mod error {
 pub use error::Error;
 
 pub(crate) mod function {
-    use super::{Error, Outcome};
-    use crate::credentials;
-    use crate::fetch::refs;
-    use git_features::progress;
-    use git_features::progress::Progress;
-    use git_transport::client::SetServiceResponse;
-    use git_transport::{client, Service};
+    use git_features::{progress, progress::Progress};
+    use git_transport::{client, client::SetServiceResponse, Service};
     use maybe_async::maybe_async;
+
+    use super::{Error, Outcome};
+    use crate::{credentials, fetch::refs};
 
     /// Perform a handshake with the server on the other side of `transport`, with `authenticate` being used if authentication
     /// turns out to be required. `extra_parameters` are the parameters `(name, optional value)` to add to the handshake,

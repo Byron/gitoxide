@@ -1,6 +1,9 @@
-use crate::bstr::{BStr, ByteSlice, ByteVec};
-use crate::{remote, Reference};
 use std::borrow::Cow;
+
+use crate::{
+    bstr::{BStr, ByteSlice, ByteVec},
+    remote, Reference,
+};
 
 /// The name of a remote, either interpreted as symbol like `origin` or as url as returned by [`Reference::remote_name()`].
 #[derive(Debug, PartialEq, Eq, Clone)]

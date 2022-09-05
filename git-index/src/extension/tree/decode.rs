@@ -1,7 +1,11 @@
-use crate::extension::Tree;
-use crate::util::{split_at_byte_exclusive, split_at_pos};
-use git_hash::ObjectId;
 use std::convert::TryInto;
+
+use git_hash::ObjectId;
+
+use crate::{
+    extension::Tree,
+    util::{split_at_byte_exclusive, split_at_pos},
+};
 
 /// A recursive data structure
 pub fn decode(data: &[u8], object_hash: git_hash::Kind) -> Option<Tree> {

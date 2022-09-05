@@ -1,8 +1,9 @@
 #[cfg(target_os = "macos")]
 #[test]
 fn verify_on_exfat() -> crate::Result<()> {
-    use git_discover::repository::Kind;
     use std::process::Command;
+
+    use git_discover::repository::Kind;
 
     let fixtures = git_testtools::scripted_fixture_repo_read_only("make_exfat_repo_darwin.sh")?;
     let mount_point = tempfile::tempdir()?;

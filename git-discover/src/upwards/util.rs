@@ -1,5 +1,6 @@
-use crate::DOT_GIT_DIR;
 use std::path::{Path, PathBuf};
+
+use crate::DOT_GIT_DIR;
 
 pub(crate) fn shorten_path_with_cwd(cursor: PathBuf, cwd: Option<&Path>) -> PathBuf {
     fn comp_len(c: std::path::Component<'_>) -> usize {

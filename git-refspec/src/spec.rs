@@ -1,5 +1,9 @@
-use crate::instruction::{Fetch, Push};
-use crate::{parse::Operation, types::Mode, Instruction, RefSpec, RefSpecRef};
+use crate::{
+    instruction::{Fetch, Push},
+    parse::Operation,
+    types::Mode,
+    Instruction, RefSpec, RefSpecRef,
+};
 
 /// Conversion. Use the [RefSpecRef][RefSpec::to_ref()] type for more usage options.
 impl RefSpec {
@@ -15,9 +19,12 @@ impl RefSpec {
 }
 
 mod impls {
+    use std::{
+        cmp::Ordering,
+        hash::{Hash, Hasher},
+    };
+
     use crate::{RefSpec, RefSpecRef};
-    use std::cmp::Ordering;
-    use std::hash::{Hash, Hasher};
 
     impl From<RefSpecRef<'_>> for RefSpec {
         fn from(v: RefSpecRef<'_>) -> Self {

@@ -1,9 +1,9 @@
 pub use crate::client::non_io_types::connect::Error;
 
 pub(crate) mod function {
-    use crate::client::non_io_types::connect::Error;
-    use crate::client::Transport;
     use std::convert::TryInto;
+
+    use crate::client::{non_io_types::connect::Error, Transport};
 
     /// A general purpose connector connecting to a repository identified by the given `url`.
     ///

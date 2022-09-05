@@ -1,6 +1,6 @@
-use crate::remote::find;
-use crate::{remote, Remote};
 use std::convert::TryInto;
+
+use crate::{remote, remote::find, Remote};
 
 impl crate::Repository {
     /// Create a new remote available at the given `url`.

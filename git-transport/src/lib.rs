@@ -13,10 +13,9 @@
 
 #[cfg(feature = "async-trait")]
 pub use async_trait;
+pub use bstr;
 #[cfg(feature = "futures-io")]
 pub use futures_io;
-
-pub use bstr;
 pub use git_packetline as packetline;
 
 /// The version of the way client and server communicate.
