@@ -6,7 +6,7 @@ use once_cell::sync::Lazy;
 
 type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-static BASELINE: Lazy<HashMap<BString, (usize, BString)>> = Lazy::new(|| {
+static BASELINE: Lazy<HashMap<BString, (usize, u32)>> = Lazy::new(|| {
     let base = git_testtools::scripted_fixture_repo_read_only("generate_git_date_baseline.sh").unwrap();
 
     (|| -> Result<_> {
@@ -15,7 +15,14 @@ static BASELINE: Lazy<HashMap<BString, (usize, BString)>> = Lazy::new(|| {
         let mut lines = baseline.lines();
         while let Some(date_str) = lines.next() {
             let exit_code = lines.next().expect("three lines per baseline").to_str()?.parse()?;
-            let output = lines.next().expect("three lines per baseline").into();
+            let output = u32::from_str(
+                lines
+                    .next()
+                    .expect("three lines per baseline")
+                    .to_str()
+                    .expect("valid utf"),
+            )
+            .expect("valid epoch value");
             map.insert(date_str.into(), (exit_code, output));
         }
         Ok(map)
@@ -34,8 +41,7 @@ fn baseline() {
         );
         if *exit_code == 0 {
             let actual = res.unwrap().seconds_since_unix_epoch;
-            let expected = u32::from_str(output.to_str().expect("valid utf")).expect("valid epoch value");
-            assert_eq!(actual, expected, "{pattern:?} disagrees with baseline: {actual:?}")
+            assert_eq!(actual, *output, "{pattern:?} disagrees with baseline: {actual:?}")
         }
     }
 }
