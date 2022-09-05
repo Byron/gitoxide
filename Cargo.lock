@@ -1134,7 +1134,7 @@ dependencies = [
 name = "git-chunk"
 version = "0.3.1"
 dependencies = [
- "quick-error",
+ "thiserror",
 ]
 
 [[package]]

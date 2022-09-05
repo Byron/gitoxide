@@ -28,21 +28,14 @@ pub mod offset_by_kind {
 
 ///
 pub mod data_by_kind {
-    use quick_error::quick_error;
-    quick_error! {
-        /// The error returned by [Index::data_by_kind()][super::Index::data_by_id()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            NotFound(err: super::offset_by_kind::Error) {
-                display("The chunk wasn't found in the file index")
-                from()
-                source(err)
-            }
-            FileTooLarge {
-                display("The offsets into the file couldn't be represented by usize")
-            }
-        }
+    /// The error returned by [Index::data_by_kind()][super::Index::data_by_id()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The chunk wasn't found in the file index")]
+        NotFound(#[from] super::offset_by_kind::Error),
+        #[error("The offsets into the file couldn't be represented by usize")]
+        FileTooLarge,
     }
 }
 
