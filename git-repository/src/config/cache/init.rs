@@ -55,9 +55,7 @@ impl Cache {
             let home_env = &home_env;
             let xdg_config_home_env = &xdg_config_home_env;
             let git_prefix = &git_prefix;
-            let mut install_path = use_installation
-                .then(|| crate::env::git::install_config_path())
-                .flatten();
+            let mut install_path = use_installation.then(crate::env::git::install_config_path).flatten();
             let metas = [git_config::source::Kind::System, git_config::source::Kind::Global]
                 .iter()
                 .flat_map(|kind| kind.sources())
