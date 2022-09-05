@@ -1835,6 +1835,7 @@ dependencies = [
  "futures-lite",
  "git-commitgraph",
  "git-config",
+ "git-date",
  "git-features",
  "git-pack",
  "git-repository",

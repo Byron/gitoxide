@@ -94,17 +94,13 @@ impl<'a> delegate::Revision for Explain<'a> {
             ReflogLookup::Entry(no) => {
                 writeln!(self.out, "Find entry {} in reflog of '{}' reference", no, ref_name).ok()
             }
-            ReflogLookup::Date(time) => {
-                let mut buf = Vec::new();
-                time.write_to(&mut buf).ok()?;
-                writeln!(
-                    self.out,
-                    "Find entry closest to time {} in reflog of '{}' reference",
-                    buf.as_bstr(),
-                    ref_name
-                )
-                .ok()
-            }
+            ReflogLookup::Date(time) => writeln!(
+                self.out,
+                "Find entry closest to time {} in reflog of '{}' reference",
+                time.format(git_date::time::format::ISO8601),
+                ref_name
+            )
+            .ok(),
         }
     }
 
