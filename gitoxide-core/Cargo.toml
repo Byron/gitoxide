@@ -44,6 +44,7 @@ git-config = { version = "^0.7.1", path = "../git-config" }
 git-features = { version = "^0.22.4", path = "../git-features" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.42"
+thiserror = "1.0.34"
 quick-error = "2.0.0"
 bytesize = "1.0.1"
 serde_json = { version = "1.0.65", optional = true }
