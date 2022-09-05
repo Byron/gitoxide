@@ -60,16 +60,24 @@ pub fn main() -> Result<()> {
     let repository = args.repository;
     enum Mode {
         Strict,
+        StrictWithGitInstallConfig,
         Lenient,
+        LenientWithGitInstallConfig,
     }
 
     let repository = {
         let config = config.clone();
         move |mode: Mode| -> Result<git::Repository> {
             let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
-            let toggle = matches!(mode, Mode::Strict);
-            mapping.full = mapping.full.strict_config(toggle);
-            mapping.reduced = mapping.reduced.strict_config(toggle);
+            let strict_toggle = matches!(mode, Mode::Strict | Mode::StrictWithGitInstallConfig);
+            mapping.full = mapping.full.strict_config(strict_toggle);
+            mapping.reduced = mapping.reduced.strict_config(strict_toggle);
+            let git_installation = matches!(
+                mode,
+                Mode::StrictWithGitInstallConfig | Mode::LenientWithGitInstallConfig
+            );
+            mapping.full.permissions.config.git_binary = git_installation;
+            mapping.reduced.permissions.config.git_binary = git_installation;
             let mut repo = git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
                 .map(git::Repository::from)
                 .map(|r| r.apply_environment())?;
@@ -103,7 +111,7 @@ pub fn main() -> Result<()> {
 
     match cmd {
         Subcommands::Credential(cmd) => core::repository::credential(
-            repository(Mode::Strict)?,
+            repository(Mode::StrictWithGitInstallConfig)?,
             match cmd {
                 credential::Subcommands::Fill => git::credentials::program::main::Action::Get,
                 credential::Subcommands::Approve => git::credentials::program::main::Action::Store,
@@ -124,7 +132,7 @@ pub fn main() -> Result<()> {
                         core::repository::remote::refs::PROGRESS_RANGE,
                         move |progress, out, _err| {
                             core::repository::remote::refs(
-                                repository(Mode::Lenient)?,
+                                repository(Mode::LenientWithGitInstallConfig)?,
                                 progress,
                                 out,
                                 core::repository::remote::refs::Context { name, url, format },
@@ -155,7 +163,13 @@ pub fn main() -> Result<()> {
             progress_keep_open,
             None,
             move |_progress, out, _err| {
-                core::repository::config::list(repository(Mode::Lenient)?, filter, config, format, out)
+                core::repository::config::list(
+                    repository(Mode::LenientWithGitInstallConfig)?,
+                    filter,
+                    config,
+                    format,
+                    out,
+                )
             },
         )
         .map(|_| ()),
