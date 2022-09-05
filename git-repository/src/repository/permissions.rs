@@ -66,6 +66,8 @@ pub struct Environment {
     pub home: permission::env_var::Resource,
     /// Control if resources pointed to by `GIT_*` prefixed environment variables can be used.
     pub git_prefix: permission::env_var::Resource,
+    /// Control if resources pointed to by `SSH_*` prefixed environment variables can be used (like `SSH_ASKPASS`)
+    pub ssh_prefix: permission::env_var::Resource,
 }
 
 impl Environment {
@@ -75,6 +77,7 @@ impl Environment {
             xdg_config_home: Access::resource(git_sec::Permission::Allow),
             home: Access::resource(git_sec::Permission::Allow),
             git_prefix: Access::resource(git_sec::Permission::Allow),
+            ssh_prefix: Access::resource(git_sec::Permission::Allow),
         }
     }
 }
@@ -116,6 +119,7 @@ impl Permissions {
                 Environment {
                     xdg_config_home: deny.clone(),
                     home: deny.clone(),
+                    ssh_prefix: deny.clone(),
                     git_prefix: deny,
                 }
             },

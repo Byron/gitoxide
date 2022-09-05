@@ -20,9 +20,9 @@ mod error {
 }
 
 impl Snapshot<'_> {
-    /// Returns the configuration for all git-credential helpers that apply to the given `url` along with an action
-    /// preconfigured to invoke the cascade with. This includes `url` which may be altered to contain a user-name
-    /// as configured.
+    /// Returns the configuration for all git-credential helpers from trusted configuration that apply
+    /// to the given `url` along with an action preconfigured to invoke the cascade with.
+    /// This includes `url` which may be altered to contain a user-name as configured.
     ///
     /// These can be invoked to obtain credentials. Note that the `url` is expected to be the one used
     /// to connect to a remote, and thus should already have passed the url-rewrite engine.
@@ -39,7 +39,14 @@ impl Snapshot<'_> {
     pub fn credential_helpers(
         &self,
         mut url: git_url::Url,
-    ) -> Result<(git_credentials::helper::Cascade, git_credentials::helper::Action), Error> {
+    ) -> Result<
+        (
+            git_credentials::helper::Cascade,
+            git_credentials::helper::Action,
+            git_prompt::Options<'static>,
+        ),
+        Error,
+    > {
         let mut programs = Vec::new();
         let mut use_http_path = false;
         let url_had_user_initially = url.user().is_some();
@@ -110,6 +117,10 @@ impl Snapshot<'_> {
             }
         }
 
+        let allow_git_env = *self.repo.options.permissions.env.git_prefix == git_sec::Permission::Allow;
+        let allow_ssh_env = *self.repo.options.permissions.env.ssh_prefix == git_sec::Permission::Allow;
+        let prompt_options =
+            git_prompt::Options::default().apply_environment(allow_git_env, allow_ssh_env, allow_git_env);
         Ok((
             git_credentials::helper::Cascade {
                 programs,
@@ -117,6 +128,7 @@ impl Snapshot<'_> {
                 ..Default::default()
             },
             git_credentials::helper::Action::get_for_url(url.to_bstring()),
+            prompt_options,
         ))
     }
 }

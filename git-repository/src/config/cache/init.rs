@@ -24,6 +24,7 @@ impl Cache {
             git_prefix,
             home: home_env,
             xdg_config_home: xdg_config_home_env,
+            ssh_prefix: _,
         }: repository::permissions::Environment,
         repository::permissions::Config {
             system: use_system,

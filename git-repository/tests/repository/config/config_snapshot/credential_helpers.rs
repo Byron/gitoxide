@@ -1,3 +1,5 @@
+use git_testtools::Env;
+
 mod baseline {
     use crate::remote;
     use git_object::bstr::BString;
@@ -64,11 +66,20 @@ mod baseline {
 
     fn agrees_with_inner(url: &str, ignore_expected_prompt_port: bool, lowercase_prompt_host: bool) {
         let repo = remote::repo("credential-helpers");
-        let (cascade, mut action) = repo
+        let (cascade, mut action, prompt_options) = repo
             .config_snapshot()
             .credential_helpers(git::url::parse(url.into()).expect("valid input URL"))
             .unwrap();
 
+        assert_ne!(
+            prompt_options.mode,
+            git_prompt::Mode::Disable,
+            "isolated repos may show prompts"
+        );
+        assert!(
+            prompt_options.askpass.is_none(),
+            "isolation does not allow environment variables to be read"
+        );
         let actual_helpers: Vec<BString> = cascade
             .programs
             .iter()
@@ -162,7 +173,9 @@ fn subdomain_globs_match_on_their_level() {
 }
 
 #[test]
+#[serial_test::serial]
 fn http_urls_match_the_host_without_path_as_well() {
+    let _env = Env::new().set("GIT_ASKPASS", "foo");
     baseline::agrees_with("http://example.com:8080/other/path");
     baseline::agrees_with_but_drops_default_port_in_prompt("http://example.com:80/");
     baseline::agrees_with_but_drops_default_port_in_prompt("http://example.com:80");
@@ -170,7 +183,9 @@ fn http_urls_match_the_host_without_path_as_well() {
 }
 
 #[test]
+#[serial_test::serial]
 fn user_rules_only_match_urls_with_user() {
+    let _env = Env::new().set("SSH_ASKPASS", "foo");
     baseline::agrees_with("https://user@example.com/with-user");
     baseline::agrees_with("https://example.com/with-user");
     baseline::agrees_with("ssh://user@host/with-user");
