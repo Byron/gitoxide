@@ -372,25 +372,13 @@ struct Statistics {
 
 pub mod input_iteration {
     use git_repository::{hash, traverse};
-    use quick_error::quick_error;
-    quick_error! {
-        #[derive(Debug)]
-        pub enum Error {
-            Iteration(err: traverse::commit::ancestors::Error) {
-                display("input objects couldn't be iterated completely")
-                from()
-                source(err)
-            }
-            InputLinesIo(err: std::io::Error) {
-                display("An error occurred while reading hashes from standard input")
-                from()
-                source(err)
-            }
-            HashDecode(err: hash::decode::Error) {
-                display("Could not decode hex hash provided on standard input")
-                from()
-                source(err)
-            }
-        }
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("input objects couldn't be iterated completely")]
+        Iteration(#[from] traverse::commit::ancestors::Error),
+        #[error("An error occurred while reading hashes from standard input")]
+        InputLinesIo(#[from] std::io::Error),
+        #[error("Could not decode hex hash provided on standard input")]
+        HashDecode(#[from] hash::decode::Error),
     }
 }

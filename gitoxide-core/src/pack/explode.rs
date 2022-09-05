@@ -12,7 +12,6 @@ use git_repository::{
     odb::{loose, pack, Write},
     Progress,
 };
-use quick_error::quick_error;
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum SafetyCheck {
@@ -69,39 +68,30 @@ impl From<SafetyCheck> for pack::index::traverse::SafetyCheck {
     }
 }
 
-quick_error! {
-    #[derive(Debug)]
-    enum Error {
-        Io(err: std::io::Error) {
-            display("An IO error occurred while writing an object")
-            source(err)
-            from()
-        }
-        OdbWrite(err: loose::write::Error) {
-            display("An object could not be written to the database")
-            source(err)
-            from()
-        }
-        Write(err: Box<dyn std::error::Error + Send + Sync>, kind: object::Kind, id: ObjectId) {
-            display("Failed to write {} object {}", kind, id)
-            source(&**err)
-        }
-        Verify(err: objs::data::verify::Error) {
-            display("Object didn't verify after right after writing it")
-            source(err)
-            from()
-        }
-        ObjectEncodeMismatch(kind: object::Kind, actual: ObjectId, expected: ObjectId) {
-            display("{} object {} wasn't re-encoded without change - new hash is {}", kind, expected, actual)
-        }
-        WrittenFileMissing(id: ObjectId) {
-            display("The recently written file for loose object {} could not be found", id)
-        }
-        WrittenFileCorrupt(err: loose::find::Error, id: ObjectId) {
-            display("The recently written file for loose object {} cold not be read", id)
-            source(err)
-        }
-    }
+#[derive(Debug, thiserror::Error)]
+enum Error {
+    #[error("An IO error occurred while writing an object")]
+    Io(#[from] std::io::Error),
+    #[error("An object could not be written to the database")]
+    OdbWrite(#[from] loose::write::Error),
+    #[error("Failed to write {kind} object {id}")]
+    Write {
+        source: Box<dyn std::error::Error + Send + Sync>,
+        kind: object::Kind,
+        id: ObjectId,
+    },
+    #[error("Object didn't verify after right after writing it")]
+    Verify(#[from] objs::data::verify::Error),
+    #[error("{kind} object {expected} wasn't re-encoded without change - new hash is {actual}")]
+    ObjectEncodeMismatch {
+        kind: object::Kind,
+        actual: ObjectId,
+        expected: ObjectId,
+    },
+    #[error("The recently written file for loose object {id} could not be found")]
+    WrittenFileMissing { id: ObjectId },
+    #[error("The recently written file for loose object {id} cold not be read")]
+    WrittenFileCorrupt { source: loose::find::Error, id: ObjectId },
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -206,11 +196,10 @@ pub fn pack_or_pack_index(
                     let mut read_buf = Vec::new();
                     move |object_kind, buf, index_entry, progress| {
                         let written_id = out.write_buf(object_kind, buf).map_err(|err| {
-                            Error::Write(
-                                Box::new(err) as Box<dyn std::error::Error + Send + Sync>,
-                                object_kind,
-                                index_entry.oid,
-                            )
+                            Error::Write{source: Box::new(err) as Box<dyn std::error::Error + Send + Sync>,
+                                kind: object_kind,
+                                id: index_entry.oid,
+                            }
                         })?;
                         if written_id != index_entry.oid {
                             if let object::Kind::Tree = object_kind {
@@ -219,14 +208,14 @@ pub fn pack_or_pack_index(
                                     index_entry.oid, written_id
                                 ));
                             } else {
-                                return Err(Error::ObjectEncodeMismatch(object_kind, index_entry.oid, written_id));
+                                return Err(Error::ObjectEncodeMismatch{kind: object_kind, actual: index_entry.oid, expected:written_id});
                             }
                         }
                         if let Some(verifier) = loose_odb.as_ref() {
                             let obj = verifier
                                 .try_find(written_id, &mut read_buf)
-                                .map_err(|err| Error::WrittenFileCorrupt(err, written_id))?
-                                .ok_or(Error::WrittenFileMissing(written_id))?;
+                                .map_err(|err| Error::WrittenFileCorrupt{source:err, id:written_id})?
+                                .ok_or(Error::WrittenFileMissing{id:written_id})?;
                             obj.verify_checksum(written_id)?;
                         }
                         Ok(())

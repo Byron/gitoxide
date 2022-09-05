@@ -1842,7 +1842,6 @@ dependencies = [
  "git-url",
  "itertools",
  "jwalk",
- "quick-error",
  "rayon",
  "serde",
  "serde_json",
