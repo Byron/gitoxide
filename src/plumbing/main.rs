@@ -102,21 +102,12 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
-        Subcommands::Credential(cmd) => prepare_and_run(
-            "credential",
-            verbose,
-            progress,
-            progress_keep_open,
-            None,
-            move |_progress, _out, _err| {
-                core::repository::credential(
-                    repository(Mode::Strict)?,
-                    match cmd {
-                        credential::Subcommands::Fill => git::credentials::program::main::Action::Get,
-                        credential::Subcommands::Approve => git::credentials::program::main::Action::Store,
-                        credential::Subcommands::Reject => git::credentials::program::main::Action::Erase,
-                    },
-                )
+        Subcommands::Credential(cmd) => core::repository::credential(
+            repository(Mode::Strict)?,
+            match cmd {
+                credential::Subcommands::Fill => git::credentials::program::main::Action::Get,
+                credential::Subcommands::Approve => git::credentials::program::main::Action::Store,
+                credential::Subcommands::Reject => git::credentials::program::main::Action::Erase,
             },
         ),
         #[cfg_attr(feature = "small", allow(unused_variables))]

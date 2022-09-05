@@ -5,14 +5,7 @@ pub fn function(_repo: git::Repository, action: git::credentials::program::main:
     // TODO: use repo for configuration
     use git::credentials::program::main::Action::*;
     git::credentials::program::main(
-        Some(
-            match action {
-                Get => "get",
-                Store => "store",
-                Erase => "erase",
-            }
-            .into(),
-        ),
+        Some(action.as_str().into()),
         std::io::stdin(),
         std::io::stdout(),
         |action, context| {
