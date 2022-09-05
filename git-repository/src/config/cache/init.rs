@@ -27,6 +27,7 @@ impl Cache {
             ssh_prefix: _,
         }: repository::permissions::Environment,
         repository::permissions::Config {
+            git_binary: use_installation,
             system: use_system,
             git: use_git,
             user: use_user,
@@ -54,35 +55,43 @@ impl Cache {
             let home_env = &home_env;
             let xdg_config_home_env = &xdg_config_home_env;
             let git_prefix = &git_prefix;
+            let mut install_path = use_installation
+                .then(|| crate::env::git::install_config_path())
+                .flatten();
             let metas = [git_config::source::Kind::System, git_config::source::Kind::Global]
                 .iter()
                 .flat_map(|kind| kind.sources())
-                .filter_map(|source| {
-                    match source {
-                        git_config::Source::System if !use_system => return None,
-                        git_config::Source::Git if !use_git => return None,
-                        git_config::Source::User if !use_user => return None,
-                        _ => {}
+                .filter_map(|source| match install_path.take() {
+                    Some(install_path) => (
+                        &git_config::Source::System,
+                        git_path::from_bstr(install_path).into_owned(),
+                    )
+                        .into(),
+                    None => {
+                        match source {
+                            git_config::Source::System if !use_system => return None,
+                            git_config::Source::Git if !use_git => return None,
+                            git_config::Source::User if !use_user => return None,
+                            _ => {}
+                        }
+                        source
+                            .storage_location(&mut |name| {
+                                match name {
+                                    git_ if git_.starts_with("GIT_") => Some(git_prefix),
+                                    "XDG_CONFIG_HOME" => Some(xdg_config_home_env),
+                                    "HOME" => Some(home_env),
+                                    _ => None,
+                                }
+                                .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check(val).ok().flatten()))
+                            })
+                            .map(|p| (source, p.into_owned()))
                     }
-                    let path = source
-                        .storage_location(&mut |name| {
-                            match name {
-                                git_ if git_.starts_with("GIT_") => Some(git_prefix),
-                                "XDG_CONFIG_HOME" => Some(xdg_config_home_env),
-                                "HOME" => Some(home_env),
-                                _ => None,
-                            }
-                            .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check(val).ok().flatten()))
-                        })
-                        .map(|p| p.into_owned());
-
-                    git_config::file::Metadata {
-                        path,
-                        source: *source,
-                        level: 0,
-                        trust: git_sec::Trust::Full,
-                    }
-                    .into()
+                })
+                .map(|(source, path)| git_config::file::Metadata {
+                    path: Some(path),
+                    source: *source,
+                    level: 0,
+                    trust: git_sec::Trust::Full,
                 });
 
             let err_on_nonexisting_paths = false;

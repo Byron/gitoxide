@@ -14,6 +14,11 @@ pub struct Permissions {
 /// Configure security relevant options when loading a git configuration.
 #[derive(Copy, Clone, Ord, PartialOrd, PartialEq, Eq, Debug, Hash)]
 pub struct Config {
+    /// The git binary may come with configuration as part of its configuration, and if this is true (default false)
+    /// we will load the configuration of the git binary, if present and not a duplicate of the ones below.
+    ///
+    /// It's disable by default as it involves executing the git binary once per execution of the application.
+    pub git_binary: bool,
     /// Whether to use the system configuration.
     /// This is defined as `$(prefix)/etc/gitconfig` on unix.
     pub system: bool,
@@ -40,6 +45,7 @@ impl Config {
     /// Allow everything which usually relates to a fully trusted environment
     pub fn all() -> Self {
         Config {
+            git_binary: false,
             system: true,
             git: true,
             user: true,
@@ -108,6 +114,7 @@ impl Permissions {
     pub fn isolated() -> Self {
         Permissions {
             config: Config {
+                git_binary: false,
                 system: false,
                 git: false,
                 user: false,
