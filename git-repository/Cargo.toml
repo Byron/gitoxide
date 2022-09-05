@@ -110,6 +110,7 @@ git-prompt = { version = "0.1.0", path = "../git-prompt" }
 git-index = { version = "^0.4.3", path = "../git-index" }
 git-worktree = { version = "^0.4.3", path = "../git-worktree" }
 
+once_cell = "1.14.0"
 signal-hook = { version = "0.3.9", default-features = false }
 thiserror = "1.0.26"
 clru = "0.5.0"
