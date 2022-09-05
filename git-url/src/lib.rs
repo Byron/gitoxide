@@ -8,12 +8,6 @@
 #![deny(rust_2018_idioms, missing_docs)]
 #![forbid(unsafe_code)]
 
-use std::path::PathBuf;
-use std::{
-    convert::TryFrom,
-    fmt::{self},
-};
-
 use bstr::{BStr, BString};
 
 ///
@@ -26,45 +20,15 @@ pub mod expand_path;
 #[doc(inline)]
 pub use expand_path::expand_path;
 
-/// A scheme for use in a [`Url`]
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone, Copy)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-#[allow(missing_docs)]
-pub enum Scheme {
-    File,
-    Git,
-    Ssh,
-    Http,
-    Https,
-    // TODO: replace this with custom formats, maybe, get an idea how to do that.
-    Radicle,
-}
-
-impl Scheme {
-    /// Return ourselves parseable name.
-    pub fn as_str(&self) -> &'static str {
-        use Scheme::*;
-        match self {
-            File => "file",
-            Git => "git",
-            Ssh => "ssh",
-            Http => "http",
-            Https => "https",
-            Radicle => "rad",
-        }
-    }
-}
-
-impl fmt::Display for Scheme {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.as_str())
-    }
-}
+mod scheme;
+pub use scheme::Scheme;
 
 /// A URL with support for specialized git related capabilities.
 ///
 /// Additionally there is support for [deserialization][Url::from_bytes()] and serialization
 /// (_see the `Display::fmt()` implementation_).
+///
+/// Note that we do not support passing the password using the URL as it's likely leading to accidents.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Url {
@@ -78,18 +42,6 @@ pub struct Url {
     pub port: Option<u16>,
     /// The path portion of the URL, usually the location of the git repository.
     pub path: bstr::BString,
-}
-
-impl Default for Url {
-    fn default() -> Self {
-        Url {
-            scheme: Scheme::Ssh,
-            user: None,
-            host: None,
-            port: None,
-            path: bstr::BString::default(),
-        }
-    }
 }
 
 /// Instantiation
@@ -135,6 +87,24 @@ impl Url {
     /// Returns the host mentioned in the url, if present.
     pub fn host(&self) -> Option<&str> {
         self.host.as_deref()
+    }
+    /// Returns true if the path portion of the url is `/`.
+    pub fn path_is_root(&self) -> bool {
+        self.path == "/"
+    }
+    /// Returns the actual or default port for use according to the url scheme.
+    /// Note that there may be no default port either.
+    pub fn port_or_default(&self) -> Option<u16> {
+        self.port.or_else(|| {
+            use Scheme::*;
+            Some(match self.scheme {
+                Http => 80,
+                Https => 443,
+                Ssh => 21,
+                Git => 9418,
+                File | Ext(_) => return None,
+            })
+        })
     }
 }
 
@@ -185,54 +155,4 @@ impl Url {
     }
 }
 
-impl TryFrom<&str> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Self::from_bytes(value.into())
-    }
-}
-
-impl TryFrom<String> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        Self::from_bytes(value.as_str().into())
-    }
-}
-
-impl TryFrom<PathBuf> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
-        use std::convert::TryInto;
-        git_path::into_bstr(value).try_into()
-    }
-}
-
-impl TryFrom<&std::ffi::OsStr> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: &std::ffi::OsStr) -> Result<Self, Self::Error> {
-        use std::convert::TryInto;
-        git_path::os_str_into_bstr(value)
-            .expect("no illformed UTF-8 on Windows")
-            .try_into()
-    }
-}
-
-impl TryFrom<&BStr> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: &BStr) -> Result<Self, Self::Error> {
-        Self::from_bytes(value)
-    }
-}
-
-impl<'a> TryFrom<std::borrow::Cow<'a, BStr>> for Url {
-    type Error = parse::Error;
-
-    fn try_from(value: std::borrow::Cow<'a, BStr>) -> Result<Self, Self::Error> {
-        Self::try_from(&*value)
-    }
-}
+mod impls;

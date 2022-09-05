@@ -247,24 +247,25 @@ fn scripted_fixture_repo_read_only_with_args_inner(
 
     // keep this lock to assure we don't return unfinished directories for threaded callers
     let args: Vec<String> = args.into_iter().map(Into::into).collect();
-    let mut map = SCRIPT_IDENTITY.lock();
-    let script_identity = map
-        .entry(args.iter().fold(script_path.clone(), |p, a| p.join(a)))
-        .or_insert_with(|| {
-            let crc_value = crc::Crc::<u32>::new(&crc::CRC_32_CKSUM);
-            let mut crc_digest = crc_value.digest();
-            crc_digest.update(&std::fs::read(&script_path).unwrap_or_else(|err| {
-                panic!(
-                    "file {script_path:?} in CWD {:?} could not be read: {err}",
-                    std::env::current_dir().expect("valid cwd"),
-                )
-            }));
-            for arg in args.iter() {
-                crc_digest.update(arg.as_bytes());
-            }
-            crc_digest.finalize()
-        })
-        .to_owned();
+    let script_identity = {
+        let mut map = SCRIPT_IDENTITY.lock();
+        map.entry(args.iter().fold(script_path.clone(), |p, a| p.join(a)))
+            .or_insert_with(|| {
+                let crc_value = crc::Crc::<u32>::new(&crc::CRC_32_CKSUM);
+                let mut crc_digest = crc_value.digest();
+                crc_digest.update(&std::fs::read(&script_path).unwrap_or_else(|err| {
+                    panic!(
+                        "file {script_path:?} in CWD {:?} could not be read: {err}",
+                        std::env::current_dir().expect("valid cwd"),
+                    )
+                }));
+                for arg in args.iter() {
+                    crc_digest.update(arg.as_bytes());
+                }
+                crc_digest.finalize()
+            })
+            .to_owned()
+    };
 
     let script_basename = script_location.file_stem().unwrap_or(script_location.as_os_str());
     let archive_file_path = fixture_path(
@@ -317,6 +318,9 @@ fn scripted_fixture_repo_read_only_with_args_inner(
                     .stderr(std::process::Stdio::piped())
                     .current_dir(&script_result_directory)
                     .env_remove("GIT_DIR")
+                    .env_remove("GIT_ASKPASS")
+                    .env_remove("SSH_ASKPASS")
+                    .env("GIT_TERMINAL_PROMPT", "false")
                     .env("GIT_AUTHOR_DATE", "2000-01-01 00:00:00 +0000")
                     .env("GIT_AUTHOR_EMAIL", "author@example.com")
                     .env("GIT_AUTHOR_NAME", "author")

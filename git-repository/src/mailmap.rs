@@ -1,4 +1,3 @@
-#[cfg(feature = "git-mailmap")]
 pub use git_mailmap::*;
 
 ///

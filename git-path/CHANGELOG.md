@@ -5,7 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.2 (2022-08-29)
+
+### New Features
+
+ - <csr-id-f58a043273b8e15afd01aac71f33652783baf462/> add `is_absolute()` for git-style absolute checks
+   This essentially means that starting slashes are always absolute, even
+   on windows.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 2 commits contributed to the release over the course of 4 calendar days.
+ - 6 days passed between releases.
+ - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - add `is_absolute()` for git-style absolute checks ([`f58a043`](https://github.com/Byron/gitoxide/commit/f58a043273b8e15afd01aac71f33652783baf462))
+ * **Uncategorized**
+    - Merge branch 'main' into filter-refs-by-spec ([`cef0b51`](https://github.com/Byron/gitoxide/commit/cef0b51ade2a3301fa09ede7a425aa1fe3527e78))
+</details>
+
 ## 0.4.1 (2022-08-23)
+
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+<csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/>
 
 ### Chore
 
@@ -25,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 4 commits contributed to the release over the course of 3 calendar days.
+ - 5 commits contributed to the release over the course of 3 calendar days.
  - 31 days passed between releases.
  - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
@@ -37,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-path v0.4.1 ([`5e82346`](https://github.com/Byron/gitoxide/commit/5e823462b3deb904f5d6154a7bf114cef1988224))
     - Handle `.` specifically in `absolutize()`. ([`9171adb`](https://github.com/Byron/gitoxide/commit/9171adb796b38b08cae9bdd375b16a59a8166a1c))
     - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
     - uniformize deny attributes ([`f7f136d`](https://github.com/Byron/gitoxide/commit/f7f136dbe4f86e7dee1d54835c420ec07c96cd78))

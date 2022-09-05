@@ -78,6 +78,9 @@ pub enum Subcommands {
     /// Query and obtain information about revisions.
     #[clap(subcommand)]
     Revision(revision::Subcommands),
+    /// A program just like `git credential`.
+    #[clap(subcommand)]
+    Credential(credential::Subcommands),
     /// Interact with the mailmap.
     #[clap(subcommand)]
     Mailmap(mailmap::Subcommands),
@@ -215,6 +218,21 @@ pub mod commit {
             /// A specification of the revision to use, or the current `HEAD` if unset.
             rev_spec: Option<String>,
         },
+    }
+}
+
+pub mod credential {
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Get the credentials fed for `url=<url>` via STDIN.
+        #[clap(visible_alias = "get")]
+        Fill,
+        /// Approve the information piped via STDIN as obtained with last call to `fill`
+        #[clap(visible_alias = "store")]
+        Approve,
+        /// Try to resolve the given revspec and print the object names.
+        #[clap(visible_alias = "erase")]
+        Reject,
     }
 }
 

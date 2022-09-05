@@ -22,7 +22,7 @@ yanked = "warn"
 # 2019-12-17 there are no security notice advisories in
 # https://github.com/rustsec/advisory-db
 notice = "warn"
-ignore = [ ]
+ignore = ["RUSTSEC-2021-0119"] # 'nix' comes in via `expectrl`, which is a dev-dependency only. Somewhat unmaintained.
 
 
 

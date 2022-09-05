@@ -77,8 +77,6 @@
 //!
 //! # Cargo-features
 //!
-//! ## With the optional "unstable" cargo feature
-//!
 //! To make using  _sub-crates_ easier these are re-exported into the root of this crate. Note that these may change their major version
 //! even if this crate doesn't, hence breaking downstream.
 //!
@@ -94,6 +92,7 @@
 //! * [`glob`]
 //! * [`path`]
 //! * [`credentials`]
+//! * [`prompt`]
 //! * [`sec`]
 //! * [`worktree`]
 //! * [`mailmap`]
@@ -116,6 +115,7 @@
 //!   * [`transport`][protocol::transport]
 //!     * [`packetline`][protocol::transport::packetline]
 //!
+//!
 //! ## Feature Flags
 #![cfg_attr(
     feature = "document-features",
@@ -128,35 +128,27 @@
 // This also means that their major version changes affect our major version, but that's alright as we directly expose their
 // APIs/instances anyway.
 pub use git_actor as actor;
-#[cfg(all(feature = "unstable"))]
 pub use git_attributes as attrs;
-#[cfg(all(feature = "unstable", feature = "git-credentials"))]
 pub use git_credentials as credentials;
-#[cfg(feature = "unstable")]
 pub use git_date as date;
 pub use git_diff as diff;
 use git_features::threading::OwnShared;
-#[cfg(feature = "unstable")]
 pub use git_features::{parallel, progress, progress::Progress, threading};
-#[cfg(feature = "unstable")]
 pub use git_glob as glob;
 pub use git_hash as hash;
 #[doc(inline)]
-#[cfg(feature = "unstable")]
 pub use git_index as index;
 pub use git_lock as lock;
 pub use git_object as objs;
 pub use git_object::bstr;
-#[cfg(feature = "unstable")]
 pub use git_odb as odb;
-#[cfg(all(feature = "unstable", feature = "git-protocol"))]
+pub use git_prompt as prompt;
+#[cfg(all(feature = "git-protocol"))]
 pub use git_protocol as protocol;
 pub use git_ref as refs;
 pub use git_refspec as refspec;
 pub use git_sec as sec;
-#[cfg(feature = "unstable")]
 pub use git_tempfile as tempfile;
-#[cfg(feature = "unstable")]
 pub use git_traverse as traverse;
 pub use git_url as url;
 #[doc(inline)]
@@ -353,34 +345,6 @@ pub mod state {
 pub mod discover;
 
 ///
-pub mod env {
-    use crate::bstr::{BString, ByteVec};
-    use std::ffi::{OsStr, OsString};
-
-    /// Equivalent to `std::env::args_os()`, but with precomposed unicode on MacOS and other apple platforms.
-    #[cfg(not(target_vendor = "apple"))]
-    pub fn args_os() -> impl Iterator<Item = OsString> {
-        std::env::args_os()
-    }
-
-    /// Equivalent to `std::env::args_os()`, but with precomposed unicode on MacOS and other apple platforms.
-    ///
-    /// Note that this ignores `core.precomposeUnicode` as git-config isn't available yet. It's default enabled in modern git though.
-    #[cfg(target_vendor = "apple")]
-    pub fn args_os() -> impl Iterator<Item = OsString> {
-        use unicode_normalization::UnicodeNormalization;
-        std::env::args_os().map(|arg| match arg.to_str() {
-            Some(arg) => arg.nfc().collect::<String>().into(),
-            None => arg,
-        })
-    }
-
-    /// Convert the given `input` into a `BString`, useful as `parse(try_from_os_str = <me>)` function.
-    pub fn os_str_to_bstring(input: &OsStr) -> Result<BString, String> {
-        Vec::from_os_string(input.into())
-            .map(Into::into)
-            .map_err(|_| input.to_string_lossy().into_owned())
-    }
-}
+pub mod env;
 
 mod kind;

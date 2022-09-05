@@ -15,7 +15,7 @@ use gitoxide_core::pack::verify;
 
 use crate::plumbing::options::remote;
 use crate::{
-    plumbing::options::{commit, config, exclude, free, mailmap, odb, revision, tree, Args, Subcommands},
+    plumbing::options::{commit, config, credential, exclude, free, mailmap, odb, revision, tree, Args, Subcommands},
     shared::pretty::prepare_and_run,
 };
 
@@ -60,22 +60,34 @@ pub fn main() -> Result<()> {
     let repository = args.repository;
     enum Mode {
         Strict,
+        StrictWithGitInstallConfig,
         Lenient,
+        LenientWithGitInstallConfig,
     }
-    let repository = move |mode: Mode| -> Result<git::Repository> {
-        let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
-        let toggle = matches!(mode, Mode::Strict);
-        mapping.full = mapping.full.strict_config(toggle);
-        mapping.reduced = mapping.reduced.strict_config(toggle);
-        let mut repo = git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
-            .map(git::Repository::from)
-            .map(|r| r.apply_environment())?;
-        if !config.is_empty() {
-            repo.config_snapshot_mut()
-                .apply_cli_overrides(config)
-                .context("Unable to parse command-line configuration")?;
+
+    let repository = {
+        let config = config.clone();
+        move |mode: Mode| -> Result<git::Repository> {
+            let mut mapping: git::sec::trust::Mapping<git::open::Options> = Default::default();
+            let strict_toggle = matches!(mode, Mode::Strict | Mode::StrictWithGitInstallConfig);
+            mapping.full = mapping.full.strict_config(strict_toggle);
+            mapping.reduced = mapping.reduced.strict_config(strict_toggle);
+            let git_installation = matches!(
+                mode,
+                Mode::StrictWithGitInstallConfig | Mode::LenientWithGitInstallConfig
+            );
+            mapping.full.permissions.config.git_binary = git_installation;
+            mapping.reduced.permissions.config.git_binary = git_installation;
+            let mut repo = git::ThreadSafeRepository::discover_opts(repository, Default::default(), mapping)
+                .map(git::Repository::from)
+                .map(|r| r.apply_environment())?;
+            if !config.is_empty() {
+                repo.config_snapshot_mut()
+                    .apply_cli_overrides(config.iter())
+                    .context("Unable to parse command-line configuration")?;
+            }
+            Ok(repo)
         }
-        Ok(repo)
     };
 
     let progress;
@@ -98,6 +110,14 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Credential(cmd) => core::repository::credential(
+            repository(Mode::StrictWithGitInstallConfig)?,
+            match cmd {
+                credential::Subcommands::Fill => git::credentials::program::main::Action::Get,
+                credential::Subcommands::Approve => git::credentials::program::main::Action::Store,
+                credential::Subcommands::Reject => git::credentials::program::main::Action::Erase,
+            },
+        ),
         #[cfg_attr(feature = "small", allow(unused_variables))]
         Subcommands::Remote(remote::Platform { name, url, cmd }) => match cmd {
             #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
@@ -112,7 +132,7 @@ pub fn main() -> Result<()> {
                         core::repository::remote::refs::PROGRESS_RANGE,
                         move |progress, out, _err| {
                             core::repository::remote::refs(
-                                repository(Mode::Lenient)?,
+                                repository(Mode::LenientWithGitInstallConfig)?,
                                 progress,
                                 out,
                                 core::repository::remote::refs::Context { name, url, format },
@@ -142,7 +162,15 @@ pub fn main() -> Result<()> {
             progress,
             progress_keep_open,
             None,
-            move |_progress, out, _err| core::repository::config::list(repository(Mode::Lenient)?, filter, format, out),
+            move |_progress, out, _err| {
+                core::repository::config::list(
+                    repository(Mode::LenientWithGitInstallConfig)?,
+                    filter,
+                    config,
+                    format,
+                    out,
+                )
+            },
         )
         .map(|_| ()),
         Subcommands::Free(subcommands) => match subcommands {

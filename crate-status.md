@@ -143,7 +143,9 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] convert URL to string
 * [x] API documentation
     * [ ] Some examples
-
+- **deviation**
+    * URLs may not contain passwords, which cannot be represent here and if present, will be ignored.
+    
 ### git-protocol
 * _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
 * [x] **credentials**
@@ -240,6 +242,18 @@ Check out the [performance discussion][git-traverse-performance] as well.
     * [ ] for fetch
     * [ ] for push
 
+### git-command
+* [x] execute commands directly
+* [x] execute commands with `sh`
+* [ ] support for `GIT_EXEC_PATH` environment variable with `git-sec` filter
+
+### git-prompt
+* [x] open prompts for usernames for example
+* [x] secure prompts for password
+* [x] use `askpass` program if available
+* [ ] signal handling (resetting and restoring terminal settings)
+* [ ] windows prompts for `cmd.exe` and mingw terminals
+
 ### git-note
 
 A mechanism to associate metadata with any object, and keep revisions of it using git itself.
@@ -262,6 +276,11 @@ A mechanism to associate metadata with any object, and keep revisions of it usin
  
 ### git-credentials
 * [x] launch git credentials helpers with a given action
+  - [x] built-in `git credential` program
+  - [x] as scripts
+  - [x] as absolute paths to programs with optional arguments
+  - [x] program name with optional arguments, transformed into `git credential-<name>`
+* [x] `helper::main()` for easy custom credential helper programs written in Rust
 
 ### git-filter
 
@@ -393,18 +412,20 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-tempfile/REA
 
 See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.md).
 
+### git-config-value
+* **parse** 
+    * [x] boolean
+    * [x] integer
+    * [x] color
+       * [ ] ANSI code output for terminal colors
+    * [x] path (incl. resolution)
+    * [ ] date
+    * [ ] [permission][https://github.com/git/git/blob/71a8fab31b70c417e8f5b5f716581f89955a7082/setup.c#L1526:L1526]
+    
 ### git-config
 * [x] read
     * zero-copy parsing with event emission
-    * [x] decode value
-        * [x] boolean
-        * [x] integer
-        * [x] color
-           * [ ] ANSI code output for terminal colors
-        * [x] path (incl. resolution)
-        * [ ] date
-        * [ ] [permission][https://github.com/git/git/blob/71a8fab31b70c417e8f5b5f716581f89955a7082/setup.c#L1526:L1526]
-        * [x] include
+    * all config values as per the `git-config-value` crate  
     * **includeIf**
       * [x] `gitdir`,  `gitdir/i`, and `onbranch`
       * [ ] `hasconfig`
@@ -415,8 +436,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * keep comments and whitespace, and only change lines that are affected by actual changes, to allow truly non-destructive editing
 * [x] cascaded loading of various configuration files into one
     * [x] load from environment variables
-    * [ ] load from well-known sources for global configuration
-    * [ ] load repository configuration with all known sources
+    * [x] load from well-known sources for global configuration
+    * [x] load repository configuration with all known sources
 * [x] API documentation
     * [x] Some examples
 
@@ -428,16 +449,20 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [x] discovery
         * [x] option to not cross file systems (default)
         * [x] handle git-common-dir
-        * [ ] support for `GIT_CEILING_DIRECTORIES` environment variable
+        * [x] support for `GIT_CEILING_DIRECTORIES` environment variable
         * [ ] handle other non-discovery modes and provide control over environment variable usage required in applications
     * [x] rev-parse
-        - **deviation**
-            * `@` actually stands for `HEAD`, whereas `git` resolves it to the object pointed to by `HEAD` without making the `HEAD` ref available for lookups.
     * [x] rev-walk
       * [x] include tips
       * [ ] exclude commits
     * [x] instantiation
     * [x] access to refs and objects
+    * **credentials**
+      * [x] run `git credential` directly
+      * [x] use credential helper configuration and to obtain credentials with `git_credential::helper::Cascade`
+    * **config**
+      * [ ] facilities to apply the [url-match](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httplturlgt) algorithm and to
+            [normalize urls](https://github.com/git/git/blob/be1a02a17ede4082a86dfbfee0f54f345e8b43ac/urlmatch.c#L109:L109) before comparison.
     * **traverse** 
       * [x] commit graphs
       * [ ] make [git-notes](https://git-scm.com/docs/git-notes) accessible
@@ -469,8 +494,10 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
           * [ ] shallow
         * [ ] fetch
         * [ ] push
-        * [ ] ls-refs
-        * [ ] list, find by name, create in memory.
+        * [x] ls-refs
+        * [ ] ls-refs with ref-spec filter
+        * [ ] list, find by name
+        * [x] create in memory
         * [ ] groups
         * [ ] [remote and branch files](https://github.com/git/git/blob/master/remote.c#L300)
   * [ ] execute hooks

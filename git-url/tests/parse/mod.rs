@@ -1,7 +1,19 @@
+use bstr::ByteSlice;
 use git_url::Scheme;
 
 fn assert_url_and(url: &str, expected: git_url::Url) -> Result<git_url::Url, crate::Error> {
-    assert_eq!(git_url::parse(url.into())?, expected);
+    let actual = git_url::parse(url.into())?;
+    assert_eq!(actual, expected);
+    if actual.scheme.as_str().starts_with("http") {
+        assert!(
+            actual.path.starts_with_str("/"),
+            "paths are never empty and at least '/': {:?}",
+            actual.path
+        );
+        if actual.path.len() < 2 {
+            assert!(actual.path_is_root())
+        }
+    }
     Ok(expected)
 }
 
@@ -45,7 +57,7 @@ mod radicle {
         assert_url_roundtrip(
             "rad://hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81@hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git",
             url(
-                Scheme::Radicle,
+                Scheme::Ext("rad".into()),
                 "hynkuwzskprmswzeo4qdtku7grdrs4ffj3g9tjdxomgmjzhtzpqf81",
                 "hwd1yregyf1dudqwkx85x5ps3qsrqw3ihxpx3ieopq6ukuuq597p6m8161c.git",
                 None,

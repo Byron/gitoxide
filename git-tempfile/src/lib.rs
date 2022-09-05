@@ -125,8 +125,7 @@ impl AutoRemove {
         match self {
             AutoRemove::Tempfile => None,
             AutoRemove::TempfileAndEmptyParentDirectoriesUntil { boundary_directory } => {
-                crate::remove_dir::empty_upward_until_boundary(directory_to_potentially_delete, &boundary_directory)
-                    .ok();
+                remove_dir::empty_upward_until_boundary(directory_to_potentially_delete, &boundary_directory).ok();
                 Some(boundary_directory)
             }
         }

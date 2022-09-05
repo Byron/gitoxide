@@ -171,3 +171,106 @@ EOF
     git remote get-url origin --push
   } > baseline.git
 )
+
+git clone --shared base protocol_denied
+(cd protocol_denied
+    git config protocol.allow never
+)
+
+git clone --shared base protocol_file_denied
+(cd protocol_file_denied
+    git config protocol.file.allow never
+)
+
+git clone --shared base protocol_file_user
+(cd protocol_file_user
+    git config protocol.file.allow user
+)
+
+git clone --shared base remote-as-url
+(cd remote-as-url
+  cat <<EOF >> .git/config
+[branch "main"]
+  remote = https://example.com/fetch-path.git
+  pushRemote = https://example.com/push-path.git
+EOF
+)
+
+
+
+git clone --shared base credential-helpers
+(cd credential-helpers
+    export GIT_TERMINAL_PROMPT=0
+    git=$(which git)
+    function baseline() {
+      local url=${1:?need url}
+      {
+        echo $url
+        echo url=$url | GIT_TRACE=1 $git credential fill 2>&1 | grep -E '^[a-z]+:' || :
+      } >> baseline.git
+    }
+
+    git config credential.helper ""
+    git config --add credential.helper global
+    git config 'credential.https://*.helper' 'https://*'
+    git config 'credential.http://*.helper' 'http://*'
+    git config 'credential.http://*.com.helper' 'http://*.com'
+    git config 'credential.http://example.*.helper' 'http://example.*'
+    git config 'credential.http://example.?om.helper' 'http://example.?om'
+    git config 'credential.http://*.example.com.helper' 'http://*.example.com'
+    git config 'credential.http://a.*.example.com.helper' 'http://a.*.example.com'
+    git config 'credential.HTTPS://example.com.helper' 'HTTPS://example.com'
+    git config credential.http://example.com:80.helper http://example.com:80
+    git config credential.https://example.com:443.helper https://example.com:443
+    git config credential.http://example.com:8080.helper http://example.com:8080
+    git config credential.https://example.com:8080.helper https://example.com:8080
+    git config credential.https://example.com:8080/path.helper https://example.com:8080/path
+    git config credential.https://example.com:8080/path.usehttppath 1
+    git config credential.https://example.com:8080/clear.helper ""
+    git config --add credential.https://example.com:8080/clear.helper credential.https://example.com:8080/clear
+    git config credential.https://user@example.com/with-user.helper https://user@example.com/with-user
+    git config credential.https://user@example.com.helper https://user@example.com
+    git config credential.ssh://user@host/with-user.helper ssh://user@host/with-user
+    git config credential.ssh://host/with-user.helper ssh://host/with-user
+    git config credential.ssh://host:21/path.helper ssh://host:21/path
+    git config credential.ssh://host/path.helper ssh://host/path
+    git config credential.git://host.org.helper git://host.org
+
+    git config credential.https://dev.azure.com.usehttppath true
+
+    baseline "https://hit-global.helper"
+    baseline "http://host"
+    baseline "http://example.com:80"
+    baseline "http://example.com:80/"
+    baseline "http://example.com"
+    baseline "http://a.example.com"
+    baseline "http://b.example.com/path"
+    baseline "http://c.example.com:80/path"
+    baseline "http://a.a.example.com:80/path"
+    baseline "http://a.b.example.com/path"
+    baseline "http://b.a.example.com/path"
+    baseline "https://example.com"
+    baseline "https://EXAMPLE.com"
+    baseline "HTTPS://example.com"
+    baseline "https://example.COM"
+    baseline "https://example.com/"
+    baseline "https://example.com:443"
+    baseline "https://example.com:443/"
+    baseline "http://example.com:8080/other/path"
+    baseline "https://example.com:8080/other/path"
+    baseline "https://example.com:8080/path"
+    baseline "https://example.com:8080/PATH"
+    baseline "https://example.com:8080/path/"
+    baseline "https://example.com:8080/clear"
+    baseline "https://example.com/with-user"
+    baseline "https://user@example.com/with-user"
+    baseline "ssh://host/with-user"
+    baseline "ssh://user@host/with-user"
+    baseline "ssh://host/path"
+    baseline "ssh://host/PATH"
+    baseline "ssh://host:21/path"
+    baseline "ssh://host:21"
+    baseline "ssh://host"
+    baseline "git://host.org"
+)
+

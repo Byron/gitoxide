@@ -64,7 +64,8 @@ impl ReplacementObjects {
 pub struct Options {
     pub(crate) object_store_slots: git_odb::store::init::Slots,
     pub(crate) replacement_objects: ReplacementObjects,
-    pub(crate) permissions: Permissions,
+    /// Define what is allowed while openeing a repository.
+    pub permissions: Permissions,
     pub(crate) git_dir_trust: Option<git_sec::Trust>,
     /// Warning: this one is copied to to config::Cache - don't change it after repo open or keep in sync.
     pub(crate) filter_config_section: Option<fn(&git_config::file::Metadata) -> bool>,

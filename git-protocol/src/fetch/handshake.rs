@@ -21,7 +21,7 @@ mod error {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
-        Credentials(#[from] credentials::helper::Error),
+        Credentials(#[from] credentials::protocol::Error),
         #[error(transparent)]
         Transport(#[from] client::Error),
         #[error("The transport didn't accept the advertised server version {actual_version:?} and closed the connection client side")]
@@ -54,7 +54,7 @@ pub(crate) mod function {
         progress: &mut impl Progress,
     ) -> Result<Outcome, Error>
     where
-        AuthFn: FnMut(credentials::helper::Action<'_>) -> credentials::helper::Result,
+        AuthFn: FnMut(credentials::helper::Action) -> credentials::protocol::Result,
         T: client::Transport,
     {
         let (server_protocol_version, refs, capabilities) = {
@@ -79,20 +79,20 @@ pub(crate) mod function {
                     drop(result); // needed to workaround this: https://github.com/rust-lang/rust/issues/76149
                     let url = transport.to_url();
                     progress.set_name("authentication");
-                    let credentials::helper::Outcome { identity, next } =
-                        authenticate(credentials::helper::Action::Fill(url.as_str().into()))?
-                            .expect("FILL provides an identity");
+                    let credentials::protocol::Outcome { identity, next } =
+                        authenticate(credentials::helper::Action::get_for_url(url))?
+                            .expect("FILL provides an identity or errors");
                     transport.set_identity(identity)?;
                     progress.step();
                     progress.set_name("handshake (authenticated)");
                     match transport.handshake(Service::UploadPack, &extra_parameters).await {
                         Ok(v) => {
-                            authenticate(next.approve())?;
+                            authenticate(next.store())?;
                             Ok(v)
                         }
                         // Still no permission? Reject the credentials.
                         Err(client::Error::Io { err }) if err.kind() == std::io::ErrorKind::PermissionDenied => {
-                            authenticate(next.reject())?;
+                            authenticate(next.erase())?;
                             Err(client::Error::Io { err })
                         }
                         // Otherwise, do nothing, as we don't know if it actually got to try the credentials.

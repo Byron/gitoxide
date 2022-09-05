@@ -9,6 +9,34 @@
 #![deny(missing_docs, rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
+/// A program/executable implementing the credential helper protocol.
+#[derive(Debug)]
+pub struct Program {
+    /// The kind of program, ready for launch.
+    pub kind: program::Kind,
+    /// If true, stderr is enabled, which is the default.
+    pub stderr: bool,
+    /// `Some(…)` if the process is running.
+    child: Option<std::process::Child>,
+}
+
 ///
 pub mod helper;
-pub use helper::action as helper;
+
+///
+pub mod program;
+
+///
+pub mod protocol;
+
+/// Call the `git credential` helper program performing the given `action`, which reads all context from the git configuration
+/// and does everything `git` typically does. The `action` should have been created with [`helper::Action::get_for_url()`] to
+/// contain only the URL to kick off the process, or should be created by [`helper::NextAction`].
+///
+/// If more control is required, use the [`Cascade`][helper::Cascade] type.
+pub fn builtin(action: helper::Action) -> protocol::Result {
+    protocol::helper_outcome_to_result(
+        helper::invoke(&mut Program::from_kind(program::Kind::Builtin), &action)?,
+        action,
+    )
+}

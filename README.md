@@ -46,6 +46,10 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
         * [x] **explain** - show what would be done while parsing a revision specification like `HEAD~1`
         * [x] **resolve** - show which objects a revspec resolves to, similar to `git rev-parse` but faster and with much better error handling
         * [x] **previous-branches** - list all previously checked out branches, powered by the ref-log.
+    * **remote**    
+        * [x] **refs** - list all references available on the remote based on the current remote configuration.
+    * **credential**
+        * [x] **fill/approve/reject** - The same as `git credential`, but implemented in Rust, calling helpers only when from trusted configuration.
     * **free** - no git repository necessary
         * **pack**
           * [x] [verify](https://asciinema.org/a/352942)
@@ -75,8 +79,6 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
                 * [x] detailed information about the TREE extension
                 * [ ] …other extensions details aren't implemented yet
             * [x] **checkout-exclusive** - a predecessor of `git worktree`, providing flexible options to evaluate checkout performance from an index and/or an object database.
-        * **remote**
-            * [ref-list](https://asciinema.org/a/359320) - list all (or given) references from a remote at the given URL
 
 [skim]: https://github.com/lotabout/skim
 [git-hours]: https://github.com/kimmobrunfeldt/git-hours/blob/8aaeee237cb9d9028e7a2592a25ad8468b1f45e4/index.js#L114-L143
@@ -105,6 +107,7 @@ Documentation is complete and was reviewed at least once.
 * [git-chunk](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-chunk)
 * [git-ref](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-ref)
 * [git-config](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config)
+* [git-config-value](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-config-value)
 * [git-glob](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-glob)
 
 ### Initial Development
@@ -137,6 +140,8 @@ is usable to some extend.
   * [git-pathspec](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-pathspec)
   * [git-index](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-index)
   * [git-revision](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-revision)
+  * [git-command](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-command)
+  * [git-prompt](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-prompt)
   * `gitoxide-core`
 * **very early**  _(possibly without any documentation and many rough edges)_
   * [git-worktree](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-worktree)
