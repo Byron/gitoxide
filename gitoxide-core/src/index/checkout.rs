@@ -136,7 +136,7 @@ pub fn checkout_exclusive(
                 )
             })
             .unwrap_or_default(),
-        git_features::progress::bytes()
+        git::progress::bytes()
             .unwrap()
             .display(bytes_written as usize, None, None)
     ));
