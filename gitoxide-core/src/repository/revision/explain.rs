@@ -1,6 +1,6 @@
 use anyhow::bail;
 use git::{
-    bstr::{BStr, BString, ByteSlice},
+    bstr::{BStr, BString},
     revision::plumbing::{
         spec,
         spec::parse::{
@@ -97,7 +97,7 @@ impl<'a> delegate::Revision for Explain<'a> {
             ReflogLookup::Date(time) => writeln!(
                 self.out,
                 "Find entry closest to time {} in reflog of '{}' reference",
-                time.format(git_date::time::format::ISO8601),
+                time.format(git::date::time::format::ISO8601),
                 ref_name
             )
             .ok(),
