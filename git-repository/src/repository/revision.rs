@@ -1,4 +1,4 @@
-use crate::{bstr::BStr, revision};
+use crate::{bstr::BStr, revision, Id};
 
 /// Methods for resolving revisions by spec or working with the commit graph.
 impl crate::Repository {
@@ -12,6 +12,15 @@ impl crate::Repository {
                 ..Default::default()
             },
         )
+    }
+
+    /// Parse a revision specification and return the single included object represented by this instance,
+    /// or `None` if it is a range of any kind.
+    pub fn rev_parse_single<'repo, 'a>(
+        &'repo self,
+        spec: impl Into<&'a BStr>,
+    ) -> Result<Option<Id<'repo>>, revision::spec::parse::Error> {
+        Ok(self.rev_parse(spec)?.single())
     }
 
     /// Create the baseline for a revision walk by initializing it with the `tips` to start iterating on.
