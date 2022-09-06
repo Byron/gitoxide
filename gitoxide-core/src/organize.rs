@@ -4,7 +4,6 @@ use std::{
 };
 
 use git::{objs::bstr::ByteSlice, progress, Progress};
-use git_config::File;
 use git_repository as git;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
@@ -101,9 +100,9 @@ where
 
 fn find_origin_remote(repo: &Path) -> anyhow::Result<Option<git_url::Url>> {
     let non_bare = repo.join(".git").join("config");
-    let local = git_config::Source::Local;
-    let config = File::from_path_no_includes(non_bare.as_path(), local)
-        .or_else(|_| File::from_path_no_includes(repo.join("config").as_path(), local))?;
+    let local = git::config::Source::Local;
+    let config = git::config::File::from_path_no_includes(non_bare.as_path(), local)
+        .or_else(|_| git::config::File::from_path_no_includes(repo.join("config").as_path(), local))?;
     Ok(config
         .string("remote", Some("origin"), "url")
         .map(|url| git_url::Url::from_bytes(url.as_ref()))
