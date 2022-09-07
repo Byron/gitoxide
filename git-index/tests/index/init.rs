@@ -59,8 +59,16 @@ fn compare_states(actual: &State, expected: &State, fixture: &str) {
     );
     // assert_eq!(actual.entries(), expected.entries(), "entries mismatch in {}", fixture);
     assert_eq!(
-        actual.entries().iter().map(|e| e.mode).collect::<Vec<_>>(),
-        expected.entries().iter().map(|e| e.mode).collect::<Vec<_>>()
+        actual
+            .entries()
+            .iter()
+            .map(|e| (e.id, e.flags, e.mode))
+            .collect::<Vec<_>>(),
+        expected
+            .entries()
+            .iter()
+            .map(|e| (e.id, e.flags, e.mode))
+            .collect::<Vec<_>>()
     );
     // assert_eq!(
     //     actual.path_backing(),
