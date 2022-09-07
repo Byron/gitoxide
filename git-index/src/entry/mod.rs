@@ -8,6 +8,7 @@ mod flags;
 pub(crate) use flags::at_rest;
 pub use flags::Flags;
 
+mod init;
 mod write;
 
 /// The time component in a [`Stat`] struct.
