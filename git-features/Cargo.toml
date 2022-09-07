@@ -41,6 +41,8 @@ crc32 = ["crc32fast"]
 ## Note that a competitive Zlib implementation is critical to `gitoxide's` object database performance.
 ## Additional backends are supported, each of which overriding the default Rust backend.
 zlib = ["flate2", "flate2/rust_backend", "quick-error"]
+## Use zlib-ng (libz-ng-sys) with native API (no compat mode) that can co-exist with system libz.
+zlib-ng= ["flate2/zlib-ng"]
 ## Use a C-based backend which can compress and decompress significantly faster than the other options.
 zlib-ng-compat = ["flate2/zlib-ng-compat"]
 ## Use a slower C-based backend which can compress and decompress significantly faster than the rust version.
