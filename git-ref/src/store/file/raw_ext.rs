@@ -95,7 +95,9 @@ impl ReferenceExt for Reference {
                     while let Some(next) = cursor.follow_packed(store, packed) {
                         let next = next?;
                         if seen.contains(&next.name) {
-                            return Err(peel::to_id::Error::Cycle(store.reference_path(cursor.name.as_ref())));
+                            return Err(peel::to_id::Error::Cycle {
+                                start_absolute: store.reference_path(cursor.name.as_ref()),
+                            });
                         }
                         *cursor = next;
                         seen.insert(cursor.name.clone());
@@ -161,9 +163,9 @@ impl ReferenceExt for Reference {
                 Target::Peeled(_) => None,
                 Target::Symbolic(full_name) => match store.try_find_packed(full_name.as_ref(), packed) {
                     Ok(Some(next)) => Some(Ok(next)),
-                    Ok(None) => Some(Err(file::find::existing::Error::NotFound(
-                        full_name.to_path().to_owned(),
-                    ))),
+                    Ok(None) => Some(Err(file::find::existing::Error::NotFound {
+                        name: full_name.to_path().to_owned(),
+                    })),
                     Err(err) => Some(Err(file::find::existing::Error::Find(err))),
                 },
             },

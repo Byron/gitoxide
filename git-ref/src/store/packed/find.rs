@@ -107,22 +107,14 @@ impl packed::Buffer {
 mod error {
     use std::convert::Infallible;
 
-    use quick_error::quick_error;
-
-    quick_error! {
-        /// The error returned by [`find()`][super::packed::Buffer::find()]
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            RefnameValidation(err: crate::name::Error) {
-                display("The ref name or path is not a valid ref name")
-                from()
-                source(err)
-            }
-            Parse {
-                display("The reference could not be parsed")
-            }
-        }
+    /// The error returned by [`find()`][super::packed::Buffer::find()]
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The ref name or path is not a valid ref name")]
+        RefnameValidation(#[from] crate::name::Error),
+        #[error("The reference could not be parsed")]
+        Parse,
     }
 
     impl From<Infallible> for Error {
@@ -135,22 +127,15 @@ pub use error::Error;
 
 ///
 pub mod existing {
-    use quick_error::quick_error;
 
-    quick_error! {
-        /// The error returned by [`find_existing()`][super::packed::Buffer::find_existing()]
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Find(err: super::Error) {
-                display("The find operation failed")
-                from()
-                source(err)
-            }
-            NotFound {
-                display("The reference did not exist even though that was expected")
-            }
-        }
+    /// The error returned by [`find_existing()`][super::packed::Buffer::find_existing()]
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The find operation failed")]
+        Find(#[from] super::Error),
+        #[error("The reference did not exist even though that was expected")]
+        NotFound,
     }
 }
 

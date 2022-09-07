@@ -132,7 +132,7 @@ impl<'a> convert::TryFrom<&'a OsStr> for &'a PartialNameRef {
     fn try_from(v: &'a OsStr) -> Result<Self, Self::Error> {
         let v = git_path::os_str_into_bstr(v).map_err(|_| {
             Error::Tag(git_validate::tag::name::Error::InvalidByte {
-                name: "<unknown encoding>".into(),
+                byte: "<unknown encoding>".into(),
             })
         })?;
         Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(

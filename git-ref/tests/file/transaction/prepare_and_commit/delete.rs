@@ -52,7 +52,7 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
         Ok(_) => unreachable!("must exist, but it doesn't actually exist"),
         Err(err) => assert_eq!(
             err.to_string(),
-            "The reference 'DOES_NOT_EXIST' for deletion did not exist or could not be parsed"
+            "The reference \"DOES_NOT_EXIST\" for deletion did not exist or could not be parsed"
         ),
     }
     Ok(())
@@ -121,7 +121,7 @@ fn delete_ref_with_incorrect_previous_value_fails() -> crate::Result {
 
     match res {
         Err(err) => {
-            assert_eq!(err.to_string(), "The reference 'refs/heads/main' should have content ref: refs/heads/main, actual content was 02a7a22d90d7c02fb494ed25551850b868e634f0");
+            assert_eq!(err.to_string(), "The reference \"refs/heads/main\" should have content ref: refs/heads/main, actual content was 02a7a22d90d7c02fb494ed25551850b868e634f0");
         }
         Ok(_) => unreachable!("must be err"),
     }
@@ -223,7 +223,7 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Res
         Err(err) => {
             assert_eq!(
                 err.to_string(),
-                "The reference 'HEAD' for deletion did not exist or could not be parsed"
+                "The reference \"HEAD\" for deletion did not exist or could not be parsed"
             );
         }
         Ok(_) => unreachable!("expected error"),
@@ -359,7 +359,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
                 name: "refs/heads/main".try_into()?,
                 deref: false,
             }),
-            git_lock::acquire::Fail::Immediately,
+            Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
 
@@ -392,7 +392,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
                 name: branch.name,
                 deref: false,
             }),
-            git_lock::acquire::Fail::Immediately,
+            Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
 
@@ -431,7 +431,7 @@ fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
                         deref: false,
                     }
                 }),
-                git_lock::acquire::Fail::Immediately,
+                Fail::Immediately,
             )?
             .commit(committer().to_ref())?;
 

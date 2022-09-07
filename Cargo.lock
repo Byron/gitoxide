@@ -1551,9 +1551,9 @@ dependencies = [
  "git-validate",
  "memmap2",
  "nom",
- "quick-error",
  "serde",
  "tempfile",
+ "thiserror",
 ]
 
 [[package]]

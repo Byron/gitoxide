@@ -144,26 +144,17 @@ where
 
 ///
 pub mod reverse {
-    use quick_error::quick_error;
 
     use super::decode;
 
-    quick_error! {
-        /// The error returned by the [`Reverse`][super::Reverse] iterator
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Io(err: std::io::Error) {
-                display("The buffer could not be filled to make more lines available")
-                from()
-                source(err)
-            }
-            Decode(err: decode::Error) {
-                display("Could not decode log line")
-                from()
-                source(err)
-            }
-        }
+    /// The error returned by the [`Reverse`][super::Reverse] iterator
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The buffer could not be filled to make more lines available")]
+        Io(#[from] std::io::Error),
+        #[error("Could not decode log line")]
+        Decode(#[from] decode::Error),
     }
 }
 

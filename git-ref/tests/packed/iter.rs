@@ -123,7 +123,7 @@ buggy-hash refs/wrong
             .expect("second ref")
             .expect_err("an error is produced")
             .to_string(),
-        "Invalid reference in line 2: 'buggy-hash refs/wrong'",
+        "Invalid reference in line 2: \"buggy-hash refs/wrong\"",
         "second line is invalid",
     );
     assert_eq!(
@@ -131,7 +131,7 @@ buggy-hash refs/wrong
             .expect("third ref")
             .expect_err("an error is produced")
             .to_string(),
-        "Invalid reference in line 3: '^buggy-hash-too'",
+        "Invalid reference in line 3: \"^buggy-hash-too\"",
         "third line is invalid",
     );
     assert!(iter.next().expect("last ref").is_ok(), "last line is valid");

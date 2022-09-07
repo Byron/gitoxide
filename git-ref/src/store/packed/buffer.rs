@@ -85,29 +85,18 @@ pub mod open {
     }
 
     mod error {
-        use quick_error::quick_error;
-
         use crate::packed;
 
-        quick_error! {
-            /// The error returned by [`open()`][super::packed::Buffer::open()].
-            #[derive(Debug)]
-            #[allow(missing_docs)]
-            pub enum Error {
-                Iter(err: packed::iter::Error) {
-                    display("The packed-refs file did not have a header or wasn't sorted and could not be iterated")
-                    from()
-                    source(err)
-                }
-                HeaderParsing {
-                    display("The header could not be parsed, even though first line started with '#'")
-                }
-                Io(err: std::io::Error) {
-                    display("The buffer could not be opened or read")
-                    from()
-                    source(err)
-                }
-            }
+        /// The error returned by [`open()`][super::packed::Buffer::open()].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("The packed-refs file did not have a header or wasn't sorted and could not be iterated")]
+            Iter(#[from] packed::iter::Error),
+            #[error("The header could not be parsed, even though first line started with '#'")]
+            HeaderParsing,
+            #[error("The buffer could not be opened or read")]
+            Io(#[from] std::io::Error),
         }
     }
     pub use error::Error;

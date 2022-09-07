@@ -8,7 +8,6 @@ use nom::{
     sequence::terminated,
     IResult,
 };
-use quick_error::quick_error;
 
 use crate::{
     parse::{hex_hash, newline},
@@ -21,19 +20,17 @@ enum MaybeUnsafeState {
     UnvalidatedPath(BString),
 }
 
-quick_error! {
-    /// The error returned by [`Reference::try_from_path()`].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        Parse(content: BString) {
-            display("{:?} could not be parsed", content)
-        }
-        RefnameValidation{err: git_validate::reference::name::Error, path: BString} {
-            display("The path to a symbolic reference within a ref file is invalid")
-            source(err)
-        }
-    }
+/// The error returned by [`Reference::try_from_path()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("{content:?} could not be parsed")]
+    Parse { content: BString },
+    #[error("The path {path:?} to a symbolic reference within a ref file is invalid")]
+    RefnameValidation {
+        source: git_validate::reference::name::Error,
+        path: BString,
+    },
 }
 
 impl TryFrom<MaybeUnsafeState> for Target {
@@ -44,7 +41,12 @@ impl TryFrom<MaybeUnsafeState> for Target {
             MaybeUnsafeState::Id(id) => Target::Peeled(id),
             MaybeUnsafeState::UnvalidatedPath(name) => Target::Symbolic(match git_validate::refname(name.as_ref()) {
                 Ok(_) => FullName(name),
-                Err(err) => return Err(Error::RefnameValidation { err, path: name }),
+                Err(err) => {
+                    return Err(Error::RefnameValidation {
+                        source: err,
+                        path: name,
+                    })
+                }
             }),
         })
     }
@@ -57,7 +59,9 @@ impl Reference {
         Ok(Reference {
             name,
             target: parse(path_contents)
-                .map_err(|_| Error::Parse(path_contents.into()))?
+                .map_err(|_| Error::Parse {
+                    content: path_contents.into(),
+                })?
                 .1
                 .try_into()?,
         })

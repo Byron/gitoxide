@@ -5,24 +5,14 @@ use crate::{store, PartialNameRef, Reference};
 mod error {
     use std::convert::Infallible;
 
-    use quick_error::quick_error;
-
-    quick_error! {
-        /// The error returned by [crate::Store::find()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Loose(err: crate::file::find::Error) {
-                display("An error occurred while finding a reference in the loose file database")
-                from()
-                source(err)
-            }
-            RefnameValidation(err: crate::name::Error) {
-                display("The ref name or path is not a valid ref name")
-                from()
-                source(err)
-            }
-        }
+    /// The error returned by [crate::Store::find()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("An error occurred while finding a reference in the loose file database")]
+        Loose(#[from] crate::file::find::Error),
+        #[error("The ref name or path is not a valid ref name")]
+        RefnameValidation(#[from] crate::name::Error),
     }
 
     impl From<Infallible> for Error {
@@ -56,22 +46,14 @@ mod existing {
     mod error {
         use std::path::PathBuf;
 
-        use quick_error::quick_error;
-
-        quick_error! {
-            /// The error returned by [file::Store::find_existing()][crate::file::Store::find_existing()].
-            #[derive(Debug)]
-            #[allow(missing_docs)]
-            pub enum Error {
-                Find(err: crate::store::find::Error) {
-                    display("An error occurred while finding a reference in the database")
-                    from()
-                    source(err)
-                }
-                NotFound(name: PathBuf) {
-                    display("The ref partially named '{}' could not be found", name.display())
-                }
-            }
+        /// The error returned by [file::Store::find_existing()][crate::file::Store::find_existing()].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("An error occurred while finding a reference in the database")]
+            Find(#[from] crate::store::find::Error),
+            #[error("The ref partially named {name:?} could not be found")]
+            NotFound { name: PathBuf },
         }
     }
 

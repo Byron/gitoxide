@@ -89,7 +89,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
                 f.read_to_end(&mut self.buf)
             })
             .map_err(|err| Error::ReadFileContents {
-                err,
+                source: err,
                 path: refpath.to_owned(),
             })?;
         loose::Reference::try_from_path(name, &self.buf)
@@ -103,7 +103,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
                     })
                     .expect("one of our bases contains the path");
                 Error::ReferenceCreation {
-                    err,
+                    source: err,
                     relative_path: relative_path.into(),
                 }
             })
@@ -409,31 +409,24 @@ mod error {
     use std::{io, path::PathBuf};
 
     use git_object::bstr::BString;
-    use quick_error::quick_error;
 
     use crate::store_impl::file;
 
-    quick_error! {
-        /// The error returned by the [`LooseThenPacked`][super::LooseThenPacked] iterator.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Traversal(err: io::Error) {
-                display("The file system could not be traversed")
-                source(err)
-            }
-            ReadFileContents{err: io::Error, path: PathBuf} {
-                display("The ref file '{}' could not be read in full", path.display())
-                source(err)
-            }
-            ReferenceCreation{ err: file::loose::reference::decode::Error, relative_path: PathBuf } {
-                display("The reference at '{}' could not be instantiated", relative_path.display())
-                source(err)
-            }
-            PackedReference { invalid_line: BString, line_number: usize } {
-                display("Invalid reference in line {}: '{}'", line_number, invalid_line)
-            }
-        }
+    /// The error returned by the [`LooseThenPacked`][super::LooseThenPacked] iterator.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The file system could not be traversed")]
+        Traversal(#[source] io::Error),
+        #[error("The ref file {path:?} could not be read in full")]
+        ReadFileContents { source: io::Error, path: PathBuf },
+        #[error("The reference at {relative_path:?} could not be instantiated")]
+        ReferenceCreation {
+            source: file::loose::reference::decode::Error,
+            relative_path: PathBuf,
+        },
+        #[error("Invalid reference in line {line_number}: {invalid_line:?}")]
+        PackedReference { invalid_line: BString, line_number: usize },
     }
 }
 pub use error::Error;
