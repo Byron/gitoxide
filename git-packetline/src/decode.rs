@@ -140,8 +140,6 @@ pub fn streaming(data: &[u8]) -> Result<Stream<'_>, Error> {
 pub fn all_at_once(data: &[u8]) -> Result<PacketLineRef<'_>, Error> {
     match streaming(data)? {
         Stream::Complete { line, .. } => Ok(line),
-        Stream::Incomplete { bytes_needed } => Err(Error::NotEnoughData {
-            bytes_needed: bytes_needed,
-        }),
+        Stream::Incomplete { bytes_needed } => Err(Error::NotEnoughData { bytes_needed }),
     }
 }
