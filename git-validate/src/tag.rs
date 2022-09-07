@@ -8,8 +8,8 @@ pub mod name {
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
-        #[error("A ref must not contain invalid bytes or ascii control characters: '{name}'")]
-        InvalidByte { name: BString },
+        #[error("A ref must not contain invalid bytes or ascii control characters: {byte:?}")]
+        InvalidByte { byte: BString },
         #[error("A ref must not contain '..' as it may be mistaken for a range")]
         DoubleDot,
         #[error("A ref must not end with '.lock'")]
@@ -41,7 +41,7 @@ pub fn name(bytes: &BStr) -> Result<&BStr, name::Error> {
         match byte {
             b'\\' | b'^' | b':' | b'[' | b'?' | b' ' | b'~' | b'\0'..=b'\x1F' | b'\x7F' => {
                 return Err(name::Error::InvalidByte {
-                    name: (&[*byte][..]).into(),
+                    byte: (&[*byte][..]).into(),
                 })
             }
             b'*' => return Err(name::Error::Asterisk),
