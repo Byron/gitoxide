@@ -72,31 +72,29 @@ impl EntryBuilder {
             EntryMode::Commit => Mode::COMMIT,
         };
 
-        match mode {
-            Mode::FILE => {
-                let path_start = self.path_backing.len();
-                self.path_backing.extend_from_slice(&self.path);
+        if mode == Mode::FILE {
+            let path_start = self.path_backing.len();
+            self.path_backing.extend_from_slice(&self.path);
 
-                let new_entry = Entry::new(
-                    Stat::zero(),
-                    entry.oid.into(),
-                    Flags::empty(),
-                    mode,
-                    path_start..self.path_backing.len(),
-                );
+            let new_entry = Entry::new(
+                Stat::zero(),
+                entry.oid.into(),
+                Flags::empty(),
+                mode,
+                path_start..self.path_backing.len(),
+            );
 
-                // TODO: maybe use different data type instead of Vec (BinaryHeap?)
-                match self.entries.binary_search_by(|entry| {
-                    Entry::cmp_filepaths(entry.path_in(&self.path_backing), self.path.as_bstr())
-                }) {
-                    Ok(_) => todo!("what to do with duplicate entries"),
-                    Err(pos) => self.entries.insert(pos, new_entry),
-                };
+            // TODO: maybe use different data type instead of Vec (BinaryHeap?)
+            match self
+                .entries
+                .binary_search_by(|entry| Entry::cmp_filepaths(entry.path_in(&self.path_backing), self.path.as_bstr()))
+            {
+                Ok(_) => todo!("what to do with duplicate entries"),
+                Err(pos) => self.entries.insert(pos, new_entry),
+            };
 
-                // NOTE: path_backing is still unsorted here (comparison in test disabled for now).
-                // Is this acceptable or is there a requirement for the path_backing to be sorted?
-            }
-            _ => {}
+            // NOTE: path_backing is still unsorted here (comparison in test disabled for now).
+            // Is this acceptable or is there a requirement for the path_backing to be sorted?
         }
     }
 }
