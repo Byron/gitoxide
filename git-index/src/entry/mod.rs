@@ -64,9 +64,9 @@ mod access {
 }
 
 mod _impls {
-    use std::cmp::Ordering;
-
     use crate::{Entry, State};
+    use bstr::BStr;
+    use std::cmp::Ordering;
 
     impl Entry {
         /// Compare one entry to another by their path, by comparing only their common path portion byte by byte, then resorting to
@@ -74,11 +74,16 @@ mod _impls {
         pub fn cmp(&self, other: &Self, state: &State) -> Ordering {
             let lhs = self.path(state);
             let rhs = other.path(state);
-            let common_len = lhs.len().min(rhs.len());
-            lhs[..common_len]
-                .cmp(&rhs[..common_len])
-                .then_with(|| lhs.len().cmp(&rhs.len()))
-                .then_with(|| self.stage().cmp(&other.stage()))
+            Entry::cmp_filepaths(lhs, rhs).then_with(|| self.stage().cmp(&other.stage()))
+        }
+
+        /// Compare one entry to another by their path, by comparing only their common path portion byte by byte, then resorting to
+        /// entry length.
+        pub fn cmp_filepaths(a: &BStr, b: &BStr) -> Ordering {
+            let common_len = a.len().min(b.len());
+            a[..common_len]
+                .cmp(&b[..common_len])
+                .then_with(|| a.len().cmp(&b.len()))
         }
     }
 }
