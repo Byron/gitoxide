@@ -87,7 +87,7 @@ impl EntryBuilder {
             .entries
             .binary_search_by(|entry| Entry::cmp_filepaths(entry.path_in(&self.path_backing), self.path.as_bstr()))
         {
-            Ok(_) => todo!("what to do with duplicate entries"),
+            Ok(pos) => self.entries[pos] = new_entry,
             Err(pos) => self.entries.insert(pos, new_entry),
         };
     }
