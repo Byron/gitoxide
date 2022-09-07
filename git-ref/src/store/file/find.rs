@@ -334,7 +334,7 @@ mod error {
         RefnameValidation(#[from] crate::name::Error),
         #[error("The ref file {path:?} could not be read in full")]
         ReadFileContents { source: io::Error, path: PathBuf },
-        #[error("The reference at {relative_path:?} could not be instantiated")]
+        #[error("The reference at \"{relative_path}\" could not be instantiated")]
         ReferenceCreation {
             source: file::loose::reference::decode::Error,
             relative_path: PathBuf,
