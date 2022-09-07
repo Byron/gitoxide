@@ -8,11 +8,10 @@ mod flags;
 pub(crate) use flags::at_rest;
 pub use flags::Flags;
 
-mod init;
 mod write;
 
 /// The time component in a [`Stat`] struct.
-#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Time {
     /// The amount of seconds elapsed since EPOCH
@@ -22,7 +21,7 @@ pub struct Time {
 }
 
 /// An entry's filesystem stat information.
-#[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Ord, PartialOrd, Clone, Copy)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stat {
     /// Modification time

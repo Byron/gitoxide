@@ -76,13 +76,13 @@ impl EntryBuilder {
             let path_start = self.path_backing.len();
             self.path_backing.extend_from_slice(&self.path);
 
-            let new_entry = Entry::new(
-                Stat::zero(),
-                entry.oid.into(),
-                Flags::empty(),
+            let new_entry = Entry {
+                stat: Stat::default(),
+                id: entry.oid.into(),
+                flags: Flags::empty(),
                 mode,
-                path_start..self.path_backing.len(),
-            );
+                path: path_start..self.path_backing.len(),
+            };
 
             // TODO: maybe use different data type instead of Vec (BinaryHeap?)
             match self
