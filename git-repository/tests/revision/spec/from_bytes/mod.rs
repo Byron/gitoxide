@@ -1,11 +1,10 @@
 use git_repository::{prelude::ObjectIdExt, revision::Spec};
 use git_testtools::hex_to_id;
-
-mod util;
 pub use util::*;
 
 mod ambiguous;
 mod regex;
+mod util;
 
 mod reflog;
 mod traverse;
@@ -93,7 +92,7 @@ fn bad_objects_are_valid_until_they_are_actually_read_from_the_odb() {
         );
         assert_eq!(
             format!("{:?}", parse_spec("e328^{object}", &repo).unwrap_err()),
-            r#"FindObject(Find(Loose(Decode(ObjectHeader(InvalidObjectKind("bad"))))))"#,
+            r#"FindObject(Find(Loose(Decode(ObjectHeader(InvalidObjectKind { kind: "bad" })))))"#,
             "Now we enforce the object to exist and be valid, as ultimately it wants to match with a certain type"
         );
     }
