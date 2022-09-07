@@ -128,7 +128,7 @@ pub use error::Error;
 ///
 pub mod existing {
 
-    /// The error returned by [`find_existing()`][super::packed::Buffer::find_existing()]
+    /// The error returned by [`find_existing()`][super::packed::Buffer::find()]
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

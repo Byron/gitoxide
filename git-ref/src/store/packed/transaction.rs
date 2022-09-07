@@ -229,7 +229,7 @@ pub(crate) fn buffer_into_transaction(
 
 ///
 pub mod prepare {
-    /// The error used in [`Transaction::prepare(…)`][super::packed::Transaction::prepare()].
+    /// The error used in [`Transaction::prepare(…)`][crate::file::Transaction::prepare()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -244,7 +244,7 @@ pub mod prepare {
 pub mod commit {
     use crate::store_impl::packed;
 
-    /// The error used in [`Transaction::commit(…)`][super::packed::Transaction::commit()].
+    /// The error used in [`Transaction::commit(…)`][crate::file::Transaction::commit()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

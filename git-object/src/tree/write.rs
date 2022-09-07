@@ -8,7 +8,7 @@ use crate::{
     Kind, Tree, TreeRef,
 };
 
-/// The Error used in [`Tree::write_to()`].
+/// The Error used in [`Tree::write_to()`][crate::WriteTo::write_to()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

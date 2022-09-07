@@ -2,7 +2,7 @@ use bstr::BString;
 
 use crate::{PacketLineRef, DELIMITER_LINE, FLUSH_LINE, MAX_DATA_LEN, MAX_LINE_LEN, RESPONSE_END_LINE, U16_HEX_BYTES};
 
-/// The error used in the [`decode`][crate::decode] module
+/// The error used in the [`decode`][mod@crate::decode] module
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -22,7 +22,7 @@ pub enum Error {
 
 ///
 pub mod band {
-    /// The error used in [`PacketLineRef::decode_band()`].
+    /// The error used in [`PacketLineRef::decode_band()`][super::PacketLineRef::decode_band()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

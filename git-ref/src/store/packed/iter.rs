@@ -103,7 +103,7 @@ impl<'a> packed::Iter<'a> {
 mod error {
     use git_object::bstr::BString;
 
-    /// The error returned by [`Iter::new(…)`][super::Iter::new()],
+    /// The error returned by [`Iter`][super::packed::Iter],
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

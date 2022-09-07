@@ -4,7 +4,7 @@ use bstr::BStr;
 pub mod name {
     use bstr::BString;
 
-    /// The error returned by [`name()`]
+    /// The error returned by [`name()`][super::name()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

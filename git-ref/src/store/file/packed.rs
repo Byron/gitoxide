@@ -51,7 +51,7 @@ pub mod transaction {
 
     use crate::store_impl::packed;
 
-    /// The error returned by [`file::Store::packed_transaction`][crate::file::Store::packed_transaction()].
+    /// The error returned by [`file::Transaction::prepare()`][crate::file::Transaction::prepare()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

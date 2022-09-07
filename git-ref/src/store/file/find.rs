@@ -309,7 +309,7 @@ pub mod existing {
 
         use crate::store_impl::file::find;
 
-        /// The error returned by [file::Store::find_existing()][crate::file::Store::find_existing()].
+        /// The error returned by [file::Store::find_existing()][crate::file::Store::find()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {

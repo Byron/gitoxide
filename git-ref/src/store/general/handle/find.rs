@@ -5,7 +5,7 @@ use crate::{store, PartialNameRef, Reference};
 mod error {
     use std::convert::Infallible;
 
-    /// The error returned by [crate::Store::find()].
+    /// The error returned by [crate::file::Store::find_loose()].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

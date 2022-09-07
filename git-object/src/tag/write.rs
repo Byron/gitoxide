@@ -4,7 +4,7 @@ use bstr::BStr;
 
 use crate::{encode, encode::NL, Kind, Tag, TagRef};
 
-/// An Error used in [`Tag::write_to()`].
+/// An Error used in [`Tag::write_to()`][crate::WriteTo::write_to()].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
