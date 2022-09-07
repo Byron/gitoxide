@@ -2,31 +2,20 @@
 pub mod name {
     use std::convert::Infallible;
 
-    use quick_error::quick_error;
-
-    quick_error! {
-        /// The error used in [name()][super::name()] and [name_partial()][super::name_partial()]
-        #[allow(missing_docs)]
-        #[derive(Debug)]
-        pub enum Error {
-            Tag(err: crate::tag::name::Error) {
-                display("A reference must be a valid tag name as well")
-                from()
-                source(err)
-            }
-            SomeLowercase {
-                display("Standalone references must be all uppercased, like 'HEAD'")
-            }
-            StartsWithSlash {
-                display("A reference name must not start with a slash '/'")
-            }
-            RepeatedSlash {
-                display("Multiple slashes in a row are not allowed as they may change the reference's meaning")
-            }
-            SingleDot {
-                display("Names must not be a single '.', but may contain it.")
-            }
-        }
+    /// The error used in [name()][super::name()] and [name_partial()][super::name_partial()]
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("A reference must be a valid tag name as well")]
+        Tag(#[from] crate::tag::name::Error),
+        #[error("Standalone references must be all uppercased, like 'HEAD'")]
+        SomeLowercase,
+        #[error("A reference name must not start with a slash '/'")]
+        StartsWithSlash,
+        #[error("Multiple slashes in a row are not allowed as they may change the reference's meaning")]
+        RepeatedSlash,
+        #[error("Names must not be a single '.', but may contain it.")]
+        SingleDot,
     }
 
     impl From<Infallible> for Error {

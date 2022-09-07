@@ -73,12 +73,12 @@ mod name_partial {
         mktest!(
             path_with_spaces,
             b"refs//heads/name with spaces",
-            RefError::Tag(TagError::InvalidByte(_))
+            RefError::Tag(TagError::InvalidByte { .. })
         );
         mktest!(
             path_with_backslashes,
             b"refs\\heads/name with spaces",
-            RefError::Tag(TagError::InvalidByte(_))
+            RefError::Tag(TagError::InvalidByte { .. })
         );
     }
 }

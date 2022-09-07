@@ -3,38 +3,27 @@ use bstr::BStr;
 ///
 pub mod name {
     use bstr::BString;
-    use quick_error::quick_error;
 
-    quick_error! {
-        /// The error returned by [`name()`]
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            InvalidByte(name: BString) {
-                display("A ref must not contain invalid bytes or ascii control characters: '{}'", name)
-            }
-            DoubleDot {
-                display("A ref must not contain '..' as it may be mistaken for a range")
-            }
-            LockFileSuffix {
-                display("A ref must not end with '.lock'")
-            }
-            ReflogPortion {
-                display("A ref must not contain '@{{' which is a part of a ref-log")
-            }
-            Asterisk {
-                display("A ref must not contain '*' character")
-            }
-            StartsWithDot {
-                display("A ref must not start with a '.'")
-            }
-            EndsWithSlash {
-                display("A ref must not end with a '/'")
-            }
-            Empty {
-                display("A ref must not be empty")
-            }
-        }
+    /// The error returned by [`name()`]
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("A ref must not contain invalid bytes or ascii control characters: '{name}'")]
+        InvalidByte { name: BString },
+        #[error("A ref must not contain '..' as it may be mistaken for a range")]
+        DoubleDot,
+        #[error("A ref must not end with '.lock'")]
+        LockFileSuffix,
+        #[error("A ref must not contain '@{{' which is a part of a ref-log")]
+        ReflogPortion,
+        #[error("A ref must not contain '*' character")]
+        Asterisk,
+        #[error("A ref must not start with a '.'")]
+        StartsWithDot,
+        #[error("A ref must not end with a '/'")]
+        EndsWithSlash,
+        #[error("A ref must not be empty")]
+        Empty,
     }
 }
 
@@ -51,7 +40,9 @@ pub fn name(bytes: &BStr) -> Result<&BStr, name::Error> {
     for byte in bytes.iter() {
         match byte {
             b'\\' | b'^' | b':' | b'[' | b'?' | b' ' | b'~' | b'\0'..=b'\x1F' | b'\x7F' => {
-                return Err(name::Error::InvalidByte((&[*byte][..]).into()))
+                return Err(name::Error::InvalidByte {
+                    name: (&[*byte][..]).into(),
+                })
             }
             b'*' => return Err(name::Error::Asterisk),
             b'.' if previous == b'.' => return Err(name::Error::DoubleDot),

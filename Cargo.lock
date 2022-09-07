@@ -1760,7 +1760,7 @@ version = "0.5.5"
 dependencies = [
  "bstr",
  "git-testtools",
- "quick-error",
+ "thiserror",
 ]
 
 [[package]]

@@ -41,7 +41,7 @@ mod invalid {
             #[test]
             fn $name() {
                 match git_validate::tag::name($input.as_bstr()) {
-                    Err(git_validate::tag::name::Error::InvalidByte(_)) => {}
+                    Err(git_validate::tag::name::Error::InvalidByte { .. }) => {}
                     got => panic!("Wanted {}, got {:?}", stringify!($expected), got),
                 }
             }
