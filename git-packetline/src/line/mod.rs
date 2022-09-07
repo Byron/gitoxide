@@ -59,7 +59,7 @@ impl<'a> PacketLineRef<'a> {
             1 => BandRef::Data(&d[1..]),
             2 => BandRef::Progress(&d[1..]),
             3 => BandRef::Error(&d[1..]),
-            band => return Err(decode::band::Error::InvalidSideBand(band)),
+            band => return Err(decode::band::Error::InvalidSideBand { band_id: band }),
         })
     }
 }

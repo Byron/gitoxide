@@ -61,7 +61,9 @@ impl<W: AsyncWrite + Unpin> AsyncWrite for LineWriter<'_, W> {
                 State::Idle => {
                     let data_len = this.prefix.len() + data.len() + this.suffix.len();
                     if data_len > MAX_DATA_LEN {
-                        return Poll::Ready(Err(into_io_err(Error::DataLengthLimitExceeded(data_len))));
+                        return Poll::Ready(Err(into_io_err(Error::DataLengthLimitExceeded {
+                            length_in_bytes: data_len,
+                        })));
                     }
                     if data.is_empty() {
                         return Poll::Ready(Err(into_io_err(Error::DataIsEmpty)));
@@ -146,7 +148,9 @@ async fn prefixed_and_suffixed_data_to_write(
 ) -> io::Result<usize> {
     let data_len = prefix.len() + data.len() + suffix.len();
     if data_len > MAX_DATA_LEN {
-        return Err(into_io_err(Error::DataLengthLimitExceeded(data_len)));
+        return Err(into_io_err(Error::DataLengthLimitExceeded {
+            length_in_bytes: data_len,
+        }));
     }
     if data.is_empty() {
         return Err(into_io_err(Error::DataIsEmpty));
