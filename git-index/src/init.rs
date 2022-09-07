@@ -65,37 +65,31 @@ impl EntryBuilder {
 
     pub fn add_entry(&mut self, entry: &tree::EntryRef<'_>) {
         let mode = match entry.mode {
-            EntryMode::Tree => Mode::DIR,
+            EntryMode::Tree => unreachable!("visit_non_tree() called us"),
             EntryMode::Blob => Mode::FILE,
-            EntryMode::BlobExecutable => Mode::FILE_EXECUTABLE,
-            EntryMode::Link => Mode::SYMLINK,
-            EntryMode::Commit => Mode::COMMIT,
+            EntryMode::BlobExecutable => todo!("executable"),
+            EntryMode::Link => todo!("symlink"),
+            EntryMode::Commit => todo!("submodule"),
         };
 
-        if mode == Mode::FILE {
-            let path_start = self.path_backing.len();
-            self.path_backing.extend_from_slice(&self.path);
+        let path_start = self.path_backing.len();
+        self.path_backing.extend_from_slice(&self.path);
 
-            let new_entry = Entry {
-                stat: Stat::default(),
-                id: entry.oid.into(),
-                flags: Flags::empty(),
-                mode,
-                path: path_start..self.path_backing.len(),
-            };
+        let new_entry = Entry {
+            stat: Stat::default(),
+            id: entry.oid.into(),
+            flags: Flags::empty(),
+            mode,
+            path: path_start..self.path_backing.len(),
+        };
 
-            // TODO: maybe use different data type instead of Vec (BinaryHeap?)
-            match self
-                .entries
-                .binary_search_by(|entry| Entry::cmp_filepaths(entry.path_in(&self.path_backing), self.path.as_bstr()))
-            {
-                Ok(_) => todo!("what to do with duplicate entries"),
-                Err(pos) => self.entries.insert(pos, new_entry),
-            };
-
-            // NOTE: path_backing is still unsorted here (comparison in test disabled for now).
-            // Is this acceptable or is there a requirement for the path_backing to be sorted?
-        }
+        match self
+            .entries
+            .binary_search_by(|entry| Entry::cmp_filepaths(entry.path_in(&self.path_backing), self.path.as_bstr()))
+        {
+            Ok(_) => todo!("what to do with duplicate entries"),
+            Err(pos) => self.entries.insert(pos, new_entry),
+        };
     }
 }
 
