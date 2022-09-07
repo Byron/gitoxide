@@ -1,3 +1,4 @@
+use git_index::verify::extensions::no_find;
 use git_index::State;
 use git_repository as git;
 use git_repository::prelude::FindExt;
@@ -20,18 +21,6 @@ fn tree_to_state() -> crate::Result {
         let expected_state = repo.index()?;
         let actual_state = State::from_tree(&tree_id, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
 
-        println!("{}\n", fixture);
-        actual_state
-            .entries()
-            .iter()
-            .for_each(|e| println!("{}\t{}", e.id, e.path(&actual_state)));
-        println!("");
-        expected_state
-            .entries()
-            .iter()
-            .for_each(|e| println!("{}\t{}", e.id, e.path(&expected_state)));
-        println!("");
-
         compare_states(&actual_state, &expected_state, fixture)
     }
     Ok(())
@@ -39,25 +28,15 @@ fn tree_to_state() -> crate::Result {
 
 fn compare_states(actual: &State, expected: &State, fixture: &str) {
     actual.verify_entries().expect("valid");
-    // actual.verify_extensions(false, no_find).expect("valid");
+    actual.verify_extensions(false, no_find).expect("valid");
 
-    // assert_eq!(actual.version(), expected.version(), "version mismatch in {}", fixture);
-    // assert_eq!(
-    //     actual.tree(),
-    //     options
-    //         .extensions
-    //         .should_write(extension::tree::SIGNATURE)
-    //         .and_then(|_| expected.tree()),
-    //     "tree extension mismatch in {}",
-    //     fixture
-    // );
     assert_eq!(
         actual.entries().len(),
         expected.entries().len(),
         "entry count mismatch in {}",
         fixture
     );
-    // assert_eq!(actual.entries(), expected.entries(), "entries mismatch in {}", fixture);
+
     assert_eq!(
         actual
             .entries()
@@ -70,6 +49,8 @@ fn compare_states(actual: &State, expected: &State, fixture: &str) {
             .map(|e| (e.id, e.flags, e.mode))
             .collect::<Vec<_>>()
     );
+
+    // TODO: check if path_backing needs to be sorted like entries are
     // assert_eq!(
     //     actual.path_backing(),
     //     expected.path_backing(),
