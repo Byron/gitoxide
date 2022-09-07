@@ -1,11 +1,9 @@
-use quick_error::quick_error;
-quick_error! {
-    /// Because the TryFrom implementations don't return proper errors
-    /// on failure
-    #[derive(Debug)]
-    enum Error {
-        TryFromError {}
-    }
+/// Because the TryFrom implementations don't return proper errors
+/// on failure
+#[derive(Debug, thiserror::Error)]
+enum Error {
+    #[error("")]
+    TryFromError,
 }
 
 macro_rules! round_trip {

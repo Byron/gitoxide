@@ -1,24 +1,17 @@
 use std::io;
 
 use bstr::BStr;
-use quick_error::quick_error;
 
 use crate::{encode, encode::NL, Kind, Tag, TagRef};
 
-quick_error! {
-    /// An Error used in [`Tag::write_to()`].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        StartsWithDash {
-            display("Tags must not start with a dash: '-'")
-        }
-        InvalidRefName(err: git_validate::tag::name::Error) {
-            display("The tag name was no valid reference name")
-            from()
-            source(err)
-        }
-    }
+/// An Error used in [`Tag::write_to()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Tags must not start with a dash: '-'")]
+    StartsWithDash,
+    #[error("The tag name was no valid reference name")]
+    InvalidRefName(#[from] git_validate::tag::name::Error),
 }
 
 impl From<Error> for io::Error {

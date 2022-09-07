@@ -1385,9 +1385,9 @@ dependencies = [
  "itoa 1.0.3",
  "nom",
  "pretty_assertions",
- "quick-error",
  "serde",
  "smallvec",
+ "thiserror",
 ]
 
 [[package]]

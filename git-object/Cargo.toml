@@ -28,7 +28,7 @@ git-actor = { version = "^0.11.3", path = "../git-actor" }
 
 btoi = "0.4.2"
 itoa = "1.0.1"
-quick-error = "2.0.0"
+thiserror = "1.0.34"
 hex = "0.4.2"
 bstr = { version = "0.2.13", default-features = false, features = ["std", "unicode"] }
 nom = { version = "7", default-features = false, features = ["std"]}
