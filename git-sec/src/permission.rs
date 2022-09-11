@@ -7,18 +7,18 @@ use std::fmt::{Display, Formatter};
 /// causes errors.
 #[derive(Debug, thiserror::Error)]
 #[error("Not allowed to handle resource {:?}: permission {}", .resource, .permission)]
-pub struct Error<R: std::fmt::Debug, P: std::fmt::Debug + Display> {
+pub struct Error<R: std::fmt::Debug> {
     /// The resource which cannot be used.
     pub resource: R,
     /// The permission causing it to be disallowed.
-    pub permission: P,
+    pub permission: Permission,
 }
 
 impl Permission {
     /// Check this permissions and produce a reply to indicate if the `resource` can be used and in which way.
     ///
     /// Only if this permission is set to `Allow` will the resource be usable.
-    pub fn check<R: std::fmt::Debug>(&self, resource: R) -> Result<Option<R>, Error<R, Self>> {
+    pub fn check<R: std::fmt::Debug>(&self, resource: R) -> Result<Option<R>, Error<R>> {
         match self {
             Permission::Allow => Ok(Some(resource)),
             Permission::Deny => Ok(None),
