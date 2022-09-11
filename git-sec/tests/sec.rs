@@ -9,4 +9,22 @@ mod trust {
     }
 }
 
+mod permission {
+    use git_sec::Permission;
+
+    #[test]
+    fn check() {
+        assert_eq!(Permission::Allow.check("hi").unwrap(), Some("hi"));
+        assert_eq!(Permission::Deny.check("hi").unwrap(), None);
+        assert!(Permission::Forbid.check("hi").is_err());
+    }
+
+    #[test]
+    fn check_opt() {
+        assert_eq!(Permission::Allow.check_opt("hi"), Some("hi"));
+        assert_eq!(Permission::Deny.check_opt("hi"), None);
+        assert_eq!(Permission::Forbid.check_opt("hi"), None);
+    }
+}
+
 mod identity;

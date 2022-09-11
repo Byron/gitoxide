@@ -28,6 +28,15 @@ impl Permission {
             }),
         }
     }
+
+    /// Like [`check()`][Self::check()], but degenerates the type to an option to make it more useful in cases where
+    /// `Forbid` shoudn't abort the entire operation.
+    pub fn check_opt<R: std::fmt::Debug>(&self, resource: R) -> Option<R> {
+        match self {
+            Permission::Allow => Some(resource),
+            Permission::Deny | Permission::Forbid => None,
+        }
+    }
 }
 
 impl Display for Permission {
