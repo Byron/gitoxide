@@ -1,18 +1,30 @@
 use crate::Permission;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 /// An error to use if an operation cannot proceed due to insufficient permissions.
 ///
 /// It's up to the implementation to decide which permission is required for an operation, and which one
 /// causes errors.
-#[derive(Debug, thiserror::Error)]
-#[error("Not allowed to handle resource {:?}: permission {}", .resource, .permission)]
+#[derive(Debug)]
 pub struct Error<R: std::fmt::Debug> {
     /// The resource which cannot be used.
     pub resource: R,
-    /// The permission causing it to be disallowed.
-    pub permission: Permission,
 }
+
+impl<R> Display for Error<R>
+where
+    R: std::fmt::Debug,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Not allowed to handle resource {:?}: permission denied",
+            self.resource
+        )
+    }
+}
+
+impl<R> std::error::Error for Error<R> where R: std::fmt::Debug {}
 
 impl Permission {
     /// Check this permissions and produce a reply to indicate if the `resource` can be used and in which way.
@@ -22,10 +34,7 @@ impl Permission {
         match self {
             Permission::Allow => Ok(Some(resource)),
             Permission::Deny => Ok(None),
-            Permission::Forbid => Err(Error {
-                resource,
-                permission: *self,
-            }),
+            Permission::Forbid => Err(Error { resource }),
         }
     }
 
