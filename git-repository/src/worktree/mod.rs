@@ -111,7 +111,7 @@ pub mod excludes {
         #[error("Could not read repository exclude.")]
         Io(#[from] std::io::Error),
         #[error(transparent)]
-        EnvironmentPermission(#[from] git_sec::permission::Error<PathBuf, git_sec::Permission>),
+        EnvironmentPermission(#[from] git_sec::permission::Error<PathBuf>),
     }
 
     impl<'repo> crate::Worktree<'repo> {

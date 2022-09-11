@@ -1,6 +1,6 @@
 use std::{borrow::Cow, time::SystemTime};
 
-use crate::{bstr::BString, permission};
+use crate::bstr::BString;
 
 /// Identity handling.
 impl crate::Repository {
@@ -98,7 +98,7 @@ pub(crate) struct Personas {
 }
 
 impl Personas {
-    pub fn from_config_and_env(config: &git_config::File<'_>, git_env: &permission::env_var::Resource) -> Self {
+    pub fn from_config_and_env(config: &git_config::File<'_>, git_env: git_sec::Permission) -> Self {
         fn env_var(name: &str) -> Option<BString> {
             std::env::var_os(name).map(|value| git_path::into_bstr(Cow::Owned(value.into())).into_owned())
         }

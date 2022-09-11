@@ -86,7 +86,7 @@ impl<'s> Transaction<'s> {
 
                             if let Some(err) = err {
                                 return Err(Error::LockCommit {
-                                    err,
+                                    source: err,
                                     full_name: change.name(),
                                 });
                             }
@@ -108,7 +108,7 @@ impl<'s> Transaction<'s> {
                     if let Err(err) = std::fs::remove_file(&reflog_path) {
                         if err.kind() != std::io::ErrorKind::NotFound {
                             return Err(Error::DeleteReflog {
-                                err,
+                                source: err,
                                 full_name: change.name(),
                             });
                         }
@@ -157,41 +157,25 @@ impl<'s> Transaction<'s> {
 }
 mod error {
     use git_object::bstr::BString;
-    use quick_error::quick_error;
 
     use crate::store_impl::{file, packed};
 
-    quick_error! {
-        /// The error returned by various [`Transaction`][super::Transaction] methods.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            PackedTransactionCommit(err: packed::transaction::commit::Error) {
-                display("The packed-ref transaction could not be committed")
-                source(err)
-            }
-            PreprocessingFailed(err: std::io::Error) {
-                display("Edit preprocessing failed with error: {}", err.to_string())
-                source(err)
-            }
-            LockCommit{err: std::io::Error, full_name: BString} {
-                display("THe change for reference {} could not be committed", full_name)
-                source(err)
-            }
-            DeleteReference{ full_name: BString, err: std::io::Error } {
-                display("The reference '{}' could not be deleted", full_name)
-                source(err)
-            }
-            DeleteReflog{ full_name: BString, err: std::io::Error } {
-                display("The reflog of reference '{}' could not be deleted", full_name)
-                source(err)
-            }
-            CreateOrUpdateRefLog(err: file::log::create_or_update::Error) {
-                display("The reflog could not be created or updated")
-                from()
-                source(err)
-            }
-        }
+    /// The error returned by various [`Transaction`][super::Transaction] methods.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The packed-ref transaction could not be committed")]
+        PackedTransactionCommit(#[source] packed::transaction::commit::Error),
+        #[error("Edit preprocessing failed with error")]
+        PreprocessingFailed { source: std::io::Error },
+        #[error("The change for reference {full_name:?} could not be committed")]
+        LockCommit { source: std::io::Error, full_name: BString },
+        #[error("The reference {full_name} could not be deleted")]
+        DeleteReference { full_name: BString, err: std::io::Error },
+        #[error("The reflog of reference {full_name:?} could not be deleted")]
+        DeleteReflog { full_name: BString, source: std::io::Error },
+        #[error("The reflog could not be created or updated")]
+        CreateOrUpdateRefLog(#[from] file::log::create_or_update::Error),
     }
 }
 pub use error::Error;

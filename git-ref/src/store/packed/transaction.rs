@@ -229,51 +229,30 @@ pub(crate) fn buffer_into_transaction(
 
 ///
 pub mod prepare {
-    use quick_error::quick_error;
-    quick_error! {
-        /// The error used in [`Transaction::prepare(…)`][super::packed::Transaction::prepare()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            CloseLock(err: std::io::Error) {
-                display("Could not close a lock which won't ever be committed")
-                source(err)
-            }
-            Resolve(err: Box<dyn std::error::Error + Send + Sync + 'static>) {
-                display("The lookup of an object failed while peeling it")
-                from()
-                source(&**err)
-            }
-        }
+    /// The error used in [`Transaction::prepare(…)`][crate::file::Transaction::prepare()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Could not close a lock which won't ever be committed")]
+        CloseLock(#[from] std::io::Error),
+        #[error("The lookup of an object failed while peeling it")]
+        Resolve(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
     }
 }
 
 ///
 pub mod commit {
-    use quick_error::quick_error;
-
     use crate::store_impl::packed;
 
-    quick_error! {
-        /// The error used in [`Transaction::commit(…)`][super::packed::Transaction::commit()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Commit(err: git_lock::commit::Error<git_lock::File>) {
-                display("Changes to the resource could not be committed")
-                from()
-                source(err)
-            }
-            Iteration(err: packed::iter::Error) {
-                display("Some references in the packed refs buffer could not be parsed")
-                from()
-                source(err)
-            }
-            Io(err: std::io::Error) {
-                display("Failed to write a ref line to the packed ref file")
-                from()
-                source(err)
-            }
-        }
+    /// The error used in [`Transaction::commit(…)`][crate::file::Transaction::commit()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Changes to the resource could not be committed")]
+        Commit(#[from] git_lock::commit::Error<git_lock::File>),
+        #[error("Some references in the packed refs buffer could not be parsed")]
+        Iteration(#[from] packed::iter::Error),
+        #[error("Failed to write a ref line to the packed ref file")]
+        Io(#[from] std::io::Error),
     }
 }

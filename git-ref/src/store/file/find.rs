@@ -111,7 +111,7 @@ impl file::Store {
         let add_refs_prefix = matches!(transform, Transform::EnforceRefsPrefix);
         let full_name = partial_name.construct_full_name_ref(add_refs_prefix, inbetween, path_buf);
         let content_buf = self.ref_contents(full_name).map_err(|err| Error::ReadFileContents {
-            err,
+            source: err,
             path: self.reference_path(full_name),
         })?;
 
@@ -148,7 +148,7 @@ impl file::Store {
                         r
                     })
                     .map_err(|err| Error::ReferenceCreation {
-                        err,
+                        source: err,
                         relative_path: full_name.to_path().to_owned(),
                     })?,
             )),
@@ -296,7 +296,9 @@ pub mod existing {
                 .map_err(|err| Error::Find(find::Error::RefnameValidation(err.into())))?;
             match self.find_one_with_verified_input(path, packed) {
                 Ok(Some(r)) => Ok(r),
-                Ok(None) => Err(Error::NotFound(path.to_partial_path().to_owned())),
+                Ok(None) => Err(Error::NotFound {
+                    name: path.to_partial_path().to_owned(),
+                }),
                 Err(err) => Err(err.into()),
             }
         }
@@ -305,24 +307,16 @@ pub mod existing {
     mod error {
         use std::path::PathBuf;
 
-        use quick_error::quick_error;
-
         use crate::store_impl::file::find;
 
-        quick_error! {
-            /// The error returned by [file::Store::find_existing()][crate::file::Store::find_existing()].
-            #[derive(Debug)]
-            #[allow(missing_docs)]
-            pub enum Error {
-                Find(err: find::Error) {
-                    display("An error occurred while trying to find a reference")
-                    from()
-                    source(err)
-                }
-                NotFound(name: PathBuf) {
-                    display("The ref partially named '{}' could not be found", name.display())
-                }
-            }
+        /// The error returned by [file::Store::find_existing()][crate::file::Store::find()].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("An error occurred while trying to find a reference")]
+            Find(#[from] find::Error),
+            #[error("The ref partially named {name:?} could not be found")]
+            NotFound { name: PathBuf },
         }
     }
 }
@@ -330,39 +324,25 @@ pub mod existing {
 mod error {
     use std::{convert::Infallible, io, path::PathBuf};
 
-    use quick_error::quick_error;
-
     use crate::{file, store_impl::packed};
 
-    quick_error! {
-        /// The error returned by [file::Store::find()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            RefnameValidation(err: crate::name::Error) {
-                display("The ref name or path is not a valid ref name")
-                from()
-                source(err)
-            }
-            ReadFileContents{err: io::Error, path: PathBuf} {
-                display("The ref file '{}' could not be read in full", path.display())
-                source(err)
-            }
-            ReferenceCreation{ err: file::loose::reference::decode::Error, relative_path: PathBuf } {
-                display("The reference at '{}' could not be instantiated", relative_path.display())
-                source(err)
-            }
-            PackedRef(err: packed::find::Error) {
-                display("A packed ref lookup failed")
-                from()
-                source(err)
-            }
-            PackedOpen(err: packed::buffer::open::Error) {
-                display("Could not open the packed refs buffer when trying to find references.")
-                from()
-                source(err)
-            }
-        }
+    /// The error returned by [file::Store::find()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The ref name or path is not a valid ref name")]
+        RefnameValidation(#[from] crate::name::Error),
+        #[error("The ref file {path:?} could not be read in full")]
+        ReadFileContents { source: io::Error, path: PathBuf },
+        #[error("The reference at \"{relative_path}\" could not be instantiated")]
+        ReferenceCreation {
+            source: file::loose::reference::decode::Error,
+            relative_path: PathBuf,
+        },
+        #[error("A packed ref lookup failed")]
+        PackedRef(#[from] packed::find::Error),
+        #[error("Could not open the packed refs buffer when trying to find references.")]
+        PackedOpen(#[from] packed::buffer::open::Error),
     }
 
     impl From<Infallible> for Error {

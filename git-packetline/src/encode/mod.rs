@@ -1,19 +1,13 @@
-use quick_error::quick_error;
-
 use crate::MAX_DATA_LEN;
 
-quick_error! {
-    /// The error returned by most functions in the [`encode`][crate::encode] module
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        DataLengthLimitExceeded(length_in_bytes: usize) {
-            display("Cannot encode more than {} bytes, got {}", MAX_DATA_LEN, length_in_bytes)
-        }
-        DataIsEmpty {
-            display("Empty lines are invalid")
-        }
-    }
+/// The error returned by most functions in the [`encode`][crate::encode] module
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Cannot encode more than {MAX_DATA_LEN} bytes, got {length_in_bytes}")]
+    DataLengthLimitExceeded { length_in_bytes: usize },
+    #[error("Empty lines are invalid")]
+    DataIsEmpty,
 }
 
 #[cfg(all(not(feature = "blocking-io"), feature = "async-io"))]

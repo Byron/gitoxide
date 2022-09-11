@@ -39,7 +39,7 @@ required-features = ["blocking-io", "maybe-async/is_sync"]
 
 [dependencies]
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
-quick-error = "2.0.0"
+thiserror = "1.0.34"
 hex = "0.4.2"
 bstr = { version = "0.2.13", default-features = false, features = ["std"] }
 # async support

@@ -1,7 +1,7 @@
 pub use git_config::*;
 use git_features::threading::OnceCell;
 
-use crate::{bstr::BString, permission, remote, repository::identity, revision::spec, Repository};
+use crate::{bstr::BString, remote, repository::identity, revision::spec, Repository};
 
 pub(crate) mod cache;
 mod snapshot;
@@ -84,10 +84,10 @@ pub(crate) struct Cache {
     /// The path to the user-level excludes file to ignore certain files in the worktree.
     pub excludes_file: Option<std::path::PathBuf>,
     /// Define how we can use values obtained with `xdg_config(…)` and its `XDG_CONFIG_HOME` variable.
-    xdg_config_home_env: permission::env_var::Resource,
+    xdg_config_home_env: git_sec::Permission,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.
-    home_env: permission::env_var::Resource,
+    home_env: git_sec::Permission,
     /// How to use git-prefixed environment variables
-    git_prefix: permission::env_var::Resource,
+    git_prefix: git_sec::Permission,
     // TODO: make core.precomposeUnicode available as well.
 }

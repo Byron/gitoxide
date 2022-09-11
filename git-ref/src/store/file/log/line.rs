@@ -13,19 +13,15 @@ mod write {
     use std::io;
 
     use git_object::bstr::{BStr, ByteSlice};
-    use quick_error::quick_error;
 
     use crate::log::Line;
 
-    quick_error! {
-        /// The Error produced by [`Line::write_to()`] (but wrapped in an io error).
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        enum Error {
-            IllegalCharacter {
-                display("Messages must not contain newlines\\n")
-            }
-        }
+    /// The Error produced by [`Line::write_to()`] (but wrapped in an io error).
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    enum Error {
+        #[error("Messages must not contain newlines\\n")]
+        IllegalCharacter,
     }
 
     impl From<Error> for io::Error {

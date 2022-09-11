@@ -3,19 +3,12 @@ use std::path::PathBuf;
 use crate::store::WriteReflog;
 
 mod error {
-    use quick_error::quick_error;
-
-    quick_error! {
-        /// The error returned by [crate::Store::at()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Io(err: std::io::Error) {
-                display("There was an error accessing the store's directory")
-                from()
-                source(err)
-            }
-        }
+    /// The error returned by [crate::Store::at()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("There was an error accessing the store's directory")]
+        Io(#[from] std::io::Error),
     }
 }
 

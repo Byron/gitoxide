@@ -1,18 +1,13 @@
 use std::fmt;
 
-use quick_error::quick_error;
-
 use crate::Kind;
 
-quick_error! {
-    /// The Error used in [`Kind::from_bytes()`].
-    #[derive(Debug, Clone)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        InvalidObjectKind(kind: crate::BString) {
-            display("Unknown object kind: {:?}", kind)
-        }
-    }
+/// The Error used in [`Kind::from_bytes()`].
+#[derive(Debug, Clone, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Unknown object kind: {kind:?}")]
+    InvalidObjectKind { kind: bstr::BString },
 }
 
 impl Kind {
@@ -23,7 +18,7 @@ impl Kind {
             b"blob" => Kind::Blob,
             b"commit" => Kind::Commit,
             b"tag" => Kind::Tag,
-            _ => return Err(Error::InvalidObjectKind(s.into())),
+            _ => return Err(Error::InvalidObjectKind { kind: s.into() }),
         })
     }
 

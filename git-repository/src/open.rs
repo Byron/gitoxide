@@ -356,7 +356,7 @@ impl ThreadSafeRepository {
         let git_install_dir = crate::path::install_dir().ok();
         let home = std::env::var_os("HOME")
             .map(PathBuf::from)
-            .and_then(|home| env.home.check(home).ok().flatten());
+            .and_then(|home| env.home.check_opt(home));
 
         let mut filter_config_section = filter_config_section.unwrap_or(config::section::is_trusted);
         let config = config::Cache::from_stage_one(

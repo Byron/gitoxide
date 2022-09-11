@@ -2,10 +2,7 @@
 
 use std::{borrow::Cow, collections::BTreeMap, convert::TryFrom};
 
-use crate::{
-    bstr::{BStr, BString, ByteSlice},
-    permission,
-};
+use crate::bstr::{BStr, BString, ByteSlice};
 
 ///
 pub mod init {
@@ -62,7 +59,7 @@ pub(crate) struct SchemePermission {
 impl SchemePermission {
     pub fn from_config(
         config: &git_config::File<'static>,
-        git_prefix: &permission::env_var::Resource,
+        git_prefix: git_sec::Permission,
         mut filter: fn(&git_config::file::Metadata) -> bool,
     ) -> Result<Self, init::Error> {
         let allow: Option<Allow> = config
@@ -106,7 +103,7 @@ impl SchemePermission {
 
         let user_allowed = saw_user.then(|| {
             std::env::var_os("GIT_PROTOCOL_FROM_USER")
-                .and_then(|val| git_prefix.check(val).ok().flatten())
+                .and_then(|val| git_prefix.check_opt(val))
                 .map_or(true, |val| val == "1")
         });
         Ok(SchemePermission {

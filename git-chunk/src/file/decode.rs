@@ -1,38 +1,30 @@
 use std::{convert::TryInto, ops::Range};
 
-pub use error::Error;
-
 mod error {
-    use quick_error::quick_error;
-    quick_error! {
-        /// The value returned by [crate::FileRef::from_bytes()
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            EarlySentinelValue {
-                display("Sentinel value encountered while still processing chunks.")
-            }
-            MissingSentinelValue { actual: crate::Id } {
-                display("Sentinel value wasn't found, saw {:?}", std::str::from_utf8(actual.as_ref()).unwrap_or("<non-ascii>"))
-            }
-            ChunkSizeOutOfBounds { offset: crate::file::Offset, file_length: u64 } {
-                display("The chunk offset {} went past the file of length {} - was it truncated?", offset, file_length)
-            }
-            NonIncrementalChunkOffsets {
-                display("All chunk offsets must be incrementing.")
-            }
-            DuplicateChunk(kind: crate::Id) {
-                display("The chunk of kind {:?} was encountered more than once", std::str::from_utf8(kind.as_ref()).unwrap_or("<non-ascii>"))
-            }
-            TocTooSmall { actual: usize, expected: usize } {
-                display("The table of contents would be {} bytes, but got only {}", expected, actual)
-            }
-            Empty {
-                display("Empty chunk indices are not allowed as the point of chunked files is to have chunks.")
-            }
-        }
+    /// The value returned by [crate::FileRef::from_bytes()
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Sentinel value encountered while still processing chunks.")]
+        EarlySentinelValue,
+        #[error("Sentinel value wasn't found, saw {:?}", std::str::from_utf8(actual.as_ref()).unwrap_or("<non-ascii>"))]
+        MissingSentinelValue { actual: crate::Id },
+        #[error("The chunk offset {offset} went past the file of length {file_length} - was it truncated?")]
+        ChunkSizeOutOfBounds {
+            offset: crate::file::Offset,
+            file_length: u64,
+        },
+        #[error("All chunk offsets must be incrementing.")]
+        NonIncrementalChunkOffsets,
+        #[error("The chunk of kind {:?} was encountered more than once", std::str::from_utf8(kind.as_ref()).unwrap_or("<non-ascii>"))]
+        DuplicateChunk { kind: crate::Id },
+        #[error("The table of contents would be {expected} bytes, but got only {actual}")]
+        TocTooSmall { actual: usize, expected: usize },
+        #[error("Empty chunk indices are not allowed as the point of chunked files is to have chunks.")]
+        Empty,
     }
 }
+pub use error::Error;
 
 use crate::{file, file::index};
 
@@ -62,7 +54,7 @@ impl file::Index {
                 return Err(Error::EarlySentinelValue);
             }
             if chunks.iter().any(|c: &index::Entry| c.kind == kind) {
-                return Err(Error::DuplicateChunk(kind));
+                return Err(Error::DuplicateChunk { kind });
             }
 
             let offset = be_u64(offset);

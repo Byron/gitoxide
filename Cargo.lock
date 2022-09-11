@@ -1135,7 +1135,7 @@ dependencies = [
 name = "git-chunk"
 version = "0.3.1"
 dependencies = [
- "quick-error",
+ "thiserror",
 ]
 
 [[package]]
@@ -1386,9 +1386,9 @@ dependencies = [
  "itoa 1.0.3",
  "nom",
  "pretty_assertions",
- "quick-error",
  "serde",
  "smallvec",
+ "thiserror",
 ]
 
 [[package]]
@@ -1458,8 +1458,8 @@ dependencies = [
  "hex",
  "maybe-async",
  "pin-project-lite",
- "quick-error",
  "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -1552,9 +1552,9 @@ dependencies = [
  "git-validate",
  "memmap2",
  "nom",
- "quick-error",
  "serde",
  "tempfile",
+ "thiserror",
 ]
 
 [[package]]
@@ -1650,7 +1650,6 @@ dependencies = [
  "libc",
  "serde",
  "tempfile",
- "thiserror",
  "windows 0.37.0",
 ]
 
@@ -1761,7 +1760,7 @@ version = "0.5.5"
 dependencies = [
  "bstr",
  "git-testtools",
- "quick-error",
+ "thiserror",
 ]
 
 [[package]]

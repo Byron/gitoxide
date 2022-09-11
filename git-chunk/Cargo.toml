@@ -14,4 +14,4 @@ doctest = false
 test = false
 
 [dependencies]
-quick-error = "2.0.0"
+thiserror = "1.0.34"

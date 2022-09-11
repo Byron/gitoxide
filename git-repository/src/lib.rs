@@ -234,14 +234,10 @@ pub fn open_opts(directory: impl Into<std::path::PathBuf>, options: open::Option
 pub mod permission {
     ///
     pub mod env_var {
-        use git_sec::{permission, Access};
-
-        /// A permission to control access to the resource pointed to an environment variable.
-        pub type Resource = Access<permission::Resource, git_sec::Permission>;
         ///
         pub mod resource {
             ///
-            pub type Error = git_sec::permission::Error<std::path::PathBuf, git_sec::Permission>;
+            pub type Error = git_sec::permission::Error<std::path::PathBuf>;
         }
     }
 }

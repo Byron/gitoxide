@@ -1,7 +1,6 @@
 use std::io;
 
 use bstr::{BString, ByteSlice};
-use quick_error::quick_error;
 
 use crate::{
     encode::SPACE,
@@ -9,15 +8,12 @@ use crate::{
     Kind, Tree, TreeRef,
 };
 
-quick_error! {
-    /// The Error used in [`Tree::write_to()`].
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        NewlineInFilename(name: BString) {
-            display("Newlines are invalid in file paths: {:?}", name)
-        }
-    }
+/// The Error used in [`Tree::write_to()`][crate::WriteTo::write_to()].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Newlines are invalid in file paths: {name:?}")]
+    NewlineInFilename { name: BString },
 }
 
 impl From<Error> for io::Error {
@@ -44,7 +40,10 @@ impl crate::WriteTo for Tree {
             out.write_all(SPACE)?;
 
             if filename.find_byte(b'\n').is_some() {
-                return Err(Error::NewlineInFilename((*filename).to_owned()).into());
+                return Err(Error::NewlineInFilename {
+                    name: (*filename).to_owned(),
+                }
+                .into());
             }
             out.write_all(filename)?;
             out.write_all(&[b'\0'])?;
@@ -84,7 +83,10 @@ impl<'a> crate::WriteTo for TreeRef<'a> {
             out.write_all(SPACE)?;
 
             if filename.find_byte(b'\n').is_some() {
-                return Err(Error::NewlineInFilename((*filename).to_owned()).into());
+                return Err(Error::NewlineInFilename {
+                    name: (*filename).to_owned(),
+                }
+                .into());
             }
             out.write_all(filename)?;
             out.write_all(&[b'\0'])?;

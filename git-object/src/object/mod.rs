@@ -162,20 +162,18 @@ impl Object {
     }
 }
 
-use quick_error::quick_error;
-
 use crate::{
     decode::{loose_header, Error as DecodeError, LooseHeaderDecodeError},
     BlobRef, CommitRef, Kind, ObjectRef, TagRef, TreeRef,
 };
 
-quick_error! {
-    #[derive(Debug)]
-    #[allow(missing_docs)]
-    pub enum LooseDecodeError {
-        InvalidHeader(err: LooseHeaderDecodeError) { from() }
-        InvalidContent(err: DecodeError) { from() }
-    }
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum LooseDecodeError {
+    #[error(transparent)]
+    InvalidHeader(#[from] LooseHeaderDecodeError),
+    #[error(transparent)]
+    InvalidContent(#[from] DecodeError),
 }
 
 impl<'a> ObjectRef<'a> {

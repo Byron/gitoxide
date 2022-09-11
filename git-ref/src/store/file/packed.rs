@@ -48,26 +48,17 @@ impl file::Store {
 
 ///
 pub mod transaction {
-    use quick_error::quick_error;
 
     use crate::store_impl::packed;
 
-    quick_error! {
-        /// The error returned by [`file::Store::packed_transaction`][crate::file::Store::packed_transaction()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            BufferOpen(err: packed::buffer::open::Error) {
-                display("An existing pack couldn't be opened or read when preparing a transaction")
-                source(err)
-                from()
-            }
-            TransactionLock(err: git_lock::acquire::Error) {
-                display("The lock for a packed transaction could not be obtained")
-                source(err)
-                from()
-            }
-        }
+    /// The error returned by [`file::Transaction::prepare()`][crate::file::Transaction::prepare()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("An existing pack couldn't be opened or read when preparing a transaction")]
+        BufferOpen(#[from] packed::buffer::open::Error),
+        #[error("The lock for a packed transaction could not be obtained")]
+        TransactionLock(#[from] git_lock::acquire::Error),
     }
 }
 

@@ -167,7 +167,7 @@ mod commit {
             .unwrap_err();
         assert_eq!(
             err.to_string(),
-            "Reference 'refs/heads/main' was supposed to exist with value 4b825dc642cb6eb9a060e54bf8d69288fbee4904, but didn't.",
+            "Reference \"refs/heads/main\" was supposed to exist with value 4b825dc642cb6eb9a060e54bf8d69288fbee4904, but didn't.",
             "cannot provide parent id in initial commit"
         );
     }

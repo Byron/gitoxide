@@ -11,34 +11,22 @@ pub mod to_id {
     use std::path::PathBuf;
 
     use git_object::bstr::BString;
-    use quick_error::quick_error;
 
     use crate::file;
 
-    quick_error! {
-        /// The error returned by [`crate::file::ReferenceExt::peel_to_id_in_place()`].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Follow(err: file::find::existing::Error) {
-                display("Could not follow a single level of a symbolic reference")
-                from()
-                source(err)
-            }
-            Cycle(start_absolute: PathBuf){
-                display("Aborting due to reference cycle with first seen path being '{}'", start_absolute.display())
-            }
-            DepthLimitExceeded { max_depth: usize } {
-                display("Refusing to follow more than {} levels of indirection", max_depth)
-            }
-            Find(err: Box<dyn std::error::Error + Send + Sync + 'static>) {
-                display("An error occurred when trying to resolve an object a reference points to")
-                from()
-                source(&**err)
-            }
-            NotFound{oid: git_hash::ObjectId, name: BString} {
-                display("Object {} as referred to by '{}' could not be found", oid, name)
-            }
-        }
+    /// The error returned by [`crate::file::ReferenceExt::peel_to_id_in_place()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Could not follow a single level of a symbolic reference")]
+        Follow(#[from] file::find::existing::Error),
+        #[error("Aborting due to reference cycle with first seen path being {start_absolute:?}")]
+        Cycle { start_absolute: PathBuf },
+        #[error("Refusing to follow more than {max_depth} levels of indirection")]
+        DepthLimitExceeded { max_depth: usize },
+        #[error("An error occurred when trying to resolve an object a reference points to")]
+        Find(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
+        #[error("Object {oid} as referred to by {name:?} could not be found")]
+        NotFound { oid: git_hash::ObjectId, name: BString },
     }
 }

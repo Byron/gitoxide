@@ -32,7 +32,7 @@ git-actor = { version = "^0.11.3", path = "../git-actor" }
 git-lock = { version = "^2.0.0", path = "../git-lock" }
 git-tempfile = { version = "^2.0.0", path = "../git-tempfile" }
 
-quick-error = "2.0.0"
+thiserror = "1.0.34"
 nom = { version = "7", default-features = false, features = ["std"]}
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 

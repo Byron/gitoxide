@@ -102,20 +102,15 @@ impl<'a> packed::Iter<'a> {
 
 mod error {
     use git_object::bstr::BString;
-    use quick_error::quick_error;
 
-    quick_error! {
-        /// The error returned by [`Iter::new(…)`][super::Iter::new()],
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Header { invalid_first_line: BString } {
-                display("The header existed but could not be parsed: '{}'", invalid_first_line)
-            }
-            Reference { invalid_line: BString, line_number: usize } {
-                display("Invalid reference in line {}: '{}'", line_number, invalid_line)
-            }
-        }
+    /// The error returned by [`Iter`][super::packed::Iter],
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The header existed but could not be parsed: {invalid_first_line:?}")]
+        Header { invalid_first_line: BString },
+        #[error("Invalid reference in line {line_number}: {invalid_line:?}")]
+        Reference { invalid_line: BString, line_number: usize },
     }
 }
 

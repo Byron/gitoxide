@@ -52,7 +52,9 @@ fn prefixed_and_suffixed_data_to_write(
     if data_len > MAX_DATA_LEN {
         return Err(io::Error::new(
             io::ErrorKind::Other,
-            Error::DataLengthLimitExceeded(data_len),
+            Error::DataLengthLimitExceeded {
+                length_in_bytes: data_len,
+            },
         ));
     }
     if data.is_empty() {

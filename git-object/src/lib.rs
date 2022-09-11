@@ -336,28 +336,20 @@ pub mod decode {
     pub use _decode::{Error, ParseError, ParseErrorOwned};
     impl std::error::Error for Error {}
 
-    use quick_error::quick_error;
-    quick_error! {
-        /// Returned by [`loose_header()`]
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum LooseHeaderDecodeError {
-            ParseIntegerError(
-                source: btoi::ParseIntegerError,
-                message: &'static str,
-                number: Vec<u8>
-            ) {
-                display("{}: {:?}", message, std::str::from_utf8(number))
-            }
-            InvalidHeader(s: &'static str) {
-                display("{}", s)
-            }
-            ObjectHeader(err: super::kind::Error) {
-                display("The object header contained an unknown object kind.")
-                from()
-                source(err)
-            }
-        }
+    /// Returned by [`loose_header()`]
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum LooseHeaderDecodeError {
+        #[error("{message}: {number:?}")]
+        ParseIntegerError {
+            source: btoi::ParseIntegerError,
+            message: &'static str,
+            number: bstr::BString,
+        },
+        #[error("{message}")]
+        InvalidHeader { message: &'static str },
+        #[error("The object header contained an unknown object kind.")]
+        ObjectHeader(#[from] super::kind::Error),
     }
 
     use bstr::ByteSlice;
@@ -367,18 +359,18 @@ pub mod decode {
     /// `size` is the uncompressed size of the payload in bytes.
     pub fn loose_header(input: &[u8]) -> Result<(super::Kind, usize, usize), LooseHeaderDecodeError> {
         use LooseHeaderDecodeError::*;
-        let kind_end = input.find_byte(0x20).ok_or(InvalidHeader("Expected '<type> <size>'"))?;
+        let kind_end = input.find_byte(0x20).ok_or(InvalidHeader {
+            message: "Expected '<type> <size>'",
+        })?;
         let kind = super::Kind::from_bytes(&input[..kind_end])?;
-        let size_end = input
-            .find_byte(0x0)
-            .ok_or(InvalidHeader("Did not find 0 byte in header"))?;
+        let size_end = input.find_byte(0x0).ok_or(InvalidHeader {
+            message: "Did not find 0 byte in header",
+        })?;
         let size_bytes = &input[kind_end + 1..size_end];
-        let size = btoi::btoi(size_bytes).map_err(|source| {
-            ParseIntegerError(
-                source,
-                "Object size in header could not be parsed",
-                size_bytes.to_owned(),
-            )
+        let size = btoi::btoi(size_bytes).map_err(|source| ParseIntegerError {
+            source,
+            message: "Object size in header could not be parsed",
+            number: size_bytes.into(),
         })?;
         Ok((kind, size, size_end + 1))
     }

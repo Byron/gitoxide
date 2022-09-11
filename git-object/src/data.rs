@@ -51,17 +51,16 @@ impl<'a> Data<'a> {
 
 /// Types supporting object hash verification
 pub mod verify {
-    use quick_error::quick_error;
 
-    quick_error! {
-        /// Returned by [`crate::Data::verify_checksum()`]
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            ChecksumMismatch {desired: git_hash::ObjectId, actual: git_hash::ObjectId} {
-                display("Object expected to have id {}, but actual id was {}", desired, actual)
-            }
-        }
+    /// Returned by [`crate::Data::verify_checksum()`]
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Object expected to have id {desired}, but actual id was {actual}")]
+        ChecksumMismatch {
+            desired: git_hash::ObjectId,
+            actual: git_hash::ObjectId,
+        },
     }
 
     impl crate::Data<'_> {

@@ -122,7 +122,7 @@ pub mod create_or_update {
                         let parent_dir = log_path.parent().expect("always with parent directory");
                         git_tempfile::create_dir::all(parent_dir, Default::default()).map_err(|err| {
                             Error::CreateLeadingDirectories {
-                                err,
+                                source: err,
                                 reflog_directory: parent_dir.to_owned(),
                             }
                         })?;
@@ -139,12 +139,12 @@ pub mod create_or_update {
                                     .and_then(|_| options.open(&log_path))
                                     .map(Some)
                                     .map_err(|_| Error::Append {
-                                        err,
+                                        source: err,
                                         reflog_path: self.reflog_path(name),
                                     })?
                             } else {
                                 return Err(Error::Append {
-                                    err,
+                                    source: err,
                                     reflog_path: log_path,
                                 });
                             }
@@ -162,7 +162,7 @@ pub mod create_or_update {
                                 }
                             })
                             .map_err(|err| Error::Append {
-                                err,
+                                source: err,
                                 reflog_path: self.reflog_path(name),
                             })?;
                     }
@@ -205,25 +205,22 @@ pub mod create_or_update {
     mod error {
         use std::path::PathBuf;
 
-        use quick_error::quick_error;
-
-        quick_error! {
-            /// The error returned when creating or appending to a reflog
-            #[derive(Debug)]
-            #[allow(missing_docs)]
-            pub enum Error {
-                CreateLeadingDirectories { err: std::io::Error, reflog_directory: PathBuf } {
-                    display("Could create one or more directories in '{}' to contain reflog file", reflog_directory.display())
-                    source(err)
-                }
-                Append { err: std::io::Error, reflog_path: PathBuf } {
-                    display("Could not open reflog file at '{}' for appending", reflog_path.display())
-                    source(err)
-                }
-                MessageWithNewlines {
-                    display("tbd")
-                }
-            }
+        /// The error returned when creating or appending to a reflog
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("Could create one or more directories in {reflog_directory:?} to contain reflog file")]
+            CreateLeadingDirectories {
+                source: std::io::Error,
+                reflog_directory: PathBuf,
+            },
+            #[error("Could not open reflog file at {reflog_path:?} for appending")]
+            Append {
+                source: std::io::Error,
+                reflog_path: PathBuf,
+            },
+            #[error("reflog message must not contain newlines")]
+            MessageWithNewlines,
         }
     }
     pub use error::Error;
@@ -232,26 +229,14 @@ pub mod create_or_update {
 }
 
 mod error {
-    use std::io;
-
-    use quick_error::quick_error;
-
-    quick_error! {
-        /// The error returned by [crate::file::Store::reflog_iter()].
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            RefnameValidation(err: crate::name::Error) {
-                display("The reflog name or path is not a valid ref name")
-                from()
-                source(err)
-            }
-            Io(err: io::Error) {
-                display("The reflog file could not read")
-                from()
-                source(err)
-            }
-        }
+    /// The error returned by [crate::file::Store::reflog_iter()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The reflog name or path is not a valid ref name")]
+        RefnameValidation(#[from] crate::name::Error),
+        #[error("The reflog file could not read")]
+        Io(#[from] std::io::Error),
     }
 }
 pub use error::Error;

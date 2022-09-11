@@ -32,7 +32,7 @@ mod expand {
         assert!(matches!(
             git_ref::namespace::expand("foo\\bar").expect_err("empty invalid"),
             git_validate::refname::Error::Tag(
-                git_validate::tag::name::Error::InvalidByte(byte)
+                git_validate::tag::name::Error::InvalidByte{byte}
             ) if byte == "\\"
         ));
     }

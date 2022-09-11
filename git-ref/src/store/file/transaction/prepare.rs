@@ -58,7 +58,7 @@ impl<'s> Transaction<'s> {
                     Some(base.into_owned()),
                 )
                 .map_err(|err| Error::LockAcquire {
-                    err,
+                    source: err,
                     full_name: "borrowchk won't allow change.name()".into(),
                 })?;
                 let existing_ref = existing_ref?;
@@ -104,7 +104,7 @@ impl<'s> Transaction<'s> {
                     Some(base.into_owned()),
                 )
                 .map_err(|err| Error::LockAcquire {
-                    err,
+                    source: err,
                     full_name: "borrowchk won't allow change.name() and this will be corrected by caller".into(),
                 })?;
 
@@ -307,8 +307,11 @@ impl<'s> Transaction<'s> {
                 change,
             ) {
                 let err = match err {
-                    Error::LockAcquire { err, full_name: _bogus } => Error::LockAcquire {
-                        err,
+                    Error::LockAcquire {
+                        source,
+                        full_name: _bogus,
+                    } => Error::LockAcquire {
+                        source,
                         full_name: {
                             let mut cursor = change.parent_index;
                             let mut ref_name = change.name();
@@ -367,68 +370,51 @@ fn possibly_adjust_name_for_prefixes(name: &FullNameRef) -> Option<FullName> {
 
 mod error {
     use git_object::bstr::BString;
-    use quick_error::quick_error;
 
     use crate::{
         store_impl::{file, packed},
         Target,
     };
 
-    quick_error! {
-        /// The error returned by various [`Transaction`][super::Transaction] methods.
-        #[derive(Debug)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            Packed(err: packed::buffer::open::Error) {
-                display("The packed ref buffer could not be loaded")
-                from()
-                source(err)
-            }
-            PackedTransactionAcquire(err: git_lock::acquire::Error) {
-                display("The lock for the packed-ref file could not be obtained")
-                source(err)
-            }
-            PackedTransactionPrepare(err: packed::transaction::prepare::Error) {
-                display("The packed transaction could not be prepared")
-                from()
-                source(err)
-            }
-            PackedFind(err: packed::find::Error) {
-                display("The packed ref file could not be parsed")
-                source(err)
-                from()
-            }
-            PreprocessingFailed(err: std::io::Error) {
-                display("Edit preprocessing failed with error: {}", err.to_string())
-                source(err)
-            }
-            LockAcquire{err: git_lock::acquire::Error, full_name: BString} {
-                display("A lock could not be obtained for reference {}", full_name)
-                source(err)
-            }
-            Io(err: std::io::Error) {
-                display("An IO error occurred while applying an edit")
-                from()
-                source(err)
-            }
-            DeleteReferenceMustExist { full_name: BString } {
-                display("The reference '{}' for deletion did not exist or could not be parsed", full_name)
-            }
-            MustNotExist { full_name: BString, actual: Target, new: Target } {
-                display("Reference '{}' was not supposed to exist when writing it with value {}, but actual content was {}", full_name, new, actual)
-            }
-            MustExist { full_name: BString, expected: Target } {
-                display("Reference '{}' was supposed to exist with value {}, but didn't.", full_name, expected)
-            }
-            ReferenceOutOfDate { full_name: BString, expected: Target, actual: Target } {
-                display("The reference '{}' should have content {}, actual content was {}", full_name, expected, actual)
-            }
-            ReferenceDecode(err: file::loose::reference::decode::Error) {
-                display("Could not read reference")
-                from()
-                source(err)
-            }
-        }
+    /// The error returned by various [`Transaction`][super::Transaction] methods.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("The packed ref buffer could not be loaded")]
+        Packed(#[from] packed::buffer::open::Error),
+        #[error("The lock for the packed-ref file could not be obtained")]
+        PackedTransactionAcquire(#[source] git_lock::acquire::Error),
+        #[error("The packed transaction could not be prepared")]
+        PackedTransactionPrepare(#[from] packed::transaction::prepare::Error),
+        #[error("The packed ref file could not be parsed")]
+        PackedFind(#[from] packed::find::Error),
+        #[error("Edit preprocessing failed with an error")]
+        PreprocessingFailed(#[source] std::io::Error),
+        #[error("A lock could not be obtained for reference {full_name:?}")]
+        LockAcquire {
+            source: git_lock::acquire::Error,
+            full_name: BString,
+        },
+        #[error("An IO error occurred while applying an edit")]
+        Io(#[from] std::io::Error),
+        #[error("The reference {full_name:?} for deletion did not exist or could not be parsed")]
+        DeleteReferenceMustExist { full_name: BString },
+        #[error("Reference {full_name:?} was not supposed to exist when writing it with value {new:?}, but actual content was {actual:?}")]
+        MustNotExist {
+            full_name: BString,
+            actual: Target,
+            new: Target,
+        },
+        #[error("Reference {full_name:?} was supposed to exist with value {expected}, but didn't.")]
+        MustExist { full_name: BString, expected: Target },
+        #[error("The reference {full_name:?} should have content {expected}, actual content was {actual}")]
+        ReferenceOutOfDate {
+            full_name: BString,
+            expected: Target,
+            actual: Target,
+        },
+        #[error("Could not read reference")]
+        ReferenceDecode(#[from] file::loose::reference::decode::Error),
     }
 }
 

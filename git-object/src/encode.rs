@@ -2,18 +2,15 @@
 use std::io::{self, Write};
 
 use bstr::{BString, ByteSlice};
-use quick_error::quick_error;
 
-quick_error! {
-    #[derive(Debug)]
-    enum Error {
-        NewlineInHeaderValue(value: BString) {
-            display("Newlines are not allowed in header values: {:?}", value)
-        }
-        EmptyValue {
-            display("Header values must not be empty")
-        }
-    }
+/// An error returned when object encoding fails.
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error("Newlines are not allowed in header values: {value:?}")]
+    NewlineInHeaderValue { value: BString },
+    #[error("Header values must not be empty")]
+    EmptyValue,
 }
 
 macro_rules! check {
@@ -78,7 +75,7 @@ pub(crate) fn header_field(name: &[u8], value: &[u8], out: impl io::Write) -> io
         return Err(Error::EmptyValue.into());
     }
     if value.find(NL).is_some() {
-        return Err(Error::NewlineInHeaderValue(value.into()).into());
+        return Err(Error::NewlineInHeaderValue { value: value.into() }.into());
     }
     trusted_header_field(name, value, out)
 }
