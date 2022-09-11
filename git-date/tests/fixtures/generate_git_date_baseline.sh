@@ -39,8 +39,3 @@ baseline '123456789'
 # raw
 baseline '1660874655 +0800'
 
-# failing
-
-# empty_input
-baseline ""
-
