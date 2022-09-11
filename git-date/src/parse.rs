@@ -103,27 +103,29 @@ mod relative {
     }
 
     pub(crate) fn parse(input: &str, now: Option<SystemTime>) -> Option<Result<OffsetDateTime, Error>> {
-        parse_inner(input).map(|offset| {
-            let offset = std::time::Duration::from_secs(offset.whole_seconds().try_into().expect("positive value"));
-            now.ok_or(Error::MissingCurrentTime).map(|now| {
-                now.checked_sub(offset)
-                    .expect("BUG: values can't be large enough to cause underflow")
-                    .into()
-            })
+        let offset = parse_inner(input).map(|offset| {
+            let secs = offset.whole_seconds().try_into().expect("positive value");
+            return std::time::Duration::from_secs(secs);
+        })?;
+        now.ok_or(Error::MissingCurrentTime).map(|now| {
+            now.checked_sub(offset)
+                .expect("BUG: values can't be large enough to cause underflow")
+                .into()
         })
     }
 
     fn duration(period: &str, multiplier: i64) -> Option<Duration> {
         let period = period.strip_suffix('s').unwrap_or(period);
-        Some(match period {
-            "second" => Duration::seconds(multiplier),
-            "minute" => Duration::minutes(multiplier),
-            "hour" => Duration::hours(multiplier),
-            "day" => Duration::days(multiplier),
-            "week" => Duration::weeks(multiplier),
-            // TODO months & years
+        let seconds: i64 = match period {
+            "second" => 1,
+            "minute" => 60,
+            "hour" => 3_600,
+            "day" => 86_400,
+            "week" => 604_800,
+            // TODO months & years?
             _ => return None,
-        })
+        };
+        Some(Duration::seconds(seconds.checked_mul(multiplier)?))
     }
 
     #[cfg(test)]

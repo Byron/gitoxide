@@ -99,7 +99,6 @@ mod relative {
     use time::{Duration, OffsetDateTime};
 
     #[test]
-    #[should_panic] // TODO: fix
     fn large_offsets_can_panic() {
         git_date::parse("999999999999999 weeks ago", Some(std::time::UNIX_EPOCH)).ok();
     }

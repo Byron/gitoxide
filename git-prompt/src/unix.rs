@@ -9,11 +9,11 @@ pub(crate) mod imp {
     };
 
     use nix::sys::{termios, termios::Termios};
-    use parking_lot::{lock_api::MutexGuard, Mutex, RawMutex};
+    use parking_lot::{const_mutex, lock_api::MutexGuard, Mutex, RawMutex};
 
     use crate::{unix::TTY_PATH, Error, Mode, Options};
 
-    static TERM_STATE: Mutex<Option<Termios>> = Mutex::new(None);
+    static TERM_STATE: Mutex<Option<Termios>> = const_mutex(None);
 
     /// Ask the user given a `prompt`, returning the result.
     pub(crate) fn ask(prompt: &str, Options { mode, .. }: &Options<'_>) -> Result<String, Error> {
