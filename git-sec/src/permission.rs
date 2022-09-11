@@ -5,7 +5,6 @@ use std::fmt::{Display, Formatter};
 ///
 /// It's up to the implementation to decide which permission is required for an operation, and which one
 /// causes errors.
-#[cfg(feature = "thiserror")]
 #[derive(Debug, thiserror::Error)]
 #[error("Not allowed to handle resource {:?}: permission {}", .resource, .permission)]
 pub struct Error<R: std::fmt::Debug, P: std::fmt::Debug + Display> {
@@ -19,7 +18,6 @@ impl Permission {
     /// Check this permissions and produce a reply to indicate if the `resource` can be used and in which way.
     ///
     /// Only if this permission is set to `Allow` will the resource be usable.
-    #[cfg(feature = "thiserror")]
     pub fn check<R: std::fmt::Debug>(&self, resource: R) -> Result<Option<R>, Error<R, Self>> {
         match self {
             Permission::Allow => Ok(Some(resource)),
