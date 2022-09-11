@@ -118,10 +118,11 @@ mod relative {
         let seconds: i64 = match period {
             "second" => 1,
             "minute" => 60,
-            "hour" => 3_600,
-            "day" => 86_400,
-            "week" => 604_800,
-            // TODO months & years?
+            "hour" => 60 * 60,
+            "day" => 24 * 60 * 60,
+            "week" => 7 * 24 * 60 * 60,
+            // TODO months & years? YES
+            // Ignore values you don't know, assume seconds then (so does git)
             _ => return None,
         };
         seconds.checked_mul(multiplier).map(Duration::seconds)
