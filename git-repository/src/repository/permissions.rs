@@ -1,6 +1,4 @@
-use git_sec::{Access, Trust};
-
-use crate::permission;
+use git_sec::Trust;
 
 /// Permissions associated with various resources of a git repository
 #[derive(Debug, Clone)]
@@ -67,23 +65,23 @@ pub struct Environment {
     /// Control whether resources pointed to by `XDG_CONFIG_HOME` can be used when looking up common configuration values.
     ///
     /// Note that [`git_sec::Permission::Forbid`] will cause the operation to abort if a resource is set via the XDG config environment.
-    pub xdg_config_home: permission::env_var::Resource,
+    pub xdg_config_home: git_sec::Permission,
     /// Control the way resources pointed to by the home directory (similar to `xdg_config_home`) may be used.
-    pub home: permission::env_var::Resource,
+    pub home: git_sec::Permission,
     /// Control if resources pointed to by `GIT_*` prefixed environment variables can be used.
-    pub git_prefix: permission::env_var::Resource,
+    pub git_prefix: git_sec::Permission,
     /// Control if resources pointed to by `SSH_*` prefixed environment variables can be used (like `SSH_ASKPASS`)
-    pub ssh_prefix: permission::env_var::Resource,
+    pub ssh_prefix: git_sec::Permission,
 }
 
 impl Environment {
     /// Allow access to the entire environment.
     pub fn all() -> Self {
         Environment {
-            xdg_config_home: Access::resource(git_sec::Permission::Allow),
-            home: Access::resource(git_sec::Permission::Allow),
-            git_prefix: Access::resource(git_sec::Permission::Allow),
-            ssh_prefix: Access::resource(git_sec::Permission::Allow),
+            xdg_config_home: git_sec::Permission::Allow,
+            home: git_sec::Permission::Allow,
+            git_prefix: git_sec::Permission::Allow,
+            ssh_prefix: git_sec::Permission::Allow,
         }
     }
 }
@@ -122,11 +120,11 @@ impl Permissions {
                 includes: false,
             },
             env: {
-                let deny = permission::env_var::Resource::resource(git_sec::Permission::Deny);
+                let deny = git_sec::Permission::Deny;
                 Environment {
-                    xdg_config_home: deny.clone(),
-                    home: deny.clone(),
-                    ssh_prefix: deny.clone(),
+                    xdg_config_home: deny,
+                    home: deny,
+                    ssh_prefix: deny,
                     git_prefix: deny,
                 }
             },

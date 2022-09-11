@@ -171,7 +171,7 @@ impl Cache {
     pub fn xdg_config_path(
         &self,
         resource_file_name: &str,
-    ) -> Result<Option<PathBuf>, git_sec::permission::Error<PathBuf, git_sec::Permission>> {
+    ) -> Result<Option<PathBuf>, git_sec::permission::Error<PathBuf>> {
         std::env::var_os("XDG_CONFIG_HOME")
             .map(|path| (path, &self.xdg_config_home_env))
             .or_else(|| std::env::var_os("HOME").map(|path| (path, &self.home_env)))

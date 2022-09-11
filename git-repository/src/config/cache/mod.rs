@@ -16,7 +16,7 @@ impl std::fmt::Debug for Cache {
 impl Cache {
     pub(crate) fn personas(&self) -> &identity::Personas {
         self.personas
-            .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved, &self.git_prefix))
+            .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved, self.git_prefix))
     }
 
     pub(crate) fn url_rewrite(&self) -> &remote::url::Rewrite {
@@ -29,7 +29,7 @@ impl Cache {
         &self,
     ) -> Result<&remote::url::SchemePermission, remote::url::scheme_permission::init::Error> {
         self.url_scheme.get_or_try_init(|| {
-            remote::url::SchemePermission::from_config(&self.resolved, &self.git_prefix, self.filter_config_section)
+            remote::url::SchemePermission::from_config(&self.resolved, self.git_prefix, self.filter_config_section)
         })
     }
 }

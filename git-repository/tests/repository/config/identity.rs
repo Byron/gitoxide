@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use git_repository as git;
-use git_sec::{Access, Permission};
+use git_sec::Permission;
 use git_testtools::Env;
 use serial_test::serial;
 
@@ -28,8 +28,8 @@ fn author_and_committer_and_fallback() {
             repo.git_dir(),
             repo.open_options().clone().with(trust).permissions(git::Permissions {
                 env: git::permissions::Environment {
-                    xdg_config_home: Access::resource(Permission::Deny),
-                    home: Access::resource(Permission::Deny),
+                    xdg_config_home: Permission::Deny,
+                    home: Permission::Deny,
                     ..git::permissions::Environment::all()
                 },
                 ..Default::default()

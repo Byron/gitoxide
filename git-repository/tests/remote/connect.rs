@@ -32,7 +32,7 @@ mod blocking_io {
                     remote::repo("protocol_file_user").git_dir(),
                     git::open::Options::isolated().permissions(git::Permissions {
                         env: git::permissions::Environment {
-                            git_prefix: git_sec::Access::resource(git_sec::Permission::Allow),
+                            git_prefix: git_sec::Permission::Allow,
                             ..git::permissions::Environment::all()
                         },
                         ..git::Permissions::isolated()

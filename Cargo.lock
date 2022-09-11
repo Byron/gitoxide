@@ -1649,7 +1649,6 @@ dependencies = [
  "libc",
  "serde",
  "tempfile",
- "thiserror",
  "windows 0.37.0",
 ]
 
