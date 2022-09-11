@@ -27,6 +27,10 @@ where
 impl<R> std::error::Error for Error<R> where R: std::fmt::Debug {}
 
 impl Permission {
+    /// Return true if this instance is `Permission::Allow`.
+    pub fn is_allowed(&self) -> bool {
+        matches!(self, Permission::Allow)
+    }
     /// Check this permissions and produce a reply to indicate if the `resource` can be used and in which way.
     ///
     /// Only if this permission is set to `Allow` will the resource be usable.

@@ -25,6 +25,13 @@ mod permission {
         assert_eq!(Permission::Deny.check_opt("hi"), None);
         assert_eq!(Permission::Forbid.check_opt("hi"), None);
     }
+
+    #[test]
+    fn is_allowed() {
+        assert!(Permission::Allow.is_allowed());
+        assert!(!Permission::Deny.is_allowed());
+        assert!(!Permission::Forbid.is_allowed());
+    }
 }
 
 mod identity;
