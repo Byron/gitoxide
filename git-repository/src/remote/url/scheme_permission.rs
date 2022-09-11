@@ -103,7 +103,7 @@ impl SchemePermission {
 
         let user_allowed = saw_user.then(|| {
             std::env::var_os("GIT_PROTOCOL_FROM_USER")
-                .and_then(|val| git_prefix.check(val).ok().flatten())
+                .and_then(|val| git_prefix.check_opt(val))
                 .map_or(true, |val| val == "1")
         });
         Ok(SchemePermission {

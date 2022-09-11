@@ -80,7 +80,7 @@ impl Cache {
                                     "HOME" => Some(home_env),
                                     _ => None,
                                 }
-                                .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check(val).ok().flatten()))
+                                .and_then(|perm| std::env::var_os(name).and_then(|val| perm.check_opt(val)))
                             })
                             .map(|p| (source, p.into_owned()))
                     }
@@ -189,6 +189,6 @@ impl Cache {
     pub fn home_dir(&self) -> Option<PathBuf> {
         std::env::var_os("HOME")
             .map(PathBuf::from)
-            .and_then(|path| self.home_env.check(path).ok().flatten())
+            .and_then(|path| self.home_env.check_opt(path))
     }
 }
