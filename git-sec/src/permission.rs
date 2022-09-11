@@ -47,16 +47,3 @@ impl Permission {
         }
     }
 }
-
-impl Display for Permission {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        Display::fmt(
-            match self {
-                Permission::Allow => "allowed",
-                Permission::Deny => "denied",
-                Permission::Forbid => "forbidden",
-            },
-            f,
-        )
-    }
-}
