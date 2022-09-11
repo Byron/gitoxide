@@ -103,14 +103,13 @@ mod relative {
     }
 
     pub(crate) fn parse(input: &str, now: Option<SystemTime>) -> Option<Result<OffsetDateTime, Error>> {
-        let offset = parse_inner(input).map(|offset| {
-            let secs = offset.whole_seconds().try_into().expect("positive value");
-            return std::time::Duration::from_secs(secs);
-        })?;
-        now.ok_or(Error::MissingCurrentTime).map(|now| {
-            now.checked_sub(offset)
-                .expect("BUG: values can't be large enough to cause underflow")
-                .into()
+        parse_inner(input).map(|offset| {
+            let offset = std::time::Duration::from_secs(offset.whole_seconds().try_into().expect("positive value"));
+            now.ok_or(Error::MissingCurrentTime).map(|now| {
+                now.checked_sub(offset)
+                    .expect("BUG: values can't be large enough to cause underflow")
+                    .into()
+            })
         })
     }
 
@@ -125,7 +124,7 @@ mod relative {
             // TODO months & years?
             _ => return None,
         };
-        Some(Duration::seconds(seconds.checked_mul(multiplier)?))
+        seconds.checked_mul(multiplier).map(Duration::seconds)
     }
 
     #[cfg(test)]
