@@ -63,3 +63,20 @@ pub enum Fetch<'a> {
         allow_non_fast_forward: bool,
     },
 }
+
+///
+pub mod matches {
+    use crate::instruction::Fetch;
+    use bstr::BStr;
+
+    impl<'a> Fetch<'a> {
+        /// For each name in `names`, set the corresponding byte in `matches` to `true` if the corresponding `name` matches the remote side
+        /// instruction (i.e. the left side of a [`fetch`][types::Mode::Fetch] refspec).
+        pub fn matches_remote_refs<'b>(
+            _names: impl Iterator<Item = &'b BStr> + ExactSizeIterator,
+            _matches: &mut Vec<bool>,
+        ) {
+            todo!()
+        }
+    }
+}
