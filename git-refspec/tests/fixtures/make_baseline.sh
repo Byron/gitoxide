@@ -75,11 +75,13 @@ baseline fetch '^refs/*/*'
 # valid
 baseline push '+:'
 baseline push ':'
+baseline fetch 55e825ebe8fd2ff78cad3826afb696b96b576a7e
 
 baseline fetch ''
 baseline fetch ':'
 baseline fetch '+'
 baseline push 'refs/heads/main:refs/remotes/frotz/xyzzy'
+baseline fetch '55e825ebe8fd2ff78cad3826afb696b96b576a7e:refs/heads/main'
 baseline push 'refs/heads/*:refs/remotes/frotz/*'
 
 
