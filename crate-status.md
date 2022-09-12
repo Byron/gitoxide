@@ -259,6 +259,10 @@ Check out the [performance discussion][git-traverse-performance] as well.
 A mechanism to associate metadata with any object, and keep revisions of it using git itself.
 
 * [ ] CRUD for git notes
+
+### git-fetchhead
+* [ ] parse `FETCH_HEAD` information back entirely
+* [ ] write typical fetch-head lines
  
 ### git-discover
 

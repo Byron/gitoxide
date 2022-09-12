@@ -1293,6 +1293,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-fetchhead"
+version = "0.0.0"
+
+[[package]]
 name = "git-filter"
 version = "0.0.0"
 
