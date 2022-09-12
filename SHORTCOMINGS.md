@@ -2,16 +2,6 @@ This file is for tracking features that are less well implemented or less powerf
 
 #### `git-repository`
 
-##### RevSpec parsing
-
-- cannot disambiguate trees using blob-access syntax like `000000:blob`
-    - See [this test](https://github.com/Byron/gitoxide/blob/5278cbc9b91ce01761a96a6962564a92daa77b7f/git-repository/tests/rev_spec/mod.rs#L102).
-- cannot disambiguate objects using their **object type** like `000000^{blob}`
-    - See [this test](https://github.com/Byron/gitoxide/blob/9d2e1eb3defc3ddd7ade7fe2bdd26d8a21afe55f/git-repository/tests/rev_spec/mod.rs#L83) 
-      which mentions the current behaviour.
-    - There are more tests around the same behaviour, check for `parse_spec_no_baseline(…)` to see where we fall short. Note that git can't disambiguate
-      consistently either, so eventually I would expect to get ahead.
-
 ### git-protocol
 * **fetches using protocol V1 and stateful connections, i.e. ssh, git, file, may hang**
     * This can be fixed by making response parsing.
