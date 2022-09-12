@@ -75,7 +75,7 @@ mod matcher {
         /// instruction (i.e. the left side of a [`fetch`][crate::parse::Operation::Fetch] refspec).
         /// Note that `name` is expected to be the full name of a reference.
         // TODO: move docs to Matcher, adjust these.
-        pub fn to_matcher<'b>(&self) -> Matcher {
+        pub fn to_matcher(&self) -> Matcher {
             todo!()
         }
     }

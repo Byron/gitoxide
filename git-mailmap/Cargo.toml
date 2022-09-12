@@ -12,11 +12,11 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "bstr/serde1", "git-actor/serde1"]
+serde1 = ["serde", "bstr/serde", "git-actor/serde1"]
 
 [dependencies]
 git-actor = { version = "^0.11.3", path = "../git-actor" }
-bstr = { version = "0.2.13", default-features = false, features = ["std", "unicode"]}
+bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"]}
 quick-error = "2.0.0"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 

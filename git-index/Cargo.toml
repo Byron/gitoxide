@@ -38,7 +38,7 @@ git-object = { version = "^0.20.2", path = "../git-object" }
 thiserror = "1.0.32"
 memmap2 = "0.5.0"
 filetime = "0.2.15"
-bstr = { version = "0.2.13", default-features = false }
+bstr = { version = "1.0.1", default-features = false }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 smallvec = "1.7.0"

@@ -13,10 +13,10 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "bstr/serde1"]
+serde1 = ["serde", "bstr/serde"]
 
 [dependencies]
-bstr = { version = "0.2.13", default-features = false, features = ["std"]}
+bstr = { version = "1.0.1", default-features = false, features = ["std"]}
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 itoa = "1.0.1"
 time = { version = "0.3.2", default-features = false, features = ["local-offset", "formatting", "macros", "parsing"] }

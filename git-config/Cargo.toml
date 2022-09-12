@@ -12,7 +12,7 @@ include = ["src/**/*", "LICENSE-*", "README.md", "CHANGELOG.md"]
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "bstr/serde1", "git-sec/serde1", "git-ref/serde1", "git-glob/serde1", "git-config-value/serde1"]
+serde1 = ["serde", "bstr/serde", "git-sec/serde1", "git-ref/serde1", "git-glob/serde1", "git-config-value/serde1"]
 
 [dependencies]
 git-features = { version = "^0.22.4", path = "../git-features"}
@@ -26,7 +26,7 @@ nom = { version = "7", default_features = false, features = [ "std" ] }
 memchr = "2"
 thiserror = "1.0.26"
 unicode-bom = "1.1.4"
-bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+bstr = { version = "1.0.1", default-features = false, features = ["std"] }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
 smallvec = "1.9.0"
 

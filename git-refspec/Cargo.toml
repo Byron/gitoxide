@@ -16,7 +16,7 @@ git-revision = { version = "^0.4.4", path = "../git-revision" }
 git-validate = { version = "^0.5.5", path = "../git-validate" }
 git-hash = { version = "^0.9.9", path = "../git-hash" }
 
-bstr = { version = "0.2.13", default-features = false, features = ["std"]}
+bstr = { version = "1.0.1", default-features = false, features = ["std"]}
 thiserror = "1.0.26"
 smallvec = "1.9.0"
 
