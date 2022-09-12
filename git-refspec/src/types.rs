@@ -19,3 +19,6 @@ pub enum Instruction<'a> {
     /// An instruction for fetching.
     Fetch(instruction::Fetch<'a>),
 }
+
+/// A type keeping enough information about a ref-spec to be able to efficiently match it against matcher items.
+pub struct Matcher {}

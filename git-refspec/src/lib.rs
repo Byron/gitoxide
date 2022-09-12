@@ -29,5 +29,19 @@ pub struct RefSpec {
 
 mod spec;
 
+///
+pub mod matcher {
+    use bstr::BStr;
+    use git_hash::oid;
+
+    /// An item to match
+    pub enum Item<'a> {
+        /// An object id
+        Oid(&'a oid),
+        /// The full name of a reference.
+        FullRefName(&'a BStr),
+    }
+}
+
 mod types;
-pub use types::Instruction;
+pub use types::{Instruction, Matcher};
