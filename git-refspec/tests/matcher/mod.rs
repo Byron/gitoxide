@@ -10,7 +10,7 @@ fn fetch_only() {
 }
 
 mod baseline {
-    use bstr::{BString, ByteSlice};
+    use bstr::{BString, ByteSlice, ByteVec};
     use git_hash::ObjectId;
     use std::collections::HashMap;
 
@@ -75,13 +75,27 @@ mod baseline {
                     drop(tokens.next());
                     let rhs = tokens.next().unwrap().trim();
                     mappings.push(Mapping {
-                        remote: lhs.into(),
-                        local: rhs.into(),
+                        remote: full_remote_ref(lhs.into()),
+                        local: full_tracking_ref(rhs.into()),
                     })
                 }
             }
         }
 
         Ok(map)
+    }
+
+    fn full_remote_ref(mut name: BString) -> BString {
+        if !name.contains(&b'/') {
+            name.insert_str(0, b"refs/heads/");
+        }
+        name
+    }
+
+    fn full_tracking_ref(mut name: BString) -> BString {
+        if name.starts_with_str(b"origin/") {
+            name.insert_str(0, b"refs/remotes/");
+        }
+        name
     }
 }
