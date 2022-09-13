@@ -40,7 +40,7 @@ pub mod baseline {
         pub local: Option<BString>,
     }
 
-    pub fn input() -> impl Iterator<Item = git_refspec::match_group::Item<'static>> + ExactSizeIterator {
+    pub fn input() -> impl Iterator<Item = git_refspec::match_group::Item<'static>> + ExactSizeIterator + Clone {
         INPUT.iter().map(Ref::to_item)
     }
 

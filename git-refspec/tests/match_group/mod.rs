@@ -21,9 +21,9 @@ fn fetch_only() {
     for (idx, (actual, expected)) in actual.iter().zip(expected).enumerate() {
         assert_eq!(actual.lhs, &expected.remote, "{}: remote mismatch", idx);
         if let Some(expected) = expected.local.as_ref() {
-            match actual.rhs {
+            match actual.rhs.as_ref() {
                 None => panic!("{}: Expected local ref to be {}, got none", idx, expected),
-                Some(actual) => assert_eq!(actual, expected, "{}: mismatched local ref", idx),
+                Some(actual) => assert_eq!(actual.as_ref(), expected, "{}: mismatched local ref", idx),
             }
         }
     }
