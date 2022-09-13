@@ -12,7 +12,7 @@ mod match_ {
 #[test]
 fn fetch_only() {
     baseline::parse_input().unwrap();
-    baseline::parse().unwrap();
+    dbg!(baseline::parse().unwrap());
     let _spec = Fetch::Only {
         src: "refs/heads/main".into(),
     };
@@ -114,9 +114,17 @@ mod baseline {
         Ok(map)
     }
 
+    fn looks_like_tag(name: &BString) -> bool {
+        name.starts_with(b"v0.")
+    }
+
     fn full_remote_ref(mut name: BString) -> BString {
         if !name.contains(&b'/') {
-            name.insert_str(0, b"refs/heads/");
+            if looks_like_tag(&name) {
+                name.insert_str(0, b"refs/tags/");
+            } else {
+                name.insert_str(0, b"refs/heads/");
+            }
         }
         name
     }
@@ -124,6 +132,8 @@ mod baseline {
     fn full_tracking_ref(mut name: BString) -> BString {
         if name.starts_with_str(b"origin/") {
             name.insert_str(0, b"refs/remotes/");
+        } else if looks_like_tag(&name) {
+            name.insert_str(0, b"refs/tags/");
         }
         name
     }
