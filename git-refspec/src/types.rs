@@ -24,7 +24,6 @@ pub enum Instruction<'a> {
 #[allow(dead_code)]
 pub struct Matcher<'a> {
     /// How to interpret our lefthand-side and right-hand side ref-specs
-    pub(crate) mode: crate::types::Mode,
     pub(crate) op: crate::parse::Operation,
     pub(crate) src: Option<matcher::Needle<'a>>,
     pub(crate) dst: Option<matcher::Needle<'a>>,

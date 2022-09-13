@@ -138,7 +138,6 @@ mod matcher {
         pub fn to_matcher(&self) -> Matcher<'_> {
             Matcher {
                 op: self.op,
-                mode: self.mode,
                 src: self.src.map(Into::into),
                 dst: self.dst.map(Into::into),
             }
