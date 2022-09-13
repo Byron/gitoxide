@@ -18,12 +18,7 @@ pub fn describe(
 ) -> Result<()> {
     repo.object_cache_size_if_unset(4 * 1024 * 1024);
     let commit = match rev_spec {
-        Some(spec) => repo
-            .rev_parse(spec)?
-            .single()
-            .context("Need single revision revspec")?
-            .object()?
-            .try_into_commit()?,
+        Some(spec) => repo.rev_parse_single(spec)?.object()?.try_into_commit()?,
         None => repo.head_commit()?,
     };
     use git::commit::describe::SelectRef::*;

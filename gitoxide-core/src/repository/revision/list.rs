@@ -18,8 +18,7 @@ pub fn list(
 
     let spec = git::path::os_str_into_bstr(&spec)?;
     let id = repo
-        .rev_parse(spec)?
-        .single()
+        .rev_parse_single(spec)
         .context("Only single revisions are currently supported")?;
     let commit_id = id
         .object()?
