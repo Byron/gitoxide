@@ -1,3 +1,5 @@
+use git_testtools::Result;
+
 mod impls;
-mod matches;
+mod matcher;
 mod parse;
