@@ -29,6 +29,8 @@ pub struct RefSpec {
 
 mod spec;
 
+mod write;
+
 ///
 pub mod matcher;
 
