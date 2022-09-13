@@ -30,20 +30,7 @@ pub struct RefSpec {
 mod spec;
 
 ///
-pub mod matcher {
-    use bstr::BStr;
-    use git_hash::oid;
-
-    /// An item to match
-    pub struct Item<'a> {
-        /// The full name of the references, like `refs/heads/main`
-        pub full_ref_name: &'a BStr,
-        /// The peeled id it points to that we should match against.
-        pub target: &'a oid,
-        /// The tag object's id if this is a tag
-        pub tag: Option<&'a oid>,
-    }
-}
+pub mod matcher;
 
 mod types;
-pub use types::{Instruction, Matcher};
+pub use types::{Instruction, Match, Matcher};

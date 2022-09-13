@@ -5,7 +5,7 @@ git init;
 
 function baseline() {
   {
-    git fetch --dry-run -v origin "$@" 2>&1 | tail +2
+    git fetch --refmap= --dry-run -v origin "$@" 2>&1 | tail +2
     echo specs: "$@"
   } >> baseline.git
 }

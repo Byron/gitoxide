@@ -1,5 +1,14 @@
 use git_refspec::instruction::Fetch;
 
+mod match_ {
+    use git_refspec::Match;
+
+    #[test]
+    fn default_is_not_matched() {
+        assert!(!Match::default().matched())
+    }
+}
+
 #[test]
 fn fetch_only() {
     baseline::parse_input().unwrap();
@@ -25,7 +34,8 @@ mod baseline {
     #[derive(Debug)]
     pub struct Mapping {
         pub remote: BString,
-        pub local: BString,
+        /// `None` if there is no destination/tracking branch
+        pub local: Option<BString>,
     }
 
     pub fn parse_input() -> crate::Result<Vec<Ref>> {
@@ -59,24 +69,25 @@ mod baseline {
         let mut map = HashMap::new();
         let mut mappings = Vec::new();
         for line in buf.lines() {
-            if line.ends_with(b"FETCH_HEAD") {
-                continue;
-            }
             match line.strip_prefix(b"specs: ") {
                 Some(specs) => {
                     let key: Vec<_> = specs.split(|b| *b == b' ').map(BString::from).collect();
                     map.insert(key, std::mem::take(&mut mappings));
                 }
                 None => {
-                    let past_note = line.splitn(2, |b| *b == b']').nth(1).unwrap();
+                    let past_note = line
+                        .splitn(2, |b| *b == b']')
+                        .nth(1)
+                        .or_else(|| line.strip_prefix(b" * branch "))
+                        .unwrap();
                     let mut tokens = past_note.split(|b| *b == b' ').filter(|t| !t.is_empty());
 
                     let lhs = tokens.next().unwrap().trim();
-                    drop(tokens.next());
+                    tokens.next();
                     let rhs = tokens.next().unwrap().trim();
                     mappings.push(Mapping {
                         remote: full_remote_ref(lhs.into()),
-                        local: full_tracking_ref(rhs.into()),
+                        local: (rhs != b"FETCH_HEAD").then(|| full_tracking_ref(rhs.into())),
                     })
                 }
             }

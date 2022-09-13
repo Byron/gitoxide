@@ -20,5 +20,18 @@ pub enum Instruction<'a> {
     Fetch(instruction::Fetch<'a>),
 }
 
-/// A type keeping enough information about a ref-spec to be able to efficiently match it against matcher items.
-pub struct Matcher {}
+/// A type keeping enough information about a ref-spec to be able to efficiently match it against multiple matcher items.
+#[allow(dead_code)]
+pub struct Matcher<'a> {
+    /// How to interpret our lefthand-side and right-hand side ref-specs
+    op: crate::parse::Operation,
+    lhs: &'a bstr::BStr,
+}
+
+/// The result of a match operation.
+#[derive(Default)]
+#[allow(dead_code)]
+pub struct Match<'a> {
+    pub(crate) lhs: Option<&'a bstr::BStr>,
+    pub(crate) rhs: Option<&'a bstr::BStr>,
+}
