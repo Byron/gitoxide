@@ -43,6 +43,9 @@ mod baseline {
         let refs_buf = std::fs::read(dir.join("clone").join("remote-refs.list"))?;
         let mut out = Vec::new();
         for line in refs_buf.lines() {
+            if line.starts_with(b"From ") {
+                continue;
+            }
             let mut tokens = line.splitn(2, |b| *b == b'\t');
             let target = ObjectId::from_hex(tokens.next().expect("hex-sha"))?;
             let name = tokens.next().expect("name");
@@ -69,6 +72,9 @@ mod baseline {
         let mut map = HashMap::new();
         let mut mappings = Vec::new();
         for line in buf.lines() {
+            if line.starts_with(b"From ") {
+                continue;
+            }
             match line.strip_prefix(b"specs: ") {
                 Some(specs) => {
                     let key: Vec<_> = specs.split(|b| *b == b' ').map(BString::from).collect();

@@ -5,7 +5,7 @@ git init;
 
 function baseline() {
   {
-    git fetch --refmap= --dry-run -v origin "$@" 2>&1 | tail +2
+    git fetch --refmap= --dry-run -v origin "$@" 2>&1
     echo specs: "$@"
   } >> baseline.git
 }
@@ -29,7 +29,7 @@ mkdir base
 
 git clone --shared ./base clone
 (cd clone
-  git ls-remote 2>&1 | tail +2 > remote-refs.list
+  git ls-remote 2>&1 > remote-refs.list
   baseline "refs/heads/main"
   baseline "heads/main"
   baseline "main"
