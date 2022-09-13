@@ -29,11 +29,3 @@ pub struct Matcher<'a> {
     pub(crate) src: Option<matcher::Needle<'a>>,
     pub(crate) dst: Option<matcher::Needle<'a>>,
 }
-
-/// The result of a match operation.
-#[derive(Default)]
-#[allow(dead_code)]
-pub struct Match<'a> {
-    pub(crate) lhs: Option<&'a bstr::BStr>,
-    pub(crate) rhs: Option<&'a bstr::BStr>,
-}

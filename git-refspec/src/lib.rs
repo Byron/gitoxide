@@ -33,4 +33,4 @@ mod spec;
 pub mod matcher;
 
 mod types;
-pub use types::{Instruction, Match, Matcher};
+pub use types::{Instruction, Matcher};
