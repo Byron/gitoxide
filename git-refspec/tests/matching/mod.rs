@@ -45,10 +45,8 @@ pub mod baseline {
     }
 
     pub fn single(spec: RefSpecRef<'_>) -> &Result<Vec<Mapping>, BString> {
-        // let key = spec.to_string().into();
-        let key = "TODO: tostring".into();
         BASELINE
-            .get(&vec![key])
+            .get(&vec![spec.to_bstring()])
             .unwrap_or_else(|| panic!("BUG: Need {:?} added to the baseline", spec))
     }
 

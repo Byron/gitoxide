@@ -1,4 +1,5 @@
 use crate::matching;
+use git_refspec::matcher::Match;
 use git_refspec::parse::Operation;
 
 mod match_ {
@@ -16,6 +17,8 @@ fn fetch_only() {
     let spec = git_refspec::parse("refs/heads/main".into(), Operation::Fetch).unwrap();
     let matcher = spec.to_matcher();
     let mut out = Vec::new();
-    matcher.match_remotes(matching::baseline::input(), &mut out);
+    out.extend(std::iter::repeat(Match::default()).take(matching::baseline::input().len()));
+
+    matcher.match_remotes(matching::baseline::input().zip(out.iter_mut()));
     let _expected = matching::baseline::single(spec);
 }

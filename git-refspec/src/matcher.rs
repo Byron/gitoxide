@@ -1,6 +1,7 @@
 use crate::Matcher;
 use bstr::BStr;
 use git_hash::{oid, ObjectId};
+use std::borrow::BorrowMut;
 
 #[allow(dead_code)]
 pub(crate) enum Needle<'a> {
@@ -21,14 +22,10 @@ impl<'a> From<&'a BStr> for Needle<'a> {
 }
 
 impl<'a> Matcher<'a> {
-    /// For each name in `names`, set the corresponding byte in `matches` to `true` if the corresponding `name` matches the remote side
-    /// instruction (i.e. the left side of a [`fetch`][crate::parse::Operation::Fetch] refspec).
-    /// Note that `name` is expected to be the full name of a reference.
-    pub fn match_remotes<'b>(
-        &self,
-        _names: impl Iterator<Item = Item<'b>> + ExactSizeIterator,
-        _matches: &mut Vec<Match<'a>>,
-    ) {
+    /// For each item in `names`, fill the accompanying `Match` structure to represent whether or not a match was found based
+    /// on all included information to match against.
+    /// Note that each _name_ in `names` is expected to be the full name of a reference.
+    pub fn match_remotes<'b>(&self, _names: impl Iterator<Item = (Item<'b>, impl BorrowMut<Match<'a>>)>) {
         todo!()
     }
 }
@@ -64,7 +61,7 @@ impl Match<'_> {
 }
 
 /// The result of a match operation.
-#[derive(Default)]
+#[derive(Default, Clone)]
 #[allow(dead_code)]
 pub struct Match<'a> {
     pub(crate) lhs: Option<&'a bstr::BStr>,
