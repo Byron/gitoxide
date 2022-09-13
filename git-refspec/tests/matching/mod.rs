@@ -20,8 +20,8 @@ pub mod baseline {
     }
 
     impl Ref {
-        pub fn to_item(&self) -> git_refspec::matcher::Item<'_> {
-            git_refspec::matcher::Item {
+        pub fn to_item(&self) -> git_refspec::match_group::Item<'_> {
+            git_refspec::match_group::Item {
                 full_ref_name: self.name.borrow(),
                 target: &self.target,
                 tag: self.tag.as_deref(),
@@ -40,7 +40,7 @@ pub mod baseline {
         pub local: Option<BString>,
     }
 
-    pub fn input() -> impl Iterator<Item = git_refspec::matcher::Item<'static>> + ExactSizeIterator {
+    pub fn input() -> impl Iterator<Item = git_refspec::match_group::Item<'static>> + ExactSizeIterator {
         INPUT.iter().map(Ref::to_item)
     }
 

@@ -1,4 +1,4 @@
-use crate::{instruction, matcher};
+use crate::{instruction, RefSpecRef};
 
 /// The way to interpret a refspec.
 #[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone, Hash, Debug)]
@@ -20,11 +20,7 @@ pub enum Instruction<'a> {
     Fetch(instruction::Fetch<'a>),
 }
 
-/// A type keeping enough information about a ref-spec to be able to efficiently match it against multiple matcher items.
-#[allow(dead_code)]
-pub struct Matcher<'a> {
-    /// How to interpret our lefthand-side and right-hand side ref-specs
-    pub(crate) op: crate::parse::Operation,
-    pub(crate) src: Option<matcher::Needle<'a>>,
-    pub(crate) dst: Option<matcher::Needle<'a>>,
+/// A match group is able to match a list of ref specs in order while handling negation, conflicts and one to many mappings.
+pub struct MatchGroup<'a> {
+    pub(crate) specs: Vec<RefSpecRef<'a>>,
 }

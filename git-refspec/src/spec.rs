@@ -129,22 +129,6 @@ impl RefSpecRef<'_> {
     }
 }
 
-///
-mod matcher {
-    use crate::{Matcher, RefSpecRef};
-
-    impl<'a> RefSpecRef<'a> {
-        /// Create a matcher to perform matching operations against this refspec.
-        pub fn to_matcher(&self) -> Matcher<'_> {
-            Matcher {
-                op: self.op,
-                src: self.src.map(Into::into),
-                dst: self.dst.map(Into::into),
-            }
-        }
-    }
-}
-
 /// Conversion
 impl RefSpecRef<'_> {
     /// Convert this ref into a standalone, owned copy.

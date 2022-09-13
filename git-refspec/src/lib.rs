@@ -32,7 +32,7 @@ mod spec;
 mod write;
 
 ///
-pub mod matcher;
+pub mod match_group;
 
 mod types;
-pub use types::{Instruction, Matcher};
+pub use types::{Instruction, MatchGroup};
