@@ -64,19 +64,3 @@ pub enum Fetch<'a> {
         allow_non_fast_forward: bool,
     },
 }
-
-///
-mod matcher {
-    use crate::instruction::Fetch;
-    use crate::Matcher;
-
-    impl<'a> Fetch<'a> {
-        /// For each name in `names`, set the corresponding byte in `matches` to `true` if the corresponding `name` matches the remote side
-        /// instruction (i.e. the left side of a [`fetch`][crate::parse::Operation::Fetch] refspec).
-        /// Note that `name` is expected to be the full name of a reference.
-        // TODO: move docs to Matcher, adjust these.
-        pub fn to_matcher(&self) -> Matcher<'_> {
-            todo!()
-        }
-    }
-}

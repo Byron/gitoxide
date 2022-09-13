@@ -129,6 +129,26 @@ impl RefSpecRef<'_> {
     }
 }
 
+///
+mod matcher {
+    use crate::{Matcher, RefSpecRef};
+
+    impl<'a> RefSpecRef<'a> {
+        /// For each name in `names`, set the corresponding byte in `matches` to `true` if the corresponding `name` matches the remote side
+        /// instruction (i.e. the left side of a [`fetch`][crate::parse::Operation::Fetch] refspec).
+        /// Note that `name` is expected to be the full name of a reference.
+        // TODO: move docs to Matcher, adjust these.
+        pub fn to_matcher(&self) -> Matcher<'_> {
+            Matcher {
+                op: self.op,
+                mode: self.mode,
+                src: self.src.map(Into::into),
+                dst: self.dst.map(Into::into),
+            }
+        }
+    }
+}
+
 /// Conversion
 impl RefSpecRef<'_> {
     /// Convert this ref into a standalone, owned copy.

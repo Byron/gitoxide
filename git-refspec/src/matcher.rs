@@ -1,6 +1,20 @@
 use crate::Match;
 use bstr::BStr;
-use git_hash::oid;
+use git_hash::{oid, ObjectId};
+
+#[allow(dead_code)]
+pub(crate) enum Needle<'a> {
+    FullName(&'a BStr),
+    PartialName(&'a BStr),
+    Glob { glob: &'a BStr, asterisk_pos: usize },
+    Object(ObjectId),
+}
+
+impl<'a> From<&'a BStr> for Needle<'a> {
+    fn from(_v: &'a BStr) -> Self {
+        todo!()
+    }
+}
 
 /// An item to match
 pub struct Item<'a> {

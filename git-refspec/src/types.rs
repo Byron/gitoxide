@@ -1,4 +1,4 @@
-use crate::instruction;
+use crate::{instruction, matcher};
 
 /// The way to interpret a refspec.
 #[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone, Hash, Debug)]
@@ -24,8 +24,10 @@ pub enum Instruction<'a> {
 #[allow(dead_code)]
 pub struct Matcher<'a> {
     /// How to interpret our lefthand-side and right-hand side ref-specs
-    op: crate::parse::Operation,
-    lhs: &'a bstr::BStr,
+    pub(crate) mode: crate::types::Mode,
+    pub(crate) op: crate::parse::Operation,
+    pub(crate) src: Option<matcher::Needle<'a>>,
+    pub(crate) dst: Option<matcher::Needle<'a>>,
 }
 
 /// The result of a match operation.
