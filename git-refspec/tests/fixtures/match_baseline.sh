@@ -5,7 +5,7 @@ git init;
 
 function baseline() {
   {
-    git fetch --refmap= --dry-run -v origin "$@" 2>&1
+    git fetch --refmap= --dry-run -v origin "$@" 2>&1 || :
     echo specs: "$@"
   } >> baseline.git
 }
@@ -25,6 +25,10 @@ mkdir base
   git checkout -b f2 main
   git commit -m "f2" --allow-empty
   git tag v0.0-f2
+
+  git checkout -b f3 main
+  git commit -m "f3" --allow-empty
+  git tag v0.0-f3
 )
 
 git clone --shared ./base clone
@@ -33,12 +37,17 @@ git clone --shared ./base clone
   baseline "refs/heads/main"
   baseline "heads/main"
   baseline "main"
+  baseline "78b1c1be9421b33a49a7a8176d93eeeafa112da1"
+  baseline "9d2fab1a0ba3585d0bc50922bfdd04ebb59361df"
   baseline "+refs/heads/*:refs/remotes/origin/*"
   baseline "refs/heads/*:refs/remotes/origin/*" "^main"
   baseline "^main" "refs/heads/*:refs/remotes/origin/*"
   baseline "^refs/heads/main" "refs/heads/*:refs/remotes/origin/*"
   baseline "refs/heads/*:refs/remotes/origin/*" "^refs/heads/main"
-  baseline "78b1c1be9421b33a49a7a8176d93eeeafa112da1"
-  baseline "9d2fab1a0ba3585d0bc50922bfdd04ebb59361df"
+  baseline "refs/heads/*:refs/remotes/origin/*" "refs/heads/main:refs/remotes/new-origin/main"
+  baseline "refs/heads/*:refs/remotes/origin/*" "refs/heads/main:refs/remotes/origin/main"
+  baseline "refs/heads/f1:refs/remotes/origin/conflict" "refs/heads/f2:refs/remotes/origin/conflict"
+  baseline "refs/heads/f1:refs/remotes/origin/conflict" "refs/heads/f2:refs/remotes/origin/conflict" "refs/heads/f3:refs/remotes/origin/conflict"
+  baseline "refs/heads/f1:refs/remotes/origin/same" "refs/tags/v0.0-f1:refs/remotes/origin/same" # same object, not technically a problem but git flags it anyway
 )
 

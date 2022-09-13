@@ -65,12 +65,13 @@ mod baseline {
         Ok(out)
     }
 
-    pub fn parse() -> crate::Result<HashMap<Vec<BString>, Vec<Mapping>>> {
+    pub fn parse() -> crate::Result<HashMap<Vec<BString>, Result<Vec<Mapping>, BString>>> {
         let dir = git_testtools::scripted_fixture_repo_read_only("match_baseline.sh")?;
         let buf = std::fs::read(dir.join("clone").join("baseline.git"))?;
 
         let mut map = HashMap::new();
         let mut mappings = Vec::new();
+        let mut fatal = None;
         for line in buf.lines() {
             if line.starts_with(b"From ") {
                 continue;
@@ -78,24 +79,33 @@ mod baseline {
             match line.strip_prefix(b"specs: ") {
                 Some(specs) => {
                     let key: Vec<_> = specs.split(|b| *b == b' ').map(BString::from).collect();
-                    map.insert(key, std::mem::take(&mut mappings));
+                    let value = match fatal.take() {
+                        Some(message) => Err(message),
+                        None => Ok(std::mem::take(&mut mappings)),
+                    };
+                    map.insert(key, value);
                 }
-                None => {
-                    let past_note = line
-                        .splitn(2, |b| *b == b']')
-                        .nth(1)
-                        .or_else(|| line.strip_prefix(b" * branch "))
-                        .unwrap();
-                    let mut tokens = past_note.split(|b| *b == b' ').filter(|t| !t.is_empty());
+                None => match line.strip_prefix(b"fatal: ") {
+                    Some(message) => {
+                        fatal = Some(message.into());
+                    }
+                    None => {
+                        let past_note = line
+                            .splitn(2, |b| *b == b']')
+                            .nth(1)
+                            .or_else(|| line.strip_prefix(b" * branch "))
+                            .unwrap();
+                        let mut tokens = past_note.split(|b| *b == b' ').filter(|t| !t.is_empty());
 
-                    let lhs = tokens.next().unwrap().trim();
-                    tokens.next();
-                    let rhs = tokens.next().unwrap().trim();
-                    mappings.push(Mapping {
-                        remote: full_remote_ref(lhs.into()),
-                        local: (rhs != b"FETCH_HEAD").then(|| full_tracking_ref(rhs.into())),
-                    })
-                }
+                        let lhs = tokens.next().unwrap().trim();
+                        tokens.next();
+                        let rhs = tokens.next().unwrap().trim();
+                        mappings.push(Mapping {
+                            remote: full_remote_ref(lhs.into()),
+                            local: (rhs != b"FETCH_HEAD").then(|| full_tracking_ref(rhs.into())),
+                        })
+                    }
+                },
             }
         }
 
