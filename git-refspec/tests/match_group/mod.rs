@@ -3,7 +3,6 @@ use git_refspec::parse::Operation;
 use git_refspec::MatchGroup;
 
 #[test]
-#[ignore]
 fn fetch_only() {
     let spec = git_refspec::parse("refs/heads/main".into(), Operation::Fetch).unwrap();
     let match_group = MatchGroup::from_fetch_specs(Some(spec));

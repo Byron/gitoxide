@@ -91,8 +91,11 @@ impl<'a> Matcher<'a> {
     ///
     /// This may involve resolving a glob with an allocation, as the destination is built using the matching portion of a glob.
     #[allow(dead_code)]
-    pub fn matches_lhs(&self, _item: Item<'_>) -> (bool, Option<Cow<'a, BStr>>) {
-        todo!()
+    pub fn matches_lhs(&self, item: Item<'_>) -> (bool, Option<Cow<'a, BStr>>) {
+        match (self.lhs, self.rhs) {
+            (Some(lhs), None) => (lhs.matches(item), None),
+            _ => todo!(),
+        }
     }
 }
 
@@ -103,6 +106,21 @@ pub(crate) enum Needle<'a> {
     PartialName(&'a BStr),
     Glob { glob: &'a BStr, asterisk_pos: usize },
     Object(ObjectId),
+}
+
+impl Needle<'_> {
+    #[inline]
+    fn matches(&self, item: Item<'_>) -> bool {
+        match self {
+            Needle::FullName(name) => *name == item.full_ref_name,
+            Needle::PartialName(_name) => todo!("partial name"),
+            Needle::Glob {
+                glob: _,
+                asterisk_pos: _,
+            } => todo!("glob"),
+            Needle::Object(_) => todo!("object check"),
+        }
+    }
 }
 
 impl<'a> From<&'a BStr> for Needle<'a> {
