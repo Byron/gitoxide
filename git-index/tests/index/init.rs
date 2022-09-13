@@ -9,6 +9,7 @@ fn tree_to_state() -> crate::Result {
     let fixtures = [
         "make_index/v2.sh",
         "make_index/v2_more_files.sh",
+        "make_index/v2_all_file_kinds.sh",
         "make_index/v4_more_files_IEOT.sh",
     ];
 
@@ -33,28 +34,14 @@ fn compare_states(actual: &State, expected: &State, fixture: &str) {
     assert_eq!(
         actual.entries().len(),
         expected.entries().len(),
-        "entry count mismatch in {}",
+        "entry count mismatch in {:?}",
         fixture
     );
 
-    assert_eq!(
-        actual
-            .entries()
-            .iter()
-            .map(|e| (e.id, e.flags, e.mode))
-            .collect::<Vec<_>>(),
-        expected
-            .entries()
-            .iter()
-            .map(|e| (e.id, e.flags, e.mode))
-            .collect::<Vec<_>>()
-    );
-
-    // TODO: check if path_backing needs to be sorted like entries are
-    // assert_eq!(
-    //     actual.path_backing(),
-    //     expected.path_backing(),
-    //     "path_backing mismatch in {}",
-    //     fixture
-    // );
+    actual.entries().iter().zip(expected.entries()).for_each(|(a, e)| {
+        assert_eq!(a.id, e.id, "entry id mismatch in {:?}", fixture);
+        assert_eq!(a.flags, e.flags, "entry flags mismatch in {:?}", fixture);
+        assert_eq!(a.mode, e.mode, "entry mode mismatch in {:?}", fixture);
+        assert_eq!(a.path(actual), e.path(expected), "entry path mismatch in {:?}", fixture);
+    })
 }

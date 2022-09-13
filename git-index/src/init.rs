@@ -67,9 +67,9 @@ impl EntryBuilder {
         let mode = match entry.mode {
             EntryMode::Tree => unreachable!("visit_non_tree() called us"),
             EntryMode::Blob => Mode::FILE,
-            EntryMode::BlobExecutable => todo!("executable"),
-            EntryMode::Link => todo!("symlink"),
-            EntryMode::Commit => todo!("submodule"),
+            EntryMode::BlobExecutable => Mode::FILE_EXECUTABLE,
+            EntryMode::Link => Mode::SYMLINK,
+            EntryMode::Commit => Mode::COMMIT,
         };
 
         let path_start = self.path_backing.len();
