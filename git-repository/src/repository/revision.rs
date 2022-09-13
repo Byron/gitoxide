@@ -14,13 +14,15 @@ impl crate::Repository {
         )
     }
 
-    /// Parse a revision specification and return the single included object represented by this instance,
-    /// or `None` if it is a range of any kind.
+    /// Parse a revision specification and return a Result containing the single included object
+    /// represented by this instance, or `Err` if it is a range of any kind.
     pub fn rev_parse_single<'repo, 'a>(
         &'repo self,
         spec: impl Into<&'a BStr>,
-    ) -> Result<Option<Id<'repo>>, revision::spec::parse::Error> {
-        Ok(self.rev_parse(spec)?.single())
+    ) -> Result<Id<'repo>, revision::spec::parse::Error> {
+        self.rev_parse(spec)?
+            .single()
+            .ok_or(revision::spec::parse::Error::SingleNotFound)
     }
 
     /// Create the baseline for a revision walk by initializing it with the `tips` to start iterating on.

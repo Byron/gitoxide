@@ -173,4 +173,6 @@ pub enum Error {
     },
     #[error(transparent)]
     Traverse(#[from] git_traverse::commit::ancestors::Error),
+    #[error("Spec does not contain a single object id")]
+    SingleNotFound,
 }
