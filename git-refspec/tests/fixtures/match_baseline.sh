@@ -5,7 +5,7 @@ git init;
 
 function baseline() {
   {
-    git fetch -v origin "$@" 2>&1 | tail +2
+    git fetch --dry-run -v origin "$@" 2>&1 | tail +2
     echo specs: "$@"
   } >> baseline.git
 }
@@ -33,6 +33,11 @@ git clone --shared ./base clone
   baseline "refs/heads/main"
   baseline "heads/main"
   baseline "main"
+  baseline "+refs/heads/*:refs/remotes/origin/*"
+  baseline "refs/heads/*:refs/remotes/origin/*" "^main"
+  baseline "^main" "refs/heads/*:refs/remotes/origin/*"
+  baseline "^refs/heads/main" "refs/heads/*:refs/remotes/origin/*"
+  baseline "refs/heads/*:refs/remotes/origin/*" "^refs/heads/main"
   baseline "78b1c1be9421b33a49a7a8176d93eeeafa112da1"
   baseline "9d2fab1a0ba3585d0bc50922bfdd04ebb59361df"
 )

@@ -12,6 +12,7 @@ fn fetch_only() {
 mod baseline {
     use bstr::{BString, ByteSlice};
     use git_hash::ObjectId;
+    use std::collections::HashMap;
 
     #[derive(Debug)]
     pub struct Ref {
@@ -19,6 +20,12 @@ mod baseline {
         pub target: ObjectId,
         /// Set if this is a tag, pointing to the tag object itself
         pub tag: Option<ObjectId>,
+    }
+
+    #[derive(Debug)]
+    pub struct Mapping {
+        pub remote: BString,
+        pub local: BString,
     }
 
     pub fn parse_input() -> crate::Result<Vec<Ref>> {
@@ -44,8 +51,37 @@ mod baseline {
         }
         Ok(out)
     }
-    pub fn parse() -> crate::Result {
-        let _ = git_testtools::scripted_fixture_repo_read_only("match_baseline.sh")?;
-        Ok(())
+
+    pub fn parse() -> crate::Result<HashMap<Vec<BString>, Vec<Mapping>>> {
+        let dir = git_testtools::scripted_fixture_repo_read_only("match_baseline.sh")?;
+        let buf = std::fs::read(dir.join("clone").join("baseline.git"))?;
+
+        let mut map = HashMap::new();
+        let mut mappings = Vec::new();
+        for line in buf.lines() {
+            if line.ends_with(b"FETCH_HEAD") {
+                continue;
+            }
+            match line.strip_prefix(b"specs: ") {
+                Some(specs) => {
+                    let key: Vec<_> = specs.split(|b| *b == b' ').map(BString::from).collect();
+                    map.insert(key, std::mem::take(&mut mappings));
+                }
+                None => {
+                    let past_note = line.splitn(2, |b| *b == b']').nth(1).unwrap();
+                    let mut tokens = past_note.split(|b| *b == b' ').filter(|t| !t.is_empty());
+
+                    let lhs = tokens.next().unwrap().trim();
+                    drop(tokens.next());
+                    let rhs = tokens.next().unwrap().trim();
+                    mappings.push(Mapping {
+                        remote: lhs.into(),
+                        local: rhs.into(),
+                    })
+                }
+            }
+        }
+
+        Ok(map)
     }
 }
