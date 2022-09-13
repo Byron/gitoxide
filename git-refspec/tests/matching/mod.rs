@@ -6,7 +6,8 @@ pub mod baseline {
     use crate::matching::BASELINE;
     use bstr::{BString, ByteSlice, ByteVec};
     use git_hash::ObjectId;
-    use git_refspec::RefSpecRef;
+    use git_refspec::parse::Operation;
+    use git_refspec::MatchGroup;
     use git_testtools::once_cell::sync::Lazy;
     use std::borrow::Borrow;
     use std::collections::HashMap;
@@ -44,11 +45,38 @@ pub mod baseline {
         INPUT.iter().map(Ref::to_item)
     }
 
-    pub fn single(spec: RefSpecRef<'_>) -> Result<&Vec<Mapping>, &BString> {
-        BASELINE
-            .get(&vec![spec.to_bstring()])
-            .unwrap_or_else(|| panic!("BUG: Need {:?} added to the baseline", spec))
+    pub fn agrees_with_fetch_specs<'a>(specs: impl IntoIterator<Item = &'a str> + Clone) {
+        let match_group = MatchGroup::from_fetch_specs(
+            specs
+                .clone()
+                .into_iter()
+                .map(|spec| git_refspec::parse(spec.into(), Operation::Fetch).unwrap()),
+        );
+
+        let key: Vec<_> = specs.into_iter().map(BString::from).collect();
+        let expected = BASELINE
+            .get(&key)
+            .unwrap_or_else(|| panic!("BUG: Need {:?} added to the baseline", key))
             .as_ref()
+            .expect("no error");
+
+        let actual = match_group.match_remotes(input());
+        assert_eq!(
+            actual.len(),
+            expected.len(),
+            "got a different amount of mappings: {:?} != {:?}",
+            actual,
+            expected
+        );
+        for (idx, (actual, expected)) in actual.iter().zip(expected).enumerate() {
+            assert_eq!(actual.lhs, &expected.remote, "{}: remote mismatch", idx);
+            if let Some(expected) = expected.local.as_ref() {
+                match actual.rhs.as_ref() {
+                    None => panic!("{}: Expected local ref to be {}, got none", idx, expected),
+                    Some(actual) => assert_eq!(actual.as_ref(), expected, "{}: mismatched local ref", idx),
+                }
+            }
+        }
     }
 
     fn parse_input() -> crate::Result<Vec<Ref>> {
