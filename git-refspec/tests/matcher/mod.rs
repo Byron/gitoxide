@@ -38,6 +38,8 @@ mod baseline {
         pub local: Option<BString>,
     }
 
+    type Baseline = HashMap<Vec<BString>, Result<Vec<Mapping>, BString>>;
+
     pub fn parse_input() -> crate::Result<Vec<Ref>> {
         let dir = git_testtools::scripted_fixture_repo_read_only("match_baseline.sh")?;
         let refs_buf = std::fs::read(dir.join("clone").join("remote-refs.list"))?;
@@ -65,7 +67,7 @@ mod baseline {
         Ok(out)
     }
 
-    pub fn parse() -> crate::Result<HashMap<Vec<BString>, Result<Vec<Mapping>, BString>>> {
+    pub fn parse() -> crate::Result<Baseline> {
         let dir = git_testtools::scripted_fixture_repo_read_only("match_baseline.sh")?;
         let buf = std::fs::read(dir.join("clone").join("baseline.git"))?;
 
