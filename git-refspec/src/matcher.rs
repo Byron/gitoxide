@@ -61,7 +61,7 @@ impl Match<'_> {
 }
 
 /// The result of a match operation.
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 #[allow(dead_code)]
 pub struct Match<'a> {
     pub(crate) lhs: Option<&'a bstr::BStr>,

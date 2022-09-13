@@ -44,10 +44,11 @@ pub mod baseline {
         INPUT.iter().map(Ref::to_item)
     }
 
-    pub fn single(spec: RefSpecRef<'_>) -> &Result<Vec<Mapping>, BString> {
+    pub fn single(spec: RefSpecRef<'_>) -> Result<&Vec<Mapping>, &BString> {
         BASELINE
             .get(&vec![spec.to_bstring()])
             .unwrap_or_else(|| panic!("BUG: Need {:?} added to the baseline", spec))
+            .as_ref()
     }
 
     fn parse_input() -> crate::Result<Vec<Ref>> {
