@@ -35,11 +35,13 @@ pub mod matcher {
     use git_hash::oid;
 
     /// An item to match
-    pub enum Item<'a> {
-        /// An object id
-        Oid(&'a oid),
-        /// The full name of a reference.
-        FullRefName(&'a BStr),
+    pub struct Item<'a> {
+        /// The full name of the references, like `refs/heads/main`
+        pub full_ref_name: &'a BStr,
+        /// The peeled id it points to that we should match against.
+        pub target: &'a oid,
+        /// The tag object's id if this is a tag
+        pub tag: Option<&'a oid>,
     }
 }
 
