@@ -37,6 +37,8 @@ git clone --shared ./base clone
   baseline "refs/heads/main"
   baseline "heads/main"
   baseline "main"
+  baseline "v0.0-f1"
+  baseline "tags/v0.0-f2"
   baseline "78b1c1be9421b33a49a7a8176d93eeeafa112da1"
   baseline "9d2fab1a0ba3585d0bc50922bfdd04ebb59361df"
   baseline "+refs/heads/*:refs/remotes/origin/*"

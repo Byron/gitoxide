@@ -135,7 +135,8 @@ pub mod baseline {
                             .splitn(2, |b| *b == b']')
                             .nth(1)
                             .or_else(|| line.strip_prefix(b" * branch "))
-                            .unwrap();
+                            .or_else(|| line.strip_prefix(b" * tag "))
+                            .unwrap_or_else(|| panic!("line unhandled: {:?}", line.as_bstr()));
                         let mut tokens = past_note.split(|b| *b == b' ').filter(|t| !t.is_empty());
 
                         let lhs = tokens.next().unwrap().trim();

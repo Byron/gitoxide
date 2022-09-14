@@ -1,7 +1,7 @@
 use crate::parse::Operation;
 use crate::types::{MatchGroup, Mode};
 use crate::RefSpecRef;
-use bstr::BStr;
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_hash::oid;
 use git_hash::ObjectId;
 use std::borrow::Cow;
@@ -104,7 +104,7 @@ impl<'a> Matcher<'a> {
 pub(crate) enum Needle<'a> {
     FullName(&'a BStr),
     PartialName(&'a BStr),
-    Glob { glob: &'a BStr, asterisk_pos: usize },
+    Glob { name: &'a BStr, asterisk_pos: usize },
     Object(ObjectId),
 }
 
@@ -113,9 +113,29 @@ impl Needle<'_> {
     fn matches(&self, item: Item<'_>) -> bool {
         match self {
             Needle::FullName(name) => *name == item.full_ref_name,
-            Needle::PartialName(_name) => todo!("partial name"),
+            Needle::PartialName(name) => {
+                let mut buf = BString::from(Vec::with_capacity(128));
+                for (base, append_head) in [
+                    ("refs/", false),
+                    ("refs/tags/", false),
+                    ("refs/heads/", false),
+                    ("refs/remotes/", false),
+                    ("refs/remotes/", true),
+                ] {
+                    buf.clear();
+                    buf.push_str(base);
+                    buf.push_str(name);
+                    if append_head {
+                        buf.push_str("/HEAD");
+                    }
+                    if buf == item.full_ref_name {
+                        return true;
+                    }
+                }
+                false
+            }
             Needle::Glob {
-                glob: _,
+                name: _,
                 asterisk_pos: _,
             } => todo!("glob"),
             Needle::Object(_) => todo!("object check"),
@@ -127,8 +147,15 @@ impl<'a> From<&'a BStr> for Needle<'a> {
     fn from(v: &'a BStr) -> Self {
         if v.starts_with(b"refs/") {
             Needle::FullName(v)
+        } else if let Some(pos) = v.find_byte(b'*') {
+            Needle::Glob {
+                name: v,
+                asterisk_pos: pos,
+            }
+        } else if let Ok(id) = git_hash::ObjectId::from_hex(v) {
+            Needle::Object(id)
         } else {
-            todo!()
+            Needle::PartialName(v)
         }
     }
 }
