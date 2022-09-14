@@ -12,6 +12,10 @@ mod error {
         ListRefs(#[from] git_protocol::fetch::refs::Error),
         #[error(transparent)]
         Transport(#[from] git_protocol::transport::client::Error),
+        #[error(transparent)]
+        ConfigureCredentials(#[from] crate::config::credential_helpers::Error),
+        #[error("No fetch url could be obtained to configure credentials")]
+        MissingFetchUrlForConfiguringCredentials,
     }
 }
 pub use error::Error;
@@ -34,19 +38,20 @@ where
     #[git_protocol::maybe_async::maybe_async]
     async fn fetch_refs(&mut self) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
-        let mut outcome = git_protocol::fetch::handshake(
-            &mut self.transport,
-            match self.credentials.as_mut() {
-                Some(f) => f,
-                None => {
-                    credentials_storage = Self::configured_credentials();
-                    &mut credentials_storage
-                }
-            },
-            Vec::new(),
-            &mut self.progress,
-        )
-        .await?;
+        let authenticate = match self.credentials.as_mut() {
+            Some(f) => f,
+            None => {
+                let url = self
+                    .remote
+                    .url(Direction::Fetch)
+                    .ok_or(Error::MissingFetchUrlForConfiguringCredentials)?
+                    .to_owned();
+                credentials_storage = self.configured_credentials(url)?;
+                &mut credentials_storage
+            }
+        };
+        let mut outcome =
+            git_protocol::fetch::handshake(&mut self.transport, authenticate, Vec::new(), &mut self.progress).await?;
         let refs = match outcome.refs.take() {
             Some(refs) => refs,
             None => {
