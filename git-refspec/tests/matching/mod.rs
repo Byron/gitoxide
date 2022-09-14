@@ -4,7 +4,7 @@ static BASELINE: Lazy<baseline::Baseline> = Lazy::new(|| baseline::parse().unwra
 
 pub mod baseline {
     use crate::matching::BASELINE;
-    use bstr::{BStr, BString, ByteSlice, ByteVec};
+    use bstr::{BString, ByteSlice, ByteVec};
     use git_hash::ObjectId;
     use git_refspec::parse::Operation;
     use git_refspec::MatchGroup;
@@ -52,7 +52,13 @@ pub mod baseline {
         check_fetch_remote(
             specs,
             Mode::ObjectHashSource {
-                expected: expected.into_iter().map(|s| s.into()).collect(),
+                expected: expected
+                    .into_iter()
+                    .map(|s| Mapping {
+                        remote: s.into(),
+                        local: None,
+                    })
+                    .collect(),
             },
         )
     }
@@ -61,9 +67,9 @@ pub mod baseline {
         check_fetch_remote(specs, Mode::Normal)
     }
 
-    enum Mode<'a> {
+    enum Mode {
         Normal,
-        ObjectHashSource { expected: Vec<&'a BStr> },
+        ObjectHashSource { expected: Vec<Mapping> },
     }
 
     fn check_fetch_remote<'a>(specs: impl IntoIterator<Item = &'a str> + Clone, mode: Mode) {
@@ -82,38 +88,26 @@ pub mod baseline {
             .expect("no error");
 
         let actual = match_group.match_remotes(input());
+        let expected = match &mode {
+            Mode::Normal => expected,
+            Mode::ObjectHashSource { expected } => expected,
+        };
         assert_eq!(
             actual.len(),
-            match &mode {
-                Mode::Normal => expected.len(),
-                Mode::ObjectHashSource { expected } => expected.len(),
-            },
+            expected.len(),
             "got a different amount of mappings: {:?} != {:?}",
             actual,
             expected
         );
 
         for (idx, (actual, expected)) in actual.iter().zip(expected).enumerate() {
-            match &mode {
-                Mode::ObjectHashSource { .. } => {}
-                Mode::Normal => {
-                    assert_eq!(actual.lhs, &expected.remote, "{}: remote mismatch", idx);
-                }
-            }
+            assert_eq!(actual.lhs, &expected.remote, "{}: remote mismatch", idx);
             if let Some(expected) = expected.local.as_ref() {
                 match actual.rhs.as_ref() {
                     None => panic!("{}: Expected local ref to be {}, got none", idx, expected),
                     Some(actual) => assert_eq!(actual.as_ref(), expected, "{}: mismatched local ref", idx),
                 }
             }
-        }
-
-        if let Mode::ObjectHashSource { expected } = &mode {
-            assert_eq!(
-                actual.iter().map(|a| a.lhs).collect::<Vec<_>>(),
-                *expected,
-                "object hash expectations should be aligned in code"
-            );
         }
     }
 
