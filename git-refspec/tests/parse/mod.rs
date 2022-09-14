@@ -57,6 +57,18 @@ fn baseline() {
     }
 }
 
+#[test]
+fn local_and_remote() -> crate::Result {
+    let spec = git_refspec::parse("remote:local".into(), Operation::Fetch)?;
+    assert_eq!(spec.remote(), spec.source());
+    assert_eq!(spec.local(), spec.destination());
+
+    let spec = git_refspec::parse("local:remote".into(), Operation::Push)?;
+    assert_eq!(spec.local(), spec.source());
+    assert_eq!(spec.remote(), spec.destination());
+    Ok(())
+}
+
 mod fetch;
 mod invalid;
 mod push;

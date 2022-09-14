@@ -100,6 +100,22 @@ impl RefSpecRef<'_> {
         self.dst
     }
 
+    /// Always returns the remote side, whose actual side in the refspec depends on how it was parsed.
+    pub fn remote(&self) -> Option<&BStr> {
+        match self.op {
+            Operation::Push => self.dst,
+            Operation::Fetch => self.src,
+        }
+    }
+
+    /// Always returns the local side, whose actual side in the refspec depends on how it was parsed.
+    pub fn local(&self) -> Option<&BStr> {
+        match self.op {
+            Operation::Push => self.src,
+            Operation::Fetch => self.dst,
+        }
+    }
+
     /// Transform the state of the refspec into an instruction making clear what to do with it.
     pub fn instruction(&self) -> Instruction<'_> {
         match self.op {
