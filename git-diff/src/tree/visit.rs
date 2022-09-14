@@ -2,6 +2,7 @@ use git_hash::ObjectId;
 use git_object::{bstr::BStr, tree};
 
 /// Represents any possible change in order to turn one tree into another.
+#[derive(Debug, Clone, PartialOrd, PartialEq, Ord, Eq, Hash)]
 pub enum Change {
     /// An entry was added, like the addition of a file or directory.
     Addition {
