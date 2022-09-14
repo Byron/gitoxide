@@ -138,7 +138,16 @@ impl Needle<'_> {
                 name: _,
                 asterisk_pos: _,
             } => todo!("glob"),
-            Needle::Object(_) => todo!("object check"),
+            Needle::Object(id) => {
+                if *id == item.target {
+                    return true;
+                }
+                if let Some(tag) = item.tag {
+                    *id == tag
+                } else {
+                    false
+                }
+            }
         }
     }
 }

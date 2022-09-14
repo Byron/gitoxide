@@ -69,7 +69,16 @@ pub mod baseline {
             expected
         );
         for (idx, (actual, expected)) in actual.iter().zip(expected).enumerate() {
-            assert_eq!(actual.lhs, &expected.remote, "{}: remote mismatch", idx);
+            if let Ok(expected) = git_hash::ObjectId::from_hex(expected.remote.as_ref()) {
+                assert!(
+                    actual.lhs.starts_with_str("refs/tags/"),
+                    "{}: remote (by object name) mismatch {}",
+                    idx,
+                    expected,
+                );
+            } else {
+                assert_eq!(actual.lhs, &expected.remote, "{}: remote mismatch", idx);
+            }
             if let Some(expected) = expected.local.as_ref() {
                 match actual.rhs.as_ref() {
                     None => panic!("{}: Expected local ref to be {}, got none", idx, expected),
@@ -162,6 +171,8 @@ pub mod baseline {
         if !name.contains(&b'/') {
             if looks_like_tag(&name) {
                 name.insert_str(0, b"refs/tags/");
+            } else if let Ok(_id) = git_hash::ObjectId::from_hex(name.as_ref()) {
+                // keep as is
             } else {
                 name.insert_str(0, b"refs/heads/");
             }
