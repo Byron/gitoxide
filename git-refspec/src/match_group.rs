@@ -183,7 +183,7 @@ impl<'a> Needle<'a> {
                 None
             }
             Needle::Glob { name, asterisk_pos } => {
-                if &name[..*asterisk_pos] != &item.full_ref_name.get(..*asterisk_pos)? {
+                if name[..*asterisk_pos] != item.full_ref_name.get(..*asterisk_pos)? {
                     return None;
                 }
                 let end = item.full_ref_name[*asterisk_pos..]
