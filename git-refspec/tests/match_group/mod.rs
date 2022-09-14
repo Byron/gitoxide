@@ -21,8 +21,19 @@ fn fetch_and_update() {
         Some("78b1c1be9421b33a49a7a8176d93eeeafa112da1:1111111111111111111111111111111111111111"),
         ["78b1c1be9421b33a49a7a8176d93eeeafa112da1:refs/heads/1111111111111111111111111111111111111111"],
     );
-    // baseline::of_objects_with_destinations_are_written_into_given_local_branches(
-    //     Some("9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:tags/special"),
-    //     ["9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:refs/tags/special"],
-    // );
+    baseline::of_objects_with_destinations_are_written_into_given_local_branches(
+        Some("9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:tags/special"),
+        ["9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:refs/tags/special"],
+    );
+    baseline::of_objects_with_destinations_are_written_into_given_local_branches(
+        Some("9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:refs/tags/special"),
+        ["9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:refs/tags/special"],
+    );
+
+    baseline::agrees_but_observable_refs_are_vague(Some("f1:origin/f1"), ["refs/heads/f1:refs/heads/origin/f1"]);
+    baseline::agrees_but_observable_refs_are_vague(
+        Some("f1:remotes/origin/f1"),
+        ["refs/heads/f1:refs/remotes/origin/f1"],
+    );
+    baseline::agrees_but_observable_refs_are_vague(Some("f1:notes/f1"), ["refs/heads/f1:refs/heads/notes/f1"]);
 }

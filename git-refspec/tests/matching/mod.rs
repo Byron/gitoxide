@@ -77,6 +77,14 @@ pub mod baseline {
         check_fetch_remote(specs, Mode::Normal)
     }
 
+    /// Here we checked by hand which refs are actually written with a particular refspec
+    pub fn agrees_but_observable_refs_are_vague<'a, 'b>(
+        specs: impl IntoIterator<Item = &'a str> + Clone,
+        expected: impl IntoIterator<Item = &'b str>,
+    ) {
+        of_objects_with_destinations_are_written_into_given_local_branches(specs, expected)
+    }
+
     enum Mode {
         Normal,
         Custom { expected: Vec<Mapping> },

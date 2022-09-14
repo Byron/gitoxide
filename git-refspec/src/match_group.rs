@@ -191,7 +191,9 @@ impl<'a> Needle<'a> {
             Needle::FullName(name) => Cow::Borrowed(name),
             Needle::PartialName(name) => Cow::Owned({
                 let mut base: BString = "refs/".into();
-                base.push_str("heads/");
+                if !(name.starts_with(b"tags/") || name.starts_with(b"remotes/")) {
+                    base.push_str("heads/");
+                }
                 base.push_str(name);
                 base
             }),
