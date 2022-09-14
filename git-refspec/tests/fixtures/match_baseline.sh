@@ -49,6 +49,8 @@ git clone --shared ./base clone
   baseline "f1:remotes/origin/f1"
   baseline "f1:notes/f1"
   baseline "+refs/heads/*:refs/remotes/origin/*"
+  baseline "refs/heads/*1:refs/remotes/origin/*1"
+  baseline "refs/heads/f*:refs/remotes/origin/a*"
   baseline "refs/heads/*:refs/remotes/origin/*" "^main"
   baseline "^main" "refs/heads/*:refs/remotes/origin/*"
   baseline "^refs/heads/main" "refs/heads/*:refs/remotes/origin/*"

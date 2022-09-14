@@ -186,9 +186,12 @@ impl<'a> Needle<'a> {
                 if name[..*asterisk_pos] != item.full_ref_name.get(..*asterisk_pos)? {
                     return None;
                 }
-                let end = item.full_ref_name[*asterisk_pos..]
-                    .find_byte(b'/')
-                    .unwrap_or(item.full_ref_name.len());
+                let tail = &name[*asterisk_pos + 1..];
+                if !item.full_ref_name.ends_with(tail) {
+                    return None;
+                }
+                let end = item.full_ref_name.len() - tail.len();
+                let end = item.full_ref_name[*asterisk_pos..end].find_byte(b'/').unwrap_or(end);
                 Some(Match {
                     glob_range: Some(*asterisk_pos..end),
                 })
