@@ -152,7 +152,7 @@ impl<'a> Needle<'a> {
         }
     }
 
-    fn to_bstr(&self) -> Cow<'a, BStr> {
+    fn to_bstr(self) -> Cow<'a, BStr> {
         match self {
             Needle::FullName(name) => Cow::Borrowed(name),
             Needle::PartialName(name) => Cow::Owned({
