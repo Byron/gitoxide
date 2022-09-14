@@ -34,21 +34,42 @@ impl<'a> MatchGroup<'a> {
     ///
     /// Note that negative matches are not part of the return value, so they are not observable.
     pub fn match_remotes<'item>(&self, items: impl Iterator<Item = Item<'item>> + Clone) -> Vec<Mapping<'item, 'a>> {
-        let mut matchers: Vec<Matcher<'_>> = self.specs.iter().copied().map(Into::into).collect();
         let mut out = Vec::new();
+        let mut matchers: Vec<Option<Matcher<'_>>> = self
+            .specs
+            .iter()
+            .copied()
+            .map(Matcher::from)
+            .enumerate()
+            .map(|(idx, m)| match m.lhs {
+                Some(Needle::Object(id)) => {
+                    out.push(Mapping {
+                        item_index: None,
+                        lhs: Source::ObjectId(id),
+                        rhs: m.rhs.map(|n| n.to_bstr()),
+                        spec_index: idx,
+                    });
+                    None
+                }
+                _ => Some(m),
+            })
+            .collect();
+
         for (spec_index, (spec, matcher)) in self.specs.iter().zip(matchers.iter_mut()).enumerate() {
             for (item_index, item) in items.clone().enumerate() {
                 if spec.mode == Mode::Negative {
                     continue;
                 }
-                let (matched, rhs) = matcher.matches_lhs(item);
-                if matched {
-                    out.push(Mapping {
-                        item_index,
-                        lhs: item.full_ref_name,
-                        rhs,
-                        spec_index,
-                    })
+                if let Some(matcher) = matcher {
+                    let (matched, rhs) = matcher.matches_lhs(item);
+                    if matched {
+                        out.push(Mapping {
+                            item_index: Some(item_index),
+                            lhs: Source::FullName(item.full_ref_name),
+                            rhs,
+                            spec_index,
+                        })
+                    }
                 }
             }
         }
@@ -62,16 +83,29 @@ impl<'a> MatchGroup<'a> {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+/// The source (or left-hand) side of a mapping.
+pub enum Source<'a> {
+    /// A full reference name, which is expected to be valid.
+    ///
+    /// Validity, however, is not enforced here.
+    FullName(&'a BStr),
+    /// The name of an object that is expected to exist on the remote side.
+    /// Note that it might not be advertised by the remote but part of the object graph,
+    /// and thus gets sent in the pack. The server is expected to fail unless the desired
+    /// object is present but at some time it is merely a request by the user.
+    ObjectId(git_hash::ObjectId),
+}
+
 /// A mapping from a remote to a local refs for fetches or local to remote refs for pushes.
 ///
 /// Mappings are like edges in a graph, initially without any constraints.
-#[derive(Debug, Default, Clone)]
-#[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub struct Mapping<'a, 'b> {
-    /// The index into the initial `items` list.
-    pub item_index: usize,
+    /// The index into the initial `items` list that matched against a spec.
+    pub item_index: Option<usize>,
     /// The name of the remote side for fetches or the local one for pushes that matched.
-    pub lhs: &'a BStr,
+    pub lhs: Source<'a>,
     /// The name of the local side for fetches or the remote one for pushes that corresponds to `lhs`, if available.
     pub rhs: Option<Cow<'b, BStr>>,
     /// The index of the matched ref-spec as seen from the match group.

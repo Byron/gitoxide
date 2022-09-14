@@ -6,6 +6,7 @@ pub mod baseline {
     use crate::matching::BASELINE;
     use bstr::{BString, ByteSlice, ByteVec};
     use git_hash::ObjectId;
+    use git_refspec::match_group::Source;
     use git_refspec::parse::Operation;
     use git_refspec::MatchGroup;
     use git_testtools::once_cell::sync::Lazy;
@@ -66,22 +67,10 @@ pub mod baseline {
         )
     }
 
-    pub fn provides_does_not_actually_match_object_names<'a, 'b>(
+    pub fn of_objects_always_matches_if_the_server_has_the_object<'a, 'b>(
         specs: impl IntoIterator<Item = &'a str> + Clone,
-        expected: impl IntoIterator<Item = &'b str>,
     ) {
-        check_fetch_remote(
-            specs,
-            Mode::Custom {
-                expected: expected
-                    .into_iter()
-                    .map(|s| Mapping {
-                        remote: s.into(),
-                        local: None,
-                    })
-                    .collect(),
-            },
-        )
+        check_fetch_remote(specs, Mode::Normal)
     }
 
     pub fn agrees_with_fetch_specs<'a>(specs: impl IntoIterator<Item = &'a str> + Clone) {
@@ -122,13 +111,25 @@ pub mod baseline {
         );
 
         for (idx, (actual, expected)) in actual.iter().zip(expected).enumerate() {
-            assert_eq!(actual.lhs, &expected.remote, "{}: remote mismatch", idx);
+            assert_eq!(
+                source_to_bstring(actual.lhs),
+                expected.remote,
+                "{}: remote mismatch",
+                idx
+            );
             if let Some(expected) = expected.local.as_ref() {
                 match actual.rhs.as_ref() {
                     None => panic!("{}: Expected local ref to be {}, got none", idx, expected),
                     Some(actual) => assert_eq!(actual.as_ref(), expected, "{}: mismatched local ref", idx),
                 }
             }
+        }
+    }
+
+    fn source_to_bstring(source: Source) -> BString {
+        match source {
+            Source::FullName(name) => name.into(),
+            Source::ObjectId(id) => id.to_string().into(),
         }
     }
 
