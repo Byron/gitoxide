@@ -196,7 +196,11 @@ impl<'a> Needle<'a> {
                 base
             }),
             Needle::Glob { .. } => todo!("resolve glob with replacement string"),
-            Needle::Object(_) => unreachable!("The right side can never be an object name"),
+            Needle::Object(id) => {
+                let mut name = id.to_string();
+                name.insert_str(0, "refs/heads/");
+                Cow::Owned(name.into())
+            }
         }
     }
 }

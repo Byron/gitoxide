@@ -27,11 +27,15 @@ fn object_hash_as_source() {
 }
 
 #[test]
-fn object_hash_destination_is_invalid() {
-    assert!(matches!(
-        try_parse("a:e69de29bb2d1d6434b8b29ae775ad8c2e48c5391", Operation::Fetch).unwrap_err(),
-        Error::InvalidFetchDestination
-    ));
+fn object_hash_destination_are_valid_as_they_might_be_a_strange_partial_branch_name() {
+    assert_parse(
+        "a:e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        Instruction::Fetch(Fetch::AndUpdate {
+            src: b("a"),
+            dst: b("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+            allow_non_fast_forward: false,
+        }),
+    );
 }
 
 #[test]

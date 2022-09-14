@@ -46,7 +46,7 @@ pub mod baseline {
         INPUT.iter().map(Ref::to_item)
     }
 
-    pub fn provides_does_not_actually_match_object_names_and_specific_local<'a, 'b>(
+    pub fn of_objects_with_destinations_are_written_into_given_local_branches<'a, 'b>(
         specs: impl IntoIterator<Item = &'a str> + Clone,
         expected: impl IntoIterator<Item = &'b str>,
     ) {

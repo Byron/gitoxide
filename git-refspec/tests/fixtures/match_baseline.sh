@@ -42,6 +42,7 @@ git clone --shared ./base clone
   baseline "78b1c1be9421b33a49a7a8176d93eeeafa112da1"
   baseline "9d2fab1a0ba3585d0bc50922bfdd04ebb59361df"
   baseline "78b1c1be9421b33a49a7a8176d93eeeafa112da1:special"
+  baseline "78b1c1be9421b33a49a7a8176d93eeeafa112da1:1111111111111111111111111111111111111111"
   baseline "9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:tags/special"
   baseline "9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:refs/tags/special"
   baseline "+refs/heads/*:refs/remotes/origin/*"

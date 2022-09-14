@@ -12,14 +12,17 @@ fn fetch_only() {
 }
 
 #[test]
-#[ignore]
 fn fetch_and_update() {
-    baseline::provides_does_not_actually_match_object_names_and_specific_local(
+    baseline::of_objects_with_destinations_are_written_into_given_local_branches(
         Some("78b1c1be9421b33a49a7a8176d93eeeafa112da1:special"),
-        ["refs/tags/annotated-v0.0:refs/heads/special"],
+        ["78b1c1be9421b33a49a7a8176d93eeeafa112da1:refs/heads/special"],
     );
-    baseline::provides_does_not_actually_match_object_names_and_specific_local(
-        Some("9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:tags/special"),
-        ["refs/tags/annotated-v0.0:refs/tags/special"],
+    baseline::of_objects_with_destinations_are_written_into_given_local_branches(
+        Some("78b1c1be9421b33a49a7a8176d93eeeafa112da1:1111111111111111111111111111111111111111"),
+        ["78b1c1be9421b33a49a7a8176d93eeeafa112da1:refs/heads/1111111111111111111111111111111111111111"],
     );
+    // baseline::of_objects_with_destinations_are_written_into_given_local_branches(
+    //     Some("9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:tags/special"),
+    //     ["9d2fab1a0ba3585d0bc50922bfdd04ebb59361df:refs/tags/special"],
+    // );
 }

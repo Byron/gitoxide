@@ -130,9 +130,6 @@ pub(crate) mod function {
         }
         let (src, src_had_pattern) = validated(src, operation == Operation::Push && dst.is_some())?;
         let (dst, dst_had_pattern) = validated(dst, false)?;
-        if !dst_had_pattern && looks_like_object_hash(dst.unwrap_or_default()) {
-            return Err(Error::InvalidFetchDestination);
-        }
         if mode != Mode::Negative && src_had_pattern != dst_had_pattern {
             return Err(Error::PatternUnbalanced);
         }
