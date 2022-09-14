@@ -182,19 +182,22 @@ impl<'a> Needle<'a> {
                 }
                 None
             }
-            Needle::Glob {
-                name: _,
-                asterisk_pos: _,
-            } => todo!("glob"),
+            Needle::Glob { name, asterisk_pos } => {
+                if &name[..*asterisk_pos] != &item.full_ref_name.get(..*asterisk_pos)? {
+                    return None;
+                }
+                let end = item.full_ref_name[*asterisk_pos..]
+                    .find_byte(b'/')
+                    .unwrap_or(item.full_ref_name.len());
+                Some(Match {
+                    glob_range: Some(*asterisk_pos..end),
+                })
+            }
             Needle::Object(id) => {
                 if *id == item.target {
                     return Some(Match::default());
                 }
-                if let Some(tag) = item.tag {
-                    (*id == tag).then(Match::default)
-                } else {
-                    None
-                }
+                (*id == item.tag?).then(Match::default)
             }
         }
     }
@@ -210,7 +213,13 @@ impl<'a> Needle<'a> {
                 base.push_str(name);
                 base
             }),
-            (Needle::Glob { .. }, Some(_range)) => todo!("resolve glob with replacement string"),
+            (Needle::Glob { name, asterisk_pos }, Some((range, item))) => {
+                let mut buf = Vec::with_capacity(name.len() + range.len() - 1);
+                buf.push_str(&name[..asterisk_pos]);
+                buf.push_str(&item.full_ref_name[range]);
+                buf.push_str(&name[asterisk_pos + 1..]);
+                Cow::Owned(buf.into())
+            }
             (Needle::Object(id), None) => {
                 let mut name = id.to_string();
                 name.insert_str(0, "refs/heads/");

@@ -36,5 +36,5 @@ fn fetch_and_update() {
         ["refs/heads/f1:refs/remotes/origin/f1"],
     );
     baseline::agrees_but_observable_refs_are_vague(Some("f1:notes/f1"), ["refs/heads/f1:refs/heads/notes/f1"]);
-    // baseline::agrees_with_fetch_specs(Some("+refs/heads/*:refs/remotes/origin/*"))
+    baseline::agrees_with_fetch_specs(Some("+refs/heads/*:refs/remotes/origin/*"))
 }
