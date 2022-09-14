@@ -94,6 +94,7 @@ impl<'a> Matcher<'a> {
     pub fn matches_lhs(&self, item: Item<'_>) -> (bool, Option<Cow<'a, BStr>>) {
         match (self.lhs, self.rhs) {
             (Some(lhs), None) => (lhs.matches(item), None),
+            (Some(lhs), Some(rhs)) => (lhs.matches(item), Some(rhs.to_bstr())),
             _ => todo!(),
         }
     }
@@ -108,7 +109,7 @@ pub(crate) enum Needle<'a> {
     Object(ObjectId),
 }
 
-impl Needle<'_> {
+impl<'a> Needle<'a> {
     #[inline]
     fn matches(&self, item: Item<'_>) -> bool {
         match self {
@@ -148,6 +149,20 @@ impl Needle<'_> {
                     false
                 }
             }
+        }
+    }
+
+    fn to_bstr(&self) -> Cow<'a, BStr> {
+        match self {
+            Needle::FullName(name) => Cow::Borrowed(name),
+            Needle::PartialName(name) => Cow::Owned({
+                let mut base: BString = "refs/".into();
+                base.push_str("heads/");
+                base.push_str(name);
+                base
+            }),
+            Needle::Glob { .. } => todo!("resolve glob with replacement string"),
+            Needle::Object(_) => unreachable!("The right side can never be an object name"),
         }
     }
 }

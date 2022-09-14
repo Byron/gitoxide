@@ -45,13 +45,34 @@ pub mod baseline {
         INPUT.iter().map(Ref::to_item)
     }
 
+    pub fn provides_does_not_actually_match_object_names_and_specific_local<'a, 'b>(
+        specs: impl IntoIterator<Item = &'a str> + Clone,
+        expected: impl IntoIterator<Item = &'b str>,
+    ) {
+        check_fetch_remote(
+            specs,
+            Mode::Custom {
+                expected: expected
+                    .into_iter()
+                    .map(|s| {
+                        let spec = git_refspec::parse(s.into(), Operation::Fetch).expect("valid spec");
+                        Mapping {
+                            remote: spec.source().unwrap().into(),
+                            local: spec.destination().map(ToOwned::to_owned),
+                        }
+                    })
+                    .collect(),
+            },
+        )
+    }
+
     pub fn provides_does_not_actually_match_object_names<'a, 'b>(
         specs: impl IntoIterator<Item = &'a str> + Clone,
         expected: impl IntoIterator<Item = &'b str>,
     ) {
         check_fetch_remote(
             specs,
-            Mode::ObjectHashSource {
+            Mode::Custom {
                 expected: expected
                     .into_iter()
                     .map(|s| Mapping {
@@ -69,7 +90,7 @@ pub mod baseline {
 
     enum Mode {
         Normal,
-        ObjectHashSource { expected: Vec<Mapping> },
+        Custom { expected: Vec<Mapping> },
     }
 
     fn check_fetch_remote<'a>(specs: impl IntoIterator<Item = &'a str> + Clone, mode: Mode) {
@@ -90,7 +111,7 @@ pub mod baseline {
         let actual = match_group.match_remotes(input());
         let expected = match &mode {
             Mode::Normal => expected,
-            Mode::ObjectHashSource { expected } => expected,
+            Mode::Custom { expected } => expected,
         };
         assert_eq!(
             actual.len(),
