@@ -14,8 +14,6 @@ mod error {
         Transport(#[from] git_protocol::transport::client::Error),
         #[error(transparent)]
         ConfigureCredentials(#[from] crate::config::credential_helpers::Error),
-        #[error("No fetch url could be obtained to configure credentials")]
-        MissingFetchUrlForConfiguringCredentials,
     }
 }
 pub use error::Error;
@@ -44,8 +42,11 @@ where
                 let url = self
                     .remote
                     .url(Direction::Fetch)
-                    .ok_or(Error::MissingFetchUrlForConfiguringCredentials)?
-                    .to_owned();
+                    .map(ToOwned::to_owned)
+                    .unwrap_or_else(|| {
+                        git_url::parse(self.transport.to_url().as_bytes().into())
+                            .expect("valid URL to be provided by transport")
+                    });
                 credentials_storage = self.configured_credentials(url)?;
                 &mut credentials_storage
             }
