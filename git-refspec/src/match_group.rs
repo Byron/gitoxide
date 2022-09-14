@@ -5,6 +5,7 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_hash::oid;
 use git_hash::ObjectId;
 use std::borrow::Cow;
+use std::ops::Range;
 
 /// An item to match, input to various matching operations.
 #[derive(Debug, Copy, Clone)]
@@ -127,8 +128,14 @@ impl<'a> Matcher<'a> {
     #[allow(dead_code)]
     pub fn matches_lhs(&self, item: Item<'_>) -> (bool, Option<Cow<'a, BStr>>) {
         match (self.lhs, self.rhs) {
-            (Some(lhs), None) => (lhs.matches(item), None),
-            (Some(lhs), Some(rhs)) => (lhs.matches(item), Some(rhs.to_bstr())),
+            (Some(lhs), None) => (lhs.matches(item).is_some(), None),
+            (Some(lhs), Some(rhs)) => {
+                let m = lhs.matches(item);
+                match m {
+                    Some(m) => (true, Some(rhs.to_bstr_replace(m.glob_range.map(|r| (r, item))))),
+                    None => (false, None),
+                }
+            }
             _ => todo!(),
         }
     }
@@ -143,11 +150,17 @@ pub(crate) enum Needle<'a> {
     Object(ObjectId),
 }
 
+#[derive(Default)]
+struct Match {
+    /// The range of text to copy from the originating item name
+    glob_range: Option<Range<usize>>,
+}
+
 impl<'a> Needle<'a> {
     #[inline]
-    fn matches(&self, item: Item<'_>) -> bool {
+    fn matches(&self, item: Item<'_>) -> Option<Match> {
         match self {
-            Needle::FullName(name) => *name == item.full_ref_name,
+            Needle::FullName(name) => (*name == item.full_ref_name).then(Match::default),
             Needle::PartialName(name) => {
                 let mut buf = BString::from(Vec::with_capacity(128));
                 for (base, append_head) in [
@@ -164,10 +177,10 @@ impl<'a> Needle<'a> {
                         buf.push_str("/HEAD");
                     }
                     if buf == item.full_ref_name {
-                        return true;
+                        return Some(Match::default());
                     }
                 }
-                false
+                None
             }
             Needle::Glob {
                 name: _,
@@ -175,21 +188,21 @@ impl<'a> Needle<'a> {
             } => todo!("glob"),
             Needle::Object(id) => {
                 if *id == item.target {
-                    return true;
+                    return Some(Match::default());
                 }
                 if let Some(tag) = item.tag {
-                    *id == tag
+                    (*id == tag).then(Match::default)
                 } else {
-                    false
+                    None
                 }
             }
         }
     }
 
-    fn to_bstr(self) -> Cow<'a, BStr> {
-        match self {
-            Needle::FullName(name) => Cow::Borrowed(name),
-            Needle::PartialName(name) => Cow::Owned({
+    fn to_bstr_replace(self, range: Option<(Range<usize>, Item<'_>)>) -> Cow<'a, BStr> {
+        match (self, range) {
+            (Needle::FullName(name), None) => Cow::Borrowed(name),
+            (Needle::PartialName(name), None) => Cow::Owned({
                 let mut base: BString = "refs/".into();
                 if !(name.starts_with(b"tags/") || name.starts_with(b"remotes/")) {
                     base.push_str("heads/");
@@ -197,25 +210,31 @@ impl<'a> Needle<'a> {
                 base.push_str(name);
                 base
             }),
-            Needle::Glob { .. } => todo!("resolve glob with replacement string"),
-            Needle::Object(id) => {
+            (Needle::Glob { .. }, Some(_range)) => todo!("resolve glob with replacement string"),
+            (Needle::Object(id), None) => {
                 let mut name = id.to_string();
                 name.insert_str(0, "refs/heads/");
                 Cow::Owned(name.into())
             }
+            (Needle::Glob { .. }, None) => unreachable!("BUG: no range provided for glob pattern"),
+            (_, Some(_)) => unreachable!("BUG: range provided even though needle wasn't a glob. Globs are symmetric."),
         }
+    }
+
+    fn to_bstr(self) -> Cow<'a, BStr> {
+        self.to_bstr_replace(None)
     }
 }
 
 impl<'a> From<&'a BStr> for Needle<'a> {
     fn from(v: &'a BStr) -> Self {
-        if v.starts_with(b"refs/") {
-            Needle::FullName(v)
-        } else if let Some(pos) = v.find_byte(b'*') {
+        if let Some(pos) = v.find_byte(b'*') {
             Needle::Glob {
                 name: v,
                 asterisk_pos: pos,
             }
+        } else if v.starts_with(b"refs/") {
+            Needle::FullName(v)
         } else if let Ok(id) = git_hash::ObjectId::from_hex(v) {
             Needle::Object(id)
         } else {
