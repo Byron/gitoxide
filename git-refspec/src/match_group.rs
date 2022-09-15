@@ -34,7 +34,10 @@ impl<'a> MatchGroup<'a> {
     /// Note that this method only makes sense if the specs are indeed fetch specs and may panic otherwise.
     ///
     /// Note that negative matches are not part of the return value, so they are not observable.
-    pub fn match_remotes<'item>(&self, items: impl Iterator<Item = Item<'item>> + Clone) -> Vec<Mapping<'item, 'a>> {
+    pub fn match_remotes<'item>(
+        &self,
+        mut items: impl Iterator<Item = Item<'item>> + Clone,
+    ) -> Vec<Mapping<'item, 'a>> {
         let mut out = Vec::new();
         let mut matchers: Vec<Option<Matcher<'_>>> = self
             .specs
@@ -56,9 +59,11 @@ impl<'a> MatchGroup<'a> {
             })
             .collect();
 
+        let mut has_negation = false;
         for (spec_index, (spec, matcher)) in self.specs.iter().zip(matchers.iter_mut()).enumerate() {
             for (item_index, item) in items.clone().enumerate() {
                 if spec.mode == Mode::Negative {
+                    has_negation = true;
                     continue;
                 }
                 if let Some(matcher) = matcher {
@@ -74,7 +79,28 @@ impl<'a> MatchGroup<'a> {
                 }
             }
         }
-        // TODO: negation subtracts from the entire set, order doesn't matter.
+
+        if let Some(id) = has_negation.then(|| items.next().map(|i| i.target)).flatten() {
+            let null_id = git_hash::ObjectId::null(id.kind());
+            for matcher in matchers
+                .into_iter()
+                .zip(self.specs.iter())
+                .filter_map(|(m, spec)| m.and_then(|m| (spec.mode == Mode::Negative).then(|| m)))
+            {
+                out.retain(|m| match m.lhs {
+                    Source::ObjectId(_) => true,
+                    Source::FullName(name) => {
+                        !matcher
+                            .matches_lhs(Item {
+                                full_ref_name: name,
+                                target: &null_id,
+                                tag: None,
+                            })
+                            .0
+                    }
+                });
+            }
+        }
         out
     }
 

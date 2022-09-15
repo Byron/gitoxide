@@ -58,4 +58,13 @@ mod multiple {
         baseline::agrees_with_fetch_specs(["heads/f1", "f2", "refs/heads/f3", "heads/main"]);
         baseline::agrees_with_fetch_specs(["f*:a*", "refs/heads/main"]);
     }
+
+    #[test]
+    #[ignore]
+    fn fetch_only_and_negations() {
+        baseline::agrees_with_fetch_specs(["refs/heads/f*:refs/remotes/origin/a*", "^f1"]);
+        baseline::agrees_with_fetch_specs(["refs/heads/f*:refs/remotes/origin/a*", "^refs/heads/f1"]);
+        baseline::agrees_with_fetch_specs(["^heads/f2", "refs/heads/f*:refs/remotes/origin/a*"]);
+        baseline::agrees_with_fetch_specs(["^refs/heads/f2", "refs/heads/f*:refs/remotes/origin/a*"]);
+    }
 }
