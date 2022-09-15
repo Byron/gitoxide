@@ -4,13 +4,12 @@ set -eu -o pipefail
 export GIT_INDEX_VERSION=2;
 
 git init -q sub
-cd sub
+(cd sub
 
-touch a b c
-git add .
-git commit -m "empty"
-
-cd ..
+  touch a b c
+  git add .
+  git commit -m "init"
+)
 
 git init -q
 git config index.threads 1
@@ -22,4 +21,4 @@ mkdir d
 (cd d && touch a b c)
 
 git add .
-git commit -m "empty"
+git commit -m "init"

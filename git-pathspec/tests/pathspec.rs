@@ -284,7 +284,7 @@ mod parse {
                 ":_()", ":`()", ":~()",
             ];
 
-            inputs.into_iter().for_each(|input| {
+            for input in inputs.into_iter() {
                 assert!(
                     !check_against_baseline(input),
                     "This pathspec is valid in git: {}",
@@ -294,7 +294,7 @@ mod parse {
                 let output = git_pathspec::parse(input.as_bytes());
                 assert!(output.is_err());
                 assert!(matches!(output.unwrap_err(), Error::Unimplemented { .. }));
-            });
+            }
         }
 
         #[test]
@@ -306,7 +306,7 @@ mod parse {
                 ":(top,exclude,icse)some/path",
             ];
 
-            inputs.into_iter().for_each(|input| {
+            for input in inputs.into_iter() {
                 assert!(
                     !check_against_baseline(input),
                     "This pathspec is valid in git: {}",
@@ -316,7 +316,7 @@ mod parse {
                 let output = git_pathspec::parse(input.as_bytes());
                 assert!(output.is_err());
                 assert!(matches!(output.unwrap_err(), Error::InvalidKeyword { .. }));
-            });
+            }
         }
 
         #[test]
@@ -454,7 +454,7 @@ mod parse {
     }
 
     fn check_valid_inputs<'a>(inputs: impl IntoIterator<Item = (&'a str, PatternForTesting)>) {
-        inputs.into_iter().for_each(|(input, expected)| {
+        for (input, expected) in inputs.into_iter() {
             assert!(
                 check_against_baseline(input),
                 "This pathspec is invalid in git: {}",
@@ -465,7 +465,7 @@ mod parse {
                 .unwrap_or_else(|_| panic!("parsing should not fail with pathspec {}", input))
                 .into();
             assert_eq!(pattern, expected, "while checking input: \"{}\"", input);
-        });
+        }
     }
 
     fn pat_with_path(path: &str) -> PatternForTesting {

@@ -38,10 +38,10 @@ fn compare_states(actual: &State, expected: &State, fixture: &str) {
         fixture
     );
 
-    actual.entries().iter().zip(expected.entries()).for_each(|(a, e)| {
+    for (a, e) in actual.entries().iter().zip(expected.entries()) {
         assert_eq!(a.id, e.id, "entry id mismatch in {:?}", fixture);
         assert_eq!(a.flags, e.flags, "entry flags mismatch in {:?}", fixture);
         assert_eq!(a.mode, e.mode, "entry mode mismatch in {:?}", fixture);
         assert_eq!(a.path(actual), e.path(expected), "entry path mismatch in {:?}", fixture);
-    })
+    }
 }
