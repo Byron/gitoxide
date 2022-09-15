@@ -34,6 +34,7 @@ git-features = { version = "^0.22.4", path = "../git-features", features = ["rus
 git-hash = { version = "^0.9.9", path = "../git-hash" }
 git-bitmap = { version = "^0.1.2", path = "../git-bitmap" }
 git-object = { version = "^0.20.2", path = "../git-object" }
+git-traverse = { version = "^0.16.0", path = "../git-traverse" }
 
 thiserror = "1.0.32"
 memmap2 = "0.5.0"
@@ -50,6 +51,7 @@ document-features = { version = "0.2.0", optional = true }
 
 [dev-dependencies]
 git-testtools = { path = "../tests/tools"}
+git-repository = { path = "../git-repository"}
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde1"]

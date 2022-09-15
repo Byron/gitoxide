@@ -21,6 +21,8 @@ pub mod entry;
 
 mod access;
 
+mod init;
+
 ///
 pub mod decode;
 
