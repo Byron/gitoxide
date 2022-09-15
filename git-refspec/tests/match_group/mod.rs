@@ -95,4 +95,16 @@ mod multiple {
             "refs/heads/main:refs/remotes/origin/main", // duplicates are removed immediately.
         ]);
     }
+
+    #[test]
+    #[ignore]
+    fn fetch_and_update_with_conflicts() {
+        baseline::agrees_with_fetch_specs_validation_error(
+            [
+                "refs/heads/f1:refs/remotes/origin/conflict",
+                "refs/heads/f2:refs/remotes/origin/conflict",
+            ],
+            "TBD",
+        );
+    }
 }

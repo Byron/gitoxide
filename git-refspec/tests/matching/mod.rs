@@ -70,11 +70,23 @@ pub mod baseline {
     pub fn of_objects_always_matches_if_the_server_has_the_object<'a, 'b>(
         specs: impl IntoIterator<Item = &'a str> + Clone,
     ) {
-        check_fetch_remote(specs, Mode::Normal)
+        check_fetch_remote(specs, Mode::Normal { validate_err: None })
     }
 
     pub fn agrees_with_fetch_specs<'a>(specs: impl IntoIterator<Item = &'a str> + Clone) {
-        check_fetch_remote(specs, Mode::Normal)
+        check_fetch_remote(specs, Mode::Normal { validate_err: None })
+    }
+
+    pub fn agrees_with_fetch_specs_validation_error<'a>(
+        specs: impl IntoIterator<Item = &'a str> + Clone,
+        validate_err: impl Into<String>,
+    ) {
+        check_fetch_remote(
+            specs,
+            Mode::Normal {
+                validate_err: Some(validate_err.into()),
+            },
+        )
     }
 
     pub fn invalid_specs_fail_to_parse_where_git_shows_surprising_behaviour<'a>(
@@ -100,7 +112,7 @@ pub mod baseline {
     }
 
     enum Mode {
-        Normal,
+        Normal { validate_err: Option<String> },
         Custom { expected: Vec<Mapping> },
     }
 
@@ -116,12 +128,14 @@ pub mod baseline {
         let expected = BASELINE
             .get(&key)
             .unwrap_or_else(|| panic!("BUG: Need {:?} added to the baseline", key))
-            .as_ref()
-            .expect("no error");
+            .as_ref();
 
         let actual = match_group.match_remotes(input());
         let expected = match &mode {
-            Mode::Normal => expected,
+            Mode::Normal { validate_err } => match validate_err {
+                Some(_err_message) => todo!("validation and error comparison"),
+                None => expected.expect("no error"),
+            },
             Mode::Custom { expected } => expected,
         };
         assert_eq!(
