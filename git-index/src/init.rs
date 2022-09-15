@@ -12,7 +12,7 @@ use std::collections::VecDeque;
 
 /// initialization
 impl State {
-    /// Takes in an oid of a tree object and creates and returns a [`State`][git_index::State] from its children.
+    /// Takes in an oid of a tree object and creates and returns a [`State`][crate::State] from its children.
     pub fn from_tree<Find>(tree: &git_hash::oid, mut find: Find) -> Result<Self, breadthfirst::Error>
     where
         Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
