@@ -248,7 +248,7 @@ pub mod baseline {
     }
 
     fn full_tracking_ref(mut name: BString) -> BString {
-        if name.starts_with_str(b"origin/") {
+        if name.starts_with_str(b"origin/") || name.starts_with_str("new-origin/") {
             name.insert_str(0, b"refs/remotes/");
         } else if looks_like_tag(&name) {
             name.insert_str(0, b"refs/tags/");

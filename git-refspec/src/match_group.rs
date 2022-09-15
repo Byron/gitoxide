@@ -5,6 +5,7 @@ use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_hash::oid;
 use git_hash::ObjectId;
 use std::borrow::Cow;
+use std::collections::BTreeSet;
 use std::ops::Range;
 
 /// An item to match, input to various matching operations.
@@ -30,15 +31,21 @@ impl<'a> MatchGroup<'a> {
 
 /// Matching
 impl<'a> MatchGroup<'a> {
-    /// Match all `items` against all fetch specs present in this group.
+    /// Match all `items` against all fetch specs present in this group, returning deduplicated mappings from source to destination.
     /// Note that this method only makes sense if the specs are indeed fetch specs and may panic otherwise.
     ///
-    /// Note that negative matches are not part of the return value, so they are not observable.
+    /// Note that negative matches are not part of the return value, so they are not observable but will be used to remove mappings.
     pub fn match_remotes<'item>(
         &self,
         mut items: impl Iterator<Item = Item<'item>> + Clone,
     ) -> Vec<Mapping<'item, 'a>> {
         let mut out = Vec::new();
+        let mut seen = BTreeSet::default();
+        let mut push_unique = |mapping| {
+            if seen.insert(calculate_hash(&mapping)) {
+                out.push(mapping);
+            }
+        };
         let mut matchers: Vec<Option<Matcher<'_>>> = self
             .specs
             .iter()
@@ -47,7 +54,7 @@ impl<'a> MatchGroup<'a> {
             .enumerate()
             .map(|(idx, m)| match m.lhs {
                 Some(Needle::Object(id)) => {
-                    out.push(Mapping {
+                    push_unique(Mapping {
                         item_index: None,
                         lhs: Source::ObjectId(id),
                         rhs: m.rhs.map(|n| n.to_bstr()),
@@ -69,7 +76,7 @@ impl<'a> MatchGroup<'a> {
                 if let Some(matcher) = matcher {
                     let (matched, rhs) = matcher.matches_lhs(item);
                     if matched {
-                        out.push(Mapping {
+                        push_unique(Mapping {
                             item_index: Some(item_index),
                             lhs: Source::FullName(item.full_ref_name),
                             rhs,
@@ -110,7 +117,14 @@ impl<'a> MatchGroup<'a> {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+fn calculate_hash<T: std::hash::Hash>(t: &T) -> u64 {
+    use std::hash::Hasher;
+    let mut s = std::collections::hash_map::DefaultHasher::new();
+    t.hash(&mut s);
+    s.finish()
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 /// The source (or left-hand) side of a mapping.
 pub enum Source<'a> {
     /// A full reference name, which is expected to be valid.
@@ -137,6 +151,13 @@ pub struct Mapping<'a, 'b> {
     pub rhs: Option<Cow<'b, BStr>>,
     /// The index of the matched ref-spec as seen from the match group.
     spec_index: usize,
+}
+
+impl std::hash::Hash for Mapping<'_, '_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.lhs.hash(state);
+        self.rhs.hash(state);
+    }
 }
 
 /// A type keeping enough information about a ref-spec to be able to efficiently match it against multiple matcher items.

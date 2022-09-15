@@ -61,7 +61,7 @@ mod multiple {
     }
 
     #[test]
-    fn fetch_only_and_negations() {
+    fn fetch_and_update_and_negations() {
         baseline::invalid_specs_fail_to_parse_where_git_shows_surprising_behaviour(
             ["refs/heads/f*:refs/remotes/origin/a*", "^f1"],
             Error::NegativePartialName,
@@ -76,5 +76,23 @@ mod multiple {
             Error::NegativePartialName,
         );
         baseline::agrees_with_fetch_specs(["^refs/heads/f2", "refs/heads/f*:refs/remotes/origin/a*"]);
+        baseline::invalid_specs_fail_to_parse_where_git_shows_surprising_behaviour(
+            ["^main", "refs/heads/*:refs/remotes/origin/*"],
+            Error::NegativePartialName,
+        );
+        baseline::agrees_with_fetch_specs(["^refs/heads/main", "refs/heads/*:refs/remotes/origin/*"]);
+        baseline::agrees_with_fetch_specs(["refs/heads/*:refs/remotes/origin/*", "^refs/heads/main"]);
+    }
+
+    #[test]
+    fn fetch_and_update_multiple_destinations() {
+        baseline::agrees_with_fetch_specs([
+            "refs/heads/*:refs/remotes/origin/*",
+            "refs/heads/main:refs/remotes/new-origin/main",
+        ]);
+        baseline::agrees_with_fetch_specs([
+            "refs/heads/*:refs/remotes/origin/*",
+            "refs/heads/main:refs/remotes/origin/main", // duplicates are removed immediately.
+        ]);
     }
 }
