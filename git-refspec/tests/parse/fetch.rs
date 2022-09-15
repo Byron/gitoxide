@@ -66,8 +66,18 @@ fn negative_with_destination() {
 
 #[test]
 fn exclude() {
-    assert_parse("^a", Instruction::Fetch(Fetch::Exclude { src: b("a") }));
-    assert_parse("^a*", Instruction::Fetch(Fetch::Exclude { src: b("a*") }));
+    assert!(matches!(
+        try_parse("^a", Operation::Fetch).unwrap_err(),
+        Error::NegativePartialName
+    ));
+    assert!(matches!(
+        try_parse("^a*", Operation::Fetch).unwrap_err(),
+        Error::NegativeGlobPattern
+    ));
+    assert_parse(
+        "^refs/heads/a",
+        Instruction::Fetch(Fetch::Exclude { src: b("refs/heads/a") }),
+    );
 }
 
 #[test]

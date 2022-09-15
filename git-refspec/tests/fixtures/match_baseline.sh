@@ -60,6 +60,7 @@ git clone --shared ./base clone
   baseline "refs/heads/f*:refs/remotes/origin/a*" "^f1"
   baseline "refs/heads/f*:refs/remotes/origin/a*" "^refs/heads/f1"
   baseline "^heads/f2" "refs/heads/f*:refs/remotes/origin/a*"
+  baseline "heads/f2" "^refs/heads/f*:refs/remotes/origin/a*"
   baseline "^refs/heads/f2" "refs/heads/f*:refs/remotes/origin/a*"
   baseline "^main" "refs/heads/*:refs/remotes/origin/*"
   baseline "^refs/heads/main" "refs/heads/*:refs/remotes/origin/*"
