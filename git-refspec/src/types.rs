@@ -1,4 +1,4 @@
-use crate::{instruction, RefSpecRef};
+use crate::instruction;
 
 /// The way to interpret a refspec.
 #[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone, Hash, Debug)]
@@ -18,10 +18,4 @@ pub enum Instruction<'a> {
     Push(instruction::Push<'a>),
     /// An instruction for fetching.
     Fetch(instruction::Fetch<'a>),
-}
-
-/// A match group is able to match a list of ref specs in order while handling negation, conflicts and one to many mappings.
-#[derive(Debug, Clone)]
-pub struct MatchGroup<'a> {
-    pub(crate) specs: Vec<RefSpecRef<'a>>,
 }
