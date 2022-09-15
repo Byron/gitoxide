@@ -6,6 +6,30 @@ use std::collections::BTreeSet;
 pub(crate) mod types;
 pub use types::{Item, Mapping, Outcome, Source};
 
+///
+pub mod validate {
+    use crate::match_group::Outcome;
+
+    /// All possible issues found while validating matched mappings.
+    #[derive(Debug)]
+    pub enum Issue {}
+
+    /// The error returned [outcome validation][Outcome::validated()].
+    #[derive(Debug, thiserror::Error)]
+    #[error("TBD")]
+    pub struct Error {
+        /// All issues discovered during validation.
+        pub issues: Vec<Issue>,
+    }
+
+    impl<'spec, 'item> Outcome<'spec, 'item> {
+        /// Validate all mappings or dissolve them into an error stating the discovered issues.
+        pub fn validated(self) -> Result<Self, Error> {
+            Ok(self)
+        }
+    }
+}
+
 /// Initialization
 impl<'a> MatchGroup<'a> {
     /// Take all the fetch ref specs from `specs` get a match group ready.

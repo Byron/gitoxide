@@ -130,13 +130,16 @@ pub mod baseline {
             .unwrap_or_else(|| panic!("BUG: Need {:?} added to the baseline", key))
             .as_ref();
 
-        let actual = match_group.match_remotes(input()).mappings;
-        let expected = match &mode {
+        let actual = match_group.match_remotes(input()).validated();
+        let (actual, expected) = match &mode {
             Mode::Normal { validate_err } => match validate_err {
-                Some(_err_message) => todo!("validation and error comparison"),
-                None => expected.expect("no error"),
+                Some(err_message) => {
+                    assert_eq!(actual.unwrap_err().to_string(), *err_message);
+                    return;
+                }
+                None => (actual.unwrap().mappings, expected.expect("no error")),
             },
-            Mode::Custom { expected } => expected,
+            Mode::Custom { expected } => (actual.unwrap().mappings, expected),
         };
         assert_eq!(
             actual.len(),
