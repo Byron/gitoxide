@@ -15,7 +15,7 @@ use gitoxide_core::pack::verify;
 
 use crate::{
     plumbing::options::{
-        commit, config, credential, exclude, free, mailmap, odb, remote, revision, tree, Args, Subcommands,
+        commit, config, credential, exclude, free, index, mailmap, odb, remote, revision, tree, Args, Subcommands,
     },
     shared::pretty::prepare_and_run,
 };
@@ -753,6 +753,16 @@ pub fn main() -> Result<()> {
                         },
                     )
                 },
+            ),
+        },
+        Subcommands::Index(cmd) => match cmd {
+            index::Subcommands::FromTree { force, id, path } => prepare_and_run(
+                "index-read-tree",
+                verbose,
+                progress,
+                progress_keep_open,
+                None,
+                move |_progress, _out, err| core::index::from_tree(id, path, force, repository(Mode::Strict)?, err),
             ),
         },
     }?;

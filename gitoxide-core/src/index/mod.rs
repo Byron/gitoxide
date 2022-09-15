@@ -1,6 +1,6 @@
-use std::path::Path;
-
+use git::odb::FindExt;
 use git_repository as git;
+use std::path::{Path, PathBuf};
 
 pub struct Options {
     pub object_hash: git::hash::Kind,
@@ -85,4 +85,30 @@ pub fn information(
             Ok(())
         }
     }
+}
+
+pub fn from_tree(
+    id: git::hash::ObjectId,
+    path: PathBuf,
+    force: bool,
+    repo: git::Repository,
+    mut err: impl std::io::Write,
+) -> anyhow::Result<()> {
+    let state = git::index::State::from_tree(&id, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
+
+    if path.is_file() {
+        writeln!(err, "File {:?} already exists", path).ok();
+        if force {
+            writeln!(err, "overwriting").ok();
+        } else {
+            anyhow::bail!("exiting");
+        }
+    }
+
+    let mut file = std::fs::File::create(&path)?;
+    state.write_to(&mut file, git::index::write::Options::default())?;
+
+    writeln!(err, "Successfully wrote file {:?}", path).ok();
+
+    Ok(())
 }

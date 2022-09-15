@@ -1,8 +1,7 @@
-use std::path::PathBuf;
-
 use git_repository as git;
 use git_repository::bstr::BString;
 use gitoxide_core as core;
+use std::path::PathBuf;
 
 #[derive(Debug, clap::Parser)]
 #[clap(name = "gix-plumbing", about = "The git underworld", version = clap::crate_version!())]
@@ -93,6 +92,9 @@ pub enum Subcommands {
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
+    /// Interact with index files
+    #[clap(subcommand)]
+    Index(index::Subcommands),
 }
 
 pub mod config {
@@ -304,6 +306,7 @@ pub mod free {
         }
     }
 
+    ///
     pub mod index {
         use std::path::PathBuf;
 
@@ -661,6 +664,24 @@ pub mod exclude {
             /// The git path specifications to check for exclusion, or unset to read from stdin one per line.
             #[clap(parse(try_from_os_str = std::convert::TryFrom::try_from))]
             pathspecs: Vec<git::path::Spec>,
+        },
+    }
+}
+
+pub mod index {
+    use std::path::PathBuf;
+
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        #[clap(visible_alias = "read-tree")]
+        FromTree {
+            /// Overwrite the specified file if it already exists
+            #[clap(long, short = 'f')]
+            force: bool,
+            /// Hash of the tree object to generate the index from
+            id: git_repository::hash::ObjectId,
+            /// Path to the index file to be written
+            path: PathBuf,
         },
     }
 }
