@@ -9,6 +9,21 @@ mod types;
 pub use types::{Error, ObjectKindHint, Options, RefsHint};
 
 ///
+pub mod single {
+    use crate::bstr::BString;
+
+    /// The error returned by [`crate::Repository::rev_parse_single()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Parse(#[from] super::Error),
+        #[error("revspec {spec:?} did not resolve to a single object")]
+        RangedRev { spec: BString },
+    }
+}
+
+///
 pub mod error;
 
 impl<'repo> Spec<'repo> {
