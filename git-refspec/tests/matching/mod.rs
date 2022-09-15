@@ -130,7 +130,7 @@ pub mod baseline {
             .unwrap_or_else(|| panic!("BUG: Need {:?} added to the baseline", key))
             .as_ref();
 
-        let actual = match_group.match_remotes(input());
+        let actual = match_group.match_remotes(input()).mappings;
         let expected = match &mode {
             Mode::Normal { validate_err } => match validate_err {
                 Some(_err_message) => todo!("validation and error comparison"),

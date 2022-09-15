@@ -8,6 +8,17 @@ use std::borrow::Cow;
 use std::collections::BTreeSet;
 use std::ops::Range;
 
+/// The outcome of any matching operation of a [`MatchGroup`].
+///
+/// It's used to validate and process the contained [mappings][Mapping].
+#[derive(Debug, Clone)]
+pub struct Outcome<'spec, 'item> {
+    /// The match group that produced this outcome.
+    pub group: MatchGroup<'spec>,
+    /// The mappings derived from matching [items][Item].
+    pub mappings: Vec<Mapping<'item, 'spec>>,
+}
+
 /// An item to match, input to various matching operations.
 #[derive(Debug, Copy, Clone)]
 pub struct Item<'a> {
@@ -35,10 +46,7 @@ impl<'a> MatchGroup<'a> {
     /// Note that this method only makes sense if the specs are indeed fetch specs and may panic otherwise.
     ///
     /// Note that negative matches are not part of the return value, so they are not observable but will be used to remove mappings.
-    pub fn match_remotes<'item>(
-        &self,
-        mut items: impl Iterator<Item = Item<'item>> + Clone,
-    ) -> Vec<Mapping<'item, 'a>> {
+    pub fn match_remotes<'item>(self, mut items: impl Iterator<Item = Item<'item>> + Clone) -> Outcome<'a, 'item> {
         let mut out = Vec::new();
         let mut seen = BTreeSet::default();
         let mut push_unique = |mapping| {
@@ -108,7 +116,10 @@ impl<'a> MatchGroup<'a> {
                 });
             }
         }
-        out
+        Outcome {
+            group: self,
+            mappings: out,
+        }
     }
 
     /// Return the spec that produced the given `mapping`.

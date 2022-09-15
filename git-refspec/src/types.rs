@@ -21,6 +21,7 @@ pub enum Instruction<'a> {
 }
 
 /// A match group is able to match a list of ref specs in order while handling negation, conflicts and one to many mappings.
+#[derive(Debug, Clone)]
 pub struct MatchGroup<'a> {
     pub(crate) specs: Vec<RefSpecRef<'a>>,
 }
