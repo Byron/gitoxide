@@ -21,7 +21,6 @@ impl State {
         let root = find(tree, &mut buf).expect("couldn't find a tree for given oid");
         let state = breadthfirst::State::default();
         let mut delegate = EntryBuilder::new();
-        // TODO: depthfirst traversal
         breadthfirst(root, state, &mut find, &mut delegate)?;
 
         Ok(State {
