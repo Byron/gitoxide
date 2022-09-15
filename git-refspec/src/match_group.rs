@@ -129,19 +129,15 @@ impl<'a> Matcher<'a> {
     pub fn matches_lhs(&self, item: Item<'_>) -> (bool, Option<Cow<'a, BStr>>) {
         match (self.lhs, self.rhs) {
             (Some(lhs), None) => (lhs.matches(item).is_some(), None),
-            (Some(lhs), Some(rhs)) => {
-                let m = lhs.matches(item);
-                match m {
-                    Some(m) => (true, Some(rhs.to_bstr_replace(m.glob_range.map(|r| (r, item))))),
-                    None => (false, None),
-                }
-            }
+            (Some(lhs), Some(rhs)) => lhs
+                .matches(item)
+                .map(|m| m.into_match_outcome(rhs, item))
+                .unwrap_or_default(),
             _ => todo!(),
         }
     }
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
 pub(crate) enum Needle<'a> {
     FullName(&'a BStr),
@@ -150,17 +146,28 @@ pub(crate) enum Needle<'a> {
     Object(ObjectId),
 }
 
-#[derive(Default)]
-struct Match {
+enum Match {
+    /// No additional data is provided as part of the match.
+    Normal,
     /// The range of text to copy from the originating item name
-    glob_range: Option<Range<usize>>,
+    GlobRange(Range<usize>),
+}
+
+impl Match {
+    fn into_match_outcome<'a>(self, destination: Needle<'a>, item: Item<'_>) -> (bool, Option<Cow<'a, BStr>>) {
+        let arg = match self {
+            Match::Normal => None,
+            Match::GlobRange(range) => Some((range, item)),
+        };
+        (true, destination.to_bstr_replace(arg).into())
+    }
 }
 
 impl<'a> Needle<'a> {
     #[inline]
     fn matches(&self, item: Item<'_>) -> Option<Match> {
         match self {
-            Needle::FullName(name) => (*name == item.full_ref_name).then(Match::default),
+            Needle::FullName(name) => (*name == item.full_ref_name).then(|| Match::Normal),
             Needle::PartialName(name) => {
                 let mut buf = BString::from(Vec::with_capacity(128));
                 for (base, append_head) in [
@@ -177,7 +184,7 @@ impl<'a> Needle<'a> {
                         buf.push_str("/HEAD");
                     }
                     if buf == item.full_ref_name {
-                        return Some(Match::default());
+                        return Some(Match::Normal);
                     }
                 }
                 None
@@ -192,15 +199,13 @@ impl<'a> Needle<'a> {
                 }
                 let end = item.full_ref_name.len() - tail.len();
                 let end = item.full_ref_name[*asterisk_pos..end].find_byte(b'/').unwrap_or(end);
-                Some(Match {
-                    glob_range: Some(*asterisk_pos..end),
-                })
+                Some(Match::GlobRange(*asterisk_pos..end))
             }
             Needle::Object(id) => {
                 if *id == item.target {
-                    return Some(Match::default());
+                    return Some(Match::Normal);
                 }
-                (*id == item.tag?).then(Match::default)
+                (*id == item.tag?).then(|| Match::Normal)
             }
         }
     }
