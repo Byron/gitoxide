@@ -49,6 +49,7 @@ mod single {
 
 mod multiple {
     use crate::matching::baseline;
+    use git_refspec::parse::Error;
 
     #[test]
     fn fetch_only() {
@@ -60,12 +61,20 @@ mod multiple {
     }
 
     #[test]
-    #[ignore]
     fn fetch_only_and_negations() {
-        baseline::agrees_with_fetch_specs(["refs/heads/f*:refs/remotes/origin/a*", "^f1"]);
-        baseline::agrees_with_fetch_specs(["heads/f2", "^refs/heads/f*:refs/remotes/origin/a*"]);
+        baseline::invalid_specs_fail_to_parse_where_git_shows_surprising_behaviour(
+            ["refs/heads/f*:refs/remotes/origin/a*", "^f1"],
+            Error::NegativePartialName,
+        );
+        baseline::invalid_specs_fail_to_parse_where_git_shows_surprising_behaviour(
+            ["heads/f2", "^refs/heads/f*:refs/remotes/origin/a*"],
+            Error::NegativeWithDestination,
+        );
         baseline::agrees_with_fetch_specs(["refs/heads/f*:refs/remotes/origin/a*", "^refs/heads/f1"]);
-        baseline::agrees_with_fetch_specs(["^heads/f2", "refs/heads/f*:refs/remotes/origin/a*"]);
+        baseline::invalid_specs_fail_to_parse_where_git_shows_surprising_behaviour(
+            ["^heads/f2", "refs/heads/f*:refs/remotes/origin/a*"],
+            Error::NegativePartialName,
+        );
         baseline::agrees_with_fetch_specs(["^refs/heads/f2", "refs/heads/f*:refs/remotes/origin/a*"]);
     }
 }

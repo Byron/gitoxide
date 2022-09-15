@@ -77,6 +77,20 @@ pub mod baseline {
         check_fetch_remote(specs, Mode::Normal)
     }
 
+    pub fn invalid_specs_fail_to_parse_where_git_shows_surprising_behaviour<'a>(
+        specs: impl IntoIterator<Item = &'a str>,
+        err: git_refspec::parse::Error,
+    ) {
+        let err = err.to_string();
+        for spec in specs {
+            match git_refspec::parse(spec.into(), Operation::Fetch) {
+                Ok(_) => {}
+                Err(e) if e.to_string() == err => {}
+                Err(err) => panic!("Unexpected parse error: {:?}", err),
+            }
+        }
+    }
+
     /// Here we checked by hand which refs are actually written with a particular refspec
     pub fn agrees_but_observable_refs_are_vague<'a, 'b>(
         specs: impl IntoIterator<Item = &'a str> + Clone,
