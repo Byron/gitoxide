@@ -18,7 +18,7 @@ impl State {
         Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
     {
         let mut buf = Vec::new();
-        let root = find(tree, &mut buf).expect("couldn't find a tree for given oid");
+        let root = find(tree, &mut buf).ok_or(breadthfirst::Error::NotFound { oid: tree.into() })?;
         let state = breadthfirst::State::default();
         let mut delegate = EntryBuilder::new();
         breadthfirst(root, state, &mut find, &mut delegate)?;
