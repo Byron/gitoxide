@@ -70,6 +70,7 @@ impl<'a> Needle<'a> {
             Needle::PartialName(name) => {
                 let mut buf = BString::from(Vec::with_capacity(128));
                 for (base, append_head) in [
+                    ("", false),
                     ("refs/", false),
                     ("refs/tags/", false),
                     ("refs/heads/", false),
@@ -158,7 +159,7 @@ impl<'a> From<&'a BStr> for Needle<'a> {
                 name: v,
                 asterisk_pos: pos,
             }
-        } else if v.starts_with(b"refs/") || v == "HEAD" {
+        } else if v.starts_with(b"refs/") {
             Needle::FullName(v)
         } else if let Ok(id) = git_hash::ObjectId::from_hex(v) {
             Needle::Object(id)

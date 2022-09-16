@@ -95,7 +95,18 @@ mod multiple {
         baseline::agrees_but_observable_refs_are_vague([":refs/heads/f1"], ["HEAD:refs/heads/f1"]);
         baseline::agrees_but_observable_refs_are_vague([":f1"], ["HEAD:refs/heads/f1"]);
         baseline::agrees_but_observable_refs_are_vague(["@:f1"], ["HEAD:refs/heads/f1"]);
-        baseline::agrees_but_observable_refs_are_vague(["@:HEAD"], ["HEAD:HEAD"]);
+    }
+
+    #[test]
+    fn fetch_and_update_head_to_head_never_updates_actual_head_ref() {
+        baseline::agrees_but_observable_refs_are_vague(["@:HEAD"], ["HEAD:refs/heads/HEAD"]);
+    }
+
+    #[test]
+    fn fetch_and_update_head_with_empty_rhs() {
+        baseline::agrees_but_observable_refs_are_vague([":"], ["HEAD:"]);
+        baseline::agrees_but_observable_refs_are_vague(["HEAD:"], ["HEAD:"]);
+        baseline::agrees_but_observable_refs_are_vague(["@:"], ["HEAD:"]);
     }
 
     #[test]
