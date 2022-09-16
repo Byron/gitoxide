@@ -149,12 +149,7 @@ mod multiple {
                     spec: glob_spec.into(),
                 },
             ],
-            [
-                "refs/heads/f1",
-                "refs/heads/f2",
-                "refs/heads/f3",
-                "refs/heads/f1:refs/heads/f1",
-            ],
+            ["refs/heads/f1:refs/heads/f1"],
         )
     }
 }

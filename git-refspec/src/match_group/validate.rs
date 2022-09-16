@@ -113,18 +113,21 @@ impl<'spec, 'item> Outcome<'spec, 'item> {
             Err(Error { issues })
         } else {
             let mut fixed = Vec::new();
-            for mapping in self.mappings.iter_mut() {
-                if let Some(dst) = mapping.rhs.as_ref() {
+            let group = &self.group;
+            self.mappings.retain(|m| match m.rhs.as_ref() {
+                Some(dst) => {
                     if dst.starts_with(b"refs/") {
-                        continue;
+                        true
+                    } else {
+                        fixed.push(Fix::MappingWithPartialDestinationRemoved {
+                            name: dst.as_ref().to_owned(),
+                            spec: group.specs[m.spec_index].to_bstring(),
+                        });
+                        false
                     }
-                    fixed.push(Fix::MappingWithPartialDestinationRemoved {
-                        name: dst.as_ref().to_owned(),
-                        spec: self.group.specs[mapping.spec_index].to_bstring(),
-                    });
-                    mapping.rhs = None;
                 }
-            }
+                None => true,
+            });
             Ok((self, fixed))
         }
     }
