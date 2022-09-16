@@ -74,5 +74,9 @@ git clone --shared ./base clone
   baseline "refs/tags/*:refs/tags/*"
   baseline 'refs/heads/f*:foo/f*' 'f1:f1'
   baseline "+refs/heads/*:refs/remotes/origin/*" "refs/heads/f1:refs/remotes/origin/f2" "refs/heads/f2:refs/remotes/origin/f1"
+  baseline ':refs/heads/f1'
+  baseline ':f1'
+  baseline '@:origin'
+  baseline '@:HEAD'
 )
 

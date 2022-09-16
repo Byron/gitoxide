@@ -104,13 +104,17 @@ pub mod baseline {
         err: git_refspec::parse::Error,
     ) {
         let err = err.to_string();
+        let mut saw_err = false;
         for spec in specs {
             match git_refspec::parse(spec.into(), Operation::Fetch) {
                 Ok(_) => {}
-                Err(e) if e.to_string() == err => {}
+                Err(e) if e.to_string() == err => {
+                    saw_err = true;
+                }
                 Err(err) => panic!("Unexpected parse error: {:?}", err),
             }
         }
+        assert!(saw_err, "Failed to see error when parsing specs: {:?}", err)
     }
 
     /// Here we checked by hand which refs are actually written with a particular refspec
@@ -259,13 +263,20 @@ pub mod baseline {
                                 .unwrap_or_else(|| panic!("line unhandled: {:?}", line.as_bstr()));
                             let mut tokens = past_note.split(|b| *b == b' ').filter(|t| !t.is_empty());
 
-                            let lhs = tokens.next().unwrap().trim();
-                            tokens.next();
+                            let mut lhs = tokens.next().unwrap().trim();
+                            if lhs.as_bstr() == "->" {
+                                lhs = "HEAD".as_bytes();
+                            } else {
+                                tokens.next();
+                            };
                             let rhs = tokens.next().unwrap().trim();
-                            mappings.push(Mapping {
-                                remote: full_remote_ref(lhs.into()),
-                                local: (rhs != b"FETCH_HEAD").then(|| full_tracking_ref(rhs.into())),
-                            })
+                            let local = (rhs != b"FETCH_HEAD").then(|| full_tracking_ref(rhs.into()));
+                            if !(lhs.as_bstr() == "HEAD" && local.is_none()) {
+                                mappings.push(Mapping {
+                                    remote: full_remote_ref(lhs.into()),
+                                    local,
+                                })
+                            }
                         }
                     },
                 },
@@ -285,7 +296,7 @@ pub mod baseline {
                 name.insert_str(0, b"refs/tags/");
             } else if let Ok(_id) = git_hash::ObjectId::from_hex(name.as_ref()) {
                 // keep as is
-            } else {
+            } else if name != "HEAD" {
                 name.insert_str(0, b"refs/heads/");
             }
         }

@@ -158,6 +158,19 @@ fn colon_alone_is_for_fetching_head_into_fetchhead() {
 }
 
 #[test]
+fn ampersand_on_left_hand_side_is_head() {
+    assert_parse("@:", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
+    assert_parse(
+        "@:HEAD",
+        Instruction::Fetch(Fetch::AndUpdate {
+            src: b("HEAD"),
+            dst: b("HEAD"),
+            allow_non_fast_forward: false,
+        }),
+    );
+}
+
+#[test]
 fn empty_refspec_is_enough_for_fetching_head_into_fetchhead() {
     assert_parse("", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
 }
