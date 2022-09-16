@@ -27,11 +27,15 @@ fn object_hash_as_source() {
 }
 
 #[test]
-fn object_hash_destination_is_invalid() {
-    assert!(matches!(
-        try_parse("a:e69de29bb2d1d6434b8b29ae775ad8c2e48c5391", Operation::Fetch).unwrap_err(),
-        Error::InvalidFetchDestination
-    ));
+fn object_hash_destination_are_valid_as_they_might_be_a_strange_partial_branch_name() {
+    assert_parse(
+        "a:e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        Instruction::Fetch(Fetch::AndUpdate {
+            src: b("a"),
+            dst: b("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"),
+            allow_non_fast_forward: false,
+        }),
+    );
 }
 
 #[test]
@@ -62,8 +66,18 @@ fn negative_with_destination() {
 
 #[test]
 fn exclude() {
-    assert_parse("^a", Instruction::Fetch(Fetch::Exclude { src: b("a") }));
-    assert_parse("^a*", Instruction::Fetch(Fetch::Exclude { src: b("a*") }));
+    assert!(matches!(
+        try_parse("^a", Operation::Fetch).unwrap_err(),
+        Error::NegativePartialName
+    ));
+    assert!(matches!(
+        try_parse("^a*", Operation::Fetch).unwrap_err(),
+        Error::NegativeGlobPattern
+    ));
+    assert_parse(
+        "^refs/heads/a",
+        Instruction::Fetch(Fetch::Exclude { src: b("refs/heads/a") }),
+    );
 }
 
 #[test]
@@ -141,6 +155,19 @@ fn empty_lhs_colon_rhs_fetches_head_to_destination() {
 fn colon_alone_is_for_fetching_head_into_fetchhead() {
     assert_parse(":", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
     assert_parse("+:", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
+}
+
+#[test]
+fn ampersand_on_left_hand_side_is_head() {
+    assert_parse("@:", Instruction::Fetch(Fetch::Only { src: b("HEAD") }));
+    assert_parse(
+        "@:HEAD",
+        Instruction::Fetch(Fetch::AndUpdate {
+            src: b("HEAD"),
+            dst: b("HEAD"),
+            allow_non_fast_forward: false,
+        }),
+    );
 }
 
 #[test]

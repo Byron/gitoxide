@@ -7,7 +7,7 @@ version = "0.24.0"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 edition = "2018"
 include = ["src/**/*", "CHANGELOG.md"]
-rust-version = "1.59"
+rust-version = "1.60"
 
 [lib]
 doctest = false

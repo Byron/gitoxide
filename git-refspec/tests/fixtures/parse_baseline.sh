@@ -68,19 +68,25 @@ baseline fetch 'refs/heads/*g*/for-linus:refs/remotes/mine/*'
 baseline push 'refs/heads/*g*/for-linus:refs/remotes/mine/*'
 bad=$(printf '\011tab')
 baseline fetch "refs/heads/${bad}"
+baseline fetch 'refs/*/*'
+baseline fetch 'refs/heads/*'
+baseline fetch '^refs/*/*'
 
 # valid
 baseline push '+:'
 baseline push ':'
+baseline fetch 55e825ebe8fd2ff78cad3826afb696b96b576a7e
 
 baseline fetch ''
 baseline fetch ':'
 baseline fetch '+'
 baseline push 'refs/heads/main:refs/remotes/frotz/xyzzy'
+baseline fetch '55e825ebe8fd2ff78cad3826afb696b96b576a7e:refs/heads/main'
 baseline push 'refs/heads/*:refs/remotes/frotz/*'
 
 
 baseline fetch 'refs/heads/*:refs/remotes/frotz/*'
+baseline fetch 'heads/main'
 baseline fetch 'refs/heads/main:refs/remotes/frotz/xyzzy'
 
 baseline push 'main~1:refs/remotes/frotz/backup'
@@ -93,6 +99,10 @@ baseline fetch '@'
 
 baseline push '^@' fail
 baseline fetch '^@'
+baseline fetch '^refs/heads/main'
+baseline fetch '^refs/heads/*'
+baseline fetch '^heads/main'
+baseline fetch '^heads/*'
 
 baseline push '+@'
 baseline fetch '+@'

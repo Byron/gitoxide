@@ -17,7 +17,7 @@ git-path = { version = "^0.4.2", path = "../git-path" }
 git-ref = { version = "^0.15.2", path = "../git-ref" }
 git-hash = { version = "^0.9.9", path = "../git-hash" }
 
-bstr = { version = "0.2.13", default-features = false, features = ["std", "unicode"] }
+bstr = { version = "1.0.1", default-features = false, features = ["std", "unicode"] }
 thiserror = "1.0.26"
 
 [dev-dependencies]

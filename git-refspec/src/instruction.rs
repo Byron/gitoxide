@@ -42,9 +42,10 @@ pub enum Push<'a> {
 /// Destinations can only be a partial or full ref-names on the local side.
 #[derive(PartialOrd, Ord, PartialEq, Eq, Copy, Clone, Hash, Debug)]
 pub enum Fetch<'a> {
-    /// Fetch a ref or refs and write the result into the `FETCH_HEAD` without updating local branches.
+    /// Fetch a ref or refs, without updating local branches.
     Only {
-        /// The ref name to fetch on the remote side, without updating the local side. This will write the result into `FETCH_HEAD`.
+        /// The partial or full ref name to fetch on the remote side or the full object hex-name, without updating the local side.
+        /// Note that this may not be a glob pattern, as those need to be matched by a destination which isn't present here.
         src: &'a BStr,
     },
     /// Exclude a single ref.

@@ -11,7 +11,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 git-hash = { path = "../../git-hash" }
-bstr = "0.2.15"
+bstr = "1.0.1"
 
 [dependencies.git-revision]
 path = ".."

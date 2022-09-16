@@ -149,6 +149,7 @@ is usable to some extend.
   * [git-date](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-date)
 * **idea** _(just a name placeholder)_
   * [git-note](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-note)
+  * [git-fetchhead](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-fetchhead)
   * [git-filter](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-filter)
   * [git-lfs](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-lfs)
   * [git-rebase](https://github.com/Byron/gitoxide/blob/main/crate-status.md#git-rebase)

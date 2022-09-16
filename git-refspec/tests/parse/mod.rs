@@ -6,7 +6,7 @@ use git_testtools::scripted_fixture_repo_read_only;
 
 #[test]
 fn baseline() {
-    let dir = scripted_fixture_repo_read_only("make_baseline.sh").unwrap();
+    let dir = scripted_fixture_repo_read_only("parse_baseline.sh").unwrap();
     let baseline = std::fs::read(dir.join("baseline.git")).unwrap();
     let mut lines = baseline.lines();
     let mut panics = 0;
@@ -29,7 +29,7 @@ fn baseline() {
             _ => unreachable!("{} unexpected", kind.as_bstr()),
         };
         let res = catch_unwind(|| try_parse(spec.to_str().unwrap(), op));
-        match res {
+        match &res {
             Ok(res) => match (res.is_ok(), err_code == 0) {
                 (true, true) | (false, false) => {
                     if let Ok(spec) = res {
@@ -37,8 +37,19 @@ fn baseline() {
                     }
                 }
                 _ => {
-                    eprintln!("{err_code} {res:?} {} {:?}", kind.as_bstr(), spec.as_bstr());
-                    mismatch += 1;
+                    match (res.as_ref().err(), err_code == 0) {
+                        (
+                            Some(
+                                git_refspec::parse::Error::NegativePartialName
+                                | git_refspec::parse::Error::NegativeGlobPattern,
+                            ),
+                            true,
+                        ) => {} // we prefer failing fast, git let's it pass
+                        _ => {
+                            eprintln!("{err_code} {res:?} {} {:?}", kind.as_bstr(), spec.as_bstr());
+                            mismatch += 1;
+                        }
+                    }
                 }
             },
             Err(_) => {
@@ -55,6 +66,18 @@ fn baseline() {
             panics
         );
     }
+}
+
+#[test]
+fn local_and_remote() -> crate::Result {
+    let spec = git_refspec::parse("remote:local".into(), Operation::Fetch)?;
+    assert_eq!(spec.remote(), spec.source());
+    assert_eq!(spec.local(), spec.destination());
+
+    let spec = git_refspec::parse("local:remote".into(), Operation::Push)?;
+    assert_eq!(spec.local(), spec.source());
+    assert_eq!(spec.remote(), spec.destination());
+    Ok(())
 }
 
 mod fetch;

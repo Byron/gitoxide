@@ -13,7 +13,7 @@ doctest = false
 
 [features]
 ## Data structures implement `serde::Serialize` and `serde::Deserialize`.
-serde1 = ["serde", "bstr/serde1"]
+serde1 = ["serde", "bstr/serde"]
 
 [dependencies]
 git-features = { version = "^0.22.4", path = "../git-features" }
@@ -22,7 +22,7 @@ git-path = { version = "^0.4.2", path = "../git-path" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 thiserror = "1.0.32"
 url = "2.1.1"
-bstr = { version = "0.2.13", default-features = false, features = ["std"] }
+bstr = { version = "1.0.1", default-features = false, features = ["std"] }
 home = "0.5.3"
 
 document-features = { version = "0.2.0", optional = true }

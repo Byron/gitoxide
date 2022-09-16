@@ -4,6 +4,7 @@ use crate::{
     types::Mode,
     Instruction, RefSpec, RefSpecRef,
 };
+use bstr::BStr;
 
 /// Conversion. Use the [RefSpecRef][RefSpec::to_ref()] type for more usage options.
 impl RefSpec {
@@ -83,6 +84,38 @@ mod impls {
 
 /// Access
 impl RefSpecRef<'_> {
+    /// Return the left-hand side of the spec, typically the source.
+    /// It takes many different forms so don't rely on this being a ref name.
+    ///
+    /// It's not present in case of deletions.
+    pub fn source(&self) -> Option<&BStr> {
+        self.src
+    }
+
+    /// Return the right-hand side of the spec, typically the destination.
+    /// It takes many different forms so don't rely on this being a ref name.
+    ///
+    /// It's not present in case of source-only specs.
+    pub fn destination(&self) -> Option<&BStr> {
+        self.dst
+    }
+
+    /// Always returns the remote side, whose actual side in the refspec depends on how it was parsed.
+    pub fn remote(&self) -> Option<&BStr> {
+        match self.op {
+            Operation::Push => self.dst,
+            Operation::Fetch => self.src,
+        }
+    }
+
+    /// Always returns the local side, whose actual side in the refspec depends on how it was parsed.
+    pub fn local(&self) -> Option<&BStr> {
+        match self.op {
+            Operation::Push => self.src,
+            Operation::Fetch => self.dst,
+        }
+    }
+
     /// Transform the state of the refspec into an instruction making clear what to do with it.
     pub fn instruction(&self) -> Instruction<'_> {
         match self.op {

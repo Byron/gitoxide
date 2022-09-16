@@ -12,6 +12,10 @@ pub enum Error {
     NegativeUnsupported,
     #[error("Negative specs must be object hashes")]
     NegativeObjectHash,
+    #[error("Negative specs must be full ref names, starting with \"refs/\"")]
+    NegativePartialName,
+    #[error("Negative glob patterns are not allowed")]
+    NegativeGlobPattern,
     #[error("Fetch destinations must be ref-names, like 'HEAD:refs/heads/branch'")]
     InvalidFetchDestination,
     #[error("Cannot push into an empty destination")]
@@ -112,17 +116,6 @@ pub(crate) mod function {
             }
         };
 
-        if mode == Mode::Negative {
-            match src {
-                Some(spec) => {
-                    if looks_like_object_hash(spec) {
-                        return Err(Error::NegativeObjectHash);
-                    }
-                }
-                None => return Err(Error::NegativeEmpty),
-            }
-        }
-
         if let Some(spec) = src.as_mut() {
             if *spec == "@" {
                 *spec = "HEAD".into();
@@ -130,12 +123,25 @@ pub(crate) mod function {
         }
         let (src, src_had_pattern) = validated(src, operation == Operation::Push && dst.is_some())?;
         let (dst, dst_had_pattern) = validated(dst, false)?;
-        if !dst_had_pattern && looks_like_object_hash(dst.unwrap_or_default()) {
-            return Err(Error::InvalidFetchDestination);
-        }
         if mode != Mode::Negative && src_had_pattern != dst_had_pattern {
             return Err(Error::PatternUnbalanced);
         }
+
+        if mode == Mode::Negative {
+            match src {
+                Some(spec) => {
+                    if src_had_pattern {
+                        return Err(Error::NegativeGlobPattern);
+                    } else if looks_like_object_hash(spec) {
+                        return Err(Error::NegativeObjectHash);
+                    } else if !spec.starts_with(b"refs/") && spec != "HEAD" {
+                        return Err(Error::NegativePartialName);
+                    }
+                }
+                None => return Err(Error::NegativeEmpty),
+            }
+        }
+
         Ok(RefSpecRef {
             op: operation,
             mode,

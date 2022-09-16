@@ -20,7 +20,7 @@ git-hash = { version = "^0.9.9", path = "../git-hash" }
 git-object = { version = "^0.20.2", path = "../git-object" }
 git-date = { version = "^0.1.0", path = "../git-date" }
 
-bstr = { version = "0.2.13", default-features = false, features = ["std"]}
+bstr = { version = "1.0.1", default-features = false, features = ["std"]}
 hash_hasher = "2.0.3"
 thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
