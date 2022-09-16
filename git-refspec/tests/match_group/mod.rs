@@ -131,12 +131,30 @@ mod multiple {
     }
 
     #[test]
-    #[ignore]
     fn fetch_and_update_with_fixes() {
+        let glob_spec = "refs/heads/f*:foo/f*";
         baseline::agrees_and_applies_fixes(
-            ["refs/heads/f*:foo/f*", "f1:f1"],
-            [Fix::InvalidRefName],
-            ["refs/heads/f1:refs/heads/f1"],
+            [glob_spec, "f1:f1"],
+            [
+                Fix::MappingWithPartialDestinationRemoved {
+                    name: "foo/f1".into(),
+                    spec: glob_spec.into(),
+                },
+                Fix::MappingWithPartialDestinationRemoved {
+                    name: "foo/f2".into(),
+                    spec: glob_spec.into(),
+                },
+                Fix::MappingWithPartialDestinationRemoved {
+                    name: "foo/f3".into(),
+                    spec: glob_spec.into(),
+                },
+            ],
+            [
+                "refs/heads/f1",
+                "refs/heads/f2",
+                "refs/heads/f3",
+                "refs/heads/f1:refs/heads/f1",
+            ],
         )
     }
 }

@@ -45,8 +45,13 @@ impl std::fmt::Display for Issue {
 /// All possible fixes corrected while validating matched mappings.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Fix {
-    /// TODO
-    InvalidRefName,
+    /// Removed a mapping that contained a partial destination entirely.
+    MappingWithPartialDestinationRemoved {
+        /// The destination ref name that was ignored.
+        name: BString,
+        /// The spec that defined the mapping
+        spec: BString,
+    },
 }
 
 /// The error returned [outcome validation][Outcome::validated()].
@@ -81,8 +86,7 @@ impl<'spec, 'item> Outcome<'spec, 'item> {
     /// Return `(modified self, issues)` providing a fixed-up set of mappings in `self` with the fixed `issues`
     /// provided as part of it.
     /// Terminal issues are communicated using the [`Error`] type accordingly.
-    pub fn validated(self) -> Result<(Self, Vec<Fix>), Error> {
-        let fixed = Vec::new();
+    pub fn validated(mut self) -> Result<(Self, Vec<Fix>), Error> {
         let mut sources_by_destinations = BTreeMap::new();
         for (dst, (spec_index, src)) in self
             .mappings
@@ -108,6 +112,19 @@ impl<'spec, 'item> Outcome<'spec, 'item> {
         if !issues.is_empty() {
             Err(Error { issues })
         } else {
+            let mut fixed = Vec::new();
+            for mapping in self.mappings.iter_mut() {
+                if let Some(dst) = mapping.rhs.as_ref() {
+                    if dst.starts_with(b"refs/") {
+                        continue;
+                    }
+                    fixed.push(Fix::MappingWithPartialDestinationRemoved {
+                        name: dst.as_ref().to_owned(),
+                        spec: self.group.specs[mapping.spec_index].to_bstring(),
+                    });
+                    mapping.rhs = None;
+                }
+            }
             Ok((self, fixed))
         }
     }
