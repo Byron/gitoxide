@@ -68,7 +68,7 @@ git clone --shared ./base clone
   baseline "refs/heads/*:refs/remotes/origin/*" "refs/heads/main:refs/remotes/new-origin/main"
   baseline "refs/heads/*:refs/remotes/origin/*" "refs/heads/main:refs/remotes/origin/main"
   baseline "refs/heads/f1:refs/remotes/origin/conflict" "refs/heads/f2:refs/remotes/origin/conflict"
-  baseline "refs/heads/f1:refs/remotes/origin/conflict" "refs/heads/f2:refs/remotes/origin/conflict" "refs/heads/f3:refs/remotes/origin/conflict"
+  baseline "refs/heads/f1:refs/remotes/origin/conflict2" "refs/heads/f2:refs/remotes/origin/conflict2" "refs/heads/f1:refs/remotes/origin/conflict" "refs/heads/f2:refs/remotes/origin/conflict" "refs/heads/f3:refs/remotes/origin/conflict"
   baseline "refs/heads/f1:refs/remotes/origin/same" "refs/tags/v0.0-f1:refs/remotes/origin/same" # same object, not technically a problem but git flags it anyway
   baseline "refs/tags/*:refs/remotes/origin/*" "refs/heads/*:refs/remotes/origin/*"
   baseline "refs/tags/*:refs/tags/*"

@@ -58,6 +58,11 @@ mod multiple {
         baseline::agrees_with_fetch_specs(["refs/heads/main", "refs/heads/f1"]);
         baseline::agrees_with_fetch_specs(["heads/f1", "f2", "refs/heads/f3", "heads/main"]);
         baseline::agrees_with_fetch_specs(["f*:a*", "refs/heads/main"]);
+        baseline::agrees_with_fetch_specs([
+            "refs/tags/*:refs/remotes/origin/*",
+            "refs/heads/*:refs/remotes/origin/*",
+        ]);
+        baseline::agrees_with_fetch_specs(["refs/tags/*:refs/tags/*"]);
     }
 
     #[test]
@@ -104,6 +109,23 @@ mod multiple {
                 "refs/heads/f2:refs/remotes/origin/conflict",
             ],
             "Found 1 issue that prevents the refspec mapping to be used: \n\tConflicting destination \"refs/remotes/origin/conflict\" would be written by refs/heads/f1 (\"refs/heads/f1:refs/remotes/origin/conflict\"), refs/heads/f2 (\"refs/heads/f2:refs/remotes/origin/conflict\")",
+        );
+        baseline::agrees_with_fetch_specs_validation_error(
+            [
+                "refs/heads/f1:refs/remotes/origin/conflict2",
+                "refs/heads/f2:refs/remotes/origin/conflict2",
+                "refs/heads/f1:refs/remotes/origin/conflict",
+                "refs/heads/f2:refs/remotes/origin/conflict",
+                "refs/heads/f3:refs/remotes/origin/conflict",
+            ],
+            "Found 2 issues that prevent the refspec mapping to be used: \n\tConflicting destination \"refs/remotes/origin/conflict\" would be written by refs/heads/f1 (\"refs/heads/f1:refs/remotes/origin/conflict\"), refs/heads/f2 (\"refs/heads/f2:refs/remotes/origin/conflict\"), refs/heads/f3 (\"refs/heads/f3:refs/remotes/origin/conflict\")\n\tConflicting destination \"refs/remotes/origin/conflict2\" would be written by refs/heads/f1 (\"refs/heads/f1:refs/remotes/origin/conflict2\"), refs/heads/f2 (\"refs/heads/f2:refs/remotes/origin/conflict2\")",
+        );
+        baseline::agrees_with_fetch_specs_validation_error(
+            [
+                "refs/heads/f1:refs/remotes/origin/same",
+                "refs/tags/v0.0-f1:refs/remotes/origin/same",
+            ],
+            "Found 1 issue that prevents the refspec mapping to be used: \n\tConflicting destination \"refs/remotes/origin/same\" would be written by refs/heads/f1 (\"refs/heads/f1:refs/remotes/origin/same\"), refs/tags/v0.0-f1 (\"refs/tags/v0.0-f1:refs/remotes/origin/same\")",
         );
     }
 }

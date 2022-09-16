@@ -264,7 +264,7 @@ pub mod baseline {
     }
 
     fn looks_like_tag(name: &BString) -> bool {
-        name.starts_with(b"v0.")
+        name.starts_with(b"v0.") || name.starts_with(b"annotated-v0.")
     }
 
     fn full_remote_ref(mut name: BString) -> BString {
