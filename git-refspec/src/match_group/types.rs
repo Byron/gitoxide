@@ -1,5 +1,5 @@
 use crate::RefSpecRef;
-use bstr::BStr;
+use bstr::{BStr, BString};
 use git_hash::oid;
 use std::borrow::Cow;
 
@@ -32,8 +32,8 @@ pub struct Item<'a> {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-/// The source (or left-hand) side of a mapping.
-pub enum Source<'a> {
+/// The source (or left-hand) side of a mapping, which references its name.
+pub enum SourceRef<'a> {
     /// A full reference name, which is expected to be valid.
     ///
     /// Validity, however, is not enforced here.
@@ -45,6 +45,39 @@ pub enum Source<'a> {
     ObjectId(git_hash::ObjectId),
 }
 
+impl SourceRef<'_> {
+    /// Create a fully owned instance from this one.
+    pub fn to_owned(&self) -> Source {
+        match self {
+            SourceRef::ObjectId(id) => Source::ObjectId(*id),
+            SourceRef::FullName(name) => Source::FullName((*name).to_owned()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// The source (or left-hand) side of a mapping, which owns its name.
+pub enum Source {
+    /// A full reference name, which is expected to be valid.
+    ///
+    /// Validity, however, is not enforced here.
+    FullName(BString),
+    /// The name of an object that is expected to exist on the remote side.
+    /// Note that it might not be advertised by the remote but part of the object graph,
+    /// and thus gets sent in the pack. The server is expected to fail unless the desired
+    /// object is present but at some time it is merely a request by the user.
+    ObjectId(git_hash::ObjectId),
+}
+
+impl std::fmt::Display for Source {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Source::FullName(name) => name.fmt(f),
+            Source::ObjectId(id) => id.fmt(f),
+        }
+    }
+}
+
 /// A mapping from a remote to a local refs for fetches or local to remote refs for pushes.
 ///
 /// Mappings are like edges in a graph, initially without any constraints.
@@ -53,9 +86,16 @@ pub struct Mapping<'a, 'b> {
     /// The index into the initial `items` list that matched against a spec.
     pub item_index: Option<usize>,
     /// The name of the remote side for fetches or the local one for pushes that matched.
-    pub lhs: Source<'a>,
+    pub lhs: SourceRef<'a>,
     /// The name of the local side for fetches or the remote one for pushes that corresponds to `lhs`, if available.
     pub rhs: Option<Cow<'b, BStr>>,
     /// The index of the matched ref-spec as seen from the match group.
     pub(crate) spec_index: usize,
+}
+
+impl std::hash::Hash for Mapping<'_, '_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.lhs.hash(state);
+        self.rhs.hash(state);
+    }
 }

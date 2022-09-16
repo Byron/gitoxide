@@ -6,7 +6,7 @@ pub mod baseline {
     use crate::matching::BASELINE;
     use bstr::{BString, ByteSlice, ByteVec};
     use git_hash::ObjectId;
-    use git_refspec::match_group::Source;
+    use git_refspec::match_group::SourceRef;
     use git_refspec::parse::Operation;
     use git_refspec::MatchGroup;
     use git_testtools::once_cell::sync::Lazy;
@@ -137,9 +137,25 @@ pub mod baseline {
                     assert_eq!(actual.unwrap_err().to_string(), *err_message);
                     return;
                 }
-                None => (actual.unwrap().mappings, expected.expect("no error")),
+                None => {
+                    let (actual, fixed) = actual.unwrap();
+                    assert_eq!(
+                        fixed,
+                        Vec::<git_refspec::match_group::validate::Fix>::new(),
+                        "we don't expect any issues to be fixed here"
+                    );
+                    (actual.mappings, expected.expect("no error"))
+                }
             },
-            Mode::Custom { expected } => (actual.unwrap().mappings, expected),
+            Mode::Custom { expected } => {
+                let (actual, fixed) = actual.unwrap();
+                assert_eq!(
+                    fixed,
+                    Vec::<git_refspec::match_group::validate::Fix>::new(),
+                    "we don't expect any issues to be fixed here"
+                );
+                (actual.mappings, expected)
+            }
         };
         assert_eq!(
             actual.len(),
@@ -165,10 +181,10 @@ pub mod baseline {
         }
     }
 
-    fn source_to_bstring(source: Source) -> BString {
+    fn source_to_bstring(source: SourceRef) -> BString {
         match source {
-            Source::FullName(name) => name.into(),
-            Source::ObjectId(id) => id.to_string().into(),
+            SourceRef::FullName(name) => name.into(),
+            SourceRef::ObjectId(id) => id.to_string().into(),
         }
     }
 

@@ -97,14 +97,13 @@ mod multiple {
     }
 
     #[test]
-    #[ignore]
     fn fetch_and_update_with_conflicts() {
         baseline::agrees_with_fetch_specs_validation_error(
             [
                 "refs/heads/f1:refs/remotes/origin/conflict",
                 "refs/heads/f2:refs/remotes/origin/conflict",
             ],
-            "TBD",
+            "Found 1 issue that prevents the refspec mapping to be used: \n\tConflicting destination \"refs/remotes/origin/conflict\" would be written by refs/heads/f1 (\"refs/heads/f1:refs/remotes/origin/conflict\"), refs/heads/f2 (\"refs/heads/f2:refs/remotes/origin/conflict\")",
         );
     }
 }
