@@ -48,7 +48,7 @@ path = "tests/async-transport.rs"
 required-features = ["async-client"]
 
 [dependencies]
-git-features = { version = "^0.22.5", path = "../git-features" }
+git-features = { version = "^0.22.6", path = "../git-features" }
 git-url = { version = "^0.9.0", path = "../git-url" }
 git-sec = { version = "^0.4.0", path = "../git-sec" }
 git-packetline = { version = "^0.13.0", path = "../git-packetline" }

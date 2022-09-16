@@ -1282,7 +1282,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.22.5"
+version = "0.22.6"
 dependencies = [
  "bstr 1.0.1",
  "bytes",

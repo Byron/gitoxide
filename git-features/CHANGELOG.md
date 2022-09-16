@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.22.6 (2022-09-16)
 
 Fix docs.rs rendering.
 
@@ -13,7 +13,7 @@ Fix docs.rs rendering.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
+ - 3 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
@@ -24,6 +24,7 @@ Fix docs.rs rendering.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - update changelog prior to release ([`ff80042`](https://github.com/Byron/gitoxide/commit/ff80042c9691e5dba5834c674174fdf6d3bdfe7d))
     - fix git-features docs build ([`e5963fe`](https://github.com/Byron/gitoxide/commit/e5963fea183d81db1fe502121b494146a58bd86e))
     - upgrade all dependencies, except for `windows` ([`2968181`](https://github.com/Byron/gitoxide/commit/29681819ffe53d3926d631dc482f71d6200cb549))
 </details>
