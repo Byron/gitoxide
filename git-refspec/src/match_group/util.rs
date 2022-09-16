@@ -20,7 +20,9 @@ impl<'a> Matcher<'a> {
         match (self.lhs, self.rhs) {
             (Some(lhs), None) => (lhs.matches(item).is_match(), None),
             (Some(lhs), Some(rhs)) => lhs.matches(item).into_match_outcome(rhs, item),
-            _ => todo!(),
+            (None, None) | (None, Some(_)) => {
+                unreachable!("For all we know, the lefthand side is never empty. Push specs might change that.")
+            }
         }
     }
 }
