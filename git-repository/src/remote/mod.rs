@@ -27,6 +27,20 @@ pub mod init;
 
 ///
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
+pub mod fetch {
+    use crate::bstr::BString;
+
+    /// A mapping between a single remote reference and its advertised objects to a local destination which may or may not exist.
+    pub struct Mapping {
+        /// The reference on the remote side, along with information about the objects they point to as advertised by the server.
+        pub remote: git_protocol::fetch::Ref,
+        /// The local tracking reference to update after fetching the object visible via `remote`.
+        pub local: Option<BString>,
+    }
+}
+
+///
+#[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
 pub mod connect;
 
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]

@@ -1,7 +1,7 @@
 use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
 
-use crate::remote::{connection::HandshakeWithRefs, Connection, Direction};
+use crate::remote::{connection::HandshakeWithRefs, fetch, Connection, Direction};
 
 mod error {
     #[derive(Debug, thiserror::Error)]
@@ -31,6 +31,13 @@ where
         let res = self.fetch_refs().await?;
         git_protocol::fetch::indicate_end_of_interaction(&mut self.transport).await?;
         Ok(res.refs)
+    }
+
+    /// A mapping showing the objects available in refs matching our ref-specs on the remote side, along with their destination
+    /// ref locally, if set and if there are no conflicts.
+    #[git_protocol::maybe_async::maybe_async]
+    pub async fn ref_mapping(self) -> Result<Vec<fetch::Mapping>, Error> {
+        todo!()
     }
 
     #[git_protocol::maybe_async::maybe_async]
