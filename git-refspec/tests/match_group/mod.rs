@@ -128,6 +128,14 @@ mod multiple {
             ],
             "Found 1 issue that prevents the refspec mapping to be used: \n\tConflicting destination \"refs/remotes/origin/same\" would be written by refs/heads/f1 (\"refs/heads/f1:refs/remotes/origin/same\"), refs/tags/v0.0-f1 (\"refs/tags/v0.0-f1:refs/remotes/origin/same\")",
         );
+        baseline::agrees_with_fetch_specs_validation_error(
+            [
+                "+refs/heads/*:refs/remotes/origin/*",
+                "refs/heads/f1:refs/remotes/origin/f2",
+                "refs/heads/f2:refs/remotes/origin/f1",
+            ],
+            "Found 2 issues that prevent the refspec mapping to be used: \n\tConflicting destination \"refs/remotes/origin/f1\" would be written by refs/heads/f1 (\"+refs/heads/*:refs/remotes/origin/*\"), refs/heads/f2 (\"refs/heads/f2:refs/remotes/origin/f1\")\n\tConflicting destination \"refs/remotes/origin/f2\" would be written by refs/heads/f2 (\"+refs/heads/*:refs/remotes/origin/*\"), refs/heads/f1 (\"refs/heads/f1:refs/remotes/origin/f2\")",
+        );
     }
 
     #[test]
