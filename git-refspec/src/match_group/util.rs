@@ -6,7 +6,6 @@ use std::borrow::Cow;
 use std::ops::Range;
 
 /// A type keeping enough information about a ref-spec to be able to efficiently match it against multiple matcher items.
-#[allow(dead_code)]
 pub struct Matcher<'a> {
     pub(crate) lhs: Option<Needle<'a>>,
     pub(crate) rhs: Option<Needle<'a>>,
@@ -17,7 +16,6 @@ impl<'a> Matcher<'a> {
     /// if there was no `rhs`.
     ///
     /// This may involve resolving a glob with an allocation, as the destination is built using the matching portion of a glob.
-    #[allow(dead_code)]
     pub fn matches_lhs(&self, item: Item<'_>) -> (bool, Option<Cow<'a, BStr>>) {
         match (self.lhs, self.rhs) {
             (Some(lhs), None) => (lhs.matches(item).is_match(), None),
@@ -160,7 +158,7 @@ impl<'a> From<&'a BStr> for Needle<'a> {
                 name: v,
                 asterisk_pos: pos,
             }
-        } else if v.starts_with(b"refs/") {
+        } else if v.starts_with(b"refs/") || v == "HEAD" {
             Needle::FullName(v)
         } else if let Ok(id) = git_hash::ObjectId::from_hex(v) {
             Needle::Object(id)

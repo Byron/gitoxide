@@ -91,9 +91,8 @@ mod multiple {
     }
 
     #[test]
-    #[ignore]
     fn fetch_and_update_with_empty_lhs() {
-        baseline::agrees_with_fetch_specs([":refs/heads/f1"]);
+        baseline::agrees_but_observable_refs_are_vague([":refs/heads/f1"], ["HEAD:refs/heads/f1"]);
         baseline::agrees_but_observable_refs_are_vague([":f1"], ["HEAD:refs/heads/f1"]);
         baseline::agrees_but_observable_refs_are_vague(["@:f1"], ["HEAD:refs/heads/f1"]);
         baseline::agrees_but_observable_refs_are_vague(["@:HEAD"], ["HEAD:HEAD"]);

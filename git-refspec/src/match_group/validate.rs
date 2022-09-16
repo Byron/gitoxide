@@ -116,7 +116,7 @@ impl<'spec, 'item> Outcome<'spec, 'item> {
             let group = &self.group;
             self.mappings.retain(|m| match m.rhs.as_ref() {
                 Some(dst) => {
-                    if dst.starts_with(b"refs/") {
+                    if dst.starts_with(b"refs/") || dst.as_ref() == "HEAD" {
                         true
                     } else {
                         fixed.push(Fix::MappingWithPartialDestinationRemoved {
