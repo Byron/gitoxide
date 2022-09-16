@@ -72,5 +72,6 @@ git clone --shared ./base clone
   baseline "refs/heads/f1:refs/remotes/origin/same" "refs/tags/v0.0-f1:refs/remotes/origin/same" # same object, not technically a problem but git flags it anyway
   baseline "refs/tags/*:refs/remotes/origin/*" "refs/heads/*:refs/remotes/origin/*"
   baseline "refs/tags/*:refs/tags/*"
+  baseline 'refs/heads/f*:foo/f*' 'f1:f1'
 )
 

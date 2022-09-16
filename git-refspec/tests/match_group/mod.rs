@@ -49,6 +49,7 @@ mod single {
 
 mod multiple {
     use crate::matching::baseline;
+    use git_refspec::match_group::validate::Fix;
     use git_refspec::parse::Error;
 
     #[test]
@@ -127,5 +128,15 @@ mod multiple {
             ],
             "Found 1 issue that prevents the refspec mapping to be used: \n\tConflicting destination \"refs/remotes/origin/same\" would be written by refs/heads/f1 (\"refs/heads/f1:refs/remotes/origin/same\"), refs/tags/v0.0-f1 (\"refs/tags/v0.0-f1:refs/remotes/origin/same\")",
         );
+    }
+
+    #[test]
+    #[ignore]
+    fn fetch_and_update_with_fixes() {
+        baseline::agrees_and_applies_fixes(
+            ["refs/heads/f*:foo/f*", "f1:f1"],
+            [Fix::InvalidRefName],
+            ["refs/heads/f1:refs/heads/f1"],
+        )
     }
 }

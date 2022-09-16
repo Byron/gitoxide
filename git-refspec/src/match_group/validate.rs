@@ -44,7 +44,10 @@ impl std::fmt::Display for Issue {
 
 /// All possible fixes corrected while validating matched mappings.
 #[derive(Debug, PartialEq, Eq)]
-pub enum Fix {}
+pub enum Fix {
+    /// TODO
+    InvalidRefName,
+}
 
 /// The error returned [outcome validation][Outcome::validated()].
 #[derive(Debug)]

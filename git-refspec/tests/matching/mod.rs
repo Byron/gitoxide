@@ -6,6 +6,7 @@ pub mod baseline {
     use crate::matching::BASELINE;
     use bstr::{BString, ByteSlice, ByteVec};
     use git_hash::ObjectId;
+    use git_refspec::match_group::validate::Fix;
     use git_refspec::match_group::SourceRef;
     use git_refspec::parse::Operation;
     use git_refspec::MatchGroup;
@@ -50,6 +51,14 @@ pub mod baseline {
         specs: impl IntoIterator<Item = &'a str> + Clone,
         expected: impl IntoIterator<Item = &'b str>,
     ) {
+        agrees_and_applies_fixes(specs, Vec::new(), expected)
+    }
+
+    pub fn agrees_and_applies_fixes<'a, 'b>(
+        specs: impl IntoIterator<Item = &'a str> + Clone,
+        fixes: impl IntoIterator<Item = Fix>,
+        expected: impl IntoIterator<Item = &'b str>,
+    ) {
         check_fetch_remote(
             specs,
             Mode::Custom {
@@ -63,6 +72,7 @@ pub mod baseline {
                         }
                     })
                     .collect(),
+                fixes: fixes.into_iter().collect(),
             },
         )
     }
@@ -113,7 +123,7 @@ pub mod baseline {
 
     enum Mode {
         Normal { validate_err: Option<String> },
-        Custom { expected: Vec<Mapping> },
+        Custom { expected: Vec<Mapping>, fixes: Vec<Fix> },
     }
 
     fn check_fetch_remote<'a>(specs: impl IntoIterator<Item = &'a str> + Clone, mode: Mode) {
@@ -147,13 +157,12 @@ pub mod baseline {
                     (actual.mappings, expected.expect("no error"))
                 }
             },
-            Mode::Custom { expected } => {
-                let (actual, fixed) = actual.unwrap();
-                assert_eq!(
-                    fixed,
-                    Vec::<git_refspec::match_group::validate::Fix>::new(),
-                    "we don't expect any issues to be fixed here"
-                );
+            Mode::Custom {
+                expected,
+                fixes: expected_fixes,
+            } => {
+                let (actual, actual_fixes) = actual.unwrap();
+                assert_eq!(&actual_fixes, expected_fixes,);
                 (actual.mappings, expected)
             }
         };
@@ -239,23 +248,26 @@ pub mod baseline {
                     Some(message) => {
                         fatal = Some(message.into());
                     }
-                    None => {
-                        let past_note = line
-                            .splitn(2, |b| *b == b']')
-                            .nth(1)
-                            .or_else(|| line.strip_prefix(b" * branch "))
-                            .or_else(|| line.strip_prefix(b" * tag "))
-                            .unwrap_or_else(|| panic!("line unhandled: {:?}", line.as_bstr()));
-                        let mut tokens = past_note.split(|b| *b == b' ').filter(|t| !t.is_empty());
+                    None => match line.strip_prefix(b"error: * Ignoring funny ref") {
+                        Some(_) => continue,
+                        None => {
+                            let past_note = line
+                                .splitn(2, |b| *b == b']')
+                                .nth(1)
+                                .or_else(|| line.strip_prefix(b" * branch "))
+                                .or_else(|| line.strip_prefix(b" * tag "))
+                                .unwrap_or_else(|| panic!("line unhandled: {:?}", line.as_bstr()));
+                            let mut tokens = past_note.split(|b| *b == b' ').filter(|t| !t.is_empty());
 
-                        let lhs = tokens.next().unwrap().trim();
-                        tokens.next();
-                        let rhs = tokens.next().unwrap().trim();
-                        mappings.push(Mapping {
-                            remote: full_remote_ref(lhs.into()),
-                            local: (rhs != b"FETCH_HEAD").then(|| full_tracking_ref(rhs.into())),
-                        })
-                    }
+                            let lhs = tokens.next().unwrap().trim();
+                            tokens.next();
+                            let rhs = tokens.next().unwrap().trim();
+                            mappings.push(Mapping {
+                                remote: full_remote_ref(lhs.into()),
+                                local: (rhs != b"FETCH_HEAD").then(|| full_tracking_ref(rhs.into())),
+                            })
+                        }
+                    },
                 },
             }
         }
