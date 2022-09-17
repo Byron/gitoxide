@@ -88,7 +88,7 @@ impl<'a> MatchGroup<'a> {
                             .matches_lhs(Item {
                                 full_ref_name: name,
                                 target: &null_id,
-                                tag: None,
+                                object: None,
                             })
                             .0
                     }

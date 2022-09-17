@@ -111,8 +111,8 @@ impl<'a> Needle<'a> {
                 if *id == item.target {
                     return Match::Normal;
                 }
-                match item.tag {
-                    Some(tag) if tag == *id => Match::Normal,
+                match item.object {
+                    Some(object) if object == *id => Match::Normal,
                     _ => Match::None,
                 }
             }

@@ -18,8 +18,8 @@ pub mod baseline {
     pub struct Ref {
         pub name: BString,
         pub target: ObjectId,
-        /// Set if this is a tag, pointing to the tag object itself
-        pub tag: Option<ObjectId>,
+        /// Set if `target` is an annotated tag, this being the object it points to.
+        pub object: Option<ObjectId>,
     }
 
     impl Ref {
@@ -27,7 +27,7 @@ pub mod baseline {
             git_refspec::match_group::Item {
                 full_ref_name: self.name.borrow(),
                 target: &self.target,
-                tag: self.tag.as_deref(),
+                object: self.object.as_deref(),
             }
         }
     }
@@ -216,13 +216,10 @@ pub mod baseline {
                 out.push(Ref {
                     name: name.into(),
                     target,
-                    tag: None,
+                    object: None,
                 })
             } else {
-                let last = out.last_mut().unwrap();
-                let tag = last.target;
-                last.target = target;
-                last.tag = Some(tag);
+                out.last_mut().unwrap().object = Some(target);
             }
         }
         Ok(out)

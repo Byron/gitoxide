@@ -25,10 +25,10 @@ pub struct Outcome<'spec, 'item> {
 pub struct Item<'a> {
     /// The full name of the references, like `refs/heads/main`
     pub full_ref_name: &'a BStr,
-    /// The peeled id it points to that we should match against.
+    /// The id that `full_ref_name` points to, which typically is a commit, but can also be a tag object (or anything else).
     pub target: &'a oid,
-    /// The tag object's id if this is a tag
-    pub tag: Option<&'a oid>,
+    /// The object an annotated tag is pointing to, if `target` is an annotated tag.
+    pub object: Option<&'a oid>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
