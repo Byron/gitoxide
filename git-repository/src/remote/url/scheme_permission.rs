@@ -1,5 +1,3 @@
-#![allow(dead_code, unused_variables)]
-
 use std::{borrow::Cow, collections::BTreeMap, convert::TryFrom};
 
 use crate::bstr::{BStr, BString, ByteSlice};

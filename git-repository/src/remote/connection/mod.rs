@@ -1,7 +1,6 @@
 use crate::Remote;
 
 pub(crate) struct HandshakeWithRefs {
-    #[allow(dead_code)]
     outcome: git_protocol::fetch::handshake::Outcome,
     refs: Vec<git_protocol::fetch::Ref>,
 }

@@ -90,7 +90,6 @@ impl Default for Options {
 }
 
 #[derive(Default, Clone)]
-#[allow(dead_code)]
 pub(crate) struct EnvironmentOverrides {
     /// An override of the worktree typically from the environment, and overrides even worktree dirs set as parameter.
     ///

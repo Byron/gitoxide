@@ -2,7 +2,6 @@ use super::{util, Error};
 
 /// A utility to deal with the cyclic dependency between the ref store and the configuration. The ref-store needs the
 /// object hash kind, and the configuration needs the current branch name to resolve conditional includes with `onbranch`.
-#[allow(dead_code)]
 pub(crate) struct StageOne {
     pub git_dir_config: git_config::File<'static>,
     pub buf: Vec<u8>,

@@ -136,7 +136,12 @@ pub mod to_map {
                     local: m.rhs.map(|c| c.into_owned()),
                 })
                 .collect();
-            Ok(fetch::RefMap { mappings, fixes })
+            Ok(fetch::RefMap {
+                mappings,
+                fixes,
+                remote_refs: remote.refs,
+                handshake: remote.outcome,
+            })
         }
     }
 }

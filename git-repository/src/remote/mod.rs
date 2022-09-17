@@ -37,6 +37,12 @@ pub mod fetch {
         pub mappings: Vec<Mapping>,
         /// Information about the fixes applied to the `mapping` due to validation and sanitization.
         pub fixes: Vec<git_refspec::match_group::validate::Fix>,
+        /// All refs advertised by the remote.
+        pub remote_refs: Vec<git_protocol::fetch::Ref>,
+        /// Additional information provided by the server as part of the handshake.
+        ///
+        /// Note that the `refs` field is always `None` as the refs are placed in `remote_refs`.
+        pub handshake: git_protocol::fetch::handshake::Outcome,
     }
 
     /// Either an object id that the remote has or the matched remote ref itself.
