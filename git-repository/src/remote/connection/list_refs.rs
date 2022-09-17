@@ -70,7 +70,7 @@ where
 }
 
 ///
-pub mod to_mapping {
+pub mod to_map {
     use crate::remote::{fetch, Connection};
     use git_features::progress::Progress;
     use git_protocol::transport::client::Transport;
@@ -81,6 +81,8 @@ pub mod to_mapping {
     pub enum Error {
         #[error(transparent)]
         ListRefs(#[from] crate::remote::list_refs::Error),
+        #[error(transparent)]
+        MappingValidation(#[from] git_refspec::match_group::validate::Error),
     }
 
     impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P>
@@ -96,8 +98,8 @@ pub mod to_mapping {
         ///
         /// Note that this doesn't fetch the objects mentioned in the tips nor does it make any change to underlying repository.
         #[git_protocol::maybe_async::maybe_async]
-        pub async fn list_refs_to_mapping(mut self) -> Result<Vec<fetch::Mapping>, Error> {
-            let mappings = self.ref_mapping().await?;
+        pub async fn list_refs_to_map(mut self) -> Result<fetch::RefMap, Error> {
+            let mappings = self.ref_map().await?;
             git_protocol::fetch::indicate_end_of_interaction(&mut self.transport)
                 .await
                 .map_err(|err| Error::ListRefs(crate::remote::list_refs::Error::Transport(err)))?;
@@ -105,11 +107,23 @@ pub mod to_mapping {
         }
 
         #[git_protocol::maybe_async::maybe_async]
-        async fn ref_mapping(&mut self) -> Result<Vec<fetch::Mapping>, Error> {
-            let _res = self.fetch_refs().await?;
-            let _group = git_refspec::MatchGroup::from_fetch_specs(self.remote.fetch_specs.iter().map(|s| s.to_ref()));
-            // group.match_remotes(res.refs.iter().map(|r| r.unpack()))
-            Ok(Vec::new())
+        async fn ref_map(&mut self) -> Result<fetch::RefMap, Error> {
+            let res = self.fetch_refs().await?;
+            let group = git_refspec::MatchGroup::from_fetch_specs(self.remote.fetch_specs.iter().map(|s| s.to_ref()));
+            let (_res, fixes) = group
+                .match_remotes(res.refs.iter().map(|r| {
+                    let (full_ref_name, target, object) = r.unpack();
+                    git_refspec::match_group::Item {
+                        full_ref_name,
+                        target,
+                        object,
+                    }
+                }))
+                .validated()?;
+            Ok(fetch::RefMap {
+                mappings: Vec::new(),
+                fixes,
+            })
         }
     }
 }

@@ -30,6 +30,14 @@ pub mod init;
 pub mod fetch {
     use crate::bstr::BString;
 
+    /// Information about the relationship between our refspecs, and remote references with their local counterparts.
+    pub struct RefMap {
+        /// A mapping between a remote reference and a local tracking branch.
+        pub mappings: Vec<Mapping>,
+        /// Information about the fixes applied to the `mapping` due to validation and sanitization.
+        pub fixes: Vec<git_refspec::match_group::validate::Fix>,
+    }
+
     /// A mapping between a single remote reference and its advertised objects to a local destination which may or may not exist.
     pub struct Mapping {
         /// The reference on the remote side, along with information about the objects they point to as advertised by the server.
