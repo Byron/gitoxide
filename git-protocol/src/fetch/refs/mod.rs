@@ -1,4 +1,4 @@
-use bstr::BString;
+use bstr::{BStr, BString};
 
 mod error {
     use crate::fetch::refs::parse;
@@ -81,17 +81,17 @@ impl Ref {
     /// Provide shared fields referring to the ref itself, namely `(name, target, [peeled])`.
     /// In case of peeled refs, the tag object itself is returned as it is what the ref directly refers to, and target of the tag is returned
     /// as `peeled`.
-    pub fn unpack(&self) -> (&BString, &git_hash::oid, Option<&git_hash::oid>) {
+    pub fn unpack(&self) -> (&BStr, &git_hash::oid, Option<&git_hash::oid>) {
         match self {
             Ref::Direct { full_ref_name, object }
             | Ref::Symbolic {
                 full_ref_name, object, ..
-            } => (full_ref_name, object, None),
+            } => (full_ref_name.as_ref(), object, None),
             Ref::Peeled {
                 full_ref_name,
                 tag: object,
                 object: peeled,
-            } => (full_ref_name, object, Some(peeled)),
+            } => (full_ref_name.as_ref(), object, Some(peeled)),
         }
     }
 }
