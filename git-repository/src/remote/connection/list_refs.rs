@@ -103,7 +103,7 @@ pub mod to_map {
             git_protocol::fetch::indicate_end_of_interaction(&mut self.transport)
                 .await
                 .map_err(|err| Error::ListRefs(crate::remote::list_refs::Error::Transport(err)))?;
-            Ok(res?)
+            res
         }
 
         #[git_protocol::maybe_async::maybe_async]
