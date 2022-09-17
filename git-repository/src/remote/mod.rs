@@ -61,6 +61,8 @@ pub mod fetch {
         pub remote: Source,
         /// The local tracking reference to update after fetching the object visible via `remote`.
         pub local: Option<BString>,
+        /// The index into the fetch ref-specs used to produce the mapping, allowing it to be recovered.   
+        pub spec_index: usize,
     }
 }
 

@@ -134,6 +134,7 @@ pub mod to_map {
                             })
                         }),
                     local: m.rhs.map(|c| c.into_owned()),
+                    spec_index: m.spec_index,
                 })
                 .collect();
             Ok(fetch::RefMap {
