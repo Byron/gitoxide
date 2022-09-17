@@ -43,7 +43,7 @@ impl std::fmt::Display for Issue {
 }
 
 /// All possible fixes corrected while validating matched mappings.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum Fix {
     /// Removed a mapping that contained a partial destination entirely.
     MappingWithPartialDestinationRemoved {
