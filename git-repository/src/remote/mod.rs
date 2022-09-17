@@ -46,7 +46,7 @@ pub mod connect;
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
 mod connection;
 #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
-pub use connection::Connection;
+pub use connection::{list_refs, Connection};
 
 mod access;
 pub(crate) mod url;

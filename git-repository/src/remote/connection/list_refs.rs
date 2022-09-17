@@ -1,22 +1,21 @@
 use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
 
-use crate::remote::{connection::HandshakeWithRefs, fetch, Connection, Direction};
+use crate::remote::{connection::HandshakeWithRefs, Connection, Direction};
 
-mod error {
-    #[derive(Debug, thiserror::Error)]
-    pub enum Error {
-        #[error(transparent)]
-        Handshake(#[from] git_protocol::fetch::handshake::Error),
-        #[error(transparent)]
-        ListRefs(#[from] git_protocol::fetch::refs::Error),
-        #[error(transparent)]
-        Transport(#[from] git_protocol::transport::client::Error),
-        #[error(transparent)]
-        ConfigureCredentials(#[from] crate::config::credential_helpers::Error),
-    }
+/// The error returned by [`Connection::list_refs()`].
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum Error {
+    #[error(transparent)]
+    Handshake(#[from] git_protocol::fetch::handshake::Error),
+    #[error(transparent)]
+    ListRefs(#[from] git_protocol::fetch::refs::Error),
+    #[error(transparent)]
+    Transport(#[from] git_protocol::transport::client::Error),
+    #[error(transparent)]
+    ConfigureCredentials(#[from] crate::config::credential_helpers::Error),
 }
-pub use error::Error;
 
 impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P>
 where
@@ -31,13 +30,6 @@ where
         let res = self.fetch_refs().await?;
         git_protocol::fetch::indicate_end_of_interaction(&mut self.transport).await?;
         Ok(res.refs)
-    }
-
-    /// A mapping showing the objects available in refs matching our ref-specs on the remote side, along with their destination
-    /// ref locally, if set and if there are no conflicts.
-    #[git_protocol::maybe_async::maybe_async]
-    pub async fn ref_mapping(self) -> Result<Vec<fetch::Mapping>, Error> {
-        todo!()
     }
 
     #[git_protocol::maybe_async::maybe_async]
@@ -75,15 +67,49 @@ where
         };
         Ok(HandshakeWithRefs { outcome, refs })
     }
+}
 
-    /// List all references on the remote that have been filtered through our remote's [`refspecs`][crate::Remote::refspecs()]
-    /// for _fetching_ or _pushing_ depending on `direction`.
-    ///
-    /// This comes in the form of information of all matching tips on the remote and the object they point to, along with
-    /// with the local tracking branch of these tips (if available).
-    ///
-    /// Note that this doesn't fetch the objects mentioned in the tips nor does it make any change to underlying repository.
-    pub fn list_refs_by_refspec(&mut self, _direction: Direction) -> ! {
-        todo!()
+///
+pub mod to_mapping {
+    use crate::remote::{fetch, Connection};
+    use git_features::progress::Progress;
+    use git_protocol::transport::client::Transport;
+
+    /// The error returned by [`Connection::list_refs_to_mapping()`].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        ListRefs(#[from] crate::remote::list_refs::Error),
+    }
+
+    impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P>
+    where
+        T: Transport,
+        P: Progress,
+    {
+        /// List all references on the remote that have been filtered through our remote's [`refspecs`][crate::Remote::refspecs()]
+        /// for _fetching_.
+        ///
+        /// This comes in the form of all matching tips on the remote and the object they point to, along with
+        /// with the local tracking branch of these tips (if available).
+        ///
+        /// Note that this doesn't fetch the objects mentioned in the tips nor does it make any change to underlying repository.
+        #[git_protocol::maybe_async::maybe_async]
+        pub async fn list_refs_to_mapping(mut self) -> Result<Vec<fetch::Mapping>, Error> {
+            let mappings = self.ref_mapping().await?;
+            git_protocol::fetch::indicate_end_of_interaction(&mut self.transport)
+                .await
+                .map_err(|err| Error::ListRefs(crate::remote::list_refs::Error::Transport(err)))?;
+            Ok(mappings)
+        }
+
+        #[git_protocol::maybe_async::maybe_async]
+        async fn ref_mapping(&mut self) -> Result<Vec<fetch::Mapping>, Error> {
+            let _res = self.fetch_refs().await?;
+            let _group = git_refspec::MatchGroup::from_fetch_specs(self.remote.fetch_specs.iter().map(|s| s.to_ref()));
+            // group.match_remotes(res.refs.iter().map(|r| r.unpack()))
+            Ok(Vec::new())
+        }
     }
 }

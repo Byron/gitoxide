@@ -22,10 +22,13 @@ mod blocking_io {
                     (version as u8).to_string().as_str(),
                 )?;
             }
+
             let remote = repo.find_remote("origin")?;
-            let connection = remote.connect(Fetch, progress::Discard)?;
-            let refs = connection.list_refs()?;
-            assert_eq!(refs.len(), 14, "it gets all remote refs, independently of the refspec.");
+            {
+                let connection = remote.connect(Fetch, progress::Discard)?;
+                let refs = connection.list_refs()?;
+                assert_eq!(refs.len(), 14, "it gets all remote refs, independently of the refspec.");
+            }
         }
         Ok(())
     }
