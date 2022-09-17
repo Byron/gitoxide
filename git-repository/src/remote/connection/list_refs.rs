@@ -27,9 +27,9 @@ where
     /// Note that this doesn't fetch the objects mentioned in the tips nor does it make any change to underlying repository.
     #[git_protocol::maybe_async::maybe_async]
     pub async fn list_refs(mut self) -> Result<Vec<git_protocol::fetch::Ref>, Error> {
-        let res = self.fetch_refs().await?;
+        let res = self.fetch_refs().await;
         git_protocol::fetch::indicate_end_of_interaction(&mut self.transport).await?;
-        Ok(res.refs)
+        Ok(res?.refs)
     }
 
     #[git_protocol::maybe_async::maybe_async]
@@ -99,19 +99,19 @@ pub mod to_map {
         /// Note that this doesn't fetch the objects mentioned in the tips nor does it make any change to underlying repository.
         #[git_protocol::maybe_async::maybe_async]
         pub async fn list_refs_to_map(mut self) -> Result<fetch::RefMap, Error> {
-            let mappings = self.ref_map().await?;
+            let res = self.ref_map().await;
             git_protocol::fetch::indicate_end_of_interaction(&mut self.transport)
                 .await
                 .map_err(|err| Error::ListRefs(crate::remote::list_refs::Error::Transport(err)))?;
-            Ok(mappings)
+            Ok(res?)
         }
 
         #[git_protocol::maybe_async::maybe_async]
         async fn ref_map(&mut self) -> Result<fetch::RefMap, Error> {
-            let res = self.fetch_refs().await?;
+            let remote = self.fetch_refs().await?;
             let group = git_refspec::MatchGroup::from_fetch_specs(self.remote.fetch_specs.iter().map(|s| s.to_ref()));
-            let (_res, fixes) = group
-                .match_remotes(res.refs.iter().map(|r| {
+            let (res, fixes) = group
+                .match_remotes(remote.refs.iter().map(|r| {
                     let (full_ref_name, target, object) = r.unpack();
                     git_refspec::match_group::Item {
                         full_ref_name,
@@ -120,10 +120,23 @@ pub mod to_map {
                     }
                 }))
                 .validated()?;
-            Ok(fetch::RefMap {
-                mappings: Vec::new(),
-                fixes,
-            })
+            let mappings = res.mappings;
+            let mappings = mappings
+                .into_iter()
+                .map(|m| fetch::Mapping {
+                    remote: m
+                        .item_index
+                        .map(|idx| fetch::Source::Ref(remote.refs[idx].clone()))
+                        .unwrap_or_else(|| {
+                            fetch::Source::ObjectId(match m.lhs {
+                                git_refspec::match_group::SourceRef::ObjectId(id) => id,
+                                _ => unreachable!("no item index implies having an object id"),
+                            })
+                        }),
+                    local: m.rhs.map(|c| c.into_owned()),
+                })
+                .collect();
+            Ok(fetch::RefMap { mappings, fixes })
         }
     }
 }

@@ -38,10 +38,18 @@ pub mod fetch {
         pub fixes: Vec<git_refspec::match_group::validate::Fix>,
     }
 
+    /// Either an object id that the remote has or the matched remote ref itself.
+    pub enum Source {
+        /// An object id, as the matched ref-spec was an object id itself.
+        ObjectId(git_hash::ObjectId),
+        /// The remote reference that matched the ref-specs name.
+        Ref(git_protocol::fetch::Ref),
+    }
+
     /// A mapping between a single remote reference and its advertised objects to a local destination which may or may not exist.
     pub struct Mapping {
         /// The reference on the remote side, along with information about the objects they point to as advertised by the server.
-        pub remote: git_protocol::fetch::Ref,
+        pub remote: Source,
         /// The local tracking reference to update after fetching the object visible via `remote`.
         pub local: Option<BString>,
     }
