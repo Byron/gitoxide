@@ -50,8 +50,8 @@ pub mod parse {
 pub enum Ref {
     /// A ref pointing to a `tag` object, which in turns points to an `object`, usually a commit
     Peeled {
-        /// The path at which the ref is located, like `/refs/heads/main`.
-        path: BString,
+        /// The name at which the ref is located, like `refs/heads/main`.
+        full_ref_name: BString,
         /// The hash of the tag the ref points to.
         tag: git_hash::ObjectId,
         /// The hash of the object the `tag` points to.
@@ -59,15 +59,15 @@ pub enum Ref {
     },
     /// A ref pointing to a commit object
     Direct {
-        /// The path at which the ref is located, like `/refs/heads/main`.
-        path: BString,
+        /// The name at which the ref is located, like `refs/heads/main`.
+        full_ref_name: BString,
         /// The hash of the object the ref points to.
         object: git_hash::ObjectId,
     },
     /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
     Symbolic {
-        /// The path at which the symbolic ref is located, like `/refs/heads/main`.
-        path: BString,
+        /// The name at which the symbolic ref is located, like `refs/heads/main`.
+        full_ref_name: BString,
         /// The path of the ref the symbolic ref points to, see issue [#205] for details
         ///
         /// [#205]: https://github.com/Byron/gitoxide/issues/205
@@ -78,13 +78,21 @@ pub enum Ref {
 }
 
 impl Ref {
-    /// Provide shared fields referring to the ref itself, namely `(path, object id)`.
-    /// In case of peeled refs, the tag object itself is returned as it is what the path refers to.
-    pub fn unpack(&self) -> (&BString, &git_hash::ObjectId) {
+    /// Provide shared fields referring to the ref itself, namely `(name, target)`.
+    /// In case of peeled refs, the tag object itself is returned as it is what the ref directly refers to.
+    pub fn unpack(&self) -> (&BString, &git_hash::oid) {
         match self {
-            Ref::Direct { path, object, .. }
-            | Ref::Peeled { path, tag: object, .. } // the tag acts as reference
-            | Ref::Symbolic { path, object, .. } => (path, object),
+            Ref::Direct {
+                full_ref_name, object, ..
+            }
+            | Ref::Peeled {
+                full_ref_name,
+                tag: object,
+                ..
+            }
+            | Ref::Symbolic {
+                full_ref_name, object, ..
+            } => (full_ref_name, object),
         }
     }
 }

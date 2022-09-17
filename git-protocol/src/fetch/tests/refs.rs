@@ -19,25 +19,25 @@ async fn extract_references_from_v2_refs() {
         out,
         vec![
             Ref::Symbolic {
-                path: "HEAD".into(),
+                full_ref_name: "HEAD".into(),
                 target: "refs/heads/main".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             },
             Ref::Direct {
-                path: "MISSING_NAMESPACE_TARGET".into(),
+                full_ref_name: "MISSING_NAMESPACE_TARGET".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             },
             Ref::Direct {
-                path: "refs/heads/main".into(),
+                full_ref_name: "refs/heads/main".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             },
             Ref::Peeled {
-                path: "refs/tags/foo".into(),
+                full_ref_name: "refs/tags/foo".into(),
                 tag: oid("7fe1b98b39423b71e14217aa299a03b7c937d656"),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             },
             Ref::Direct {
-                path: "refs/tags/blaz".into(),
+                full_ref_name: "refs/tags/blaz".into(),
                 object: oid("7fe1b98b39423b71e14217aa299a03b7c937d6ff")
             },
         ]
@@ -66,24 +66,24 @@ dce0ea858eef7ff61ad345cc5cdac62203fb3c10 refs/tags/git-commitgraph-v0.0.0
         out,
         vec![
             Ref::Symbolic {
-                path: "HEAD".into(),
+                full_ref_name: "HEAD".into(),
                 target: "refs/heads/main".into(),
                 object: oid("73a6868963993a3328e7d8fe94e5a6ac5078a944")
             },
             Ref::Direct {
-                path: "MISSING_NAMESPACE_TARGET".into(),
+                full_ref_name: "MISSING_NAMESPACE_TARGET".into(),
                 object: oid("21c9b7500cb144b3169a6537961ec2b9e865be81")
             },
             Ref::Direct {
-                path: "refs/heads/main".into(),
+                full_ref_name: "refs/heads/main".into(),
                 object: oid("73a6868963993a3328e7d8fe94e5a6ac5078a944")
             },
             Ref::Direct {
-                path: "refs/pull/13/head".into(),
+                full_ref_name: "refs/pull/13/head".into(),
                 object: oid("8e472f9ccc7d745927426cbb2d9d077de545aa4e")
             },
             Ref::Peeled {
-                path: "refs/tags/git-commitgraph-v0.0.0".into(),
+                full_ref_name: "refs/tags/git-commitgraph-v0.0.0".into(),
                 tag: oid("dce0ea858eef7ff61ad345cc5cdac62203fb3c10"),
                 object: oid("21c9b7500cb144b3169a6537961ec2b9e865be81")
             },

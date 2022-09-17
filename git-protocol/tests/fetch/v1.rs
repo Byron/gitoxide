@@ -49,12 +49,12 @@ async fn ls_remote() -> crate::Result {
         delegate.refs,
         vec![
             fetch::Ref::Symbolic {
-                path: "HEAD".into(),
+                full_ref_name: "HEAD".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb"),
                 target: "refs/heads/master".into()
             },
             fetch::Ref::Direct {
-                path: "refs/heads/master".into(),
+                full_ref_name: "refs/heads/master".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             }
         ]

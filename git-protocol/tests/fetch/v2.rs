@@ -75,12 +75,12 @@ async fn ls_remote() -> crate::Result {
         delegate.refs,
         vec![
             fetch::Ref::Symbolic {
-                path: "HEAD".into(),
+                full_ref_name: "HEAD".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb"),
                 target: "refs/heads/master".into()
             },
             fetch::Ref::Direct {
-                path: "refs/heads/master".into(),
+                full_ref_name: "refs/heads/master".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
             }
         ]
@@ -167,7 +167,7 @@ async fn ref_in_want() -> crate::Result {
     assert_eq!(
         delegate.wanted_refs,
         vec![fetch::Ref::Direct {
-            path: "refs/heads/main".into(),
+            full_ref_name: "refs/heads/main".into(),
             object: oid("9e320b9180e0b5580af68fa3255b7f3d9ecd5af0"),
         }]
     );
