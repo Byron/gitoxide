@@ -81,16 +81,27 @@ mod net {
     impl From<fetch::Ref> for JsonRef {
         fn from(value: fetch::Ref) -> Self {
             match value {
-                fetch::Ref::Direct { path, object } => JsonRef::Direct {
+                fetch::Ref::Direct {
+                    full_ref_name: path,
+                    object,
+                } => JsonRef::Direct {
                     path: path.to_string(),
                     object: object.to_string(),
                 },
-                fetch::Ref::Symbolic { path, target, object } => JsonRef::Symbolic {
+                fetch::Ref::Symbolic {
+                    full_ref_name: path,
+                    target,
+                    object,
+                } => JsonRef::Symbolic {
                     path: path.to_string(),
                     target: target.to_string(),
                     object: object.to_string(),
                 },
-                fetch::Ref::Peeled { path, tag, object } => JsonRef::Peeled {
+                fetch::Ref::Peeled {
+                    full_ref_name: path,
+                    tag,
+                    object,
+                } => JsonRef::Peeled {
                     path: path.to_string(),
                     tag: tag.to_string(),
                     object: object.to_string(),
@@ -102,11 +113,22 @@ mod net {
     pub(crate) fn print(mut out: impl std::io::Write, refs: &[fetch::Ref]) -> std::io::Result<()> {
         for r in refs {
             match r {
-                fetch::Ref::Direct { path, object } => writeln!(&mut out, "{} {}", object.to_hex(), path),
-                fetch::Ref::Peeled { path, object, tag } => {
+                fetch::Ref::Direct {
+                    full_ref_name: path,
+                    object,
+                } => writeln!(&mut out, "{} {}", object.to_hex(), path),
+                fetch::Ref::Peeled {
+                    full_ref_name: path,
+                    object,
+                    tag,
+                } => {
                     writeln!(&mut out, "{} {} tag:{}", object.to_hex(), path, tag)
                 }
-                fetch::Ref::Symbolic { path, target, object } => {
+                fetch::Ref::Symbolic {
+                    full_ref_name: path,
+                    target,
+                    object,
+                } => {
                     writeln!(&mut out, "{} {} symref-target:{}", object.to_hex(), path, target)
                 }
             }?;
