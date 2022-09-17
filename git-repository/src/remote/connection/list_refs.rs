@@ -75,7 +75,7 @@ pub mod to_map {
     use git_features::progress::Progress;
     use git_protocol::transport::client::Transport;
 
-    /// The error returned by [`Connection::list_refs_to_mapping()`].
+    /// The error returned by [`Connection::list_refs_to_map()`].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {

@@ -3,6 +3,7 @@ use git_transport::client::Capabilities;
 use crate::fetch::Ref;
 
 /// The result of the [`handshake()`][super::handshake()] function.
+#[derive(Debug, Clone)]
 pub struct Outcome {
     /// The protocol version the server responded with. It might have downgraded the desired version.
     pub server_protocol_version: git_transport::Protocol,
