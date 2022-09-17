@@ -100,11 +100,6 @@ impl<'a> MatchGroup<'a> {
             mappings: out,
         }
     }
-
-    /// Return the spec that produced the given `mapping`.
-    pub fn spec_by_mapping(&self, mapping: &Mapping<'_, '_>) -> RefSpecRef<'a> {
-        self.specs[mapping.spec_index]
-    }
 }
 
 fn calculate_hash<T: std::hash::Hash>(t: &T) -> u64 {
