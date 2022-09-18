@@ -16,13 +16,14 @@ mod refs_impl {
 
         pub enum Kind {
             Remote,
-            Tracking { ref_specs: Vec<BString>, server_info: bool },
+            Tracking { ref_specs: Vec<BString> },
         }
 
         pub struct Context {
             pub format: OutputFormat,
             pub name: Option<String>,
             pub url: Option<git_repository::Url>,
+            pub handshake_info: bool,
         }
 
         pub(crate) use super::print;
@@ -33,9 +34,14 @@ mod refs_impl {
         repo: git::Repository,
         kind: refs::Kind,
         mut progress: impl git::Progress,
-        out: impl std::io::Write,
+        mut out: impl std::io::Write,
         err: impl std::io::Write,
-        refs::Context { format, name, url }: refs::Context,
+        refs::Context {
+            format,
+            name,
+            url,
+            handshake_info,
+        }: refs::Context,
     ) -> anyhow::Result<()> {
         use anyhow::Context;
         let mut remote = match (name, url) {
@@ -68,15 +74,14 @@ mod refs_impl {
             .ref_map()
             .await?;
 
+        if handshake_info {
+            writeln!(out, "Handshake Information")?;
+            writeln!(out, "\t{:?}", map.handshake)?;
+        }
         match kind {
-            refs::Kind::Tracking { server_info, .. } => print_refmap(
-                &repo,
-                remote.refspecs(git::remote::Direction::Fetch),
-                map,
-                server_info,
-                out,
-                err,
-            ),
+            refs::Kind::Tracking { .. } => {
+                print_refmap(&repo, remote.refspecs(git::remote::Direction::Fetch), map, out, err)
+            }
             refs::Kind::Remote => {
                 match format {
                     OutputFormat::Human => drop(print(out, &map.remote_refs)),
@@ -95,7 +100,6 @@ mod refs_impl {
         repo: &git::Repository,
         refspecs: &[RefSpec],
         mut map: git::remote::fetch::RefMap<'_>,
-        server_info: bool,
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
@@ -157,10 +161,6 @@ mod refs_impl {
                     }
                 }
             }
-        }
-        if server_info {
-            writeln!(out, "Additional Information")?;
-            writeln!(out, "{:?}", map.handshake)?;
         }
         Ok(())
     }

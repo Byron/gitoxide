@@ -120,18 +120,25 @@ pub fn main() -> Result<()> {
             },
         ),
         #[cfg_attr(feature = "small", allow(unused_variables))]
-        Subcommands::Remote(remote::Platform { name, url, cmd }) => match cmd {
+        Subcommands::Remote(remote::Platform {
+            name,
+            url,
+            cmd,
+            handshake_info,
+        }) => match cmd {
             #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
             remote::Subcommands::Refs | remote::Subcommands::RefMap { .. } => {
                 let kind = match cmd {
                     remote::Subcommands::Refs => core::repository::remote::refs::Kind::Remote,
-                    remote::Subcommands::RefMap {
-                        ref_spec,
-                        connection_info,
-                    } => core::repository::remote::refs::Kind::Tracking {
-                        ref_specs: ref_spec,
-                        server_info: connection_info,
-                    },
+                    remote::Subcommands::RefMap { ref_spec } => {
+                        core::repository::remote::refs::Kind::Tracking { ref_specs: ref_spec }
+                    }
+                };
+                let context = core::repository::remote::refs::Context {
+                    name,
+                    url,
+                    format,
+                    handshake_info,
                 };
                 #[cfg(feature = "gitoxide-core-blocking-client")]
                 {
@@ -148,7 +155,7 @@ pub fn main() -> Result<()> {
                                 progress,
                                 out,
                                 err,
-                                core::repository::remote::refs::Context { name, url, format },
+                                context,
                             )
                         },
                     )
@@ -166,7 +173,7 @@ pub fn main() -> Result<()> {
                         progress,
                         std::io::stdout(),
                         std::io::stderr(),
-                        core::repository::remote::refs::Context { name, url, format },
+                        context,
                     ))
                 }
             }
