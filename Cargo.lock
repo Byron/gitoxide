@@ -1188,6 +1188,7 @@ dependencies = [
  "git-testtools",
  "memchr",
  "nom",
+ "once_cell",
  "serde",
  "serde_derive",
  "serial_test 0.7.0",
