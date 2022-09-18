@@ -54,9 +54,9 @@ pub mod baseline {
         agrees_and_applies_fixes(specs, Vec::new(), expected)
     }
 
-    pub fn agrees_and_applies_fixes<'a, 'b>(
+    pub fn agrees_and_applies_fixes<'a, 'b, 'c>(
         specs: impl IntoIterator<Item = &'a str> + Clone,
-        fixes: impl IntoIterator<Item = Fix>,
+        fixes: impl IntoIterator<Item = Fix<'c>>,
         expected: impl IntoIterator<Item = &'b str>,
     ) {
         check_fetch_remote(
@@ -125,9 +125,14 @@ pub mod baseline {
         of_objects_with_destinations_are_written_into_given_local_branches(specs, expected)
     }
 
-    enum Mode {
-        Normal { validate_err: Option<String> },
-        Custom { expected: Vec<Mapping>, fixes: Vec<Fix> },
+    enum Mode<'a> {
+        Normal {
+            validate_err: Option<String>,
+        },
+        Custom {
+            expected: Vec<Mapping>,
+            fixes: Vec<Fix<'a>>,
+        },
     }
 
     fn check_fetch_remote<'a>(specs: impl IntoIterator<Item = &'a str> + Clone, mode: Mode) {
