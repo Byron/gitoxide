@@ -3,6 +3,7 @@ mod refs_impl {
     use anyhow::bail;
     use git_repository as git;
     use git_repository::protocol::fetch;
+    use git_repository::refspec::match_group::validate::Fix;
     use git_repository::refspec::RefSpec;
 
     use crate::OutputFormat;
@@ -128,9 +129,25 @@ mod refs_impl {
             }?;
         }
         if !map.fixes.is_empty() {
-            writeln!(err, "Fixes and sanitizations")?;
+            writeln!(
+                err,
+                "The following destination refs were removed as they didn't start with 'ref/'"
+            )?;
+            map.fixes.sort_by_key(|f| match f {
+                Fix::MappingWithPartialDestinationRemoved { spec, .. } => *spec,
+            });
+            let mut prev_spec = None;
             for fix in &map.fixes {
-                writeln!(err, "\t{fix:?}")?;
+                match fix {
+                    Fix::MappingWithPartialDestinationRemoved { name, spec } => {
+                        if prev_spec.map_or(true, |prev_spec| prev_spec != spec) {
+                            prev_spec = spec.into();
+                            spec.write_to(&mut err)?;
+                            writeln!(err)?;
+                        }
+                        writeln!(err, "\t{name}")?;
+                    }
+                }
             }
         }
         Ok(())
