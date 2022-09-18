@@ -96,6 +96,9 @@ pub struct EstimateHours {
     /// The name of the ref like 'HEAD' or 'main' at which to start iterating the commit graph.
     #[clap(default_value("HEAD"))]
     pub refname: OsString,
+    /// Ignore github bots which match the `[bot]` search string.
+    #[clap(short = 'b', long)]
+    pub no_bots: bool,
     /// Show personally identifiable information before the summary. Includes names and email addresses.
     #[clap(short = 'p', long)]
     pub show_pii: bool,

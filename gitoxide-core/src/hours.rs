@@ -8,12 +8,16 @@ use std::{
 
 use anyhow::{anyhow, bail};
 use git_repository as git;
-use git_repository::{actor, bstr::BString, interrupt, objs, prelude::*, progress, refs::file::ReferenceExt, Progress};
+use git_repository::{
+    actor, bstr::BString, bstr::ByteSlice, interrupt, objs, prelude::*, progress, refs::file::ReferenceExt, Progress,
+};
 use itertools::Itertools;
 use rayon::prelude::*;
 
 /// Additional configuration for the hours estimation functionality.
 pub struct Context<W> {
+    /// Ignore github bots which match the `[bot]` search string.
+    pub ignore_bots: bool,
     /// Show personally identifiable information before the summary. Includes names and email addresses.
     pub show_pii: bool,
     /// Omit unifying identities by name and email which can lead to the same author appear multiple times
@@ -35,6 +39,7 @@ pub fn estimate<W, P>(
     mut progress: P,
     Context {
         show_pii,
+        ignore_bots,
         omit_unify_identities,
         mut out,
     }: Context<W>,
@@ -110,11 +115,17 @@ where
     let mut current_email = &all_commits[0].email;
     let mut slice_start = 0;
     let mut results_by_hours = Vec::new();
+    let mut ignored_bot_commits = 0_u32;
     for (idx, elm) in all_commits.iter().enumerate() {
         if elm.email != *current_email {
-            results_by_hours.push(estimate_hours(&all_commits[slice_start..idx]));
+            let estimate = estimate_hours(&all_commits[slice_start..idx]);
             slice_start = idx;
             current_email = &elm.email;
+            if ignore_bots && estimate.name.contains_str(b"[bot]") {
+                ignored_bot_commits += estimate.num_commits;
+                continue;
+            }
+            results_by_hours.push(estimate);
         }
     }
     if let Some(commits) = all_commits.get(slice_start..) {
@@ -170,7 +181,14 @@ where
             (1.0 - (num_unique_authors as f32 / num_authors as f32)) * 100.0
         )?;
     }
-    assert_eq!(total_commits, all_commits.len() as u32, "need to get all commits");
+    if ignored_bot_commits != 0 {
+        writeln!(out, "commits by bots: {}", ignored_bot_commits,)?;
+    }
+    assert_eq!(
+        total_commits,
+        all_commits.len() as u32 - ignored_bot_commits,
+        "need to get all commits"
+    );
     Ok(())
 }
 

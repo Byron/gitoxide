@@ -39,6 +39,7 @@ pub fn main() -> Result<()> {
             crate::porcelain::options::ToolCommands::EstimateHours(crate::porcelain::options::EstimateHours {
                 working_dir,
                 refname,
+                no_bots,
                 show_pii,
                 omit_unify_identities,
             }) => {
@@ -56,6 +57,7 @@ pub fn main() -> Result<()> {
                             progress,
                             hours::Context {
                                 show_pii,
+                                ignore_bots: no_bots,
                                 omit_unify_identities,
                                 out,
                             },
