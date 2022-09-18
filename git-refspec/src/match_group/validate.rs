@@ -1,7 +1,11 @@
-use crate::match_group::{Outcome, Source};
-use crate::RefSpecRef;
-use bstr::BString;
 use std::collections::BTreeMap;
+
+use bstr::BString;
+
+use crate::{
+    match_group::{Outcome, Source},
+    RefSpecRef,
+};
 
 /// All possible issues found while validating matched mappings.
 #[derive(Debug, PartialEq, Eq)]

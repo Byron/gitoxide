@@ -1,5 +1,6 @@
-use crate::{entry, extension, Entry, PathStorage, State, Version};
 use bstr::{BStr, ByteSlice};
+
+use crate::{entry, extension, Entry, PathStorage, State, Version};
 
 /// General information and entries
 impl State {

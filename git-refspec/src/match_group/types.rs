@@ -1,7 +1,9 @@
-use crate::RefSpecRef;
+use std::borrow::Cow;
+
 use bstr::{BStr, BString};
 use git_hash::oid;
-use std::borrow::Cow;
+
+use crate::RefSpecRef;
 
 /// A match group is able to match a list of ref specs in order while handling negation, conflicts and one to many mappings.
 #[derive(Default, Debug, Clone)]

@@ -2,15 +2,17 @@
 mod refs_impl {
     use anyhow::bail;
     use git_repository as git;
-    use git_repository::protocol::fetch;
-    use git_repository::refspec::match_group::validate::Fix;
-    use git_repository::refspec::RefSpec;
+    use git_repository::{
+        protocol::fetch,
+        refspec::{match_group::validate::Fix, RefSpec},
+    };
 
     use crate::OutputFormat;
 
     pub mod refs {
-        use crate::OutputFormat;
         use git_repository::bstr::BString;
+
+        use crate::OutputFormat;
 
         pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 

@@ -64,9 +64,11 @@ mod access {
 }
 
 mod _impls {
-    use crate::{Entry, State};
-    use bstr::BStr;
     use std::cmp::Ordering;
+
+    use bstr::BStr;
+
+    use crate::{Entry, State};
 
     impl Entry {
         /// Compare one entry to another by their path, by comparing only their common path portion byte by byte, then resorting to

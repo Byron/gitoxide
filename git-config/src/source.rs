@@ -107,8 +107,9 @@ impl Source {
 
 /// Environment information involving the `git` program itself.
 mod git {
-    use bstr::{BStr, BString, ByteSlice};
     use std::process::{Command, Stdio};
+
+    use bstr::{BStr, BString, ByteSlice};
 
     /// Returns the file that contains git configuration coming with the installation of the `git` file in the current `PATH`, or `None`
     /// if no `git` executable was found or there were other errors during execution.

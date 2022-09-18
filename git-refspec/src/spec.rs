@@ -1,10 +1,11 @@
+use bstr::BStr;
+
 use crate::{
     instruction::{Fetch, Push},
     parse::Operation,
     types::Mode,
     Instruction, RefSpec, RefSpecRef,
 };
-use bstr::BStr;
 
 /// Conversion. Use the [RefSpecRef][RefSpec::to_ref()] type for more usage options.
 impl RefSpec {

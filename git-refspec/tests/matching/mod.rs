@@ -3,16 +3,18 @@ use git_testtools::once_cell::sync::Lazy;
 static BASELINE: Lazy<baseline::Baseline> = Lazy::new(|| baseline::parse().unwrap());
 
 pub mod baseline {
-    use crate::matching::BASELINE;
+    use std::{borrow::Borrow, collections::HashMap};
+
     use bstr::{BString, ByteSlice, ByteVec};
     use git_hash::ObjectId;
-    use git_refspec::match_group::validate::Fix;
-    use git_refspec::match_group::SourceRef;
-    use git_refspec::parse::Operation;
-    use git_refspec::MatchGroup;
+    use git_refspec::{
+        match_group::{validate::Fix, SourceRef},
+        parse::Operation,
+        MatchGroup,
+    };
     use git_testtools::once_cell::sync::Lazy;
-    use std::borrow::Borrow;
-    use std::collections::HashMap;
+
+    use crate::matching::BASELINE;
 
     #[derive(Debug)]
     pub struct Ref {

@@ -1,6 +1,9 @@
-use crate::instruction::{Fetch, Push};
-use crate::{Instruction, RefSpecRef};
 use bstr::BString;
+
+use crate::{
+    instruction::{Fetch, Push},
+    Instruction, RefSpecRef,
+};
 
 impl RefSpecRef<'_> {
     /// Reproduce ourselves in parseable form.

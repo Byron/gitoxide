@@ -9,7 +9,13 @@ use std::{
 use anyhow::{anyhow, bail};
 use git_repository as git;
 use git_repository::{
-    actor, bstr::BString, bstr::ByteSlice, interrupt, objs, prelude::*, progress, refs::file::ReferenceExt, Progress,
+    actor,
+    bstr::{BString, ByteSlice},
+    interrupt, objs,
+    prelude::*,
+    progress,
+    refs::file::ReferenceExt,
+    Progress,
 };
 use itertools::Itertools;
 use rayon::prelude::*;

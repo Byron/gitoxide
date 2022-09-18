@@ -1,7 +1,6 @@
 use git_refspec::RefSpec;
 
-use crate::bstr::BStr;
-use crate::{remote, Remote};
+use crate::{bstr::BStr, remote, Remote};
 
 /// Access
 impl Remote<'_> {

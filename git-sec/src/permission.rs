@@ -1,5 +1,6 @@
-use crate::Permission;
 use std::fmt::{Debug, Display, Formatter};
+
+use crate::Permission;
 
 /// An error to use if an operation cannot proceed due to insufficient permissions.
 ///

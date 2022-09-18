@@ -1,7 +1,6 @@
-use crate::parse::Operation;
-use crate::types::Mode;
-use crate::{MatchGroup, RefSpecRef};
 use std::collections::BTreeSet;
+
+use crate::{parse::Operation, types::Mode, MatchGroup, RefSpecRef};
 
 pub(crate) mod types;
 pub use types::{Item, Mapping, Outcome, Source, SourceRef};

@@ -48,9 +48,12 @@ mod single {
 }
 
 mod multiple {
+    use git_refspec::{
+        match_group::validate::Fix,
+        parse::{Error, Operation},
+    };
+
     use crate::matching::baseline;
-    use git_refspec::match_group::validate::Fix;
-    use git_refspec::parse::{Error, Operation};
 
     #[test]
     fn fetch_only() {

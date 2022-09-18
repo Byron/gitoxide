@@ -1,14 +1,16 @@
-use crate::{
-    entry::{Flags, Mode, Stat},
-    Entry, PathStorage, State, Version,
-};
+use std::collections::VecDeque;
+
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_object::{
     tree::{self, EntryMode},
     TreeRefIter,
 };
 use git_traverse::tree::{breadthfirst, visit::Action, Visit};
-use std::collections::VecDeque;
+
+use crate::{
+    entry::{Flags, Mode, Stat},
+    Entry, PathStorage, State, Version,
+};
 
 /// initialization
 impl State {

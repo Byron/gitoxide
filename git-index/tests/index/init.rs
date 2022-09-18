@@ -1,5 +1,4 @@
-use git_index::verify::extensions::no_find;
-use git_index::State;
+use git_index::{verify::extensions::no_find, State};
 use git_repository as git;
 use git_repository::prelude::FindExt;
 use git_testtools::scripted_fixture_repo_read_only;

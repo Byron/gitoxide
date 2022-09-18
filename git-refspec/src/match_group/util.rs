@@ -1,9 +1,9 @@
-use crate::match_group::Item;
-use crate::RefSpecRef;
+use std::{borrow::Cow, ops::Range};
+
 use bstr::{BStr, BString, ByteSlice, ByteVec};
 use git_hash::ObjectId;
-use std::borrow::Cow;
-use std::ops::Range;
+
+use crate::{match_group::Item, RefSpecRef};
 
 /// A type keeping enough information about a ref-spec to be able to efficiently match it against multiple matcher items.
 pub struct Matcher<'a> {
