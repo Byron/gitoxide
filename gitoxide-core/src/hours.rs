@@ -1,8 +1,6 @@
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::OsStr,
-    fmt,
-    fmt::{Display, Formatter},
     io,
     path::Path,
     time::Instant,
@@ -143,17 +141,18 @@ where
     ));
 
     let num_unique_authors = results_by_hours.len();
-    if show_pii {
-        results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
-        for entry in results_by_hours.iter() {
-            writeln!(out, "{}\n", entry)?;
-        }
-    }
     let (total_hours, total_commits) = results_by_hours
         .iter()
         .map(|e| (e.hours, e.num_commits))
         .reduce(|a, b| (a.0 + b.0, a.1 + b.1))
         .expect("at least one commit at this point");
+    if show_pii {
+        results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
+        for entry in results_by_hours.iter() {
+            entry.write_to(total_hours, &mut out)?;
+            writeln!(out)?;
+        }
+    }
     writeln!(
         out,
         "total hours: {:.02}\ntotal 8h days: {:.02}\ntotal commits = {}{}\ntotal authors: {}",
@@ -264,15 +263,21 @@ impl<'a> From<&'a WorkByEmail> for WorkByPerson<'a> {
     }
 }
 
-impl<'a> Display for WorkByPerson<'a> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        writeln!(f, "{} <{}>", self.name.iter().join(", "), self.email.iter().join(", "))?;
-        writeln!(f, "{} commits found", self.num_commits)?;
+impl<'a> WorkByPerson<'a> {
+    fn write_to(&self, total_hours: f32, mut out: impl std::io::Write) -> std::io::Result<()> {
         writeln!(
-            f,
-            "total time spent: {:.02}h ({:.02} 8h days)",
+            out,
+            "{} <{}>",
+            self.name.iter().join(", "),
+            self.email.iter().join(", ")
+        )?;
+        writeln!(out, "{} commits found", self.num_commits)?;
+        writeln!(
+            out,
+            "total time spent: {:.02}h ({:.02} 8h days, {:.02}%)",
             self.hours,
-            self.hours / HOURS_PER_WORKDAY
+            self.hours / HOURS_PER_WORKDAY,
+            (self.hours / total_hours) * 100.0
         )
     }
 }
