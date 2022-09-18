@@ -60,7 +60,7 @@ mod refs_impl {
             .await?;
 
         match kind {
-            refs::Kind::Tracking => print_refmap(remote, map, out),
+            refs::Kind::Tracking => print_refmap(&repo, remote, map, out),
             refs::Kind::Remote => {
                 match format {
                     OutputFormat::Human => drop(print(out, &map.remote_refs)),
@@ -76,6 +76,7 @@ mod refs_impl {
     }
 
     fn print_refmap(
+        repo: &git::Repository,
         remote: git::Remote<'_>,
         mut map: git::remote::fetch::RefMap,
         mut out: impl std::io::Write,
@@ -91,12 +92,26 @@ mod refs_impl {
             }
 
             write!(out, "\t")?;
-            match &mapping.remote {
-                git::remote::fetch::Source::ObjectId(id) => write!(out, "{}", id),
-                git::remote::fetch::Source::Ref(r) => print_ref(&mut out, r),
-            }?;
+            let target_id = match &mapping.remote {
+                git::remote::fetch::Source::ObjectId(id) => {
+                    write!(out, "{}", id)?;
+                    id
+                }
+                git::remote::fetch::Source::Ref(r) => print_ref(&mut out, r)?,
+            };
             match &mapping.local {
-                Some(local) => writeln!(out, " -> {}", local),
+                Some(local) => {
+                    write!(out, " -> {} ", local)?;
+                    match repo.try_find_reference(local)? {
+                        Some(mut tracking) => {
+                            let msg = (tracking.peel_to_id_in_place()?.as_ref() == target_id)
+                                .then(|| "[up-to-date]")
+                                .unwrap_or("[changed]");
+                            writeln!(out, "{msg}")
+                        }
+                        None => writeln!(out, "[new]"),
+                    }
+                }
                 None => writeln!(out, " (fetch only)"),
             }?;
         }
@@ -153,26 +168,22 @@ mod refs_impl {
         }
     }
 
-    fn print_ref(mut out: impl std::io::Write, r: &fetch::Ref) -> std::io::Result<()> {
+    fn print_ref(mut out: impl std::io::Write, r: &fetch::Ref) -> std::io::Result<&git::hash::oid> {
         match r {
             fetch::Ref::Direct {
                 full_ref_name: path,
                 object,
-            } => write!(&mut out, "{} {}", object.to_hex(), path),
+            } => write!(&mut out, "{} {}", object.to_hex(), path).map(|_| object.as_ref()),
             fetch::Ref::Peeled {
                 full_ref_name: path,
-                object,
                 tag,
-            } => {
-                write!(&mut out, "{} {} tag:{}", object.to_hex(), path, tag)
-            }
+                object,
+            } => write!(&mut out, "{} {} tag:{}", object.to_hex(), path, tag).map(|_| tag.as_ref()),
             fetch::Ref::Symbolic {
                 full_ref_name: path,
                 target,
                 object,
-            } => {
-                write!(&mut out, "{} {} symref-target:{}", object.to_hex(), path, target)
-            }
+            } => write!(&mut out, "{} {} symref-target:{}", object.to_hex(), path, target).map(|_| object.as_ref()),
         }
     }
 

@@ -168,6 +168,16 @@ mod impls {
     }
 }
 
+impl<'a> convert::TryFrom<&'a BString> for &'a PartialNameRef {
+    type Error = Error;
+
+    fn try_from(v: &'a BString) -> Result<Self, Self::Error> {
+        Ok(PartialNameRef::new_unchecked(git_validate::reference::name_partial(
+            v.as_ref(),
+        )?))
+    }
+}
+
 impl<'a> convert::TryFrom<&'a BStr> for &'a PartialNameRef {
     type Error = Error;
 
