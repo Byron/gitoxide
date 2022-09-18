@@ -122,7 +122,11 @@ pub fn main() -> Result<()> {
         #[cfg_attr(feature = "small", allow(unused_variables))]
         Subcommands::Remote(remote::Platform { name, url, cmd }) => match cmd {
             #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-            remote::Subcommands::Refs => {
+            remote::Subcommands::Refs | remote::Subcommands::RefMap => {
+                let kind = match cmd {
+                    remote::Subcommands::Refs => core::repository::remote::refs::Kind::Remote,
+                    remote::Subcommands::RefMap => core::repository::remote::refs::Kind::Tracking,
+                };
                 #[cfg(feature = "gitoxide-core-blocking-client")]
                 {
                     prepare_and_run(
@@ -134,6 +138,7 @@ pub fn main() -> Result<()> {
                         move |progress, out, _err| {
                             core::repository::remote::refs(
                                 repository(Mode::LenientWithGitInstallConfig)?,
+                                kind,
                                 progress,
                                 out,
                                 core::repository::remote::refs::Context { name, url, format },
@@ -149,7 +154,8 @@ pub fn main() -> Result<()> {
                         Some(core::repository::remote::refs::PROGRESS_RANGE),
                     );
                     futures_lite::future::block_on(core::repository::remote::refs(
-                        repository(Mode::Lenient)?,
+                        repository(Mode::LenientWithGitInstallConfig)?,
+                        kind,
                         progress,
                         std::io::stdout(),
                         core::repository::remote::refs::Context { name, url, format },

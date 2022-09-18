@@ -14,7 +14,6 @@
 ### git-object
 * *decode (zero-copy)* borrowed objects
     * [x] commit
-      * [x] parse the title, body, and provide a title summary.
       * [ ] parse [trailers](https://git-scm.com/docs/git-interpret-trailers#_description) 
     * [x] tree
 * encode owned objects

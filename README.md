@@ -48,6 +48,7 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
         * [x] **previous-branches** - list all previously checked out branches, powered by the ref-log.
     * **remote**    
         * [x] **refs** - list all references available on the remote based on the current remote configuration.
+        * [x] **ref-map** - show how remote references relate to their local tracking branches as mapped by refspecs.
     * **credential**
         * [x] **fill/approve/reject** - The same as `git credential`, but implemented in Rust, calling helpers only when from trusted configuration.
     * **free** - no git repository necessary

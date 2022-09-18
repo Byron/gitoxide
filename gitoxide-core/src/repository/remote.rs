@@ -1,5 +1,5 @@
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
-mod net {
+mod refs_impl {
     use anyhow::bail;
     use git_repository as git;
     use git_repository::protocol::fetch;
@@ -10,6 +10,11 @@ mod net {
         use crate::OutputFormat;
 
         pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
+
+        pub enum Kind {
+            Remote,
+            Tracking,
+        }
 
         pub struct Context {
             pub format: OutputFormat,
@@ -23,6 +28,7 @@ mod net {
     #[git::protocol::maybe_async::maybe_async]
     pub async fn refs_fn(
         repo: git::Repository,
+        _kind: refs::Kind,
         mut progress: impl git::Progress,
         out: impl std::io::Write,
         refs::Context { format, name, url }: refs::Context,
@@ -44,17 +50,17 @@ mod net {
                 .context("Remote didn't have a URL to connect to")?
                 .to_bstring()
         ));
-        let refs = remote
+        let map = remote
             .connect(git::remote::Direction::Fetch, progress)
             .await?
-            .list_refs()
+            .ref_map()
             .await?;
 
         match format {
-            OutputFormat::Human => drop(print(out, &refs)),
+            OutputFormat::Human => drop(print(out, &map.remote_refs)),
             #[cfg(feature = "serde1")]
             OutputFormat::Json => {
-                serde_json::to_writer_pretty(out, &refs.into_iter().map(JsonRef::from).collect::<Vec<_>>())?
+                serde_json::to_writer_pretty(out, &map.remote_refs.into_iter().map(JsonRef::from).collect::<Vec<_>>())?
             }
         };
         Ok(())
@@ -137,4 +143,4 @@ mod net {
     }
 }
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
-pub use net::{refs, refs_fn as refs, JsonRef};
+pub use refs_impl::{refs, refs_fn as refs, JsonRef};

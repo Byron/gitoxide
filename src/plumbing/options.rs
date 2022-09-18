@@ -131,9 +131,12 @@ pub mod remote {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "remotes")]
     pub enum Subcommands {
-        /// Print all references available on the remote
+        /// Print all references available on the remote.
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Refs,
+        /// Print all references available on the remote as filtered through ref-specs.
+        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
+        RefMap,
     }
 }
 
