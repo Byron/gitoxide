@@ -4,9 +4,10 @@ use git_hash::oid;
 use std::borrow::Cow;
 
 /// A match group is able to match a list of ref specs in order while handling negation, conflicts and one to many mappings.
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct MatchGroup<'a> {
-    pub(crate) specs: Vec<RefSpecRef<'a>>,
+    /// The specs that take part in item matching.
+    pub specs: Vec<RefSpecRef<'a>>,
 }
 
 /// The outcome of any matching operation of a [`MatchGroup`].
@@ -25,10 +26,10 @@ pub struct Outcome<'spec, 'item> {
 pub struct Item<'a> {
     /// The full name of the references, like `refs/heads/main`
     pub full_ref_name: &'a BStr,
-    /// The peeled id it points to that we should match against.
+    /// The id that `full_ref_name` points to, which typically is a commit, but can also be a tag object (or anything else).
     pub target: &'a oid,
-    /// The tag object's id if this is a tag
-    pub tag: Option<&'a oid>,
+    /// The object an annotated tag is pointing to, if `target` is an annotated tag.
+    pub object: Option<&'a oid>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -90,7 +91,7 @@ pub struct Mapping<'a, 'b> {
     /// The name of the local side for fetches or the remote one for pushes that corresponds to `lhs`, if available.
     pub rhs: Option<Cow<'b, BStr>>,
     /// The index of the matched ref-spec as seen from the match group.
-    pub(crate) spec_index: usize,
+    pub spec_index: usize,
 }
 
 impl std::hash::Hash for Mapping<'_, '_> {

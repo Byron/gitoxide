@@ -24,6 +24,7 @@ pub enum Error {
 
 /// A structure to represent multiple [capabilities][Capability] or features supported by the server.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Capabilities {
     data: BString,
     value_sep: u8,

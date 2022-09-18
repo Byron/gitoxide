@@ -22,10 +22,22 @@ mod blocking_io {
                     (version as u8).to_string().as_str(),
                 )?;
             }
+
             let remote = repo.find_remote("origin")?;
             let connection = remote.connect(Fetch, progress::Discard)?;
-            let refs = connection.list_refs()?;
-            assert_eq!(refs.len(), 14, "it gets all remote refs, independently of the refspec.");
+            let map = connection.ref_map()?;
+            assert_eq!(
+                map.remote_refs.len(),
+                14,
+                "it gets all remote refs, independently of the refspec."
+            );
+
+            assert_eq!(map.fixes.len(), 0);
+            assert_eq!(
+                map.mappings.len(),
+                11,
+                "mappings are only a sub-set of all remotes due to refspec matching"
+            );
         }
         Ok(())
     }

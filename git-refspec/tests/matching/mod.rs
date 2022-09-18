@@ -18,8 +18,8 @@ pub mod baseline {
     pub struct Ref {
         pub name: BString,
         pub target: ObjectId,
-        /// Set if this is a tag, pointing to the tag object itself
-        pub tag: Option<ObjectId>,
+        /// Set if `target` is an annotated tag, this being the object it points to.
+        pub object: Option<ObjectId>,
     }
 
     impl Ref {
@@ -27,7 +27,7 @@ pub mod baseline {
             git_refspec::match_group::Item {
                 full_ref_name: self.name.borrow(),
                 target: &self.target,
-                tag: self.tag.as_deref(),
+                object: self.object.as_deref(),
             }
         }
     }
@@ -54,9 +54,9 @@ pub mod baseline {
         agrees_and_applies_fixes(specs, Vec::new(), expected)
     }
 
-    pub fn agrees_and_applies_fixes<'a, 'b>(
+    pub fn agrees_and_applies_fixes<'a, 'b, 'c>(
         specs: impl IntoIterator<Item = &'a str> + Clone,
-        fixes: impl IntoIterator<Item = Fix>,
+        fixes: impl IntoIterator<Item = Fix<'c>>,
         expected: impl IntoIterator<Item = &'b str>,
     ) {
         check_fetch_remote(
@@ -125,9 +125,14 @@ pub mod baseline {
         of_objects_with_destinations_are_written_into_given_local_branches(specs, expected)
     }
 
-    enum Mode {
-        Normal { validate_err: Option<String> },
-        Custom { expected: Vec<Mapping>, fixes: Vec<Fix> },
+    enum Mode<'a> {
+        Normal {
+            validate_err: Option<String>,
+        },
+        Custom {
+            expected: Vec<Mapping>,
+            fixes: Vec<Fix<'a>>,
+        },
     }
 
     fn check_fetch_remote<'a>(specs: impl IntoIterator<Item = &'a str> + Clone, mode: Mode) {
@@ -216,13 +221,10 @@ pub mod baseline {
                 out.push(Ref {
                     name: name.into(),
                     target,
-                    tag: None,
+                    object: None,
                 })
             } else {
-                let last = out.last_mut().unwrap();
-                let tag = last.target;
-                last.target = target;
-                last.tag = Some(tag);
+                out.last_mut().unwrap().object = Some(target);
             }
         }
         Ok(out)

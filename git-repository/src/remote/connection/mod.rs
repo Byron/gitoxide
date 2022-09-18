@@ -1,11 +1,11 @@
 use crate::Remote;
 
 pub(crate) struct HandshakeWithRefs {
-    #[allow(dead_code)]
     outcome: git_protocol::fetch::handshake::Outcome,
     refs: Vec<git_protocol::fetch::Ref>,
 }
 
+/// A function that performs a given credential action.
 pub type CredentialsFn<'a> = Box<dyn FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + 'a>;
 
 /// A type to represent an ongoing connection to a remote host, typically with the connection already established.
@@ -65,4 +65,5 @@ mod access {
     }
 }
 
-mod list_refs;
+///
+pub mod ref_map;

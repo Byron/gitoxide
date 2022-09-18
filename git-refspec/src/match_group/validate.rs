@@ -1,4 +1,5 @@
 use crate::match_group::{Outcome, Source};
+use crate::RefSpecRef;
 use bstr::BString;
 use std::collections::BTreeMap;
 
@@ -43,14 +44,14 @@ impl std::fmt::Display for Issue {
 }
 
 /// All possible fixes corrected while validating matched mappings.
-#[derive(Debug, PartialEq, Eq)]
-pub enum Fix {
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum Fix<'a> {
     /// Removed a mapping that contained a partial destination entirely.
     MappingWithPartialDestinationRemoved {
         /// The destination ref name that was ignored.
         name: BString,
         /// The spec that defined the mapping
-        spec: BString,
+        spec: RefSpecRef<'a>,
     },
 }
 
@@ -86,7 +87,7 @@ impl<'spec, 'item> Outcome<'spec, 'item> {
     /// Return `(modified self, issues)` providing a fixed-up set of mappings in `self` with the fixed `issues`
     /// provided as part of it.
     /// Terminal issues are communicated using the [`Error`] type accordingly.
-    pub fn validated(mut self) -> Result<(Self, Vec<Fix>), Error> {
+    pub fn validated(mut self) -> Result<(Self, Vec<Fix<'spec>>), Error> {
         let mut sources_by_destinations = BTreeMap::new();
         for (dst, (spec_index, src)) in self
             .mappings
@@ -121,7 +122,7 @@ impl<'spec, 'item> Outcome<'spec, 'item> {
                     } else {
                         fixed.push(Fix::MappingWithPartialDestinationRemoved {
                             name: dst.as_ref().to_owned(),
-                            spec: group.specs[m.spec_index].to_bstring(),
+                            spec: group.specs[m.spec_index],
                         });
                         false
                     }

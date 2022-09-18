@@ -9,14 +9,28 @@ impl From<InternalRef> for Ref {
                 path,
                 target: Some(target),
                 object,
-            } => Ref::Symbolic { path, target, object },
+            } => Ref::Symbolic {
+                full_ref_name: path,
+                target,
+                object,
+            },
             InternalRef::Symbolic {
                 path,
                 target: None,
                 object,
-            } => Ref::Direct { path, object },
-            InternalRef::Peeled { path, tag, object } => Ref::Peeled { path, tag, object },
-            InternalRef::Direct { path, object } => Ref::Direct { path, object },
+            } => Ref::Direct {
+                full_ref_name: path,
+                object,
+            },
+            InternalRef::Peeled { path, tag, object } => Ref::Peeled {
+                full_ref_name: path,
+                tag,
+                object,
+            },
+            InternalRef::Direct { path, object } => Ref::Direct {
+                full_ref_name: path,
+                object,
+            },
             InternalRef::SymbolicForLookup { .. } => {
                 unreachable!("this case should have been removed during processing")
             }
@@ -170,17 +184,17 @@ pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
                         }
                         match attribute {
                             "peeled" => Ref::Peeled {
-                                path: path.into(),
+                                full_ref_name: path.into(),
                                 object: git_hash::ObjectId::from_hex(value.as_bytes())?,
                                 tag: id,
                             },
                             "symref-target" => match value {
                                 "(null)" => Ref::Direct {
-                                    path: path.into(),
+                                    full_ref_name: path.into(),
                                     object: id,
                                 },
                                 name => Ref::Symbolic {
-                                    path: path.into(),
+                                    full_ref_name: path.into(),
                                     object: id,
                                     target: name.into(),
                                 },
@@ -198,7 +212,7 @@ pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
             } else {
                 Ref::Direct {
                     object: id,
-                    path: path.into(),
+                    full_ref_name: path.into(),
                 }
             })
         }

@@ -1,5 +1,6 @@
 use git_refspec::RefSpec;
 
+use crate::bstr::BStr;
 use crate::{remote, Remote};
 
 /// Access
@@ -59,5 +60,37 @@ impl Remote<'_> {
             };
         url_err.or(push_url_err).map(Err::<&mut Self, _>).transpose()?;
         Ok(self)
+    }
+
+    /// Replace all currently set refspecs, typically from configuration, with the given `specs` for `direction`,
+    /// or `None` if one of the input specs could not be parsed.
+    pub fn replace_refspecs<Spec>(
+        &mut self,
+        specs: impl IntoIterator<Item = Spec>,
+        direction: remote::Direction,
+    ) -> Result<(), git_refspec::parse::Error>
+    where
+        Spec: AsRef<BStr>,
+    {
+        use remote::Direction::*;
+        let specs: Vec<_> = specs
+            .into_iter()
+            .map(|spec| {
+                git_refspec::parse(
+                    spec.as_ref(),
+                    match direction {
+                        Push => git_refspec::parse::Operation::Push,
+                        Fetch => git_refspec::parse::Operation::Fetch,
+                    },
+                )
+                .map(|url| url.to_owned())
+            })
+            .collect::<Result<_, _>>()?;
+        let dst = match direction {
+            Push => &mut self.push_specs,
+            Fetch => &mut self.fetch_specs,
+        };
+        *dst = specs;
+        Ok(())
     }
 }

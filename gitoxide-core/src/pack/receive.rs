@@ -90,7 +90,7 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
     ) -> io::Result<Action> {
         if self.wanted_refs.is_empty() {
             for r in refs {
-                let (path, id) = r.unpack();
+                let (path, id, _) = r.unpack();
                 match self.ref_filter {
                     Some(ref_prefixes) => {
                         if ref_prefixes.iter().any(|prefix| path.starts_with_str(prefix)) {
@@ -310,10 +310,20 @@ fn write_raw_refs(refs: &[Ref], directory: PathBuf) -> std::io::Result<()> {
     };
     for r in refs {
         let (path, content) = match r {
-            Ref::Symbolic { path, target, .. } => (assure_dir_exists(path)?, format!("ref: {}", target)),
-            Ref::Peeled { path, tag: object, .. } | Ref::Direct { path, object } => {
-                (assure_dir_exists(path)?, object.to_string())
+            Ref::Symbolic {
+                full_ref_name: path,
+                target,
+                ..
+            } => (assure_dir_exists(path)?, format!("ref: {}", target)),
+            Ref::Peeled {
+                full_ref_name: path,
+                tag: object,
+                ..
             }
+            | Ref::Direct {
+                full_ref_name: path,
+                object,
+            } => (assure_dir_exists(path)?, object.to_string()),
         };
         std::fs::write(path, content.as_bytes())?;
     }

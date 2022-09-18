@@ -120,9 +120,26 @@ pub fn main() -> Result<()> {
             },
         ),
         #[cfg_attr(feature = "small", allow(unused_variables))]
-        Subcommands::Remote(remote::Platform { name, url, cmd }) => match cmd {
+        Subcommands::Remote(remote::Platform {
+            name,
+            url,
+            cmd,
+            handshake_info,
+        }) => match cmd {
             #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-            remote::Subcommands::Refs => {
+            remote::Subcommands::Refs | remote::Subcommands::RefMap { .. } => {
+                let kind = match cmd {
+                    remote::Subcommands::Refs => core::repository::remote::refs::Kind::Remote,
+                    remote::Subcommands::RefMap { ref_spec } => {
+                        core::repository::remote::refs::Kind::Tracking { ref_specs: ref_spec }
+                    }
+                };
+                let context = core::repository::remote::refs::Context {
+                    name,
+                    url,
+                    format,
+                    handshake_info,
+                };
                 #[cfg(feature = "gitoxide-core-blocking-client")]
                 {
                     prepare_and_run(
@@ -131,12 +148,14 @@ pub fn main() -> Result<()> {
                         progress,
                         progress_keep_open,
                         core::repository::remote::refs::PROGRESS_RANGE,
-                        move |progress, out, _err| {
+                        move |progress, out, err| {
                             core::repository::remote::refs(
                                 repository(Mode::LenientWithGitInstallConfig)?,
+                                kind,
                                 progress,
                                 out,
-                                core::repository::remote::refs::Context { name, url, format },
+                                err,
+                                context,
                             )
                         },
                     )
@@ -149,10 +168,12 @@ pub fn main() -> Result<()> {
                         Some(core::repository::remote::refs::PROGRESS_RANGE),
                     );
                     futures_lite::future::block_on(core::repository::remote::refs(
-                        repository(Mode::Lenient)?,
+                        repository(Mode::LenientWithGitInstallConfig)?,
+                        kind,
                         progress,
                         std::io::stdout(),
-                        core::repository::remote::refs::Context { name, url, format },
+                        std::io::stderr(),
+                        context,
                     ))
                 }
             }

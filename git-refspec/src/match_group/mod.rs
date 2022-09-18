@@ -88,7 +88,7 @@ impl<'a> MatchGroup<'a> {
                             .matches_lhs(Item {
                                 full_ref_name: name,
                                 target: &null_id,
-                                tag: None,
+                                object: None,
                             })
                             .0
                     }
@@ -99,11 +99,6 @@ impl<'a> MatchGroup<'a> {
             group: self,
             mappings: out,
         }
-    }
-
-    /// Return the spec that produced the given `mapping`.
-    pub fn spec_by_mapping(&self, mapping: &Mapping<'_, '_>) -> RefSpecRef<'a> {
-        self.specs[mapping.spec_index]
     }
 }
 

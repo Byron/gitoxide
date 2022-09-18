@@ -169,7 +169,7 @@ mod blocking_io {
         ) -> io::Result<()> {
             for wanted in response.wanted_refs() {
                 self.wanted_refs.push(fetch::Ref::Direct {
-                    path: wanted.path.clone(),
+                    full_ref_name: wanted.path.clone(),
                     object: wanted.id,
                 });
             }
@@ -230,7 +230,7 @@ mod async_io {
         ) -> io::Result<()> {
             for wanted in response.wanted_refs() {
                 self.wanted_refs.push(fetch::Ref::Direct {
-                    path: wanted.path.clone(),
+                    full_ref_name: wanted.path.clone(),
                     object: wanted.id,
                 });
             }

@@ -15,6 +15,8 @@ use crate::{
 /// their source.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum Source {
+    /// A special configuration file that ships with the git installation, and is thus tied to the used git binary.
+    GitInstallation,
     /// System-wide configuration path. This is defined as
     /// `$(prefix)/etc/gitconfig` (where prefix is the git-installation directory).
     System,

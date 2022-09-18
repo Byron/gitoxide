@@ -123,6 +123,10 @@ pub mod remote {
         #[clap(long, short = 'u', conflicts_with("name"), parse(try_from_os_str = std::convert::TryFrom::try_from))]
         pub url: Option<git::Url>,
 
+        /// Output additional typically information provided by the server as part of the connection handshake.
+        #[clap(long)]
+        pub handshake_info: bool,
+
         /// Subcommands
         #[clap(subcommand)]
         pub cmd: Subcommands,
@@ -131,9 +135,16 @@ pub mod remote {
     #[derive(Debug, clap::Subcommand)]
     #[clap(visible_alias = "remotes")]
     pub enum Subcommands {
-        /// Print all references available on the remote
+        /// Print all references available on the remote.
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Refs,
+        /// Print all references available on the remote as filtered through ref-specs.
+        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
+        RefMap {
+            /// Override the built-in and configured ref-specs with one or more of the given ones.
+            #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
+            ref_spec: Vec<git_repository::bstr::BString>,
+        },
     }
 }
 
