@@ -3,6 +3,7 @@ mod refs_impl {
     use anyhow::bail;
     use git_repository as git;
     use git_repository::protocol::fetch;
+    use git_repository::refspec::RefSpec;
 
     use crate::OutputFormat;
 
@@ -65,7 +66,9 @@ mod refs_impl {
             .await?;
 
         match kind {
-            refs::Kind::Tracking { .. } => print_refmap(&repo, remote, map, out, err),
+            refs::Kind::Tracking { .. } => {
+                print_refmap(&repo, remote.refspecs(git::remote::Direction::Fetch), map, out, err)
+            }
             refs::Kind::Remote => {
                 match format {
                     OutputFormat::Human => drop(print(out, &map.remote_refs)),
@@ -82,8 +85,8 @@ mod refs_impl {
 
     fn print_refmap(
         repo: &git::Repository,
-        remote: git::Remote<'_>,
-        mut map: git::remote::fetch::RefMap,
+        refspecs: &[RefSpec],
+        mut map: git::remote::fetch::RefMap<'_>,
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
@@ -92,7 +95,7 @@ mod refs_impl {
         for mapping in &map.mappings {
             if mapping.spec_index != last_spec_index {
                 last_spec_index = mapping.spec_index;
-                let spec = &remote.refspecs(git::remote::Direction::Fetch)[mapping.spec_index];
+                let spec = &refspecs[mapping.spec_index];
                 spec.to_ref().write_to(&mut out)?;
                 writeln!(out)?;
             }

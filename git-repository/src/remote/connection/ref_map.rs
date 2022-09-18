@@ -19,7 +19,7 @@ pub enum Error {
     MappingValidation(#[from] git_refspec::match_group::validate::Error),
 }
 
-impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P>
+impl<'remote, 'repo, T, P> Connection<'remote, 'repo, T, P>
 where
     T: Transport,
     P: Progress,
@@ -32,14 +32,14 @@ where
     ///
     /// Note that this doesn't fetch the objects mentioned in the tips nor does it make any change to underlying repository.
     #[git_protocol::maybe_async::maybe_async]
-    pub async fn ref_map(mut self) -> Result<fetch::RefMap, Error> {
+    pub async fn ref_map(mut self) -> Result<fetch::RefMap<'remote>, Error> {
         let res = self.ref_map_inner().await;
         git_protocol::fetch::indicate_end_of_interaction(&mut self.transport).await?;
         res
     }
 
     #[git_protocol::maybe_async::maybe_async]
-    async fn ref_map_inner(&mut self) -> Result<fetch::RefMap, Error> {
+    async fn ref_map_inner(&mut self) -> Result<fetch::RefMap<'remote>, Error> {
         let remote = self.fetch_refs().await?;
         let group = git_refspec::MatchGroup::from_fetch_specs(self.remote.fetch_specs.iter().map(|s| s.to_ref()));
         let (res, fixes) = group

@@ -32,11 +32,11 @@ pub mod fetch {
 
     /// Information about the relationship between our refspecs, and remote references with their local counterparts.
     #[derive(Debug, Clone)]
-    pub struct RefMap {
+    pub struct RefMap<'spec> {
         /// A mapping between a remote reference and a local tracking branch.
         pub mappings: Vec<Mapping>,
         /// Information about the fixes applied to the `mapping` due to validation and sanitization.
-        pub fixes: Vec<git_refspec::match_group::validate::Fix>,
+        pub fixes: Vec<git_refspec::match_group::validate::Fix<'spec>>,
         /// All refs advertised by the remote.
         pub remote_refs: Vec<git_protocol::fetch::Ref>,
         /// Additional information provided by the server as part of the handshake.
