@@ -208,17 +208,17 @@ mod refs_impl {
             fetch::Ref::Direct {
                 full_ref_name: path,
                 object,
-            } => write!(&mut out, "{} {}", object.to_hex(), path).map(|_| object.as_ref()),
+            } => write!(&mut out, "{} {}", object, path).map(|_| object.as_ref()),
             fetch::Ref::Peeled {
                 full_ref_name: path,
                 tag,
                 object,
-            } => write!(&mut out, "{} {} tag:{}", object.to_hex(), path, tag).map(|_| tag.as_ref()),
+            } => write!(&mut out, "{} {} object:{}", tag, path, object).map(|_| tag.as_ref()),
             fetch::Ref::Symbolic {
                 full_ref_name: path,
                 target,
                 object,
-            } => write!(&mut out, "{} {} symref-target:{}", object.to_hex(), path, target).map(|_| object.as_ref()),
+            } => write!(&mut out, "{} {} symref-target:{}", object, path, target).map(|_| object.as_ref()),
         }
     }
 
