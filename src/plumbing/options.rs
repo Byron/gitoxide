@@ -110,7 +110,6 @@ pub mod config {
 
 pub mod remote {
     use git_repository as git;
-    use git_repository::bstr::BString;
 
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
@@ -140,7 +139,7 @@ pub mod remote {
         RefMap {
             /// Override the built-in and configured ref-specs with one or more of the given ones.
             #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
-            ref_spec: Vec<BString>,
+            ref_spec: Vec<git_repository::bstr::BString>,
         },
     }
 }

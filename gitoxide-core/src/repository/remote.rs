@@ -32,6 +32,7 @@ mod refs_impl {
         kind: refs::Kind,
         mut progress: impl git::Progress,
         out: impl std::io::Write,
+        err: impl std::io::Write,
         refs::Context { format, name, url }: refs::Context,
     ) -> anyhow::Result<()> {
         use anyhow::Context;
@@ -64,7 +65,7 @@ mod refs_impl {
             .await?;
 
         match kind {
-            refs::Kind::Tracking { .. } => print_refmap(&repo, remote, map, out),
+            refs::Kind::Tracking { .. } => print_refmap(&repo, remote, map, out, err),
             refs::Kind::Remote => {
                 match format {
                     OutputFormat::Human => drop(print(out, &map.remote_refs)),
@@ -84,6 +85,7 @@ mod refs_impl {
         remote: git::Remote<'_>,
         mut map: git::remote::fetch::RefMap,
         mut out: impl std::io::Write,
+        mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
         let mut last_spec_index = usize::MAX;
         map.mappings.sort_by_key(|m| m.spec_index);
@@ -105,7 +107,7 @@ mod refs_impl {
             };
             match &mapping.local {
                 Some(local) => {
-                    write!(out, " -> {} ", local)?;
+                    write!(out, " -> {local} ")?;
                     match repo.try_find_reference(local)? {
                         Some(tracking) => {
                             let msg = match tracking.try_id() {
@@ -121,6 +123,12 @@ mod refs_impl {
                 }
                 None => writeln!(out, " (fetch only)"),
             }?;
+        }
+        if !map.fixes.is_empty() {
+            writeln!(err, "Fixes and sanitizations")?;
+            for fix in &map.fixes {
+                writeln!(err, "\t{fix:?}")?;
+            }
         }
         Ok(())
     }

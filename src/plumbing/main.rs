@@ -137,12 +137,13 @@ pub fn main() -> Result<()> {
                         progress,
                         progress_keep_open,
                         core::repository::remote::refs::PROGRESS_RANGE,
-                        move |progress, out, _err| {
+                        move |progress, out, err| {
                             core::repository::remote::refs(
                                 repository(Mode::LenientWithGitInstallConfig)?,
                                 kind,
                                 progress,
                                 out,
+                                err,
                                 core::repository::remote::refs::Context { name, url, format },
                             )
                         },
@@ -160,6 +161,7 @@ pub fn main() -> Result<()> {
                         kind,
                         progress,
                         std::io::stdout(),
+                        std::io::stderr(),
                         core::repository::remote::refs::Context { name, url, format },
                     ))
                 }

@@ -3,7 +3,7 @@ use git_protocol::transport::client::Transport;
 
 use crate::remote::{connection::HandshakeWithRefs, fetch, Connection, Direction};
 
-/// The error returned by [`Connection::list_refs_to_map()`].
+/// The error returned by [`Connection::ref_map()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
