@@ -16,7 +16,7 @@ mod refs_impl {
 
         pub enum Kind {
             Remote,
-            Tracking { ref_specs: Vec<BString> },
+            Tracking { ref_specs: Vec<BString>, server_info: bool },
         }
 
         pub struct Context {
@@ -47,11 +47,13 @@ mod refs_impl {
             (None, Some(url)) => repo.remote_at(url)?,
             (Some(_), Some(_)) => bail!("Must not set both the remote name and the url - they are mutually exclusive"),
         };
-        if let refs::Kind::Tracking { ref_specs } = &kind {
+        if let refs::Kind::Tracking { ref_specs, .. } = &kind {
             if format != OutputFormat::Human {
                 bail!("JSON output isn't yet supported for listing ref-mappings.");
             }
-            remote.replace_refspecs(ref_specs.iter(), git::remote::Direction::Fetch)?;
+            if !ref_specs.is_empty() {
+                remote.replace_refspecs(ref_specs.iter(), git::remote::Direction::Fetch)?;
+            }
         }
         progress.info(format!(
             "Connecting to {:?}",
@@ -67,9 +69,14 @@ mod refs_impl {
             .await?;
 
         match kind {
-            refs::Kind::Tracking { .. } => {
-                print_refmap(&repo, remote.refspecs(git::remote::Direction::Fetch), map, out, err)
-            }
+            refs::Kind::Tracking { server_info, .. } => print_refmap(
+                &repo,
+                remote.refspecs(git::remote::Direction::Fetch),
+                map,
+                server_info,
+                out,
+                err,
+            ),
             refs::Kind::Remote => {
                 match format {
                     OutputFormat::Human => drop(print(out, &map.remote_refs)),
@@ -88,6 +95,7 @@ mod refs_impl {
         repo: &git::Repository,
         refspecs: &[RefSpec],
         mut map: git::remote::fetch::RefMap<'_>,
+        server_info: bool,
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
@@ -149,6 +157,10 @@ mod refs_impl {
                     }
                 }
             }
+        }
+        if server_info {
+            writeln!(out, "Additional Information")?;
+            writeln!(out, "{:?}", map.handshake)?;
         }
         Ok(())
     }

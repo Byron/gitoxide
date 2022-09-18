@@ -125,9 +125,13 @@ pub fn main() -> Result<()> {
             remote::Subcommands::Refs | remote::Subcommands::RefMap { .. } => {
                 let kind = match cmd {
                     remote::Subcommands::Refs => core::repository::remote::refs::Kind::Remote,
-                    remote::Subcommands::RefMap { ref_spec } => {
-                        core::repository::remote::refs::Kind::Tracking { ref_specs: ref_spec }
-                    }
+                    remote::Subcommands::RefMap {
+                        ref_spec,
+                        connection_info,
+                    } => core::repository::remote::refs::Kind::Tracking {
+                        ref_specs: ref_spec,
+                        server_info: connection_info,
+                    },
                 };
                 #[cfg(feature = "gitoxide-core-blocking-client")]
                 {

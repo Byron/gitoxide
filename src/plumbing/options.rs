@@ -137,6 +137,9 @@ pub mod remote {
         /// Print all references available on the remote as filtered through ref-specs.
         #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         RefMap {
+            /// Output additional typically internal information provided by the server.
+            #[clap(long)]
+            connection_info: bool,
             /// Override the built-in and configured ref-specs with one or more of the given ones.
             #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
             ref_spec: Vec<git_repository::bstr::BString>,
