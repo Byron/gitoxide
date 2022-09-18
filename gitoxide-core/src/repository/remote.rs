@@ -28,11 +28,14 @@ mod refs_impl {
     #[git::protocol::maybe_async::maybe_async]
     pub async fn refs_fn(
         repo: git::Repository,
-        _kind: refs::Kind,
+        kind: refs::Kind,
         mut progress: impl git::Progress,
         out: impl std::io::Write,
         refs::Context { format, name, url }: refs::Context,
     ) -> anyhow::Result<()> {
+        if matches!(kind, refs::Kind::Tracking) && format != OutputFormat::Human {
+            bail!("JSON output isn't yet supported for listing ref-mappings.");
+        }
         use anyhow::Context;
         let remote = match (name, url) {
             (Some(name), None) => repo.find_remote(&name)?,
@@ -56,13 +59,47 @@ mod refs_impl {
             .ref_map()
             .await?;
 
-        match format {
-            OutputFormat::Human => drop(print(out, &map.remote_refs)),
-            #[cfg(feature = "serde1")]
-            OutputFormat::Json => {
-                serde_json::to_writer_pretty(out, &map.remote_refs.into_iter().map(JsonRef::from).collect::<Vec<_>>())?
+        match kind {
+            refs::Kind::Tracking => print_refmap(remote, map, out),
+            refs::Kind::Remote => {
+                match format {
+                    OutputFormat::Human => drop(print(out, &map.remote_refs)),
+                    #[cfg(feature = "serde1")]
+                    OutputFormat::Json => serde_json::to_writer_pretty(
+                        out,
+                        &map.remote_refs.into_iter().map(JsonRef::from).collect::<Vec<_>>(),
+                    )?,
+                };
+                Ok(())
             }
-        };
+        }
+    }
+
+    fn print_refmap(
+        remote: git::Remote<'_>,
+        mut map: git::remote::fetch::RefMap,
+        mut out: impl std::io::Write,
+    ) -> anyhow::Result<()> {
+        let mut last_spec_index = usize::MAX;
+        map.mappings.sort_by_key(|m| m.spec_index);
+        for mapping in &map.mappings {
+            if mapping.spec_index != last_spec_index {
+                last_spec_index = mapping.spec_index;
+                let spec = &remote.refspecs(git::remote::Direction::Fetch)[mapping.spec_index];
+                spec.to_ref().write_to(&mut out)?;
+                writeln!(out)?;
+            }
+
+            write!(out, "\t")?;
+            match &mapping.remote {
+                git::remote::fetch::Source::ObjectId(id) => write!(out, "{}", id),
+                git::remote::fetch::Source::Ref(r) => print_ref(&mut out, r),
+            }?;
+            match &mapping.local {
+                Some(local) => writeln!(out, " -> {}", local),
+                None => writeln!(out, " (fetch only)"),
+            }?;
+        }
         Ok(())
     }
 
@@ -116,28 +153,33 @@ mod refs_impl {
         }
     }
 
+    fn print_ref(mut out: impl std::io::Write, r: &fetch::Ref) -> std::io::Result<()> {
+        match r {
+            fetch::Ref::Direct {
+                full_ref_name: path,
+                object,
+            } => write!(&mut out, "{} {}", object.to_hex(), path),
+            fetch::Ref::Peeled {
+                full_ref_name: path,
+                object,
+                tag,
+            } => {
+                write!(&mut out, "{} {} tag:{}", object.to_hex(), path, tag)
+            }
+            fetch::Ref::Symbolic {
+                full_ref_name: path,
+                target,
+                object,
+            } => {
+                write!(&mut out, "{} {} symref-target:{}", object.to_hex(), path, target)
+            }
+        }
+    }
+
     pub(crate) fn print(mut out: impl std::io::Write, refs: &[fetch::Ref]) -> std::io::Result<()> {
         for r in refs {
-            match r {
-                fetch::Ref::Direct {
-                    full_ref_name: path,
-                    object,
-                } => writeln!(&mut out, "{} {}", object.to_hex(), path),
-                fetch::Ref::Peeled {
-                    full_ref_name: path,
-                    object,
-                    tag,
-                } => {
-                    writeln!(&mut out, "{} {} tag:{}", object.to_hex(), path, tag)
-                }
-                fetch::Ref::Symbolic {
-                    full_ref_name: path,
-                    target,
-                    object,
-                } => {
-                    writeln!(&mut out, "{} {} symref-target:{}", object.to_hex(), path, target)
-                }
-            }?;
+            print_ref(&mut out, r)?;
+            writeln!(out)?;
         }
         Ok(())
     }
