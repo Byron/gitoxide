@@ -122,10 +122,12 @@ pub fn main() -> Result<()> {
         #[cfg_attr(feature = "small", allow(unused_variables))]
         Subcommands::Remote(remote::Platform { name, url, cmd }) => match cmd {
             #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-            remote::Subcommands::Refs | remote::Subcommands::RefMap => {
+            remote::Subcommands::Refs | remote::Subcommands::RefMap { .. } => {
                 let kind = match cmd {
                     remote::Subcommands::Refs => core::repository::remote::refs::Kind::Remote,
-                    remote::Subcommands::RefMap => core::repository::remote::refs::Kind::Tracking,
+                    remote::Subcommands::RefMap { ref_spec } => {
+                        core::repository::remote::refs::Kind::Tracking { ref_specs: ref_spec }
+                    }
                 };
                 #[cfg(feature = "gitoxide-core-blocking-client")]
                 {

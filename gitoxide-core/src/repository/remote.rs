@@ -8,12 +8,13 @@ mod refs_impl {
 
     pub mod refs {
         use crate::OutputFormat;
+        use git_repository::bstr::BString;
 
         pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
 
         pub enum Kind {
             Remote,
-            Tracking,
+            Tracking { ref_specs: Vec<BString> },
         }
 
         pub struct Context {
@@ -33,11 +34,8 @@ mod refs_impl {
         out: impl std::io::Write,
         refs::Context { format, name, url }: refs::Context,
     ) -> anyhow::Result<()> {
-        if matches!(kind, refs::Kind::Tracking) && format != OutputFormat::Human {
-            bail!("JSON output isn't yet supported for listing ref-mappings.");
-        }
         use anyhow::Context;
-        let remote = match (name, url) {
+        let mut remote = match (name, url) {
             (Some(name), None) => repo.find_remote(&name)?,
             (None, None) => repo
                 .head()?
@@ -46,6 +44,12 @@ mod refs_impl {
             (None, Some(url)) => repo.remote_at(url)?,
             (Some(_), Some(_)) => bail!("Must not set both the remote name and the url - they are mutually exclusive"),
         };
+        if let refs::Kind::Tracking { ref_specs } = &kind {
+            if format != OutputFormat::Human {
+                bail!("JSON output isn't yet supported for listing ref-mappings.");
+            }
+            remote.replace_refspecs(ref_specs.iter(), git::remote::Direction::Fetch)?;
+        }
         progress.info(format!(
             "Connecting to {:?}",
             remote
@@ -60,7 +64,7 @@ mod refs_impl {
             .await?;
 
         match kind {
-            refs::Kind::Tracking => print_refmap(&repo, remote, map, out),
+            refs::Kind::Tracking { .. } => print_refmap(&repo, remote, map, out),
             refs::Kind::Remote => {
                 match format {
                     OutputFormat::Human => drop(print(out, &map.remote_refs)),
@@ -103,10 +107,13 @@ mod refs_impl {
                 Some(local) => {
                     write!(out, " -> {} ", local)?;
                     match repo.try_find_reference(local)? {
-                        Some(mut tracking) => {
-                            let msg = (tracking.peel_to_id_in_place()?.as_ref() == target_id)
-                                .then(|| "[up-to-date]")
-                                .unwrap_or("[changed]");
+                        Some(tracking) => {
+                            let msg = match tracking.try_id() {
+                                Some(id) => (id.as_ref() == target_id)
+                                    .then(|| "[up-to-date]")
+                                    .unwrap_or("[changed]"),
+                                None => "[skipped]",
+                            };
                             writeln!(out, "{msg}")
                         }
                         None => writeln!(out, "[new]"),
