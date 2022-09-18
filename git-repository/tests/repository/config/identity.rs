@@ -50,22 +50,16 @@ fn author_and_committer_and_fallback() {
             }),
             "the only parsesable marker time we know right now, indicating time parse success"
         );
-        assert_eq!(
-            repo.committer(),
-            Some(git_actor::SignatureRef {
-                name: "committer".into(),
-                email: "committer@email".into(),
-                time: git_date::Time::now_local_or_utc()
-            })
-        );
-        assert_eq!(
-            repo.user_default(),
-            git_actor::SignatureRef {
-                name: "gitoxide".into(),
-                email: "gitoxide@localhost".into(),
-                time: git_date::Time::now_local_or_utc()
-            }
-        );
+        {
+            let actual = repo.committer().expect("set");
+            assert_eq!(actual.name, "committer");
+            assert_eq!(actual.email, "committer@email");
+        }
+        {
+            let actual = repo.user_default();
+            assert_eq!(actual.name, "gitoxide");
+            assert_eq!(actual.email, "gitoxide@localhost");
+        }
 
         let config = repo.config_snapshot();
 
