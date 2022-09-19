@@ -16,7 +16,6 @@ use git_repository::{
     progress, Progress,
 };
 use itertools::Itertools;
-use rayon::prelude::*;
 
 /// Additional configuration for the hours estimation functionality.
 pub struct Context<W> {
@@ -59,12 +58,36 @@ where
         let start = Instant::now();
         let mut progress = progress.add_child("Traverse commit graph");
         progress.init(None, progress::count("commits"));
-        let mut commits: Vec<Vec<u8>> = Vec::new();
+        let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
+        let mailmap = repo.open_mailmap();
+        let handle = std::thread::spawn(move || -> anyhow::Result<Vec<actor::Signature>> {
+            let mut out = Vec::new();
+            for commit_data in rx {
+                if let Some(author) = objs::CommitRefIter::from_bytes(&commit_data)
+                    .author()
+                    .map(|author| mailmap.resolve(author.trim()))
+                    .ok()
+                {
+                    out.push(author);
+                }
+            }
+            out.shrink_to_fit();
+            out.sort_by(|a, b| {
+                a.email.cmp(&b.email).then(
+                    a.time
+                        .seconds_since_unix_epoch
+                        .cmp(&b.time.seconds_since_unix_epoch)
+                        .reverse(),
+                )
+            });
+            Ok(out)
+        });
+
         let commit_iter = interrupt::Iter::new(
             commit_id.detach().ancestors(|oid, buf| {
                 progress.inc();
                 repo.objects.find(oid, buf).map(|o| {
-                    commits.push(o.data.to_owned());
+                    tx.send(o.data.to_owned()).ok();
                     objs::CommitRefIter::from_bytes(o.data)
                 })
             }),
@@ -81,33 +104,16 @@ where
                 Err(err) => return Err(err.into()),
             };
         }
+        drop(tx);
         progress.show_throughput(start);
-        (commits, is_shallow)
+        (handle.join().expect("no panic")?, is_shallow)
     };
 
-    let mailmap = repo.open_mailmap();
-    let start = Instant::now();
-    #[allow(clippy::redundant_closure)]
-    let mut all_commits: Vec<actor::Signature> = all_commits
-        .into_par_iter()
-        .filter_map(|commit_data: Vec<u8>| {
-            objs::CommitRefIter::from_bytes(&commit_data)
-                .author()
-                .map(|author| mailmap.resolve(author.trim()))
-                .ok()
-        })
-        .collect::<Vec<_>>();
-    all_commits.sort_by(|a, b| {
-        a.email.cmp(&b.email).then(
-            a.time
-                .seconds_since_unix_epoch
-                .cmp(&b.time.seconds_since_unix_epoch)
-                .reverse(),
-        )
-    });
     if all_commits.is_empty() {
         bail!("No commits to process");
     }
+
+    let start = Instant::now();
     let mut current_email = &all_commits[0].email;
     let mut slice_start = 0;
     let mut results_by_hours = Vec::new();

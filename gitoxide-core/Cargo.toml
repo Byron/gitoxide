@@ -18,7 +18,7 @@ default = []
 ## Discover all git repositories within a directory. Particularly useful with [skim](https://github.com/lotabout/skim).
 organize = ["git-url", "jwalk"]
 ## Derive the amount of time invested into a git repository akin to [git-hours](https://github.com/kimmobrunfeldt/git-hours).
-estimate-hours = ["itertools", "rayon", "fs-err"]
+estimate-hours = ["itertools", "fs-err"]
 
 #! ### Mutually Exclusive Networking
 #! If both are set, _blocking-client_ will take precedence, allowing `--all-features` to be used.
@@ -59,7 +59,6 @@ blocking = { version = "1.0.2", optional = true }
 git-url = { version = "^0.8.0", path = "../git-url", optional = true }
 jwalk = { version = "0.6.0", optional = true }
 
-rayon = { version = "1.5.0", optional = true }
 itertools = { version = "0.10.1", optional = true }
 fs-err = { version = "2.6.0", optional = true }
 
