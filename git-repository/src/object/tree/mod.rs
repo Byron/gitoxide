@@ -71,7 +71,7 @@ pub mod diff {
     use git_object::TreeRefIter;
     use git_odb::FindExt;
 
-    /// The error return by methods on the [diff platform][super::Platform].
+    /// The error return by methods on the [diff platform][Platform].
     #[derive(Debug, thiserror::Error)]
     #[allow(missing_docs)]
     pub enum Error {
@@ -142,7 +142,7 @@ pub mod diff {
     /// Diffing
     impl<'repo> Tree<'repo> {
         /// Return a platform to see the changes needed to create other trees, for instance.
-        pub fn changes<'other_repo, 'a>(&'a self) -> Platform<'a, 'repo> {
+        pub fn changes<'a>(&'a self) -> Platform<'a, 'repo> {
             Platform {
                 state: Default::default(),
                 lhs: self,
