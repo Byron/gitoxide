@@ -1262,6 +1262,7 @@ dependencies = [
  "git-odb",
  "git-testtools",
  "git-traverse",
+ "similar",
  "thiserror",
 ]
 
@@ -2899,6 +2900,9 @@ name = "similar"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62ac7f900db32bf3fd12e0117dd3dc4da74bc52ebaac97f39668446d89694803"
+dependencies = [
+ "bstr 0.2.17",
+]
 
 [[package]]
 name = "slab"

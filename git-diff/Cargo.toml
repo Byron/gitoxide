@@ -15,6 +15,7 @@ doctest = false
 git-hash = { version = "^0.9.9", path = "../git-hash" }
 git-object = { version = "^0.20.3", path = "../git-object" }
 thiserror = "1.0.32"
+similar = { version = "2.2.0", features = ["bytes"] }
 
 [dev-dependencies]
 git-odb = { path = "../git-odb" }
