@@ -8,14 +8,8 @@ use std::{
 
 use anyhow::{anyhow, bail};
 use git_repository as git;
-use git_repository::bstr::BStr;
-use git_repository::{
-    actor,
-    bstr::{BString, ByteSlice},
-    interrupt, objs,
-    prelude::*,
-    progress, Progress,
-};
+use git_repository::bstr::{BStr, BString};
+use git_repository::{actor, bstr::ByteSlice, interrupt, objs, prelude::*, progress, Progress};
 use itertools::Itertools;
 
 /// Additional configuration for the hours estimation functionality.
@@ -65,6 +59,7 @@ where
                 progress.init(None, progress::count("commits"));
                 let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
                 let mailmap = repo.open_mailmap();
+
                 let handle = scope.spawn(move || -> anyhow::Result<Vec<actor::SignatureRef<'static>>> {
                     let mut out = Vec::new();
                     for commit_data in rx {
@@ -73,23 +68,19 @@ where
                             .map(|author| mailmap.resolve(author.trim()))
                             .ok()
                         {
-                            let name = match string_heap.get(author.name.as_slice()) {
-                                Some(n) => n.as_bstr(),
-                                None => {
-                                    let name: Vec<u8> = author.name.clone().into();
-                                    string_heap.insert(Box::leak(name.into_boxed_slice()));
-                                    (*string_heap.get(author.name.as_slice()).expect("present")).as_ref()
+                            let mut string_ref = |s: &BString| -> &'static BStr {
+                                match string_heap.get(s.as_slice()) {
+                                    Some(n) => n.as_bstr(),
+                                    None => {
+                                        let sv: Vec<u8> = s.clone().into();
+                                        string_heap.insert(Box::leak(sv.into_boxed_slice()));
+                                        (*string_heap.get(s.as_slice()).expect("present")).as_ref()
+                                    }
                                 }
                             };
-                            let email = match string_heap.get(author.email.as_slice()) {
-                                Some(n) => n.as_bstr(),
-                                None => {
-                                    let email: Vec<u8> = author.email.clone().into();
-                                    string_heap.insert(Box::leak(email.into_boxed_slice()));
-                                    (*string_heap.get(author.email.as_slice()).expect("present")).as_ref()
-                                }
-                            };
-                            // out.push(author);
+                            let name = string_ref(&author.name);
+                            let email = string_ref(&author.email);
+
                             out.push(actor::SignatureRef {
                                 name,
                                 email,
@@ -225,7 +216,7 @@ where
 const MINUTES_PER_HOUR: f32 = 60.0;
 const HOURS_PER_WORKDAY: f32 = 8.0;
 
-fn estimate_hours(commits: &[actor::SignatureRef<'_>]) -> WorkByEmail {
+fn estimate_hours(commits: &[actor::SignatureRef<'static>]) -> WorkByEmail {
     assert!(!commits.is_empty());
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
@@ -245,19 +236,19 @@ fn estimate_hours(commits: &[actor::SignatureRef<'_>]) -> WorkByEmail {
         );
     let author = &commits[0];
     WorkByEmail {
-        name: author.name.to_owned(),
-        email: author.email.to_owned(),
+        name: author.name,
+        email: author.email,
         hours,
         num_commits: commits.len() as u32,
     }
 }
 
-fn deduplicate_identities(persons: &[WorkByEmail]) -> Vec<WorkByPerson<'_>> {
-    let mut email_to_index = HashMap::<&BString, usize>::with_capacity(persons.len());
-    let mut name_to_index = HashMap::<&BString, usize>::with_capacity(persons.len());
-    let mut out = Vec::<WorkByPerson<'_>>::with_capacity(persons.len());
+fn deduplicate_identities(persons: &[WorkByEmail]) -> Vec<WorkByPerson> {
+    let mut email_to_index = HashMap::<&'static BStr, usize>::with_capacity(persons.len());
+    let mut name_to_index = HashMap::<&'static BStr, usize>::with_capacity(persons.len());
+    let mut out = Vec::<WorkByPerson>::with_capacity(persons.len());
     for person_by_email in persons {
-        match email_to_index.entry(&person_by_email.email) {
+        match email_to_index.entry(person_by_email.email) {
             Entry::Occupied(email_entry) => {
                 out[*email_entry.get()].merge(person_by_email);
                 name_to_index.insert(&person_by_email.name, *email_entry.get());
@@ -280,14 +271,14 @@ fn deduplicate_identities(persons: &[WorkByEmail]) -> Vec<WorkByPerson<'_>> {
 }
 
 #[derive(Debug)]
-struct WorkByPerson<'a> {
-    name: Vec<&'a BString>,
-    email: Vec<&'a BString>,
+struct WorkByPerson {
+    name: Vec<&'static BStr>,
+    email: Vec<&'static BStr>,
     hours: f32,
     num_commits: u32,
 }
 
-impl<'a> WorkByPerson<'a> {
+impl<'a> WorkByPerson {
     fn merge(&mut self, other: &'a WorkByEmail) {
         if !self.name.contains(&&other.name) {
             self.name.push(&other.name);
@@ -300,18 +291,18 @@ impl<'a> WorkByPerson<'a> {
     }
 }
 
-impl<'a> From<&'a WorkByEmail> for WorkByPerson<'a> {
+impl<'a> From<&'a WorkByEmail> for WorkByPerson {
     fn from(w: &'a WorkByEmail) -> Self {
         WorkByPerson {
-            name: vec![&w.name],
-            email: vec![&w.email],
+            name: vec![w.name],
+            email: vec![w.email],
             hours: w.hours,
             num_commits: w.num_commits,
         }
     }
 }
 
-impl<'a> WorkByPerson<'a> {
+impl WorkByPerson {
     fn write_to(&self, total_hours: f32, mut out: impl std::io::Write) -> std::io::Result<()> {
         writeln!(
             out,
@@ -332,8 +323,8 @@ impl<'a> WorkByPerson<'a> {
 
 #[derive(Debug)]
 struct WorkByEmail {
-    name: BString,
-    email: BString,
+    name: &'static BStr,
+    email: &'static BStr,
     hours: f32,
     num_commits: u32,
 }
