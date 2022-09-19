@@ -12,8 +12,9 @@ mod diff {
         let from = tree_named(&repo, "g");
         let to = tree_named(&repo, "h");
         from.changes()
-            .for_each_to_obtain_tree(&to, |event| -> Result<_, Infallible> {
-                match event {
+            .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
+                assert_eq!(change.location, "", "without configuration the location field is empty");
+                match change.event {
                     Event::Modification {
                         previous_entry_mode,
                         previous_id,

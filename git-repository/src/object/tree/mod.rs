@@ -65,7 +65,7 @@ impl<'repo> Tree<'repo> {
 #[allow(missing_docs)]
 ///
 pub mod diff {
-    use crate::bstr::BStr;
+    use crate::bstr::{BStr, BString};
     use crate::ext::ObjectIdExt;
     use crate::{Id, Repository, Tree};
     use git_object::TreeRefIter;
@@ -82,6 +82,17 @@ pub mod diff {
     }
 
     /// Represents any possible change in order to turn one tree into another.
+    #[derive(Debug, Clone, Copy)]
+    pub struct Change<'a, 'repo, 'other_repo> {
+        /// The location of the file or directory described by `event`, if tracking was enabled.
+        ///
+        /// Otherwise this value is always an empty path.
+        pub location: &'a BStr,
+        /// The diff event itself to provide information about what would need to change.
+        pub event: Event<'repo, 'other_repo>,
+    }
+
+    /// An event emitted when finding differences between two trees.
     #[derive(Debug, Clone, Copy)]
     pub enum Event<'repo, 'other_repo> {
         /// An entry was added, like the addition of a file or directory.
@@ -135,7 +146,7 @@ pub mod diff {
         pub fn for_each_to_obtain_tree<'other_repo, E>(
             &mut self,
             other: &Tree<'other_repo>,
-            for_each: impl FnMut(Event<'repo, 'other_repo>) -> Result<git_diff::tree::visit::Action, E>,
+            for_each: impl FnMut(Change<'_, 'repo, 'other_repo>) -> Result<git_diff::tree::visit::Action, E>,
         ) -> Result<(), Error>
         where
             E: std::error::Error + Sync + Send + 'static,
@@ -144,6 +155,7 @@ pub mod diff {
             let mut delegate = Delegate {
                 repo: self.lhs.repo,
                 other_repo: other.repo,
+                location: BString::default(),
                 visit: for_each,
                 err: None,
             };
@@ -163,13 +175,15 @@ pub mod diff {
     struct Delegate<'repo, 'other_repo, VisitFn, E> {
         repo: &'repo Repository,
         other_repo: &'other_repo Repository,
+        location: BString,
         visit: VisitFn,
         err: Option<E>,
     }
 
     impl<'repo, 'other_repo, VisitFn, E> git_diff::tree::Visit for Delegate<'repo, 'other_repo, VisitFn, E>
     where
-        VisitFn: FnMut(Event<'repo, 'other_repo>) -> Result<git_diff::tree::visit::Action, E>,
+        VisitFn:
+            for<'delegate> FnMut(Change<'delegate, 'repo, 'other_repo>) -> Result<git_diff::tree::visit::Action, E>,
         E: std::error::Error + Sync + Send + 'static,
     {
         fn pop_front_tracked_path_and_set_current(&mut self) {}
@@ -205,7 +219,10 @@ pub mod diff {
                     id: oid.attach(self.other_repo),
                 },
             };
-            match (self.visit)(event) {
+            match (self.visit)(Change {
+                event,
+                location: self.location.as_ref(),
+            }) {
                 Ok(action) => action,
                 Err(err) => {
                     self.err = Some(err);
