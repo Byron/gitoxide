@@ -52,61 +52,64 @@ where
     P: Progress,
 {
     let repo = git::discover(working_dir)?.apply_environment();
-    let commit_id = repo.rev_parse_single(rev_spec)?;
+    let commit_id = repo.rev_parse_single(rev_spec)?.detach();
+    // let string_heap = BTreeSet::new();
 
     let (all_commits, is_shallow) = {
-        let start = Instant::now();
         let mut progress = progress.add_child("Traverse commit graph");
-        progress.init(None, progress::count("commits"));
-        let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
-        let mailmap = repo.open_mailmap();
-        let handle = std::thread::spawn(move || -> anyhow::Result<Vec<actor::Signature>> {
-            let mut out = Vec::new();
-            for commit_data in rx {
-                if let Some(author) = objs::CommitRefIter::from_bytes(&commit_data)
-                    .author()
-                    .map(|author| mailmap.resolve(author.trim()))
-                    .ok()
-                {
-                    out.push(author);
+        std::thread::scope(move |scope| -> anyhow::Result<(Vec<actor::Signature>, bool)> {
+            let start = Instant::now();
+            progress.init(None, progress::count("commits"));
+            let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
+            let mailmap = repo.open_mailmap();
+            let handle = scope.spawn(move || -> anyhow::Result<Vec<actor::Signature>> {
+                let mut out = Vec::new();
+                for commit_data in rx {
+                    if let Some(author) = objs::CommitRefIter::from_bytes(&commit_data)
+                        .author()
+                        .map(|author| mailmap.resolve(author.trim()))
+                        .ok()
+                    {
+                        out.push(author);
+                    }
                 }
-            }
-            out.shrink_to_fit();
-            out.sort_by(|a, b| {
-                a.email.cmp(&b.email).then(
-                    a.time
-                        .seconds_since_unix_epoch
-                        .cmp(&b.time.seconds_since_unix_epoch)
-                        .reverse(),
-                )
+                out.shrink_to_fit();
+                out.sort_by(|a, b| {
+                    a.email.cmp(&b.email).then(
+                        a.time
+                            .seconds_since_unix_epoch
+                            .cmp(&b.time.seconds_since_unix_epoch)
+                            .reverse(),
+                    )
+                });
+                Ok(out)
             });
-            Ok(out)
-        });
 
-        let commit_iter = interrupt::Iter::new(
-            commit_id.detach().ancestors(|oid, buf| {
-                progress.inc();
-                repo.objects.find(oid, buf).map(|o| {
-                    tx.send(o.data.to_owned()).ok();
-                    objs::CommitRefIter::from_bytes(o.data)
-                })
-            }),
-            || anyhow!("Cancelled by user"),
-        );
-        let mut is_shallow = false;
-        for c in commit_iter {
-            match c? {
-                Ok(c) => c,
-                Err(git::traverse::commit::ancestors::Error::FindExisting { .. }) => {
-                    is_shallow = true;
-                    break;
-                }
-                Err(err) => return Err(err.into()),
-            };
-        }
-        drop(tx);
-        progress.show_throughput(start);
-        (handle.join().expect("no panic")?, is_shallow)
+            let commit_iter = interrupt::Iter::new(
+                commit_id.ancestors(|oid, buf| {
+                    progress.inc();
+                    repo.objects.find(oid, buf).map(|o| {
+                        tx.send(o.data.to_owned()).ok();
+                        objs::CommitRefIter::from_bytes(o.data)
+                    })
+                }),
+                || anyhow!("Cancelled by user"),
+            );
+            let mut is_shallow = false;
+            for c in commit_iter {
+                match c? {
+                    Ok(c) => c,
+                    Err(git::traverse::commit::ancestors::Error::FindExisting { .. }) => {
+                        is_shallow = true;
+                        break;
+                    }
+                    Err(err) => return Err(err.into()),
+                };
+            }
+            drop(tx);
+            progress.show_throughput(start);
+            Ok((handle.join().expect("no panic")?, is_shallow))
+        })?
     };
 
     if all_commits.is_empty() {
