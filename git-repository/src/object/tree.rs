@@ -37,7 +37,6 @@ impl<'repo> Tree<'repo> {
         I: IntoIterator<Item = P>,
         P: PartialEq<BStr>,
     {
-        // let mut out = None;
         let mut path = path.into_iter().peekable();
         while let Some(component) = path.next() {
             match TreeRefIter::from_bytes(&self.data)
@@ -49,9 +48,9 @@ impl<'repo> Tree<'repo> {
                         return Ok(Some(entry.into()));
                     } else {
                         let next_id = entry.oid.to_owned();
-                        let handle = self.repo;
+                        let repo = self.repo;
                         drop(self);
-                        self = match handle.find_object(next_id)?.try_into_tree() {
+                        self = match repo.find_object(next_id)?.try_into_tree() {
                             Ok(tree) => tree,
                             Err(_) => return Ok(None),
                         };
