@@ -25,13 +25,24 @@ mod diff {
                         assert_eq!(entry_mode, EntryMode::Blob);
                         assert_eq!(previous_id.object().unwrap().data.as_bstr(), "a\n");
                         assert_eq!(id.object().unwrap().data.as_bstr(), "a\na1\n");
-                        Ok(Default::default())
                     }
                     Event::Deletion { .. } | Event::Addition { .. } => unreachable!("only modification is expected"),
-                }
+                };
+
+                let count = change
+                    .event
+                    .diff()
+                    .expect("changed file")
+                    .expect("objects available")
+                    .text(git::diff::lines::Algorithm::Myers)
+                    .iter_all_changes()
+                    .count();
+                assert_eq!(count, 2);
+                Ok(Default::default())
             })
             .unwrap();
     }
+
     #[test]
     fn changes_against_tree_with_filename_tracking() {
         let repo = named_repo("make_diff_repo.sh").unwrap();

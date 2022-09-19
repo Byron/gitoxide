@@ -32,35 +32,37 @@ impl Default for Action {
 
 /// Represents any possible change in order to turn one tree into another.
 #[derive(Debug, Clone, Copy)]
-pub struct Change<'a, 'repo, 'other_repo> {
+pub struct Change<'a, 'old, 'new> {
     /// The location of the file or directory described by `event`, if tracking was enabled.
     ///
     /// Otherwise this value is always an empty path.
     pub location: &'a BStr,
     /// The diff event itself to provide information about what would need to change.
-    pub event: change::Event<'repo, 'other_repo>,
+    pub event: change::Event<'old, 'new>,
 }
 
 ///
 pub mod change {
+    use crate::bstr::ByteSlice;
     use crate::Id;
+    use git_object::tree::EntryMode;
 
     /// An event emitted when finding differences between two trees.
     #[derive(Debug, Clone, Copy)]
-    pub enum Event<'repo, 'other_repo> {
+    pub enum Event<'old, 'new> {
         /// An entry was added, like the addition of a file or directory.
         Addition {
             /// The mode of the added entry.
             entry_mode: git_object::tree::EntryMode,
             /// The object id of the added entry.
-            id: Id<'other_repo>,
+            id: Id<'new>,
         },
         /// An entry was deleted, like the deletion of a file or directory.
         Deletion {
             /// The mode of the deleted entry.
             entry_mode: git_object::tree::EntryMode,
             /// The object id of the deleted entry.
-            id: Id<'repo>,
+            id: Id<'old>,
         },
         /// An entry was modified, e.g. changing the contents of a file adjusts its object id and turning
         /// a file into a symbolic link adjusts its mode.
@@ -68,13 +70,51 @@ pub mod change {
             /// The mode of the entry before the modification.
             previous_entry_mode: git_object::tree::EntryMode,
             /// The object id of the entry before the modification.
-            previous_id: Id<'repo>,
+            previous_id: Id<'old>,
 
             /// The mode of the entry after the modification.
             entry_mode: git_object::tree::EntryMode,
             /// The object id after the modification.
-            id: Id<'other_repo>,
+            id: Id<'new>,
         },
+    }
+
+    /// A platform to keep temporary information to perform line diffs.
+    pub struct DiffPlatform<'old, 'new> {
+        old: crate::Object<'old>,
+        new: crate::Object<'new>,
+    }
+
+    impl<'old, 'new> Event<'old, 'new> {
+        /// Produce a platform for performing a line-diff, or `None` if this is not a [`Modification`][Event::Modification]
+        /// or one of the entries to compare is not a blob.
+        pub fn diff(&self) -> Option<Result<DiffPlatform<'old, 'new>, crate::object::find::existing::Error>> {
+            match self {
+                Event::Modification {
+                    previous_entry_mode: EntryMode::BlobExecutable | EntryMode::Blob,
+                    previous_id,
+                    entry_mode: EntryMode::BlobExecutable | EntryMode::Blob,
+                    id,
+                } => match previous_id.object().and_then(|old| id.object().map(|new| (old, new))) {
+                    Ok((old, new)) => Some(Ok(DiffPlatform { old, new })),
+                    Err(err) => Some(Err(err)),
+                },
+                _ => None,
+            }
+        }
+    }
+
+    impl<'old, 'new> DiffPlatform<'old, 'new> {
+        /// Create a platform for performing various tasks to diff text.
+        ///
+        /// It can be used to traverse [all line changes](git_diff::lines::similar::TextDiff::iter_all_changes()) for example.
+        // TODO: How should this integrate with configurable algorithms? Maybe users should get it themselves and pass it here?
+        pub fn text<'bufs>(
+            &self,
+            algorithm: git_diff::lines::Algorithm,
+        ) -> git_diff::lines::similar::TextDiff<'_, '_, 'bufs, [u8]> {
+            git_diff::lines::with(self.old.data.as_bstr(), self.new.data.as_bstr(), algorithm)
+        }
     }
 }
 
@@ -126,12 +166,12 @@ impl<'a, 'repo> Platform<'a, 'repo> {
 }
 
 /// Add the item to compare to.
-impl<'a, 'repo> Platform<'a, 'repo> {
+impl<'a, 'old> Platform<'a, 'old> {
     /// Call `for_each` repeatedly with all changes that are needed to convert the source of the diff to the tree to `other`.
-    pub fn for_each_to_obtain_tree<'other_repo, E>(
+    pub fn for_each_to_obtain_tree<'new, E>(
         &mut self,
-        other: &Tree<'other_repo>,
-        for_each: impl FnMut(Change<'_, 'repo, 'other_repo>) -> Result<Action, E>,
+        other: &Tree<'new>,
+        for_each: impl FnMut(Change<'_, 'old, 'new>) -> Result<Action, E>,
     ) -> Result<(), Error>
     where
         E: std::error::Error + Sync + Send + 'static,
@@ -159,9 +199,9 @@ impl<'a, 'repo> Platform<'a, 'repo> {
     }
 }
 
-struct Delegate<'repo, 'other_repo, VisitFn, E> {
-    repo: &'repo Repository,
-    other_repo: &'other_repo Repository,
+struct Delegate<'old, 'new, VisitFn, E> {
+    repo: &'old Repository,
+    other_repo: &'new Repository,
     tracking: Option<Tracking>,
     location: BString,
     path_deque: VecDeque<BString>,
@@ -186,9 +226,9 @@ impl<A, B> Delegate<'_, '_, A, B> {
     }
 }
 
-impl<'repo, 'other_repo, VisitFn, E> git_diff::tree::Visit for Delegate<'repo, 'other_repo, VisitFn, E>
+impl<'old, 'new, VisitFn, E> git_diff::tree::Visit for Delegate<'old, 'new, VisitFn, E>
 where
-    VisitFn: for<'delegate> FnMut(Change<'delegate, 'repo, 'other_repo>) -> Result<Action, E>,
+    VisitFn: for<'delegate> FnMut(Change<'delegate, 'old, 'new>) -> Result<Action, E>,
     E: std::error::Error + Sync + Send + 'static,
 {
     fn pop_front_tracked_path_and_set_current(&mut self) {
