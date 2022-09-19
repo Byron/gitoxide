@@ -52,7 +52,7 @@ mod diff {
         );
         let to = tree_named(&repo, ":/c1");
 
-        let mut expected = vec!["a", "b", "c"];
+        let mut expected = vec!["a", "b", "c", "d"];
         from.changes()
             .track_filename()
             .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
@@ -62,7 +62,7 @@ mod diff {
             .unwrap();
         assert_eq!(expected, Vec::<&str>::new(), "all paths should have been seen");
 
-        let mut expected = vec!["a", "b", "dir/c"];
+        let mut expected = vec!["a", "b", "dir/c", "d"];
         from.changes()
             .track_path()
             .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {

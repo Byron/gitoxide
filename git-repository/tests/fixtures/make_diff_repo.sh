@@ -5,13 +5,14 @@ git init -q
 
 git checkout -b main
 mkdir dir
-touch a b dir/c
+touch a b dir/c d
 git add .
 git commit -q -m c1
 
 echo a >> a
 echo b >> b
 echo dir/c >> dir/c
+echo d >> d
 git commit -q -am c2
 
 echo a1 >> a
