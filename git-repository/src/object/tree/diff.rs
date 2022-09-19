@@ -81,6 +81,10 @@ pub mod change {
 /// Diffing
 impl<'repo> Tree<'repo> {
     /// Return a platform to see the changes needed to create other trees, for instance.
+    ///
+    /// # Performance
+    ///
+    /// It's highly recommended to set an object cache to avoid extracting the same object multiple times.
     pub fn changes<'a>(&'a self) -> Platform<'a, 'repo> {
         Platform {
             state: Default::default(),
