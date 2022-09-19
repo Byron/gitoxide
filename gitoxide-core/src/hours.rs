@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::{
     collections::{hash_map::Entry, HashMap},
     io,
@@ -53,63 +54,87 @@ where
 {
     let repo = git::discover(working_dir)?.apply_environment();
     let commit_id = repo.rev_parse_single(rev_spec)?.detach();
-    // let string_heap = BTreeSet::new();
+    let mut string_heap = BTreeSet::<&'static [u8]>::new();
 
     let (all_commits, is_shallow) = {
         let mut progress = progress.add_child("Traverse commit graph");
-        std::thread::scope(move |scope| -> anyhow::Result<(Vec<actor::Signature>, bool)> {
-            let start = Instant::now();
-            progress.init(None, progress::count("commits"));
-            let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
-            let mailmap = repo.open_mailmap();
-            let handle = scope.spawn(move || -> anyhow::Result<Vec<actor::Signature>> {
-                let mut out = Vec::new();
-                for commit_data in rx {
-                    if let Some(author) = objs::CommitRefIter::from_bytes(&commit_data)
-                        .author()
-                        .map(|author| mailmap.resolve(author.trim()))
-                        .ok()
-                    {
-                        out.push(author);
+        let string_heap = &mut string_heap;
+        std::thread::scope(
+            move |scope| -> anyhow::Result<(Vec<actor::SignatureRef<'static>>, bool)> {
+                let start = Instant::now();
+                progress.init(None, progress::count("commits"));
+                let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
+                let mailmap = repo.open_mailmap();
+                let handle = scope.spawn(move || -> anyhow::Result<Vec<actor::SignatureRef<'static>>> {
+                    let mut out = Vec::new();
+                    for commit_data in rx {
+                        if let Some(author) = objs::CommitRefIter::from_bytes(&commit_data)
+                            .author()
+                            .map(|author| mailmap.resolve(author.trim()))
+                            .ok()
+                        {
+                            let name = match string_heap.get(author.name.as_slice()) {
+                                Some(n) => n.as_bstr(),
+                                None => {
+                                    let name: Vec<u8> = author.name.clone().into();
+                                    string_heap.insert(Box::leak(name.into_boxed_slice()));
+                                    (*string_heap.get(author.name.as_slice()).expect("present")).as_ref()
+                                }
+                            };
+                            let email = match string_heap.get(author.email.as_slice()) {
+                                Some(n) => n.as_bstr(),
+                                None => {
+                                    let email: Vec<u8> = author.email.clone().into();
+                                    string_heap.insert(Box::leak(email.into_boxed_slice()));
+                                    (*string_heap.get(author.email.as_slice()).expect("present")).as_ref()
+                                }
+                            };
+                            // out.push(author);
+                            out.push(actor::SignatureRef {
+                                name,
+                                email,
+                                time: author.time,
+                            });
+                        }
                     }
-                }
-                out.shrink_to_fit();
-                out.sort_by(|a, b| {
-                    a.email.cmp(&b.email).then(
-                        a.time
-                            .seconds_since_unix_epoch
-                            .cmp(&b.time.seconds_since_unix_epoch)
-                            .reverse(),
-                    )
+                    out.shrink_to_fit();
+                    out.sort_by(|a, b| {
+                        a.email.cmp(&b.email).then(
+                            a.time
+                                .seconds_since_unix_epoch
+                                .cmp(&b.time.seconds_since_unix_epoch)
+                                .reverse(),
+                        )
+                    });
+                    Ok(out)
                 });
-                Ok(out)
-            });
 
-            let commit_iter = interrupt::Iter::new(
-                commit_id.ancestors(|oid, buf| {
-                    progress.inc();
-                    repo.objects.find(oid, buf).map(|o| {
-                        tx.send(o.data.to_owned()).ok();
-                        objs::CommitRefIter::from_bytes(o.data)
-                    })
-                }),
-                || anyhow!("Cancelled by user"),
-            );
-            let mut is_shallow = false;
-            for c in commit_iter {
-                match c? {
-                    Ok(c) => c,
-                    Err(git::traverse::commit::ancestors::Error::FindExisting { .. }) => {
-                        is_shallow = true;
-                        break;
-                    }
-                    Err(err) => return Err(err.into()),
-                };
-            }
-            drop(tx);
-            progress.show_throughput(start);
-            Ok((handle.join().expect("no panic")?, is_shallow))
-        })?
+                let commit_iter = interrupt::Iter::new(
+                    commit_id.ancestors(|oid, buf| {
+                        progress.inc();
+                        repo.objects.find(oid, buf).map(|o| {
+                            tx.send(o.data.to_owned()).ok();
+                            objs::CommitRefIter::from_bytes(o.data)
+                        })
+                    }),
+                    || anyhow!("Cancelled by user"),
+                );
+                let mut is_shallow = false;
+                for c in commit_iter {
+                    match c? {
+                        Ok(c) => c,
+                        Err(git::traverse::commit::ancestors::Error::FindExisting { .. }) => {
+                            is_shallow = true;
+                            break;
+                        }
+                        Err(err) => return Err(err.into()),
+                    };
+                }
+                drop(tx);
+                progress.show_throughput(start);
+                Ok((handle.join().expect("no panic")?, is_shallow))
+            },
+        )?
     };
 
     if all_commits.is_empty() {
@@ -200,7 +225,7 @@ where
 const MINUTES_PER_HOUR: f32 = 60.0;
 const HOURS_PER_WORKDAY: f32 = 8.0;
 
-fn estimate_hours(commits: &[actor::Signature]) -> WorkByEmail {
+fn estimate_hours(commits: &[actor::SignatureRef<'_>]) -> WorkByEmail {
     assert!(!commits.is_empty());
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
@@ -208,7 +233,7 @@ fn estimate_hours(commits: &[actor::Signature]) -> WorkByEmail {
     let hours = FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0
         + commits.iter().rev().tuple_windows().fold(
             0_f32,
-            |hours, (cur, next): (&actor::Signature, &actor::Signature)| {
+            |hours, (cur, next): (&actor::SignatureRef<'_>, &actor::SignatureRef<'_>)| {
                 let change_in_minutes =
                     (next.time.seconds_since_unix_epoch - cur.time.seconds_since_unix_epoch) as f32 / MINUTES_PER_HOUR;
                 if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
