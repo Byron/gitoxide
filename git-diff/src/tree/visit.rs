@@ -42,6 +42,12 @@ pub enum Action {
     Cancel,
 }
 
+impl Default for Action {
+    fn default() -> Self {
+        Action::Continue
+    }
+}
+
 impl Action {
     /// Returns true if this action means to stop the traversal.
     pub fn cancelled(&self) -> bool {

@@ -25,7 +25,7 @@ mod diff {
                         assert_eq!(entry_mode, EntryMode::Blob);
                         assert_eq!(previous_id.object().unwrap().data.as_bstr(), "g\n");
                         assert_eq!(id.object().unwrap().data.as_bstr(), "h\n");
-                        Ok(git::diff::tree::visit::Action::Continue)
+                        Ok(Default::default())
                     }
                     Event::Deletion { .. } | Event::Addition { .. } => unreachable!("only modification is expected"),
                 }
@@ -36,7 +36,7 @@ mod diff {
             .track_filename()
             .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
                 assert_eq!(change.location, "file");
-                Ok(git::diff::tree::visit::Action::Continue)
+                Ok(git::object::tree::diff::Action::Continue)
             })
             .unwrap();
     }

@@ -81,6 +81,21 @@ pub mod diff {
         ForEach(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
     }
 
+    /// Returned by the `for_each` function to control flow.
+    #[derive(Clone, Copy, PartialOrd, PartialEq, Ord, Eq, Hash)]
+    pub enum Action {
+        /// Continue the traversal of changes.
+        Continue,
+        /// Stop the traversal of changes and stop calling this function.
+        Cancel,
+    }
+
+    impl Default for Action {
+        fn default() -> Self {
+            Action::Continue
+        }
+    }
+
     /// Represents any possible change in order to turn one tree into another.
     #[derive(Debug, Clone, Copy)]
     pub struct Change<'a, 'repo, 'other_repo> {
@@ -164,7 +179,7 @@ pub mod diff {
         pub fn for_each_to_obtain_tree<'other_repo, E>(
             &mut self,
             other: &Tree<'other_repo>,
-            for_each: impl FnMut(Change<'_, 'repo, 'other_repo>) -> Result<git_diff::tree::visit::Action, E>,
+            for_each: impl FnMut(Change<'_, 'repo, 'other_repo>) -> Result<Action, E>,
         ) -> Result<(), Error>
         where
             E: std::error::Error + Sync + Send + 'static,
@@ -202,8 +217,7 @@ pub mod diff {
 
     impl<'repo, 'other_repo, VisitFn, E> git_diff::tree::Visit for Delegate<'repo, 'other_repo, VisitFn, E>
     where
-        VisitFn:
-            for<'delegate> FnMut(Change<'delegate, 'repo, 'other_repo>) -> Result<git_diff::tree::visit::Action, E>,
+        VisitFn: for<'delegate> FnMut(Change<'delegate, 'repo, 'other_repo>) -> Result<Action, E>,
         E: std::error::Error + Sync + Send + 'static,
     {
         fn pop_front_tracked_path_and_set_current(&mut self) {}
@@ -251,7 +265,8 @@ pub mod diff {
                 event,
                 location: self.location.as_ref(),
             }) {
-                Ok(action) => action,
+                Ok(Action::Cancel) => git_diff::tree::visit::Action::Cancel,
+                Ok(Action::Continue) => git_diff::tree::visit::Action::Continue,
                 Err(err) => {
                     self.err = Some(err);
                     git_diff::tree::visit::Action::Cancel
