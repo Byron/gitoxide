@@ -101,6 +101,9 @@ pub struct EstimateHours {
     /// Ignore github bots which match the `[bot]` search string.
     #[clap(short = 'b', long)]
     pub no_bots: bool,
+    /// Collect additional information like tree changes and changed lines.
+    #[clap(short = 's', long)]
+    pub stats: bool,
     /// Show personally identifiable information before the summary. Includes names and email addresses.
     #[clap(short = 'p', long)]
     pub show_pii: bool,

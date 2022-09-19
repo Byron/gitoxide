@@ -40,6 +40,7 @@ pub fn main() -> Result<()> {
                 working_dir,
                 rev_spec,
                 no_bots,
+                stats,
                 show_pii,
                 omit_unify_identities,
             }) => {
@@ -58,6 +59,7 @@ pub fn main() -> Result<()> {
                             hours::Context {
                                 show_pii,
                                 ignore_bots: no_bots,
+                                stats,
                                 omit_unify_identities,
                                 out,
                             },
