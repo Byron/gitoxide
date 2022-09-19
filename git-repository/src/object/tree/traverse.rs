@@ -15,11 +15,11 @@ impl<'repo> Tree<'repo> {
 /// An intermediate object to start traversing the parent tree from.
 pub struct Platform<'a, 'repo> {
     root: &'a Tree<'repo>,
-    #[allow(missing_docs)] // TODO
+    /// Provides easy access to presets for common breadth-first traversal.
     pub breadthfirst: BreadthFirstPresets<'a, 'repo>,
 }
 
-#[allow(missing_docs)] // TODO
+/// Presets for common choices in breadth-first traversal.
 #[derive(Copy, Clone)]
 pub struct BreadthFirstPresets<'a, 'repo> {
     root: &'a Tree<'repo>,
@@ -39,8 +39,11 @@ impl<'a, 'repo> BreadthFirstPresets<'a, 'repo> {
 }
 
 impl<'a, 'repo> Platform<'a, 'repo> {
-    /// Start a breadth-first traversal with a delegate, note that it's not sorted.
-    /// TODO: more docs or links to git-traverse
+    /// Start a breadth-first traversal using `delegate`, for which a [`Recorder`][git_traverse::tree::Recorder] can be used to get started.
+    ///
+    /// # Note
+    ///
+    /// Results are not sorted.
     pub fn breadthfirst<V>(&self, delegate: &mut V) -> Result<(), git_traverse::tree::breadthfirst::Error>
     where
         V: git_traverse::tree::Visit,
