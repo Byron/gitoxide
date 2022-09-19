@@ -1,6 +1,5 @@
 use std::{
     collections::{hash_map::Entry, HashMap},
-    ffi::OsStr,
     io,
     path::Path,
     time::Instant,
@@ -8,14 +7,13 @@ use std::{
 
 use anyhow::{anyhow, bail};
 use git_repository as git;
+use git_repository::bstr::BStr;
 use git_repository::{
     actor,
     bstr::{BString, ByteSlice},
     interrupt, objs,
     prelude::*,
-    progress,
-    refs::file::ReferenceExt,
-    Progress,
+    progress, Progress,
 };
 use itertools::Itertools;
 use rayon::prelude::*;
@@ -41,7 +39,7 @@ pub struct Context<W> {
 /// * _progress_ - A way to provide progress and performance information
 pub fn estimate<W, P>(
     working_dir: &Path,
-    refname: &OsStr,
+    rev_spec: &BStr,
     mut progress: P,
     Context {
         show_pii,
@@ -55,15 +53,7 @@ where
     P: Progress,
 {
     let repo = git::discover(working_dir)?.apply_environment();
-    let commit_id = repo
-        .refs
-        .find(refname.to_string_lossy().as_ref())?
-        .peel_to_id_in_place(&repo.refs, |oid, buf| {
-            repo.objects
-                .try_find(oid, buf)
-                .map(|obj| obj.map(|obj| (obj.kind, obj.data)))
-        })?
-        .to_owned();
+    let commit_id = repo.rev_parse_single(rev_spec)?;
 
     let (all_commits, is_shallow) = {
         let start = Instant::now();
@@ -71,7 +61,7 @@ where
         progress.init(None, progress::count("commits"));
         let mut commits: Vec<Vec<u8>> = Vec::new();
         let commit_iter = interrupt::Iter::new(
-            commit_id.ancestors(|oid, buf| {
+            commit_id.detach().ancestors(|oid, buf| {
                 progress.inc();
                 repo.objects.find(oid, buf).map(|o| {
                     commits.push(o.data.to_owned());
