@@ -31,6 +31,14 @@ mod diff {
                 }
             })
             .unwrap();
+
+        from.changes()
+            .track_filename()
+            .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
+                assert_eq!(change.location, "file");
+                Ok(git::diff::tree::visit::Action::Continue)
+            })
+            .unwrap();
     }
 
     fn tree_named<'repo>(repo: &'repo git::Repository, rev_spec: &str) -> git::Tree<'repo> {

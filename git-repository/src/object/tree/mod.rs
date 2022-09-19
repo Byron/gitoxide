@@ -65,7 +65,7 @@ impl<'repo> Tree<'repo> {
 #[allow(missing_docs)]
 ///
 pub mod diff {
-    use crate::bstr::{BStr, BString};
+    use crate::bstr::{BStr, BString, ByteVec};
     use crate::ext::ObjectIdExt;
     use crate::{Id, Repository, Tree};
     use git_object::TreeRefIter;
@@ -131,13 +131,31 @@ pub mod diff {
             Platform {
                 state: Default::default(),
                 lhs: self,
+                tracking: None,
             }
         }
     }
 
+    /// The diffing platform returned by [`Tree::changes()`].
+    #[derive(Clone)]
     pub struct Platform<'a, 'repo> {
         state: git_diff::tree::State,
         lhs: &'a Tree<'repo>,
+        tracking: Option<Tracking>,
+    }
+
+    #[derive(Clone, Copy)]
+    enum Tracking {
+        FileName,
+    }
+
+    /// Configuration
+    impl<'a, 'repo> Platform<'a, 'repo> {
+        /// Keep track of file-names, which makes the [`location`][Change::location] field usable with the filename of the changed item.
+        pub fn track_filename(&mut self) -> &mut Self {
+            self.tracking = Some(Tracking::FileName);
+            self
+        }
     }
 
     /// Add the item to compare to.
@@ -155,6 +173,7 @@ pub mod diff {
             let mut delegate = Delegate {
                 repo: self.lhs.repo,
                 other_repo: other.repo,
+                tracking: self.tracking,
                 location: BString::default(),
                 visit: for_each,
                 err: None,
@@ -175,6 +194,7 @@ pub mod diff {
     struct Delegate<'repo, 'other_repo, VisitFn, E> {
         repo: &'repo Repository,
         other_repo: &'other_repo Repository,
+        tracking: Option<Tracking>,
         location: BString,
         visit: VisitFn,
         err: Option<E>,
@@ -192,7 +212,15 @@ pub mod diff {
             {}
         }
 
-        fn push_path_component(&mut self, _component: &BStr) {}
+        fn push_path_component(&mut self, component: &BStr) {
+            match self.tracking {
+                Some(Tracking::FileName) => {
+                    self.location.clear();
+                    self.location.push_str(component);
+                }
+                None => {}
+            }
+        }
 
         fn pop_path_component(&mut self) {}
 
