@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::{anyhow, bail};
 use git_repository as git;
-use git_repository::bstr::{BStr, BString};
+use git_repository::bstr::BStr;
 use git_repository::{actor, bstr::ByteSlice, interrupt, objs, prelude::*, progress, Progress};
 use itertools::Itertools;
 
@@ -65,21 +65,21 @@ where
                     for commit_data in rx {
                         if let Some(author) = objs::CommitRefIter::from_bytes(&commit_data)
                             .author()
-                            .map(|author| mailmap.resolve(author.trim()))
+                            .map(|author| mailmap.resolve_cow(author.trim()))
                             .ok()
                         {
-                            let mut string_ref = |s: &BString| -> &'static BStr {
-                                match string_heap.get(s.as_slice()) {
+                            let mut string_ref = |s: &[u8]| -> &'static BStr {
+                                match string_heap.get(s) {
                                     Some(n) => n.as_bstr(),
                                     None => {
-                                        let sv: Vec<u8> = s.clone().into();
+                                        let sv: Vec<u8> = s.to_owned().into();
                                         string_heap.insert(Box::leak(sv.into_boxed_slice()));
-                                        (*string_heap.get(s.as_slice()).expect("present")).as_ref()
+                                        (*string_heap.get(s).expect("present")).as_ref()
                                     }
                                 }
                             };
-                            let name = string_ref(&author.name);
-                            let email = string_ref(&author.email);
+                            let name = string_ref(author.name.as_ref());
+                            let email = string_ref(&author.email.as_ref());
 
                             out.push(actor::SignatureRef {
                                 name,
