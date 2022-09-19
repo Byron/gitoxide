@@ -1,4 +1,6 @@
-use std::{ffi::OsString, path::PathBuf};
+use git::bstr::BString;
+use git_repository as git;
+use std::path::PathBuf;
 
 #[derive(Debug, clap::Parser)]
 #[clap(about = "The rusty git", version = clap::crate_version!())]
@@ -93,9 +95,9 @@ pub struct EstimateHours {
     #[clap(validator_os = validator::is_repo)]
     #[clap(default_value = ".")]
     pub working_dir: PathBuf,
-    /// The name of the ref like 'HEAD' or 'main' at which to start iterating the commit graph.
-    #[clap(default_value("HEAD"))]
-    pub refname: OsString,
+    /// The name of the revision as spec, like 'HEAD' or 'main' at which to start iterating the commit graph.
+    #[clap(default_value("HEAD"), parse(try_from_os_str = git::env::os_str_to_bstring))]
+    pub rev_spec: BString,
     /// Ignore github bots which match the `[bot]` search string.
     #[clap(short = 'b', long)]
     pub no_bots: bool,
