@@ -1,9 +1,42 @@
+use std::borrow::Cow;
 use std::{cmp::Ordering, ops::Deref};
 
 use bstr::{BStr, BString, ByteSlice};
 use git_actor::SignatureRef;
 
 use crate::Snapshot;
+
+/// A signature like [`git_actor::Signature`], but with all string fields being a `Cow`.
+#[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Signature<'a> {
+    /// The possibly mapped name.
+    pub name: Cow<'a, BStr>,
+    /// The possibly mapped email.
+    pub email: Cow<'a, BStr>,
+    /// The time stamp at which the signature is performed.
+    pub time: git_actor::Time,
+}
+
+impl<'a> From<Signature<'a>> for git_actor::Signature {
+    fn from(s: Signature<'a>) -> Self {
+        git_actor::Signature {
+            name: s.name.into_owned(),
+            email: s.email.into_owned(),
+            time: s.time,
+        }
+    }
+}
+
+impl<'a> From<git_actor::SignatureRef<'a>> for Signature<'a> {
+    fn from(s: git_actor::SignatureRef<'a>) -> Self {
+        Signature {
+            name: s.name.into(),
+            email: s.email.into(),
+            time: s.time,
+        }
+    }
+}
 
 /// A resolved signature with borrowed fields for a mapped `name` and/or `email`.
 pub struct ResolvedSignature<'a> {
@@ -291,8 +324,8 @@ impl Snapshot {
     ///
     /// Return `None` if no such mapping was found.
     pub fn try_resolve(&self, signature: git_actor::SignatureRef<'_>) -> Option<git_actor::Signature> {
-        let new = self.try_resolve_ref(signature)?;
-        enriched_signature(signature, new)
+        self.try_resolve_ref(signature)
+            .map(|new| enriched_signature(signature, new).into())
     }
 
     /// Like [`try_resolve()`][Snapshot::try_resolve()], but always returns an owned signature, which might be a copy
@@ -302,31 +335,36 @@ impl Snapshot {
     pub fn resolve(&self, signature: git_actor::SignatureRef<'_>) -> git_actor::Signature {
         self.try_resolve(signature).unwrap_or_else(|| signature.to_owned())
     }
+
+    /// Like [`try_resolve()`][Snapshot::try_resolve()], but always returns a special copy-on-write signature, which contains
+    /// changed names or emails as `Cow::Owned`, or `Cow::Borrowed` if no mapping was found.
+    pub fn resolve_cow<'a>(&self, signature: git_actor::SignatureRef<'a>) -> Signature<'a> {
+        self.try_resolve_ref(signature)
+            .map(|new| enriched_signature(signature, new).into())
+            .unwrap_or_else(|| signature.into())
+    }
 }
 
-fn enriched_signature(
-    SignatureRef { name, email, time }: SignatureRef<'_>,
+fn enriched_signature<'a>(
+    SignatureRef { name, email, time }: SignatureRef<'a>,
     new: ResolvedSignature<'_>,
-) -> Option<git_actor::Signature> {
+) -> Signature<'a> {
     match (new.email, new.name) {
-        (Some(new_email), Some(new_name)) => git_actor::Signature {
-            email: new_email.to_owned(),
-            name: new_name.to_owned(),
+        (Some(new_email), Some(new_name)) => Signature {
+            email: new_email.to_owned().into(),
+            name: new_name.to_owned().into(),
             time,
-        }
-        .into(),
-        (Some(new_email), None) => git_actor::Signature {
-            email: new_email.to_owned(),
-            name: (*name).to_owned(),
+        },
+        (Some(new_email), None) => Signature {
+            email: new_email.to_owned().into(),
+            name: name.into(),
             time,
-        }
-        .into(),
-        (None, Some(new_name)) => git_actor::Signature {
-            email: (*email).to_owned(),
-            name: new_name.to_owned(),
+        },
+        (None, Some(new_name)) => Signature {
+            email: email.into(),
+            name: new_name.to_owned().into(),
             time,
-        }
-        .into(),
+        },
         (None, None) => unreachable!("BUG: ResolvedSignatures don't exist here when nothing is set"),
     }
 }
