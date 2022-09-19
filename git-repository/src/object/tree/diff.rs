@@ -1,6 +1,6 @@
 use crate::bstr::{BStr, BString, ByteVec};
 use crate::ext::ObjectIdExt;
-use crate::{Id, Repository, Tree};
+use crate::{Repository, Tree};
 use git_object::TreeRefIter;
 use git_odb::FindExt;
 
@@ -37,39 +37,44 @@ pub struct Change<'a, 'repo, 'other_repo> {
     /// Otherwise this value is always an empty path.
     pub location: &'a BStr,
     /// The diff event itself to provide information about what would need to change.
-    pub event: Event<'repo, 'other_repo>,
+    pub event: change::Event<'repo, 'other_repo>,
 }
 
-/// An event emitted when finding differences between two trees.
-#[derive(Debug, Clone, Copy)]
-pub enum Event<'repo, 'other_repo> {
-    /// An entry was added, like the addition of a file or directory.
-    Addition {
-        /// The mode of the added entry.
-        entry_mode: git_object::tree::EntryMode,
-        /// The object id of the added entry.
-        id: Id<'other_repo>,
-    },
-    /// An entry was deleted, like the deletion of a file or directory.
-    Deletion {
-        /// The mode of the deleted entry.
-        entry_mode: git_object::tree::EntryMode,
-        /// The object id of the deleted entry.
-        id: Id<'repo>,
-    },
-    /// An entry was modified, e.g. changing the contents of a file adjusts its object id and turning
-    /// a file into a symbolic link adjusts its mode.
-    Modification {
-        /// The mode of the entry before the modification.
-        previous_entry_mode: git_object::tree::EntryMode,
-        /// The object id of the entry before the modification.
-        previous_id: Id<'repo>,
+///
+pub mod change {
+    use crate::Id;
 
-        /// The mode of the entry after the modification.
-        entry_mode: git_object::tree::EntryMode,
-        /// The object id after the modification.
-        id: Id<'other_repo>,
-    },
+    /// An event emitted when finding differences between two trees.
+    #[derive(Debug, Clone, Copy)]
+    pub enum Event<'repo, 'other_repo> {
+        /// An entry was added, like the addition of a file or directory.
+        Addition {
+            /// The mode of the added entry.
+            entry_mode: git_object::tree::EntryMode,
+            /// The object id of the added entry.
+            id: Id<'other_repo>,
+        },
+        /// An entry was deleted, like the deletion of a file or directory.
+        Deletion {
+            /// The mode of the deleted entry.
+            entry_mode: git_object::tree::EntryMode,
+            /// The object id of the deleted entry.
+            id: Id<'repo>,
+        },
+        /// An entry was modified, e.g. changing the contents of a file adjusts its object id and turning
+        /// a file into a symbolic link adjusts its mode.
+        Modification {
+            /// The mode of the entry before the modification.
+            previous_entry_mode: git_object::tree::EntryMode,
+            /// The object id of the entry before the modification.
+            previous_id: Id<'repo>,
+
+            /// The mode of the entry after the modification.
+            entry_mode: git_object::tree::EntryMode,
+            /// The object id after the modification.
+            id: Id<'other_repo>,
+        },
+    }
 }
 
 /// Diffing
@@ -174,11 +179,11 @@ where
     fn visit(&mut self, change: git_diff::tree::visit::Change) -> git_diff::tree::visit::Action {
         use git_diff::tree::visit::Change::*;
         let event = match change {
-            Addition { entry_mode, oid } => Event::Addition {
+            Addition { entry_mode, oid } => change::Event::Addition {
                 entry_mode,
                 id: oid.attach(self.other_repo),
             },
-            Deletion { entry_mode, oid } => Event::Deletion {
+            Deletion { entry_mode, oid } => change::Event::Deletion {
                 entry_mode,
                 id: oid.attach(self.repo),
             },
@@ -187,7 +192,7 @@ where
                 previous_oid,
                 entry_mode,
                 oid,
-            } => Event::Modification {
+            } => change::Event::Modification {
                 previous_entry_mode,
                 entry_mode,
                 previous_id: previous_oid.attach(self.repo),

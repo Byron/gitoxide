@@ -3,7 +3,7 @@ mod diff {
     use git_object::bstr::ByteSlice;
     use git_object::tree::EntryMode;
     use git_repository as git;
-    use git_repository::object::tree::diff::Event;
+    use git_repository::object::tree::diff::change::Event;
     use std::convert::Infallible;
 
     #[test]
