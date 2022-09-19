@@ -15,11 +15,11 @@ impl<'repo> Tree<'repo> {
 /// An intermediate object to start traversing the parent tree from.
 pub struct Platform<'a, 'repo> {
     root: &'a Tree<'repo>,
-    /// TODO: EXPLAIN
+    #[allow(missing_docs)] // TODO
     pub breadthfirst: BreadthFirstPresets<'a, 'repo>,
 }
 
-/// TODO: explain THIS!
+#[allow(missing_docs)] // TODO
 #[derive(Copy, Clone)]
 pub struct BreadthFirstPresets<'a, 'repo> {
     root: &'a Tree<'repo>,

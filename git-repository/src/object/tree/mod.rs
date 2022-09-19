@@ -22,7 +22,7 @@ impl<'repo> Tree<'repo> {
         Id::from_id(self.id, self.repo)
     }
 
-    // TODO: move implementation to git-object, tests.
+    // TODO: tests.
     /// Follow a sequence of `path` components starting from this instance, and look them up one by one until the last component
     /// is looked up and its tree entry is returned.
     ///
@@ -59,6 +59,29 @@ impl<'repo> Tree<'repo> {
             }
         }
         Ok(None)
+    }
+}
+
+#[allow(missing_docs)]
+///
+pub mod diff {
+    use crate::Tree;
+
+    impl<'repo> Tree<'repo> {
+        pub fn changes<'other_repo, 'a>(&'a self) -> Platform<'a, 'repo> {
+            Platform { lhs: self }
+        }
+    }
+
+    #[allow(dead_code)]
+    pub struct Platform<'a, 'repo> {
+        lhs: &'a Tree<'repo>,
+    }
+
+    impl<'a, 'repo> Platform<'a, 'repo> {
+        pub fn to_obtain_tree(&self, _other: &Tree<'_>) {
+            todo!()
+        }
     }
 }
 
