@@ -49,7 +49,17 @@ mod diff {
                 Ok(Default::default())
             })
             .unwrap();
-        assert_eq!(expected, Vec::<&str>::new(), "all paths should have been seen")
+        assert_eq!(expected, Vec::<&str>::new(), "all paths should have been seen");
+
+        let mut expected = vec!["a", "b", "dir/c"];
+        from.changes()
+            .track_path()
+            .for_each_to_obtain_tree(&to, |change| -> Result<_, Infallible> {
+                expected.retain(|name| name != change.location);
+                Ok(Default::default())
+            })
+            .unwrap();
+        assert_eq!(expected, Vec::<&str>::new(), "all paths should have been seen");
     }
 
     fn tree_named<'repo>(repo: &'repo git::Repository, rev_spec: &str) -> git::Tree<'repo> {

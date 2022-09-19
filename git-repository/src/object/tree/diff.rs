@@ -1,8 +1,9 @@
-use crate::bstr::{BStr, BString, ByteVec};
+use crate::bstr::{BStr, BString, ByteSlice, ByteVec};
 use crate::ext::ObjectIdExt;
 use crate::{Repository, Tree};
 use git_object::TreeRefIter;
 use git_odb::FindExt;
+use std::collections::VecDeque;
 
 /// The error return by methods on the [diff platform][Platform].
 #[derive(Debug, thiserror::Error)]
@@ -100,6 +101,7 @@ pub struct Platform<'a, 'repo> {
 #[derive(Clone, Copy)]
 enum Tracking {
     FileName,
+    Path,
 }
 
 /// Configuration
@@ -107,6 +109,14 @@ impl<'a, 'repo> Platform<'a, 'repo> {
     /// Keep track of file-names, which makes the [`location`][Change::location] field usable with the filename of the changed item.
     pub fn track_filename(&mut self) -> &mut Self {
         self.tracking = Some(Tracking::FileName);
+        self
+    }
+
+    /// Keep track of the entire path of a change, relative to the repository.
+    ///
+    /// This makes the [`location`][Change::location] field usable.
+    pub fn track_path(&mut self) -> &mut Self {
+        self.tracking = Some(Tracking::Path);
         self
     }
 }
@@ -128,6 +138,7 @@ impl<'a, 'repo> Platform<'a, 'repo> {
             other_repo: other.repo,
             tracking: self.tracking,
             location: BString::default(),
+            path_deque: Default::default(),
             visit: for_each,
             err: None,
         };
@@ -149,8 +160,26 @@ struct Delegate<'repo, 'other_repo, VisitFn, E> {
     other_repo: &'other_repo Repository,
     tracking: Option<Tracking>,
     location: BString,
+    path_deque: VecDeque<BString>,
     visit: VisitFn,
     err: Option<E>,
+}
+
+impl<A, B> Delegate<'_, '_, A, B> {
+    fn pop_element(&mut self) {
+        if let Some(pos) = self.location.rfind_byte(b'/') {
+            self.location.resize(pos, 0);
+        } else {
+            self.location.clear();
+        }
+    }
+
+    fn push_element(&mut self, name: &BStr) {
+        if !self.location.is_empty() {
+            self.location.push(b'/');
+        }
+        self.location.push_str(name);
+    }
 }
 
 impl<'repo, 'other_repo, VisitFn, E> git_diff::tree::Visit for Delegate<'repo, 'other_repo, VisitFn, E>
@@ -158,10 +187,20 @@ where
     VisitFn: for<'delegate> FnMut(Change<'delegate, 'repo, 'other_repo>) -> Result<Action, E>,
     E: std::error::Error + Sync + Send + 'static,
 {
-    fn pop_front_tracked_path_and_set_current(&mut self) {}
+    fn pop_front_tracked_path_and_set_current(&mut self) {
+        if let Some(Tracking::Path) = self.tracking {
+            self.location = self
+                .path_deque
+                .pop_front()
+                .expect("every call is matched with push_tracked_path_component");
+        }
+    }
 
-    fn push_back_tracked_path_component(&mut self, _component: &BStr) {
-        {}
+    fn push_back_tracked_path_component(&mut self, component: &BStr) {
+        if let Some(Tracking::Path) = self.tracking {
+            self.push_element(component);
+            self.path_deque.push_back(self.location.clone());
+        }
     }
 
     fn push_path_component(&mut self, component: &BStr) {
@@ -170,11 +209,18 @@ where
                 self.location.clear();
                 self.location.push_str(component);
             }
+            Some(Tracking::Path) => {
+                self.push_element(component);
+            }
             None => {}
         }
     }
 
-    fn pop_path_component(&mut self) {}
+    fn pop_path_component(&mut self) {
+        if let Some(Tracking::Path) = self.tracking {
+            self.pop_element();
+        }
+    }
 
     fn visit(&mut self, change: git_diff::tree::visit::Change) -> git_diff::tree::visit::Action {
         use git_diff::tree::visit::Change::*;
