@@ -137,7 +137,7 @@ impl Snapshot {
     /// changed names or emails as `Cow::Owned`, or `Cow::Borrowed` if no mapping was found.
     pub fn resolve_cow<'a>(&self, signature: git_actor::SignatureRef<'a>) -> Signature<'a> {
         self.try_resolve_ref(signature)
-            .map(|new| enriched_signature(signature, new).into())
+            .map(|new| enriched_signature(signature, new))
             .unwrap_or_else(|| signature.into())
     }
 }
