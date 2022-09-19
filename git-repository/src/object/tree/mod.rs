@@ -65,22 +65,126 @@ impl<'repo> Tree<'repo> {
 #[allow(missing_docs)]
 ///
 pub mod diff {
-    use crate::Tree;
+    use crate::bstr::BStr;
+    use crate::ext::ObjectIdExt;
+    use crate::{Id, Repository, Tree};
+    use git_object::TreeRefIter;
+    use git_odb::FindExt;
 
+    /// Represents any possible change in order to turn one tree into another.
+    #[derive(Debug, Clone, Copy)]
+    pub enum Event<'repo, 'other_repo> {
+        /// An entry was added, like the addition of a file or directory.
+        Addition {
+            /// The mode of the added entry.
+            entry_mode: git_object::tree::EntryMode,
+            /// The object id of the added entry.
+            id: Id<'other_repo>,
+        },
+        /// An entry was deleted, like the deletion of a file or directory.
+        Deletion {
+            /// The mode of the deleted entry.
+            entry_mode: git_object::tree::EntryMode,
+            /// The object id of the deleted entry.
+            id: Id<'repo>,
+        },
+        /// An entry was modified, e.g. changing the contents of a file adjusts its object id and turning
+        /// a file into a symbolic link adjusts its mode.
+        Modification {
+            /// The mode of the entry before the modification.
+            previous_entry_mode: git_object::tree::EntryMode,
+            /// The object id of the entry before the modification.
+            previous_id: Id<'repo>,
+
+            /// The mode of the entry after the modification.
+            entry_mode: git_object::tree::EntryMode,
+            /// The object id after the modification.
+            id: Id<'other_repo>,
+        },
+    }
+
+    /// Diffing
     impl<'repo> Tree<'repo> {
+        /// Return a platform to see the changes needed to create other trees, for instance.
         pub fn changes<'other_repo, 'a>(&'a self) -> Platform<'a, 'repo> {
-            Platform { lhs: self }
+            Platform {
+                state: Default::default(),
+                lhs: self,
+            }
         }
     }
 
-    #[allow(dead_code)]
     pub struct Platform<'a, 'repo> {
+        state: git_diff::tree::State,
         lhs: &'a Tree<'repo>,
     }
 
+    /// Add the item to compare to.
     impl<'a, 'repo> Platform<'a, 'repo> {
-        pub fn to_obtain_tree(&self, _other: &Tree<'_>) {
-            todo!()
+        pub fn to_obtain_tree<'other_repo>(
+            &mut self,
+            other: &Tree<'other_repo>,
+            for_each: impl FnMut(Event<'repo, 'other_repo>) -> git_diff::tree::visit::Action,
+        ) -> Result<(), git_diff::tree::changes::Error> {
+            let repo = self.lhs.repo;
+            let mut delegate = Delegate {
+                repo: self.lhs.repo,
+                other_repo: other.repo,
+                visit: for_each,
+            };
+            git_diff::tree::Changes::from(TreeRefIter::from_bytes(&self.lhs.data)).needed_to_obtain(
+                TreeRefIter::from_bytes(&other.data),
+                &mut self.state,
+                |oid, buf| repo.objects.find_tree_iter(oid, buf),
+                &mut delegate,
+            )
+        }
+    }
+
+    struct Delegate<'repo, 'other_repo, VisitFn> {
+        repo: &'repo Repository,
+        other_repo: &'other_repo Repository,
+        visit: VisitFn,
+    }
+
+    impl<'repo, 'other_repo, VisitFn> git_diff::tree::Visit for Delegate<'repo, 'other_repo, VisitFn>
+    where
+        VisitFn: FnMut(Event<'repo, 'other_repo>) -> git_diff::tree::visit::Action,
+    {
+        fn pop_front_tracked_path_and_set_current(&mut self) {}
+
+        fn push_back_tracked_path_component(&mut self, _component: &BStr) {
+            {}
+        }
+
+        fn push_path_component(&mut self, _component: &BStr) {}
+
+        fn pop_path_component(&mut self) {}
+
+        fn visit(&mut self, change: git_diff::tree::visit::Change) -> git_diff::tree::visit::Action {
+            use git_diff::tree::visit::Change::*;
+            let event = match change {
+                Addition { entry_mode, oid } => Event::Addition {
+                    entry_mode,
+                    id: oid.attach(self.other_repo),
+                },
+                Deletion { entry_mode, oid } => Event::Deletion {
+                    entry_mode,
+                    id: oid.attach(self.repo),
+                },
+                Modification {
+                    previous_entry_mode,
+                    previous_oid,
+                    entry_mode,
+                    oid,
+                } => Event::Modification {
+                    previous_entry_mode,
+                    entry_mode,
+                    previous_id: previous_oid.attach(self.repo),
+                    id: oid.attach(self.other_repo),
+                },
+            };
+            (self.visit)(event)
         }
     }
 }
