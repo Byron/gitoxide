@@ -71,6 +71,16 @@ pub mod diff {
     use git_object::TreeRefIter;
     use git_odb::FindExt;
 
+    /// The error return by methods on the [diff platform][super::Platform].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Diff(#[from] git_diff::tree::changes::Error),
+        #[error("The user-provided callback failed")]
+        ForEach(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+    }
+
     /// Represents any possible change in order to turn one tree into another.
     #[derive(Debug, Clone, Copy)]
     pub enum Event<'repo, 'other_repo> {
@@ -121,35 +131,46 @@ pub mod diff {
 
     /// Add the item to compare to.
     impl<'a, 'repo> Platform<'a, 'repo> {
-        pub fn to_obtain_tree<'other_repo>(
+        /// Call `for_each` repeatedly with all changes that are needed to convert the source of the diff to the tree to `other`.
+        pub fn for_each_to_obtain_tree<'other_repo, E>(
             &mut self,
             other: &Tree<'other_repo>,
-            for_each: impl FnMut(Event<'repo, 'other_repo>) -> git_diff::tree::visit::Action,
-        ) -> Result<(), git_diff::tree::changes::Error> {
+            for_each: impl FnMut(Event<'repo, 'other_repo>) -> Result<git_diff::tree::visit::Action, E>,
+        ) -> Result<(), Error>
+        where
+            E: std::error::Error + Sync + Send + 'static,
+        {
             let repo = self.lhs.repo;
             let mut delegate = Delegate {
                 repo: self.lhs.repo,
                 other_repo: other.repo,
                 visit: for_each,
+                err: None,
             };
             git_diff::tree::Changes::from(TreeRefIter::from_bytes(&self.lhs.data)).needed_to_obtain(
                 TreeRefIter::from_bytes(&other.data),
                 &mut self.state,
                 |oid, buf| repo.objects.find_tree_iter(oid, buf),
                 &mut delegate,
-            )
+            )?;
+            match delegate.err {
+                Some(err) => Err(Error::ForEach(Box::new(err))),
+                None => Ok(()),
+            }
         }
     }
 
-    struct Delegate<'repo, 'other_repo, VisitFn> {
+    struct Delegate<'repo, 'other_repo, VisitFn, E> {
         repo: &'repo Repository,
         other_repo: &'other_repo Repository,
         visit: VisitFn,
+        err: Option<E>,
     }
 
-    impl<'repo, 'other_repo, VisitFn> git_diff::tree::Visit for Delegate<'repo, 'other_repo, VisitFn>
+    impl<'repo, 'other_repo, VisitFn, E> git_diff::tree::Visit for Delegate<'repo, 'other_repo, VisitFn, E>
     where
-        VisitFn: FnMut(Event<'repo, 'other_repo>) -> git_diff::tree::visit::Action,
+        VisitFn: FnMut(Event<'repo, 'other_repo>) -> Result<git_diff::tree::visit::Action, E>,
+        E: std::error::Error + Sync + Send + 'static,
     {
         fn pop_front_tracked_path_and_set_current(&mut self) {}
 
@@ -184,7 +205,13 @@ pub mod diff {
                     id: oid.attach(self.other_repo),
                 },
             };
-            (self.visit)(event)
+            match (self.visit)(event) {
+                Ok(action) => action,
+                Err(err) => {
+                    self.err = Some(err);
+                    git_diff::tree::visit::Action::Cancel
+                }
+            }
         }
     }
 }
