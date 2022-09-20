@@ -20,8 +20,10 @@ pub struct Context<W> {
     pub ignore_bots: bool,
     /// Show personally identifiable information before the summary. Includes names and email addresses.
     pub show_pii: bool,
-    /// Collect additional information like tree changes and changed lines.
-    pub stats: bool,
+    /// Collect how many files have been added, removed and modified (without rename tracking).
+    pub file_stats: bool,
+    /// Collect how many lines in files have been added, removed and modified (without rename tracking).
+    pub line_stats: bool,
     /// Omit unifying identities by name and email which can lead to the same author appear multiple times
     /// due to using different names or email addresses.
     pub omit_unify_identities: bool,
@@ -42,7 +44,8 @@ pub fn estimate<W, P>(
     Context {
         show_pii,
         ignore_bots,
-        stats,
+        file_stats,
+        line_stats,
         omit_unify_identities,
         mut out,
     }: Context<W>,
@@ -56,7 +59,7 @@ where
     let mut string_heap = BTreeSet::<&'static [u8]>::new();
 
     let (commit_authors, stats, is_shallow) = {
-        let stat_progress = stats.then(|| progress.add_child("extract stats")).map(|mut p| {
+        let stat_progress = file_stats.then(|| progress.add_child("extract stats")).map(|mut p| {
             p.init(None, progress::count("commits"));
             p
         });
@@ -113,7 +116,7 @@ where
                 Ok(out)
             });
 
-            let (tx_tree_id, stat_threads) = stats
+            let (tx_tree_id, stat_threads) = (file_stats || line_stats)
                 .then(|| {
                     let num_threads = num_cpus::get().saturating_sub(1 /*main thread*/).max(1);
                     let (tx, rx) = flume::unbounded::<(u32, Option<git::hash::ObjectId>, git::hash::ObjectId)>();
@@ -130,7 +133,7 @@ where
                                         if let Some(c) = counter.as_ref() {
                                             c.fetch_add(1, Ordering::SeqCst);
                                         }
-                                        let mut stat = Stats::default();
+                                        let mut stat = FileStats::default();
                                         let from = match parent_commit {
                                             Some(id) => {
                                                 match repo.find_object(id).ok().and_then(|c| c.peel_to_tree().ok()) {
@@ -283,16 +286,15 @@ where
     ));
 
     let num_unique_authors = results_by_hours.len();
-    let (total_hours, total_commits, total_stats) = results_by_hours
+    let (total_hours, total_commits, total_files, total_lines) = results_by_hours
         .iter()
-        .map(|e| (e.hours, e.num_commits, e.stats))
-        .reduce(|a, b| (a.0 + b.0, a.1 + b.1, a.2.clone().added(&b.2)))
+        .map(|e| (e.hours, e.num_commits, e.files, e.lines))
+        .reduce(|a, b| (a.0 + b.0, a.1 + b.1, a.2.clone().added(&b.2), a.3.clone().added(&b.3)))
         .expect("at least one commit at this point");
     if show_pii {
         results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
-        let show_stats = !stats.is_empty();
         for entry in results_by_hours.iter() {
-            entry.write_to(total_hours, show_stats, &mut out)?;
+            entry.write_to(total_hours, file_stats, line_stats, &mut out)?;
             writeln!(out)?;
         }
     }
@@ -305,11 +307,18 @@ where
         is_shallow.then(|| " (shallow)").unwrap_or_default(),
         num_authors
     )?;
-    if !stats.is_empty() {
+    if file_stats {
         writeln!(
             out,
             "total files added/removed/modified: {}/{}/{}",
-            total_stats.added, total_stats.removed, total_stats.modified
+            total_files.added, total_files.removed, total_files.modified
+        )?;
+    }
+    if line_stats {
+        writeln!(
+            out,
+            "total lines added/removed: {}/{}",
+            total_lines.added, total_lines.removed
         )?;
     }
     if !omit_unify_identities {
@@ -334,7 +343,7 @@ where
 const MINUTES_PER_HOUR: f32 = 60.0;
 const HOURS_PER_WORKDAY: f32 = 8.0;
 
-fn estimate_hours(commits: &[(u32, actor::SignatureRef<'static>)], stats: &[(u32, Stats)]) -> WorkByEmail {
+fn estimate_hours(commits: &[(u32, actor::SignatureRef<'static>)], stats: &[(u32, FileStats)]) -> WorkByEmail {
     assert!(!commits.is_empty());
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
@@ -361,9 +370,9 @@ fn estimate_hours(commits: &[(u32, actor::SignatureRef<'static>)], stats: &[(u32
         email: author.email,
         hours: FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0 + hours_for_commits,
         num_commits: commits.len() as u32,
-        stats: (!stats.is_empty())
+        files: (!stats.is_empty())
             .then(|| {
-                commits.iter().map(|t| &t.0).fold(Stats::default(), |mut acc, id| {
+                commits.iter().map(|t| &t.0).fold(FileStats::default(), |mut acc, id| {
                     match stats.binary_search_by(|t| t.0.cmp(id)) {
                         Ok(idx) => {
                             acc.add(&stats[idx].1);
@@ -374,6 +383,7 @@ fn estimate_hours(commits: &[(u32, actor::SignatureRef<'static>)], stats: &[(u32
                 })
             })
             .unwrap_or_default(),
+        lines: Default::default(),
     }
 }
 
@@ -410,7 +420,8 @@ struct WorkByPerson {
     email: Vec<&'static BStr>,
     hours: f32,
     num_commits: u32,
-    stats: Stats,
+    files: FileStats,
+    lines: LineStats,
 }
 
 impl<'a> WorkByPerson {
@@ -423,7 +434,7 @@ impl<'a> WorkByPerson {
         }
         self.num_commits += other.num_commits;
         self.hours += other.hours;
-        self.stats.add(&other.stats);
+        self.files.add(&other.files);
     }
 }
 
@@ -434,13 +445,20 @@ impl<'a> From<&'a WorkByEmail> for WorkByPerson {
             email: vec![w.email],
             hours: w.hours,
             num_commits: w.num_commits,
-            stats: w.stats,
+            files: w.files,
+            lines: w.lines,
         }
     }
 }
 
 impl WorkByPerson {
-    fn write_to(&self, total_hours: f32, show_stats: bool, mut out: impl std::io::Write) -> std::io::Result<()> {
+    fn write_to(
+        &self,
+        total_hours: f32,
+        show_files: bool,
+        show_lines: bool,
+        mut out: impl std::io::Write,
+    ) -> std::io::Result<()> {
         writeln!(
             out,
             "{} <{}>",
@@ -455,11 +473,18 @@ impl WorkByPerson {
             self.hours / HOURS_PER_WORKDAY,
             (self.hours / total_hours) * 100.0
         )?;
-        if show_stats {
+        if show_files {
             writeln!(
                 out,
                 "total files added/removed/modified: {}/{}/{}",
-                self.stats.added, self.stats.removed, self.stats.modified
+                self.files.added, self.files.removed, self.files.modified
+            )?;
+        }
+        if show_lines {
+            writeln!(
+                out,
+                "total lines added/removed: {}/{}",
+                self.lines.added, self.lines.removed
             )?;
         }
         Ok(())
@@ -472,12 +497,13 @@ struct WorkByEmail {
     email: &'static BStr,
     hours: f32,
     num_commits: u32,
-    stats: Stats,
+    files: FileStats,
+    lines: LineStats,
 }
 
-/// Statistics for a particular commit.
+/// File statistics for a particular commit.
 #[derive(Debug, Default, Copy, Clone)]
-struct Stats {
+struct FileStats {
     /// amount of added files
     added: usize,
     /// amount of removed files
@@ -486,15 +512,38 @@ struct Stats {
     modified: usize,
 }
 
-impl Stats {
-    fn add(&mut self, other: &Stats) -> &mut Self {
+/// Line statistics for a particular commit.
+#[derive(Debug, Default, Copy, Clone)]
+struct LineStats {
+    /// amount of added lines
+    added: usize,
+    /// amount of removed lines
+    removed: usize,
+}
+
+impl FileStats {
+    fn add(&mut self, other: &FileStats) -> &mut Self {
         self.added += other.added;
         self.removed += other.removed;
         self.modified += other.modified;
         self
     }
 
-    fn added(&self, other: &Stats) -> Self {
+    fn added(&self, other: &FileStats) -> Self {
+        let mut a = *self;
+        a.add(other);
+        a
+    }
+}
+
+impl LineStats {
+    fn add(&mut self, other: &LineStats) -> &mut Self {
+        self.added += other.added;
+        self.removed += other.removed;
+        self
+    }
+
+    fn added(&self, other: &LineStats) -> Self {
         let mut a = *self;
         a.add(other);
         a
