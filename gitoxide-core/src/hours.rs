@@ -66,13 +66,17 @@ where
         });
         let stat_counter = stat_progress.as_ref().and_then(|p| p.counter());
 
-        let change_progress = needs_stats
-            .then(|| progress.add_child("analyzing changes"))
-            .map(|mut p| {
-                p.init(None, progress::count("files"));
-                p
-            });
+        let change_progress = needs_stats.then(|| progress.add_child("find changes")).map(|mut p| {
+            p.init(None, progress::count("modified files"));
+            p
+        });
         let change_counter = change_progress.as_ref().and_then(|p| p.counter());
+
+        let lines_progress = line_stats.then(|| progress.add_child("find changes")).map(|mut p| {
+            p.init(None, progress::count("diff lines"));
+            p
+        });
+        let lines_counter = lines_progress.as_ref().and_then(|p| p.counter());
 
         let mut progress = progress.add_child("traverse commit graph");
         progress.init(None, progress::count("commits"));
@@ -134,6 +138,7 @@ where
                             scope.spawn({
                                 let commit_counter = stat_counter.clone();
                                 let change_counter = change_counter.clone();
+                                let lines_counter = lines_counter.clone();
                                 let mut repo = repo.clone();
                                 repo.object_cache_size_if_unset(4 * 1024 * 1024);
                                 let rx = rx.clone();
@@ -142,6 +147,9 @@ where
                                     for (commit_idx, parent_commit, commit) in rx {
                                         if let Some(c) = commit_counter.as_ref() {
                                             c.fetch_add(1, Ordering::SeqCst);
+                                        }
+                                        if git::interrupt::is_triggered() {
+                                            return Ok(out);
                                         }
                                         let mut files = FileStats::default();
                                         let mut lines = LineStats::default();
@@ -173,7 +181,11 @@ where
                                                         files.added += 1
                                                     }
                                                     if let Ok(blob) = id.object() {
-                                                        lines.added = blob.data.lines_with_terminator().count();
+                                                        let nl = blob.data.lines_with_terminator().count();
+                                                        lines.added += nl;
+                                                        if let Some(c) = lines_counter.as_ref() {
+                                                            c.fetch_add(nl, Ordering::SeqCst);
+                                                        }
                                                     }
                                                 }
                                                 Deletion { entry_mode, id } => {
@@ -181,7 +193,11 @@ where
                                                         files.removed += 1
                                                     }
                                                     if let Ok(blob) = id.object() {
-                                                        lines.removed = blob.data.lines_with_terminator().count();
+                                                        let nl = blob.data.lines_with_terminator().count();
+                                                        lines.removed += nl;
+                                                        if let Some(c) = lines_counter.as_ref() {
+                                                            c.fetch_add(nl, Ordering::SeqCst);
+                                                        }
                                                     }
                                                 }
                                                 Modification { entry_mode, .. } => {
@@ -191,15 +207,25 @@ where
                                                     if line_stats {
                                                         if let Some(Ok(diff)) = change.event.diff() {
                                                             use git::diff::lines::similar::ChangeTag::*;
+                                                            let mut nl = 0;
                                                             for change in diff
                                                                 .text(git::diff::lines::Algorithm::Myers)
                                                                 .iter_all_changes()
                                                             {
                                                                 match change.tag() {
-                                                                    Delete => lines.removed += 1,
-                                                                    Insert => lines.added += 1,
+                                                                    Delete => {
+                                                                        lines.removed += 1;
+                                                                        nl += 1;
+                                                                    }
+                                                                    Insert => {
+                                                                        lines.added += 1;
+                                                                        nl += 1
+                                                                    }
                                                                     Equal => {}
                                                                 }
+                                                            }
+                                                            if let Some(c) = lines_counter.as_ref() {
+                                                                c.fetch_add(nl, Ordering::SeqCst);
                                                             }
                                                         }
                                                     }
@@ -260,6 +286,9 @@ where
                     let mut stats = Vec::new();
                     for handle in stat_threads {
                         stats.extend(handle.join().expect("no panic")?);
+                        if git::interrupt::is_triggered() {
+                            bail!("Cancelled by user");
+                        }
                     }
                     stats.sort_by_key(|t| t.0);
                     progress.show_throughput(start);
@@ -268,6 +297,9 @@ where
                 None => Vec::new(),
             };
             if let Some(mut progress) = change_progress {
+                progress.show_throughput(start);
+            }
+            if let Some(mut progress) = lines_progress {
                 progress.show_throughput(start);
             }
 
