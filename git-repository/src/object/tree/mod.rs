@@ -67,7 +67,7 @@ impl<'repo> Tree<'repo> {
         Ok(None)
     }
 
-    /// Like [`lookup_path()`][Self::lookup_path()], but takes a `Path` directly via `relative_path`, a path relative to this tree.
+    /// Like [`lookup_entry()`][Self::lookup_entry()], but takes a `Path` directly via `relative_path`, a path relative to this tree.
     ///
     /// # Note
     ///
