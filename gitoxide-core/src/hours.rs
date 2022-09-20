@@ -211,10 +211,11 @@ where
             drop(tx);
             drop(tx_tree_id);
             progress.show_throughput(start);
+            drop(progress);
 
             let _stats_by_commit_idx = match stat_progress {
                 Some(mut progress) => {
-                    progress.init(Some(commit_idx as usize), progress::count("commits"));
+                    progress.set_max(Some(commit_idx as usize));
                     let mut stats = Vec::new();
                     for handle in stat_threads {
                         stats.extend(handle.join().expect("no panic")?);
