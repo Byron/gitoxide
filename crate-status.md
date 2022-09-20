@@ -109,9 +109,10 @@ Check out the [performance discussion][git-diff-performance] as well.
 * **patches**    
   * There are various ways to generate a patch from two blobs.
   * [ ] any
+* **lines**
+  * [ ] Simple line-by-line diffs powered by the `similar` crate.
 * diffing, merging, working with hunks of data
 * find differences between various states, i.e. index, working tree, commit-tree
-* Parallel stat calls to check/update objects in index
 * [x] API documentation
   * [ ] Examples
     
@@ -471,7 +472,9 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
       * [ ] make [git-notes](https://git-scm.com/docs/git-notes) accessible
       * [x] tree entries
     * **diffs/changes**
-        * [x] tree with working tree
+        * [x] tree with other tree
+        * [ ] tree with working tree
+        * [x] diffs between modified blobs with various algorithms
         * [ ] tree with index
     * [x] initialize
         * [x] Proper configuration depending on platform (e.g. ignorecase, filemode, …)
