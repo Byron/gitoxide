@@ -60,6 +60,24 @@ impl<'repo> Tree<'repo> {
         }
         Ok(None)
     }
+
+    /// Like [`lookup_path()`][Self::lookup_path()], but takes a `Path` directly via `relative_path`, a path relative to this tree.
+    ///
+    /// # Note
+    ///
+    /// If any path component contains illformed UTF-8 and thus can't be converted to bytes on platforms which can't do so natively,
+    /// the returned component will be empty which makes the lookup fail.
+    pub fn lookup_path_by_path(
+        self,
+        relative_path: impl AsRef<std::path::Path>,
+    ) -> Result<Option<git_object::tree::Entry>, find::existing::Error> {
+        self.lookup_path(
+            relative_path
+                .as_ref()
+                .components()
+                .map(|c| git_path::os_str_into_bstr(c.as_os_str()).unwrap_or("".into()).as_ref()),
+        )
+    }
 }
 
 ///
