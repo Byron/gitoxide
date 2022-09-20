@@ -1153,6 +1153,7 @@ dependencies = [
 name = "git-command"
 version = "0.1.0"
 dependencies = [
+ "bstr 1.0.1",
  "git-testtools",
 ]
 
