@@ -361,15 +361,19 @@ fn estimate_hours(commits: &[(u32, actor::SignatureRef<'static>)], stats: &[(u32
         email: author.email,
         hours: FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0 + hours_for_commits,
         num_commits: commits.len() as u32,
-        stats: commits.iter().map(|t| &t.0).fold(Stats::default(), |mut acc, id| {
-            match stats.binary_search_by(|t| t.0.cmp(id)) {
-                Ok(idx) => {
-                    acc.add(&stats[idx].1);
-                    acc
-                }
-                Err(_) => acc,
-            }
-        }),
+        stats: (!stats.is_empty())
+            .then(|| {
+                commits.iter().map(|t| &t.0).fold(Stats::default(), |mut acc, id| {
+                    match stats.binary_search_by(|t| t.0.cmp(id)) {
+                        Ok(idx) => {
+                            acc.add(&stats[idx].1);
+                            acc
+                        }
+                        Err(_) => acc,
+                    }
+                })
+            })
+            .unwrap_or_default(),
     }
 }
 
