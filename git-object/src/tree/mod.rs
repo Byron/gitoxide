@@ -39,6 +39,11 @@ impl EntryMode {
         *self != EntryMode::Tree
     }
 
+    /// Return true if the entry is any kind of blob.
+    pub fn is_blob(&self) -> bool {
+        matches!(self, EntryMode::Blob | EntryMode::BlobExecutable)
+    }
+
     /// Represent the mode as descriptive string.
     pub fn as_str(&self) -> &'static str {
         use EntryMode::*;
