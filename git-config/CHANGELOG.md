@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.8.0 (2022-09-20)
 
 ### Changed
 
@@ -21,10 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 15 commits contributed to the release over the course of 21 calendar days.
+ - 16 commits contributed to the release over the course of 21 calendar days.
  - 22 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
 
 ### Commit Details
 
@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - upgrade `bstr` to `1.0.1` ([`99905ba`](https://github.com/Byron/gitoxide/commit/99905bacace8aed42b16d43f0f04cae996cb971c))
     - `git-config` now uses `git-config-value`. ([`5ad2965`](https://github.com/Byron/gitoxide/commit/5ad296577d837b0699b4718fa2be3d0978c4e342))
     - port tests over as well ([`9b28df2`](https://github.com/Byron/gitoxide/commit/9b28df22b858b6f1c9ca9b07a5a1c0cc300b50f0))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
  * **Uncategorized**
     - make fmt ([`429cccc`](https://github.com/Byron/gitoxide/commit/429cccc5831c25a7205a12dc7a0443ac48616e2c))
     - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))

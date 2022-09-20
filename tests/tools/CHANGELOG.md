@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.0 (2022-09-20)
 
 ### Bug Fixes
 
@@ -26,10 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 21 calendar days.
+ - 15 commits contributed to the release over the course of 21 calendar days.
  - 24 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#509](https://github.com/Byron/gitoxide/issues/509)
+ - 3 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#509](https://github.com/Byron/gitoxide/issues/509)
 
 ### Commit Details
 
@@ -41,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - upgrade `bstr` to `1.0.1` ([`99905ba`](https://github.com/Byron/gitoxide/commit/99905bacace8aed42b16d43f0f04cae996cb971c))
     - Allow multiple scripts to run at the same time, if they are not the same. ([`cba9ede`](https://github.com/Byron/gitoxide/commit/cba9edeb403aae4d77087de4167cbabe72525d92))
     - Make tests more robust; fix windows tests ([`1983fbc`](https://github.com/Byron/gitoxide/commit/1983fbc39be3da5598cf3af6fb97f6ea0bc3ec6b))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
  * **[#509](https://github.com/Byron/gitoxide/issues/509)**
     - some unit tests for the time when something truly unparseable shows up ([`94fc0d6`](https://github.com/Byron/gitoxide/commit/94fc0d60d21c22a0d36f5de986cd9443755141bf))
     - Be more verbose when git version parsing fails ([`9c2f1b5`](https://github.com/Byron/gitoxide/commit/9c2f1b5d03fbcf5dd08c2469ea17da426ea6670c))

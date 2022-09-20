@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.0 (2022-09-20)
 
 ### New Features
 
@@ -34,10 +34,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 17 commits contributed to the release over the course of 21 calendar days.
+ - 18 commits contributed to the release over the course of 21 calendar days.
  - 27 days passed between releases.
  - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
 
 ### Commit Details
 
@@ -54,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - remove `thiserror` optional feature. ([`ac3823d`](https://github.com/Byron/gitoxide/commit/ac3823d7e0dcd1e51a373c9adca1a7476ca79003))
     - refactor ([`129bc87`](https://github.com/Byron/gitoxide/commit/129bc87cadf2d69d565ccd643ea7a4c0d51e9737))
     - Remove `Access` without replacement. ([`0f0bca3`](https://github.com/Byron/gitoxide/commit/0f0bca3652f0e46dbebcb46956aa9c32e8812abe))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
  * **Uncategorized**
     - make fmt ([`429cccc`](https://github.com/Byron/gitoxide/commit/429cccc5831c25a7205a12dc7a0443ac48616e2c))
     - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))

@@ -1,6 +1,6 @@
 [package]
 name = "git-pathspec"
-version = "0.0.0"
+version = "0.1.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project dealing magical pathspecs"
@@ -11,8 +11,8 @@ edition = "2018"
 doctest = false
 
 [dependencies]
-git-glob = { version = "^0.3.2", path = "../git-glob" }
-git-attributes = { version = "^0.3.3", path = "../git-attributes" }
+git-glob = { version = "^0.4.0", path = "../git-glob" }
+git-attributes = { version = "^0.4.0", path = "../git-attributes" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std"]}
 bitflags = "1.3.2"

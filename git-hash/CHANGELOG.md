@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.9.10 (2022-09-20)
 
 Maintenance release without observable changes.
 
@@ -13,10 +13,10 @@ Maintenance release without observable changes.
 
 <csr-read-only-do-not-edit/>
 
- - 5 commits contributed to the release over the course of 16 calendar days.
+ - 6 commits contributed to the release over the course of 16 calendar days.
  - 18 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
 
 ### Commit Details
 
@@ -26,6 +26,8 @@ Maintenance release without observable changes.
 
  * **[#450](https://github.com/Byron/gitoxide/issues/450)**
     - refactor ([`93ac4c3`](https://github.com/Byron/gitoxide/commit/93ac4c38e5837250e158613820a6ac1bb7119ba0))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
  * **Uncategorized**
     - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
     - make fmt ([`535e967`](https://github.com/Byron/gitoxide/commit/535e967666c6da657ff1b7eff7c64ab27cafb182))

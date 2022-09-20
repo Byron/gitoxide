@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.18.0 (2022-09-20)
 
 ### Changed
 
@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 68 commits contributed to the release over the course of 27 calendar days.
+ - 69 commits contributed to the release over the course of 27 calendar days.
  - 27 days passed between releases.
  - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - adjust to changes in `git-credentials` ([`dc32898`](https://github.com/Byron/gitoxide/commit/dc32898e9dda9cb8eee2bcad31cbe1c13d31f214))
     - adjust to changes in `git-credentials` ([`cabe40a`](https://github.com/Byron/gitoxide/commit/cabe40a15460cffd14618d4bb936e1f2805d687a))
  * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
     - percentages for files and lines added ([`bf63a13`](https://github.com/Byron/gitoxide/commit/bf63a139292ffe265b1d7bcbbd0c0980dc042e1e))
     - only diff files that are probably not a binary file (as per extension). ([`2a3c5b0`](https://github.com/Byron/gitoxide/commit/2a3c5b000493a5a4cf62a5d5e2a509bc12a9fedd))
     - replace `flume` with `crossbeam-channel` as it's already in the dependency graph ([`e27b65a`](https://github.com/Byron/gitoxide/commit/e27b65abfceb90cadd1902381414d9052ec6d8d0))

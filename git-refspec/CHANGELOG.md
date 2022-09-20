@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.2.0 (2022-09-20)
 
 ### New Features
 
@@ -25,10 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 70 commits contributed to the release over the course of 18 calendar days.
+ - 71 commits contributed to the release over the course of 18 calendar days.
  - 22 days passed between releases.
  - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
 
 ### Thanks Clippy
 
@@ -104,6 +104,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - more examples using fully spelled out object names as fetch destination ([`095a099`](https://github.com/Byron/gitoxide/commit/095a09918dc080ba7794c6ff13db0ef0ead20d0d))
     - get more clarity about `git ls-remote` and `git fetch` ([`1b15fe8`](https://github.com/Byron/gitoxide/commit/1b15fe80817d600f39090848c7d144ff94ac398c))
     - a tiny sketch of a possible matching API ([`39d5ff3`](https://github.com/Byron/gitoxide/commit/39d5ff39ac58ec2abf2b55ee69df9905a4f303c2))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
  * **Uncategorized**
     - make fmt ([`429cccc`](https://github.com/Byron/gitoxide/commit/429cccc5831c25a7205a12dc7a0443ac48616e2c))
     - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.1.0 (2022-09-20)
 
 The first usable release.
 
@@ -13,10 +13,10 @@ The first usable release.
 
 <csr-read-only-do-not-edit/>
 
- - 22 commits contributed to the release over the course of 26 calendar days.
+ - 23 commits contributed to the release over the course of 26 calendar days.
  - 26 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
 
 ### Thanks Clippy
 
@@ -44,6 +44,8 @@ The first usable release.
     - add remaining docs ([`6a39e62`](https://github.com/Byron/gitoxide/commit/6a39e62bb4aebf9c48daddf007c95b2117b4454d))
     - basic support for 'sh' based execution ([`8c61b0b`](https://github.com/Byron/gitoxide/commit/8c61b0bded71dff223e24ae68f8cf7fc50195ce9))
     - First sketch of git-command API ([`cd4a608`](https://github.com/Byron/gitoxide/commit/cd4a608f0b8ef3adeb7a7f1979f653b63e77ad4d))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
  * **Uncategorized**
     - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
     - make fmt ([`535e967`](https://github.com/Byron/gitoxide/commit/535e967666c6da657ff1b7eff7c64ab27cafb182))

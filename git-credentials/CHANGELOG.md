@@ -5,7 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.5.0 (2022-09-20)
+
+<csr-id-d95029eac0e9179a7cd730d1d60a08696584bfd1/>
+<csr-id-b8c54f03fdb6060caf9c04557c0530c090e7a975/>
+<csr-id-4c39521a47419bb4b0f0edbe51aa509fb4e2a7f1/>
 
 ### Changed
 
@@ -59,10 +63,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 113 commits contributed to the release over the course of 27 calendar days.
+ - 114 commits contributed to the release over the course of 27 calendar days.
  - 27 days passed between releases.
  - 21 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
 
 ### Thanks Clippy
 
@@ -175,6 +179,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - hide `helper::action()` in favor of single path via `helper()` ([`081934c`](https://github.com/Byron/gitoxide/commit/081934ca4452e550cf2663026905bce67253af81))
     - `helper::(encode|decode)_message(…)` to `::message::(encode|decode)(…)` ([`4c39521`](https://github.com/Byron/gitoxide/commit/4c39521a47419bb4b0f0edbe51aa509fb4e2a7f1))
     - refactor ([`a395308`](https://github.com/Byron/gitoxide/commit/a395308fdc01b5449a851b1dcb6c3e97a205a5d0))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
  * **Uncategorized**
     - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
     - make fmt ([`535e967`](https://github.com/Byron/gitoxide/commit/535e967666c6da657ff1b7eff7c64ab27cafb182))

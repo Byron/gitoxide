@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.24.0 (2022-09-20)
+
+<csr-id-f5959edc1477573278afcfe23e9e52ddaacb37db/>
+<csr-id-79c22557ce0aea1ee8f3a58192c2c76087ccd3d8/>
 
 ### New Features
 
@@ -57,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 93 commits contributed to the release over the course of 19 calendar days.
+ - 94 commits contributed to the release over the course of 19 calendar days.
  - 19 days passed between releases.
  - 12 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
@@ -122,6 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - mark a difference in the way credential helper urls are validated ([`dc57b67`](https://github.com/Byron/gitoxide/commit/dc57b676e2fcb869f8e73cc543a73c73b83bfe22))
     - the first successful url matching test ([`beddce1`](https://github.com/Byron/gitoxide/commit/beddce1b1814b60da5881a3676b019d35c47a0a8))
  * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
     - `Object::peel_to_tree()` as convenience method. ([`0871a96`](https://github.com/Byron/gitoxide/commit/0871a96b9cc84d7a496d39393e081999c0a3fe17))
     - fix docs ([`593f57b`](https://github.com/Byron/gitoxide/commit/593f57b486d03b4d689cda6c0800e9f349cc4ad5))
     - Add note on why we consume the tree for looking up an entry. ([`b285097`](https://github.com/Byron/gitoxide/commit/b28509724c8877d6488bf5dc72308e8b18928124))
