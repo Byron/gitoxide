@@ -373,7 +373,12 @@ where
     if show_pii {
         results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
         for entry in results_by_hours.iter() {
-            entry.write_to(total_hours, file_stats, line_stats, &mut out)?;
+            entry.write_to(
+                total_hours,
+                file_stats.then(|| total_files),
+                line_stats.then(|| total_lines),
+                &mut out,
+            )?;
             writeln!(out)?;
         }
     }
@@ -543,8 +548,8 @@ impl WorkByPerson {
     fn write_to(
         &self,
         total_hours: f32,
-        show_files: bool,
-        show_lines: bool,
+        total_files: Option<FileStats>,
+        total_lines: Option<LineStats>,
         mut out: impl std::io::Write,
     ) -> std::io::Result<()> {
         writeln!(
@@ -561,18 +566,23 @@ impl WorkByPerson {
             self.hours / HOURS_PER_WORKDAY,
             (self.hours / total_hours) * 100.0
         )?;
-        if show_files {
+        if let Some(total) = total_files {
             writeln!(
                 out,
-                "total files added/removed/modified: {}/{}/{}",
-                self.files.added, self.files.removed, self.files.modified
+                "total files added/removed/modified: {}/{}/{} ({:.02}%)",
+                self.files.added,
+                self.files.removed,
+                self.files.modified,
+                (self.files.sum() / total.sum()) * 100.0
             )?;
         }
-        if show_lines {
+        if let Some(total) = total_lines {
             writeln!(
                 out,
-                "total lines added/removed: {}/{}",
-                self.lines.added, self.lines.removed
+                "total lines added/removed: {}/{} ({:.02}%)",
+                self.lines.added,
+                self.lines.removed,
+                (self.lines.sum() / total.sum()) * 100.0
             )?;
         }
         Ok(())
@@ -622,6 +632,10 @@ impl FileStats {
         a.add(other);
         a
     }
+
+    fn sum(&self) -> f32 {
+        (self.added + self.removed + self.modified) as f32
+    }
 }
 
 impl LineStats {
@@ -635,5 +649,9 @@ impl LineStats {
         let mut a = *self;
         a.add(other);
         a
+    }
+
+    fn sum(&self) -> f32 {
+        (self.added + self.removed) as f32
     }
 }
