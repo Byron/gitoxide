@@ -77,12 +77,11 @@ impl<'repo> Tree<'repo> {
         self,
         relative_path: impl AsRef<std::path::Path>,
     ) -> Result<Option<git_object::tree::Entry>, find::existing::Error> {
-        self.lookup_entry(
-            relative_path
+        self.lookup_entry(relative_path.as_ref().components().map(|c| {
+            git_path::os_str_into_bstr(c.as_os_str())
+                .unwrap_or_else(|_| "".into())
                 .as_ref()
-                .components()
-                .map(|c| git_path::os_str_into_bstr(c.as_os_str()).unwrap_or("".into()).as_ref()),
-        )
+        }))
     }
 }
 
