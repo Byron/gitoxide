@@ -171,7 +171,7 @@ where
                                             Some(c) => c,
                                             None => continue,
                                         };
-                                        from.changes().for_each_to_obtain_tree(&to, |change| {
+                                        from.changes().track_filename().for_each_to_obtain_tree(&to, |change| {
                                             use git::object::tree::diff::change::Event::*;
                                             if let Some(c) = change_counter.as_ref() {
                                                 c.fetch_add(1, Ordering::SeqCst);
@@ -205,29 +205,37 @@ where
                                                     if entry_mode.is_no_tree() {
                                                         files.modified += 1;
                                                     }
-                                                    if let Some(Ok(diff)) =
-                                                        line_stats.then(|| change.event.diff()).flatten()
-                                                    {
-                                                        use git::diff::lines::similar::ChangeTag::*;
-                                                        let mut nl = 0;
-                                                        for change in diff
-                                                            .text(git::diff::lines::Algorithm::Myers)
-                                                            .iter_all_changes()
+                                                    if line_stats {
+                                                        let is_text_file = mime_guess::from_path(
+                                                            git::path::from_bstr(change.location).as_ref(),
+                                                        )
+                                                        .first_or_text_plain()
+                                                        .type_()
+                                                            == mime_guess::mime::TEXT;
+                                                        if let Some(Ok(diff)) =
+                                                            is_text_file.then(|| change.event.diff()).flatten()
                                                         {
-                                                            match change.tag() {
-                                                                Delete => {
-                                                                    lines.removed += 1;
-                                                                    nl += 1;
+                                                            use git::diff::lines::similar::ChangeTag::*;
+                                                            let mut nl = 0;
+                                                            for change in diff
+                                                                .text(git::diff::lines::Algorithm::Myers)
+                                                                .iter_all_changes()
+                                                            {
+                                                                match change.tag() {
+                                                                    Delete => {
+                                                                        lines.removed += 1;
+                                                                        nl += 1;
+                                                                    }
+                                                                    Insert => {
+                                                                        lines.added += 1;
+                                                                        nl += 1
+                                                                    }
+                                                                    Equal => {}
                                                                 }
-                                                                Insert => {
-                                                                    lines.added += 1;
-                                                                    nl += 1
-                                                                }
-                                                                Equal => {}
                                                             }
-                                                        }
-                                                        if let Some(c) = lines_counter.as_ref() {
-                                                            c.fetch_add(nl, Ordering::SeqCst);
+                                                            if let Some(c) = lines_counter.as_ref() {
+                                                                c.fetch_add(nl, Ordering::SeqCst);
+                                                            }
                                                         }
                                                     }
                                                 }
