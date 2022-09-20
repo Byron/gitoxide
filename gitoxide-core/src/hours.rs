@@ -1,4 +1,6 @@
 use std::collections::BTreeSet;
+use std::convert::Infallible;
+use std::sync::atomic::Ordering;
 use std::{
     collections::{hash_map::Entry, HashMap},
     io,
@@ -9,7 +11,7 @@ use std::{
 use anyhow::{anyhow, bail};
 use git_repository as git;
 use git_repository::bstr::BStr;
-use git_repository::{actor, bstr::ByteSlice, interrupt, objs, prelude::*, progress, Progress};
+use git_repository::{actor, bstr::ByteSlice, interrupt, prelude::*, progress, Progress};
 use itertools::Itertools;
 
 /// Additional configuration for the hours estimation functionality.
@@ -40,7 +42,7 @@ pub fn estimate<W, P>(
     Context {
         show_pii,
         ignore_bots,
-        stats: _,
+        stats,
         omit_unify_identities,
         mut out,
     }: Context<W>,
@@ -53,18 +55,25 @@ where
     let commit_id = repo.rev_parse_single(rev_spec)?.detach();
     let mut string_heap = BTreeSet::<&'static [u8]>::new();
 
-    let (all_commits, is_shallow) = {
-        let mut progress = progress.add_child("Traverse commit graph");
+    let (commit_authors, is_shallow) = {
+        let stat_progress = stats.then(|| progress.add_child("extract stats")).map(|mut p| {
+            p.init(None, progress::count("commits"));
+            p
+        });
+        let stat_counter = stat_progress.as_ref().and_then(|p| p.counter());
+
+        let mut progress = progress.add_child("traverse commit graph");
+        progress.init(None, progress::count("commits"));
+
         std::thread::scope(|scope| -> anyhow::Result<(Vec<actor::SignatureRef<'static>>, bool)> {
             let start = Instant::now();
-            progress.init(None, progress::count("commits"));
             let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
             let mailmap = repo.open_mailmap();
 
-            let handle = scope.spawn(move || -> anyhow::Result<Vec<actor::SignatureRef<'static>>> {
+            let commit_thread = scope.spawn(move || -> anyhow::Result<Vec<actor::SignatureRef<'static>>> {
                 let mut out = Vec::new();
                 for commit_data in rx {
-                    if let Some(author) = objs::CommitRefIter::from_bytes(&commit_data)
+                    if let Some(author) = git::objs::CommitRefIter::from_bytes(&commit_data)
                         .author()
                         .map(|author| mailmap.resolve_cow(author.trim()))
                         .ok()
@@ -101,12 +110,89 @@ where
                 Ok(out)
             });
 
+            let (tx_tree_id, stat_threads) = stats
+                .then(|| {
+                    let num_threads = num_cpus::get().saturating_sub(1 /*main thread*/).max(1);
+                    let (tx, rx) = flume::unbounded::<(u32, Option<git::hash::ObjectId>, git::hash::ObjectId)>();
+                    let stat_workers = (0..num_threads)
+                        .map(|_| {
+                            scope.spawn({
+                                let counter = stat_counter.clone();
+                                let mut repo = repo.clone();
+                                repo.object_cache_size_if_unset(4 * 1024 * 1024);
+                                let rx = rx.clone();
+                                move || -> Result<_, git::object::tree::diff::Error> {
+                                    let mut out = Vec::new();
+                                    for (commit_idx, parent_commit, commit) in rx {
+                                        if let Some(c) = counter.as_ref() {
+                                            c.fetch_add(1, Ordering::SeqCst);
+                                        }
+                                        let mut stat = Stats::default();
+                                        let from = match parent_commit {
+                                            Some(id) => {
+                                                match repo.find_object(id).ok().and_then(|c| c.peel_to_tree().ok()) {
+                                                    Some(tree) => tree,
+                                                    None => continue,
+                                                }
+                                            }
+                                            None => repo
+                                                .find_object(git::hash::ObjectId::empty_tree(repo.object_hash()))
+                                                .expect("always present")
+                                                .into_tree(),
+                                        };
+                                        let to = match repo.find_object(commit).ok().and_then(|c| c.peel_to_tree().ok())
+                                        {
+                                            Some(c) => c,
+                                            None => continue,
+                                        };
+                                        from.changes().for_each_to_obtain_tree(&to, |change| {
+                                            use git::object::tree::diff::change::Event::*;
+                                            match change.event {
+                                                Addition { entry_mode, .. } => {
+                                                    if entry_mode.is_no_tree() {
+                                                        stat.added += 1
+                                                    }
+                                                }
+                                                Deletion { entry_mode, .. } => {
+                                                    if entry_mode.is_no_tree() {
+                                                        stat.removed += 1
+                                                    }
+                                                }
+                                                Modification { entry_mode, .. } => {
+                                                    if entry_mode.is_no_tree() {
+                                                        stat.modified += 1;
+                                                    }
+                                                }
+                                            }
+                                            Ok::<_, Infallible>(Default::default())
+                                        })?;
+                                        out.push((commit_idx, stat));
+                                    }
+                                    Ok(out)
+                                }
+                            })
+                        })
+                        .collect::<Vec<_>>();
+                    (Some(tx), stat_workers)
+                })
+                .unwrap_or_else(Default::default);
+
+            let mut commit_idx = 0_u32;
             let commit_iter = interrupt::Iter::new(
                 commit_id.ancestors(|oid, buf| {
                     progress.inc();
                     repo.objects.find(oid, buf).map(|o| {
                         tx.send(o.data.to_owned()).ok();
-                        objs::CommitRefIter::from_bytes(o.data)
+                        if let Some((tx_tree, first_parent, commit)) = tx_tree_id.as_ref().and_then(|tx| {
+                            git::objs::CommitRefIter::from_bytes(o.data)
+                                .parent_ids()
+                                .next()
+                                .map(|first_parent| (tx, Some(first_parent), oid.to_owned()))
+                        }) {
+                            tx_tree.send((commit_idx, first_parent, commit)).ok();
+                        }
+                        commit_idx += 1;
+                        git::objs::CommitRefIter::from_bytes(o.data)
                     })
                 }),
                 || anyhow!("Cancelled by user"),
@@ -123,23 +209,38 @@ where
                 };
             }
             drop(tx);
+            drop(tx_tree_id);
             progress.show_throughput(start);
-            Ok((handle.join().expect("no panic")?, is_shallow))
+
+            let _stats_by_commit_idx = match stat_progress {
+                Some(mut progress) => {
+                    progress.init(Some(commit_idx as usize), progress::count("commits"));
+                    let mut stats = Vec::new();
+                    for handle in stat_threads {
+                        stats.extend(handle.join().expect("no panic")?);
+                    }
+                    progress.show_throughput(start);
+                    stats
+                }
+                None => Vec::new(),
+            };
+
+            Ok((commit_thread.join().expect("no panic")?, is_shallow))
         })?
     };
 
-    if all_commits.is_empty() {
+    if commit_authors.is_empty() {
         bail!("No commits to process");
     }
 
     let start = Instant::now();
-    let mut current_email = &all_commits[0].email;
+    let mut current_email = &commit_authors[0].email;
     let mut slice_start = 0;
     let mut results_by_hours = Vec::new();
     let mut ignored_bot_commits = 0_u32;
-    for (idx, elm) in all_commits.iter().enumerate() {
+    for (idx, elm) in commit_authors.iter().enumerate() {
         if elm.email != *current_email {
-            let estimate = estimate_hours(&all_commits[slice_start..idx]);
+            let estimate = estimate_hours(&commit_authors[slice_start..idx]);
             slice_start = idx;
             current_email = &elm.email;
             if ignore_bots && estimate.name.contains_str(b"[bot]") {
@@ -149,7 +250,7 @@ where
             results_by_hours.push(estimate);
         }
     }
-    if let Some(commits) = all_commits.get(slice_start..) {
+    if let Some(commits) = commit_authors.get(slice_start..) {
         results_by_hours.push(estimate_hours(commits));
     }
 
@@ -167,9 +268,9 @@ where
     let elapsed = start.elapsed();
     progress.done(format!(
         "Extracted and organized data from {} commits in {:?} ({:0.0} commits/s)",
-        all_commits.len(),
+        commit_authors.len(),
         elapsed,
-        all_commits.len() as f32 / elapsed.as_secs_f32()
+        commit_authors.len() as f32 / elapsed.as_secs_f32()
     ));
 
     let num_unique_authors = results_by_hours.len();
@@ -207,7 +308,7 @@ where
     }
     assert_eq!(
         total_commits,
-        all_commits.len() as u32 - ignored_bot_commits,
+        commit_authors.len() as u32 - ignored_bot_commits,
         "need to get all commits"
     );
     Ok(())
@@ -327,4 +428,15 @@ struct WorkByEmail {
     email: &'static BStr,
     hours: f32,
     num_commits: u32,
+}
+
+/// Statistics for a particular commit.
+#[derive(Debug, Default)]
+struct Stats {
+    /// amount of added files
+    added: usize,
+    /// amount of removed files
+    removed: usize,
+    /// amount of modified files
+    modified: usize,
 }
