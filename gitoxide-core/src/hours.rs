@@ -59,11 +59,20 @@ where
     let mut string_heap = BTreeSet::<&'static [u8]>::new();
 
     let (commit_authors, stats, is_shallow) = {
-        let stat_progress = file_stats.then(|| progress.add_child("extract stats")).map(|mut p| {
+        let needs_stats = file_stats || line_stats;
+        let stat_progress = needs_stats.then(|| progress.add_child("extract stats")).map(|mut p| {
             p.init(None, progress::count("commits"));
             p
         });
         let stat_counter = stat_progress.as_ref().and_then(|p| p.counter());
+
+        let change_progress = needs_stats
+            .then(|| progress.add_child("analyzing changes"))
+            .map(|mut p| {
+                p.init(None, progress::count("files"));
+                p
+            });
+        let change_counter = change_progress.as_ref().and_then(|p| p.counter());
 
         let mut progress = progress.add_child("traverse commit graph");
         progress.init(None, progress::count("commits"));
@@ -116,21 +125,22 @@ where
                 Ok(out)
             });
 
-            let (tx_tree_id, stat_threads) = (file_stats || line_stats)
+            let (tx_tree_id, stat_threads) = needs_stats
                 .then(|| {
                     let num_threads = num_cpus::get().saturating_sub(1 /*main thread*/).max(1);
                     let (tx, rx) = flume::unbounded::<(u32, Option<git::hash::ObjectId>, git::hash::ObjectId)>();
                     let stat_workers = (0..num_threads)
                         .map(|_| {
                             scope.spawn({
-                                let counter = stat_counter.clone();
+                                let commit_counter = stat_counter.clone();
+                                let change_counter = change_counter.clone();
                                 let mut repo = repo.clone();
                                 repo.object_cache_size_if_unset(4 * 1024 * 1024);
                                 let rx = rx.clone();
                                 move || -> Result<_, git::object::tree::diff::Error> {
                                     let mut out = Vec::new();
                                     for (commit_idx, parent_commit, commit) in rx {
-                                        if let Some(c) = counter.as_ref() {
+                                        if let Some(c) = commit_counter.as_ref() {
                                             c.fetch_add(1, Ordering::SeqCst);
                                         }
                                         let mut stat = FileStats::default();
@@ -153,6 +163,9 @@ where
                                         };
                                         from.changes().for_each_to_obtain_tree(&to, |change| {
                                             use git::object::tree::diff::change::Event::*;
+                                            if let Some(c) = change_counter.as_ref() {
+                                                c.fetch_add(1, Ordering::SeqCst);
+                                            }
                                             match change.event {
                                                 Addition { entry_mode, .. } => {
                                                     if entry_mode.is_no_tree() {
@@ -232,6 +245,9 @@ where
                 }
                 None => Vec::new(),
             };
+            if let Some(mut progress) = change_progress {
+                progress.show_throughput(start);
+            }
 
             Ok((
                 commit_thread.join().expect("no panic")?,
