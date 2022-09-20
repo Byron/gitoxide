@@ -2569,6 +2569,7 @@ dependencies = [
  "humantime",
  "log",
  "parking_lot 0.11.2",
+ "signal-hook",
  "time",
  "tui",
  "tui-react",

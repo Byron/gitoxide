@@ -37,7 +37,7 @@ pretty-cli = [ "gitoxide-core/serde1", "prodash/progress-tree", "prodash/progres
 
 ## The `--verbose` flag will be powered by an interactive progress mechanism that doubles as log as well as interactive progress
 ## that appears after a short duration.
-prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "atty", "crosstermion"]
+prodash-render-line-crossterm = ["prodash-render-line", "prodash/render-line-crossterm", "prodash/signal-hook", "atty", "crosstermion"]
 
 #! ### Convenience Features
 #! These combine common choices of the above features to represent typical builds
