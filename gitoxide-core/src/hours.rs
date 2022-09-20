@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 use std::convert::Infallible;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::{
     collections::{hash_map::Entry, HashMap},
     io,
@@ -179,66 +179,78 @@ where
                                             match change.event {
                                                 Addition { entry_mode, id } => {
                                                     if entry_mode.is_no_tree() {
-                                                        files.added += 1
-                                                    }
-                                                    if let Ok(blob) = id.object() {
-                                                        let nl = blob.data.lines_with_terminator().count();
-                                                        lines.added += nl;
-                                                        if let Some(c) = lines_counter.as_ref() {
-                                                            c.fetch_add(nl, Ordering::SeqCst);
-                                                        }
+                                                        files.added += 1;
+                                                        add_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
                                                     }
                                                 }
                                                 Deletion { entry_mode, id } => {
                                                     if entry_mode.is_no_tree() {
-                                                        files.removed += 1
-                                                    }
-                                                    if let Ok(blob) = id.object() {
-                                                        let nl = blob.data.lines_with_terminator().count();
-                                                        lines.removed += nl;
-                                                        if let Some(c) = lines_counter.as_ref() {
-                                                            c.fetch_add(nl, Ordering::SeqCst);
-                                                        }
+                                                        files.removed += 1;
+                                                        remove_lines(
+                                                            line_stats,
+                                                            lines_counter.as_deref(),
+                                                            &mut lines,
+                                                            id,
+                                                        );
                                                     }
                                                 }
-                                                Modification { entry_mode, .. } => {
-                                                    if entry_mode.is_no_tree() {
-                                                        files.modified += 1;
+                                                Modification {
+                                                    entry_mode,
+                                                    previous_entry_mode,
+                                                    id,
+                                                    previous_id,
+                                                } => match (previous_entry_mode.is_blob(), entry_mode.is_blob()) {
+                                                    (false, false) => {}
+                                                    (false, true) => {
+                                                        files.added += 1;
+                                                        add_lines(line_stats, lines_counter.as_deref(), &mut lines, id);
                                                     }
-                                                    if line_stats {
-                                                        let is_text_file = mime_guess::from_path(
-                                                            git::path::from_bstr(change.location).as_ref(),
-                                                        )
-                                                        .first_or_text_plain()
-                                                        .type_()
-                                                            == mime_guess::mime::TEXT;
-                                                        if let Some(Ok(diff)) =
-                                                            is_text_file.then(|| change.event.diff()).flatten()
-                                                        {
-                                                            use git::diff::lines::similar::ChangeTag::*;
-                                                            let mut nl = 0;
-                                                            for change in diff
-                                                                .text(git::diff::lines::Algorithm::Myers)
-                                                                .iter_all_changes()
+                                                    (true, false) => {
+                                                        files.removed += 1;
+                                                        add_lines(
+                                                            line_stats,
+                                                            lines_counter.as_deref(),
+                                                            &mut lines,
+                                                            previous_id,
+                                                        );
+                                                    }
+                                                    (true, true) => {
+                                                        files.modified += 1;
+                                                        if line_stats {
+                                                            let is_text_file = mime_guess::from_path(
+                                                                git::path::from_bstr(change.location).as_ref(),
+                                                            )
+                                                            .first_or_text_plain()
+                                                            .type_()
+                                                                == mime_guess::mime::TEXT;
+                                                            if let Some(Ok(diff)) =
+                                                                is_text_file.then(|| change.event.diff()).flatten()
                                                             {
-                                                                match change.tag() {
-                                                                    Delete => {
-                                                                        lines.removed += 1;
-                                                                        nl += 1;
+                                                                use git::diff::lines::similar::ChangeTag::*;
+                                                                let mut nl = 0;
+                                                                for change in diff
+                                                                    .text(git::diff::lines::Algorithm::Myers)
+                                                                    .iter_all_changes()
+                                                                {
+                                                                    match change.tag() {
+                                                                        Delete => {
+                                                                            lines.removed += 1;
+                                                                            nl += 1;
+                                                                        }
+                                                                        Insert => {
+                                                                            lines.added += 1;
+                                                                            nl += 1
+                                                                        }
+                                                                        Equal => {}
                                                                     }
-                                                                    Insert => {
-                                                                        lines.added += 1;
-                                                                        nl += 1
-                                                                    }
-                                                                    Equal => {}
+                                                                }
+                                                                if let Some(c) = lines_counter.as_ref() {
+                                                                    c.fetch_add(nl, Ordering::SeqCst);
                                                                 }
                                                             }
-                                                            if let Some(c) = lines_counter.as_ref() {
-                                                                c.fetch_add(nl, Ordering::SeqCst);
-                                                            }
                                                         }
                                                     }
-                                                }
+                                                },
                                             }
                                             Ok::<_, Infallible>(Default::default())
                                         })?;
@@ -427,6 +439,25 @@ where
         "need to get all commits"
     );
     Ok(())
+}
+
+fn add_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, mut lines: &mut LineStats, id: git::Id<'_>) {
+    if let Some(Ok(blob)) = line_stats.then(|| id.object()) {
+        let nl = blob.data.lines_with_terminator().count();
+        lines.added += nl;
+        if let Some(c) = lines_counter {
+            c.fetch_add(nl, Ordering::SeqCst);
+        }
+    }
+}
+fn remove_lines(line_stats: bool, lines_counter: Option<&AtomicUsize>, mut lines: &mut LineStats, id: git::Id<'_>) {
+    if let Some(Ok(blob)) = line_stats.then(|| id.object()) {
+        let nl = blob.data.lines_with_terminator().count();
+        lines.removed += nl;
+        if let Some(c) = lines_counter {
+            c.fetch_add(nl, Ordering::SeqCst);
+        }
+    }
 }
 
 const MINUTES_PER_HOUR: f32 = 60.0;
