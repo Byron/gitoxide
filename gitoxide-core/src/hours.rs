@@ -143,7 +143,8 @@ where
                                         if let Some(c) = commit_counter.as_ref() {
                                             c.fetch_add(1, Ordering::SeqCst);
                                         }
-                                        let mut stat = FileStats::default();
+                                        let mut files = FileStats::default();
+                                        let mut lines = LineStats::default();
                                         let from = match parent_commit {
                                             Some(id) => {
                                                 match repo.find_object(id).ok().and_then(|c| c.peel_to_tree().ok()) {
@@ -167,25 +168,46 @@ where
                                                 c.fetch_add(1, Ordering::SeqCst);
                                             }
                                             match change.event {
-                                                Addition { entry_mode, .. } => {
+                                                Addition { entry_mode, id } => {
                                                     if entry_mode.is_no_tree() {
-                                                        stat.added += 1
+                                                        files.added += 1
+                                                    }
+                                                    if let Ok(blob) = id.object() {
+                                                        lines.added = blob.data.lines_with_terminator().count();
                                                     }
                                                 }
-                                                Deletion { entry_mode, .. } => {
+                                                Deletion { entry_mode, id } => {
                                                     if entry_mode.is_no_tree() {
-                                                        stat.removed += 1
+                                                        files.removed += 1
+                                                    }
+                                                    if let Ok(blob) = id.object() {
+                                                        lines.removed = blob.data.lines_with_terminator().count();
                                                     }
                                                 }
                                                 Modification { entry_mode, .. } => {
                                                     if entry_mode.is_no_tree() {
-                                                        stat.modified += 1;
+                                                        files.modified += 1;
+                                                    }
+                                                    if line_stats {
+                                                        if let Some(Ok(diff)) = change.event.diff() {
+                                                            use git::diff::lines::similar::ChangeTag::*;
+                                                            for change in diff
+                                                                .text(git::diff::lines::Algorithm::Myers)
+                                                                .iter_all_changes()
+                                                            {
+                                                                match change.tag() {
+                                                                    Delete => lines.removed += 1,
+                                                                    Insert => lines.added += 1,
+                                                                    Equal => {}
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             }
                                             Ok::<_, Infallible>(Default::default())
                                         })?;
-                                        out.push((commit_idx, stat));
+                                        out.push((commit_idx, files, lines));
                                     }
                                     Ok(out)
                                 }
@@ -359,7 +381,10 @@ where
 const MINUTES_PER_HOUR: f32 = 60.0;
 const HOURS_PER_WORKDAY: f32 = 8.0;
 
-fn estimate_hours(commits: &[(u32, actor::SignatureRef<'static>)], stats: &[(u32, FileStats)]) -> WorkByEmail {
+fn estimate_hours(
+    commits: &[(u32, actor::SignatureRef<'static>)],
+    stats: &[(u32, FileStats, LineStats)],
+) -> WorkByEmail {
     assert!(!commits.is_empty());
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
@@ -381,25 +406,31 @@ fn estimate_hours(commits: &[(u32, actor::SignatureRef<'static>)], stats: &[(u32
     );
 
     let author = &commits[0].1;
+    let (files, lines) = (!stats.is_empty())
+        .then(|| {
+            commits
+                .iter()
+                .map(|t| &t.0)
+                .fold((FileStats::default(), LineStats::default()), |mut acc, id| match stats
+                    .binary_search_by(|t| t.0.cmp(id))
+                {
+                    Ok(idx) => {
+                        let t = &stats[idx];
+                        acc.0.add(&t.1);
+                        acc.1.add(&t.2);
+                        acc
+                    }
+                    Err(_) => acc,
+                })
+        })
+        .unwrap_or_default();
     WorkByEmail {
         name: author.name,
         email: author.email,
         hours: FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0 + hours_for_commits,
         num_commits: commits.len() as u32,
-        files: (!stats.is_empty())
-            .then(|| {
-                commits.iter().map(|t| &t.0).fold(FileStats::default(), |mut acc, id| {
-                    match stats.binary_search_by(|t| t.0.cmp(id)) {
-                        Ok(idx) => {
-                            acc.add(&stats[idx].1);
-                            acc
-                        }
-                        Err(_) => acc,
-                    }
-                })
-            })
-            .unwrap_or_default(),
-        lines: Default::default(),
+        files,
+        lines,
     }
 }
 
