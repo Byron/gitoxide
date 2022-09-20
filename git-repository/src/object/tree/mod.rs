@@ -31,6 +31,12 @@ impl<'repo> Tree<'repo> {
     /// Searching tree entries is currently done in sequence, which allows to the search to be allocation free. It would be possible
     /// to re-use a vector and use a binary search instead, which might be able to improve performance over all.
     /// However, a benchmark should be created first to have some data and see which trade-off to choose here.
+    ///
+    /// # Why is this consunming?
+    ///
+    /// The borrow checker shows pathological behaviour in loops that mutate a buffer, but also want to return from it.
+    /// Workarounds include keeping an index and doing a separate access to the memory, which seems hard to do here without
+    /// re-parsing the entries.
     pub fn lookup_entry<I, P>(mut self, path: I) -> Result<Option<git_object::tree::Entry>, find::existing::Error>
     where
         I: IntoIterator<Item = P>,

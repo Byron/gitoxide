@@ -6,7 +6,7 @@ pub struct EntryRef<'repo, 'a> {
     /// The actual entry ref we are wrapping.
     pub inner: git_object::tree::EntryRef<'a>,
 
-    repo: &'repo Repository,
+    pub(crate) repo: &'repo Repository,
 }
 
 impl<'repo, 'a> EntryRef<'repo, 'a> {
@@ -23,6 +23,11 @@ impl<'repo, 'a> EntryRef<'repo, 'a> {
     /// Return the entries id, connected to the underlying repository.
     pub fn id(&self) -> crate::Id<'repo> {
         crate::Id::from_id(self.inner.oid, self.repo)
+    }
+
+    /// Return the entries id, without repository connection.
+    pub fn oid(&self) -> git_hash::ObjectId {
+        self.inner.oid.to_owned()
     }
 }
 
