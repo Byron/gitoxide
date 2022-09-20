@@ -528,6 +528,7 @@ impl<'a> WorkByPerson {
         self.num_commits += other.num_commits;
         self.hours += other.hours;
         self.files.add(&other.files);
+        self.lines.add(&other.lines);
     }
 }
 
