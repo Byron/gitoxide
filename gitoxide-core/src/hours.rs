@@ -55,7 +55,7 @@ where
     let commit_id = repo.rev_parse_single(rev_spec)?.detach();
     let mut string_heap = BTreeSet::<&'static [u8]>::new();
 
-    let (commit_authors, is_shallow) = {
+    let (commit_authors, stats, is_shallow) = {
         let stat_progress = stats.then(|| progress.add_child("extract stats")).map(|mut p| {
             p.init(None, progress::count("commits"));
             p
@@ -65,14 +65,14 @@ where
         let mut progress = progress.add_child("traverse commit graph");
         progress.init(None, progress::count("commits"));
 
-        std::thread::scope(|scope| -> anyhow::Result<(Vec<actor::SignatureRef<'static>>, bool)> {
+        std::thread::scope(|scope| -> anyhow::Result<_> {
             let start = Instant::now();
-            let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
+            let (tx, rx) = std::sync::mpsc::channel::<(u32, Vec<u8>)>();
             let mailmap = repo.open_mailmap();
 
-            let commit_thread = scope.spawn(move || -> anyhow::Result<Vec<actor::SignatureRef<'static>>> {
+            let commit_thread = scope.spawn(move || -> anyhow::Result<Vec<_>> {
                 let mut out = Vec::new();
-                for commit_data in rx {
+                for (commit_idx, commit_data) in rx {
                     if let Some(author) = git::objs::CommitRefIter::from_bytes(&commit_data)
                         .author()
                         .map(|author| mailmap.resolve_cow(author.trim()))
@@ -91,19 +91,22 @@ where
                         let name = string_ref(author.name.as_ref());
                         let email = string_ref(&author.email.as_ref());
 
-                        out.push(actor::SignatureRef {
-                            name,
-                            email,
-                            time: author.time,
-                        });
+                        out.push((
+                            commit_idx,
+                            actor::SignatureRef {
+                                name,
+                                email,
+                                time: author.time,
+                            },
+                        ));
                     }
                 }
                 out.shrink_to_fit();
                 out.sort_by(|a, b| {
-                    a.email.cmp(&b.email).then(
-                        a.time
+                    a.1.email.cmp(&b.1.email).then(
+                        a.1.time
                             .seconds_since_unix_epoch
-                            .cmp(&b.time.seconds_since_unix_epoch)
+                            .cmp(&b.1.time.seconds_since_unix_epoch)
                             .reverse(),
                     )
                 });
@@ -181,18 +184,18 @@ where
             let commit_iter = interrupt::Iter::new(
                 commit_id.ancestors(|oid, buf| {
                     progress.inc();
-                    repo.objects.find(oid, buf).map(|o| {
-                        tx.send(o.data.to_owned()).ok();
+                    repo.objects.find(oid, buf).map(|obj| {
+                        tx.send((commit_idx, obj.data.to_owned())).ok();
                         if let Some((tx_tree, first_parent, commit)) = tx_tree_id.as_ref().and_then(|tx| {
-                            git::objs::CommitRefIter::from_bytes(o.data)
+                            git::objs::CommitRefIter::from_bytes(obj.data)
                                 .parent_ids()
                                 .next()
                                 .map(|first_parent| (tx, Some(first_parent), oid.to_owned()))
                         }) {
                             tx_tree.send((commit_idx, first_parent, commit)).ok();
                         }
-                        commit_idx += 1;
-                        git::objs::CommitRefIter::from_bytes(o.data)
+                        commit_idx = commit_idx.checked_add(1).expect("less then 4 billion commits");
+                        git::objs::CommitRefIter::from_bytes(obj.data)
                     })
                 }),
                 || anyhow!("Cancelled by user"),
@@ -213,20 +216,25 @@ where
             progress.show_throughput(start);
             drop(progress);
 
-            let _stats_by_commit_idx = match stat_progress {
+            let stats_by_commit_idx = match stat_progress {
                 Some(mut progress) => {
                     progress.set_max(Some(commit_idx as usize));
                     let mut stats = Vec::new();
                     for handle in stat_threads {
                         stats.extend(handle.join().expect("no panic")?);
                     }
+                    stats.sort_by_key(|t| t.0);
                     progress.show_throughput(start);
                     stats
                 }
                 None => Vec::new(),
             };
 
-            Ok((commit_thread.join().expect("no panic")?, is_shallow))
+            Ok((
+                commit_thread.join().expect("no panic")?,
+                stats_by_commit_idx,
+                is_shallow,
+            ))
         })?
     };
 
@@ -235,13 +243,13 @@ where
     }
 
     let start = Instant::now();
-    let mut current_email = &commit_authors[0].email;
+    let mut current_email = &commit_authors[0].1.email;
     let mut slice_start = 0;
     let mut results_by_hours = Vec::new();
     let mut ignored_bot_commits = 0_u32;
-    for (idx, elm) in commit_authors.iter().enumerate() {
+    for (idx, (_, elm)) in commit_authors.iter().enumerate() {
         if elm.email != *current_email {
-            let estimate = estimate_hours(&commit_authors[slice_start..idx]);
+            let estimate = estimate_hours(&commit_authors[slice_start..idx], &stats);
             slice_start = idx;
             current_email = &elm.email;
             if ignore_bots && estimate.name.contains_str(b"[bot]") {
@@ -252,7 +260,7 @@ where
         }
     }
     if let Some(commits) = commit_authors.get(slice_start..) {
-        results_by_hours.push(estimate_hours(commits));
+        results_by_hours.push(estimate_hours(commits, &stats));
     }
 
     let num_authors = results_by_hours.len();
@@ -275,15 +283,16 @@ where
     ));
 
     let num_unique_authors = results_by_hours.len();
-    let (total_hours, total_commits) = results_by_hours
+    let (total_hours, total_commits, total_stats) = results_by_hours
         .iter()
-        .map(|e| (e.hours, e.num_commits))
-        .reduce(|a, b| (a.0 + b.0, a.1 + b.1))
+        .map(|e| (e.hours, e.num_commits, e.stats))
+        .reduce(|a, b| (a.0 + b.0, a.1 + b.1, a.2.clone().added(&b.2)))
         .expect("at least one commit at this point");
     if show_pii {
         results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
+        let show_stats = !stats.is_empty();
         for entry in results_by_hours.iter() {
-            entry.write_to(total_hours, &mut out)?;
+            entry.write_to(total_hours, show_stats, &mut out)?;
             writeln!(out)?;
         }
     }
@@ -296,6 +305,13 @@ where
         is_shallow.then(|| " (shallow)").unwrap_or_default(),
         num_authors
     )?;
+    if !stats.is_empty() {
+        writeln!(
+            out,
+            "total files added/removed/modified: {}/{}/{}",
+            total_stats.added, total_stats.removed, total_stats.modified
+        )?;
+    }
     if !omit_unify_identities {
         writeln!(
             out,
@@ -318,30 +334,42 @@ where
 const MINUTES_PER_HOUR: f32 = 60.0;
 const HOURS_PER_WORKDAY: f32 = 8.0;
 
-fn estimate_hours(commits: &[actor::SignatureRef<'static>]) -> WorkByEmail {
+fn estimate_hours(commits: &[(u32, actor::SignatureRef<'static>)], stats: &[(u32, Stats)]) -> WorkByEmail {
     assert!(!commits.is_empty());
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
 
-    let hours = FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0
-        + commits.iter().rev().tuple_windows().fold(
-            0_f32,
-            |hours, (cur, next): (&actor::SignatureRef<'_>, &actor::SignatureRef<'_>)| {
-                let change_in_minutes =
-                    (next.time.seconds_since_unix_epoch - cur.time.seconds_since_unix_epoch) as f32 / MINUTES_PER_HOUR;
-                if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
-                    hours + change_in_minutes as f32 / MINUTES_PER_HOUR
-                } else {
-                    hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR)
-                }
-            },
-        );
-    let author = &commits[0];
+    let hours_for_commits = commits.iter().map(|t| &t.1).rev().tuple_windows().fold(
+        0_f32,
+        |hours, (cur, next): (&actor::SignatureRef<'_>, &actor::SignatureRef<'_>)| {
+            let change_in_minutes = (next
+                .time
+                .seconds_since_unix_epoch
+                .saturating_sub(cur.time.seconds_since_unix_epoch)) as f32
+                / MINUTES_PER_HOUR;
+            if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
+                hours + change_in_minutes as f32 / MINUTES_PER_HOUR
+            } else {
+                hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR)
+            }
+        },
+    );
+
+    let author = &commits[0].1;
     WorkByEmail {
         name: author.name,
         email: author.email,
-        hours,
+        hours: FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0 + hours_for_commits,
         num_commits: commits.len() as u32,
+        stats: commits.iter().map(|t| &t.0).fold(Stats::default(), |mut acc, id| {
+            match stats.binary_search_by(|t| t.0.cmp(id)) {
+                Ok(idx) => {
+                    acc.add(&stats[idx].1);
+                    acc
+                }
+                Err(_) => acc,
+            }
+        }),
     }
 }
 
@@ -378,6 +406,7 @@ struct WorkByPerson {
     email: Vec<&'static BStr>,
     hours: f32,
     num_commits: u32,
+    stats: Stats,
 }
 
 impl<'a> WorkByPerson {
@@ -390,6 +419,7 @@ impl<'a> WorkByPerson {
         }
         self.num_commits += other.num_commits;
         self.hours += other.hours;
+        self.stats.add(&other.stats);
     }
 }
 
@@ -400,12 +430,13 @@ impl<'a> From<&'a WorkByEmail> for WorkByPerson {
             email: vec![w.email],
             hours: w.hours,
             num_commits: w.num_commits,
+            stats: w.stats,
         }
     }
 }
 
 impl WorkByPerson {
-    fn write_to(&self, total_hours: f32, mut out: impl std::io::Write) -> std::io::Result<()> {
+    fn write_to(&self, total_hours: f32, show_stats: bool, mut out: impl std::io::Write) -> std::io::Result<()> {
         writeln!(
             out,
             "{} <{}>",
@@ -419,7 +450,15 @@ impl WorkByPerson {
             self.hours,
             self.hours / HOURS_PER_WORKDAY,
             (self.hours / total_hours) * 100.0
-        )
+        )?;
+        if show_stats {
+            writeln!(
+                out,
+                "total files added/removed/modified: {}/{}/{}",
+                self.stats.added, self.stats.removed, self.stats.modified
+            )?;
+        }
+        Ok(())
     }
 }
 
@@ -429,10 +468,11 @@ struct WorkByEmail {
     email: &'static BStr,
     hours: f32,
     num_commits: u32,
+    stats: Stats,
 }
 
 /// Statistics for a particular commit.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Copy, Clone)]
 struct Stats {
     /// amount of added files
     added: usize,
@@ -440,4 +480,19 @@ struct Stats {
     removed: usize,
     /// amount of modified files
     modified: usize,
+}
+
+impl Stats {
+    fn add(&mut self, other: &Stats) -> &mut Self {
+        self.added += other.added;
+        self.removed += other.removed;
+        self.modified += other.modified;
+        self
+    }
+
+    fn added(&self, other: &Stats) -> Self {
+        let mut a = *self;
+        a.add(other);
+        a
+    }
 }
