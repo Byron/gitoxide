@@ -394,15 +394,20 @@ where
     if file_stats {
         writeln!(
             out,
-            "total files added/removed/modified: {}/{}/{}",
-            total_files.added, total_files.removed, total_files.modified
+            "total files added/removed/modified/remaining: {}/{}/{}/{}",
+            total_files.added,
+            total_files.removed,
+            total_files.modified,
+            total_files.added - total_files.removed
         )?;
     }
     if line_stats {
         writeln!(
             out,
-            "total lines added/removed: {}/{}",
-            total_lines.added, total_lines.removed
+            "total lines added/removed/remaining: {}/{}/{}",
+            total_lines.added,
+            total_lines.removed,
+            total_lines.added - total_lines.removed
         )?;
     }
     if !omit_unify_identities {
