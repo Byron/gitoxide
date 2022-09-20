@@ -132,7 +132,8 @@ where
             let (tx_tree_id, stat_threads) = needs_stats
                 .then(|| {
                     let num_threads = num_cpus::get().saturating_sub(1 /*main thread*/).max(1);
-                    let (tx, rx) = flume::unbounded::<(u32, Option<git::hash::ObjectId>, git::hash::ObjectId)>();
+                    let (tx, rx) =
+                        crossbeam_channel::unbounded::<(u32, Option<git::hash::ObjectId>, git::hash::ObjectId)>();
                     let stat_workers = (0..num_threads)
                         .map(|_| {
                             scope.spawn({
