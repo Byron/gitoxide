@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-cfe46b502afc3ecb312849ddbd7748007d432cd1/> add zlib-ng feature to allow linking against system libz-ng
+   Allow to use zlib-ng (zlib-ng-sys) with native API (no compat mode)
+   that can co-exist with system libz (loaded by e.g. libcurl).
+   This is used in gitoxide package on Alpine Linux.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 8 commits contributed to the release over the course of 12 calendar days.
+ - 15 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#470](https://github.com/Byron/gitoxide/issues/470)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - working progress printing ([`67ec2c7`](https://github.com/Byron/gitoxide/commit/67ec2c7f9a4a6cefdf7148f5c7e48a79f201c4d2))
+    - First attempt to get progress information from stat worker. ([`0947c70`](https://github.com/Byron/gitoxide/commit/0947c703f9cecc31ceba101565e6ecafb00adb08))
+    - upgrade to prodash 20.1 for `Progress::counter()` feature ([`0ac4a2c`](https://github.com/Byron/gitoxide/commit/0ac4a2c514aeb94d8e90ce28ae7a0e0350c21ab2))
+ * **Uncategorized**
+    - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
+    - upgrade prodash and crosstermion to latest versions ([`ab7ee5b`](https://github.com/Byron/gitoxide/commit/ab7ee5b5d5c15771f431ada9c3b4f53e4be2afdd))
+    - Merge branch 'git_date_relative' ([`83a3832`](https://github.com/Byron/gitoxide/commit/83a38329c59e9ebc057221da832fd8320bbeddb1))
+    - Merge branch 'filter-refs' ([`e10554d`](https://github.com/Byron/gitoxide/commit/e10554d2a3b9c027353a432b0c84f7d3797b7cae))
+    - add zlib-ng feature to allow linking against system libz-ng ([`cfe46b5`](https://github.com/Byron/gitoxide/commit/cfe46b502afc3ecb312849ddbd7748007d432cd1))
+</details>
+
 ## 0.22.4 (2022-09-04)
 
 A maintenance release without breaking changes.
@@ -13,7 +49,7 @@ A maintenance release without breaking changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 2 calendar days.
+ - 4 commits contributed to the release over the course of 2 calendar days.
  - 8 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#524](https://github.com/Byron/gitoxide/issues/524)
@@ -27,6 +63,7 @@ A maintenance release without breaking changes.
  * **[#524](https://github.com/Byron/gitoxide/issues/524)**
     - prepare changelogs prior to release ([`6446b39`](https://github.com/Byron/gitoxide/commit/6446b395d5926565ef899b0c923f35468ccf1921))
  * **Uncategorized**
+    - Release git-features v0.22.4, git-url v0.8.0, safety bump 4 crates ([`1d4600a`](https://github.com/Byron/gitoxide/commit/1d4600ae51475c2e225f96c16c41e2c4a2b3f2aa))
     - Merge branch 'git_date_parse' ([`75591fb`](https://github.com/Byron/gitoxide/commit/75591fb108ce440ba2f920bebf99158b407e3046))
     - Release git-hash v0.9.9 ([`da0716f`](https://github.com/Byron/gitoxide/commit/da0716f8c27b4f29cfff0e5ce7fcb3d7240f4aeb))
 </details>

@@ -5,6 +5,117 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### New Features
+
+ - <csr-id-abdf83f494e2a9fba4a8d9fcb776f2c84baebd3e/> Simple serialization for `Instruction` and `RefSpecRef` type.
+   It's also a way to normalize input strings as there is only one way
+   to serialize instructions, which themselves are already normalized
+   towards what's possible.
+
+### Changed (BREAKING)
+
+ - <csr-id-4c4f82170d08b910a7f64482431c99956b1a04c3/> reject all invalid negative refspec patterns.
+   Git is more lenient, but will then fail to match against such patterns
+   which seems like avoidable surprising behaviour.
+ - <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 70 commits contributed to the release over the course of 18 calendar days.
+ - 22 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 4 times to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - A more efficient representation for `validate::Fix` ([`e819fc6`](https://github.com/Byron/gitoxide/commit/e819fc68531e2d2de3d7df782f63f84941eeef57))
+    - Make `specs` in `MatchGroup` public to reduce API surface. ([`2a7df32`](https://github.com/Byron/gitoxide/commit/2a7df323b15678aee3e61a41908aceb644873b11))
+    - Allow `match_group::Fix` to be cloned. ([`85c49ec`](https://github.com/Byron/gitoxide/commit/85c49ec16ac7eeb2175fa43545c72b81da693ab1))
+    - fix `match_group::Item` to make it uniform with how we typically name refs ([`21420da`](https://github.com/Byron/gitoxide/commit/21420dacb485795e80baabf2a300ff900036ba7b))
+    - remote todo with note about our current understanding ([`9dc7a3f`](https://github.com/Byron/gitoxide/commit/9dc7a3f40dbf3d4802ed095fc21dfb3da67acfea))
+    - Actually assure we don't try to write into the HEAD ref, which git avoids as well ([`1335618`](https://github.com/Byron/gitoxide/commit/13356184c735d72edb891d64b3de1bb5c981a6ad))
+    - Allow 'HEAD' based refspecs to match correctly ([`7432a2b`](https://github.com/Byron/gitoxide/commit/7432a2bb5d11e9991ed5f9d1b29ecf79b10c676a))
+    - tests to show that empty remotes actually work ([`2fdec73`](https://github.com/Byron/gitoxide/commit/2fdec7315a65117095f909b4d7d57a91ba666a43))
+    - another test which doesn't manage to trigger a certain message from git. ([`4f48095`](https://github.com/Byron/gitoxide/commit/4f48095566fc1e2b440d542ef2c5118c3e37fddd))
+    - fully drop 'funny' names ([`f137d60`](https://github.com/Byron/gitoxide/commit/f137d6010610d98de32edb4501053d7786181217))
+    - A first version of the 'funny name' sanitization ([`c81e418`](https://github.com/Byron/gitoxide/commit/c81e418ae7f90b674ad005e4b42816c35332a417))
+    - frame for testing of fixes ([`9148102`](https://github.com/Byron/gitoxide/commit/91481020c87cfa0cae9dd497fb87e7fb9dd33c8a))
+    - refactor ([`d37fd04`](https://github.com/Byron/gitoxide/commit/d37fd044df2cc5355735121e63fcc3c54b8ea4cb))
+    - all baseline specs are tested and pass ([`afc0a3d`](https://github.com/Byron/gitoxide/commit/afc0a3da864362ec7a0ab243f72daba4713db569))
+    - the first test to validate conflict reporting ([`aef0a46`](https://github.com/Byron/gitoxide/commit/aef0a464811ce98e81d44d1417098c9adef035f5))
+    - sketch of validation API along with test suite integration ([`70a765e`](https://github.com/Byron/gitoxide/commit/70a765e295295f87f8550453452d2ffe95b177be))
+    - refactor ([`547129e`](https://github.com/Byron/gitoxide/commit/547129e98dfcac32ebc83e743f9aee05d038629b))
+    - sketch `Outcome` type which can be used for later sanitization and validation. ([`53e17c1`](https://github.com/Byron/gitoxide/commit/53e17c10f663bc3c389a13cdfec3716da34dd311))
+    - prepare first test for conflicts and validation ([`508a33a`](https://github.com/Byron/gitoxide/commit/508a33a5f279c9a6f29e98f560fcd54cea1ed77d))
+    - just-in-time deduplication of mappings ([`8ed5d01`](https://github.com/Byron/gitoxide/commit/8ed5d01a75ceb03083b2bddc58b1e9dc26a66cd0))
+    - adjust expectations to make first exclusion tests work ([`6e1b19b`](https://github.com/Byron/gitoxide/commit/6e1b19b7f07050c3fcb70187a4d6a4e4210d3343))
+    - reject all invalid negative refspec patterns. ([`4c4f821`](https://github.com/Byron/gitoxide/commit/4c4f82170d08b910a7f64482431c99956b1a04c3))
+    - basic negation implementation along with first failure. ([`e4931d0`](https://github.com/Byron/gitoxide/commit/e4931d0205c9b8e8e859e8ea940b67483e62a07e))
+    - first tests for multiple refspecs ([`77db112`](https://github.com/Byron/gitoxide/commit/77db1127a8ccd71c75670b5d803cabcf93cbcedc))
+    - refactor ([`4c73a19`](https://github.com/Byron/gitoxide/commit/4c73a19ae4b044df816e95a4fc19dc6481222a4c))
+    - refactor ([`00401be`](https://github.com/Byron/gitoxide/commit/00401bef4279d4b8152ea4c149a00ddf50f518e3))
+    - improved glob matching ([`eaf36e7`](https://github.com/Byron/gitoxide/commit/eaf36e7d0336be8398d0b1d9414d3ad73afbb393))
+    - basic glob matching. ([`a93628c`](https://github.com/Byron/gitoxide/commit/a93628cb404987c498779b35994db0a05b3dbc0a))
+    - type-system supprots  glob matching ([`4b73d11`](https://github.com/Byron/gitoxide/commit/4b73d11a4f0bef8db374cde567547a9ba7097719))
+    - more tests for simple 1:1 fetch and update specs ([`74de83c`](https://github.com/Byron/gitoxide/commit/74de83cbea30b84136bfa191f471e137ae7af5c3))
+    - Make it easy to obtain the local and remote sides of RefSpecs ([`67506b1`](https://github.com/Byron/gitoxide/commit/67506b1b1997c2b5951f0e1320b0459eac1366e2))
+    - Don't reject object-id like heads on the receiving side. ([`6668c3f`](https://github.com/Byron/gitoxide/commit/6668c3f418663ed6f2ed56efd3d7e78d27124296))
+    - make object-ids in the source position type-safe ([`413051d`](https://github.com/Byron/gitoxide/commit/413051d03c843c9c99dbc67f4a5f48d6f2b1aeb2))
+    - prepare for dual-sided ref mapping to realize that it needs a special case. ([`7368fe4`](https://github.com/Byron/gitoxide/commit/7368fe4ee38bbd34bd811310afa8eeb78c475fda))
+    - refactor ([`579e891`](https://github.com/Byron/gitoxide/commit/579e89188679942508f9da107d856ab782a512a1))
+    - support testing source-only object names ([`bb61c49`](https://github.com/Byron/gitoxide/commit/bb61c49a9b6a3a109d7af3ddde43fc98bb712ec7))
+    - preliminary matching of refs by name ([`426107f`](https://github.com/Byron/gitoxide/commit/426107fea911a2f75d3b624a1c7279cac4edc12e))
+    - handle partial names as well ([`dc7f162`](https://github.com/Byron/gitoxide/commit/dc7f1620cb6d00af60cf78e02b4c2949a3e260e4))
+    - generalize baseline assertion to support multiple input specs ([`b752e48`](https://github.com/Byron/gitoxide/commit/b752e48b4201c1f26401af39de0a7312b158607b))
+    - first successful test ([`3625d5a`](https://github.com/Byron/gitoxide/commit/3625d5a0abb109270b046e2dc206d6f870164306))
+    - top-level match-group loop without negation ([`c915a5f`](https://github.com/Byron/gitoxide/commit/c915a5f5f0d771e704b108b9442a605d62f0945e))
+    - refactor to use a match-group instead. ([`4ba31c5`](https://github.com/Byron/gitoxide/commit/4ba31c55b57f644361e18e5d31d5df514cddd58a))
+    - not using a matchgroup right away seems like the wrong approach ([`7f3bc30`](https://github.com/Byron/gitoxide/commit/7f3bc300dfb980d6e6aa72f8c22edd58fa9351fb))
+    - actual expectation for first simple test ([`cec6905`](https://github.com/Byron/gitoxide/commit/cec69057585796ec7bc69f5a6295b97cddb8cb4f))
+    - Get to the point where the matcher is invoked ([`cbbdf59`](https://github.com/Byron/gitoxide/commit/cbbdf59290d6c3fb4936b31e3b7836becb126ce4))
+    - Simple serialization for `Instruction` and `RefSpecRef` type. ([`abdf83f`](https://github.com/Byron/gitoxide/commit/abdf83f494e2a9fba4a8d9fcb776f2c84baebd3e))
+    - ground work for matcher tests ([`509764c`](https://github.com/Byron/gitoxide/commit/509764c95978115da129b8bb9baeb304634fa10c))
+    - tag specific tests ([`4f35485`](https://github.com/Byron/gitoxide/commit/4f354852e15b469260bd3553e4f615f9612fabcc))
+    - more tests to investigate conflict handling ([`192d4f7`](https://github.com/Byron/gitoxide/commit/192d4f78ba611f090dafda7ef5014efb900d2115))
+    - a more realistic sketch for `Matcher`, which will need a surrounding `MatchGroup` ([`dd1d824`](https://github.com/Byron/gitoxide/commit/dd1d8244c8708bbc3583cc0f3f42ad967d5ad524))
+    - more robust baseline tests on windows ([`54ca267`](https://github.com/Byron/gitoxide/commit/54ca267138a5116aa2215109b4abe00a64518feb))
+    - pares FETCH_HEAD (as specs without local sides); sketch `Match` type ([`44228a0`](https://github.com/Byron/gitoxide/commit/44228a0b9c057bcc915bc0ade43b4ccb3cb916f2))
+    - restore full ref names for baseline ([`f6124db`](https://github.com/Byron/gitoxide/commit/f6124db39dc0e828801a59310265d95a755ea46a))
+    - parse basline mapping ([`3000a14`](https://github.com/Byron/gitoxide/commit/3000a14c1eed4a543fdef2fd8bcbacba2742aece))
+    - parse baseline reflist which serves as input to the matcher ([`fce877f`](https://github.com/Byron/gitoxide/commit/fce877f8d2112fafdb71208784104a66b2313a40))
+    - frame for baseline for fetch-matching ([`2569da5`](https://github.com/Byron/gitoxide/commit/2569da5988a055372a1b85660f93185603900dbe))
+    - upgrade `bstr` to `1.0.1` ([`99905ba`](https://github.com/Byron/gitoxide/commit/99905bacace8aed42b16d43f0f04cae996cb971c))
+    - prefer to represent instructions with Matchers ([`0887e2e`](https://github.com/Byron/gitoxide/commit/0887e2e0b7ebdcad30606a2633794ac8ff586091))
+    - more examples using fully spelled out object names as fetch destination ([`095a099`](https://github.com/Byron/gitoxide/commit/095a09918dc080ba7794c6ff13db0ef0ead20d0d))
+    - get more clarity about `git ls-remote` and `git fetch` ([`1b15fe8`](https://github.com/Byron/gitoxide/commit/1b15fe80817d600f39090848c7d144ff94ac398c))
+    - a tiny sketch of a possible matching API ([`39d5ff3`](https://github.com/Byron/gitoxide/commit/39d5ff39ac58ec2abf2b55ee69df9905a4f303c2))
+ * **Uncategorized**
+    - make fmt ([`429cccc`](https://github.com/Byron/gitoxide/commit/429cccc5831c25a7205a12dc7a0443ac48616e2c))
+    - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
+    - thanks clippy ([`74a5f22`](https://github.com/Byron/gitoxide/commit/74a5f2262154c5cb5434c1ef2854c4ec3d839f89))
+    - thanks clippy ([`016cd1f`](https://github.com/Byron/gitoxide/commit/016cd1f70a536ac95eaa8b80958110caa096d875))
+    - thanks clippy ([`b8ac13e`](https://github.com/Byron/gitoxide/commit/b8ac13e5074fa08111fcef1092432ed3a2326c6e))
+    - thanks clippy ([`73b405f`](https://github.com/Byron/gitoxide/commit/73b405fe70cf7d53e5e011cf69ea654f4bd96dd2))
+    - make fmt ([`535e967`](https://github.com/Byron/gitoxide/commit/535e967666c6da657ff1b7eff7c64ab27cafb182))
+    - Merge branch 'git_date_parse' ([`75591fb`](https://github.com/Byron/gitoxide/commit/75591fb108ce440ba2f920bebf99158b407e3046))
+    - Release git-hash v0.9.9 ([`da0716f`](https://github.com/Byron/gitoxide/commit/da0716f8c27b4f29cfff0e5ce7fcb3d7240f4aeb))
+</details>
+
 ## 0.1.1 (2022-08-28)
 
 Maintenance release without user-facing changes.
@@ -13,9 +124,9 @@ Maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release over the course of 1 calendar day.
+ - 3 commits contributed to the release over the course of 1 calendar day.
  - 4 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
 
 ### Commit Details
@@ -27,6 +138,7 @@ Maintenance release without user-facing changes.
  * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
  * **Uncategorized**
+    - Release git-object v0.20.3, git-ref v0.15.4, git-config v0.7.1, git-diff v0.18.0, git-traverse v0.16.3, git-pack v0.22.0, git-odb v0.32.0, git-url v0.7.3, git-transport v0.19.3, git-protocol v0.19.1, git-refspec v0.1.1, git-repository v0.23.0, safety bump 6 crates ([`85a3bed`](https://github.com/Byron/gitoxide/commit/85a3bedd68d2e5f36592a2f691c977dc55298279))
     - Release git-features v0.22.3, git-revision v0.4.4 ([`c2660e2`](https://github.com/Byron/gitoxide/commit/c2660e2503323531ba02519eaa51124ee22fec51))
 </details>
 
@@ -46,7 +158,7 @@ Maintenance release without user-facing changes.
 
  - 52 commits contributed to the release over the course of 18 calendar days.
  - 18 days passed between releases.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
 
 ### Thanks Clippy
@@ -126,7 +238,7 @@ Initial release for name reservation.
 <csr-read-only-do-not-edit/>
 
  - 3 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
 
 ### Commit Details

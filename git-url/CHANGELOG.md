@@ -5,10 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed (BREAKING)
+
+ - <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 15 calendar days.
+ - 15 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - upgrade `bstr` to `1.0.1` ([`99905ba`](https://github.com/Byron/gitoxide/commit/99905bacace8aed42b16d43f0f04cae996cb971c))
+ * **Uncategorized**
+    - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
+    - make fmt ([`535e967`](https://github.com/Byron/gitoxide/commit/535e967666c6da657ff1b7eff7c64ab27cafb182))
+    - Merge branch 'main' into filter-refs-by-spec ([`9aa1d3d`](https://github.com/Byron/gitoxide/commit/9aa1d3dc46d4b1c76af257f573aff3aeef2d3fa8))
+</details>
+
 ## 0.8.0 (2022-09-04)
 
 A major release to properly introduce the signature change that happened in 0.7.2, which effectively
 broke compilation for users of `parse()` in 0.7.1.
+
+### New Features
+
+ - <csr-id-7484db5d36383de450de31b4c94c01bc4c237ce4/> `Url::port_or_default()` to fill in default numbers for ports if possible.
+ - <csr-id-fbe75c9457708b95dd833e00afa2dcc1db677167/> `Url::path_is_root()` to determine if the path is `/`.
+   This could also be considered an empty path depending on the context
+   which is what makes it useful.
 
 ### Changed (BREAKING)
 
@@ -20,10 +56,10 @@ broke compilation for users of `parse()` in 0.7.1.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 1 calendar day.
+ - 14 commits contributed to the release over the course of 6 calendar days.
  - 7 days passed between releases.
- - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#524](https://github.com/Byron/gitoxide/issues/524)
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#524](https://github.com/Byron/gitoxide/issues/524)
 
 ### Commit Details
 
@@ -31,11 +67,23 @@ broke compilation for users of `parse()` in 0.7.1.
 
 <details><summary>view details</summary>
 
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - refactor ([`02e5775`](https://github.com/Byron/gitoxide/commit/02e5775f86ea414112ea9f66daf24ead8be31f73))
+    - `Url::port_or_default()` to fill in default numbers for ports if possible. ([`7484db5`](https://github.com/Byron/gitoxide/commit/7484db5d36383de450de31b4c94c01bc4c237ce4))
+    - `Url::path_is_root()` to determine if the path is `/`. ([`fbe75c9`](https://github.com/Byron/gitoxide/commit/fbe75c9457708b95dd833e00afa2dcc1db677167))
+    - make note about why we don't support passwords in URLs ([`970ec9b`](https://github.com/Byron/gitoxide/commit/970ec9b2e51a32cae070e561a13ca3d76b9d22f9))
  * **[#524](https://github.com/Byron/gitoxide/issues/524)**
     - prepare changelogs prior to release ([`6446b39`](https://github.com/Byron/gitoxide/commit/6446b395d5926565ef899b0c923f35468ccf1921))
     - Introduce `parse(&BStr)` (previously it took `&[u8]`) ([`653ebc5`](https://github.com/Byron/gitoxide/commit/653ebc52f97116e9c72e985eda0d76f566e8c74d))
  * **Uncategorized**
+    - Release git-features v0.22.4, git-url v0.8.0, safety bump 4 crates ([`1d4600a`](https://github.com/Byron/gitoxide/commit/1d4600ae51475c2e225f96c16c41e2c4a2b3f2aa))
+    - Merge branch 'main' into filter-refs-by-spec ([`1f6e5ab`](https://github.com/Byron/gitoxide/commit/1f6e5ab15f5fd8d23719b13e6aea59cd231ac0fe))
     - Merge branch 'git_date_parse' ([`75591fb`](https://github.com/Byron/gitoxide/commit/75591fb108ce440ba2f920bebf99158b407e3046))
+    - Merge branch 'main' into filter-refs-by-spec ([`51dc828`](https://github.com/Byron/gitoxide/commit/51dc8282fb77b519ff7d2c94c6bd73af306cfe8b))
+    - Merge branch 'main' into filter-refs-by-spec ([`56ba481`](https://github.com/Byron/gitoxide/commit/56ba481f4c48f74f10397feb1b6dc3d7dd3704fb))
+    - Merge branch 'main' into filter-refs-by-spec ([`a36c05d`](https://github.com/Byron/gitoxide/commit/a36c05d281269f3f8b297e7adc463bfb3c306663))
+    - Release git-path v0.4.2, git-config-value v0.7.0 ([`c48fb31`](https://github.com/Byron/gitoxide/commit/c48fb3107d29f9a06868b0c6de40567063a656d1))
+    - Merge branch 'main' into filter-refs-by-spec ([`cef0b51`](https://github.com/Byron/gitoxide/commit/cef0b51ade2a3301fa09ede7a425aa1fe3527e78))
 </details>
 
 ## 0.7.3 (2022-08-28)
@@ -46,10 +94,10 @@ Maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release over the course of 1 calendar day.
+ - 6 commits contributed to the release over the course of 4 calendar days.
  - 4 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#XXX](https://github.com/Byron/gitoxide/issues/XXX)
 
 ### Commit Details
 
@@ -57,11 +105,15 @@ Maintenance release without user-facing changes.
 
 <details><summary>view details</summary>
 
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - url-preprocessing for scripts ([`c00cc35`](https://github.com/Byron/gitoxide/commit/c00cc35493cec8f0b2673248caf1f0d83590dd54))
  * **[#XXX](https://github.com/Byron/gitoxide/issues/XXX)**
     - prepare changelogs prior to release ([`8c0bca3`](https://github.com/Byron/gitoxide/commit/8c0bca37ff9fbaadbe55561fb2b0d649980c95b1))
  * **Uncategorized**
     - Release git-object v0.20.3, git-ref v0.15.4, git-config v0.7.1, git-diff v0.18.0, git-traverse v0.16.3, git-pack v0.22.0, git-odb v0.32.0, git-url v0.7.3, git-transport v0.19.3, git-protocol v0.19.1, git-refspec v0.1.1, git-repository v0.23.0, safety bump 6 crates ([`85a3bed`](https://github.com/Byron/gitoxide/commit/85a3bedd68d2e5f36592a2f691c977dc55298279))
     - Release git-features v0.22.3, git-revision v0.4.4 ([`c2660e2`](https://github.com/Byron/gitoxide/commit/c2660e2503323531ba02519eaa51124ee22fec51))
+    - Merge branch 'main' into filter-refs-by-spec ([`dbfa328`](https://github.com/Byron/gitoxide/commit/dbfa3282cf876596b250b2040c1ec0b761741796))
+    - Merge branch 'main' into filter-refs-by-spec ([`cfa1440`](https://github.com/Byron/gitoxide/commit/cfa144031dbcac2707ab0cec012bc35e78f9c475))
 </details>
 
 ## 0.7.2 (2022-08-24)
@@ -74,6 +126,19 @@ Maintenance release without user-facing changes.
  - <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/> uniformize deny attributes
  - <csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/> remove default link to cargo doc everywhere
 
+### Bug Fixes (BREAKING)
+
+ - <csr-id-2da6c862e184ac37d59147e9cf809017b65db966/> make Scheme work with serde, removing `Copy` in the process.  e#450)
+   This wasn't supposed to happen but a requirement to get `serde` support
+   back.
+
+### New Features (BREAKING)
+
+ - <csr-id-96a265cc67ea787ed28adde2c5d0a07babf64c9e/> generalize extension schemes.
+   Previously this was hard-coded to `radicle`, now it's just an extension
+   scheme along with a statically known string. This means we have to
+   explicitly support new formats which should be fine.
+
 ### New Features
 
  - <csr-id-7a1769009d68d14a134f368f93245abab0fb41dd/> `TryFrom<&OsStr>` to allow direct usage of `Url` in `clap`.
@@ -82,14 +147,15 @@ Maintenance release without user-facing changes.
  - <csr-id-b7a5f7a3b5cf058f503cc18d18fc75356ab98955/> `TryFrom<PathBuf>` which is useful if urls are obtained from the command-line.
  - <csr-id-b1c40b0364ef092cd52d03b34f491b254816b18d/> use docsrs feature in code to show what is feature-gated automatically on docs.rs
  - <csr-id-517677147f1c17304c62cf97a1dd09f232ebf5db/> pass --cfg docsrs when compiling for https://docs.rs
+ - <csr-id-d40f6e1f34eb3f4664caec36727bf0aa3a396a33/> `Scheme::try_from(&str)`
 
 ### Commit Statistics
 
 <csr-read-only-do-not-edit/>
 
- - 15 commits contributed to the release over the course of 5 calendar days.
+ - 19 commits contributed to the release over the course of 5 calendar days.
  - 6 days passed between releases.
- - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
 
 ### Commit Details
@@ -99,10 +165,14 @@ Maintenance release without user-facing changes.
 <details><summary>view details</summary>
 
  * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - `Scheme::try_from(&str)` ([`d40f6e1`](https://github.com/Byron/gitoxide/commit/d40f6e1f34eb3f4664caec36727bf0aa3a396a33))
+    - generalize extension schemes. ([`96a265c`](https://github.com/Byron/gitoxide/commit/96a265cc67ea787ed28adde2c5d0a07babf64c9e))
     - `TryFrom<&OsStr>` to allow direct usage of `Url` in `clap`. ([`7a17690`](https://github.com/Byron/gitoxide/commit/7a1769009d68d14a134f368f93245abab0fb41dd))
     - `TryFrom<PathBuf>` which is useful if urls are obtained from the command-line. ([`b7a5f7a`](https://github.com/Byron/gitoxide/commit/b7a5f7a3b5cf058f503cc18d18fc75356ab98955))
  * **Uncategorized**
     - Release git-date v0.0.5, git-hash v0.9.8, git-features v0.22.2, git-actor v0.11.3, git-glob v0.3.2, git-quote v0.2.1, git-attributes v0.3.2, git-tempfile v2.0.4, git-lock v2.1.1, git-validate v0.5.5, git-object v0.20.2, git-ref v0.15.2, git-sec v0.3.1, git-config v0.7.0, git-credentials v0.4.0, git-diff v0.17.2, git-discover v0.4.1, git-bitmap v0.1.2, git-index v0.4.2, git-mailmap v0.3.2, git-chunk v0.3.1, git-traverse v0.16.2, git-pack v0.21.2, git-odb v0.31.2, git-packetline v0.12.7, git-url v0.7.2, git-transport v0.19.2, git-protocol v0.19.0, git-revision v0.4.2, git-refspec v0.1.0, git-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
+    - thanks clippy ([`dc74fbd`](https://github.com/Byron/gitoxide/commit/dc74fbd9a58e1d424713fc5f2442cedcc09c1200))
+    - make Scheme work with serde, removing `Copy` in the process.  e#450) ([`2da6c86`](https://github.com/Byron/gitoxide/commit/2da6c862e184ac37d59147e9cf809017b65db966))
     - Release git-path v0.4.1 ([`5e82346`](https://github.com/Byron/gitoxide/commit/5e823462b3deb904f5d6154a7bf114cef1988224))
     - Merge branch 'example-write-blob' ([`afedd7f`](https://github.com/Byron/gitoxide/commit/afedd7f86ec8ea18a8165f71698ecc886f5cf643))
     - Merge pull request #494 from ultrasaurus/patch-1 ([`86fe22c`](https://github.com/Byron/gitoxide/commit/86fe22cb1aad5944a229bc2a5252b36ef1fd59ef))
