@@ -1102,7 +1102,7 @@ dependencies = [
 
 [[package]]
 name = "git-actor"
-version = "0.11.4"
+version = "0.12.0"
 dependencies = [
  "bstr 1.0.1",
  "btoi",
@@ -1119,7 +1119,7 @@ dependencies = [
 
 [[package]]
 name = "git-attributes"
-version = "0.3.3"
+version = "0.4.0"
 dependencies = [
  "bstr 1.0.1",
  "compact_str",
@@ -1144,7 +1144,7 @@ dependencies = [
 
 [[package]]
 name = "git-chunk"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "thiserror",
 ]
@@ -1153,12 +1153,13 @@ dependencies = [
 name = "git-command"
 version = "0.1.0"
 dependencies = [
+ "bstr 1.0.1",
  "git-testtools",
 ]
 
 [[package]]
 name = "git-commitgraph"
-version = "0.8.2"
+version = "0.9.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1173,7 +1174,7 @@ dependencies = [
 
 [[package]]
 name = "git-config"
-version = "0.7.1"
+version = "0.8.0"
 dependencies = [
  "bstr 1.0.1",
  "criterion",
@@ -1200,7 +1201,7 @@ dependencies = [
 
 [[package]]
 name = "git-config-value"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "bitflags",
  "bstr 1.0.1",
@@ -1224,7 +1225,7 @@ dependencies = [
 
 [[package]]
 name = "git-credentials"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1241,7 +1242,7 @@ dependencies = [
 
 [[package]]
 name = "git-date"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1255,19 +1256,20 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.18.1"
+version = "0.19.0"
 dependencies = [
  "git-hash",
  "git-object",
  "git-odb",
  "git-testtools",
  "git-traverse",
+ "similar",
  "thiserror",
 ]
 
 [[package]]
 name = "git-discover"
-version = "0.4.2"
+version = "0.5.0"
 dependencies = [
  "bstr 1.0.1",
  "defer",
@@ -1283,7 +1285,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.22.4"
+version = "0.22.5"
 dependencies = [
  "bstr 0.2.17",
  "bytes",
@@ -1315,7 +1317,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-glob"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "bitflags",
  "bstr 1.0.1",
@@ -1326,7 +1328,7 @@ dependencies = [
 
 [[package]]
 name = "git-hash"
-version = "0.9.9"
+version = "0.9.10"
 dependencies = [
  "document-features",
  "git-testtools",
@@ -1337,7 +1339,7 @@ dependencies = [
 
 [[package]]
 name = "git-index"
-version = "0.4.3"
+version = "0.5.0"
 dependencies = [
  "atoi",
  "bitflags",
@@ -1374,7 +1376,7 @@ dependencies = [
 
 [[package]]
 name = "git-mailmap"
-version = "0.3.2"
+version = "0.4.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1390,7 +1392,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-object"
-version = "0.20.3"
+version = "0.21.0"
 dependencies = [
  "bstr 1.0.1",
  "btoi",
@@ -1411,7 +1413,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.32.0"
+version = "0.33.0"
 dependencies = [
  "arc-swap",
  "document-features",
@@ -1434,7 +1436,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.22.0"
+version = "0.23.0"
 dependencies = [
  "bstr 1.0.1",
  "bytesize",
@@ -1464,7 +1466,7 @@ dependencies = [
 
 [[package]]
 name = "git-packetline"
-version = "0.12.7"
+version = "0.13.0"
 dependencies = [
  "async-std",
  "bstr 1.0.1",
@@ -1482,7 +1484,7 @@ dependencies = [
 
 [[package]]
 name = "git-path"
-version = "0.4.2"
+version = "0.5.0"
 dependencies = [
  "bstr 1.0.1",
  "tempfile",
@@ -1491,7 +1493,7 @@ dependencies = [
 
 [[package]]
 name = "git-pathspec"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bitflags",
  "bstr 1.0.1",
@@ -1541,7 +1543,7 @@ dependencies = [
 
 [[package]]
 name = "git-quote"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "bstr 1.0.1",
  "btoi",
@@ -1554,7 +1556,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-ref"
-version = "0.15.4"
+version = "0.16.0"
 dependencies = [
  "document-features",
  "git-actor",
@@ -1577,7 +1579,7 @@ dependencies = [
 
 [[package]]
 name = "git-refspec"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "bstr 1.0.1",
  "git-hash",
@@ -1643,7 +1645,7 @@ dependencies = [
 
 [[package]]
 name = "git-revision"
-version = "0.4.4"
+version = "0.5.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1659,7 +1661,7 @@ dependencies = [
 
 [[package]]
 name = "git-sec"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "bitflags",
  "dirs",
@@ -1681,7 +1683,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-tempfile"
-version = "2.0.4"
+version = "2.0.5"
 dependencies = [
  "dashmap",
  "libc",
@@ -1693,7 +1695,7 @@ dependencies = [
 
 [[package]]
 name = "git-testtools"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "bstr 1.0.1",
  "crc",
@@ -1744,7 +1746,7 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.16.4"
+version = "0.17.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1760,7 +1762,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1774,7 +1776,7 @@ dependencies = [
 
 [[package]]
 name = "git-validate"
-version = "0.5.5"
+version = "0.6.0"
 dependencies = [
  "bstr 1.0.1",
  "git-testtools",
@@ -1783,7 +1785,7 @@ dependencies = [
 
 [[package]]
 name = "git-worktree"
-version = "0.4.3"
+version = "0.5.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1847,6 +1849,7 @@ dependencies = [
  "async-trait",
  "blocking",
  "bytesize",
+ "crossbeam-channel",
  "document-features",
  "fs-err",
  "futures-io",
@@ -1858,6 +1861,8 @@ dependencies = [
  "git-url",
  "itertools",
  "jwalk",
+ "mime_guess",
+ "num_cpus",
  "serde",
  "serde_json",
  "tempfile",
@@ -2197,6 +2202,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "mime"
+version = "0.3.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
+
+[[package]]
+name = "mime_guess"
+version = "2.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4192263c238a5f0d0c6bfd21f336a313a4ce1c450542449ca191bb657b4642ef"
+dependencies = [
+ "mime",
+ "unicase",
+]
+
+[[package]]
 name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2533,9 +2554,9 @@ dependencies = [
 
 [[package]]
 name = "prodash"
-version = "20.0.0"
+version = "20.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65ae8c4c227abf4616b5819a60cf72b34c5c2541581f916c174ec2b2c1566da0"
+checksum = "cd4e8b029f29b4eb8f95315957fb7ac8a8fd1924405fadf885b0e208fe34ba39"
 dependencies = [
  "async-io",
  "atty",
@@ -2899,6 +2920,9 @@ name = "similar"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62ac7f900db32bf3fd12e0117dd3dc4da74bc52ebaac97f39668446d89694803"
+dependencies = [
+ "bstr 0.2.17",
+]
 
 [[package]]
 name = "slab"

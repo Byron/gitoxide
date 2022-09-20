@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.12.0 (2022-09-20)
+
+### Changed (BREAKING)
+
+ - <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 4 commits contributed to the release over the course of 15 calendar days.
+ - 27 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - upgrade `bstr` to `1.0.1` ([`99905ba`](https://github.com/Byron/gitoxide/commit/99905bacace8aed42b16d43f0f04cae996cb971c))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
+ * **Uncategorized**
+    - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
+    - Release git-features v0.22.4, git-url v0.8.0, safety bump 4 crates ([`1d4600a`](https://github.com/Byron/gitoxide/commit/1d4600ae51475c2e225f96c16c41e2c4a2b3f2aa))
+</details>
+
 ## 0.11.4 (2022-08-24)
 
 A maintenance release without user facing changes.
@@ -13,8 +43,8 @@ A maintenance release without user facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits contributed to the release.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -24,6 +54,7 @@ A maintenance release without user facing changes.
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-date v0.1.0, git-actor v0.11.4, git-revision v0.4.3, git-repository v0.22.1, cargo-smart-release v0.11.0, git-commitgraph v0.8.2, gitoxide-core v0.17.0, gitoxide v0.15.0 ([`1fb931a`](https://github.com/Byron/gitoxide/commit/1fb931a7ea59f1cf895a6c1392fd8615b723c743))
     - update changelogs prior to release ([`23cb58f`](https://github.com/Byron/gitoxide/commit/23cb58f02043e0e5027136fd6e8e724c03a2efbe))
     - adjust to new version of git-date ([`b3fe26b`](https://github.com/Byron/gitoxide/commit/b3fe26bf03db7e1babb5ffbc89d71bf9614e3df3))
 </details>
@@ -47,7 +78,7 @@ A maintenance release without user facing changes.
 
  - 5 commits contributed to the release over the course of 3 calendar days.
  - 4 days passed between releases.
- - 3 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -74,7 +105,7 @@ A maintenance release with a dependency update.
 
  - 3 commits contributed to the release.
  - 1 day passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -103,7 +134,7 @@ A maintenance release with a dependency update.
 
  - 6 commits contributed to the release over the course of 18 calendar days.
  - 26 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Commit Details
@@ -141,7 +172,7 @@ A maintenance release with a dependency update.
 
  - 3 commits contributed to the release.
  - 39 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
 
 ### Commit Details
@@ -167,7 +198,7 @@ A maintenance release without user-facing changes.
 
  - 4 commits contributed to the release over the course of 5 calendar days.
  - 25 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Commit Details
@@ -194,7 +225,7 @@ A maintenance release without user-facing changes.
 
  - 3 commits contributed to the release over the course of 36 calendar days.
  - 45 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#301](https://github.com/Byron/gitoxide/issues/301)
 
 ### Commit Details
@@ -237,7 +268,7 @@ A maintenance release without user-facing changes.
 
  - 16 commits contributed to the release over the course of 55 calendar days.
  - 55 days passed between releases.
- - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 4 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#364](https://github.com/Byron/gitoxide/issues/364), [#366](https://github.com/Byron/gitoxide/issues/366)
 
 ### Commit Details
@@ -281,7 +312,7 @@ A maintenance release without user-facing changes.
 
  - 3 commits contributed to the release over the course of 12 calendar days.
  - 13 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#329](https://github.com/Byron/gitoxide/issues/329)
 
 ### Commit Details
@@ -307,7 +338,7 @@ A maintenance release thanks to upgraded dependencies.
 
  - 7 commits contributed to the release over the course of 35 calendar days.
  - 55 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -338,7 +369,7 @@ Maintenance release due, which isn't really required but one now has to be caref
 
  - 5 commits contributed to the release over the course of 25 calendar days.
  - 40 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#250](https://github.com/Byron/gitoxide/issues/250)
 
 ### Commit Details
@@ -366,7 +397,7 @@ A maintenance release due to properly dealing with previously breaking changes i
 
  - 2 commits contributed to the release.
  - 3 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com/Byron/gitoxide/issues/222)
 
 ### Commit Details
@@ -391,7 +422,7 @@ This release contains no functional changes.
 
  - 9 commits contributed to the release over the course of 5 calendar days.
  - 36 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#198](https://github.com/Byron/gitoxide/issues/198)
 
 ### Commit Details
@@ -421,7 +452,7 @@ This release contains no functional changes.
 
  - 3 commits contributed to the release.
  - 1 day passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -444,7 +475,7 @@ This release contains no functional changes.
 
  - 6 commits contributed to the release over the course of 6 calendar days.
  - 10 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -470,7 +501,7 @@ This release contains no functional changes.
 
  - 4 commits contributed to the release over the course of 1 calendar day.
  - 1 day passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -494,7 +525,7 @@ This release contains no functional changes.
 
  - 6 commits contributed to the release over the course of 6 calendar days.
  - 8 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -520,7 +551,7 @@ This release contains no functional changes.
 
  - 2 commits contributed to the release over the course of 1 calendar day.
  - 3 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -542,7 +573,7 @@ This release contains no functional changes.
 
  - 2 commits contributed to the release.
  - 1 day passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -563,7 +594,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -584,7 +615,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -606,7 +637,7 @@ This release contains no functional changes.
 
  - 14 commits contributed to the release over the course of 45 calendar days.
  - 46 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -639,7 +670,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -660,7 +691,7 @@ This release contains no functional changes.
 <csr-read-only-do-not-edit/>
 
  - 4 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Thanks Clippy

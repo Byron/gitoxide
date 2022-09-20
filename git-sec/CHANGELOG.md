@@ -5,7 +5,73 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.4.0 (2022-09-20)
+
+### New Features
+
+ - <csr-id-fe24b41bae244884f1f2cea43af11ab27976b9bc/> `Permission::is_allowed()` as convenience method
+ - <csr-id-515e52145b2bd0e484af232de4cd8450a1e7cbf2/> `Permissions::check_opt()` for those who don't need an error case.
+
+### Changed (BREAKING)
+
+ - <csr-id-33f8b9292946329ca2b24c5f0b2877db9afa2a15/> remove `Perrmission::fmt()` (Display)
+   It was somewhat specific to being printed in the error scenario, and
+   not general purpose at all.
+ - <csr-id-51c721cccc4754e55ec9cb30344f75d7b07fc2a7/> `permission::Error<R>` with only one generic parameter
+   As this error is only used for `Permission`, it's clear that it
+   contains a `Permission` instance.
+ - <csr-id-ac3823d7e0dcd1e51a373c9adca1a7476ca79003/> remove `thiserror` optional feature.
+   It's now included by default even though it's only used for a single
+   error type.
+   The reasoning is that `git-sec` is used within a tree that uses
+   `thiserror` anyway, so no need to optimize compile times for the case
+   where it doesn't.
+ - <csr-id-0f0bca3652f0e46dbebcb46956aa9c32e8812abe/> Remove `Access` without replacement.
+   It's a clear case of over-engineering and it didn't prove to be useful
+   at all.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 18 commits contributed to the release over the course of 21 calendar days.
+ - 27 days passed between releases.
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - `Permission::is_allowed()` as convenience method ([`fe24b41`](https://github.com/Byron/gitoxide/commit/fe24b41bae244884f1f2cea43af11ab27976b9bc))
+    - remove `Perrmission::fmt()` (Display) ([`33f8b92`](https://github.com/Byron/gitoxide/commit/33f8b9292946329ca2b24c5f0b2877db9afa2a15))
+    - Manually implement `permission::Error` to save on `thiserror` dependency. ([`b42a64d`](https://github.com/Byron/gitoxide/commit/b42a64dededae3a24dedc3bb42a097208c76afaa))
+    - `permission::Error<R>` with only one generic parameter ([`51c721c`](https://github.com/Byron/gitoxide/commit/51c721cccc4754e55ec9cb30344f75d7b07fc2a7))
+    - `Permissions::check_opt()` for those who don't need an error case. ([`515e521`](https://github.com/Byron/gitoxide/commit/515e52145b2bd0e484af232de4cd8450a1e7cbf2))
+    - remove `thiserror` optional feature. ([`ac3823d`](https://github.com/Byron/gitoxide/commit/ac3823d7e0dcd1e51a373c9adca1a7476ca79003))
+    - refactor ([`129bc87`](https://github.com/Byron/gitoxide/commit/129bc87cadf2d69d565ccd643ea7a4c0d51e9737))
+    - Remove `Access` without replacement. ([`0f0bca3`](https://github.com/Byron/gitoxide/commit/0f0bca3652f0e46dbebcb46956aa9c32e8812abe))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
+ * **Uncategorized**
+    - make fmt ([`429cccc`](https://github.com/Byron/gitoxide/commit/429cccc5831c25a7205a12dc7a0443ac48616e2c))
+    - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
+    - Merge branch 'git_date_relative' ([`83a3832`](https://github.com/Byron/gitoxide/commit/83a38329c59e9ebc057221da832fd8320bbeddb1))
+    - Merge branch 'main' into filter-refs-by-spec ([`9aa1d3d`](https://github.com/Byron/gitoxide/commit/9aa1d3dc46d4b1c76af257f573aff3aeef2d3fa8))
+    - Merge branch 'main' into filter-refs-by-spec ([`1f6e5ab`](https://github.com/Byron/gitoxide/commit/1f6e5ab15f5fd8d23719b13e6aea59cd231ac0fe))
+    - Merge branch 'main' into filter-refs-by-spec ([`51dc828`](https://github.com/Byron/gitoxide/commit/51dc8282fb77b519ff7d2c94c6bd73af306cfe8b))
+    - Merge branch 'main' into filter-refs-by-spec ([`56ba481`](https://github.com/Byron/gitoxide/commit/56ba481f4c48f74f10397feb1b6dc3d7dd3704fb))
+    - Merge branch 'main' into filter-refs-by-spec ([`a36c05d`](https://github.com/Byron/gitoxide/commit/a36c05d281269f3f8b297e7adc463bfb3c306663))
+    - Release git-path v0.4.2, git-config-value v0.7.0 ([`c48fb31`](https://github.com/Byron/gitoxide/commit/c48fb3107d29f9a06868b0c6de40567063a656d1))
+</details>
+
 ## 0.3.1 (2022-08-24)
+
+<csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
+<csr-id-533e887e80c5f7ede8392884562e1c5ba56fb9a8/>
 
 ### Chore
 
@@ -21,9 +87,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release over the course of 3 calendar days.
+ - 7 commits contributed to the release over the course of 3 calendar days.
  - 32 days passed between releases.
- - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -33,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-date v0.0.5, git-hash v0.9.8, git-features v0.22.2, git-actor v0.11.3, git-glob v0.3.2, git-quote v0.2.1, git-attributes v0.3.2, git-tempfile v2.0.4, git-lock v2.1.1, git-validate v0.5.5, git-object v0.20.2, git-ref v0.15.2, git-sec v0.3.1, git-config v0.7.0, git-credentials v0.4.0, git-diff v0.17.2, git-discover v0.4.1, git-bitmap v0.1.2, git-index v0.4.2, git-mailmap v0.3.2, git-chunk v0.3.1, git-traverse v0.16.2, git-pack v0.21.2, git-odb v0.31.2, git-packetline v0.12.7, git-url v0.7.2, git-transport v0.19.2, git-protocol v0.19.0, git-revision v0.4.2, git-refspec v0.1.0, git-worktree v0.4.2, git-repository v0.22.0, safety bump 4 crates ([`4974eca`](https://github.com/Byron/gitoxide/commit/4974eca96d525d1ee4f8cad79bb713af7a18bf9d))
     - Release git-path v0.4.1 ([`5e82346`](https://github.com/Byron/gitoxide/commit/5e823462b3deb904f5d6154a7bf114cef1988224))
     - Merge branch 'example-new-repo' ([`946dd3a`](https://github.com/Byron/gitoxide/commit/946dd3a80522ef437e09528a93aa1433f01b0ee8))
     - use docsrs feature in code to show what is feature-gated automatically on docs.rs ([`b1c40b0`](https://github.com/Byron/gitoxide/commit/b1c40b0364ef092cd52d03b34f491b254816b18d))
@@ -61,7 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 7 commits contributed to the release over the course of 33 calendar days.
  - 39 days passed between releases.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
 
 ### Commit Details
@@ -94,7 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 5 commits contributed to the release over the course of 15 calendar days.
  - 16 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -125,7 +192,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 5 commits contributed to the release over the course of 5 calendar days.
  - 5 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#426](https://github.com/Byron/gitoxide/issues/426), [#429](https://github.com/Byron/gitoxide/issues/429)
 
 ### Commit Details
@@ -154,7 +221,7 @@ A maintenance release without user-facing changes.
 
  - 6 commits contributed to the release over the course of 2 calendar days.
  - 3 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#422](https://github.com/Byron/gitoxide/issues/422)
 
 ### Commit Details
@@ -198,7 +265,7 @@ A maintenance release without user-facing changes.
 
  - 33 commits contributed to the release over the course of 33 calendar days.
  - 33 days passed between releases.
- - 6 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 6 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#386](https://github.com/Byron/gitoxide/issues/386)
 
 ### Thanks Clippy
@@ -261,7 +328,7 @@ An empty crate without any content to reserve the name for the gitoxide project.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#386](https://github.com/Byron/gitoxide/issues/386)
 
 ### Commit Details

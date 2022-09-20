@@ -17,7 +17,7 @@ pub struct Prepare {
 mod prepare {
     use std::process::{Command, Stdio};
 
-    use git_testtools::bstr::ByteSlice;
+    use bstr::ByteSlice;
 
     use crate::Prepare;
 

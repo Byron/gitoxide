@@ -41,6 +41,11 @@ pub fn try_into_bstr<'a>(path: impl Into<Cow<'a, Path>>) -> Result<Cow<'a, BStr>
                 use std::os::unix::ffi::OsStringExt;
                 path.into_os_string().into_vec().into()
             };
+            #[cfg(target_os = "wasi")]
+            let p: BString = {
+                use std::os::wasi::ffi::OsStringExt;
+                path.into_os_string().into_vec().into()
+            };
             #[cfg(not(unix))]
             let p: BString = path.into_os_string().into_string().map_err(|_| Utf8Error)?.into();
             p
@@ -49,6 +54,11 @@ pub fn try_into_bstr<'a>(path: impl Into<Cow<'a, Path>>) -> Result<Cow<'a, BStr>
             #[cfg(unix)]
             let p: &BStr = {
                 use std::os::unix::ffi::OsStrExt;
+                path.as_os_str().as_bytes().into()
+            };
+            #[cfg(target_os = "wasi")]
+            let p: &BStr = {
+                use std::os::wasi::ffi::OsStrExt;
                 path.as_os_str().as_bytes().into()
             };
             #[cfg(not(unix))]
@@ -73,6 +83,11 @@ pub fn try_from_byte_slice(input: &[u8]) -> Result<&Path, Utf8Error> {
     #[cfg(unix)]
     let p = {
         use std::os::unix::ffi::OsStrExt;
+        OsStr::from_bytes(input).as_ref()
+    };
+    #[cfg(target_os = "wasi")]
+    let p = {
+        use std::os::wasi::ffi::OsStrExt;
         OsStr::from_bytes(input).as_ref()
     };
     #[cfg(not(unix))]
@@ -100,6 +115,11 @@ pub fn try_from_bstring(input: impl Into<BString>) -> Result<PathBuf, Utf8Error>
     #[cfg(unix)]
     let p = {
         use std::os::unix::ffi::OsStringExt;
+        std::ffi::OsString::from_vec(input.into()).into()
+    };
+    #[cfg(target_os = "wasi")]
+    let p = {
+        use std::os::wasi::ffi::OsStringExt;
         std::ffi::OsString::from_vec(input.into()).into()
     };
     #[cfg(not(unix))]

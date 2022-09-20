@@ -5,12 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.9.10 (2022-09-20)
+
+Maintenance release without observable changes.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 16 calendar days.
+ - 18 days passed between releases.
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - refactor ([`93ac4c3`](https://github.com/Byron/gitoxide/commit/93ac4c38e5837250e158613820a6ac1bb7119ba0))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
+ * **Uncategorized**
+    - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
+    - make fmt ([`535e967`](https://github.com/Byron/gitoxide/commit/535e967666c6da657ff1b7eff7c64ab27cafb182))
+    - Merge branch 'main' into filter-refs-by-spec ([`9aa1d3d`](https://github.com/Byron/gitoxide/commit/9aa1d3dc46d4b1c76af257f573aff3aeef2d3fa8))
+    - Merge branch 'git_date_parse' ([`75591fb`](https://github.com/Byron/gitoxide/commit/75591fb108ce440ba2f920bebf99158b407e3046))
+</details>
+
 ## 0.9.9 (2022-09-02)
+
+<csr-id-7926f47ebc34e11c769acfd3441ab391fc1b9b36/>
 
 ### Bug Fixes
 
  - <csr-id-aaed7eaf4887d5e499437d45c8284bc8941da2ac/> don't assume hex-only characters in `ObjectId::from_hex(…)`.
-
 
 ### Refactor
 
@@ -20,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 6 commits contributed to the release.
+ - 7 commits contributed to the release.
  - 9 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#522](https://github.com/Byron/gitoxide/issues/522)
@@ -36,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - refactor ([`f3bcddf`](https://github.com/Byron/gitoxide/commit/f3bcddff931e50472e7a3e8c2c60f3cd565bfa56))
     - refactor ([`0f0de2b`](https://github.com/Byron/gitoxide/commit/0f0de2ba7837e2044e22a16b6d5e20b3137e9691))
  * **Uncategorized**
+    - Release git-hash v0.9.9 ([`da0716f`](https://github.com/Byron/gitoxide/commit/da0716f8c27b4f29cfff0e5ce7fcb3d7240f4aeb))
     - fix docs ([`71cb9ea`](https://github.com/Byron/gitoxide/commit/71cb9eaefb792656b6380fdcc760c2234f9b9fa7))
     - replace `quickerror` with `thiserror` ([`7926f47`](https://github.com/Byron/gitoxide/commit/7926f47ebc34e11c769acfd3441ab391fc1b9b36))
     - some more tests ([`400c6cb`](https://github.com/Byron/gitoxide/commit/400c6cb14fe24b5e947f0c7f3a105deecd3b2f84))

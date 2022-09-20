@@ -40,7 +40,16 @@ impl<'repo> delegate::Revision for Delegate<'repo> {
         self.last_call_was_disambiguate_prefix[self.idx] = true;
         let mut candidates = Some(HashSet::default());
         self.prefix[self.idx] = Some(prefix);
-        match self.repo.objects.lookup_prefix(prefix, candidates.as_mut()) {
+
+        let empty_tree_id = git_hash::ObjectId::empty_tree(prefix.as_oid().kind());
+        let res = if prefix.as_oid() == empty_tree_id {
+            candidates.as_mut().expect("set").insert(empty_tree_id);
+            Ok(Some(Err(())))
+        } else {
+            self.repo.objects.lookup_prefix(prefix, candidates.as_mut())
+        };
+
+        match res {
             Err(err) => {
                 self.err.push(object::find::existing::Error::Find(err).into());
                 None

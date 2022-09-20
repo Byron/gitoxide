@@ -5,6 +5,67 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.16.0 (2022-09-20)
+
+### Changed
+
+ - <csr-id-3c7c9a735f5771ef787cbc86b46cbafc9226f4d6/> `ein tool hours -s` was split into `-f|--file-stats` and `-l|line-stats`.
+   That way more information is generated at increasingly high costs.
+
+### New Features
+
+ - <csr-id-28c4cae70aab2bd5b479961fcc6ee91ff80f651b/> `ein tool hours --stat` to collect additional statistics per author.
+   Note that these are expensive and unconditionally use threads to speed
+   up these computations.
+ - <csr-id-5d0332f51c63c5456a28c8f3f466ad805b2e0626/> `ein tool hours -b` ignores bots.
+   For now it only considers bots with names containing `[bot]`.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 26 commits contributed to the release over the course of 27 calendar days.
+ - 27 days passed between releases.
+ - 3 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - refactor ([`11851f3`](https://github.com/Byron/gitoxide/commit/11851f334f642e7bd69bcbfc7ad4f1990fc326ba))
+    - option to print server information about the connection ([`4720666`](https://github.com/Byron/gitoxide/commit/4720666c8bfdaa3acc5c832b44755d4b4f86e16e))
+    - show fixes as well ([`2237495`](https://github.com/Byron/gitoxide/commit/2237495d82624b39bf75c6430549424a5e36b8bb))
+    - Correct printing of tag information (even though it doesn't look great) ([`f4d8198`](https://github.com/Byron/gitoxide/commit/f4d8198992b4c45f64d81e20f40a1cad69883162))
+    - wire up the `ref-map` sub-command. ([`94c2b78`](https://github.com/Byron/gitoxide/commit/94c2b785f892f85503b8927c7fa98ae99d677be7))
+    - Select `gix` commands will now load the git installation configuration ([`23d2dec`](https://github.com/Byron/gitoxide/commit/23d2dec375305c39d472c4f8ff764274dd033f6b))
+    - refactor ([`7abc0a3`](https://github.com/Byron/gitoxide/commit/7abc0a39205b9f374c90c4750fe6cc9b3749d7b9))
+    - Add sketch of `gix credential` ([`642e21f`](https://github.com/Byron/gitoxide/commit/642e21fc58d8d4b68cba3067c88d44c019ec4ace))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - `ein tool hours -s` was split into `-f|--file-stats` and `-l|line-stats`. ([`3c7c9a7`](https://github.com/Byron/gitoxide/commit/3c7c9a735f5771ef787cbc86b46cbafc9226f4d6))
+    - upgrade to prodash 20.1 for `Progress::counter()` feature ([`0ac4a2c`](https://github.com/Byron/gitoxide/commit/0ac4a2c514aeb94d8e90ce28ae7a0e0350c21ab2))
+    - `ein tool hours --stat` to collect additional statistics per author. ([`28c4cae`](https://github.com/Byron/gitoxide/commit/28c4cae70aab2bd5b479961fcc6ee91ff80f651b))
+ * **Uncategorized**
+    - use rev-specs instead of ref-names ([`cf7182e`](https://github.com/Byron/gitoxide/commit/cf7182e3390c03df97c10cd101440f7aa8874904))
+    - `ein tool hours -b` ignores bots. ([`5d0332f`](https://github.com/Byron/gitoxide/commit/5d0332f51c63c5456a28c8f3f466ad805b2e0626))
+    - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
+    - make fmt ([`535e967`](https://github.com/Byron/gitoxide/commit/535e967666c6da657ff1b7eff7c64ab27cafb182))
+    - Merge branch 'main' into filter-refs-by-spec ([`9aa1d3d`](https://github.com/Byron/gitoxide/commit/9aa1d3dc46d4b1c76af257f573aff3aeef2d3fa8))
+    - Merge branch 'main' into filter-refs-by-spec ([`1f6e5ab`](https://github.com/Byron/gitoxide/commit/1f6e5ab15f5fd8d23719b13e6aea59cd231ac0fe))
+    - Merge branch 'git_date_parse' ([`75591fb`](https://github.com/Byron/gitoxide/commit/75591fb108ce440ba2f920bebf99158b407e3046))
+    - Merge branch 'main' into filter-refs-by-spec ([`51dc828`](https://github.com/Byron/gitoxide/commit/51dc8282fb77b519ff7d2c94c6bd73af306cfe8b))
+    - Merge branch 'macos-exfat' ([`f256f8f`](https://github.com/Byron/gitoxide/commit/f256f8fb7603f83d44acda07386f277c65ac652c))
+    - Merge branch 'main' into filter-refs-by-spec ([`56ba481`](https://github.com/Byron/gitoxide/commit/56ba481f4c48f74f10397feb1b6dc3d7dd3704fb))
+    - A basic implementation of rev-list without anything fancy ([`791dd66`](https://github.com/Byron/gitoxide/commit/791dd666430fe0586c7db75b352487a72d3789e7))
+    - Merge branch 'main' into filter-refs-by-spec ([`a36c05d`](https://github.com/Byron/gitoxide/commit/a36c05d281269f3f8b297e7adc463bfb3c306663))
+    - Merge branch 'main' into filter-refs-by-spec ([`cef0b51`](https://github.com/Byron/gitoxide/commit/cef0b51ade2a3301fa09ede7a425aa1fe3527e78))
+    - Merge branch 'main' into filter-refs-by-spec ([`dbfa328`](https://github.com/Byron/gitoxide/commit/dbfa3282cf876596b250b2040c1ec0b761741796))
+    - Merge branch 'main' into filter-refs-by-spec ([`cfa1440`](https://github.com/Byron/gitoxide/commit/cfa144031dbcac2707ab0cec012bc35e78f9c475))
+</details>
+
 ## 0.15.0 (2022-08-24)
 
 <csr-id-f7f136dbe4f86e7dee1d54835c420ec07c96cd78/>
@@ -33,9 +94,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 14 commits contributed to the release over the course of 3 calendar days.
+ - 15 commits contributed to the release over the course of 3 calendar days.
  - 6 days passed between releases.
- - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
 
 ### Thanks Clippy
@@ -51,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - Support for -c CLI config overrides in `gix config`. ([`19c1746`](https://github.com/Byron/gitoxide/commit/19c1746cefca9bc76537637ec99634eb4cf66a92))
     - remove `gix free remote ref-list` in favor of `gix remote refs` ([`dda9957`](https://github.com/Byron/gitoxide/commit/dda995790c260131048484a11e66185b9c841311))
     - Support for `-c/--config` in `gix` ([`45a30f0`](https://github.com/Byron/gitoxide/commit/45a30f0f31a99cda5cf105408e9c3905f43071f2))
     - refactor ([`e0be6e9`](https://github.com/Byron/gitoxide/commit/e0be6e9558add3255de63f3785306daace2707a6))
@@ -95,7 +157,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 15 commits contributed to the release over the course of 26 calendar days.
  - 26 days passed between releases.
- - 5 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 5 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Commit Details
@@ -137,7 +199,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 38 commits contributed to the release over the course of 101 calendar days.
  - 108 days passed between releases.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 3 unique issues were worked on: [#301](https://github.com/Byron/gitoxide/issues/301), [#331](https://github.com/Byron/gitoxide/issues/331), [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Thanks Clippy
@@ -209,7 +271,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 5 commits contributed to the release over the course of 1 calendar day.
  - 2 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#298](https://github.com/Byron/gitoxide/issues/298)
 
 ### Commit Details
@@ -269,7 +331,7 @@ which usually are `Clone` too as they are passed by immutable reference (which i
 
  - 61 commits contributed to the release over the course of 126 calendar days.
  - 165 days passed between releases.
- - 10 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 10 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 12 unique issues were worked on: [#215](https://github.com/Byron/gitoxide/issues/215), [#263](https://github.com/Byron/gitoxide/issues/263), [#266](https://github.com/Byron/gitoxide/issues/266), [#279](https://github.com/Byron/gitoxide/issues/279), [#287](https://github.com/Byron/gitoxide/issues/287), [#289](https://github.com/Byron/gitoxide/issues/289), [#293](https://github.com/Byron/gitoxide/issues/293), [#298](https://github.com/Byron/gitoxide/issues/298), [#301](https://github.com/Byron/gitoxide/issues/301), [#329](https://github.com/Byron/gitoxide/issues/329), [#366](https://github.com/Byron/gitoxide/issues/366), [#67](https://github.com/Byron/gitoxide/issues/67)
 
 ### Commit Details
@@ -368,7 +430,7 @@ to the `clap-derive` crate.
 
  - 1 commit contributed to the release over the course of 1 calendar day.
  - 4 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#222](https://github.com/Byron/gitoxide/issues/222)
 
 ### Commit Details
@@ -411,7 +473,7 @@ A first usable version of `git-repository` to make using `gitoxide` from your ap
 
  - 4 commits contributed to the release over the course of 26 calendar days.
  - 35 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#200](https://github.com/Byron/gitoxide/issues/200), [#67](https://github.com/Byron/gitoxide/issues/67)
 
 ## v0.8.4 (2021-09-10)
@@ -426,7 +488,7 @@ This is a maintenance release.
 
  - 1 commit contributed to the release over the course of 8 calendar days.
  - 20 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ## v0.8.2 (2021-08-17)
@@ -437,7 +499,7 @@ This is a maintenance release.
 
  - 1 commit contributed to the release over the course of 1 calendar day.
  - 1 day passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ## v0.8.1 (2021-08-15)
@@ -448,7 +510,7 @@ This is a maintenance release.
 
  - 43 commits contributed to the release over the course of 95 calendar days.
  - 98 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#83](https://github.com/Byron/gitoxide/issues/83)
 
 ### Thanks Clippy
@@ -465,7 +527,7 @@ This is a maintenance release.
 
  - 33 commits contributed to the release over the course of 128 calendar days.
  - 143 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Thanks Clippy
@@ -497,7 +559,7 @@ Maintenance release without any new features.
 
  - 3 commits contributed to the release over the course of 65 calendar days.
  - 84 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -520,7 +582,7 @@ Maintenance release without any new features.
 
  - 1 commit contributed to the release over the course of 1 calendar day.
  - 3 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ## v0.4.1 (2020-09-18)
@@ -533,7 +595,7 @@ Maintenance release without any new features.
 
  - 2 commits contributed to the release over the course of 6 calendar days.
  - 6 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -561,7 +623,7 @@ Maintenance release without any new features.
 
  - 14 commits contributed to the release over the course of 29 calendar days.
  - 30 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -600,7 +662,7 @@ Many small and possibly breaking changes are not mentioned here.
 
  - 46 commits contributed to the release over the course of 30 calendar days.
  - 31 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -667,7 +729,7 @@ Many small and possibly breaking changes are not mentioned here.
 <csr-read-only-do-not-edit/>
 
  - 53 commits contributed to the release over the course of 765 calendar days.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details

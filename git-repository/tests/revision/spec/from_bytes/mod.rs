@@ -123,3 +123,12 @@ fn access_blob_through_tree() {
         "Could not find path \"missing\" in tree 0000000000c of parent object 0000000000c"
     );
 }
+
+#[test]
+fn empty_tree_as_full_name() {
+    let repo = repo("complex_graph").unwrap();
+    assert_eq!(
+        parse_spec("4b825dc642cb6eb9a060e54bf8d69288fbee4904", &repo).unwrap(),
+        Spec::from_id(hex_to_id("4b825dc642cb6eb9a060e54bf8d69288fbee4904").attach(&repo))
+    );
+}

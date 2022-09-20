@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.2.0 (2022-09-20)
+
+### Changed (BREAKING)
+
+ - <csr-id-99905bacace8aed42b16d43f0f04cae996cb971c/> upgrade `bstr` to `1.0.1`
+ - <csr-id-c24ea67f84aa48953949682672114715bee67432/> parse now takes the current time `parse(…, Option<time>)` as parameter.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 27 commits contributed to the release over the course of 24 calendar days.
+ - 27 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#450](https://github.com/Byron/gitoxide/issues/450)**
+    - upgrade `bstr` to `1.0.1` ([`99905ba`](https://github.com/Byron/gitoxide/commit/99905bacace8aed42b16d43f0f04cae996cb971c))
+ * **[#470](https://github.com/Byron/gitoxide/issues/470)**
+    - update changelogs prior to release ([`caa7a1b`](https://github.com/Byron/gitoxide/commit/caa7a1bdef74d7d3166a7e38127a59f5ab3cfbdd))
+ * **Uncategorized**
+    - Merge branch 'index-from-tree' ([`172f73c`](https://github.com/Byron/gitoxide/commit/172f73cf26878d153d51790fa01853fa4ba6beb7))
+    - refactor ([`c5c6bf6`](https://github.com/Byron/gitoxide/commit/c5c6bf6ef3f0c9c12389bb638ab4d32b61839dec))
+    - refactor ([`956613f`](https://github.com/Byron/gitoxide/commit/956613fcdb33a845526fa9743aa0e7f80b3badfa))
+    - refactor ([`1026b7c`](https://github.com/Byron/gitoxide/commit/1026b7c613a3a8b46a27dd7cd5e3520043b21ab7))
+    - WIP. ([`79d82d4`](https://github.com/Byron/gitoxide/commit/79d82d46613c83280d2401ef4d72a35010a70b87))
+    - Parse the output while parsing the baseline file. ([`70fe59f`](https://github.com/Byron/gitoxide/commit/70fe59f4a1cad25f687397206ee2cbe50e643181))
+    - make fmt ([`535e967`](https://github.com/Byron/gitoxide/commit/535e967666c6da657ff1b7eff7c64ab27cafb182))
+    - parse now takes the current time `parse(…, Option<time>)` as parameter. ([`c24ea67`](https://github.com/Byron/gitoxide/commit/c24ea67f84aa48953949682672114715bee67432))
+    - thanks clippy ([`590fcc9`](https://github.com/Byron/gitoxide/commit/590fcc9f3fc768802fd09f4e73036e225ec5c363))
+    - a sample on how to more easily test relative date parsing ([`c585c9b`](https://github.com/Byron/gitoxide/commit/c585c9b2b0e628914169bbfba55aa5130da51a83))
+    - add test to check times before unix epoch ([`eb304ea`](https://github.com/Byron/gitoxide/commit/eb304ea91f857070380ef4e4dbdff6b8ab89cee1))
+    - refactor ([`0e231eb`](https://github.com/Byron/gitoxide/commit/0e231ebeeb41306b1075bc06c78b45dc65ded5fa))
+    - refactor ([`5793465`](https://github.com/Byron/gitoxide/commit/5793465b0f19b284a4615290e2b08203e969e9bb))
+    - refactor; add failing test to see invalid date error in action ([`90008aa`](https://github.com/Byron/gitoxide/commit/90008aa4e59f78cfe2ecd5a7ee851bb56f7b0d33))
+    - PR comments. ([`1eac4de`](https://github.com/Byron/gitoxide/commit/1eac4de99de250e770b48054fd5bc6b806418e4d))
+    - `parse` is pure function. ([`9ad1a5f`](https://github.com/Byron/gitoxide/commit/9ad1a5fa2ce54e978396ff3eaa7061a8edd10d4a))
+    - Fallible timestamp cast i64 -> u32. ([`cce7616`](https://github.com/Byron/gitoxide/commit/cce7616835f1dff29b2c74bd96b5238d55167d5f))
+    - `parse()` returns Result. ([`206f392`](https://github.com/Byron/gitoxide/commit/206f3923f5da2e9e26677e917550e6e5baa2913a))
+    - Add output to baseline. ([`5c3b733`](https://github.com/Byron/gitoxide/commit/5c3b7334289ef71a9dbcc021f1989eb8e021fc7f))
+    - `parse` returns Result. ([`67c8c6a`](https://github.com/Byron/gitoxide/commit/67c8c6a9666161a3a0cd01203e0fb1da22336939))
+    - Add fixtures. ([`6c40ac1`](https://github.com/Byron/gitoxide/commit/6c40ac1e39fbefba640fc9cb4fd3ef419a149e99))
+    - Add git baseline. ([`b747a60`](https://github.com/Byron/gitoxide/commit/b747a60b62c533b3919124e628f31e6bbef9c838))
+    - refactor ([`3e6e0f9`](https://github.com/Byron/gitoxide/commit/3e6e0f9ebdf7ab87c689be074ae1eecfea4485f0))
+    - Draft. ([`95b4902`](https://github.com/Byron/gitoxide/commit/95b490230ebfbd4c2f04edd7074d5a0f5e2429ec))
+    - Draft. ([`43b6c06`](https://github.com/Byron/gitoxide/commit/43b6c064bfa407d1a2cabf09aad1cc8334dec651))
+</details>
+
 ## 0.1.0 (2022-08-24)
 
 ### New Features
@@ -17,8 +77,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 2 commits contributed to the release.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 3 commits contributed to the release.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -28,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release git-date v0.1.0, git-actor v0.11.4, git-revision v0.4.3, git-repository v0.22.1, cargo-smart-release v0.11.0, git-commitgraph v0.8.2, gitoxide-core v0.17.0, gitoxide v0.15.0 ([`1fb931a`](https://github.com/Byron/gitoxide/commit/1fb931a7ea59f1cf895a6c1392fd8615b723c743))
     - update changelogs prior to release ([`23cb58f`](https://github.com/Byron/gitoxide/commit/23cb58f02043e0e5027136fd6e8e724c03a2efbe))
     - bump version to 1.0 to prevent accidental inclusions downstream ([`034c8dc`](https://github.com/Byron/gitoxide/commit/034c8dc4437c06dc8af702fbe9b86ec903c73a18))
 </details>
@@ -53,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 7 commits contributed to the release over the course of 3 calendar days.
  - 4 days passed between releases.
- - 4 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -85,7 +146,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - 8 commits contributed to the release.
  - 1 day passed between releases.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' where seen in commit messages
 
 ### Commit Details
@@ -115,7 +176,7 @@ A maintenance release without user facing changes.
 
  - 18 commits contributed to the release over the course of 25 calendar days.
  - 26 days passed between releases.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Commit Details
@@ -163,7 +224,7 @@ A maintenance release without user facing changes.
 
  - 4 commits contributed to the release.
  - 39 days passed between releases.
- - 2 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
 
 ### Commit Details
@@ -193,7 +254,7 @@ A maintenance release without user facing changes.
 
  - 5 commits contributed to the release over the course of 58 calendar days.
  - 59 days passed between releases.
- - 1 commit where understood as [conventional](https://www.conventionalcommits.org).
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#427](https://github.com/Byron/gitoxide/issues/427)
 
 ### Commit Details
@@ -220,7 +281,7 @@ An empty crate without any content to reserve the name for the gitoxide project.
 <csr-read-only-do-not-edit/>
 
  - 2 commits contributed to the release.
- - 0 commits where understood as [conventional](https://www.conventionalcommits.org).
+ - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#331](https://github.com/Byron/gitoxide/issues/331)
 
 ### Commit Details

@@ -11,4 +11,7 @@ edition = "2018"
 doctest = false
 
 [dependencies]
+bstr = "1.0.1"
+
+[dev-dependencies]
 git-testtools = { path = "../tests/tools" }

@@ -1,4 +1,6 @@
 use std::collections::BTreeSet;
+use std::convert::Infallible;
+use std::sync::atomic::Ordering;
 use std::{
     collections::{hash_map::Entry, HashMap},
     io,
@@ -9,7 +11,7 @@ use std::{
 use anyhow::{anyhow, bail};
 use git_repository as git;
 use git_repository::bstr::BStr;
-use git_repository::{actor, bstr::ByteSlice, interrupt, objs, prelude::*, progress, Progress};
+use git_repository::{actor, bstr::ByteSlice, interrupt, prelude::*, progress, Progress};
 use itertools::Itertools;
 
 /// Additional configuration for the hours estimation functionality.
@@ -18,6 +20,10 @@ pub struct Context<W> {
     pub ignore_bots: bool,
     /// Show personally identifiable information before the summary. Includes names and email addresses.
     pub show_pii: bool,
+    /// Collect how many files have been added, removed and modified (without rename tracking).
+    pub file_stats: bool,
+    /// Collect how many lines in files have been added, removed and modified (without rename tracking).
+    pub line_stats: bool,
     /// Omit unifying identities by name and email which can lead to the same author appear multiple times
     /// due to using different names or email addresses.
     pub omit_unify_identities: bool,
@@ -38,6 +44,8 @@ pub fn estimate<W, P>(
     Context {
         show_pii,
         ignore_bots,
+        file_stats,
+        line_stats,
         omit_unify_identities,
         mut out,
     }: Context<W>,
@@ -50,96 +58,280 @@ where
     let commit_id = repo.rev_parse_single(rev_spec)?.detach();
     let mut string_heap = BTreeSet::<&'static [u8]>::new();
 
-    let (all_commits, is_shallow) = {
-        let mut progress = progress.add_child("Traverse commit graph");
-        let string_heap = &mut string_heap;
-        std::thread::scope(
-            move |scope| -> anyhow::Result<(Vec<actor::SignatureRef<'static>>, bool)> {
-                let start = Instant::now();
-                progress.init(None, progress::count("commits"));
-                let (tx, rx) = std::sync::mpsc::channel::<Vec<u8>>();
-                let mailmap = repo.open_mailmap();
+    let (commit_authors, stats, is_shallow) = {
+        let needs_stats = file_stats || line_stats;
+        let stat_progress = needs_stats.then(|| progress.add_child("extract stats")).map(|mut p| {
+            p.init(None, progress::count("commits"));
+            p
+        });
+        let stat_counter = stat_progress.as_ref().and_then(|p| p.counter());
 
-                let handle = scope.spawn(move || -> anyhow::Result<Vec<actor::SignatureRef<'static>>> {
-                    let mut out = Vec::new();
-                    for commit_data in rx {
-                        if let Some(author) = objs::CommitRefIter::from_bytes(&commit_data)
-                            .author()
-                            .map(|author| mailmap.resolve_cow(author.trim()))
-                            .ok()
-                        {
-                            let mut string_ref = |s: &[u8]| -> &'static BStr {
-                                match string_heap.get(s) {
-                                    Some(n) => n.as_bstr(),
-                                    None => {
-                                        let sv: Vec<u8> = s.to_owned().into();
-                                        string_heap.insert(Box::leak(sv.into_boxed_slice()));
-                                        (*string_heap.get(s).expect("present")).as_ref()
-                                    }
+        let change_progress = needs_stats.then(|| progress.add_child("find changes")).map(|mut p| {
+            p.init(None, progress::count("modified files"));
+            p
+        });
+        let change_counter = change_progress.as_ref().and_then(|p| p.counter());
+
+        let lines_progress = line_stats.then(|| progress.add_child("find changes")).map(|mut p| {
+            p.init(None, progress::count("diff lines"));
+            p
+        });
+        let lines_counter = lines_progress.as_ref().and_then(|p| p.counter());
+
+        let mut progress = progress.add_child("traverse commit graph");
+        progress.init(None, progress::count("commits"));
+
+        std::thread::scope(|scope| -> anyhow::Result<_> {
+            let start = Instant::now();
+            let (tx, rx) = std::sync::mpsc::channel::<(u32, Vec<u8>)>();
+            let mailmap = repo.open_mailmap();
+
+            let commit_thread = scope.spawn(move || -> anyhow::Result<Vec<_>> {
+                let mut out = Vec::new();
+                for (commit_idx, commit_data) in rx {
+                    if let Some(author) = git::objs::CommitRefIter::from_bytes(&commit_data)
+                        .author()
+                        .map(|author| mailmap.resolve_cow(author.trim()))
+                        .ok()
+                    {
+                        let mut string_ref = |s: &[u8]| -> &'static BStr {
+                            match string_heap.get(s) {
+                                Some(n) => n.as_bstr(),
+                                None => {
+                                    let sv: Vec<u8> = s.to_owned().into();
+                                    string_heap.insert(Box::leak(sv.into_boxed_slice()));
+                                    (*string_heap.get(s).expect("present")).as_ref()
                                 }
-                            };
-                            let name = string_ref(author.name.as_ref());
-                            let email = string_ref(&author.email.as_ref());
+                            }
+                        };
+                        let name = string_ref(author.name.as_ref());
+                        let email = string_ref(&author.email.as_ref());
 
-                            out.push(actor::SignatureRef {
+                        out.push((
+                            commit_idx,
+                            actor::SignatureRef {
                                 name,
                                 email,
                                 time: author.time,
-                            });
+                            },
+                        ));
+                    }
+                }
+                out.shrink_to_fit();
+                out.sort_by(|a, b| {
+                    a.1.email.cmp(&b.1.email).then(
+                        a.1.time
+                            .seconds_since_unix_epoch
+                            .cmp(&b.1.time.seconds_since_unix_epoch)
+                            .reverse(),
+                    )
+                });
+                Ok(out)
+            });
+
+            let (tx_tree_id, stat_threads) = needs_stats
+                .then(|| {
+                    let num_threads = num_cpus::get().saturating_sub(1 /*main thread*/).max(1);
+                    let (tx, rx) =
+                        crossbeam_channel::unbounded::<(u32, Option<git::hash::ObjectId>, git::hash::ObjectId)>();
+                    let stat_workers = (0..num_threads)
+                        .map(|_| {
+                            scope.spawn({
+                                let commit_counter = stat_counter.clone();
+                                let change_counter = change_counter.clone();
+                                let lines_counter = lines_counter.clone();
+                                let mut repo = repo.clone();
+                                repo.object_cache_size_if_unset(4 * 1024 * 1024);
+                                let rx = rx.clone();
+                                move || -> Result<_, git::object::tree::diff::Error> {
+                                    let mut out = Vec::new();
+                                    for (commit_idx, parent_commit, commit) in rx {
+                                        if let Some(c) = commit_counter.as_ref() {
+                                            c.fetch_add(1, Ordering::SeqCst);
+                                        }
+                                        if git::interrupt::is_triggered() {
+                                            return Ok(out);
+                                        }
+                                        let mut files = FileStats::default();
+                                        let mut lines = LineStats::default();
+                                        let from = match parent_commit {
+                                            Some(id) => {
+                                                match repo.find_object(id).ok().and_then(|c| c.peel_to_tree().ok()) {
+                                                    Some(tree) => tree,
+                                                    None => continue,
+                                                }
+                                            }
+                                            None => repo
+                                                .find_object(git::hash::ObjectId::empty_tree(repo.object_hash()))
+                                                .expect("always present")
+                                                .into_tree(),
+                                        };
+                                        let to = match repo.find_object(commit).ok().and_then(|c| c.peel_to_tree().ok())
+                                        {
+                                            Some(c) => c,
+                                            None => continue,
+                                        };
+                                        from.changes().track_filename().for_each_to_obtain_tree(&to, |change| {
+                                            use git::object::tree::diff::change::Event::*;
+                                            if let Some(c) = change_counter.as_ref() {
+                                                c.fetch_add(1, Ordering::SeqCst);
+                                            }
+                                            match change.event {
+                                                Addition { entry_mode, id } => {
+                                                    if entry_mode.is_no_tree() {
+                                                        files.added += 1
+                                                    }
+                                                    if let Ok(blob) = id.object() {
+                                                        let nl = blob.data.lines_with_terminator().count();
+                                                        lines.added += nl;
+                                                        if let Some(c) = lines_counter.as_ref() {
+                                                            c.fetch_add(nl, Ordering::SeqCst);
+                                                        }
+                                                    }
+                                                }
+                                                Deletion { entry_mode, id } => {
+                                                    if entry_mode.is_no_tree() {
+                                                        files.removed += 1
+                                                    }
+                                                    if let Ok(blob) = id.object() {
+                                                        let nl = blob.data.lines_with_terminator().count();
+                                                        lines.removed += nl;
+                                                        if let Some(c) = lines_counter.as_ref() {
+                                                            c.fetch_add(nl, Ordering::SeqCst);
+                                                        }
+                                                    }
+                                                }
+                                                Modification { entry_mode, .. } => {
+                                                    if entry_mode.is_no_tree() {
+                                                        files.modified += 1;
+                                                    }
+                                                    if line_stats {
+                                                        let is_text_file = mime_guess::from_path(
+                                                            git::path::from_bstr(change.location).as_ref(),
+                                                        )
+                                                        .first_or_text_plain()
+                                                        .type_()
+                                                            == mime_guess::mime::TEXT;
+                                                        if let Some(Ok(diff)) =
+                                                            is_text_file.then(|| change.event.diff()).flatten()
+                                                        {
+                                                            use git::diff::lines::similar::ChangeTag::*;
+                                                            let mut nl = 0;
+                                                            for change in diff
+                                                                .text(git::diff::lines::Algorithm::Myers)
+                                                                .iter_all_changes()
+                                                            {
+                                                                match change.tag() {
+                                                                    Delete => {
+                                                                        lines.removed += 1;
+                                                                        nl += 1;
+                                                                    }
+                                                                    Insert => {
+                                                                        lines.added += 1;
+                                                                        nl += 1
+                                                                    }
+                                                                    Equal => {}
+                                                                }
+                                                            }
+                                                            if let Some(c) = lines_counter.as_ref() {
+                                                                c.fetch_add(nl, Ordering::SeqCst);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            Ok::<_, Infallible>(Default::default())
+                                        })?;
+                                        out.push((commit_idx, files, lines));
+                                    }
+                                    Ok(out)
+                                }
+                            })
+                        })
+                        .collect::<Vec<_>>();
+                    (Some(tx), stat_workers)
+                })
+                .unwrap_or_else(Default::default);
+
+            let mut commit_idx = 0_u32;
+            let commit_iter = interrupt::Iter::new(
+                commit_id.ancestors(|oid, buf| {
+                    progress.inc();
+                    repo.objects.find(oid, buf).map(|obj| {
+                        tx.send((commit_idx, obj.data.to_owned())).ok();
+                        if let Some((tx_tree, first_parent, commit)) = tx_tree_id.as_ref().and_then(|tx| {
+                            git::objs::CommitRefIter::from_bytes(obj.data)
+                                .parent_ids()
+                                .next()
+                                .map(|first_parent| (tx, Some(first_parent), oid.to_owned()))
+                        }) {
+                            tx_tree.send((commit_idx, first_parent, commit)).ok();
+                        }
+                        commit_idx = commit_idx.checked_add(1).expect("less then 4 billion commits");
+                        git::objs::CommitRefIter::from_bytes(obj.data)
+                    })
+                }),
+                || anyhow!("Cancelled by user"),
+            );
+            let mut is_shallow = false;
+            for c in commit_iter {
+                match c? {
+                    Ok(c) => c,
+                    Err(git::traverse::commit::ancestors::Error::FindExisting { .. }) => {
+                        is_shallow = true;
+                        break;
+                    }
+                    Err(err) => return Err(err.into()),
+                };
+            }
+            drop(tx);
+            drop(tx_tree_id);
+            progress.show_throughput(start);
+            drop(progress);
+
+            let stats_by_commit_idx = match stat_progress {
+                Some(mut progress) => {
+                    progress.set_max(Some(commit_idx as usize));
+                    let mut stats = Vec::new();
+                    for handle in stat_threads {
+                        stats.extend(handle.join().expect("no panic")?);
+                        if git::interrupt::is_triggered() {
+                            bail!("Cancelled by user");
                         }
                     }
-                    out.shrink_to_fit();
-                    out.sort_by(|a, b| {
-                        a.email.cmp(&b.email).then(
-                            a.time
-                                .seconds_since_unix_epoch
-                                .cmp(&b.time.seconds_since_unix_epoch)
-                                .reverse(),
-                        )
-                    });
-                    Ok(out)
-                });
-
-                let commit_iter = interrupt::Iter::new(
-                    commit_id.ancestors(|oid, buf| {
-                        progress.inc();
-                        repo.objects.find(oid, buf).map(|o| {
-                            tx.send(o.data.to_owned()).ok();
-                            objs::CommitRefIter::from_bytes(o.data)
-                        })
-                    }),
-                    || anyhow!("Cancelled by user"),
-                );
-                let mut is_shallow = false;
-                for c in commit_iter {
-                    match c? {
-                        Ok(c) => c,
-                        Err(git::traverse::commit::ancestors::Error::FindExisting { .. }) => {
-                            is_shallow = true;
-                            break;
-                        }
-                        Err(err) => return Err(err.into()),
-                    };
+                    stats.sort_by_key(|t| t.0);
+                    progress.show_throughput(start);
+                    stats
                 }
-                drop(tx);
+                None => Vec::new(),
+            };
+            if let Some(mut progress) = change_progress {
                 progress.show_throughput(start);
-                Ok((handle.join().expect("no panic")?, is_shallow))
-            },
-        )?
+            }
+            if let Some(mut progress) = lines_progress {
+                progress.show_throughput(start);
+            }
+
+            Ok((
+                commit_thread.join().expect("no panic")?,
+                stats_by_commit_idx,
+                is_shallow,
+            ))
+        })?
     };
 
-    if all_commits.is_empty() {
+    if commit_authors.is_empty() {
         bail!("No commits to process");
     }
 
     let start = Instant::now();
-    let mut current_email = &all_commits[0].email;
+    let mut current_email = &commit_authors[0].1.email;
     let mut slice_start = 0;
     let mut results_by_hours = Vec::new();
     let mut ignored_bot_commits = 0_u32;
-    for (idx, elm) in all_commits.iter().enumerate() {
+    for (idx, (_, elm)) in commit_authors.iter().enumerate() {
         if elm.email != *current_email {
-            let estimate = estimate_hours(&all_commits[slice_start..idx]);
+            let estimate = estimate_hours(&commit_authors[slice_start..idx], &stats);
             slice_start = idx;
             current_email = &elm.email;
             if ignore_bots && estimate.name.contains_str(b"[bot]") {
@@ -149,8 +341,8 @@ where
             results_by_hours.push(estimate);
         }
     }
-    if let Some(commits) = all_commits.get(slice_start..) {
-        results_by_hours.push(estimate_hours(commits));
+    if let Some(commits) = commit_authors.get(slice_start..) {
+        results_by_hours.push(estimate_hours(commits, &stats));
     }
 
     let num_authors = results_by_hours.len();
@@ -167,21 +359,26 @@ where
     let elapsed = start.elapsed();
     progress.done(format!(
         "Extracted and organized data from {} commits in {:?} ({:0.0} commits/s)",
-        all_commits.len(),
+        commit_authors.len(),
         elapsed,
-        all_commits.len() as f32 / elapsed.as_secs_f32()
+        commit_authors.len() as f32 / elapsed.as_secs_f32()
     ));
 
     let num_unique_authors = results_by_hours.len();
-    let (total_hours, total_commits) = results_by_hours
+    let (total_hours, total_commits, total_files, total_lines) = results_by_hours
         .iter()
-        .map(|e| (e.hours, e.num_commits))
-        .reduce(|a, b| (a.0 + b.0, a.1 + b.1))
+        .map(|e| (e.hours, e.num_commits, e.files, e.lines))
+        .reduce(|a, b| (a.0 + b.0, a.1 + b.1, a.2.clone().added(&b.2), a.3.clone().added(&b.3)))
         .expect("at least one commit at this point");
     if show_pii {
         results_by_hours.sort_by(|a, b| a.hours.partial_cmp(&b.hours).unwrap_or(std::cmp::Ordering::Equal));
         for entry in results_by_hours.iter() {
-            entry.write_to(total_hours, &mut out)?;
+            entry.write_to(
+                total_hours,
+                file_stats.then(|| total_files),
+                line_stats.then(|| total_lines),
+                &mut out,
+            )?;
             writeln!(out)?;
         }
     }
@@ -194,6 +391,20 @@ where
         is_shallow.then(|| " (shallow)").unwrap_or_default(),
         num_authors
     )?;
+    if file_stats {
+        writeln!(
+            out,
+            "total files added/removed/modified: {}/{}/{}",
+            total_files.added, total_files.removed, total_files.modified
+        )?;
+    }
+    if line_stats {
+        writeln!(
+            out,
+            "total lines added/removed: {}/{}",
+            total_lines.added, total_lines.removed
+        )?;
+    }
     if !omit_unify_identities {
         writeln!(
             out,
@@ -207,7 +418,7 @@ where
     }
     assert_eq!(
         total_commits,
-        all_commits.len() as u32 - ignored_bot_commits,
+        commit_authors.len() as u32 - ignored_bot_commits,
         "need to get all commits"
     );
     Ok(())
@@ -216,30 +427,56 @@ where
 const MINUTES_PER_HOUR: f32 = 60.0;
 const HOURS_PER_WORKDAY: f32 = 8.0;
 
-fn estimate_hours(commits: &[actor::SignatureRef<'static>]) -> WorkByEmail {
+fn estimate_hours(
+    commits: &[(u32, actor::SignatureRef<'static>)],
+    stats: &[(u32, FileStats, LineStats)],
+) -> WorkByEmail {
     assert!(!commits.is_empty());
     const MAX_COMMIT_DIFFERENCE_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
     const FIRST_COMMIT_ADDITION_IN_MINUTES: f32 = 2.0 * MINUTES_PER_HOUR;
 
-    let hours = FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0
-        + commits.iter().rev().tuple_windows().fold(
-            0_f32,
-            |hours, (cur, next): (&actor::SignatureRef<'_>, &actor::SignatureRef<'_>)| {
-                let change_in_minutes =
-                    (next.time.seconds_since_unix_epoch - cur.time.seconds_since_unix_epoch) as f32 / MINUTES_PER_HOUR;
-                if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
-                    hours + change_in_minutes as f32 / MINUTES_PER_HOUR
-                } else {
-                    hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR)
-                }
-            },
-        );
-    let author = &commits[0];
+    let hours_for_commits = commits.iter().map(|t| &t.1).rev().tuple_windows().fold(
+        0_f32,
+        |hours, (cur, next): (&actor::SignatureRef<'_>, &actor::SignatureRef<'_>)| {
+            let change_in_minutes = (next
+                .time
+                .seconds_since_unix_epoch
+                .saturating_sub(cur.time.seconds_since_unix_epoch)) as f32
+                / MINUTES_PER_HOUR;
+            if change_in_minutes < MAX_COMMIT_DIFFERENCE_IN_MINUTES {
+                hours + change_in_minutes as f32 / MINUTES_PER_HOUR
+            } else {
+                hours + (FIRST_COMMIT_ADDITION_IN_MINUTES / MINUTES_PER_HOUR)
+            }
+        },
+    );
+
+    let author = &commits[0].1;
+    let (files, lines) = (!stats.is_empty())
+        .then(|| {
+            commits
+                .iter()
+                .map(|t| &t.0)
+                .fold((FileStats::default(), LineStats::default()), |mut acc, id| match stats
+                    .binary_search_by(|t| t.0.cmp(id))
+                {
+                    Ok(idx) => {
+                        let t = &stats[idx];
+                        acc.0.add(&t.1);
+                        acc.1.add(&t.2);
+                        acc
+                    }
+                    Err(_) => acc,
+                })
+        })
+        .unwrap_or_default();
     WorkByEmail {
         name: author.name,
         email: author.email,
-        hours,
+        hours: FIRST_COMMIT_ADDITION_IN_MINUTES / 60.0 + hours_for_commits,
         num_commits: commits.len() as u32,
+        files,
+        lines,
     }
 }
 
@@ -276,6 +513,8 @@ struct WorkByPerson {
     email: Vec<&'static BStr>,
     hours: f32,
     num_commits: u32,
+    files: FileStats,
+    lines: LineStats,
 }
 
 impl<'a> WorkByPerson {
@@ -288,6 +527,7 @@ impl<'a> WorkByPerson {
         }
         self.num_commits += other.num_commits;
         self.hours += other.hours;
+        self.files.add(&other.files);
     }
 }
 
@@ -298,12 +538,20 @@ impl<'a> From<&'a WorkByEmail> for WorkByPerson {
             email: vec![w.email],
             hours: w.hours,
             num_commits: w.num_commits,
+            files: w.files,
+            lines: w.lines,
         }
     }
 }
 
 impl WorkByPerson {
-    fn write_to(&self, total_hours: f32, mut out: impl std::io::Write) -> std::io::Result<()> {
+    fn write_to(
+        &self,
+        total_hours: f32,
+        total_files: Option<FileStats>,
+        total_lines: Option<LineStats>,
+        mut out: impl std::io::Write,
+    ) -> std::io::Result<()> {
         writeln!(
             out,
             "{} <{}>",
@@ -317,7 +565,27 @@ impl WorkByPerson {
             self.hours,
             self.hours / HOURS_PER_WORKDAY,
             (self.hours / total_hours) * 100.0
-        )
+        )?;
+        if let Some(total) = total_files {
+            writeln!(
+                out,
+                "total files added/removed/modified: {}/{}/{} ({:.02}%)",
+                self.files.added,
+                self.files.removed,
+                self.files.modified,
+                (self.files.sum() / total.sum()) * 100.0
+            )?;
+        }
+        if let Some(total) = total_lines {
+            writeln!(
+                out,
+                "total lines added/removed: {}/{} ({:.02}%)",
+                self.lines.added,
+                self.lines.removed,
+                (self.lines.sum() / total.sum()) * 100.0
+            )?;
+        }
+        Ok(())
     }
 }
 
@@ -327,4 +595,63 @@ struct WorkByEmail {
     email: &'static BStr,
     hours: f32,
     num_commits: u32,
+    files: FileStats,
+    lines: LineStats,
+}
+
+/// File statistics for a particular commit.
+#[derive(Debug, Default, Copy, Clone)]
+struct FileStats {
+    /// amount of added files
+    added: usize,
+    /// amount of removed files
+    removed: usize,
+    /// amount of modified files
+    modified: usize,
+}
+
+/// Line statistics for a particular commit.
+#[derive(Debug, Default, Copy, Clone)]
+struct LineStats {
+    /// amount of added lines
+    added: usize,
+    /// amount of removed lines
+    removed: usize,
+}
+
+impl FileStats {
+    fn add(&mut self, other: &FileStats) -> &mut Self {
+        self.added += other.added;
+        self.removed += other.removed;
+        self.modified += other.modified;
+        self
+    }
+
+    fn added(&self, other: &FileStats) -> Self {
+        let mut a = *self;
+        a.add(other);
+        a
+    }
+
+    fn sum(&self) -> f32 {
+        (self.added + self.removed + self.modified) as f32
+    }
+}
+
+impl LineStats {
+    fn add(&mut self, other: &LineStats) -> &mut Self {
+        self.added += other.added;
+        self.removed += other.removed;
+        self
+    }
+
+    fn added(&self, other: &LineStats) -> Self {
+        let mut a = *self;
+        a.add(other);
+        a
+    }
+
+    fn sum(&self) -> f32 {
+        (self.added + self.removed) as f32
+    }
 }

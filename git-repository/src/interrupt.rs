@@ -82,6 +82,11 @@ where
     pub fn into_inner(self) -> I {
         self.inner.inner
     }
+
+    /// Return the inner iterator as reference
+    pub fn inner(&self) -> &I {
+        &self.inner.inner
+    }
 }
 
 impl<I, EFN, E> Iterator for Iter<I, EFN>

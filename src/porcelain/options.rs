@@ -101,6 +101,14 @@ pub struct EstimateHours {
     /// Ignore github bots which match the `[bot]` search string.
     #[clap(short = 'b', long)]
     pub no_bots: bool,
+    /// Collect additional information about file modifications, additions and deletions (without rename tracking).
+    #[clap(short = 'f', long)]
+    pub file_stats: bool,
+    /// Collect additional information about lines added and deleted (without rename tracking).
+    ///
+    /// Note that this implies the work to be done for file-stats, so it should be set as well.
+    #[clap(short = 'l', long)]
+    pub line_stats: bool,
     /// Show personally identifiable information before the summary. Includes names and email addresses.
     #[clap(short = 'p', long)]
     pub show_pii: bool,

@@ -48,10 +48,10 @@ path = "tests/async-transport.rs"
 required-features = ["async-client"]
 
 [dependencies]
-git-features = { version = "^0.22.4", path = "../git-features" }
-git-url = { version = "^0.8.0", path = "../git-url" }
-git-sec = { version = "^0.3.1", path = "../git-sec" }
-git-packetline = { version = "^0.12.7", path = "../git-packetline" }
+git-features = { version = "^0.22.5", path = "../git-features" }
+git-url = { version = "^0.9.0", path = "../git-url" }
+git-sec = { version = "^0.4.0", path = "../git-sec" }
+git-packetline = { version = "^0.13.0", path = "../git-packetline" }
 
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["std", "derive"]}
 bstr = { version = "1.0.1", default-features = false, features = ["std"] }

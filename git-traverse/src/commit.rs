@@ -46,6 +46,7 @@ impl Default for Sorting {
 
 ///
 pub mod ancestors {
+    use std::borrow::Borrow;
     use std::{borrow::BorrowMut, collections::VecDeque, iter::FromIterator};
 
     use git_hash::{oid, ObjectId};
@@ -85,6 +86,7 @@ pub mod ancestors {
         }
     }
 
+    /// Builder
     impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut> {
         /// Change our commit parent handling mode to the given one.
         pub fn parents(mut self, mode: Parents) -> Self {
@@ -93,6 +95,7 @@ pub mod ancestors {
         }
     }
 
+    /// Builder
     impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
@@ -119,6 +122,7 @@ pub mod ancestors {
         }
     }
 
+    /// Initialization
     impl<Find, StateMut, E> Ancestors<Find, fn(&oid) -> bool, StateMut>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
@@ -140,6 +144,7 @@ pub mod ancestors {
         }
     }
 
+    /// Initialization
     impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
@@ -186,6 +191,16 @@ pub mod ancestors {
             }
         }
     }
+    /// Access
+    impl<Find, Predicate, StateMut> Ancestors<Find, Predicate, StateMut>
+    where
+        StateMut: Borrow<State>,
+    {
+        /// Return an iterator for accessing more of the current commits data.
+        pub fn commit_iter(&self) -> CommitRefIter<'_> {
+            CommitRefIter::from_bytes(&self.state.borrow().buf)
+        }
+    }
 
     impl<Find, Predicate, StateMut, E> Iterator for Ancestors<Find, Predicate, StateMut>
     where
@@ -208,6 +223,7 @@ pub mod ancestors {
         }
     }
 
+    /// Utilities
     impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,
@@ -272,6 +288,7 @@ pub mod ancestors {
         }
     }
 
+    /// Utilities
     impl<Find, Predicate, StateMut, E> Ancestors<Find, Predicate, StateMut>
     where
         Find: for<'a> FnMut(&oid, &'a mut Vec<u8>) -> Result<CommitRefIter<'a>, E>,

@@ -18,7 +18,7 @@ default = []
 ## Discover all git repositories within a directory. Particularly useful with [skim](https://github.com/lotabout/skim).
 organize = ["git-url", "jwalk"]
 ## Derive the amount of time invested into a git repository akin to [git-hours](https://github.com/kimmobrunfeldt/git-hours).
-estimate-hours = ["itertools", "fs-err"]
+estimate-hours = ["itertools", "fs-err", "num_cpus", "crossbeam-channel", "mime_guess"]
 
 #! ### Mutually Exclusive Networking
 #! If both are set, _blocking-client_ will take precedence, allowing `--all-features` to be used.
@@ -37,9 +37,9 @@ serde1 = ["git-commitgraph/serde1", "git-repository/serde1", "serde_json", "serd
 [dependencies]
 # deselect everything else (like "performance") as this should be controllable by the parent application.
 git-repository = { version = "^0.24.0", path = "../git-repository", default-features = false }
-git-pack-for-configuration-only = { package = "git-pack", version = "^0.22.0", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
+git-pack-for-configuration-only = { package = "git-pack", version = "^0.23.0", path = "../git-pack", default-features = false, features = ["pack-cache-lru-dynamic", "pack-cache-lru-static"] }
 git-transport-configuration-only = { package = "git-transport", version = "^0.20.0", path = "../git-transport", default-features = false }
-git-commitgraph = { version = "^0.8.2", path = "../git-commitgraph" }
+git-commitgraph = { version = "^0.9.0", path = "../git-commitgraph" }
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"] }
 anyhow = "1.0.42"
 thiserror = "1.0.34"
@@ -56,11 +56,15 @@ futures-io = { version = "0.3.16", optional = true }
 blocking = { version = "1.0.2", optional = true }
 
 # for 'organize' functionality
-git-url = { version = "^0.8.0", path = "../git-url", optional = true }
+git-url = { version = "^0.9.0", path = "../git-url", optional = true }
 jwalk = { version = "0.6.0", optional = true }
 
+# for 'hours'
 itertools = { version = "0.10.1", optional = true }
 fs-err = { version = "2.6.0", optional = true }
+num_cpus = { version = "1.13.1", optional = true }
+crossbeam-channel = { version = "0.5.6", optional = true }
+mime_guess = { version = "2.0.4", optional = true }
 
 document-features = { version = "0.2.0", optional = true }
 
