@@ -237,10 +237,10 @@ fn add_item_if_package_changed<'a>(
             let mut repo = ctx.repo.clone();
             repo.object_cache_size(1024 * 1024);
             let current = git::Tree::from_data(item.id, data_by_tree_id[&item.tree_id].to_owned(), &ctx.repo)
-                .lookup_path(components.iter().copied())?;
+                .lookup_entry(components.iter().copied())?;
             let parent = match item.parent_tree_id {
                 Some(tree_id) => git::Tree::from_data(tree_id, data_by_tree_id[&tree_id].to_owned(), &ctx.repo)
-                    .lookup_path(components.iter().copied())?,
+                    .lookup_entry(components.iter().copied())?,
                 None => None,
             };
             match (current, parent) {
