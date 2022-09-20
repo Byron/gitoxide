@@ -55,6 +55,24 @@ title "Porcelain ${kind}"
                 expect_run_sh $SUCCESSFULLY "$exe t estimate-hours --omit-unify-identities 2>/dev/null"
               }
             )
+            (with "the --file-stats argument"
+              it "succeeds and shows file statistics" && {
+                WITH_SNAPSHOT="$snapshot/file-stats-success" \
+                expect_run_sh $SUCCESSFULLY "$exe tool estimate-hours --file-stats 2>/dev/null"
+              }
+            )
+            (with "the --line-stats argument"
+              it "succeeds and shows line statistics" && {
+                WITH_SNAPSHOT="$snapshot/line-stats-success" \
+                expect_run_sh $SUCCESSFULLY "$exe tool estimate-hours --line-stats 2>/dev/null"
+              }
+            )
+            (with "all --stats arguments and pii"
+              it "succeeds and shows all statistics" && {
+                WITH_SNAPSHOT="$snapshot/all-stats-success" \
+                expect_run_sh $SUCCESSFULLY "$exe tool estimate-hours -pfl 2>/dev/null"
+              }
+            )
             (with "a branch name that doesn't exist"
               it "fails and shows a decent enough error message" && {
                 WITH_SNAPSHOT="$snapshot/invalid-branch-name-failure" \
