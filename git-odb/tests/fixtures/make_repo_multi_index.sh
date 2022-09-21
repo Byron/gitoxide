@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eu -o pipefail
 
+omit_multi_index=${1:-no}
+
 git init -q
 git config commit.gpgsign false
 
@@ -26,6 +28,7 @@ for round in $(seq $rounds); do
   write_files "${dirs[$dir_index]}" $num_files "$round"
   git add .
   git commit -qm "$round $num_files"
+  git repack
 done
 
 echo hello world > referee
@@ -34,6 +37,6 @@ git commit -qm "to be forgotten"
 git tag -m "a tag object" referrer
 git reset --hard HEAD~1
 
-# speed up all access by creating a pack
-git gc --aggressive
-git multi-pack-index write
+if [ "$omit_multi_index" == "no" ]; then
+  git multi-pack-index write
+fi

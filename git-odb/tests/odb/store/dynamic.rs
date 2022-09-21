@@ -62,7 +62,7 @@ fn multi_index_access() -> crate::Result {
         assert!(handle.find(oid, &mut buf).is_ok());
         count += 1;
     }
-    assert_eq!(count, 868);
+    assert_eq!(count, 1732);
 
     assert_eq!(
         handle.store_ref().metrics(),
@@ -71,8 +71,8 @@ fn multi_index_access() -> crate::Result {
             num_refreshes: 1,
             open_reachable_indices: 1,
             known_reachable_indices: 1,
-            open_reachable_packs: 1,
-            known_packs: 1,
+            open_reachable_packs: 15,
+            known_packs: 15,
             unused_slots: 31,
             loose_dbs: 1,
             unreachable_indices: 0,
@@ -91,8 +91,8 @@ fn multi_index_access() -> crate::Result {
             num_refreshes: 2,
             open_reachable_indices: 1,
             known_reachable_indices: 1,
-            open_reachable_packs: 1,
-            known_packs: 1,
+            open_reachable_packs: 15,
+            known_packs: 15,
             unused_slots: 31,
             loose_dbs: 1,
             unreachable_indices: 0,
@@ -115,7 +115,7 @@ fn multi_index_access() -> crate::Result {
             open_reachable_indices: 1,
             known_reachable_indices: 1,
             open_reachable_packs: 0,
-            known_packs: 1,
+            known_packs: 15,
             unused_slots: 31,
             loose_dbs: 1,
             unreachable_indices: 0,
@@ -147,7 +147,7 @@ fn multi_index_keep_open() -> crate::Result {
             open_reachable_indices: 1,
             known_reachable_indices: 1,
             open_reachable_packs: 0,
-            known_packs: 1,
+            known_packs: 15,
             unused_slots: 31,
             loose_dbs: 1,
             unreachable_indices: 0,
@@ -176,7 +176,7 @@ fn multi_index_keep_open() -> crate::Result {
             open_reachable_indices: 1,
             known_reachable_indices: 1,
             open_reachable_packs: 0, /*no pack is open anymore at least as seen from the index*/
-            known_packs: 1,
+            known_packs: 15,
             unused_slots: 30,
             loose_dbs: 1,
             unreachable_indices: 1,

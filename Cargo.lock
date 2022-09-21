@@ -1416,6 +1416,7 @@ name = "git-odb"
 version = "0.33.0"
 dependencies = [
  "arc-swap",
+ "crossbeam-channel",
  "document-features",
  "filetime",
  "git-actor",
@@ -1427,6 +1428,7 @@ dependencies = [
  "git-quote",
  "git-testtools",
  "maplit",
+ "num_cpus",
  "parking_lot 0.12.1",
  "pretty_assertions",
  "serde",

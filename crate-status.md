@@ -473,6 +473,8 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
       * [x] tree entries
     * **diffs/changes**
         * [x] tree with other tree
+           * [ ] respect case-sensitivity of host filesystem.
+           * [ ] a way to access various diff related settings or use them
         * [ ] tree with working tree
         * [x] diffs between modified blobs with various algorithms
         * [ ] tree with index

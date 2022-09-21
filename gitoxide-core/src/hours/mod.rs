@@ -18,6 +18,8 @@ pub struct Context<W> {
     pub file_stats: bool,
     /// Collect how many lines in files have been added, removed and modified (without rename tracking).
     pub line_stats: bool,
+    /// The amount of threads to use. If unset, use all cores, if 0 use al physical cores.
+    pub threads: Option<usize>,
     /// Omit unifying identities by name and email which can lead to the same author appear multiple times
     /// due to using different names or email addresses.
     pub omit_unify_identities: bool,
@@ -41,6 +43,7 @@ pub fn estimate<W, P>(
         file_stats,
         line_stats,
         omit_unify_identities,
+        threads,
         mut out,
     }: Context<W>,
 ) -> anyhow::Result<()>
@@ -52,6 +55,14 @@ where
     let commit_id = repo.rev_parse_single(rev_spec)?.detach();
     let mut string_heap = BTreeSet::<&'static [u8]>::new();
     let needs_stats = file_stats || line_stats;
+    let threads = {
+        let t = threads.unwrap_or_else(num_cpus::get);
+        (t == 0)
+            .then(num_cpus::get_physical)
+            .unwrap_or(t)
+            .saturating_sub(1 /*main thread*/)
+            .max(1)
+    };
 
     let (commit_authors, stats, is_shallow, skipped_merge_commits) = {
         let stat_progress = needs_stats.then(|| progress.add_child("extract stats")).map(|mut p| {
@@ -125,10 +136,9 @@ where
 
             let (tx_tree_id, stat_threads) = needs_stats
                 .then(|| {
-                    let num_threads = num_cpus::get().saturating_sub(1 /*main thread*/).max(1);
                     let (tx, rx) =
                         crossbeam_channel::unbounded::<(u32, Option<git::hash::ObjectId>, git::hash::ObjectId)>();
-                    let stat_workers = (0..num_threads)
+                    let stat_workers = (0..threads)
                         .map(|_| {
                             scope.spawn({
                                 let commit_counter = stat_counter.clone();

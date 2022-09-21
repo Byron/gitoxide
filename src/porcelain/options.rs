@@ -109,6 +109,9 @@ pub struct EstimateHours {
     /// Note that this implies the work to be done for file-stats, so it should be set as well.
     #[clap(short = 'l', long)]
     pub line_stats: bool,
+    /// The amount of threads to use. If unset, use all cores, if 0 use al physical cores.
+    #[clap(short = 't', long)]
+    pub threads: Option<usize>,
     /// Show personally identifiable information before the summary. Includes names and email addresses.
     #[clap(short = 'p', long)]
     pub show_pii: bool,
