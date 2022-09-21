@@ -102,10 +102,10 @@ mod impl_ {
                 PCWSTR(to_wide_path(path).as_ptr()),
                 SE_FILE_OBJECT,
                 OWNER_SECURITY_INFORMATION,
-                &mut folder_owner,
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
+                Some(&mut folder_owner),
+                None,
+                None,
+                None,
                 &mut pdescriptor,
             );
 
@@ -119,18 +119,10 @@ mod impl_ {
 
                 let mut buffer_size = 0;
                 let mut buffer = Vec::<u8>::new();
-                GetTokenInformation(token, TokenOwner, std::ptr::null_mut(), 0, &mut buffer_size);
+                GetTokenInformation(token, TokenOwner, None, &mut buffer_size);
                 if buffer_size != 0 {
                     buffer.resize(buffer_size as usize, 0);
-                    if GetTokenInformation(
-                        token,
-                        TokenOwner,
-                        buffer.as_mut_ptr() as _,
-                        buffer_size,
-                        &mut buffer_size,
-                    )
-                    .as_bool()
-                    {
+                    if GetTokenInformation(token, TokenOwner, Some(buffer.as_mut_slice()), &mut buffer_size).as_bool() {
                         let token_owner = buffer.as_ptr() as *const TOKEN_OWNER;
                         let token_owner = (*token_owner).Owner;
 
