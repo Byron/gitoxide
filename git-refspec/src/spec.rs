@@ -84,7 +84,7 @@ mod impls {
 }
 
 /// Access
-impl RefSpecRef<'_> {
+impl<'a> RefSpecRef<'a> {
     /// Return the left-hand side of the spec, typically the source.
     /// It takes many different forms so don't rely on this being a ref name.
     ///
@@ -129,7 +129,7 @@ impl RefSpecRef<'_> {
     }
 
     /// Transform the state of the refspec into an instruction making clear what to do with it.
-    pub fn instruction(&self) -> Instruction<'_> {
+    pub fn instruction(&self) -> Instruction<'a> {
         match self.op {
             Operation::Fetch => match (self.mode, self.src, self.dst) {
                 (Mode::Normal | Mode::Force, Some(src), None) => Instruction::Fetch(Fetch::Only { src }),
