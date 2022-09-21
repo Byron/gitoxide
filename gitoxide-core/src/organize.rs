@@ -173,10 +173,10 @@ fn handle(
     }
 
     let destination = canonicalized_destination
-        .join(
-            url.host()
-                .ok_or_else(|| anyhow::Error::msg(format!("Remote URLs must have host names: {}", url.to_bstring())))?,
-        )
+        .join(match url.host() {
+            Some(h) => h,
+            None => return Ok(()),
+        })
         .join(to_relative({
             let mut path = git_url::expand_path(None, url.path.as_bstr())?;
             match kind {
