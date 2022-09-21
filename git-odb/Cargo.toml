@@ -48,6 +48,8 @@ git-actor = { path = "../git-actor" }
 pretty_assertions = "1.0.0"
 filetime = "0.2.15"
 maplit = "1.0.2"
+num_cpus = "1.13.1"
+crossbeam-channel = "0.5.6"
 
 [package.metadata.docs.rs]
 features = ["document-features", "serde1"]
