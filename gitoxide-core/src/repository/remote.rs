@@ -164,6 +164,15 @@ mod refs_impl {
                 }
             }
         }
+        if map.remote_refs.len() - map.mappings.len() != 0 {
+            writeln!(
+                err,
+                "server sent {} tips, {} were filtered due to {} refspec(s).",
+                map.remote_refs.len(),
+                map.remote_refs.len() - map.mappings.len(),
+                refspecs.len()
+            )?;
+        }
         Ok(())
     }
 
