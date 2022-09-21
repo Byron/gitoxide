@@ -57,11 +57,7 @@ where
     let needs_stats = file_stats || line_stats;
     let threads = {
         let t = threads.unwrap_or_else(num_cpus::get);
-        (t == 0)
-            .then(num_cpus::get_physical)
-            .unwrap_or(t)
-            .saturating_sub(1 /*main thread*/)
-            .max(1)
+        (t == 0).then(num_cpus::get_physical).unwrap_or(t)
     };
 
     let (commit_authors, stats, is_shallow, skipped_merge_commits) = {
