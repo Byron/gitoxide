@@ -34,8 +34,9 @@ impl Context {
         changelog: bool,
         changelog_links: bool,
     ) -> anyhow::Result<Self> {
+        let base = crate::Context::new(crate_names, changelog, bump, bump_dependencies)?;
         let changelog_links = if changelog_links {
-            crate::git::remote_url()?
+            crate::git::remote_url(&base.repo)?
                 .map(|url| Linkables::AsLinks {
                     repository_url: url.into(),
                 })
@@ -43,10 +44,7 @@ impl Context {
         } else {
             Linkables::AsText
         };
-        Ok(Context {
-            base: crate::Context::new(crate_names, changelog, bump, bump_dependencies)?,
-            changelog_links,
-        })
+        Ok(Context { base, changelog_links })
     }
 }
 
