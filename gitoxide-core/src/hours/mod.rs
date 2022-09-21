@@ -51,9 +51,9 @@ where
     let repo = git::discover(working_dir)?.apply_environment();
     let commit_id = repo.rev_parse_single(rev_spec)?.detach();
     let mut string_heap = BTreeSet::<&'static [u8]>::new();
+    let needs_stats = file_stats || line_stats;
 
-    let (commit_authors, stats, is_shallow) = {
-        let needs_stats = file_stats || line_stats;
+    let (commit_authors, stats, is_shallow, skipped_merge_commits) = {
         let stat_progress = needs_stats.then(|| progress.add_child("extract stats")).map(|mut p| {
             p.init(None, progress::count("commits"));
             p
@@ -260,16 +260,24 @@ where
                 .unwrap_or_else(Default::default);
 
             let mut commit_idx = 0_u32;
+            let mut skipped_merge_commits = 0;
             let commit_iter = interrupt::Iter::new(
                 commit_id.ancestors(|oid, buf| {
                     progress.inc();
                     repo.objects.find(oid, buf).map(|obj| {
                         tx.send((commit_idx, obj.data.to_owned())).ok();
                         if let Some((tx_tree, first_parent, commit)) = tx_tree_id.as_ref().and_then(|tx| {
-                            git::objs::CommitRefIter::from_bytes(obj.data)
-                                .parent_ids()
+                            let mut parents = git::objs::CommitRefIter::from_bytes(obj.data).parent_ids();
+                            let res = parents
                                 .next()
-                                .map(|first_parent| (tx, Some(first_parent), oid.to_owned()))
+                                .map(|first_parent| (tx, Some(first_parent), oid.to_owned()));
+                            match parents.next() {
+                                Some(_) => {
+                                    skipped_merge_commits += 1;
+                                    None
+                                }
+                                None => res,
+                            }
                         }) {
                             tx_tree.send((commit_idx, first_parent, commit)).ok();
                         }
@@ -322,6 +330,7 @@ where
                 commit_thread.join().expect("no panic")?,
                 stats_by_commit_idx,
                 is_shallow,
+                skipped_merge_commits,
             ))
         })?
     };
@@ -425,7 +434,10 @@ where
         )?;
     }
     if ignored_bot_commits != 0 {
-        writeln!(out, "commits by bots: {}", ignored_bot_commits,)?;
+        writeln!(out, "commits by bots: {}", ignored_bot_commits)?;
+    }
+    if needs_stats && skipped_merge_commits != 0 {
+        writeln!(out, "stats omitted for {} merge commits", skipped_merge_commits)?;
     }
     assert_eq!(
         total_commits,
