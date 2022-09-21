@@ -87,7 +87,7 @@ mod remote {
     /// Remote
     impl<'repo> Head<'repo> {
         /// Return the remote with which the currently checked our reference can be handled as configured by `branch.<name>.remote|pushRemote`
-        /// or fall back to the non-branch specific remote configuration.
+        /// or fall back to the non-branch specific remote configuration. `None` is returned if the head is detached or unborn.
         ///
         /// This is equivalent to calling [`Reference::remote(…)`][crate::Reference::remote()] and
         /// [`Repository::remote_default_name()`][crate::Repository::remote_default_name()] in order.
