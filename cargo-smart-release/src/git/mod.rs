@@ -1,4 +1,4 @@
-use std::{convert::TryInto, process::Command};
+use std::process::Command;
 
 use anyhow::{anyhow, bail};
 use cargo_metadata::{camino::Utf8Path, Package};
@@ -91,23 +91,12 @@ pub fn assure_clean_working_tree() -> anyhow::Result<()> {
     Ok(())
 }
 
-// TODO: actually derive this from the repository by doing a lot of git-config work, better to add that to git-repository
-pub fn head_remote_symbol() -> &'static str {
-    "origin"
-}
-
-// TODO: use git-repository for this
-pub fn remote_url() -> anyhow::Result<Option<git::Url>> {
-    let output = Command::new("git")
-        .arg("config")
-        .arg(format!("remote.{}.url", head_remote_symbol()))
-        .output()?;
-
-    output
-        .status
-        .success()
-        .then(|| output.stdout.as_bstr().try_into().map_err(Into::into))
-        .transpose()
+pub fn remote_url(repo: &git::Repository) -> anyhow::Result<Option<git::Url>> {
+    Ok(repo
+        .head()?
+        .into_remote(git::remote::Direction::Push)
+        .transpose()?
+        .and_then(|r| r.url(git::remote::Direction::Push).map(ToOwned::to_owned)))
 }
 
 pub fn author() -> anyhow::Result<git_repository::actor::Signature> {

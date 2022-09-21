@@ -2,7 +2,7 @@
 name = "git-features"
 description = "A crate to integrate various capabilities using compile-time feature flags"
 repository = "https://github.com/Byron/gitoxide"
-version = "0.22.5"
+version = "0.22.6"
 authors = ["Sebastian Thiel <sebastian.thiel@icloud.com>"]
 license = "MIT/Apache-2.0"
 edition = "2018"
@@ -130,12 +130,10 @@ once_cell = { version = "1.13.0", optional = true }
 document-features = { version = "0.2.0", optional = true }
 
 [target.'cfg(unix)'.dependencies]
-## for fs::open_options_no_follow()
-# TODO: ideally we conditionally import it only if a plumbing crate wants to use the underlying feature. Wanted to avoid to add to feature-toggle complexity.
 libc = { version = "0.2.119" }
 
 [dev-dependencies]
-bstr = { version = "0.2.15", default-features = false }
+bstr = { version = "1.0.1", default-features = false }
 
 
 # Assembly doesn't yet compile on MSVC on windows, but does on GNU, see https://github.com/RustCrypto/asm-hashes/issues/17

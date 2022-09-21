@@ -73,7 +73,7 @@ title "smart-release"
   (with "'c'"
     (with '-d minor to bump minor dependencies'
       it "succeeds" && {
-        expect_run $SUCCESSFULLY "$exe" smart-release c -d minor -b keep
+        expect_run $SUCCESSFULLY "$exe" smart-release c -d minor -b keep --no-push
       }
     )
   )

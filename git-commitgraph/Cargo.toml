@@ -17,7 +17,7 @@ doctest = false
 serde1 = ["serde", "git-hash/serde1", "bstr/serde"]
 
 [dependencies]
-git-features = { version = "^0.22.5", path = "../git-features", features = ["rustsha1"] }
+git-features = { version = "^0.22.6", path = "../git-features", features = ["rustsha1"] }
 git-hash = { version = "^0.9.10", path = "../git-hash" }
 git-chunk = { version = "^0.3.2", path = "../git-chunk" }
 

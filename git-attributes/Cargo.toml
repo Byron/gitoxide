@@ -16,7 +16,7 @@ doctest = false
 serde1 = ["serde", "bstr/serde", "git-glob/serde1", "compact_str/serde"]
 
 [dependencies]
-git-features = { version = "^0.22.5", path = "../git-features" }
+git-features = { version = "^0.22.6", path = "../git-features" }
 git-path = { version = "^0.5.0", path = "../git-path" }
 git-quote = { version = "^0.3.0", path = "../git-quote" }
 git-glob = { version = "^0.4.0", path = "../git-glob" }
@@ -25,7 +25,7 @@ bstr = { version = "1.0.1", default-features = false, features = ["std", "unicod
 unicode-bom = "1.1.4"
 thiserror = "1.0.26"
 serde = { version = "1.0.114", optional = true, default-features = false, features = ["derive"]}
-compact_str = "0.4"
+compact_str = "0.6.1"
 
 document-features = { version = "0.2.1", optional = true }
 

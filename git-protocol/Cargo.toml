@@ -39,7 +39,7 @@ path = "tests/async-protocol.rs"
 required-features = ["async-client"]
 
 [dependencies]
-git-features = { version = "^0.22.5", path = "../git-features", features = ["progress"] }
+git-features = { version = "^0.22.6", path = "../git-features", features = ["progress"] }
 git-transport = { version = "^0.20.0", path = "../git-transport" }
 git-hash = { version = "^0.9.10", path = "../git-hash" }
 git-credentials = { version = "^0.5.0", path = "../git-credentials" }

@@ -27,7 +27,7 @@ libc = "0.2.123"
 [target.'cfg(windows)'.dependencies]
 git-path = { version = "^0.5.0", path = "../git-path" }
 dirs = "4"
-windows = { version = "0.37.0", features = [ "alloc",
+windows = { version = "0.40.0", features = [
     "Win32_Foundation",
     "Win32_Security_Authorization",
     "Win32_Storage_FileSystem",

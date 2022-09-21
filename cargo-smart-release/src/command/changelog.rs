@@ -63,7 +63,7 @@ pub fn changelog(opts: Options, crates: Vec<String>) -> anyhow::Result<()> {
     let linkables = if dry_run || no_links {
         Linkables::AsText
     } else {
-        crate::git::remote_url()?
+        crate::git::remote_url(&ctx.repo)?
             .map(|url| Linkables::AsLinks {
                 repository_url: url.into(),
             })
