@@ -1,4 +1,4 @@
-use bstr::BStr;
+use bstr::{BStr, ByteSlice};
 
 use crate::{
     instruction::{Fetch, Push},
@@ -115,6 +115,17 @@ impl RefSpecRef<'_> {
             Operation::Push => self.src,
             Operation::Fetch => self.dst,
         }
+    }
+
+    /// Derive the prefix from the `source` side of this spec, if possible.
+    ///
+    /// This means it starts with `refs/`. Note that it won't contain more than two components, like `refs/heads/`
+    pub fn prefix(&self) -> Option<&BStr> {
+        let source = self.source()?;
+        let suffix = source.strip_prefix(b"refs/")?;
+        let slash_pos = suffix.find_byte(b'/')?;
+        let prefix = source[..="refs/".len() + slash_pos].as_bstr();
+        (!prefix.contains(&b'*')).then(|| prefix)
     }
 
     /// Transform the state of the refspec into an instruction making clear what to do with it.
