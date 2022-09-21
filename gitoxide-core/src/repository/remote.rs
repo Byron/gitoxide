@@ -73,7 +73,9 @@ mod refs_impl {
         let map = remote
             .connect(git::remote::Direction::Fetch, progress)
             .await?
-            .ref_map()
+            .ref_map(git::remote::ref_map::Options {
+                prefix_from_spec_as_filter_on_remote: !matches!(kind, refs::Kind::Remote),
+            })
             .await?;
 
         if handshake_info {

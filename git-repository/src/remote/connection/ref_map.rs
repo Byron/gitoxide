@@ -21,6 +21,22 @@ pub enum Error {
     MappingValidation(#[from] git_refspec::match_group::validate::Error),
 }
 
+/// For use in [`Connection::ref_map()`].
+#[derive(Debug, Copy, Clone)]
+pub struct Options {
+    /// Use a two-component prefix derived from the ref-spec's source, like `refs/heads/`  to let the server pre-filter refs
+    /// with great potential for savings in traffic and local CPU time.
+    pub prefix_from_spec_as_filter_on_remote: bool,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            prefix_from_spec_as_filter_on_remote: true,
+        }
+    }
+}
+
 impl<'remote, 'repo, T, P> Connection<'remote, 'repo, T, P>
 where
     T: Transport,
@@ -34,15 +50,20 @@ where
     ///
     /// Note that this doesn't fetch the objects mentioned in the tips nor does it make any change to underlying repository.
     #[git_protocol::maybe_async::maybe_async]
-    pub async fn ref_map(mut self) -> Result<fetch::RefMap<'remote>, Error> {
-        let res = self.ref_map_inner().await;
+    pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap<'remote>, Error> {
+        let res = self.ref_map_inner(options).await;
         git_protocol::fetch::indicate_end_of_interaction(&mut self.transport).await?;
         res
     }
 
     #[git_protocol::maybe_async::maybe_async]
-    async fn ref_map_inner(&mut self) -> Result<fetch::RefMap<'remote>, Error> {
-        let remote = self.fetch_refs().await?;
+    async fn ref_map_inner(
+        &mut self,
+        Options {
+            prefix_from_spec_as_filter_on_remote,
+        }: Options,
+    ) -> Result<fetch::RefMap<'remote>, Error> {
+        let remote = self.fetch_refs(prefix_from_spec_as_filter_on_remote).await?;
         let group = git_refspec::MatchGroup::from_fetch_specs(self.remote.fetch_specs.iter().map(|s| s.to_ref()));
         let (res, fixes) = group
             .match_remotes(remote.refs.iter().map(|r| {
@@ -79,7 +100,7 @@ where
         })
     }
     #[git_protocol::maybe_async::maybe_async]
-    async fn fetch_refs(&mut self) -> Result<HandshakeWithRefs, Error> {
+    async fn fetch_refs(&mut self, filter_by_prefix: bool) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
         let authenticate = match self.credentials.as_mut() {
             Some(f) => f,
@@ -107,14 +128,16 @@ where
                     outcome.server_protocol_version,
                     &outcome.capabilities,
                     |_capabilities, arguments, _features| {
-                        let mut seen = HashSet::new();
-                        for spec in specs {
-                            let spec = spec.to_ref();
-                            if seen.insert(spec.instruction()) {
-                                if let Some(prefix) = spec.prefix() {
-                                    let mut arg: BString = "ref-prefix ".into();
-                                    arg.push_str(prefix);
-                                    arguments.push(arg)
+                        if filter_by_prefix {
+                            let mut seen = HashSet::new();
+                            for spec in specs {
+                                let spec = spec.to_ref();
+                                if seen.insert(spec.instruction()) {
+                                    if let Some(prefix) = spec.prefix() {
+                                        let mut arg: BString = "ref-prefix ".into();
+                                        arg.push_str(prefix);
+                                        arguments.push(arg)
+                                    }
                                 }
                             }
                         }

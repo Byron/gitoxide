@@ -25,7 +25,7 @@ mod blocking_io {
 
             let remote = repo.find_remote("origin")?;
             let connection = remote.connect(Fetch, progress::Discard)?;
-            let map = connection.ref_map()?;
+            let map = connection.ref_map(Default::default())?;
             assert_eq!(
                 map.remote_refs.len(),
                 14,
