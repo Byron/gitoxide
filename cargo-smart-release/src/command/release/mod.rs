@@ -446,7 +446,7 @@ fn perform_release(ctx: &Context, options: Options, crates: &[traverse::Dependen
             tag_names.push(tag_name);
         }
     }
-    git::push_tags_and_head(&tag_names, options)?;
+    git::push_tags_and_head(&ctx.base.repo, &tag_names, options)?;
     if should_publish_to_github {
         for (publishee, new_version) in successful_publishees_and_version {
             release_section_by_publishee
