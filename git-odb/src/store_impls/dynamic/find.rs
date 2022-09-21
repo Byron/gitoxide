@@ -324,7 +324,6 @@ where
                                     })?
                                     .0
                                     .kind;
-                                let index = &mut snapshot.indices[idx];
                                 let handle::index_lookup::Outcome {
                                     object_index:
                                         handle::IndexForObjectInPack {
@@ -333,7 +332,22 @@ where
                                         },
                                     index_file,
                                     pack: possibly_pack,
-                                } = index.lookup(id).expect("to find the object again in snapshot");
+                                } = match snapshot.indices[idx].lookup(id) {
+                                    Some(res) => res,
+                                    None => {
+                                        let mut out = None;
+                                        for index in snapshot.indices.iter_mut() {
+                                            out = index.lookup(id);
+                                            if out.is_some() {
+                                                break;
+                                            }
+                                        }
+
+                                        out.unwrap_or_else(|| {
+                                           panic!("could not find object {} in any index after looking up one of its base objects {}", id, base_id)
+                                       })
+                                    }
+                                };
                                 let pack = possibly_pack
                                     .as_ref()
                                     .expect("pack to still be available like just now");
