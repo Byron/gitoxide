@@ -311,7 +311,7 @@ where
 
             let stats_by_commit_idx = match stat_progress {
                 Some(mut progress) => {
-                    progress.set_max(Some(commit_idx as usize));
+                    progress.set_max(Some(commit_idx as usize - skipped_merge_commits));
                     let mut stats = Vec::new();
                     for handle in stat_threads {
                         stats.extend(handle.join().expect("no panic")?);
