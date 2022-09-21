@@ -16,7 +16,7 @@ pub async fn refs(
     mut transport: impl Transport,
     protocol_version: Protocol,
     capabilities: &Capabilities,
-    mut prepare_ls_refs: impl FnMut(
+    prepare_ls_refs: impl FnOnce(
         &Capabilities,
         &mut Vec<BString>,
         &mut Vec<(&str, Option<&str>)>,
