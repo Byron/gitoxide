@@ -17,4 +17,4 @@ pub(crate) fn cow_str(s: &str) -> Cow<str> {
 }
 
 mod connect;
-mod list_refs;
+mod ref_map;

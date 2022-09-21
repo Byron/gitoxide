@@ -1,5 +1,7 @@
+use crate::bstr::{BString, ByteVec};
 use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
+use std::collections::HashSet;
 
 use crate::remote::{connection::HandshakeWithRefs, fetch, Connection, Direction};
 
@@ -99,11 +101,25 @@ where
         let refs = match outcome.refs.take() {
             Some(refs) => refs,
             None => {
+                let specs = &self.remote.fetch_specs;
                 git_protocol::fetch::refs(
                     &mut self.transport,
                     outcome.server_protocol_version,
                     &outcome.capabilities,
-                    |_a, _b, _c| Ok(git_protocol::fetch::delegate::LsRefsAction::Continue),
+                    |_capabilities, arguments, _features| {
+                        let mut seen = HashSet::new();
+                        for spec in specs {
+                            let spec = spec.to_ref();
+                            if seen.insert(spec.instruction()) {
+                                if let Some(prefix) = spec.prefix() {
+                                    let mut arg: BString = "ref-prefix ".into();
+                                    arg.push_str(prefix);
+                                    arguments.push(arg)
+                                }
+                            }
+                        }
+                        Ok(git_protocol::fetch::delegate::LsRefsAction::Continue)
+                    },
                     &mut self.progress,
                 )
                 .await?
