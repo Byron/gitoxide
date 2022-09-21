@@ -135,7 +135,7 @@ document-features = { version = "0.2.0", optional = true }
 libc = { version = "0.2.119" }
 
 [dev-dependencies]
-bstr = { version = "0.2.15", default-features = false }
+bstr = { version = "1.0.1", default-features = false }
 
 
 # Assembly doesn't yet compile on MSVC on windows, but does on GNU, see https://github.com/RustCrypto/asm-hashes/issues/17
