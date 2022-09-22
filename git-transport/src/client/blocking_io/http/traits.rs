@@ -71,5 +71,8 @@ pub trait Http {
     /// Pass `config` which can deserialize in the implementation's configuration, as documented separately.
     ///
     /// The caller must know how that `config` data looks like for the intended implementation.
-    fn configure(&mut self, config: &[u8]) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
+    fn configure(
+        &mut self,
+        config: &dyn std::any::Any,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
 }

@@ -102,7 +102,7 @@ impl crate::client::http::Http for Curl {
         self.make_request(url, headers, true)
     }
 
-    fn configure(&mut self, _config: &[u8]) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    fn configure(&mut self, _config: &dyn std::any::Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         Ok(())
     }
 }

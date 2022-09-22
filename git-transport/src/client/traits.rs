@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::ops::{Deref, DerefMut};
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
@@ -47,10 +48,10 @@ pub trait TransportWithoutIO {
     /// to the server for most graceful termination of the connection.
     fn connection_persists_across_multiple_requests(&self) -> bool;
 
-    /// Pass `config` which can deserialize in the implementation's configuration, as documented separately.
+    /// Pass `config` can be cast and interpreted by the implementation, as documented separately.
     ///
     /// The caller must know how that `config` data looks like for the intended implementation.
-    fn configure(&mut self, config: &[u8]) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
+    fn configure(&mut self, config: &dyn Any) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
 }
 
 // Would be nice if the box implementation could auto-forward to all implemented traits.
@@ -76,7 +77,7 @@ impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for Box<T> {
         self.deref().connection_persists_across_multiple_requests()
     }
 
-    fn configure(&mut self, config: &[u8]) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+    fn configure(&mut self, config: &dyn Any) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
         self.deref_mut().configure(config)
     }
 }
@@ -103,7 +104,7 @@ impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for &mut T {
         self.deref().connection_persists_across_multiple_requests()
     }
 
-    fn configure(&mut self, config: &[u8]) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+    fn configure(&mut self, config: &dyn Any) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
         self.deref_mut().configure(config)
     }
 }

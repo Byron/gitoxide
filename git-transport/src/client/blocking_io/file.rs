@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::error::Error;
 use std::process::{self, Command, Stdio};
 
@@ -103,7 +104,7 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
         true
     }
 
-    fn configure(&mut self, _config: &[u8]) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    fn configure(&mut self, _config: &dyn Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         Ok(())
     }
 }

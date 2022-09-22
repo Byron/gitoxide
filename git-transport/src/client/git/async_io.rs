@@ -3,6 +3,7 @@ use bstr::BString;
 use futures_io::{AsyncRead, AsyncWrite};
 use futures_lite::AsyncWriteExt;
 use git_packetline::PacketLineRef;
+use std::error::Error;
 
 use crate::{
     client::{self, capabilities, git, Capabilities, SetServiceResponse},
@@ -49,6 +50,10 @@ where
 
     fn connection_persists_across_multiple_requests(&self) -> bool {
         true
+    }
+
+    fn configure(&mut self, _config: &dyn std::any::Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        Ok(())
     }
 }
 

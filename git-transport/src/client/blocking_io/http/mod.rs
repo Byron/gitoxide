@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::{
     borrow::Cow,
     io::{BufRead, Read},
@@ -159,7 +160,7 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
         false
     }
 
-    fn configure(&mut self, config: &[u8]) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+    fn configure(&mut self, config: &dyn Any) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
         self.http.configure(config)
     }
 }

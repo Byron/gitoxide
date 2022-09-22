@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::error::Error;
 use std::io::Write;
 
@@ -54,7 +55,7 @@ where
         true
     }
 
-    fn configure(&mut self, _config: &[u8]) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    fn configure(&mut self, _config: &dyn Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         Ok(())
     }
 }
