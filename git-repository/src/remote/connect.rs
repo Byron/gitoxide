@@ -27,6 +27,9 @@ mod error {
 #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 pub use error::Error;
 
+#[cfg(all(feature = "blocking-http-transport", feature = "blocking-network-client"))]
+use git_protocol::transport::client::http;
+
 /// Establishing connections to remote hosts
 impl<'repo> Remote<'repo> {
     /// Create a new connection using `transport` to communicate, with `progress` to indicate changes.
@@ -60,7 +63,38 @@ impl<'repo> Remote<'repo> {
     where
         P: Progress,
     {
-        use git_protocol::transport::Protocol;
+        let (url, version) = self.sanitized_url_and_version(direction)?;
+        let transport = git_protocol::transport::connect(url, version).await?;
+        Ok(self.to_connection_with_transport(transport, progress))
+    }
+
+    /// Connect to the http(s) url suitable for `direction` and return a handle through which operations can be performed.
+    ///
+    /// Note that the `protocol.version` configuration key affects the transport protocol used to connect,
+    /// with `2` being the default, and that the 'dumb'-http protocol isn't supported.
+    ///
+    /// Using this method has the advantage of
+    #[cfg(all(feature = "blocking-http-transport", feature = "blocking-network-client"))]
+    pub async fn connect_http<P>(
+        &self,
+        direction: crate::remote::Direction,
+        progress: P,
+    ) -> Result<Connection<'_, 'repo, http::Transport<http::Impl>, P>, Error>
+    where
+        P: Progress,
+    {
+        let (url, version) = self.sanitized_url_and_version(direction)?;
+        let transport = http::connect(&url.to_bstring().to_string(), version);
+        Ok(self.to_connection_with_transport(transport, progress))
+    }
+
+    /// Produce the sanitized URL and protocol version to use as obtained by querying the repository configuration.
+    ///
+    /// This can be useful when using custom transports to allow additional configuration.
+    pub fn sanitized_url_and_version(
+        &self,
+        direction: crate::remote::Direction,
+    ) -> Result<(git_url::Url, git_protocol::transport::Protocol), Error> {
         fn sanitize(mut url: git_url::Url) -> Result<git_url::Url, Error> {
             if url.scheme == git_url::Scheme::File {
                 let mut dir = git_path::from_bstr(url.path.as_ref());
@@ -75,6 +109,7 @@ impl<'repo> Remote<'repo> {
             Ok(url)
         }
 
+        use git_protocol::transport::Protocol;
         let version = self
             .repo
             .config
@@ -101,7 +136,6 @@ impl<'repo> Remote<'repo> {
                 scheme: url.scheme,
             });
         }
-        let transport = git_protocol::transport::connect(sanitize(url)?, version).await?;
-        Ok(self.to_connection_with_transport(transport, progress))
+        Ok((sanitize(url)?, version))
     }
 }

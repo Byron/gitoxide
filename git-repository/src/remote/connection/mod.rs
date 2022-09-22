@@ -62,6 +62,11 @@ mod access {
         pub fn remote(&self) -> &Remote<'repo> {
             self.remote
         }
+
+        /// Provide a mutable transport to allow configuring it.
+        pub fn transport_mut(&mut self) -> &mut T {
+            &mut self.transport
+        }
     }
 }
 
