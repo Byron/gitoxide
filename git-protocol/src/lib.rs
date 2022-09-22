@@ -26,7 +26,7 @@ pub mod fetch;
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod fetch_fn;
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
-pub use fetch_fn::{fetch, fetch_pack, FetchConnection};
+pub use fetch_fn::{fetch, FetchConnection};
 
 mod remote_progress;
 pub use remote_progress::RemoteProgress;
