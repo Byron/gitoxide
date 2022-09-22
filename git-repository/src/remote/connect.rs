@@ -1,8 +1,6 @@
+use crate::{remote::Connection, Progress, Remote};
 use git_protocol::transport::client::Transport;
 
-use crate::{remote::Connection, Progress, Remote};
-
-#[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 mod error {
     use crate::{bstr::BString, remote};
 
@@ -24,11 +22,7 @@ mod error {
         FileUrl(#[from] git_discover::is_git::Error),
     }
 }
-#[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
 pub use error::Error;
-
-#[cfg(all(feature = "blocking-http-transport", feature = "blocking-network-client"))]
-use git_protocol::transport::client::http;
 
 /// Establishing connections to remote hosts (without performing a git-handshake).
 impl<'repo> Remote<'repo> {

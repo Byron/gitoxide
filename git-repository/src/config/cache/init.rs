@@ -158,7 +158,7 @@ impl Cache {
             home_env,
             personas: Default::default(),
             url_rewrite: Default::default(),
-            #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
+            #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
             url_scheme: Default::default(),
             git_prefix,
         })

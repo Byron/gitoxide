@@ -74,7 +74,7 @@ pub(crate) struct Cache {
     /// A lazily loaded rewrite list for remote urls
     pub url_rewrite: OnceCell<remote::url::Rewrite>,
     /// A lazily loaded mapping to know which url schemes to allow
-    #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
+    #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     pub url_scheme: OnceCell<remote::url::SchemePermission>,
     /// The config section filter from the options used to initialize this instance. Keep these in sync!
     filter_config_section: fn(&git_config::file::Metadata) -> bool,
