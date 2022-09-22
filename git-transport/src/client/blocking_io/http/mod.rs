@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::{
     borrow::Cow,
     convert::Infallible,
@@ -100,10 +99,6 @@ fn append_url(base: &str, suffix: &str) -> String {
 }
 
 impl<H: Http> client::TransportWithoutIO for Transport<H> {
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn set_identity(&mut self, identity: git_sec::identity::Account) -> Result<(), client::Error> {
         self.identity = Some(identity);
         Ok(())

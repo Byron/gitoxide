@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::process::{self, Command, Stdio};
 
 use bstr::{BString, ByteSlice};
@@ -84,10 +83,6 @@ impl SpawnProcessOnDemand {
 }
 
 impl client::TransportWithoutIO for SpawnProcessOnDemand {
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn request(
         &mut self,
         write_mode: WriteMode,

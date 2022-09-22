@@ -1,4 +1,3 @@
-use std::any::Any;
 use std::ops::{Deref, DerefMut};
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
@@ -8,11 +7,6 @@ use crate::{client::Error, Protocol};
 /// This trait represents all transport related functions that don't require any input/output to be done which helps
 /// implementation to share more code across blocking and async programs.
 pub trait TransportWithoutIO {
-    /// Cast this type as dyn trait to allow casting it back to a known concrete type.
-    ///
-    /// This is useful for configuration after a boxed transport implementation has been crated.
-    fn as_any_mut(&mut self) -> &mut dyn std::any::Any;
-
     /// If the handshake or subsequent reads failed with [std::io::ErrorKind::PermissionDenied], use this method to
     /// inform the transport layer about the identity to use for subsequent calls.
     /// If authentication continues to fail even with an identity set, consider communicating this to the provider
@@ -56,10 +50,6 @@ pub trait TransportWithoutIO {
 
 // Would be nice if the box implementation could auto-forward to all implemented traits.
 impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for Box<T> {
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn set_identity(&mut self, identity: git_sec::identity::Account) -> Result<(), Error> {
         self.deref_mut().set_identity(identity)
     }
@@ -83,10 +73,6 @@ impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for Box<T> {
 }
 
 impl<T: TransportWithoutIO + ?Sized> TransportWithoutIO for &mut T {
-    fn as_any_mut(&mut self) -> &mut dyn Any {
-        self
-    }
-
     fn set_identity(&mut self, identity: git_sec::identity::Account) -> Result<(), Error> {
         self.deref_mut().set_identity(identity)
     }

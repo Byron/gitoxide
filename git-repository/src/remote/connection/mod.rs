@@ -24,7 +24,6 @@ mod access {
         remote::{connection::CredentialsFn, Connection},
         Remote,
     };
-    use std::any::Any;
 
     /// Builder
     impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
@@ -62,31 +61,6 @@ mod access {
         /// Drop the transport and additional state to regain the original remote.
         pub fn remote(&self) -> &Remote<'repo> {
             self.remote
-        }
-
-        /// Return the connection's transport.
-        pub fn transport(&self) -> &T {
-            &self.transport
-        }
-    }
-
-    /// Access to the transport if it can be downcast to a particular type.
-    impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P>
-    where
-        T: crate::protocol::transport::client::Transport + 'static,
-    {
-        /// Try to cast our transport `T` into `U`, and pass it to `f` to allow any kind of configuration.
-        ///
-        /// Note that if the case fails and `f` is not called at all, `false` is returned.
-        pub fn configure_transport<U: 'static, E>(
-            &mut self,
-            f: impl FnOnce(&mut U) -> Result<(), E>,
-        ) -> Result<bool, E> {
-            let transport = (&mut self.transport) as &mut dyn Any;
-            match transport.downcast_mut::<U>() {
-                Some(transport) => f(transport).map(|_| true),
-                None => Ok(false),
-            }
         }
     }
 }
