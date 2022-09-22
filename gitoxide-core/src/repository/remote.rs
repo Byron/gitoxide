@@ -75,6 +75,7 @@ mod refs_impl {
             .await?
             .ref_map(git::remote::ref_map::Options {
                 prefix_from_spec_as_filter_on_remote: !matches!(kind, refs::Kind::Remote),
+                ..Default::default()
             })
             .await?;
 
