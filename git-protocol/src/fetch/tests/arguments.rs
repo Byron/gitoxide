@@ -46,6 +46,10 @@ mod impls {
         fn connection_persists_across_multiple_requests(&self) -> bool {
             self.stateful
         }
+
+        fn configure(&mut self, config: &[u8]) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            self.inner.configure(config)
+        }
     }
 
     impl<T: client::Transport> client::Transport for Transport<T> {
