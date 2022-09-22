@@ -66,7 +66,7 @@ pub mod fetch {
     }
 
     #[cfg(feature = "blocking-network-client")]
-    pub use super::connection::fetch::Options;
+    pub use super::connection::fetch::Prepare;
 }
 
 ///
