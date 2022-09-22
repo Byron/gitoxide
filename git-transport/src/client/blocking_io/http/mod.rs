@@ -158,6 +158,10 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
     fn connection_persists_across_multiple_requests(&self) -> bool {
         false
     }
+
+    fn configure(&mut self, config: &[u8]) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+        self.http.configure(config)
+    }
 }
 
 impl<H: Http> client::Transport for Transport<H> {

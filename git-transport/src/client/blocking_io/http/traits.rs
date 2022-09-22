@@ -67,4 +67,9 @@ pub trait Http {
         url: &str,
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, Error>;
+
+    /// Pass `config` which can deserialize in the implementation's configuration, as documented separately.
+    ///
+    /// The caller must know how that `config` data looks like for the intended implementation.
+    fn configure(&mut self, config: &[u8]) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
 }
