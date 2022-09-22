@@ -22,17 +22,22 @@ pub enum Error {
 }
 
 /// For use in [`Connection::ref_map()`].
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct Options {
     /// Use a two-component prefix derived from the ref-spec's source, like `refs/heads/`  to let the server pre-filter refs
     /// with great potential for savings in traffic and local CPU time.
     pub prefix_from_spec_as_filter_on_remote: bool,
+    /// Parameters in the form of `(name, optional value)` to add to the handshake.
+    ///
+    /// This is useful in case of custom servers.
+    pub handshake_parameters: Vec<(String, Option<String>)>,
 }
 
 impl Default for Options {
     fn default() -> Self {
         Options {
             prefix_from_spec_as_filter_on_remote: true,
+            handshake_parameters: Default::default(),
         }
     }
 }
@@ -61,9 +66,12 @@ where
         &mut self,
         Options {
             prefix_from_spec_as_filter_on_remote,
+            handshake_parameters,
         }: Options,
     ) -> Result<fetch::RefMap<'remote>, Error> {
-        let remote = self.fetch_refs(prefix_from_spec_as_filter_on_remote).await?;
+        let remote = self
+            .fetch_refs(prefix_from_spec_as_filter_on_remote, handshake_parameters)
+            .await?;
         let group = git_refspec::MatchGroup::from_fetch_specs(self.remote.fetch_specs.iter().map(|s| s.to_ref()));
         let (res, fixes) = group
             .match_remotes(remote.refs.iter().map(|r| {
@@ -100,7 +108,11 @@ where
         })
     }
     #[git_protocol::maybe_async::maybe_async]
-    async fn fetch_refs(&mut self, filter_by_prefix: bool) -> Result<HandshakeWithRefs, Error> {
+    async fn fetch_refs(
+        &mut self,
+        filter_by_prefix: bool,
+        extra_parameters: Vec<(String, Option<String>)>,
+    ) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
         let authenticate = match self.credentials.as_mut() {
             Some(f) => f,
@@ -118,7 +130,8 @@ where
             }
         };
         let mut outcome =
-            git_protocol::fetch::handshake(&mut self.transport, authenticate, Vec::new(), &mut self.progress).await?;
+            git_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut self.progress)
+                .await?;
         let refs = match outcome.refs.take() {
             Some(refs) => refs,
             None => {
