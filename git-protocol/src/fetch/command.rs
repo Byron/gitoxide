@@ -50,9 +50,12 @@ mod with_io {
                     "filter ", // filter-spec
                     // ref-in-want feature
                     "want-ref ", // ref path
+                    // sideband-all feature
                     "sideband-all",
                     // packfile-uris feature
                     "packfile-uris ", // protocols
+                    // wait-for-done feature
+                    "wait-for-done",
                 ],
             }
         }
@@ -79,9 +82,14 @@ mod with_io {
                         "no-done",
                         "filter",
                     ],
-                    git_transport::Protocol::V2 => {
-                        &["shallow", "filter", "ref-in-want", "sideband-all", "packfile-uris"]
-                    }
+                    git_transport::Protocol::V2 => &[
+                        "shallow",
+                        "filter",
+                        "ref-in-want",
+                        "sideband-all",
+                        "packfile-uris",
+                        "wait-for-done",
+                    ],
                 },
             }
         }
@@ -104,6 +112,7 @@ mod with_io {
             }
         }
 
+        /// Turns on all modern features for V1 and all supported features for V2.
         pub(crate) fn default_features(
             &self,
             version: git_transport::Protocol,
