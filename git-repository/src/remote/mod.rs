@@ -64,6 +64,9 @@ pub mod fetch {
         /// The index into the fetch ref-specs used to produce the mapping, allowing it to be recovered.   
         pub spec_index: usize,
     }
+
+    #[cfg(feature = "blocking-network-client")]
+    pub use super::connection::fetch::Options;
 }
 
 ///

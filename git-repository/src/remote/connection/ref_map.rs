@@ -54,6 +54,11 @@ where
     /// with the local tracking branch of these tips (if available).
     ///
     /// Note that this doesn't fetch the objects mentioned in the tips nor does it make any change to underlying repository.
+    ///
+    /// # Consumption
+    ///
+    /// Due to management of the transport, it's cleanest to only use it for a single interaction. Thus it's consumed along with
+    /// the connection.
     #[git_protocol::maybe_async::maybe_async]
     pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap<'remote>, Error> {
         let res = self.ref_map_inner(options).await;

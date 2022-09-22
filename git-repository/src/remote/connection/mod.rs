@@ -67,3 +67,7 @@ mod access {
 
 ///
 pub mod ref_map;
+
+///
+#[cfg(feature = "blocking-network-client")]
+pub mod fetch;
