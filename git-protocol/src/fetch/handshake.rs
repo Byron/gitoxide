@@ -47,6 +47,8 @@ pub(crate) mod function {
     /// turns out to be required. `extra_parameters` are the parameters `(name, optional value)` to add to the handshake,
     /// each time it is performed in case authentication is required.
     /// `progress` is used to inform about what's currently happening.
+    ///
+    /// Note that this function never terminates an existing connection on error as it is assumed to be mutually invalid.
     #[maybe_async]
     pub async fn handshake<AuthFn, T>(
         mut transport: T,

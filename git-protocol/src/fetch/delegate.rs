@@ -193,7 +193,7 @@ mod blocking_io {
 
     use git_features::progress::Progress;
 
-    use crate::fetch::{DelegateBlocking, Ref, Response};
+    use crate::fetch::{Ref, Response};
 
     /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///
@@ -202,7 +202,7 @@ mod blocking_io {
     /// Everything is tucked away behind type-safety so 'nothing can go wrong'©. Runtime assertions assure invalid
     /// features or arguments don't make it to the server in the first place.
     /// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
-    pub trait Delegate: DelegateBlocking {
+    pub trait Delegate {
         /// Receive a pack provided from the given `input`.
         ///
         /// Use `progress` to emit your own progress messages when decoding the pack.
@@ -253,7 +253,7 @@ mod async_io {
     use futures_io::AsyncBufRead;
     use git_features::progress::Progress;
 
-    use crate::fetch::{DelegateBlocking, Ref, Response};
+    use crate::fetch::{Ref, Response};
 
     /// The protocol delegate is the bare minimal interface needed to fully control the [`fetch`][crate::fetch()] operation.
     ///
@@ -263,7 +263,7 @@ mod async_io {
     /// features or arguments don't make it to the server in the first place.
     /// Please note that this trait mostly corresponds to what V2 would look like, even though V1 is supported as well.
     #[async_trait(?Send)]
-    pub trait Delegate: DelegateBlocking {
+    pub trait Delegate {
         /// Receive a pack provided from the given `input`, and the caller should consider it to be blocking as
         /// most operations on the received pack are implemented in a blocking fashion.
         ///
@@ -279,6 +279,7 @@ mod async_io {
             previous_response: &Response,
         ) -> io::Result<()>;
     }
+
     #[async_trait(?Send)]
     impl<T: Delegate> Delegate for Box<T> {
         async fn receive_pack(

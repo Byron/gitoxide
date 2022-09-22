@@ -1,7 +1,9 @@
 use git_features::progress::Progress;
 use git_transport::client;
+use git_transport::client::Capabilities;
 use maybe_async::maybe_async;
 
+use crate::fetch::{DelegateBlocking, Ref};
 use crate::{
     credentials,
     fetch::{handshake, indicate_end_of_interaction, Action, Arguments, Command, Delegate, Error, Response},
@@ -53,7 +55,7 @@ pub async fn fetch<F, D, T>(
 ) -> Result<(), Error>
 where
     F: FnMut(credentials::helper::Action) -> credentials::protocol::Result,
-    D: Delegate,
+    D: Delegate + DelegateBlocking,
     T: client::Transport,
 {
     let handshake::Outcome {
@@ -125,6 +127,94 @@ where
                 setup_remote_progress(&mut progress, &mut reader);
             }
             delegate.receive_pack(reader, progress, &refs, &response).await?;
+            break 'negotiation;
+        } else {
+            match action {
+                Action::Cancel => break 'negotiation,
+                Action::Continue => Some(response),
+            }
+        }
+    }
+    if matches!(protocol_version, git_transport::Protocol::V2)
+        && matches!(fetch_mode, FetchConnection::TerminateOnSuccessfulCompletion)
+    {
+        indicate_end_of_interaction(transport).await?;
+    }
+    Ok(())
+}
+
+/// Fetch the pack after a `handshake` has been performed on `transport` and `refs` have been obtained.
+///
+/// `negotiate` maybe called repeatedly, after `prepare_fetch` was called once, to setup the haves and wants to fetch.
+/// The `delegate` will receive a reader with pack data when done, and `progress` sees all remote end progress messages.
+#[maybe_async]
+pub async fn fetch_pack<F, D, T>(
+    handshake::Outcome {
+        server_protocol_version: protocol_version,
+        refs: _,
+        capabilities,
+    }: &handshake::Outcome,
+    refs: &[Ref],
+    mut transport: T,
+    mut prepare_fetch: impl FnMut(
+        git_transport::Protocol,
+        &Capabilities,
+        &mut Vec<(&str, Option<&str>)>,
+        &[Ref],
+    ) -> std::io::Result<Action>,
+    mut negotiate: impl FnMut(&[Ref], &mut Arguments, Option<&Response>) -> std::io::Result<Action>,
+    mut delegate: D,
+    mut progress: impl Progress,
+    fetch_mode: FetchConnection,
+) -> Result<(), Error>
+where
+    F: FnMut(credentials::helper::Action) -> credentials::protocol::Result,
+    D: Delegate,
+    T: client::Transport,
+{
+    let fetch = Command::Fetch;
+    let mut fetch_features = fetch.default_features(*protocol_version, capabilities);
+    match prepare_fetch(*protocol_version, capabilities, &mut fetch_features, refs) {
+        Ok(Action::Cancel) => {
+            return if matches!(protocol_version, git_transport::Protocol::V1)
+                || matches!(fetch_mode, FetchConnection::TerminateOnSuccessfulCompletion)
+            {
+                indicate_end_of_interaction(transport).await.map_err(Into::into)
+            } else {
+                Ok(())
+            };
+        }
+        Ok(Action::Continue) => {
+            fetch.validate_argument_prefixes_or_panic(*protocol_version, capabilities, &[], &fetch_features);
+        }
+        Err(err) => {
+            indicate_end_of_interaction(transport).await?;
+            return Err(err.into());
+        }
+    }
+
+    Response::check_required_features(*protocol_version, &fetch_features)?;
+    let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
+    let mut arguments = Arguments::new(*protocol_version, fetch_features);
+    let mut previous_response = None::<Response>;
+    let mut round = 1;
+    'negotiation: loop {
+        progress.step();
+        progress.set_name(format!("negotiate (round {})", round));
+        round += 1;
+        let action = negotiate(refs, &mut arguments, previous_response.as_ref())?;
+        let mut reader = arguments.send(&mut transport, action == Action::Cancel).await?;
+        if sideband_all {
+            setup_remote_progress(&mut progress, &mut reader);
+        }
+        let response = Response::from_line_reader(*protocol_version, &mut reader).await?;
+        previous_response = if response.has_pack() {
+            progress.step();
+            progress.set_name("receiving pack");
+            if !sideband_all {
+                setup_remote_progress(&mut progress, &mut reader);
+            }
+            delegate.receive_pack(reader, progress, refs, &response).await?;
             break 'negotiation;
         } else {
             match action {
