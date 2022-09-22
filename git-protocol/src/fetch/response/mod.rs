@@ -152,7 +152,8 @@ impl Response {
         self.has_pack
     }
 
-    /// Return an error if the given `features` don't contain the required ones for the given `version` of the protocol.
+    /// Return an error if the given `features` don't contain the required ones (the ones this implementation needs)
+    /// for the given `version` of the protocol.
     ///
     /// Even though technically any set of features supported by the server could work, we only implement the ones that
     /// make it easy to maintain all versions with a single code base that aims to be and remain maintainable.
