@@ -66,10 +66,10 @@ pub(crate) mod function {
             #[cfg(not(feature = "http-client-curl"))]
             git_url::Scheme::Https | git_url::Scheme::Http => return Err(Error::CompiledWithoutHttp(url.scheme)),
             #[cfg(feature = "http-client-curl")]
-            git_url::Scheme::Https | git_url::Scheme::Http => Box::new(
-                crate::client::http::connect(&url.to_bstring().to_string(), desired_version)
-                    .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?,
-            ),
+            git_url::Scheme::Https | git_url::Scheme::Http => Box::new(crate::client::http::connect(
+                &url.to_bstring().to_string(),
+                desired_version,
+            )),
         })
     }
 }

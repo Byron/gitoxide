@@ -1,6 +1,5 @@
 use std::{
     borrow::Cow,
-    convert::Infallible,
     io::{BufRead, Read},
 };
 
@@ -286,6 +285,6 @@ impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H,
 }
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol.
-pub fn connect(url: &str, desired_version: Protocol) -> Result<Transport<Impl>, Infallible> {
-    Ok(Transport::new(url, desired_version))
+pub fn connect(url: &str, desired_version: Protocol) -> Transport<Impl> {
+    Transport::new(url, desired_version)
 }
