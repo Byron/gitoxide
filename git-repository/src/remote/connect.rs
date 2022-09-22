@@ -30,7 +30,7 @@ pub use error::Error;
 #[cfg(all(feature = "blocking-http-transport", feature = "blocking-network-client"))]
 use git_protocol::transport::client::http;
 
-/// Establishing connections to remote hosts
+/// Establishing connections to remote hosts (without performing a git-handshake).
 impl<'repo> Remote<'repo> {
     /// Create a new connection using `transport` to communicate, with `progress` to indicate changes.
     ///

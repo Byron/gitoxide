@@ -62,7 +62,9 @@ where
     #[git_protocol::maybe_async::maybe_async]
     pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap<'remote>, Error> {
         let res = self.ref_map_inner(options).await;
-        git_protocol::fetch::indicate_end_of_interaction(&mut self.transport).await?;
+        git_protocol::fetch::indicate_end_of_interaction(&mut self.transport)
+            .await
+            .ok();
         res
     }
 
