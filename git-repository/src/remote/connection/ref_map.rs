@@ -134,15 +134,15 @@ where
                 &mut credentials_storage
             }
         };
+        let transport = &mut self.transport;
         let mut outcome =
-            git_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut self.progress)
-                .await?;
+            git_protocol::fetch::handshake(&mut *transport, authenticate, extra_parameters, &mut self.progress).await?;
         let refs = match outcome.refs.take() {
             Some(refs) => refs,
             None => {
                 let specs = &self.remote.fetch_specs;
                 git_protocol::fetch::refs(
-                    &mut self.transport,
+                    transport,
                     outcome.server_protocol_version,
                     &outcome.capabilities,
                     |_capabilities, arguments, _features| {

@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::io::Write;
 
 use bstr::BString;
@@ -13,6 +14,10 @@ where
     R: std::io::Read,
     W: std::io::Write,
 {
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
     fn request(
         &mut self,
         write_mode: client::WriteMode,
