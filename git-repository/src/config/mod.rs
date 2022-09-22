@@ -18,7 +18,8 @@ pub struct Snapshot<'repo> {
 /// Note that the values will only affect this instance of the parent repository, and not other clones that may exist.
 ///
 /// Note that these values won't update even if the underlying file(s) change.
-// TODO: make it possible to load snapshots with reloading via .config() and write mutated snapshots back to disk.
+// TODO: make it possible to load snapshots with reloading via .config() and write mutated snapshots back to disk which should be the way
+//       to affect all instances of a repo.
 pub struct SnapshotMut<'repo> {
     pub(crate) repo: &'repo mut Repository,
     pub(crate) config: git_config::File<'static>,

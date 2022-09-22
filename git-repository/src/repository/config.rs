@@ -10,6 +10,9 @@ impl crate::Repository {
     }
 
     /// Return a mutable snapshot of the configuration as seen upon opening the repository.
+    ///
+    /// Note that changes to the configuration are in-memory only and are observed only the this instance
+    /// of the [`Repository`].
     pub fn config_snapshot_mut(&mut self) -> config::SnapshotMut<'_> {
         let config = self.config.resolved.as_ref().clone();
         config::SnapshotMut { repo: self, config }

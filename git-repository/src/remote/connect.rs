@@ -53,6 +53,10 @@ impl<'repo> Remote<'repo> {
     ///
     /// Note that the `protocol.version` configuration key affects the transport protocol used to connect,
     /// with `2` being the default.
+    ///
+    /// The transport used for connection can be configured via `transport_mut().configure()` assuming the actually
+    /// used transport is well known. If that's not the case, the transport can be created by hand and passed to
+    /// [to_connection_with_transport()][Self::to_connection_with_transport()].
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
     #[git_protocol::maybe_async::maybe_async]
     pub async fn connect<P>(
@@ -65,26 +69,6 @@ impl<'repo> Remote<'repo> {
     {
         let (url, version) = self.sanitized_url_and_version(direction)?;
         let transport = git_protocol::transport::connect(url, version).await?;
-        Ok(self.to_connection_with_transport(transport, progress))
-    }
-
-    /// Connect to the http(s) url suitable for `direction` and return a handle through which operations can be performed.
-    ///
-    /// Note that the `protocol.version` configuration key affects the transport protocol used to connect,
-    /// with `2` being the default, and that the 'dumb'-http protocol isn't supported.
-    ///
-    /// Using this method has the advantage of
-    #[cfg(all(feature = "blocking-http-transport", feature = "blocking-network-client"))]
-    pub async fn connect_http<P>(
-        &self,
-        direction: crate::remote::Direction,
-        progress: P,
-    ) -> Result<Connection<'_, 'repo, http::Transport<http::Impl>, P>, Error>
-    where
-        P: Progress,
-    {
-        let (url, version) = self.sanitized_url_and_version(direction)?;
-        let transport = http::connect(&url.to_bstring().to_string(), version);
         Ok(self.to_connection_with_transport(transport, progress))
     }
 

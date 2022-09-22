@@ -25,7 +25,7 @@ pub enum Error {
 #[derive(Debug, Clone)]
 pub struct Options {
     /// Use a two-component prefix derived from the ref-spec's source, like `refs/heads/`  to let the server pre-filter refs
-    /// with great potential for savings in traffic and local CPU time.
+    /// with great potential for savings in traffic and local CPU time. Defaults to `true`.
     pub prefix_from_spec_as_filter_on_remote: bool,
     /// Parameters in the form of `(name, optional value)` to add to the handshake.
     ///
