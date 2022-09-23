@@ -1,3 +1,4 @@
+use crosstermion::crossterm::style::Stylize;
 use owo_colors::OwoColorize;
 use std::fmt::{Display, Formatter};
 use tabled::{Style, TableIteratorExt, Tabled};
@@ -60,7 +61,11 @@ impl Tabled for Record {
     const LENGTH: usize = 3;
 
     fn fields(&self) -> Vec<String> {
-        vec![self.usage.icon().into(), self.config.into(), self.usage.to_string()]
+        let mut tokens = self.config.split(".");
+        let mut buf = vec![tokens.next().expect("present").bold().to_string()];
+        buf.extend(tokens.map(ToOwned::to_owned));
+
+        vec![self.usage.icon().into(), buf.join("."), self.usage.to_string()]
     }
 
     fn headers() -> Vec<String> {
