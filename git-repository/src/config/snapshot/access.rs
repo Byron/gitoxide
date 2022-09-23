@@ -94,6 +94,11 @@ impl<'repo> Snapshot<'repo> {
 
 /// Utilities
 impl<'repo> SnapshotMut<'repo> {
+    /// Apply all changes made to this instance.
+    ///
+    /// Note that this would also happen once this instance is dropped, but using this method may be more intuitive.
+    pub fn commit(self) {}
+
     /// Don't apply any of the changes after consuming this instance, effectively forgetting them.
     pub fn forget(mut self) {
         std::mem::take(&mut self.config);
