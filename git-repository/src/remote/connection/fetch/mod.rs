@@ -9,8 +9,9 @@ mod error {
     #[derive(Debug, thiserror::Error)]
     #[error("TBD")]
     pub enum Error {
-        #[error("The configured pack.indexVersion is not valid. It must be 1 or 2, with 2 being the default{}", desired.map(|n| format!(" (but got {})", n)).unwrap_or_default())]
-        PackIndexVersion {
+        #[error("{message}{}", desired.map(|n| format!(" (got {})", n)).unwrap_or_default())]
+        Configuration {
+            message: &'static str,
             desired: Option<i64>,
             source: Option<git_config::value::Error>,
         },
@@ -60,6 +61,7 @@ where
 
         let repo = con.remote.repo;
         let _index_version = config::pack_index_version(repo)?;
+        let _thread_limit = config::index_threads(repo)?;
         // let options = git_pack::bundle::write::Options {
         //     thread_limit: ctx.thread_limit,
         //     index_version: git_pack::index::Version::V2,
@@ -71,35 +73,7 @@ where
     }
 }
 
-mod config {
-    use super::Error;
-    use crate::Repository;
-
-    pub fn pack_index_version(repo: &Repository) -> Result<git_pack::index::Version, Error> {
-        use git_pack::index::Version;
-        let lenient_config = repo.options.lenient_config;
-        Ok(
-            match repo.config.resolved.integer("pack", None, "indexVersion").transpose() {
-                Ok(Some(v)) if v == 1 => Version::V1,
-                Ok(Some(v)) if v == 2 => Version::V2,
-                Ok(None) => Version::V2,
-                Ok(Some(_)) | Err(_) if lenient_config => Version::V2,
-                Ok(Some(v)) => {
-                    return Err(Error::PackIndexVersion {
-                        desired: v.into(),
-                        source: None,
-                    })
-                }
-                Err(err) => {
-                    return Err(Error::PackIndexVersion {
-                        desired: None,
-                        source: err.into(),
-                    })
-                }
-            },
-        )
-    }
-}
+mod config;
 
 /// A structure to hold the result of the handshake with the remote and configure the upcoming fetch operation.
 #[allow(dead_code)]
