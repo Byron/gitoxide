@@ -340,7 +340,7 @@ fn receive_pack_blocking<W: io::Write>(
 ) -> io::Result<()> {
     let options = pack::bundle::write::Options {
         thread_limit: ctx.thread_limit,
-        index_kind: pack::index::Version::V2,
+        index_version: pack::index::Version::V2,
         iteration_mode: pack::data::input::Mode::Verify,
         object_hash: ctx.object_hash,
     };
