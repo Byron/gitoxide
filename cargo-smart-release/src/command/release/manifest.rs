@@ -572,9 +572,9 @@ fn set_version_and_update_package_dependency(
 // Originally copied from [cargo release](https://github.com/crate-ci/cargo-release/blob/9633353ad5a57dbdca9a9ed6a70c1cf78fc5a51f/src/cargo.rs#L235:L263).
 // The licenses are compatible.
 // With adjustments.
-fn find_dependency_tables<'r>(
-    root: &'r mut toml_edit::Table,
-) -> impl Iterator<Item = (&mut dyn toml_edit::TableLike, Cow<'_, str>)> + 'r {
+fn find_dependency_tables(
+    root: &mut toml_edit::Table,
+) -> impl Iterator<Item = (&mut dyn toml_edit::TableLike, Cow<'_, str>)> + '_ {
     const DEP_TABLES: &[&str] = &["dependencies", "dev-dependencies", "build-dependencies"];
 
     root.iter_mut()
