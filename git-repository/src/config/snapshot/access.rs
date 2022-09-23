@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+use crate::config::SnapshotMut;
 use crate::{
     bstr::BStr,
     config::{cache::interpolate_context, Snapshot},
@@ -88,5 +89,13 @@ impl<'repo> Snapshot<'repo> {
     /// It's expected that more functionality will move up depending on demand.
     pub fn plumbing(&self) -> &git_config::File<'static> {
         &self.repo.config.resolved
+    }
+}
+
+/// Utilities
+impl<'repo> SnapshotMut<'repo> {
+    /// Don't apply any of the changes after consuming this instance, effectively forgetting them.
+    pub fn forget(mut self) {
+        std::mem::take(&mut self.config);
     }
 }

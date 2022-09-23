@@ -27,6 +27,9 @@ forcing a choice, or more typically, as a side-lane where overrides can be done 
 Note that it should be possible to obtain the current configuration for modification by the user for selective overrides, either
 by calling methods or by obtaining a data structure that can be set as a whole using a `get -> modify -> set` cycle.
 
+Note that without any of that, one should document that with `config_snapshot_mut()` any of the relevant configuration can be
+changed in memory before invoking a method in order to affect it.
+
 Parameters which are not available in git or specific to `gitoxide` or the needs of the caller can be passed as parameters or via
 `Options` or `Context` structures as needed.
 
