@@ -61,7 +61,7 @@ impl Tabled for Record {
     const LENGTH: usize = 3;
 
     fn fields(&self) -> Vec<String> {
-        let mut tokens = self.config.split(".");
+        let mut tokens = self.config.split('.');
         let mut buf = vec![tokens.next().expect("present").bold().to_string()];
         buf.extend(tokens.map(ToOwned::to_owned));
 
