@@ -48,11 +48,10 @@ doc: ## Run cargo doc on all crates
 	cargo doc
 	cargo doc --features=max,lean,small
 
-clippy_args = -- -A clppy::unnecessary_lazy_evaluations # needed to silence `.then(||)` warnings, need MSRV of 1.62 to make use of it.
 clippy: ## Run cargo clippy on all crates
-	cargo clippy --all --tests --examples $(clippy_args)
-	cargo clippy --all --no-default-features --features small $(clippy_args)
-	cargo clippy --all --no-default-features --features lean-async --tests $(clippy_args)
+	cargo clippy --all --tests --examples
+	cargo clippy --all --no-default-features --features small
+	cargo clippy --all --no-default-features --features lean-async --tests
 
 check-msrv: ## run cargo msrv to validate the current msrv requirements, similar to what CI does
 	cd git-repository && cargo check --package git-repository --no-default-features --features async-network-client,max-performance
