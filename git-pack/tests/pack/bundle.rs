@@ -156,7 +156,7 @@ mod write_to_directory {
             pack::bundle::write::Options {
                 thread_limit: None,
                 iteration_mode: pack::data::input::Mode::Verify,
-                index_kind: pack::index::Version::V2,
+                index_version: pack::index::Version::V2,
                 object_hash: git_hash::Kind::Sha1,
             },
         )

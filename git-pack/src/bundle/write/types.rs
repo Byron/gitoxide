@@ -11,7 +11,7 @@ pub struct Options {
     /// Determine how much processing to spend on protecting against corruption or recovering from errors.
     pub iteration_mode: crate::data::input::Mode,
     /// The version of pack index to write, should be [`crate::index::Version::default()`]
-    pub index_kind: crate::index::Version,
+    pub index_version: crate::index::Version,
     /// The kind of hash to use when writing the bundle.
     pub object_hash: git_hash::Kind,
 }
@@ -22,7 +22,7 @@ impl Default for Options {
         Options {
             thread_limit: None,
             iteration_mode: crate::data::input::Mode::Verify,
-            index_kind: Default::default(),
+            index_version: Default::default(),
             object_hash: Default::default(),
         }
     }
