@@ -12,12 +12,15 @@ enum Usage {
         name: &'static str,
         deviation: Option<&'static str>,
     },
+    /// Needs analysis
+    Puzzled,
 }
 use Usage::*;
 
 impl Display for Usage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            Puzzled => f.write_str("❓")?,
             NotApplicable => f.write_str("not applicable")?,
             Planned { note } => {
                 write!(f, "{}", "planned".blink())?;
@@ -39,6 +42,7 @@ impl Display for Usage {
 impl Usage {
     pub fn icon(&self) -> &'static str {
         match self {
+            Puzzled => "?",
             NotApplicable => "❌",
             Planned { .. } => "🕒",
             InModule { deviation, .. } => deviation.is_some().then(|| "👌️").unwrap_or("✅"),
@@ -66,6 +70,48 @@ impl Tabled for Record {
 
 static GIT_CONFIG: &[Record] = &[
     Record {
+        config: "fetch.recurseSubmodules",
+        usage: Planned {
+            note: Some("Seems useful for cargo as well"),
+        },
+    },
+    Record {
+        config: "fetch.fsckObjects",
+        usage: Puzzled,
+    },
+    Record {
+        config: "fetch.fsck.<msg-id>",
+        usage: Puzzled,
+    },
+    Record {
+        config: "fetch.fsck.skipList",
+        usage: Puzzled,
+    },
+    Record {
+        config: "fetch.unpackLimit",
+        usage: Planned { note: None },
+    },
+    Record {
+        config: "fetch.prune",
+        usage: Planned { note: None },
+    },
+    Record {
+        config: "fetch.pruneTags",
+        usage: Planned { note: None },
+    },
+    Record {
+        config: "fetch.writeCommitGraph",
+        usage: Planned { note: None },
+    },
+    Record {
+        config: "fetch.parallel",
+        usage: Planned { note: None },
+    },
+    Record {
+        config: "fetch.showForcedUpdates",
+        usage: NotApplicable,
+    },
+    Record {
         config: "fetch.output",
         usage: NotApplicable,
     },
@@ -80,6 +126,13 @@ static GIT_CONFIG: &[Record] = &[
         usage: InModule {
             name: "remote::connection::fetch",
             deviation: Some("if unset, it uses all threads as opposed to just 1"),
+        },
+    },
+    Record {
+        config: "pack.indexVersion",
+        usage: InModule {
+            name: "remote::connection::fetch",
+            deviation: None,
         },
     },
 ];
