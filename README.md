@@ -27,6 +27,10 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
           * Based on the [git-hours] algorithm.
           * See the [discussion][git-hours-discussion] for some performance data.
   * **the `gix` program** _(plumbing)_ - lower level commands for use in automation
+    * **progress**
+        * [x] **show** - provide an overview of what works and what doesn't from the perspective of the git configuration.
+                         This is likely to change a lot over time depending on actual needs, but maybe useful for you to see
+                         if particular git-configuration is picked up and where it deviates.
     * **config** - list the complete git configuration in human-readable form and optionally filter sections by name.
     * **exclude**
         * [x] **query** - check if path specs are excluded via gits exclusion rules like `.gitignore`.

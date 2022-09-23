@@ -1835,6 +1835,7 @@ dependencies = [
  "git-repository",
  "git-transport",
  "gitoxide-core",
+ "owo-colors",
  "prodash",
 ]
 
@@ -2379,6 +2380,12 @@ checksum = "628223faebab4e3e40667ee0b2336d34a5b960ff60ea743ddfdbcf7770bcfb66"
 dependencies = [
  "winapi",
 ]
+
+[[package]]
+name = "owo-colors"
+version = "3.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 
 [[package]]
 name = "parking"
