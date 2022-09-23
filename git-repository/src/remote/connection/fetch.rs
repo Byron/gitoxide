@@ -8,7 +8,13 @@ mod error {
     /// The error returned by [`receive()`](super::Prepare::receive()).
     #[derive(Debug, thiserror::Error)]
     #[error("TBD")]
-    pub enum Error {}
+    pub enum Error {
+        #[error("The configured pack.indexVersion is not valid. It must be 1 or 2, with 2 being the default{}", desired.map(|n| format!(" (but got {})", n)).unwrap_or_default())]
+        PackIndexVersion {
+            desired: Option<i64>,
+            source: Option<git_config::value::Error>,
+        },
+    }
 }
 pub use error::Error;
 
@@ -42,11 +48,56 @@ where
     T: Transport,
     P: Progress,
 {
-    /// receive the pack and perform the operation as configured by git via `git-config` or overridden by various builder methods.
+    /// Receive the pack and perform the operation as configured by git via `git-config` or overridden by various builder methods.
+    ///
+    /// ### Negotiation
+    ///
+    /// "fetch.negotiationAlgorithm" describes algorithms `git` uses currently, with the default being `consecutive` and `skipping` being
+    /// experimented with. We currently implement something we could call 'naive' which works for now.
     pub fn receive(mut self, _should_interrupt: &AtomicBool) -> Result<(), Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
         git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+
+        let repo = con.remote.repo;
+        let _index_version = config::pack_index_version(repo)?;
+        // let options = git_pack::bundle::write::Options {
+        //     thread_limit: ctx.thread_limit,
+        //     index_version: git_pack::index::Version::V2,
+        //     iteration_mode: git_pack::data::input::Mode::Verify,
+        //     object_hash: ctx.object_hash,
+        // };
+
         todo!()
+    }
+}
+
+mod config {
+    use super::Error;
+    use crate::Repository;
+
+    pub fn pack_index_version(repo: &Repository) -> Result<git_pack::index::Version, Error> {
+        use git_pack::index::Version;
+        let lenient_config = repo.options.lenient_config;
+        Ok(
+            match repo.config.resolved.integer("pack", None, "indexVersion").transpose() {
+                Ok(Some(v)) if v == 1 => Version::V1,
+                Ok(Some(v)) if v == 2 => Version::V2,
+                Ok(None) => Version::V2,
+                Ok(Some(_)) | Err(_) if lenient_config => Version::V2,
+                Ok(Some(v)) => {
+                    return Err(Error::PackIndexVersion {
+                        desired: v.into(),
+                        source: None,
+                    })
+                }
+                Err(err) => {
+                    return Err(Error::PackIndexVersion {
+                        desired: None,
+                        source: err.into(),
+                    })
+                }
+            },
+        )
     }
 }
 
