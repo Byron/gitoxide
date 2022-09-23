@@ -274,3 +274,7 @@ git clone --shared base credential-helpers
     baseline "git://host.org"
 )
 
+git clone --shared base detached-head
+(cd detached-head
+  git checkout @~1
+)
