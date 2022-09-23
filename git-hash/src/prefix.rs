@@ -11,7 +11,7 @@ pub enum Error {
         Prefix::MIN_HEX_LEN
     )]
     TooShort { hex_len: usize },
-    #[error("An object of kind {} cannot be larger than {object_kind} in hex, but {hex_len} was requested")]
+    #[error("An object of kind {object_kind} cannot be larger than {} in hex, but {hex_len} was requested", object_kind.len_in_hex())]
     TooLong { object_kind: crate::Kind, hex_len: usize },
 }
 

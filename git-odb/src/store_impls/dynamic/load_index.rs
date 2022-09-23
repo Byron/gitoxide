@@ -602,7 +602,7 @@ impl super::Store {
                 .iter()
                 .map(|idx| (*idx, &self.files[*idx]))
                 .filter_map(|(id, file)| {
-                    let lookup = match (&**file.files.load()).as_ref()? {
+                    let lookup = match (**file.files.load()).as_ref()? {
                         types::IndexAndPacks::Index(bundle) => handle::SingleOrMultiIndex::Single {
                             index: bundle.index.loaded()?.clone(),
                             data: bundle.data.loaded().cloned(),
