@@ -70,6 +70,113 @@ impl Tabled for Record {
 
 static GIT_CONFIG: &[Record] = &[
     Record {
+        config: "core.bare",
+        usage: InModule {
+            name: "config::cache",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "core.excludesFile",
+        usage: InModule {
+            name: "config::cache",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "core.abbrev",
+        usage: InModule {
+            name: "config::cache",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "core.ignoreCase",
+        usage: InModule {
+            name: "config::cache",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "core.multiPackIndex",
+        usage: InModule {
+            name: "config::cache",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "core.disambiguate",
+        usage: InModule {
+            name: "config::cache",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "core.logAllRefUpdates",
+        usage: InModule {
+            name: "config::cache",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "core.repositoryFormatVersion",
+        usage: InModule {
+            name: "config::cache::incubate",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "extensions.objectFormat",
+        usage: InModule {
+            name: "config::cache::incubate",
+            deviation: Some(
+                "Support for SHA256 is prepared but not fully implemented yet. For now we abort when encountered.",
+            ),
+        },
+    },
+    Record {
+        config: "committer.name",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "committer.email",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "author.name",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "author.email",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "user.name",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: Some("defaults to 'gitoxide'"),
+        },
+    },
+    Record {
+        config: "user.email",
+        usage: InModule {
+            name: "repository::identity",
+            deviation: Some("defaults to 'gitoxide@localhost'"),
+        },
+    },
+    Record {
         config: "fetch.recurseSubmodules",
         usage: Planned {
             note: Some("Seems useful for cargo as well"),
@@ -132,6 +239,34 @@ static GIT_CONFIG: &[Record] = &[
         config: "pack.indexVersion",
         usage: InModule {
             name: "remote::connection::fetch",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "protocol.allow",
+        usage: InModule {
+            name: "remote::url::scheme_permission",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "protocol.<name>.allow",
+        usage: InModule {
+            name: "remote::url::scheme_permission",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "url.<base>.insteadOf",
+        usage: InModule {
+            name: "remote::url::rewrite",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "url.<base>.pushInsteadOf",
+        usage: InModule {
+            name: "remote::url::rewrite",
             deviation: None,
         },
     },
