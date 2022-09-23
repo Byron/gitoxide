@@ -5,8 +5,8 @@ pub(crate) struct HandshakeWithRefs {
     refs: Vec<git_protocol::fetch::Ref>,
 }
 
-/// A function that performs a given credential action.
-pub type CredentialsFn<'a> = Box<dyn FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + 'a>;
+/// A function that performs a given credential action, trying to obtain credentials for an operation that needs it.
+pub type AuthenticateFn<'a> = Box<dyn FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + 'a>;
 
 /// A type to represent an ongoing connection to a remote host, typically with the connection already established.
 ///
@@ -14,7 +14,7 @@ pub type CredentialsFn<'a> = Box<dyn FnMut(git_credentials::helper::Action) -> g
 /// much like a remote procedure call.
 pub struct Connection<'a, 'repo, T, P> {
     pub(crate) remote: &'a Remote<'repo>,
-    pub(crate) credentials: Option<CredentialsFn<'a>>,
+    pub(crate) authenticate: Option<AuthenticateFn<'a>>,
     pub(crate) transport: T,
     pub(crate) progress: P,
 }

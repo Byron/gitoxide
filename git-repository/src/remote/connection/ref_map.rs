@@ -121,7 +121,7 @@ where
         extra_parameters: Vec<(String, Option<String>)>,
     ) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
-        let authenticate = match self.credentials.as_mut() {
+        let authenticate = match self.authenticate.as_mut() {
             Some(f) => f,
             None => {
                 let url = self

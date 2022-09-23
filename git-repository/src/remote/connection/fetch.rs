@@ -2,6 +2,15 @@ use crate::remote::fetch::RefMap;
 use crate::remote::{ref_map, Connection};
 use crate::Progress;
 use git_protocol::transport::client::Transport;
+use std::sync::atomic::AtomicBool;
+
+mod error {
+    /// The error returned by [`receive()`](super::Prepare::receive()).
+    #[derive(Debug, thiserror::Error)]
+    #[error("TBD")]
+    pub enum Error {}
+}
+pub use error::Error;
 
 impl<'remote, 'repo, T, P> Connection<'remote, 'repo, T, P>
 where
@@ -25,6 +34,19 @@ where
             con: Some(self),
             ref_map,
         })
+    }
+}
+
+impl<'remote, 'repo, T, P> Prepare<'remote, 'repo, T, P>
+where
+    T: Transport,
+    P: Progress,
+{
+    /// receive the pack and perform the operation as configured by git via `git-config` or overridden by various builder methods.
+    pub fn receive(mut self, _should_interrupt: &AtomicBool) -> Result<(), Error> {
+        let mut con = self.con.take().expect("receive() can only be called once");
+        git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+        todo!()
     }
 }
 

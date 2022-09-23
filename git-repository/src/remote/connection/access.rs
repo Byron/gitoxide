@@ -1,5 +1,5 @@
 use crate::{
-    remote::{connection::CredentialsFn, Connection},
+    remote::{connection::AuthenticateFn, Connection},
     Remote,
 };
 
@@ -16,7 +16,7 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
         mut self,
         helper: impl FnMut(git_credentials::helper::Action) -> git_credentials::protocol::Result + 'a,
     ) -> Self {
-        self.credentials = Some(Box::new(helper));
+        self.authenticate = Some(Box::new(helper));
         self
     }
 }
@@ -31,17 +31,17 @@ impl<'a, 'repo, T, P> Connection<'a, 'repo, T, P> {
     pub fn configured_credentials(
         &self,
         url: git_url::Url,
-    ) -> Result<CredentialsFn<'a>, crate::config::credential_helpers::Error> {
+    ) -> Result<AuthenticateFn<'a>, crate::config::credential_helpers::Error> {
         let (mut cascade, _action_with_normalized_url, prompt_opts) =
             self.remote.repo.config_snapshot().credential_helpers(url)?;
-        Ok(Box::new(move |action| cascade.invoke(action, prompt_opts.clone())) as CredentialsFn<'_>)
+        Ok(Box::new(move |action| cascade.invoke(action, prompt_opts.clone())) as AuthenticateFn<'_>)
     }
-    /// Drop the transport and additional state to regain the original remote.
+    /// Return the underlying remote that instantiate this connection.
     pub fn remote(&self) -> &Remote<'repo> {
         self.remote
     }
 
-    /// Provide a mutable transport to allow configuring it.
+    /// Provide a mutable transport to allow configuring it with [`configure()`][git_protocol::transport::client::TransportWithoutIO::configure()]
     pub fn transport_mut(&mut self) -> &mut T {
         &mut self.transport
     }
