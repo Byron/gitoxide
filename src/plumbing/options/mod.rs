@@ -89,21 +89,12 @@ pub enum Subcommands {
     /// Interact with the exclude files like .gitignore.
     #[clap(subcommand)]
     Exclude(exclude::Subcommands),
-    #[clap(subcommand)]
-    Progress(progress::Subcommands),
+    /// Display overall progress of the gitoxide project as seen from the perspective of git-config.
+    Progress,
     Config(config::Platform),
     /// Subcommands that need no git repository to run.
     #[clap(subcommand)]
     Free(free::Subcommands),
-}
-
-pub mod progress {
-
-    #[derive(Debug, clap::Subcommand)]
-    pub enum Subcommands {
-        /// Show the implementation progress of gitoxide based on the git configuration that it consumes.
-        Show,
-    }
 }
 
 pub mod config {
