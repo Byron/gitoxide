@@ -18,6 +18,18 @@
    * We `thiserror` generally.
  * Adhere to the [stability guide](https://github.com/Byron/gitoxide/blob/main/STABILITY.md)
   
+## Configuration and overrides
+
+As a general rule, respect and implement all applicable [git-config](https://git-scm.com/docs/git-config) by default, but allow the
+caller to set overrides. How overrides work depends on the goals of the particular API so it can be done on the main call path,
+forcing a choice, or more typically, as a side-lane where overrides can be done on demand.
+
+Note that it should be possible to obtain the current configuration for modification by the user for selective overrides, either
+by calling methods or by obtaining a data structure that can be set as a whole using a `get -> modify -> set` cycle.
+
+Parameters which are not available in git or specific to `gitoxide` or the needs of the caller can be passed as parameters or via
+`Options` or `Context` structures as needed.
+
 ## General
 
 * **async**
