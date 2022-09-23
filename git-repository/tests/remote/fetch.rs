@@ -7,7 +7,6 @@ mod blocking_io {
     use crate::remote;
 
     #[test]
-    #[ignore]
     fn fetch_pack() -> crate::Result {
         for version in [
             None,
@@ -25,9 +24,12 @@ mod blocking_io {
             }
 
             let remote = repo.find_remote("origin")?;
-            remote
-                .connect(Fetch, progress::Discard)?
-                .prepare_fetch(Default::default())?;
+            {
+                remote
+                    .connect(Fetch, progress::Discard)?
+                    .prepare_fetch(Default::default())?;
+                // early drops are fine and won't block.
+            }
         }
         Ok(())
     }

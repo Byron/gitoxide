@@ -69,7 +69,7 @@ where
     }
 
     #[git_protocol::maybe_async::maybe_async]
-    async fn ref_map_inner(
+    pub(crate) async fn ref_map_inner(
         &mut self,
         Options {
             prefix_from_spec_as_filter_on_remote,
