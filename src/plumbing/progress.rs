@@ -1,6 +1,6 @@
-use crosstermion::crossterm::style::Stylize;
 use owo_colors::OwoColorize;
 use std::fmt::{Display, Formatter};
+use tabled::{Style, TableIteratorExt, Tabled};
 
 #[derive(Clone)]
 enum Usage {
@@ -52,6 +52,18 @@ struct Record {
     usage: Usage,
 }
 
+impl Tabled for Record {
+    const LENGTH: usize = 3;
+
+    fn fields(&self) -> Vec<String> {
+        vec![self.usage.icon().into(), self.config.into(), self.usage.to_string()]
+    }
+
+    fn headers() -> Vec<String> {
+        vec![]
+    }
+}
+
 static GIT_CONFIG: &[Record] = &[
     Record {
         config: "fetch.output",
@@ -80,8 +92,7 @@ pub fn show_progress() -> anyhow::Result<()> {
         v
     };
 
-    for Record { config, usage } in sorted {
-        println!("{} {}: {usage}", usage.icon(), config.bold(),);
-    }
+    println!("{}", sorted.table().with(Style::blank()));
+    println!("\nTotal records: {}", GIT_CONFIG.len());
     Ok(())
 }
