@@ -262,6 +262,12 @@ static GIT_CONFIG: &[Record] = &[
         },
     },
     Record {
+        config: "remotes.<group>",
+        usage: Planned {
+            note: Some("useful for multi-remote fetches as part of the standard API, maybe just `group(name) -> Option<Vec<Remote>>`"),
+        },
+    },
+    Record {
         config: "url.<base>.insteadOf",
         usage: InModule {
             name: "remote::url::rewrite",
