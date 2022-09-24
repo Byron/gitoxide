@@ -60,14 +60,14 @@ where
         git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
 
         let repo = con.remote.repo;
-        let _index_version = config::pack_index_version(repo)?;
-        let _thread_limit = config::index_threads(repo)?;
-        // let options = git_pack::bundle::write::Options {
-        //     thread_limit: ctx.thread_limit,
-        //     index_version: git_pack::index::Version::V2,
-        //     iteration_mode: git_pack::data::input::Mode::Verify,
-        //     object_hash: ctx.object_hash,
-        // };
+        let index_version = config::pack_index_version(repo)?;
+        let thread_limit = config::index_threads(repo)?;
+        let _options = git_pack::bundle::write::Options {
+            thread_limit,
+            index_version,
+            iteration_mode: git_pack::data::input::Mode::Verify,
+            object_hash: con.remote.repo.object_hash(),
+        };
 
         todo!()
     }
