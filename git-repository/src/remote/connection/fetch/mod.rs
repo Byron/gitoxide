@@ -7,7 +7,6 @@ use std::sync::atomic::AtomicBool;
 mod error {
     /// The error returned by [`receive()`](super::Prepare::receive()).
     #[derive(Debug, thiserror::Error)]
-    #[error("TBD")]
     pub enum Error {
         #[error("{message}{}", desired.map(|n| format!(" (got {})", n)).unwrap_or_default())]
         Configuration {
@@ -15,9 +14,18 @@ mod error {
             desired: Option<i64>,
             source: Option<git_config::value::Error>,
         },
+        #[error(transparent)]
+        FetchResponse(#[from] git_protocol::fetch::response::Error),
+        #[error(transparent)]
+        Negotiate(#[from] super::negotiate::Error),
+        #[error(transparent)]
+        Client(#[from] git_protocol::transport::client::Error),
     }
 }
 pub use error::Error;
+
+///
+pub mod negotiate;
 
 impl<'remote, 'repo, T, P> Connection<'remote, 'repo, T, P>
 where
@@ -57,20 +65,83 @@ where
     /// experimented with. We currently implement something we could call 'naive' which works for now.
     pub fn receive(mut self, _should_interrupt: &AtomicBool) -> Result<(), Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
-        git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
 
+        let handshake = &self.ref_map.handshake;
+        let protocol_version = handshake.server_protocol_version;
+
+        let fetch = git_protocol::fetch::Command::Fetch;
+        let fetch_features = fetch.default_features(protocol_version, &handshake.capabilities);
+
+        git_protocol::fetch::Response::check_required_features(protocol_version, &fetch_features)?;
+        let sideband_all = fetch_features.iter().any(|(n, _)| *n == "sideband-all");
+        let mut arguments = git_protocol::fetch::Arguments::new(protocol_version, fetch_features);
+        let mut previous_response = None::<git_protocol::fetch::Response>;
+        let mut round = 1;
+        let progress = &mut con.progress;
         let repo = con.remote.repo;
-        let index_version = config::pack_index_version(repo)?;
-        let thread_limit = config::index_threads(repo)?;
+
+        let _reader = 'negotiation: loop {
+            progress.step();
+            progress.set_name(format!("negotiate (round {})", round));
+            let is_done = match negotiate::one_round(
+                negotiate::Algorithm::Naive,
+                round,
+                repo,
+                &self.ref_map,
+                &mut arguments,
+                previous_response.as_ref(),
+            ) {
+                Ok(is_done) => is_done,
+                Err(err) => {
+                    git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+                    return Err(err.into());
+                }
+            };
+            round += 1;
+            let mut reader = arguments.send(&mut con.transport, is_done)?;
+            if sideband_all {
+                setup_remote_progress(progress, &mut reader);
+            }
+            let response = git_protocol::fetch::Response::from_line_reader(protocol_version, &mut reader)?;
+            if response.has_pack() {
+                progress.step();
+                progress.set_name("receiving pack");
+                if !sideband_all {
+                    setup_remote_progress(progress, &mut reader);
+                }
+                break 'negotiation reader;
+            } else {
+                previous_response = Some(response);
+            }
+        };
+
         let _options = git_pack::bundle::write::Options {
-            thread_limit,
-            index_version,
+            thread_limit: config::index_threads(repo)?,
+            index_version: config::pack_index_version(repo)?,
             iteration_mode: git_pack::data::input::Mode::Verify,
             object_hash: con.remote.repo.object_hash(),
         };
+        // git_pack::Bundle::write_to_directory();
+        todo!("read pack");
 
-        todo!()
+        if matches!(protocol_version, git_protocol::transport::Protocol::V2) {
+            git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+        }
+        todo!("apply refs")
     }
+}
+
+fn setup_remote_progress(
+    progress: &mut impl Progress,
+    reader: &mut Box<dyn git_protocol::transport::client::ExtendedBufRead + Unpin + '_>,
+) {
+    use git_protocol::transport::client::ExtendedBufRead;
+    reader.set_progress_handler(Some(Box::new({
+        let mut remote_progress = progress.add_child("remote");
+        move |is_err: bool, data: &[u8]| {
+            git_protocol::RemoteProgress::translate_to_progress(is_err, data, &mut remote_progress)
+        }
+    }) as git_protocol::transport::client::HandleProgress));
 }
 
 mod config;

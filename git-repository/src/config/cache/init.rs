@@ -129,14 +129,19 @@ impl Cache {
             Err(err) => return Err(err),
         };
 
+        use util::config_bool;
+        let reflog = util::query_refupdates(&config);
+        let ignore_case = config_bool(&config, "core.ignoreCase", false, lenient_config)?;
+        let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true, lenient_config)?;
+        let object_kind_hint = util::disambiguate_hint(&config);
         Ok(Cache {
             resolved: config.into(),
-            use_multi_pack_index: util::config_bool(&config, "core.multiPackIndex", true, lenient_config)?,
+            use_multi_pack_index,
             object_hash,
-            object_kind_hint: util::disambiguate_hint(&config),
-            reflog: util::query_refupdates(&config),
+            object_kind_hint,
+            reflog,
             is_bare,
-            ignore_case: util::config_bool(&config, "core.ignoreCase", false, lenient_config)?,
+            ignore_case,
             hex_len,
             filter_config_section,
             excludes_file,

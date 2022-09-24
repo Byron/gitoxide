@@ -95,7 +95,7 @@ pub(crate) fn parse_core_abbrev(
     }
 }
 
-pub(crate) fn disambiguate_hint(config: &git_configFile) -> Option<ObjectKindHint> {
+pub(crate) fn disambiguate_hint(config: &git_config::File<'static>) -> Option<ObjectKindHint> {
     config.string("core", None, "disambiguate").and_then(|value| {
         Some(match value.as_ref().as_ref() {
             b"commit" => ObjectKindHint::Commit,
