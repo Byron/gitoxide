@@ -125,8 +125,10 @@ impl Arguments {
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
         self.args.push(format!("{}{}", prefix, value).into());
     }
+    /// Create a new instance to help setting up arguments to send to the server as part of a `fetch` operation
+    /// for which `features` are the available and configured features to use.
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
-    pub(crate) fn new(version: git_transport::Protocol, features: Vec<crate::fetch::command::Feature>) -> Self {
+    pub fn new(version: git_transport::Protocol, features: Vec<crate::fetch::command::Feature>) -> Self {
         use crate::fetch::Command;
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");

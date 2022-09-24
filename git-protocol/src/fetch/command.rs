@@ -112,8 +112,9 @@ mod with_io {
             }
         }
 
-        /// Turns on all modern features for V1 and all supported features for V2.
-        pub(crate) fn default_features(
+        /// Turns on all modern features for V1 and all supported features for V2, returning them as a vector of features.
+        /// Note that this is the basis for any fetch operation as these features fulfil basic requirements and reasonably up-to-date servers.
+        pub fn default_features(
             &self,
             version: git_transport::Protocol,
             server_capabilities: &Capabilities,
