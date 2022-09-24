@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use super::{interpolate_context, util, Error, StageOne};
-use crate::{config::Cache, repository, revision::spec::parse::ObjectKindHint};
+use crate::{config::Cache, repository};
 
 /// Initialization
 impl Cache {
@@ -129,28 +129,14 @@ impl Cache {
             Err(err) => return Err(err),
         };
 
-        use util::config_bool;
-        let reflog = util::query_refupdates(&config);
-        let ignore_case = config_bool(&config, "core.ignoreCase", false, lenient_config)?;
-        let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true, lenient_config)?;
-        let object_kind_hint = config.string("core", None, "disambiguate").and_then(|value| {
-            Some(match value.as_ref().as_ref() {
-                b"commit" => ObjectKindHint::Commit,
-                b"committish" => ObjectKindHint::Committish,
-                b"tree" => ObjectKindHint::Tree,
-                b"treeish" => ObjectKindHint::Treeish,
-                b"blob" => ObjectKindHint::Blob,
-                _ => return None,
-            })
-        });
         Ok(Cache {
             resolved: config.into(),
-            use_multi_pack_index,
+            use_multi_pack_index: util::config_bool(&config, "core.multiPackIndex", true, lenient_config)?,
             object_hash,
-            object_kind_hint,
-            reflog,
+            object_kind_hint: util::disambiguate_hint(&config),
+            reflog: util::query_refupdates(&config),
             is_bare,
-            ignore_case,
+            ignore_case: util::config_bool(&config, "core.ignoreCase", false, lenient_config)?,
             hex_len,
             filter_config_section,
             excludes_file,
