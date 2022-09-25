@@ -50,7 +50,7 @@ pub mod parse {
 pub enum Ref {
     /// A ref pointing to a `tag` object, which in turns points to an `object`, usually a commit
     Peeled {
-        /// The name at which the ref is located, like `refs/heads/main`.
+        /// The name at which the ref is located, like `refs/tags/1.0`.
         full_ref_name: BString,
         /// The hash of the tag the ref points to.
         tag: git_hash::ObjectId,

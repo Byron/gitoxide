@@ -3,6 +3,7 @@ use std::fmt;
 use bstr::{BStr, BString, ByteVec};
 
 /// The arguments passed to a server command.
+#[derive(Debug)]
 pub struct Arguments {
     /// The active features/capabilities of the fetch invocation
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
@@ -24,6 +25,13 @@ pub struct Arguments {
 }
 
 impl Arguments {
+    /// Return true if there is no argument at all.
+    ///
+    /// This can happen if callers assure that they won't add 'wants' if their 'have' is the same, i.e. if the remote has nothing
+    /// new for them.
+    pub fn is_empty(&self) -> bool {
+        self.args.is_empty()
+    }
     /// Return true if ref filters is supported.
     pub fn can_use_filter(&self) -> bool {
         self.filter
