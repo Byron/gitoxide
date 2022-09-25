@@ -1,6 +1,7 @@
 use crate::remote::fetch::RefMap;
 use crate::remote::{ref_map, Connection};
 use crate::Progress;
+use git_odb::FindExt;
 use git_protocol::transport::client::Transport;
 use std::sync::atomic::AtomicBool;
 
@@ -20,9 +21,19 @@ mod error {
         Negotiate(#[from] super::negotiate::Error),
         #[error(transparent)]
         Client(#[from] git_protocol::transport::client::Error),
+        #[error(transparent)]
+        WritePack(#[from] git_pack::bundle::write::Error),
     }
 }
 pub use error::Error;
+
+/// The outcome of receiving a pack via [`Prepare::receive()`].
+#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
+#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
+pub struct Outcome {
+    /// Information collected while writing the pack and its index.
+    pub write_pack_bundle: git_pack::bundle::write::Outcome,
+}
 
 ///
 pub mod negotiate;
@@ -58,12 +69,14 @@ where
     P: Progress,
 {
     /// Receive the pack and perform the operation as configured by git via `git-config` or overridden by various builder methods.
+    /// Return `Ok(None)` if there was nothing to do because all remote refs are at the same state as they are locally, or `Ok(Some(outcome))`
+    /// to inform about all the changes that were made.
     ///
     /// ### Negotiation
     ///
     /// "fetch.negotiationAlgorithm" describes algorithms `git` uses currently, with the default being `consecutive` and `skipping` being
     /// experimented with. We currently implement something we could call 'naive' which works for now.
-    pub fn receive(mut self, _should_interrupt: &AtomicBool) -> Result<(), Error> {
+    pub fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Option<Outcome>, Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
 
         let handshake = &self.ref_map.handshake;
@@ -80,7 +93,7 @@ where
         let progress = &mut con.progress;
         let repo = con.remote.repo;
 
-        let _reader = 'negotiation: loop {
+        let reader = 'negotiation: loop {
             progress.step();
             progress.set_name(format!("negotiate (round {})", round));
             let is_done = match negotiate::one_round(
@@ -91,6 +104,10 @@ where
                 &mut arguments,
                 previous_response.as_ref(),
             ) {
+                Ok(_) if arguments.is_empty() => {
+                    git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
+                    return Ok(None);
+                }
                 Ok(is_done) => is_done,
                 Err(err) => {
                     git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
@@ -115,19 +132,30 @@ where
             }
         };
 
-        let _options = git_pack::bundle::write::Options {
+        let options = git_pack::bundle::write::Options {
             thread_limit: config::index_threads(repo)?,
             index_version: config::pack_index_version(repo)?,
             iteration_mode: git_pack::data::input::Mode::Verify,
             object_hash: con.remote.repo.object_hash(),
         };
-        // git_pack::Bundle::write_to_directory();
-        todo!("read pack");
+        let write_pack_bundle = git_pack::Bundle::write_to_directory(
+            reader,
+            Some(repo.objects.store_ref().path().join("pack")),
+            con.progress,
+            should_interrupt,
+            Some(Box::new({
+                let repo = repo.clone();
+                move |oid, buf| repo.objects.find(oid, buf).ok()
+            })),
+            options,
+        )?;
 
         if matches!(protocol_version, git_protocol::transport::Protocol::V2) {
             git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
         }
-        todo!("apply refs")
+
+        // TODO: apply refs
+        Ok(Some(Outcome { write_pack_bundle }))
     }
 }
 

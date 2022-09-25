@@ -3,6 +3,7 @@ mod blocking_io {
     use git_features::progress;
     use git_repository as git;
     use git_repository::remote::Direction::Fetch;
+    use std::sync::atomic::AtomicBool;
 
     use crate::remote;
 
@@ -30,6 +31,12 @@ mod blocking_io {
                     .prepare_fetch(Default::default())?;
                 // early drops are fine and won't block.
             }
+            // TODO: make sure there is actually something to do to run into other issues
+            let outcome = remote
+                .connect(Fetch, progress::Discard)?
+                .prepare_fetch(Default::default())?
+                .receive(&AtomicBool::default())?;
+            assert_eq!(outcome, None, "there is nothing to do right after a clone.");
         }
         Ok(())
     }

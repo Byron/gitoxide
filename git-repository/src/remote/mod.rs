@@ -54,6 +54,16 @@ pub mod fetch {
         Ref(git_protocol::fetch::Ref),
     }
 
+    impl Source {
+        /// Return either the direct object id we refer to or the direct target that a reference refers to.
+        pub fn as_id(&self) -> &git_hash::oid {
+            match self {
+                Source::ObjectId(id) => id,
+                Source::Ref(r) => r.unpack().1,
+            }
+        }
+    }
+
     /// A mapping between a single remote reference and its advertised objects to a local destination which may or may not exist.
     #[derive(Debug, Clone)]
     pub struct Mapping {
