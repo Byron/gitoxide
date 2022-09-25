@@ -31,7 +31,7 @@ pub mod fetch {
     use crate::bstr::BString;
 
     /// Information about the relationship between our refspecs, and remote references with their local counterparts.
-    #[derive(Debug, Clone)]
+    #[derive(Default, Debug, Clone)]
     pub struct RefMap<'spec> {
         /// A mapping between a remote reference and a local tracking branch.
         pub mappings: Vec<Mapping>,
@@ -73,6 +73,27 @@ pub mod fetch {
         pub local: Option<BString>,
         /// The index into the fetch ref-specs used to produce the mapping, allowing it to be recovered.   
         pub spec_index: usize,
+    }
+
+    /// The status of the repository after the fetch operation
+    #[derive(Debug, Clone)]
+    pub enum Status {
+        /// Nothing changed as the remote didn't have anything new.
+        NoChange,
+        /// There was at least one tip with a new object which we received.
+        Change {
+            /// Information collected while writing the pack and its index.
+            write_pack_bundle: git_pack::bundle::write::Outcome,
+        },
+    }
+
+    /// The outcome of receiving a pack via [`Prepare::receive()`].
+    #[derive(Debug, Clone)]
+    pub struct Outcome<'spec> {
+        /// The result of the initial mapping of references, the prerequisite for any fetch.
+        pub ref_map: RefMap<'spec>,
+        /// The status of the operation to indicate what happened.
+        pub status: Status,
     }
 
     #[cfg(feature = "blocking-network-client")]

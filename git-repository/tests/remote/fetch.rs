@@ -36,7 +36,7 @@ mod blocking_io {
                 .connect(Fetch, progress::Discard)?
                 .prepare_fetch(Default::default())?
                 .receive(&AtomicBool::default())?;
-            assert_eq!(outcome, None, "there is nothing to do right after a clone.");
+            assert!(matches!(outcome.status, git::remote::fetch::Status::NoChange));
         }
         Ok(())
     }

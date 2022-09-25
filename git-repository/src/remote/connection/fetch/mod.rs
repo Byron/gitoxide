@@ -1,4 +1,4 @@
-use crate::remote::fetch::RefMap;
+use crate::remote::fetch::{Outcome, RefMap, Status};
 use crate::remote::{ref_map, Connection};
 use crate::Progress;
 use git_odb::FindExt;
@@ -26,14 +26,6 @@ mod error {
     }
 }
 pub use error::Error;
-
-/// The outcome of receiving a pack via [`Prepare::receive()`].
-#[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
-#[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
-pub struct Outcome {
-    /// Information collected while writing the pack and its index.
-    pub write_pack_bundle: git_pack::bundle::write::Outcome,
-}
 
 ///
 pub mod negotiate;
@@ -76,7 +68,7 @@ where
     ///
     /// "fetch.negotiationAlgorithm" describes algorithms `git` uses currently, with the default being `consecutive` and `skipping` being
     /// experimented with. We currently implement something we could call 'naive' which works for now.
-    pub fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Option<Outcome>, Error> {
+    pub fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome<'remote>, Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
 
         let handshake = &self.ref_map.handshake;
@@ -106,7 +98,10 @@ where
             ) {
                 Ok(_) if arguments.is_empty() => {
                     git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
-                    return Ok(None);
+                    return Ok(Outcome {
+                        ref_map: self.take_ref_map(),
+                        status: Status::NoChange,
+                    });
                 }
                 Ok(is_done) => is_done,
                 Err(err) => {
@@ -155,7 +150,24 @@ where
         }
 
         // TODO: apply refs
-        Ok(Some(Outcome { write_pack_bundle }))
+        Ok(Outcome {
+            ref_map: self.take_ref_map(),
+            status: Status::Change { write_pack_bundle },
+        })
+    }
+
+    fn take_ref_map(&mut self) -> RefMap<'remote> {
+        let ref_map = RefMap {
+            mappings: Default::default(),
+            fixes: Default::default(),
+            remote_refs: Default::default(),
+            handshake: git_protocol::fetch::handshake::Outcome {
+                server_protocol_version: Default::default(),
+                refs: None,
+                capabilities: git_protocol::transport::client::Capabilities::default(),
+            },
+        };
+        std::mem::replace(&mut self.ref_map, ref_map)
     }
 }
 
