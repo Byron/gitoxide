@@ -171,7 +171,7 @@ impl crate::index::File {
                     modify_base(data, entry, bytes, kind.hash());
                     Ok::<_, Error>(())
                 },
-                crate::cache::delta::traverse::Options {
+                traverse::Options {
                     object_progress: root_progress.add_child("Resolving"),
                     size_progress: root_progress.add_child("Decoding"),
                     thread_limit,
@@ -215,12 +215,7 @@ impl crate::index::File {
     }
 }
 
-fn modify_base(
-    entry: &mut crate::index::write::TreeEntry,
-    pack_entry: &crate::data::Entry,
-    decompressed: &[u8],
-    hash: git_hash::Kind,
-) {
+fn modify_base(entry: &mut TreeEntry, pack_entry: &crate::data::Entry, decompressed: &[u8], hash: git_hash::Kind) {
     fn compute_hash(kind: git_object::Kind, bytes: &[u8], object_hash: git_hash::Kind) -> git_hash::ObjectId {
         let mut hasher = git_features::hash::hasher(object_hash);
         hasher.update(&git_object::encode::loose_header(kind, bytes.len()));
