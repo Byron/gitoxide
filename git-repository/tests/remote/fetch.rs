@@ -44,18 +44,45 @@ mod blocking_io {
 
             #[test]
             #[ignore]
-            fn remote_without_changes() {
+            fn various_valid_updates() {
                 let repo = repo("two-origins");
-                let out = fetch::refs::update(
-                    &repo,
-                    &mapping_from_spec("refs/heads/main:refs/remotes/origin/main", &repo),
-                    true,
-                )
-                .unwrap();
+                for (spec, expected_mode) in [
+                    (
+                        "refs/heads/main:refs/remotes/origin/main",
+                        fetch::refs::update::Mode::NoChangeNeeded,
+                    ),
+                    (
+                        "refs/heads/main:refs/remotes/origin/new-main",
+                        fetch::refs::update::Mode::New,
+                    ),
+                    ("+refs/heads/main:refs/heads/g", fetch::refs::update::Mode::Forced),
+                ] {
+                    let out = fetch::refs::update(&repo, &mapping_from_spec(spec, &repo), true).unwrap();
+
+                    assert_eq!(
+                        out.updates,
+                        vec![fetch::refs::Update {
+                            mode: expected_mode,
+                            edit_index: Some(0)
+                        }]
+                    );
+                    assert_eq!(out.edits.len(), 1);
+                }
+            }
+
+            #[test]
+            #[ignore]
+            #[should_panic]
+            fn fast_forward_is_not_implemented_yet() {
+                // TODO: move it above for acceptable case, test here for non-fastforwards being denied.
+                let repo = repo("two-origins");
+                let out = fetch::refs::update(&repo, &mapping_from_spec("+refs/heads/main:refs/heads/g", &repo), true)
+                    .unwrap();
+
                 assert_eq!(
                     out.updates,
                     vec![fetch::refs::Update {
-                        mode: fetch::refs::update::Mode::NoChangeNeeded,
+                        mode: fetch::refs::update::Mode::FastForward,
                         edit_index: Some(0)
                     }]
                 );

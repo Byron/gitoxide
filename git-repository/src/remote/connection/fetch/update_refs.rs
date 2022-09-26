@@ -29,6 +29,8 @@ pub mod update {
         FastForward,
         /// The ref was set to point to the new commit from the remote without taking into consideration its ancestry.
         Forced,
+        /// A new ref has been created as there was none before.
+        New,
         /// No change was attempted as the remote ref didn't change compared to the current ref, or because no remote ref was specified
         /// in the ref-spec.
         NoChangeNeeded,
