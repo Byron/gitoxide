@@ -7,7 +7,16 @@ mod blocking_io {
     use git_testtools::hex_to_id;
     use std::sync::atomic::AtomicBool;
 
-    use crate::remote;
+    pub(crate) fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
+        let dir = git_testtools::scripted_fixture_repo_writable_with_args(
+            "make_fetch_repos.sh",
+            &[] as &[String],
+            git_testtools::Creation::ExecuteScript,
+        )
+        .unwrap();
+        let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
+        (repo, dir)
+    }
 
     #[test]
     fn fetch_pack() -> crate::Result {
@@ -16,7 +25,7 @@ mod blocking_io {
             Some(git::protocol::transport::Protocol::V2),
             Some(git::protocol::transport::Protocol::V1),
         ] {
-            let (mut repo, _tmp) = remote::repo_rw("two-origins");
+            let (mut repo, _tmp) = repo_rw("two-origins");
             if let Some(version) = version {
                 repo.config_snapshot_mut().set_raw_value(
                     "protocol",
