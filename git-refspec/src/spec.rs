@@ -18,6 +18,11 @@ impl RefSpec {
             dst: self.dst.as_ref().map(|b| b.as_ref()),
         }
     }
+
+    /// Return true if the spec stats with a `+` and thus forces setting the reference.
+    pub fn allow_non_fast_forward(&self) -> bool {
+        matches!(self.mode, Mode::Force)
+    }
 }
 
 mod impls {
