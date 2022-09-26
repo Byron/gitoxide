@@ -7,7 +7,7 @@ use std::convert::TryInto;
 pub mod update {
     use crate::remote::fetch;
     mod error {
-        /// The error returned by [`fetch::refs::update()`].
+        /// The error returned by [`fetch::refs::update()`][`crate::remote::fetch::refs::update()`].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
@@ -88,6 +88,7 @@ pub struct Update {
 pub fn update(
     repo: &crate::Repository,
     mappings: &[fetch::Mapping],
+    refspecs: &[git_refspec::RefSpec],
     _dry_run: fetch::DryRun,
 ) -> Result<update::Outcome, update::Error> {
     let mut edits = Vec::new();
@@ -115,8 +116,10 @@ pub fn update(
                         TargetRef::Peeled(local_id) => {
                             let (mode, reflog_message) = if local_id == remote_id {
                                 (update::Mode::NoChangeNeeded, "TBD no change")
+                            } else if refspecs[*spec_index].allow_non_fast_forward() {
+                                (update::Mode::Forced, "TBD force")
                             } else {
-                                todo!("determine fast forward or force")
+                                todo!("check for fast-forward (is local an ancestor of remote?)")
                             };
                             (mode, reflog_message, existing.name().to_owned())
                         }

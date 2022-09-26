@@ -66,7 +66,8 @@ mod blocking_io {
                     ("+refs/heads/main:refs/heads/g", fetch::refs::update::Mode::Forced, "a forced non-fastforward (main goes backwards)"),
                     // ("refs/heads/g:refs/heads/main", fetch::refs::update::Mode::FastForward, "a fast-forward only fast-forward situation, all good"),
                 ] {
-                    let out = fetch::refs::update(&repo, &mapping_from_spec(spec, &repo), fetch::DryRun::Yes).unwrap();
+                    let (mapping, specs) = mapping_from_spec(spec, &repo);
+                    let out = fetch::refs::update(&repo, &mapping, &specs, fetch::DryRun::Yes).unwrap();
 
                     assert_eq!(
                         out.updates,
@@ -87,12 +88,8 @@ mod blocking_io {
             fn fast_forward_is_not_implemented_yet() {
                 // TODO: move it above for acceptable case, test here for non-fastforwards being denied.
                 let repo = repo("two-origins");
-                let out = fetch::refs::update(
-                    &repo,
-                    &mapping_from_spec("+refs/heads/main:refs/heads/g", &repo),
-                    fetch::DryRun::Yes,
-                )
-                .unwrap();
+                let (mappings, specs) = mapping_from_spec("+refs/heads/main:refs/heads/g", &repo);
+                let out = fetch::refs::update(&repo, &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
                 assert_eq!(
                     out.updates,
@@ -105,12 +102,15 @@ mod blocking_io {
                 assert_eq!(out.edits.len(), 1);
             }
 
-            fn mapping_from_spec(spec: &str, repo: &git::Repository) -> Vec<fetch::Mapping> {
+            fn mapping_from_spec(
+                spec: &str,
+                repo: &git::Repository,
+            ) -> (Vec<fetch::Mapping>, Vec<git::refspec::RefSpec>) {
                 let spec = git_refspec::parse(spec.into(), git_refspec::parse::Operation::Fetch).unwrap();
                 let group = git_refspec::MatchGroup::from_fetch_specs(Some(spec));
                 let references = repo.references().unwrap();
                 let references: Vec<_> = references.all().unwrap().map(|r| into_remote_ref(r.unwrap())).collect();
-                group
+                let mappings = group
                     .match_remotes(references.iter().map(remote_ref_to_item))
                     .mappings
                     .into_iter()
@@ -121,7 +121,8 @@ mod blocking_io {
                         local: m.rhs.map(|r| r.into_owned()),
                         spec_index: m.spec_index,
                     })
-                    .collect()
+                    .collect();
+                (mappings, vec![spec.to_owned()])
             }
 
             fn into_remote_ref(mut r: git::Reference<'_>) -> git_protocol::fetch::Ref {

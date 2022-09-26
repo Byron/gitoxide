@@ -175,7 +175,12 @@ where
             git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
         }
 
-        let update_refs = refs::update(repo, &self.ref_map.mappings, fetch::DryRun::No)?;
+        let update_refs = refs::update(
+            repo,
+            &self.ref_map.mappings,
+            con.remote.refspecs(crate::remote::Direction::Fetch),
+            fetch::DryRun::No,
+        )?;
 
         Ok(Outcome {
             ref_map: std::mem::take(&mut self.ref_map),
