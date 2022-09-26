@@ -14,4 +14,5 @@ git clone --shared base two-origins
 (cd two-origins
   git remote add changes-on-top-of-origin "$PWD/../clone-as-base-with-changes"
   git branch "not-currently-checked-out"
+  git symbolic-ref refs/heads/symbolic refs/heads/main
 )

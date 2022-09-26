@@ -44,12 +44,18 @@ mod update {
                 "the destination branch doesn't exist and needs to be created",
             ),
             (
+                "refs/heads/main:refs/remotes/origin/new-main",
+                fetch::refs::update::Mode::New,
+                true,
+                "just to validate that we really are in dry-run mode, or else this ref would be present now",
+            ),
+            (
                 "+refs/heads/main:refs/remotes/origin/g",
                 fetch::refs::update::Mode::Forced,
                 true,
                 "a forced non-fastforward (main goes backwards)",
             ),
-            // (
+            // ( // TODO: make fast-forwards work
             //     "refs/remotes/origin/g:refs/heads/not-currently-checked-out",
             //     fetch::refs::update::Mode::FastForward,
             //     true,
@@ -73,18 +79,33 @@ mod update {
     }
 
     #[test]
-    #[ignore]
-    #[should_panic]
-    fn fast_forward_is_not_implemented_yet() {
-        // TODO: move it above for acceptable case, test here for non-fastforwards being denied.
+    fn symbolic_refs_are_never_written() {
         let repo = repo("two-origins");
-        let (mappings, specs) = mapping_from_spec("+refs/heads/main:refs/heads/g", &repo);
+        let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/heads/symbolic", &repo);
         let out = fetch::refs::update(&repo, &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
         assert_eq!(
             out.updates,
             vec![fetch::refs::Update {
-                mode: fetch::refs::update::Mode::FastForward,
+                mode: fetch::refs::update::Mode::RejectedSymbolic,
+                edit_index: None,
+                spec_index: 0,
+            }]
+        );
+        assert_eq!(out.edits.len(), 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn fast_forward_is_not_implemented_yet_but_should_be_denied() {
+        let repo = repo("two-origins");
+        let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/remotes/origin/g", &repo);
+        let out = fetch::refs::update(&repo, &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+        assert_eq!(
+            out.updates,
+            vec![fetch::refs::Update {
+                mode: fetch::refs::update::Mode::RejectedNonFastForward,
                 edit_index: Some(0),
                 spec_index: 0,
             }]
