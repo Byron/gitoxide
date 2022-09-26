@@ -10,7 +10,8 @@ git clone --shared base clone-as-base-with-changes
   git tag -m "new-file introduction" v1.0
 )
 
-git clone --bare --shared base two-origins
+git clone --shared base two-origins
 (cd two-origins
   git remote add changes-on-top-of-origin "$PWD/../clone-as-base-with-changes"
+  git branch "not-currently-checked-out"
 )

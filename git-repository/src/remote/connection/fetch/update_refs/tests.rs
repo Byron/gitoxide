@@ -21,32 +21,40 @@ mod update {
     use git_ref::TargetRef;
 
     #[test]
-    #[ignore]
     fn various_valid_updates() {
         let repo = repo("two-origins");
         // TODO: test reflog message (various cases if it's new)
-        for (spec, expected_mode, detail) in [
+        for (spec, expected_mode, has_edit_index, detail) in [
             (
                 "refs/heads/main:refs/remotes/origin/main",
                 fetch::refs::update::Mode::NoChangeNeeded,
+                true,
                 "these refs are en-par since the initial clone",
             ),
             (
                 "refs/heads/main",
                 fetch::refs::update::Mode::NoChangeNeeded,
+                false,
                 "without local destination ref there is nothing to do for us, ever (except for FETCH_HEADs) later",
             ),
             (
                 "refs/heads/main:refs/remotes/origin/new-main",
                 fetch::refs::update::Mode::New,
+                true,
                 "the destination branch doesn't exist and needs to be created",
             ),
             (
-                "+refs/heads/main:refs/heads/g",
+                "+refs/heads/main:refs/remotes/origin/g",
                 fetch::refs::update::Mode::Forced,
+                true,
                 "a forced non-fastforward (main goes backwards)",
             ),
-            // ("refs/heads/g:refs/heads/main", fetch::refs::update::Mode::FastForward, "a fast-forward only fast-forward situation, all good"),
+            // (
+            //     "refs/remotes/origin/g:refs/heads/not-currently-checked-out",
+            //     fetch::refs::update::Mode::FastForward,
+            //     true,
+            //     "a fast-forward only fast-forward situation, all good",
+            // ),
         ] {
             let (mapping, specs) = mapping_from_spec(spec, &repo);
             let out = fetch::refs::update(&repo, &mapping, &specs, fetch::DryRun::Yes).unwrap();
@@ -55,12 +63,12 @@ mod update {
                 out.updates,
                 vec![fetch::refs::Update {
                     mode: expected_mode,
-                    edit_index: Some(0),
+                    edit_index: has_edit_index.then(|| 0),
                     spec_index: 0
                 }],
                 "{spec:?}: {detail}"
             );
-            assert_eq!(out.edits.len(), 1);
+            assert_eq!(out.edits.len(), has_edit_index.then(|| 1).unwrap_or(0));
         }
     }
 
