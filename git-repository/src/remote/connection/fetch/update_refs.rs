@@ -23,7 +23,7 @@ pub mod update {
     }
 
     /// Describe the way a ref was updated
-    #[derive(Debug, Copy, Clone)]
+    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
     pub enum Mode {
         /// The old ref's commit was an ancestor of the new one, allowing for a fast-forward without a merge.
         FastForward,
@@ -56,7 +56,7 @@ pub mod update {
 }
 
 /// Information about the update of a single reference, corresponding the respective entry in [`RefMap::mappings`][crate::remote::fetch::RefMap::mappings].
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Update {
     /// The way the update was performed.
     pub mode: update::Mode,
