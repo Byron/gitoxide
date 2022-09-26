@@ -1,5 +1,14 @@
 use crate::bstr::BString;
 
+/// If `Yes`, don't really make changes but do as much as possible to get an idea of what would be done.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum DryRun {
+    /// Enable dry-run mode and don't actually change the underlying repository in any way.
+    Yes,
+    /// Run the operation like normal, making changes to the underlying repository.
+    No,
+}
+
 /// Information about the relationship between our refspecs, and remote references with their local counterparts.
 #[derive(Default, Debug, Clone)]
 pub struct RefMap<'spec> {

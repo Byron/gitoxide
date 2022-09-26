@@ -46,25 +46,36 @@ mod blocking_io {
             #[ignore]
             fn various_valid_updates() {
                 let repo = repo("two-origins");
-                for (spec, expected_mode) in [
+                // TODO: test reflog message (various cases if it's new)
+                for (spec, expected_mode, detail) in [
                     (
                         "refs/heads/main:refs/remotes/origin/main",
                         fetch::refs::update::Mode::NoChangeNeeded,
+                        "these refs are en-par since the initial clone"
+                    ),
+                    (
+                        "refs/heads/main",
+                        fetch::refs::update::Mode::NoChangeNeeded,
+                        "without local destination ref there is nothing to do for us, ever (except for FETCH_HEADs) later"
                     ),
                     (
                         "refs/heads/main:refs/remotes/origin/new-main",
                         fetch::refs::update::Mode::New,
+                        "the destination branch doesn't exist and needs to be created"
                     ),
-                    ("+refs/heads/main:refs/heads/g", fetch::refs::update::Mode::Forced),
+                    ("+refs/heads/main:refs/heads/g", fetch::refs::update::Mode::Forced, "a forced non-fastforward (main goes backwards)"),
+                    // ("refs/heads/g:refs/heads/main", fetch::refs::update::Mode::FastForward, "a fast-forward only fast-forward situation, all good"),
                 ] {
-                    let out = fetch::refs::update(&repo, &mapping_from_spec(spec, &repo), true).unwrap();
+                    let out = fetch::refs::update(&repo, &mapping_from_spec(spec, &repo), fetch::DryRun::Yes).unwrap();
 
                     assert_eq!(
                         out.updates,
                         vec![fetch::refs::Update {
                             mode: expected_mode,
-                            edit_index: Some(0)
-                        }]
+                            edit_index: Some(0),
+                            spec_index: 0
+                        }],
+                        "{spec:?}: {detail}"
                     );
                     assert_eq!(out.edits.len(), 1);
                 }
@@ -76,14 +87,19 @@ mod blocking_io {
             fn fast_forward_is_not_implemented_yet() {
                 // TODO: move it above for acceptable case, test here for non-fastforwards being denied.
                 let repo = repo("two-origins");
-                let out = fetch::refs::update(&repo, &mapping_from_spec("+refs/heads/main:refs/heads/g", &repo), true)
-                    .unwrap();
+                let out = fetch::refs::update(
+                    &repo,
+                    &mapping_from_spec("+refs/heads/main:refs/heads/g", &repo),
+                    fetch::DryRun::Yes,
+                )
+                .unwrap();
 
                 assert_eq!(
                     out.updates,
                     vec![fetch::refs::Update {
                         mode: fetch::refs::update::Mode::FastForward,
-                        edit_index: Some(0)
+                        edit_index: Some(0),
+                        spec_index: 0,
                     }]
                 );
                 assert_eq!(out.edits.len(), 1);

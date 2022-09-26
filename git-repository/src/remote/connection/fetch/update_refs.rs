@@ -1,14 +1,22 @@
 use crate::remote::fetch;
+use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog};
+use git_ref::{Target, TargetRef};
+use std::convert::TryInto;
 
 ///
 pub mod update {
-    mod error {
-        /// The error returned when updating refs after a fetch operation.
-        #[derive(Debug, thiserror::Error)]
-        #[error("TBD")]
-        pub struct Error {}
-    }
     use crate::remote::fetch;
+    mod error {
+        /// The error returned by [`fetch::refs::update()`].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            FindReference(#[from] crate::reference::find::Error),
+            #[error("A remote reference had a name that wasn't considered valid. Corrupt remote repo or insufficient checks on remote?")]
+            InvalidRefName(#[from] git_validate::refname::Error),
+        }
+    }
     pub use error::Error;
 
     /// The outcome of the refs-update operation at the end of a fetch.
@@ -31,6 +39,10 @@ pub mod update {
         Forced,
         /// A new ref has been created as there was none before.
         New,
+        /// The reference update would not have been a fast-forward, and force is not specified in the ref-spec.
+        RejectedNonFastForward,
+        /// The update of a local symbolic reference was rejected.
+        RejectedSymbolic,
         /// No change was attempted as the remote ref didn't change compared to the current ref, or because no remote ref was specified
         /// in the ref-spec.
         NoChangeNeeded,
@@ -64,6 +76,8 @@ pub struct Update {
     pub mode: update::Mode,
     /// The index to the edit that was created from the corresponding mapping, or `None` if there was no local ref.
     pub edit_index: Option<usize>,
+    /// The index of the ref-spec from which the source mapping originated.
+    pub spec_index: usize,
 }
 
 /// Update all refs as derived from `mappings` and produce an `Outcome` informing about all applied changes in detail.
@@ -72,13 +86,68 @@ pub struct Update {
 ///
 /// It can be used to produce typical information that one is used to from `git fetch`.
 pub fn update(
-    _repo: &crate::Repository,
-    _mappings: &[fetch::Mapping],
-    _dry_run: bool,
+    repo: &crate::Repository,
+    mappings: &[fetch::Mapping],
+    _dry_run: fetch::DryRun,
 ) -> Result<update::Outcome, update::Error> {
-    // TODO: tests and impl
-    Ok(update::Outcome {
-        edits: Default::default(),
-        updates: Default::default(),
-    })
+    let mut edits = Vec::new();
+    let mut updates = Vec::new();
+
+    for fetch::Mapping {
+        remote,
+        local,
+        spec_index,
+    } in mappings
+    {
+        let remote_id = remote.as_id();
+        let (mode, edit_index) = match local {
+            Some(name) => {
+                let (mode, reflog_message, name) = match repo.try_find_reference(name)? {
+                    Some(existing) => match existing.target() {
+                        TargetRef::Symbolic(_) => {
+                            updates.push(Update {
+                                mode: update::Mode::RejectedSymbolic,
+                                spec_index: *spec_index,
+                                edit_index: None,
+                            });
+                            continue;
+                        }
+                        TargetRef::Peeled(local_id) => {
+                            let (mode, reflog_message) = if local_id == remote_id {
+                                (update::Mode::NoChangeNeeded, "TBD no change")
+                            } else {
+                                todo!("determine fast forward or force")
+                            };
+                            (mode, reflog_message, existing.name().to_owned())
+                        }
+                    },
+                    None => (update::Mode::New, "TBD new", name.try_into()?),
+                };
+                let edit = RefEdit {
+                    change: Change::Update {
+                        log: LogChange {
+                            mode: RefLog::AndReference,
+                            force_create_reflog: false,
+                            message: reflog_message.into(),
+                        },
+                        expected: PreviousValue::ExistingMustMatch(Target::Peeled(remote_id.into())),
+                        new: Target::Peeled(remote_id.into()),
+                    },
+                    name,
+                    deref: false,
+                };
+                let edit_index = edits.len();
+                edits.push(edit);
+                (mode, Some(edit_index))
+            }
+            None => (update::Mode::NoChangeNeeded, None),
+        };
+        updates.push(Update {
+            mode,
+            spec_index: *spec_index,
+            edit_index,
+        })
+    }
+
+    Ok(update::Outcome { edits, updates })
 }

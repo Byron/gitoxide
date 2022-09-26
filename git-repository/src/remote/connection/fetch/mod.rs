@@ -1,5 +1,5 @@
 use crate::remote::fetch::RefMap;
-use crate::remote::{ref_map, Connection};
+use crate::remote::{fetch, ref_map, Connection};
 use crate::Progress;
 use git_odb::FindExt;
 use git_protocol::transport::client::Transport;
@@ -175,7 +175,7 @@ where
             git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
         }
 
-        let update_refs = refs::update(repo, &self.ref_map.mappings, false)?;
+        let update_refs = refs::update(repo, &self.ref_map.mappings, fetch::DryRun::No)?;
 
         Ok(Outcome {
             ref_map: std::mem::take(&mut self.ref_map),
