@@ -62,14 +62,14 @@ mod blocking_io {
                     fetch::Status::Change { write_pack_bundle } => {
                         assert_eq!(write_pack_bundle.pack_kind, git::odb::pack::data::Version::V2);
                         assert_eq!(write_pack_bundle.object_hash, repo.object_hash());
-                        assert_eq!(write_pack_bundle.index.num_objects, 33); // TODO: should just be 4! but in naive mode it's what happens currently.
+                        assert_eq!(write_pack_bundle.index.num_objects, 3, "this value is 4 when git does it with 'consecutive' negotiation style, but could be 33 if completely naive.");
                         assert_eq!(
                             write_pack_bundle.index.index_version,
                             git::odb::pack::index::Version::V2
                         );
                         assert_eq!(
                             write_pack_bundle.index.index_hash,
-                            hex_to_id("1e396d0e2ab415556b240dc6251c65c71b568caa")
+                            hex_to_id("5e0c69c18bf1835edaa103622dc8637fd87ea2f3")
                         );
                     }
                     fetch::Status::NoChange => unreachable!("we firmly expect changes here"),
