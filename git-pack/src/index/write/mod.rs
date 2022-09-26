@@ -18,7 +18,7 @@ pub(crate) struct TreeEntry {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The version of the verified index
-    pub index_kind: crate::index::Version,
+    pub index_version: crate::index::Version,
     /// The verified checksum of the verified index
     pub index_hash: git_hash::ObjectId,
 
@@ -207,7 +207,7 @@ impl crate::index::File {
             progress::MessageLevel::Success,
         );
         Ok(Outcome {
-            index_kind: kind,
+            index_version: kind,
             index_hash,
             data_hash: pack_hash,
             num_objects,
