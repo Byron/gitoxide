@@ -25,14 +25,19 @@ pub(crate) fn one_round(
         Algorithm::Naive => {
             assert_eq!(round, 1, "Naive always finishes after the first round, and claims.");
             for mapping in &ref_map.mappings {
-                if let Some(have_id) = mapping.local.as_ref().and_then(|name| {
+                let have_id = mapping.local.as_ref().and_then(|name| {
                     repo.find_reference(name)
                         .ok()
                         .and_then(|r| r.target().try_id().map(ToOwned::to_owned))
-                }) {
-                    if mapping.remote.as_id() != have_id {
+                });
+                match have_id {
+                    Some(have_id) if mapping.remote.as_id() != have_id => {
                         arguments.want(mapping.remote.as_id());
                         arguments.have(have_id);
+                    }
+                    Some(_) => {}
+                    None => {
+                        arguments.want(mapping.remote.as_id());
                     }
                 }
             }
