@@ -62,7 +62,10 @@ mod blocking_io {
                     .prepare_fetch(Default::default())?
                     .receive(&AtomicBool::default())?;
                 match outcome.status {
-                    fetch::Status::Change { write_pack_bundle } => {
+                    fetch::Status::Change {
+                        write_pack_bundle,
+                        update_refs: _, // TODO: validate update refs
+                    } => {
                         assert_eq!(write_pack_bundle.pack_kind, git::odb::pack::data::Version::V2);
                         assert_eq!(write_pack_bundle.object_hash, repo.object_hash());
                         assert_eq!(write_pack_bundle.index.num_objects, 3, "this value is 4 when git does it with 'consecutive' negotiation style, but could be 33 if completely naive.");

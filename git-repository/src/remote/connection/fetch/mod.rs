@@ -8,6 +8,7 @@ use std::sync::atomic::AtomicBool;
 mod error {
     /// The error returned by [`receive()`](super::Prepare::receive()).
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("{message}{}", desired.map(|n| format!(" (got {})", n)).unwrap_or_default())]
         Configuration {
@@ -23,6 +24,8 @@ mod error {
         Client(#[from] git_protocol::transport::client::Error),
         #[error(transparent)]
         WritePack(#[from] git_pack::bundle::write::Error),
+        #[error(transparent)]
+        UpdateRefs(#[from] super::refs::update::Error),
     }
 }
 pub use error::Error;
@@ -91,7 +94,7 @@ where
             let is_done = match negotiate::one_round(
                 negotiate::Algorithm::Naive,
                 round,
-                con.remote,
+                repo,
                 &self.ref_map,
                 &mut arguments,
                 previous_response.as_ref(),
@@ -133,6 +136,7 @@ where
             iteration_mode: git_pack::data::input::Mode::Verify,
             object_hash: con.remote.repo.object_hash(),
         };
+        let remote = con.remote;
         let write_pack_bundle = git_pack::Bundle::write_to_directory(
             reader,
             Some(repo.objects.store_ref().path().join("pack")),
@@ -149,10 +153,14 @@ where
             git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
         }
 
-        // TODO: apply refs
+        let update_refs = refs::update(repo, remote.refspecs(crate::remote::Direction::Fetch), &self.ref_map)?;
+
         Ok(Outcome {
             ref_map: std::mem::take(&mut self.ref_map),
-            status: Status::Change { write_pack_bundle },
+            status: Status::Change {
+                write_pack_bundle,
+                update_refs,
+            },
         })
     }
 }
@@ -171,6 +179,8 @@ fn setup_remote_progress(
 }
 
 mod config;
+///
+pub mod refs;
 
 /// A structure to hold the result of the handshake with the remote and configure the upcoming fetch operation.
 #[allow(dead_code)]

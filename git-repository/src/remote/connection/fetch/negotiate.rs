@@ -1,10 +1,13 @@
+/// The way the negotiation is performed
 #[derive(Copy, Clone)]
 pub(crate) enum Algorithm {
     /// Our very own implementation that probably should be replaced by one of the known algorithms soon.
     Naive,
 }
 
+/// The error returned during negotiation.
 #[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
 pub enum Error {
     #[error("We were unable to figure out what objects the server should send after {rounds} round(s)")]
     NegotiationFailed { rounds: usize },
@@ -16,12 +19,11 @@ pub enum Error {
 pub(crate) fn one_round(
     algo: Algorithm,
     round: usize,
-    remote: &crate::Remote<'_>,
+    repo: &crate::Repository,
     ref_map: &crate::remote::fetch::RefMap<'_>,
     arguments: &mut git_protocol::fetch::Arguments,
     _previous_response: Option<&git_protocol::fetch::Response>,
 ) -> Result<bool, Error> {
-    let repo = remote.repo;
     match algo {
         Algorithm::Naive => {
             assert_eq!(round, 1, "Naive always finishes after the first round, and claims.");
