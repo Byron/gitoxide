@@ -91,7 +91,7 @@ where
             let is_done = match negotiate::one_round(
                 negotiate::Algorithm::Naive,
                 round,
-                repo,
+                con.remote,
                 &self.ref_map,
                 &mut arguments,
                 previous_response.as_ref(),
