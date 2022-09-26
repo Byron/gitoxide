@@ -207,7 +207,7 @@ fn setup_remote_progress(
 
 mod config;
 ///
-#[path = "update_refs.rs"]
+#[path = "update_refs/mod.rs"]
 pub mod refs;
 
 /// A structure to hold the result of the handshake with the remote and configure the upcoming fetch operation.
