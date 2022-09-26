@@ -1,4 +1,4 @@
-use crate::remote::fetch::RefMap;
+use crate::remote::fetch;
 
 ///
 pub mod update {
@@ -8,7 +8,7 @@ pub mod update {
         #[error("TBD")]
         pub struct Error {}
     }
-    use crate::remote::fetch::RefMap;
+    use crate::remote::fetch;
     pub use error::Error;
 
     /// The outcome of the refs-update operation at the end of a fetch.
@@ -35,26 +35,25 @@ pub mod update {
     }
 
     impl Outcome {
-        /// Produce an iterator over all information used to produce the this outcome, ref-update by ref-update, using the `ref_map`
+        /// Produce an iterator over all information used to produce the this outcome, ref-update by ref-update, using the `mappings`
         /// used when producing the ref update.
         pub fn iter_mapping_updates<'a>(
             &self,
-            ref_map: &'a RefMap<'_>,
+            mappings: &'a [fetch::Mapping],
         ) -> impl Iterator<
             Item = (
                 &super::Update,
-                &'a crate::remote::fetch::Mapping,
+                &'a fetch::Mapping,
                 Option<&git_ref::transaction::RefEdit>,
             ),
         > {
             self.updates
                 .iter()
-                .zip(ref_map.mappings.iter())
+                .zip(mappings.iter())
                 .map(move |(update, mapping)| (update, mapping, update.edit_index.and_then(|idx| self.edits.get(idx))))
         }
     }
 }
-use git_refspec::RefSpec;
 
 /// Information about the update of a single reference, corresponding the respective entry in [`RefMap::mapping`].
 #[derive(Debug, Clone, Copy)]
@@ -65,10 +64,15 @@ pub struct Update {
     pub edit_index: Option<usize>,
 }
 
-pub(crate) fn update(
+/// Update all refs as derived from `mappings` and produce an `Outcome` informing about all applied changes in detail.
+/// If `dry_run` is true, ref transactions won't actually be applied, but are assumed to work without error so the underlying
+/// `repo` is not actually changed.
+///
+/// It can be used to produce typical information that one is used to from `git fetch`.
+pub fn update(
     _repo: &crate::Repository,
-    _remote: &[RefSpec],
-    _ref_map: &RefMap<'_>,
+    _mappings: &[fetch::Mapping],
+    _dry_run: bool,
 ) -> Result<update::Outcome, update::Error> {
     // TODO: tests and impl
     Ok(update::Outcome {

@@ -136,7 +136,6 @@ where
             iteration_mode: git_pack::data::input::Mode::Verify,
             object_hash: con.remote.repo.object_hash(),
         };
-        let remote = con.remote;
         let write_pack_bundle = git_pack::Bundle::write_to_directory(
             reader,
             Some(repo.objects.store_ref().path().join("pack")),
@@ -153,7 +152,7 @@ where
             git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
         }
 
-        let update_refs = refs::update(repo, remote.refspecs(crate::remote::Direction::Fetch), &self.ref_map)?;
+        let update_refs = refs::update(repo, &self.ref_map.mappings, false)?;
 
         Ok(Outcome {
             ref_map: std::mem::take(&mut self.ref_map),
@@ -180,6 +179,7 @@ fn setup_remote_progress(
 
 mod config;
 ///
+#[path = "update_refs.rs"]
 pub mod refs;
 
 /// A structure to hold the result of the handshake with the remote and configure the upcoming fetch operation.
