@@ -45,28 +45,5 @@ pub struct Mapping {
     pub spec_index: usize,
 }
 
-/// The status of the repository after the fetch operation
-#[derive(Debug, Clone)]
-pub enum Status {
-    /// Nothing changed as the remote didn't have anything new.
-    NoChange,
-    /// There was at least one tip with a new object which we received.
-    Change {
-        /// Information collected while writing the pack and its index.
-        write_pack_bundle: git_pack::bundle::write::Outcome,
-        /// Information collected while updating references.
-        update_refs: refs::update::Outcome,
-    },
-}
-
-/// The outcome of receiving a pack via [`Prepare::receive()`].
-#[derive(Debug, Clone)]
-pub struct Outcome<'spec> {
-    /// The result of the initial mapping of references, the prerequisite for any fetch.
-    pub ref_map: RefMap<'spec>,
-    /// The status of the operation to indicate what happened.
-    pub status: Status,
-}
-
 #[cfg(feature = "blocking-network-client")]
-pub use super::connection::fetch::{negotiate, refs, Error, Prepare};
+pub use super::connection::fetch::{negotiate, refs, Error, Outcome, Prepare, Status};
