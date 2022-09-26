@@ -99,7 +99,7 @@ where
                 Ok(_) if arguments.is_empty() => {
                     git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
                     return Ok(Outcome {
-                        ref_map: self.take_ref_map(),
+                        ref_map: std::mem::take(&mut self.ref_map),
                         status: Status::NoChange,
                     });
                 }
@@ -151,23 +151,9 @@ where
 
         // TODO: apply refs
         Ok(Outcome {
-            ref_map: self.take_ref_map(),
+            ref_map: std::mem::take(&mut self.ref_map),
             status: Status::Change { write_pack_bundle },
         })
-    }
-
-    fn take_ref_map(&mut self) -> RefMap<'remote> {
-        let ref_map = RefMap {
-            mappings: Default::default(),
-            fixes: Default::default(),
-            remote_refs: Default::default(),
-            handshake: git_protocol::fetch::handshake::Outcome {
-                server_protocol_version: Default::default(),
-                refs: None,
-                capabilities: git_protocol::transport::client::Capabilities::default(),
-            },
-        };
-        std::mem::replace(&mut self.ref_map, ref_map)
     }
 }
 
