@@ -246,7 +246,7 @@ pub use self::async_io::receive;
 
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct JsonBundleWriteOutcome {
-    pub index_kind: pack::index::Version,
+    pub index_version: pack::index::Version,
     pub index_hash: String,
 
     pub data_hash: String,
@@ -256,7 +256,7 @@ pub struct JsonBundleWriteOutcome {
 impl From<pack::index::write::Outcome> for JsonBundleWriteOutcome {
     fn from(v: pack::index::write::Outcome) -> Self {
         JsonBundleWriteOutcome {
-            index_kind: v.index_kind,
+            index_version: v.index_version,
             num_objects: v.num_objects,
             data_hash: v.data_hash.to_string(),
             index_hash: v.index_hash.to_string(),
