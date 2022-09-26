@@ -1,5 +1,6 @@
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
+    use crate::remote;
     use git_features::progress;
     use git_repository as git;
     use git_repository::remote::fetch;
@@ -10,7 +11,9 @@ mod blocking_io {
     pub(crate) fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
         let dir = git_testtools::scripted_fixture_repo_writable_with_args(
             "make_fetch_repos.sh",
-            &[] as &[String],
+            [git::path::realpath(remote::repo_path("base"))
+                .unwrap()
+                .to_string_lossy()],
             git_testtools::Creation::ExecuteScript,
         )
         .unwrap();
@@ -69,8 +72,10 @@ mod blocking_io {
                         );
                         assert_eq!(
                             write_pack_bundle.index.index_hash,
-                            hex_to_id("5e0c69c18bf1835edaa103622dc8637fd87ea2f3")
+                            hex_to_id("c75114f60ab2c9389916f3de1082bbaa47491e3b")
                         );
+                        assert!(write_pack_bundle.data_path.map_or(false, |f| f.is_file()));
+                        assert!(write_pack_bundle.index_path.map_or(false, |f| f.is_file()));
                     }
                     fetch::Status::NoChange => unreachable!("we firmly expect changes here"),
                 }

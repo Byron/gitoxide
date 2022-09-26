@@ -1,96 +1,6 @@
 set -eu -o pipefail
 
-function tick () {
-  if test -z "${tick+set}"
-  then
-    tick=1112911993
-  else
-    tick=$(($tick + 60))
-  fi
-  GIT_COMMITTER_DATE="$tick -0700"
-  GIT_AUTHOR_DATE="$tick -0700"
-  export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
-}
-
-GIT_AUTHOR_EMAIL=author@example.com
-GIT_AUTHOR_NAME='A U Thor'
-GIT_AUTHOR_DATE='1112354055 +0200'
-TEST_COMMITTER_LOCALNAME=committer
-TEST_COMMITTER_DOMAIN=example.com
-GIT_COMMITTER_EMAIL=committer@example.com
-GIT_COMMITTER_NAME='C O Mitter'
-GIT_COMMITTER_DATE='1112354055 +0200'
-
-# runup to the correct count for ambigous commits
-tick; tick; tick; tick; tick
-
-git init base
-(
-  cd base
-  tick
-
-  echo g > file
-  git add file && git commit -m $'G\n\n initial message'
-  git branch g
-
-  tick
-  git checkout --orphan=h
-  echo h > file
-  git add file && git commit -m H
-
-  tick
-  git checkout main
-  git merge h --allow-unrelated-histories || :
-  { echo g && echo h && echo d; } > file
-  git add file
-  git commit -m D
-  git branch d
-
-  tick
-  git checkout --orphan=i
-  echo i > file
-  git add file && git commit -m I
-  git tag -m I-tag i-tag
-
-  tick
-  git checkout --orphan=j
-  echo j > file
-  git add file && git commit -m J
-
-  tick
-  git checkout i
-  git merge j --allow-unrelated-histories || :
-  { echo i && echo j && echo f; } > file
-  git add file
-  git commit -m F
-  git branch f
-
-  tick
-  git checkout --orphan=e
-  echo e > file
-  git add file && git commit -m E
-
-  tick
-  git checkout main
-  git merge e i --allow-unrelated-histories || :
-  { echo g && echo h && echo i && echo j && echo d && echo e && echo f && echo b; } > file
-  git add file && git commit -m B
-  git tag -m b-tag b-tag && git branch b
-
-  tick
-  git checkout i
-  echo c >> file
-  git add file && git commit -m $'C\n\n message recent'
-  git branch c
-  git reset --hard i-tag
-
-  tick
-  git checkout main
-  git merge c || :
-  { echo g && echo h && echo i && echo j && echo d && echo e && echo f && echo b && echo c && echo a; } > file
-  git add file && git commit -m A
-  git branch a
-)
+git clone --bare "${1:?First argument is the complex base repo from make_remote_repos.sh/base}" base
 
 git clone --shared base clone-as-base-with-changes
 (cd clone-as-base-with-changes
@@ -100,7 +10,7 @@ git clone --shared base clone-as-base-with-changes
   git tag -m "new-file introduction" v1.0
 )
 
-git clone --shared base two-origins
+git clone --bare --shared base two-origins
 (cd two-origins
   git remote add changes-on-top-of-origin "$PWD/../clone-as-base-with-changes"
 )
