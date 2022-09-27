@@ -1,14 +1,12 @@
 use git_repository::{open, Repository, ThreadSafeRepository};
-use once_cell::sync::Lazy;
 
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub fn freeze_time() {
-    static FROZEN: Lazy<()> = Lazy::new(|| {
-        std::env::set_var("GIT_AUTHOR_DATE", "1979-02-26 18:30:00");
-        std::env::set_var("GIT_COMMITTER_DATE", "1979-02-26 18:30:00");
-    });
-    *FROZEN
+pub fn freeze_time() -> git_testtools::Env<'static> {
+    let frozen_time = "1979-02-26 18:30:00";
+    git_testtools::Env::new()
+        .set("GIT_AUTHOR_DATE", frozen_time)
+        .set("GIT_COMMITTER_DATE", frozen_time)
 }
 pub fn repo(name: &str) -> Result<ThreadSafeRepository> {
     let repo_path = git_testtools::scripted_fixture_repo_read_only(name)?;

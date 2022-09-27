@@ -167,8 +167,9 @@ mod commit {
     }
 
     #[test]
+    #[serial_test::serial]
     fn single_line_initial_commit_empty_tree_ref_nonexisting() -> crate::Result {
-        freeze_time();
+        let _env = freeze_time();
         let tmp = tempfile::tempdir()?;
         let repo = git::open_opts(git::init(&tmp)?.path(), restricted())?;
         let empty_tree_id = repo.write_object(&git::objs::Tree::empty())?;
@@ -194,8 +195,9 @@ mod commit {
     }
 
     #[test]
+    #[serial_test::serial]
     fn multi_line_commit_message_uses_first_line_in_ref_log_ref_nonexisting() -> crate::Result {
-        freeze_time();
+        let _env = freeze_time();
         let (repo, _keep) = crate::basic_rw_repo()?;
         let parent = repo.find_reference("HEAD")?.peel_to_id_in_place()?;
         let empty_tree_id = parent.object()?.to_commit_ref_iter().tree_id().expect("tree to be set");
