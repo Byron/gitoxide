@@ -5,7 +5,11 @@ pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 pub fn freeze_time() -> git_testtools::Env<'static> {
     let frozen_time = "1979-02-26 18:30:00";
     git_testtools::Env::new()
+        .unset("GIT_AUTHOR_NAME")
+        .unset("GIT_AUTHOR_EMAIL")
         .set("GIT_AUTHOR_DATE", frozen_time)
+        .unset("GIT_COMMITTER_NAME")
+        .unset("GIT_COMMITTER_EMAIL")
         .set("GIT_COMMITTER_DATE", frozen_time)
 }
 pub fn repo(name: &str) -> Result<ThreadSafeRepository> {
