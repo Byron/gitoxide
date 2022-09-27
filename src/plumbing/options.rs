@@ -678,10 +678,12 @@ pub mod index {
             /// Overwrite the specified file if it already exists
             #[clap(long, short = 'f')]
             force: bool,
-            /// Hash of the tree object to generate the index from
-            id: git_repository::hash::ObjectId,
-            /// Path to the index file to be written
-            path: PathBuf,
+            /// Treeish Id to generate the index from
+            id: String,
+            /// Path to the index file to be written.
+            /// If none is given output will be written to stdout.
+            #[clap(long, short = 'i')]
+            index: Option<PathBuf>,
         },
     }
 }

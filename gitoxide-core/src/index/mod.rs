@@ -1,4 +1,4 @@
-use git::odb::FindExt;
+use git::{odb::FindExt, prelude::ObjectIdExt};
 use git_repository as git;
 use std::path::{Path, PathBuf};
 
@@ -88,27 +88,48 @@ pub fn information(
 }
 
 pub fn from_tree(
-    id: git::hash::ObjectId,
-    path: PathBuf,
+    id: String,
+    index: Option<PathBuf>,
     force: bool,
     repo: git::Repository,
+    mut out: impl std::io::Write,
     mut err: impl std::io::Write,
 ) -> anyhow::Result<()> {
-    let state = git::index::State::from_tree(&id, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
+    // TODO: consider HashKind
+    let id = match id.len() {
+        40 => git::hash::ObjectId::from_hex(id.as_bytes())?,
+        _ => {
+            let prefix = git::hash::Prefix::from_hex(&id)?;
+            match repo.objects.lookup_prefix(prefix, None) {
+                Ok(Some(Ok(id))) => id,
+                Ok(Some(Err(_))) => anyhow::bail!("multiple objects found while trying to disambiguate id: {:?}", id),
+                Ok(None) => anyhow::bail!("no objects found while trying to disambiguate id: {:?}", id),
+                Err(e) => anyhow::bail!(e),
+            }
+        }
+    };
 
-    if path.is_file() {
-        writeln!(err, "File {:?} already exists", path).ok();
-        if force {
-            writeln!(err, "overwriting").ok();
-        } else {
-            anyhow::bail!("exiting");
+    let tree = id.attach(&repo).object()?.peel_to_kind(git::objs::Kind::Tree)?.id();
+    let state = git::index::State::from_tree(&tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
+
+    match index {
+        Some(index) => {
+            if index.is_file() {
+                writeln!(err, "File {:?} already exists", index).ok();
+                if force {
+                    writeln!(err, "overwriting").ok();
+                } else {
+                    anyhow::bail!("exiting, to overwrite use the '-f' flag");
+                }
+            }
+            let mut file = std::fs::File::create(&index)?;
+            state.write_to(&mut file, git::index::write::Options::default())?;
+            writeln!(err, "Successfully wrote file {:?}", index).ok();
+        }
+        None => {
+            state.write_to(&mut out, git::index::write::Options::default())?;
         }
     }
-
-    let mut file = std::fs::File::create(&path)?;
-    state.write_to(&mut file, git::index::write::Options::default())?;
-
-    writeln!(err, "Successfully wrote file {:?}", path).ok();
 
     Ok(())
 }
