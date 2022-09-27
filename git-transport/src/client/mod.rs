@@ -10,7 +10,7 @@ pub use traits::TransportWithoutIO;
 
 #[cfg(feature = "blocking-client")]
 mod blocking_io;
-#[cfg(all(feature = "blocking-client", feature = "http-client-curl"))]
+#[cfg(feature = "http-client")]
 pub use blocking_io::http;
 #[cfg(feature = "blocking-client")]
 pub use blocking_io::{
