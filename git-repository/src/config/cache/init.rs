@@ -15,7 +15,7 @@ impl Cache {
         }: StageOne,
         git_dir: &std::path::Path,
         branch_name: Option<&git_ref::FullNameRef>,
-        mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
+        filter_config_section: fn(&git_config::file::Metadata) -> bool,
         git_install_dir: Option<&std::path::Path>,
         home: Option<&std::path::Path>,
         repository::permissions::Environment {
@@ -111,16 +111,6 @@ impl Cache {
             globals
         };
 
-        let excludes_file = match config
-            .path_filter("core", None, "excludesFile", &mut filter_config_section)
-            .map(|p| p.interpolate(options.includes.interpolate).map(|p| p.into_owned()))
-            .transpose()
-        {
-            Ok(f) => f,
-            Err(_err) if lenient_config => None,
-            Err(err) => return Err(err.into()),
-        };
-
         let hex_len = match util::parse_core_abbrev(&config, object_hash) {
             Ok(v) => v,
             Err(_err) if lenient_config => None,
@@ -143,7 +133,6 @@ impl Cache {
             ignore_case,
             hex_len,
             filter_config_section,
-            excludes_file,
             xdg_config_home_env,
             home_env,
             lenient_config,
@@ -160,19 +149,6 @@ impl Cache {
     /// Note that we unconditionally re-read all values.
     pub fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
         let config = &self.resolved;
-
-        let home = self.home_dir();
-        let install_dir = crate::path::install_dir().ok();
-        let ctx = interpolate_context(install_dir.as_deref(), home.as_deref());
-        self.excludes_file = match config
-            .path_filter("core", None, "excludesFile", &mut self.filter_config_section)
-            .map(|p| p.interpolate(ctx).map(|p| p.into_owned()))
-            .transpose()
-        {
-            Ok(f) => f,
-            Err(_err) if self.lenient_config => None,
-            Err(err) => return Err(err.into()),
-        };
 
         self.hex_len = match util::parse_core_abbrev(&config, self.object_hash) {
             Ok(v) => v,

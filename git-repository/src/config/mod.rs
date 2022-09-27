@@ -64,7 +64,10 @@ pub enum Error {
     PathInterpolation(#[from] git_config::path::interpolate::Error),
 }
 
-/// Utility type to keep pre-obtained configuration values.
+/// Utility type to keep pre-obtained configuration values, only for those required during initial setup
+/// and other basic operations that are common enough to warrant a permanent cache.
+///
+/// All other values are obtained lazily using OnceCell.
 #[derive(Clone)]
 pub(crate) struct Cache {
     pub resolved: crate::Config,
@@ -91,8 +94,6 @@ pub(crate) struct Cache {
     pub object_kind_hint: Option<spec::parse::ObjectKindHint>,
     /// If true, we are on a case-insensitive file system.
     pub ignore_case: bool,
-    /// The path to the user-level excludes file to ignore certain files in the worktree.
-    pub excludes_file: Option<std::path::PathBuf>,
     /// If true, we should default what's possible if something is misconfigured, on case by case basis, to be more resilient.
     /// Also available in options! Keep in sync!
     pub lenient_config: bool,

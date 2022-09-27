@@ -59,6 +59,23 @@ impl Cache {
         Ok((out[0], out[1]))
     }
 
+    /// The path to the user-level excludes file to ignore certain files in the worktree.
+    pub(crate) fn excludes_file(&self) -> Result<Option<PathBuf>, git_config::path::interpolate::Error> {
+        let home = self.home_dir();
+        let install_dir = crate::path::install_dir().ok();
+        let ctx = crate::config::cache::interpolate_context(install_dir.as_deref(), home.as_deref());
+        match self
+            .resolved
+            .path_filter("core", None, "excludesFile", &mut self.filter_config_section.clone())
+            .map(|p| p.interpolate(ctx).map(|p| p.into_owned()))
+            .transpose()
+        {
+            Ok(f) => Ok(f),
+            Err(_err) if self.lenient_config => Ok(None),
+            Err(err) => return Err(err),
+        }
+    }
+
     /// Return a path by using the `$XDF_CONFIG_HOME` or `$HOME/.config/…` environment variables locations.
     pub fn xdg_config_path(
         &self,
