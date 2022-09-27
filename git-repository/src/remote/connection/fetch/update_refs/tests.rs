@@ -21,6 +21,7 @@ mod update {
     use git_ref::TargetRef;
 
     #[test]
+    #[ignore]
     fn various_valid_updates() {
         let repo = repo("two-origins");
         // TODO: test reflog message (various cases if it's new)
@@ -54,6 +55,12 @@ mod update {
                 fetch::refs::update::Mode::Forced,
                 true,
                 "a forced non-fastforward (main goes backwards)",
+            ),
+            (
+                "+refs/remotes/origin/g:refs/heads/main",
+                fetch::refs::update::Mode::RejectedCheckedOut,
+                false,
+                "checked out branches cannot be written, as it requires a merge of sorts which isn't done here",
             ),
             // ( // TODO: make fast-forwards work
             //     "refs/remotes/origin/g:refs/heads/not-currently-checked-out",
@@ -90,14 +97,11 @@ mod update {
                 mode: fetch::refs::update::Mode::RejectedSymbolic,
                 edit_index: None,
                 spec_index: 0,
-            }]
+            }],
+            "this also protects from writing HEAD, which should in theory be impossible to get from a refspec as it normalizes partial ref names"
         );
         assert_eq!(out.edits.len(), 0);
     }
-
-    #[test]
-    #[ignore]
-    fn currently_checked_out_destination_is_rejected() {}
 
     #[test]
     #[should_panic]

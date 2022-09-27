@@ -40,6 +40,8 @@ pub enum Mode {
     RejectedNonFastForward,
     /// The update of a local symbolic reference was rejected.
     RejectedSymbolic,
+    /// The update was rejected as the destination branch is currently checked out
+    RejectedCheckedOut,
     /// No change was attempted as the remote ref didn't change compared to the current ref, or because no remote ref was specified
     /// in the ref-spec.
     NoChangeNeeded,
