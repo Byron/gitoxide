@@ -9,6 +9,8 @@ mod error {
         FindReference(#[from] crate::reference::find::Error),
         #[error("A remote reference had a name that wasn't considered valid. Corrupt remote repo or insufficient checks on remote?")]
         InvalidRefName(#[from] git_validate::refname::Error),
+        #[error("Failed to update references to their new position to match their remote locations")]
+        EditReferences(#[from] crate::reference::edit::Error),
     }
 }
 

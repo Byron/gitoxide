@@ -26,7 +26,7 @@ pub(crate) fn update(
     repo: &crate::Repository,
     mappings: &[fetch::Mapping],
     refspecs: &[git_refspec::RefSpec],
-    _dry_run: fetch::DryRun,
+    dry_run: fetch::DryRun,
 ) -> Result<update::Outcome, update::Error> {
     let mut edits = Vec::new();
     let mut updates = Vec::new();
@@ -88,6 +88,13 @@ pub(crate) fn update(
             edit_index,
         })
     }
+
+    let edits = match dry_run {
+        fetch::DryRun::No => {
+            repo.edit_references(edits, git_lock::acquire::Fail::Immediately, repo.committer_or_default())?
+        }
+        fetch::DryRun::Yes => edits,
+    };
 
     Ok(update::Outcome { edits, updates })
 }

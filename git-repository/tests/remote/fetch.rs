@@ -22,7 +22,6 @@ mod blocking_io {
     }
 
     #[test]
-    #[ignore]
     fn fetch_pack() -> crate::Result {
         for version in [
             None,

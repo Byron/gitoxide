@@ -96,6 +96,10 @@ mod update {
     }
 
     #[test]
+    #[ignore]
+    fn currently_checked_out_destination_is_rejected() {}
+
+    #[test]
     #[should_panic]
     fn fast_forward_is_not_implemented_yet_but_should_be_denied() {
         let repo = repo("two-origins");
