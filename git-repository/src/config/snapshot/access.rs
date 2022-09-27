@@ -108,8 +108,8 @@ impl<'repo> SnapshotMut<'repo> {
         &mut self,
         repo: &'repo mut crate::Repository,
     ) -> Result<&'repo mut crate::Repository, crate::config::Error> {
-        repo.config.resolved = std::mem::take(&mut self.config).into();
-        repo.config.reread_values_and_clear_caches()?;
+        repo.config
+            .reread_values_and_clear_caches(std::mem::take(&mut self.config).into())?;
         Ok(repo)
     }
 

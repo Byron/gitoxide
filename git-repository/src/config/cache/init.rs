@@ -140,23 +140,29 @@ impl Cache {
         })
     }
 
-    /// Call this after the `resolved` configuration changed in a way that may affect the caches provided here.
+    /// Call this with new `config` to update values and clear caches. Note that none of the values will be applied if a single
+    /// one is invalid.
+    /// However, those that are lazily read won't be re-evaluated right away and might thus pass now but fail later.
     ///
     /// Note that we unconditionally re-read all values.
-    pub fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
-        let config = &self.resolved;
-
-        self.hex_len = util::check_lenient(util::parse_core_abbrev(config, self.object_hash), self.lenient_config)?;
+    pub fn reread_values_and_clear_caches(&mut self, config: crate::Config) -> Result<(), Error> {
+        let hex_len = util::check_lenient(util::parse_core_abbrev(&config, self.object_hash), self.lenient_config)?;
 
         use util::config_bool;
-        self.ignore_case = config_bool(config, "core.ignoreCase", false, self.lenient_config)?;
-        self.object_kind_hint = util::disambiguate_hint(config);
+        let ignore_case = config_bool(&config, "core.ignoreCase", false, self.lenient_config)?;
+        let object_kind_hint = util::disambiguate_hint(&config);
+
         self.personas = Default::default();
         self.url_rewrite = Default::default();
         #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
         {
             self.url_scheme = Default::default();
         }
+
+        self.resolved = config;
+        self.hex_len = hex_len;
+        self.ignore_case = ignore_case;
+        self.object_kind_hint = object_kind_hint;
 
         Ok(())
     }

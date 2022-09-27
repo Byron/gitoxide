@@ -34,8 +34,10 @@ impl Drop for SnapshotMut<'_> {
 
 impl Drop for CommitAndRollback<'_> {
     fn drop(&mut self) {
-        self.repo.config.resolved = OwnShared::clone(&self.prev_config);
-        self.repo.config.reread_values_and_clear_caches().ok();
+        self.repo
+            .config
+            .reread_values_and_clear_caches(OwnShared::clone(&self.prev_config))
+            .ok();
     }
 }
 
