@@ -55,6 +55,14 @@ pub(crate) fn query_refupdates(config: &git_config::File<'static>) -> Option<git
     })
 }
 
+pub(crate) fn check_lenient<T, E>(v: Result<Option<T>, E>, lenient: bool) -> Result<Option<T>, E> {
+    match v {
+        Ok(v) => Ok(v),
+        Err(_) if lenient => Ok(None),
+        Err(err) => Err(err),
+    }
+}
+
 pub(crate) fn parse_core_abbrev(
     config: &git_config::File<'static>,
     object_hash: git_hash::Kind,

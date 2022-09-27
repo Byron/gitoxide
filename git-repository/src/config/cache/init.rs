@@ -111,11 +111,7 @@ impl Cache {
             globals
         };
 
-        let hex_len = match util::parse_core_abbrev(&config, object_hash) {
-            Ok(v) => v,
-            Err(_err) if lenient_config => None,
-            Err(err) => return Err(err),
-        };
+        let hex_len = util::check_lenient(util::parse_core_abbrev(&config, object_hash), lenient_config)?;
 
         use util::config_bool;
         let reflog = util::query_refupdates(&config);
@@ -150,11 +146,7 @@ impl Cache {
     pub fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
         let config = &self.resolved;
 
-        self.hex_len = match util::parse_core_abbrev(&config, self.object_hash) {
-            Ok(v) => v,
-            Err(_err) if self.lenient_config => None,
-            Err(err) => return Err(err),
-        };
+        self.hex_len = util::check_lenient(util::parse_core_abbrev(&config, self.object_hash), self.lenient_config)?;
 
         use util::config_bool;
         self.ignore_case = config_bool(&config, "core.ignoreCase", false, self.lenient_config)?;
