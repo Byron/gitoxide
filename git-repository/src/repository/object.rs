@@ -125,8 +125,10 @@ impl crate::Repository {
         self.tag_reference(name, tag_id, constraint).map_err(Into::into)
     }
 
-    /// Create a new commit object with `author`, `committer` and `message` referring to `tree` with `parents`, and point `reference`
+    /// Create a new commit object with `message` referring to `tree` with `parents`, and point `reference`
     /// to it. The commit is written without message encoding field, which can be assumed to be UTF-8.
+    /// `author` and `committer` fields are pre-set from the configuration, which can be altered
+    /// [temporarily][crate::Repository::config_snapshot_mut()] before the call if required.
     ///
     /// `reference` will be created if it doesn't exist, and can be `"HEAD"` to automatically write-through to the symbolic reference
     /// that `HEAD` points to if it is not detached. For this reason, detached head states cannot be created unless the `HEAD` is detached
@@ -139,8 +141,6 @@ impl crate::Repository {
     pub fn commit<Name, E>(
         &self,
         reference: Name,
-        author: git_actor::SignatureRef<'_>,
-        committer: git_actor::SignatureRef<'_>,
         message: impl AsRef<str>,
         tree: impl Into<ObjectId>,
         parents: impl IntoIterator<Item = impl Into<ObjectId>>,
@@ -157,6 +157,8 @@ impl crate::Repository {
         // TODO: possibly use CommitRef to save a few allocations (but will have to allocate for object ids anyway.
         //       This can be made vastly more efficient though if we wanted to, so we lie in the API
         let reference = reference.try_into()?;
+        let author = self.author_or_default();
+        let committer = self.committer_or_default();
         let commit = git_object::Commit {
             message: message.as_ref().into(),
             tree: tree.into(),
@@ -168,35 +170,28 @@ impl crate::Repository {
         };
 
         let commit_id = self.write_object(&commit)?;
-        self.edit_reference(
-            RefEdit {
-                change: Change::Update {
-                    log: LogChange {
-                        mode: RefLog::AndReference,
-                        force_create_reflog: false,
-                        message: crate::reference::log::message(
-                            "commit",
-                            commit.message.as_ref(),
-                            commit.parents.len(),
-                        ),
-                    },
-                    expected: match commit.parents.first().map(|p| Target::Peeled(*p)) {
-                        Some(previous) => {
-                            if reference.as_bstr() == "HEAD" {
-                                PreviousValue::MustExistAndMatch(previous)
-                            } else {
-                                PreviousValue::ExistingMustMatch(previous)
-                            }
-                        }
-                        None => PreviousValue::MustNotExist,
-                    },
-                    new: Target::Peeled(commit_id.inner),
+        self.edit_reference(RefEdit {
+            change: Change::Update {
+                log: LogChange {
+                    mode: RefLog::AndReference,
+                    force_create_reflog: false,
+                    message: crate::reference::log::message("commit", commit.message.as_ref(), commit.parents.len()),
                 },
-                name: reference,
-                deref: true,
+                expected: match commit.parents.first().map(|p| Target::Peeled(*p)) {
+                    Some(previous) => {
+                        if reference.as_bstr() == "HEAD" {
+                            PreviousValue::MustExistAndMatch(previous)
+                        } else {
+                            PreviousValue::ExistingMustMatch(previous)
+                        }
+                    }
+                    None => PreviousValue::MustNotExist,
+                },
+                new: Target::Peeled(commit_id.inner),
             },
-            commit.committer.to_ref(),
-        )?;
+            name: reference,
+            deref: true,
+        })?;
         Ok(commit_id)
     }
 }

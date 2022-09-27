@@ -24,8 +24,14 @@ pub struct Snapshot<'repo> {
 // TODO: make it possible to load snapshots with reloading via .config() and write mutated snapshots back to disk which should be the way
 //       to affect all instances of a repo, probably via `config_mut()` and `config_mut_at()`.
 pub struct SnapshotMut<'repo> {
-    pub(crate) repo: &'repo mut Repository,
+    pub(crate) repo: Option<&'repo mut Repository>,
     pub(crate) config: git_config::File<'static>,
+}
+
+/// A utility structure created by [`SnapshotMut::commit_and_rollback()`] that restores the previous configuration on drop.
+pub struct CommitAndRollback<'repo> {
+    pub(crate) repo: &'repo mut Repository,
+    pub(crate) prev_config: crate::Config,
 }
 
 pub(crate) mod section {

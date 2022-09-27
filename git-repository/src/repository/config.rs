@@ -16,7 +16,10 @@ impl crate::Repository {
     /// of the [`Repository`][crate::Repository].
     pub fn config_snapshot_mut(&mut self) -> config::SnapshotMut<'_> {
         let config = self.config.resolved.as_ref().clone();
-        config::SnapshotMut { repo: self, config }
+        config::SnapshotMut {
+            repo: Some(self),
+            config,
+        }
     }
 
     /// The options used to open the repository.

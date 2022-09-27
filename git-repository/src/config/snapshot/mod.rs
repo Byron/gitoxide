@@ -7,14 +7,21 @@ pub mod apply_cli_overrides;
 pub mod credential_helpers;
 
 mod _impls {
+    use git_features::threading::OwnShared;
     use std::{
         fmt::{Debug, Formatter},
         ops::{Deref, DerefMut},
     };
 
-    use crate::config::{Snapshot, SnapshotMut};
+    use crate::config::{CommitAndRollback, Snapshot, SnapshotMut};
 
     impl Debug for Snapshot<'_> {
+        fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+            f.write_str(&self.repo.config.resolved.to_string())
+        }
+    }
+
+    impl Debug for CommitAndRollback<'_> {
         fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
             f.write_str(&self.repo.config.resolved.to_string())
         }
@@ -28,7 +35,15 @@ mod _impls {
 
     impl Drop for SnapshotMut<'_> {
         fn drop(&mut self) {
-            self.repo.config.resolved = std::mem::take(&mut self.config).into();
+            if let Some(repo) = self.repo.take() {
+                repo.config.resolved = std::mem::take(&mut self.config).into()
+            };
+        }
+    }
+
+    impl Drop for CommitAndRollback<'_> {
+        fn drop(&mut self) {
+            self.repo.config.resolved = OwnShared::clone(&self.prev_config);
         }
     }
 
@@ -37,6 +52,14 @@ mod _impls {
 
         fn deref(&self) -> &Self::Target {
             &self.config
+        }
+    }
+
+    impl Deref for CommitAndRollback<'_> {
+        type Target = crate::Repository;
+
+        fn deref(&self) -> &Self::Target {
+            self.repo
         }
     }
 

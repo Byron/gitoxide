@@ -1,7 +1,15 @@
 use git_repository::{open, Repository, ThreadSafeRepository};
+use once_cell::sync::Lazy;
 
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+pub fn freeze_time() {
+    static FROZEN: Lazy<()> = Lazy::new(|| {
+        std::env::set_var("GIT_AUTHOR_DATE", "1979-02-26 18:30:00");
+        std::env::set_var("GIT_COMMITTER_DATE", "1979-02-26 18:30:00");
+    });
+    *FROZEN
+}
 pub fn repo(name: &str) -> Result<ThreadSafeRepository> {
     let repo_path = git_testtools::scripted_fixture_repo_read_only(name)?;
     Ok(ThreadSafeRepository::open_opts(repo_path, restricted())?)
@@ -13,7 +21,9 @@ pub fn named_repo(name: &str) -> Result<Repository> {
 }
 
 pub fn restricted() -> open::Options {
-    open::Options::isolated()
+    let mut opts = open::Options::isolated();
+    opts.permissions.env.git_prefix = git_sec::Permission::Allow;
+    opts
 }
 
 pub fn repo_rw(name: &str) -> Result<(Repository, tempfile::TempDir)> {

@@ -60,17 +60,14 @@ pub mod delete {
         /// Note that this instance remains available in memory but probably shouldn't be used anymore.
         pub fn delete(&self) -> Result<(), crate::reference::edit::Error> {
             self.repo
-                .edit_reference(
-                    RefEdit {
-                        change: Change::Delete {
-                            expected: PreviousValue::MustExistAndMatch(self.inner.target.clone()),
-                            log: RefLog::AndReference,
-                        },
-                        name: self.inner.name.clone(),
-                        deref: false,
+                .edit_reference(RefEdit {
+                    change: Change::Delete {
+                        expected: PreviousValue::MustExistAndMatch(self.inner.target.clone()),
+                        log: RefLog::AndReference,
                     },
-                    self.repo.committer_or_default(),
-                )
+                    name: self.inner.name.clone(),
+                    deref: false,
+                })
                 .map(|_| ())
         }
     }

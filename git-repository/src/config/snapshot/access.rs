@@ -1,6 +1,7 @@
+use git_features::threading::OwnShared;
 use std::borrow::Cow;
 
-use crate::config::SnapshotMut;
+use crate::config::{CommitAndRollback, SnapshotMut};
 use crate::{
     bstr::BStr,
     config::{cache::interpolate_context, Snapshot},
@@ -99,8 +100,17 @@ impl<'repo> SnapshotMut<'repo> {
     /// Note that this would also happen once this instance is dropped, but using this method may be more intuitive.
     pub fn commit(self) {}
 
-    /// Don't apply any of the changes after consuming this instance, effectively forgetting them.
-    pub fn forget(mut self) {
-        std::mem::take(&mut self.config);
+    /// Create a structure the temporarily commits the changes, but rolls them back when dropped.
+    pub fn commit_and_rollback(mut self) -> CommitAndRollback<'repo> {
+        let new_config = std::mem::take(&mut self.config);
+        let repo = self.repo.take().expect("this only runs once on consumption");
+        repo.config.resolved = new_config.into();
+        let prev_config = OwnShared::clone(&repo.config.resolved);
+        CommitAndRollback { repo, prev_config }
+    }
+
+    /// Don't apply any of the changes after consuming this instance, effectively forgetting them, returning the changed configuration.
+    pub fn forget(mut self) -> git_config::File<'static> {
+        std::mem::take(&mut self.config)
     }
 }
