@@ -132,9 +132,10 @@ impl crate::Repository {
         &self,
         edits: impl IntoIterator<Item = RefEdit>,
     ) -> Result<Vec<RefEdit>, reference::edit::Error> {
+        let (file_lock_fail, packed_refs_lock_fail) = self.config.lock_timeout()?;
         self.refs
             .transaction()
-            .prepare(edits, self.config.lock_timeout()?.0)?
+            .prepare(edits, file_lock_fail, packed_refs_lock_fail)?
             .commit(self.committer_or_default())
             .map_err(Into::into)
     }

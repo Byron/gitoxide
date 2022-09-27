@@ -146,11 +146,11 @@ impl Cache {
     pub fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
         let config = &self.resolved;
 
-        self.hex_len = util::check_lenient(util::parse_core_abbrev(&config, self.object_hash), self.lenient_config)?;
+        self.hex_len = util::check_lenient(util::parse_core_abbrev(config, self.object_hash), self.lenient_config)?;
 
         use util::config_bool;
-        self.ignore_case = config_bool(&config, "core.ignoreCase", false, self.lenient_config)?;
-        self.object_kind_hint = util::disambiguate_hint(&config);
+        self.ignore_case = config_bool(config, "core.ignoreCase", false, self.lenient_config)?;
+        self.object_kind_hint = util::disambiguate_hint(config);
         self.personas = Default::default();
         self.url_rewrite = Default::default();
         #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]

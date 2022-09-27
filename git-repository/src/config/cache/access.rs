@@ -72,7 +72,7 @@ impl Cache {
         {
             Ok(f) => Ok(f),
             Err(_err) if self.lenient_config => Ok(None),
-            Err(err) => return Err(err),
+            Err(err) => Err(err),
         }
     }
 
