@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use super::{interpolate_context, util, Error, StageOne};
 use crate::{config::Cache, repository};
 
@@ -134,6 +132,7 @@ impl Cache {
         let ignore_case = config_bool(&config, "core.ignoreCase", false, lenient_config)?;
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true, lenient_config)?;
         let object_kind_hint = util::disambiguate_hint(&config);
+        // NOTE: When adding a new initial cache, consider adjusting `reread_values_and_clear_caches()` as well.
         Ok(Cache {
             resolved: config.into(),
             use_multi_pack_index,
@@ -156,28 +155,41 @@ impl Cache {
         })
     }
 
-    /// Return a path by using the `$XDF_CONFIG_HOME` or `$HOME/.config/…` environment variables locations.
-    pub fn xdg_config_path(
-        &self,
-        resource_file_name: &str,
-    ) -> Result<Option<PathBuf>, git_sec::permission::Error<PathBuf>> {
-        std::env::var_os("XDG_CONFIG_HOME")
-            .map(|path| (path, &self.xdg_config_home_env))
-            .or_else(|| std::env::var_os("HOME").map(|path| (path, &self.home_env)))
-            .and_then(|(base, permission)| {
-                let resource = std::path::PathBuf::from(base).join("git").join(resource_file_name);
-                permission.check(resource).transpose()
-            })
-            .transpose()
-    }
-
-    /// Return the home directory if we are allowed to read it and if it is set in the environment.
+    /// Call this after the `resolved` configuration changed in a way that may affect the caches provided here.
     ///
-    /// We never fail for here even if the permission is set to deny as we `git-config` will fail later
-    /// if it actually wants to use the home directory - we don't want to fail prematurely.
-    pub fn home_dir(&self) -> Option<PathBuf> {
-        std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .and_then(|path| self.home_env.check_opt(path))
+    /// Note that we unconditionally re-read all values.
+    pub fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
+        let config = &self.resolved;
+
+        let home = self.home_dir();
+        let install_dir = crate::path::install_dir().ok();
+        let ctx = interpolate_context(install_dir.as_deref(), home.as_deref());
+        self.excludes_file = match config
+            .path_filter("core", None, "excludesFile", &mut self.filter_config_section)
+            .map(|p| p.interpolate(ctx).map(|p| p.into_owned()))
+            .transpose()
+        {
+            Ok(f) => f,
+            Err(_err) if self.lenient_config => None,
+            Err(err) => return Err(err.into()),
+        };
+
+        self.hex_len = match util::parse_core_abbrev(&config, self.object_hash) {
+            Ok(v) => v,
+            Err(_err) if self.lenient_config => None,
+            Err(err) => return Err(err),
+        };
+
+        use util::config_bool;
+        self.ignore_case = config_bool(&config, "core.ignoreCase", false, self.lenient_config)?;
+        self.object_kind_hint = util::disambiguate_hint(&config);
+        self.personas = Default::default();
+        self.url_rewrite = Default::default();
+        #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
+        {
+            self.url_scheme = Default::default();
+        }
+
+        Ok(())
     }
 }

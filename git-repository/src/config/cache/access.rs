@@ -2,6 +2,7 @@ use crate::config::Cache;
 use crate::{remote, repository::identity};
 use git_lock::acquire::Fail;
 use std::convert::TryInto;
+use std::path::PathBuf;
 use std::time::Duration;
 
 /// Access
@@ -56,5 +57,30 @@ impl Cache {
             out[idx] = lock_mode;
         }
         Ok((out[0], out[1]))
+    }
+
+    /// Return a path by using the `$XDF_CONFIG_HOME` or `$HOME/.config/…` environment variables locations.
+    pub fn xdg_config_path(
+        &self,
+        resource_file_name: &str,
+    ) -> Result<Option<PathBuf>, git_sec::permission::Error<PathBuf>> {
+        std::env::var_os("XDG_CONFIG_HOME")
+            .map(|path| (path, &self.xdg_config_home_env))
+            .or_else(|| std::env::var_os("HOME").map(|path| (path, &self.home_env)))
+            .and_then(|(base, permission)| {
+                let resource = std::path::PathBuf::from(base).join("git").join(resource_file_name);
+                permission.check(resource).transpose()
+            })
+            .transpose()
+    }
+
+    /// Return the home directory if we are allowed to read it and if it is set in the environment.
+    ///
+    /// We never fail for here even if the permission is set to deny as we `git-config` will fail later
+    /// if it actually wants to use the home directory - we don't want to fail prematurely.
+    pub fn home_dir(&self) -> Option<PathBuf> {
+        std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .and_then(|path| self.home_env.check_opt(path))
     }
 }
