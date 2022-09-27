@@ -535,6 +535,14 @@ impl<'a> Env<'a> {
         self.altered_vars.push((var, prev));
         self
     }
+
+    /// Set `var` to `value`.
+    pub fn unset(mut self, var: &'a str) -> Self {
+        let prev = std::env::var_os(var);
+        std::env::remove_var(var);
+        self.altered_vars.push((var, prev));
+        self
+    }
 }
 
 impl<'a> Drop for Env<'a> {
