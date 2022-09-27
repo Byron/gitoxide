@@ -147,7 +147,7 @@ mod tag {
 }
 
 mod commit {
-    use crate::freeze_time;
+    use crate::{freeze_time, restricted};
     use git_repository as git;
     use git_testtools::hex_to_id;
 
@@ -170,12 +170,12 @@ mod commit {
     fn single_line_initial_commit_empty_tree_ref_nonexisting() -> crate::Result {
         freeze_time();
         let tmp = tempfile::tempdir()?;
-        let repo = git::init(&tmp)?;
+        let repo = git::open_opts(git::init(&tmp)?.path(), restricted())?;
         let empty_tree_id = repo.write_object(&git::objs::Tree::empty())?;
         let commit_id = repo.commit("HEAD", "initial", empty_tree_id, git::commit::NO_PARENT_IDS)?;
         assert_eq!(
             commit_id,
-            hex_to_id("bbbd91e8b0f81f0693291d4a47c3f2c724ac44ee"),
+            hex_to_id("3a774843723a713a8d361b4d4d98ad4092ef05bd"),
             "the commit id is stable"
         );
 
