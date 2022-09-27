@@ -14,14 +14,15 @@ pub struct Snapshot<'repo> {
     pub(crate) repo: &'repo Repository,
 }
 
-/// A platform to access configuration values and modify them in memory, while making them available when this platform is dropped.
+/// A platform to access configuration values and modify them in memory, while making them available when this platform is dropped
+/// as form of auto-commit.
 /// Note that the values will only affect this instance of the parent repository, and not other clones that may exist.
 ///
 /// Note that these values won't update even if the underlying file(s) change.
 ///
 /// Use [`forget()`][Self::forget()] to not apply any of the changes.
 // TODO: make it possible to load snapshots with reloading via .config() and write mutated snapshots back to disk which should be the way
-//       to affect all instances of a repo.
+//       to affect all instances of a repo, probably via `config_mut()` and `config_mut_at()`.
 pub struct SnapshotMut<'repo> {
     pub(crate) repo: &'repo mut Repository,
     pub(crate) config: git_config::File<'static>,
@@ -86,6 +87,9 @@ pub(crate) struct Cache {
     pub ignore_case: bool,
     /// The path to the user-level excludes file to ignore certain files in the worktree.
     pub excludes_file: Option<std::path::PathBuf>,
+    /// If true, we should default what's possible if something is misconfigured, on case by case basis, to be more resilient.
+    /// Also available in options! Keep in sync!
+    pub lenient_config: bool,
     /// Define how we can use values obtained with `xdg_config(…)` and its `XDG_CONFIG_HOME` variable.
     xdg_config_home_env: git_sec::Permission,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.

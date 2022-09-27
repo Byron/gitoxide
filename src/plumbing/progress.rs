@@ -118,7 +118,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.filesRefLockTimeout",
-        usage: Planned {note: Some("to be cached and used for all ref operations")},
+        usage: InModule {name: "config::cache::access", deviation: None},
     },
     Record {
         config: "core.packedRefsTimeout",

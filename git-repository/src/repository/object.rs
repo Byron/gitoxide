@@ -195,7 +195,6 @@ impl crate::Repository {
                 name: reference,
                 deref: true,
             },
-            git_lock::acquire::Fail::Immediately,
             commit.committer.to_ref(),
         )?;
         Ok(commit_id)

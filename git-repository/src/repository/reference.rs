@@ -2,15 +2,12 @@ use std::convert::TryInto;
 
 use git_actor as actor;
 use git_hash::ObjectId;
-use git_lock as lock;
 use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     FullName, PartialNameRef, Target,
 };
 
 use crate::{bstr::BString, ext::ReferenceExt, reference, Reference};
-
-const DEFAULT_LOCK_MODE: git_lock::acquire::Fail = git_lock::acquire::Fail::Immediately;
 
 /// Obtain and alter references comfortably
 impl crate::Repository {
@@ -35,7 +32,6 @@ impl crate::Repository {
                 name: format!("refs/tags/{}", name.as_ref()).try_into()?,
                 deref: false,
             },
-            DEFAULT_LOCK_MODE,
             self.committer_or_default(),
         )?;
         assert_eq!(edits.len(), 1, "reference splits should ever happen");
@@ -109,7 +105,6 @@ impl crate::Repository {
                 name,
                 deref: false,
             },
-            DEFAULT_LOCK_MODE,
             self.committer_or_default(),
         )?;
         assert_eq!(
@@ -126,33 +121,30 @@ impl crate::Repository {
         .attach(self))
     }
 
-    /// Edit a single reference as described in `edit`, handle locks via `lock_mode` and write reference logs as `log_committer`.
+    /// Edit a single reference as described in `edit`, and write reference logs as `log_committer`.
     ///
     /// One or more `RefEdit`s  are returned - symbolic reference splits can cause more edits to be performed. All edits have the previous
     /// reference values set to the ones encountered at rest after acquiring the respective reference's lock.
     pub fn edit_reference(
         &self,
         edit: RefEdit,
-        lock_mode: lock::acquire::Fail,
         log_committer: actor::SignatureRef<'_>,
     ) -> Result<Vec<RefEdit>, reference::edit::Error> {
-        self.edit_references(Some(edit), lock_mode, log_committer)
+        self.edit_references(Some(edit), log_committer)
     }
 
-    /// Edit one or more references as described by their `edits`, with `lock_mode` deciding on how to handle competing
-    /// transactions. `log_committer` is the name appearing in reference logs.
+    /// Edit one or more references as described by their `edits`. `log_committer` is the name appearing in reference logs.
     ///
     /// Returns all reference edits, which might be more than where provided due the splitting of symbolic references, and
     /// whose previous (_old_) values are the ones seen on in storage after the reference was locked.
     pub fn edit_references(
         &self,
         edits: impl IntoIterator<Item = RefEdit>,
-        lock_mode: lock::acquire::Fail,
         log_committer: actor::SignatureRef<'_>,
     ) -> Result<Vec<RefEdit>, reference::edit::Error> {
         self.refs
             .transaction()
-            .prepare(edits, lock_mode)?
+            .prepare(edits, self.config.lock_timeout()?.0)?
             .commit(log_committer)
             .map_err(Into::into)
     }

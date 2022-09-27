@@ -147,6 +147,7 @@ impl Cache {
             excludes_file,
             xdg_config_home_env,
             home_env,
+            lenient_config,
             personas: Default::default(),
             url_rewrite: Default::default(),
             #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]

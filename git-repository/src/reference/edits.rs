@@ -55,35 +55,23 @@ pub mod delete {
 
     use crate::Reference;
 
-    mod error {
-        /// The error returned by [`Reference::delete()`][super::Reference::delete()].
-        #[derive(Debug, thiserror::Error)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            #[error(transparent)]
-            ReferenceEdit(#[from] crate::reference::edit::Error),
-        }
-    }
-    pub use error::Error;
-    use git_lock::acquire::Fail;
-
     impl<'repo> Reference<'repo> {
         /// Delete this reference or fail if it was changed since last observed.
         /// Note that this instance remains available in memory but probably shouldn't be used anymore.
-        pub fn delete(&self) -> Result<(), Error> {
-            self.repo.edit_reference(
-                RefEdit {
-                    change: Change::Delete {
-                        expected: PreviousValue::MustExistAndMatch(self.inner.target.clone()),
-                        log: RefLog::AndReference,
+        pub fn delete(&self) -> Result<(), crate::reference::edit::Error> {
+            self.repo
+                .edit_reference(
+                    RefEdit {
+                        change: Change::Delete {
+                            expected: PreviousValue::MustExistAndMatch(self.inner.target.clone()),
+                            log: RefLog::AndReference,
+                        },
+                        name: self.inner.name.clone(),
+                        deref: false,
                     },
-                    name: self.inner.name.clone(),
-                    deref: false,
-                },
-                Fail::Immediately,
-                self.repo.committer_or_default(),
-            )?;
-            Ok(())
+                    self.repo.committer_or_default(),
+                )
+                .map(|_| ())
         }
     }
 }

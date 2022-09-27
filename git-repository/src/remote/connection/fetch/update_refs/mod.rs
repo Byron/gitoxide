@@ -90,9 +90,7 @@ pub(crate) fn update(
     }
 
     let edits = match dry_run {
-        fetch::DryRun::No => {
-            repo.edit_references(edits, git_lock::acquire::Fail::Immediately, repo.committer_or_default())?
-        }
+        fetch::DryRun::No => repo.edit_references(edits, repo.committer_or_default())?,
         fetch::DryRun::Yes => edits,
     };
 
