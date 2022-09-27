@@ -28,7 +28,7 @@ pub struct SnapshotMut<'repo> {
     pub(crate) config: git_config::File<'static>,
 }
 
-/// A utility structure created by [`SnapshotMut::commit_and_rollback()`] that restores the previous configuration on drop.
+/// A utility structure created by [`SnapshotMut::commit_auto_rollback()`] that restores the previous configuration on drop.
 pub struct CommitAutoRollback<'repo> {
     pub(crate) repo: Option<&'repo mut Repository>,
     pub(crate) prev_config: crate::Config,
