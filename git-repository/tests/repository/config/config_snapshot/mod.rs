@@ -1,18 +1,46 @@
 use crate::named_repo;
 
 #[test]
-fn commit_and_rollback() -> crate::Result {
+fn commit_auto_rollback() -> crate::Result {
     let mut repo: git_repository::Repository = named_repo("make_basic_repo.sh")?;
     assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189cd3");
 
     {
         let mut repo = repo.config_snapshot_mut();
         repo.set_raw_value("core", None, "abbrev", "4")?;
-        let repo = repo.commit_and_rollback()?;
+        let repo = repo.commit_auto_rollback()?;
         assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189");
     }
 
     assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189cd3");
+
+    let repo = {
+        let mut repo = repo.config_snapshot_mut();
+        repo.set_raw_value("core", None, "abbrev", "4")?;
+        let repo = repo.commit_auto_rollback()?;
+        assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189");
+        repo.rollback()?
+    };
+    assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189cd3");
+
+    Ok(())
+}
+
+#[test]
+fn snapshot_mut_commit_and_forget() -> crate::Result {
+    let mut repo: git_repository::Repository = named_repo("make_basic_repo.sh")?;
+    let repo = {
+        let mut repo = repo.config_snapshot_mut();
+        repo.set_raw_value("core", None, "abbrev", "4")?;
+        repo.commit()?
+    };
+    assert_eq!(repo.config_snapshot().integer("core.abbrev").expect("set"), 4);
+    {
+        let mut repo = repo.config_snapshot_mut();
+        repo.set_raw_value("core", None, "abbrev", "8")?;
+        repo.forget();
+    }
+    assert_eq!(repo.config_snapshot().integer("core.abbrev"), Some(4));
     Ok(())
 }
 
