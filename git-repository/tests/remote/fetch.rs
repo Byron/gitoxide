@@ -22,6 +22,7 @@ mod blocking_io {
     }
 
     #[test]
+    #[ignore]
     fn fetch_pack() -> crate::Result {
         for version in [
             None,
@@ -64,7 +65,7 @@ mod blocking_io {
                 match outcome.status {
                     fetch::Status::Change {
                         write_pack_bundle,
-                        update_refs: _, // TODO: validate update refs
+                        update_refs: refs,
                     } => {
                         assert_eq!(write_pack_bundle.pack_kind, git::odb::pack::data::Version::V2);
                         assert_eq!(write_pack_bundle.object_hash, repo.object_hash());
@@ -79,6 +80,27 @@ mod blocking_io {
                         );
                         assert!(write_pack_bundle.data_path.map_or(false, |f| f.is_file()));
                         assert!(write_pack_bundle.index_path.map_or(false, |f| f.is_file()));
+
+                        assert_eq!(
+                            refs.updates,
+                            vec![fetch::refs::Update {
+                                mode: fetch::refs::update::Mode::New,
+                                edit_index: Some(0),
+                                spec_index: 0
+                            }]
+                        );
+                        for (_update, mapping, _spec, edit) in refs.iter_mapping_updates(
+                            &outcome.ref_map.mappings,
+                            remote.refspecs(git::remote::Direction::Fetch),
+                        ) {
+                            let edit = edit.expect("refedit present even if it's a no-op");
+                            let r = repo.find_reference(edit.name.as_ref()).unwrap();
+                            assert_eq!(
+                                r.id(),
+                                *mapping.remote.as_id(),
+                                "local reference should point to remote id"
+                            );
+                        }
                     }
                     fetch::Status::NoChange => unreachable!("we firmly expect changes here"),
                 }

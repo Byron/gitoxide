@@ -46,19 +46,25 @@ pub enum Mode {
 impl Outcome {
     /// Produce an iterator over all information used to produce the this outcome, ref-update by ref-update, using the `mappings`
     /// used when producing the ref update.
-    pub fn iter_mapping_updates<'a>(
+    pub fn iter_mapping_updates<'a, 'b>(
         &self,
         mappings: &'a [fetch::Mapping],
+        refspecs: &'b [git_refspec::RefSpec],
     ) -> impl Iterator<
         Item = (
             &super::Update,
             &'a fetch::Mapping,
+            &'b git_refspec::RefSpec,
             Option<&git_ref::transaction::RefEdit>,
         ),
     > {
-        self.updates
-            .iter()
-            .zip(mappings.iter())
-            .map(move |(update, mapping)| (update, mapping, update.edit_index.and_then(|idx| self.edits.get(idx))))
+        self.updates.iter().zip(mappings.iter()).map(move |(update, mapping)| {
+            (
+                update,
+                mapping,
+                &refspecs[mapping.spec_index],
+                update.edit_index.and_then(|idx| self.edits.get(idx)),
+            )
+        })
     }
 }
