@@ -20,8 +20,10 @@ default = []
 
 ## If set, blocking implementations of the typical git transports become available in `crate::client`
 blocking-client = ["git-packetline/blocking-io"]
-## Implies `blocking-client`, and adds support for the http and https transports using the Rust bindings for `libcurl`.
-http-client-curl = ["curl", "base64", "git-features/io-pipe", "blocking-client"]
+## Implies `blocking-client`, and adds support for the http and https transports.
+http-client = ["base64", "git-features/io-pipe", "blocking-client"]
+## Implies `http-client`, and adds support for the http and https transports using the Rust bindings for `libcurl`.
+http-client-curl = ["curl", "http-client"]
 ## If set, an async implementations of the git transports becomes available in `crate::client`.
 ## Suitable for implementing your own transports while using git's way of communication, typically in conjunction with a custom server.
 ## **Note** that the _blocking_ client has a wide range of available transports, with the _async_ version of it supporting only the TCP based `git` transport leaving you
@@ -62,11 +64,13 @@ futures-io = { version = "0.3.16", optional = true }
 futures-lite = { version  = "1.12.0", optional = true }
 pin-project-lite = { version = "0.2.6", optional = true }
 
+# for http-client
+base64 = { version = "0.13.0", optional = true }
+
 # for http-client-curl
 # zlib-ng-compat doesn't force zlib-ng
 curl = { version = "0.4", optional = true, features = ["static-curl", "static-ssl", "zlib-ng-compat"] }
 thiserror = "1.0.26"
-base64 = { version = "0.13.0", optional = true }
 
 ## If used in conjunction with `async-client`, the `connect()` method will be come available along with supporting the git protocol over TCP,
 ## where the TCP stream is created using this crate.

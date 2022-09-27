@@ -35,9 +35,9 @@ pub struct Transport<H: Http> {
     identity: Option<git_sec::identity::Account>,
 }
 
-impl Transport<Impl> {
-    /// Create a new instance to communicate to `url` using the given `desired_version` of the `git` protocol.
-    pub fn new(url: &str, desired_version: Protocol) -> Self {
+impl<H: Http> Transport<H> {
+    /// Create a new instance with `http` as implementation to communicate to `url` using the given `desired_version` of the `git` protocol.
+    pub fn new_http(http: H, url: &str, desired_version: Protocol) -> Self {
         Transport {
             url: url.to_owned(),
             user_agent_header: concat!("User-Agent: git/oxide-", env!("CARGO_PKG_VERSION")),
@@ -45,10 +45,20 @@ impl Transport<Impl> {
             actual_version: desired_version,
             supported_versions: [desired_version],
             service: None,
-            http: Impl::default(),
+            http,
             line_provider: None,
             identity: None,
         }
+    }
+}
+
+#[cfg(feature = "http-client-curl")]
+impl Transport<Impl> {
+    /// Create a new instance to communicate to `url` using the given `desired_version` of the `git` protocol.
+    ///
+    /// Note that the actual implementation depends on feature toggles.
+    pub fn new(url: &str, desired_version: Protocol) -> Self {
+        Self::new_http(Impl::default(), url, desired_version)
     }
 }
 
@@ -285,7 +295,14 @@ impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H,
     }
 }
 
+/// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol, with `http` as implementation.
+#[cfg(all(feature = "http-client", not(feature = "http-client-curl")))]
+pub fn connect_http<H: Http>(http: H, url: &str, desired_version: Protocol) -> Result<Transport<H>, Infallible> {
+    Ok(Transport::new_http(http, url, desired_version))
+}
+
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol.
+#[cfg(feature = "http-client-curl")]
 pub fn connect(url: &str, desired_version: Protocol) -> Result<Transport<Impl>, Infallible> {
     Ok(Transport::new(url, desired_version))
 }

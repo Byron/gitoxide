@@ -4,7 +4,7 @@ pub mod connect;
 ///
 pub mod file;
 ///
-#[cfg(feature = "http-client-curl")]
+#[cfg(feature = "http-client")]
 pub mod http;
 
 mod bufread_ext;
