@@ -27,8 +27,7 @@ impl Debug for SnapshotMut<'_> {
 impl Drop for SnapshotMut<'_> {
     fn drop(&mut self) {
         if let Some(repo) = self.repo.take() {
-            repo.config.resolved = std::mem::take(&mut self.config).into();
-            repo.config.reread_values_and_clear_caches().ok();
+            self.commit_inner(repo).ok();
         };
     }
 }

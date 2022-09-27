@@ -97,16 +97,31 @@ impl<'repo> Snapshot<'repo> {
 impl<'repo> SnapshotMut<'repo> {
     /// Apply all changes made to this instance.
     ///
-    /// Note that this would also happen once this instance is dropped, but using this method may be more intuitive.
-    pub fn commit(self) {}
+    /// Note that this would also happen once this instance is dropped, but using this method may be more intuitive and won't squelch errors
+    /// in case the new configuration is partially invalid.
+    pub fn commit(mut self) -> Result<&'repo mut crate::Repository, crate::config::Error> {
+        let repo = self.repo.take().expect("always present here");
+        self.commit_inner(repo)
+    }
+
+    pub(crate) fn commit_inner(
+        &mut self,
+        repo: &'repo mut crate::Repository,
+    ) -> Result<&'repo mut crate::Repository, crate::config::Error> {
+        repo.config.resolved = std::mem::take(&mut self.config).into();
+        repo.config.reread_values_and_clear_caches()?;
+        Ok(repo)
+    }
 
     /// Create a structure the temporarily commits the changes, but rolls them back when dropped.
-    pub fn commit_and_rollback(mut self) -> CommitAndRollback<'repo> {
-        let new_config = std::mem::take(&mut self.config);
+    pub fn commit_and_rollback(mut self) -> Result<CommitAndRollback<'repo>, crate::config::Error> {
         let repo = self.repo.take().expect("this only runs once on consumption");
-        repo.config.resolved = new_config.into();
         let prev_config = OwnShared::clone(&repo.config.resolved);
-        CommitAndRollback { repo, prev_config }
+
+        Ok(CommitAndRollback {
+            repo: self.commit_inner(repo)?,
+            prev_config,
+        })
     }
 
     /// Don't apply any of the changes after consuming this instance, effectively forgetting them, returning the changed configuration.

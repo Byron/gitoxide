@@ -24,7 +24,7 @@ fn main() -> anyhow::Result<()> {
     config.set_raw_value("author", None, "name", "Maria Sanchez")?;
     config.set_raw_value("author", None, "email", "maria@example.com")?;
     {
-        let repo = config.commit_and_rollback();
+        let repo = config.commit_and_rollback()?;
         let initial_commit_id = repo.commit("HEAD", "initial commit", empty_tree_id, git::commit::NO_PARENT_IDS)?;
 
         println!("initial commit id with empty tree: {:?}", initial_commit_id);

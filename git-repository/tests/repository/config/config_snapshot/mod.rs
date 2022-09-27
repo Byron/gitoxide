@@ -1,6 +1,22 @@
 use crate::named_repo;
 
 #[test]
+fn commit_and_rollback() -> crate::Result {
+    let mut repo: git_repository::Repository = named_repo("make_basic_repo.sh")?;
+    assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189cd3");
+
+    {
+        let mut repo = repo.config_snapshot_mut();
+        repo.set_raw_value("core", None, "abbrev", "4")?;
+        let repo = repo.commit_and_rollback()?;
+        assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189");
+    }
+
+    assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189cd3");
+    Ok(())
+}
+
+#[test]
 fn values_are_set_in_memory_only() {
     let mut repo = named_repo("make_config_repo.sh").unwrap();
     let repo_clone = repo.clone();
