@@ -122,7 +122,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.packedRefsTimeout",
-        usage: Planned {note: Some("needs support in git-ref crate which currently only knows one setting for all locks")},
+        usage: InModule {name: "config::cache::access", deviation: None},
     },
     Record {
         config: "core.logAllRefUpdates",
