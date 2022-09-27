@@ -147,7 +147,7 @@ mod tag {
 }
 
 mod commit {
-    use crate::{freeze_time, restricted};
+    use crate::{freeze_time, restricted_and_git};
     use git_repository as git;
     use git_testtools::hex_to_id;
 
@@ -171,7 +171,7 @@ mod commit {
     fn single_line_initial_commit_empty_tree_ref_nonexisting() -> crate::Result {
         let _env = freeze_time();
         let tmp = tempfile::tempdir()?;
-        let repo = git::open_opts(git::init(&tmp)?.path(), restricted())?;
+        let repo = git::open_opts(git::init(&tmp)?.path(), restricted_and_git())?;
         let empty_tree_id = repo.write_object(&git::objs::Tree::empty())?;
         let commit_id = repo.commit("HEAD", "initial", empty_tree_id, git::commit::NO_PARENT_IDS)?;
         assert_eq!(
@@ -198,7 +198,7 @@ mod commit {
     #[serial_test::serial]
     fn multi_line_commit_message_uses_first_line_in_ref_log_ref_nonexisting() -> crate::Result {
         let _env = freeze_time();
-        let (repo, _keep) = crate::basic_rw_repo()?;
+        let (repo, _keep) = crate::repo_rw_opts("make_basic_repo.sh", restricted_and_git())?;
         let parent = repo.find_reference("HEAD")?.peel_to_id_in_place()?;
         let empty_tree_id = parent.object()?.to_commit_ref_iter().tree_id().expect("tree to be set");
         assert_eq!(

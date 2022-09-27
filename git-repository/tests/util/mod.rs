@@ -23,20 +23,28 @@ pub fn named_repo(name: &str) -> Result<Repository> {
 }
 
 pub fn restricted() -> open::Options {
+    open::Options::isolated()
+}
+
+pub fn restricted_and_git() -> open::Options {
     let mut opts = open::Options::isolated();
     opts.permissions.env.git_prefix = git_sec::Permission::Allow;
     opts
 }
 
 pub fn repo_rw(name: &str) -> Result<(Repository, tempfile::TempDir)> {
+    repo_rw_opts(name, restricted())
+}
+
+pub fn repo_rw_opts(name: &str, opts: git_repository::open::Options) -> Result<(Repository, tempfile::TempDir)> {
     let repo_path = git_testtools::scripted_fixture_repo_writable(name)?;
     Ok((
         ThreadSafeRepository::discover_opts(
             repo_path.path(),
             Default::default(),
             git_sec::trust::Mapping {
-                full: restricted(),
-                reduced: restricted(),
+                full: opts.clone(),
+                reduced: opts,
             },
         )?
         .to_thread_local(),
