@@ -46,6 +46,19 @@ mod remote {
                         break;
                     }
                     let mut res = match req.send() {
+                        Ok(res) if !res.status().is_success() => {
+                            let kind = if res.status() == reqwest::StatusCode::UNAUTHORIZED {
+                                std::io::ErrorKind::PermissionDenied
+                            } else {
+                                std::io::ErrorKind::Other
+                            };
+                            let err = Err(std::io::Error::new(
+                                kind,
+                                format!("Received HTTP status {}", res.status()),
+                            ));
+                            headers_tx.channel.send(err).ok();
+                            continue;
+                        }
                         Ok(res) => res,
                         Err(err) => {
                             let err = Err(std::io::Error::new(std::io::ErrorKind::Other, err));

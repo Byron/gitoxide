@@ -29,11 +29,12 @@ fn assert_error_status(
         .expect("non-200 status causes error");
     let error = error
         .source()
-        .expect("source")
+        .unwrap_or_else(|| panic!("no source() in: {:?} ", error))
         .downcast_ref::<std::io::Error>()
         .expect("io error as source");
     assert_eq!(error.kind(), kind);
-    assert_eq!(error.to_string(), format!("Received HTTP status {}", status));
+    let expected = format!("Received HTTP status {}", status);
+    assert_eq!(error.to_string().get(..expected.len()), Some(expected).as_deref());
     drop(server.received());
     Ok((server, client))
 }
@@ -95,7 +96,6 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
 }
 
 #[test]
-#[cfg_attr(feature = "http-client-reqwest", ignore)]
 fn http_error_results_in_observable_error() -> crate::Result {
     assert_error_status(404, std::io::ErrorKind::Other)?;
     Ok(())
