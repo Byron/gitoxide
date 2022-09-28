@@ -1,7 +1,10 @@
 pub struct Remote {
+    /// A worker thread which performs the actual request.
     handle: Option<std::thread::JoinHandle<Result<(), reqwest::Error>>>,
-    req: std::sync::mpsc::SyncSender<remote::Request>,
-    res: std::sync::mpsc::Receiver<remote::Response>,
+    /// A channel to send requests (work) to the worker thread.
+    request: std::sync::mpsc::SyncSender<remote::Request>,
+    /// A channel to receive the result of the prior request.
+    response: std::sync::mpsc::Receiver<remote::Response>,
 }
 
 mod remote {
@@ -19,6 +22,8 @@ mod remote {
             let (res_send, res_recv) = std::sync::mpsc::sync_channel(0);
             let handle = std::thread::spawn(move || -> Result<(), reqwest::Error> {
                 for Request { url, headers, upload } in req_recv {
+                    // We may error while configuring, which is expected as part of the internal protocol. The error will be
+                    // received and the sender of the request might restart us.
                     let client = reqwest::blocking::ClientBuilder::new()
                         .connect_timeout(std::time::Duration::from_secs(20))
                         .build()?;
@@ -37,9 +42,18 @@ mod remote {
                         })
                         .is_err()
                     {
-                        continue;
+                        // This means our internal protocol is violated as the one who sent the request isn't listening anymore.
+                        // Shut down as something is off.
+                        break;
                     }
-                    let mut res = req.send()?;
+                    let mut res = match req.send() {
+                        Ok(res) => res,
+                        Err(err) => {
+                            let err = Err(std::io::Error::new(std::io::ErrorKind::Other, err));
+                            headers_tx.channel.send(err).ok();
+                            continue;
+                        }
+                    };
                     let mut send_headers = {
                         let headers = res.headers();
                         move || -> std::io::Result<()> {
@@ -52,19 +66,23 @@ mod remote {
                         }
                     };
 
-                    if send_headers().is_err() {
-                        continue;
-                    }
+                    // We don't have to care if anybody is receiving the header, as a matter of fact we cannot fail sending them.
+                    // Thus an error means the receiver failed somehow, but might also have decided not to read headers at all. Fine with us.
+                    send_headers().ok();
 
-                    std::io::copy(&mut res, &mut response_body_tx).ok();
+                    // reading the response body is streaming and may fail for many reasons. If so, we send the error over the response
+                    // body channel and that's all we can do.
+                    if let Err(err) = std::io::copy(&mut res, &mut response_body_tx) {
+                        response_body_tx.channel.send(Err(err)).ok();
+                    }
                 }
                 Ok(())
             });
 
             Remote {
                 handle: Some(handle),
-                req: req_send,
-                res: res_recv,
+                request: req_send,
+                response: res_recv,
             }
         }
     }
@@ -93,31 +111,32 @@ mod remote {
                     None => continue,
                 };
             }
-            if let Err(std::sync::mpsc::SendError(req)) = self.req.send(Request {
-                url: url.to_owned(),
-                headers: header_map,
-                upload,
-            }) {
-                // maybe the previous operation left it downed, but the transport is reused.
-                *self = Self::new();
-                if self.req.send(req).is_err() {
+            self.request
+                .send(Request {
+                    url: url.to_owned(),
+                    headers: header_map,
+                    upload,
+                })
+                .expect("the remote cannot be down at this point");
+
+            let Response {
+                headers,
+                body,
+                upload_body,
+            } = match self.response.recv() {
+                Ok(res) => res,
+                Err(_) => {
                     let err = self
                         .handle
                         .take()
                         .expect("always present")
                         .join()
                         .expect("no panic")
-                        .expect_err("no receiver means thread is down with error");
+                        .expect_err("no receiver means thread is down with init error");
                     *self = Self::new();
                     return Err(http::Error::InitHttpClient { source: Box::new(err) });
                 }
-            }
-
-            let Response {
-                headers,
-                body,
-                upload_body,
-            } = self.res.recv().expect("cannot fail between send and receive");
+            };
 
             Ok(http::PostResponse {
                 post_body: upload_body,
@@ -154,6 +173,12 @@ mod remote {
         pub headers: reqwest::header::HeaderMap,
         pub upload: bool,
     }
+
+    /// A link to a thread who provides data for the contained readers.
+    /// The expected order is:
+    /// - write `upload_body`
+    /// - read `headers` to end
+    /// - read `body` to hend
     pub struct Response {
         pub headers: pipe::Reader,
         pub body: pipe::Reader,
