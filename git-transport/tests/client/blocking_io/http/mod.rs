@@ -321,7 +321,7 @@ Accept: application/x-git-upload-pack-result
 }
 
 #[test]
-#[cfg_attr(feature = "http-client-reqwest", ignore)]
+#[cfg_attr(feature = "http-client-reqwest", ignore)] // hangs
 fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
     let (server, mut c) = mock::serve_and_connect(
         "v2/http-handshake.response",
@@ -367,7 +367,11 @@ fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
     );
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .collect::<HashSet<_>>(),
         format!(
             "GET /path/not/important/due/to/mock/info/refs?service=git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -380,7 +384,8 @@ Git-Protocol: version=2:value-only:key=value
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
 
     server.next_read_and_respond_with(fixture_bytes("v2/http-lsrefs.response"));
