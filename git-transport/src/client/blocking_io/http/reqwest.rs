@@ -9,23 +9,54 @@ mod remote {
     use crate::client::http::reqwest::Remote;
     use git_features::io::pipe;
     use std::convert::TryFrom;
+    use std::io::Write;
     use std::str::FromStr;
 
     /// initialization
     impl Remote {
         pub fn new() -> Self {
             let (req_send, req_recv) = std::sync::mpsc::sync_channel(0);
-            let (_res_send, res_recv) = std::sync::mpsc::sync_channel(0);
+            let (res_send, res_recv) = std::sync::mpsc::sync_channel(0);
             let handle = std::thread::spawn(move || -> Result<(), reqwest::Error> {
-                for Request {
-                    url: _,
-                    headers: _,
-                    upload: _,
-                } in req_recv
-                {
-                    let _client = reqwest::blocking::ClientBuilder::new()
+                for Request { url, headers, upload } in req_recv {
+                    let client = reqwest::blocking::ClientBuilder::new()
                         .connect_timeout(std::time::Duration::from_secs(20))
                         .build()?;
+                    let mut req = if upload { client.post(url) } else { client.get(url) }.headers(headers);
+                    let (post_body_tx, post_body_rx) = pipe::unidirectional(0);
+                    if upload {
+                        req = req.body(reqwest::blocking::Body::new(post_body_rx));
+                    }
+                    let (mut response_body_tx, response_body_rx) = pipe::unidirectional(0);
+                    let (mut headers_tx, headers_rx) = pipe::unidirectional(0);
+                    if res_send
+                        .send(Response {
+                            headers: headers_rx,
+                            body: response_body_rx,
+                            upload_body: post_body_tx,
+                        })
+                        .is_err()
+                    {
+                        continue;
+                    }
+                    let mut res = req.send()?;
+                    let mut send_headers = {
+                        let headers = res.headers();
+                        move || -> std::io::Result<()> {
+                            for (name, value) in headers {
+                                headers_tx.write_all(name.as_str().as_bytes())?;
+                                headers_tx.write_all(b":")?;
+                                headers_tx.write_all(value.as_bytes())?;
+                            }
+                            Ok(())
+                        }
+                    };
+
+                    if send_headers().is_err() {
+                        continue;
+                    }
+
+                    std::io::copy(&mut res, &mut response_body_tx).ok();
                 }
                 Ok(())
             });
