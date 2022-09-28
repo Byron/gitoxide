@@ -116,7 +116,8 @@ check: ## Build all code in suitable configurations
 					 && cargo check --features async-client \
 					 && cargo check --features async-client,async-std \
 					 && cargo check --features http-client \
-					 && cargo check --features http-client-curl
+					 && cargo check --features http-client-curl \
+					 && cargo check --features http-client-reqwest
 	cd git-transport && if cargo check --all-features 2>/dev/null; then false; else true; fi
 	cd git-protocol && cargo check \
 					&& cargo check --features blocking-client \
@@ -152,6 +153,7 @@ unit-tests: ## run all unit tests
 					  && cargo test --features "async-io" --test async-packetline
 	cd git-transport && cargo test \
 					 && cargo test --features http-client-curl,maybe-async/is_sync \
+					 && cargo test --features http-client-reqwest,maybe-async/is_sync \
 					 && cargo test --features async-client
 	cd git-protocol && cargo test --features blocking-client \
 					&& cargo test --features async-client \

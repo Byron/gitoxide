@@ -145,7 +145,6 @@ pub fn new() -> (
                 break;
             }
 
-            #[allow(clippy::branches_sharing_code)]
             if let Err(err) = handle.perform() {
                 let handler = handle.get_mut();
                 handler.reset();

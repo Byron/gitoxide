@@ -15,12 +15,18 @@ use crate::{
 #[cfg(feature = "http-client-curl")]
 mod curl;
 
+#[cfg(feature = "http-client-reqwest")]
+mod reqwest;
+
 ///
 mod traits;
 
-/// The actual http client implementation.
+/// The actual http client implementation, using curl
 #[cfg(feature = "http-client-curl")]
 pub type Impl = curl::Curl;
+/// The actual http client implementation, using reqwest
+#[cfg(feature = "http-client-reqwest")]
+pub type Impl = reqwest::Remote;
 
 /// A transport for supporting arbitrary http clients by abstracting interactions with them into the [Http] trait.
 pub struct Transport<H: Http> {
