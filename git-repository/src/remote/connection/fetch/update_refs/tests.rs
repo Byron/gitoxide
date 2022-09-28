@@ -1,22 +1,22 @@
 mod update {
-
     use crate as git;
 
-    fn repo(name: &str) -> git::Repository {
-        let dir = git_testtools::scripted_fixture_repo_read_only_with_args(
-            "make_fetch_repos.sh",
-            [git::path::realpath(
-                git_testtools::scripted_fixture_repo_read_only("make_remote_repos.sh")
-                    .unwrap()
-                    .join("base"),
-            )
-            .unwrap()
-            .to_string_lossy()],
+    fn base_repo_path() -> String {
+        git::path::realpath(
+            git_testtools::scripted_fixture_repo_read_only("make_remote_repos.sh")
+                .unwrap()
+                .join("base"),
         )
-        .unwrap();
-        git::open_opts(dir.join(name), git::open::Options::isolated()).unwrap()
+        .unwrap()
+        .to_string_lossy()
+        .into_owned()
     }
 
+    fn repo(name: &str) -> git::Repository {
+        let dir = git_testtools::scripted_fixture_repo_read_only_with_args("make_fetch_repos.sh", [base_repo_path()])
+            .unwrap();
+        git::open_opts(dir.join(name), git::open::Options::isolated()).unwrap()
+    }
     use crate::remote::fetch;
     use git_ref::TargetRef;
 
@@ -58,7 +58,9 @@ mod update {
             ),
             (
                 "+refs/remotes/origin/g:refs/heads/main",
-                fetch::refs::update::Mode::RejectedCheckedOut,
+                fetch::refs::update::Mode::RejectedCurrentlyCheckedOut {
+                    worktree_dir: repo.work_dir().expect("present").to_owned(),
+                },
                 false,
                 "checked out branches cannot be written, as it requires a merge of sorts which isn't done here",
             ),
@@ -75,13 +77,49 @@ mod update {
             assert_eq!(
                 out.updates,
                 vec![fetch::refs::Update {
-                    mode: expected_mode,
+                    mode: expected_mode.clone(),
                     edit_index: has_edit_index.then(|| 0),
                     spec_index: 0
                 }],
                 "{spec:?}: {detail}"
             );
             assert_eq!(out.edits.len(), has_edit_index.then(|| 1).unwrap_or(0));
+        }
+    }
+
+    #[test]
+    #[ignore]
+    fn checked_out_branches_in_worktrees_are_rejected_with_additional_infromation() {
+        let root = git_testtools::scripted_fixture_repo_read_only_with_args("make_fetch_repos.sh", [base_repo_path()])
+            .unwrap();
+        let repo = root.join("worktree-root");
+        let repo = git::open_opts(repo, git::open::Options::isolated()).unwrap();
+        for (branch, path_from_root) in [
+            ("main", "worktree-root"),
+            ("wt-a-nested", "prec/wt-a"),
+            ("wt-a", "wt-a"),
+            ("nested-wt-b", "wt-a/nested-wt-b"),
+            ("wt-c-locked", "wt-c-locked"),
+            ("wt-deleted", "wt-deleted"),
+        ] {
+            let spec = format!("refs/heads/main:refs/heads/{}", branch);
+            let (mappings, specs) = mapping_from_spec(&spec, &repo);
+            let out = fetch::refs::update(&repo, &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+            assert_eq!(
+                out.updates,
+                vec![fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::RejectedCurrentlyCheckedOut {
+                        worktree_dir: root.join(path_from_root),
+                    },
+                    edit_index: None,
+                    spec_index: 0,
+                }],
+                "{}: checked-out checks are done before checking if a change would actually be required (here it isn't)", spec
+            );
+
+            // TODO: add
+            assert_eq!(out.edits.len(), 0);
         }
     }
 

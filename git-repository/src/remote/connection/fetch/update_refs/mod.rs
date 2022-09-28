@@ -7,7 +7,7 @@ use std::convert::TryInto;
 pub mod update;
 
 /// Information about the update of a single reference, corresponding the respective entry in [`RefMap::mappings`][crate::remote::fetch::RefMap::mappings].
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Update {
     /// The way the update was performed.
     pub mode: update::Mode,

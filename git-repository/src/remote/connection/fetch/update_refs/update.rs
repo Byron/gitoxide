@@ -1,4 +1,5 @@
 use crate::remote::fetch;
+use std::path::PathBuf;
 
 mod error {
     /// The error returned when updating references.
@@ -28,7 +29,7 @@ pub struct Outcome {
 }
 
 /// Describe the way a ref was updated
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Mode {
     /// The old ref's commit was an ancestor of the new one, allowing for a fast-forward without a merge.
     FastForward,
@@ -40,8 +41,13 @@ pub enum Mode {
     RejectedNonFastForward,
     /// The update of a local symbolic reference was rejected.
     RejectedSymbolic,
-    /// The update was rejected as the destination branch is currently checked out
-    RejectedCheckedOut,
+    /// The update was rejected because the branch is checked out in the given worktree_dir.
+    ///
+    /// Note that the check applies to any known worktree, whether it's present on disk or not.
+    RejectedCurrentlyCheckedOut {
+        /// The path to the worktree directory where the branch is checked out.
+        worktree_dir: PathBuf,
+    },
     /// No change was attempted as the remote ref didn't change compared to the current ref, or because no remote ref was specified
     /// in the ref-spec.
     NoChangeNeeded,
