@@ -54,7 +54,8 @@ mod remote {
                             continue;
                         }
                     };
-                    let mut send_headers = {
+
+                    let send_headers = {
                         let headers = res.headers();
                         move || -> std::io::Result<()> {
                             for (name, value) in headers {
@@ -62,6 +63,8 @@ mod remote {
                                 headers_tx.write_all(b":")?;
                                 headers_tx.write_all(value.as_bytes())?;
                             }
+                            // Make sure this is an FnOnce closure to signal the remote reader we are done.
+                            drop(headers_tx);
                             Ok(())
                         }
                     };
