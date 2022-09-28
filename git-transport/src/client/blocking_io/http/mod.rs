@@ -58,7 +58,7 @@ impl<H: Http> Transport<H> {
     }
 }
 
-#[cfg(feature = "http-client-curl")]
+#[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
 impl Transport<Impl> {
     /// Create a new instance to communicate to `url` using the given `desired_version` of the `git` protocol.
     ///
@@ -308,7 +308,7 @@ pub fn connect_http<H: Http>(http: H, url: &str, desired_version: Protocol) -> R
 }
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol.
-#[cfg(feature = "http-client-curl")]
+#[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
 pub fn connect(url: &str, desired_version: Protocol) -> Result<Transport<Impl>, Infallible> {
     Ok(Transport::new(url, desired_version))
 }

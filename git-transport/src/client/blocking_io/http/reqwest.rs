@@ -15,9 +15,8 @@ mod remote {
     use std::io::Write;
     use std::str::FromStr;
 
-    /// initialization
-    impl Remote {
-        pub fn new() -> Self {
+    impl Default for Remote {
+        fn default() -> Self {
             let (req_send, req_recv) = std::sync::mpsc::sync_channel(0);
             let (res_send, res_recv) = std::sync::mpsc::sync_channel(0);
             let handle = std::thread::spawn(move || -> Result<(), reqwest::Error> {
@@ -136,7 +135,7 @@ mod remote {
                         .join()
                         .expect("no panic")
                         .expect_err("no receiver means thread is down with init error");
-                    *self = Self::new();
+                    *self = Self::default();
                     return Err(http::Error::InitHttpClient { source: Box::new(err) });
                 }
             };
