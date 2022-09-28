@@ -108,7 +108,6 @@ fn http_error_results_in_observable_error() -> crate::Result {
 }
 
 #[test]
-#[cfg_attr(feature = "http-client-reqwest", ignore)]
 fn handshake_v1() -> crate::Result {
     let (server, mut c) = mock::serve_and_connect(
         "v1/http-handshake.response",
@@ -220,7 +219,11 @@ fn handshake_v1() -> crate::Result {
     );
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .collect::<HashSet<_>>(),
         format!(
             "GET /path/not/important/due/to/mock/info/refs?service=git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -232,7 +235,8 @@ User-Agent: git/oxide-{}
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
     Ok(())
 }
