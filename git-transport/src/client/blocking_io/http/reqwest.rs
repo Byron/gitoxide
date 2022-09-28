@@ -45,23 +45,21 @@ mod remote {
                         // Shut down as something is off.
                         break;
                     }
-                    let mut res = match req.send() {
-                        Ok(res) if !res.status().is_success() => {
-                            let kind = if res.status() == reqwest::StatusCode::UNAUTHORIZED {
-                                std::io::ErrorKind::PermissionDenied
-                            } else {
-                                std::io::ErrorKind::Other
-                            };
-                            let err = Err(std::io::Error::new(
-                                kind,
-                                format!("Received HTTP status {}", res.status()),
-                            ));
-                            headers_tx.channel.send(err).ok();
-                            continue;
-                        }
+                    let mut res = match req.send().and_then(|res| res.error_for_status()) {
                         Ok(res) => res,
                         Err(err) => {
-                            let err = Err(std::io::Error::new(std::io::ErrorKind::Other, err));
+                            let (kind, err) = match err.status() {
+                                Some(status) => {
+                                    let kind = if status == reqwest::StatusCode::UNAUTHORIZED {
+                                        std::io::ErrorKind::PermissionDenied
+                                    } else {
+                                        std::io::ErrorKind::Other
+                                    };
+                                    (kind, format!("Received HTTP status {}", status.as_str()))
+                                }
+                                None => (std::io::ErrorKind::Other, err.to_string()),
+                            };
+                            let err = Err(std::io::Error::new(kind, err));
                             headers_tx.channel.send(err).ok();
                             continue;
                         }
