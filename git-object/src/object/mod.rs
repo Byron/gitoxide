@@ -184,7 +184,7 @@ impl<'a> ObjectRef<'a> {
         let body = &data[offset..]
             .get(..size)
             .ok_or(LooseHeaderDecodeError::InvalidHeader {
-                message: "invalid size",
+                message: "object data was shorter than its size declared in the header",
             })?;
 
         Ok(Self::from_bytes(kind, body)?)

@@ -20,9 +20,9 @@ fn all() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn invalid_loose() {
+fn shorter_than_advertised() {
     assert_eq!(
         ObjectRef::from_loose(b"tree 1000\x00").unwrap_err().to_string(),
-        "invalid size"
+        "object data was shorter than its size declared in the header"
     );
 }
