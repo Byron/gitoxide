@@ -1,5 +1,5 @@
 use bstr::ByteSlice;
-use git_object::{decode, encode, Kind};
+use git_object::{decode, encode, Kind, ObjectRef};
 
 #[test]
 fn all() -> Result<(), Box<dyn std::error::Error>> {
@@ -17,4 +17,12 @@ fn all() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(actual_read, buf.len());
     }
     Ok(())
+}
+
+#[test]
+fn shorter_than_advertised() {
+    assert_eq!(
+        ObjectRef::from_loose(b"tree 1000\x00").unwrap_err().to_string(),
+        "object data was shorter than its size declared in the header"
+    );
 }

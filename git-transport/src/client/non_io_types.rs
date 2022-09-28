@@ -58,12 +58,12 @@ mod error {
     use bstr::BString;
 
     use crate::client::capabilities;
-    #[cfg(feature = "http-client-curl")]
+    #[cfg(feature = "http-client")]
     use crate::client::http;
 
-    #[cfg(feature = "http-client-curl")]
+    #[cfg(feature = "http-client")]
     type HttpError = http::Error;
-    #[cfg(not(feature = "http-client-curl"))]
+    #[cfg(not(feature = "http-client"))]
     type HttpError = std::convert::Infallible;
 
     /// The error used in most methods of the [`client`][crate::client] module

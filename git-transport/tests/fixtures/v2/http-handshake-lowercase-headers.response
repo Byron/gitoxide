@@ -1,0 +1,18 @@
+HTTP/1.1 200 OK
+server: GitHub Babel 2.0
+content-type: application/x-git-upload-pack-advertisement
+content-length: 1000
+expires: Fri, 01 Jan 1980 00:00:00 GMT
+pragma: no-cache
+cache-control: no-cache, max-age=0, must-revalidate
+vary: Accept-Encoding
+x-frame-options: DENY
+x-github-request-id: 737D:544E:C932CB:113F404:5F3F3EE5
+
+001e# service=git-upload-pack
+0000000eversion 2
+0023agent=git/github-gdf51a71f0236
+000cls-refs
+0019fetch=shallow filter
+0012server-option
+0000

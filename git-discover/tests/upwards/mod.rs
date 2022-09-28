@@ -182,6 +182,10 @@ fn cross_fs() -> crate::Result {
     use std::{os::unix::fs::symlink, process::Command};
 
     use git_discover::upwards::Options;
+    if git_testtools::is_ci::cached() {
+        // Don't run on CI as it's too slow there, resource busy, it fails more often than it succeeds by now.
+        return Ok(());
+    }
 
     let top_level_repo = git_testtools::scripted_fixture_repo_writable("make_basic_repo.sh")?;
 

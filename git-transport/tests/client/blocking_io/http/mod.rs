@@ -455,3 +455,15 @@ Git-Protocol: version=2
     );
     Ok(())
 }
+
+#[test]
+fn check_content_type_is_case_insensitive() -> crate::Result {
+    let (_server, mut client) = mock::serve_and_connect(
+        "v2/http-handshake-lowercase-headers.response",
+        "path/not/important/due/to/mock",
+        Protocol::V2,
+    )?;
+    let result = client.handshake(Service::UploadPack, &[]);
+    assert!(result.is_ok());
+    Ok(())
+}

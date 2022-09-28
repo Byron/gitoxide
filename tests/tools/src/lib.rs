@@ -282,7 +282,7 @@ fn scripted_fixture_repo_read_only_with_args_inner(
 
     let _marker = git_lock::Marker::acquire_to_hold_resource(
         script_basename,
-        git_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(if cfg!(windows) { 3 * 60 } else { 30 })),
+        git_lock::acquire::Fail::AfterDurationWithBackoff(Duration::from_secs(if cfg!(windows) { 3 * 60 } else { 60 })),
         None,
     )?;
     let failure_marker = script_result_directory.join("_invalid_state_due_to_script_failure_");
