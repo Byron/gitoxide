@@ -2,6 +2,10 @@
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
+    #[error("Could initialize the http client")]
+    InitHttpClient {
+        source: Box<dyn std::error::Error + Send + Sync + 'static>,
+    },
     #[error("{description}")]
     Detail { description: String },
     #[error("An IO error occurred while uploading the body of a POST request")]

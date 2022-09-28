@@ -1,6 +1,5 @@
 pub struct Remote {
-    #[allow(dead_code)] // TODO: do we ever care about the handle? Guess is: no
-    handle: std::thread::JoinHandle<Result<(), reqwest::Error>>,
+    handle: Option<std::thread::JoinHandle<Result<(), reqwest::Error>>>,
     req: std::sync::mpsc::SyncSender<remote::Request>,
     res: std::sync::mpsc::Receiver<remote::Response>,
 }
@@ -23,12 +22,16 @@ mod remote {
                     headers: _,
                     upload: _,
                 } in req_recv
-                {}
+                {
+                    let _client = reqwest::blocking::ClientBuilder::new()
+                        .connect_timeout(std::time::Duration::from_secs(20))
+                        .build()?;
+                }
                 Ok(())
             });
 
             Remote {
-                handle,
+                handle: Some(handle),
                 req: req_send,
                 res: res_recv,
             }
@@ -64,8 +67,19 @@ mod remote {
                 headers: header_map,
                 upload,
             }) {
+                // maybe the previous operation left it downed, but the transport is reused.
                 *self = Self::new();
-                self.req.send(req).expect("thread is fresh and ought to be running");
+                if self.req.send(req).is_err() {
+                    let err = self
+                        .handle
+                        .take()
+                        .expect("always present")
+                        .join()
+                        .expect("no panic")
+                        .expect_err("no receiver means thread is down with error");
+                    *self = Self::new();
+                    return Err(http::Error::InitHttpClient { source: Box::new(err) });
+                }
             }
 
             let Response {
