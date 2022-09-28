@@ -1,5 +1,5 @@
 pub struct Remote {
-    #[allow(dead_code)]
+    #[allow(dead_code)] // TODO: do we ever care about the handle? Guess is: no
     handle: std::thread::JoinHandle<Result<(), reqwest::Error>>,
     req: std::sync::mpsc::SyncSender<remote::Request>,
     res: std::sync::mpsc::Receiver<remote::Response>,
@@ -59,25 +59,21 @@ mod remote {
                     None => continue,
                 };
             }
-            if self
-                .req
-                .send(Request {
-                    url: url.to_owned(),
-                    headers: header_map,
-                    upload,
-                })
-                .is_err()
-            {
-                todo!()
+            if let Err(std::sync::mpsc::SendError(req)) = self.req.send(Request {
+                url: url.to_owned(),
+                headers: header_map,
+                upload,
+            }) {
+                *self = Self::new();
+                self.req.send(req).expect("thread is fresh and ought to be running");
             }
+
             let Response {
                 headers,
                 body,
                 upload_body,
-            } = match self.res.recv() {
-                Ok(res) => res,
-                Err(_) => todo!("err handling post"),
-            };
+            } = self.res.recv().expect("cannot fail between send and receive");
+
             Ok(http::PostResponse {
                 post_body: upload_body,
                 headers,
