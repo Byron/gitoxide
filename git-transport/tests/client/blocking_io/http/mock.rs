@@ -1,3 +1,4 @@
+use std::net::Shutdown;
 use std::{
     io::{Read, Write},
     net::SocketAddr,
@@ -54,6 +55,7 @@ impl Server {
                         stream.read_to_end(&mut out).ok();
                         stream.write_all(&response).expect("write to always work");
                         stream.flush().expect("flush to work");
+                        stream.shutdown(Shutdown::Both).ok();
                         if send_result.send(CommandResult::ReadAndRespond(out)).is_err() {
                             break;
                         }
