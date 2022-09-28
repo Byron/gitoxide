@@ -180,7 +180,14 @@ impl<'a> ObjectRef<'a> {
     /// Deserialize an object from a loose serialisation
     pub fn from_loose(data: &'a [u8]) -> Result<ObjectRef<'a>, LooseDecodeError> {
         let (kind, size, offset) = loose_header(data)?;
-        Ok(Self::from_bytes(kind, &data[offset..][..size])?)
+
+        let body = &data[offset..]
+            .get(..size)
+            .ok_or(LooseHeaderDecodeError::InvalidHeader {
+                message: "invalid size",
+            })?;
+
+        Ok(Self::from_bytes(kind, body)?)
     }
 
     /// Deserialize an object of `kind` from the given `data`.
