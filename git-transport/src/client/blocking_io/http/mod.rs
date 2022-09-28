@@ -70,13 +70,13 @@ impl Transport<Impl> {
 
 impl<H: Http> Transport<H> {
     fn check_content_type(service: Service, kind: &str, headers: <H as Http>::Headers) -> Result<(), client::Error> {
-        let wanted_content_type = format!("content-type: application/x-{}-{}", service.as_str(), kind);
-        if !headers
-            .lines()
-            .collect::<Result<Vec<_>, _>>()?
-            .iter()
-            .any(|l| l.to_lowercase() == wanted_content_type)
-        {
+        let wanted_content_type = format!("application/x-{}-{}", service.as_str(), kind);
+        if !headers.lines().collect::<Result<Vec<_>, _>>()?.iter().any(|l| {
+            let mut tokens = l.split(':');
+            tokens.next().zip(tokens.next()).map_or(false, |(name, value)| {
+                name.eq_ignore_ascii_case("content-type") && value.trim() == wanted_content_type
+            })
+        }) {
             return Err(client::Error::Http(Error::Detail {
                 description: format!(
                     "Didn't find '{}' header to indicate 'smart' protocol, and 'dumb' protocol is not supported.",

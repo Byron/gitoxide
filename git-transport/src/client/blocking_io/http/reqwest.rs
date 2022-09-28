@@ -61,6 +61,7 @@ mod remote {
                                 headers_tx.write_all(name.as_str().as_bytes())?;
                                 headers_tx.write_all(b":")?;
                                 headers_tx.write_all(value.as_bytes())?;
+                                headers_tx.write_all(b"\n")?;
                             }
                             // Make sure this is an FnOnce closure to signal the remote reader we are done.
                             drop(headers_tx);
@@ -103,7 +104,8 @@ mod remote {
                 let colon_pos = header_line
                     .find(':')
                     .expect("header line must contain a colon to separate key and value");
-                let (header_name, value) = header_line.split_at(colon_pos);
+                let header_name = &header_line[..colon_pos];
+                let value = &header_line[colon_pos + 1..];
 
                 match reqwest::header::HeaderName::from_str(header_name)
                     .ok()

@@ -39,6 +39,7 @@ fn assert_error_status(
 }
 
 #[test]
+#[cfg_attr(feature = "http-client-reqwest", ignore)]
 fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted() -> crate::Result {
     let (server, mut client) = assert_error_status(401, std::io::ErrorKind::PermissionDenied)?;
     server.next_read_and_respond_with(fixture_bytes("v1/http-handshake.response"));
@@ -94,12 +95,14 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
 }
 
 #[test]
+#[cfg_attr(feature = "http-client-reqwest", ignore)]
 fn http_error_results_in_observable_error() -> crate::Result {
     assert_error_status(404, std::io::ErrorKind::Other)?;
     Ok(())
 }
 
 #[test]
+#[cfg_attr(feature = "http-client-reqwest", ignore)]
 fn handshake_v1() -> crate::Result {
     let (server, mut c) = mock::serve_and_connect(
         "v1/http-handshake.response",
@@ -229,6 +232,7 @@ User-Agent: git/oxide-{}
 }
 
 #[test]
+#[cfg_attr(feature = "http-client-reqwest", ignore)]
 fn clone_v1() -> crate::Result {
     let (server, mut c) = mock::serve_and_connect(
         "v1/http-handshake.response",
@@ -239,8 +243,13 @@ fn clone_v1() -> crate::Result {
         c.handshake(Service::UploadPack, &[("key", Some("value")), ("value-only", None)])?;
     io::copy(&mut refs.expect("refs in protocol V1"), &mut io::sink())?;
     assert_eq!(
-        server.received_as_string().lines().nth(4).expect("git-protocol header"),
-        "Git-Protocol: key=value:value-only",
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .find(|l| l.starts_with("git-protocol"))
+            .expect("git-protocol header"),
+        "git-protocol: key=value:value-only",
         "it writes extra-parameters without the version"
     );
 
@@ -302,6 +311,7 @@ Accept: application/x-git-upload-pack-result
 }
 
 #[test]
+#[cfg_attr(feature = "http-client-reqwest", ignore)]
 fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
     let (server, mut c) = mock::serve_and_connect(
         "v2/http-handshake.response",
