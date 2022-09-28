@@ -12,6 +12,10 @@ mod error {
         InvalidRefName(#[from] git_validate::refname::Error),
         #[error("Failed to update references to their new position to match their remote locations")]
         EditReferences(#[from] crate::reference::edit::Error),
+        #[error("Failed to read or iterate worktree dir")]
+        WorktreeListing(#[from] std::io::Error),
+        #[error("Could not open worktree repository")]
+        OpenWorktreeRepo(#[from] crate::open::Error),
     }
 }
 

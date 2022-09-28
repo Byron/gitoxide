@@ -1,5 +1,6 @@
 mod update {
     use crate as git;
+    use git_testtools::Result;
 
     fn base_repo_path() -> String {
         git::path::realpath(
@@ -88,15 +89,16 @@ mod update {
     }
 
     #[test]
-    #[ignore]
-    fn checked_out_branches_in_worktrees_are_rejected_with_additional_infromation() {
-        let root = git_testtools::scripted_fixture_repo_read_only_with_args("make_fetch_repos.sh", [base_repo_path()])
-            .unwrap();
+    fn checked_out_branches_in_worktrees_are_rejected_with_additional_infromation() -> Result {
+        let root = git_path::realpath(git_testtools::scripted_fixture_repo_read_only_with_args(
+            "make_fetch_repos.sh",
+            [base_repo_path()],
+        )?)?;
         let repo = root.join("worktree-root");
-        let repo = git::open_opts(repo, git::open::Options::isolated()).unwrap();
+        let repo = git::open_opts(repo, git::open::Options::isolated())?;
         for (branch, path_from_root) in [
             ("main", "worktree-root"),
-            ("wt-a-nested", "prec/wt-a"),
+            ("wt-a-nested", "prev/wt-a-nested"),
             ("wt-a", "wt-a"),
             ("nested-wt-b", "wt-a/nested-wt-b"),
             ("wt-c-locked", "wt-c-locked"),
@@ -104,7 +106,7 @@ mod update {
         ] {
             let spec = format!("refs/heads/main:refs/heads/{}", branch);
             let (mappings, specs) = mapping_from_spec(&spec, &repo);
-            let out = fetch::refs::update(&repo, &mappings, &specs, fetch::DryRun::Yes).unwrap();
+            let out = fetch::refs::update(&repo, &mappings, &specs, fetch::DryRun::Yes)?;
 
             assert_eq!(
                 out.updates,
@@ -117,10 +119,9 @@ mod update {
                 }],
                 "{}: checked-out checks are done before checking if a change would actually be required (here it isn't)", spec
             );
-
-            // TODO: add
             assert_eq!(out.edits.len(), 0);
         }
+        Ok(())
     }
 
     #[test]

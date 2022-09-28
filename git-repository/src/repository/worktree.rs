@@ -25,21 +25,11 @@ impl crate::Repository {
         res.sort_by(|a, b| a.git_dir.cmp(&b.git_dir));
         Ok(res)
     }
-
-    /// Iterate all _linked_ worktrees in sort order and resolve them, ignoring those without an accessible work tree, into repositories
-    /// whose [`worktree()`][crate::Repository::worktree()] is the worktree currently being iterated.
-    ///
-    /// Note that for convenience all io errors are squelched so if there is a chance for IO errors during
-    /// traversal of an owned directory, better use `list()` directly. The latter allows to resolve repositories
-    /// even if the worktree checkout isn't accessible.
-    pub fn worktree_repos(&self) -> ! {
-        todo!()
-    }
 }
 
 /// Interact with individual worktrees and their information.
 impl crate::Repository {
-    /// Return the repository owning the main worktree.
+    /// Return the repository owning the main worktree, typically from a linked worktree.
     ///
     /// Note that it might be the one that is currently open if this repository doesn't point to a linked worktree.
     /// Also note that the main repo might be bare.
