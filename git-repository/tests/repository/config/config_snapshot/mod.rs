@@ -6,18 +6,18 @@ fn commit_auto_rollback() -> crate::Result {
     assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189cd3");
 
     {
-        let mut repo = repo.config_snapshot_mut();
-        repo.set_raw_value("core", None, "abbrev", "4")?;
-        let repo = repo.commit_auto_rollback()?;
+        let mut config = repo.config_snapshot_mut();
+        config.set_raw_value("core", None, "abbrev", "4")?;
+        let repo = config.commit_auto_rollback()?;
         assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189");
     }
 
     assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189cd3");
 
     let repo = {
-        let mut repo = repo.config_snapshot_mut();
-        repo.set_raw_value("core", None, "abbrev", "4")?;
-        let repo = repo.commit_auto_rollback()?;
+        let mut config = repo.config_snapshot_mut();
+        config.set_raw_value("core", None, "abbrev", "4")?;
+        let repo = config.commit_auto_rollback()?;
         assert_eq!(repo.head_id()?.shorten()?.to_string(), "3189");
         repo.rollback()?
     };
