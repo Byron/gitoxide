@@ -16,11 +16,10 @@ pub struct Update {
     pub mode: update::Mode,
     /// The index to the edit that was created from the corresponding mapping, or `None` if there was no local ref.
     pub edit_index: Option<usize>,
-    /// The index of the ref-spec from which the source mapping originated.
-    pub spec_index: usize,
 }
 
-/// Update all refs as derived from `mappings` and produce an `Outcome` informing about all applied changes in detail.
+/// Update all refs as derived from `mappings` and produce an `Outcome` informing about all applied changes in detail, with each
+/// [`update`][Update] corresponding to the [`fetch::Mapping`] of at the same index.
 /// If `dry_run` is true, ref transactions won't actually be applied, but are assumed to work without error so the underlying
 /// `repo` is not actually changed.
 ///
@@ -51,7 +50,6 @@ pub(crate) fn update(
                                 mode: update::Mode::RejectedCurrentlyCheckedOut {
                                     worktree_dir: wt_dir.to_owned(),
                                 },
-                                spec_index: *spec_index,
                                 edit_index: None,
                             });
                             continue;
@@ -60,7 +58,6 @@ pub(crate) fn update(
                             TargetRef::Symbolic(_) => {
                                 updates.push(Update {
                                     mode: update::Mode::RejectedSymbolic,
-                                    spec_index: *spec_index,
                                     edit_index: None,
                                 });
                                 continue;
@@ -98,11 +95,7 @@ pub(crate) fn update(
             }
             None => (update::Mode::NoChangeNeeded, None),
         };
-        updates.push(Update {
-            mode,
-            spec_index: *spec_index,
-            edit_index,
-        })
+        updates.push(Update { mode, edit_index })
     }
 
     let edits = match dry_run {

@@ -85,7 +85,6 @@ mod blocking_io {
                             vec![fetch::refs::Update {
                                 mode: fetch::refs::update::Mode::New,
                                 edit_index: Some(0),
-                                spec_index: 0
                             }]
                         );
                         for (_update, mapping, _spec, edit) in refs.iter_mapping_updates(

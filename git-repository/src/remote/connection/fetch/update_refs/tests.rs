@@ -80,7 +80,6 @@ mod update {
                 vec![fetch::refs::Update {
                     mode: expected_mode.clone(),
                     edit_index: has_edit_index.then(|| 0),
-                    spec_index: 0
                 }],
                 "{spec:?}: {detail}"
             );
@@ -115,7 +114,6 @@ mod update {
                         worktree_dir: root.join(path_from_root),
                     },
                     edit_index: None,
-                    spec_index: 0,
                 }],
                 "{}: checked-out checks are done before checking if a change would actually be required (here it isn't)", spec
             );
@@ -135,7 +133,6 @@ mod update {
             vec![fetch::refs::Update {
                 mode: fetch::refs::update::Mode::RejectedSymbolic,
                 edit_index: None,
-                spec_index: 0,
             }],
             "this also protects from writing HEAD, which should in theory be impossible to get from a refspec as it normalizes partial ref names"
         );
@@ -154,7 +151,6 @@ mod update {
             vec![fetch::refs::Update {
                 mode: fetch::refs::update::Mode::RejectedNonFastForward,
                 edit_index: Some(0),
-                spec_index: 0,
             }]
         );
         assert_eq!(out.edits.len(), 1);
