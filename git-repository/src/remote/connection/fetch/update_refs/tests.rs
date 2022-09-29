@@ -22,7 +22,6 @@ mod update {
     use git_ref::TargetRef;
 
     #[test]
-    #[ignore]
     fn various_valid_updates() {
         let repo = repo("two-origins");
         // TODO: test reflog message (various cases if it's new)
@@ -56,6 +55,18 @@ mod update {
                 fetch::refs::update::Mode::Forced,
                 true,
                 "a forced non-fastforward (main goes backwards)",
+            ),
+            (
+                "+refs/heads/main:refs/tags/b-tag",
+                fetch::refs::update::Mode::Forced,
+                true,
+                "tags can only be forced",
+            ),
+            (
+                "refs/heads/main:refs/tags/b-tag",
+                fetch::refs::update::Mode::RejectedTagUpdate,
+                false,
+                "otherwise a tag is always refusing itself to be overwritten (no-clobber)",
             ),
             (
                 "+refs/remotes/origin/g:refs/heads/main",

@@ -1,4 +1,5 @@
 use crate::remote::fetch;
+use crate::remote::fetch::refs::update::Mode;
 use crate::Repository;
 use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog};
 use git_ref::{Target, TargetRef};
@@ -16,6 +17,12 @@ pub struct Update {
     pub mode: update::Mode,
     /// The index to the edit that was created from the corresponding mapping, or `None` if there was no local ref.
     pub edit_index: Option<usize>,
+}
+
+impl From<update::Mode> for Update {
+    fn from(mode: Mode) -> Self {
+        Update { mode, edit_index: None }
+    }
 }
 
 /// Update all refs as derived from `mappings` and produce an `Outcome` informing about all applied changes in detail, with each
@@ -46,20 +53,15 @@ pub(crate) fn update(
                 let (mode, reflog_message, name) = match repo.try_find_reference(name)? {
                     Some(existing) => {
                         if let Some(wt_dir) = checked_out_branches.get(existing.name()) {
-                            updates.push(Update {
-                                mode: update::Mode::RejectedCurrentlyCheckedOut {
-                                    worktree_dir: wt_dir.to_owned(),
-                                },
-                                edit_index: None,
-                            });
+                            let mode = update::Mode::RejectedCurrentlyCheckedOut {
+                                worktree_dir: wt_dir.to_owned(),
+                            };
+                            updates.push(mode.into());
                             continue;
                         }
                         match existing.target() {
                             TargetRef::Symbolic(_) => {
-                                updates.push(Update {
-                                    mode: update::Mode::RejectedSymbolic,
-                                    edit_index: None,
-                                });
+                                updates.push(update::Mode::RejectedSymbolic.into());
                                 continue;
                             }
                             TargetRef::Peeled(local_id) => {
@@ -68,7 +70,12 @@ pub(crate) fn update(
                                 } else if refspecs[*spec_index].allow_non_fast_forward() {
                                     (update::Mode::Forced, "TBD force")
                                 } else {
-                                    todo!("check for fast-forward (is local an ancestor of remote?)")
+                                    if let Some(git_ref::Category::Tag) = existing.name().category() {
+                                        updates.push(update::Mode::RejectedTagUpdate.into());
+                                        continue;
+                                    } else {
+                                        todo!("check for fast-forward (is local an ancestor of remote?)")
+                                    }
                                 };
                                 (mode, reflog_message, existing.name().to_owned())
                             }

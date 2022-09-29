@@ -41,6 +41,9 @@ pub enum Mode {
     Forced,
     /// A new ref has been created as there was none before.
     New,
+    /// Tags can never be overwritten (whether the new object would be a fast-forward or not, or unchanged), unless the refspec
+    /// specifies force.
+    RejectedTagUpdate,
     /// The reference update would not have been a fast-forward, and force is not specified in the ref-spec.
     RejectedNonFastForward,
     /// The update of a local symbolic reference was rejected.
