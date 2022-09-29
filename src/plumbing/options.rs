@@ -678,7 +678,7 @@ pub mod index {
             /// Overwrite the specified file if it already exists
             #[clap(long, short = 'f')]
             force: bool,
-            /// Treeish Id to generate the index from
+            /// RevSpec that points to a tree to generate the index from
             id: String,
             /// Path to the index file to be written.
             /// If none is given output will be written to stdout.
