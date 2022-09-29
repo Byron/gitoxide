@@ -74,13 +74,11 @@ pub(crate) fn update(
                                     (update::Mode::NoChangeNeeded, "TBD no change")
                                 } else if refspecs[*spec_index].allow_non_fast_forward() {
                                     (update::Mode::Forced, "TBD force")
+                                } else if let Some(git_ref::Category::Tag) = existing.name().category() {
+                                    updates.push(update::Mode::RejectedTagUpdate.into());
+                                    continue;
                                 } else {
-                                    if let Some(git_ref::Category::Tag) = existing.name().category() {
-                                        updates.push(update::Mode::RejectedTagUpdate.into());
-                                        continue;
-                                    } else {
-                                        todo!("check for fast-forward (is local an ancestor of remote?)")
-                                    }
+                                    todo!("check for fast-forward (is local an ancestor of remote?)")
                                 };
                                 (mode, reflog_message, existing.name().to_owned())
                             }
