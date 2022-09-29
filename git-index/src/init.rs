@@ -23,11 +23,20 @@ impl State {
         let mut delegate = EntryBuilder::new();
         breadthfirst(root, state, &mut find, &mut delegate)?;
 
+        let EntryBuilder {
+            mut entries,
+            path_backing,
+            path: _,
+            path_deque: _,
+        } = delegate;
+
+        entries.sort_by(|a, b| Entry::cmp_filepaths(a.path_in(&path_backing), b.path_in(&path_backing)));
+
         Ok(State {
             timestamp: filetime::FileTime::now(),
             version: Version::V2,
-            entries: delegate.entries,
-            path_backing: delegate.path_backing,
+            entries,
+            path_backing,
             is_sparse: false,
             tree: None,
             link: None,
@@ -82,13 +91,7 @@ impl EntryBuilder {
             path: path_start..self.path_backing.len(),
         };
 
-        match self
-            .entries
-            .binary_search_by(|entry| Entry::cmp_filepaths(entry.path_in(&self.path_backing), self.path.as_bstr()))
-        {
-            Ok(pos) => self.entries[pos] = new_entry,
-            Err(pos) => self.entries.insert(pos, new_entry),
-        };
+        self.entries.push(new_entry);
     }
 }
 
