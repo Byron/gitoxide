@@ -1,6 +1,9 @@
-use git::{odb::FindExt, prelude::ObjectIdExt};
+use git::odb::FindExt;
 use git_repository as git;
-use std::path::{Path, PathBuf};
+use std::{
+    io::BufWriter,
+    path::{Path, PathBuf},
+};
 
 pub struct Options {
     pub object_hash: git::hash::Kind,
@@ -95,21 +98,7 @@ pub fn from_tree(
     mut out: impl std::io::Write,
     mut err: impl std::io::Write,
 ) -> anyhow::Result<()> {
-    // TODO: consider HashKind
-    let id = match id.len() {
-        40 => git::hash::ObjectId::from_hex(id.as_bytes())?,
-        _ => {
-            let prefix = git::hash::Prefix::from_hex(&id)?;
-            match repo.objects.lookup_prefix(prefix, None) {
-                Ok(Some(Ok(id))) => id,
-                Ok(Some(Err(_))) => anyhow::bail!("multiple objects found while trying to disambiguate id: {:?}", id),
-                Ok(None) => anyhow::bail!("no objects found while trying to disambiguate id: {:?}", id),
-                Err(e) => anyhow::bail!(e),
-            }
-        }
-    };
-
-    let tree = id.attach(&repo).object()?.peel_to_kind(git::objs::Kind::Tree)?.id();
+    let tree = repo.rev_parse_single(id.as_str())?;
     let state = git::index::State::from_tree(&tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
 
     match index {
@@ -122,8 +111,8 @@ pub fn from_tree(
                     anyhow::bail!("exiting, to overwrite use the '-f' flag");
                 }
             }
-            let mut file = std::fs::File::create(&index)?;
-            state.write_to(&mut file, git::index::write::Options::default())?;
+            let writer = BufWriter::new(std::fs::File::create(&index)?);
+            state.write_to(writer, git::index::write::Options::default())?;
             writeln!(err, "Successfully wrote file {:?}", index).ok();
         }
         None => {
