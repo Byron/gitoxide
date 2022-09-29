@@ -19,53 +19,54 @@ mod update {
         git::open_opts(dir.join(name), git::open::Options::isolated()).unwrap()
     }
     use crate::remote::fetch;
+    use git_ref::transaction::Change;
     use git_ref::TargetRef;
 
     #[test]
     fn various_valid_updates() {
         let repo = repo("two-origins");
         // TODO: test reflog message (various cases if it's new)
-        for (spec, expected_mode, has_edit_index, detail) in [
+        for (spec, expected_mode, reflog_message, detail) in [
             (
                 "refs/heads/main:refs/remotes/origin/main",
                 fetch::refs::update::Mode::NoChangeNeeded,
-                true,
+                Some("TBD"),
                 "these refs are en-par since the initial clone",
             ),
             (
                 "refs/heads/main",
                 fetch::refs::update::Mode::NoChangeNeeded,
-                false,
+                None,
                 "without local destination ref there is nothing to do for us, ever (except for FETCH_HEADs) later",
             ),
             (
                 "refs/heads/main:refs/remotes/origin/new-main",
                 fetch::refs::update::Mode::New,
-                true,
+                Some("TBD"),
                 "the destination branch doesn't exist and needs to be created",
             ),
             (
                 "refs/heads/main:refs/remotes/origin/new-main",
                 fetch::refs::update::Mode::New,
-                true,
+                Some("TBD"),
                 "just to validate that we really are in dry-run mode, or else this ref would be present now",
             ),
             (
                 "+refs/heads/main:refs/remotes/origin/g",
                 fetch::refs::update::Mode::Forced,
-                true,
+                Some("TBD"),
                 "a forced non-fastforward (main goes backwards)",
             ),
             (
                 "+refs/heads/main:refs/tags/b-tag",
                 fetch::refs::update::Mode::Forced,
-                true,
+                Some("TBD"),
                 "tags can only be forced",
             ),
             (
                 "refs/heads/main:refs/tags/b-tag",
                 fetch::refs::update::Mode::RejectedTagUpdate,
-                false,
+                None,
                 "otherwise a tag is always refusing itself to be overwritten (no-clobber)",
             ),
             (
@@ -73,7 +74,7 @@ mod update {
                 fetch::refs::update::Mode::RejectedCurrentlyCheckedOut {
                     worktree_dir: repo.work_dir().expect("present").to_owned(),
                 },
-                false,
+                None,
                 "checked out branches cannot be written, as it requires a merge of sorts which isn't done here",
             ),
             (
@@ -81,7 +82,7 @@ mod update {
                 fetch::refs::update::Mode::RejectedSourceObjectNotFound {
                     id: hex_to_id("ffffffffffffffffffffffffffffffffffffffff"),
                 },
-                false,
+                None,
                 "checked out branches cannot be written, as it requires a merge of sorts which isn't done here",
             ),
             // ( // TODO: make fast-forwards work
@@ -98,11 +99,23 @@ mod update {
                 out.updates,
                 vec![fetch::refs::Update {
                     mode: expected_mode.clone(),
-                    edit_index: has_edit_index.then(|| 0),
+                    edit_index: reflog_message.map(|_| 0),
                 }],
                 "{spec:?}: {detail}"
             );
-            assert_eq!(out.edits.len(), has_edit_index.then(|| 1).unwrap_or(0));
+            assert_eq!(out.edits.len(), reflog_message.map(|_| 1).unwrap_or(0));
+            if let Some(reflog_message) = reflog_message {
+                let edit = &out.edits[0];
+                match &edit.change {
+                    Change::Update { log, .. } => {
+                        assert_eq!(
+                            log.message, reflog_message,
+                            "reflog messages are specific and we emulate git word for word"
+                        );
+                    }
+                    _ => unreachable!("only updates"),
+                }
+            }
         }
     }
 
