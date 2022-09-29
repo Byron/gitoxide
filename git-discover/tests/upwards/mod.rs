@@ -82,17 +82,32 @@ fn from_dir_with_dot_dot() -> crate::Result {
     let working_dir = repo_path()?;
     let dir = working_dir.join("some/very/deeply/nested/subdir/../../../../../..");
     let (path, trust) = git_discover::upwards(&dir)?;
-    assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
-    assert_eq!(
-        path.as_ref(),
-        std::path::Path::new(".."),
-        "there is only the minimal amount of relative path components to see this worktree"
-    );
     assert_ne!(
         path.as_ref().canonicalize()?,
         working_dir.canonicalize()?,
-        "a relative path that climbs above the test repo should yield the gitoxide repo"
+        "a relative path that climbs above the test repo should yield the parent-gitoxide repo"
     );
+    // If the parent repo is actually a main worktree, we can make more assertions. If it is not,
+    // it will use an absolute paths and we have to bail.
+    if path.as_ref() == std::path::Path::new("..") {
+        assert_eq!(path.kind(), Kind::WorkTree { linked_git_dir: None });
+        assert_eq!(
+            path.as_ref(),
+            std::path::Path::new(".."),
+            "there is only the minimal amount of relative path components to see this worktree"
+        );
+    } else {
+        assert!(
+            path.as_ref().is_absolute(),
+            "worktree paths are absolute and the parent repo is one"
+        );
+        assert!(matches!(
+            path.kind(),
+            Kind::WorkTree {
+                linked_git_dir: Some(_)
+            }
+        ));
+    }
     assert_eq!(trust, expected_trust());
     Ok(())
 }
