@@ -35,12 +35,20 @@ pub struct Outcome {
 /// Describe the way a ref was updated
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Mode {
+    /// No change was attempted as the remote ref didn't change compared to the current ref, or because no remote ref was specified
+    /// in the ref-spec.
+    NoChangeNeeded,
     /// The old ref's commit was an ancestor of the new one, allowing for a fast-forward without a merge.
     FastForward,
     /// The ref was set to point to the new commit from the remote without taking into consideration its ancestry.
     Forced,
     /// A new ref has been created as there was none before.
     New,
+    /// The object id to set the target reference to could not be found.
+    RejectedSourceObjectNotFound {
+        /// The id of the object that didn't exist in the object database, even though it should since it should be part of the pack.
+        id: git_hash::ObjectId,
+    },
     /// Tags can never be overwritten (whether the new object would be a fast-forward or not, or unchanged), unless the refspec
     /// specifies force.
     RejectedTagUpdate,
@@ -55,9 +63,6 @@ pub enum Mode {
         /// The path to the worktree directory where the branch is checked out.
         worktree_dir: PathBuf,
     },
-    /// No change was attempted as the remote ref didn't change compared to the current ref, or because no remote ref was specified
-    /// in the ref-spec.
-    NoChangeNeeded,
 }
 
 impl Outcome {

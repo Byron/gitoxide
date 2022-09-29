@@ -1,6 +1,7 @@
 use crate::remote::fetch;
 use crate::remote::fetch::refs::update::Mode;
 use crate::Repository;
+use git_pack::Find;
 use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog};
 use git_ref::{Target, TargetRef};
 use std::collections::BTreeMap;
@@ -47,6 +48,10 @@ pub(crate) fn update(
     } in mappings
     {
         let remote_id = remote.as_id();
+        if !repo.objects.contains(remote_id) {
+            updates.push(update::Mode::RejectedSourceObjectNotFound { id: remote_id.into() }.into());
+            continue;
+        }
         let checked_out_branches = worktree_branches(repo)?;
         let (mode, edit_index) = match local {
             Some(name) => {

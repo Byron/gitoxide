@@ -1,6 +1,6 @@
 mod update {
     use crate as git;
-    use git_testtools::Result;
+    use git_testtools::{hex_to_id, Result};
 
     fn base_repo_path() -> String {
         git::path::realpath(
@@ -72,6 +72,14 @@ mod update {
                 "+refs/remotes/origin/g:refs/heads/main",
                 fetch::refs::update::Mode::RejectedCurrentlyCheckedOut {
                     worktree_dir: repo.work_dir().expect("present").to_owned(),
+                },
+                false,
+                "checked out branches cannot be written, as it requires a merge of sorts which isn't done here",
+            ),
+            (
+                "ffffffffffffffffffffffffffffffffffffffff:refs/heads/invalid-source-object",
+                fetch::refs::update::Mode::RejectedSourceObjectNotFound {
+                    id: hex_to_id("ffffffffffffffffffffffffffffffffffffffff"),
                 },
                 false,
                 "checked out branches cannot be written, as it requires a merge of sorts which isn't done here",
@@ -177,9 +185,13 @@ mod update {
             .mappings
             .into_iter()
             .map(|m| fetch::Mapping {
-                remote: fetch::Source::Ref(
-                    references[m.item_index.expect("set as all items are backed by ref")].clone(),
-                ),
+                remote: m
+                    .item_index
+                    .map(|idx| fetch::Source::Ref(references[idx].clone()))
+                    .unwrap_or_else(|| match m.lhs {
+                        git_refspec::match_group::SourceRef::ObjectId(id) => fetch::Source::ObjectId(id),
+                        _ => unreachable!("not a ref, must be id: {:?}", m),
+                    }),
                 local: m.rhs.map(|r| r.into_owned()),
                 spec_index: m.spec_index,
             })
