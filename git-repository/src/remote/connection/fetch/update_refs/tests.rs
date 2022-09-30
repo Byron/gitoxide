@@ -93,7 +93,7 @@ mod update {
             // ),
         ] {
             let (mapping, specs) = mapping_from_spec(spec, &repo);
-            let out = fetch::refs::update(&repo, &mapping, &specs, fetch::DryRun::Yes).unwrap();
+            let out = fetch::refs::update(&repo, "action", &mapping, &specs, fetch::DryRun::Yes).unwrap();
 
             assert_eq!(
                 out.updates,
@@ -109,7 +109,8 @@ mod update {
                 match &edit.change {
                     Change::Update { log, .. } => {
                         assert_eq!(
-                            log.message, reflog_message,
+                            log.message,
+                            format!("action: {}", reflog_message),
                             "reflog messages are specific and we emulate git word for word"
                         );
                     }
@@ -137,7 +138,7 @@ mod update {
         ] {
             let spec = format!("refs/heads/main:refs/heads/{}", branch);
             let (mappings, specs) = mapping_from_spec(&spec, &repo);
-            let out = fetch::refs::update(&repo, &mappings, &specs, fetch::DryRun::Yes)?;
+            let out = fetch::refs::update(&repo, "action", &mappings, &specs, fetch::DryRun::Yes)?;
 
             assert_eq!(
                 out.updates,
@@ -158,7 +159,7 @@ mod update {
     fn symbolic_refs_are_never_written() {
         let repo = repo("two-origins");
         let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/heads/symbolic", &repo);
-        let out = fetch::refs::update(&repo, &mappings, &specs, fetch::DryRun::Yes).unwrap();
+        let out = fetch::refs::update(&repo, "action", &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
         assert_eq!(
             out.updates,
@@ -176,7 +177,7 @@ mod update {
     fn fast_forward_is_not_implemented_yet_but_should_be_denied() {
         let repo = repo("two-origins");
         let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/remotes/origin/g", &repo);
-        let out = fetch::refs::update(&repo, &mappings, &specs, fetch::DryRun::Yes).unwrap();
+        let out = fetch::refs::update(&repo, "action", &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
         assert_eq!(
             out.updates,

@@ -177,6 +177,7 @@ where
 
         let update_refs = refs::update(
             repo,
+            "fetch",
             &self.ref_map.mappings,
             con.remote.refspecs(crate::remote::Direction::Fetch),
             fetch::DryRun::No,

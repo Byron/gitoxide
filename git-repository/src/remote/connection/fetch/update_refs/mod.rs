@@ -30,10 +30,12 @@ impl From<update::Mode> for Update {
 /// [`update`][Update] corresponding to the [`fetch::Mapping`] of at the same index.
 /// If `dry_run` is true, ref transactions won't actually be applied, but are assumed to work without error so the underlying
 /// `repo` is not actually changed.
+/// `action` is the prefix used for reflog entries, and is typically "fetch".
 ///
 /// It can be used to produce typical information that one is used to from `git fetch`.
 pub(crate) fn update(
     repo: &Repository,
+    action: &str,
     mappings: &[fetch::Mapping],
     refspecs: &[git_refspec::RefSpec],
     dry_run: fetch::DryRun,
@@ -91,7 +93,7 @@ pub(crate) fn update(
                         log: LogChange {
                             mode: RefLog::AndReference,
                             force_create_reflog: false,
-                            message: reflog_message.into(),
+                            message: format!("{}: {}", action, reflog_message).into(),
                         },
                         expected: PreviousValue::ExistingMustMatch(Target::Peeled(remote_id.into())),
                         new: Target::Peeled(remote_id.into()),
