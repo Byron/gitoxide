@@ -11,6 +11,8 @@ pub mod edit {
         FileTransactionCommit(#[from] git_ref::file::transaction::commit::Error),
         #[error(transparent)]
         NameValidation(#[from] git_validate::reference::name::Error),
+        #[error("Could not interpret core.filesRefLockTimeout or core.packedRefsTimeout, it must be the number in milliseconds to wait for locks or negative to wait forever")]
+        LockTimeoutConfiguration(#[from] git_config::value::Error),
     }
 }
 

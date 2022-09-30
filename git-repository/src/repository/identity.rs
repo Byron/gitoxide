@@ -4,7 +4,8 @@ use crate::bstr::BString;
 
 /// Identity handling.
 impl crate::Repository {
-    /// Return a crate-specific constant signature with [`Time`][git_actor::Time] set to now,
+    /// Return a crate-specific constant signature with [`Time`][git_actor::Time] set to now, or whatever
+    /// was overridden via `GIT_COMMITTER_TIME` or `GIT_AUTHOR_TIME` if these variables are allowed to be read,
     /// in a similar vein as the default that git chooses if there is nothing configured.
     ///
     /// This can be useful as fallback for an unset `committer` or `author`.
@@ -16,7 +17,13 @@ impl crate::Repository {
         git_actor::SignatureRef {
             name: "gitoxide".into(),
             email: "gitoxide@localhost".into(),
-            time: git_date::Time::now_local_or_utc(),
+            time: {
+                let p = self.config.personas();
+                p.committer
+                    .time
+                    .or(p.author.time)
+                    .unwrap_or_else(git_date::Time::now_local_or_utc)
+            },
         }
     }
 

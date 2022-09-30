@@ -85,7 +85,7 @@ pub fn from_pack(
     let options = pack::bundle::write::Options {
         thread_limit: ctx.thread_limit,
         iteration_mode: ctx.iteration_mode.into(),
-        index_kind: pack::index::Version::default(),
+        index_version: pack::index::Version::default(),
         object_hash: ctx.object_hash,
     };
     let out = ctx.out;

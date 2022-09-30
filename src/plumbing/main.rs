@@ -14,8 +14,9 @@ use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
 use crate::{
-    plumbing::options::{
-        commit, config, credential, exclude, free, mailmap, odb, remote, revision, tree, Args, Subcommands,
+    plumbing::{
+        options::{commit, config, credential, exclude, free, mailmap, odb, remote, revision, tree, Args, Subcommands},
+        show_progress,
     },
     shared::pretty::prepare_and_run,
 };
@@ -111,6 +112,7 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        Subcommands::Progress => show_progress(),
         Subcommands::Credential(cmd) => core::repository::credential(
             repository(Mode::StrictWithGitInstallConfig)?,
             match cmd {

@@ -28,6 +28,7 @@ fn delete_a_ref_which_is_gone_succeeds() -> crate::Result {
                 deref: false,
             }),
             Fail::Immediately,
+            Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
     assert_eq!(edits.len(), 1);
@@ -46,6 +47,7 @@ fn delete_a_ref_which_is_gone_but_must_exist_fails() -> crate::Result {
             name: "DOES_NOT_EXIST".try_into()?,
             deref: false,
         }),
+        Fail::Immediately,
         Fail::Immediately,
     );
     match res {
@@ -76,6 +78,7 @@ fn delete_ref_and_reflog_on_symbolic_no_deref() -> crate::Result {
                 name: head.name.clone(),
                 deref: false,
             }),
+            Fail::Immediately,
             Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
@@ -117,6 +120,7 @@ fn delete_ref_with_incorrect_previous_value_fails() -> crate::Result {
             deref: true,
         }),
         Fail::Immediately,
+        Fail::Immediately,
     );
 
     match res {
@@ -150,6 +154,7 @@ fn delete_reflog_only_of_symbolic_no_deref() -> crate::Result {
                 name: head.name,
                 deref: false,
             }),
+            Fail::Immediately,
             Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
@@ -185,6 +190,7 @@ fn delete_reflog_only_of_symbolic_with_deref() -> crate::Result {
                 deref: true,
             }),
             Fail::Immediately,
+            Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
 
@@ -218,6 +224,7 @@ fn delete_broken_ref_that_must_exist_fails_as_it_is_no_valid_ref() -> crate::Res
             deref: true,
         }),
         Fail::Immediately,
+        Fail::Immediately,
     );
     match res {
         Err(err) => {
@@ -247,6 +254,7 @@ fn non_existing_can_be_deleted_with_the_may_exist_match_constraint() -> crate::R
                 name: "refs/heads/not-there".try_into()?,
                 deref: true,
             }),
+            Fail::Immediately,
             Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
@@ -283,6 +291,7 @@ fn delete_broken_ref_that_may_not_exist_works_even_in_deref_mode() -> crate::Res
                 name: "HEAD".try_into()?,
                 deref: true,
             }),
+            Fail::Immediately,
             Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
@@ -325,6 +334,7 @@ fn store_write_mode_has_no_effect_and_reflogs_are_always_deleted() -> crate::Res
                     deref: false,
                 }),
                 Fail::Immediately,
+                Fail::Immediately,
             )?
             .commit(committer().to_ref())?;
         assert_eq!(edits.len(), 1);
@@ -360,6 +370,7 @@ fn packed_refs_are_consulted_when_determining_previous_value_of_ref_to_be_delete
                 deref: false,
             }),
             Fail::Immediately,
+            Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
 
@@ -392,6 +403,7 @@ fn a_loose_ref_with_old_value_check_and_outdated_packed_refs_value_deletes_both_
                 name: branch.name,
                 deref: false,
             }),
+            Fail::Immediately,
             Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
@@ -431,6 +443,7 @@ fn all_contained_references_deletes_the_packed_ref_file_too() -> crate::Result {
                         deref: false,
                     }
                 }),
+                Fail::Immediately,
                 Fail::Immediately,
             )?
             .commit(committer().to_ref())?;

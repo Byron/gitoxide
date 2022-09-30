@@ -1,6 +1,6 @@
 {
   "index": {
-    "index_kind": "V2",
+    "index_version": "V2",
     "index_hash": {
       "Sha1": [
         44,

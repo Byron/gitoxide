@@ -205,7 +205,7 @@ mod version {
                     outcome.num_objects, num_objects,
                     "it wrote the entire iterator worth of entries"
                 );
-                assert_eq!(outcome.index_kind, desired_kind);
+                assert_eq!(outcome.index_version, desired_kind);
                 assert_eq!(
                     outcome.index_hash,
                     git_hash::ObjectId::from(&expected[end_of_pack_hash..end_of_index_hash])

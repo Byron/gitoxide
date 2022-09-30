@@ -10,13 +10,13 @@ use super::Error;
 use crate::fetch::{indicate_end_of_interaction, refs::from_v2_refs, Command, LsRefsAction, Ref};
 
 /// Invoke an ls-refs command on `transport`  (assuming `protocol_version` 2 or panic), which requires a prior handshake that yielded
-/// server `capabilities`. `prepare_ls_refs(arguments, features)` can be used to alter the _ls-refs_. `progress` is used to provide feedback.
+/// server `capabilities`. `prepare_ls_refs(capabilities, arguments, features)` can be used to alter the _ls-refs_. `progress` is used to provide feedback.
 #[maybe_async]
 pub async fn refs(
     mut transport: impl Transport,
     protocol_version: Protocol,
     capabilities: &Capabilities,
-    mut prepare_ls_refs: impl FnMut(
+    prepare_ls_refs: impl FnOnce(
         &Capabilities,
         &mut Vec<BString>,
         &mut Vec<(&str, Option<&str>)>,

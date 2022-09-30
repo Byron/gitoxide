@@ -54,7 +54,7 @@ impl<'a> RemoteProgress<'a> {
                 progress.fail(progress_name(None, text));
             }
         } else {
-            match Self::from_bytes(text) {
+            match RemoteProgress::from_bytes(text) {
                 Some(RemoteProgress {
                     action,
                     percent: _,

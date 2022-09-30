@@ -19,7 +19,7 @@ impl<'a> TargetRef<'a> {
             TargetRef::Peeled(oid) => Some(oid),
         }
     }
-    /// Interpret this target as object id or panic if it is symbolic.
+    /// Interpret this target as object id or **panic** if it is symbolic.
     pub fn id(&self) -> &oid {
         match self {
             TargetRef::Symbolic(_) => panic!("BUG: tries to obtain object id from symbolic target"),

@@ -38,6 +38,15 @@ impl TryFrom<BString> for FullName {
     }
 }
 
+impl TryFrom<&BString> for FullName {
+    type Error = git_validate::refname::Error;
+
+    fn try_from(value: &BString) -> Result<Self, Self::Error> {
+        git_validate::refname(value.as_ref())?;
+        Ok(FullName(value.clone()))
+    }
+}
+
 impl From<FullName> for BString {
     fn from(name: FullName) -> Self {
         name.0

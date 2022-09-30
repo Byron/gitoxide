@@ -44,6 +44,7 @@ fn reference_with_equally_named_empty_or_non_empty_directory_already_in_place_ca
                     deref: false,
                 }),
                 Fail::Immediately,
+                Fail::Immediately,
             )?
             .commit(committer().to_ref());
         if *is_empty {
@@ -83,6 +84,7 @@ fn reference_with_old_value_must_exist_when_creating_it() -> crate::Result {
             deref: false,
         }),
         Fail::Immediately,
+        Fail::Immediately,
     );
 
     match res {
@@ -114,6 +116,7 @@ fn reference_with_explicit_value_must_match_the_value_on_update() -> crate::Resu
             deref: false,
         }),
         Fail::Immediately,
+        Fail::Immediately,
     );
     match res {
         Err(transaction::prepare::Error::ReferenceOutOfDate { full_name, actual, .. }) => {
@@ -141,6 +144,7 @@ fn the_existing_must_match_constraint_allow_non_existing_references_to_be_create
                 name: "refs/heads/new".try_into()?,
                 deref: false,
             }),
+            Fail::Immediately,
             Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
@@ -180,6 +184,7 @@ fn the_existing_must_match_constraint_requires_existing_references_to_have_the_g
             deref: false,
         }),
         Fail::Immediately,
+        Fail::Immediately,
     );
     match res {
         Err(transaction::prepare::Error::ReferenceOutOfDate { full_name, actual, .. }) => {
@@ -207,6 +212,7 @@ fn reference_with_must_not_exist_constraint_cannot_be_created_if_it_exists_alrea
             name: "HEAD".try_into()?,
             deref: false,
         }),
+        Fail::Immediately,
         Fail::Immediately,
     );
     match res {
@@ -245,6 +251,7 @@ fn namespaced_updates_or_deletions_are_transparent_and_not_observable() -> crate
                     deref: false,
                 },
             ],
+            Fail::Immediately,
             Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
@@ -295,6 +302,7 @@ fn reference_with_must_exist_constraint_must_exist_already_with_any_value() -> c
                 deref: false,
             }),
             Fail::Immediately,
+            Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
 
@@ -339,6 +347,7 @@ fn reference_with_must_not_exist_constraint_may_exist_already_if_the_new_value_m
                 name: "HEAD".try_into()?,
                 deref: false,
             }),
+            Fail::Immediately,
             Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
@@ -387,6 +396,7 @@ fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
             deref: false,
         }),
         Fail::Immediately,
+        Fail::Immediately,
     )?;
     assert_eq!(std::fs::read_dir(dir.path())?.count(), 1, "the lock file was created");
 
@@ -423,6 +433,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     name: "HEAD".try_into()?,
                     deref: false,
                 }),
+                Fail::Immediately,
                 Fail::Immediately,
             )?
             .commit(committer().to_ref())?;
@@ -474,6 +485,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
                     name: "HEAD".try_into()?,
                     deref: true,
                 }),
+                Fail::Immediately,
                 Fail::Immediately,
             )?
             .commit(committer().to_ref())?;
@@ -568,6 +580,7 @@ fn write_reference_to_which_head_points_to_does_not_update_heads_reflog_even_tho
                 deref: false,
             }),
             Fail::Immediately,
+            Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
 
@@ -632,7 +645,8 @@ fn packed_refs_are_looked_up_when_checking_existing_values() -> crate::Result {
                 name: "refs/heads/main".try_into()?,
                 deref: false,
             }),
-            git_lock::acquire::Fail::Immediately,
+            Fail::Immediately,
+            Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
 
@@ -687,7 +701,8 @@ fn packed_refs_creation_with_packed_refs_mode_prune_removes_original_loose_refs(
                     name: r.name,
                     deref: false,
                 }),
-            git_lock::acquire::Fail::Immediately,
+            Fail::Immediately,
+            Fail::Immediately,
         )?
         .commit(committer().to_ref())?;
 
@@ -743,7 +758,7 @@ fn packed_refs_creation_with_packed_refs_mode_leave_keeps_original_loose_refs() 
         .packed_refs(PackedRefs::DeletionsAndNonSymbolicUpdates(Box::new(|_, _| {
             Ok(Some(git_object::Kind::Commit))
         })))
-        .prepare(edits, git_lock::acquire::Fail::Immediately)?
+        .prepare(edits, Fail::Immediately, Fail::Immediately)?
         .commit(committer().to_ref())?;
     assert_eq!(
         edits.len(),

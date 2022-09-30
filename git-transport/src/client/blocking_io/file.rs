@@ -1,3 +1,5 @@
+use std::any::Any;
+use std::error::Error;
 use std::process::{self, Command, Stdio};
 
 use bstr::{BString, ByteSlice};
@@ -100,6 +102,10 @@ impl client::TransportWithoutIO for SpawnProcessOnDemand {
 
     fn connection_persists_across_multiple_requests(&self) -> bool {
         true
+    }
+
+    fn configure(&mut self, _config: &dyn Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        Ok(())
     }
 }
 

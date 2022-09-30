@@ -32,6 +32,17 @@ impl crate::Repository {
             .ok_or_else(|| find::existing::Error::NotFound { name: name.into() })??)
     }
 
+    /// Find the default remote as configured, or `None` if no such configuration could be found.
+    ///
+    /// See [remote_default_name()][Self::remote_default_name()] for more information on the `direction` parameter.
+    pub fn find_default_remote(
+        &self,
+        direction: remote::Direction,
+    ) -> Option<Result<Remote<'_>, find::existing::Error>> {
+        self.remote_default_name(direction)
+            .map(|name| self.find_remote(name.as_ref()))
+    }
+
     /// Find the remote with the given `name` or return `None` if it doesn't exist, for the purpose of fetching or pushing
     /// data to a remote.
     ///

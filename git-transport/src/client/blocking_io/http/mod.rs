@@ -1,6 +1,6 @@
+use std::any::Any;
 use std::{
     borrow::Cow,
-    convert::Infallible,
     io::{BufRead, Read},
 };
 
@@ -169,6 +169,10 @@ impl<H: Http> client::TransportWithoutIO for Transport<H> {
     fn connection_persists_across_multiple_requests(&self) -> bool {
         false
     }
+
+    fn configure(&mut self, config: &dyn Any) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+        self.http.configure(config)
+    }
 }
 
 impl<H: Http> client::Transport for Transport<H> {
@@ -297,12 +301,12 @@ impl<H: Http, B: ExtendedBufRead + Unpin> ExtendedBufRead for HeadersThenBody<H,
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol, with `http` as implementation.
 #[cfg(all(feature = "http-client", not(feature = "http-client-curl")))]
-pub fn connect_http<H: Http>(http: H, url: &str, desired_version: Protocol) -> Result<Transport<H>, Infallible> {
-    Ok(Transport::new_http(http, url, desired_version))
+pub fn connect_http<H: Http>(http: H, url: &str, desired_version: Protocol) -> Transport<H> {
+    Transport::new_http(http, url, desired_version)
 }
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol.
 #[cfg(feature = "http-client-curl")]
-pub fn connect(url: &str, desired_version: Protocol) -> Result<Transport<Impl>, Infallible> {
-    Ok(Transport::new(url, desired_version))
+pub fn connect(url: &str, desired_version: Protocol) -> Transport<Impl> {
+    Transport::new(url, desired_version)
 }

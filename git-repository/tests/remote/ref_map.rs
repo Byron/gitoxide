@@ -24,8 +24,7 @@ mod blocking_io {
             }
 
             let remote = repo.find_remote("origin")?;
-            let connection = remote.connect(Fetch, progress::Discard)?;
-            let map = connection.ref_map()?;
+            let map = remote.connect(Fetch, progress::Discard)?.ref_map(Default::default())?;
             assert_eq!(
                 map.remote_refs.len(),
                 14,
@@ -36,7 +35,7 @@ mod blocking_io {
             assert_eq!(
                 map.mappings.len(),
                 11,
-                "mappings are only a sub-set of all remotes due to refspec matching"
+                "mappings are only a sub-set of all remotes due to refspec matching, tags are filtered out."
             );
         }
         Ok(())

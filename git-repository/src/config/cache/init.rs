@@ -1,7 +1,5 @@
-use std::path::PathBuf;
-
 use super::{interpolate_context, util, Error, StageOne};
-use crate::{config::Cache, repository, revision::spec::parse::ObjectKindHint};
+use crate::{config::Cache, repository};
 
 /// Initialization
 impl Cache {
@@ -17,7 +15,7 @@ impl Cache {
         }: StageOne,
         git_dir: &std::path::Path,
         branch_name: Option<&git_ref::FullNameRef>,
-        mut filter_config_section: fn(&git_config::file::Metadata) -> bool,
+        filter_config_section: fn(&git_config::file::Metadata) -> bool,
         git_install_dir: Option<&std::path::Path>,
         home: Option<&std::path::Path>,
         repository::permissions::Environment {
@@ -113,36 +111,14 @@ impl Cache {
             globals
         };
 
-        let excludes_file = match config
-            .path_filter("core", None, "excludesFile", &mut filter_config_section)
-            .map(|p| p.interpolate(options.includes.interpolate).map(|p| p.into_owned()))
-            .transpose()
-        {
-            Ok(f) => f,
-            Err(_err) if lenient_config => None,
-            Err(err) => return Err(err.into()),
-        };
-
-        let hex_len = match util::parse_core_abbrev(&config, object_hash) {
-            Ok(v) => v,
-            Err(_err) if lenient_config => None,
-            Err(err) => return Err(err),
-        };
+        let hex_len = util::check_lenient(util::parse_core_abbrev(&config, object_hash), lenient_config)?;
 
         use util::config_bool;
         let reflog = util::query_refupdates(&config);
         let ignore_case = config_bool(&config, "core.ignoreCase", false, lenient_config)?;
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true, lenient_config)?;
-        let object_kind_hint = config.string("core", None, "disambiguate").and_then(|value| {
-            Some(match value.as_ref().as_ref() {
-                b"commit" => ObjectKindHint::Commit,
-                b"committish" => ObjectKindHint::Committish,
-                b"tree" => ObjectKindHint::Tree,
-                b"treeish" => ObjectKindHint::Treeish,
-                b"blob" => ObjectKindHint::Blob,
-                _ => return None,
-            })
-        });
+        let object_kind_hint = util::disambiguate_hint(&config);
+        // NOTE: When adding a new initial cache, consider adjusting `reread_values_and_clear_caches()` as well.
         Ok(Cache {
             resolved: config.into(),
             use_multi_pack_index,
@@ -153,39 +129,41 @@ impl Cache {
             ignore_case,
             hex_len,
             filter_config_section,
-            excludes_file,
             xdg_config_home_env,
             home_env,
+            lenient_config,
             personas: Default::default(),
             url_rewrite: Default::default(),
-            #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
+            #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
             url_scheme: Default::default(),
             git_prefix,
         })
     }
 
-    /// Return a path by using the `$XDF_CONFIG_HOME` or `$HOME/.config/…` environment variables locations.
-    pub fn xdg_config_path(
-        &self,
-        resource_file_name: &str,
-    ) -> Result<Option<PathBuf>, git_sec::permission::Error<PathBuf>> {
-        std::env::var_os("XDG_CONFIG_HOME")
-            .map(|path| (path, &self.xdg_config_home_env))
-            .or_else(|| std::env::var_os("HOME").map(|path| (path, &self.home_env)))
-            .and_then(|(base, permission)| {
-                let resource = std::path::PathBuf::from(base).join("git").join(resource_file_name);
-                permission.check(resource).transpose()
-            })
-            .transpose()
-    }
-
-    /// Return the home directory if we are allowed to read it and if it is set in the environment.
+    /// Call this with new `config` to update values and clear caches. Note that none of the values will be applied if a single
+    /// one is invalid.
+    /// However, those that are lazily read won't be re-evaluated right away and might thus pass now but fail later.
     ///
-    /// We never fail for here even if the permission is set to deny as we `git-config` will fail later
-    /// if it actually wants to use the home directory - we don't want to fail prematurely.
-    pub fn home_dir(&self) -> Option<PathBuf> {
-        std::env::var_os("HOME")
-            .map(PathBuf::from)
-            .and_then(|path| self.home_env.check_opt(path))
+    /// Note that we unconditionally re-read all values.
+    pub fn reread_values_and_clear_caches(&mut self, config: crate::Config) -> Result<(), Error> {
+        let hex_len = util::check_lenient(util::parse_core_abbrev(&config, self.object_hash), self.lenient_config)?;
+
+        use util::config_bool;
+        let ignore_case = config_bool(&config, "core.ignoreCase", false, self.lenient_config)?;
+        let object_kind_hint = util::disambiguate_hint(&config);
+
+        self.personas = Default::default();
+        self.url_rewrite = Default::default();
+        #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
+        {
+            self.url_scheme = Default::default();
+        }
+
+        self.resolved = config;
+        self.hex_len = hex_len;
+        self.ignore_case = ignore_case;
+        self.object_kind_hint = object_kind_hint;
+
+        Ok(())
     }
 }

@@ -90,7 +90,7 @@ mod write_to_directory {
     fn expected_outcome() -> Result<pack::bundle::write::Outcome, Box<dyn std::error::Error>> {
         Ok(pack::bundle::write::Outcome {
             index: pack::index::write::Outcome {
-                index_kind: pack::index::Version::V2,
+                index_version: pack::index::Version::V2,
                 index_hash: git_hash::ObjectId::from_hex(b"544a7204a55f6e9cacccf8f6e191ea8f83575de3")?,
                 data_hash: git_hash::ObjectId::from_hex(b"0f3ea84cd1bba10c2a03d736a460635082833e59")?,
                 num_objects: 42,
@@ -156,7 +156,7 @@ mod write_to_directory {
             pack::bundle::write::Options {
                 thread_limit: None,
                 iteration_mode: pack::data::input::Mode::Verify,
-                index_kind: pack::index::Version::V2,
+                index_version: pack::index::Version::V2,
                 object_hash: git_hash::Kind::Sha1,
             },
         )

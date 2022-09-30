@@ -83,7 +83,15 @@ pub enum Change {
 }
 
 impl Change {
-    /// Return references to values that are in common between all variants.
+    /// Return references to values that are the new value after the change is applied, if this is an update.
+    pub fn new_value(&self) -> Option<crate::TargetRef<'_>> {
+        match self {
+            Change::Update { new, .. } => new.to_ref().into(),
+            Change::Delete { .. } => None,
+        }
+    }
+
+    /// Return references to values that are in common between all variants and denote the previous observed value.
     pub fn previous_value(&self) -> Option<crate::TargetRef<'_>> {
         match self {
             // TODO: use or-patterns once MRV is larger than 1.52 (and this is supported)

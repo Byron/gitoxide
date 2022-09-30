@@ -72,6 +72,8 @@ impl<'repo> Reference<'repo> {
     /// Like [`remote_name(…)`][Self::remote_name()], but configures the returned `Remote` with additional information like
     ///
     /// - `branch.<name>.merge` to know which branch on the remote side corresponds to this one for merging when pulling.
+    ///
+    /// It also handles if the remote is a configured URL, which has no name.
     pub fn remote(
         &self,
         direction: remote::Direction,

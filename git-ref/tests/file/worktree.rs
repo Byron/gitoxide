@@ -191,6 +191,7 @@ mod read_only {
 }
 
 mod writable {
+    use git_lock::acquire::Fail;
     use std::convert::TryInto;
 
     use git_ref::{
@@ -258,7 +259,8 @@ mod writable {
                             deref: false,
                         },
                     ],
-                    git_lock::acquire::Fail::Immediately,
+                    Fail::Immediately,
+                    Fail::Immediately,
                 )?
                 .commit(committer().to_ref())
                 .expect("successful commit as even similar resolved names live in different base locations");
@@ -405,7 +407,8 @@ mod writable {
                             deref: false,
                         },
                     ],
-                    git_lock::acquire::Fail::Immediately,
+                    Fail::Immediately,
+                    Fail::Immediately,
                 ),
                 Err(git_ref::file::transaction::prepare::Error::LockAcquire { .. })
             ), "prefixed refs resolve to the same name and will fail to be locked (so we don't check for this when doing dupe checking)");
@@ -424,7 +427,8 @@ mod writable {
                             deref: false,
                         },
                     ],
-                    git_lock::acquire::Fail::Immediately,
+                    Fail::Immediately,
+                    Fail::Immediately,
                 ),
                 Err(git_ref::file::transaction::prepare::Error::LockAcquire { .. })
             ));
@@ -467,7 +471,8 @@ mod writable {
                                 deref: false,
                             },
                         ],
-                        git_lock::acquire::Fail::Immediately,
+                        Fail::Immediately,
+                        Fail::Immediately,
                     ),
                     Err(git_ref::file::transaction::prepare::Error::LockAcquire { .. })
                 ), "prefixed refs resolve to the same name and will fail to be locked (so we don't check for this when doing dupe checking)");
@@ -509,7 +514,8 @@ mod writable {
                             deref: false,
                         },
                     ],
-                    git_lock::acquire::Fail::Immediately,
+                    Fail::Immediately,
+                    Fail::Immediately,
                 )?
                 .commit(committer().to_ref())
                 .expect("successful commit as even similar resolved names live in different base locations");

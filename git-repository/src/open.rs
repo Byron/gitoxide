@@ -201,7 +201,7 @@ impl Options {
     /// If set, default is false, invalid configuration values will cause an error even if these can safely be defaulted.
     ///
     /// This is recommended for all applications that prefer correctness over usability.
-    /// `git` itself by defaults to strict configuration mode to let you know if configuration is incorrect.
+    /// `git` itself defaults to strict configuration mode, flagging incorrect configuration immediately.
     pub fn strict_config(mut self, toggle: bool) -> Self {
         self.lenient_config = !toggle;
         self

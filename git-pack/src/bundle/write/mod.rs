@@ -10,7 +10,7 @@ use git_tempfile::{handle::Writable, AutoRemove, ContainingDirectory};
 use crate::data;
 
 mod error;
-use error::Error;
+pub use error::Error;
 
 mod types;
 use types::{LockWriter, PassThrough};
@@ -228,7 +228,7 @@ impl crate::Bundle {
         Options {
             thread_limit,
             iteration_mode: _,
-            index_kind,
+            index_version: index_kind,
             object_hash,
         }: Options,
         data_file: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,

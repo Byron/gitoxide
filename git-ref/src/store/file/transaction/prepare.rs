@@ -176,7 +176,8 @@ impl<'s> Transaction<'s> {
     pub fn prepare(
         mut self,
         edits: impl IntoIterator<Item = RefEdit>,
-        lock_fail_mode: git_lock::acquire::Fail,
+        ref_files_lock_fail_mode: git_lock::acquire::Fail,
+        packed_refs_lock_fail_mode: git_lock::acquire::Fail,
     ) -> Result<Self, Error> {
         assert!(self.updates.is_none(), "BUG: Must not call prepare(…) multiple times");
         let store = self.store;
@@ -267,7 +268,7 @@ impl<'s> Transaction<'s> {
                 let packed_transaction: Option<_> = if maybe_updates_for_packed_refs.unwrap_or(0) > 0 {
                     // We have to create a packed-ref even if it doesn't exist
                     self.store
-                        .packed_transaction(lock_fail_mode)
+                        .packed_transaction(packed_refs_lock_fail_mode)
                         .map_err(|err| match err {
                             file::packed::transaction::Error::BufferOpen(err) => Error::from(err),
                             file::packed::transaction::Error::TransactionLock(err) => {
@@ -280,7 +281,10 @@ impl<'s> Transaction<'s> {
                     // no packed-ref file exists anyway
                     self.store
                         .assure_packed_refs_uptodate()?
-                        .map(|p| buffer_into_transaction(p, lock_fail_mode).map_err(Error::PackedTransactionAcquire))
+                        .map(|p| {
+                            buffer_into_transaction(p, packed_refs_lock_fail_mode)
+                                .map_err(Error::PackedTransactionAcquire)
+                        })
                         .transpose()?
                 };
                 if let Some(transaction) = packed_transaction {
@@ -302,7 +306,7 @@ impl<'s> Transaction<'s> {
             let change = &mut updates[cid];
             if let Err(err) = Self::lock_ref_and_apply_change(
                 self.store,
-                lock_fail_mode,
+                ref_files_lock_fail_mode,
                 self.packed_transaction.as_ref().and_then(|t| t.buffer()),
                 change,
             ) {

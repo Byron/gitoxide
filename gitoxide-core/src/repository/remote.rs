@@ -73,7 +73,10 @@ mod refs_impl {
         let map = remote
             .connect(git::remote::Direction::Fetch, progress)
             .await?
-            .ref_map()
+            .ref_map(git::remote::ref_map::Options {
+                prefix_from_spec_as_filter_on_remote: !matches!(kind, refs::Kind::Remote),
+                ..Default::default()
+            })
             .await?;
 
         if handshake_info {
@@ -163,6 +166,15 @@ mod refs_impl {
                     }
                 }
             }
+        }
+        if map.remote_refs.len() - map.mappings.len() != 0 {
+            writeln!(
+                err,
+                "server sent {} tips, {} were filtered due to {} refspec(s).",
+                map.remote_refs.len(),
+                map.remote_refs.len() - map.mappings.len(),
+                refspecs.len()
+            )?;
         }
         Ok(())
     }
