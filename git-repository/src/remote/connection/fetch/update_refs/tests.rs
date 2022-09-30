@@ -30,7 +30,7 @@ mod update {
             (
                 "refs/heads/main:refs/remotes/origin/main",
                 fetch::refs::update::Mode::NoChangeNeeded,
-                Some("TBD"),
+                Some("no update will be performed"),
                 "these refs are en-par since the initial clone",
             ),
             (
@@ -42,25 +42,37 @@ mod update {
             (
                 "refs/heads/main:refs/remotes/origin/new-main",
                 fetch::refs::update::Mode::New,
-                Some("TBD"),
+                Some("storing ref"),
                 "the destination branch doesn't exist and needs to be created",
             ),
             (
-                "refs/heads/main:refs/remotes/origin/new-main",
+                "refs/heads/main:refs/heads/feature",
                 fetch::refs::update::Mode::New,
-                Some("TBD"),
+                Some("storing head"),
+                "reflog messages are specific to the type of branch stored, to some limited extend",
+            ),
+            (
+                "refs/heads/main:refs/tags/new-tag",
+                fetch::refs::update::Mode::New,
+                Some("storing tag"),
+                "reflog messages are specific to the type of branch stored, to some limited extend",
+            ),
+            (
+                "+refs/heads/main:refs/remotes/origin/new-main",
+                fetch::refs::update::Mode::New,
+                Some("storing ref"),
                 "just to validate that we really are in dry-run mode, or else this ref would be present now",
             ),
             (
                 "+refs/heads/main:refs/remotes/origin/g",
                 fetch::refs::update::Mode::Forced,
-                Some("TBD"),
+                Some("forced-update"),
                 "a forced non-fastforward (main goes backwards)",
             ),
             (
                 "+refs/heads/main:refs/tags/b-tag",
                 fetch::refs::update::Mode::Forced,
-                Some("TBD"),
+                Some("updating tag"),
                 "tags can only be forced",
             ),
             (
@@ -111,7 +123,8 @@ mod update {
                         assert_eq!(
                             log.message,
                             format!("action: {}", reflog_message),
-                            "reflog messages are specific and we emulate git word for word"
+                            "{}: reflog messages are specific and we emulate git word for word",
+                            spec
                         );
                     }
                     _ => unreachable!("only updates"),

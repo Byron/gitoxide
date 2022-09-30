@@ -73,9 +73,13 @@ pub(crate) fn update(
                             }
                             TargetRef::Peeled(local_id) => {
                                 let (mode, reflog_message) = if local_id == remote_id {
-                                    (update::Mode::NoChangeNeeded, "TBD")
+                                    (update::Mode::NoChangeNeeded, "no update will be performed")
                                 } else if refspecs[*spec_index].allow_non_fast_forward() {
-                                    (update::Mode::Forced, "TBD")
+                                    let reflog_msg = match existing.name().category() {
+                                        Some(git_ref::Category::Tag) => "updating tag",
+                                        _ => "forced-update",
+                                    };
+                                    (update::Mode::Forced, reflog_msg)
                                 } else if let Some(git_ref::Category::Tag) = existing.name().category() {
                                     updates.push(update::Mode::RejectedTagUpdate.into());
                                     continue;
@@ -86,7 +90,15 @@ pub(crate) fn update(
                             }
                         }
                     }
-                    None => (update::Mode::New, "TBD", name.try_into()?),
+                    None => {
+                        let name: git_ref::FullName = name.try_into()?;
+                        let reflog_msg = match name.category() {
+                            Some(git_ref::Category::Tag) => "storing tag",
+                            Some(git_ref::Category::LocalBranch) => "storing head",
+                            _ => "storing ref",
+                        };
+                        (update::Mode::New, reflog_msg, name)
+                    }
                 };
                 let edit = RefEdit {
                     change: Change::Update {
