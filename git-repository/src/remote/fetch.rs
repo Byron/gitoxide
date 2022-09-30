@@ -2,7 +2,6 @@ use crate::bstr::BString;
 
 /// If `Yes`, don't really make changes but do as much as possible to get an idea of what would be done.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[cfg_attr(not(test), allow(dead_code))]
 #[cfg(feature = "blocking-network-client")]
 pub(crate) enum DryRun {
     /// Enable dry-run mode and don't actually change the underlying repository in any way.

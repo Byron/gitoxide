@@ -29,7 +29,8 @@ impl From<update::Mode> for Update {
 /// Update all refs as derived from `mappings` and produce an `Outcome` informing about all applied changes in detail, with each
 /// [`update`][Update] corresponding to the [`fetch::Mapping`] of at the same index.
 /// If `dry_run` is true, ref transactions won't actually be applied, but are assumed to work without error so the underlying
-/// `repo` is not actually changed.
+/// `repo` is not actually changed. Also it won't perform an 'object exists' check as these are likely not to exist as the pack
+/// wasn't fetched either.
 /// `action` is the prefix used for reflog entries, and is typically "fetch".
 ///
 /// It can be used to produce typical information that one is used to from `git fetch`.
@@ -50,7 +51,7 @@ pub(crate) fn update(
     } in mappings
     {
         let remote_id = remote.as_id();
-        if !repo.objects.contains(remote_id) {
+        if dry_run == fetch::DryRun::No && !repo.objects.contains(remote_id) {
             updates.push(update::Mode::RejectedSourceObjectNotFound { id: remote_id.into() }.into());
             continue;
         }

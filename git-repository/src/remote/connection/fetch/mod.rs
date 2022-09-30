@@ -1,4 +1,4 @@
-use crate::remote::fetch::RefMap;
+use crate::remote::fetch::{DryRun, RefMap};
 use crate::remote::{fetch, ref_map, Connection};
 use crate::Progress;
 use git_odb::FindExt;
@@ -42,6 +42,12 @@ pub enum Status {
         /// Information collected while updating references.
         update_refs: refs::update::Outcome,
     },
+    /// A dry run was performed which leaves the local repository without any change
+    /// nor will a pack have been received.
+    DryRun {
+        /// Information about what updates to refs would have been done.
+        update_refs: refs::update::Outcome,
+    },
 }
 
 /// The outcome of receiving a pack via [`Prepare::receive()`].
@@ -77,6 +83,7 @@ where
         Ok(Prepare {
             con: Some(self),
             ref_map,
+            dry_run: fetch::DryRun::No,
         })
     }
 }
@@ -159,17 +166,23 @@ where
             iteration_mode: git_pack::data::input::Mode::Verify,
             object_hash: con.remote.repo.object_hash(),
         };
-        let write_pack_bundle = git_pack::Bundle::write_to_directory(
-            reader,
-            Some(repo.objects.store_ref().path().join("pack")),
-            con.progress,
-            should_interrupt,
-            Some(Box::new({
-                let repo = repo.clone();
-                move |oid, buf| repo.objects.find(oid, buf).ok()
-            })),
-            options,
-        )?;
+
+        let write_pack_bundle = if matches!(self.dry_run, fetch::DryRun::No) {
+            Some(git_pack::Bundle::write_to_directory(
+                reader,
+                Some(repo.objects.store_ref().path().join("pack")),
+                con.progress,
+                should_interrupt,
+                Some(Box::new({
+                    let repo = repo.clone();
+                    move |oid, buf| repo.objects.find(oid, buf).ok()
+                })),
+                options,
+            )?)
+        } else {
+            drop(reader);
+            None
+        };
 
         if matches!(protocol_version, git_protocol::transport::Protocol::V2) {
             git_protocol::fetch::indicate_end_of_interaction(&mut con.transport).ok();
@@ -180,14 +193,17 @@ where
             "fetch",
             &self.ref_map.mappings,
             con.remote.refspecs(crate::remote::Direction::Fetch),
-            fetch::DryRun::No,
+            self.dry_run,
         )?;
 
         Ok(Outcome {
             ref_map: std::mem::take(&mut self.ref_map),
-            status: Status::Change {
-                write_pack_bundle,
-                update_refs,
+            status: match write_pack_bundle {
+                Some(write_pack_bundle) => Status::Change {
+                    write_pack_bundle,
+                    update_refs,
+                },
+                None => Status::DryRun { update_refs },
             },
         })
     }
@@ -212,13 +228,27 @@ mod config;
 pub mod refs;
 
 /// A structure to hold the result of the handshake with the remote and configure the upcoming fetch operation.
-#[allow(dead_code)]
 pub struct Prepare<'remote, 'repo, T, P>
 where
     T: Transport,
 {
     con: Option<Connection<'remote, 'repo, T, P>>,
     ref_map: RefMap<'remote>,
+    dry_run: fetch::DryRun,
+}
+
+/// Builder
+impl<'remote, 'repo, T, P> Prepare<'remote, 'repo, T, P>
+where
+    T: Transport,
+{
+    /// If dry run is enabled, no change to the repository will be made.
+    ///
+    /// This works by not actually fetching the pack after negotiating it, nor will refs be updated.
+    pub fn with_dry_run(mut self, enabled: bool) -> Self {
+        self.dry_run = enabled.then(|| fetch::DryRun::Yes).unwrap_or(DryRun::No);
+        self
+    }
 }
 
 impl<'remote, 'repo, T, P> Drop for Prepare<'remote, 'repo, T, P>

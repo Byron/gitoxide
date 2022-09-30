@@ -55,16 +55,17 @@ mod blocking_io {
             }
 
             // Some updates to be fetched
-            {
+            for dry_run in [true, false] {
                 let remote = repo.find_remote("changes-on-top-of-origin")?;
                 let outcome: git::remote::fetch::Outcome = remote
                     .connect(Fetch, progress::Discard)?
                     .prepare_fetch(Default::default())?
+                    .with_dry_run(dry_run)
                     .receive(&AtomicBool::default())?;
-                match outcome.status {
+                let refs = match outcome.status {
                     fetch::Status::Change {
                         write_pack_bundle,
-                        update_refs: refs,
+                        update_refs,
                     } => {
                         assert_eq!(write_pack_bundle.pack_kind, git::odb::pack::data::Version::V2);
                         assert_eq!(write_pack_bundle.object_hash, repo.object_hash());
@@ -80,27 +81,40 @@ mod blocking_io {
                         assert!(write_pack_bundle.data_path.map_or(false, |f| f.is_file()));
                         assert!(write_pack_bundle.index_path.map_or(false, |f| f.is_file()));
 
-                        assert_eq!(
-                            refs.updates,
-                            vec![fetch::refs::Update {
-                                mode: fetch::refs::update::Mode::New,
-                                edit_index: Some(0),
-                            }]
-                        );
-                        for (_update, mapping, _spec, edit) in refs.iter_mapping_updates(
-                            &outcome.ref_map.mappings,
-                            remote.refspecs(git::remote::Direction::Fetch),
-                        ) {
-                            let edit = edit.expect("refedit present even if it's a no-op");
-                            let r = repo.find_reference(edit.name.as_ref()).unwrap();
-                            assert_eq!(
-                                r.id(),
-                                *mapping.remote.as_id(),
-                                "local reference should point to remote id"
-                            );
-                        }
+                        update_refs
                     }
+                    fetch::Status::DryRun { update_refs } => update_refs,
                     fetch::Status::NoChange => unreachable!("we firmly expect changes here"),
+                };
+
+                assert_eq!(
+                    refs.updates,
+                    vec![fetch::refs::Update {
+                        mode: fetch::refs::update::Mode::New,
+                        edit_index: Some(0),
+                    }]
+                );
+                for (_update, mapping, _spec, edit) in
+                    refs.iter_mapping_updates(&outcome.ref_map.mappings, remote.refspecs(Fetch))
+                {
+                    let edit = edit.expect("refedit present even if it's a no-op");
+                    if dry_run {
+                        assert_eq!(
+                            edit.change.new_value().expect("no deletions").id(),
+                            mapping.remote.as_id()
+                        );
+                        assert!(
+                            repo.try_find_reference(edit.name.as_ref())?.is_none(),
+                            "no ref created in dry-run mode"
+                        );
+                    } else {
+                        let r = repo.find_reference(edit.name.as_ref()).unwrap();
+                        assert_eq!(
+                            r.id(),
+                            *mapping.remote.as_id(),
+                            "local reference should point to remote id"
+                        );
+                    }
                 }
             }
         }

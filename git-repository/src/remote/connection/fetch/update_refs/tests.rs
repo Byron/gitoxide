@@ -105,7 +105,14 @@ mod update {
             // ),
         ] {
             let (mapping, specs) = mapping_from_spec(spec, &repo);
-            let out = fetch::refs::update(&repo, "action", &mapping, &specs, fetch::DryRun::Yes).unwrap();
+            let out = fetch::refs::update(
+                &repo,
+                "action",
+                &mapping,
+                &specs,
+                reflog_message.map(|_| fetch::DryRun::Yes).unwrap_or(fetch::DryRun::No),
+            )
+            .unwrap();
 
             assert_eq!(
                 out.updates,
