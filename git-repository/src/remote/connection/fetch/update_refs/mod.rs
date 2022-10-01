@@ -79,15 +79,13 @@ pub(crate) fn update(
                                     PreviousValue::MustExistAndMatch(Target::Peeled(local_id.to_owned()));
                                 let (mode, reflog_message) = if local_id == remote_id {
                                     (update::Mode::NoChangeNeeded, "no update will be performed")
-                                } else if refspecs[*spec_index].allow_non_fast_forward() {
-                                    let reflog_msg = match existing.name().category() {
-                                        Some(git_ref::Category::Tag) => "updating tag",
-                                        _ => "forced-update",
-                                    };
-                                    (update::Mode::Forced, reflog_msg)
                                 } else if let Some(git_ref::Category::Tag) = existing.name().category() {
-                                    updates.push(update::Mode::RejectedTagUpdate.into());
-                                    continue;
+                                    if refspecs[*spec_index].allow_non_fast_forward() {
+                                        (update::Mode::Forced, "updating tag")
+                                    } else {
+                                        updates.push(update::Mode::RejectedTagUpdate.into());
+                                        continue;
+                                    }
                                 } else {
                                     let mut force = refspecs[*spec_index].allow_non_fast_forward();
                                     let is_fast_forward = match dry_run {

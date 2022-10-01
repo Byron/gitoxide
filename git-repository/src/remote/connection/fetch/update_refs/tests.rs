@@ -74,9 +74,9 @@ mod update {
             ),
             (
                 "+refs/heads/main:refs/remotes/origin/g",
-                fetch::refs::update::Mode::Forced,
-                Some("forced-update"),
-                "a forced non-fastforward (main goes backwards)",
+                fetch::refs::update::Mode::FastForward,
+                Some("fast-forward (guessed in dry-run)"),
+                "a forced non-fastforward (main goes backwards), but dry-run calls it fast-forward",
             ),
             (
                 "+refs/heads/main:refs/tags/b-tag",
@@ -242,6 +242,29 @@ mod update {
         assert_eq!(out.edits.len(), 0);
 
         let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/remotes/origin/g", &repo);
+        let out = fetch::refs::update(&repo, "prefix", &mappings, &specs, fetch::DryRun::No).unwrap();
+
+        assert_eq!(
+            out.updates,
+            vec![fetch::refs::Update {
+                mode: fetch::refs::update::Mode::FastForward,
+                edit_index: Some(0),
+            }]
+        );
+        assert_eq!(out.edits.len(), 1);
+        let edit = &out.edits[0];
+        match &edit.change {
+            Change::Update { log, .. } => {
+                assert_eq!(log.message, format!("prefix: {}", "fast-forward"));
+            }
+            _ => unreachable!("only updates"),
+        }
+    }
+
+    #[test]
+    fn fast_forwards_are_called_out_even_if_force_is_given() {
+        let (repo, _tmp) = repo_rw("two-origins");
+        let (mappings, specs) = mapping_from_spec("+refs/heads/main:refs/remotes/origin/g", &repo);
         let out = fetch::refs::update(&repo, "prefix", &mappings, &specs, fetch::DryRun::No).unwrap();
 
         assert_eq!(
