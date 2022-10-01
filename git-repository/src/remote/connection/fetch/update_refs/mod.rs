@@ -89,7 +89,8 @@ pub(crate) fn update(
                                     updates.push(update::Mode::RejectedTagUpdate.into());
                                     continue;
                                 } else {
-                                    match dry_run {
+                                    let mut force = refspecs[*spec_index].allow_non_fast_forward();
+                                    let is_fast_forward = match dry_run {
                                         fetch::DryRun::No => {
                                             let ancestors = repo
                                                 .find_object(local_id)?
@@ -110,18 +111,29 @@ pub(crate) fn update(
                                                 );
                                             match ancestors {
                                                 Ok(mut ancestors) => {
-                                                    if ancestors.any(|cid| cid.map_or(false, |cid| cid == local_id)) {
-                                                        (update::Mode::FastForward, "fast-forward")
-                                                    } else {
-                                                        updates.push(update::Mode::RejectedNonFastForward.into());
-                                                        continue;
-                                                    }
+                                                    ancestors.any(|cid| cid.map_or(false, |cid| cid == local_id))
                                                 }
-                                                Err(_) => (update::Mode::Forced, "forced-update"),
+                                                Err(_) => {
+                                                    force = true;
+                                                    false
+                                                }
                                             }
                                         }
-                                        fetch::DryRun::Yes => {
-                                            (update::Mode::FastForward, "fast-forward (guessed in dry-run)")
+                                        fetch::DryRun::Yes => true,
+                                    };
+                                    if is_fast_forward {
+                                        (
+                                            update::Mode::FastForward,
+                                            matches!(dry_run, fetch::DryRun::Yes)
+                                                .then(|| "fast-forward (guessed in dry-run)")
+                                                .unwrap_or("fast-forward"),
+                                        )
+                                    } else {
+                                        if force {
+                                            (update::Mode::Forced, "forced-update")
+                                        } else {
+                                            updates.push(update::Mode::RejectedNonFastForward.into());
+                                            continue;
                                         }
                                     }
                                 };
