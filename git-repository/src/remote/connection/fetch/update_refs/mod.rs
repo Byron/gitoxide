@@ -126,13 +126,11 @@ pub(crate) fn update(
                                                 .then(|| "fast-forward (guessed in dry-run)")
                                                 .unwrap_or("fast-forward"),
                                         )
+                                    } else if force {
+                                        (update::Mode::Forced, "forced-update")
                                     } else {
-                                        if force {
-                                            (update::Mode::Forced, "forced-update")
-                                        } else {
-                                            updates.push(update::Mode::RejectedNonFastForward.into());
-                                            continue;
-                                        }
+                                        updates.push(update::Mode::RejectedNonFastForward.into());
+                                        continue;
                                     }
                                 };
                                 (mode, reflog_message, existing.name().to_owned(), previous_value)
