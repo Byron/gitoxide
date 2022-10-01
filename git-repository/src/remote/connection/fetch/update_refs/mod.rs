@@ -1,6 +1,8 @@
+use crate::ext::ObjectIdExt;
 use crate::remote::fetch;
 use crate::remote::fetch::refs::update::Mode;
 use crate::Repository;
+use git_odb::FindExt;
 use git_pack::Find;
 use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog};
 use git_ref::{Target, TargetRef};
@@ -85,7 +87,38 @@ pub(crate) fn update(
                                     updates.push(update::Mode::RejectedTagUpdate.into());
                                     continue;
                                 } else {
-                                    todo!("check for fast-forward (is local an ancestor of remote?)")
+                                    match dry_run {
+                                        fetch::DryRun::No => match repo
+                                            .find_object(local_id)?
+                                            .try_into_commit()
+                                            .map_err(|_| ())
+                                            .and_then(|c| {
+                                                c.committer().map(|a| a.time.seconds_since_unix_epoch).map_err(|_| ())
+                                            }).and_then(|local_commit_time|
+                                                    remote_id
+                                                        .to_owned()
+                                                        .ancestors(|id, buf| repo.objects.find_commit_iter(id, buf))
+                                                        .sorting(
+                                                            git_traverse::commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+                                                                time_in_seconds_since_epoch: local_commit_time
+                                                            },
+                                                        )
+                                                        .map_err(|_| ())
+                                        ) {
+                                            Ok(mut ancestors) => {
+                                                if ancestors.any(|cid| cid.map_or(false, |cid| cid == local_id)) {
+                                                    (update::Mode::FastForward, "fast-forward")
+                                                } else {
+                                                    updates.push(update::Mode::RejectedNonFastForward.into());
+                                                    continue;
+                                                }
+                                            }
+                                            Err(_) => (update::Mode::Forced, "forced-update"),
+                                        },
+                                        fetch::DryRun::Yes => {
+                                            (update::Mode::FastForward, "fast-forward (guessed in dry-run)")
+                                        }
+                                    }
                                 };
                                 (mode, reflog_message, existing.name().to_owned())
                             }

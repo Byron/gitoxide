@@ -18,6 +18,16 @@ mod update {
             .unwrap();
         git::open_opts(dir.join(name), git::open::Options::isolated()).unwrap()
     }
+    fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
+        let dir = git_testtools::scripted_fixture_repo_writable_with_args(
+            "make_fetch_repos.sh",
+            [base_repo_path()],
+            git_testtools::Creation::ExecuteScript,
+        )
+        .unwrap();
+        let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
+        (repo, dir)
+    }
     use crate::remote::fetch;
     use git_ref::transaction::Change;
     use git_ref::TargetRef;
@@ -97,12 +107,12 @@ mod update {
                 None,
                 "checked out branches cannot be written, as it requires a merge of sorts which isn't done here",
             ),
-            // ( // TODO: make fast-forwards work
-            //     "refs/remotes/origin/g:refs/heads/not-currently-checked-out",
-            //     fetch::refs::update::Mode::FastForward,
-            //     true,
-            //     "a fast-forward only fast-forward situation, all good",
-            // ),
+            (
+                "refs/remotes/origin/g:refs/heads/not-currently-checked-out",
+                fetch::refs::update::Mode::FastForward,
+                Some("fast-forward (guessed in dry-run)"),
+                "a fast-forward only fast-forward situation, all good",
+            ),
         ] {
             let (mapping, specs) = mapping_from_spec(spec, &repo);
             let out = fetch::refs::update(
@@ -193,11 +203,28 @@ mod update {
     }
 
     #[test]
-    #[should_panic]
-    fn fast_forward_is_not_implemented_yet_but_should_be_denied() {
+    fn non_fast_forward_is_rejected_but_appears_to_be_fast_forward_in_dryrun_mode() {
         let repo = repo("two-origins");
         let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/remotes/origin/g", &repo);
         let out = fetch::refs::update(&repo, "action", &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+        assert_eq!(
+            out.updates,
+            vec![fetch::refs::Update {
+                mode: fetch::refs::update::Mode::FastForward,
+                edit_index: Some(0),
+            }],
+            "The caller has to be aware and note that dry-runs can't know about fast-forwards as they don't have remote objects"
+        );
+        assert_eq!(out.edits.len(), 1);
+    }
+
+    #[test]
+    #[ignore]
+    fn non_fast_forward_is_rejected_if_dry_run_is_disabled() {
+        let (repo, _tmp) = repo_rw("two-origins");
+        let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/remotes/origin/g", &repo);
+        let out = fetch::refs::update(&repo, "action", &mappings, &specs, fetch::DryRun::No).unwrap();
 
         assert_eq!(
             out.updates,

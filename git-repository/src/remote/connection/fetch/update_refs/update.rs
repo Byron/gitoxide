@@ -16,6 +16,8 @@ mod error {
         WorktreeListing(#[from] std::io::Error),
         #[error("Could not open worktree repository")]
         OpenWorktreeRepo(#[from] crate::open::Error),
+        #[error("Could not find local commit for fast-forward ancestor check")]
+        FindCommit(#[from] crate::object::find::existing::Error),
     }
 }
 
