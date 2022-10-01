@@ -223,6 +223,20 @@ mod ancestor {
     }
 
     #[test]
+    #[ignore]
+    fn committer_date_sorted_commits_with_cutoff() -> crate::Result {
+        TraversalAssertion::new(
+            "make_traversal_repo_for_commits_with_dates.sh",
+            &["288e509293165cb5630d08f4185bdf2445bf6170"],
+            &["bcb05040a6925f2ff5e10d3ae1f9264f2e8c43ac"],
+        )
+        .with_sorting(commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+            time_in_seconds_since_epoch: 978393600, // =2001-01-02 00:00:00 +0000
+        })
+        .check()
+    }
+
+    #[test]
     fn committer_date_sorted_commits_parents_only() -> crate::Result {
         TraversalAssertion::new(
             "make_traversal_repo_for_commits_with_dates.sh",

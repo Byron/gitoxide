@@ -36,6 +36,14 @@ pub enum Sorting {
     /// This mode benefits greatly from having an object_cache in `find()`
     /// to avoid having to lookup each commit twice.
     ByCommitTimeNewestFirst,
+    /// This sorting is similar to `ByCommitTimeNewestFirst`, but adds a cutoff to not return commits older than
+    /// a given time, stopping the iteration once no younger commits is queued to be traversed.
+    ///
+    /// As the query is usually repeated with different cutoff dates, this search mode benefits greatly from an object cache.
+    ByCommitTimeNewestFirstCutoffOlderThan {
+        /// The amount of seconds since unix epoch, the same value obtained by any `git_date::Time` structure and the way git counts time.
+        time_in_seconds_since_epoch: u32,
+    },
 }
 
 impl Default for Sorting {
@@ -217,7 +225,10 @@ pub mod ancestors {
             } else {
                 match self.sorting {
                     Sorting::Topological => self.next_by_topology(),
-                    Sorting::ByCommitTimeNewestFirst => self.next_by_commit_date(),
+                    Sorting::ByCommitTimeNewestFirst => self.next_by_commit_date(None),
+                    Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+                        time_in_seconds_since_epoch,
+                    } => self.next_by_commit_date(time_in_seconds_since_epoch.into()),
                 }
             }
         }
@@ -231,7 +242,10 @@ pub mod ancestors {
         StateMut: BorrowMut<State>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        fn next_by_commit_date(&mut self) -> Option<Result<ObjectId, Error>> {
+        fn next_by_commit_date(
+            &mut self,
+            _cutoff_older_than: Option<TimeInSeconds>,
+        ) -> Option<Result<ObjectId, Error>> {
             let state = self.state.borrow_mut();
 
             let (oid, _commit_time) = state.next.pop_front()?;
