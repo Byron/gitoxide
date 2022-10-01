@@ -60,7 +60,7 @@ pub(crate) fn update(
         let checked_out_branches = worktree_branches(repo)?;
         let (mode, edit_index) = match local {
             Some(name) => {
-                let (mode, reflog_message, name) = match repo.try_find_reference(name)? {
+                let (mode, reflog_message, name, previous_value) = match repo.try_find_reference(name)? {
                     Some(existing) => {
                         if let Some(wt_dir) = checked_out_branches.get(existing.name()) {
                             let mode = update::Mode::RejectedCurrentlyCheckedOut {
@@ -75,6 +75,8 @@ pub(crate) fn update(
                                 continue;
                             }
                             TargetRef::Peeled(local_id) => {
+                                let previous_value =
+                                    PreviousValue::MustExistAndMatch(Target::Peeled(local_id.to_owned()));
                                 let (mode, reflog_message) = if local_id == remote_id {
                                     (update::Mode::NoChangeNeeded, "no update will be performed")
                                 } else if refspecs[*spec_index].allow_non_fast_forward() {
@@ -120,7 +122,7 @@ pub(crate) fn update(
                                         }
                                     }
                                 };
-                                (mode, reflog_message, existing.name().to_owned())
+                                (mode, reflog_message, existing.name().to_owned(), previous_value)
                             }
                         }
                     }
@@ -131,7 +133,12 @@ pub(crate) fn update(
                             Some(git_ref::Category::LocalBranch) => "storing head",
                             _ => "storing ref",
                         };
-                        (update::Mode::New, reflog_msg, name)
+                        (
+                            update::Mode::New,
+                            reflog_msg,
+                            name,
+                            PreviousValue::ExistingMustMatch(Target::Peeled(remote_id.to_owned())),
+                        )
                     }
                 };
                 let edit = RefEdit {
@@ -141,7 +148,7 @@ pub(crate) fn update(
                             force_create_reflog: false,
                             message: format!("{}: {}", action, reflog_message).into(),
                         },
-                        expected: PreviousValue::ExistingMustMatch(Target::Peeled(remote_id.into())),
+                        expected: previous_value,
                         new: Target::Peeled(remote_id.into()),
                     },
                     name,
