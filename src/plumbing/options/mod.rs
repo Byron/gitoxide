@@ -123,15 +123,11 @@ pub mod fetch {
         #[clap(long, short = 'n')]
         pub dry_run: bool,
 
-        /// The name of the remote to connect to.
+        /// The name of the remote to connect to, or the url of the remote to connect to directly.
         ///
         /// If unset, the current branch will determine the remote.
         #[clap(long, short = 'r')]
         pub remote: Option<String>,
-
-        /// Connect directly to the given URL, forgoing any configuration from the repository.
-        #[clap(long, short = 'u', conflicts_with("remote"), parse(try_from_os_str = std::convert::TryFrom::try_from))]
-        pub url: Option<git::Url>,
 
         /// Override the built-in and configured ref-specs with one or more of the given ones.
         #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
@@ -144,15 +140,11 @@ pub mod remote {
 
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
-        /// The name of the remote to connect to.
+        /// The name of the remote to connect to, or the URL of the remote to connect to directly.
         ///
         /// If unset, the current branch will determine the remote.
         #[clap(long, short = 'n')]
         pub name: Option<String>,
-
-        /// Connect directly to the given URL, forgoing any configuration from the repository.
-        #[clap(long, short = 'u', conflicts_with("name"), parse(try_from_os_str = std::convert::TryFrom::try_from))]
-        pub url: Option<git::Url>,
 
         /// Output additional typically information provided by the server as part of the connection handshake.
         #[clap(long)]

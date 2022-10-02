@@ -118,14 +118,12 @@ pub fn main() -> Result<()> {
             dry_run,
             remote,
             ref_spec,
-            url,
         }) => {
             let opts = core::repository::fetch::Options {
                 format,
                 dry_run,
                 remote,
                 ref_specs: ref_spec,
-                url,
             };
             prepare_and_run(
                 "fetch",
@@ -150,7 +148,6 @@ pub fn main() -> Result<()> {
         #[cfg_attr(feature = "small", allow(unused_variables))]
         Subcommands::Remote(remote::Platform {
             name,
-            url,
             cmd,
             handshake_info,
         }) => match cmd {
@@ -162,9 +159,8 @@ pub fn main() -> Result<()> {
                         core::repository::remote::refs::Kind::Tracking { ref_specs: ref_spec }
                     }
                 };
-                let context = core::repository::remote::refs::Context {
-                    name,
-                    url,
+                let context = core::repository::remote::refs::Options {
+                    name_or_url: name,
                     format,
                     handshake_info,
                 };

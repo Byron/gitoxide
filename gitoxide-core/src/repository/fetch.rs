@@ -6,7 +6,6 @@ pub struct Options {
     pub format: OutputFormat,
     pub dry_run: bool,
     pub remote: Option<String>,
-    pub url: Option<git::Url>,
     /// If non-empty, override all ref-specs otherwise configured in the remote
     pub ref_specs: Vec<BString>,
 }
@@ -27,11 +26,10 @@ pub(crate) mod function {
             format,
             dry_run,
             remote,
-            url,
             ref_specs,
         }: Options,
     ) -> anyhow::Result<()> {
-        let _remote = crate::repository::remote::by_name_or_url(&repo, remote.as_deref(), url)?;
+        let _remote = crate::repository::remote::by_name_or_url(&repo, remote.as_deref())?;
         todo!()
     }
 }
