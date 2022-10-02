@@ -83,20 +83,20 @@ title "gix (with repository)"
           (with "version 1"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/file-v-any" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=1 remote -u .git refs
+              expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=1 remote -n .git refs
             }
           )
           (with "version 2"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/file-v-any" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=2  remote -u "$PWD" refs
+              expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=2  remote -n "$PWD" refs
             }
           )
           if test "$kind" = "max"; then
           (with "--format json"
             it "generates the correct output in JSON format" && {
               WITH_SNAPSHOT="$snapshot/file-v-any-json" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" --format json remote -u . refs
+              expect_run $SUCCESSFULLY "$exe_plumbing" --format json remote -n . refs
             }
           )
           fi
@@ -108,13 +108,13 @@ title "gix (with repository)"
           (with "version 1"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/file-v-any" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" --config protocol.version=1 remote --url git://localhost/ refs
+              expect_run $SUCCESSFULLY "$exe_plumbing" --config protocol.version=1 remote --name git://localhost/ refs
             }
           )
           (with "version 2"
             it "generates the correct output" && {
               WITH_SNAPSHOT="$snapshot/file-v-any" \
-              expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=2 remote -u git://localhost/ refs
+              expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=2 remote -n git://localhost/ refs
             }
           )
         )
@@ -122,7 +122,7 @@ title "gix (with repository)"
         (with "https:// protocol (in small builds)"
           it "fails as http is not compiled in" && {
             WITH_SNAPSHOT="$snapshot/fail-http-in-small" \
-            expect_run $WITH_FAILURE "$exe_plumbing" -c protocol.version=1 remote -u https://github.com/byron/gitoxide refs
+            expect_run $WITH_FAILURE "$exe_plumbing" -c protocol.version=1 remote -n https://github.com/byron/gitoxide refs
           }
         )
         fi
@@ -131,12 +131,12 @@ title "gix (with repository)"
           (with "https:// protocol"
             (with "version 1"
               it "generates the correct output" && {
-                expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=1 remote -u https://github.com/byron/gitoxide refs
+                expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=1 remote -n https://github.com/byron/gitoxide refs
               }
             )
             (with "version 2"
               it "generates the correct output" && {
-                expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=2 remote -u https://github.com/byron/gitoxide refs
+                expect_run $SUCCESSFULLY "$exe_plumbing" -c protocol.version=2 remote -n https://github.com/byron/gitoxide refs
               }
             )
           )
@@ -145,7 +145,7 @@ title "gix (with repository)"
         else
           it "fails as the CLI doesn't include networking in 'small' mode" && {
             WITH_SNAPSHOT="$snapshot/remote ref-list-no-networking-in-small-failure" \
-            expect_run 2 "$exe_plumbing" -c protocol.version=1 remote -u .git refs
+            expect_run 2 "$exe_plumbing" -c protocol.version=1 remote -n .git refs
           }
         fi
       )

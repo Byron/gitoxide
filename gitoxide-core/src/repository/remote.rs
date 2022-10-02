@@ -257,7 +257,7 @@ pub(crate) fn by_name_or_url<'repo>(
     use anyhow::Context;
     Ok(match name_or_url {
         Some(name) => {
-            if name.contains('/') || name == "." {
+            if name.contains('/') || name.contains('.') {
                 repo.remote_at(git_repository::url::parse(name.into())?)?
             } else {
                 repo.find_remote(&name)?
