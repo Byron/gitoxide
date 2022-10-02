@@ -88,6 +88,7 @@ pub enum Subcommands {
     #[clap(subcommand)]
     Mailmap(mailmap::Subcommands),
     /// Interact with the remote hosts.
+    #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     Remote(remote::Platform),
     /// Interact with the exclude files like .gitignore.
     #[clap(subcommand)]
@@ -135,6 +136,7 @@ pub mod fetch {
     }
 }
 
+#[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 pub mod remote {
     use git_repository as git;
 
@@ -159,10 +161,8 @@ pub mod remote {
     #[clap(visible_alias = "remotes")]
     pub enum Subcommands {
         /// Print all references available on the remote.
-        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Refs,
         /// Print all references available on the remote as filtered through ref-specs.
-        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         RefMap {
             /// Override the built-in and configured ref-specs with one or more of the given ones.
             #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]

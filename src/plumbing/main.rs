@@ -13,10 +13,9 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
-use crate::plumbing::options::fetch;
 use crate::{
     plumbing::{
-        options::{commit, config, credential, exclude, free, mailmap, odb, remote, revision, tree, Args, Subcommands},
+        options::{commit, config, credential, exclude, free, mailmap, odb, revision, tree, Args, Subcommands},
         show_progress,
     },
     shared::pretty::prepare_and_run,
@@ -114,7 +113,7 @@ pub fn main() -> Result<()> {
 
     match cmd {
         #[cfg(feature = "gitoxide-core-blocking-client")]
-        Subcommands::Fetch(fetch::Platform {
+        Subcommands::Fetch(crate::plumbing::options::fetch::Platform {
             dry_run,
             remote,
             ref_spec,
@@ -145,63 +144,65 @@ pub fn main() -> Result<()> {
                 credential::Subcommands::Reject => git::credentials::program::main::Action::Erase,
             },
         ),
-        #[cfg_attr(feature = "small", allow(unused_variables))]
-        Subcommands::Remote(remote::Platform {
+        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
+        Subcommands::Remote(crate::plumbing::options::remote::Platform {
             name,
             cmd,
             handshake_info,
-        }) => match cmd {
-            #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
-            remote::Subcommands::Refs | remote::Subcommands::RefMap { .. } => {
-                let kind = match cmd {
-                    remote::Subcommands::Refs => core::repository::remote::refs::Kind::Remote,
-                    remote::Subcommands::RefMap { ref_spec } => {
-                        core::repository::remote::refs::Kind::Tracking { ref_specs: ref_spec }
+        }) => {
+            use crate::plumbing::options::remote;
+            match cmd {
+                remote::Subcommands::Refs | remote::Subcommands::RefMap { .. } => {
+                    let kind = match cmd {
+                        remote::Subcommands::Refs => core::repository::remote::refs::Kind::Remote,
+                        remote::Subcommands::RefMap { ref_spec } => {
+                            core::repository::remote::refs::Kind::Tracking { ref_specs: ref_spec }
+                        }
+                    };
+                    let context = core::repository::remote::refs::Options {
+                        name_or_url: name,
+                        format,
+                        handshake_info,
+                    };
+                    #[cfg(feature = "gitoxide-core-blocking-client")]
+                    {
+                        prepare_and_run(
+                            "remote-refs",
+                            verbose,
+                            progress,
+                            progress_keep_open,
+                            core::repository::remote::refs::PROGRESS_RANGE,
+                            move |progress, out, err| {
+                                core::repository::remote::refs(
+                                    repository(Mode::LenientWithGitInstallConfig)?,
+                                    kind,
+                                    progress,
+                                    out,
+                                    err,
+                                    context,
+                                )
+                            },
+                        )
                     }
-                };
-                let context = core::repository::remote::refs::Options {
-                    name_or_url: name,
-                    format,
-                    handshake_info,
-                };
-                #[cfg(feature = "gitoxide-core-blocking-client")]
-                {
-                    prepare_and_run(
-                        "remote-refs",
-                        verbose,
-                        progress,
-                        progress_keep_open,
-                        core::repository::remote::refs::PROGRESS_RANGE,
-                        move |progress, out, err| {
-                            core::repository::remote::refs(
-                                repository(Mode::LenientWithGitInstallConfig)?,
-                                kind,
-                                progress,
-                                out,
-                                err,
-                                context,
-                            )
-                        },
-                    )
-                }
-                #[cfg(feature = "gitoxide-core-async-client")]
-                {
-                    let (_handle, progress) = async_util::prepare(
-                        verbose,
-                        "remote-refs",
-                        Some(core::repository::remote::refs::PROGRESS_RANGE),
-                    );
-                    futures_lite::future::block_on(core::repository::remote::refs(
-                        repository(Mode::LenientWithGitInstallConfig)?,
-                        kind,
-                        progress,
-                        std::io::stdout(),
-                        std::io::stderr(),
-                        context,
-                    ))
+                    #[cfg(feature = "gitoxide-core-async-client")]
+                    {
+                        let (_handle, progress) = async_util::prepare(
+                            verbose,
+                            "remote-refs",
+                            Some(core::repository::remote::refs::PROGRESS_RANGE),
+                        );
+                        futures_lite::future::block_on(core::repository::remote::refs(
+                            repository(Mode::LenientWithGitInstallConfig)?,
+                            kind,
+                            progress,
+                            std::io::stdout(),
+                            std::io::stderr(),
+                            context,
+                        ))
+                    }
                 }
             }
-        },
+        }
         Subcommands::Config(config::Platform { filter }) => prepare_and_run(
             "config-list",
             verbose,

@@ -249,24 +249,23 @@ mod refs_impl {
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub use refs_impl::{refs, refs_fn as refs, JsonRef};
 
-use git_repository as git;
-
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub(crate) fn by_name_or_url<'repo>(
-    repo: &'repo git::Repository,
+    repo: &'repo git_repository::Repository,
     name_or_url: Option<&str>,
-) -> anyhow::Result<git::Remote<'repo>> {
+) -> anyhow::Result<git_repository::Remote<'repo>> {
     use anyhow::Context;
     Ok(match name_or_url {
         Some(name) => {
             if name.contains('/') || name == "." {
-                repo.remote_at(git::url::parse(name.into())?)?
+                repo.remote_at(git_repository::url::parse(name.into())?)?
             } else {
                 repo.find_remote(&name)?
             }
         }
         None => repo
             .head()?
-            .into_remote(git::remote::Direction::Fetch)
+            .into_remote(git_repository::remote::Direction::Fetch)
             .context("Cannot find a remote for unborn branch")??,
     })
 }
