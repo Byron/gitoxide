@@ -11,7 +11,7 @@ pub struct Options {
     pub handshake_info: bool,
 }
 
-pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
+pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub(crate) mod function {
     use super::Options;
