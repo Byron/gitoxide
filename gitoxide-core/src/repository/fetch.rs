@@ -59,8 +59,19 @@ pub(crate) mod function {
             Status::NoChange => {
                 crate::repository::remote::refs::print_refmap(&repo, ref_specs, res.ref_map, &mut out, err)
             }
-            Status::Change { update_refs, .. } | Status::DryRun { update_refs } => {
-                print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err)
+            Status::DryRun { update_refs } => print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err),
+            Status::Change {
+                update_refs,
+                write_pack_bundle,
+            } => {
+                print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err)?;
+                if let Some(data_path) = write_pack_bundle.data_path {
+                    writeln!(out, "pack  file: \"{}\"", data_path.display()).ok();
+                }
+                if let Some(index_path) = write_pack_bundle.index_path {
+                    writeln!(out, "index file: \"{}\"", index_path.display()).ok();
+                }
+                Ok(())
             }
         }?;
         if dry_run {
