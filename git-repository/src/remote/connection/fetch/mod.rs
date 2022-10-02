@@ -16,7 +16,7 @@ mod error {
             desired: Option<i64>,
             source: Option<git_config::value::Error>,
         },
-        #[error(transparent)]
+        #[error("Could not decode server reply")]
         FetchResponse(#[from] git_protocol::fetch::response::Error),
         #[error(transparent)]
         Negotiate(#[from] super::negotiate::Error),
