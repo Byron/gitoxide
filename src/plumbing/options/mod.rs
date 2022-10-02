@@ -124,6 +124,10 @@ pub mod fetch {
         #[clap(long, short = 'n')]
         pub dry_run: bool,
 
+        /// Output additional typically information provided by the server as part of the connection handshake.
+        #[clap(long, short = 'H')]
+        pub handshake_info: bool,
+
         /// The name of the remote to connect to, or the url of the remote to connect to directly.
         ///
         /// If unset, the current branch will determine the remote.
@@ -149,7 +153,7 @@ pub mod remote {
         pub name: Option<String>,
 
         /// Output additional typically information provided by the server as part of the connection handshake.
-        #[clap(long)]
+        #[clap(long, short = 'H')]
         pub handshake_info: bool,
 
         /// Subcommands

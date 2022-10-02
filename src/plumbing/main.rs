@@ -115,6 +115,7 @@ pub fn main() -> Result<()> {
         #[cfg(feature = "gitoxide-core-blocking-client")]
         Subcommands::Fetch(crate::plumbing::options::fetch::Platform {
             dry_run,
+            handshake_info,
             remote,
             ref_spec,
         }) => {
@@ -122,6 +123,7 @@ pub fn main() -> Result<()> {
                 format,
                 dry_run,
                 remote,
+                handshake_info,
                 ref_specs: ref_spec,
             };
             prepare_and_run(

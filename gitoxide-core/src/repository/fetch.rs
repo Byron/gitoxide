@@ -8,6 +8,7 @@ pub struct Options {
     pub remote: Option<String>,
     /// If non-empty, override all ref-specs otherwise configured in the remote
     pub ref_specs: Vec<BString>,
+    pub handshake_info: bool,
 }
 
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=2;
@@ -30,6 +31,7 @@ pub(crate) mod function {
             format,
             dry_run,
             remote,
+            handshake_info,
             ref_specs,
         }: Options,
     ) -> anyhow::Result<()> {
@@ -46,6 +48,11 @@ pub(crate) mod function {
             .prepare_fetch(Default::default())?
             .with_dry_run(dry_run)
             .receive(&git::interrupt::IS_INTERRUPTED)?;
+
+        if handshake_info {
+            writeln!(out, "Handshake Information")?;
+            writeln!(out, "\t{:?}", res.ref_map.handshake)?;
+        }
 
         let ref_specs = remote.refspecs(git::remote::Direction::Fetch);
         match res.status {
