@@ -46,7 +46,6 @@ pub(crate) mod function {
             .with_dry_run(dry_run)
             .receive(&git::interrupt::IS_INTERRUPTED)?;
 
-        dbg!(res);
         Ok(())
     }
 }
