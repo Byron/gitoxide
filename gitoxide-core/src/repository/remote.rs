@@ -27,7 +27,7 @@ mod refs_impl {
             pub handshake_info: bool,
         }
 
-        pub(crate) use super::print;
+        pub(crate) use super::{print, print_refmap};
     }
 
     #[git::protocol::maybe_async::maybe_async]
@@ -91,7 +91,7 @@ mod refs_impl {
         }
     }
 
-    fn print_refmap(
+    pub(crate) fn print_refmap(
         repo: &git::Repository,
         refspecs: &[RefSpec],
         mut map: git::remote::fetch::RefMap<'_>,

@@ -19,6 +19,7 @@ pub(crate) mod function {
     use crate::OutputFormat;
     use anyhow::bail;
     use git_repository as git;
+    use git_repository::remote::fetch::Status;
 
     pub fn fetch(
         repo: git::Repository,
@@ -43,6 +44,15 @@ pub(crate) mod function {
             .with_dry_run(dry_run)
             .receive(&git::interrupt::IS_INTERRUPTED)?;
 
-        Ok(())
+        match res.status {
+            Status::NoChange => crate::repository::remote::refs::print_refmap(
+                &repo,
+                remote.refspecs(git::remote::Direction::Fetch),
+                res.ref_map,
+                out,
+                err,
+            ),
+            Status::Change { update_refs, .. } | Status::DryRun { update_refs } => todo!("change printing or dry-run"),
+        }
     }
 }
