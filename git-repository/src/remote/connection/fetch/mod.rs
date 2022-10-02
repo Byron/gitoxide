@@ -96,7 +96,7 @@ where
         Ok(Prepare {
             con: Some(self),
             ref_map,
-            dry_run: fetch::DryRun::No,
+            dry_run: DryRun::No,
         })
     }
 }
@@ -193,7 +193,21 @@ where
                 options,
             )?)
         } else {
-            drop(reader);
+            if protocol_version == git_protocol::transport::Protocol::V1 {
+                git_pack::Bundle::write_to_directory(
+                    reader,
+                    None::<std::path::PathBuf>,
+                    con.progress,
+                    should_interrupt,
+                    Some(Box::new({
+                        let repo = repo.clone();
+                        move |oid, buf| repo.objects.find(oid, buf).ok()
+                    })),
+                    options,
+                )?;
+            } else {
+                drop(reader);
+            }
             None
         };
 
@@ -205,7 +219,7 @@ where
             repo,
             "fetch",
             &self.ref_map.mappings,
-            con.remote.refspecs(crate::remote::Direction::Fetch),
+            con.remote.refspecs(remote::Direction::Fetch),
             self.dry_run,
         )?;
 
@@ -247,7 +261,7 @@ where
 {
     con: Option<Connection<'remote, 'repo, T, P>>,
     ref_map: RefMap<'remote>,
-    dry_run: fetch::DryRun,
+    dry_run: DryRun,
 }
 
 /// Builder
@@ -259,7 +273,7 @@ where
     ///
     /// This works by not actually fetching the pack after negotiating it, nor will refs be updated.
     pub fn with_dry_run(mut self, enabled: bool) -> Self {
-        self.dry_run = enabled.then(|| fetch::DryRun::Yes).unwrap_or(DryRun::No);
+        self.dry_run = enabled.then(|| DryRun::Yes).unwrap_or(DryRun::No);
         self
     }
 }
