@@ -13,6 +13,7 @@ use git_repository::bstr::io::BufReadExt;
 use gitoxide_core as core;
 use gitoxide_core::pack::verify;
 
+use crate::plumbing::options::fetch;
 use crate::{
     plumbing::{
         options::{commit, config, credential, exclude, free, mailmap, odb, remote, revision, tree, Args, Subcommands},
@@ -112,6 +113,29 @@ pub fn main() -> Result<()> {
     })?;
 
     match cmd {
+        #[cfg(feature = "gitoxide-core-blocking-client")]
+        Subcommands::Fetch(fetch::Platform {
+            dry_run,
+            remote,
+            ref_spec,
+        }) => {
+            let opts = core::repository::fetch::Options {
+                format,
+                dry_run,
+                remote,
+                ref_specs: ref_spec,
+            };
+            prepare_and_run(
+                "fetch",
+                verbose,
+                progress,
+                progress_keep_open,
+                core::repository::fetch::PROGRESS_RANGE,
+                move |progress, out, err| {
+                    core::repository::fetch(repository(Mode::LenientWithGitInstallConfig)?, progress, out, err, opts)
+                },
+            )
+        }
         Subcommands::Progress => show_progress(),
         Subcommands::Credential(cmd) => core::repository::credential(
             repository(Mode::StrictWithGitInstallConfig)?,

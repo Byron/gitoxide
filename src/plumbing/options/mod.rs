@@ -81,6 +81,9 @@ pub enum Subcommands {
     /// A program just like `git credential`.
     #[clap(subcommand)]
     Credential(credential::Subcommands),
+    /// Fetch data from remotes and store it in the repository
+    #[cfg(feature = "gitoxide-core-blocking-client")]
+    Fetch(fetch::Platform),
     /// Interact with the mailmap.
     #[clap(subcommand)]
     Mailmap(mailmap::Subcommands),
@@ -107,6 +110,28 @@ pub mod config {
         /// Typical filters are `branch` or `remote.origin` or `remote.or*` - git-style globs are supported
         /// and comparisons are case-insensitive.
         pub filter: Vec<String>,
+    }
+}
+
+#[cfg(feature = "gitoxide-core-blocking-client")]
+pub mod fetch {
+    use git_repository as git;
+
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        /// Don't change the local repository, but otherwise try to be as accurate as possible.
+        #[clap(long, short = 'n')]
+        pub dry_run: bool,
+
+        /// The name of the remote to connect to.
+        ///
+        /// If unset, the current branch will determine the remote.
+        #[clap(long, short = 'r')]
+        pub remote: Option<String>,
+
+        /// Override the built-in and configured ref-specs with one or more of the given ones.
+        #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
+        pub ref_spec: Vec<git_repository::bstr::BString>,
     }
 }
 
