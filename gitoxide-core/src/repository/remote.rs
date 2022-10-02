@@ -27,7 +27,7 @@ mod refs_impl {
             pub handshake_info: bool,
         }
 
-        pub(crate) use super::{print, print_refmap};
+        pub(crate) use super::{print, print_ref, print_refmap};
     }
 
     #[git::protocol::maybe_async::maybe_async]
@@ -222,7 +222,7 @@ mod refs_impl {
         }
     }
 
-    fn print_ref(mut out: impl std::io::Write, r: &fetch::Ref) -> std::io::Result<&git::hash::oid> {
+    pub(crate) fn print_ref(mut out: impl std::io::Write, r: &fetch::Ref) -> std::io::Result<&git::hash::oid> {
         match r {
             fetch::Ref::Direct {
                 full_ref_name: path,
