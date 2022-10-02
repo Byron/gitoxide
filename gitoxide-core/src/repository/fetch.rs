@@ -36,11 +36,8 @@ pub(crate) mod function {
             bail!("JSON output isn't yet supported for fetching.");
         }
         let mut remote = crate::repository::remote::by_name_or_url(&repo, remote.as_deref())?;
-        if !ref_specs.is_empty() {
-            remote.replace_refspecs(ref_specs.iter(), git::remote::Direction::Fetch)?;
-        }
 
-        let res = remote
+        let res: git::remote::fetch::Outcome<'_> = remote
             .connect(git::remote::Direction::Fetch, progress)?
             .prepare_fetch(Default::default())?
             .with_dry_run(dry_run)

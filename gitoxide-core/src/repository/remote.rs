@@ -166,6 +166,9 @@ mod refs_impl {
                 refspecs.len()
             )?;
         }
+        if refspecs.is_empty() {
+            bail!("Without ref-specs there is nothing to show here. Add ref-specs as arguments or configure them in git-config.")
+        }
         Ok(())
     }
 

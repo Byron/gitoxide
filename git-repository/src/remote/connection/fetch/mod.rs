@@ -1,6 +1,6 @@
 use crate::remote::fetch::{DryRun, RefMap};
 use crate::remote::{fetch, ref_map, Connection};
-use crate::Progress;
+use crate::{remote, Progress};
 use git_odb::FindExt;
 use git_protocol::transport::client::Transport;
 use std::sync::atomic::AtomicBool;
@@ -62,6 +62,16 @@ pub struct Outcome<'spec> {
 ///
 pub mod negotiate;
 
+pub mod prepare {
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("Cannot perform a meaningful fetch operation without any configured ref-specs")]
+        MissingRefSpecs,
+        #[error(transparent)]
+        RefMap(#[from] crate::remote::ref_map::Error),
+    }
+}
+
 impl<'remote, 'repo, T, P> Connection<'remote, 'repo, T, P>
 where
     T: Transport,
@@ -78,7 +88,10 @@ where
     /// Note that this implementation is currently limited to blocking mode as it relies on Drop semantics to close the connection
     /// should the fetch not be performed. Furthermore, there the code doing the fetch is inherently blocking so there is no benefit.
     /// It's best to unblock it by placing it into its own thread or offload it should usage in an async context be required.
-    pub fn prepare_fetch(mut self, options: ref_map::Options) -> Result<Prepare<'remote, 'repo, T, P>, ref_map::Error> {
+    pub fn prepare_fetch(mut self, options: ref_map::Options) -> Result<Prepare<'remote, 'repo, T, P>, prepare::Error> {
+        if self.remote.refspecs(remote::Direction::Fetch).is_empty() {
+            return Err(prepare::Error::MissingRefSpecs);
+        }
         let ref_map = self.ref_map_inner(options)?;
         Ok(Prepare {
             con: Some(self),
