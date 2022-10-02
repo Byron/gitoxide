@@ -129,6 +129,10 @@ pub mod fetch {
         #[clap(long, short = 'r')]
         pub remote: Option<String>,
 
+        /// Connect directly to the given URL, forgoing any configuration from the repository.
+        #[clap(long, short = 'u', conflicts_with("remote"), parse(try_from_os_str = std::convert::TryFrom::try_from))]
+        pub url: Option<git::Url>,
+
         /// Override the built-in and configured ref-specs with one or more of the given ones.
         #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
         pub ref_spec: Vec<git_repository::bstr::BString>,

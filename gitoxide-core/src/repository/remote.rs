@@ -1,13 +1,13 @@
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod refs_impl {
+    use super::by_name_or_url;
+    use crate::OutputFormat;
     use anyhow::bail;
     use git_repository as git;
     use git_repository::{
         protocol::fetch,
         refspec::{match_group::validate::Fix, RefSpec},
     };
-
-    use crate::OutputFormat;
 
     pub mod refs {
         use git_repository::bstr::BString;
@@ -46,15 +46,7 @@ mod refs_impl {
         }: refs::Context,
     ) -> anyhow::Result<()> {
         use anyhow::Context;
-        let mut remote = match (name, url) {
-            (Some(name), None) => repo.find_remote(&name)?,
-            (None, None) => repo
-                .head()?
-                .into_remote(git::remote::Direction::Fetch)
-                .context("Cannot find a remote for unborn branch")??,
-            (None, Some(url)) => repo.remote_at(url)?,
-            (Some(_), Some(_)) => bail!("Must not set both the remote name and the url - they are mutually exclusive"),
-        };
+        let mut remote = by_name_or_url(&repo, name.as_deref(), url)?;
         if let refs::Kind::Tracking { ref_specs, .. } = &kind {
             if format != OutputFormat::Human {
                 bail!("JSON output isn't yet supported for listing ref-mappings.");
@@ -258,3 +250,22 @@ mod refs_impl {
 }
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub use refs_impl::{refs, refs_fn as refs, JsonRef};
+
+use git_repository as git;
+
+pub(crate) fn by_name_or_url<'repo>(
+    repo: &'repo git::Repository,
+    name: Option<&str>,
+    url: Option<git::Url>,
+) -> anyhow::Result<git::Remote<'repo>> {
+    use anyhow::{bail, Context};
+    Ok(match (name, url) {
+        (Some(name), None) => repo.find_remote(&name)?,
+        (None, None) => repo
+            .head()?
+            .into_remote(git::remote::Direction::Fetch)
+            .context("Cannot find a remote for unborn branch")??,
+        (None, Some(url)) => repo.remote_at(url)?,
+        (Some(_), Some(_)) => bail!("Must not set both the remote name and the url - they are mutually exclusive"),
+    })
+}

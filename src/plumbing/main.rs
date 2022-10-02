@@ -118,12 +118,14 @@ pub fn main() -> Result<()> {
             dry_run,
             remote,
             ref_spec,
+            url,
         }) => {
             let opts = core::repository::fetch::Options {
                 format,
                 dry_run,
                 remote,
                 ref_specs: ref_spec,
+                url,
             };
             prepare_and_run(
                 "fetch",
