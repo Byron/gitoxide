@@ -67,6 +67,29 @@ pub enum Mode {
     },
 }
 
+impl std::fmt::Display for Mode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Mode::NoChangeNeeded => "up-to-date",
+            Mode::FastForward => "fast-forward",
+            Mode::Forced => "forced-update",
+            Mode::New => "new",
+            Mode::RejectedSourceObjectNotFound { id } => return write!(f, "rejected ({} not found)", id),
+            Mode::RejectedTagUpdate => "rejected (would overwrite existing tag)",
+            Mode::RejectedNonFastForward => "rejected (non-fast-forward)",
+            Mode::RejectedSymbolic => "rejected (refusing to write symbolic refs)",
+            Mode::RejectedCurrentlyCheckedOut { worktree_dir } => {
+                return write!(
+                    f,
+                    "rejected (cannot write into checked-out branch at \"{}\")",
+                    worktree_dir.display()
+                )
+            }
+        }
+        .fmt(f)
+    }
+}
+
 impl Outcome {
     /// Produce an iterator over all information used to produce the this outcome, ref-update by ref-update, using the `mappings`
     /// used when producing the ref update.
