@@ -193,21 +193,7 @@ where
                 options,
             )?)
         } else {
-            if protocol_version == git_protocol::transport::Protocol::V1 {
-                git_pack::Bundle::write_to_directory(
-                    reader,
-                    None::<std::path::PathBuf>,
-                    con.progress,
-                    should_interrupt,
-                    Some(Box::new({
-                        let repo = repo.clone();
-                        move |oid, buf| repo.objects.find(oid, buf).ok()
-                    })),
-                    options,
-                )?;
-            } else {
-                drop(reader);
-            }
+            drop(reader);
             None
         };
 
