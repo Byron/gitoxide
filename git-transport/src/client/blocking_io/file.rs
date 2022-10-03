@@ -68,7 +68,9 @@ impl SpawnProcessOnDemand {
             path,
             ssh_program: None,
             ssh_args: Vec::new(),
-            ssh_env: Vec::new(),
+            ssh_env: (version != Protocol::V1)
+                .then(|| vec![("GIT_PROTOCOL", format!("version={}", version as usize))])
+                .unwrap_or_default(),
             child: None,
             connection: None,
             desired_version: version,
