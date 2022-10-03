@@ -260,7 +260,7 @@ impl crate::Bundle {
                     object_hash,
                 )?;
 
-                let data_path = directory.join(format!("{}.pack", outcome.data_hash.to_hex()));
+                let data_path = directory.join(format!("pack-{}.pack", outcome.data_hash.to_hex()));
                 let index_path = data_path.with_extension("idx");
 
                 Arc::try_unwrap(data_file)

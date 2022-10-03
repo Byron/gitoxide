@@ -125,10 +125,10 @@ mod write_to_directory {
         assert_eq!(sorted_entries.len(), 2, "we want a pack and the corresponding index");
 
         let pack_hash = res.index.data_hash.to_hex();
-        assert_eq!(file_name(&sorted_entries[0]), format!("{}.idx", pack_hash));
+        assert_eq!(file_name(&sorted_entries[0]), format!("pack-{}.idx", pack_hash));
         assert_eq!(Some(sorted_entries[0].path()), index_path);
 
-        assert_eq!(file_name(&sorted_entries[1]), format!("{}.pack", pack_hash));
+        assert_eq!(file_name(&sorted_entries[1]), format!("pack-{}.pack", pack_hash));
         assert_eq!(Some(sorted_entries[1].path()), data_path);
 
         res.index_path = index_path;
