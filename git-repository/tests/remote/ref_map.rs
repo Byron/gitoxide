@@ -8,10 +8,10 @@ mod blocking_io {
 
     #[test]
     fn all() -> crate::Result {
-        for version in [
-            None,
-            Some(git::protocol::transport::Protocol::V2),
-            Some(git::protocol::transport::Protocol::V1),
+        for (version, expected_remote_refs) in [
+            (None, 11),
+            (Some(git::protocol::transport::Protocol::V2), 11),
+            (Some(git::protocol::transport::Protocol::V1), 14), // V1 doesn't support prefiltering.
         ] {
             let mut repo = remote::repo("clone");
             if let Some(version) = version {
@@ -27,8 +27,9 @@ mod blocking_io {
             let map = remote.connect(Fetch, progress::Discard)?.ref_map(Default::default())?;
             assert_eq!(
                 map.remote_refs.len(),
-                14,
-                "it gets all remote refs, independently of the refspec."
+                expected_remote_refs,
+                "{:?}: it gets all remote refs, independently of the refspec. But we use a prefix so pre-filter them.",
+                version
             );
 
             assert_eq!(map.fixes.len(), 0);

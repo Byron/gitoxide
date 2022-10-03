@@ -23,10 +23,18 @@ mod blocking_io {
 
     #[test]
     fn fetch_pack() -> crate::Result {
-        for version in [
-            None,
-            Some(git::protocol::transport::Protocol::V2),
-            Some(git::protocol::transport::Protocol::V1),
+        for (version, expected_objects, expected_hash) in [
+            (None, 4, "d07c527cf14e524a8494ce6d5d08e28079f5c6ea"),
+            (
+                Some(git::protocol::transport::Protocol::V2),
+                4,
+                "d07c527cf14e524a8494ce6d5d08e28079f5c6ea",
+            ),
+            (
+                Some(git::protocol::transport::Protocol::V1),
+                3,
+                "c75114f60ab2c9389916f3de1082bbaa47491e3b",
+            ),
         ] {
             let (mut repo, _tmp) = repo_rw("two-origins");
             if let Some(version) = version {
@@ -69,15 +77,12 @@ mod blocking_io {
                     } => {
                         assert_eq!(write_pack_bundle.pack_kind, git::odb::pack::data::Version::V2);
                         assert_eq!(write_pack_bundle.object_hash, repo.object_hash());
-                        assert_eq!(write_pack_bundle.index.num_objects, 3, "this value is 4 when git does it with 'consecutive' negotiation style, but could be 33 if completely naive.");
+                        assert_eq!(write_pack_bundle.index.num_objects, expected_objects, "this value is 4 when git does it with 'consecutive' negotiation style, but could be 33 if completely naive.");
                         assert_eq!(
                             write_pack_bundle.index.index_version,
                             git::odb::pack::index::Version::V2
                         );
-                        assert_eq!(
-                            write_pack_bundle.index.index_hash,
-                            hex_to_id("c75114f60ab2c9389916f3de1082bbaa47491e3b")
-                        );
+                        assert_eq!(write_pack_bundle.index.index_hash, hex_to_id(expected_hash));
                         assert!(write_pack_bundle.data_path.map_or(false, |f| f.is_file()));
                         assert!(write_pack_bundle.index_path.map_or(false, |f| f.is_file()));
 
