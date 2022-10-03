@@ -42,14 +42,6 @@ pub struct SpawnProcessOnDemand {
     child: Option<process::Child>,
 }
 
-impl Drop for SpawnProcessOnDemand {
-    fn drop(&mut self) {
-        if let Some(mut child) = self.child.take() {
-            child.wait().ok();
-        }
-    }
-}
-
 impl SpawnProcessOnDemand {
     pub(crate) fn new_ssh(
         url: git_url::Url,
