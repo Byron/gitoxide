@@ -1,6 +1,6 @@
 use std::fmt;
 
-use bstr::{BStr, BString, ByteVec};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 
 /// The arguments passed to a server command.
 #[derive(Debug)]
@@ -30,7 +30,7 @@ impl Arguments {
     /// This can happen if callers assure that they won't add 'wants' if their 'have' is the same, i.e. if the remote has nothing
     /// new for them.
     pub fn is_empty(&self) -> bool {
-        self.args.is_empty()
+        self.haves.is_empty() && !self.args.iter().rev().any(|arg| arg.starts_with_str("want "))
     }
     /// Return true if ref filters is supported.
     pub fn can_use_filter(&self) -> bool {

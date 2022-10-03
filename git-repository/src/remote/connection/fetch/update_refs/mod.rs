@@ -1,6 +1,8 @@
+use crate::ext::ObjectIdExt;
 use crate::remote::fetch;
 use crate::remote::fetch::refs::update::Mode;
 use crate::Repository;
+use git_odb::FindExt;
 use git_pack::Find;
 use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog};
 use git_ref::{Target, TargetRef};
@@ -58,7 +60,7 @@ pub(crate) fn update(
         let checked_out_branches = worktree_branches(repo)?;
         let (mode, edit_index) = match local {
             Some(name) => {
-                let (mode, reflog_message, name) = match repo.try_find_reference(name)? {
+                let (mode, reflog_message, name, previous_value) = match repo.try_find_reference(name)? {
                     Some(existing) => {
                         if let Some(wt_dir) = checked_out_branches.get(existing.name()) {
                             let mode = update::Mode::RejectedCurrentlyCheckedOut {
@@ -73,21 +75,65 @@ pub(crate) fn update(
                                 continue;
                             }
                             TargetRef::Peeled(local_id) => {
+                                let previous_value =
+                                    PreviousValue::MustExistAndMatch(Target::Peeled(local_id.to_owned()));
                                 let (mode, reflog_message) = if local_id == remote_id {
                                     (update::Mode::NoChangeNeeded, "no update will be performed")
-                                } else if refspecs[*spec_index].allow_non_fast_forward() {
-                                    let reflog_msg = match existing.name().category() {
-                                        Some(git_ref::Category::Tag) => "updating tag",
-                                        _ => "forced-update",
-                                    };
-                                    (update::Mode::Forced, reflog_msg)
                                 } else if let Some(git_ref::Category::Tag) = existing.name().category() {
-                                    updates.push(update::Mode::RejectedTagUpdate.into());
-                                    continue;
+                                    if refspecs[*spec_index].allow_non_fast_forward() {
+                                        (update::Mode::Forced, "updating tag")
+                                    } else {
+                                        updates.push(update::Mode::RejectedTagUpdate.into());
+                                        continue;
+                                    }
                                 } else {
-                                    todo!("check for fast-forward (is local an ancestor of remote?)")
+                                    let mut force = refspecs[*spec_index].allow_non_fast_forward();
+                                    let is_fast_forward = match dry_run {
+                                        fetch::DryRun::No => {
+                                            let ancestors = repo
+                                                .find_object(local_id)?
+                                                .try_into_commit()
+                                                .map_err(|_| ())
+                                                .and_then(|c| {
+                                                    c.committer().map(|a| a.time.seconds_since_unix_epoch).map_err(|_| ())
+                                                }).and_then(|local_commit_time|
+                                                        remote_id
+                                                            .to_owned()
+                                                            .ancestors(|id, buf| repo.objects.find_commit_iter(id, buf))
+                                                            .sorting(
+                                                                git_traverse::commit::Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+                                                                    time_in_seconds_since_epoch: local_commit_time
+                                                                },
+                                                            )
+                                                            .map_err(|_| ())
+                                                );
+                                            match ancestors {
+                                                Ok(mut ancestors) => {
+                                                    ancestors.any(|cid| cid.map_or(false, |cid| cid == local_id))
+                                                }
+                                                Err(_) => {
+                                                    force = true;
+                                                    false
+                                                }
+                                            }
+                                        }
+                                        fetch::DryRun::Yes => true,
+                                    };
+                                    if is_fast_forward {
+                                        (
+                                            update::Mode::FastForward,
+                                            matches!(dry_run, fetch::DryRun::Yes)
+                                                .then(|| "fast-forward (guessed in dry-run)")
+                                                .unwrap_or("fast-forward"),
+                                        )
+                                    } else if force {
+                                        (update::Mode::Forced, "forced-update")
+                                    } else {
+                                        updates.push(update::Mode::RejectedNonFastForward.into());
+                                        continue;
+                                    }
                                 };
-                                (mode, reflog_message, existing.name().to_owned())
+                                (mode, reflog_message, existing.name().to_owned(), previous_value)
                             }
                         }
                     }
@@ -98,7 +144,12 @@ pub(crate) fn update(
                             Some(git_ref::Category::LocalBranch) => "storing head",
                             _ => "storing ref",
                         };
-                        (update::Mode::New, reflog_msg, name)
+                        (
+                            update::Mode::New,
+                            reflog_msg,
+                            name,
+                            PreviousValue::ExistingMustMatch(Target::Peeled(remote_id.to_owned())),
+                        )
                     }
                 };
                 let edit = RefEdit {
@@ -108,7 +159,7 @@ pub(crate) fn update(
                             force_create_reflog: false,
                             message: format!("{}: {}", action, reflog_message).into(),
                         },
-                        expected: PreviousValue::ExistingMustMatch(Target::Peeled(remote_id.into())),
+                        expected: previous_value,
                         new: Target::Peeled(remote_id.into()),
                     },
                     name,

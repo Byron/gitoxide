@@ -238,7 +238,12 @@ where
                                         .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
                                     const ENCODED_BAND: usize = 1;
                                     match band {
-                                        BandRef::Data(d) => break (U16_HEX_BYTES + ENCODED_BAND, d.len()),
+                                        BandRef::Data(d) => {
+                                            if d.is_empty() {
+                                                continue;
+                                            }
+                                            break (U16_HEX_BYTES + ENCODED_BAND, d.len());
+                                        }
                                         BandRef::Progress(d) => {
                                             let text = TextRef::from(d).0;
                                             handle_progress(false, text);

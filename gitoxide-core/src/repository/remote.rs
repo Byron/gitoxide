@@ -1,13 +1,13 @@
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod refs_impl {
+    use super::by_name_or_url;
+    use crate::OutputFormat;
     use anyhow::bail;
     use git_repository as git;
     use git_repository::{
         protocol::fetch,
         refspec::{match_group::validate::Fix, RefSpec},
     };
-
-    use crate::OutputFormat;
 
     pub mod refs {
         use git_repository::bstr::BString;
@@ -21,14 +21,13 @@ mod refs_impl {
             Tracking { ref_specs: Vec<BString> },
         }
 
-        pub struct Context {
+        pub struct Options {
             pub format: OutputFormat,
-            pub name: Option<String>,
-            pub url: Option<git_repository::Url>,
+            pub name_or_url: Option<String>,
             pub handshake_info: bool,
         }
 
-        pub(crate) use super::print;
+        pub(crate) use super::{print, print_ref, print_refmap};
     }
 
     #[git::protocol::maybe_async::maybe_async]
@@ -38,23 +37,14 @@ mod refs_impl {
         mut progress: impl git::Progress,
         mut out: impl std::io::Write,
         err: impl std::io::Write,
-        refs::Context {
+        refs::Options {
             format,
-            name,
-            url,
+            name_or_url,
             handshake_info,
-        }: refs::Context,
+        }: refs::Options,
     ) -> anyhow::Result<()> {
         use anyhow::Context;
-        let mut remote = match (name, url) {
-            (Some(name), None) => repo.find_remote(&name)?,
-            (None, None) => repo
-                .head()?
-                .into_remote(git::remote::Direction::Fetch)
-                .context("Cannot find a remote for unborn branch")??,
-            (None, Some(url)) => repo.remote_at(url)?,
-            (Some(_), Some(_)) => bail!("Must not set both the remote name and the url - they are mutually exclusive"),
-        };
+        let mut remote = by_name_or_url(&repo, name_or_url.as_deref())?;
         if let refs::Kind::Tracking { ref_specs, .. } = &kind {
             if format != OutputFormat::Human {
                 bail!("JSON output isn't yet supported for listing ref-mappings.");
@@ -101,7 +91,7 @@ mod refs_impl {
         }
     }
 
-    fn print_refmap(
+    pub(crate) fn print_refmap(
         repo: &git::Repository,
         refspecs: &[RefSpec],
         mut map: git::remote::fetch::RefMap<'_>,
@@ -176,6 +166,9 @@ mod refs_impl {
                 refspecs.len()
             )?;
         }
+        if refspecs.is_empty() {
+            bail!("Without ref-specs there is nothing to show here. Add ref-specs as arguments or configure them in git-config.")
+        }
         Ok(())
     }
 
@@ -229,7 +222,7 @@ mod refs_impl {
         }
     }
 
-    fn print_ref(mut out: impl std::io::Write, r: &fetch::Ref) -> std::io::Result<&git::hash::oid> {
+    pub(crate) fn print_ref(mut out: impl std::io::Write, r: &fetch::Ref) -> std::io::Result<&git::hash::oid> {
         match r {
             fetch::Ref::Direct {
                 full_ref_name: path,
@@ -258,3 +251,24 @@ mod refs_impl {
 }
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 pub use refs_impl::{refs, refs_fn as refs, JsonRef};
+
+#[cfg(any(feature = "blocking-client", feature = "async-client"))]
+pub(crate) fn by_name_or_url<'repo>(
+    repo: &'repo git_repository::Repository,
+    name_or_url: Option<&str>,
+) -> anyhow::Result<git_repository::Remote<'repo>> {
+    use anyhow::Context;
+    Ok(match name_or_url {
+        Some(name) => {
+            if name.contains('/') || name.contains('.') {
+                repo.remote_at(git_repository::url::parse(name.into())?)?
+            } else {
+                repo.find_remote(&name)?
+            }
+        }
+        None => repo
+            .head()?
+            .into_remote(git_repository::remote::Direction::Fetch)
+            .context("Cannot find a remote for unborn branch")??,
+    })
+}

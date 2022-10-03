@@ -1,6 +1,6 @@
 use crate::remote::fetch::{DryRun, RefMap};
 use crate::remote::{fetch, ref_map, Connection};
-use crate::Progress;
+use crate::{remote, Progress};
 use git_odb::FindExt;
 use git_protocol::transport::client::Transport;
 use std::sync::atomic::AtomicBool;
@@ -16,7 +16,7 @@ mod error {
             desired: Option<i64>,
             source: Option<git_config::value::Error>,
         },
-        #[error(transparent)]
+        #[error("Could not decode server reply")]
         FetchResponse(#[from] git_protocol::fetch::response::Error),
         #[error(transparent)]
         Negotiate(#[from] super::negotiate::Error),
@@ -62,6 +62,16 @@ pub struct Outcome<'spec> {
 ///
 pub mod negotiate;
 
+pub mod prepare {
+    #[derive(Debug, thiserror::Error)]
+    pub enum Error {
+        #[error("Cannot perform a meaningful fetch operation without any configured ref-specs")]
+        MissingRefSpecs,
+        #[error(transparent)]
+        RefMap(#[from] crate::remote::ref_map::Error),
+    }
+}
+
 impl<'remote, 'repo, T, P> Connection<'remote, 'repo, T, P>
 where
     T: Transport,
@@ -78,12 +88,15 @@ where
     /// Note that this implementation is currently limited to blocking mode as it relies on Drop semantics to close the connection
     /// should the fetch not be performed. Furthermore, there the code doing the fetch is inherently blocking so there is no benefit.
     /// It's best to unblock it by placing it into its own thread or offload it should usage in an async context be required.
-    pub fn prepare_fetch(mut self, options: ref_map::Options) -> Result<Prepare<'remote, 'repo, T, P>, ref_map::Error> {
+    pub fn prepare_fetch(mut self, options: ref_map::Options) -> Result<Prepare<'remote, 'repo, T, P>, prepare::Error> {
+        if self.remote.refspecs(remote::Direction::Fetch).is_empty() {
+            return Err(prepare::Error::MissingRefSpecs);
+        }
         let ref_map = self.ref_map_inner(options)?;
         Ok(Prepare {
             con: Some(self),
             ref_map,
-            dry_run: fetch::DryRun::No,
+            dry_run: DryRun::No,
         })
     }
 }
@@ -192,7 +205,7 @@ where
             repo,
             "fetch",
             &self.ref_map.mappings,
-            con.remote.refspecs(crate::remote::Direction::Fetch),
+            con.remote.refspecs(remote::Direction::Fetch),
             self.dry_run,
         )?;
 
@@ -234,7 +247,7 @@ where
 {
     con: Option<Connection<'remote, 'repo, T, P>>,
     ref_map: RefMap<'remote>,
-    dry_run: fetch::DryRun,
+    dry_run: DryRun,
 }
 
 /// Builder
@@ -246,7 +259,7 @@ where
     ///
     /// This works by not actually fetching the pack after negotiating it, nor will refs be updated.
     pub fn with_dry_run(mut self, enabled: bool) -> Self {
-        self.dry_run = enabled.then(|| fetch::DryRun::Yes).unwrap_or(DryRun::No);
+        self.dry_run = enabled.then(|| DryRun::Yes).unwrap_or(DryRun::No);
         self
     }
 }

@@ -8,7 +8,7 @@ use crate::fetch::command::Feature;
 #[allow(missing_docs)]
 pub enum Error {
     #[error("Failed to read from line reader")]
-    Io(std::io::Error),
+    Io(#[source] std::io::Error),
     #[error(transparent)]
     UploadPack(#[from] git_transport::packetline::read::Error),
     #[error(transparent)]
@@ -139,6 +139,7 @@ impl WantedRef {
 }
 
 /// A representation of a complete fetch response
+#[derive(Debug)]
 pub struct Response {
     acks: Vec<Acknowledgement>,
     shallows: Vec<ShallowUpdate>,

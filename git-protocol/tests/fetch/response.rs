@@ -124,14 +124,21 @@ mod v2 {
 
         #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
         async fn clone() -> crate::Result {
-            let mut provider = mock_reader("v2/clone-only.response");
-            let mut reader = provider.as_read_without_sidebands();
-            let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
-            assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
-            assert!(r.has_pack());
-            let mut buf = Vec::new();
-            let bytes_read = reader.read_to_end(&mut buf).await?;
-            assert_eq!(bytes_read, 1089, "should be able to read the whole pack");
+            for keepalive in [false, true] {
+                let fixture = format!(
+                    "v2/clone-only{}.response",
+                    keepalive.then(|| "-with-keepalive").unwrap_or_default()
+                );
+                let mut provider = mock_reader(&fixture);
+                let mut reader = provider.as_read_without_sidebands();
+                let r = fetch::Response::from_line_reader(Protocol::V2, &mut reader).await?;
+                assert!(r.acknowledgements().is_empty(), "it should go straight to the packfile");
+                assert!(r.has_pack());
+                reader.set_progress_handler(Some(Box::new(|_is_err, _text| ())));
+                let mut buf = Vec::new();
+                let bytes_read = reader.read_to_end(&mut buf).await?;
+                assert_eq!(bytes_read, 876, "should be able to read the whole pack");
+            }
             Ok(())
         }
 

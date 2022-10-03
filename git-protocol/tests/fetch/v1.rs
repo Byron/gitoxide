@@ -7,22 +7,28 @@ use crate::fetch::{helper_unused, oid, transport, CloneDelegate, LsRemoteDelegat
 
 #[maybe_async::test(feature = "blocking-client", async(feature = "async-client", async_std::test))]
 async fn clone() -> crate::Result {
-    let out = Vec::new();
-    let mut dlg = CloneDelegate::default();
-    git_protocol::fetch(
-        transport(
-            out,
-            "v1/clone.response",
-            Protocol::V1,
-            git_transport::client::git::ConnectMode::Daemon,
-        ),
-        &mut dlg,
-        helper_unused,
-        progress::Discard,
-        FetchConnection::TerminateOnSuccessfulCompletion,
-    )
-    .await?;
-    assert_eq!(dlg.pack_bytes, 876, "It be able to read pack bytes");
+    for with_keepalive in [false, true] {
+        let out = Vec::new();
+        let mut dlg = CloneDelegate::default();
+        let fixture = format!(
+            "v1/clone{}.response",
+            with_keepalive.then(|| "-with-keepalive").unwrap_or_default()
+        );
+        git_protocol::fetch(
+            transport(
+                out,
+                &fixture,
+                Protocol::V1,
+                git_transport::client::git::ConnectMode::Daemon,
+            ),
+            &mut dlg,
+            helper_unused,
+            progress::Discard,
+            FetchConnection::TerminateOnSuccessfulCompletion,
+        )
+        .await?;
+        assert_eq!(dlg.pack_bytes, 876, "{}: It be able to read pack bytes", fixture);
+    }
     Ok(())
 }
 

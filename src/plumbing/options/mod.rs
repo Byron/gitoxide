@@ -81,10 +81,14 @@ pub enum Subcommands {
     /// A program just like `git credential`.
     #[clap(subcommand)]
     Credential(credential::Subcommands),
+    /// Fetch data from remotes and store it in the repository
+    #[cfg(feature = "gitoxide-core-blocking-client")]
+    Fetch(fetch::Platform),
     /// Interact with the mailmap.
     #[clap(subcommand)]
     Mailmap(mailmap::Subcommands),
     /// Interact with the remote hosts.
+    #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
     Remote(remote::Platform),
     /// Interact with the exclude files like .gitignore.
     #[clap(subcommand)]
@@ -110,23 +114,46 @@ pub mod config {
     }
 }
 
+#[cfg(feature = "gitoxide-core-blocking-client")]
+pub mod fetch {
+    use git_repository as git;
+
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        /// Don't change the local repository, but otherwise try to be as accurate as possible.
+        #[clap(long, short = 'n')]
+        pub dry_run: bool,
+
+        /// Output additional typically information provided by the server as part of the connection handshake.
+        #[clap(long, short = 'H')]
+        pub handshake_info: bool,
+
+        /// The name of the remote to connect to, or the url of the remote to connect to directly.
+        ///
+        /// If unset, the current branch will determine the remote.
+        #[clap(long, short = 'r')]
+        pub remote: Option<String>,
+
+        /// Override the built-in and configured ref-specs with one or more of the given ones.
+        #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
+        pub ref_spec: Vec<git_repository::bstr::BString>,
+    }
+}
+
+#[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
 pub mod remote {
     use git_repository as git;
 
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
-        /// The name of the remote to connect to.
+        /// The name of the remote to connect to, or the URL of the remote to connect to directly.
         ///
         /// If unset, the current branch will determine the remote.
         #[clap(long, short = 'n')]
         pub name: Option<String>,
 
-        /// Connect directly to the given URL, forgoing any configuration from the repository.
-        #[clap(long, short = 'u', conflicts_with("name"), parse(try_from_os_str = std::convert::TryFrom::try_from))]
-        pub url: Option<git::Url>,
-
         /// Output additional typically information provided by the server as part of the connection handshake.
-        #[clap(long)]
+        #[clap(long, short = 'H')]
         pub handshake_info: bool,
 
         /// Subcommands
@@ -138,10 +165,8 @@ pub mod remote {
     #[clap(visible_alias = "remotes")]
     pub enum Subcommands {
         /// Print all references available on the remote.
-        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         Refs,
         /// Print all references available on the remote as filtered through ref-specs.
-        #[cfg(any(feature = "gitoxide-core-async-client", feature = "gitoxide-core-blocking-client"))]
         RefMap {
             /// Override the built-in and configured ref-specs with one or more of the given ones.
             #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]

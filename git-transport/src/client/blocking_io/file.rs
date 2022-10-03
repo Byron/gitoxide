@@ -42,14 +42,6 @@ pub struct SpawnProcessOnDemand {
     child: Option<process::Child>,
 }
 
-impl Drop for SpawnProcessOnDemand {
-    fn drop(&mut self) {
-        if let Some(mut child) = self.child.take() {
-            child.wait().ok();
-        }
-    }
-}
-
 impl SpawnProcessOnDemand {
     pub(crate) fn new_ssh(
         url: git_url::Url,
@@ -76,7 +68,9 @@ impl SpawnProcessOnDemand {
             path,
             ssh_program: None,
             ssh_args: Vec::new(),
-            ssh_env: Vec::new(),
+            ssh_env: (version != Protocol::V1)
+                .then(|| vec![("GIT_PROTOCOL", format!("version={}", version as usize))])
+                .unwrap_or_default(),
             child: None,
             connection: None,
             desired_version: version,
