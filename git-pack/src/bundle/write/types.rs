@@ -55,9 +55,11 @@ impl Outcome {
     }
 }
 
+pub(crate) type SharedTempFile = Arc<parking_lot::Mutex<std::io::BufWriter<git_tempfile::Handle<Writable>>>>;
+
 pub(crate) struct PassThrough<R> {
     pub reader: R,
-    pub writer: Option<Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>>,
+    pub writer: Option<SharedTempFile>,
 }
 
 impl<R> io::Read for PassThrough<R>
@@ -87,7 +89,7 @@ where
 }
 
 pub(crate) struct LockWriter {
-    pub writer: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
+    pub writer: SharedTempFile,
 }
 
 impl io::Write for LockWriter {
@@ -102,7 +104,7 @@ impl io::Write for LockWriter {
 
 impl io::Read for LockWriter {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.writer.lock().read(buf)
+        self.writer.lock().get_mut().read(buf)
     }
 }
 
