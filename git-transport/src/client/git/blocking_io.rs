@@ -1,6 +1,4 @@
-use std::any::Any;
-use std::error::Error;
-use std::io::Write;
+use std::{any::Any, error::Error, io::Write};
 
 use bstr::BString;
 use git_packetline::PacketLineRef;

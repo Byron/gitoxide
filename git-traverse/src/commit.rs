@@ -54,8 +54,11 @@ impl Default for Sorting {
 
 ///
 pub mod ancestors {
-    use std::borrow::Borrow;
-    use std::{borrow::BorrowMut, collections::VecDeque, iter::FromIterator};
+    use std::{
+        borrow::{Borrow, BorrowMut},
+        collections::VecDeque,
+        iter::FromIterator,
+    };
 
     use git_hash::{oid, ObjectId};
     use git_object::CommitRefIter;

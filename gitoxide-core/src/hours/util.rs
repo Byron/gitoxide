@@ -1,9 +1,10 @@
-use crate::hours::core::HOURS_PER_WORKDAY;
-use git::bstr::BStr;
-use git::bstr::ByteSlice;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+use git::bstr::{BStr, ByteSlice};
 use git_repository as git;
 use itertools::Itertools;
-use std::sync::atomic::{AtomicUsize, Ordering};
+
+use crate::hours::core::HOURS_PER_WORKDAY;
 
 #[derive(Debug)]
 pub struct WorkByPerson {

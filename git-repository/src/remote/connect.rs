@@ -1,5 +1,6 @@
-use crate::{remote::Connection, Progress, Remote};
 use git_protocol::transport::client::Transport;
+
+use crate::{remote::Connection, Progress, Remote};
 
 mod error {
     use crate::{bstr::BString, remote};

@@ -273,8 +273,9 @@ mod find_remote {
 }
 
 mod find_default_remote {
-    use crate::remote;
     use git_repository as git;
+
+    use crate::remote;
 
     #[test]
     fn works_on_detached_heads() -> crate::Result {

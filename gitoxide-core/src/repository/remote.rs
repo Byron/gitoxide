@@ -1,13 +1,14 @@
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 mod refs_impl {
-    use super::by_name_or_url;
-    use crate::OutputFormat;
     use anyhow::bail;
     use git_repository as git;
     use git_repository::{
         protocol::fetch,
         refspec::{match_group::validate::Fix, RefSpec},
     };
+
+    use super::by_name_or_url;
+    use crate::OutputFormat;
 
     pub mod refs {
         use git_repository::bstr::BString;

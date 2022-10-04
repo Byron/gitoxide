@@ -191,9 +191,9 @@ mod read_only {
 }
 
 mod writable {
-    use git_lock::acquire::Fail;
     use std::convert::TryInto;
 
+    use git_lock::acquire::Fail;
     use git_ref::{
         file::{transaction::PackedRefs, Store},
         transaction::{Change, LogChange, PreviousValue, RefEdit},

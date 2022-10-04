@@ -1,6 +1,7 @@
 mod update {
-    use crate as git;
     use git_testtools::{hex_to_id, Result};
+
+    use crate as git;
 
     fn base_repo_path() -> String {
         git::path::realpath(
@@ -28,9 +29,9 @@ mod update {
         let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
         (repo, dir)
     }
+    use git_ref::{transaction::Change, TargetRef};
+
     use crate::remote::fetch;
-    use git_ref::transaction::Change;
-    use git_ref::TargetRef;
 
     #[test]
     fn various_valid_updates() {

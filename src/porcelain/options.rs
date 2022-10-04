@@ -1,6 +1,7 @@
+use std::path::PathBuf;
+
 use git::bstr::BString;
 use git_repository as git;
-use std::path::PathBuf;
 
 #[derive(Debug, clap::Parser)]
 #[clap(about = "The rusty git", version = clap::crate_version!())]

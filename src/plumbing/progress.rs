@@ -1,6 +1,7 @@
+use std::fmt::{Display, Formatter};
+
 use crosstermion::crossterm::style::Stylize;
 use owo_colors::OwoColorize;
-use std::fmt::{Display, Formatter};
 use tabled::{Style, TableIteratorExt, Tabled};
 
 #[derive(Clone)]

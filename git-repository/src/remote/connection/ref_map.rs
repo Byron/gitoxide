@@ -1,9 +1,12 @@
-use crate::bstr::{BString, ByteVec};
-use git_features::progress::Progress;
-use git_protocol::transport::client::Transport;
 use std::collections::HashSet;
 
-use crate::remote::{connection::HandshakeWithRefs, fetch, Connection, Direction};
+use git_features::progress::Progress;
+use git_protocol::transport::client::Transport;
+
+use crate::{
+    bstr::{BString, ByteVec},
+    remote::{connection::HandshakeWithRefs, fetch, Connection, Direction},
+};
 
 /// The error returned by [`Connection::ref_map()`].
 #[derive(Debug, thiserror::Error)]

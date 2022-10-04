@@ -1,10 +1,10 @@
-use git_features::threading::OwnShared;
 use std::borrow::Cow;
 
-use crate::config::{CommitAutoRollback, SnapshotMut};
+use git_features::threading::OwnShared;
+
 use crate::{
     bstr::BStr,
-    config::{cache::interpolate_context, Snapshot},
+    config::{cache::interpolate_context, CommitAutoRollback, Snapshot, SnapshotMut},
 };
 
 /// Access configuration values, frozen in time, using a `key` which is a `.` separated string of up to

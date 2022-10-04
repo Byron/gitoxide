@@ -1,9 +1,13 @@
-use crate::bstr::{BStr, BString, ByteSlice, ByteVec};
-use crate::ext::ObjectIdExt;
-use crate::{Repository, Tree};
+use std::collections::VecDeque;
+
 use git_object::TreeRefIter;
 use git_odb::FindExt;
-use std::collections::VecDeque;
+
+use crate::{
+    bstr::{BStr, BString, ByteSlice, ByteVec},
+    ext::ObjectIdExt,
+    Repository, Tree,
+};
 
 /// The error return by methods on the [diff platform][Platform].
 #[derive(Debug, thiserror::Error)]
@@ -43,9 +47,9 @@ pub struct Change<'a, 'old, 'new> {
 
 ///
 pub mod change {
-    use crate::bstr::ByteSlice;
-    use crate::Id;
     use git_object::tree::EntryMode;
+
+    use crate::{bstr::ByteSlice, Id};
 
     /// An event emitted when finding differences between two trees.
     #[derive(Debug, Clone, Copy)]

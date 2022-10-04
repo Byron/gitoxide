@@ -1,6 +1,8 @@
-use std::any::Any;
-use std::error::Error;
-use std::process::{self, Command, Stdio};
+use std::{
+    any::Any,
+    error::Error,
+    process::{self, Command, Stdio},
+};
 
 use bstr::{BString, ByteSlice};
 

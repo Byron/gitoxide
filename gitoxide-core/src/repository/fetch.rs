@@ -1,6 +1,7 @@
-use crate::OutputFormat;
 use git::bstr::BString;
 use git_repository as git;
+
+use crate::OutputFormat;
 
 pub struct Options {
     pub format: OutputFormat,
@@ -14,13 +15,12 @@ pub struct Options {
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub(crate) mod function {
-    use super::Options;
-    use crate::OutputFormat;
     use anyhow::bail;
     use git_repository as git;
-    use git_repository::prelude::ObjectIdExt;
-    use git_repository::refspec::match_group::validate::Fix;
-    use git_repository::remote::fetch::Status;
+    use git_repository::{prelude::ObjectIdExt, refspec::match_group::validate::Fix, remote::fetch::Status};
+
+    use super::Options;
+    use crate::OutputFormat;
 
     pub fn fetch(
         repo: git::Repository,

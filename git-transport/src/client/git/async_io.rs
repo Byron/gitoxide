@@ -1,9 +1,10 @@
+use std::error::Error;
+
 use async_trait::async_trait;
 use bstr::BString;
 use futures_io::{AsyncRead, AsyncWrite};
 use futures_lite::AsyncWriteExt;
 use git_packetline::PacketLineRef;
-use std::error::Error;
 
 use crate::{
     client::{self, capabilities, git, Capabilities, SetServiceResponse},

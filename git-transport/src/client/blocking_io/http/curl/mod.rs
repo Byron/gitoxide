@@ -1,5 +1,5 @@
-use std::error::Error;
 use std::{
+    error::Error,
     sync::mpsc::{Receiver, SyncSender},
     thread,
 };

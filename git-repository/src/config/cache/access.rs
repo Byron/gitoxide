@@ -1,9 +1,8 @@
-use crate::config::Cache;
-use crate::{remote, repository::identity};
+use std::{convert::TryInto, path::PathBuf, time::Duration};
+
 use git_lock::acquire::Fail;
-use std::convert::TryInto;
-use std::path::PathBuf;
-use std::time::Duration;
+
+use crate::{config::Cache, remote, repository::identity};
 
 /// Access
 impl Cache {

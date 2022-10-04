@@ -1,5 +1,6 @@
-use crate::remote::fetch;
 use std::path::PathBuf;
+
+use crate::remote::fetch;
 
 mod error {
     /// The error returned when updating references.

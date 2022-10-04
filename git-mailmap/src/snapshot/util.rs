@@ -1,6 +1,6 @@
+use std::{cmp::Ordering, ops::Deref};
+
 use bstr::{BStr, BString, ByteSlice};
-use std::cmp::Ordering;
-use std::ops::Deref;
 
 #[cfg_attr(test, derive(Debug))]
 #[derive(Clone)]

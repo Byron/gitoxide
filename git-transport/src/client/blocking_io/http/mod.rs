@@ -1,5 +1,5 @@
-use std::any::Any;
 use std::{
+    any::Any,
     borrow::Cow,
     io::{BufRead, Read},
 };

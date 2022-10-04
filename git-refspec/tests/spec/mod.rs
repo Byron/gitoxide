@@ -1,6 +1,5 @@
 mod prefix {
-    use git_refspec::parse::Operation;
-    use git_refspec::RefSpec;
+    use git_refspec::{parse::Operation, RefSpec};
 
     #[test]
     fn partial_refs_have_no_prefix() {

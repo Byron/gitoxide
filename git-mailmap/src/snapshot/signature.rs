@@ -1,5 +1,6 @@
-use bstr::{BStr, BString, ByteSlice};
 use std::borrow::Cow;
+
+use bstr::{BStr, BString, ByteSlice};
 
 /// A signature like [`git_actor::Signature`], but with all string fields being a `Cow`.
 #[derive(Default, PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]

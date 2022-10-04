@@ -1,6 +1,6 @@
-use std::io::Write;
 use std::{
     io,
+    io::Write,
     path::{Path, PathBuf},
     sync::{atomic::AtomicBool, Arc},
 };
@@ -14,9 +14,10 @@ mod error;
 pub use error::Error;
 
 mod types;
-use crate::bundle::write::types::SharedTempFile;
 use types::{LockWriter, PassThrough};
 pub use types::{Options, Outcome};
+
+use crate::bundle::write::types::SharedTempFile;
 
 type ThinPackLookupFn = Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>>>;
 type ThinPackLookupFnSend =

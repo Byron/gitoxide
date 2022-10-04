@@ -1,9 +1,17 @@
-use crate::remote::fetch::{DryRun, RefMap};
-use crate::remote::{fetch, ref_map, Connection};
-use crate::{remote, Progress};
+use std::sync::atomic::AtomicBool;
+
 use git_odb::FindExt;
 use git_protocol::transport::client::Transport;
-use std::sync::atomic::AtomicBool;
+
+use crate::{
+    remote,
+    remote::{
+        fetch,
+        fetch::{DryRun, RefMap},
+        ref_map, Connection,
+    },
+    Progress,
+};
 
 mod error {
     /// The error returned by [`receive()`](super::Prepare::receive()).

@@ -147,9 +147,10 @@ mod tag {
 }
 
 mod commit {
-    use crate::{freeze_time, restricted_and_git};
     use git_repository as git;
     use git_testtools::hex_to_id;
+
+    use crate::{freeze_time, restricted_and_git};
 
     #[test]
     fn parent_in_initial_commit_causes_failure() {

@@ -1,14 +1,17 @@
-use crate::ext::ObjectIdExt;
-use crate::remote::fetch;
-use crate::remote::fetch::refs::update::Mode;
-use crate::Repository;
+use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
+
 use git_odb::FindExt;
 use git_pack::Find;
-use git_ref::transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog};
-use git_ref::{Target, TargetRef};
-use std::collections::BTreeMap;
-use std::convert::TryInto;
-use std::path::PathBuf;
+use git_ref::{
+    transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
+    Target, TargetRef,
+};
+
+use crate::{
+    ext::ObjectIdExt,
+    remote::{fetch, fetch::refs::update::Mode},
+    Repository,
+};
 
 ///
 pub mod update;

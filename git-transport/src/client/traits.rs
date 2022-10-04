@@ -1,5 +1,7 @@
-use std::any::Any;
-use std::ops::{Deref, DerefMut};
+use std::{
+    any::Any,
+    ops::{Deref, DerefMut},
+};
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 use crate::client::{MessageKind, RequestWriter, WriteMode};

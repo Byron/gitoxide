@@ -1,12 +1,10 @@
-use crate::hours::FileStats;
-use crate::hours::LineStats;
-use crate::hours::WorkByEmail;
-use crate::hours::WorkByPerson;
+use std::collections::{hash_map::Entry, HashMap};
+
 use git::bstr::BStr;
 use git_repository as git;
 use itertools::Itertools;
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+
+use crate::hours::{FileStats, LineStats, WorkByEmail, WorkByPerson};
 
 const MINUTES_PER_HOUR: f32 = 60.0;
 pub const HOURS_PER_WORKDAY: f32 = 8.0;

@@ -1,6 +1,7 @@
+use std::convert::TryInto;
+
 use super::Error;
 use crate::Repository;
-use std::convert::TryInto;
 
 pub fn index_threads(repo: &Repository) -> Result<Option<usize>, Error> {
     let lenient_config = repo.options.lenient_config;

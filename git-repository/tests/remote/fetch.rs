@@ -1,12 +1,13 @@
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
-    use crate::remote;
+    use std::sync::atomic::AtomicBool;
+
     use git_features::progress;
     use git_repository as git;
-    use git_repository::remote::fetch;
-    use git_repository::remote::Direction::Fetch;
+    use git_repository::remote::{fetch, Direction::Fetch};
     use git_testtools::hex_to_id;
-    use std::sync::atomic::AtomicBool;
+
+    use crate::remote;
 
     fn repo_rw(name: &str) -> (git::Repository, git_testtools::tempfile::TempDir) {
         let dir = git_testtools::scripted_fixture_repo_writable_with_args(
