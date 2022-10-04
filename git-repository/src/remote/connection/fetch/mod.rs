@@ -41,7 +41,7 @@ pub use error::Error;
 /// The status of the repository after the fetch operation
 #[derive(Debug, Clone)]
 pub enum Status {
-    /// Nothing changed as the remote didn't have anything new.
+    /// Nothing changed as the remote didn't have anything new compared to our tracking branches.
     NoChange,
     /// There was at least one tip with a new object which we received.
     Change {
@@ -70,8 +70,11 @@ pub struct Outcome<'spec> {
 ///
 pub mod negotiate;
 
+///
 pub mod prepare {
+    /// The error returned by [`prepare_fetch()`][super::Connection::prepare_fetch()].
     #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
     pub enum Error {
         #[error("Cannot perform a meaningful fetch operation without any configured ref-specs")]
         MissingRefSpecs,
