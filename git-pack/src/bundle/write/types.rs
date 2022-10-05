@@ -36,7 +36,7 @@ pub struct Outcome {
     /// The successful result of the index write operation
     pub index: crate::index::write::Outcome,
     /// The version of the pack
-    pub pack_kind: crate::data::Version,
+    pub pack_version: crate::data::Version,
     /// The kind of hash stored within the pack and indices
     pub object_hash: git_hash::Kind,
 

@@ -95,7 +95,7 @@ mod write_to_directory {
                 data_hash: git_hash::ObjectId::from_hex(b"0f3ea84cd1bba10c2a03d736a460635082833e59")?,
                 num_objects: 42,
             },
-            pack_kind: pack::data::Version::V2,
+            pack_version: pack::data::Version::V2,
             index_path: None,
             data_path: None,
             object_hash: git_hash::Kind::Sha1,

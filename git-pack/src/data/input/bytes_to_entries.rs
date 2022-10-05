@@ -16,7 +16,7 @@ pub struct BytesToEntriesIter<BR> {
     decompressor: Option<Box<Decompress>>,
     offset: u64,
     had_error: bool,
-    kind: crate::data::Version,
+    version: crate::data::Version,
     objects_left: u32,
     hash: Option<Sha1>,
     mode: input::Mode,
@@ -30,8 +30,8 @@ where
     BR: io::BufRead,
 {
     /// The pack version currently being iterated
-    pub fn kind(&self) -> crate::data::Version {
-        self.kind
+    pub fn version(&self) -> crate::data::Version {
+        self.version
     }
 
     /// The kind of iteration
@@ -52,9 +52,9 @@ where
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
-        let (kind, num_objects) = crate::data::header::decode(&header_data)?;
+        let (version, num_objects) = crate::data::header::decode(&header_data)?;
         assert_eq!(
-            kind,
+            version,
             crate::data::Version::V2,
             "let's stop here if we see undocumented pack formats"
         );
@@ -64,7 +64,7 @@ where
             compressed,
             offset: 12,
             had_error: false,
-            kind,
+            version,
             objects_left: num_objects,
             hash: (mode != input::Mode::AsIs).then(|| {
                 let mut hash = git_features::hash::hasher(object_hash);
