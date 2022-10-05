@@ -146,7 +146,7 @@ where
             }),
             None => match self.write_header_and_digest(None) {
                 Ok(_) => None,
-                Err(err) => Some(Err(err.into())),
+                Err(err) => Some(Err(err)),
             },
         }
     }
