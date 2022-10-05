@@ -145,6 +145,7 @@ where
         let reader = 'negotiation: loop {
             progress.step();
             progress.set_name(format!("negotiate (round {})", round));
+
             let is_done = match negotiate::one_round(
                 negotiate::Algorithm::Naive,
                 round,

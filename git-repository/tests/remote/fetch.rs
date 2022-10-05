@@ -23,6 +23,26 @@ mod blocking_io {
     }
 
     #[test]
+    fn fetch_empty_pack() -> crate::Result {
+        let (repo, _tmp) = repo_rw("two-origins");
+        let mut remote = repo.head()?.into_remote(Fetch).expect("present")?;
+        remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-exist"), Fetch)?;
+
+        let res: git::remote::fetch::Outcome<'_> = remote
+            .connect(Fetch, git::progress::Discard)?
+            .prepare_fetch(Default::default())?
+            .receive(&AtomicBool::default())?;
+
+        match res.status {
+            git::remote::fetch::Status::Change {write_pack_bundle, ..} => {
+                assert_eq!(write_pack_bundle.index.data_hash, hex_to_id("029d08823bd8a8eab510ad6ac75c823cfd3ed31e"));
+                assert_eq!(write_pack_bundle.index.num_objects, 0, "empty pack")},
+            _ => unreachable!("Naive negotiation sends the same have and wants, resulting in an empty pack (technically no change, but we don't detect it) - empty packs are fine")
+        }
+        Ok(())
+    }
+
+    #[test]
     fn fetch_pack() -> crate::Result {
         for (version, expected_objects, expected_hash) in [
             (None, 4, "d07c527cf14e524a8494ce6d5d08e28079f5c6ea"),
@@ -76,7 +96,7 @@ mod blocking_io {
                         write_pack_bundle,
                         update_refs,
                     } => {
-                        assert_eq!(write_pack_bundle.pack_kind, git::odb::pack::data::Version::V2);
+                        assert_eq!(write_pack_bundle.pack_version, git::odb::pack::data::Version::V2);
                         assert_eq!(write_pack_bundle.object_hash, repo.object_hash());
                         assert_eq!(write_pack_bundle.index.num_objects, expected_objects, "this value is 4 when git does it with 'consecutive' negotiation style, but could be 33 if completely naive.");
                         assert_eq!(
