@@ -322,18 +322,14 @@ fn traversals() -> crate::Result {
 }
 
 #[test]
-fn empty_pack_is_not_allowed() {
-    assert_eq!(
-        write_and_verify(
-            db(DbKind::DeterministicGeneratedContent).unwrap(),
-            vec![],
-            hex_to_id("029d08823bd8a8eab510ad6ac75c823cfd3ed31e"),
-            None,
-        )
-        .unwrap_err()
-        .to_string(),
-        "Did not encounter a single base - refusing to write empty pack."
-    );
+fn empty_pack_is_allowed() {
+    write_and_verify(
+        db(DbKind::DeterministicGeneratedContent).unwrap(),
+        vec![],
+        hex_to_id("029d08823bd8a8eab510ad6ac75c823cfd3ed31e"),
+        None,
+    )
+    .unwrap();
 }
 
 fn write_and_verify(

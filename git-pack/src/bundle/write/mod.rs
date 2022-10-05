@@ -65,7 +65,7 @@ impl crate::Bundle {
                 None => git_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
             },
         )));
-        let (pack_entries_iter, pack_kind): (
+        let (pack_entries_iter, pack_version): (
             Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>>>,
             _,
         ) = match thin_pack_base_object_lookup_fn {
@@ -84,16 +84,16 @@ impl crate::Bundle {
                     )?,
                     thin_pack_lookup_fn,
                 );
-                let pack_kind = pack_entries_iter.inner.kind();
+                let pack_version = pack_entries_iter.inner.version();
                 let pack_entries_iter = data::input::EntriesToBytesIter::new(
                     pack_entries_iter,
                     LockWriter {
                         writer: data_file.clone(),
                     },
-                    pack_kind,
-                    git_hash::Kind::Sha1,
+                    pack_version,
+                    git_hash::Kind::Sha1, // Thin packs imply a pack being transported, and there we only ever know SHA1 at the moment.
                 );
-                (Box::new(pack_entries_iter), pack_kind)
+                (Box::new(pack_entries_iter), pack_version)
             }
             None => {
                 let pack = PassThrough {
@@ -114,8 +114,8 @@ impl crate::Bundle {
                     data::input::EntryDataMode::Crc32,
                     object_hash,
                 )?;
-                let pack_kind = pack_entries_iter.kind();
-                (Box::new(pack_entries_iter), pack_kind)
+                let pack_version = pack_entries_iter.version();
+                (Box::new(pack_entries_iter), pack_version)
             }
         };
         let (outcome, data_path, index_path) = crate::Bundle::inner_write(
@@ -125,12 +125,13 @@ impl crate::Bundle {
             data_file,
             pack_entries_iter,
             should_interrupt,
+            pack_version,
         )?;
 
         Ok(Outcome {
             index: outcome,
             object_hash,
-            pack_kind,
+            pack_version,
             data_path,
             index_path,
         })
@@ -165,7 +166,7 @@ impl crate::Bundle {
         })));
         let object_hash = options.object_hash;
         let eight_pages = 4096 * 8;
-        let (pack_entries_iter, pack_kind): (
+        let (pack_entries_iter, pack_version): (
             Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>> + Send + 'static>,
             _,
         ) = match thin_pack_base_object_lookup_fn {
@@ -184,7 +185,7 @@ impl crate::Bundle {
                     )?,
                     thin_pack_lookup_fn,
                 );
-                let pack_kind = pack_entries_iter.inner.kind();
+                let pack_kind = pack_entries_iter.inner.version();
                 (Box::new(pack_entries_iter), pack_kind)
             }
             None => {
@@ -202,7 +203,7 @@ impl crate::Bundle {
                     data::input::EntryDataMode::Crc32,
                     object_hash,
                 )?;
-                let pack_kind = pack_entries_iter.kind();
+                let pack_kind = pack_entries_iter.version();
                 (Box::new(pack_entries_iter), pack_kind)
             }
         };
@@ -217,12 +218,13 @@ impl crate::Bundle {
             data_file,
             pack_entries_iter,
             should_interrupt,
+            pack_version,
         )?;
 
         Ok(Outcome {
             index: outcome,
             object_hash,
-            pack_kind,
+            pack_version,
             data_path,
             index_path,
         })
@@ -240,6 +242,7 @@ impl crate::Bundle {
         data_file: SharedTempFile,
         pack_entries_iter: impl Iterator<Item = Result<data::input::Entry, data::input::Error>>,
         should_interrupt: &AtomicBool,
+        pack_version: crate::data::Version,
     ) -> Result<(crate::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error> {
         let indexing_progress = progress.add_child("create index file");
         Ok(match directory {
@@ -259,6 +262,7 @@ impl crate::Bundle {
                     &mut index_file,
                     should_interrupt,
                     object_hash,
+                    pack_version,
                 )?;
 
                 let data_path = directory.join(format!("pack-{}.pack", outcome.data_hash.to_hex()));
@@ -291,6 +295,7 @@ impl crate::Bundle {
                     io::sink(),
                     should_interrupt,
                     object_hash,
+                    pack_version,
                 )?,
                 None,
                 None,

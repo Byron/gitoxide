@@ -279,7 +279,7 @@ impl JsonOutcome {
     pub fn from_outcome_and_refs(v: pack::bundle::write::Outcome, refs: &[Ref]) -> Self {
         JsonOutcome {
             index: v.index.into(),
-            pack_kind: v.pack_kind,
+            pack_kind: v.pack_version,
             index_path: v.index_path,
             data_path: v.data_path,
             refs: refs.iter().cloned().map(Into::into).collect(),

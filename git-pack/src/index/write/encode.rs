@@ -18,10 +18,6 @@ pub(crate) fn write_to(
     mut progress: impl Progress,
 ) -> io::Result<git_hash::ObjectId> {
     use io::Write;
-    assert!(
-        !entries_sorted_by_oid.is_empty(),
-        "Empty packs do not exists, or so I think"
-    );
     assert_eq!(kind, crate::index::Version::V2, "Can only write V2 packs right now");
     assert!(
         entries_sorted_by_oid.len() <= u32::MAX as usize,

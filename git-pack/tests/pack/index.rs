@@ -147,6 +147,7 @@ mod version {
                 let mut actual = Vec::<u8>::new();
                 let desired_kind = pack::index::Version::default();
                 let num_objects = pack_iter.len() as u32;
+                let pack_version = pack_iter.version();
                 let outcome = pack::index::File::write_data_iter_to_stream(
                     desired_kind,
                     move || Ok(resolve),
@@ -156,6 +157,7 @@ mod version {
                     &mut actual,
                     &AtomicBool::new(false),
                     git_hash::Kind::Sha1,
+                    pack_version,
                 )?;
 
                 let expected = fs::read(fixture_path(index_path))?;
