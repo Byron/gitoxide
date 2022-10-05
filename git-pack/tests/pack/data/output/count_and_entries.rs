@@ -322,7 +322,7 @@ fn traversals() -> crate::Result {
 }
 
 #[test]
-fn empty_pack_is_not_allowed() {
+fn empty_pack_is_allowed() {
     assert_eq!(
         write_and_verify(
             db(DbKind::DeterministicGeneratedContent).unwrap(),

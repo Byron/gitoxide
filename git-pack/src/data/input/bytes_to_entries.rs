@@ -5,6 +5,7 @@ use git_features::{
     hash::Sha1,
     zlib::{stream::inflate::ReadBoxed, Decompress},
 };
+use git_hash::ObjectId;
 
 use crate::data::input;
 
@@ -23,12 +24,11 @@ pub struct BytesToEntriesIter<BR> {
     compressed: input::EntryDataMode,
     compressed_buf: Option<Vec<u8>>,
     hash_len: usize,
+    object_hash: git_hash::Kind,
 }
 
-impl<BR> BytesToEntriesIter<BR>
-where
-    BR: io::BufRead,
-{
+/// Access
+impl<BR> BytesToEntriesIter<BR> {
     /// The pack version currently being iterated
     pub fn version(&self) -> crate::data::Version {
         self.version
@@ -38,7 +38,13 @@ where
     pub fn mode(&self) -> input::Mode {
         self.mode
     }
+}
 
+/// Initialization
+impl<BR> BytesToEntriesIter<BR>
+where
+    BR: io::BufRead,
+{
     /// Obtain an iterator from a `read` stream to a pack data file and configure it using `mode` and `compressed`.
     /// `object_hash` specifies which hash is used for objects in ref-delta entries.
     ///
@@ -74,6 +80,7 @@ where
             mode,
             compressed_buf: None,
             hash_len: object_hash.len_in_bytes(),
+            object_hash,
         })
     }
 
@@ -158,8 +165,22 @@ where
         };
 
         // Last objects gets trailer (which is potentially verified)
-        let trailer = if self.objects_left == 0 {
-            let mut id = git_hash::ObjectId::from([0; 20]);
+        let trailer = self.try_read_trailer()?;
+        Ok(input::Entry {
+            header: entry.header,
+            header_size: entry.header_size() as u16,
+            compressed,
+            compressed_size,
+            crc32,
+            pack_offset,
+            decompressed_size: bytes_copied,
+            trailer,
+        })
+    }
+
+    fn try_read_trailer(&mut self) -> Result<Option<ObjectId>, input::Error> {
+        Ok(if self.objects_left == 0 {
+            let mut id = git_hash::ObjectId::null(self.object_hash);
             if let Err(err) = self.read.read_exact(id.as_mut_slice()) {
                 if self.mode != input::Mode::Restore {
                     return Err(err.into());
@@ -184,17 +205,6 @@ where
             Some(git_hash::ObjectId::from(hash.digest()))
         } else {
             None
-        };
-
-        Ok(input::Entry {
-            header: entry.header,
-            header_size: entry.header_size() as u16,
-            compressed,
-            compressed_size,
-            crc32,
-            pack_offset,
-            decompressed_size: bytes_copied,
-            trailer,
         })
     }
 }
