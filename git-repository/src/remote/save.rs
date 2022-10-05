@@ -20,7 +20,7 @@ impl Remote<'_> {
             url: self
                 .url
                 .as_ref()
-                .or_else(|| self.push_url.as_ref())
+                .or(self.push_url.as_ref())
                 .expect("one url is always set")
                 .to_owned(),
         })?;
