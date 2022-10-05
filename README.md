@@ -52,7 +52,10 @@ Please see _'Development Status'_ for a listing of all crates and their capabili
     * **remote**    
         * [x] **refs** - list all references available on the remote based on the current remote configuration.
         * [x] **ref-map** - show how remote references relate to their local tracking branches as mapped by refspecs.
-    * **fetch** - fetch the current remote or the given one, optionally just as dry-run.    
+    * [x] **fetch** - fetch the current remote or the given one, optionally just as dry-run.
+    * **clone**
+        * [ ] initialize a new **bare** repository and fetch all objects.
+        * [ ] initialize a new repository, fetch all objects and checkout the main worktree.
     * **credential**
         * [x] **fill/approve/reject** - The same as `git credential`, but implemented in Rust, calling helpers only when from trusted configuration.
     * **free** - no git repository necessary
