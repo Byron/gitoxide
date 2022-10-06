@@ -68,7 +68,7 @@ impl<'a, T> Node<'a, T> {
             // SAFETY: The resulting mutable pointer cannot be yielded by any other node.
             #[allow(unsafe_code)]
             Node {
-                item: unsafe { &mut *(children as *mut Item<T>).add(index) },
+                item: unsafe { &mut *(children as *mut Item<T>).add(index as usize) },
                 children,
             }
         })
