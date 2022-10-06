@@ -119,7 +119,7 @@ impl<T> Tree<T> {
             offset,
             next_offset: 0,
             data,
-            children: Vec::new(),
+            children: Default::default(),
         });
         Ok(())
     }
@@ -147,7 +147,7 @@ impl<T> Tree<T> {
             offset,
             next_offset: 0,
             data,
-            children: Vec::new(),
+            children: Default::default(),
         });
         Ok(())
     }
@@ -193,6 +193,12 @@ mod tests {
                 Ok(())
             }
         }
+    }
+
+    #[test]
+    fn size_of_pack_tree_item() {
+        use super::Item;
+        assert_eq!(std::mem::size_of::<[Item<()>; 7_500_000]>(), 300_000_000);
     }
 
     #[test]
