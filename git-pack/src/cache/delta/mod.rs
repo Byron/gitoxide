@@ -29,7 +29,9 @@ pub struct Item<T> {
     /// Data to store with each Item, effectively data associated with each entry in a pack.
     pub data: T,
     /// Indices into our Tree's `items`, one for each pack entry that depends on us.
-    children: Vec<usize>,
+    ///
+    /// Limited to u32 as that's the maximum amount of objects in a pack.
+    children: Vec<u32>,
 }
 
 /// Identify what kind of node we have last seen
@@ -92,9 +94,9 @@ impl<T> Tree<T> {
         if !self.future_child_offsets.is_empty() {
             for (parent_offset, child_index) in self.future_child_offsets.drain(..) {
                 if let Ok(i) = self.child_items.binary_search_by_key(&parent_offset, |i| i.offset) {
-                    self.child_items[i].children.push(child_index);
+                    self.child_items[i].children.push(child_index as u32);
                 } else if let Ok(i) = self.root_items.binary_search_by_key(&parent_offset, |i| i.offset) {
-                    self.root_items[i].children.push(child_index);
+                    self.root_items[i].children.push(child_index as u32);
                 } else {
                     return Err(traverse::Error::OutOfPackRefDelta {
                         base_pack_offset: parent_offset,
@@ -133,9 +135,9 @@ impl<T> Tree<T> {
 
         let next_child_index = self.child_items.len();
         if let Ok(i) = self.child_items.binary_search_by_key(&base_offset, |i| i.offset) {
-            self.child_items[i].children.push(next_child_index);
+            self.child_items[i].children.push(next_child_index as u32);
         } else if let Ok(i) = self.root_items.binary_search_by_key(&base_offset, |i| i.offset) {
-            self.root_items[i].children.push(next_child_index);
+            self.root_items[i].children.push(next_child_index as u32);
         } else {
             self.future_child_offsets.push((base_offset, next_child_index));
         }
