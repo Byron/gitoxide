@@ -195,38 +195,9 @@ mod tests {
         }
     }
 
-    struct TreeItem<D> {
-        _offset: crate::data::Offset,
-        _data: D,
-        _children: Vec<usize>,
-    }
-
-    #[test]
-    fn using_option_as_data_does_not_increase_size_in_memory() {
-        struct Entry {
-            pub _id: Option<git_hash::ObjectId>,
-            pub _crc32: u32,
-        }
-
-        struct TreeItemOption<D> {
-            _offset: crate::data::Offset,
-            _data: Option<D>,
-            _children: Vec<usize>,
-        }
-        assert_eq!(
-            std::mem::size_of::<TreeItem<Entry>>(),
-            std::mem::size_of::<TreeItemOption<Entry>>(),
-            "we hope niche filling optimizations kick in for our data structures to not pay for the Option at all"
-        );
-        assert_eq!(
-            std::mem::size_of::<[TreeItemOption<Entry>; 7_500_000]>(),
-            480_000_000,
-            "it should be as small as possible"
-        );
-    }
-
     #[test]
     fn size_of_pack_verify_data_structure() {
+        use super::Item;
         use git_odb::pack;
         pub struct EntryWithDefault {
             _index_entry: pack::index::Entry,
@@ -238,9 +209,6 @@ mod tests {
             _level: u16,
         }
 
-        assert_eq!(
-            std::mem::size_of::<[TreeItem<EntryWithDefault>; 7_500_000]>(),
-            780_000_000
-        );
+        assert_eq!(std::mem::size_of::<[Item<EntryWithDefault>; 7_500_000]>(), 840_000_000);
     }
 }
