@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use crate::parallel::{num_threads, Reduce};
 
@@ -102,10 +102,11 @@ where
     S: Send,
 {
     let num_threads = num_threads(thread_limit);
-    let num_items = input.len();
     let mut results = Vec::with_capacity(num_threads);
     let stop_everything = &AtomicBool::default();
+    let index = &AtomicUsize::default();
 
+    // TODO: use std::thread::scope() once Rust 1.63 is available.
     crossbeam_utils::thread::scope({
         move |s| {
             s.spawn({
@@ -124,6 +125,7 @@ where
                 }
             });
 
+            let input_len = input.len();
             let threads: Vec<_> = (0..num_threads)
                 .map(|thread_id| {
                     s.spawn({
@@ -131,7 +133,9 @@ where
                         let mut consume = consume.clone();
                         move |_| {
                             let mut state = new_thread_state(thread_id);
-                            for input_index in (thread_id..num_items).step_by(num_threads) {
+                            while let Ok(input_index) = index
+                                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| (x < input_len).then(|| x + 1))
+                            {
                                 if stop_everything.load(Ordering::Relaxed) {
                                     break;
                                 }
