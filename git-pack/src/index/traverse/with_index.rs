@@ -72,9 +72,7 @@ impl index::File {
                     should_interrupt,
                     self.object_hash,
                 )?;
-                let there_are_enough_objects = || self.num_objects > 10_000;
                 let mut outcome = digest_statistics(tree.traverse(
-                    there_are_enough_objects,
                     |slice, out| pack.entry_slice(slice).map(|entry| out.copy_from_slice(entry)),
                     pack.pack_end() as u64,
                     new_processor,

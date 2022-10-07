@@ -6,6 +6,8 @@ use git_features::{
     zlib,
 };
 
+use crate::cache::delta::traverse::util::{ItemSliceSend, Node};
+use crate::cache::delta::Item;
 use crate::{
     cache::delta::traverse::{Context, Error},
     data::EntryRange,
@@ -14,11 +16,19 @@ use crate::{
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
     object_counter: Option<git_features::progress::StepShared>,
     size_counter: Option<git_features::progress::StepShared>,
-    nodes: crate::cache::delta::Chunk<'_, T>,
-    (bytes_buf, ref mut progress, state, resolve, modify_base): &mut (Vec<u8>, P, S, F, MBFN),
+    node: &mut crate::cache::delta::Item<T>,
+    (bytes_buf, ref mut progress, state, resolve, modify_base, child_items): &mut (
+        Vec<u8>,
+        P,
+        S,
+        F,
+        MBFN,
+        ItemSliceSend<Item<T>>,
+    ),
     hash_len: usize,
 ) -> Result<(), Error>
 where
+    T: Send,
     F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()>,
     P: Progress,
     MBFN: Fn(&mut T, &mut P, Context<'_, S>) -> Result<(), E>,
@@ -50,7 +60,13 @@ where
     // each node is a base, and its children always start out as deltas which become a base after applying them.
     // These will be pushed onto our stack until all are processed
     let root_level = 0;
-    let mut nodes: Vec<_> = nodes.into_iter().map(|n| (root_level, n)).collect();
+    let mut nodes: Vec<_> = vec![(
+        root_level,
+        Node {
+            item: node,
+            child_items: child_items.0,
+        },
+    )];
     while let Some((level, mut base)) = nodes.pop() {
         let (base_entry, entry_end, base_bytes) = if level == root_level {
             decompress_from_resolver(base.entry_slice())?

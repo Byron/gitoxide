@@ -1,18 +1,19 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use git_features::parallel::in_parallel_with_slice;
 use git_features::{
-    parallel,
-    parallel::in_parallel_if,
     progress::{self, Progress},
     threading::{lock, Mutable, OwnShared},
 };
 
+use crate::cache::delta::traverse::util::ItemSliceSend;
 use crate::{
     cache::delta::{Item, Tree},
     data::EntryRange,
 };
 
 mod resolve;
+pub(crate) mod util;
 
 /// Returned by [`Tree::traverse()`]
 #[derive(thiserror::Error, Debug)]
@@ -100,7 +101,6 @@ where
     /// _Note_ that this method consumed the Tree to assure safe parallel traversal with mutation support.
     pub fn traverse<F, P1, P2, MBFN, S, E>(
         mut self,
-        should_run_in_parallel: impl FnOnce() -> bool,
         resolve: F,
         pack_entries_end: u64,
         new_thread_state: impl Fn() -> S + Send + Clone,
@@ -121,14 +121,12 @@ where
         E: std::error::Error + Send + Sync + 'static,
     {
         self.set_pack_entries_end_and_resolve_ref_offsets(pack_entries_end)?;
-        let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         let object_progress = OwnShared::new(Mutable::new(object_progress));
 
         // TODO: this could be faster using the `in_parallel_with_slice()` as it will a root item per thread,
         //       allowing threads to be more busy overall. This, however, needs some refactorings to allow operation
         //       on a single item efficiently while providing real-time feedback.
         let num_objects = self.num_items();
-        // let child_items_ptr = self.child_items.as_mut_slice() as *mut [Item<T>];
 
         let object_counter = {
             let mut progress = lock(&object_progress);
@@ -137,14 +135,15 @@ where
         };
         size_progress.init(None, progress::bytes());
         let size_counter = size_progress.counter();
+        let child_items = self.child_items.as_mut_slice();
 
         let start = std::time::Instant::now();
-        in_parallel_if(
-            should_run_in_parallel,
-            self.iter_root_chunks(chunk_size),
+        in_parallel_with_slice(
+            &mut self.root_items,
             thread_limit,
             {
                 let object_progress = object_progress.clone();
+                let child_items = ItemSliceSend(child_items as *mut [Item<T>]);
                 move |thread_index| {
                     (
                         Vec::<u8>::with_capacity(4096),
@@ -152,23 +151,25 @@ where
                         new_thread_state(),
                         resolve.clone(),
                         inspect_object.clone(),
+                        ItemSliceSend(child_items.0),
                     )
                 }
             },
             {
                 let object_counter = object_counter.clone();
                 let size_counter = size_counter.clone();
-                move |root_nodes, state| {
+                move |node, state| {
                     resolve::deltas(
                         object_counter.clone(),
                         size_counter.clone(),
-                        root_nodes,
+                        node,
                         state,
                         object_hash.len_in_bytes(),
                     )
                 }
             },
-            Reducer::new(should_interrupt),
+            || (!should_interrupt.load(Ordering::Relaxed)).then(|| std::time::Duration::from_millis(50)),
+            |_| (),
         )?;
 
         lock(&object_progress).show_throughput(start);
@@ -178,34 +179,5 @@ where
             roots: self.root_items,
             children: self.child_items,
         })
-    }
-}
-
-struct Reducer<'a> {
-    should_interrupt: &'a AtomicBool,
-}
-
-impl<'a> Reducer<'a> {
-    pub fn new(should_interrupt: &'a AtomicBool) -> Self {
-        Reducer { should_interrupt }
-    }
-}
-
-impl<'a> parallel::Reduce for Reducer<'a> {
-    type Input = Result<(), Error>;
-    type FeedProduce = ();
-    type Output = ();
-    type Error = Error;
-
-    fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-        input?;
-        if self.should_interrupt.load(Ordering::SeqCst) {
-            return Err(Error::Interrupted);
-        }
-        Ok(())
-    }
-
-    fn finalize(self) -> Result<Self::Output, Self::Error> {
-        Ok(())
     }
 }
