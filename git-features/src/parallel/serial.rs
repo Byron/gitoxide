@@ -61,10 +61,10 @@ mod not_parallel {
     /// for file-io as it won't make use of sorted inputs well.
     // TODO: better docs
     pub fn in_parallel_with_slice<I, S, E>(
-        input: &[I],
+        input: &mut [I],
         _thread_limit: Option<usize>,
         mut new_thread_state: impl FnMut(usize) -> S + Send + Clone,
-        mut consume: impl FnMut(&I, &mut S) -> Result<(), E> + Send + Clone,
+        mut consume: impl FnMut(&mut I, &mut S) -> Result<(), E> + Send + Clone,
         mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
     ) -> Result<Vec<S>, E>
     where

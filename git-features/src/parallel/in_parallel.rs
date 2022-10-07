@@ -90,10 +90,10 @@ where
 /// Note that `periodic` is not guaranteed to be called in case other threads come up first and finish too fast.
 // TODO: better docs
 pub fn in_parallel_with_slice<I, S, E>(
-    input: &[I],
+    input: &mut [I],
     thread_limit: Option<usize>,
     new_thread_state: impl FnMut(usize) -> S + Send + Clone,
-    consume: impl FnMut(&I, &mut S) -> Result<(), E> + Send + Clone,
+    consume: impl FnMut(&mut I, &mut S) -> Result<(), E> + Send + Clone,
     mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
 ) -> Result<Vec<S>, E>
 where
@@ -126,11 +126,21 @@ where
             });
 
             let input_len = input.len();
+            #[derive(Copy, Clone)]
+            struct Input<I>(*mut [I])
+            where
+                I: Send + Sync;
+
+            // SAFETY: I is Send + Sync, so is a *mut [I]
+            #[allow(unsafe_code)]
+            unsafe impl<I> Send for Input<I> where I: Send + Sync {}
+
             let threads: Vec<_> = (0..num_threads)
                 .map(|thread_id| {
                     s.spawn({
                         let mut new_thread_state = new_thread_state.clone();
                         let mut consume = consume.clone();
+                        let input = Input(input as *mut [I]);
                         move |_| {
                             let mut state = new_thread_state(thread_id);
                             while let Ok(input_index) = index
@@ -139,7 +149,14 @@ where
                                 if stop_everything.load(Ordering::Relaxed) {
                                     break;
                                 }
-                                let item = &input[input_index];
+                                // SAFETY: our atomic counter for `input_index` is only ever incremented, yielding
+                                //         each item exactly once.
+                                let item = {
+                                    #[allow(unsafe_code)]
+                                    unsafe {
+                                        &mut (&mut *input.0)[input_index]
+                                    }
+                                };
                                 if let Err(err) = consume(item, &mut state) {
                                     stop_everything.store(true, Ordering::Relaxed);
                                     return Err(err);
