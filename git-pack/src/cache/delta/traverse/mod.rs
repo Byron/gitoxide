@@ -108,7 +108,7 @@ where
         Options {
             thread_limit,
             object_progress,
-            size_progress,
+            mut size_progress,
             should_interrupt,
             object_hash,
         }: Options<'_, P1, P2>,
@@ -128,6 +128,16 @@ where
         //       allowing threads to be more busy overall. This, however, needs some refactorings to allow operation
         //       on a single item efficiently while providing real-time feedback.
         let num_objects = self.num_items();
+
+        let object_counter = {
+            let mut progress = lock(&object_progress);
+            progress.init(Some(num_objects), progress::count("objects"));
+            progress.counter()
+        };
+        size_progress.init(None, progress::bytes());
+        let size_counter = size_progress.counter();
+
+        let start = std::time::Instant::now();
         in_parallel_if(
             should_run_in_parallel,
             self.iter_root_chunks(chunk_size),
@@ -144,9 +154,25 @@ where
                     )
                 }
             },
-            move |root_nodes, state| resolve::deltas(root_nodes, state, object_hash.len_in_bytes()),
-            Reducer::new(num_objects, object_progress, size_progress, should_interrupt),
+            {
+                let object_counter = object_counter.clone();
+                let size_counter = size_counter.clone();
+                move |root_nodes, state| {
+                    resolve::deltas(
+                        object_counter.clone(),
+                        size_counter.clone(),
+                        root_nodes,
+                        state,
+                        object_hash.len_in_bytes(),
+                    )
+                }
+            },
+            Reducer::new(should_interrupt),
         )?;
+
+        lock(&object_progress).show_throughput(start);
+        size_progress.show_throughput(start);
+
         Ok(Outcome {
             roots: self.root_items,
             children: self.child_items,
@@ -154,61 +180,31 @@ where
     }
 }
 
-struct Reducer<'a, P1, P2> {
-    item_count: usize,
-    progress: OwnShared<Mutable<P1>>,
-    start: std::time::Instant,
-    size_progress: P2,
+struct Reducer<'a> {
     should_interrupt: &'a AtomicBool,
 }
 
-impl<'a, P1, P2> Reducer<'a, P1, P2>
-where
-    P1: Progress,
-    P2: Progress,
-{
-    pub fn new(
-        num_objects: usize,
-        progress: OwnShared<Mutable<P1>>,
-        mut size_progress: P2,
-        should_interrupt: &'a AtomicBool,
-    ) -> Self {
-        lock(&progress).init(Some(num_objects), progress::count("objects"));
-        size_progress.init(None, progress::bytes());
-        Reducer {
-            item_count: 0,
-            progress,
-            start: std::time::Instant::now(),
-            size_progress,
-            should_interrupt,
-        }
+impl<'a> Reducer<'a> {
+    pub fn new(should_interrupt: &'a AtomicBool) -> Self {
+        Reducer { should_interrupt }
     }
 }
 
-impl<'a, P1, P2> parallel::Reduce for Reducer<'a, P1, P2>
-where
-    P1: Progress,
-    P2: Progress,
-{
-    type Input = Result<(usize, u64), Error>;
+impl<'a> parallel::Reduce for Reducer<'a> {
+    type Input = Result<(), Error>;
     type FeedProduce = ();
     type Output = ();
     type Error = Error;
 
     fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-        let (num_objects, decompressed_size) = input?;
-        self.item_count += num_objects;
-        self.size_progress.inc_by(decompressed_size as usize);
-        lock(&self.progress).set(self.item_count);
+        input?;
         if self.should_interrupt.load(Ordering::SeqCst) {
             return Err(Error::Interrupted);
         }
         Ok(())
     }
 
-    fn finalize(mut self) -> Result<Self::Output, Self::Error> {
-        lock(&self.progress).show_throughput(self.start);
-        self.size_progress.show_throughput(self.start);
+    fn finalize(self) -> Result<Self::Output, Self::Error> {
         Ok(())
     }
 }

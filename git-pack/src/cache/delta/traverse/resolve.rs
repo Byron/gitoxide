@@ -1,3 +1,4 @@
+use std::sync::atomic::Ordering;
 use std::{cell::RefCell, collections::BTreeMap};
 
 use git_features::{
@@ -11,10 +12,12 @@ use crate::{
 };
 
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
+    object_counter: Option<git_features::progress::StepShared>,
+    size_counter: Option<git_features::progress::StepShared>,
     nodes: crate::cache::delta::Chunk<'_, T>,
     (bytes_buf, ref mut progress, state, resolve, modify_base): &mut (Vec<u8>, P, S, F, MBFN),
     hash_len: usize,
-) -> Result<(usize, u64), Error>
+) -> Result<(), Error>
 where
     F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()>,
     P: Progress,
@@ -23,8 +26,6 @@ where
 {
     let mut decompressed_bytes_by_pack_offset = BTreeMap::new();
     let bytes_buf = RefCell::new(bytes_buf);
-    let mut num_objects = 0;
-    let mut decompressed_bytes: u64 = 0;
     let decompress_from_resolver = |slice: EntryRange| -> Result<(crate::data::Entry, u64, Vec<u8>), Error> {
         let mut bytes_buf = bytes_buf.borrow_mut();
         bytes_buf.resize((slice.end - slice.start) as usize, 0);
@@ -75,9 +76,10 @@ where
                 },
             )
             .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-            num_objects += 1;
-            decompressed_bytes += base_bytes.len() as u64;
-            progress.inc();
+            object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
+            size_counter
+                .as_ref()
+                .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
         }
 
         for mut child in base.into_child_iter() {
@@ -118,14 +120,15 @@ where
                     },
                 )
                 .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-                num_objects += 1;
-                decompressed_bytes += fully_resolved_delta_bytes.len() as u64;
-                progress.inc();
+                object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
+                size_counter
+                    .as_ref()
+                    .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
             }
         }
     }
 
-    Ok((num_objects, decompressed_bytes))
+    Ok(())
 }
 
 fn decompress_all_at_once(b: &[u8], decompressed_len: usize) -> Result<Vec<u8>, Error> {
