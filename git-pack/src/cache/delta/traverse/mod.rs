@@ -156,8 +156,6 @@ where
                 }
             },
             {
-                let object_counter = object_counter.clone();
-                let size_counter = size_counter.clone();
                 move |node, state| {
                     resolve::deltas(
                         object_counter.clone(),
