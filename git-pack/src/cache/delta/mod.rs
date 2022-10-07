@@ -11,9 +11,6 @@ pub enum Error {
     },
 }
 
-mod iter;
-pub use iter::{Chunk, Node};
-
 ///
 pub mod traverse;
 
@@ -29,7 +26,9 @@ pub struct Item<T> {
     /// Data to store with each Item, effectively data associated with each entry in a pack.
     pub data: T,
     /// Indices into our Tree's `items`, one for each pack entry that depends on us.
-    children: Vec<usize>,
+    ///
+    /// Limited to u32 as that's the maximum amount of objects in a pack.
+    children: Vec<u32>,
 }
 
 /// Identify what kind of node we have last seen
@@ -92,9 +91,9 @@ impl<T> Tree<T> {
         if !self.future_child_offsets.is_empty() {
             for (parent_offset, child_index) in self.future_child_offsets.drain(..) {
                 if let Ok(i) = self.child_items.binary_search_by_key(&parent_offset, |i| i.offset) {
-                    self.child_items[i].children.push(child_index);
+                    self.child_items[i].children.push(child_index as u32);
                 } else if let Ok(i) = self.root_items.binary_search_by_key(&parent_offset, |i| i.offset) {
-                    self.root_items[i].children.push(child_index);
+                    self.root_items[i].children.push(child_index as u32);
                 } else {
                     return Err(traverse::Error::OutOfPackRefDelta {
                         base_pack_offset: parent_offset,
@@ -117,7 +116,7 @@ impl<T> Tree<T> {
             offset,
             next_offset: 0,
             data,
-            children: Vec::new(),
+            children: Default::default(),
         });
         Ok(())
     }
@@ -133,9 +132,9 @@ impl<T> Tree<T> {
 
         let next_child_index = self.child_items.len();
         if let Ok(i) = self.child_items.binary_search_by_key(&base_offset, |i| i.offset) {
-            self.child_items[i].children.push(next_child_index);
+            self.child_items[i].children.push(next_child_index as u32);
         } else if let Ok(i) = self.root_items.binary_search_by_key(&base_offset, |i| i.offset) {
-            self.root_items[i].children.push(next_child_index);
+            self.root_items[i].children.push(next_child_index as u32);
         } else {
             self.future_child_offsets.push((base_offset, next_child_index));
         }
@@ -145,7 +144,7 @@ impl<T> Tree<T> {
             offset,
             next_offset: 0,
             data,
-            children: Vec::new(),
+            children: Default::default(),
         });
         Ok(())
     }
@@ -193,38 +192,15 @@ mod tests {
         }
     }
 
-    struct TreeItem<D> {
-        _offset: crate::data::Offset,
-        _data: D,
-        _children: Vec<usize>,
-    }
-
     #[test]
-    fn using_option_as_data_does_not_increase_size_in_memory() {
-        struct Entry {
-            pub _id: Option<git_hash::ObjectId>,
-            pub _crc32: u32,
-        }
-
-        struct TreeItemOption<D> {
-            _offset: crate::data::Offset,
-            _data: Option<D>,
-            _children: Vec<usize>,
-        }
-        assert_eq!(
-            std::mem::size_of::<TreeItem<Entry>>(),
-            std::mem::size_of::<TreeItemOption<Entry>>(),
-            "we hope niche filling optimizations kick in for our data structures to not pay for the Option at all"
-        );
-        assert_eq!(
-            std::mem::size_of::<[TreeItemOption<Entry>; 7_500_000]>(),
-            480_000_000,
-            "it should be as small as possible"
-        );
+    fn size_of_pack_tree_item() {
+        use super::Item;
+        assert_eq!(std::mem::size_of::<[Item<()>; 7_500_000]>(), 300_000_000);
     }
 
     #[test]
     fn size_of_pack_verify_data_structure() {
+        use super::Item;
         use git_odb::pack;
         pub struct EntryWithDefault {
             _index_entry: pack::index::Entry,
@@ -236,9 +212,6 @@ mod tests {
             _level: u16,
         }
 
-        assert_eq!(
-            std::mem::size_of::<[TreeItem<EntryWithDefault>; 7_500_000]>(),
-            780_000_000
-        );
+        assert_eq!(std::mem::size_of::<[Item<EntryWithDefault>; 7_500_000]>(), 840_000_000);
     }
 }

@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 use crate::parallel::{num_threads, Reduce};
 
@@ -89,23 +89,25 @@ where
 /// for file-io as it won't make use of sorted inputs well.
 /// Note that `periodic` is not guaranteed to be called in case other threads come up first and finish too fast.
 // TODO: better docs
-pub fn in_parallel_with_slice<I, S, E>(
-    input: &[I],
+pub fn in_parallel_with_slice<I, S, R, E>(
+    input: &mut [I],
     thread_limit: Option<usize>,
     new_thread_state: impl FnMut(usize) -> S + Send + Clone,
-    consume: impl FnMut(&I, &mut S) -> Result<(), E> + Send + Clone,
+    consume: impl FnMut(&mut I, &mut S) -> Result<(), E> + Send + Clone,
     mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
-) -> Result<Vec<S>, E>
+    state_to_rval: impl FnOnce(S) -> R + Send + Clone,
+) -> Result<Vec<R>, E>
 where
-    I: Send + Sync,
-    E: Send + Sync,
-    S: Send,
+    I: Send,
+    E: Send,
+    R: Send,
 {
     let num_threads = num_threads(thread_limit);
-    let num_items = input.len();
     let mut results = Vec::with_capacity(num_threads);
     let stop_everything = &AtomicBool::default();
+    let index = &AtomicUsize::default();
 
+    // TODO: use std::thread::scope() once Rust 1.63 is available.
     crossbeam_utils::thread::scope({
         move |s| {
             s.spawn({
@@ -124,24 +126,44 @@ where
                 }
             });
 
+            let input_len = input.len();
+            struct Input<I>(*mut [I])
+            where
+                I: Send;
+
+            // SAFETY: I is Send + Sync, so is a *mut [I]
+            #[allow(unsafe_code)]
+            unsafe impl<I> Send for Input<I> where I: Send {}
+
             let threads: Vec<_> = (0..num_threads)
                 .map(|thread_id| {
                     s.spawn({
                         let mut new_thread_state = new_thread_state.clone();
+                        let state_to_rval = state_to_rval.clone();
                         let mut consume = consume.clone();
+                        let input = Input(input as *mut [I]);
                         move |_| {
                             let mut state = new_thread_state(thread_id);
-                            for input_index in (thread_id..num_items).step_by(num_threads) {
+                            while let Ok(input_index) = index
+                                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |x| (x < input_len).then(|| x + 1))
+                            {
                                 if stop_everything.load(Ordering::Relaxed) {
                                     break;
                                 }
-                                let item = &input[input_index];
+                                // SAFETY: our atomic counter for `input_index` is only ever incremented, yielding
+                                //         each item exactly once.
+                                let item = {
+                                    #[allow(unsafe_code)]
+                                    unsafe {
+                                        &mut (&mut *input.0)[input_index]
+                                    }
+                                };
                                 if let Err(err) = consume(item, &mut state) {
                                     stop_everything.store(true, Ordering::Relaxed);
                                     return Err(err);
                                 }
                             }
-                            Ok(state)
+                            Ok(state_to_rval(state))
                         }
                     })
                 })
