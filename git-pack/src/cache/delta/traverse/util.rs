@@ -1,44 +1,26 @@
-use crate::cache::delta::{Item, Tree};
+use crate::cache::delta::Item;
 
-/// Iteration
-impl<T> Tree<T> {
-    /// Return an iterator over chunks of roots. Roots are not children themselves, they have no parents.
-    pub fn iter_root_chunks(&mut self, chunk_size: usize) -> impl Iterator<Item = Chunk<'_, T>> + '_ {
-        let roots = self.root_items.as_mut_slice();
-        let children = self.child_items.as_mut_slice();
+pub struct ItemSliceSend<T>(pub *mut [T])
+where
+    T: Send;
 
-        roots.chunks_mut(chunk_size).map(move |c| Chunk {
-            inner: c.iter_mut(),
-            children: children as *mut [Item<T>],
-        })
+impl<T> Clone for ItemSliceSend<T>
+where
+    T: Send,
+{
+    fn clone(&self) -> Self {
+        ItemSliceSend(self.0)
     }
 }
 
-/// A chunk returned by `iter_root_chunks`, which can be iterated over to get [`Node`]s.
-pub struct Chunk<'a, T> {
-    inner: std::slice::IterMut<'a, Item<T>>,
-    children: *mut [Item<T>],
-}
-
-// SAFETY: The raw pointer is uniquely materialized in `Node::into_child_iter`.
+// SAFETY: T is `Send`, and we only ever access one T at a time. And, ptrs need that assurance, I wonder if it's always right.
 #[allow(unsafe_code)]
-unsafe impl<'a, T> Send for Chunk<'a, T> where T: Send {}
-
-impl<'a, T> Iterator for Chunk<'a, T> {
-    type Item = Node<'a, T>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|item| Node {
-            item,
-            children: self.children,
-        })
-    }
-}
+unsafe impl<T> Send for ItemSliceSend<T> where T: Send {}
 
 /// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
 pub struct Node<'a, T> {
-    item: &'a mut Item<T>,
-    children: *mut [Item<T>],
+    pub item: &'a mut Item<T>,
+    pub child_items: *mut [Item<T>],
 }
 
 impl<'a, T> Node<'a, T> {
@@ -66,7 +48,7 @@ impl<'a, T> Node<'a, T> {
     ///
     /// Children are `Node`s referring to pack entries whose base object is this pack entry.
     pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> + 'a {
-        let children = self.children;
+        let children = self.child_items;
         self.item.children.iter().map(move |&index| {
             // SAFETY: The children array is alive by the 'a lifetime.
             // SAFETY: The index is a valid index into the children array.
@@ -74,7 +56,7 @@ impl<'a, T> Node<'a, T> {
             #[allow(unsafe_code)]
             Node {
                 item: unsafe { &mut *(children as *mut Item<T>).add(index as usize) },
-                children,
+                child_items: children,
             }
         })
     }

@@ -1,18 +1,19 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use git_features::parallel::in_parallel_with_slice;
 use git_features::{
-    parallel,
-    parallel::in_parallel_if,
     progress::{self, Progress},
     threading::{lock, Mutable, OwnShared},
 };
 
+use crate::cache::delta::traverse::util::ItemSliceSend;
 use crate::{
     cache::delta::{Item, Tree},
     data::EntryRange,
 };
 
 mod resolve;
+pub(crate) mod util;
 
 /// Returned by [`Tree::traverse()`]
 #[derive(thiserror::Error, Debug)]
@@ -100,7 +101,6 @@ where
     /// _Note_ that this method consumed the Tree to assure safe parallel traversal with mutation support.
     pub fn traverse<F, P1, P2, MBFN, S, E>(
         mut self,
-        should_run_in_parallel: impl FnOnce() -> bool,
         resolve: F,
         pack_entries_end: u64,
         new_thread_state: impl Fn() -> S + Send + Clone,
@@ -108,7 +108,7 @@ where
         Options {
             thread_limit,
             object_progress,
-            size_progress,
+            mut size_progress,
             should_interrupt,
             object_hash,
         }: Options<'_, P1, P2>,
@@ -121,19 +121,25 @@ where
         E: std::error::Error + Send + Sync + 'static,
     {
         self.set_pack_entries_end_and_resolve_ref_offsets(pack_entries_end)?;
-        let (chunk_size, thread_limit, _) = parallel::optimize_chunk_size_and_thread_limit(1, None, thread_limit, None);
         let object_progress = OwnShared::new(Mutable::new(object_progress));
 
-        // TODO: this could be faster using the `in_parallel_with_slice()` as it will a root item per thread,
-        //       allowing threads to be more busy overall. This, however, needs some refactorings to allow operation
-        //       on a single item efficiently while providing real-time feedback.
         let num_objects = self.num_items();
-        in_parallel_if(
-            should_run_in_parallel,
-            self.iter_root_chunks(chunk_size),
+        let object_counter = {
+            let mut progress = lock(&object_progress);
+            progress.init(Some(num_objects), progress::count("objects"));
+            progress.counter()
+        };
+        size_progress.init(None, progress::bytes());
+        let size_counter = size_progress.counter();
+        let child_items = self.child_items.as_mut_slice();
+
+        let start = std::time::Instant::now();
+        in_parallel_with_slice(
+            &mut self.root_items,
             thread_limit,
             {
                 let object_progress = object_progress.clone();
+                let child_items = ItemSliceSend(child_items as *mut [Item<T>]);
                 move |thread_index| {
                     (
                         Vec::<u8>::with_capacity(4096),
@@ -141,74 +147,31 @@ where
                         new_thread_state(),
                         resolve.clone(),
                         inspect_object.clone(),
+                        ItemSliceSend(child_items.0),
                     )
                 }
             },
-            move |root_nodes, state| resolve::deltas(root_nodes, state, object_hash.len_in_bytes()),
-            Reducer::new(num_objects, object_progress, size_progress, should_interrupt),
+            {
+                move |node, state| {
+                    resolve::deltas(
+                        object_counter.clone(),
+                        size_counter.clone(),
+                        node,
+                        state,
+                        object_hash.len_in_bytes(),
+                    )
+                }
+            },
+            || (!should_interrupt.load(Ordering::Relaxed)).then(|| std::time::Duration::from_millis(50)),
+            |_| (),
         )?;
+
+        lock(&object_progress).show_throughput(start);
+        size_progress.show_throughput(start);
+
         Ok(Outcome {
             roots: self.root_items,
             children: self.child_items,
         })
-    }
-}
-
-struct Reducer<'a, P1, P2> {
-    item_count: usize,
-    progress: OwnShared<Mutable<P1>>,
-    start: std::time::Instant,
-    size_progress: P2,
-    should_interrupt: &'a AtomicBool,
-}
-
-impl<'a, P1, P2> Reducer<'a, P1, P2>
-where
-    P1: Progress,
-    P2: Progress,
-{
-    pub fn new(
-        num_objects: usize,
-        progress: OwnShared<Mutable<P1>>,
-        mut size_progress: P2,
-        should_interrupt: &'a AtomicBool,
-    ) -> Self {
-        lock(&progress).init(Some(num_objects), progress::count("objects"));
-        size_progress.init(None, progress::bytes());
-        Reducer {
-            item_count: 0,
-            progress,
-            start: std::time::Instant::now(),
-            size_progress,
-            should_interrupt,
-        }
-    }
-}
-
-impl<'a, P1, P2> parallel::Reduce for Reducer<'a, P1, P2>
-where
-    P1: Progress,
-    P2: Progress,
-{
-    type Input = Result<(usize, u64), Error>;
-    type FeedProduce = ();
-    type Output = ();
-    type Error = Error;
-
-    fn feed(&mut self, input: Self::Input) -> Result<(), Self::Error> {
-        let (num_objects, decompressed_size) = input?;
-        self.item_count += num_objects;
-        self.size_progress.inc_by(decompressed_size as usize);
-        lock(&self.progress).set(self.item_count);
-        if self.should_interrupt.load(Ordering::SeqCst) {
-            return Err(Error::Interrupted);
-        }
-        Ok(())
-    }
-
-    fn finalize(mut self) -> Result<Self::Output, Self::Error> {
-        lock(&self.progress).show_throughput(self.start);
-        self.size_progress.show_throughput(self.start);
-        Ok(())
     }
 }

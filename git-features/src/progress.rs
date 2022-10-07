@@ -3,7 +3,7 @@ use std::io;
 
 pub use prodash::{
     messages::MessageLevel,
-    progress::{Discard, DoOrDiscard, Either, ThroughputOnDrop},
+    progress::{Discard, DoOrDiscard, Either, Step, StepShared, ThroughputOnDrop},
     unit, Progress, Unit,
 };
 

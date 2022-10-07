@@ -11,9 +11,6 @@ pub enum Error {
     },
 }
 
-mod iter;
-pub use iter::{Chunk, Node};
-
 ///
 pub mod traverse;
 

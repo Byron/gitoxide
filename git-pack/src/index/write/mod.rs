@@ -69,7 +69,6 @@ impl crate::index::File {
             return Err(Error::Unsupported(version));
         }
         let mut num_objects: usize = 0;
-        let mut bytes_to_process = 0u64;
         let mut last_seen_trailer = None;
         let anticipated_num_objects = entries.size_hint().1.unwrap_or_else(|| entries.size_hint().0);
         let mut tree = Tree::with_capacity(anticipated_num_objects)?;
@@ -94,7 +93,6 @@ impl crate::index::File {
                 trailer,
             } = entry?;
 
-            bytes_to_process += decompressed_size;
             decompressed_progress.inc_by(decompressed_size as usize);
 
             let entry_len = header_size as u64 + compressed_size;
@@ -155,9 +153,7 @@ impl crate::index::File {
 
         let resolver = make_resolver()?;
         let sorted_pack_offsets_by_oid = {
-            let in_parallel_if_pack_is_big_enough = || bytes_to_process > 5_000_000;
             let traverse::Outcome { roots, children } = tree.traverse(
-                in_parallel_if_pack_is_big_enough,
                 resolver,
                 pack_entries_end,
                 || (),

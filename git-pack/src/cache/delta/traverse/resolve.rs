@@ -1,3 +1,4 @@
+use std::sync::atomic::Ordering;
 use std::{cell::RefCell, collections::BTreeMap};
 
 use git_features::{
@@ -5,17 +6,29 @@ use git_features::{
     zlib,
 };
 
+use crate::cache::delta::traverse::util::{ItemSliceSend, Node};
+use crate::cache::delta::Item;
 use crate::{
     cache::delta::traverse::{Context, Error},
     data::EntryRange,
 };
 
 pub(crate) fn deltas<T, F, P, MBFN, S, E>(
-    nodes: crate::cache::delta::Chunk<'_, T>,
-    (bytes_buf, ref mut progress, state, resolve, modify_base): &mut (Vec<u8>, P, S, F, MBFN),
+    object_counter: Option<git_features::progress::StepShared>,
+    size_counter: Option<git_features::progress::StepShared>,
+    node: &mut crate::cache::delta::Item<T>,
+    (bytes_buf, ref mut progress, state, resolve, modify_base, child_items): &mut (
+        Vec<u8>,
+        P,
+        S,
+        F,
+        MBFN,
+        ItemSliceSend<Item<T>>,
+    ),
     hash_len: usize,
-) -> Result<(usize, u64), Error>
+) -> Result<(), Error>
 where
+    T: Send,
     F: for<'r> Fn(EntryRange, &'r mut Vec<u8>) -> Option<()>,
     P: Progress,
     MBFN: Fn(&mut T, &mut P, Context<'_, S>) -> Result<(), E>,
@@ -23,8 +36,6 @@ where
 {
     let mut decompressed_bytes_by_pack_offset = BTreeMap::new();
     let bytes_buf = RefCell::new(bytes_buf);
-    let mut num_objects = 0;
-    let mut decompressed_bytes: u64 = 0;
     let decompress_from_resolver = |slice: EntryRange| -> Result<(crate::data::Entry, u64, Vec<u8>), Error> {
         let mut bytes_buf = bytes_buf.borrow_mut();
         bytes_buf.resize((slice.end - slice.start) as usize, 0);
@@ -49,7 +60,13 @@ where
     // each node is a base, and its children always start out as deltas which become a base after applying them.
     // These will be pushed onto our stack until all are processed
     let root_level = 0;
-    let mut nodes: Vec<_> = nodes.into_iter().map(|n| (root_level, n)).collect();
+    let mut nodes: Vec<_> = vec![(
+        root_level,
+        Node {
+            item: node,
+            child_items: child_items.0,
+        },
+    )];
     while let Some((level, mut base)) = nodes.pop() {
         let (base_entry, entry_end, base_bytes) = if level == root_level {
             decompress_from_resolver(base.entry_slice())?
@@ -75,9 +92,10 @@ where
                 },
             )
             .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-            num_objects += 1;
-            decompressed_bytes += base_bytes.len() as u64;
-            progress.inc();
+            object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
+            size_counter
+                .as_ref()
+                .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
         }
 
         for mut child in base.into_child_iter() {
@@ -118,14 +136,15 @@ where
                     },
                 )
                 .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-                num_objects += 1;
-                decompressed_bytes += fully_resolved_delta_bytes.len() as u64;
-                progress.inc();
+                object_counter.as_ref().map(|c| c.fetch_add(1, Ordering::SeqCst));
+                size_counter
+                    .as_ref()
+                    .map(|c| c.fetch_add(base_bytes.len(), Ordering::SeqCst));
             }
         }
     }
 
-    Ok((num_objects, decompressed_bytes))
+    Ok(())
 }
 
 fn decompress_all_at_once(b: &[u8], decompressed_len: usize) -> Result<Vec<u8>, Error> {
