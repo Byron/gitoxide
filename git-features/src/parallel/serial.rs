@@ -63,16 +63,11 @@ mod not_parallel {
     pub fn in_parallel_with_slice<I, S, R, E>(
         input: &mut [I],
         _thread_limit: Option<usize>,
-        mut new_thread_state: impl FnMut(usize) -> S + Send + Clone,
-        mut consume: impl FnMut(&mut I, &mut S) -> Result<(), E> + Send + Clone,
-        mut periodic: impl FnMut() -> Option<std::time::Duration> + Send,
-        state_to_rval: impl FnOnce(S) -> R + Send + Clone,
-    ) -> Result<Vec<R>, E>
-    where
-        I: Send,
-        R: Send,
-        E: Send,
-    {
+        mut new_thread_state: impl FnMut(usize) -> S + Clone,
+        mut consume: impl FnMut(&mut I, &mut S) -> Result<(), E> + Clone,
+        mut periodic: impl FnMut() -> Option<std::time::Duration>,
+        state_to_rval: impl FnOnce(S) -> R + Clone,
+    ) -> Result<Vec<R>, E> {
         let mut state = new_thread_state(0);
         for item in input {
             consume(item, &mut state)?;

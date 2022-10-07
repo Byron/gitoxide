@@ -123,11 +123,7 @@ where
         self.set_pack_entries_end_and_resolve_ref_offsets(pack_entries_end)?;
         let object_progress = OwnShared::new(Mutable::new(object_progress));
 
-        // TODO: this could be faster using the `in_parallel_with_slice()` as it will a root item per thread,
-        //       allowing threads to be more busy overall. This, however, needs some refactorings to allow operation
-        //       on a single item efficiently while providing real-time feedback.
         let num_objects = self.num_items();
-
         let object_counter = {
             let mut progress = lock(&object_progress);
             progress.init(Some(num_objects), progress::count("objects"));
