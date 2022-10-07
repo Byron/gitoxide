@@ -59,22 +59,28 @@ where
                 .expect("we store the resolved delta buffer when done")
         };
 
-        modify_base(
-            base.data(),
-            progress,
-            Context {
-                entry: &base_entry,
-                entry_end,
-                decompressed: &base_bytes,
-                state,
-                level,
-            },
-        )
-        .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
-        num_objects += 1;
-        decompressed_bytes += base_bytes.len() as u64;
-        progress.inc();
-        for child in base.into_child_iter() {
+        // anything done here must be repeated further down for leaf-nodes.
+        // This way we avoid retaining their decompressed memory longer than needed (they have no children,
+        // thus their memory can be released right away, using 18% less peak memory on the linux kernel).
+        {
+            modify_base(
+                base.data(),
+                progress,
+                Context {
+                    entry: &base_entry,
+                    entry_end,
+                    decompressed: &base_bytes,
+                    state,
+                    level,
+                },
+            )
+            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
+            num_objects += 1;
+            decompressed_bytes += base_bytes.len() as u64;
+            progress.inc();
+        }
+
+        for mut child in base.into_child_iter() {
             let (mut child_entry, entry_end, delta_bytes) = decompress_from_resolver(child.entry_slice())?;
             let (base_size, consumed) = crate::data::delta::decode_header_size(&delta_bytes);
             let mut header_ofs = consumed;
@@ -91,13 +97,31 @@ where
             crate::data::delta::apply(&base_bytes, &mut fully_resolved_delta_bytes, &delta_bytes[header_ofs..]);
 
             // FIXME: this actually invalidates the "pack_offset()" computation, which is not obvious to consumers
-            // at all
-            child_entry.header = base_entry.header;
-            decompressed_bytes_by_pack_offset.insert(
-                child.offset(),
-                (child_entry, entry_end, fully_resolved_delta_bytes.to_owned()),
-            );
-            nodes.push((level + 1, child));
+            //        at all
+            child_entry.header = base_entry.header; // assign the actual object type, instead of 'delta'
+            if child.has_children() {
+                decompressed_bytes_by_pack_offset.insert(
+                    child.offset(),
+                    (child_entry, entry_end, fully_resolved_delta_bytes.to_owned()),
+                );
+                nodes.push((level + 1, child));
+            } else {
+                modify_base(
+                    child.data(),
+                    progress,
+                    Context {
+                        entry: &child_entry,
+                        entry_end,
+                        decompressed: &fully_resolved_delta_bytes,
+                        state,
+                        level: level + 1,
+                    },
+                )
+                .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync>)?;
+                num_objects += 1;
+                decompressed_bytes += fully_resolved_delta_bytes.len() as u64;
+                progress.inc();
+            }
         }
     }
 

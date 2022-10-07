@@ -57,6 +57,11 @@ impl<'a, T> Node<'a, T> {
         &mut self.item.data
     }
 
+    /// Returns true if this node has children, e.g. is not a leaf in the tree.
+    pub fn has_children(&self) -> bool {
+        !self.item.children.is_empty()
+    }
+
     /// Transform this `Node` into an iterator over its children.
     ///
     /// Children are `Node`s referring to pack entries whose base object is this pack entry.
