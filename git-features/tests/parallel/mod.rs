@@ -51,6 +51,7 @@ fn in_parallel_with_mut_slice_in_chunks() {
             Ok::<_, ()>(())
         },
         || Some(std::time::Duration::from_millis(10)),
+        std::convert::identity,
     )
     .unwrap();
     let expected = std::iter::repeat(1).take(num_items).sum::<usize>();
