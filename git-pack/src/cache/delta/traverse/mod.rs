@@ -128,6 +128,7 @@ where
         //       allowing threads to be more busy overall. This, however, needs some refactorings to allow operation
         //       on a single item efficiently while providing real-time feedback.
         let num_objects = self.num_items();
+        // let child_items_ptr = self.child_items.as_mut_slice() as *mut [Item<T>];
 
         let object_counter = {
             let mut progress = lock(&object_progress);

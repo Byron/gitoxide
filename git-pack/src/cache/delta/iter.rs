@@ -9,7 +9,7 @@ impl<T> Tree<T> {
 
         roots.chunks_mut(chunk_size).map(move |c| Chunk {
             inner: c.iter_mut(),
-            children: children as *mut [Item<T>],
+            child_items: children as *mut [Item<T>],
         })
     }
 }
@@ -17,7 +17,7 @@ impl<T> Tree<T> {
 /// A chunk returned by `iter_root_chunks`, which can be iterated over to get [`Node`]s.
 pub struct Chunk<'a, T> {
     inner: std::slice::IterMut<'a, Item<T>>,
-    children: *mut [Item<T>],
+    child_items: *mut [Item<T>],
 }
 
 // SAFETY: The raw pointer is uniquely materialized in `Node::into_child_iter`.
@@ -30,7 +30,7 @@ impl<'a, T> Iterator for Chunk<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|item| Node {
             item,
-            children: self.children,
+            child_items: self.child_items,
         })
     }
 }
@@ -38,7 +38,7 @@ impl<'a, T> Iterator for Chunk<'a, T> {
 /// An item returned by `iter_root_chunks`, allowing access to the `data` stored alongside nodes in a [`Tree`].
 pub struct Node<'a, T> {
     item: &'a mut Item<T>,
-    children: *mut [Item<T>],
+    child_items: *mut [Item<T>],
 }
 
 impl<'a, T> Node<'a, T> {
@@ -66,7 +66,7 @@ impl<'a, T> Node<'a, T> {
     ///
     /// Children are `Node`s referring to pack entries whose base object is this pack entry.
     pub fn into_child_iter(self) -> impl Iterator<Item = Node<'a, T>> + 'a {
-        let children = self.children;
+        let children = self.child_items;
         self.item.children.iter().map(move |&index| {
             // SAFETY: The children array is alive by the 'a lifetime.
             // SAFETY: The index is a valid index into the children array.
@@ -74,7 +74,7 @@ impl<'a, T> Node<'a, T> {
             #[allow(unsafe_code)]
             Node {
                 item: unsafe { &mut *(children as *mut Item<T>).add(index as usize) },
-                children,
+                child_items: children,
             }
         })
     }
