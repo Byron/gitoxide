@@ -41,7 +41,6 @@ fn assert_error_status(
 }
 
 #[test]
-// #[cfg_attr(feature = "http-client-reqwest", ignore)] // hanging
 fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted() -> crate::Result {
     let (server, mut client) = assert_error_status(401, std::io::ErrorKind::PermissionDenied)?;
     server.next_read_and_respond_with(fixture_bytes("v1/http-handshake.response"));
@@ -332,7 +331,6 @@ Accept: application/x-git-upload-pack-result
 }
 
 #[test]
-#[cfg_attr(feature = "http-client-reqwest", ignore)] // hangs
 fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
     let (server, mut c) = mock::serve_and_connect(
         "v2/http-handshake.response",
@@ -415,7 +413,12 @@ Git-Protocol: version=2:value-only:key=value
     );
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .filter(|l| !l.starts_with("expect: "))
+            .collect::<HashSet<_>>(),
         format!(
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -438,7 +441,8 @@ Git-Protocol: version=2
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
 
     server.next_read_and_respond_with(fixture_bytes("v2/http-fetch.response"));
@@ -467,7 +471,12 @@ Git-Protocol: version=2
     assert_eq!(messages.len(), 5);
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .filter(|l| !l.starts_with("expect: "))
+            .map(|l| l.to_lowercase())
+            .collect::<HashSet<_>>(),
         format!(
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -487,7 +496,8 @@ Git-Protocol: version=2
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
     Ok(())
 }
