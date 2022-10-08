@@ -61,7 +61,7 @@ mod save_as_to {
         remote.save_as_to(remote_name.try_into().expect("valid name"), &mut config)?;
         assert_eq!(
             uniformize(config.to_string()),
-            "[remote \"origin\"]\n\t\n\t\n\t\n\t\n\t\n\t\n\tfree = should not be removed\n\turl = https://example.com/path\n\tpushurl = https://ein.hub/path\n\tfetch = +refs/heads/*:refs/remotes/any/*\n\tfetch = refs/heads/special:refs/heads/special-upstream\n\tpush = refs/heads/main:refs/heads/main\n\tpush = :\n[unrelated]\n\ta = value\n[initially-empty-not-removed \"name\"]\n",
+            "[remote \"origin\"]\n\tfree = should not be removed\n\turl = https://example.com/path\n\tpushurl = https://ein.hub/path\n\tfetch = +refs/heads/*:refs/remotes/any/*\n\tfetch = refs/heads/special:refs/heads/special-upstream\n\tpush = refs/heads/main:refs/heads/main\n\tpush = :\n[unrelated]\n\ta = value\n[initially-empty-not-removed \"name\"]\n",
             "unrelated keys are kept, and so are keys in the sections we edit"
         );
         Ok(())
