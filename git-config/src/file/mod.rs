@@ -110,7 +110,7 @@ impl AddAssign<usize> for Size {
 /// words, it's possible that a section may have an ID of 3 but the next section
 /// has an ID of 5 as 4 was deleted.
 #[derive(PartialEq, Eq, Hash, Copy, Clone, PartialOrd, Ord, Debug)]
-pub(crate) struct SectionId(pub(crate) usize);
+pub struct SectionId(pub(crate) usize);
 
 /// All section body ids referred to by a section name.
 ///

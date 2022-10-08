@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use git_features::threading::OwnShared;
 
+use crate::file::SectionBodyIdsLut;
 use crate::{
     file::{self, rename_section, write::ends_with_newline, MetadataFilter, SectionId, SectionMut},
     lookup,
@@ -182,13 +183,39 @@ impl<'event> File<'event> {
             .ok()?
             .rev()
             .next()?;
-        self.section_order.remove(
-            self.section_order
-                .iter()
-                .position(|v| *v == id)
-                .expect("known section id"),
-        );
-        self.sections.remove(&id)
+        self.remove_section_by_id(id)
+    }
+
+    /// Remove the section identified by `id` if it exists and return it, or return `None` if no such section was present.
+    ///
+    /// Note that section ids are unambiguous even in the face of removals and additions of sections.
+    pub fn remove_section_by_id(&mut self, id: SectionId) -> Option<file::Section<'event>> {
+        self.section_order
+            .remove(self.section_order.iter().position(|v| *v == id)?);
+        let section = self.sections.remove(&id)?;
+        let lut = self
+            .section_lookup_tree
+            .get_mut(&section.header.name)
+            .expect("lookup cache still has name to be deleted");
+        for entry in lut {
+            match section.header.subsection_name.as_deref() {
+                Some(subsection_name) => {
+                    if let SectionBodyIdsLut::NonTerminal(map) = entry {
+                        if let Some(ids) = map.get_mut(subsection_name) {
+                            ids.remove(ids.iter().position(|v| *v == id).expect("present"));
+                            break;
+                        }
+                    }
+                }
+                None => {
+                    if let SectionBodyIdsLut::Terminal(ids) = entry {
+                        ids.remove(ids.iter().position(|v| *v == id).expect("present"));
+                        break;
+                    }
+                }
+            }
+        }
+        Some(section)
     }
 
     /// Removes the section with `name` and `subsection_name` that passed `filter`, returning the removed section
