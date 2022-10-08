@@ -44,12 +44,28 @@ mod save_as_to {
             expected,
             "it appears to be idempotent in this case"
         );
+
+        {
+            let mut new_section = config.section_mut_or_create_new("unrelated", None).expect("works");
+            new_section.push("a".try_into().unwrap(), Some("value".into()));
+
+            config
+                .section_mut_or_create_new("initially-empty-not-removed", Some("name"))
+                .expect("works");
+
+            let mut existing_section = config
+                .section_mut_or_create_new("remote", Some("origin"))
+                .expect("works");
+            existing_section.push("free".try_into().unwrap(), Some("should not be removed".into()))
+        }
+        remote.save_as_to(remote_name.try_into().expect("valid name"), &mut config)?;
+        assert_eq!(
+            uniformize(config.to_string()),
+            "[remote \"origin\"]\n\t\n\t\n\t\n\t\n\t\n\t\n\tfree = should not be removed\n\turl = https://example.com/path\n\tpushurl = https://ein.hub/path\n\tfetch = +refs/heads/*:refs/remotes/any/*\n\tfetch = refs/heads/special:refs/heads/special-upstream\n\tpush = refs/heads/main:refs/heads/main\n\tpush = :\n[unrelated]\n\ta = value\n[initially-empty-not-removed \"name\"]\n",
+            "unrelated keys are kept, and so are keys in the sections we edit"
+        );
         Ok(())
     }
-
-    #[test]
-    #[ignore]
-    fn save_existing_and_leave_extra_values_we_do_not_touch() {}
 
     fn uniformize(input: String) -> String {
         input.replace("\r\n", "\n")
