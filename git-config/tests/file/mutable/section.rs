@@ -58,10 +58,7 @@ mod remove {
         }
 
         assert!(!section.is_void(), "everything is still there");
-        assert_eq!(
-            config.to_string(),
-            "\n        [a]\n            \n            \n            \n            \n            "
-        );
+        assert_eq!(config.to_string(), "\n        [a]\n");
         Ok(())
     }
 }
