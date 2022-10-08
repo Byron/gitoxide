@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::{
     cell::RefCell,
     error::Error,
@@ -29,11 +30,12 @@ fn assert_error_status(
         .expect("non-200 status causes error");
     let error = error
         .source()
-        .expect("source")
+        .unwrap_or_else(|| panic!("no source() in: {:?} ", error))
         .downcast_ref::<std::io::Error>()
         .expect("io error as source");
     assert_eq!(error.kind(), kind);
-    assert_eq!(error.to_string(), format!("Received HTTP status {}", status));
+    let expected = format!("Received HTTP status {}", status);
+    assert_eq!(error.to_string().get(..expected.len()), Some(expected).as_deref());
     drop(server.received());
     Ok((server, client))
 }
@@ -49,7 +51,11 @@ fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted()
     client.handshake(Service::UploadPack, &[])?;
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .collect::<HashSet<_>>(),
         format!(
             "GET /path/not-important/info/refs?service=git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -62,14 +68,20 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
 
     server.next_read_and_respond_with(fixture_bytes("v1/http-handshake.response"));
     client.request(client::WriteMode::Binary, client::MessageKind::Flush)?;
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .filter(|l| !l.starts_with("expect: "))
+            .collect::<HashSet<_>>(),
         format!(
             "POST /path/not-important/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -86,7 +98,8 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>(),
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>(),
         "the authentication information is used in subsequent calls"
     );
 
@@ -211,7 +224,11 @@ fn handshake_v1() -> crate::Result {
     );
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .collect::<HashSet<_>>(),
         format!(
             "GET /path/not/important/due/to/mock/info/refs?service=git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -223,7 +240,8 @@ User-Agent: git/oxide-{}
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
     Ok(())
 }
@@ -239,8 +257,13 @@ fn clone_v1() -> crate::Result {
         c.handshake(Service::UploadPack, &[("key", Some("value")), ("value-only", None)])?;
     io::copy(&mut refs.expect("refs in protocol V1"), &mut io::sink())?;
     assert_eq!(
-        server.received_as_string().lines().nth(4).expect("git-protocol header"),
-        "Git-Protocol: key=value:value-only",
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .find(|l| l.starts_with("git-protocol"))
+            .expect("git-protocol header"),
+        "git-protocol: key=value:value-only",
         "it writes extra-parameters without the version"
     );
 
@@ -275,12 +298,17 @@ fn clone_v1() -> crate::Result {
     let sidebands = Rc::try_unwrap(messages).expect("no other handle").into_inner();
     assert_eq!(sidebands.len(), 3);
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .filter(|l| !l.starts_with("expect: "))
+            .collect::<HashSet<_>>(),
         format!(
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
-Transfer-Encoding: chunked
 User-Agent: git/oxide-{}
+Transfer-Encoding: Chunked
 Content-Type: application/x-git-upload-pack-request
 Accept: application/x-git-upload-pack-result
 
@@ -296,7 +324,8 @@ Accept: application/x-git-upload-pack-result
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
     Ok(())
 }
@@ -347,7 +376,11 @@ fn handshake_and_lsrefs_and_fetch_v2() -> crate::Result {
     );
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .collect::<HashSet<_>>(),
         format!(
             "GET /path/not/important/due/to/mock/info/refs?service=git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -360,7 +393,8 @@ Git-Protocol: version=2:value-only:key=value
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
 
     server.next_read_and_respond_with(fixture_bytes("v2/http-lsrefs.response"));
@@ -379,7 +413,12 @@ Git-Protocol: version=2:value-only:key=value
     );
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .filter(|l| !l.starts_with("expect: "))
+            .collect::<HashSet<_>>(),
         format!(
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -402,7 +441,8 @@ Git-Protocol: version=2
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
 
     server.next_read_and_respond_with(fixture_bytes("v2/http-fetch.response"));
@@ -431,7 +471,12 @@ Git-Protocol: version=2
     assert_eq!(messages.len(), 5);
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .filter(|l| !l.starts_with("expect: "))
+            .map(|l| l.to_lowercase())
+            .collect::<HashSet<_>>(),
         format!(
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -451,7 +496,8 @@ Git-Protocol: version=2
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
     Ok(())
 }

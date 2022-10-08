@@ -176,6 +176,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] [side-band mode](https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L467:L467)
 * [x] `Read` from packet line with (optional) progress support via sidebands
 * [x] `Write` with built-in packet line encoding
+* [x] `async` support
 * [x] API documentation
     * [ ] Some examples
 
@@ -187,6 +188,8 @@ Check out the [performance discussion][git-traverse-performance] as well.
         * [x] _ssh://_ launches service application in a remote shell using _ssh_
         * [x] _git://_ establishes a tcp connection to a git daemon
         * [x] _http(s)://_ establishes connections to web server
+           * [x] via `curl` (blocking only)
+           * [x] via `reqwest` (blocking only)
         * [ ] pass context for scheme specific configuration, like timeouts
     * [x] git://<service>
         * [x] V1 handshake
@@ -203,6 +206,7 @@ Check out the [performance discussion][git-traverse-performance] as well.
             * [x] send command request, receive response with sideband support
         * [ ] ~~'dumb'~~ - _we opt out using this protocol seems too slow to be useful, unless it downloads entire packs for clones?_
     * [x] authentication failures are communicated by io::ErrorKind::PermissionDenied, allowing other layers to retry with authentication
+    * [x] `async` support
 * **server**
     * [ ] general purpose `accept(…)` for servers
 * [x] API documentation

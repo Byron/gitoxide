@@ -15,12 +15,18 @@ use crate::{
 #[cfg(feature = "http-client-curl")]
 mod curl;
 
+#[cfg(feature = "http-client-reqwest")]
+mod reqwest;
+
 ///
 mod traits;
 
-/// The actual http client implementation.
+/// The actual http client implementation, using curl
 #[cfg(feature = "http-client-curl")]
 pub type Impl = curl::Curl;
+/// The actual http client implementation, using reqwest
+#[cfg(feature = "http-client-reqwest")]
+pub type Impl = reqwest::Remote;
 
 /// A transport for supporting arbitrary http clients by abstracting interactions with them into the [Http] trait.
 pub struct Transport<H: Http> {
@@ -52,7 +58,7 @@ impl<H: Http> Transport<H> {
     }
 }
 
-#[cfg(feature = "http-client-curl")]
+#[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
 impl Transport<Impl> {
     /// Create a new instance to communicate to `url` using the given `desired_version` of the `git` protocol.
     ///
@@ -64,13 +70,13 @@ impl Transport<Impl> {
 
 impl<H: Http> Transport<H> {
     fn check_content_type(service: Service, kind: &str, headers: <H as Http>::Headers) -> Result<(), client::Error> {
-        let wanted_content_type = format!("content-type: application/x-{}-{}", service.as_str(), kind);
-        if !headers
-            .lines()
-            .collect::<Result<Vec<_>, _>>()?
-            .iter()
-            .any(|l| l.to_lowercase() == wanted_content_type)
-        {
+        let wanted_content_type = format!("application/x-{}-{}", service.as_str(), kind);
+        if !headers.lines().collect::<Result<Vec<_>, _>>()?.iter().any(|l| {
+            let mut tokens = l.split(':');
+            tokens.next().zip(tokens.next()).map_or(false, |(name, value)| {
+                name.eq_ignore_ascii_case("content-type") && value.trim() == wanted_content_type
+            })
+        }) {
             return Err(client::Error::Http(Error::Detail {
                 description: format!(
                     "Didn't find '{}' header to indicate 'smart' protocol, and 'dumb' protocol is not supported.",
@@ -306,7 +312,7 @@ pub fn connect_http<H: Http>(http: H, url: &str, desired_version: Protocol) -> T
 }
 
 /// Connect to the given `url` via HTTP/S using the `desired_version` of the `git` protocol.
-#[cfg(feature = "http-client-curl")]
+#[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
 pub fn connect(url: &str, desired_version: Protocol) -> Transport<Impl> {
     Transport::new(url, desired_version)
 }
