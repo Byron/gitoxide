@@ -30,6 +30,15 @@ impl<'event> File<'event> {
             .expect("BUG: Section did not have id from lookup")
             .to_mut(nl))
     }
+
+    /// Return the mutable section identified by `id`, or `None` if it didn't exist.
+    ///
+    /// Note that `id` is stable across deletions and insertions.
+    pub fn section_mut_by_id<'a>(&'a mut self, id: SectionId) -> Option<SectionMut<'a, 'event>> {
+        let nl = self.detect_newline_style_smallvec();
+        self.sections.get_mut(&id).map(|s| s.to_mut(nl))
+    }
+
     /// Returns the last mutable section with a given `name` and optional `subsection_name`, _if it exists_, or create a new section.
     pub fn section_mut_or_create_new<'a>(
         &'a mut self,

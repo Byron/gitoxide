@@ -2,7 +2,32 @@ mod remove_section {
     use std::convert::TryFrom;
 
     #[test]
-    fn removal_is_complete() {
+    fn removal_of_all_sections_programmatically_with_sections_and_ids_by_name() {
+        let mut file = git_config::File::try_from("[core] \na = b\nb=c\n\n[core \"name\"]\nd = 1\ne = 2").unwrap();
+        for id in file
+            .sections_and_ids_by_name("core")
+            .expect("2 sections present")
+            .map(|(_, id)| id)
+            .collect::<Vec<_>>()
+        {
+            file.remove_section_by_id(id);
+        }
+        assert!(file.is_void());
+        assert_eq!(file.sections().count(), 0);
+    }
+
+    #[test]
+    fn removal_of_all_sections_programmatically_with_sections_and_ids() {
+        let mut file = git_config::File::try_from("[core] \na = b\nb=c\n\n[core \"name\"]\nd = 1\ne = 2").unwrap();
+        for id in file.sections_and_ids().map(|(_, id)| id).collect::<Vec<_>>() {
+            file.remove_section_by_id(id);
+        }
+        assert!(file.is_void());
+        assert_eq!(file.sections().count(), 0);
+    }
+
+    #[test]
+    fn removal_is_complete_and_sections_can_be_readded() {
         let mut file = git_config::File::try_from("[core] \na = b\nb=c\n\n[core \"name\"]\nd = 1\ne = 2").unwrap();
         assert_eq!(file.sections().count(), 2);
 
