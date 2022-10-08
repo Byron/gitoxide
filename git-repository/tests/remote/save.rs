@@ -19,7 +19,14 @@ mod save_as_to {
         let repo = basic_repo()?;
         let mut remote = repo
             .remote_at("https://example.com/path")?
-            .push_url("https://ein.hub/path")?;
+            .push_url("https://ein.hub/path")?
+            .with_refspec("+refs/heads/*:refs/remotes/any/*", git::remote::Direction::Fetch)?
+            .with_refspec(
+                "refs/heads/special:refs/heads/special-upstream",
+                git::remote::Direction::Fetch,
+            )?
+            .with_refspec("refs/heads/main:refs/heads/main", git::remote::Direction::Push)? // similar to 'simple' for `push.default`
+            .with_refspec(":", git::remote::Direction::Push)?; // similar to 'matching'
         let remote_name = "origin";
         assert!(
             repo.find_remote(remote_name).is_err(),
@@ -30,7 +37,7 @@ mod save_as_to {
         remote.save_as_to(remote_name.try_into().expect("valid name"), &mut config)?;
         assert_eq!(
             uniformize(config.to_string()),
-            "[remote \"origin\"]\n\turl = https://example.com/path\n\tpushurl = https://ein.hub/path\n"
+            "[remote \"origin\"]\n\turl = https://example.com/path\n\tpushurl = https://ein.hub/path\n\tfetch = +refs/heads/*:refs/remotes/any/*\n\tfetch = refs/heads/special:refs/heads/special-upstream\n\tpush = refs/heads/main:refs/heads/main\n\tpush = :\n"
         );
         Ok(())
     }

@@ -34,6 +34,17 @@ impl Remote<'_> {
         if let Some(url) = self.push_url.as_ref() {
             section.push("pushurl".try_into().expect("valid"), Some(url.to_bstring().as_ref()))
         }
+        for (key, spec) in self
+            .fetch_specs
+            .iter()
+            .map(|spec| ("fetch", spec))
+            .chain(self.push_specs.iter().map(|spec| ("push", spec)))
+        {
+            section.push(
+                key.try_into().expect("valid"),
+                Some(spec.to_ref().to_bstring().as_ref()),
+            )
+        }
         Ok(())
     }
 
