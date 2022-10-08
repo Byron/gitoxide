@@ -35,12 +35,21 @@ mod save_as_to {
         assert_eq!(remote.name(), None);
         let mut config = git::config::File::default();
         remote.save_as_to(remote_name.try_into().expect("valid name"), &mut config)?;
+        let expected = "[remote \"origin\"]\n\turl = https://example.com/path\n\tpushurl = https://ein.hub/path\n\tfetch = +refs/heads/*:refs/remotes/any/*\n\tfetch = refs/heads/special:refs/heads/special-upstream\n\tpush = refs/heads/main:refs/heads/main\n\tpush = :\n";
+        assert_eq!(uniformize(config.to_string()), expected);
+
+        remote.save_as_to(remote_name.try_into().expect("valid name"), &mut config)?;
         assert_eq!(
             uniformize(config.to_string()),
-            "[remote \"origin\"]\n\turl = https://example.com/path\n\tpushurl = https://ein.hub/path\n\tfetch = +refs/heads/*:refs/remotes/any/*\n\tfetch = refs/heads/special:refs/heads/special-upstream\n\tpush = refs/heads/main:refs/heads/main\n\tpush = :\n"
+            expected,
+            "it appears to be idempotent in this case"
         );
         Ok(())
     }
+
+    #[test]
+    #[ignore]
+    fn save_existing_and_leave_extra_values_we_do_not_touch() {}
 
     fn uniformize(input: String) -> String {
         input.replace("\r\n", "\n")
