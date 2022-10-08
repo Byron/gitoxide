@@ -11,7 +11,7 @@ use crate::{
 
 /// Mutating low-level access methods.
 impl<'event> File<'event> {
-    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_.
+    /// Returns the last mutable section with a given `name` and optional `subsection_name`, _if it exists_.
     pub fn section_mut<'a>(
         &'a mut self,
         name: impl AsRef<str>,
@@ -29,7 +29,7 @@ impl<'event> File<'event> {
             .expect("BUG: Section did not have id from lookup")
             .to_mut(nl))
     }
-    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_, or create a new section.
+    /// Returns the last mutable section with a given `name` and optional `subsection_name`, _if it exists_, or create a new section.
     pub fn section_mut_or_create_new<'a>(
         &'a mut self,
         name: impl AsRef<str>,
