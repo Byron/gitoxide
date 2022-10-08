@@ -1,4 +1,5 @@
 use crate::Remote;
+use std::convert::TryInto;
 
 /// The error returned by [`Remote::save_to()`].
 #[derive(Debug, thiserror::Error)]
@@ -15,8 +16,8 @@ impl Remote<'_> {
     /// Note that all sections named `remote "<name>"` will be cleared of all values we are about to write,
     /// and the last `remote "<name>"` section will be containing all relevant values so that reloading the remote
     /// from `config` would yield the same in-memory state.
-    pub fn save_to(&self, _config: &mut git_config::File<'static>) -> Result<(), Error> {
-        let _name = self.name().ok_or_else(|| Error::NameMissing {
+    pub fn save_to(&self, config: &mut git_config::File<'static>) -> Result<(), Error> {
+        let name = self.name().ok_or_else(|| Error::NameMissing {
             url: self
                 .url
                 .as_ref()
@@ -24,7 +25,16 @@ impl Remote<'_> {
                 .expect("one url is always set")
                 .to_owned(),
         })?;
-        todo!()
+        let mut section = config
+            .section_mut_or_create_new("remote", Some(name))
+            .expect("section name is validated and 'remote' is acceptable");
+        if let Some(url) = self.url.as_ref() {
+            section.push("url".try_into().expect("valid"), Some(url.to_bstring().as_ref()))
+        }
+        if let Some(url) = self.push_url.as_ref() {
+            section.push("pushurl".try_into().expect("valid"), Some(url.to_bstring().as_ref()))
+        }
+        Ok(())
     }
 
     /// Forcefully set our name to `name` and write our state to `config` similar to [`save_to()`][Self::save_to()].
@@ -32,12 +42,16 @@ impl Remote<'_> {
     /// Note that this sets a name for anonymous remotes, but overwrites the name for those who were named before.
     /// If this name is different from the current one, the git configuration will still contain the previous name,
     /// and the caller should account for that.
-    pub fn save_as(
+    pub fn save_as_to(
         &mut self,
         name: git_config::parse::section::Name<'_>,
         config: &mut git_config::File<'static>,
     ) -> Result<(), Error> {
+        let prev_name = self.name.take();
         self.name = Some(name.to_string());
-        self.save_to(config)
+        self.save_to(config).map_err(|err| {
+            self.name = prev_name;
+            err
+        })
     }
 }
