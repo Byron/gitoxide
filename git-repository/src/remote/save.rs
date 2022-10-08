@@ -30,13 +30,13 @@ impl Remote<'_> {
                 .collect::<Vec<_>>()
         }) {
             let mut sections_to_remove = Vec::new();
-            const KEYS_TO_REMOVE: &[&'static str] = &["url", "pushurl", "fetch", "push"];
+            const KEYS_TO_REMOVE: &[&str] = &["url", "pushurl", "fetch", "push"];
             for id in section_ids {
                 let mut section = config.section_mut_by_id(id).expect("just queried");
                 let was_empty = section.num_values() == 0;
 
                 for key in KEYS_TO_REMOVE {
-                    while let Some(_) = section.remove(key) {}
+                    while section.remove(key).is_some() {}
                 }
 
                 let is_empty_after_deletions_of_values_to_be_written = section.num_values() == 0;
