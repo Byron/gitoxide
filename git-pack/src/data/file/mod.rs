@@ -4,6 +4,9 @@ mod init;
 ///
 pub mod verify;
 
+/// The bytes used as header in a pack data file.
+pub type Header = [u8; 12];
+
 /// A return value of a resolve function, which given an [`ObjectId`][git_hash::ObjectId] determines where an object can be found.
 #[derive(Debug, PartialEq, Eq, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]

@@ -5,6 +5,7 @@ use git_features::{
     hash::Sha1,
     zlib::{stream::inflate::ReadBoxed, Decompress},
 };
+use git_hash::ObjectId;
 
 use crate::data::input;
 
@@ -16,29 +17,34 @@ pub struct BytesToEntriesIter<BR> {
     decompressor: Option<Box<Decompress>>,
     offset: u64,
     had_error: bool,
-    kind: crate::data::Version,
+    version: crate::data::Version,
     objects_left: u32,
     hash: Option<Sha1>,
     mode: input::Mode,
     compressed: input::EntryDataMode,
     compressed_buf: Option<Vec<u8>>,
     hash_len: usize,
+    object_hash: git_hash::Kind,
 }
 
-impl<BR> BytesToEntriesIter<BR>
-where
-    BR: io::BufRead,
-{
+/// Access
+impl<BR> BytesToEntriesIter<BR> {
     /// The pack version currently being iterated
-    pub fn kind(&self) -> crate::data::Version {
-        self.kind
+    pub fn version(&self) -> crate::data::Version {
+        self.version
     }
 
     /// The kind of iteration
     pub fn mode(&self) -> input::Mode {
         self.mode
     }
+}
 
+/// Initialization
+impl<BR> BytesToEntriesIter<BR>
+where
+    BR: io::BufRead,
+{
     /// Obtain an iterator from a `read` stream to a pack data file and configure it using `mode` and `compressed`.
     /// `object_hash` specifies which hash is used for objects in ref-delta entries.
     ///
@@ -52,9 +58,9 @@ where
         let mut header_data = [0u8; 12];
         read.read_exact(&mut header_data)?;
 
-        let (kind, num_objects) = crate::data::header::decode(&header_data)?;
+        let (version, num_objects) = crate::data::header::decode(&header_data)?;
         assert_eq!(
-            kind,
+            version,
             crate::data::Version::V2,
             "let's stop here if we see undocumented pack formats"
         );
@@ -64,7 +70,7 @@ where
             compressed,
             offset: 12,
             had_error: false,
-            kind,
+            version,
             objects_left: num_objects,
             hash: (mode != input::Mode::AsIs).then(|| {
                 let mut hash = git_features::hash::hasher(object_hash);
@@ -74,6 +80,7 @@ where
             mode,
             compressed_buf: None,
             hash_len: object_hash.len_in_bytes(),
+            object_hash,
         })
     }
 
@@ -158,8 +165,22 @@ where
         };
 
         // Last objects gets trailer (which is potentially verified)
-        let trailer = if self.objects_left == 0 {
-            let mut id = git_hash::ObjectId::from([0; 20]);
+        let trailer = self.try_read_trailer()?;
+        Ok(input::Entry {
+            header: entry.header,
+            header_size: entry.header_size() as u16,
+            compressed,
+            compressed_size,
+            crc32,
+            pack_offset,
+            decompressed_size: bytes_copied,
+            trailer,
+        })
+    }
+
+    fn try_read_trailer(&mut self) -> Result<Option<ObjectId>, input::Error> {
+        Ok(if self.objects_left == 0 {
+            let mut id = git_hash::ObjectId::null(self.object_hash);
             if let Err(err) = self.read.read_exact(id.as_mut_slice()) {
                 if self.mode != input::Mode::Restore {
                     return Err(err.into());
@@ -184,17 +205,6 @@ where
             Some(git_hash::ObjectId::from(hash.digest()))
         } else {
             None
-        };
-
-        Ok(input::Entry {
-            header: entry.header,
-            header_size: entry.header_size() as u16,
-            compressed,
-            compressed_size,
-            crc32,
-            pack_offset,
-            decompressed_size: bytes_copied,
-            trailer,
         })
     }
 }

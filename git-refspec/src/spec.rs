@@ -1,4 +1,4 @@
-use bstr::BStr;
+use bstr::{BStr, ByteSlice};
 
 use crate::{
     instruction::{Fetch, Push},
@@ -17,6 +17,11 @@ impl RefSpec {
             src: self.src.as_ref().map(|b| b.as_ref()),
             dst: self.dst.as_ref().map(|b| b.as_ref()),
         }
+    }
+
+    /// Return true if the spec stats with a `+` and thus forces setting the reference.
+    pub fn allow_non_fast_forward(&self) -> bool {
+        matches!(self.mode, Mode::Force)
     }
 }
 
@@ -84,7 +89,7 @@ mod impls {
 }
 
 /// Access
-impl RefSpecRef<'_> {
+impl<'a> RefSpecRef<'a> {
     /// Return the left-hand side of the spec, typically the source.
     /// It takes many different forms so don't rely on this being a ref name.
     ///
@@ -117,8 +122,19 @@ impl RefSpecRef<'_> {
         }
     }
 
+    /// Derive the prefix from the `source` side of this spec, if possible.
+    ///
+    /// This means it starts with `refs/`. Note that it won't contain more than two components, like `refs/heads/`
+    pub fn prefix(&self) -> Option<&BStr> {
+        let source = self.source()?;
+        let suffix = source.strip_prefix(b"refs/")?;
+        let slash_pos = suffix.find_byte(b'/')?;
+        let prefix = source[..="refs/".len() + slash_pos].as_bstr();
+        (!prefix.contains(&b'*')).then(|| prefix)
+    }
+
     /// Transform the state of the refspec into an instruction making clear what to do with it.
-    pub fn instruction(&self) -> Instruction<'_> {
+    pub fn instruction(&self) -> Instruction<'a> {
         match self.op {
             Operation::Fetch => match (self.mode, self.src, self.dst) {
                 (Mode::Normal | Mode::Force, Some(src), None) => Instruction::Fetch(Fetch::Only { src }),

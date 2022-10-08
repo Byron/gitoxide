@@ -1,7 +1,12 @@
+use std::collections::HashSet;
+
 use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
 
-use crate::remote::{connection::HandshakeWithRefs, fetch, Connection, Direction};
+use crate::{
+    bstr::{BString, ByteVec},
+    remote::{connection::HandshakeWithRefs, fetch, Connection, Direction},
+};
 
 /// The error returned by [`Connection::ref_map()`].
 #[derive(Debug, thiserror::Error)]
@@ -19,6 +24,27 @@ pub enum Error {
     MappingValidation(#[from] git_refspec::match_group::validate::Error),
 }
 
+/// For use in [`Connection::ref_map()`].
+#[derive(Debug, Clone)]
+pub struct Options {
+    /// Use a two-component prefix derived from the ref-spec's source, like `refs/heads/`  to let the server pre-filter refs
+    /// with great potential for savings in traffic and local CPU time. Defaults to `true`.
+    pub prefix_from_spec_as_filter_on_remote: bool,
+    /// Parameters in the form of `(name, optional value)` to add to the handshake.
+    ///
+    /// This is useful in case of custom servers.
+    pub handshake_parameters: Vec<(String, Option<String>)>,
+}
+
+impl Default for Options {
+    fn default() -> Self {
+        Options {
+            prefix_from_spec_as_filter_on_remote: true,
+            handshake_parameters: Default::default(),
+        }
+    }
+}
+
 impl<'remote, 'repo, T, P> Connection<'remote, 'repo, T, P>
 where
     T: Transport,
@@ -31,16 +57,31 @@ where
     /// with the local tracking branch of these tips (if available).
     ///
     /// Note that this doesn't fetch the objects mentioned in the tips nor does it make any change to underlying repository.
+    ///
+    /// # Consumption
+    ///
+    /// Due to management of the transport, it's cleanest to only use it for a single interaction. Thus it's consumed along with
+    /// the connection.
     #[git_protocol::maybe_async::maybe_async]
-    pub async fn ref_map(mut self) -> Result<fetch::RefMap<'remote>, Error> {
-        let res = self.ref_map_inner().await;
-        git_protocol::fetch::indicate_end_of_interaction(&mut self.transport).await?;
+    pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap<'remote>, Error> {
+        let res = self.ref_map_inner(options).await;
+        git_protocol::fetch::indicate_end_of_interaction(&mut self.transport)
+            .await
+            .ok();
         res
     }
 
     #[git_protocol::maybe_async::maybe_async]
-    async fn ref_map_inner(&mut self) -> Result<fetch::RefMap<'remote>, Error> {
-        let remote = self.fetch_refs().await?;
+    pub(crate) async fn ref_map_inner(
+        &mut self,
+        Options {
+            prefix_from_spec_as_filter_on_remote,
+            handshake_parameters,
+        }: Options,
+    ) -> Result<fetch::RefMap<'remote>, Error> {
+        let remote = self
+            .fetch_refs(prefix_from_spec_as_filter_on_remote, handshake_parameters)
+            .await?;
         let group = git_refspec::MatchGroup::from_fetch_specs(self.remote.fetch_specs.iter().map(|s| s.to_ref()));
         let (res, fixes) = group
             .match_remotes(remote.refs.iter().map(|r| {
@@ -77,9 +118,13 @@ where
         })
     }
     #[git_protocol::maybe_async::maybe_async]
-    async fn fetch_refs(&mut self) -> Result<HandshakeWithRefs, Error> {
+    async fn fetch_refs(
+        &mut self,
+        filter_by_prefix: bool,
+        extra_parameters: Vec<(String, Option<String>)>,
+    ) -> Result<HandshakeWithRefs, Error> {
         let mut credentials_storage;
-        let authenticate = match self.credentials.as_mut() {
+        let authenticate = match self.authenticate.as_mut() {
             Some(f) => f,
             None => {
                 let url = self
@@ -95,15 +140,32 @@ where
             }
         };
         let mut outcome =
-            git_protocol::fetch::handshake(&mut self.transport, authenticate, Vec::new(), &mut self.progress).await?;
+            git_protocol::fetch::handshake(&mut self.transport, authenticate, extra_parameters, &mut self.progress)
+                .await?;
         let refs = match outcome.refs.take() {
             Some(refs) => refs,
             None => {
+                let specs = &self.remote.fetch_specs;
                 git_protocol::fetch::refs(
                     &mut self.transport,
                     outcome.server_protocol_version,
                     &outcome.capabilities,
-                    |_a, _b, _c| Ok(git_protocol::fetch::delegate::LsRefsAction::Continue),
+                    |_capabilities, arguments, _features| {
+                        if filter_by_prefix {
+                            let mut seen = HashSet::new();
+                            for spec in specs {
+                                let spec = spec.to_ref();
+                                if seen.insert(spec.instruction()) {
+                                    if let Some(prefix) = spec.prefix() {
+                                        let mut arg: BString = "ref-prefix ".into();
+                                        arg.push_str(prefix);
+                                        arguments.push(arg)
+                                    }
+                                }
+                            }
+                        }
+                        Ok(git_protocol::fetch::delegate::LsRefsAction::Continue)
+                    },
                     &mut self.progress,
                 )
                 .await?

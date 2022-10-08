@@ -1,16 +1,12 @@
 use std::convert::TryInto;
 
-use git_actor as actor;
 use git_hash::ObjectId;
-use git_lock as lock;
 use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     FullName, PartialNameRef, Target,
 };
 
 use crate::{bstr::BString, ext::ReferenceExt, reference, Reference};
-
-const DEFAULT_LOCK_MODE: git_lock::acquire::Fail = git_lock::acquire::Fail::Immediately;
 
 /// Obtain and alter references comfortably
 impl crate::Repository {
@@ -25,19 +21,15 @@ impl crate::Repository {
         constraint: PreviousValue,
     ) -> Result<Reference<'_>, reference::edit::Error> {
         let id = target.into();
-        let mut edits = self.edit_reference(
-            RefEdit {
-                change: Change::Update {
-                    log: Default::default(),
-                    expected: constraint,
-                    new: Target::Peeled(id),
-                },
-                name: format!("refs/tags/{}", name.as_ref()).try_into()?,
-                deref: false,
+        let mut edits = self.edit_reference(RefEdit {
+            change: Change::Update {
+                log: Default::default(),
+                expected: constraint,
+                new: Target::Peeled(id),
             },
-            DEFAULT_LOCK_MODE,
-            self.committer_or_default(),
-        )?;
+            name: format!("refs/tags/{}", name.as_ref()).try_into()?,
+            deref: false,
+        })?;
         assert_eq!(edits.len(), 1, "reference splits should ever happen");
         let edit = edits.pop().expect("exactly one item");
         Ok(Reference {
@@ -95,23 +87,19 @@ impl crate::Repository {
     {
         let name = name.try_into().map_err(git_validate::reference::name::Error::from)?;
         let id = target.into();
-        let mut edits = self.edit_reference(
-            RefEdit {
-                change: Change::Update {
-                    log: LogChange {
-                        mode: RefLog::AndReference,
-                        force_create_reflog: false,
-                        message: log_message.into(),
-                    },
-                    expected: constraint,
-                    new: Target::Peeled(id),
+        let mut edits = self.edit_reference(RefEdit {
+            change: Change::Update {
+                log: LogChange {
+                    mode: RefLog::AndReference,
+                    force_create_reflog: false,
+                    message: log_message.into(),
                 },
-                name,
-                deref: false,
+                expected: constraint,
+                new: Target::Peeled(id),
             },
-            DEFAULT_LOCK_MODE,
-            self.committer_or_default(),
-        )?;
+            name,
+            deref: false,
+        })?;
         assert_eq!(
             edits.len(),
             1,
@@ -126,34 +114,29 @@ impl crate::Repository {
         .attach(self))
     }
 
-    /// Edit a single reference as described in `edit`, handle locks via `lock_mode` and write reference logs as `log_committer`.
+    /// Edit a single reference as described in `edit`, and write reference logs as `log_committer`.
     ///
     /// One or more `RefEdit`s  are returned - symbolic reference splits can cause more edits to be performed. All edits have the previous
     /// reference values set to the ones encountered at rest after acquiring the respective reference's lock.
-    pub fn edit_reference(
-        &self,
-        edit: RefEdit,
-        lock_mode: lock::acquire::Fail,
-        log_committer: actor::SignatureRef<'_>,
-    ) -> Result<Vec<RefEdit>, reference::edit::Error> {
-        self.edit_references(Some(edit), lock_mode, log_committer)
+    pub fn edit_reference(&self, edit: RefEdit) -> Result<Vec<RefEdit>, reference::edit::Error> {
+        self.edit_references(Some(edit))
     }
 
-    /// Edit one or more references as described by their `edits`, with `lock_mode` deciding on how to handle competing
-    /// transactions. `log_committer` is the name appearing in reference logs.
+    /// Edit one or more references as described by their `edits`.
+    /// Note that one can set the committer name for use in the ref-log by temporarily
+    /// [overriding the git-config][crate::Repository::config_snapshot_mut()].
     ///
     /// Returns all reference edits, which might be more than where provided due the splitting of symbolic references, and
     /// whose previous (_old_) values are the ones seen on in storage after the reference was locked.
     pub fn edit_references(
         &self,
         edits: impl IntoIterator<Item = RefEdit>,
-        lock_mode: lock::acquire::Fail,
-        log_committer: actor::SignatureRef<'_>,
     ) -> Result<Vec<RefEdit>, reference::edit::Error> {
+        let (file_lock_fail, packed_refs_lock_fail) = self.config.lock_timeout()?;
         self.refs
             .transaction()
-            .prepare(edits, lock_mode)?
-            .commit(log_committer)
+            .prepare(edits, file_lock_fail, packed_refs_lock_fail)?
+            .commit(self.committer_or_default())
             .map_err(Into::into)
     }
 

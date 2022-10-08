@@ -11,7 +11,9 @@ mod remote {
     use crate::client::http;
     use crate::client::http::reqwest::Remote;
     use git_features::io::pipe;
+    use std::any::Any;
     use std::convert::TryFrom;
+    use std::error::Error;
     use std::io::Write;
     use std::str::FromStr;
 
@@ -180,6 +182,10 @@ mod remote {
             headers: impl IntoIterator<Item = impl AsRef<str>>,
         ) -> Result<http::PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, http::Error> {
             self.make_request(url, headers, true)
+        }
+
+        fn configure(&mut self, _config: &dyn Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+            Ok(())
         }
     }
 

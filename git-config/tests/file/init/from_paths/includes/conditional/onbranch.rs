@@ -285,6 +285,7 @@ value = branch-override-by-include
                 deref: false,
             }),
             git_repository::lock::acquire::Fail::Immediately,
+            git_repository::lock::acquire::Fail::Immediately,
         )?
         .commit(repo.committer_or_default())?;
 

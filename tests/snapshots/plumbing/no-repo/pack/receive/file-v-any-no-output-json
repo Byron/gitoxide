@@ -1,6 +1,6 @@
 {
   "index": {
-    "index_kind": "V2",
+    "index_version": "V2",
     "index_hash": "c787de2aafb897417ca8167baeb146eabd18bc5f",
     "data_hash": "346574b7331dc3a1724da218d622c6e1b6c66a57",
     "num_objects": 9

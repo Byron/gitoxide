@@ -5,7 +5,8 @@ use git_transport::{client, client::TransportV2Ext};
 use crate::fetch::{Arguments, Command};
 
 impl Arguments {
-    pub(crate) fn send<'a, T: client::Transport + 'a>(
+    /// Send fetch arguments to the server, and indicate this is the end of negotiations only if `add_done_argument` is present.
+    pub fn send<'a, T: client::Transport + 'a>(
         &mut self,
         transport: &'a mut T,
         add_done_argument: bool,

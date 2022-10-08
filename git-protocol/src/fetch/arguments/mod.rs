@@ -1,8 +1,9 @@
 use std::fmt;
 
-use bstr::{BStr, BString, ByteVec};
+use bstr::{BStr, BString, ByteSlice, ByteVec};
 
 /// The arguments passed to a server command.
+#[derive(Debug)]
 pub struct Arguments {
     /// The active features/capabilities of the fetch invocation
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
@@ -24,6 +25,13 @@ pub struct Arguments {
 }
 
 impl Arguments {
+    /// Return true if there is no argument at all.
+    ///
+    /// This can happen if callers assure that they won't add 'wants' if their 'have' is the same, i.e. if the remote has nothing
+    /// new for them.
+    pub fn is_empty(&self) -> bool {
+        self.haves.is_empty() && !self.args.iter().rev().any(|arg| arg.starts_with_str("want "))
+    }
     /// Return true if ref filters is supported.
     pub fn can_use_filter(&self) -> bool {
         self.filter
@@ -125,8 +133,10 @@ impl Arguments {
     fn prefixed(&mut self, prefix: &str, value: impl fmt::Display) {
         self.args.push(format!("{}{}", prefix, value).into());
     }
+    /// Create a new instance to help setting up arguments to send to the server as part of a `fetch` operation
+    /// for which `features` are the available and configured features to use.
     #[cfg(any(feature = "async-client", feature = "blocking-client"))]
-    pub(crate) fn new(version: git_transport::Protocol, features: Vec<crate::fetch::command::Feature>) -> Self {
+    pub fn new(version: git_transport::Protocol, features: Vec<crate::fetch::command::Feature>) -> Self {
         use crate::fetch::Command;
         let has = |name: &str| features.iter().any(|f| f.0 == name);
         let filter = has("filter");

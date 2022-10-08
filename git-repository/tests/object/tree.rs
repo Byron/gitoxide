@@ -1,10 +1,11 @@
 mod diff {
-    use crate::named_repo;
-    use git_object::bstr::ByteSlice;
-    use git_object::tree::EntryMode;
+    use std::convert::Infallible;
+
+    use git_object::{bstr::ByteSlice, tree::EntryMode};
     use git_repository as git;
     use git_repository::object::tree::diff::change::Event;
-    use std::convert::Infallible;
+
+    use crate::named_repo;
 
     #[test]
     fn changes_against_tree_modified() {

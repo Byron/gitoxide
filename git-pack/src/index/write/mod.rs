@@ -18,7 +18,7 @@ pub(crate) struct TreeEntry {
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The version of the verified index
-    pub index_kind: crate::index::Version,
+    pub index_version: crate::index::Version,
     /// The verified checksum of the verified index
     pub index_hash: git_hash::ObjectId,
 
@@ -34,11 +34,13 @@ impl crate::index::File {
     /// The resolver produced by `make_resolver` must resolve pack entries from the same pack data file that produced the
     /// `entries` iterator.
     ///
-    /// `kind` is the version of pack index to produce, use [`crate::index::Version::default()`] if in doubt.
-    /// `tread_limit` is used for a parallel tree traversal for obtaining object hashes with optimal performance.
-    /// `root_progress` is the top-level progress to stay informed about the progress of this potentially long-running
-    /// computation.
-    /// `object_hash` defines what kind of object hash we write into the index file.
+    /// * `kind` is the version of pack index to produce, use [`crate::index::Version::default()`] if in doubt.
+    /// * `tread_limit` is used for a parallel tree traversal for obtaining object hashes with optimal performance.
+    /// * `root_progress` is the top-level progress to stay informed about the progress of this potentially long-running
+    ///    computation.
+    /// * `object_hash` defines what kind of object hash we write into the index file.
+    /// * `pack_version` is the version of the underlying pack for which `entries` are read. It's used in case none of these objects are provided
+    ///    to compute a pack-hash.
     ///
     /// # Remarks
     ///
@@ -49,7 +51,7 @@ impl crate::index::File {
     /// the write operation to fail.
     #[allow(clippy::too_many_arguments)]
     pub fn write_data_iter_to_stream<F, F2>(
-        kind: crate::index::Version,
+        version: crate::index::Version,
         make_resolver: F,
         entries: impl Iterator<Item = Result<crate::data::input::Entry, crate::data::input::Error>>,
         thread_limit: Option<usize>,
@@ -57,18 +59,17 @@ impl crate::index::File {
         out: impl io::Write,
         should_interrupt: &AtomicBool,
         object_hash: git_hash::Kind,
+        pack_version: crate::data::Version,
     ) -> Result<Outcome, Error>
     where
         F: FnOnce() -> io::Result<F2>,
         F2: for<'r> Fn(crate::data::EntryRange, &'r mut Vec<u8>) -> Option<()> + Send + Clone,
     {
-        if kind != crate::index::Version::default() {
-            return Err(Error::Unsupported(kind));
+        if version != crate::index::Version::default() {
+            return Err(Error::Unsupported(version));
         }
         let mut num_objects: usize = 0;
-        let mut bytes_to_process = 0u64;
         let mut last_seen_trailer = None;
-        let mut last_base_index = None;
         let anticipated_num_objects = entries.size_hint().1.unwrap_or_else(|| entries.size_hint().0);
         let mut tree = Tree::with_capacity(anticipated_num_objects)?;
         let indexing_start = std::time::Instant::now();
@@ -80,7 +81,7 @@ impl crate::index::File {
         decompressed_progress.init(None, progress::bytes());
         let mut pack_entries_end: u64 = 0;
 
-        for (eid, entry) in entries.enumerate() {
+        for entry in entries {
             let crate::data::input::Entry {
                 header,
                 pack_offset,
@@ -92,7 +93,6 @@ impl crate::index::File {
                 trailer,
             } = entry?;
 
-            bytes_to_process += decompressed_size;
             decompressed_progress.inc_by(decompressed_size as usize);
 
             let entry_len = header_size as u64 + compressed_size;
@@ -103,7 +103,6 @@ impl crate::index::File {
             use crate::data::entry::Header::*;
             match header {
                 Tree | Blob | Commit | Tag => {
-                    last_base_index = Some(eid);
                     tree.add_root(
                         pack_offset,
                         TreeEntry {
@@ -144,7 +143,6 @@ impl crate::index::File {
         let num_objects: u32 = num_objects
             .try_into()
             .map_err(|_| Error::IteratorInvariantTooManyObjects(num_objects))?;
-        last_base_index.ok_or(Error::IteratorInvariantBasesPresent)?;
 
         objects_progress.show_throughput(indexing_start);
         decompressed_progress.show_throughput(indexing_start);
@@ -155,9 +153,7 @@ impl crate::index::File {
 
         let resolver = make_resolver()?;
         let sorted_pack_offsets_by_oid = {
-            let in_parallel_if_pack_is_big_enough = || bytes_to_process > 5_000_000;
             let traverse::Outcome { roots, children } = tree.traverse(
-                in_parallel_if_pack_is_big_enough,
                 resolver,
                 pack_entries_end,
                 || (),
@@ -168,10 +164,10 @@ impl crate::index::File {
                      decompressed: bytes,
                      ..
                  }| {
-                    modify_base(data, entry, bytes, kind.hash());
+                    modify_base(data, entry, bytes, version.hash());
                     Ok::<_, Error>(())
                 },
-                crate::cache::delta::traverse::Options {
+                traverse::Options {
                     object_progress: root_progress.add_child("Resolving"),
                     size_progress: root_progress.add_child("Decoding"),
                     thread_limit,
@@ -192,12 +188,21 @@ impl crate::index::File {
             items
         };
 
-        let pack_hash = last_seen_trailer.ok_or(Error::IteratorInvariantTrailer)?;
+        let pack_hash = match last_seen_trailer {
+            Some(ph) => ph,
+            None if num_objects == 0 => {
+                let header = crate::data::header::encode(pack_version, 0);
+                let mut hasher = git_features::hash::hasher(object_hash);
+                hasher.update(&header);
+                git_hash::ObjectId::from(hasher.digest())
+            }
+            None => return Err(Error::IteratorInvariantTrailer),
+        };
         let index_hash = encode::write_to(
             out,
             sorted_pack_offsets_by_oid,
             &pack_hash,
-            kind,
+            version,
             root_progress.add_child("writing index file"),
         )?;
         root_progress.show_throughput_with(
@@ -207,7 +212,7 @@ impl crate::index::File {
             progress::MessageLevel::Success,
         );
         Ok(Outcome {
-            index_kind: kind,
+            index_version: version,
             index_hash,
             data_hash: pack_hash,
             num_objects,
@@ -215,12 +220,7 @@ impl crate::index::File {
     }
 }
 
-fn modify_base(
-    entry: &mut crate::index::write::TreeEntry,
-    pack_entry: &crate::data::Entry,
-    decompressed: &[u8],
-    hash: git_hash::Kind,
-) {
+fn modify_base(entry: &mut TreeEntry, pack_entry: &crate::data::Entry, decompressed: &[u8], hash: git_hash::Kind) {
     fn compute_hash(kind: git_object::Kind, bytes: &[u8], object_hash: git_hash::Kind) -> git_hash::ObjectId {
         let mut hasher = git_features::hash::hasher(object_hash);
         hasher.update(&git_object::encode::loose_header(kind, bytes.len()));

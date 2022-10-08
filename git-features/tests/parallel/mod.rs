@@ -40,22 +40,23 @@ fn in_parallel() {
 #[test]
 fn in_parallel_with_mut_slice_in_chunks() {
     let num_items = 33;
-    let input: Vec<_> = std::iter::repeat(1).take(num_items).collect();
+    let mut input: Vec<_> = std::iter::repeat(1).take(num_items).collect();
     let counts = parallel::in_parallel_with_slice(
-        &input,
+        &mut input,
         None,
         |_| 0usize,
         |item, acc| {
             *acc += *item;
+            *item += 1;
             Ok::<_, ()>(())
         },
         || Some(std::time::Duration::from_millis(10)),
+        std::convert::identity,
     )
     .unwrap();
-    assert_eq!(
-        counts.iter().sum::<usize>(),
-        std::iter::repeat(1).take(num_items).sum::<usize>()
-    );
+    let expected = std::iter::repeat(1).take(num_items).sum::<usize>();
+    assert_eq!(counts.iter().sum::<usize>(), expected);
+    assert_eq!(input.iter().sum::<usize>(), expected * 2, "we increment each entry");
 }
 
 #[test]

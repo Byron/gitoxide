@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use async_trait::async_trait;
 use bstr::BString;
 use futures_io::{AsyncRead, AsyncWrite};
@@ -49,6 +51,10 @@ where
 
     fn connection_persists_across_multiple_requests(&self) -> bool {
         true
+    }
+
+    fn configure(&mut self, _config: &dyn std::any::Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        Ok(())
     }
 }
 

@@ -11,7 +11,7 @@ pub struct Options {
     /// Determine how much processing to spend on protecting against corruption or recovering from errors.
     pub iteration_mode: crate::data::input::Mode,
     /// The version of pack index to write, should be [`crate::index::Version::default()`]
-    pub index_kind: crate::index::Version,
+    pub index_version: crate::index::Version,
     /// The kind of hash to use when writing the bundle.
     pub object_hash: git_hash::Kind,
 }
@@ -22,7 +22,7 @@ impl Default for Options {
         Options {
             thread_limit: None,
             iteration_mode: crate::data::input::Mode::Verify,
-            index_kind: Default::default(),
+            index_version: Default::default(),
             object_hash: Default::default(),
         }
     }
@@ -36,7 +36,7 @@ pub struct Outcome {
     /// The successful result of the index write operation
     pub index: crate::index::write::Outcome,
     /// The version of the pack
-    pub pack_kind: crate::data::Version,
+    pub pack_version: crate::data::Version,
     /// The kind of hash stored within the pack and indices
     pub object_hash: git_hash::Kind,
 
@@ -55,9 +55,11 @@ impl Outcome {
     }
 }
 
+pub(crate) type SharedTempFile = Arc<parking_lot::Mutex<std::io::BufWriter<git_tempfile::Handle<Writable>>>>;
+
 pub(crate) struct PassThrough<R> {
     pub reader: R,
-    pub writer: Option<Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>>,
+    pub writer: Option<SharedTempFile>,
 }
 
 impl<R> io::Read for PassThrough<R>
@@ -87,7 +89,7 @@ where
 }
 
 pub(crate) struct LockWriter {
-    pub writer: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
+    pub writer: SharedTempFile,
 }
 
 impl io::Write for LockWriter {
@@ -102,7 +104,7 @@ impl io::Write for LockWriter {
 
 impl io::Read for LockWriter {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
-        self.writer.lock().read(buf)
+        self.writer.lock().get_mut().read(buf)
     }
 }
 

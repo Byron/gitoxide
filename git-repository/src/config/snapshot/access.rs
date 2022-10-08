@@ -1,8 +1,10 @@
 use std::borrow::Cow;
 
+use git_features::threading::OwnShared;
+
 use crate::{
     bstr::BStr,
-    config::{cache::interpolate_context, Snapshot},
+    config::{cache::interpolate_context, CommitAutoRollback, Snapshot, SnapshotMut},
 };
 
 /// Access configuration values, frozen in time, using a `key` which is a `.` separated string of up to
@@ -88,5 +90,61 @@ impl<'repo> Snapshot<'repo> {
     /// It's expected that more functionality will move up depending on demand.
     pub fn plumbing(&self) -> &git_config::File<'static> {
         &self.repo.config.resolved
+    }
+}
+
+/// Utilities
+impl<'repo> SnapshotMut<'repo> {
+    /// Apply all changes made to this instance.
+    ///
+    /// Note that this would also happen once this instance is dropped, but using this method may be more intuitive and won't squelch errors
+    /// in case the new configuration is partially invalid.
+    pub fn commit(mut self) -> Result<&'repo mut crate::Repository, crate::config::Error> {
+        let repo = self.repo.take().expect("always present here");
+        self.commit_inner(repo)
+    }
+
+    pub(crate) fn commit_inner(
+        &mut self,
+        repo: &'repo mut crate::Repository,
+    ) -> Result<&'repo mut crate::Repository, crate::config::Error> {
+        repo.config
+            .reread_values_and_clear_caches(std::mem::take(&mut self.config).into())?;
+        Ok(repo)
+    }
+
+    /// Create a structure the temporarily commits the changes, but rolls them back when dropped.
+    pub fn commit_auto_rollback(mut self) -> Result<CommitAutoRollback<'repo>, crate::config::Error> {
+        let repo = self.repo.take().expect("this only runs once on consumption");
+        let prev_config = OwnShared::clone(&repo.config.resolved);
+
+        Ok(CommitAutoRollback {
+            repo: self.commit_inner(repo)?.into(),
+            prev_config,
+        })
+    }
+
+    /// Don't apply any of the changes after consuming this instance, effectively forgetting them, returning the changed configuration.
+    pub fn forget(mut self) -> git_config::File<'static> {
+        self.repo.take();
+        std::mem::take(&mut self.config)
+    }
+}
+
+/// Utilities
+impl<'repo> CommitAutoRollback<'repo> {
+    /// Rollback the changes previously applied and all values before the change.
+    pub fn rollback(mut self) -> Result<&'repo mut crate::Repository, crate::config::Error> {
+        let repo = self.repo.take().expect("still present, consumed only once");
+        self.rollback_inner(repo)
+    }
+
+    pub(crate) fn rollback_inner(
+        &mut self,
+        repo: &'repo mut crate::Repository,
+    ) -> Result<&'repo mut crate::Repository, crate::config::Error> {
+        repo.config
+            .reread_values_and_clear_caches(OwnShared::clone(&self.prev_config))?;
+        Ok(repo)
     }
 }

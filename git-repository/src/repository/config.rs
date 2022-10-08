@@ -9,10 +9,17 @@ impl crate::Repository {
         config::Snapshot { repo: self }
     }
 
-    /// Return a mutable snapshot of the configuration as seen upon opening the repository.
+    /// Return a mutable snapshot of the configuration as seen upon opening the repository, starting a transaction.
+    /// When the returned instance is dropped, it is applied in full, even if the reason for the drop is an error.
+    ///
+    /// Note that changes to the configuration are in-memory only and are observed only the this instance
+    /// of the [`Repository`][crate::Repository].
     pub fn config_snapshot_mut(&mut self) -> config::SnapshotMut<'_> {
         let config = self.config.resolved.as_ref().clone();
-        config::SnapshotMut { repo: self, config }
+        config::SnapshotMut {
+            repo: Some(self),
+            config,
+        }
     }
 
     /// The options used to open the repository.

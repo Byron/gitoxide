@@ -149,21 +149,16 @@ mod tag {
 mod commit {
     use git_repository as git;
     use git_testtools::hex_to_id;
+
+    use crate::{freeze_time, restricted_and_git};
+
     #[test]
     fn parent_in_initial_commit_causes_failure() {
         let tmp = tempfile::tempdir().unwrap();
         let repo = git::init(&tmp).unwrap();
         let empty_tree_id = repo.write_object(&git::objs::Tree::empty()).unwrap().detach();
-        let author = git::actor::Signature::empty();
         let err = repo
-            .commit(
-                "HEAD",
-                author.to_ref(),
-                author.to_ref(),
-                "initial",
-                empty_tree_id,
-                [empty_tree_id],
-            )
+            .commit("HEAD", "initial", empty_tree_id, [empty_tree_id])
             .unwrap_err();
         assert_eq!(
             err.to_string(),
@@ -173,22 +168,16 @@ mod commit {
     }
 
     #[test]
+    #[serial_test::serial]
     fn single_line_initial_commit_empty_tree_ref_nonexisting() -> crate::Result {
+        let _env = freeze_time();
         let tmp = tempfile::tempdir()?;
-        let repo = git::init(&tmp)?;
+        let repo = git::open_opts(git::init(&tmp)?.path(), restricted_and_git())?;
         let empty_tree_id = repo.write_object(&git::objs::Tree::empty())?;
-        let author = git::actor::Signature::empty();
-        let commit_id = repo.commit(
-            "HEAD",
-            author.to_ref(),
-            author.to_ref(),
-            "initial",
-            empty_tree_id,
-            git::commit::NO_PARENT_IDS,
-        )?;
+        let commit_id = repo.commit("HEAD", "initial", empty_tree_id, git::commit::NO_PARENT_IDS)?;
         assert_eq!(
             commit_id,
-            hex_to_id("302ea5640358f98ba23cda66c1e664a6f274643f"),
+            hex_to_id("3a774843723a713a8d361b4d4d98ad4092ef05bd"),
             "the commit id is stable"
         );
 
@@ -207,8 +196,10 @@ mod commit {
     }
 
     #[test]
+    #[serial_test::serial]
     fn multi_line_commit_message_uses_first_line_in_ref_log_ref_nonexisting() -> crate::Result {
-        let (repo, _keep) = crate::basic_rw_repo()?;
+        let _env = freeze_time();
+        let (repo, _keep) = crate::repo_rw_opts("make_basic_repo.sh", restricted_and_git())?;
         let parent = repo.find_reference("HEAD")?.peel_to_id_in_place()?;
         let empty_tree_id = parent.object()?.to_commit_ref_iter().tree_id().expect("tree to be set");
         assert_eq!(
@@ -221,18 +212,10 @@ mod commit {
             empty_tree_id,
             "try and non-try work the same"
         );
-        let author = git::actor::Signature::empty();
-        let first_commit_id = repo.commit(
-            "HEAD",
-            author.to_ref(),
-            author.to_ref(),
-            "hello there \r\n\nthe body",
-            empty_tree_id,
-            Some(parent),
-        )?;
+        let first_commit_id = repo.commit("HEAD", "hello there \r\n\nthe body", empty_tree_id, Some(parent))?;
         assert_eq!(
             first_commit_id,
-            hex_to_id("1ff7decccf76bfa15bfdb0b66bac0c9144b4b083"),
+            hex_to_id("e7c7273539cfc1a52802fa9d61aa578f6ccebcb4"),
             "the commit id is stable"
         );
 
@@ -254,8 +237,6 @@ mod commit {
 
         let second_commit_id = repo.commit(
             "refs/heads/new-branch",
-            author.to_ref(),
-            author.to_ref(),
             "committing into a new branch creates it",
             empty_tree_id,
             Some(first_commit_id),
@@ -263,7 +244,7 @@ mod commit {
 
         assert_eq!(
             second_commit_id,
-            hex_to_id("b0d041ade77e51d31c79c7147fb769336ccc77b1"),
+            hex_to_id("e1412f169e0812eb260601bdab3854ca0f1a7b33"),
             "the second commit id is stable"
         );
 

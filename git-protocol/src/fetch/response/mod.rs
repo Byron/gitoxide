@@ -8,7 +8,7 @@ use crate::fetch::command::Feature;
 #[allow(missing_docs)]
 pub enum Error {
     #[error("Failed to read from line reader")]
-    Io(std::io::Error),
+    Io(#[source] std::io::Error),
     #[error(transparent)]
     UploadPack(#[from] git_transport::packetline::read::Error),
     #[error(transparent)]
@@ -139,6 +139,7 @@ impl WantedRef {
 }
 
 /// A representation of a complete fetch response
+#[derive(Debug)]
 pub struct Response {
     acks: Vec<Acknowledgement>,
     shallows: Vec<ShallowUpdate>,
@@ -152,7 +153,8 @@ impl Response {
         self.has_pack
     }
 
-    /// Return an error if the given `features` don't contain the required ones for the given `version` of the protocol.
+    /// Return an error if the given `features` don't contain the required ones (the ones this implementation needs)
+    /// for the given `version` of the protocol.
     ///
     /// Even though technically any set of features supported by the server could work, we only implement the ones that
     /// make it easy to maintain all versions with a single code base that aims to be and remain maintainable.

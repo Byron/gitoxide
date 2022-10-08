@@ -1,4 +1,5 @@
 use std::{
+    error::Error,
     sync::mpsc::{Receiver, SyncSender},
     thread,
 };
@@ -99,5 +100,9 @@ impl http::Http for Curl {
         headers: impl IntoIterator<Item = impl AsRef<str>>,
     ) -> Result<http::PostResponse<Self::Headers, Self::ResponseBody, Self::PostBody>, http::Error> {
         self.make_request(url, headers, true)
+    }
+
+    fn configure(&mut self, _config: &dyn std::any::Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        Ok(())
     }
 }

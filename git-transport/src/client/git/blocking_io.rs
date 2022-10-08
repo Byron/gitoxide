@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{any::Any, error::Error, io::Write};
 
 use bstr::BString;
 use git_packetline::PacketLineRef;
@@ -51,6 +51,10 @@ where
 
     fn connection_persists_across_multiple_requests(&self) -> bool {
         true
+    }
+
+    fn configure(&mut self, _config: &dyn Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        Ok(())
     }
 }
 

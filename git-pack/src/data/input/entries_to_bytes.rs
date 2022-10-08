@@ -85,11 +85,14 @@ where
         Ok(entry)
     }
 
-    fn write_header_and_digest(&mut self, last_entry: &mut input::Entry) -> Result<(), input::Error> {
-        let num_bytes_written = self.output.stream_position()?;
-
-        self.output.seek(std::io::SeekFrom::Start(0))?;
+    fn write_header_and_digest(&mut self, last_entry: Option<&mut input::Entry>) -> Result<(), input::Error> {
         let header_bytes = crate::data::header::encode(self.data_version, self.num_entries);
+        let num_bytes_written = if last_entry.is_some() {
+            self.output.stream_position()?
+        } else {
+            header_bytes.len() as u64
+        };
+        self.output.seek(std::io::SeekFrom::Start(0))?;
         self.output.write_all(&header_bytes[..])?;
         self.output.flush()?;
 
@@ -106,7 +109,9 @@ where
         self.output.flush()?;
 
         self.is_done = true;
-        last_entry.trailer = Some(digest);
+        if let Some(last_entry) = last_entry {
+            last_entry.trailer = Some(digest);
+        }
         self.trailer = Some(digest);
         Ok(())
     }
@@ -125,19 +130,25 @@ where
             return None;
         }
 
-        self.input.next().map(|res| match res {
-            Ok(entry) => self.next_inner(entry).and_then(|mut entry| {
-                if self.input.peek().is_none() {
-                    self.write_header_and_digest(&mut entry).map(|_| entry)
-                } else {
-                    Ok(entry)
+        match self.input.next() {
+            Some(res) => Some(match res {
+                Ok(entry) => self.next_inner(entry).and_then(|mut entry| {
+                    if self.input.peek().is_none() {
+                        self.write_header_and_digest(Some(&mut entry)).map(|_| entry)
+                    } else {
+                        Ok(entry)
+                    }
+                }),
+                Err(err) => {
+                    self.is_done = true;
+                    Err(err)
                 }
             }),
-            Err(err) => {
-                self.is_done = true;
-                Err(err)
-            }
-        })
+            None => match self.write_header_and_digest(None) {
+                Ok(_) => None,
+                Err(err) => Some(Err(err)),
+            },
+        }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

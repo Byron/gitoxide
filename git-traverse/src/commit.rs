@@ -36,6 +36,14 @@ pub enum Sorting {
     /// This mode benefits greatly from having an object_cache in `find()`
     /// to avoid having to lookup each commit twice.
     ByCommitTimeNewestFirst,
+    /// This sorting is similar to `ByCommitTimeNewestFirst`, but adds a cutoff to not return commits older than
+    /// a given time, stopping the iteration once no younger commits is queued to be traversed.
+    ///
+    /// As the query is usually repeated with different cutoff dates, this search mode benefits greatly from an object cache.
+    ByCommitTimeNewestFirstCutoffOlderThan {
+        /// The amount of seconds since unix epoch, the same value obtained by any `git_date::Time` structure and the way git counts time.
+        time_in_seconds_since_epoch: u32,
+    },
 }
 
 impl Default for Sorting {
@@ -46,8 +54,11 @@ impl Default for Sorting {
 
 ///
 pub mod ancestors {
-    use std::borrow::Borrow;
-    use std::{borrow::BorrowMut, collections::VecDeque, iter::FromIterator};
+    use std::{
+        borrow::{Borrow, BorrowMut},
+        collections::VecDeque,
+        iter::FromIterator,
+    };
 
     use git_hash::{oid, ObjectId};
     use git_object::CommitRefIter;
@@ -106,15 +117,26 @@ pub mod ancestors {
         pub fn sorting(mut self, sorting: Sorting) -> Result<Self, Error> {
             self.sorting = sorting;
             if !matches!(self.sorting, Sorting::Topological) {
+                let mut cutoff_time_storage = self.sorting.cutoff_time().map(|cot| (cot, Vec::new()));
                 let state = self.state.borrow_mut();
                 for (commit_id, commit_time) in state.next.iter_mut() {
                     let commit_iter = (self.find)(commit_id, &mut state.buf).map_err(|err| Error::FindExisting {
                         oid: *commit_id,
                         source: err.into(),
                     })?;
-                    *commit_time = commit_iter.committer()?.time.seconds_since_unix_epoch;
+                    let time = commit_iter.committer()?.time.seconds_since_unix_epoch;
+                    match &mut cutoff_time_storage {
+                        Some((cutoff_time, storage)) if time >= *cutoff_time => {
+                            storage.push((*commit_id, time));
+                        }
+                        Some(_) => {}
+                        None => *commit_time = time,
+                    }
                 }
-                let mut v = Vec::from_iter(std::mem::take(&mut state.next).into_iter());
+                let mut v = match cutoff_time_storage {
+                    Some((_, storage)) => storage,
+                    None => Vec::from_iter(std::mem::take(&mut state.next).into_iter()),
+                };
                 v.sort_by(|a, b| a.1.cmp(&b.1).reverse());
                 state.next = v.into();
             }
@@ -217,8 +239,23 @@ pub mod ancestors {
             } else {
                 match self.sorting {
                     Sorting::Topological => self.next_by_topology(),
-                    Sorting::ByCommitTimeNewestFirst => self.next_by_commit_date(),
+                    Sorting::ByCommitTimeNewestFirst => self.next_by_commit_date(None),
+                    Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+                        time_in_seconds_since_epoch,
+                    } => self.next_by_commit_date(time_in_seconds_since_epoch.into()),
                 }
+            }
+        }
+    }
+
+    impl Sorting {
+        /// If not topo sort, provide the cutoff date if present.
+        fn cutoff_time(&self) -> Option<u32> {
+            match self {
+                Sorting::ByCommitTimeNewestFirstCutoffOlderThan {
+                    time_in_seconds_since_epoch,
+                } => Some(*time_in_seconds_since_epoch),
+                _ => None,
             }
         }
     }
@@ -231,7 +268,7 @@ pub mod ancestors {
         StateMut: BorrowMut<State>,
         E: std::error::Error + Send + Sync + 'static,
     {
-        fn next_by_commit_date(&mut self) -> Option<Result<ObjectId, Error>> {
+        fn next_by_commit_date(&mut self, cutoff_older_than: Option<TimeInSeconds>) -> Option<Result<ObjectId, Error>> {
             let state = self.state.borrow_mut();
 
             let (oid, _commit_time) = state.next.pop_front()?;
@@ -263,9 +300,17 @@ pub mod ancestors {
                                     })
                                     .unwrap_or_default();
 
-                                match state.next.binary_search_by(|c| c.1.cmp(&parent_commit_time).reverse()) {
-                                    Ok(_) => state.next.push_back((id, parent_commit_time)), // collision => topo-sort
-                                    Err(pos) => state.next.insert(pos, (id, parent_commit_time)), // otherwise insert by commit-time
+                                let pos = match state.next.binary_search_by(|c| c.1.cmp(&parent_commit_time).reverse())
+                                {
+                                    Ok(_) => None,
+                                    Err(pos) => Some(pos),
+                                };
+                                match cutoff_older_than {
+                                    Some(cutoff_older_than) if parent_commit_time < cutoff_older_than => continue,
+                                    Some(_) | None => match pos {
+                                        Some(pos) => state.next.insert(pos, (id, parent_commit_time)),
+                                        None => state.next.push_back((id, parent_commit_time)),
+                                    },
                                 }
 
                                 if is_first && matches!(self.parents, Parents::First) {

@@ -14,8 +14,6 @@ pub enum Error {
     IteratorInvariantNoRefDelta,
     #[error("The iterator failed to set a trailing hash over all prior pack entries in the last provided entry")]
     IteratorInvariantTrailer,
-    #[error("Did not encounter a single base")]
-    IteratorInvariantBasesPresent,
     #[error("Only u32::MAX objects can be stored in a pack, found {0}")]
     IteratorInvariantTooManyObjects(usize),
     #[error("{pack_offset} is not a valid offset for pack offset {distance}")]

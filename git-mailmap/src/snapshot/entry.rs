@@ -1,5 +1,6 @@
-use crate::snapshot::util::{EncodedString, EncodedStringRef};
 use bstr::BString;
+
+use crate::snapshot::util::{EncodedString, EncodedStringRef};
 
 #[derive(Clone)]
 pub(crate) struct NameEntry {

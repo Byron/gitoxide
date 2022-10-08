@@ -14,14 +14,24 @@ pub struct Snapshot<'repo> {
     pub(crate) repo: &'repo Repository,
 }
 
-/// A platform to access configuration values and modify them in memory, while making them available when this platform is dropped.
+/// A platform to access configuration values and modify them in memory, while making them available when this platform is dropped
+/// as form of auto-commit.
 /// Note that the values will only affect this instance of the parent repository, and not other clones that may exist.
 ///
 /// Note that these values won't update even if the underlying file(s) change.
-// TODO: make it possible to load snapshots with reloading via .config() and write mutated snapshots back to disk.
+///
+/// Use [`forget()`][Self::forget()] to not apply any of the changes.
+// TODO: make it possible to load snapshots with reloading via .config() and write mutated snapshots back to disk which should be the way
+//       to affect all instances of a repo, probably via `config_mut()` and `config_mut_at()`.
 pub struct SnapshotMut<'repo> {
-    pub(crate) repo: &'repo mut Repository,
+    pub(crate) repo: Option<&'repo mut Repository>,
     pub(crate) config: git_config::File<'static>,
+}
+
+/// A utility structure created by [`SnapshotMut::commit_auto_rollback()`] that restores the previous configuration on drop.
+pub struct CommitAutoRollback<'repo> {
+    pub(crate) repo: Option<&'repo mut Repository>,
+    pub(crate) prev_config: crate::Config,
 }
 
 pub(crate) mod section {
@@ -54,7 +64,10 @@ pub enum Error {
     PathInterpolation(#[from] git_config::path::interpolate::Error),
 }
 
-/// Utility type to keep pre-obtained configuration values.
+/// Utility type to keep pre-obtained configuration values, only for those required during initial setup
+/// and other basic operations that are common enough to warrant a permanent cache.
+///
+/// All other values are obtained lazily using OnceCell.
 #[derive(Clone)]
 pub(crate) struct Cache {
     pub resolved: crate::Config,
@@ -73,7 +86,7 @@ pub(crate) struct Cache {
     /// A lazily loaded rewrite list for remote urls
     pub url_rewrite: OnceCell<remote::url::Rewrite>,
     /// A lazily loaded mapping to know which url schemes to allow
-    #[cfg(any(feature = "blocking-network-client", feature = "async-network-client-async-std"))]
+    #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
     pub url_scheme: OnceCell<remote::url::SchemePermission>,
     /// The config section filter from the options used to initialize this instance. Keep these in sync!
     filter_config_section: fn(&git_config::file::Metadata) -> bool,
@@ -81,8 +94,9 @@ pub(crate) struct Cache {
     pub object_kind_hint: Option<spec::parse::ObjectKindHint>,
     /// If true, we are on a case-insensitive file system.
     pub ignore_case: bool,
-    /// The path to the user-level excludes file to ignore certain files in the worktree.
-    pub excludes_file: Option<std::path::PathBuf>,
+    /// If true, we should default what's possible if something is misconfigured, on case by case basis, to be more resilient.
+    /// Also available in options! Keep in sync!
+    pub lenient_config: bool,
     /// Define how we can use values obtained with `xdg_config(…)` and its `XDG_CONFIG_HOME` variable.
     xdg_config_home_env: git_sec::Permission,
     /// Define how we can use values obtained with `xdg_config(…)`. and its `HOME` variable.

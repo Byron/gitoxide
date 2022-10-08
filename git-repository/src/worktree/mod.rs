@@ -112,6 +112,8 @@ pub mod excludes {
         Io(#[from] std::io::Error),
         #[error(transparent)]
         EnvironmentPermission(#[from] git_sec::permission::Error<PathBuf>),
+        #[error("The value for `core.excludesFile` could not be read from configuration")]
+        ExcludesFilePathInterpolation(#[from] git_config::path::interpolate::Error),
     }
 
     impl<'repo> crate::Worktree<'repo> {
@@ -135,7 +137,7 @@ pub mod excludes {
                 overrides.unwrap_or_default(),
                 git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(
                     repo.git_dir(),
-                    match repo.config.excludes_file.as_ref() {
+                    match repo.config.excludes_file()?.as_ref() {
                         Some(user_path) => Some(user_path.to_owned()),
                         None => repo.config.xdg_config_path("ignore")?,
                     },

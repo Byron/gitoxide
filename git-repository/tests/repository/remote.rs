@@ -271,3 +271,23 @@ mod find_remote {
         .to_string()
     }
 }
+
+mod find_default_remote {
+    use git_repository as git;
+
+    use crate::remote;
+
+    #[test]
+    fn works_on_detached_heads() -> crate::Result {
+        let repo = remote::repo("detached-head");
+        assert_eq!(
+            repo.find_default_remote(git::remote::Direction::Fetch)
+                .transpose()?
+                .expect("present")
+                .name()
+                .expect("always named"),
+            "origin"
+        );
+        Ok(())
+    }
+}

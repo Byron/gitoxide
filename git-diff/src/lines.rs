@@ -1,9 +1,8 @@
 use git_object::bstr::BStr;
-use similar::TextDiff;
-
 /// The crate powering file diffs.
 pub use similar;
 pub use similar::Algorithm;
+use similar::TextDiff;
 
 /// Provide an iterator over the changes needed to turn `old` into `new` with `algorithm`.
 ///

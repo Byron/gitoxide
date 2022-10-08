@@ -1,5 +1,6 @@
-use crate::Tree;
 use git_odb::FindExt;
+
+use crate::Tree;
 
 /// Traversal
 impl<'repo> Tree<'repo> {

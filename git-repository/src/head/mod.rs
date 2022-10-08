@@ -87,19 +87,22 @@ mod remote {
     /// Remote
     impl<'repo> Head<'repo> {
         /// Return the remote with which the currently checked our reference can be handled as configured by `branch.<name>.remote|pushRemote`
-        /// or fall back to the non-branch specific remote configuration. `None` is returned if the head is detached or unborn.
+        /// or fall back to the non-branch specific remote configuration. `None` is returned if the head is detached or unborn, so there is
+        /// no branch specific remote.
         ///
         /// This is equivalent to calling [`Reference::remote(…)`][crate::Reference::remote()] and
         /// [`Repository::remote_default_name()`][crate::Repository::remote_default_name()] in order.
+        ///
+        /// Combine it with [`find_default_remote()`][crate::Repository::find_default_remote()] as fallback to handle detached heads,
+        /// i.e. obtain a remote even in case of detached heads.
         pub fn into_remote(
             self,
             direction: remote::Direction,
         ) -> Option<Result<Remote<'repo>, remote::find::existing::Error>> {
             let repo = self.repo;
-            self.try_into_referent()?.remote(direction).or_else(|| {
-                repo.remote_default_name(direction)
-                    .map(|name| repo.find_remote(name.as_ref()))
-            })
+            self.try_into_referent()?
+                .remote(direction)
+                .or_else(|| repo.find_default_remote(direction))
         }
     }
 }

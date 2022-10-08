@@ -246,7 +246,7 @@ pub use self::async_io::receive;
 
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct JsonBundleWriteOutcome {
-    pub index_kind: pack::index::Version,
+    pub index_version: pack::index::Version,
     pub index_hash: String,
 
     pub data_hash: String,
@@ -256,7 +256,7 @@ pub struct JsonBundleWriteOutcome {
 impl From<pack::index::write::Outcome> for JsonBundleWriteOutcome {
     fn from(v: pack::index::write::Outcome) -> Self {
         JsonBundleWriteOutcome {
-            index_kind: v.index_kind,
+            index_version: v.index_version,
             num_objects: v.num_objects,
             data_hash: v.data_hash.to_string(),
             index_hash: v.index_hash.to_string(),
@@ -279,7 +279,7 @@ impl JsonOutcome {
     pub fn from_outcome_and_refs(v: pack::bundle::write::Outcome, refs: &[Ref]) -> Self {
         JsonOutcome {
             index: v.index.into(),
-            pack_kind: v.pack_kind,
+            pack_kind: v.pack_version,
             index_path: v.index_path,
             data_path: v.data_path,
             refs: refs.iter().cloned().map(Into::into).collect(),
@@ -340,7 +340,7 @@ fn receive_pack_blocking<W: io::Write>(
 ) -> io::Result<()> {
     let options = pack::bundle::write::Options {
         thread_limit: ctx.thread_limit,
-        index_kind: pack::index::Version::V2,
+        index_version: pack::index::Version::V2,
         iteration_mode: pack::data::input::Mode::Verify,
         object_hash: ctx.object_hash,
     };

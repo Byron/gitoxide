@@ -1,20 +1,23 @@
 use std::{
     io,
+    io::Write,
     path::{Path, PathBuf},
     sync::{atomic::AtomicBool, Arc},
 };
 
 use git_features::{interrupt, progress, progress::Progress};
-use git_tempfile::{handle::Writable, AutoRemove, ContainingDirectory};
+use git_tempfile::{AutoRemove, ContainingDirectory};
 
 use crate::data;
 
 mod error;
-use error::Error;
+pub use error::Error;
 
 mod types;
 use types::{LockWriter, PassThrough};
 pub use types::{Options, Outcome};
+
+use crate::bundle::write::types::SharedTempFile;
 
 type ThinPackLookupFn = Box<dyn for<'a> FnMut(git_hash::ObjectId, &'a mut Vec<u8>) -> Option<git_object::Data<'a>>>;
 type ThinPackLookupFnSend =
@@ -55,11 +58,14 @@ impl crate::Bundle {
         };
 
         let object_hash = options.object_hash;
-        let data_file = Arc::new(parking_lot::Mutex::new(match directory.as_ref() {
-            Some(directory) => git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
-            None => git_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
-        }));
-        let (pack_entries_iter, pack_kind): (
+        let data_file = Arc::new(parking_lot::Mutex::new(io::BufWriter::with_capacity(
+            64 * 1024,
+            match directory.as_ref() {
+                Some(directory) => git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
+                None => git_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
+            },
+        )));
+        let (pack_entries_iter, pack_version): (
             Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>>>,
             _,
         ) = match thin_pack_base_object_lookup_fn {
@@ -78,16 +84,16 @@ impl crate::Bundle {
                     )?,
                     thin_pack_lookup_fn,
                 );
-                let pack_kind = pack_entries_iter.inner.kind();
+                let pack_version = pack_entries_iter.inner.version();
                 let pack_entries_iter = data::input::EntriesToBytesIter::new(
                     pack_entries_iter,
                     LockWriter {
                         writer: data_file.clone(),
                     },
-                    pack_kind,
-                    git_hash::Kind::Sha1,
+                    pack_version,
+                    git_hash::Kind::Sha1, // Thin packs imply a pack being transported, and there we only ever know SHA1 at the moment.
                 );
-                (Box::new(pack_entries_iter), pack_kind)
+                (Box::new(pack_entries_iter), pack_version)
             }
             None => {
                 let pack = PassThrough {
@@ -97,7 +103,7 @@ impl crate::Bundle {
                     },
                     writer: Some(data_file.clone()),
                 };
-                // This buff-reader is required to assure we call 'read()' in order to fill the (extra) buffer. Otherwise all the counting
+                // This buf-reader is required to assure we call 'read()' in order to fill the (extra) buffer. Otherwise all the counting
                 // we do with the wrapped pack reader doesn't work as it does not expect anyone to call BufRead functions directly.
                 // However, this is exactly what's happening in the ZipReader implementation that is eventually used.
                 // The performance impact of this is probably negligible, compared to all the other work that is done anyway :D.
@@ -108,8 +114,8 @@ impl crate::Bundle {
                     data::input::EntryDataMode::Crc32,
                     object_hash,
                 )?;
-                let pack_kind = pack_entries_iter.kind();
-                (Box::new(pack_entries_iter), pack_kind)
+                let pack_version = pack_entries_iter.version();
+                (Box::new(pack_entries_iter), pack_version)
             }
         };
         let (outcome, data_path, index_path) = crate::Bundle::inner_write(
@@ -119,12 +125,13 @@ impl crate::Bundle {
             data_file,
             pack_entries_iter,
             should_interrupt,
+            pack_version,
         )?;
 
         Ok(Outcome {
             index: outcome,
             object_hash,
-            pack_kind,
+            pack_version,
             data_path,
             index_path,
         })
@@ -153,13 +160,13 @@ impl crate::Bundle {
             progress: progress::ThroughputOnDrop::new(read_progress),
         };
 
-        let data_file = Arc::new(parking_lot::Mutex::new(match directory.as_ref() {
+        let data_file = Arc::new(parking_lot::Mutex::new(io::BufWriter::new(match directory.as_ref() {
             Some(directory) => git_tempfile::new(directory, ContainingDirectory::Exists, AutoRemove::Tempfile)?,
             None => git_tempfile::new(std::env::temp_dir(), ContainingDirectory::Exists, AutoRemove::Tempfile)?,
-        }));
+        })));
         let object_hash = options.object_hash;
         let eight_pages = 4096 * 8;
-        let (pack_entries_iter, pack_kind): (
+        let (pack_entries_iter, pack_version): (
             Box<dyn Iterator<Item = Result<data::input::Entry, data::input::Error>> + Send + 'static>,
             _,
         ) = match thin_pack_base_object_lookup_fn {
@@ -178,7 +185,7 @@ impl crate::Bundle {
                     )?,
                     thin_pack_lookup_fn,
                 );
-                let pack_kind = pack_entries_iter.inner.kind();
+                let pack_kind = pack_entries_iter.inner.version();
                 (Box::new(pack_entries_iter), pack_kind)
             }
             None => {
@@ -196,7 +203,7 @@ impl crate::Bundle {
                     data::input::EntryDataMode::Crc32,
                     object_hash,
                 )?;
-                let pack_kind = pack_entries_iter.kind();
+                let pack_kind = pack_entries_iter.version();
                 (Box::new(pack_entries_iter), pack_kind)
             }
         };
@@ -211,12 +218,13 @@ impl crate::Bundle {
             data_file,
             pack_entries_iter,
             should_interrupt,
+            pack_version,
         )?;
 
         Ok(Outcome {
             index: outcome,
             object_hash,
-            pack_kind,
+            pack_version,
             data_path,
             index_path,
         })
@@ -228,12 +236,13 @@ impl crate::Bundle {
         Options {
             thread_limit,
             iteration_mode: _,
-            index_kind,
+            index_version: index_kind,
             object_hash,
         }: Options,
-        data_file: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
+        data_file: SharedTempFile,
         pack_entries_iter: impl Iterator<Item = Result<data::input::Entry, data::input::Error>>,
         should_interrupt: &AtomicBool,
+        pack_version: crate::data::Version,
     ) -> Result<(crate::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error> {
         let indexing_progress = progress.add_child("create index file");
         Ok(match directory {
@@ -253,14 +262,17 @@ impl crate::Bundle {
                     &mut index_file,
                     should_interrupt,
                     object_hash,
+                    pack_version,
                 )?;
 
-                let data_path = directory.join(format!("{}.pack", outcome.data_hash.to_hex()));
+                let data_path = directory.join(format!("pack-{}.pack", outcome.data_hash.to_hex()));
                 let index_path = data_path.with_extension("idx");
 
                 Arc::try_unwrap(data_file)
                     .expect("only one handle left after pack was consumed")
                     .into_inner()
+                    .into_inner()
+                    .map_err(|err| Error::from(err.into_error()))?
                     .persist(&data_path)?;
                 index_file
                     .persist(&index_path)
@@ -283,6 +295,7 @@ impl crate::Bundle {
                     io::sink(),
                     should_interrupt,
                     object_hash,
+                    pack_version,
                 )?,
                 None,
                 None,
@@ -292,10 +305,12 @@ impl crate::Bundle {
 }
 
 fn new_pack_file_resolver(
-    data_file: Arc<parking_lot::Mutex<git_tempfile::Handle<Writable>>>,
+    data_file: SharedTempFile,
 ) -> io::Result<impl Fn(data::EntryRange, &mut Vec<u8>) -> Option<()> + Send + Clone> {
+    let mut guard = data_file.lock();
+    guard.flush()?;
     let mapped_file = Arc::new(crate::mmap::read_only(
-        &data_file.lock().with_mut(|f| f.path().to_owned())?,
+        &guard.get_mut().with_mut(|f| f.path().to_owned())?,
     )?);
     let pack_data_lookup = move |range: std::ops::Range<u64>, out: &mut Vec<u8>| -> Option<()> {
         mapped_file

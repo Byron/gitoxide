@@ -3,7 +3,7 @@ use git_transport::client::Capabilities;
 use crate::fetch::Ref;
 
 /// The result of the [`handshake()`][super::handshake()] function.
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
 pub struct Outcome {
     /// The protocol version the server responded with. It might have downgraded the desired version.

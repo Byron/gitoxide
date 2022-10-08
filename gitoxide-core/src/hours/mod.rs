@@ -1,12 +1,14 @@
-use std::collections::BTreeSet;
-use std::convert::Infallible;
-use std::sync::atomic::Ordering;
-use std::{io, path::Path, time::Instant};
+use std::{collections::BTreeSet, convert::Infallible, io, path::Path, sync::atomic::Ordering, time::Instant};
 
 use anyhow::{anyhow, bail};
 use git_repository as git;
-use git_repository::bstr::BStr;
-use git_repository::{actor, bstr::ByteSlice, interrupt, prelude::*, progress, Progress};
+use git_repository::{
+    actor,
+    bstr::{BStr, ByteSlice},
+    interrupt,
+    prelude::*,
+    progress, Progress,
+};
 
 /// Additional configuration for the hours estimation functionality.
 pub struct Context<W> {
