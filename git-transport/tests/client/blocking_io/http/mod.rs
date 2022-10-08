@@ -41,7 +41,7 @@ fn assert_error_status(
 }
 
 #[test]
-#[cfg_attr(feature = "http-client-reqwest", ignore)] // hanging
+// #[cfg_attr(feature = "http-client-reqwest", ignore)] // hanging
 fn http_authentication_error_can_be_differentiated_and_identity_is_transmitted() -> crate::Result {
     let (server, mut client) = assert_error_status(401, std::io::ErrorKind::PermissionDenied)?;
     server.next_read_and_respond_with(fixture_bytes("v1/http-handshake.response"));
@@ -77,7 +77,12 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
     client.request(client::WriteMode::Binary, client::MessageKind::Flush)?;
 
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .filter(|l| !l.starts_with("expect: "))
+            .collect::<HashSet<_>>(),
         format!(
             "POST /path/not-important/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
@@ -94,7 +99,8 @@ Authorization: Basic dXNlcjpwYXNzd29yZA==
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>(),
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>(),
         "the authentication information is used in subsequent calls"
     );
 
@@ -297,12 +303,13 @@ fn clone_v1() -> crate::Result {
             .received_as_string()
             .lines()
             .map(|l| l.to_lowercase())
-            .filter(|l| !(l.starts_with("transfer-encoding") || l.starts_with("expect: ")))
+            .filter(|l| !l.starts_with("expect: "))
             .collect::<HashSet<_>>(),
         format!(
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
 User-Agent: git/oxide-{}
+Transfer-Encoding: Chunked
 Content-Type: application/x-git-upload-pack-request
 Accept: application/x-git-upload-pack-result
 
