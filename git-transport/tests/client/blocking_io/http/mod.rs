@@ -242,7 +242,6 @@ User-Agent: git/oxide-{}
 }
 
 #[test]
-#[cfg_attr(feature = "http-client-reqwest", ignore)] // hanging
 fn clone_v1() -> crate::Result {
     let (server, mut c) = mock::serve_and_connect(
         "v1/http-handshake.response",
@@ -294,11 +293,15 @@ fn clone_v1() -> crate::Result {
     let sidebands = Rc::try_unwrap(messages).expect("no other handle").into_inner();
     assert_eq!(sidebands.len(), 3);
     assert_eq!(
-        server.received_as_string().lines().collect::<Vec<_>>(),
+        server
+            .received_as_string()
+            .lines()
+            .map(|l| l.to_lowercase())
+            .filter(|l| !(l.starts_with("transfer-encoding") || l.starts_with("expect: ")))
+            .collect::<HashSet<_>>(),
         format!(
             "POST /path/not/important/due/to/mock/git-upload-pack HTTP/1.1
 Host: 127.0.0.1:{}
-Transfer-Encoding: chunked
 User-Agent: git/oxide-{}
 Content-Type: application/x-git-upload-pack-request
 Accept: application/x-git-upload-pack-result
@@ -315,7 +318,8 @@ Accept: application/x-git-upload-pack-result
             env!("CARGO_PKG_VERSION")
         )
         .lines()
-        .collect::<Vec<_>>()
+        .map(|l| l.to_lowercase())
+        .collect::<HashSet<_>>()
     );
     Ok(())
 }
