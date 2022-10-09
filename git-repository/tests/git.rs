@@ -4,6 +4,8 @@ mod util;
 use util::*;
 
 #[cfg(not(feature = "regex"))]
+mod clone;
+#[cfg(not(feature = "regex"))]
 mod commit;
 #[cfg(not(feature = "regex"))]
 mod head;
