@@ -6,7 +6,7 @@
 //! For information on how to use the [`WalkDir`] type, have a look at
 //! * [`jwalk::WalkDir`](https://docs.rs/jwalk/0.5.1/jwalk/type.WalkDir.html) if `parallel` feature is enabled
 //! * [walkdir::WalkDir](https://docs.rs/walkdir/2.3.1/walkdir/struct.WalkDir.html) otherwise
-#[cfg(feature = "parallel")]
+#[cfg(feature = "fs-walkdir-parallel")]
 ///
 pub mod walkdir {
     use std::path::Path;
@@ -18,38 +18,24 @@ pub mod walkdir {
 
     /// Instantiate a new directory iterator which will not skip hidden files.
     pub fn walkdir_new(root: impl AsRef<Path>) -> WalkDir {
-        #[cfg(not(feature = "fs-walkdir-single-threaded"))]
-        {
-            WalkDir::new(root).skip_hidden(false)
-        }
-        #[cfg(feature = "fs-walkdir-single-threaded")]
-        {
-            WalkDir::new(root)
-                .skip_hidden(false)
-                .parallelism(jwalk::Parallelism::Serial)
-        }
+        WalkDir::new(root)
+            .skip_hidden(false)
+            .parallelism(jwalk::Parallelism::Serial)
     }
 
     /// Instantiate a new directory iterator which will not skip hidden files and is sorted
     pub fn walkdir_sorted_new(root: impl AsRef<Path>) -> WalkDir {
-        #[cfg(not(feature = "fs-walkdir-single-threaded"))]
-        {
-            WalkDir::new(root).skip_hidden(false).sort(true)
-        }
-        #[cfg(feature = "fs-walkdir-single-threaded")]
-        {
-            WalkDir::new(root)
-                .skip_hidden(false)
-                .sort(true)
-                .parallelism(jwalk::Parallelism::Serial)
-        }
+        WalkDir::new(root)
+            .skip_hidden(false)
+            .sort(true)
+            .parallelism(jwalk::Parallelism::Serial)
     }
 
     /// The Iterator yielding directory items
     pub type DirEntryIter = DirEntryIterGeneric<((), ())>;
 }
 
-#[cfg(all(feature = "walkdir", not(feature = "parallel")))]
+#[cfg(all(feature = "walkdir", not(feature = "fs-walkdir-parallel")))]
 ///
 pub mod walkdir {
     use std::path::Path;
@@ -70,7 +56,7 @@ pub mod walkdir {
     pub type DirEntryIter = walkdir::IntoIter;
 }
 
-#[cfg(any(feature = "walkdir", feature = "jwalk"))]
+#[cfg(any(feature = "walkdir", feature = "fs-walkdir-parallel"))]
 pub use self::walkdir::{walkdir_new, walkdir_sorted_new, WalkDir};
 
 /// Prepare open options which won't follow symlinks when the file is opened.
