@@ -1,4 +1,7 @@
-use std::{convert::TryFrom, path::PathBuf};
+use std::{
+    convert::TryFrom,
+    path::{Path, PathBuf},
+};
 
 use bstr::BStr;
 
@@ -37,6 +40,15 @@ impl TryFrom<PathBuf> for Url {
     type Error = parse::Error;
 
     fn try_from(value: PathBuf) -> Result<Self, Self::Error> {
+        use std::convert::TryInto;
+        git_path::into_bstr(value).try_into()
+    }
+}
+
+impl TryFrom<&Path> for Url {
+    type Error = parse::Error;
+
+    fn try_from(value: &Path) -> Result<Self, Self::Error> {
         use std::convert::TryInto;
         git_path::into_bstr(value).try_into()
     }
