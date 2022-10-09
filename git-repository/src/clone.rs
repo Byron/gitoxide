@@ -2,6 +2,9 @@
 pub struct Prepare {
     /// A freshly initialized repository which is owned by us, or `None` if it was handed to the user
     repo: Option<crate::Repository>,
+    /// The name of the remote, which defaults to `origin` if not overridden.
+    #[allow(dead_code)]
+    remote_name: Option<String>,
     /// A function to configure a remote prior to fetching a pack.
     configure_remote:
         Option<Box<dyn FnOnce(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error>>>,
@@ -48,6 +51,7 @@ pub mod prepare {
             Ok(Prepare {
                 url,
                 repo: Some(repo),
+                remote_name: None,
                 configure_remote: None,
             })
         }
@@ -57,7 +61,7 @@ pub mod prepare {
     impl Prepare {
         /// Use `f` to apply arbitrary changes to the remote that is about to be used to fetch a pack.
         ///
-        /// The passed in `remote` will be anonymous and pre-configured to be a default remote as we know it from git-clone.
+        /// The passed in `remote` will be un-named and pre-configured to be a default remote as we know it from git-clone.
         /// It is not yet present in the configuration of the repository,
         /// but each change it will eventually be written to the configuration prior to performing a the fetch operation.
         pub fn configure_remote(
