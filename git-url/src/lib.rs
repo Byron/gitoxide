@@ -127,7 +127,7 @@ impl Url {
 impl Url {
     /// Write this URL losslessly to `out`, ready to be parsed again.
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
-        if !(self.serialize_alternative_form && self.scheme == Scheme::File) {
+        if !(self.serialize_alternative_form && (self.scheme == Scheme::File || self.scheme == Scheme::Ssh)) {
             out.write_all(self.scheme.as_str().as_bytes())?;
             out.write_all(b"://")?;
         }
@@ -146,7 +146,12 @@ impl Url {
         if let Some(port) = &self.port {
             write!(&mut out, ":{}", port)?;
         }
-        out.write_all(&self.path)?;
+        if self.serialize_alternative_form && self.scheme == Scheme::Ssh {
+            out.write_all(b":")?;
+            out.write_all(&self.path[1..])?;
+        } else {
+            out.write_all(&self.path)?;
+        }
         Ok(())
     }
 

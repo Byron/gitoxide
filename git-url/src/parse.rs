@@ -98,16 +98,19 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     }
 
     let url_str = std::str::from_utf8(input)?;
-    let mut url = match url::Url::parse(url_str) {
-        Ok(url) => url,
+    let (mut url, mut sanitized_scp) = match url::Url::parse(url_str) {
+        Ok(url) => (url, false),
         Err(url::ParseError::RelativeUrlWithoutBase) => {
             // happens with bare paths as well as scp like paths. The latter contain a ':' past the host portion,
             // which we are trying to detect.
-            url::Url::parse(&format!(
-                "{}://{}",
-                guessed_protocol,
-                sanitize_for_protocol(guessed_protocol, url_str)
-            ))?
+            (
+                url::Url::parse(&format!(
+                    "{}://{}",
+                    guessed_protocol,
+                    sanitize_for_protocol(guessed_protocol, url_str)
+                ))?,
+                true,
+            )
         }
         Err(err) => return Err(err.into()),
     };
@@ -115,6 +118,7 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     if url.scheme().find('.').is_some() {
         // try again with prefixed protocol
         url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
+        sanitized_scp = true;
     }
     if url.scheme() != "rad" && url.path().is_empty() {
         return Err(Error::EmptyPath);
@@ -123,5 +127,5 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
         return Err(Error::RelativeUrl { url: url.into() });
     }
 
-    to_owned_url(url)
+    to_owned_url(url).map(|url| url.serialize_alternate_form(sanitized_scp))
 }
