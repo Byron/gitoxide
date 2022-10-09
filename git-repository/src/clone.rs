@@ -2,6 +2,9 @@
 pub struct Prepare {
     /// A freshly initialized repository which is owned by us, or `None` if it was handed to the user
     repo: Option<crate::Repository>,
+    /// A function to configure a remote prior to fetching a pack.
+    configure_remote:
+        Option<Box<dyn FnOnce(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error>>>,
     /// The url to clone from
     #[allow(dead_code)]
     url: git_url::Url,
@@ -42,7 +45,27 @@ pub mod prepare {
         {
             let url = url.try_into().map_err(git_url::parse::Error::from)?;
             let repo = crate::ThreadSafeRepository::init_opts(path, create_opts, open_opts)?.to_thread_local();
-            Ok(Prepare { url, repo: Some(repo) })
+            Ok(Prepare {
+                url,
+                repo: Some(repo),
+                configure_remote: None,
+            })
+        }
+    }
+
+    /// Builder
+    impl Prepare {
+        /// Use `f` to apply arbitrary changes to the remote that is about to be used to fetch a pack.
+        ///
+        /// The passed in `remote` will be anonymous and pre-configured to be a default remote as we know it from git-clone.
+        /// It is not yet present in the configuration of the repository,
+        /// but each change it will eventually be written to the configuration prior to performing a the fetch operation.
+        pub fn configure_remote(
+            mut self,
+            f: impl FnOnce(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error> + 'static,
+        ) -> Self {
+            self.configure_remote = Some(Box::new(f));
+            self
         }
     }
 
