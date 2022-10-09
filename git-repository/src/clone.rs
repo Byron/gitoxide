@@ -5,7 +5,6 @@ pub struct Prepare {
     /// A freshly initialized repository which is owned by us, or `None` if it was handed to the user
     repo: Option<crate::Repository>,
     /// The name of the remote, which defaults to `origin` if not overridden.
-    #[allow(dead_code)]
     remote_name: Option<String>,
     /// A function to configure a remote prior to fetching a pack.
     configure_remote: Option<ConfigureRemoteFn>,
@@ -71,6 +70,15 @@ pub mod prepare {
         ) -> Self {
             self.configure_remote = Some(Box::new(f));
             self
+        }
+
+        /// Set the remote's name to the given value after it was configured using the function provided via
+        /// [`configure_remote()`][Self::configure_remote()].
+        ///
+        /// If not set here, it defaults to `origin`.
+        pub fn remote_name(mut self, name: impl Into<String>) -> Result<Self, crate::remote::name::Error> {
+            self.remote_name = Some(crate::remote::name::validated(name)?);
+            Ok(self)
         }
     }
 
