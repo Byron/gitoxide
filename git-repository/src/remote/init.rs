@@ -44,7 +44,7 @@ impl<'repo> Remote<'repo> {
             .then(|| rewrite_urls(&repo.config, url.as_ref(), push_url.as_ref()))
             .unwrap_or(Ok((None, None)))?;
         Ok(Remote {
-            name: name.map(|name| remote::name::validated(name)).transpose()?,
+            name: name.map(remote::name::validated).transpose()?,
             url,
             url_alias,
             push_url,
