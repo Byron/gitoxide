@@ -1,5 +1,51 @@
+mod save_to {
+    use crate::remote;
+    use crate::remote::save::uniformize;
+    use git_repository as git;
+
+    #[test]
+    fn named_remotes_save_as_is() -> crate::Result {
+        let repo = remote::repo("clone");
+        let remote = repo.find_remote("origin")?;
+
+        let mut config = git::config::File::default();
+        remote.save_to(&mut config)?;
+        let actual = uniformize(config.to_string());
+        assert!(
+            actual.starts_with("[remote \"origin\"]\n\turl = "),
+            "workaround absolute paths in test fixture…"
+        );
+        assert!(
+            actual.ends_with("/base\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n"),
+            "…by checking only the parts that are similar"
+        );
+
+        // TODO: fix this
+        // let previous_remote_state = repo
+        //     .config_snapshot()
+        //     .plumbing()
+        //     .section("remote", Some("origin"))
+        //     .expect("present")
+        //     .to_bstring();
+        let mut config = repo.config_snapshot().plumbing().clone();
+        remote.save_to(&mut config)?;
+        assert_eq!(
+            config.sections_by_name("remote").expect("more than one").count(),
+            2,
+            "amount of remotes are unaltered"
+        );
+        // assert_eq!(
+        //     config.section("remote", Some("origin")).expect("present").to_bstring(),
+        //     previous_remote_state,
+        //     "the serialization doesn't modify anything"
+        // );
+        Ok(())
+    }
+}
+
 mod save_as_to {
     use crate::basic_repo;
+    use crate::remote::save::uniformize;
     use git_repository as git;
     use std::convert::TryInto;
 
@@ -66,8 +112,8 @@ mod save_as_to {
         );
         Ok(())
     }
+}
 
-    fn uniformize(input: String) -> String {
-        input.replace("\r\n", "\n")
-    }
+fn uniformize(input: String) -> String {
+    input.replace("\r\n", "\n")
 }
