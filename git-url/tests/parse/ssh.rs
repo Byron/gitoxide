@@ -88,5 +88,12 @@ fn scp_like_with_user_and_relative_path_turns_into_absolute_path() -> crate::Res
     )?
     .to_bstring();
     assert_eq!(url, "user@host.xz:relative");
+
+    let url = assert_url_and(
+        "user@host.xz:../relative",
+        url_alternate(Scheme::Ssh, "user", "host.xz", None, b"/../relative"),
+    )?
+    .to_bstring();
+    assert_eq!(url, "user@host.xz:relative");
     Ok(())
 }
