@@ -12,6 +12,8 @@ mod error {
     #[allow(missing_docs)]
     pub enum Error {
         #[error(transparent)]
+        Name(#[from] crate::remote::name::Error),
+        #[error(transparent)]
         Url(#[from] git_url::parse::Error),
         #[error("The rewritten {kind} url {rewritten_url:?} failed to parse")]
         RewrittenUrlInvalid {
@@ -42,7 +44,7 @@ impl<'repo> Remote<'repo> {
             .then(|| rewrite_urls(&repo.config, url.as_ref(), push_url.as_ref()))
             .unwrap_or(Ok((None, None)))?;
         Ok(Remote {
-            name,
+            name: name.map(|name| remote::name::validated(name)).transpose()?,
             url,
             url_alias,
             push_url,

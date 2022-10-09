@@ -23,6 +23,30 @@ mod errors;
 pub use errors::find;
 
 ///
+pub mod name {
+    /// The error returned by [validate()].
+    #[derive(Debug, thiserror::Error)]
+    #[error("remote names must be valid within refspecs for fetching: {name:?}")]
+    #[allow(missing_docs)]
+    pub struct Error {
+        source: git_refspec::parse::Error,
+        name: String,
+    }
+
+    /// Return `name` if it is valid or convert it into an `Error`.
+    pub fn validated(name: impl Into<String>) -> Result<String, Error> {
+        let name = name.into();
+        match git_refspec::parse(
+            format!("refs/heads/test:refs/remotes/{name}/test").as_str().into(),
+            git_refspec::parse::Operation::Fetch,
+        ) {
+            Ok(_) => Ok(name),
+            Err(err) => Err(Error { source: err, name }),
+        }
+    }
+}
+
+///
 pub mod init;
 
 ///

@@ -9,6 +9,18 @@ pub enum Error {
     NameMissing { url: git_url::Url },
 }
 
+/// The error returned by [`Remote::save_as_to()`].
+///
+/// Note that this type should rather be in the `as` module, but cannot be as it's part of the Rust syntax.
+#[derive(Debug, thiserror::Error)]
+#[allow(missing_docs)]
+pub enum AsError {
+    #[error(transparent)]
+    Save(#[from] Error),
+    #[error(transparent)]
+    Name(#[from] crate::remote::name::Error),
+}
+
 /// Serialize into git-config.
 impl Remote<'_> {
     /// Save ourselves to the given `config` if we are a named remote or fail otherwise.
@@ -78,14 +90,15 @@ impl Remote<'_> {
     /// and the caller should account for that.
     pub fn save_as_to(
         &mut self,
-        name: git_config::parse::section::Name<'_>,
+        name: impl Into<String>,
         config: &mut git_config::File<'static>,
-    ) -> Result<(), Error> {
+    ) -> Result<(), AsError> {
+        let name = crate::remote::name::validated(name)?;
         let prev_name = self.name.take();
-        self.name = Some(name.to_string());
+        self.name = name.into();
         self.save_to(config).map_err(|err| {
             self.name = prev_name;
-            err
+            err.into()
         })
     }
 }

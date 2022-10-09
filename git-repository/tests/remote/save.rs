@@ -79,11 +79,11 @@ mod save_as_to {
         );
         assert_eq!(remote.name(), None);
         let mut config = git::config::File::default();
-        remote.save_as_to(remote_name.try_into().expect("valid name"), &mut config)?;
+        remote.save_as_to(remote_name, &mut config)?;
         let expected = "[remote \"origin\"]\n\turl = https://example.com/path\n\tpushurl = https://ein.hub/path\n\tfetch = +refs/heads/*:refs/remotes/any/*\n\tfetch = refs/heads/special:refs/heads/special-upstream\n\tpush = refs/heads/main:refs/heads/main\n\tpush = :\n";
         assert_eq!(uniformize(config.to_string()), expected);
 
-        remote.save_as_to(remote_name.try_into().expect("valid name"), &mut config)?;
+        remote.save_as_to(remote_name, &mut config)?;
         assert_eq!(
             uniformize(config.to_string()),
             expected,
@@ -103,7 +103,7 @@ mod save_as_to {
                 .expect("works");
             existing_section.push("free".try_into().unwrap(), Some("should not be removed".into()))
         }
-        remote.save_as_to(remote_name.try_into().expect("valid name"), &mut config)?;
+        remote.save_as_to(remote_name, &mut config)?;
         assert_eq!(
             uniformize(config.to_string()),
             "[remote \"origin\"]\n\tfree = should not be removed\n\turl = https://example.com/path\n\tpushurl = https://ein.hub/path\n\tfetch = +refs/heads/*:refs/remotes/any/*\n\tfetch = refs/heads/special:refs/heads/special-upstream\n\tpush = refs/heads/main:refs/heads/main\n\tpush = :\n[unrelated]\n\ta = value\n[initially-empty-not-removed \"name\"]\n",
