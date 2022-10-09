@@ -1,3 +1,5 @@
+type ConfigureRemoteFn = Box<dyn FnOnce(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error>>;
+
 /// A utility to collect configuration on how to fetch from a remote and possibly create a working tree locally.
 pub struct Prepare {
     /// A freshly initialized repository which is owned by us, or `None` if it was handed to the user
@@ -6,8 +8,7 @@ pub struct Prepare {
     #[allow(dead_code)]
     remote_name: Option<String>,
     /// A function to configure a remote prior to fetching a pack.
-    configure_remote:
-        Option<Box<dyn FnOnce(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error>>>,
+    configure_remote: Option<ConfigureRemoteFn>,
     /// The url to clone from
     #[allow(dead_code)]
     url: git_url::Url,
@@ -89,9 +90,9 @@ pub mod prepare {
         }
     }
 
-    impl Into<Repository> for Prepare {
-        fn into(self) -> Repository {
-            self.persist()
+    impl From<Prepare> for Repository {
+        fn from(prep: Prepare) -> Self {
+            prep.persist()
         }
     }
 }

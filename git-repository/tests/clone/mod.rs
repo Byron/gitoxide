@@ -5,7 +5,7 @@ use git_repository as git;
 fn persist() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     let repo = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?.persist();
-    assert_eq!(repo.is_bare(), true, "repo is now ours and remains");
+    assert!(repo.is_bare(), "repo is now ours and remains");
     Ok(())
 }
 
