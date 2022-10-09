@@ -8,6 +8,14 @@ fn empty() {
 }
 
 #[test]
+fn empty_component() {
+    assert!(matches!(
+        try_parse("refs/heads/test:refs/remotes//test", Operation::Fetch).unwrap_err(),
+        Error::ReferenceName(git_validate::refname::Error::RepeatedSlash)
+    ));
+}
+
+#[test]
 fn complex_patterns_with_more_than_one_asterisk() {
     for op in [Operation::Fetch, Operation::Push] {
         for spec in ["a/*/c/*", "a**:**b", "+:**/"] {
