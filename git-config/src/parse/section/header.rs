@@ -41,9 +41,13 @@ impl<'a> Header<'a> {
     }
 }
 
+/// Return true if `name` is valid as subsection name, like `origin` in `[remote "origin"]`.
+pub fn is_valid_subsection(name: &BStr) -> bool {
+    name.find_byteset(b"\n\0").is_none()
+}
+
 fn validated_subsection(name: Cow<'_, BStr>) -> Result<Cow<'_, BStr>, Error> {
-    name.find_byteset(b"\n\0")
-        .is_none()
+    is_valid_subsection(name.as_ref())
         .then(|| name)
         .ok_or(Error::InvalidSubSection)
 }
@@ -53,6 +57,24 @@ fn validated_name(name: Cow<'_, BStr>) -> Result<Cow<'_, BStr>, Error> {
         .all(|b| b.is_ascii_alphanumeric() || *b == b'-')
         .then(|| name)
         .ok_or(Error::InvalidName)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn empty_header_names_are_legal() {
+        assert!(Header::new("", None).is_ok(), "yes, git allows this, so do we");
+    }
+
+    #[test]
+    fn empty_header_sub_names_are_legal() {
+        assert!(
+            Header::new("remote", Some("".into())).is_ok(),
+            "yes, git allows this, so do we"
+        );
+    }
 }
 
 impl Header<'_> {
