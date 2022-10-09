@@ -16,7 +16,7 @@ mod remote_at {
         let mut remote = remote.push_url("user@host.xz:./relative")?;
         assert_eq!(
             remote.url(Direction::Push).unwrap().to_bstring(),
-            "ssh://user@host.xz/relative"
+            "user@host.xz:relative"
         );
         assert_eq!(remote.url(Direction::Fetch).unwrap().to_bstring(), fetch_url);
 

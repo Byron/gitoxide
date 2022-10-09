@@ -20,13 +20,12 @@ mod save_to {
             "…by checking only the parts that are similar"
         );
 
-        // TODO: fix this
-        // let previous_remote_state = repo
-        //     .config_snapshot()
-        //     .plumbing()
-        //     .section("remote", Some("origin"))
-        //     .expect("present")
-        //     .to_bstring();
+        let previous_remote_state = repo
+            .config_snapshot()
+            .plumbing()
+            .section("remote", Some("origin"))
+            .expect("present")
+            .to_bstring();
         let mut config = repo.config_snapshot().plumbing().clone();
         remote.save_to(&mut config)?;
         assert_eq!(
@@ -34,11 +33,11 @@ mod save_to {
             2,
             "amount of remotes are unaltered"
         );
-        // assert_eq!(
-        //     config.section("remote", Some("origin")).expect("present").to_bstring(),
-        //     previous_remote_state,
-        //     "the serialization doesn't modify anything"
-        // );
+        assert_eq!(
+            config.section("remote", Some("origin")).expect("present").to_bstring(),
+            previous_remote_state,
+            "the serialization doesn't modify anything"
+        );
         Ok(())
     }
 }
