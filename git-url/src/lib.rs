@@ -38,6 +38,8 @@ pub struct Url {
     user: Option<String>,
     /// The host to which to connect. Localhost is implied if `None`.
     host: Option<String>,
+    /// When serializing, use the alternative forms as it was parsed as such.
+    serialize_alternative_form: bool,
     /// The port to use when connecting to a host. If `None`, standard ports depending on `scheme` will be used.
     pub port: Option<u16>,
     /// The path portion of the URL, usually the location of the git repository.
@@ -61,6 +63,7 @@ impl Url {
                 host,
                 port,
                 path,
+                serialize_alternative_form: false,
             }
             .to_bstring()
             .as_ref(),
@@ -75,6 +78,18 @@ impl Url {
         let prev = self.user.take();
         self.user = user;
         prev
+    }
+}
+
+/// Builder
+impl Url {
+    /// Enable alternate serialization for this url, e.g. `file:///path` becomes `/path`.
+    ///
+    /// This is automatically set correctly for parsed URLs, but can be set here for urls
+    /// created by constructor.
+    pub fn serialize_alternate_form(mut self, use_alternate_form: bool) -> Self {
+        self.serialize_alternative_form = use_alternate_form;
+        self
     }
 }
 
@@ -112,8 +127,10 @@ impl Url {
 impl Url {
     /// Write this URL losslessly to `out`, ready to be parsed again.
     pub fn write_to(&self, mut out: impl std::io::Write) -> std::io::Result<()> {
-        out.write_all(self.scheme.as_str().as_bytes())?;
-        out.write_all(b"://")?;
+        if !(self.serialize_alternative_form && self.scheme == Scheme::File) {
+            out.write_all(self.scheme.as_str().as_bytes())?;
+            out.write_all(b"://")?;
+        }
         match (&self.user, &self.host) {
             (Some(user), Some(host)) => {
                 out.write_all(user.as_bytes())?;
@@ -148,6 +165,7 @@ impl Url {
     }
 }
 
+/// Deserialization
 impl Url {
     /// Parse a URL from `bytes`
     pub fn from_bytes(bytes: &BStr) -> Result<Self, parse::Error> {

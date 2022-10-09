@@ -7,6 +7,7 @@ use crate::{parse, Scheme, Url};
 impl Default for Url {
     fn default() -> Self {
         Url {
+            serialize_alternative_form: false,
             scheme: Scheme::Ssh,
             user: None,
             host: None,

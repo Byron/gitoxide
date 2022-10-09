@@ -43,6 +43,16 @@ fn url(
     .expect("valid")
 }
 
+fn url_alternate(
+    protocol: Scheme,
+    user: impl Into<Option<&'static str>>,
+    host: impl Into<Option<&'static str>>,
+    port: impl Into<Option<u16>>,
+    path: &'static [u8],
+) -> git_url::Url {
+    url(protocol, user, host, port, path).serialize_alternate_form(true)
+}
+
 mod file;
 mod invalid;
 mod ssh;
