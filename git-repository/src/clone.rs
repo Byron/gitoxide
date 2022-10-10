@@ -1,4 +1,4 @@
-type ConfigureRemoteFn = Box<dyn FnOnce(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error>>;
+type ConfigureRemoteFn = Box<dyn FnMut(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error>>;
 
 /// A utility to collect configuration on how to fetch from a remote and possibly create a working tree locally.
 pub struct Prepare {
@@ -8,6 +8,9 @@ pub struct Prepare {
     remote_name: Option<String>,
     /// A function to configure a remote prior to fetching a pack.
     configure_remote: Option<ConfigureRemoteFn>,
+    /// Options for preparing a fetch operation.
+    #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
+    fetch_options: crate::remote::ref_map::Options,
     /// The url to clone from
     #[allow(dead_code)]
     url: git_url::Url,
@@ -27,6 +30,24 @@ pub mod prepare {
         Init(#[from] crate::init::Error),
         #[error(transparent)]
         UrlParse(#[from] git_url::parse::Error),
+    }
+
+    ///
+    #[cfg(feature = "blocking-network-client")]
+    pub mod fetch {
+        /// The error returned by [`Prepare::fetch_only()`].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error(transparent)]
+            Connect(#[from] crate::remote::connect::Error),
+            #[error(transparent)]
+            PrepareFetch(#[from] crate::remote::fetch::prepare::Error),
+            #[error(transparent)]
+            Fetch(#[from] crate::remote::fetch::Error),
+            #[error(transparent)]
+            RemoteConfiguration(#[from] crate::remote::init::Error),
+        }
     }
 
     /// Instantiation
@@ -50,6 +71,8 @@ pub mod prepare {
             let repo = crate::ThreadSafeRepository::init_opts(path, create_opts, open_opts)?.to_thread_local();
             Ok(Prepare {
                 url,
+                #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
+                fetch_options: Default::default(),
                 repo: Some(repo),
                 remote_name: None,
                 configure_remote: None,
@@ -57,8 +80,32 @@ pub mod prepare {
         }
     }
 
+    /// Modification
+    impl Prepare {
+        /// Fetch a pack and update local branches according to refspecs, providing `progress` and checking `should_interrupt` to stop
+        /// the operation.
+        /// On success, the persisted repository is returned, and this method must not be called again to avoid a **panic**.
+        /// On error, the method may be called again to retry as often as needed.
+        ///
+        /// Note that all data we created will be removed once this instance drops if the operation wasn't successful.
+        #[cfg(feature = "blocking-network-client")]
+        pub fn fetch_only(
+            &mut self,
+            progress: impl crate::Progress,
+            should_interrupt: &std::sync::atomic::AtomicBool,
+        ) -> Result<Repository, fetch::Error> {
+            todo!()
+        }
+    }
+
     /// Builder
     impl Prepare {
+        /// Set additional options to adjust parts of the fetch operation that are not affected by the git configuration.
+        #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
+        pub fn with_fetch_options(mut self, opts: crate::remote::ref_map::Options) -> Self {
+            self.fetch_options = opts;
+            self
+        }
         /// Use `f` to apply arbitrary changes to the remote that is about to be used to fetch a pack.
         ///
         /// The passed in `remote` will be un-named and pre-configured to be a default remote as we know it from git-clone.
@@ -66,7 +113,7 @@ pub mod prepare {
         /// but each change it will eventually be written to the configuration prior to performing a the fetch operation.
         pub fn configure_remote(
             mut self,
-            f: impl FnOnce(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error> + 'static,
+            f: impl FnMut(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error> + 'static,
         ) -> Self {
             self.configure_remote = Some(Box::new(f));
             self
@@ -76,13 +123,13 @@ pub mod prepare {
         /// [`configure_remote()`][Self::configure_remote()].
         ///
         /// If not set here, it defaults to `origin`.
-        pub fn remote_name(mut self, name: impl Into<String>) -> Result<Self, crate::remote::name::Error> {
+        pub fn with_remote_name(mut self, name: impl Into<String>) -> Result<Self, crate::remote::name::Error> {
             self.remote_name = Some(crate::remote::name::validated(name)?);
             Ok(self)
         }
     }
 
-    /// Access
+    /// Consumption
     impl Prepare {
         /// Persist the contained repository as is even if an error may have occurred when interacting with the remote or checking out the main working tree.
         pub fn persist(mut self) -> Repository {

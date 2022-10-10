@@ -2,7 +2,38 @@ use crate::remote;
 use git_repository as git;
 
 #[test]
-fn persist() -> crate::Result {
+#[cfg(feature = "blocking-network-client")]
+fn fetch_only_with_configuration() -> crate::Result {
+    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let mut called_configure_remote = false;
+    let remote_name = "special";
+    let mut prepare = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+        .with_remote_name(remote_name)?
+        .configure_remote(move |r| {
+            // TODO: no move
+            called_configure_remote = true;
+            Ok(
+                r.with_refspec("+refs/tags/*:refs/tags/*", git::remote::Direction::Fetch)
+                    .expect("valid static spec"),
+            )
+        });
+    let repo = prepare.fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+    drop(prepare);
+
+    assert_eq!(called_configure_remote, true, "custom remote configuration is called");
+    assert_eq!(repo.remote_names().len(), 1, "only ever one remote");
+    let remote = repo.find_remote(remote_name)?;
+    assert_eq!(
+        remote.refspecs(git::remote::Direction::Fetch).len(),
+        2,
+        "our added spec was stored as well"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn clone_and_early_persist_without_receive() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     let repo = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?.persist();
     assert!(repo.is_bare(), "repo is now ours and remains");
@@ -10,7 +41,7 @@ fn persist() -> crate::Result {
 }
 
 #[test]
-fn clone_bare_into_empty_directory() -> crate::Result {
+fn clone_bare_into_empty_directory_and_early_drop() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     // this breaks isolation, but shouldn't be affecting the test. If so, use isolation options for opening the repo.
     let prep = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?;
@@ -23,9 +54,8 @@ fn clone_bare_into_empty_directory() -> crate::Result {
 }
 
 #[test]
-fn clone_into_empty_directory() -> crate::Result {
+fn clone_into_empty_directory_and_early_drop() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
-    // this breaks isolation, but shouldn't be affecting the test. If so, use isolation options for opening the repo.
     let prep = git::prepare_clone(remote::repo("base").path(), tmp.path())?;
     let head = tmp.path().join(".git").join("HEAD");
     assert!(head.is_file(), "now a basic repo is present");
