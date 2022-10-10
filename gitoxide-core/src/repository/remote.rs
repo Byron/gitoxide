@@ -95,7 +95,7 @@ mod refs_impl {
     pub(crate) fn print_refmap(
         repo: &git::Repository,
         refspecs: &[RefSpec],
-        mut map: git::remote::fetch::RefMap<'_>,
+        mut map: git::remote::fetch::RefMap,
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
@@ -141,8 +141,11 @@ mod refs_impl {
                 err,
                 "The following destination refs were removed as they didn't start with 'ref/'"
             )?;
-            map.fixes.sort_by_key(|f| match f {
-                Fix::MappingWithPartialDestinationRemoved { spec, .. } => *spec,
+            map.fixes.sort_by(|l, r| match (l, r) {
+                (
+                    Fix::MappingWithPartialDestinationRemoved { spec: l, .. },
+                    Fix::MappingWithPartialDestinationRemoved { spec: r, .. },
+                ) => l.cmp(&r),
             });
             let mut prev_spec = None;
             for fix in &map.fixes {
@@ -150,7 +153,7 @@ mod refs_impl {
                     Fix::MappingWithPartialDestinationRemoved { name, spec } => {
                         if prev_spec.map_or(true, |prev_spec| prev_spec != spec) {
                             prev_spec = spec.into();
-                            spec.write_to(&mut err)?;
+                            spec.to_ref().write_to(&mut err)?;
                             writeln!(err)?;
                         }
                         writeln!(err, "\t{name}")?;
