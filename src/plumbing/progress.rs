@@ -10,6 +10,9 @@ enum Usage {
     Planned {
         note: Option<&'static str>,
     },
+    NotPlanned {
+        reason: &'static str,
+    },
     InModule {
         name: &'static str,
         deviation: Option<&'static str>,
@@ -24,6 +27,10 @@ impl Display for Usage {
         match self {
             Puzzled => f.write_str("❓")?,
             NotApplicable => f.write_str("not applicable")?,
+            NotPlanned { reason } => {
+                write!(f, "{}", "not planned".blink())?;
+                write!(f, " ℹ {} ℹ", reason.bright_white())?;
+            }
             Planned { note } => {
                 write!(f, "{}", "planned".blink())?;
                 if let Some(note) = note {
@@ -47,6 +54,7 @@ impl Usage {
             Puzzled => "?",
             NotApplicable => "❌",
             Planned { .. } => "🕒",
+            NotPlanned { .. } => "🤔",
             InModule { deviation, .. } => deviation.is_some().then(|| "👌️").unwrap_or("✅"),
         }
     }
@@ -188,6 +196,24 @@ static GIT_CONFIG: &[Record] = &[
         usage: InModule {
             name: "repository::identity",
             deviation: Some("defaults to 'gitoxide@localhost'"),
+        },
+    },
+    Record {
+    config: "clone.filterSubmodules,",
+        usage: Planned {
+            note: Some("currently object filtering isn't support, a prerequisite for this, see --filter=blob:none for more"),
+        },
+    },
+    Record {
+        config: "clone.defaultRemoteName",
+        usage: Planned {
+            note: None,
+        },
+    },
+    Record {
+        config: "clone.rejectShallow",
+        usage: NotPlanned {
+            reason: "it's not a use-case we consider important now, but once that changes it can be implemented",
         },
     },
     Record {
