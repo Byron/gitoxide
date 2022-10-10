@@ -275,20 +275,18 @@ fn present_and_validate_dependencies(
                             .then(|| format!(", ignoring computed version {}", bump.desired_release))
                             .unwrap_or_default(),
                     );
-                } else {
-                    if bump.desired_release != dep.package.version {
-                        log::info!(
-                            "Manifest version of {} package '{}' at {} is sufficient{}, ignoring computed version {}",
-                            kind,
-                            dep.package.name,
-                            dep.package.version,
-                            bump.latest_release
-                                .as_ref()
-                                .map(|latest_release| format!(" to succeed latest released version {}", latest_release))
-                                .unwrap_or_else(|| ", creating a new release 🎉".into()),
-                            bump.desired_release
-                        );
-                    }
+                } else if bump.desired_release != dep.package.version {
+                    log::info!(
+                        "Manifest version of {} package '{}' at {} is sufficient{}, ignoring computed version {}",
+                        kind,
+                        dep.package.name,
+                        dep.package.version,
+                        bump.latest_release
+                            .as_ref()
+                            .map(|latest_release| format!(" to succeed latest released version {}", latest_release))
+                            .unwrap_or_else(|| ", creating a new release 🎉".into()),
+                        bump.desired_release
+                    );
                 };
             }
             dependency::Mode::NotForPublishing { .. } => {}
