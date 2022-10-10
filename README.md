@@ -313,11 +313,13 @@ For additional details, also take a look at the [collaboration guide].
 Provide a CLI to for the most basic user journey:
 
 * [x] initialize a repository
+* [x] fetch
+    * [ ] and update worktree
 * clone a repository
    - [ ] bare
    - [ ] with working tree
-* [ ] create a commit
-* [ ] add a remote
+* [ ] create a commit after adding worktree files
+* [x] add a remote
 * [ ] push
   * [x] create (thin) pack
 
