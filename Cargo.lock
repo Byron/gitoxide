@@ -1152,7 +1152,7 @@ dependencies = [
 
 [[package]]
 name = "git-actor"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "bstr 1.0.1",
  "btoi",
@@ -1169,7 +1169,7 @@ dependencies = [
 
 [[package]]
 name = "git-attributes"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "bstr 1.0.1",
  "compact_str",
@@ -1209,7 +1209,7 @@ dependencies = [
 
 [[package]]
 name = "git-commitgraph"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1224,7 +1224,7 @@ dependencies = [
 
 [[package]]
 name = "git-config"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "bstr 1.0.1",
  "criterion",
@@ -1275,7 +1275,7 @@ dependencies = [
 
 [[package]]
 name = "git-credentials"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1306,7 +1306,7 @@ dependencies = [
 
 [[package]]
 name = "git-diff"
-version = "0.19.0"
+version = "0.20.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1319,7 +1319,7 @@ dependencies = [
 
 [[package]]
 name = "git-discover"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bstr 1.0.1",
  "defer",
@@ -1335,7 +1335,7 @@ dependencies = [
 
 [[package]]
 name = "git-features"
-version = "0.22.6"
+version = "0.23.0"
 dependencies = [
  "bstr 1.0.1",
  "bytes",
@@ -1378,7 +1378,7 @@ dependencies = [
 
 [[package]]
 name = "git-hash"
-version = "0.9.10"
+version = "0.9.11"
 dependencies = [
  "document-features",
  "git-testtools",
@@ -1389,7 +1389,7 @@ dependencies = [
 
 [[package]]
 name = "git-index"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "atoi",
  "bitflags",
@@ -1426,7 +1426,7 @@ dependencies = [
 
 [[package]]
 name = "git-mailmap"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1442,7 +1442,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-object"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "bstr 1.0.1",
  "btoi",
@@ -1463,7 +1463,7 @@ dependencies = [
 
 [[package]]
 name = "git-odb"
-version = "0.33.0"
+version = "0.34.0"
 dependencies = [
  "arc-swap",
  "crossbeam-channel",
@@ -1488,7 +1488,7 @@ dependencies = [
 
 [[package]]
 name = "git-pack"
-version = "0.23.0"
+version = "0.24.0"
 dependencies = [
  "bstr 1.0.1",
  "bytesize",
@@ -1518,7 +1518,7 @@ dependencies = [
 
 [[package]]
 name = "git-packetline"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "async-std",
  "bstr 1.0.1",
@@ -1572,7 +1572,7 @@ dependencies = [
 
 [[package]]
 name = "git-protocol"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1608,7 +1608,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-ref"
-version = "0.16.0"
+version = "0.17.0"
 dependencies = [
  "document-features",
  "git-actor",
@@ -1631,7 +1631,7 @@ dependencies = [
 
 [[package]]
 name = "git-refspec"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bstr 1.0.1",
  "git-hash",
@@ -1644,7 +1644,7 @@ dependencies = [
 
 [[package]]
 name = "git-repository"
-version = "0.24.0"
+version = "0.25.0"
 dependencies = [
  "anyhow",
  "async-std",
@@ -1697,7 +1697,7 @@ dependencies = [
 
 [[package]]
 name = "git-revision"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1713,7 +1713,7 @@ dependencies = [
 
 [[package]]
 name = "git-sec"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "bitflags",
  "dirs",
@@ -1747,7 +1747,7 @@ dependencies = [
 
 [[package]]
 name = "git-testtools"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "bstr 1.0.1",
  "crc",
@@ -1773,7 +1773,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-transport"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "async-std",
  "async-trait",
@@ -1799,7 +1799,7 @@ dependencies = [
 
 [[package]]
 name = "git-traverse"
-version = "0.17.0"
+version = "0.18.0"
 dependencies = [
  "git-hash",
  "git-object",
@@ -1815,7 +1815,7 @@ version = "0.0.0"
 
 [[package]]
 name = "git-url"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1838,7 +1838,7 @@ dependencies = [
 
 [[package]]
 name = "git-worktree"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bstr 1.0.1",
  "document-features",
@@ -1876,7 +1876,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide"
-version = "0.16.0"
+version = "0.17.0"
 dependencies = [
  "anyhow",
  "atty",
@@ -1896,7 +1896,7 @@ dependencies = [
 
 [[package]]
 name = "gitoxide-core"
-version = "0.18.0"
+version = "0.19.0"
 dependencies = [
  "anyhow",
  "async-io",

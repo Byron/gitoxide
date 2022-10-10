@@ -1,6 +1,6 @@
 [package]
 name = "git-refspec"
-version = "0.2.0"
+version = "0.3.0"
 repository = "https://github.com/Byron/gitoxide"
 license = "MIT/Apache-2.0"
 description = "A WIP crate of the gitoxide project for parsing and representing refspecs"
@@ -12,9 +12,9 @@ include = ["src/**/*", "CHANGELOG.md", "README.md"]
 doctest = false
 
 [dependencies]
-git-revision = { version = "^0.5.0", path = "../git-revision" }
+git-revision = { version = "^0.6.0", path = "../git-revision" }
 git-validate = { version = "^0.6.0", path = "../git-validate" }
-git-hash = { version = "^0.9.10", path = "../git-hash" }
+git-hash = { version = "^0.9.11", path = "../git-hash" }
 
 bstr = { version = "1.0.1", default-features = false, features = ["std"]}
 thiserror = "1.0.26"

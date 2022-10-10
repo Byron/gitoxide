@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.34.0 (2022-10-10)
 
 Maintenance release without user-facing changes.
 
@@ -13,7 +13,7 @@ Maintenance release without user-facing changes.
 
 <csr-read-only-do-not-edit/>
 
- - 8 commits contributed to the release over the course of 20 calendar days.
+ - 9 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#536](https://github.com/Byron/gitoxide/issues/536)
@@ -35,6 +35,7 @@ Maintenance release without user-facing changes.
     - try to recreate multi-threaded panic, without success. ([`53b5086`](https://github.com/Byron/gitoxide/commit/53b50866bcf9785904f1d8f809375edae9cee6f1))
     - Only run single-threaded these when respective toggle is set (when multi-threading is requested) ([`730384d`](https://github.com/Byron/gitoxide/commit/730384d6c8908ab8b44e9b499f3f7d678143e8ed))
  * **Uncategorized**
+    - prepare changelogs for release ([`d232567`](https://github.com/Byron/gitoxide/commit/d23256701a95284857dc8d1cb37c7c94cada973c))
     - Merge branch 'main' into fetch-pack ([`d686020`](https://github.com/Byron/gitoxide/commit/d6860205db847b8a474756e92578195e1022481c))
     - thanks clippy ([`b9937ad`](https://github.com/Byron/gitoxide/commit/b9937adc2c31095dde63397be7d56f1ea559b0f7))
     - Merge branch 'fix-git-features' ([`82fd251`](https://github.com/Byron/gitoxide/commit/82fd251ac80d07bc9da8a4d36e517aa35580d188))

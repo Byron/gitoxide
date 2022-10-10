@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.3.0 (2022-10-10)
 
 ### New Features
 
@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 10 commits contributed to the release over the course of 20 calendar days.
+ - 11 commits contributed to the release over the course of 20 calendar days.
  - 20 days passed between releases.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 1 unique issue was worked on: [#450](https://github.com/Byron/gitoxide/issues/450)
@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `RefSpec::allow_non_fast_forward()` to get information about 'force' quickly. ([`d7f63a6`](https://github.com/Byron/gitoxide/commit/d7f63a6c60a826dc862bd13adbef041e4ac6d8ab))
     - `RefSpecRef` instruction uses the correct lifetime. ([`278ff7a`](https://github.com/Byron/gitoxide/commit/278ff7a6ee084ea864193a5ca25b6cd0f18e19a0))
  * **Uncategorized**
+    - prepare changelogs for release ([`d232567`](https://github.com/Byron/gitoxide/commit/d23256701a95284857dc8d1cb37c7c94cada973c))
     - Merge branch 'clone' ([`507dc7e`](https://github.com/Byron/gitoxide/commit/507dc7e706cb3c9d89d048b3aff5df239a9b6788))
     - remove lifetime of `match_group::Fix`, keeping `RefSpec` instances instead ([`2a0a87a`](https://github.com/Byron/gitoxide/commit/2a0a87a04e7b4d6ed3be3d8adc89917576727686))
     - Another test to validate components must not be empty ([`b2c9af1`](https://github.com/Byron/gitoxide/commit/b2c9af1cf7eedfb618c47d0598cfcef636e793ff))
