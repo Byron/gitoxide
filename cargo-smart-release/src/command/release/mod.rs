@@ -232,13 +232,13 @@ fn present_and_validate_dependencies(
                         dependency::Kind::DependencyOrDependentOfUserSelection => "--bump-dependencies <level>",
                     };
                     if bump.next_release == bump.package_version {
-                        log::warn!(
+                        log::error!(
                             "'{}' is unchanged. Consider using {} along with --no-bump-on-demand to force a version change.",
                             dep.package.name,
                             bump_flag
                         );
                     } else {
-                        log::warn!(
+                        log::error!(
                             "Latest published version of '{}' is {}, the new version is {}. Consider using {} or update the index with --update-crates-index.",
                             dep.package.name,
                             latest_release,
