@@ -20,6 +20,7 @@ pub struct Prepare {
 pub mod prepare {
     use crate::clone::Prepare;
     use crate::Repository;
+    use git_features::threading::OwnShared;
     use std::convert::TryInto;
 
     /// The error returned by [`Prepare::new()`].
@@ -105,7 +106,7 @@ pub mod prepare {
             // TODO: provide fetch::Outcome somehow - it references `Repository`.
             let repo = self
                 .repo
-                .as_ref()
+                .as_mut()
                 .expect("user error: multiple calls are allowed only until it succeeds");
 
             let remote_name = match self.remote_name.as_deref() {
@@ -138,6 +139,16 @@ pub mod prepare {
                 .connect(crate::remote::Direction::Fetch, progress)?
                 .prepare_fetch(self.fetch_options.clone())?
                 .receive(should_interrupt)?;
+
+            let repo_config = OwnShared::make_mut(&mut repo.config.resolved);
+            let ids_to_remove: Vec<_> = repo_config
+                .sections_and_ids()
+                .filter_map(|(s, id)| (s.meta().source == git_config::Source::Local).then(|| id))
+                .collect();
+            for id in ids_to_remove {
+                repo_config.remove_section_by_id(id);
+            }
+            repo_config.append(config);
 
             Ok(self.repo.take().expect("still present"))
         }

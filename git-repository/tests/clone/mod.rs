@@ -3,7 +3,6 @@ use git_repository as git;
 
 #[test]
 #[cfg(feature = "blocking-network-client")]
-#[ignore]
 fn fetch_only_with_configuration() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
