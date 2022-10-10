@@ -1,5 +1,6 @@
-use crate::remote;
 use git_repository as git;
+
+use crate::remote;
 
 #[test]
 #[cfg(feature = "blocking-network-client")]

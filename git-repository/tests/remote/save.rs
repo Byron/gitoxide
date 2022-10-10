@@ -1,7 +1,7 @@
 mod save_to {
-    use crate::remote;
-    use crate::remote::save::uniformize;
     use git_repository as git;
+
+    use crate::{remote, remote::save::uniformize};
 
     #[test]
     fn named_remotes_save_as_is() -> crate::Result {
@@ -43,10 +43,11 @@ mod save_to {
 }
 
 mod save_as_to {
-    use crate::basic_repo;
-    use crate::remote::save::uniformize;
-    use git_repository as git;
     use std::convert::TryInto;
+
+    use git_repository as git;
+
+    use crate::{basic_repo, remote::save::uniformize};
 
     #[test]
     fn anonymous_remotes_cannot_be_save_lacking_a_name() -> crate::Result {

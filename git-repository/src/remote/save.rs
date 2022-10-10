@@ -1,5 +1,6 @@
-use crate::Remote;
 use std::convert::TryInto;
+
+use crate::Remote;
 
 /// The error returned by [`Remote::save_to()`].
 #[derive(Debug, thiserror::Error)]

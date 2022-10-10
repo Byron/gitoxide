@@ -2,9 +2,8 @@ use std::borrow::Cow;
 
 use git_features::threading::OwnShared;
 
-use crate::file::SectionBodyIdsLut;
 use crate::{
-    file::{self, rename_section, write::ends_with_newline, MetadataFilter, SectionId, SectionMut},
+    file::{self, rename_section, write::ends_with_newline, MetadataFilter, SectionBodyIdsLut, SectionId, SectionMut},
     lookup,
     parse::{section, Event, FrontMatterEvents},
     File,

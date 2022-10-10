@@ -4,12 +4,11 @@ use bstr::BStr;
 use git_features::threading::OwnShared;
 use smallvec::SmallVec;
 
-use crate::file::SectionId;
 use crate::{
     file,
     file::{
         write::{extract_newline, platform_newline},
-        Metadata, MetadataFilter,
+        Metadata, MetadataFilter, SectionId,
     },
     lookup,
     parse::Event,

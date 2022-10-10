@@ -44,9 +44,9 @@ pub mod fetch {
 
 ///
 pub mod prepare {
-    use crate::clone::Prepare;
-    use crate::Repository;
     use std::convert::TryInto;
+
+    use crate::{clone::Prepare, Repository};
 
     /// The error returned by [`Prepare::new()`].
     #[derive(Debug, thiserror::Error)]

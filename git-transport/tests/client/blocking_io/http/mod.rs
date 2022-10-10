@@ -1,6 +1,6 @@
-use std::collections::HashSet;
 use std::{
     cell::RefCell,
+    collections::HashSet,
     error::Error,
     io::{self, BufRead, Read, Write},
     ops::Deref,
