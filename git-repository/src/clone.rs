@@ -101,8 +101,7 @@ pub mod prepare {
             &mut self,
             progress: impl crate::Progress,
             should_interrupt: &std::sync::atomic::AtomicBool,
-        ) -> Result<Repository, fetch::Error> {
-            // TODO: provide fetch::Outcome somehow - it references `Repository`.
+        ) -> Result<(Repository, crate::remote::fetch::Outcome), fetch::Error> {
             let repo = self
                 .repo
                 .as_mut()
@@ -134,7 +133,7 @@ pub mod prepare {
             remote.save_as_to(remote_name, &mut config)?;
             std::fs::write(config_path, config.to_bstring())?;
 
-            remote
+            let outcome = remote
                 .connect(crate::remote::Direction::Fetch, progress)?
                 .prepare_fetch(self.fetch_options.clone())?
                 .receive(should_interrupt)?;
@@ -149,7 +148,7 @@ pub mod prepare {
             }
             repo_config.append(config);
 
-            Ok(self.repo.take().expect("still present"))
+            Ok((self.repo.take().expect("still present"), outcome))
         }
     }
 

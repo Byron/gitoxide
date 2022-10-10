@@ -1,5 +1,7 @@
 use crate::remote;
+use git_odb::Find;
 use git_repository as git;
+use git_repository::remote::fetch::Status;
 
 #[test]
 #[cfg(feature = "blocking-network-client")]
@@ -19,7 +21,7 @@ fn fetch_only_with_configuration() -> crate::Result {
                 )
             }
         });
-    let repo = prepare.fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+    let (repo, out) = prepare.fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
     drop(prepare);
 
     assert!(
@@ -34,6 +36,18 @@ fn fetch_only_with_configuration() -> crate::Result {
         "our added spec was stored as well"
     );
 
+    assert_eq!(out.ref_map.mappings.len(), 13);
+    match out.status {
+        Status::Change { update_refs, .. } => {
+            for edit in &update_refs.edits {
+                assert!(
+                    repo.objects.contains(edit.change.new_value().expect("always set").id()),
+                    "part of the fetched pack"
+                );
+            }
+        }
+        _ => unreachable!("clones are always causing changes and dry-runs aren't possible"),
+    }
     Ok(())
 }
 
