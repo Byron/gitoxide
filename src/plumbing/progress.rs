@@ -206,8 +206,9 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "clone.defaultRemoteName",
-        usage: Planned {
-            note: None,
+        usage: InModule {
+            name: "clone::prepare",
+            deviation: None
         },
     },
     Record {
