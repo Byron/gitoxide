@@ -47,6 +47,14 @@ pub mod prepare {
             Fetch(#[from] crate::remote::fetch::Error),
             #[error(transparent)]
             RemoteConfiguration(#[from] crate::remote::init::Error),
+            #[error("Default remote configured at `clone.defaultRemoteName` is invalid")]
+            RemoteName(#[from] crate::remote::name::Error),
+            #[error("Failed to load repo-local git configuration before writing")]
+            LoadConfig(#[from] git_config::file::init::from_paths::Error),
+            #[error("Failed to store configured remote in memory")]
+            SaveConfig(#[from] crate::remote::save::AsError),
+            #[error("Failed to write repository configuration to disk")]
+            SaveConfigIo(#[from] std::io::Error),
         }
     }
 
@@ -94,7 +102,44 @@ pub mod prepare {
             progress: impl crate::Progress,
             should_interrupt: &std::sync::atomic::AtomicBool,
         ) -> Result<Repository, fetch::Error> {
-            todo!()
+            // TODO: provide fetch::Outcome somehow - it references `Repository`.
+            let repo = self
+                .repo
+                .as_ref()
+                .expect("user error: multiple calls are allowed only until it succeeds");
+
+            let remote_name = match self.remote_name.as_deref() {
+                Some(name) => name.to_owned(),
+                None => repo
+                    .config
+                    .resolved
+                    .string("clone", None, "defaultRemoteName")
+                    .map(|n| crate::remote::name::validated(n.to_string()))
+                    .unwrap_or_else(|| Ok("origin".into()))?,
+            };
+
+            let mut remote = repo
+                .remote_at(self.url.clone())?
+                .with_refspec("+refs/heads/*:refs/remotes/origin/*", crate::remote::Direction::Fetch)
+                .expect("valid static spec");
+            if let Some(f) = self.configure_remote.as_mut() {
+                remote = f(remote)?;
+            }
+
+            let mut metadata = git_config::file::Metadata::from(git_config::Source::Local);
+            let config_path = repo.git_dir().join("config");
+            metadata.path = Some(config_path.clone());
+            let mut config =
+                git_config::File::from_paths_metadata(Some(metadata), Default::default())?.expect("one file to load");
+            remote.save_as_to(remote_name, &mut config)?;
+            std::fs::write(config_path, config.to_bstring())?;
+
+            remote
+                .connect(crate::remote::Direction::Fetch, progress)?
+                .prepare_fetch(self.fetch_options.clone())?
+                .receive(should_interrupt)?;
+
+            Ok(self.repo.take().expect("still present"))
         }
     }
 
@@ -122,7 +167,7 @@ pub mod prepare {
         /// Set the remote's name to the given value after it was configured using the function provided via
         /// [`configure_remote()`][Self::configure_remote()].
         ///
-        /// If not set here, it defaults to `origin`.
+        /// If not set here, it defaults to `origin` or the value of `clone.defaultRemoteName`.
         pub fn with_remote_name(mut self, name: impl Into<String>) -> Result<Self, crate::remote::name::Error> {
             self.remote_name = Some(crate::remote::name::validated(name)?);
             Ok(self)

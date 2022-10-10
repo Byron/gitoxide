@@ -125,6 +125,17 @@ where
     ///
     /// "fetch.negotiationAlgorithm" describes algorithms `git` uses currently, with the default being `consecutive` and `skipping` being
     /// experimented with. We currently implement something we could call 'naive' which works for now.
+    ///
+    ///
+    /// ### Deviation
+    ///
+    /// When **updating refs**, the `git-fetch` docs state that the following:
+    ///
+    /// > Unlike when pushing with git-push, any updates outside of refs/{tags,heads}/* will be accepted without + in the refspec (or --force), whether that’s swapping e.g. a tree object for a blob, or a commit for another commit that’s doesn’t have the previous commit as an ancestor etc.
+    ///
+    /// We explicitly don't special case those refs and expect the user to take control. Note that by its nature,
+    /// force only applies to refs pointing to commits and if they don't, they will be updated either way in our
+    /// implementation as well.
     pub fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome<'remote>, Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
 
