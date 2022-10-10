@@ -17,6 +17,32 @@ pub struct Prepare {
 }
 
 ///
+#[cfg(feature = "blocking-network-client")]
+pub mod fetch {
+    /// The error returned by [`Prepare::fetch_only()`][super::Prepare::fetch_only()].
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error(transparent)]
+        Connect(#[from] crate::remote::connect::Error),
+        #[error(transparent)]
+        PrepareFetch(#[from] crate::remote::fetch::prepare::Error),
+        #[error(transparent)]
+        Fetch(#[from] crate::remote::fetch::Error),
+        #[error(transparent)]
+        RemoteConfiguration(#[from] crate::remote::init::Error),
+        #[error("Default remote configured at `clone.defaultRemoteName` is invalid")]
+        RemoteName(#[from] crate::remote::name::Error),
+        #[error("Failed to load repo-local git configuration before writing")]
+        LoadConfig(#[from] git_config::file::init::from_paths::Error),
+        #[error("Failed to store configured remote in memory")]
+        SaveConfig(#[from] crate::remote::save::AsError),
+        #[error("Failed to write repository configuration to disk")]
+        SaveConfigIo(#[from] std::io::Error),
+    }
+}
+
+///
 pub mod prepare {
     use crate::clone::Prepare;
     use crate::Repository;
@@ -30,32 +56,6 @@ pub mod prepare {
         Init(#[from] crate::init::Error),
         #[error(transparent)]
         UrlParse(#[from] git_url::parse::Error),
-    }
-
-    ///
-    #[cfg(feature = "blocking-network-client")]
-    pub mod fetch {
-        /// The error returned by [`Prepare::fetch_only()`][super::Prepare::fetch_only()].
-        #[derive(Debug, thiserror::Error)]
-        #[allow(missing_docs)]
-        pub enum Error {
-            #[error(transparent)]
-            Connect(#[from] crate::remote::connect::Error),
-            #[error(transparent)]
-            PrepareFetch(#[from] crate::remote::fetch::prepare::Error),
-            #[error(transparent)]
-            Fetch(#[from] crate::remote::fetch::Error),
-            #[error(transparent)]
-            RemoteConfiguration(#[from] crate::remote::init::Error),
-            #[error("Default remote configured at `clone.defaultRemoteName` is invalid")]
-            RemoteName(#[from] crate::remote::name::Error),
-            #[error("Failed to load repo-local git configuration before writing")]
-            LoadConfig(#[from] git_config::file::init::from_paths::Error),
-            #[error("Failed to store configured remote in memory")]
-            SaveConfig(#[from] crate::remote::save::AsError),
-            #[error("Failed to write repository configuration to disk")]
-            SaveConfigIo(#[from] std::io::Error),
-        }
     }
 
     /// Instantiation
@@ -101,7 +101,7 @@ pub mod prepare {
             &mut self,
             progress: impl crate::Progress,
             should_interrupt: &std::sync::atomic::AtomicBool,
-        ) -> Result<(Repository, crate::remote::fetch::Outcome), fetch::Error> {
+        ) -> Result<(Repository, crate::remote::fetch::Outcome), super::fetch::Error> {
             let repo = self
                 .repo
                 .as_mut()
