@@ -169,15 +169,15 @@ mod multiple {
             [
                 Fix::MappingWithPartialDestinationRemoved {
                     name: "foo/f1".into(),
-                    spec: glob_spec_ref,
+                    spec: glob_spec_ref.to_owned(),
                 },
                 Fix::MappingWithPartialDestinationRemoved {
                     name: "foo/f2".into(),
-                    spec: glob_spec_ref,
+                    spec: glob_spec_ref.to_owned(),
                 },
                 Fix::MappingWithPartialDestinationRemoved {
                     name: "foo/f3".into(),
-                    spec: glob_spec_ref,
+                    spec: glob_spec_ref.to_owned(),
                 },
             ],
             ["refs/heads/f1:refs/heads/f1"],
