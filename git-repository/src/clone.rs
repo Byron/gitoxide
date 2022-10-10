@@ -20,7 +20,6 @@ pub struct Prepare {
 pub mod prepare {
     use crate::clone::Prepare;
     use crate::Repository;
-    use git_features::threading::OwnShared;
     use std::convert::TryInto;
 
     /// The error returned by [`Prepare::new()`].
@@ -140,7 +139,7 @@ pub mod prepare {
                 .prepare_fetch(self.fetch_options.clone())?
                 .receive(should_interrupt)?;
 
-            let repo_config = OwnShared::make_mut(&mut repo.config.resolved);
+            let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
             let ids_to_remove: Vec<_> = repo_config
                 .sections_and_ids()
                 .filter_map(|(s, id)| (s.meta().source == git_config::Source::Local).then(|| id))

@@ -22,9 +22,8 @@ fn fetch_only_with_configuration() -> crate::Result {
     let repo = prepare.fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
     drop(prepare);
 
-    assert_eq!(
+    assert!(
         called_configure_remote.load(std::sync::atomic::Ordering::Relaxed),
-        true,
         "custom remote configuration is called"
     );
     assert_eq!(repo.remote_names().len(), 1, "only ever one remote");
