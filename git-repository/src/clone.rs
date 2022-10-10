@@ -35,7 +35,7 @@ pub mod prepare {
     ///
     #[cfg(feature = "blocking-network-client")]
     pub mod fetch {
-        /// The error returned by [`Prepare::fetch_only()`].
+        /// The error returned by [`Prepare::fetch_only()`][super::Prepare::fetch_only()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {

@@ -24,7 +24,7 @@ pub use errors::find;
 
 ///
 pub mod name {
-    /// The error returned by [validate()].
+    /// The error returned by [validated()].
     #[derive(Debug, thiserror::Error)]
     #[error("remote names must be valid within refspecs for fetching: {name:?}")]
     #[allow(missing_docs)]
