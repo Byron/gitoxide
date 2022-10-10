@@ -8,14 +8,11 @@ pub struct Remote {
 }
 
 mod remote {
-    use crate::client::http;
-    use crate::client::http::reqwest::Remote;
+    use std::{any::Any, convert::TryFrom, error::Error, io::Write, str::FromStr};
+
     use git_features::io::pipe;
-    use std::any::Any;
-    use std::convert::TryFrom;
-    use std::error::Error;
-    use std::io::Write;
-    use std::str::FromStr;
+
+    use crate::client::{http, http::reqwest::Remote};
 
     impl Default for Remote {
         fn default() -> Self {

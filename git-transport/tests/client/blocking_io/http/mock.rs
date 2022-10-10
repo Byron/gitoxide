@@ -1,7 +1,6 @@
-use std::net::Shutdown;
 use std::{
     io::{Read, Write},
-    net::SocketAddr,
+    net::{Shutdown, SocketAddr},
     time::Duration,
 };
 

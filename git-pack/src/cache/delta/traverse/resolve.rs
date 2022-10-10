@@ -1,15 +1,18 @@
-use std::sync::atomic::Ordering;
-use std::{cell::RefCell, collections::BTreeMap};
+use std::{cell::RefCell, collections::BTreeMap, sync::atomic::Ordering};
 
 use git_features::{
     progress::{unit, Progress},
     zlib,
 };
 
-use crate::cache::delta::traverse::util::{ItemSliceSend, Node};
-use crate::cache::delta::Item;
 use crate::{
-    cache::delta::traverse::{Context, Error},
+    cache::delta::{
+        traverse::{
+            util::{ItemSliceSend, Node},
+            Context, Error,
+        },
+        Item,
+    },
     data::EntryRange,
 };
 

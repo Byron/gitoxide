@@ -200,8 +200,9 @@ mod tests {
 
     #[test]
     fn size_of_pack_verify_data_structure() {
-        use super::Item;
         use git_odb::pack;
+
+        use super::Item;
         pub struct EntryWithDefault {
             _index_entry: pack::index::Entry,
             _kind: git_object::Kind,

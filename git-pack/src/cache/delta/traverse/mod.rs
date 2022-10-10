@@ -1,14 +1,13 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use git_features::parallel::in_parallel_with_slice;
 use git_features::{
+    parallel::in_parallel_with_slice,
     progress::{self, Progress},
     threading::{lock, Mutable, OwnShared},
 };
 
-use crate::cache::delta::traverse::util::ItemSliceSend;
 use crate::{
-    cache::delta::{Item, Tree},
+    cache::delta::{traverse::util::ItemSliceSend, Item, Tree},
     data::EntryRange,
 };
 
