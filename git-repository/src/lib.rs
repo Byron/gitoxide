@@ -183,6 +183,8 @@ pub use types::{
     Worktree,
 };
 
+///
+pub mod clone;
 pub mod commit;
 pub mod head;
 pub mod id;
@@ -218,6 +220,59 @@ pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, i
         },
     )
     .map(Into::into)
+}
+
+/// Create a platform for configuring a bare clone from `url` to the local `path`, using default options for opening it (but
+/// amended with using configuration from the git installation to ensure all authentication options are honored).
+///
+/// See [`clone::Prepare::new()] for a function to take full control over all options.
+pub fn prepare_clone_bare<Url, E>(
+    url: Url,
+    path: impl AsRef<std::path::Path>,
+) -> Result<clone::Prepare, clone::prepare::Error>
+where
+    Url: std::convert::TryInto<git_url::Url, Error = E>,
+    git_url::parse::Error: From<E>,
+{
+    clone::Prepare::new(
+        url,
+        path,
+        create::Options {
+            bare: true,
+            fs_capabilities: None,
+        },
+        open_opts_with_git_binary_config(),
+    )
+}
+
+/// Create a platform for configuring a clone with main working tree from `url` to the local `path`, using default options for opening it
+/// (but amended with using configuration from the git installation to ensure all authentication options are honored).
+///
+/// See [`clone::Prepare::new()] for a function to take full control over all options.
+pub fn prepare_clone<Url, E>(
+    url: Url,
+    path: impl AsRef<std::path::Path>,
+) -> Result<clone::Prepare, clone::prepare::Error>
+where
+    Url: std::convert::TryInto<git_url::Url, Error = E>,
+    git_url::parse::Error: From<E>,
+{
+    clone::Prepare::new(
+        url,
+        path,
+        create::Options {
+            bare: false,
+            fs_capabilities: None,
+        },
+        open_opts_with_git_binary_config(),
+    )
+}
+
+fn open_opts_with_git_binary_config() -> open::Options {
+    use git_sec::trust::DefaultForLevel;
+    let mut opts = open::Options::default_for_level(git_sec::Trust::Full);
+    opts.permissions.config.git_binary = true;
+    opts
 }
 
 /// See [ThreadSafeRepository::open()], but returns a [`Repository`] instead.

@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use git_features::threading::OwnShared;
 
+use crate::file::SectionBodyIdsLut;
 use crate::{
     file::{self, rename_section, write::ends_with_newline, MetadataFilter, SectionId, SectionMut},
     lookup,
@@ -11,7 +12,7 @@ use crate::{
 
 /// Mutating low-level access methods.
 impl<'event> File<'event> {
-    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_.
+    /// Returns the last mutable section with a given `name` and optional `subsection_name`, _if it exists_.
     pub fn section_mut<'a>(
         &'a mut self,
         name: impl AsRef<str>,
@@ -29,7 +30,16 @@ impl<'event> File<'event> {
             .expect("BUG: Section did not have id from lookup")
             .to_mut(nl))
     }
-    /// Returns an mutable section with a given `name` and optional `subsection_name`, _if it exists_, or create a new section.
+
+    /// Return the mutable section identified by `id`, or `None` if it didn't exist.
+    ///
+    /// Note that `id` is stable across deletions and insertions.
+    pub fn section_mut_by_id<'a>(&'a mut self, id: SectionId) -> Option<SectionMut<'a, 'event>> {
+        let nl = self.detect_newline_style_smallvec();
+        self.sections.get_mut(&id).map(|s| s.to_mut(nl))
+    }
+
+    /// Returns the last mutable section with a given `name` and optional `subsection_name`, _if it exists_, or create a new section.
     pub fn section_mut_or_create_new<'a>(
         &'a mut self,
         name: impl AsRef<str>,
@@ -182,13 +192,39 @@ impl<'event> File<'event> {
             .ok()?
             .rev()
             .next()?;
-        self.section_order.remove(
-            self.section_order
-                .iter()
-                .position(|v| *v == id)
-                .expect("known section id"),
-        );
-        self.sections.remove(&id)
+        self.remove_section_by_id(id)
+    }
+
+    /// Remove the section identified by `id` if it exists and return it, or return `None` if no such section was present.
+    ///
+    /// Note that section ids are unambiguous even in the face of removals and additions of sections.
+    pub fn remove_section_by_id(&mut self, id: SectionId) -> Option<file::Section<'event>> {
+        self.section_order
+            .remove(self.section_order.iter().position(|v| *v == id)?);
+        let section = self.sections.remove(&id)?;
+        let lut = self
+            .section_lookup_tree
+            .get_mut(&section.header.name)
+            .expect("lookup cache still has name to be deleted");
+        for entry in lut {
+            match section.header.subsection_name.as_deref() {
+                Some(subsection_name) => {
+                    if let SectionBodyIdsLut::NonTerminal(map) = entry {
+                        if let Some(ids) = map.get_mut(subsection_name) {
+                            ids.remove(ids.iter().position(|v| *v == id).expect("present"));
+                            break;
+                        }
+                    }
+                }
+                None => {
+                    if let SectionBodyIdsLut::Terminal(ids) = entry {
+                        ids.remove(ids.iter().position(|v| *v == id).expect("present"));
+                        break;
+                    }
+                }
+            }
+        }
+        Some(section)
     }
 
     /// Removes the section with `name` and `subsection_name` that passed `filter`, returning the removed section

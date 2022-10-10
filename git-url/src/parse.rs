@@ -60,16 +60,13 @@ fn has_no_explicit_protocol(url: &[u8]) -> bool {
     url.find(b"://").is_none()
 }
 
-fn possibly_strip_file_protocol(url: &[u8]) -> &[u8] {
-    if url.starts_with(b"file://") {
-        &url[b"file://".len()..]
-    } else {
-        url
-    }
+fn try_strip_file_protocol(url: &[u8]) -> Option<&[u8]> {
+    url.strip_prefix(b"file://")
 }
 
 fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
     Ok(crate::Url {
+        serialize_alternative_form: false,
         scheme: str_to_protocol(url.scheme())?,
         user: if url.username().is_empty() {
             None
@@ -90,25 +87,30 @@ fn to_owned_url(url: url::Url) -> Result<crate::Url, Error> {
 /// For file-paths, we don't expect UTF8 encoding either.
 pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     let guessed_protocol = guess_protocol(input);
-    if possibly_strip_file_protocol(input) != input || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
+    let path_without_protocol = try_strip_file_protocol(input);
+    if path_without_protocol.is_some() || (has_no_explicit_protocol(input) && guessed_protocol == "file") {
         return Ok(crate::Url {
             scheme: Scheme::File,
-            path: possibly_strip_file_protocol(input).into(),
+            path: path_without_protocol.unwrap_or(input).into(),
+            serialize_alternative_form: !input.starts_with(b"file://"),
             ..Default::default()
         });
     }
 
     let url_str = std::str::from_utf8(input)?;
-    let mut url = match url::Url::parse(url_str) {
-        Ok(url) => url,
-        Err(::url::ParseError::RelativeUrlWithoutBase) => {
+    let (mut url, mut sanitized_scp) = match url::Url::parse(url_str) {
+        Ok(url) => (url, false),
+        Err(url::ParseError::RelativeUrlWithoutBase) => {
             // happens with bare paths as well as scp like paths. The latter contain a ':' past the host portion,
             // which we are trying to detect.
-            url::Url::parse(&format!(
-                "{}://{}",
-                guessed_protocol,
-                sanitize_for_protocol(guessed_protocol, url_str)
-            ))?
+            (
+                url::Url::parse(&format!(
+                    "{}://{}",
+                    guessed_protocol,
+                    sanitize_for_protocol(guessed_protocol, url_str)
+                ))?,
+                true,
+            )
         }
         Err(err) => return Err(err.into()),
     };
@@ -116,6 +118,7 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
     if url.scheme().find('.').is_some() {
         // try again with prefixed protocol
         url = url::Url::parse(&format!("ssh://{}", sanitize_for_protocol("ssh", url_str)))?;
+        sanitized_scp = true;
     }
     if url.scheme() != "rad" && url.path().is_empty() {
         return Err(Error::EmptyPath);
@@ -124,5 +127,5 @@ pub fn parse(input: &BStr) -> Result<crate::Url, Error> {
         return Err(Error::RelativeUrl { url: url.into() });
     }
 
-    to_owned_url(url)
+    to_owned_url(url).map(|url| url.serialize_alternate_form(sanitized_scp))
 }

@@ -19,3 +19,11 @@ pub(crate) fn cow_str(s: &str) -> Cow<str> {
 mod connect;
 mod fetch;
 mod ref_map;
+mod save;
+mod name {
+    use git_repository as git;
+    #[test]
+    fn empty_is_invalid() {
+        assert!(git::remote::name::validated("").is_err());
+    }
+}

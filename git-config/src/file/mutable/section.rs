@@ -95,7 +95,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
             Some((key_range, value_range)) => {
                 let value_range = value_range.unwrap_or(key_range.end - 1..key_range.end);
                 let range_start = value_range.start;
-                let ret = self.remove_internal(value_range);
+                let ret = self.remove_internal(value_range, false);
                 self.section
                     .body
                     .0
@@ -109,7 +109,7 @@ impl<'a, 'event> SectionMut<'a, 'event> {
     pub fn remove(&mut self, key: impl AsRef<str>) -> Option<Cow<'event, BStr>> {
         let key = Key::from_str_unchecked(key.as_ref());
         let (key_range, _value_range) = self.key_and_value_range_by(&key)?;
-        Some(self.remove_internal(key_range))
+        Some(self.remove_internal(key_range, true))
     }
 
     /// Adds a new line event. Note that you don't need to call this unless
@@ -231,17 +231,33 @@ impl<'a, 'event> SectionMut<'a, 'event> {
     }
 
     /// Performs the removal, assuming the range is valid.
-    fn remove_internal(&mut self, range: Range<usize>) -> Cow<'event, BStr> {
-        self.section
-            .body
-            .0
-            .drain(range)
-            .fold(Cow::Owned(BString::default()), |mut acc, e| {
+    fn remove_internal(&mut self, range: Range<usize>, fix_whitespace: bool) -> Cow<'event, BStr> {
+        let events = &mut self.section.body.0;
+        if fix_whitespace
+            && events
+                .get(range.end)
+                .map_or(false, |ev| matches!(ev, Event::Newline(_)))
+        {
+            events.remove(range.end);
+        }
+        let value = events
+            .drain(range.clone())
+            .fold(Cow::Owned(BString::default()), |mut acc: Cow<'_, BStr>, e| {
                 if let Event::Value(v) | Event::ValueNotDone(v) | Event::ValueDone(v) = e {
                     acc.to_mut().extend(&**v);
                 }
                 acc
-            })
+            });
+        if fix_whitespace
+            && range
+                .start
+                .checked_sub(1)
+                .and_then(|pos| events.get(pos))
+                .map_or(false, |ev| matches!(ev, Event::Whitespace(_)))
+        {
+            events.remove(range.start - 1);
+        }
+        value
     }
 }
 

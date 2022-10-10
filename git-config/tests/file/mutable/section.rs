@@ -28,6 +28,15 @@ fn section_mut_or_create_new_filter_may_reject_existing_sections() -> crate::Res
     Ok(())
 }
 
+#[test]
+fn section_mut_by_id() {
+    let mut config = multi_value_section();
+    let id = config.sections_and_ids().next().expect("at least one").1;
+    let section = config.section_mut_by_id(id).expect("present");
+    assert_eq!(section.header().name(), "a");
+    assert_eq!(section.header().subsection_name(), None);
+}
+
 mod remove {
     use super::multi_value_section;
 
@@ -49,10 +58,7 @@ mod remove {
         }
 
         assert!(!section.is_void(), "everything is still there");
-        assert_eq!(
-            config.to_string(),
-            "\n        [a]\n            \n            \n            \n            \n            "
-        );
+        assert_eq!(config.to_string(), "\n        [a]\n");
         Ok(())
     }
 }

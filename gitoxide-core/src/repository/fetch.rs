@@ -43,7 +43,7 @@ pub(crate) mod function {
         if !ref_specs.is_empty() {
             remote.replace_refspecs(ref_specs.iter(), git::remote::Direction::Fetch)?;
         }
-        let res: git::remote::fetch::Outcome<'_> = remote
+        let res: git::remote::fetch::Outcome = remote
             .connect(git::remote::Direction::Fetch, progress)?
             .prepare_fetch(Default::default())?
             .with_dry_run(dry_run)
@@ -84,7 +84,7 @@ pub(crate) mod function {
         repo: &git::Repository,
         update_refs: git::remote::fetch::refs::update::Outcome,
         refspecs: &[git::refspec::RefSpec],
-        mut map: git::remote::fetch::RefMap<'_>,
+        mut map: git::remote::fetch::RefMap,
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
@@ -121,8 +121,11 @@ pub(crate) mod function {
                 err,
                 "The following destination refs were removed as they didn't start with 'ref/'"
             )?;
-            map.fixes.sort_by_key(|f| match f {
-                Fix::MappingWithPartialDestinationRemoved { spec, .. } => *spec,
+            map.fixes.sort_by(|l, r| match (l, r) {
+                (
+                    Fix::MappingWithPartialDestinationRemoved { spec: l, .. },
+                    Fix::MappingWithPartialDestinationRemoved { spec: r, .. },
+                ) => l.cmp(&r),
             });
             let mut prev_spec = None;
             for fix in &map.fixes {
@@ -130,7 +133,7 @@ pub(crate) mod function {
                     Fix::MappingWithPartialDestinationRemoved { name, spec } => {
                         if prev_spec.map_or(true, |prev_spec| prev_spec != spec) {
                             prev_spec = spec.into();
-                            spec.write_to(&mut err)?;
+                            spec.to_ref().write_to(&mut err)?;
                             writeln!(err)?;
                         }
                         writeln!(err, "\t{name}")?;

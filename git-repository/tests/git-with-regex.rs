@@ -1,6 +1,7 @@
 mod util;
 use util::*;
 
+mod clone;
 mod commit;
 mod head;
 mod id;

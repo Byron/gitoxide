@@ -1,9 +1,10 @@
-use std::{borrow::Cow, convert::TryFrom, iter::FromIterator};
+use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
 use git_features::threading::OwnShared;
 use smallvec::SmallVec;
 
+use crate::file::SectionId;
 use crate::{
     file,
     file::{
@@ -206,6 +207,25 @@ impl<'event> File<'event> {
         })
     }
 
+    /// Similar to [`sections_by_name()`][Self::sections_by_name()], but returns an identifier for this section as well to allow
+    /// referring to it unambiguously even in the light of deletions.
+    #[must_use]
+    pub fn sections_and_ids_by_name<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> Option<impl Iterator<Item = (&file::Section<'event>, SectionId)> + '_> {
+        self.section_ids_by_name(name).ok().map(move |ids| {
+            ids.map(move |id| {
+                (
+                    self.sections
+                        .get(&id)
+                        .expect("section doesn't have id from from lookup"),
+                    id,
+                )
+            })
+        })
+    }
+
     /// Gets all sections that match the provided `name`, ignoring any subsections, and pass the `filter`.
     #[must_use]
     pub fn sections_by_name_and_filter<'a>(
@@ -258,6 +278,11 @@ impl<'event> File<'event> {
         self.section_order.iter().map(move |id| &self.sections[id])
     }
 
+    /// Return an iterator over all sections and their ids, in order of occurrence in the file itself.
+    pub fn sections_and_ids(&self) -> impl Iterator<Item = (&file::Section<'event>, SectionId)> + '_ {
+        self.section_order.iter().map(move |id| (&self.sections[id], *id))
+    }
+
     /// Return an iterator over all sections along with non-section events that are placed right after them,
     /// in order of occurrence in the file itself.
     ///
@@ -296,6 +321,6 @@ impl<'event> File<'event> {
     }
 
     pub(crate) fn detect_newline_style_smallvec(&self) -> SmallVec<[u8; 2]> {
-        SmallVec::from_iter(self.detect_newline_style().iter().copied())
+        self.detect_newline_style().as_ref().into()
     }
 }

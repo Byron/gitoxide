@@ -1,6 +1,6 @@
 use git_url::Scheme;
 
-use crate::parse::{assert_url_and, assert_url_roundtrip, url};
+use crate::parse::{assert_url_and, assert_url_roundtrip, url, url_alternate};
 
 #[test]
 fn without_user_and_without_port() -> crate::Result {
@@ -51,10 +51,10 @@ fn with_user_and_without_port() -> crate::Result {
 fn scp_like_without_user() -> crate::Result {
     let url = assert_url_and(
         "host.xz:path/to/git",
-        url(Scheme::Ssh, None, "host.xz", None, b"/path/to/git"),
+        url_alternate(Scheme::Ssh, None, "host.xz", None, b"/path/to/git"),
     )?
     .to_bstring();
-    assert_eq!(url, "ssh://host.xz/path/to/git");
+    assert_eq!(url, "host.xz:path/to/git");
     Ok(())
 }
 
@@ -62,10 +62,10 @@ fn scp_like_without_user() -> crate::Result {
 fn scp_like_without_user_and_username_expansion_without_username() -> crate::Result {
     let url = assert_url_and(
         "host.xz:~/to/git",
-        url(Scheme::Ssh, None, "host.xz", None, b"/~/to/git"),
+        url_alternate(Scheme::Ssh, None, "host.xz", None, b"/~/to/git"),
     )?
     .to_bstring();
-    assert_eq!(url, "ssh://host.xz/~/to/git");
+    assert_eq!(url, "host.xz:~/to/git");
     Ok(())
 }
 
@@ -73,10 +73,10 @@ fn scp_like_without_user_and_username_expansion_without_username() -> crate::Res
 fn scp_like_without_user_and_username_expansion_with_username() -> crate::Result {
     let url = assert_url_and(
         "host.xz:~byron/to/git",
-        url(Scheme::Ssh, None, "host.xz", None, b"/~byron/to/git"),
+        url_alternate(Scheme::Ssh, None, "host.xz", None, b"/~byron/to/git"),
     )?
     .to_bstring();
-    assert_eq!(url, "ssh://host.xz/~byron/to/git");
+    assert_eq!(url, "host.xz:~byron/to/git");
     Ok(())
 }
 
@@ -84,9 +84,16 @@ fn scp_like_without_user_and_username_expansion_with_username() -> crate::Result
 fn scp_like_with_user_and_relative_path_turns_into_absolute_path() -> crate::Result {
     let url = assert_url_and(
         "user@host.xz:./relative",
-        url(Scheme::Ssh, "user", "host.xz", None, b"/relative"),
+        url_alternate(Scheme::Ssh, "user", "host.xz", None, b"/relative"),
     )?
     .to_bstring();
-    assert_eq!(url, "ssh://user@host.xz/relative");
+    assert_eq!(url, "user@host.xz:relative");
+
+    let url = assert_url_and(
+        "user@host.xz:../relative",
+        url_alternate(Scheme::Ssh, "user", "host.xz", None, b"/../relative"),
+    )?
+    .to_bstring();
+    assert_eq!(url, "user@host.xz:relative");
     Ok(())
 }

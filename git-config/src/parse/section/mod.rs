@@ -160,10 +160,10 @@ mod types {
     generate_case_insensitive!(
         Name,
         name,
-        "Valid names consist alphanumeric characters or dashes.",
+        "Valid names consist of alphanumeric characters or dashes.",
         is_valid_name,
         bstr::BStr,
-        "Wrapper struct for section header names, like `includeIf`, since these are case-insensitive."
+        "Wrapper struct for section header names, like `remote`, since these are case-insensitive."
     );
 
     generate_case_insensitive!(

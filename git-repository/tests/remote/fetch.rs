@@ -28,7 +28,7 @@ mod blocking_io {
         let mut remote = repo.head()?.into_remote(Fetch).expect("present")?;
         remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-exist"), Fetch)?;
 
-        let res: git::remote::fetch::Outcome<'_> = remote
+        let res: git::remote::fetch::Outcome = remote
             .connect(Fetch, git::progress::Discard)?
             .prepare_fetch(Default::default())?
             .receive(&AtomicBool::default())?;

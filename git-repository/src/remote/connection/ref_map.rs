@@ -63,7 +63,7 @@ where
     /// Due to management of the transport, it's cleanest to only use it for a single interaction. Thus it's consumed along with
     /// the connection.
     #[git_protocol::maybe_async::maybe_async]
-    pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap<'remote>, Error> {
+    pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap, Error> {
         let res = self.ref_map_inner(options).await;
         git_protocol::fetch::indicate_end_of_interaction(&mut self.transport)
             .await
@@ -78,7 +78,7 @@ where
             prefix_from_spec_as_filter_on_remote,
             handshake_parameters,
         }: Options,
-    ) -> Result<fetch::RefMap<'remote>, Error> {
+    ) -> Result<fetch::RefMap, Error> {
         let remote = self
             .fetch_refs(prefix_from_spec_as_filter_on_remote, handshake_parameters)
             .await?;
