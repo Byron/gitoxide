@@ -241,7 +241,7 @@ fn add_item_if_package_changed<'a>(
             };
             match (current, parent) {
                 (Some(current), Some(parent)) => {
-                    if current.oid != parent.oid {
+                    if current.oid() != parent.oid() {
                         history.push(item)
                     }
                 }

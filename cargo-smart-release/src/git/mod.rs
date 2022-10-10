@@ -49,14 +49,14 @@ pub fn change_since_last_release(package: &Package, ctx: &crate::Context) -> any
                         .into_tree()
                         .lookup_entry(components.clone())?
                         .expect("path must exist in current commit")
-                        .oid;
+                        .object_id();
                     let released_dir_id = released_target
                         .object()?
                         .peel_to_kind(object::Kind::Tree)?
                         .into_tree()
                         .lookup_entry(components)?
                         .expect("path must exist as it was supposedly released there")
-                        .oid;
+                        .object_id();
 
                     (released_dir_id != current_dir_id).then(|| PackageChangeKind::ChangedOrNew)
                 }
