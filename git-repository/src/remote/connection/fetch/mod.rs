@@ -60,9 +60,9 @@ pub enum Status {
 
 /// The outcome of receiving a pack via [`Prepare::receive()`].
 #[derive(Debug, Clone)]
-pub struct Outcome<'spec> {
+pub struct Outcome {
     /// The result of the initial mapping of references, the prerequisite for any fetch.
-    pub ref_map: RefMap<'spec>,
+    pub ref_map: RefMap,
     /// The status of the operation to indicate what happened.
     pub status: Status,
 }
@@ -136,7 +136,7 @@ where
     /// We explicitly don't special case those refs and expect the user to take control. Note that by its nature,
     /// force only applies to refs pointing to commits and if they don't, they will be updated either way in our
     /// implementation as well.
-    pub fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome<'remote>, Error> {
+    pub fn receive(mut self, should_interrupt: &AtomicBool) -> Result<Outcome, Error> {
         let mut con = self.con.take().expect("receive() can only be called once");
 
         let handshake = &self.ref_map.handshake;
@@ -269,7 +269,7 @@ where
     T: Transport,
 {
     con: Option<Connection<'remote, 'repo, T, P>>,
-    ref_map: RefMap<'remote>,
+    ref_map: RefMap,
     dry_run: DryRun,
 }
 

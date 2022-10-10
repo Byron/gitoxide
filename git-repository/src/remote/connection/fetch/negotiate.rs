@@ -20,7 +20,7 @@ pub(crate) fn one_round(
     algo: Algorithm,
     round: usize,
     repo: &crate::Repository,
-    ref_map: &crate::remote::fetch::RefMap<'_>,
+    ref_map: &crate::remote::fetch::RefMap,
     arguments: &mut git_protocol::fetch::Arguments,
     _previous_response: Option<&git_protocol::fetch::Response>,
 ) -> Result<bool, Error> {

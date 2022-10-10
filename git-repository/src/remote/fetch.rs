@@ -12,11 +12,11 @@ pub(crate) enum DryRun {
 
 /// Information about the relationship between our refspecs, and remote references with their local counterparts.
 #[derive(Default, Debug, Clone)]
-pub struct RefMap<'spec> {
+pub struct RefMap {
     /// A mapping between a remote reference and a local tracking branch.
     pub mappings: Vec<Mapping>,
     /// Information about the fixes applied to the `mapping` due to validation and sanitization.
-    pub fixes: Vec<git_refspec::match_group::validate::Fix<'spec>>,
+    pub fixes: Vec<git_refspec::match_group::validate::Fix>,
     /// All refs advertised by the remote.
     pub remote_refs: Vec<git_protocol::fetch::Ref>,
     /// Additional information provided by the server as part of the handshake.
