@@ -62,8 +62,11 @@ fn bump_major_minor_patch(v: &mut semver::Version, bump_spec: BumpSpec) -> bool 
 #[derive(Clone, Debug)]
 pub struct Bump {
     pub next_release: semver::Version,
+    /// The current version of the crate as read from Cargo.toml.
     pub package_version: semver::Version,
+    /// The latest released version of the package, as read from the crates-index.
     pub latest_release: Option<semver::Version>,
+    /// The computed version, for example based on a user version bump or a computed version bump.
     pub desired_release: semver::Version,
 }
 

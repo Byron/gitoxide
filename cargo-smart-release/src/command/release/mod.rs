@@ -117,7 +117,7 @@ fn assure_crates_index_is_uptodate<'meta>(
         .find_map(|(d, b)| {
             b.latest_release
                 .as_ref()
-                .and_then(|lr| (lr >= &b.desired_release).then(|| d))
+                .and_then(|lr| (lr >= &b.next_release).then(|| d))
         })
     {
         let mut index = crate::crates_index::Index::new_cargo_default()?;
@@ -225,13 +225,13 @@ fn present_and_validate_dependencies(
                 if let Some(latest_release) = bump
                     .latest_release
                     .as_ref()
-                    .and_then(|lr| (*lr >= bump.desired_release).then(|| lr))
+                    .and_then(|lr| (*lr >= bump.next_release).then(|| lr))
                 {
                     let bump_flag = match dep.kind {
                         dependency::Kind::UserSelection => "--bump <level>",
                         dependency::Kind::DependencyOrDependentOfUserSelection => "--bump-dependencies <level>",
                     };
-                    if bump.desired_release == bump.package_version {
+                    if bump.next_release == bump.package_version {
                         log::warn!(
                             "'{}' is unchanged. Consider using {} along with --no-bump-on-demand to force a version change.",
                             dep.package.name,
@@ -242,7 +242,7 @@ fn present_and_validate_dependencies(
                             "Latest published version of '{}' is {}, the new version is {}. Consider using {} or update the index with --update-crates-index.",
                             dep.package.name,
                             latest_release,
-                            bump.desired_release,
+                            bump.next_release,
                             bump_flag
                         );
                     }
@@ -276,17 +276,19 @@ fn present_and_validate_dependencies(
                             .unwrap_or_default(),
                     );
                 } else {
-                    log::info!(
-                        "Manifest version of {} package '{}' at {} is sufficient{}, ignoring computed version {}",
-                        kind,
-                        dep.package.name,
-                        dep.package.version,
-                        bump.latest_release
-                            .as_ref()
-                            .map(|latest_release| format!(" to succeed latest released version {}", latest_release))
-                            .unwrap_or_else(|| ", creating a new release 🎉".into()),
-                        bump.desired_release
-                    );
+                    if bump.desired_release != dep.package.version {
+                        log::info!(
+                            "Manifest version of {} package '{}' at {} is sufficient{}, ignoring computed version {}",
+                            kind,
+                            dep.package.name,
+                            dep.package.version,
+                            bump.latest_release
+                                .as_ref()
+                                .map(|latest_release| format!(" to succeed latest released version {}", latest_release))
+                                .unwrap_or_else(|| ", creating a new release 🎉".into()),
+                            bump.desired_release
+                        );
+                    }
                 };
             }
             dependency::Mode::NotForPublishing { .. } => {}
