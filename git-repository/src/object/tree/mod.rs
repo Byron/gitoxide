@@ -37,7 +37,7 @@ impl<'repo> Tree<'repo> {
     /// The borrow checker shows pathological behaviour in loops that mutate a buffer, but also want to return from it.
     /// Workarounds include keeping an index and doing a separate access to the memory, which seems hard to do here without
     /// re-parsing the entries.
-    pub fn lookup_entry<I, P>(mut self, path: I) -> Result<Option<git_object::tree::Entry>, find::existing::Error>
+    pub fn lookup_entry<I, P>(mut self, path: I) -> Result<Option<Entry<'repo>>, find::existing::Error>
     where
         I: IntoIterator<Item = P>,
         P: PartialEq<BStr>,
@@ -50,7 +50,10 @@ impl<'repo> Tree<'repo> {
             {
                 Some(entry) => {
                     if path.peek().is_none() {
-                        return Ok(Some(entry.into()));
+                        return Ok(Some(Entry {
+                            inner: entry.into(),
+                            repo: self.repo,
+                        }));
                     } else {
                         let next_id = entry.oid.to_owned();
                         let repo = self.repo;
@@ -76,7 +79,7 @@ impl<'repo> Tree<'repo> {
     pub fn lookup_entry_by_path(
         self,
         relative_path: impl AsRef<std::path::Path>,
-    ) -> Result<Option<git_object::tree::Entry>, find::existing::Error> {
+    ) -> Result<Option<Entry<'repo>>, find::existing::Error> {
         self.lookup_entry(relative_path.as_ref().components().map(|c| {
             git_path::os_str_into_bstr(c.as_os_str())
                 .unwrap_or_else(|_| "".into())
@@ -98,5 +101,59 @@ pub use iter::EntryRef;
 impl<'r> std::fmt::Debug for Tree<'r> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Tree({})", self.id)
+    }
+}
+
+/// An entry in a [`Tree`], similar to an entry in a directory.
+#[derive(PartialEq, Debug, Clone)]
+pub struct Entry<'repo> {
+    inner: git_object::tree::Entry,
+    repo: &'repo crate::Repository,
+}
+
+mod entry {
+    use crate::bstr::BStr;
+    use crate::ext::ObjectIdExt;
+    use crate::object::tree::Entry;
+
+    /// Access
+    impl<'repo> Entry<'repo> {
+        /// The kind of object to which `oid` is pointing to.
+        pub fn mode(&self) -> git_object::tree::EntryMode {
+            self.inner.mode
+        }
+
+        /// The name of the file in the parent tree.
+        pub fn filename(&self) -> &BStr {
+            self.inner.filename.as_ref()
+        }
+
+        /// Return the object id of the entry.
+        pub fn id(&self) -> crate::Id<'repo> {
+            self.inner.oid.attach(self.repo)
+        }
+
+        /// Return the object this entry points to.
+        pub fn object(&self) -> Result<crate::Object<'repo>, crate::object::find::existing::Error> {
+            self.id().object()
+        }
+
+        /// Return the plain object id of this entry, without access to the repository.
+        pub fn oid(&self) -> &git_hash::oid {
+            &self.inner.oid
+        }
+
+        /// Return the plain object id of this entry, without access to the repository.
+        pub fn object_id(&self) -> git_hash::ObjectId {
+            self.inner.oid
+        }
+    }
+
+    /// Consuming
+    impl Entry<'_> {
+        /// Return the contained object.
+        pub fn detach(self) -> git_object::tree::Entry {
+            self.inner
+        }
     }
 }

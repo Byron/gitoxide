@@ -131,7 +131,7 @@ impl<'repo> delegate::Navigate for Delegate<'repo> {
                                 object: obj.attach(repo).shorten_or_id(),
                                 tree: tree_id.attach(repo).shorten_or_id(),
                             })?;
-                    Ok(entry.oid)
+                    Ok(entry.object_id())
                 };
                 for obj in objs.iter() {
                     match lookup_path(obj) {
