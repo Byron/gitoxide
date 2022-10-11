@@ -229,12 +229,12 @@ pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, i
 pub fn prepare_clone_bare<Url, E>(
     url: Url,
     path: impl AsRef<std::path::Path>,
-) -> Result<clone::Prepare, clone::prepare::Error>
+) -> Result<clone::PrepareFetch, clone::Error>
 where
     Url: std::convert::TryInto<git_url::Url, Error = E>,
     git_url::parse::Error: From<E>,
 {
-    clone::Prepare::new(
+    clone::PrepareFetch::new(
         url,
         path,
         create::Options {
@@ -249,15 +249,12 @@ where
 /// (but amended with using configuration from the git installation to ensure all authentication options are honored).
 ///
 /// See [`clone::Prepare::new()] for a function to take full control over all options.
-pub fn prepare_clone<Url, E>(
-    url: Url,
-    path: impl AsRef<std::path::Path>,
-) -> Result<clone::Prepare, clone::prepare::Error>
+pub fn prepare_clone<Url, E>(url: Url, path: impl AsRef<std::path::Path>) -> Result<clone::PrepareFetch, clone::Error>
 where
     Url: std::convert::TryInto<git_url::Url, Error = E>,
     git_url::parse::Error: From<E>,
 {
-    clone::Prepare::new(
+    clone::PrepareFetch::new(
         url,
         path,
         create::Options {
