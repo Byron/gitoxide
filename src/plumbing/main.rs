@@ -756,14 +756,18 @@ pub fn main() -> Result<()> {
             ),
         },
         Subcommands::Index(cmd) => match cmd {
-            index::Subcommands::FromTree { force, id, index } => prepare_and_run(
-                "index-read-tree",
+            index::Subcommands::FromTree {
+                force,
+                index_output_path,
+                spec,
+            } => prepare_and_run(
+                "index-from-tree",
                 verbose,
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, err| {
-                    core::index::from_tree(id, index, force, repository(Mode::Strict)?, out, err)
+                move |_progress, out, _err| {
+                    core::index::from_tree(spec, index_output_path, force, repository(Mode::Strict)?, out)
                 },
             ),
         },

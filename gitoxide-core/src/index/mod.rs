@@ -1,5 +1,6 @@
 use git::odb::FindExt;
 use git_repository as git;
+use std::ffi::OsString;
 use std::{
     io::BufWriter,
     path::{Path, PathBuf},
@@ -91,32 +92,35 @@ pub fn information(
 }
 
 pub fn from_tree(
-    id: String,
-    index: Option<PathBuf>,
+    spec: OsString,
+    index_path: Option<PathBuf>,
     force: bool,
     repo: git::Repository,
     mut out: impl std::io::Write,
-    mut err: impl std::io::Write,
 ) -> anyhow::Result<()> {
-    let tree = repo.rev_parse_single(id.as_str())?;
+    let spec = git::path::os_str_into_bstr(&spec)?;
+    let tree = repo.rev_parse_single(spec)?;
     let state = git::index::State::from_tree(&tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
+    let options = git::index::write::Options {
+        hash_kind: repo.object_hash(),
+        ..Default::default()
+    };
 
-    match index {
-        Some(index) => {
-            if index.is_file() {
-                writeln!(err, "File {:?} already exists", index).ok();
-                if force {
-                    writeln!(err, "overwriting").ok();
-                } else {
-                    anyhow::bail!("exiting, to overwrite use the '-f' flag");
+    match index_path {
+        Some(index_path) => {
+            if index_path.is_file() {
+                if !force {
+                    anyhow::bail!(
+                        "File at \"{}\" already exists, to overwrite use the '-f' flag",
+                        index_path.display()
+                    );
                 }
             }
-            let writer = BufWriter::new(std::fs::File::create(&index)?);
-            state.write_to(writer, git::index::write::Options::default())?;
-            writeln!(err, "Successfully wrote file {:?}", index).ok();
+            let writer = BufWriter::new(std::fs::File::create(&index_path)?);
+            state.write_to(writer, options)?;
         }
         None => {
-            state.write_to(&mut out, git::index::write::Options::default())?;
+            state.write_to(&mut out, options)?;
         }
     }
 

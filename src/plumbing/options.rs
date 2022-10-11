@@ -60,13 +60,13 @@ pub struct Args {
 
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommands {
-    /// Interact with the object database.
+    /// Interact with the object database
     #[clap(subcommand)]
     Odb(odb::Subcommands),
-    /// Interact with tree objects.
+    /// Interact with tree objects
     #[clap(subcommand)]
     Tree(tree::Subcommands),
-    /// Interact with commit objects.
+    /// Interact with commit objects
     #[clap(subcommand)]
     Commit(commit::Subcommands),
     /// Verify the integrity of the entire repository
@@ -74,22 +74,22 @@ pub enum Subcommands {
         #[clap(flatten)]
         args: free::pack::VerifyOptions,
     },
-    /// Query and obtain information about revisions.
+    /// Query and obtain information about revisions
     #[clap(subcommand)]
     Revision(revision::Subcommands),
-    /// A program just like `git credential`.
+    /// A program just like `git credential`
     #[clap(subcommand)]
     Credential(credential::Subcommands),
-    /// Interact with the mailmap.
+    /// Interact with the mailmap
     #[clap(subcommand)]
     Mailmap(mailmap::Subcommands),
     /// Interact with the remote hosts.
     Remote(remote::Platform),
-    /// Interact with the exclude files like .gitignore.
+    /// Interact with the exclude files like .gitignore
     #[clap(subcommand)]
     Exclude(exclude::Subcommands),
     Config(config::Platform),
-    /// Subcommands that need no git repository to run.
+    /// Subcommands that need no git repository to run
     #[clap(subcommand)]
     Free(free::Subcommands),
     /// Interact with index files
@@ -673,17 +673,18 @@ pub mod index {
 
     #[derive(Debug, clap::Subcommand)]
     pub enum Subcommands {
+        /// Create an index from a tree-ish.
         #[clap(visible_alias = "read-tree")]
         FromTree {
-            /// Overwrite the specified file if it already exists
+            /// Overwrite the specified index file if it already exists.
             #[clap(long, short = 'f')]
             force: bool,
-            /// RevSpec that points to a tree to generate the index from
-            id: String,
             /// Path to the index file to be written.
-            /// If none is given output will be written to stdout.
+            /// If none is given it will be written to stdout, avoiding to overwrite the repository index just yet.
             #[clap(long, short = 'i')]
-            index: Option<PathBuf>,
+            index_output_path: Option<PathBuf>,
+            /// A revspec that points to the to generate the index from.
+            spec: std::ffi::OsString,
         },
     }
 }
