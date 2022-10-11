@@ -55,10 +55,9 @@ fn fetch_only_with_configuration() -> crate::Result {
 #[cfg(feature = "blocking-network-client")]
 fn fetch_and_checkout() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
-    let _prepare = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?;
-    // let (checkout, out) =
-    //     prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-
+    let mut prepare = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?;
+    let (_checkout, _out) =
+        prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
     Ok(())
 }
 

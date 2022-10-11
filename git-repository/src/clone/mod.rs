@@ -2,7 +2,9 @@ use std::convert::TryInto;
 
 type ConfigureRemoteFn = Box<dyn FnMut(crate::Remote<'_>) -> Result<crate::Remote<'_>, crate::remote::init::Error>>;
 
-/// A utility to collect configuration on how to fetch from a remote and possibly create a working tree locally.
+/// A utility to collect configuration on how to fetch from a remote and initiate a fetch operation. It will delete the newly
+/// created repository on when dropped without successfully finishing a fetch.
+#[must_use]
 pub struct PrepareFetch {
     /// A freshly initialized repository which is owned by us, or `None` if it was handed to the user
     repo: Option<crate::Repository>,
@@ -58,5 +60,16 @@ impl PrepareFetch {
     }
 }
 
+/// A utility to collect configuration on how to perform a checkout into a working tree, and when dropped without checking out successfully
+/// the fetched repository will be dropped.
+#[must_use]
+pub struct PrepareCheckout {
+    /// A freshly initialized repository which is owned by us, or `None` if it was handed to the user
+    pub(self) repo: Option<crate::Repository>,
+}
+
 ///
 pub mod fetch;
+
+///
+pub mod checkout;

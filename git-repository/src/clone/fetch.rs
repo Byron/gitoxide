@@ -85,6 +85,17 @@ impl PrepareFetch {
 
         Ok((self.repo.take().expect("still present"), outcome))
     }
+
+    /// Similar to [`fetch_only()`][Self::fetch_only()`], but passes ownership to a utility type to configure a checkout operation.
+    #[cfg(feature = "blocking-network-client")]
+    pub fn fetch_then_checkout(
+        &mut self,
+        progress: impl crate::Progress,
+        should_interrupt: &std::sync::atomic::AtomicBool,
+    ) -> Result<(crate::clone::PrepareCheckout, crate::remote::fetch::Outcome), Error> {
+        let (repo, fetch_outcome) = self.fetch_only(progress, should_interrupt)?;
+        Ok((crate::clone::PrepareCheckout { repo: repo.into() }, fetch_outcome))
+    }
 }
 
 /// Builder
@@ -120,7 +131,7 @@ impl PrepareFetch {
 
 /// Consumption
 impl PrepareFetch {
-    /// Persist the contained repository as is even if an error may have occurred when interacting with the remote or checking out the main working tree.
+    /// Persist the contained repository as is even if an error may have occurred when fetching from the remote.
     pub fn persist(mut self) -> Repository {
         self.repo.take().expect("present and consumed once")
     }
