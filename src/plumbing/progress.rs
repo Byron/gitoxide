@@ -6,7 +6,9 @@ use tabled::{Style, TableIteratorExt, Tabled};
 
 #[derive(Clone)]
 enum Usage {
-    NotApplicable,
+    NotApplicable {
+        reason: &'static str,
+    },
     Planned {
         note: Option<&'static str>,
     },
@@ -26,7 +28,7 @@ impl Display for Usage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Puzzled => f.write_str("❓")?,
-            NotApplicable => f.write_str("not applicable")?,
+            NotApplicable { reason } => write!(f, "not applicable: {reason}")?,
             NotPlanned { reason } => {
                 write!(f, "{}", "not planned".blink())?;
                 write!(f, " ℹ {} ℹ", reason.bright_white())?;
@@ -52,7 +54,7 @@ impl Usage {
     pub fn icon(&self) -> &'static str {
         match self {
             Puzzled => "?",
-            NotApplicable => "❌",
+            NotApplicable { .. } => "❌",
             Planned { .. } => "🕒",
             NotPlanned { .. } => "🤔",
             InModule { deviation, .. } => deviation.is_some().then(|| "👌️").unwrap_or("✅"),
@@ -83,6 +85,70 @@ impl Tabled for Record {
 }
 
 static GIT_CONFIG: &[Record] = &[
+    Record {
+        config: "core.safeCRLF",
+        usage: Planned { note: Some("safety is not optional") },
+    },
+    Record {
+        config: "core.protectHFS",
+        usage: Planned { note: Some("relevant for checkout on MacOS") },
+    },
+    Record {
+        config: "core.protectNTFS",
+        usage: NotPlanned { reason: "lack of demand"},
+    },
+    Record {
+        config: "core.sparseCheckout",
+        usage: Planned { note: Some("we want to support huge repos and be the fastest in doing so") },
+    },
+    Record {
+        config: "core.sparseCheckoutCone",
+        usage: Planned { note: Some("this is a nice improvement over spareCheckout alone and should one day be available too") },
+    },
+    Record {
+        config: "checkout.defaultRemote",
+        usage: Planned { note: Some("needed for correct checkout behaviour, similar to what git does") },
+    },
+    Record {
+        config: "core.untrackedCache",
+        usage: Planned { note: Some("needed for fast worktree operation") },
+    },
+    Record {
+        config: "checkout.guess",
+        usage: Planned { note: None },
+    },
+    Record {
+        config: "checkout.workers",
+        usage: Planned { note: Some("definitely, and we will deviate to allow for parallelism by default unless specified") },
+    },
+    Record {
+        config: "checkout.thresholdForParallelism",
+        usage: NotApplicable {reason: "parallelism is efficient enough to always run with benefit"},
+    },
+    Record {
+        config: "feature.manyFile",
+        usage: Planned {note: Some("big repositories are on the roadmap")},
+    },
+    Record {
+        config: "core.preloadIndex",
+        usage: Planned {note: Some("it's enabled by default and allows parallel stat checks - it's using a lot of CPU for just minor performance boosts though")},
+    },
+    Record {
+        config: "index.sparse",
+        usage: Planned {note: Some("we can read sparse indices and support for it will be added early on")},
+    },
+    Record {
+        config: "merge.renormalize",
+        usage: Planned {note: Some("once merging is being implemented, renormalization should be respected")},
+    },
+    Record {
+        config: "sparse.expectFilesOutsideOfPatterns",
+        usage: Planned {note: Some("a feature definitely worth having")},
+    },
+    Record {
+        config: "submodule.recurse",
+        usage: Planned {note: Some("very relevant for doing the right thing during checkouts")},
+    },
     Record {
         config: "core.bare",
         usage: InModule {
@@ -257,11 +323,11 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "fetch.showForcedUpdates",
-        usage: NotApplicable,
+        usage: NotApplicable {reason: "we don't support advices"},
     },
     Record {
         config: "fetch.output",
-        usage: NotApplicable,
+        usage: NotPlanned {reason: "'gix' might support it, but there is no intention on copying the 'git' CLI"},
     },
     Record {
         config: "fetch.negotiationAlgorithm",
