@@ -1,4 +1,5 @@
 use git_repository as git;
+use std::sync::atomic::AtomicBool;
 
 use crate::remote;
 
@@ -53,11 +54,13 @@ fn fetch_only_with_configuration() -> crate::Result {
 
 #[test]
 #[cfg(feature = "blocking-network-client")]
+#[ignore]
 fn fetch_and_checkout() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     let mut prepare = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?;
-    let (_checkout, _out) =
+    let (mut checkout, _out) =
         prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+    checkout.main_worktree(git::progress::Discard, &AtomicBool::default())?;
     Ok(())
 }
 

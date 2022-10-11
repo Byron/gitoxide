@@ -1,6 +1,30 @@
 use crate::clone::PrepareCheckout;
 use crate::Repository;
 
+///
+pub mod main_worktree {
+    use crate::clone::PrepareCheckout;
+    use crate::Repository;
+    use std::sync::atomic::AtomicBool;
+
+    /// The error returned by [`PrepareCheckout::main_worktree()`][super::PrepareCheckout::main_wokrtree()].
+    #[derive(Debug, thiserror::Error)]
+    #[error("TBD")]
+    pub struct Error {}
+
+    /// Modification
+    impl PrepareCheckout {
+        /// Checkout the main worktree
+        pub fn main_worktree(
+            &mut self,
+            _progress: impl crate::Progress,
+            _should_interrupt: &AtomicBool,
+        ) -> Result<Repository, Error> {
+            todo!()
+        }
+    }
+}
+
 /// Consumption
 impl PrepareCheckout {
     /// Persist the contained repository as is even if an error may have occurred when checking out the main working tree.
