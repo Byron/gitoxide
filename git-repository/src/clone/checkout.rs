@@ -7,7 +7,7 @@ pub mod main_worktree {
     use crate::Repository;
     use std::sync::atomic::AtomicBool;
 
-    /// The error returned by [`PrepareCheckout::main_worktree()`][super::PrepareCheckout::main_wokrtree()].
+    /// The error returned by [`PrepareCheckout::main_worktree()`].
     #[derive(Debug, thiserror::Error)]
     #[error("TBD")]
     pub struct Error {}

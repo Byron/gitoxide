@@ -20,7 +20,7 @@ pub struct PrepareFetch {
     url: git_url::Url,
 }
 
-/// The error returned by [`Prepare::new()`].
+/// The error returned by [`PrepareFetch::new()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {

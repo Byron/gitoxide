@@ -1,6 +1,6 @@
 use crate::{clone::PrepareFetch, Repository};
 
-/// The error returned by [`Prepare::fetch_only()`][super::Prepare::fetch_only()].
+/// The error returned by [`PrepareFetch::fetch_only()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 #[cfg(feature = "blocking-network-client")]
