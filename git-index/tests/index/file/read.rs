@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::loose_file_path;
+use crate::{decode_options, loose_file_path};
 use bstr::ByteSlice;
 use git_index::{entry, Version};
 use git_testtools::hex_to_id;
@@ -16,11 +16,11 @@ fn verify(index: git_index::File) -> git_index::File {
 
 pub(crate) fn loose_file(name: &str) -> git_index::File {
     let path = loose_file_path(name);
-    let file = git_index::File::at(path, git_index::decode::Options::default()).unwrap();
+    let file = git_index::File::at(path, decode_options()).unwrap();
     verify(file)
 }
 pub(crate) fn file(name: &str) -> git_index::File {
-    let file = git_index::File::at(crate::fixture_index_path(name), git_index::decode::Options::default()).unwrap();
+    let file = git_index::File::at(crate::fixture_index_path(name), decode_options()).unwrap();
     verify(file)
 }
 fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
@@ -34,7 +34,7 @@ fn v2_with_single_entry_tree_and_eoie_ext() {
         "v2",
         git_index::decode::Options {
             min_extension_block_in_bytes_for_threading: 100000,
-            ..Default::default()
+            ..decode_options()
         },
     );
     for file in [file("v2"), file_disallow_threaded_loading] {
@@ -107,7 +107,7 @@ fn find_shared_index_for(index: impl AsRef<Path>) -> PathBuf {
 fn split_index_without_any_extension() {
     let file = git_index::File::at(
         find_shared_index_for(crate::fixture_index_path("v2_split_index")),
-        git_index::decode::Options::default(),
+        decode_options(),
     )
     .unwrap();
     assert_eq!(file.version(), Version::V2);

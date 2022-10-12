@@ -30,8 +30,7 @@ use git_features::parallel::InOrderIter;
 use crate::util::read_u32;
 
 /// Options to define how to decode an index state [from bytes][State::from_bytes()].
-// TODO: remove default, hash can't be defaulted actually
-#[derive(Default)]
+#[derive(Clone, Copy)]
 pub struct Options {
     /// The kind of object hash to assume when decoding object ids.
     pub object_hash: git_hash::Kind,

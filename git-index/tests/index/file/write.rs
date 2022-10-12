@@ -1,8 +1,8 @@
 use crate::index::Fixture::*;
 use filetime::FileTime;
-use git_index::{decode, entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
+use git_index::{entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
 
-use crate::{fixture_index_path, loose_file_path};
+use crate::{decode_options, fixture_index_path, loose_file_path};
 
 /// Round-trips should eventually be possible for all files we have, as we write them back exactly as they were read.
 #[test]
@@ -22,7 +22,7 @@ fn roundtrips() -> crate::Result {
             Generated(name) => (fixture_index_path(name), name),
             Loose(name) => (loose_file_path(name), name),
         };
-        let expected = git_index::File::at(&path, decode::Options::default())?;
+        let expected = git_index::File::at(&path, decode_options())?;
         let expected_bytes = std::fs::read(&path)?;
         let mut out_bytes = Vec::new();
 
@@ -33,7 +33,7 @@ fn roundtrips() -> crate::Result {
             "{} didn't write the expected version",
             fixture
         );
-        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), decode::Options::default())?;
+        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), decode_options())?;
 
         compare_states(&actual, actual_version, &expected, options, fixture);
         compare_raw_bytes(&out_bytes, &expected_bytes, fixture);
@@ -79,12 +79,12 @@ fn state_comparisons_with_various_extension_configurations() {
         ] {
             let path = fixture.to_path();
             let fixture = fixture.to_name();
-            let expected = git_index::File::at(&path, Default::default()).unwrap();
+            let expected = git_index::File::at(&path, decode_options()).unwrap();
 
             let mut out = Vec::<u8>::new();
             let (actual_version, _digest) = expected.write_to(&mut out, options).unwrap();
 
-            let (actual, _) = State::from_bytes(&out, FileTime::now(), decode::Options::default()).unwrap();
+            let (actual, _) = State::from_bytes(&out, FileTime::now(), decode_options()).unwrap();
             compare_states(&actual, actual_version, &expected, options, fixture);
         }
     }
@@ -92,7 +92,7 @@ fn state_comparisons_with_various_extension_configurations() {
 
 #[test]
 fn extended_flags_automatically_upgrade_the_version_to_avoid_data_loss() -> crate::Result {
-    let mut expected = git_index::File::at(fixture_index_path("v2"), Default::default())?;
+    let mut expected = git_index::File::at(fixture_index_path("v2"), decode_options())?;
     assert_eq!(expected.version(), Version::V2);
     expected.entries_mut()[0].flags.insert(entry::Flags::EXTENDED);
 
