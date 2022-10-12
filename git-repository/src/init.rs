@@ -55,7 +55,7 @@ impl ThreadSafeRepository {
             .config
             .resolved
             .string("init", None, "defaultBranch")
-            .unwrap_or(Cow::Borrowed("main".into()));
+            .unwrap_or_else(|| Cow::Borrowed("main".into()));
         if branch_name.as_ref() != "main" {
             let sym_ref: FullName =
                 format!("refs/heads/{branch_name}")
