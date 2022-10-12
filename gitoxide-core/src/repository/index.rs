@@ -21,13 +21,11 @@ pub fn from_tree(
 
     match index_path {
         Some(index_path) => {
-            if index_path.is_file() {
-                if !force {
-                    anyhow::bail!(
-                        "File at \"{}\" already exists, to overwrite use the '-f' flag",
-                        index_path.display()
-                    );
-                }
+            if index_path.is_file() && !force {
+                anyhow::bail!(
+                    "File at \"{}\" already exists, to overwrite use the '-f' flag",
+                    index_path.display()
+                );
             }
             let writer = BufWriter::new(std::fs::File::create(&index_path)?);
             state.write_to(writer, options)?;
