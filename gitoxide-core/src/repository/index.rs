@@ -4,12 +4,13 @@ use std::ffi::OsString;
 use std::{io::BufWriter, path::PathBuf};
 
 pub fn from_tree(
-    spec: OsString,
+    mut spec: OsString,
     index_path: Option<PathBuf>,
     force: bool,
     repo: git::Repository,
     mut out: impl std::io::Write,
 ) -> anyhow::Result<()> {
+    spec.push("^{tree}");
     let spec = git::path::os_str_into_bstr(&spec)?;
     let tree = repo.rev_parse_single(spec)?;
     let state = git::index::State::from_tree(&tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
