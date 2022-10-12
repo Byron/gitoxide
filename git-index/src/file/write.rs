@@ -45,7 +45,7 @@ impl File {
             Err(err) => return Err(err.into_error().into()),
         };
         self.state.version = version;
-        self.checksum = digest;
+        self.checksum = Some(digest);
         Ok(())
     }
 }

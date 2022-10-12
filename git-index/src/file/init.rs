@@ -35,7 +35,11 @@ impl File {
         };
 
         let (state, checksum) = State::from_bytes(&data, mtime, options)?;
-        Ok(File { state, path, checksum })
+        Ok(File {
+            state,
+            path,
+            checksum: Some(checksum),
+        })
     }
 
     /// Consume `state` and pretend it was read from `path`, setting our checksum to `null`.
@@ -45,7 +49,7 @@ impl File {
         File {
             state,
             path: path.into(),
-            checksum: git_hash::ObjectId::null(git_hash::Kind::default()),
+            checksum: None,
         }
     }
 }

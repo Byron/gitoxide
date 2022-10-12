@@ -67,7 +67,7 @@ pub struct File {
     /// The path from which the index was read or to which it is supposed to be written.
     pub(crate) path: PathBuf,
     /// The checksum of all bytes prior to the checksum itself.
-    pub(crate) checksum: git_hash::ObjectId,
+    pub(crate) checksum: Option<git_hash::ObjectId>,
 }
 
 /// The type to use and store paths to all entries.

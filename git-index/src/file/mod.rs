@@ -58,7 +58,7 @@ mod access {
         ///
         /// Note that even if `Some`, it will only represent the state in memory right after reading or [writing][File::write()].
         pub fn checksum(&self) -> Option<git_hash::ObjectId> {
-            (!self.checksum.is_null()).then(|| self.checksum)
+            self.checksum
         }
     }
 }
