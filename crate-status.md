@@ -502,11 +502,12 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * **remotes**  
         * [ ] clone 
           * [ ] shallow
-        * [ ] fetch
+          * [ ] [bundles](https://git-scm.com/docs/git-bundle)
+        * [x] fetch
         * [ ] push
         * [x] ls-refs
-        * [ ] ls-refs with ref-spec filter
-        * [ ] list, find by name
+        * [x] ls-refs with ref-spec filter
+        * [x] list, find by name
         * [x] create in memory
         * [ ] groups
         * [ ] [remote and branch files](https://github.com/git/git/blob/master/remote.c#L300)
