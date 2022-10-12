@@ -1,4 +1,5 @@
 use super::{interpolate_context, util, Error, StageOne};
+use crate::bstr::BString;
 use crate::{config::Cache, repository};
 
 /// Initialization
@@ -33,6 +34,7 @@ impl Cache {
             includes: use_includes,
         }: repository::permissions::Config,
         lenient_config: bool,
+        config_overrides: &[BString],
     ) -> Result<Self, Error> {
         let options = git_config::file::init::Options {
             includes: if use_includes {
@@ -107,6 +109,9 @@ impl Cache {
             globals.resolve_includes(options)?;
             if use_env {
                 globals.append(git_config::File::from_env(options)?.unwrap_or_default());
+            }
+            if !config_overrides.is_empty() {
+                crate::config::overrides::apply(&mut globals, config_overrides, git_config::Source::Api)?;
             }
             globals
         };

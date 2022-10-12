@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
 
+use crate::bstr::BString;
 use crate::{config, config::cache::interpolate_context, permission, Permissions, ThreadSafeRepository};
 
 /// A way to configure the usage of replacement objects, see `git replace`.
@@ -72,6 +73,7 @@ pub struct Options {
     pub(crate) lossy_config: Option<bool>,
     pub(crate) lenient_config: bool,
     pub(crate) bail_if_untrusted: bool,
+    pub(crate) config_overrides: Vec<BString>,
 }
 
 impl Default for Options {
@@ -85,6 +87,7 @@ impl Default for Options {
             lossy_config: None,
             lenient_config: true,
             bail_if_untrusted: false,
+            config_overrides: Vec::new(),
         }
     }
 }
@@ -126,6 +129,14 @@ impl Options {
 
 /// Builder methods
 impl Options {
+    /// Apply the given configuration `values` like `init.defaultBranch=special` or `core.bool-implicit-true` in memory to as early
+    /// as the configuration is initialized to allow affecting the repository instantiation phase, both on disk or when opening.
+    /// The configuration is marked with [source API][git_config::Source::Api].
+    pub fn config_overrides(mut self, values: impl IntoIterator<Item = impl Into<BString>>) -> Self {
+        self.config_overrides = values.into_iter().map(Into::into).collect();
+        self
+    }
+
     /// Set the amount of slots to use for the object database. It's a value that doesn't need changes on the client, typically,
     /// but should be controlled on the server.
     pub fn object_store_slots(mut self, slots: git_odb::store::init::Slots) -> Self {
@@ -225,6 +236,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 lossy_config: None,
                 bail_if_untrusted: false,
                 lenient_config: true,
+                config_overrides: Vec::new(),
             },
             git_sec::Trust::Reduced => Options {
                 object_store_slots: git_odb::store::init::Slots::Given(32), // limit resource usage
@@ -235,6 +247,7 @@ impl git_sec::trust::DefaultForLevel for Options {
                 bail_if_untrusted: false,
                 lenient_config: true,
                 lossy_config: None,
+                config_overrides: Vec::new(),
             },
         }
     }
@@ -330,6 +343,7 @@ impl ThreadSafeRepository {
             lenient_config,
             bail_if_untrusted,
             permissions: Permissions { ref env, config },
+            ref config_overrides,
         } = options;
         let git_dir_trust = git_dir_trust.expect("trust must be been determined by now");
 
@@ -368,6 +382,7 @@ impl ThreadSafeRepository {
             env.clone(),
             config,
             lenient_config,
+            config_overrides,
         )?;
 
         if bail_if_untrusted && git_dir_trust != git_sec::Trust::Full {
@@ -505,7 +520,7 @@ mod tests {
     fn size_of_options() {
         assert_eq!(
             std::mem::size_of::<Options>(),
-            72,
+            96,
             "size shouldn't change without us knowing"
         );
     }

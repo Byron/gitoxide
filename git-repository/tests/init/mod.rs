@@ -31,22 +31,39 @@ mod bare {
 }
 
 mod non_bare {
+    use git_repository as git;
+
+    #[test]
+    fn init_bare_with_custom_branch_name() -> crate::Result {
+        let tmp = tempfile::tempdir()?;
+        let repo: git::Repository = git::ThreadSafeRepository::init_opts(
+            tmp.path(),
+            git::create::Options {
+                bare: true,
+                fs_capabilities: None,
+            },
+            git::open::Options::isolated().config_overrides(Some("init.defaultBranch=special")),
+        )?
+        .into();
+        assert_eq!(
+            repo.head()?.referent_name().expect("name").as_bstr(),
+            "refs/heads/special"
+        );
+        Ok(())
+    }
     #[test]
     fn init_into_empty_directory_creates_a_dot_git_dir() -> crate::Result {
         let tmp = tempfile::tempdir()?;
-        let repo = git_repository::init(tmp.path())?;
-        assert_eq!(repo.kind(), git_repository::Kind::WorkTree { is_linked: false });
+        let repo = git::init(tmp.path())?;
+        assert_eq!(repo.kind(), git::Kind::WorkTree { is_linked: false });
         assert_eq!(repo.work_dir(), Some(tmp.path()), "there is a work tree by default");
         assert_eq!(
             repo.git_dir(),
             tmp.path().join(".git"),
             "there is a work tree by default"
         );
-        assert_eq!(git_repository::open(repo.git_dir())?, repo);
-        assert_eq!(
-            git_repository::open(repo.work_dir().as_ref().expect("non-bare repo"))?,
-            repo
-        );
+        assert_eq!(git::open(repo.git_dir())?, repo);
+        assert_eq!(git::open(repo.work_dir().as_ref().expect("non-bare repo"))?, repo);
         Ok(())
     }
 

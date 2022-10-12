@@ -95,6 +95,15 @@ impl<'repo> Snapshot<'repo> {
 
 /// Utilities
 impl<'repo> SnapshotMut<'repo> {
+    /// Apply configuration values of the form `core.abbrev=5` or `remote.origin.url = foo` or `core.bool-implicit-true`
+    /// to the repository configuration, marked with [source CLI][git_config::Source::Cli].
+    pub fn apply_cli_overrides(
+        &mut self,
+        values: impl IntoIterator<Item = impl AsRef<BStr>>,
+    ) -> Result<&mut Self, crate::config::overrides::Error> {
+        crate::config::overrides::apply(&mut self.config, values, git_config::Source::Cli)?;
+        Ok(self)
+    }
     /// Apply all changes made to this instance.
     ///
     /// Note that this would also happen once this instance is dropped, but using this method may be more intuitive and won't squelch errors

@@ -5,7 +5,10 @@ use crate::{bstr::BString, remote, repository::identity, revision::spec, Reposit
 
 pub(crate) mod cache;
 mod snapshot;
-pub use snapshot::{apply_cli_overrides, credential_helpers};
+pub use snapshot::credential_helpers;
+
+///
+pub mod overrides;
 
 /// A platform to access configuration values as read from disk.
 ///
@@ -62,6 +65,8 @@ pub enum Error {
     DecodeBoolean { key: String, value: BString },
     #[error(transparent)]
     PathInterpolation(#[from] git_config::path::interpolate::Error),
+    #[error("Configuration overrides at open or init time could not be applied.")]
+    ConfigOverrides(#[from] overrides::Error),
 }
 
 /// Utility type to keep pre-obtained configuration values, only for those required during initial setup
