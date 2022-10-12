@@ -23,10 +23,7 @@ mod from_state {
             assert!(index.checksum().is_none());
             assert_eq!(index.path(), index_path);
 
-            index.write(git_index::write::Options {
-                hash_kind: git_hash::Kind::Sha1,
-                extensions: Default::default(),
-            })?;
+            index.write(git_index::write::Options::default())?;
             assert!(index.checksum().is_some(), "checksum is adjusted after writing");
             assert!(index.path().is_file());
             assert_eq!(index.version(), expected_version,);

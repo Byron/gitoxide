@@ -209,6 +209,7 @@ impl State {
 
         Ok((
             State {
+                object_hash,
                 timestamp,
                 version,
                 entries,

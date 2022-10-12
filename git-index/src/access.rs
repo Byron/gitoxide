@@ -9,6 +9,11 @@ impl State {
         self.version
     }
 
+    /// Return the kind of hashes used in this instance.
+    pub fn object_hash(&self) -> git_hash::Kind {
+        self.object_hash
+    }
+
     /// Return our entries
     pub fn entries(&self) -> &[Entry] {
         &self.entries

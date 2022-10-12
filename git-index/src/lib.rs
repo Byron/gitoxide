@@ -81,6 +81,10 @@ pub type PathStorageRef = [u8];
 /// We treat index and its state synonymous.
 #[derive(Clone)]
 pub struct State {
+    /// The kind of object hash used when storing the underlying file.
+    ///
+    /// Empty states for example won't have a single object id, so deduction of the hash used isn't always possible.
+    object_hash: git_hash::Kind,
     /// The time at which the state was created, indicating its freshness compared to other files on disk.
     ///
     /// Note that on platforms that only have a precisions of a second for this time, we will treat all entries with the

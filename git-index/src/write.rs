@@ -46,24 +46,15 @@ impl Extensions {
 /// The options for use when [writing an index][State::write_to()].
 ///
 /// Note that default options write either index V2 or V3 depending on the content of the entries.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Options {
-    /// The hash kind to use when writing the index file.
-    ///
-    /// It is not always possible to infer the hash kind when reading an index, so this is required.
-    pub hash_kind: git_hash::Kind,
-
     /// Configures which extensions to write
     pub extensions: Extensions,
 }
 
 impl State {
     /// Serialize this instance to `out` with [`options`][Options].
-    pub fn write_to(
-        &self,
-        out: impl std::io::Write,
-        Options { hash_kind, extensions }: Options,
-    ) -> std::io::Result<Version> {
+    pub fn write_to(&self, out: impl std::io::Write, Options { extensions }: Options) -> std::io::Result<Version> {
         let version = self.detect_required_version();
 
         let mut write = CountBytes::new(out);
@@ -83,7 +74,7 @@ impl State {
                 .is_some()
             && !extension_toc.is_empty()
         {
-            extension::end_of_index_entry::write_to(out, hash_kind, offset_to_extensions, extension_toc)?
+            extension::end_of_index_entry::write_to(out, self.object_hash, offset_to_extensions, extension_toc)?
         }
 
         Ok(version)

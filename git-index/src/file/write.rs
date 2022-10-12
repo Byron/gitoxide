@@ -22,7 +22,7 @@ impl File {
         mut out: impl std::io::Write,
         options: write::Options,
     ) -> std::io::Result<(Version, git_hash::ObjectId)> {
-        let mut hasher = hash::Write::new(&mut out, options.hash_kind);
+        let mut hasher = hash::Write::new(&mut out, self.state.object_hash);
         let version = self.state.write_to(&mut hasher, options)?;
 
         let hash = hasher.hash.digest();

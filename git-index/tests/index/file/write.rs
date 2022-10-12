@@ -11,8 +11,8 @@ fn roundtrips() -> crate::Result {
         (Loose("extended-flags"), all_ext_but_eoie()),
         (Loose("conflicting-file"), all_ext_but_eoie()),
         (Loose("very-long-path"), all_ext_but_eoie()),
-        (Generated("v2"), sha1_options()),
-        (Generated("V2_empty"), sha1_options()),
+        (Generated("v2"), Default::default()),
+        (Generated("V2_empty"), Default::default()),
         (Generated("v2_more_files"), all_ext_but_eoie()),
         (Generated("v2_all_file_kinds"), all_ext_but_eoie()),
     ];
@@ -44,10 +44,7 @@ fn roundtrips() -> crate::Result {
 #[test]
 fn state_comparisons_with_various_extension_configurations() {
     fn options_with(extensions: write::Extensions) -> Options {
-        Options {
-            hash_kind: git_hash::Kind::Sha1,
-            extensions,
-        }
+        Options { extensions }
     }
 
     for fixture in [
@@ -98,7 +95,7 @@ fn extended_flags_automatically_upgrade_the_version_to_avoid_data_loss() -> crat
     expected.entries_mut()[0].flags.insert(entry::Flags::EXTENDED);
 
     let mut buf = Vec::new();
-    let (actual_version, _digest) = expected.write_to(&mut buf, sha1_options())?;
+    let (actual_version, _digest) = expected.write_to(&mut buf, Default::default())?;
     assert_eq!(actual_version, Version::V3, "extended flags need V3");
 
     Ok(())
@@ -158,13 +155,6 @@ fn all_ext_but_eoie() -> Options {
             end_of_index_entry: false,
             tree_cache: true,
         },
-        ..sha1_options()
-    }
-}
-
-fn sha1_options() -> git_index::write::Options {
-    git_index::write::Options {
-        hash_kind: git_hash::Kind::Sha1,
-        extensions: Default::default(),
+        ..Default::default()
     }
 }
