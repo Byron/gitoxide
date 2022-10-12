@@ -6,11 +6,11 @@ mod from_state {
     fn writes_data_to_disk_and_is_a_valid_index() -> git_testtools::Result {
         let fixtures = [
             (Loose("extended-flags"), V3),
-            (Generated("v2.sh"), V2),
-            (Generated("v2_empty.sh"), V2),
-            (Generated("v2_more_files.sh"), V2),
-            (Generated("v2_all_file_kinds.sh"), V2),
-            (Generated("v4_more_files_IEOT.sh"), V2),
+            (Generated("v2"), V2),
+            (Generated("V2_empty"), V2),
+            (Generated("v2_more_files"), V2),
+            (Generated("v2_all_file_kinds"), V2),
+            (Generated("v4_more_files_IEOT"), V2),
         ];
 
         for (fixture, expected_version) in fixtures {
