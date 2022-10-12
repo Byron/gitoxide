@@ -46,8 +46,7 @@ impl Extensions {
 /// The options for use when [writing an index][State::write_to()].
 ///
 /// Note that default options write either index V2 or V3 depending on the content of the entries.
-// TODO: remove Default
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Options {
     /// The hash kind to use when writing the index file.
     ///
