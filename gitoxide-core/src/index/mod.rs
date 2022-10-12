@@ -12,11 +12,7 @@ pub use entries::entries;
 pub mod information;
 
 fn parse_file(index_path: impl AsRef<Path>, object_hash: git::hash::Kind) -> anyhow::Result<git::index::File> {
-    git::index::File::at(
-        index_path.as_ref(),
-        git::index::decode::Options::default_from_object_hash(object_hash),
-    )
-    .map_err(Into::into)
+    git::index::File::at(index_path.as_ref(), object_hash, Default::default()).map_err(Into::into)
 }
 
 pub mod checkout_exclusive {
