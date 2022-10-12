@@ -93,6 +93,8 @@ pub enum Subcommands {
     /// Interact with the exclude files like .gitignore.
     #[clap(subcommand)]
     Exclude(exclude::Subcommands),
+    #[clap(subcommand)]
+    Index(index::Subcommands),
     /// Display overall progress of the gitoxide project as seen from the perspective of git-config.
     Progress,
     Config(config::Platform),
@@ -327,6 +329,27 @@ pub mod exclude {
             /// The git path specifications to check for exclusion, or unset to read from stdin one per line.
             #[clap(parse(try_from_os_str = std::convert::TryFrom::try_from))]
             pathspecs: Vec<git::path::Spec>,
+        },
+    }
+}
+
+pub mod index {
+    use std::path::PathBuf;
+
+    #[derive(Debug, clap::Subcommand)]
+    pub enum Subcommands {
+        /// Create an index from a tree-ish.
+        #[clap(visible_alias = "read-tree")]
+        FromTree {
+            /// Overwrite the specified index file if it already exists.
+            #[clap(long, short = 'f')]
+            force: bool,
+            /// Path to the index file to be written.
+            /// If none is given it will be written to stdout, avoiding to overwrite the repository index just yet.
+            #[clap(long, short = 'i')]
+            index_output_path: Option<PathBuf>,
+            /// A revspec that points to the to generate the index from.
+            spec: std::ffi::OsString,
         },
     }
 }

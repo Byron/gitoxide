@@ -23,6 +23,7 @@ pub mod exclude;
 pub mod fetch;
 #[cfg(feature = "blocking-client")]
 pub use fetch::function::fetch;
+pub mod index;
 pub mod mailmap;
 pub mod odb;
 pub mod remote;

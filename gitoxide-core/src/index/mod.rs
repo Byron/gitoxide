@@ -1,6 +1,5 @@
-use std::path::Path;
-
 use git_repository as git;
+use std::path::Path;
 
 pub struct Options {
     pub object_hash: git::hash::Kind,
