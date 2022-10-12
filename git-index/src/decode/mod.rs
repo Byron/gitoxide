@@ -45,6 +45,17 @@ pub struct Options {
     pub min_extension_block_in_bytes_for_threading: usize,
 }
 
+impl Options {
+    /// Produce a reasonable default set of options knowing only the kind of object hash to expect.
+    pub fn default_from_object_hash(object_hash: git_hash::Kind) -> Self {
+        Options {
+            object_hash,
+            thread_limit: None,
+            min_extension_block_in_bytes_for_threading: 0,
+        }
+    }
+}
+
 impl State {
     /// Decode an index state from `data` and store `timestamp` in the resulting instance for pass-through.
     pub fn from_bytes(

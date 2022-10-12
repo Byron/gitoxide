@@ -23,11 +23,7 @@ fn size_of_entry() {
 }
 
 pub fn decode_options() -> git_index::decode::Options {
-    git_index::decode::Options {
-        object_hash: git_hash::Kind::Sha1,
-        thread_limit: None,
-        min_extension_block_in_bytes_for_threading: 0,
-    }
+    git_index::decode::Options::default_from_object_hash(git_hash::Kind::Sha1)
 }
 
 enum Fixture {
