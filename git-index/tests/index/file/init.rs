@@ -1,23 +1,24 @@
 mod from_state {
+    use crate::index::Fixture::*;
+    use git_index::Version::{V2, V3};
+
     #[test]
     fn writes_data_to_disk_and_is_a_valid_index() -> git_testtools::Result {
         let fixtures = [
-            "v2.sh",
-            "v2_empty.sh",
-            "v2_more_files.sh",
-            "v2_all_file_kinds.sh",
-            "v4_more_files_IEOT.sh",
+            (Loose("extended-flags"), V3),
+            (Generated("v2.sh"), V2),
+            (Generated("v2_empty.sh"), V2),
+            (Generated("v2_more_files.sh"), V2),
+            (Generated("v2_all_file_kinds.sh"), V2),
+            (Generated("v4_more_files_IEOT.sh"), V2),
         ];
 
-        for fixture in fixtures {
+        for (fixture, expected_version) in fixtures {
             let tmp = git_testtools::tempfile::TempDir::new()?;
-            let index_path = tmp.path().join(fixture);
-
-            let fixture = format!("make_index/{}", fixture);
-            let repo_dir = git_testtools::scripted_fixture_repo_read_only(&fixture)?;
-            let index = git_index::File::at(repo_dir.join(".git").join("index"), Default::default())?;
-
+            let index_path = tmp.path().join(fixture.to_name());
             assert!(!index_path.exists());
+
+            let index = git_index::File::at(fixture.to_path(), Default::default())?;
             let mut index = git_index::File::from_state(index.state, index_path.clone());
             assert!(index.checksum.is_null());
             assert_eq!(index.path, index_path);
@@ -28,12 +29,7 @@ mod from_state {
             })?;
             assert!(!index.checksum.is_null(), "checksum is adjusted after writing");
             assert!(index.path.is_file());
-            // TODO: make it easier to test on loose indices.
-            assert_eq!(
-                index.state.version(),
-                git_index::Version::V2,
-                "V2 is enough as we don't have extended attributes"
-            );
+            assert_eq!(index.state.version(), expected_version,);
 
             index.verify_integrity()?;
         }
