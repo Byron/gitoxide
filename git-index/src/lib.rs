@@ -63,11 +63,11 @@ pub struct Entry {
 /// An index file whose state was read from a file on disk.
 pub struct File {
     /// The state containing the actual index data.
-    pub state: State,
+    pub(crate) state: State,
     /// The path from which the index was read or to which it is supposed to be written.
-    pub path: PathBuf,
+    pub(crate) path: PathBuf,
     /// The checksum of all bytes prior to the checksum itself.
-    pub checksum: git_hash::ObjectId,
+    pub(crate) checksum: git_hash::ObjectId,
 }
 
 /// The type to use and store paths to all entries.

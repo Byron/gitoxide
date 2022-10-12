@@ -20,17 +20,17 @@ mod from_state {
             assert!(!index_path.exists());
 
             let index = git_index::File::at(fixture.to_path(), decode_options())?;
-            let mut index = git_index::File::from_state(index.state, index_path.clone());
-            assert!(index.checksum.is_null());
-            assert_eq!(index.path, index_path);
+            let mut index = git_index::File::from_state(index.into_state(), index_path.clone());
+            assert!(index.checksum().is_none());
+            assert_eq!(index.path(), index_path);
 
             index.write(git_index::write::Options {
                 hash_kind: git_hash::Kind::Sha1,
                 extensions: Default::default(),
             })?;
-            assert!(!index.checksum.is_null(), "checksum is adjusted after writing");
-            assert!(index.path.is_file());
-            assert_eq!(index.state.version(), expected_version,);
+            assert!(index.checksum().is_some(), "checksum is adjusted after writing");
+            assert!(index.path().is_file());
+            assert_eq!(index.version(), expected_version,);
 
             index.verify_integrity()?;
         }

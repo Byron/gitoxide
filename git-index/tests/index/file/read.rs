@@ -46,7 +46,7 @@ fn v2_with_single_entry_tree_and_eoie_ext() {
         assert_eq!(entry.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"));
         assert!(entry.flags.is_empty());
         assert_eq!(entry.mode, entry::Mode::FILE);
-        assert_eq!(entry.path(&file.state), "a");
+        assert_eq!(entry.path(&file), "a");
 
         let tree = file.tree().unwrap();
         assert_eq!(tree.num_entries.unwrap_or_default(), 1);
@@ -132,9 +132,9 @@ fn v2_very_long_path() {
     let file = loose_file("very-long-path");
     assert_eq!(file.version(), Version::V2);
 
-    assert_eq!(file.state.entries().len(), 9);
+    assert_eq!(file.entries().len(), 9);
     assert_eq!(
-        file.state.entries()[0].path(&file.state),
+        file.entries()[0].path(&file),
         std::iter::repeat('a')
             .take(4096)
             .chain(std::iter::once('q'))
