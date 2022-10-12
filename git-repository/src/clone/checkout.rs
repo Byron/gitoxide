@@ -5,12 +5,16 @@ use crate::Repository;
 pub mod main_worktree {
     use crate::clone::PrepareCheckout;
     use crate::Repository;
+    use std::path::PathBuf;
     use std::sync::atomic::AtomicBool;
 
     /// The error returned by [`PrepareCheckout::main_worktree()`].
     #[derive(Debug, thiserror::Error)]
-    #[error("TBD")]
-    pub struct Error {}
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("Repository at \"{}\" is a bare repository and cannot have a main worktree checkout", git_dir.display())]
+        BareRepository { git_dir: PathBuf },
+    }
 
     /// Modification
     impl PrepareCheckout {
@@ -20,7 +24,15 @@ pub mod main_worktree {
             _progress: impl crate::Progress,
             _should_interrupt: &AtomicBool,
         ) -> Result<Repository, Error> {
-            todo!()
+            let repo = self
+                .repo
+                .as_ref()
+                .expect("still present as we never succeeded the worktree checkout yet");
+            let _workdir = repo.work_dir().ok_or_else(|| Error::BareRepository {
+                git_dir: repo.git_dir().to_owned(),
+            })?;
+
+            todo!("which branch to use?")
         }
     }
 }
