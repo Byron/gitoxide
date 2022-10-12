@@ -58,7 +58,7 @@ pub(crate) fn to_json(
             hex_id: entry.id.to_hex().to_string(),
             flags: entry.flags.bits(),
             mode: entry.mode.bits(),
-            path: entry.path(&file.state).to_str_lossy(),
+            path: entry.path(&file).to_str_lossy(),
         },
     )?;
 
@@ -91,6 +91,6 @@ pub(crate) fn to_human(
         },
         entry.mode,
         entry.id,
-        entry.path(&file.state)
+        entry.path(&file)
     )
 }

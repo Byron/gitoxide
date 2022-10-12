@@ -82,7 +82,7 @@ mod serde_only {
         pub fn try_from_file(f: git::index::File, extension_details: bool) -> anyhow::Result<Self> {
             Ok(Collection {
                 version: f.version() as u8,
-                checksum: f.checksum.to_hex().to_string(),
+                checksum: f.checksum().expect("just read from disk").to_hex().to_string(),
                 extensions: {
                     let mut names = Vec::new();
                     let tree = f.tree().and_then(|tree| {

@@ -14,10 +14,7 @@ pub mod information;
 fn parse_file(index_path: impl AsRef<Path>, object_hash: git::hash::Kind) -> anyhow::Result<git::index::File> {
     git::index::File::at(
         index_path.as_ref(),
-        git::index::decode::Options {
-            object_hash,
-            ..Default::default()
-        },
+        git::index::decode::Options::default_from_object_hash(object_hash),
     )
     .map_err(Into::into)
 }
