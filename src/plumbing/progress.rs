@@ -337,8 +337,9 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "init.defaultBranch",
-        usage: Planned {
-            note: Some("Needed when initializing any git repository"),
+        usage: InModule {
+            name: "init",
+            deviation: Some("If unset, we default to 'main' instead of 'master'")
         },
     },
     Record {
