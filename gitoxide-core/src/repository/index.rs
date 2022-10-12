@@ -8,7 +8,6 @@ pub fn from_tree(
     index_path: Option<PathBuf>,
     force: bool,
     repo: git::Repository,
-    mut out: impl std::io::Write,
 ) -> anyhow::Result<()> {
     spec.push("^{tree}");
     let spec = git::path::os_str_into_bstr(&spec)?;
@@ -29,6 +28,7 @@ pub fn from_tree(
         }
         None => {
             let index = git::index::File::from_state(index, std::path::PathBuf::new());
+            let mut out = Vec::with_capacity(512 * 1024);
             index.write_to(&mut out, options)?;
         }
     }
