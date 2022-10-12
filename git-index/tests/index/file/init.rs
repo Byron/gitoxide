@@ -1,5 +1,4 @@
 mod from_state {
-    use crate::decode_options;
     use crate::index::Fixture::*;
     use git_index::Version::{V2, V3};
 
@@ -19,7 +18,7 @@ mod from_state {
             let index_path = tmp.path().join(fixture.to_name());
             assert!(!index_path.exists());
 
-            let index = git_index::File::at(fixture.to_path(), decode_options())?;
+            let index = git_index::File::at(fixture.to_path(), git_hash::Kind::Sha1, Default::default())?;
             let mut index = git_index::File::from_state(index.into_state(), index_path.clone());
             assert!(index.checksum().is_none());
             assert_eq!(index.path(), index_path);

@@ -22,10 +22,6 @@ fn size_of_entry() {
     assert_eq!(std::mem::size_of::<filetime::FileTime>(), 16);
 }
 
-pub fn decode_options() -> git_index::decode::Options {
-    git_index::decode::Options::default_from_object_hash(git_hash::Kind::Sha1)
-}
-
 enum Fixture {
     Generated(&'static str),
     Loose(&'static str),

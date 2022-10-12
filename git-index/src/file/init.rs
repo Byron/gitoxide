@@ -23,8 +23,8 @@ pub use error::Error;
 
 /// Initialization
 impl File {
-    /// Open an index file at `path` with `options`.
-    pub fn at(path: impl Into<PathBuf>, options: decode::Options) -> Result<Self, Error> {
+    /// Open an index file at `path` with `options`, assuming `object_hash` is used throughout the file.
+    pub fn at(path: impl Into<PathBuf>, object_hash: git_hash::Kind, options: decode::Options) -> Result<Self, Error> {
         let path = path.into();
         let (data, mtime) = {
             // SAFETY: we have to take the risk of somebody changing the file underneath. Git never writes into the same file.
@@ -34,7 +34,7 @@ impl File {
             (data, filetime::FileTime::from_last_modification_time(&file.metadata()?))
         };
 
-        let (state, checksum) = State::from_bytes(&data, mtime, options)?;
+        let (state, checksum) = State::from_bytes(&data, mtime, object_hash, options)?;
         Ok(File {
             state,
             path,
