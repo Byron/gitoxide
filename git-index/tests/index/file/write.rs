@@ -1,16 +1,12 @@
+use crate::index::Fixture::*;
 use filetime::FileTime;
 use git_index::{decode, entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
 
-use crate::{fixture_index_path, index::file::read::loose_file_path};
+use crate::{fixture_index_path, loose_file_path};
 
 /// Round-trips should eventually be possible for all files we have, as we write them back exactly as they were read.
 #[test]
 fn roundtrips() -> crate::Result {
-    enum Kind {
-        Generated(&'static str),
-        Loose(&'static str),
-    }
-    use Kind::*;
     let input = [
         (Loose("extended-flags"), all_ext_but_eoie()),
         (Loose("conflicting-file"), all_ext_but_eoie()),
@@ -54,12 +50,6 @@ fn state_comparisons_with_various_extension_configurations() {
         }
     }
 
-    enum Kind {
-        Generated(&'static str),
-        Loose(&'static str),
-    }
-    use Kind::*;
-
     for fixture in [
         Loose("extended-flags"),
         Loose("conflicting-file"),
@@ -87,10 +77,8 @@ fn state_comparisons_with_various_extension_configurations() {
                 end_of_index_entry: true,
             }),
         ] {
-            let (path, fixture) = match fixture {
-                Generated(name) => (fixture_index_path(name), name),
-                Loose(name) => (loose_file_path(name), name),
-            };
+            let path = fixture.to_path();
+            let fixture = fixture.to_name();
             let expected = git_index::File::at(&path, Default::default()).unwrap();
 
             let mut out = Vec::<u8>::new();

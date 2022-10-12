@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use crate::loose_file_path;
 use bstr::ByteSlice;
 use git_index::{entry, Version};
 use git_testtools::hex_to_id;
@@ -11,10 +12,6 @@ fn verify(index: git_index::File) -> git_index::File {
         .verify_extensions(false, git_index::verify::extensions::no_find)
         .unwrap();
     index
-}
-
-pub(crate) fn loose_file_path(name: &str) -> PathBuf {
-    git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"))
 }
 
 pub(crate) fn loose_file(name: &str) -> git_index::File {
