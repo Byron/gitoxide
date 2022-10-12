@@ -30,7 +30,7 @@ fn roundtrips() -> crate::Result {
         let expected_bytes = std::fs::read(&path)?;
         let mut out_bytes = Vec::new();
 
-        let actual_version = expected.write_to(&mut out_bytes, options)?;
+        let (actual_version, _digest) = expected.write_to(&mut out_bytes, options)?;
         assert_eq!(
             actual_version,
             expected.version(),
@@ -94,7 +94,7 @@ fn state_comparisons_with_various_extension_configurations() {
             let expected = git_index::File::at(&path, Default::default()).unwrap();
 
             let mut out = Vec::<u8>::new();
-            let actual_version = expected.write_to(&mut out, options).unwrap();
+            let (actual_version, _digest) = expected.write_to(&mut out, options).unwrap();
 
             let (actual, _) = State::from_bytes(&out, FileTime::now(), decode::Options::default()).unwrap();
             compare_states(&actual, actual_version, &expected, options, fixture);
@@ -109,7 +109,7 @@ fn extended_flags_automatically_upgrade_the_version_to_avoid_data_loss() -> crat
     expected.entries_mut()[0].flags.insert(entry::Flags::EXTENDED);
 
     let mut buf = Vec::new();
-    let actual_version = expected.write_to(&mut buf, Default::default())?;
+    let (actual_version, _digest) = expected.write_to(&mut buf, Default::default())?;
     assert_eq!(actual_version, Version::V3, "extended flags need V3");
 
     Ok(())
