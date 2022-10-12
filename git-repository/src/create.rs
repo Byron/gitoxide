@@ -110,6 +110,9 @@ pub struct Options {
 
 /// Create a new `.git` repository of `kind` within the possibly non-existing `directory`
 /// and return its path.
+/// Note that this is a simple template-based initialization routine which should be accompanied with additional corrections
+/// to respect git configuration, which is accomplished by [its callers][crate::ThreadSafeRepository::init_opts()]
+/// that return a [Repository][crate::Repository].
 pub fn into(
     directory: impl Into<PathBuf>,
     Options { bare, fs_capabilities }: Options,

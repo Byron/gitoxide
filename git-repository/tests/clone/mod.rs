@@ -1,5 +1,4 @@
 use git_repository as git;
-use std::sync::atomic::AtomicBool;
 
 use crate::remote;
 
@@ -60,7 +59,7 @@ fn fetch_and_checkout() -> crate::Result {
     let mut prepare = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?;
     let (mut checkout, _out) =
         prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-    checkout.main_worktree(git::progress::Discard, &AtomicBool::default())?;
+    checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
     Ok(())
 }
 

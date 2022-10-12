@@ -336,6 +336,12 @@ static GIT_CONFIG: &[Record] = &[
         },
     },
     Record {
+        config: "init.defaultBranch",
+        usage: Planned {
+            note: Some("Needed when initializing any git repository"),
+        },
+    },
+    Record {
         config: "pack.threads",
         usage: InModule {
             name: "remote::connection::fetch",
