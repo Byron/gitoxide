@@ -14,10 +14,7 @@ pub fn from_tree(
     let spec = git::path::os_str_into_bstr(&spec)?;
     let tree = repo.rev_parse_single(spec)?;
     let state = git::index::State::from_tree(&tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
-    let options = git::index::write::Options {
-        hash_kind: repo.object_hash(),
-        extensions: Default::default(),
-    };
+    let options = git::index::write::Options::default();
 
     match index_path {
         Some(index_path) => {
