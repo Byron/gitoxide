@@ -16,7 +16,7 @@ pub fn from_tree(
     let state = git::index::State::from_tree(&tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
     let options = git::index::write::Options {
         hash_kind: repo.object_hash(),
-        ..Default::default()
+        extensions: Default::default(),
     };
 
     match index_path {
