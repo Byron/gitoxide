@@ -37,4 +37,15 @@ impl File {
         let (state, checksum) = State::from_bytes(&data, mtime, options)?;
         Ok(File { state, path, checksum })
     }
+
+    /// Consume `state` and pretend it was read from `path`, setting our checksum to `null`.
+    ///
+    /// `File` instances created like that should be written to disk to set the correct checksum via `[File::write()]`.
+    pub fn from_state(state: crate::State, path: impl Into<PathBuf>) -> Self {
+        File {
+            state,
+            path: path.into(),
+            checksum: git_hash::ObjectId::null(git_hash::Kind::default()),
+        }
+    }
 }
