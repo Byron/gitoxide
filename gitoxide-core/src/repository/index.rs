@@ -1,23 +1,19 @@
 use git::prelude::FindExt;
 use git_repository as git;
 use std::ffi::OsString;
-use std::{io::BufWriter, path::PathBuf};
+use std::path::PathBuf;
 
 pub fn from_tree(
     mut spec: OsString,
     index_path: Option<PathBuf>,
     force: bool,
     repo: git::Repository,
-    mut out: impl std::io::Write,
 ) -> anyhow::Result<()> {
     spec.push("^{tree}");
     let spec = git::path::os_str_into_bstr(&spec)?;
     let tree = repo.rev_parse_single(spec)?;
-    let state = git::index::State::from_tree(&tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
-    let options = git::index::write::Options {
-        hash_kind: repo.object_hash(),
-        ..Default::default()
-    };
+    let index = git::index::State::from_tree(&tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())?;
+    let options = git::index::write::Options::default();
 
     match index_path {
         Some(index_path) => {
@@ -27,11 +23,13 @@ pub fn from_tree(
                     index_path.display()
                 );
             }
-            let writer = BufWriter::new(std::fs::File::create(&index_path)?);
-            state.write_to(writer, options)?;
+            let mut index = git::index::File::from_state(index, index_path);
+            index.write(options)?;
         }
         None => {
-            state.write_to(&mut out, options)?;
+            let index = git::index::File::from_state(index, std::path::PathBuf::new());
+            let mut out = Vec::with_capacity(512 * 1024);
+            index.write_to(&mut out, options)?;
         }
     }
 

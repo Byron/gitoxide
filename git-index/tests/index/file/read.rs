@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use crate::loose_file_path;
 use bstr::ByteSlice;
 use git_index::{entry, Version};
 use git_testtools::hex_to_id;
@@ -13,21 +14,22 @@ fn verify(index: git_index::File) -> git_index::File {
     index
 }
 
-pub(crate) fn loose_file_path(name: &str) -> PathBuf {
-    git_testtools::fixture_path(Path::new("loose_index").join(name).with_extension("git-index"))
-}
-
 pub(crate) fn loose_file(name: &str) -> git_index::File {
     let path = loose_file_path(name);
-    let file = git_index::File::at(path, git_index::decode::Options::default()).unwrap();
+    let file = git_index::File::at(path, git_hash::Kind::Sha1, Default::default()).unwrap();
     verify(file)
 }
 pub(crate) fn file(name: &str) -> git_index::File {
-    let file = git_index::File::at(crate::fixture_index_path(name), git_index::decode::Options::default()).unwrap();
+    let file = git_index::File::at(
+        crate::fixture_index_path(name),
+        git_hash::Kind::Sha1,
+        Default::default(),
+    )
+    .unwrap();
     verify(file)
 }
 fn file_opt(name: &str, opts: git_index::decode::Options) -> git_index::File {
-    let file = git_index::File::at(crate::fixture_index_path(name), opts).unwrap();
+    let file = git_index::File::at(crate::fixture_index_path(name), git_hash::Kind::Sha1, opts).unwrap();
     verify(file)
 }
 
@@ -49,7 +51,7 @@ fn v2_with_single_entry_tree_and_eoie_ext() {
         assert_eq!(entry.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"));
         assert!(entry.flags.is_empty());
         assert_eq!(entry.mode, entry::Mode::FILE);
-        assert_eq!(entry.path(&file.state), "a");
+        assert_eq!(entry.path(&file), "a");
 
         let tree = file.tree().unwrap();
         assert_eq!(tree.num_entries.unwrap_or_default(), 1);
@@ -110,7 +112,8 @@ fn find_shared_index_for(index: impl AsRef<Path>) -> PathBuf {
 fn split_index_without_any_extension() {
     let file = git_index::File::at(
         find_shared_index_for(crate::fixture_index_path("v2_split_index")),
-        git_index::decode::Options::default(),
+        git_hash::Kind::Sha1,
+        Default::default(),
     )
     .unwrap();
     assert_eq!(file.version(), Version::V2);
@@ -135,9 +138,9 @@ fn v2_very_long_path() {
     let file = loose_file("very-long-path");
     assert_eq!(file.version(), Version::V2);
 
-    assert_eq!(file.state.entries().len(), 9);
+    assert_eq!(file.entries().len(), 9);
     assert_eq!(
-        file.state.entries()[0].path(&file.state),
+        file.entries()[0].path(&file),
         std::iter::repeat('a')
             .take(4096)
             .chain(std::iter::once('q'))

@@ -63,11 +63,11 @@ pub struct Entry {
 /// An index file whose state was read from a file on disk.
 pub struct File {
     /// The state containing the actual index data.
-    pub state: State,
+    pub(crate) state: State,
     /// The path from which the index was read or to which it is supposed to be written.
-    pub path: PathBuf,
+    pub(crate) path: PathBuf,
     /// The checksum of all bytes prior to the checksum itself.
-    pub checksum: git_hash::ObjectId,
+    pub(crate) checksum: Option<git_hash::ObjectId>,
 }
 
 /// The type to use and store paths to all entries.
@@ -81,6 +81,10 @@ pub type PathStorageRef = [u8];
 /// We treat index and its state synonymous.
 #[derive(Clone)]
 pub struct State {
+    /// The kind of object hash used when storing the underlying file.
+    ///
+    /// Empty states for example won't have a single object id, so deduction of the hash used isn't always possible.
+    object_hash: git_hash::Kind,
     /// The time at which the state was created, indicating its freshness compared to other files on disk.
     ///
     /// Note that on platforms that only have a precisions of a second for this time, we will treat all entries with the

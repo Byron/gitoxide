@@ -814,8 +814,8 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 None,
-                move |_progress, out, _err| {
-                    core::repository::index::from_tree(spec, index_output_path, force, repository(Mode::Strict)?, out)
+                move |_progress, _out, _err| {
+                    core::repository::index::from_tree(spec, index_output_path, force, repository(Mode::Strict)?)
                 },
             ),
         },

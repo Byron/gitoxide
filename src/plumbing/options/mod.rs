@@ -345,7 +345,8 @@ pub mod index {
             #[clap(long, short = 'f')]
             force: bool,
             /// Path to the index file to be written.
-            /// If none is given it will be written to stdout, avoiding to overwrite the repository index just yet.
+            /// If none is given it will be kept in memory only as a way to measure performance. One day we will probably write the index
+            /// back by default, but that requires us to write more of the index to work.
             #[clap(long, short = 'i')]
             index_output_path: Option<PathBuf>,
             /// A revspec that points to the to generate the index from.

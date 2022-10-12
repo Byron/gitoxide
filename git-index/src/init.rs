@@ -37,6 +37,7 @@ mod from_tree {
             entries.sort_by(|a, b| Entry::cmp_filepaths(a.path_in(&path_backing), b.path_in(&path_backing)));
 
             Ok(State {
+                object_hash: tree.kind(),
                 timestamp: filetime::FileTime::now(),
                 version: Version::V2,
                 entries,
