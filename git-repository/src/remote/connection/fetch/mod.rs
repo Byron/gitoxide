@@ -115,6 +115,16 @@ where
 impl<'remote, 'repo, T, P> Prepare<'remote, 'repo, T, P>
 where
     T: Transport,
+{
+    /// Return the outcome of the handshake with the remote, yielding additional information about its capabilities and expectations.
+    pub fn handshake_outcome(&self) -> &git_protocol::fetch::handshake::Outcome {
+        &self.ref_map.handshake
+    }
+}
+
+impl<'remote, 'repo, T, P> Prepare<'remote, 'repo, T, P>
+where
+    T: Transport,
     P: Progress,
 {
     /// Receive the pack and perform the operation as configured by git via `git-config` or overridden by various builder methods.
