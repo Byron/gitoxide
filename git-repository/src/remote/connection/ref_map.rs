@@ -4,6 +4,7 @@ use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
 
 use crate::{
+    bstr,
     bstr::{BString, ByteVec},
     remote::{connection::HandshakeWithRefs, fetch, Connection, Direction},
 };
@@ -14,6 +15,8 @@ use crate::{
 pub enum Error {
     #[error(transparent)]
     Handshake(#[from] git_protocol::fetch::handshake::Error),
+    #[error("The object format {format:?} as used by the remote is unsupported")]
+    UnknownObjectFormat { format: BString },
     #[error(transparent)]
     ListRefs(#[from] git_protocol::fetch::refs::Error),
     #[error(transparent)]
@@ -110,11 +113,14 @@ where
                 spec_index: m.spec_index,
             })
             .collect();
+
+        let object_hash = extract_object_format(&self.remote.repo, &remote.outcome)?;
         Ok(fetch::RefMap {
             mappings,
             fixes,
             remote_refs: remote.refs,
             handshake: remote.outcome,
+            object_hash,
         })
     }
     #[git_protocol::maybe_async::maybe_async]
@@ -173,4 +179,25 @@ where
         };
         Ok(HandshakeWithRefs { outcome, refs })
     }
+}
+
+/// Assume sha1 if server says nothing, otherwise configure anything beyond sha1 in the local repo configuration
+fn extract_object_format(
+    _repo: &crate::Repository,
+    outcome: &git_protocol::fetch::handshake::Outcome,
+) -> Result<git_hash::Kind, Error> {
+    use bstr::ByteSlice;
+    let object_hash =
+        if let Some(object_format) = outcome.capabilities.capability("object-format").and_then(|c| c.value()) {
+            let object_format = object_format.to_str().map_err(|_| Error::UnknownObjectFormat {
+                format: object_format.into(),
+            })?;
+            match object_format {
+                "sha1" => git_hash::Kind::Sha1,
+                unknown => return Err(Error::UnknownObjectFormat { format: unknown.into() }),
+            }
+        } else {
+            git_hash::Kind::Sha1
+        };
+    Ok(object_hash)
 }

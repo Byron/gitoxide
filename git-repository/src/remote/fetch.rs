@@ -23,6 +23,10 @@ pub struct RefMap {
     ///
     /// Note that the `refs` field is always `None` as the refs are placed in `remote_refs`.
     pub handshake: git_protocol::fetch::handshake::Outcome,
+    /// The kind of hash used for all data sent by the server, if understood by this client implementation.
+    ///
+    /// It was extracted from the `handshake` as advertised by the server.
+    pub object_hash: git_hash::Kind,
 }
 
 /// Either an object id that the remote has or the matched remote ref itself.

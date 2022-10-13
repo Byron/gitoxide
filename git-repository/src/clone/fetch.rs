@@ -1,4 +1,3 @@
-use crate::bstr::{BString, ByteSlice};
 use crate::{clone::PrepareFetch, Repository};
 
 /// The error returned by [`PrepareFetch::fetch_only()`].
@@ -10,8 +9,6 @@ pub enum Error {
     Connect(#[from] crate::remote::connect::Error),
     #[error(transparent)]
     PrepareFetch(#[from] crate::remote::fetch::prepare::Error),
-    #[error("The object format {format:?} as used by the remote is unsupported")]
-    UnknownObjectFormat { format: BString },
     #[error(transparent)]
     Fetch(#[from] crate::remote::fetch::Error),
     #[error(transparent)]
@@ -64,11 +61,13 @@ impl PrepareFetch {
         }
 
         let config = write_remote_to_local_config(&mut remote, remote_name)?;
-        let prepared: crate::remote::fetch::Prepare<'_, '_, _, _> = remote
+        let pending_pack: crate::remote::fetch::Prepare<'_, '_, _, _> = remote
             .connect(crate::remote::Direction::Fetch, progress)?
             .prepare_fetch(self.fetch_options.clone())?;
-        configure_object_format(repo, prepared.handshake_outcome())?;
-        let outcome = prepared.receive(should_interrupt)?;
+        if pending_pack.ref_map().object_hash != repo.object_hash() {
+            unimplemented!("configure repository to expect a different object hash as advertised by the server")
+        }
+        let outcome = pending_pack.receive(should_interrupt)?;
 
         replace_changed_local_config(repo, config);
         Ok((self.repo.take().expect("still present"), outcome))
@@ -83,21 +82,6 @@ impl PrepareFetch {
     ) -> Result<(crate::clone::PrepareCheckout, crate::remote::fetch::Outcome), Error> {
         let (repo, fetch_outcome) = self.fetch_only(progress, should_interrupt)?;
         Ok((crate::clone::PrepareCheckout { repo: repo.into() }, fetch_outcome))
-    }
-}
-
-/// Assume sha1 if server says nothing, otherwise configure anything beyond sha1 in the local repo configuration
-fn configure_object_format(_repo: &Repository, outcome: &git_protocol::fetch::handshake::Outcome) -> Result<(), Error> {
-    if let Some(object_format) = outcome.capabilities.capability("object-format").and_then(|c| c.value()) {
-        let object_format = object_format.to_str().map_err(|_| Error::UnknownObjectFormat {
-            format: object_format.into(),
-        })?;
-        match object_format {
-            "sha1" => Ok(()),
-            unknown => Err(Error::UnknownObjectFormat { format: unknown.into() }),
-        }
-    } else {
-        Ok(())
     }
 }
 

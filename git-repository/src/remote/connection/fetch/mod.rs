@@ -26,6 +26,11 @@ mod error {
         },
         #[error("Could not decode server reply")]
         FetchResponse(#[from] git_protocol::fetch::response::Error),
+        #[error("Cannot fetch from a remote that uses {remote} while local repository uses {local} for object hashes")]
+        IncompatibleObjectHash {
+            local: git_hash::Kind,
+            remote: git_hash::Kind,
+        },
         #[error(transparent)]
         Negotiate(#[from] super::negotiate::Error),
         #[error(transparent)]
@@ -116,9 +121,9 @@ impl<'remote, 'repo, T, P> Prepare<'remote, 'repo, T, P>
 where
     T: Transport,
 {
-    /// Return the outcome of the handshake with the remote, yielding additional information about its capabilities and expectations.
-    pub fn handshake_outcome(&self) -> &git_protocol::fetch::handshake::Outcome {
-        &self.ref_map.handshake
+    /// Return the ref_map (that includes the server handshake) which was part of listing refs prior to fetching a pack.
+    pub fn ref_map(&self) -> &RefMap {
+        &self.ref_map
     }
 }
 
@@ -162,6 +167,13 @@ where
         let mut round = 1;
         let progress = &mut con.progress;
         let repo = con.remote.repo;
+
+        if self.ref_map.object_hash != repo.object_hash() {
+            return Err(Error::IncompatibleObjectHash {
+                local: repo.object_hash(),
+                remote: self.ref_map.object_hash,
+            });
+        }
 
         let reader = 'negotiation: loop {
             progress.step();
