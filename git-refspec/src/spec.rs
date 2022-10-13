@@ -122,8 +122,8 @@ impl<'a> RefSpecRef<'a> {
         }
     }
 
-    /// Derive the prefix from the `source` side of this spec if this is a fetch spec, or the `destination` side if it is a push spec,
-    /// if it is possible to do so without ambiguity.
+    /// Derive the prefix from the [`source`][Self::source()] side of this spec if this is a fetch spec,
+    /// or the [`destination`][Self::destination()] side if it is a push spec, if it is possible to do so without ambiguity.
     ///
     /// This means it starts with `refs/`. Note that it won't contain more than two components, like `refs/heads/`
     pub fn prefix(&self) -> Option<&BStr> {
@@ -140,7 +140,7 @@ impl<'a> RefSpecRef<'a> {
         (!prefix.contains(&b'*')).then(|| prefix)
     }
 
-    /// As opposed to [`prefix()`], if the latter is `None` it will expand to all possible prefixes and place them in `out`.
+    /// As opposed to [`prefix()`][Self::prefix], if the latter is `None` it will expand to all possible prefixes and place them in `out`.
     ///
     /// Note that only the `source` side is considered.
     pub fn expand_prefixes(&self, out: &mut Vec<BString>) {
