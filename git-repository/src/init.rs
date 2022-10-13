@@ -51,6 +51,7 @@ impl ThreadSafeRepository {
         let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
         open_options.git_dir_trust = Some(git_sec::Trust::Full);
         let repo = ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, open_options)?;
+
         let branch_name = repo
             .config
             .resolved
@@ -76,6 +77,7 @@ impl ThreadSafeRepository {
                 deref: false,
             })?;
         }
+
         Ok(repo)
     }
 }
