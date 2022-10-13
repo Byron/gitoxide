@@ -162,10 +162,11 @@ where
                             for spec in specs {
                                 let spec = spec.to_ref();
                                 if seen.insert(spec.instruction()) {
-                                    if let Some(prefix) = spec.prefix() {
-                                        let mut arg: BString = "ref-prefix ".into();
-                                        arg.push_str(prefix);
-                                        arguments.push(arg)
+                                    let mut prefixes = Vec::with_capacity(1);
+                                    spec.expand_prefixes(&mut prefixes);
+                                    for mut prefix in prefixes {
+                                        prefix.insert_str(0, "ref-prefix ");
+                                        arguments.push(prefix);
                                     }
                                 }
                             }
