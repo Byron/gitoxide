@@ -114,7 +114,7 @@ where
             })
             .collect();
 
-        let object_hash = extract_object_format(&self.remote.repo, &remote.outcome)?;
+        let object_hash = extract_object_format(self.remote.repo, &remote.outcome)?;
         Ok(fetch::RefMap {
             mappings,
             fixes,

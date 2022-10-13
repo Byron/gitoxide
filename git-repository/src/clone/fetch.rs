@@ -37,6 +37,32 @@ impl PrepareFetch {
         progress: impl crate::Progress,
         should_interrupt: &std::sync::atomic::AtomicBool,
     ) -> Result<(Repository, crate::remote::fetch::Outcome), Error> {
+        fn replace_changed_local_config(repo: &mut Repository, config: git_config::File<'static>) {
+            let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
+            let ids_to_remove: Vec<_> = repo_config
+                .sections_and_ids()
+                .filter_map(|(s, id)| (s.meta().source == git_config::Source::Local).then(|| id))
+                .collect();
+            for id in ids_to_remove {
+                repo_config.remove_section_by_id(id);
+            }
+            repo_config.append(config);
+        }
+
+        fn write_remote_to_local_config(
+            remote: &mut crate::Remote<'_>,
+            remote_name: String,
+        ) -> Result<git_config::File<'static>, Error> {
+            let mut metadata = git_config::file::Metadata::from(git_config::Source::Local);
+            let config_path = remote.repo.git_dir().join("config");
+            metadata.path = Some(config_path.clone());
+            let mut config =
+                git_config::File::from_paths_metadata(Some(metadata), Default::default())?.expect("one file to load");
+            remote.save_as_to(remote_name, &mut config)?;
+            std::fs::write(config_path, config.to_bstring())?;
+            Ok(config)
+        }
+
         let repo = self
             .repo
             .as_mut()
@@ -83,32 +109,6 @@ impl PrepareFetch {
         let (repo, fetch_outcome) = self.fetch_only(progress, should_interrupt)?;
         Ok((crate::clone::PrepareCheckout { repo: repo.into() }, fetch_outcome))
     }
-}
-
-fn replace_changed_local_config(repo: &mut Repository, config: git_config::File<'static>) {
-    let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
-    let ids_to_remove: Vec<_> = repo_config
-        .sections_and_ids()
-        .filter_map(|(s, id)| (s.meta().source == git_config::Source::Local).then(|| id))
-        .collect();
-    for id in ids_to_remove {
-        repo_config.remove_section_by_id(id);
-    }
-    repo_config.append(config);
-}
-
-fn write_remote_to_local_config(
-    remote: &mut crate::Remote<'_>,
-    remote_name: String,
-) -> Result<git_config::File<'static>, Error> {
-    let mut metadata = git_config::file::Metadata::from(git_config::Source::Local);
-    let config_path = remote.repo.git_dir().join("config");
-    metadata.path = Some(config_path.clone());
-    let mut config =
-        git_config::File::from_paths_metadata(Some(metadata), Default::default())?.expect("one file to load");
-    remote.save_as_to(remote_name, &mut config)?;
-    std::fs::write(config_path, config.to_bstring())?;
-    Ok(config)
 }
 
 /// Builder
