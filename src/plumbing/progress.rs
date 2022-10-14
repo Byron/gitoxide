@@ -90,6 +90,26 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned { note: Some("safety is not optional") },
     },
     Record {
+        config: "core.fileMode",
+        usage: Planned { note: Some("Needed for checkout") },
+    },
+    Record {
+        config: "core.trustCTime",
+        usage: Planned { note: Some("Needed for checkout") },
+    },
+    Record {
+        config: "core.checkStat",
+        usage: Planned { note: Some("Needed for checkout") },
+    },
+    Record {
+        config: "core.symlinks",
+        usage: Planned { note: Some("Needed for checkout") },
+    },
+    Record {
+        config: "core.ignorecase",
+        usage: Planned { note: Some("Needed for checkout") },
+    },
+    Record {
         config: "core.protectHFS",
         usage: Planned { note: Some("relevant for checkout on MacOS") },
     },
@@ -119,7 +139,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "checkout.workers",
-        usage: Planned { note: Some("definitely, and we will deviate to allow for parallelism by default unless specified") },
+        usage: InModule {name: "clone::checkout", deviation: Some("if unset, uses all cores instead of just one")},
     },
     Record {
         config: "checkout.thresholdForParallelism",
