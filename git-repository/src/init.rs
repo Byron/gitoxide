@@ -8,6 +8,13 @@ use std::path::Path;
 
 use crate::ThreadSafeRepository;
 
+/// The name of the branch to use if non is configured via git configuration.
+///
+/// # Deviation
+///
+/// We use `main` instead of `master`.
+pub const DEFAULT_BRANCH_NAME: &str = "main";
+
 /// The error returned by [`crate::init()`].
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
@@ -56,8 +63,8 @@ impl ThreadSafeRepository {
             .config
             .resolved
             .string("init", None, "defaultBranch")
-            .unwrap_or_else(|| Cow::Borrowed("main".into()));
-        if branch_name.as_ref() != "main" {
+            .unwrap_or_else(|| Cow::Borrowed(DEFAULT_BRANCH_NAME.into()));
+        if branch_name.as_ref() != DEFAULT_BRANCH_NAME {
             let sym_ref: FullName =
                 format!("refs/heads/{branch_name}")
                     .try_into()

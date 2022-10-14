@@ -16,7 +16,7 @@ pub struct PrepareFetch {
     #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]
     fetch_options: crate::remote::ref_map::Options,
     /// The url to clone from
-    #[allow(dead_code)]
+    #[cfg_attr(not(feature = "blocking-network-client"), allow(dead_code))]
     url: git_url::Url,
 }
 

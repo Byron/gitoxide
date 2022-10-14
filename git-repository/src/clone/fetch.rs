@@ -21,6 +21,15 @@ pub enum Error {
     SaveConfig(#[from] crate::remote::save::AsError),
     #[error("Failed to write repository configuration to disk")]
     SaveConfigIo(#[from] std::io::Error),
+    #[error("The remote didn't advertise a remote reference named HEAD despite us asking for it, making it impossible to know what to checkout")]
+    MissingRemoteHead,
+    #[error("The remote HEAD points to a reference named {head_ref_name:?} which is invalid.")]
+    InvalidHeadRef {
+        source: git_validate::refname::Error,
+        head_ref_name: crate::bstr::BString,
+    },
+    #[error("Failed to update HEAD with values from remote")]
+    HeadUpdate(#[from] crate::reference::edit::Error),
 }
 
 /// Modification
@@ -63,6 +72,72 @@ impl PrepareFetch {
             Ok(config)
         }
 
+        /// HEAD cannot be written by means of refspec by design, so we have to do it manually here. Also create the pointed-to ref
+        /// if we have to, as it might not have been naturally included in the ref-specs.
+        fn update_head(repo: &mut Repository, remote_refs: &[git_protocol::fetch::Ref]) -> Result<(), Error> {
+            use git_ref::store::WriteReflog;
+            use git_ref::transaction::{PreviousValue, RefEdit};
+            use git_ref::Target;
+            use std::convert::TryInto;
+            let (head_peeled_id, head_ref) = remote_refs
+                .iter()
+                .find_map(|r| match r {
+                    git_protocol::fetch::Ref::Symbolic {
+                        full_ref_name,
+                        target,
+                        object,
+                    } if full_ref_name == "HEAD" => Some((object, Some(target))),
+                    git_protocol::fetch::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
+                        Some((object, None))
+                    }
+                    _ => None,
+                })
+                .ok_or(Error::MissingRemoteHead)?;
+
+            repo.refs.write_reflog = WriteReflog::Disable;
+            let name = "HEAD".try_into().expect("valid");
+            match head_ref {
+                Some(referent) => {
+                    let referent: git_ref::FullName = referent.try_into().map_err(|err| Error::InvalidHeadRef {
+                        head_ref_name: referent.to_owned(),
+                        source: err,
+                    })?;
+                    repo.edit_references([
+                        RefEdit {
+                            change: git_ref::transaction::Change::Update {
+                                log: Default::default(),
+                                expected: PreviousValue::Any,
+                                new: Target::Peeled(head_peeled_id.to_owned()),
+                            },
+                            name: referent.clone(),
+                            deref: false,
+                        },
+                        RefEdit {
+                            change: git_ref::transaction::Change::Update {
+                                log: Default::default(),
+                                expected: PreviousValue::Any,
+                                new: Target::Symbolic(referent),
+                            },
+                            name,
+                            deref: false,
+                        },
+                    ])?;
+                }
+                None => {
+                    repo.edit_reference(RefEdit {
+                        change: git_ref::transaction::Change::Update {
+                            log: Default::default(),
+                            expected: PreviousValue::Any,
+                            new: Target::Peeled(head_peeled_id.to_owned()),
+                        },
+                        name,
+                        deref: false,
+                    })?;
+                }
+            };
+            Ok(())
+        }
+
         let repo = self
             .repo
             .as_mut()
@@ -87,6 +162,14 @@ impl PrepareFetch {
         }
 
         let config = write_remote_to_local_config(&mut remote, remote_name)?;
+
+        // Add HEAD after the remote was written to config, we need it to know what to checkout later, and assure
+        // the ref HEAD points to is present no matter what.
+        remote.fetch_specs.push(
+            git_refspec::parse("HEAD".into(), git_refspec::parse::Operation::Fetch)
+                .expect("valid")
+                .to_owned(),
+        );
         let pending_pack: crate::remote::fetch::Prepare<'_, '_, _, _> = remote
             .connect(crate::remote::Direction::Fetch, progress)?
             .prepare_fetch(self.fetch_options.clone())?;
@@ -96,6 +179,8 @@ impl PrepareFetch {
         let outcome = pending_pack.receive(should_interrupt)?;
 
         replace_changed_local_config(repo, config);
+        update_head(repo, &outcome.ref_map.remote_refs)?;
+
         Ok((self.repo.take().expect("still present"), outcome))
     }
 

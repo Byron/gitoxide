@@ -35,7 +35,7 @@ fn fetch_only_with_configuration() -> crate::Result {
         "our added spec was stored as well"
     );
 
-    assert_eq!(out.ref_map.mappings.len(), 13);
+    assert_eq!(out.ref_map.mappings.len(), 14);
     match out.status {
         git_repository::remote::fetch::Status::Change { update_refs, .. } => {
             for edit in &update_refs.edits {
@@ -48,6 +48,13 @@ fn fetch_only_with_configuration() -> crate::Result {
         }
         _ => unreachable!("clones are always causing changes and dry-runs aren't possible"),
     }
+
+    let head = repo.head()?;
+    let referent = head.try_into_referent().expect("symbolic ref is present");
+    assert!(
+        referent.id().object().is_ok(),
+        "the object pointed to by HEAD was fetched as well"
+    );
     Ok(())
 }
 
