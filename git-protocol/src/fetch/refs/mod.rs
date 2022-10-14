@@ -66,9 +66,11 @@ pub enum Ref {
     },
     /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
     Symbolic {
-        /// The name at which the symbolic ref is located, like `refs/heads/main`.
+        /// The name at which the symbolic ref is located, like `HEAD`.
         full_ref_name: BString,
-        /// The path of the ref the symbolic ref points to, see issue [#205] for details
+        /// The path of the ref the symbolic ref points to, like `refs/heads/main`.
+        ///
+        /// See issue [#205] for details
         ///
         /// [#205]: https://github.com/Byron/gitoxide/issues/205
         target: BString,
