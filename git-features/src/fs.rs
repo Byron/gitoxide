@@ -88,6 +88,15 @@ mod snapshot {
         modified: std::time::SystemTime,
     }
 
+    impl<T: Clone + std::fmt::Debug> Clone for Snapshot<T> {
+        fn clone(&self) -> Self {
+            Self {
+                value: self.value.clone(),
+                modified: self.modified.clone(),
+            }
+        }
+    }
+
     /// A snapshot of a resource which is up-to-date in the moment it is retrieved.
     pub type SharedSnapshot<T> = OwnShared<Snapshot<T>>;
 
