@@ -5,6 +5,7 @@ use crate::Repository;
 pub mod main_worktree {
     use crate::clone::PrepareCheckout;
     use crate::Repository;
+    use git_odb::FindExt;
     use std::path::PathBuf;
     use std::sync::atomic::AtomicBool;
 
@@ -14,6 +15,15 @@ pub mod main_worktree {
     pub enum Error {
         #[error("Repository at \"{}\" is a bare repository and cannot have a main worktree checkout", git_dir.display())]
         BareRepository { git_dir: PathBuf },
+        #[error("The object pointed to by HEAD is not a treeish")]
+        NoHeadTree(#[from] crate::object::peel::to_kind::Error),
+        #[error("Could not create index from tree at {id}")]
+        IndexFromTree {
+            id: git_hash::ObjectId,
+            source: git_traverse::tree::breadthfirst::Error,
+        },
+        #[error(transparent)]
+        WriteIndex(#[from] git_index::file::write::Error),
     }
 
     /// Modification
@@ -31,8 +41,22 @@ pub mod main_worktree {
             let _workdir = repo.work_dir().ok_or_else(|| Error::BareRepository {
                 git_dir: repo.git_dir().to_owned(),
             })?;
-            let _index_path = repo.index_path();
-            //     git_worktree::index::checkout(
+            let root_tree = repo
+                .head_id()
+                .expect("head points to an object")
+                .object()
+                .expect("downloaded from remote")
+                .peel_to_tree()?
+                .id;
+            let index = git_index::State::from_tree(&root_tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())
+                .map_err(|err| Error::IndexFromTree {
+                    id: root_tree,
+                    source: err,
+                })?;
+            let mut index = git_index::File::from_state(index, repo.index_path());
+            index.write(Default::default())?;
+
+            // git_worktree::index::checkout(
             //     &mut index,
             //     workdir,
             //     {
