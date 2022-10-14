@@ -2,6 +2,11 @@ mod prefix {
     use git_refspec::{parse::Operation, RefSpec};
 
     #[test]
+    fn head_is_specifically_known() {
+        assert_eq!(parse("HEAD").to_ref().prefix().unwrap(), "HEAD");
+    }
+
+    #[test]
     fn partial_refs_have_no_prefix() {
         assert_eq!(parse("main").to_ref().prefix(), None);
     }
@@ -59,13 +64,12 @@ mod expand_prefixes {
     use git_refspec::parse::Operation;
 
     #[test]
+    fn head_is_specifically_known() {
+        assert_eq!(parse("HEAD"), ["HEAD"]);
+    }
+
+    #[test]
     fn partial_refs_have_many_prefixes() {
-        // "%.*s",
-        // "refs/%.*s",
-        // "refs/tags/%.*s",
-        // "refs/heads/%.*s",
-        // "refs/remotes/%.*s",
-        // "refs/remotes/%.*s/HEAD",
         assert_eq!(
             parse("main"),
             [

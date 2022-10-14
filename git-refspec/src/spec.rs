@@ -134,6 +134,9 @@ impl<'a> RefSpecRef<'a> {
             Operation::Fetch => self.source(),
             Operation::Push => self.destination(),
         }?;
+        if source == "HEAD" {
+            return source.into();
+        }
         let suffix = source.strip_prefix(b"refs/")?;
         let slash_pos = suffix.find_byte(b'/')?;
         let prefix = source[..="refs/".len() + slash_pos].as_bstr();
