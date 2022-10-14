@@ -31,7 +31,30 @@ pub mod main_worktree {
             let _workdir = repo.work_dir().ok_or_else(|| Error::BareRepository {
                 git_dir: repo.git_dir().to_owned(),
             })?;
-
+            let _index_path = repo.index_path();
+            //     git_worktree::index::checkout(
+            //     &mut index,
+            //     workdir,
+            //     {
+            //         let objects = repo.objects.into_arc()?;
+            //         move |oid, buf| {
+            //             objects.find_blob(oid, buf).ok();
+            //             if empty_files {
+            //                 // We always want to query the ODB here…
+            //                 objects.find_blob(oid, buf)?;
+            //                 buf.clear();
+            //                 // …but write nothing
+            //                 Ok(git::objs::BlobRef { data: buf })
+            //             } else {
+            //                 objects.find_blob(oid, buf)
+            //             }
+            //         }
+            //     },
+            //     &mut files,
+            //     &mut bytes,
+            //     should_interrupt,
+            //     opts,
+            // );
             todo!("which branch to use?")
         }
     }

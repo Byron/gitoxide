@@ -66,7 +66,16 @@ fn fetch_and_checkout() -> crate::Result {
     let mut prepare = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?;
     let (mut checkout, _out) =
         prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-    checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+    let repo = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+    let index = repo.index()?;
+    assert_eq!(index.entries().len(), 42, "All entries are known as per HEAD tree");
+
+    let work_dir = repo.work_dir().expect("non-bare");
+    for entry in index.entries() {
+        let entry_path = work_dir.join(git_path::from_bstr(entry.path(&index)));
+        assert!(entry_path.is_file(), "{:?} not found on disk", entry_path)
+    }
     Ok(())
 }
 
