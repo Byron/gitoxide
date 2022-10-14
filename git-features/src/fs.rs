@@ -92,7 +92,7 @@ mod snapshot {
         fn clone(&self) -> Self {
             Self {
                 value: self.value.clone(),
-                modified: self.modified.clone(),
+                modified: self.modified,
             }
         }
     }

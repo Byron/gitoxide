@@ -57,6 +57,6 @@ echo "in root: gitoxide CLI"
 (enter git-odb && indent cargo diet -n --package-size-limit 120KB)
 (enter git-protocol && indent cargo diet -n --package-size-limit 55KB)
 (enter git-packetline && indent cargo diet -n --package-size-limit 35KB)
-(enter git-repository && indent cargo diet -n --package-size-limit 200KB)
+(enter git-repository && indent cargo diet -n --package-size-limit 210KB)
 (enter git-transport && indent cargo diet -n --package-size-limit 60KB)
 (enter gitoxide-core && indent cargo diet -n --package-size-limit 90KB)
