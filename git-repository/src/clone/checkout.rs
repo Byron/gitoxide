@@ -6,6 +6,7 @@ pub mod main_worktree {
     use crate::clone::PrepareCheckout;
     use crate::Repository;
     use git_odb::FindExt;
+    use std::convert::TryInto;
     use std::path::PathBuf;
     use std::sync::atomic::AtomicBool;
 
@@ -24,16 +25,40 @@ pub mod main_worktree {
         },
         #[error(transparent)]
         WriteIndex(#[from] git_index::file::write::Error),
+        #[error("{key}: {message}")]
+        Configuration {
+            key: &'static str,
+            message: &'static str,
+            source: git_config::value::Error,
+        },
     }
 
     /// Modification
     impl PrepareCheckout {
-        /// Checkout the main worktree
+        /// Checkout the main worktree, determining how many threads to use by looking at `checkout.workers`, defaulting to using
+        /// on thread per logical core.
         pub fn main_worktree(
             &mut self,
             _progress: impl crate::Progress,
             _should_interrupt: &AtomicBool,
         ) -> Result<Repository, Error> {
+            fn checkout_thread_limit_from_config(repo: &Repository) -> Result<Option<usize>, Error> {
+                repo.config
+                    .resolved
+                    .integer("checkout", None, "workers")
+                    .map(|val| match val {
+                        Ok(v) if v < 0 => Ok(0),
+                        Ok(v) => Ok(v.try_into().expect("positive i64 can always be usize on 64 bit")),
+                        Err(_err) if repo.options.lenient_config => Ok(1),
+                        Err(err) => Err(Error::Configuration {
+                            key: "checkout.workers",
+                            message: "",
+                            source: err,
+                        }),
+                    })
+                    .transpose()
+            }
+
             let repo = self
                 .repo
                 .as_ref()
@@ -55,6 +80,18 @@ pub mod main_worktree {
                 })?;
             let mut index = git_index::File::from_state(index, repo.index_path());
             index.write(Default::default())?;
+
+            let thread_limit = checkout_thread_limit_from_config(repo)?;
+            let _opts = git_worktree::index::checkout::Options {
+                fs: Default::default(),
+                thread_limit,
+                destination_is_initially_empty: true,
+                overwrite_existing: false,
+                keep_going: false,
+                trust_ctime: true,
+                check_stat: true,
+                attribute_globals: Default::default(),
+            };
 
             // git_worktree::index::checkout(
             //     &mut index,
