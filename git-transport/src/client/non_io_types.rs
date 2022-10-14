@@ -48,7 +48,7 @@ pub(crate) mod connect {
         },
         #[error("The '{0}' protocol is currently unsupported")]
         UnsupportedScheme(git_url::Scheme),
-        #[cfg(all(not(feature = "http-client-curl"), not(feature = "http-client-reqwest")))]
+        #[cfg(not(any(feature = "http-client-curl", feature = "http-client-reqwest")))]
         #[error(
             "'{0}' is not compiled in. Compile with the 'http-client-curl' or 'http-client-reqwest' cargo feature"
         )]
