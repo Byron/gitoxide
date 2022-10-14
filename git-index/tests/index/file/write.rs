@@ -1,22 +1,18 @@
+use crate::index::Fixture::*;
 use filetime::FileTime;
-use git_index::{decode, entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
+use git_index::{entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
 
-use crate::{fixture_index_path, index::file::read::loose_file_path};
+use crate::{fixture_index_path, loose_file_path};
 
 /// Round-trips should eventually be possible for all files we have, as we write them back exactly as they were read.
 #[test]
 fn roundtrips() -> crate::Result {
-    enum Kind {
-        Generated(&'static str),
-        Loose(&'static str),
-    }
-    use Kind::*;
     let input = [
         (Loose("extended-flags"), all_ext_but_eoie()),
         (Loose("conflicting-file"), all_ext_but_eoie()),
         (Loose("very-long-path"), all_ext_but_eoie()),
-        (Generated("v2"), Options::default()),
-        (Generated("V2_empty"), Options::default()),
+        (Generated("v2"), Default::default()),
+        (Generated("V2_empty"), Default::default()),
         (Generated("v2_more_files"), all_ext_but_eoie()),
         (Generated("v2_all_file_kinds"), all_ext_but_eoie()),
     ];
@@ -26,18 +22,18 @@ fn roundtrips() -> crate::Result {
             Generated(name) => (fixture_index_path(name), name),
             Loose(name) => (loose_file_path(name), name),
         };
-        let expected = git_index::File::at(&path, decode::Options::default())?;
+        let expected = git_index::File::at(&path, git_hash::Kind::Sha1, Default::default())?;
         let expected_bytes = std::fs::read(&path)?;
         let mut out_bytes = Vec::new();
 
-        let actual_version = expected.write_to(&mut out_bytes, options)?;
+        let (actual_version, _digest) = expected.write_to(&mut out_bytes, options)?;
         assert_eq!(
             actual_version,
             expected.version(),
             "{} didn't write the expected version",
             fixture
         );
-        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), decode::Options::default())?;
+        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
 
         compare_states(&actual, actual_version, &expected, options, fixture);
         compare_raw_bytes(&out_bytes, &expected_bytes, fixture);
@@ -48,17 +44,8 @@ fn roundtrips() -> crate::Result {
 #[test]
 fn state_comparisons_with_various_extension_configurations() {
     fn options_with(extensions: write::Extensions) -> Options {
-        Options {
-            hash_kind: git_hash::Kind::Sha1,
-            extensions,
-        }
+        Options { extensions }
     }
-
-    enum Kind {
-        Generated(&'static str),
-        Loose(&'static str),
-    }
-    use Kind::*;
 
     for fixture in [
         Loose("extended-flags"),
@@ -87,16 +74,15 @@ fn state_comparisons_with_various_extension_configurations() {
                 end_of_index_entry: true,
             }),
         ] {
-            let (path, fixture) = match fixture {
-                Generated(name) => (fixture_index_path(name), name),
-                Loose(name) => (loose_file_path(name), name),
-            };
-            let expected = git_index::File::at(&path, Default::default()).unwrap();
+            let path = fixture.to_path();
+            let fixture = fixture.to_name();
+            let expected = git_index::File::at(&path, git_hash::Kind::Sha1, Default::default()).unwrap();
 
             let mut out = Vec::<u8>::new();
-            let actual_version = expected.write_to(&mut out, options).unwrap();
+            let (actual_version, _digest) = expected.write_to(&mut out, options).unwrap();
 
-            let (actual, _) = State::from_bytes(&out, FileTime::now(), decode::Options::default()).unwrap();
+            let (actual, _) =
+                State::from_bytes(&out, FileTime::now(), git_hash::Kind::Sha1, Default::default()).unwrap();
             compare_states(&actual, actual_version, &expected, options, fixture);
         }
     }
@@ -104,12 +90,12 @@ fn state_comparisons_with_various_extension_configurations() {
 
 #[test]
 fn extended_flags_automatically_upgrade_the_version_to_avoid_data_loss() -> crate::Result {
-    let mut expected = git_index::File::at(fixture_index_path("v2"), Default::default())?;
+    let mut expected = git_index::File::at(fixture_index_path("v2"), git_hash::Kind::Sha1, Default::default())?;
     assert_eq!(expected.version(), Version::V2);
     expected.entries_mut()[0].flags.insert(entry::Flags::EXTENDED);
 
     let mut buf = Vec::new();
-    let actual_version = expected.write_to(&mut buf, Default::default())?;
+    let (actual_version, _digest) = expected.write_to(&mut buf, Default::default())?;
     assert_eq!(actual_version, Version::V3, "extended flags need V3");
 
     Ok(())
@@ -169,6 +155,6 @@ fn all_ext_but_eoie() -> Options {
             end_of_index_entry: false,
             tree_cache: true,
         },
-        ..Options::default()
+        ..Default::default()
     }
 }

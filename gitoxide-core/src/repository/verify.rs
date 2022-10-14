@@ -51,7 +51,9 @@ pub fn integrity(
             let objects = repo.objects;
             move |oid, buf: &mut Vec<u8>| objects.find_tree_iter(oid, buf).ok()
         })?;
-        outcome.progress.info(format!("Index at '{}' OK", index.path.display()));
+        outcome
+            .progress
+            .info(format!("Index at '{}' OK", index.path().display()));
     }
     match output_statistics {
         Some(OutputFormat::Human) => writeln!(out, "Human output is currently unsupported, use JSON instead")?,

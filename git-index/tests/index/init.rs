@@ -4,7 +4,7 @@ use git_repository::prelude::FindExt;
 use git_testtools::scripted_fixture_repo_read_only;
 
 #[test]
-fn tree_to_state() -> crate::Result {
+fn from_tree() -> crate::Result {
     let fixtures = [
         "make_index/v2.sh",
         "make_index/v2_more_files.sh",

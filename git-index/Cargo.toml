@@ -35,6 +35,7 @@ git-hash = { version = "^0.9.11", path = "../git-hash" }
 git-bitmap = { version = "^0.1.2", path = "../git-bitmap" }
 git-object = { version = "^0.22.0", path = "../git-object" }
 git-traverse = { version = "^0.18.0", path = "../git-traverse" }
+git-lock = { version = "2.1.1", path = "../git-lock" }
 
 thiserror = "1.0.32"
 memmap2 = "0.5.0"

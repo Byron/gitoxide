@@ -30,10 +30,8 @@ use git_features::parallel::InOrderIter;
 use crate::util::read_u32;
 
 /// Options to define how to decode an index state [from bytes][State::from_bytes()].
-#[derive(Default)]
+#[derive(Default, Clone, Copy)]
 pub struct Options {
-    /// The kind of object hash to assume when decoding object ids.
-    pub object_hash: git_hash::Kind,
     /// If Some(_), we are allowed to use more than one thread. If Some(N), use no more than N threads. If Some(0)|None, use as many threads
     /// as there are logical cores.
     ///
@@ -46,12 +44,13 @@ pub struct Options {
 }
 
 impl State {
-    /// Decode an index state from `data` and store `timestamp` in the resulting instance for pass-through.
+    /// Decode an index state from `data` and store `timestamp` in the resulting instance for pass-through, assuming `object_hash`
+    /// to be used through the file.
     pub fn from_bytes(
         data: &[u8],
         timestamp: FileTime,
+        object_hash: git_hash::Kind,
         Options {
-            object_hash,
             thread_limit,
             min_extension_block_in_bytes_for_threading,
         }: Options,
@@ -210,6 +209,7 @@ impl State {
 
         Ok((
             State {
+                object_hash,
                 timestamp,
                 version,
                 entries,

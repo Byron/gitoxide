@@ -77,8 +77,8 @@ impl crate::Repository {
             .transpose()?;
         git_index::File::at(
             self.index_path(),
+            self.object_hash(),
             git_index::decode::Options {
-                object_hash: self.object_hash(),
                 thread_limit,
                 min_extension_block_in_bytes_for_threading: 0,
             },

@@ -1,6 +1,5 @@
-use std::path::Path;
-
 use git_repository as git;
+use std::path::Path;
 
 pub struct Options {
     pub object_hash: git::hash::Kind,
@@ -13,14 +12,7 @@ pub use entries::entries;
 pub mod information;
 
 fn parse_file(index_path: impl AsRef<Path>, object_hash: git::hash::Kind) -> anyhow::Result<git::index::File> {
-    git::index::File::at(
-        index_path.as_ref(),
-        git::index::decode::Options {
-            object_hash,
-            ..Default::default()
-        },
-    )
-    .map_err(Into::into)
+    git::index::File::at(index_path.as_ref(), object_hash, Default::default()).map_err(Into::into)
 }
 
 pub mod checkout_exclusive {

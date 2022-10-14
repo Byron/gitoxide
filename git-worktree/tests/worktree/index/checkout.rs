@@ -391,7 +391,7 @@ fn checkout_index_in_tmp_dir_opts(
 )> {
     let source_tree = fixture_path(name);
     let git_dir = source_tree.join(".git");
-    let mut index = git_index::File::at(git_dir.join("index"), Default::default())?;
+    let mut index = git_index::File::at(git_dir.join("index"), git_hash::Kind::Sha1, Default::default())?;
     let odb = git_odb::at(git_dir.join("objects"))?.into_inner().into_arc()?;
     let destination = tempfile::tempdir_in(std::env::current_dir()?)?;
     prep_dest(destination.path())?;

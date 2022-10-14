@@ -63,9 +63,9 @@ pub(crate) mod function {
                     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)?
                 })
             }
-            #[cfg(not(feature = "http-client-curl"))]
+            #[cfg(not(any(feature = "http-client-curl", feature = "http-client-reqwest")))]
             git_url::Scheme::Https | git_url::Scheme::Http => return Err(Error::CompiledWithoutHttp(url.scheme)),
-            #[cfg(feature = "http-client-curl")]
+            #[cfg(any(feature = "http-client-curl", feature = "http-client-reqwest"))]
             git_url::Scheme::Https | git_url::Scheme::Http => Box::new(crate::client::http::connect(
                 &url.to_bstring().to_string(),
                 desired_version,

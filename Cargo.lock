@@ -1399,6 +1399,7 @@ dependencies = [
  "git-bitmap",
  "git-features",
  "git-hash",
+ "git-lock",
  "git-object",
  "git-repository",
  "git-testtools",
