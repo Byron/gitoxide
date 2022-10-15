@@ -122,15 +122,10 @@ impl Cache {
             overwrite_existing: false,
             keep_going: false,
             trust_ctime: boolean(self, "core.trustCTime", true)?,
-            check_stat: self.resolved.string("core", None, "checkStat").map_or(true, |v| {
-                if v.as_ref() == "default" {
-                    true
-                } else if v.as_ref() == "minimal" {
-                    false
-                } else {
-                    true
-                }
-            }),
+            check_stat: self
+                .resolved
+                .string("core", None, "checkStat")
+                .map_or(true, |v| v.as_ref() != "minimal"),
             attribute_globals: Default::default(),
         })
     }
