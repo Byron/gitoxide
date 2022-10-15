@@ -129,7 +129,11 @@ impl Cache {
         }
 
         fn assemble_attribute_globals(me: &Cache) -> Result<git_attributes::MatchGroup, checkout_options::Error> {
-            let _attributes_file = me.trusted_file_path("core", None, "attributesFile").transpose()?;
+            let _attributes_file = match me.trusted_file_path("core", None, "attributesFile").transpose()? {
+                Some(attributes) => Some(attributes.into_owned()),
+                None => me.xdg_config_path("attributes").ok().flatten(),
+            };
+            // let group = git_attributes::MatchGroup::<git_attributes::Attributes>::from_git_dir()
             Ok(Default::default())
         }
 
@@ -153,13 +157,24 @@ impl Cache {
             attribute_globals: assemble_attribute_globals(self)?,
         })
     }
-    pub fn xdg_config_path(
+    pub(crate) fn xdg_config_path(
         &self,
         resource_file_name: &str,
     ) -> Result<Option<PathBuf>, git_sec::permission::Error<PathBuf>> {
         std::env::var_os("XDG_CONFIG_HOME")
-            .map(|path| (path, &self.xdg_config_home_env))
-            .or_else(|| std::env::var_os("HOME").map(|path| (path, &self.home_env)))
+            .map(|path| (PathBuf::from(path), &self.xdg_config_home_env))
+            .or_else(|| {
+                std::env::var_os("HOME").map(|path| {
+                    (
+                        {
+                            let mut p = PathBuf::from(path);
+                            p.push(".config");
+                            p
+                        },
+                        &self.home_env,
+                    )
+                })
+            })
             .and_then(|(base, permission)| {
                 let resource = std::path::PathBuf::from(base).join("git").join(resource_file_name);
                 permission.check(resource).transpose()
@@ -171,7 +186,7 @@ impl Cache {
     ///
     /// We never fail for here even if the permission is set to deny as we `git-config` will fail later
     /// if it actually wants to use the home directory - we don't want to fail prematurely.
-    pub fn home_dir(&self) -> Option<PathBuf> {
+    pub(crate) fn home_dir(&self) -> Option<PathBuf> {
         std::env::var_os("HOME")
             .map(PathBuf::from)
             .and_then(|path| self.home_env.check_opt(path))
