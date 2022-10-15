@@ -69,6 +69,20 @@ pub enum Error {
     ConfigOverrides(#[from] overrides::Error),
 }
 
+///
+pub mod checkout_options {
+    /// The error produced when collecting all information needed for checking out files into a worktree.
+    #[derive(Debug, thiserror::Error)]
+    #[allow(missing_docs)]
+    pub enum Error {
+        #[error("{key} could not be decoded")]
+        Configuration {
+            key: &'static str,
+            source: git_config::value::Error,
+        },
+    }
+}
+
 /// Utility type to keep pre-obtained configuration values, only for those required during initial setup
 /// and other basic operations that are common enough to warrant a permanent cache.
 ///

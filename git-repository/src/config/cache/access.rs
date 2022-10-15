@@ -2,6 +2,7 @@ use std::{convert::TryInto, path::PathBuf, time::Duration};
 
 use git_lock::acquire::Fail;
 
+use crate::config::checkout_options;
 use crate::{config::Cache, remote, repository::identity};
 
 /// Access
@@ -63,16 +64,53 @@ impl Cache {
         let home = self.home_dir();
         let install_dir = crate::path::install_dir().ok();
         let ctx = crate::config::cache::interpolate_context(install_dir.as_deref(), home.as_deref());
-        match self
-            .resolved
-            .path_filter("core", None, "excludesFile", &mut self.filter_config_section.clone())
-            .map(|p| p.interpolate(ctx).map(|p| p.into_owned()))
-            .transpose()
-        {
-            Ok(f) => Ok(f),
+        self.apply_leniency(
+            self.resolved
+                .path_filter("core", None, "excludesFile", &mut self.filter_config_section.clone())
+                .map(|p| p.interpolate(ctx).map(|p| p.into_owned()))
+                .transpose(),
+        )
+    }
+
+    pub(crate) fn apply_leniency<T, E>(&self, res: Result<Option<T>, E>) -> Result<Option<T>, E> {
+        match res {
+            Ok(v) => Ok(v),
             Err(_err) if self.lenient_config => Ok(None),
             Err(err) => Err(err),
         }
+    }
+
+    /// Collect everything needed to checkout files into a worktree.
+    /// Note that some of the options being returned will be defaulted so safe settings, the caller might have to override them
+    /// depending on the use-case.
+    pub(crate) fn checkout_options(&self) -> Result<git_worktree::index::checkout::Options, checkout_options::Error> {
+        fn checkout_thread_limit_from_config(
+            config: &git_config::File<'static>,
+        ) -> Result<Option<usize>, checkout_options::Error> {
+            config
+                .integer("checkout", None, "workers")
+                .map(|val| match val {
+                    Ok(v) if v < 0 => Ok(0),
+                    Ok(v) => Ok(v.try_into().expect("positive i64 can always be usize on 64 bit")),
+                    Err(err) => Err(checkout_options::Error::Configuration {
+                        key: "checkout.workers",
+                        source: err,
+                    }),
+                })
+                .transpose()
+        }
+
+        let thread_limit = self.apply_leniency(checkout_thread_limit_from_config(&self.resolved))?;
+        Ok(git_worktree::index::checkout::Options {
+            fs: Default::default(),
+            thread_limit,
+            destination_is_initially_empty: false,
+            overwrite_existing: false,
+            keep_going: false,
+            trust_ctime: true,
+            check_stat: true,
+            attribute_globals: Default::default(),
+        })
     }
 
     /// Return a path by using the `$XDF_CONFIG_HOME` or `$HOME/.config/…` environment variables locations.
