@@ -80,6 +80,8 @@ pub mod checkout_options {
             key: &'static str,
             source: git_config::value::Error,
         },
+        #[error("Failed to interpolate the attribute file configured at `core.attributesFile`")]
+        AttributesFileInterpolation(#[from] git_config::path::interpolate::Error),
     }
 }
 

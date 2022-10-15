@@ -128,6 +128,11 @@ impl Cache {
                 .unwrap_or(default))
         }
 
+        fn assemble_attribute_globals(me: &Cache) -> Result<git_attributes::MatchGroup, checkout_options::Error> {
+            let _attributes_file = me.trusted_file_path("core", None, "attributesFile").transpose()?;
+            Ok(Default::default())
+        }
+
         let thread_limit = self.apply_leniency(checkout_thread_limit_from_config(&self.resolved))?;
         Ok(git_worktree::index::checkout::Options {
             fs: git_worktree::fs::Capabilities {
@@ -145,7 +150,7 @@ impl Cache {
                 .resolved
                 .string("core", None, "checkStat")
                 .map_or(true, |v| v.as_ref() != "minimal"),
-            attribute_globals: Default::default(),
+            attribute_globals: assemble_attribute_globals(self)?,
         })
     }
     pub fn xdg_config_path(
