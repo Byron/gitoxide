@@ -60,16 +60,13 @@ impl Cache {
     }
 
     /// The path to the user-level excludes file to ignore certain files in the worktree.
-    pub(crate) fn excludes_file(&self) -> Result<Option<PathBuf>, git_config::path::interpolate::Error> {
+    pub(crate) fn excludes_file(&self) -> Option<Result<PathBuf, git_config::path::interpolate::Error>> {
         let home = self.home_dir();
         let install_dir = crate::path::install_dir().ok();
         let ctx = crate::config::cache::interpolate_context(install_dir.as_deref(), home.as_deref());
-        self.apply_leniency(
-            self.resolved
-                .path_filter("core", None, "excludesFile", &mut self.filter_config_section.clone())
-                .map(|p| p.interpolate(ctx).map(|p| p.into_owned()))
-                .transpose(),
-        )
+        self.resolved
+            .path_filter("core", None, "excludesFile", &mut self.filter_config_section.clone())
+            .map(|p| p.interpolate(ctx).map(|p| p.into_owned()))
     }
 
     pub(crate) fn apply_leniency<T, E>(&self, res: Result<Option<T>, E>) -> Result<Option<T>, E> {

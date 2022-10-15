@@ -137,7 +137,7 @@ pub mod excludes {
                 overrides.unwrap_or_default(),
                 git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(
                     repo.git_dir(),
-                    match repo.config.excludes_file()?.as_ref() {
+                    match repo.config.excludes_file().transpose()?.as_ref() {
                         Some(user_path) => Some(user_path.to_owned()),
                         None => repo.config.xdg_config_path("ignore")?,
                     },
