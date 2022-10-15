@@ -103,7 +103,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.checkStat",
-        usage: Planned { note: Some("Needed for checkout") },
+        usage: Planned { note: Some("Needed for checkout - read from config but not used yet further down") },
     },
     Record {
         config: "core.symlinks",
