@@ -69,11 +69,12 @@ impl Cache {
             .map(|p| p.interpolate(ctx).map(|p| p.into_owned()))
     }
 
-    pub(crate) fn apply_leniency<T, E>(&self, res: Result<Option<T>, E>) -> Result<Option<T>, E> {
+    pub(crate) fn apply_leniency<T, E>(&self, res: Option<Result<T, E>>) -> Result<Option<T>, E> {
         match res {
-            Ok(v) => Ok(v),
-            Err(_err) if self.lenient_config => Ok(None),
-            Err(err) => Err(err),
+            Some(Ok(v)) => Ok(Some(v)),
+            Some(Err(_err)) if self.lenient_config => Ok(None),
+            Some(Err(err)) => Err(err),
+            None => Ok(None),
         }
     }
 
@@ -83,18 +84,15 @@ impl Cache {
     pub(crate) fn checkout_options(&self) -> Result<git_worktree::index::checkout::Options, checkout_options::Error> {
         fn checkout_thread_limit_from_config(
             config: &git_config::File<'static>,
-        ) -> Result<Option<usize>, checkout_options::Error> {
-            config
-                .integer("checkout", None, "workers")
-                .map(|val| match val {
-                    Ok(v) if v < 0 => Ok(0),
-                    Ok(v) => Ok(v.try_into().expect("positive i64 can always be usize on 64 bit")),
-                    Err(err) => Err(checkout_options::Error::Configuration {
-                        key: "checkout.workers",
-                        source: err,
-                    }),
-                })
-                .transpose()
+        ) -> Option<Result<usize, checkout_options::Error>> {
+            config.integer("checkout", None, "workers").map(|val| match val {
+                Ok(v) if v < 0 => Ok(0),
+                Ok(v) => Ok(v.try_into().expect("positive i64 can always be usize on 64 bit")),
+                Err(err) => Err(checkout_options::Error::Configuration {
+                    key: "checkout.workers",
+                    source: err,
+                }),
+            })
         }
 
         fn boolean(me: &Cache, full_key: &'static str, default: bool) -> Result<bool, checkout_options::Error> {
@@ -103,7 +101,7 @@ impl Cache {
             let key = tokens.next().expect("key");
             assert!(tokens.next().is_none(), "core.<key>");
             Ok(me
-                .apply_leniency(me.resolved.boolean(section, None, key).transpose())
+                .apply_leniency(me.resolved.boolean(section, None, key))
                 .map_err(|err| checkout_options::Error::Configuration {
                     key: full_key,
                     source: err,
