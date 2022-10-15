@@ -464,6 +464,29 @@ pub fn show_progress() -> anyhow::Result<()> {
     };
 
     println!("{}", sorted.table().with(Style::blank()));
-    println!("\nTotal records: {}", GIT_CONFIG.len());
+    println!(
+        "\nTotal records: {} ({perfect_icon} = {perfect}, {deviation_icon} = {deviation}, {planned_icon} = {planned})",
+        GIT_CONFIG.len(),
+        perfect_icon = InModule {
+            name: "",
+            deviation: None
+        }
+        .icon(),
+        deviation_icon = InModule {
+            name: "",
+            deviation: Some("")
+        }
+        .icon(),
+        planned_icon = Planned { note: None }.icon(),
+        planned = GIT_CONFIG.iter().filter(|e| matches!(e.usage, Planned { .. })).count(),
+        perfect = GIT_CONFIG
+            .iter()
+            .filter(|e| matches!(e.usage, InModule { deviation, .. } if deviation.is_none()))
+            .count(),
+        deviation = GIT_CONFIG
+            .iter()
+            .filter(|e| matches!(e.usage, InModule { deviation, .. } if deviation.is_some()))
+            .count()
+    );
     Ok(())
 }
