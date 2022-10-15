@@ -100,20 +100,37 @@ impl Cache {
                 .transpose()
         }
 
+        fn boolean(me: &Cache, full_key: &'static str, default: bool) -> Result<bool, checkout_options::Error> {
+            let mut tokens = full_key.split('.');
+            let section = tokens.next().expect("section");
+            let key = tokens.next().expect("key");
+            assert!(tokens.next().is_none(), "core.<key>");
+            Ok(me
+                .apply_leniency(me.resolved.boolean(section, None, key).transpose())
+                .map_err(|err| checkout_options::Error::Configuration {
+                    key: full_key,
+                    source: err,
+                })?
+                .unwrap_or(default))
+        }
+
         let thread_limit = self.apply_leniency(checkout_thread_limit_from_config(&self.resolved))?;
         Ok(git_worktree::index::checkout::Options {
-            fs: Default::default(),
+            fs: git_worktree::fs::Capabilities {
+                precompose_unicode: boolean(self, "core.precomposeUnicode", false)?,
+                ignore_case: boolean(self, "core.ignoreCase", false)?,
+                executable_bit: boolean(self, "core.fileMode", true)?,
+                symlink: boolean(self, "core.symlinks", true)?,
+            },
             thread_limit,
             destination_is_initially_empty: false,
             overwrite_existing: false,
             keep_going: false,
-            trust_ctime: true,
+            trust_ctime: boolean(self, "core.trustCTime", true)?,
             check_stat: true,
             attribute_globals: Default::default(),
         })
     }
-
-    /// Return a path by using the `$XDF_CONFIG_HOME` or `$HOME/.config/…` environment variables locations.
     pub fn xdg_config_path(
         &self,
         resource_file_name: &str,
