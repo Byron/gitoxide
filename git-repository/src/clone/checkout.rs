@@ -59,7 +59,7 @@ pub mod main_worktree {
             let mut index = git_index::File::from_state(index, repo.index_path());
             index.write(Default::default())?;
 
-            let mut opts = repo.config.checkout_options()?;
+            let mut opts = repo.config.checkout_options(repo.git_dir())?;
             opts.destination_is_initially_empty = true;
             // git_worktree::index::checkout(
             //     &mut index,

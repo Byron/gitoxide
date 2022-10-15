@@ -100,7 +100,10 @@ impl Cache {
     /// Collect everything needed to checkout files into a worktree.
     /// Note that some of the options being returned will be defaulted so safe settings, the caller might have to override them
     /// depending on the use-case.
-    pub(crate) fn checkout_options(&self) -> Result<git_worktree::index::checkout::Options, checkout_options::Error> {
+    pub(crate) fn checkout_options(
+        &self,
+        git_dir: &std::path::Path,
+    ) -> Result<git_worktree::index::checkout::Options, checkout_options::Error> {
         fn checkout_thread_limit_from_config(
             config: &git_config::File<'static>,
         ) -> Option<Result<usize, checkout_options::Error>> {
@@ -128,12 +131,15 @@ impl Cache {
                 .unwrap_or(default))
         }
 
-        fn assemble_attribute_globals(me: &Cache) -> Result<git_attributes::MatchGroup, checkout_options::Error> {
+        fn assemble_attribute_globals(
+            me: &Cache,
+            _git_dir: &std::path::Path,
+        ) -> Result<git_attributes::MatchGroup, checkout_options::Error> {
             let _attributes_file = match me.trusted_file_path("core", None, "attributesFile").transpose()? {
                 Some(attributes) => Some(attributes.into_owned()),
                 None => me.xdg_config_path("attributes").ok().flatten(),
             };
-            // let group = git_attributes::MatchGroup::<git_attributes::Attributes>::from_git_dir()
+            // TODO: implement git_attributes::MatchGroup::<git_attributes::Attributes>::from_git_dir(), similar to what's done for `Ignore`.
             Ok(Default::default())
         }
 
@@ -154,7 +160,7 @@ impl Cache {
                 .resolved
                 .string("core", None, "checkStat")
                 .map_or(true, |v| v.as_ref() != "minimal"),
-            attribute_globals: assemble_attribute_globals(self)?,
+            attribute_globals: assemble_attribute_globals(self, git_dir)?,
         })
     }
     pub(crate) fn xdg_config_path(

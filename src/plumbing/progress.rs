@@ -216,6 +216,10 @@ static GIT_CONFIG: &[Record] = &[
         },
     },
     Record {
+        config: "core.attributesFile",
+        usage: Planned {note: Some("for checkout - it's already queried but needs building of attributes group, and of course support during checkout")},
+    },
+    Record {
         config: "core.abbrev",
         usage: InModule {
             name: "config::cache",
