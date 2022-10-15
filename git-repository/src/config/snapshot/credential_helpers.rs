@@ -19,6 +19,8 @@ mod error {
             section: BString,
             source: git_config::value::Error,
         },
+        #[error("core.askpass could not be read")]
+        CoreAskpass(#[from] git_config::path::interpolate::Error),
     }
 }
 
@@ -122,8 +124,14 @@ impl Snapshot<'_> {
 
         let allow_git_env = self.repo.options.permissions.env.git_prefix.is_allowed();
         let allow_ssh_env = self.repo.options.permissions.env.ssh_prefix.is_allowed();
-        let prompt_options =
-            git_prompt::Options::default().apply_environment(allow_git_env, allow_ssh_env, allow_git_env);
+        let prompt_options = git_prompt::Options {
+            askpass: self
+                .trusted_path("core.askpass")
+                .transpose()?
+                .map(|c| Cow::Owned(c.into_owned())),
+            ..Default::default()
+        }
+        .apply_environment(allow_git_env, allow_ssh_env, allow_git_env);
         Ok((
             git_credentials::helper::Cascade {
                 programs,
