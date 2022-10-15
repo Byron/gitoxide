@@ -91,11 +91,15 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.fileMode",
-        usage: Planned { note: Some("Needed for checkout") },
+        usage: InModule {name: "config", deviation: None},
+    },
+    Record {
+        config: "core.hideDotFiles",
+        usage: Planned {note: Some("Seems useful, but needs demand from windows users")}
     },
     Record {
         config: "core.trustCTime",
-        usage: Planned { note: Some("Needed for checkout") },
+        usage: Planned { note: Some("Needed for checkout - read from config but not used yet") },
     },
     Record {
         config: "core.checkStat",
@@ -103,7 +107,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.symlinks",
-        usage: Planned { note: Some("Needed for checkout") },
+        usage: InModule {name: "config", deviation: None},
     },
     Record {
         config: "core.packedGitWindowSize",
@@ -131,7 +135,11 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.ignorecase",
-        usage: Planned { note: Some("Needed for checkout") },
+        usage: InModule {name: "config", deviation: None}
+    },
+    Record {
+        config: "core.precomposeUnicode",
+        usage: InModule {name: "config", deviation: Some("This must be explicitly handled when data is coming into the program to fully work")}
     },
     Record {
         config: "core.protectHFS",
