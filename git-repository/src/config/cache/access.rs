@@ -182,7 +182,7 @@ impl Cache {
                 })
             })
             .and_then(|(base, permission)| {
-                let resource = std::path::PathBuf::from(base).join("git").join(resource_file_name);
+                let resource = base.join("git").join(resource_file_name);
                 permission.check(resource).transpose()
             })
             .transpose()
