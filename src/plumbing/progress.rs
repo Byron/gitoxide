@@ -106,6 +106,30 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned { note: Some("Needed for checkout") },
     },
     Record {
+        config: "core.packedGitWindowSize",
+        usage: NotPlanned { reason: "an optimization for handling many large packs more efficiently seems unnecessary" }
+    },
+    Record {
+        config: "core.packedGitLimit",
+        usage: NotApplicable { reason: "we target 32bit systems only and don't use a windowing mechanism" }
+    },
+    Record {
+        config: "core.deltaBaseCacheLimit",
+        usage: NotApplicable { reason: "we use a small 64 slot pack delta cache by default, which can be replaced with larger caches as determined by the algorithm. This keeps memory usage low and is fast enough" }
+    },
+    Record {
+        config: "core.bigFileThreshold",
+        usage: Planned { note: Some("unfortunately we can't stream packed files yet, even if not delta-compressed, but respecting the threshold for other operations is definitely a must") }
+    },
+    Record {
+        config: "core.compression",
+        usage: Planned { note: Some("Allow to remove similar hardcoded value - passing it through will be some effort") },
+    },
+    Record {
+        config: "core.loosecompression",
+        usage: Planned { note: None },
+    },
+    Record {
         config: "core.ignorecase",
         usage: Planned { note: Some("Needed for checkout") },
     },
@@ -187,6 +211,13 @@ static GIT_CONFIG: &[Record] = &[
         config: "core.abbrev",
         usage: InModule {
             name: "config::cache",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "core.askPass",
+        usage: InModule {
+            name: "config::snapshot::credential_helpers",
             deviation: None,
         },
     },
