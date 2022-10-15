@@ -60,16 +60,18 @@ fn fetch_only_with_configuration() -> crate::Result {
 
 #[test]
 #[cfg(feature = "blocking-network-client")]
-#[ignore]
 fn fetch_and_checkout() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
-    let mut prepare = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?;
-    let (mut checkout, _out) =
-        prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-    let repo = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+    let tmp = git_testtools::tempfile::TempDir::new().unwrap();
+    let mut prepare = git::prepare_clone(remote::repo("base").path(), tmp.path()).unwrap();
+    let (mut checkout, _out) = prepare
+        .fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())
+        .unwrap();
+    let repo = checkout
+        .main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())
+        .unwrap();
 
-    let index = repo.index()?;
-    assert_eq!(index.entries().len(), 42, "All entries are known as per HEAD tree");
+    let index = repo.index().unwrap();
+    assert_eq!(index.entries().len(), 1, "All entries are known as per HEAD tree");
 
     let work_dir = repo.work_dir().expect("non-bare");
     for entry in index.entries() {
