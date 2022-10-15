@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::{convert::TryInto, path::PathBuf, time::Duration};
 
 use git_lock::acquire::Fail;
@@ -61,12 +62,30 @@ impl Cache {
 
     /// The path to the user-level excludes file to ignore certain files in the worktree.
     pub(crate) fn excludes_file(&self) -> Option<Result<PathBuf, git_config::path::interpolate::Error>> {
-        let home = self.home_dir();
+        self.trusted_file_path("core", None, "excludesFile")?
+            .map(|p| p.into_owned())
+            .into()
+    }
+
+    /// A helper to obtain a file from trusted configuration at `section_name`, `subsection_name`, and `key`, which is interpolated
+    /// if present.
+    pub(crate) fn trusted_file_path(
+        &self,
+        section_name: impl AsRef<str>,
+        subsection_name: Option<&str>,
+        key: impl AsRef<str>,
+    ) -> Option<Result<Cow<'_, std::path::Path>, git_config::path::interpolate::Error>> {
+        let path = self.resolved.path_filter(
+            section_name,
+            subsection_name,
+            key,
+            &mut self.filter_config_section.clone(),
+        )?;
+
         let install_dir = crate::path::install_dir().ok();
+        let home = self.home_dir();
         let ctx = crate::config::cache::interpolate_context(install_dir.as_deref(), home.as_deref());
-        self.resolved
-            .path_filter("core", None, "excludesFile", &mut self.filter_config_section.clone())
-            .map(|p| p.interpolate(ctx).map(|p| p.into_owned()))
+        Some(path.interpolate(ctx))
     }
 
     pub(crate) fn apply_leniency<T, E>(&self, res: Option<Result<T, E>>) -> Result<Option<T>, E> {

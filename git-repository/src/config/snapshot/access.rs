@@ -4,7 +4,7 @@ use git_features::threading::OwnShared;
 
 use crate::{
     bstr::BStr,
-    config::{cache::interpolate_context, CommitAutoRollback, Snapshot, SnapshotMut},
+    config::{CommitAutoRollback, Snapshot, SnapshotMut},
 };
 
 /// Access configuration values, frozen in time, using a `key` which is a `.` separated string of up to
@@ -70,16 +70,9 @@ impl<'repo> Snapshot<'repo> {
         key: &str,
     ) -> Option<Result<Cow<'_, std::path::Path>, git_config::path::interpolate::Error>> {
         let key = git_config::parse::key(key)?;
-        let path = self.repo.config.resolved.path_filter(
-            key.section_name,
-            key.subsection_name,
-            key.value_name,
-            &mut self.repo.filter_config_section(),
-        )?;
-
-        let install_dir = self.repo.install_dir().ok();
-        let home = self.repo.config.home_dir();
-        Some(path.interpolate(interpolate_context(install_dir.as_deref(), home.as_deref())))
+        self.repo
+            .config
+            .trusted_file_path(key.section_name, key.subsection_name, key.value_name)
     }
 }
 
