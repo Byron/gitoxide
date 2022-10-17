@@ -270,10 +270,8 @@ fn empty_bare_repo() -> crate::Result<(tempfile::TempDir, git::Repository)> {
     let tmp = tempfile::tempdir()?;
     let repo = git::ThreadSafeRepository::init_opts(
         tmp.path(),
-        git::create::Options {
-            bare: true,
-            fs_capabilities: None,
-        },
+        git::create::Kind::Bare,
+        git::create::Options::default(),
         git::open::Options::isolated(),
     )?
     .into();

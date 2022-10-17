@@ -100,6 +100,19 @@ fn clone_and_early_persist_without_receive() -> crate::Result {
 }
 
 #[test]
+fn clone_and_destination_must_be_empty() -> crate::Result {
+    let tmp = git_testtools::tempfile::TempDir::new()?;
+    std::fs::write(tmp.path().join("file"), b"hello")?;
+    match git::prepare_clone_bare(remote::repo("base").path(), tmp.path()) {
+        Ok(_) => unreachable!("this should fail as the directory isn't empty"),
+        Err(err) => assert!(err
+            .to_string()
+            .starts_with("Refusing to initialize the non-empty directory as ")),
+    }
+    Ok(())
+}
+
+#[test]
 fn clone_bare_into_empty_directory_and_early_drop() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
     // this breaks isolation, but shouldn't be affecting the test. If so, use isolation options for opening the repo.

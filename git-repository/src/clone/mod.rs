@@ -40,7 +40,8 @@ impl PrepareFetch {
     pub fn new<Url, E>(
         url: Url,
         path: impl AsRef<std::path::Path>,
-        create_opts: crate::create::Options,
+        kind: crate::create::Kind,
+        mut create_opts: crate::create::Options,
         open_opts: crate::open::Options,
     ) -> Result<Self, Error>
     where
@@ -48,7 +49,8 @@ impl PrepareFetch {
         git_url::parse::Error: From<E>,
     {
         let url = url.try_into().map_err(git_url::parse::Error::from)?;
-        let repo = crate::ThreadSafeRepository::init_opts(path, create_opts, open_opts)?.to_thread_local();
+        create_opts.destination_must_be_empty = true;
+        let repo = crate::ThreadSafeRepository::init_opts(path, kind, create_opts, open_opts)?.to_thread_local();
         Ok(PrepareFetch {
             url,
             #[cfg(any(feature = "async-network-client", feature = "blocking-network-client"))]

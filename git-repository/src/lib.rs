@@ -200,26 +200,12 @@ pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, di
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
-    ThreadSafeRepository::init(
-        directory,
-        create::Options {
-            bare: false,
-            fs_capabilities: None,
-        },
-    )
-    .map(Into::into)
+    ThreadSafeRepository::init(directory, create::Kind::WithWorktree, create::Options::default()).map(Into::into)
 }
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
-    ThreadSafeRepository::init(
-        directory,
-        create::Options {
-            bare: true,
-            fs_capabilities: None,
-        },
-    )
-    .map(Into::into)
+    ThreadSafeRepository::init(directory, create::Kind::Bare, create::Options::default()).map(Into::into)
 }
 
 /// Create a platform for configuring a bare clone from `url` to the local `path`, using default options for opening it (but
@@ -237,10 +223,8 @@ where
     clone::PrepareFetch::new(
         url,
         path,
-        create::Options {
-            bare: true,
-            fs_capabilities: None,
-        },
+        create::Kind::Bare,
+        create::Options::default(),
         open_opts_with_git_binary_config(),
     )
 }
@@ -257,10 +241,8 @@ where
     clone::PrepareFetch::new(
         url,
         path,
-        create::Options {
-            bare: false,
-            fs_capabilities: None,
-        },
+        crate::create::Kind::WithWorktree,
+        create::Options::default(),
         open_opts_with_git_binary_config(),
     )
 }
