@@ -118,26 +118,25 @@ pub fn into(
     Options { bare, fs_capabilities }: Options,
 ) -> Result<git_discover::repository::Path, Error> {
     let mut dot_git = directory.into();
+    if fs::read_dir(&dot_git)
+        .or_else(|err| {
+            if err.kind() == std::io::ErrorKind::NotFound {
+                fs::create_dir(&dot_git).and_then(|_| fs::read_dir(&dot_git))
+            } else {
+                Err(err)
+            }
+        })
+        .map_err(|err| Error::IoOpen {
+            source: err,
+            path: dot_git.clone(),
+        })?
+        .count()
+        != 0
+    {
+        return Err(Error::DirectoryNotEmpty { path: dot_git });
+    }
 
-    if bare {
-        if fs::read_dir(&dot_git)
-            .or_else(|err| {
-                if err.kind() == std::io::ErrorKind::NotFound {
-                    fs::create_dir(&dot_git).and_then(|_| fs::read_dir(&dot_git))
-                } else {
-                    Err(err)
-                }
-            })
-            .map_err(|err| Error::IoOpen {
-                source: err,
-                path: dot_git.clone(),
-            })?
-            .count()
-            != 0
-        {
-            return Err(Error::DirectoryNotEmpty { path: dot_git });
-        }
-    } else {
+    if !bare {
         dot_git.push(DOT_GIT_DIR);
 
         if dot_git.is_dir() {

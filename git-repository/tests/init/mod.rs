@@ -87,11 +87,15 @@ mod non_bare {
     }
 
     #[test]
-    fn init_into_non_empty_directory_is_allowed() -> crate::Result {
+    fn init_into_non_empty_directory_is_not_allowed() -> crate::Result {
         let tmp = tempfile::tempdir()?;
         std::fs::write(tmp.path().join("existing.txt"), b"I was here before you")?;
 
-        git_repository::init(tmp.path())?;
+        assert!(git_repository::init(tmp.path())
+            .unwrap_err()
+            .to_string()
+            .starts_with("Refusing to initialize the non-empty directory as"));
+
         Ok(())
     }
 }
