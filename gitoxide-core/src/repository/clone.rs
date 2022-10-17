@@ -11,6 +11,7 @@ pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 pub(crate) mod function {
     use anyhow::bail;
     use git_repository as git;
+    use git_repository::bstr::BString;
     use git_repository::remote::fetch::Status;
     use git_repository::Progress;
     use std::ffi::OsStr;
@@ -22,6 +23,7 @@ pub(crate) mod function {
     pub fn clone<P>(
         remote: impl AsRef<OsStr>,
         directory: impl AsRef<std::path::Path>,
+        overrides: Vec<BString>,
         mut progress: P,
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
@@ -46,7 +48,7 @@ pub(crate) mod function {
                 .unwrap_or(git::create::Kind::WithWorktree),
             git::create::Options::default(),
             {
-                let mut opts = git::open::Options::default();
+                let mut opts = git::open::Options::default().config_overrides(overrides);
                 opts.permissions.config.git_binary = true;
                 opts
             },

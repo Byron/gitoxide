@@ -130,7 +130,7 @@ pub fn main() -> Result<()> {
                 progress,
                 progress_keep_open,
                 core::repository::clone::PROGRESS_RANGE,
-                move |progress, out, err| core::repository::clone(remote, directory, progress, out, err, opts),
+                move |progress, out, err| core::repository::clone(remote, directory, config, progress, out, err, opts),
             )
         }
         #[cfg(feature = "gitoxide-core-blocking-client")]
