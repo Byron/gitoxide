@@ -43,7 +43,7 @@ pub mod main_worktree {
             &mut self,
             mut progress: impl crate::Progress,
             should_interrupt: &AtomicBool,
-        ) -> Result<Repository, Error> {
+        ) -> Result<(Repository, git_worktree::index::checkout::Outcome), Error> {
             let repo = self
                 .repo
                 .as_ref()
@@ -75,7 +75,7 @@ pub mod main_worktree {
             bytes.init(None, crate::progress::bytes());
 
             let start = std::time::Instant::now();
-            git_worktree::index::checkout(
+            let outcome = git_worktree::index::checkout(
                 &mut index,
                 workdir,
                 {
@@ -91,7 +91,7 @@ pub mod main_worktree {
             bytes.show_throughput(start);
 
             index.write(Default::default())?;
-            Ok(self.repo.take().expect("still present"))
+            Ok((self.repo.take().expect("still present"), outcome))
         }
     }
 }

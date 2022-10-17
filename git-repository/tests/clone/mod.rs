@@ -66,7 +66,7 @@ fn fetch_and_checkout() -> crate::Result {
     let (mut checkout, _out) = prepare
         .fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())
         .unwrap();
-    let repo = checkout
+    let (repo, _) = checkout
         .main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())
         .unwrap();
 
