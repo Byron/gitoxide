@@ -57,7 +57,7 @@ pub(crate) mod function {
         let (repo, outcome) = if bare {
             (checkout.persist(), None)
         } else {
-            let (repo, outcome) = checkout.main_worktree(&mut progress, &git::interrupt::IS_INTERRUPTED)?;
+            let (repo, outcome) = checkout.main_worktree(progress, &git::interrupt::IS_INTERRUPTED)?;
             (repo, Some(outcome))
         };
 
@@ -80,22 +80,7 @@ pub(crate) mod function {
             }
         };
 
-        if let Some(git::worktree::index::checkout::Outcome {
-            files_updated,
-            bytes_written,
-            collisions,
-            errors,
-        }) = outcome
-        {
-            progress.set_name("checkout");
-            progress.done(format!(
-                "{} files ({})",
-                files_updated,
-                git::progress::bytes()
-                    .unwrap()
-                    .display(bytes_written as usize, None, None)
-            ));
-
+        if let Some(git::worktree::index::checkout::Outcome { collisions, errors, .. }) = outcome {
             if !(collisions.is_empty() && errors.is_empty()) {
                 let mut messages = Vec::new();
                 if !errors.is_empty() {
