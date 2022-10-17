@@ -91,6 +91,7 @@ pub(crate) mod function {
         let mut last_spec_index = usize::MAX;
         let mut updates = update_refs
             .iter_mapping_updates(&map.mappings, refspecs)
+            .filter_map(|(update, mapping, spec, edit)| spec.map(|spec| (update, mapping, spec, edit)))
             .collect::<Vec<_>>();
         updates.sort_by_key(|t| t.2);
         for (update, mapping, spec, edit) in updates {

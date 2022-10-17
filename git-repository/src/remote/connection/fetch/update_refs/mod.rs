@@ -49,12 +49,13 @@ pub(crate) fn update(
     let mut edits = Vec::new();
     let mut updates = Vec::new();
 
-    for fetch::Mapping {
-        remote,
-        local,
-        spec_index,
-    } in mappings
-    {
+    for (remote, local, spec) in mappings.iter().filter_map(
+        |fetch::Mapping {
+             remote,
+             local,
+             spec_index,
+         }| refspecs.get(*spec_index).map(|spec| (remote, local, spec)),
+    ) {
         let remote_id = remote.as_id();
         if dry_run == fetch::DryRun::No && !repo.objects.contains(remote_id) {
             updates.push(update::Mode::RejectedSourceObjectNotFound { id: remote_id.into() }.into());
@@ -83,14 +84,14 @@ pub(crate) fn update(
                                 let (mode, reflog_message) = if local_id == remote_id {
                                     (update::Mode::NoChangeNeeded, "no update will be performed")
                                 } else if let Some(git_ref::Category::Tag) = existing.name().category() {
-                                    if refspecs[*spec_index].allow_non_fast_forward() {
+                                    if spec.allow_non_fast_forward() {
                                         (update::Mode::Forced, "updating tag")
                                     } else {
                                         updates.push(update::Mode::RejectedTagUpdate.into());
                                         continue;
                                     }
                                 } else {
-                                    let mut force = refspecs[*spec_index].allow_non_fast_forward();
+                                    let mut force = spec.allow_non_fast_forward();
                                     let is_fast_forward = match dry_run {
                                         fetch::DryRun::No => {
                                             let ancestors = repo
