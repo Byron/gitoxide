@@ -56,7 +56,7 @@ where
     D: Delegate,
     T: client::Transport,
     P: Progress,
-    <P as Progress>::SubProgress: 'static,
+    P::SubProgress: 'static,
 {
     let handshake::Outcome {
         server_protocol_version: protocol_version,
@@ -143,10 +143,10 @@ where
     Ok(())
 }
 
-fn setup_remote_progress<T>(progress: &mut T, reader: &mut Box<dyn git_transport::client::ExtendedBufRead + Unpin + '_>)
+fn setup_remote_progress<P>(progress: &mut P, reader: &mut Box<dyn git_transport::client::ExtendedBufRead + Unpin + '_>)
 where
-    T: Progress,
-    <T as Progress>::SubProgress: 'static,
+    P: Progress,
+    P::SubProgress: 'static,
 {
     reader.set_progress_handler(Some(Box::new({
         let mut remote_progress = progress.add_child("remote");

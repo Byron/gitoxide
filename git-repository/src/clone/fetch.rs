@@ -48,7 +48,7 @@ impl PrepareFetch {
     ) -> Result<(Repository, crate::remote::fetch::Outcome), Error>
     where
         P: crate::Progress,
-        <P as crate::Progress>::SubProgress: 'static,
+        P::SubProgress: 'static,
     {
         fn replace_changed_local_config(repo: &mut Repository, config: git_config::File<'static>) {
             let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
@@ -200,7 +200,7 @@ impl PrepareFetch {
     ) -> Result<(crate::clone::PrepareCheckout, crate::remote::fetch::Outcome), Error>
     where
         P: crate::Progress,
-        <P as crate::Progress>::SubProgress: 'static,
+        P::SubProgress: 'static,
     {
         let (repo, fetch_outcome) = self.fetch_only(progress, should_interrupt)?;
         Ok((crate::clone::PrepareCheckout { repo: repo.into() }, fetch_outcome))

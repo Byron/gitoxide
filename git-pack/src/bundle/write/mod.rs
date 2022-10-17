@@ -155,7 +155,7 @@ impl crate::Bundle {
     ) -> Result<Outcome, Error>
     where
         P: Progress,
-        <P as Progress>::SubProgress: 'static,
+        P::SubProgress: 'static,
     {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());

@@ -24,7 +24,7 @@ fn find_git_repository_workdirs<P: Progress>(
     debug: bool,
 ) -> impl Iterator<Item = (PathBuf, git::Kind)>
 where
-    <P as Progress>::SubProgress: Sync,
+    P::SubProgress: Sync,
 {
     progress.init(None, progress::count("filesystem items"));
     fn is_repository(path: &Path) -> Option<git::Kind> {
@@ -223,7 +223,7 @@ pub fn discover<P: Progress>(
     debug: bool,
 ) -> anyhow::Result<()>
 where
-    <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
+    <P::SubProgress as Progress>::SubProgress: Sync,
 {
     for (git_workdir, _kind) in
         find_git_repository_workdirs(source_dir, progress.add_child("Searching repositories"), debug)
@@ -240,7 +240,7 @@ pub fn run<P: Progress>(
     mut progress: P,
 ) -> anyhow::Result<()>
 where
-    <<P as Progress>::SubProgress as Progress>::SubProgress: Sync,
+    <P::SubProgress as Progress>::SubProgress: Sync,
 {
     let mut num_errors = 0usize;
     let destination = destination.as_ref().canonicalize()?;
