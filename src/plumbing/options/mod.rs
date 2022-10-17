@@ -84,6 +84,8 @@ pub enum Subcommands {
     /// Fetch data from remotes and store it in the repository
     #[cfg(feature = "gitoxide-core-blocking-client")]
     Fetch(fetch::Platform),
+    #[cfg(feature = "gitoxide-core-blocking-client")]
+    Clone(clone::Platform),
     /// Interact with the mailmap.
     #[clap(subcommand)]
     Mailmap(mailmap::Subcommands),
@@ -139,6 +141,29 @@ pub mod fetch {
         /// Override the built-in and configured ref-specs with one or more of the given ones.
         #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
         pub ref_spec: Vec<git_repository::bstr::BString>,
+    }
+}
+
+#[cfg(feature = "gitoxide-core-blocking-client")]
+pub mod clone {
+    use std::ffi::OsString;
+    use std::path::PathBuf;
+
+    #[derive(Debug, clap::Parser)]
+    pub struct Platform {
+        /// Output additional typically information provided by the server as part of the connection handshake.
+        #[clap(long, short = 'H')]
+        pub handshake_info: bool,
+
+        /// If set, the clone will be bare and a working tree checkout won't be available.
+        #[clap(long)]
+        pub bare: bool,
+
+        /// The url of the remote to connect to, like `https://github.com/byron/gitoxide`.
+        pub remote: OsString,
+
+        /// The directory to initialize with the new repository and to which all data should be written.
+        pub directory: PathBuf,
     }
 }
 

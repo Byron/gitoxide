@@ -90,6 +90,21 @@ pub mod main_worktree {
     }
 }
 
+/// Access
+impl PrepareCheckout {
+    /// Get access to the repository while the checkout isn't yet completed.
+    ///
+    /// # Panics
+    ///
+    /// If the checkout is completed and the [`Repository`] was already passed on to the caller.
+    pub fn repo(&self) -> &Repository {
+        self.repo
+            .as_ref()
+            .take()
+            .expect("present as checkout operation isn't complete")
+    }
+}
+
 /// Consumption
 impl PrepareCheckout {
     /// Persist the contained repository as is even if an error may have occurred when checking out the main working tree.

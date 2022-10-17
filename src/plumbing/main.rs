@@ -113,6 +113,27 @@ pub fn main() -> Result<()> {
 
     match cmd {
         #[cfg(feature = "gitoxide-core-blocking-client")]
+        Subcommands::Clone(crate::plumbing::options::clone::Platform {
+            handshake_info,
+            bare,
+            remote,
+            directory,
+        }) => {
+            let opts = core::repository::clone::Options {
+                format,
+                bare,
+                handshake_info,
+            };
+            prepare_and_run(
+                "clone",
+                verbose,
+                progress,
+                progress_keep_open,
+                core::repository::fetch::PROGRESS_RANGE,
+                move |progress, out, err| core::repository::clone(remote, directory, progress, out, err, opts),
+            )
+        }
+        #[cfg(feature = "gitoxide-core-blocking-client")]
         Subcommands::Fetch(crate::plumbing::options::fetch::Platform {
             dry_run,
             handshake_info,
