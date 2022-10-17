@@ -24,7 +24,7 @@ pub(crate) mod function {
         directory: impl AsRef<std::path::Path>,
         mut progress: P,
         mut out: impl std::io::Write,
-        err: impl std::io::Write,
+        mut err: impl std::io::Write,
         Options {
             format,
             handshake_info,
@@ -54,10 +54,11 @@ pub(crate) mod function {
         let (mut checkout, fetch_outcome) =
             prepare.fetch_then_checkout(&mut progress, &git::interrupt::IS_INTERRUPTED)?;
 
-        let repo = if bare {
-            checkout.persist()
+        let (repo, outcome) = if bare {
+            (checkout.persist(), None)
         } else {
-            checkout.main_worktree(progress, &git::interrupt::IS_INTERRUPTED)?
+            let (repo, outcome) = checkout.main_worktree(&mut progress, &git::interrupt::IS_INTERRUPTED)?;
+            (repo, Some(outcome))
         };
 
         if handshake_info {
@@ -75,9 +76,46 @@ pub(crate) mod function {
                     .find_default_remote(git::remote::Direction::Fetch)
                     .expect("one origin remote")?;
                 let ref_specs = remote.refspecs(git::remote::Direction::Fetch);
-                print_updates(&repo, update_refs, ref_specs, fetch_outcome.ref_map, &mut out, err)?;
+                print_updates(&repo, update_refs, ref_specs, fetch_outcome.ref_map, &mut out, &mut err)?;
             }
         };
+
+        if let Some(git::worktree::index::checkout::Outcome {
+            files_updated,
+            bytes_written,
+            collisions,
+            errors,
+        }) = outcome
+        {
+            progress.set_name("checkout");
+            progress.done(format!(
+                "{} files ({})",
+                files_updated,
+                git::progress::bytes()
+                    .unwrap()
+                    .display(bytes_written as usize, None, None)
+            ));
+
+            if !(collisions.is_empty() && errors.is_empty()) {
+                let mut messages = Vec::new();
+                if !errors.is_empty() {
+                    messages.push(format!("kept going through {} errors(s)", errors.len()));
+                    for record in errors {
+                        writeln!(err, "{}: {}", record.path, record.error).ok();
+                    }
+                }
+                if !collisions.is_empty() {
+                    messages.push(format!("encountered {} collision(s)", collisions.len()));
+                    for col in collisions {
+                        writeln!(err, "{}: collision ({:?})", col.path, col.error_kind).ok();
+                    }
+                }
+                bail!(
+                    "One or more errors occurred - checkout is incomplete: {}",
+                    messages.join(", ")
+                );
+            }
+        }
         Ok(())
     }
 }
