@@ -215,7 +215,7 @@ mod async_io {
         }
     }
 
-    pub async fn receive<P: Progress, W: io::Write + Send + 'static>(
+    pub async fn receive<P, W>(
         protocol: Option<net::Protocol>,
         url: &str,
         directory: Option<PathBuf>,
@@ -223,7 +223,11 @@ mod async_io {
         wanted_refs: Vec<BString>,
         progress: P,
         ctx: Context<W>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<()>
+    where
+        P: Progress + 'static,
+        W: io::Write + Send + 'static,
+    {
         let transport = net::connect(url.to_string(), protocol.unwrap_or_default().into()).await?;
         let mut delegate = CloneDelegate {
             ctx,
