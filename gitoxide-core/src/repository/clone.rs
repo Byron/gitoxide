@@ -6,7 +6,7 @@ pub struct Options {
     pub handshake_info: bool,
 }
 
-pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
+pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=4;
 
 pub(crate) mod function {
     use anyhow::bail;
@@ -42,10 +42,9 @@ pub(crate) mod function {
         let mut prepare = git::clone::PrepareFetch::new(
             remote.as_ref(),
             directory,
-            git::create::Options {
-                bare,
-                fs_capabilities: None,
-            },
+            bare.then(|| git::create::Kind::Bare)
+                .unwrap_or(git::create::Kind::WithWorktree),
+            git::create::Options::default(),
             {
                 let mut opts = git::open::Options::default();
                 opts.permissions.config.git_binary = true;
