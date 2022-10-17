@@ -121,6 +121,13 @@ pub fn into(
 
     if bare {
         if fs::read_dir(&dot_git)
+            .or_else(|err| {
+                if err.kind() == std::io::ErrorKind::NotFound {
+                    fs::create_dir(&dot_git).and_then(|_| fs::read_dir(&dot_git))
+                } else {
+                    Err(err)
+                }
+            })
             .map_err(|err| Error::IoOpen {
                 source: err,
                 path: dot_git.clone(),

@@ -1,6 +1,25 @@
 mod bare {
     #[test]
-    fn init_into_empty_directory_creates_a_dot_git_dir() -> crate::Result {
+    fn init_into_non_existing_directory_creates_it() -> crate::Result {
+        let tmp = tempfile::tempdir()?;
+        let git_dir = tmp.path().join("bare.git");
+        let repo = git_repository::init_bare(&git_dir)?;
+        assert_eq!(repo.kind(), git_repository::Kind::Bare);
+        assert!(
+            repo.work_dir().is_none(),
+            "a worktree isn't present in bare repositories"
+        );
+        assert_eq!(
+            repo.git_dir(),
+            git_dir,
+            "the repository is placed into the given directory without added sub-directories"
+        );
+        assert_eq!(git_repository::open(repo.git_dir())?, repo);
+        Ok(())
+    }
+
+    #[test]
+    fn init_into_empty_directory_uses_it_directly() -> crate::Result {
         let tmp = tempfile::tempdir()?;
         let repo = git_repository::init_bare(tmp.path())?;
         assert_eq!(repo.kind(), git_repository::Kind::Bare);
