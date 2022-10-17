@@ -100,7 +100,6 @@ impl PrepareCheckout {
     pub fn repo(&self) -> &Repository {
         self.repo
             .as_ref()
-            .take()
             .expect("present as checkout operation isn't complete")
     }
 }
