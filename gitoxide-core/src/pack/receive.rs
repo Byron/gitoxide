@@ -142,7 +142,7 @@ mod blocking_io {
         }
     }
 
-    pub fn receive<P: Progress, W: io::Write>(
+    pub fn receive<P, W>(
         protocol: Option<net::Protocol>,
         url: &str,
         directory: Option<PathBuf>,
@@ -150,7 +150,12 @@ mod blocking_io {
         wanted_refs: Vec<BString>,
         progress: P,
         ctx: Context<W>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<()>
+    where
+        W: std::io::Write,
+        P: Progress,
+        P::SubProgress: 'static,
+    {
         let transport = net::connect(url, protocol.unwrap_or_default().into())?;
         let delegate = CloneDelegate {
             ctx,

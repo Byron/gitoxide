@@ -22,9 +22,9 @@ pub(crate) mod function {
     use super::Options;
     use crate::OutputFormat;
 
-    pub fn fetch(
+    pub fn fetch<P>(
         repo: git::Repository,
-        progress: impl git::Progress,
+        progress: P,
         mut out: impl std::io::Write,
         err: impl std::io::Write,
         Options {
@@ -34,7 +34,11 @@ pub(crate) mod function {
             handshake_info,
             ref_specs,
         }: Options,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<()>
+    where
+        P: git::Progress,
+        P::SubProgress: 'static,
+    {
         if format != OutputFormat::Human {
             bail!("JSON output isn't yet supported for fetching.");
         }

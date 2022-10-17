@@ -144,15 +144,19 @@ impl crate::Bundle {
     /// As it sends portions of the input to a thread it requires the 'static lifetime for the interrupt flags. This can only
     /// be satisfied by a static AtomicBool which is only suitable for programs that only run one of these operations at a time
     /// or don't mind that all of them abort when the flag is set.
-    pub fn write_to_directory_eagerly(
+    pub fn write_to_directory_eagerly<P>(
         pack: impl io::Read + Send + 'static,
         pack_size: Option<u64>,
         directory: Option<impl AsRef<Path>>,
-        mut progress: impl Progress,
+        mut progress: P,
         should_interrupt: &'static AtomicBool,
         thin_pack_base_object_lookup_fn: Option<ThinPackLookupFnSend>,
         options: Options,
-    ) -> Result<Outcome, Error> {
+    ) -> Result<Outcome, Error>
+    where
+        P: Progress,
+        <P as Progress>::SubProgress: 'static,
+    {
         let mut read_progress = progress.add_child("read pack");
         read_progress.init(pack_size.map(|s| s as usize), progress::bytes());
         let pack = progress::Read {

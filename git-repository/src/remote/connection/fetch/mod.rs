@@ -131,6 +131,7 @@ impl<'remote, 'repo, T, P> Prepare<'remote, 'repo, T, P>
 where
     T: Transport,
     P: Progress,
+    <P as Progress>::SubProgress: 'static,
 {
     /// Receive the pack and perform the operation as configured by git via `git-config` or overridden by various builder methods.
     /// Return `Ok(None)` if there was nothing to do because all remote refs are at the same state as they are locally, or `Ok(Some(outcome))`
@@ -267,10 +268,13 @@ where
     }
 }
 
-fn setup_remote_progress(
-    progress: &mut impl Progress,
+fn setup_remote_progress<P>(
+    progress: &mut P,
     reader: &mut Box<dyn git_protocol::transport::client::ExtendedBufRead + Unpin + '_>,
-) {
+) where
+    P: Progress,
+    <P as Progress>::SubProgress: 'static,
+{
     use git_protocol::transport::client::ExtendedBufRead;
     reader.set_progress_handler(Some(Box::new({
         let mut remote_progress = progress.add_child("remote");

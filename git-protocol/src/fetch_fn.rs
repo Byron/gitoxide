@@ -44,17 +44,19 @@ impl Default for FetchConnection {
 ///
 /// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
 #[maybe_async]
-pub async fn fetch<F, D, T>(
+pub async fn fetch<F, D, T, P>(
     mut transport: T,
     mut delegate: D,
     authenticate: F,
-    mut progress: impl Progress,
+    mut progress: P,
     fetch_mode: FetchConnection,
 ) -> Result<(), Error>
 where
     F: FnMut(credentials::helper::Action) -> credentials::protocol::Result,
     D: Delegate,
     T: client::Transport,
+    P: Progress,
+    <P as Progress>::SubProgress: 'static,
 {
     let handshake::Outcome {
         server_protocol_version: protocol_version,
@@ -141,10 +143,11 @@ where
     Ok(())
 }
 
-fn setup_remote_progress(
-    progress: &mut impl Progress,
-    reader: &mut Box<dyn git_transport::client::ExtendedBufRead + Unpin + '_>,
-) {
+fn setup_remote_progress<T>(progress: &mut T, reader: &mut Box<dyn git_transport::client::ExtendedBufRead + Unpin + '_>)
+where
+    T: Progress,
+    <T as Progress>::SubProgress: 'static,
+{
     reader.set_progress_handler(Some(Box::new({
         let mut remote_progress = progress.add_child("remote");
         move |is_err: bool, data: &[u8]| {

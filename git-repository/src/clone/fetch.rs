@@ -41,11 +41,15 @@ impl PrepareFetch {
     ///
     /// Note that all data we created will be removed once this instance drops if the operation wasn't successful.
     #[cfg(feature = "blocking-network-client")]
-    pub fn fetch_only(
+    pub fn fetch_only<P>(
         &mut self,
-        progress: impl crate::Progress,
+        progress: P,
         should_interrupt: &std::sync::atomic::AtomicBool,
-    ) -> Result<(Repository, crate::remote::fetch::Outcome), Error> {
+    ) -> Result<(Repository, crate::remote::fetch::Outcome), Error>
+    where
+        P: crate::Progress,
+        <P as crate::Progress>::SubProgress: 'static,
+    {
         fn replace_changed_local_config(repo: &mut Repository, config: git_config::File<'static>) {
             let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
             let ids_to_remove: Vec<_> = repo_config
@@ -189,11 +193,15 @@ impl PrepareFetch {
 
     /// Similar to [`fetch_only()`][Self::fetch_only()`], but passes ownership to a utility type to configure a checkout operation.
     #[cfg(feature = "blocking-network-client")]
-    pub fn fetch_then_checkout(
+    pub fn fetch_then_checkout<P>(
         &mut self,
-        progress: impl crate::Progress,
+        progress: P,
         should_interrupt: &std::sync::atomic::AtomicBool,
-    ) -> Result<(crate::clone::PrepareCheckout, crate::remote::fetch::Outcome), Error> {
+    ) -> Result<(crate::clone::PrepareCheckout, crate::remote::fetch::Outcome), Error>
+    where
+        P: crate::Progress,
+        <P as crate::Progress>::SubProgress: 'static,
+    {
         let (repo, fetch_outcome) = self.fetch_only(progress, should_interrupt)?;
         Ok((crate::clone::PrepareCheckout { repo: repo.into() }, fetch_outcome))
     }

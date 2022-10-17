@@ -12,16 +12,17 @@ pub(crate) mod function {
     use anyhow::bail;
     use git_repository as git;
     use git_repository::remote::fetch::Status;
+    use git_repository::Progress;
     use std::ffi::OsStr;
 
     use super::Options;
     use crate::repository::fetch::function::print_updates;
     use crate::OutputFormat;
 
-    pub fn clone(
+    pub fn clone<P>(
         remote: impl AsRef<OsStr>,
         directory: impl AsRef<std::path::Path>,
-        mut progress: impl git::Progress,
+        mut progress: P,
         mut out: impl std::io::Write,
         err: impl std::io::Write,
         Options {
@@ -29,7 +30,11 @@ pub(crate) mod function {
             handshake_info,
             bare,
         }: Options,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<()>
+    where
+        P: Progress,
+        P::SubProgress: 'static,
+    {
         if format != OutputFormat::Human {
             bail!("JSON output isn't yet supported for fetching.");
         }
@@ -48,7 +53,7 @@ pub(crate) mod function {
             },
         )?;
         let (mut checkout, fetch_outcome) =
-            prepare.fetch_then_checkout(progress.add_child("fetch"), &git::interrupt::IS_INTERRUPTED)?;
+            prepare.fetch_then_checkout(&mut progress, &git::interrupt::IS_INTERRUPTED)?;
 
         if handshake_info {
             writeln!(out, "Handshake Information")?;
@@ -89,7 +94,7 @@ pub(crate) mod function {
         let repo = if bare {
             checkout.persist()
         } else {
-            checkout.main_worktree(progress.add_child("clone"), &git::interrupt::IS_INTERRUPTED)?
+            checkout.main_worktree(progress, &git::interrupt::IS_INTERRUPTED)?
         };
         writeln!(
             out,

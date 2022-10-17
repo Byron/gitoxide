@@ -36,7 +36,7 @@ use crate::data::output;
 pub fn iter_from_counts<Find>(
     mut counts: Vec<output::Count>,
     db: Find,
-    mut progress: impl Progress,
+    mut progress: impl Progress + 'static,
     Options {
         version,
         mode,
