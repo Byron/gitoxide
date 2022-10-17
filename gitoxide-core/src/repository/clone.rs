@@ -55,6 +55,12 @@ pub(crate) mod function {
         let (mut checkout, fetch_outcome) =
             prepare.fetch_then_checkout(&mut progress, &git::interrupt::IS_INTERRUPTED)?;
 
+        let repo = if bare {
+            checkout.persist()
+        } else {
+            checkout.main_worktree(progress, &git::interrupt::IS_INTERRUPTED)?
+        };
+
         if handshake_info {
             writeln!(out, "Handshake Information")?;
             writeln!(out, "\t{:?}", fetch_outcome.ref_map.handshake)?;
@@ -65,43 +71,14 @@ pub(crate) mod function {
                 unreachable!("clone always has changes")
             }
             Status::DryRun { .. } => unreachable!("dry-run unsupported"),
-            Status::Change {
-                update_refs,
-                write_pack_bundle,
-            } => {
-                let repo = checkout.repo();
+            Status::Change { update_refs, .. } => {
                 let remote = repo
                     .find_default_remote(git::remote::Direction::Fetch)
                     .expect("one origin remote")?;
                 let ref_specs = remote.refspecs(git::remote::Direction::Fetch);
-                print_updates(
-                    checkout.repo(),
-                    update_refs,
-                    ref_specs,
-                    fetch_outcome.ref_map,
-                    &mut out,
-                    err,
-                )?;
-                if let Some(data_path) = write_pack_bundle.data_path {
-                    writeln!(out, "pack  file: \"{}\"", data_path.display()).ok();
-                }
-                if let Some(index_path) = write_pack_bundle.index_path {
-                    writeln!(out, "index file: \"{}\"", index_path.display()).ok();
-                }
+                print_updates(&repo, update_refs, ref_specs, fetch_outcome.ref_map, &mut out, err)?;
             }
         };
-
-        let repo = if bare {
-            checkout.persist()
-        } else {
-            checkout.main_worktree(progress, &git::interrupt::IS_INTERRUPTED)?
-        };
-        writeln!(
-            out,
-            "clone (bare = {}) successful at \"{}\"",
-            bare,
-            repo.work_dir().unwrap_or_else(|| repo.git_dir()).display()
-        )?;
         Ok(())
     }
 }

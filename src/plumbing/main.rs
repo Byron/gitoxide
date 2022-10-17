@@ -129,7 +129,7 @@ pub fn main() -> Result<()> {
                 verbose,
                 progress,
                 progress_keep_open,
-                core::repository::fetch::PROGRESS_RANGE,
+                core::repository::clone::PROGRESS_RANGE,
                 move |progress, out, err| core::repository::clone(remote, directory, progress, out, err, opts),
             )
         }
