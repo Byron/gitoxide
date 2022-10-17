@@ -135,7 +135,7 @@ pub fn into(
     let bare = matches!(kind, Kind::Bare);
 
     if bare || destination_must_be_empty {
-        if fs::read_dir(&dot_git)
+        let num_entries_in_dot_git = fs::read_dir(&dot_git)
             .or_else(|err| {
                 if err.kind() == std::io::ErrorKind::NotFound {
                     fs::create_dir(&dot_git).and_then(|_| fs::read_dir(&dot_git))
@@ -147,9 +147,8 @@ pub fn into(
                 source: err,
                 path: dot_git.clone(),
             })?
-            .count()
-            != 0
-        {
+            .count();
+        if num_entries_in_dot_git != 0 {
             return Err(Error::DirectoryNotEmpty { path: dot_git });
         }
     }
