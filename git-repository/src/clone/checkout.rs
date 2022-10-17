@@ -4,7 +4,7 @@ use crate::Repository;
 ///
 pub mod main_worktree {
     use crate::clone::PrepareCheckout;
-    use crate::Repository;
+    use crate::{Progress, Repository};
     use git_odb::FindExt;
     use std::path::PathBuf;
     use std::sync::atomic::AtomicBool;
@@ -71,6 +71,10 @@ pub mod main_worktree {
             let mut files = progress.add_child("checkout");
             let mut bytes = progress.add_child("writing");
 
+            files.init(Some(index.entries().len()), crate::progress::count("files"));
+            bytes.init(None, crate::progress::bytes());
+
+            let start = std::time::Instant::now();
             git_worktree::index::checkout(
                 &mut index,
                 workdir,
@@ -83,6 +87,8 @@ pub mod main_worktree {
                 should_interrupt,
                 opts,
             )?;
+            files.show_throughput(start);
+            bytes.show_throughput(start);
 
             index.write(Default::default())?;
             Ok(self.repo.take().expect("still present"))
