@@ -9,6 +9,7 @@ use std::{
 use bstr::{BString, ByteSlice};
 use git_config::file::init::{self};
 
+use crate::file::init::from_paths::includes::conditional::git_init;
 use crate::file::{
     cow_str,
     init::from_paths::{escape_backslashes, includes::conditional::options_with_git_dir},
@@ -216,7 +217,7 @@ fn write_main_config(
     env: &GitEnv,
     overwrite_config_location: ConfigLocation,
 ) -> crate::Result {
-    git_repository::init(env.worktree_dir())?;
+    git_init(env.worktree_dir(), false)?;
 
     if overwrite_config_location == ConfigLocation::Repo {
         write_append_config_value(env.git_dir().join("config"), "base-value")?;
