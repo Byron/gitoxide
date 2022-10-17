@@ -74,8 +74,7 @@ impl PrepareFetch {
 
         /// HEAD cannot be written by means of refspec by design, so we have to do it manually here. Also create the pointed-to ref
         /// if we have to, as it might not have been naturally included in the ref-specs.
-        fn update_head(repo: &mut Repository, remote_refs: &[git_protocol::fetch::Ref]) -> Result<(), Error> {
-            use git_ref::store::WriteReflog;
+        fn update_head(repo: &Repository, remote_refs: &[git_protocol::fetch::Ref]) -> Result<(), Error> {
             use git_ref::transaction::{PreviousValue, RefEdit};
             use git_ref::Target;
             use std::convert::TryInto;
@@ -94,7 +93,6 @@ impl PrepareFetch {
                 })
                 .ok_or(Error::MissingRemoteHead)?;
 
-            repo.refs.write_reflog = WriteReflog::Disable;
             let name = "HEAD".try_into().expect("valid");
             match head_ref {
                 Some(referent) => {
@@ -179,7 +177,12 @@ impl PrepareFetch {
         let outcome = pending_pack.receive(should_interrupt)?;
 
         replace_changed_local_config(repo, config);
-        update_head(repo, &outcome.ref_map.remote_refs)?;
+
+        let prev_write_ref_log = repo.refs.write_reflog;
+        repo.refs.write_reflog = git_ref::store::WriteReflog::Disable;
+        let res = update_head(repo, &outcome.ref_map.remote_refs);
+        repo.refs.write_reflog = prev_write_ref_log;
+        res?;
 
         Ok((self.repo.take().expect("still present"), outcome))
     }

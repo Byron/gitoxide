@@ -73,6 +73,7 @@ impl ThreadSafeRepository {
                         source: err,
                     })?;
             let mut repo = repo.to_thread_local();
+            let prev_write_reflog = repo.refs.write_reflog;
             repo.refs.write_reflog = WriteReflog::Disable;
             repo.edit_reference(RefEdit {
                 change: git_ref::transaction::Change::Update {
@@ -83,6 +84,7 @@ impl ThreadSafeRepository {
                 name: "HEAD".try_into().expect("valid"),
                 deref: false,
             })?;
+            repo.refs.write_reflog = prev_write_reflog;
         }
 
         Ok(repo)
