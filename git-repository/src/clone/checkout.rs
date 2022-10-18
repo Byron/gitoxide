@@ -33,12 +33,19 @@ pub mod main_worktree {
         ),
         #[error("Failed to reopen object database as Arc (only if thread-safety wasn't compiled in)")]
         OpenArcOdb(#[from] std::io::Error),
+        #[error("The HEAD reference could not be located")]
+        FindHead(#[from] crate::reference::find::existing::Error),
+        #[error("The HEAD reference could not be located")]
+        PeelHeadToId(#[from] crate::head::peel::Error),
     }
 
     /// Modification
     impl PrepareCheckout {
         /// Checkout the main worktree, determining how many threads to use by looking at `checkout.workers`, defaulting to using
         /// on thread per logical core.
+        ///
+        /// Note that this is a no-op if the remote was empty, leaving this repository empty as well. This can be validated by checking
+        /// if the `head()` of the returned repository is not unborn.
         pub fn main_worktree(
             &mut self,
             mut progress: impl crate::Progress,
@@ -51,13 +58,15 @@ pub mod main_worktree {
             let workdir = repo.work_dir().ok_or_else(|| Error::BareRepository {
                 git_dir: repo.git_dir().to_owned(),
             })?;
-            let root_tree = repo
-                .head_id()
-                .expect("head points to an object")
-                .object()
-                .expect("downloaded from remote")
-                .peel_to_tree()?
-                .id;
+            let root_tree = match repo.head()?.peel_to_id_in_place().transpose()? {
+                Some(id) => id.object().expect("downloaded from remote").peel_to_tree()?.id,
+                None => {
+                    return Ok((
+                        self.repo.take().expect("still present"),
+                        git_worktree::index::checkout::Outcome::default(),
+                    ))
+                }
+            };
             let index = git_index::State::from_tree(&root_tree, |oid, buf| repo.objects.find_tree_iter(oid, buf).ok())
                 .map_err(|err| Error::IndexFromTree {
                     id: root_tree,

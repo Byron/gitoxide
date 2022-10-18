@@ -17,6 +17,7 @@ pub struct ErrorRecord {
     pub error: Box<dyn std::error::Error + Send + Sync + 'static>,
 }
 
+#[derive(Default)]
 pub struct Outcome {
     /// The amount of files updated, or created.
     pub files_updated: usize,

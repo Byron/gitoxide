@@ -83,15 +83,15 @@ mod blocking_io {
     }
 
     #[test]
-    #[ignore]
     fn fetch_and_checkout_empty_remote_repo() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let mut prepare = git::prepare_clone(
             git_testtools::scripted_fixture_repo_read_only("make_empty_repo.sh")?,
             tmp.path(),
         )?;
-        let (mut checkout, _out) =
-            prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+        let (mut checkout, _out) = prepare
+            .fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())
+            .unwrap();
         let (repo, _) = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
 
         assert!(!repo.index_path().is_file(), "newly initialized repos have no index");

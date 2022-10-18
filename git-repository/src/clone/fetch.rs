@@ -21,8 +21,6 @@ pub enum Error {
     SaveConfig(#[from] crate::remote::save::AsError),
     #[error("Failed to write repository configuration to disk")]
     SaveConfigIo(#[from] std::io::Error),
-    #[error("The remote didn't advertise a remote reference named HEAD despite us asking for it, making it impossible to know what to checkout")]
-    MissingRemoteHead,
     #[error("The remote HEAD points to a reference named {head_ref_name:?} which is invalid.")]
     InvalidHeadRef {
         source: git_validate::refname::Error,
@@ -38,6 +36,9 @@ impl PrepareFetch {
     /// the operation.
     /// On success, the persisted repository is returned, and this method must not be called again to avoid a **panic**.
     /// On error, the method may be called again to retry as often as needed.
+    ///
+    /// If the remote repository was empty, that is newly initialized, the returned repository will also be empty and like
+    /// it was newly initialized.
     ///
     /// Note that all data we created will be removed once this instance drops if the operation wasn't successful.
     #[cfg(feature = "blocking-network-client")]
@@ -82,20 +83,20 @@ impl PrepareFetch {
             use git_ref::transaction::{PreviousValue, RefEdit};
             use git_ref::Target;
             use std::convert::TryInto;
-            let (head_peeled_id, head_ref) = remote_refs
-                .iter()
-                .find_map(|r| match r {
-                    git_protocol::fetch::Ref::Symbolic {
-                        full_ref_name,
-                        target,
-                        object,
-                    } if full_ref_name == "HEAD" => Some((object, Some(target))),
-                    git_protocol::fetch::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
-                        Some((object, None))
-                    }
-                    _ => None,
-                })
-                .ok_or(Error::MissingRemoteHead)?;
+            let (head_peeled_id, head_ref) = match remote_refs.iter().find_map(|r| match r {
+                git_protocol::fetch::Ref::Symbolic {
+                    full_ref_name,
+                    target,
+                    object,
+                } if full_ref_name == "HEAD" => Some((object, Some(target))),
+                git_protocol::fetch::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
+                    Some((object, None))
+                }
+                _ => None,
+            }) {
+                Some(t) => t,
+                None => return Ok(()),
+            };
 
             let name = "HEAD".try_into().expect("valid");
             match head_ref {
