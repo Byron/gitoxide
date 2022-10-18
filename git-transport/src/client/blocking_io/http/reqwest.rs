@@ -1,3 +1,5 @@
+use crate::client::http::reqwest::remote::Config;
+
 pub struct Remote {
     /// A worker thread which performs the actual request.
     handle: Option<std::thread::JoinHandle<Result<(), reqwest::Error>>>,
@@ -5,9 +7,11 @@ pub struct Remote {
     request: std::sync::mpsc::SyncSender<remote::Request>,
     /// A channel to receive the result of the prior request.
     response: std::sync::mpsc::Receiver<remote::Response>,
+    config: Config,
 }
 
 mod remote {
+    use std::sync::Arc;
     use std::{any::Any, convert::TryFrom, error::Error, io::Write, str::FromStr};
 
     use git_features::io::pipe;
@@ -19,10 +23,17 @@ mod remote {
             let (req_send, req_recv) = std::sync::mpsc::sync_channel(0);
             let (res_send, res_recv) = std::sync::mpsc::sync_channel(0);
             let handle = std::thread::spawn(move || -> Result<(), reqwest::Error> {
-                for Request { url, headers, upload } in req_recv {
+                for Request {
+                    url,
+                    headers,
+                    upload,
+                    config,
+                } in req_recv
+                {
                     // We may error while configuring, which is expected as part of the internal protocol. The error will be
                     // received and the sender of the request might restart us.
-                    let client = reqwest::blocking::ClientBuilder::new()
+                    let client = config
+                        .configure(reqwest::blocking::ClientBuilder::new())
                         .connect_timeout(std::time::Duration::from_secs(20))
                         .build()?;
                     let mut req = if upload { client.post(url) } else { client.get(url) }.headers(headers);
@@ -130,6 +141,7 @@ mod remote {
                     url: url.to_owned(),
                     headers: header_map,
                     upload,
+                    config: self.config.clone(),
                 })
                 .expect("the remote cannot be down at this point");
 
@@ -182,14 +194,24 @@ mod remote {
         }
 
         fn configure(&mut self, _config: &dyn Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+            if let Some(config) = _config.downcast_ref::<Config>() {
+                self.config = config.into();
+            }
             Ok(())
         }
+    }
+
+    #[derive(Default, Clone)]
+    pub struct Config {
+        config: Option<String>,
+        configure: Arc<dyn FnMut(&mut reqwest::ClientBuilder) + Send + Sync + 'static>,
     }
 
     pub struct Request {
         pub url: String,
         pub headers: reqwest::header::HeaderMap,
         pub upload: bool,
+        pub config: Config,
     }
 
     /// A link to a thread who provides data for the contained readers.
