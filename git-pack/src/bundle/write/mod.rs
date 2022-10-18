@@ -118,7 +118,7 @@ impl crate::Bundle {
                 (Box::new(pack_entries_iter), pack_version)
             }
         };
-        let (outcome, data_path, index_path) = crate::Bundle::inner_write(
+        let (outcome, data_path, index_path, keep_path) = crate::Bundle::inner_write(
             directory,
             progress,
             options,
@@ -134,6 +134,7 @@ impl crate::Bundle {
             pack_version,
             data_path,
             index_path,
+            keep_path,
         })
     }
 
@@ -211,7 +212,7 @@ impl crate::Bundle {
         let pack_entries_iter =
             git_features::parallel::EagerIterIf::new(move || num_objects > 25_000, pack_entries_iter, 5_000, 5);
 
-        let (outcome, data_path, index_path) = crate::Bundle::inner_write(
+        let (outcome, data_path, index_path, keep_path) = crate::Bundle::inner_write(
             directory,
             progress,
             options,
@@ -227,6 +228,7 @@ impl crate::Bundle {
             pack_version,
             data_path,
             index_path,
+            keep_path,
         })
     }
 
@@ -242,8 +244,16 @@ impl crate::Bundle {
         data_file: SharedTempFile,
         pack_entries_iter: impl Iterator<Item = Result<data::input::Entry, data::input::Error>>,
         should_interrupt: &AtomicBool,
-        pack_version: crate::data::Version,
-    ) -> Result<(crate::index::write::Outcome, Option<PathBuf>, Option<PathBuf>), Error> {
+        pack_version: data::Version,
+    ) -> Result<
+        (
+            crate::index::write::Outcome,
+            Option<PathBuf>,
+            Option<PathBuf>,
+            Option<PathBuf>,
+        ),
+        Error,
+    > {
         let indexing_progress = progress.add_child("create index file");
         Ok(match directory {
             Some(directory) => {
@@ -267,7 +277,9 @@ impl crate::Bundle {
 
                 let data_path = directory.join(format!("pack-{}.pack", outcome.data_hash.to_hex()));
                 let index_path = data_path.with_extension("idx");
+                let keep_path = data_path.with_extension("keep");
 
+                std::fs::write(&keep_path, b"")?;
                 Arc::try_unwrap(data_file)
                     .expect("only one handle left after pack was consumed")
                     .into_inner()
@@ -283,7 +295,7 @@ impl crate::Bundle {
                         ));
                         err
                     })?;
-                (outcome, Some(data_path), Some(index_path))
+                (outcome, Some(data_path), Some(index_path), Some(keep_path))
             }
             None => (
                 crate::index::File::write_data_iter_to_stream(
@@ -297,6 +309,7 @@ impl crate::Bundle {
                     object_hash,
                     pack_version,
                 )?,
+                None,
                 None,
                 None,
             ),

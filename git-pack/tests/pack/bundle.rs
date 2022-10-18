@@ -98,6 +98,7 @@ mod write_to_directory {
             pack_version: pack::data::Version::V2,
             index_path: None,
             data_path: None,
+            keep_path: None,
             object_hash: git_hash::Kind::Sha1,
         })
     }
@@ -118,18 +119,23 @@ mod write_to_directory {
     fn given_a_directory() -> Result<(), Box<dyn std::error::Error>> {
         let dir = TempDir::new()?;
         let mut res = write_pack(Some(&dir), SMALL_PACK)?;
-        let (index_path, data_path) = (res.index_path.take(), res.data_path.take());
+        let (index_path, data_path, keep_path) = (res.index_path.take(), res.data_path.take(), res.keep_path.take());
         assert_eq!(res, expected_outcome()?);
         let mut sorted_entries = fs::read_dir(&dir)?.filter_map(Result::ok).collect::<Vec<_>>();
         sorted_entries.sort_by_key(|e| e.file_name());
-        assert_eq!(sorted_entries.len(), 2, "we want a pack and the corresponding index");
+        assert_eq!(
+            sorted_entries.len(),
+            3,
+            "we want a pack and the corresponding index and the keep file"
+        );
 
         let pack_hash = res.index.data_hash.to_hex();
         assert_eq!(file_name(&sorted_entries[0]), format!("pack-{}.idx", pack_hash));
         assert_eq!(Some(sorted_entries[0].path()), index_path);
-
-        assert_eq!(file_name(&sorted_entries[1]), format!("pack-{}.pack", pack_hash));
-        assert_eq!(Some(sorted_entries[1].path()), data_path);
+        assert_eq!(file_name(&sorted_entries[1]), format!("pack-{}.keep", pack_hash));
+        assert_eq!(Some(sorted_entries[1].path()), keep_path);
+        assert_eq!(file_name(&sorted_entries[2]), format!("pack-{}.pack", pack_hash));
+        assert_eq!(Some(sorted_entries[2].path()), data_path);
 
         res.index_path = index_path;
         assert!(res.to_bundle().transpose()?.is_some());
