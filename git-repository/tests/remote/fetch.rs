@@ -26,7 +26,7 @@ mod blocking_io {
     fn fetch_empty_pack() -> crate::Result {
         let (repo, _tmp) = repo_rw("two-origins");
         let mut remote = repo.head()?.into_remote(Fetch).expect("present")?;
-        remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-exist"), Fetch)?;
+        remote.replace_refspecs(Some("HEAD:refs/remotes/origin/does-not-yet-exist"), Fetch)?;
 
         let res: git::remote::fetch::Outcome = remote
             .connect(Fetch, git::progress::Discard)?
@@ -34,9 +34,39 @@ mod blocking_io {
             .receive(&AtomicBool::default())?;
 
         match res.status {
-            git::remote::fetch::Status::Change {write_pack_bundle, ..} => {
+            git::remote::fetch::Status::Change {write_pack_bundle, update_refs} => {
                 assert_eq!(write_pack_bundle.index.data_hash, hex_to_id("029d08823bd8a8eab510ad6ac75c823cfd3ed31e"));
-                assert_eq!(write_pack_bundle.index.num_objects, 0, "empty pack")},
+                assert_eq!(write_pack_bundle.index.num_objects, 0, "empty pack");
+                assert!(write_pack_bundle.data_path.as_deref().map_or(false, |p| p.is_file()));
+                assert!(write_pack_bundle.index_path.as_deref().map_or(false, |p| p.is_file()));
+                assert_eq!(update_refs.edits.len(), 1);
+                assert!(!write_pack_bundle.keep_path.as_deref().map_or(false, |p| p.is_file()), ".keep files are deleted if at least one ref-edit was made or the pack is empty");
+            },
+            _ => unreachable!("Naive negotiation sends the same have and wants, resulting in an empty pack (technically no change, but we don't detect it) - empty packs are fine")
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn fetch_pack_without_local_destination() -> crate::Result {
+        let (repo, _tmp) = repo_rw("two-origins");
+        let mut remote = repo.find_remote("changes-on-top-of-origin")?;
+        remote.replace_refspecs(Some("HEAD"), Fetch)?;
+
+        let res: git::remote::fetch::Outcome = remote
+            .connect(Fetch, git::progress::Discard)?
+            .prepare_fetch(Default::default())?
+            .receive(&AtomicBool::default())?;
+
+        match res.status {
+            git::remote::fetch::Status::Change {write_pack_bundle, update_refs} => {
+                assert_eq!(write_pack_bundle.index.data_hash, hex_to_id("edc8cc8a25e64e73aacea469fc765564dd2c3f65"));
+                assert_eq!(write_pack_bundle.index.num_objects, 4);
+                assert!(write_pack_bundle.data_path.as_deref().map_or(false, |p| p.is_file()));
+                assert!(write_pack_bundle.index_path.as_deref().map_or(false, |p| p.is_file()));
+                assert_eq!(update_refs.edits.len(), 0);
+                assert!(write_pack_bundle.keep_path.as_deref().map_or(false, |p| p.is_file()), ".keep are kept if there was no edit to bind the packs objects to our commit graph");
+            },
             _ => unreachable!("Naive negotiation sends the same have and wants, resulting in an empty pack (technically no change, but we don't detect it) - empty packs are fine")
         }
         Ok(())
@@ -106,6 +136,11 @@ mod blocking_io {
                         assert_eq!(write_pack_bundle.index.index_hash, hex_to_id(expected_hash));
                         assert!(write_pack_bundle.data_path.map_or(false, |f| f.is_file()));
                         assert!(write_pack_bundle.index_path.map_or(false, |f| f.is_file()));
+                        assert_eq!(update_refs.edits.len(), 1);
+                        assert!(
+                            !write_pack_bundle.keep_path.map_or(false, |f| f.is_file()),
+                            ".keep files are deleted if there is one edit"
+                        );
 
                         update_refs
                     }
