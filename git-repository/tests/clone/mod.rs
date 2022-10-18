@@ -61,16 +61,13 @@ fn fetch_only_with_configuration() -> crate::Result {
 #[test]
 #[cfg(feature = "blocking-network-client")]
 fn fetch_and_checkout() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new().unwrap();
-    let mut prepare = git::prepare_clone(remote::repo("base").path(), tmp.path()).unwrap();
-    let (mut checkout, _out) = prepare
-        .fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())
-        .unwrap();
-    let (repo, _) = checkout
-        .main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())
-        .unwrap();
+    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let mut prepare = git::prepare_clone(remote::repo("base").path(), tmp.path())?;
+    let (mut checkout, _out) =
+        prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+    let (repo, _) = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
 
-    let index = repo.index().unwrap();
+    let index = repo.index()?;
     assert_eq!(index.entries().len(), 1, "All entries are known as per HEAD tree");
 
     let work_dir = repo.work_dir().expect("non-bare");
@@ -78,6 +75,25 @@ fn fetch_and_checkout() -> crate::Result {
         let entry_path = work_dir.join(git_path::from_bstr(entry.path(&index)));
         assert!(entry_path.is_file(), "{:?} not found on disk", entry_path)
     }
+    Ok(())
+}
+
+#[test]
+#[cfg(feature = "blocking-network-client")]
+#[ignore]
+fn fetch_and_checkout_empty_remote_repo() -> crate::Result {
+    let tmp = git_testtools::tempfile::TempDir::new()?;
+    let mut prepare = git::prepare_clone(
+        git_testtools::scripted_fixture_repo_read_only("make_empty_repo.sh")?,
+        tmp.path(),
+    )?;
+    let (mut checkout, _out) =
+        prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+    let (repo, _) = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+    assert!(!repo.index_path().is_file(), "newly initialized repos have no index");
+    assert!(repo.head()?.is_unborn());
+
     Ok(())
 }
 
