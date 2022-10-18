@@ -44,6 +44,11 @@ pub struct Outcome {
     pub index_path: Option<PathBuf>,
     /// The path to the pack data file
     pub data_path: Option<PathBuf>,
+    /// The path to the `.keep` file to prevent collection of the newly written pack until refs are pointing to it.
+    ///
+    /// The file is created right before moving the pack data and index data into place (i.e. `data_path` and `index_path`)
+    /// and is expected to be removed by the caller when ready.
+    pub keep_path: Option<PathBuf>,
 }
 
 impl Outcome {

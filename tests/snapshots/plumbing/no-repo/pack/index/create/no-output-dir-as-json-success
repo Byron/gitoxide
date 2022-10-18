@@ -54,5 +54,6 @@
   "pack_version": "V2",
   "object_hash": "Sha1",
   "index_path": null,
-  "data_path": null
+  "data_path": null,
+  "keep_path": null
 }

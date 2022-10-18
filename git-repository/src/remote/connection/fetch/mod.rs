@@ -39,6 +39,11 @@ mod error {
         WritePack(#[from] git_pack::bundle::write::Error),
         #[error(transparent)]
         UpdateRefs(#[from] super::refs::update::Error),
+        #[error("Failed to remove .keep file at \"{}\"", path.display())]
+        RemovePackKeepFile {
+            path: std::path::PathBuf,
+            source: std::io::Error,
+        },
     }
 }
 pub use error::Error;
@@ -142,6 +147,19 @@ where
     /// "fetch.negotiationAlgorithm" describes algorithms `git` uses currently, with the default being `consecutive` and `skipping` being
     /// experimented with. We currently implement something we could call 'naive' which works for now.
     ///
+    /// ### Pack `.keep` files
+    ///
+    /// That packs that are freshly written to the object database are vulnerable to garbage collection for the brief time that it takes between
+    /// them being placed and the respective references to be written to disk which binds their objects to the commit graph, making them reachable.
+    ///
+    /// To circumvent this issue, a `.keep` file is created before any pack related file (i.e. `.pack` or `.idx`) is written, which indicates the
+    /// garbage collector (like `git maintenance`, `git gc`) to leave the corresponding pack file alone.
+    ///
+    /// If there were any ref updates or the received pack was empty, the `.keep` file will be deleted automatically leaving in its place at
+    /// `write_pack_bundle.keep_path` a `None`.
+    /// However, if no ref-update happened the path will still be present in `write_pack_bundle.keep_path` and is expected to be handled by the caller.
+    /// A known application for this behaviour is in `remote-helper` implementations which should send this path via `lock <path>` to stdout
+    /// to inform git about the file that it will remove once it updated the refs accordingly.
     ///
     /// ### Deviation
     ///
@@ -226,7 +244,7 @@ where
             object_hash: con.remote.repo.object_hash(),
         };
 
-        let write_pack_bundle = if matches!(self.dry_run, fetch::DryRun::No) {
+        let mut write_pack_bundle = if matches!(self.dry_run, fetch::DryRun::No) {
             Some(git_pack::Bundle::write_to_directory(
                 reader,
                 Some(repo.objects.store_ref().path().join("pack")),
@@ -254,6 +272,14 @@ where
             con.remote.refspecs(remote::Direction::Fetch),
             self.dry_run,
         )?;
+
+        if let Some(bundle) = write_pack_bundle.as_mut() {
+            if !update_refs.edits.is_empty() || bundle.index.num_objects == 0 {
+                if let Some(path) = bundle.keep_path.take() {
+                    std::fs::remove_file(&path).map_err(|err| Error::RemovePackKeepFile { path, source: err })?;
+                }
+            }
+        }
 
         Ok(Outcome {
             ref_map: std::mem::take(&mut self.ref_map),

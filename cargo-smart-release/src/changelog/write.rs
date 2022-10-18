@@ -327,7 +327,7 @@ impl section::Segment {
                     if *conventional_count == 1 { "was" } else { "were" }
                 )?;
                 if unique_issues.is_empty() {
-                    writeln!(out, " - 0 issues like '(#ID)' where seen in commit messages")?;
+                    writeln!(out, " - 0 issues like '(#ID)' were seen in commit messages")?;
                 } else {
                     writeln!(
                         out,

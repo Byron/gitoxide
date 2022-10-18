@@ -85,9 +85,18 @@ fn fetch_and_checkout() -> crate::Result {
 #[cfg(feature = "blocking-network-client")]
 fn fetch_only_without_configuration() -> crate::Result {
     let tmp = git_testtools::tempfile::TempDir::new()?;
-    let (repo, _out) = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+    let (repo, out) = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
         .fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
     assert!(repo.find_remote("origin").is_ok(), "default remote name is 'origin'");
+    match out.status {
+        git_repository::remote::fetch::Status::Change { write_pack_bundle, .. } => {
+            assert!(
+                write_pack_bundle.keep_path.is_none(),
+                "keep files aren't kept if refs are written"
+            );
+        }
+        _ => unreachable!("a clone always carries a change"),
+    }
     Ok(())
 }
 
