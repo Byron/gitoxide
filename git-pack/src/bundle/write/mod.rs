@@ -118,7 +118,12 @@ impl crate::Bundle {
                 (Box::new(pack_entries_iter), pack_version)
             }
         };
-        let (outcome, data_path, index_path, keep_path) = crate::Bundle::inner_write(
+        let WriteOutcome {
+            outcome,
+            data_path,
+            index_path,
+            keep_path,
+        } = crate::Bundle::inner_write(
             directory,
             progress,
             options,
@@ -212,7 +217,12 @@ impl crate::Bundle {
         let pack_entries_iter =
             git_features::parallel::EagerIterIf::new(move || num_objects > 25_000, pack_entries_iter, 5_000, 5);
 
-        let (outcome, data_path, index_path, keep_path) = crate::Bundle::inner_write(
+        let WriteOutcome {
+            outcome,
+            data_path,
+            index_path,
+            keep_path,
+        } = crate::Bundle::inner_write(
             directory,
             progress,
             options,
@@ -245,15 +255,7 @@ impl crate::Bundle {
         pack_entries_iter: impl Iterator<Item = Result<data::input::Entry, data::input::Error>>,
         should_interrupt: &AtomicBool,
         pack_version: data::Version,
-    ) -> Result<
-        (
-            crate::index::write::Outcome,
-            Option<PathBuf>,
-            Option<PathBuf>,
-            Option<PathBuf>,
-        ),
-        Error,
-    > {
+    ) -> Result<WriteOutcome, Error> {
         let indexing_progress = progress.add_child("create index file");
         Ok(match directory {
             Some(directory) => {
@@ -295,10 +297,15 @@ impl crate::Bundle {
                         ));
                         err
                     })?;
-                (outcome, Some(data_path), Some(index_path), Some(keep_path))
+                WriteOutcome {
+                    outcome,
+                    data_path: Some(data_path),
+                    index_path: Some(index_path),
+                    keep_path: Some(keep_path),
+                }
             }
-            None => (
-                crate::index::File::write_data_iter_to_stream(
+            None => WriteOutcome {
+                outcome: crate::index::File::write_data_iter_to_stream(
                     index_kind,
                     move || new_pack_file_resolver(data_file),
                     pack_entries_iter,
@@ -309,10 +316,10 @@ impl crate::Bundle {
                     object_hash,
                     pack_version,
                 )?,
-                None,
-                None,
-                None,
-            ),
+                data_path: None,
+                index_path: None,
+                keep_path: None,
+            },
         })
     }
 }
@@ -331,4 +338,11 @@ fn new_pack_file_resolver(
             .map(|pack_entry| out.copy_from_slice(pack_entry))
     };
     Ok(pack_data_lookup)
+}
+
+struct WriteOutcome {
+    outcome: crate::index::write::Outcome,
+    data_path: Option<PathBuf>,
+    index_path: Option<PathBuf>,
+    keep_path: Option<PathBuf>,
 }
