@@ -2,118 +2,121 @@ use git_repository as git;
 
 use crate::remote;
 
-#[test]
 #[cfg(feature = "blocking-network-client")]
-fn fetch_only_with_configuration() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
-    let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
-    let remote_name = "special";
-    let mut prepare = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
-        .with_remote_name(remote_name)?
-        .configure_remote({
-            let called_configure_remote = called_configure_remote.clone();
-            move |r| {
-                called_configure_remote.store(true, std::sync::atomic::Ordering::Relaxed);
-                Ok(
-                    r.with_refspec("+refs/tags/*:refs/tags/*", git::remote::Direction::Fetch)
-                        .expect("valid static spec"),
-                )
+mod blocking_io {
+    use git_repository as git;
+
+    use crate::remote;
+
+    #[test]
+    fn fetch_only_with_configuration() -> crate::Result {
+        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
+        let remote_name = "special";
+        let mut prepare = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+            .with_remote_name(remote_name)?
+            .configure_remote({
+                let called_configure_remote = called_configure_remote.clone();
+                move |r| {
+                    called_configure_remote.store(true, std::sync::atomic::Ordering::Relaxed);
+                    Ok(
+                        r.with_refspec("+refs/tags/*:refs/tags/*", git::remote::Direction::Fetch)
+                            .expect("valid static spec"),
+                    )
+                }
+            });
+        let (repo, out) = prepare.fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+        drop(prepare);
+
+        assert!(
+            called_configure_remote.load(std::sync::atomic::Ordering::Relaxed),
+            "custom remote configuration is called"
+        );
+        assert_eq!(repo.remote_names().len(), 1, "only ever one remote");
+        let remote = repo.find_remote(remote_name)?;
+        assert_eq!(
+            remote.refspecs(git::remote::Direction::Fetch).len(),
+            2,
+            "our added spec was stored as well"
+        );
+
+        assert_eq!(out.ref_map.mappings.len(), 14);
+        match out.status {
+            git_repository::remote::fetch::Status::Change { update_refs, .. } => {
+                for edit in &update_refs.edits {
+                    use git_odb::Find;
+                    assert!(
+                        repo.objects.contains(edit.change.new_value().expect("always set").id()),
+                        "part of the fetched pack"
+                    );
+                }
             }
-        });
-    let (repo, out) = prepare.fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-    drop(prepare);
+            _ => unreachable!("clones are always causing changes and dry-runs aren't possible"),
+        }
 
-    assert!(
-        called_configure_remote.load(std::sync::atomic::Ordering::Relaxed),
-        "custom remote configuration is called"
-    );
-    assert_eq!(repo.remote_names().len(), 1, "only ever one remote");
-    let remote = repo.find_remote(remote_name)?;
-    assert_eq!(
-        remote.refspecs(git::remote::Direction::Fetch).len(),
-        2,
-        "our added spec was stored as well"
-    );
+        let head = repo.head()?;
+        let referent = head.try_into_referent().expect("symbolic ref is present");
+        assert!(
+            referent.id().object().is_ok(),
+            "the object pointed to by HEAD was fetched as well"
+        );
+        Ok(())
+    }
 
-    assert_eq!(out.ref_map.mappings.len(), 14);
-    match out.status {
-        git_repository::remote::fetch::Status::Change { update_refs, .. } => {
-            for edit in &update_refs.edits {
-                use git_odb::Find;
+    #[test]
+    fn fetch_and_checkout() -> crate::Result {
+        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let mut prepare = git::prepare_clone(remote::repo("base").path(), tmp.path())?;
+        let (mut checkout, _out) =
+            prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+        let (repo, _) = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+        let index = repo.index()?;
+        assert_eq!(index.entries().len(), 1, "All entries are known as per HEAD tree");
+
+        let work_dir = repo.work_dir().expect("non-bare");
+        for entry in index.entries() {
+            let entry_path = work_dir.join(git_path::from_bstr(entry.path(&index)));
+            assert!(entry_path.is_file(), "{:?} not found on disk", entry_path)
+        }
+        Ok(())
+    }
+
+    #[test]
+    #[ignore]
+    fn fetch_and_checkout_empty_remote_repo() -> crate::Result {
+        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let mut prepare = git::prepare_clone(
+            git_testtools::scripted_fixture_repo_read_only("make_empty_repo.sh")?,
+            tmp.path(),
+        )?;
+        let (mut checkout, _out) =
+            prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+        let (repo, _) = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+
+        assert!(!repo.index_path().is_file(), "newly initialized repos have no index");
+        assert!(repo.head()?.is_unborn());
+
+        Ok(())
+    }
+
+    #[test]
+    fn fetch_only_without_configuration() -> crate::Result {
+        let tmp = git_testtools::tempfile::TempDir::new()?;
+        let (repo, out) = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
+            .fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
+        assert!(repo.find_remote("origin").is_ok(), "default remote name is 'origin'");
+        match out.status {
+            git_repository::remote::fetch::Status::Change { write_pack_bundle, .. } => {
                 assert!(
-                    repo.objects.contains(edit.change.new_value().expect("always set").id()),
-                    "part of the fetched pack"
+                    write_pack_bundle.keep_path.is_none(),
+                    "keep files aren't kept if refs are written"
                 );
             }
+            _ => unreachable!("a clone always carries a change"),
         }
-        _ => unreachable!("clones are always causing changes and dry-runs aren't possible"),
+        Ok(())
     }
-
-    let head = repo.head()?;
-    let referent = head.try_into_referent().expect("symbolic ref is present");
-    assert!(
-        referent.id().object().is_ok(),
-        "the object pointed to by HEAD was fetched as well"
-    );
-    Ok(())
-}
-
-#[test]
-#[cfg(feature = "blocking-network-client")]
-fn fetch_and_checkout() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
-    let mut prepare = git::prepare_clone(remote::repo("base").path(), tmp.path())?;
-    let (mut checkout, _out) =
-        prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-    let (repo, _) = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-
-    let index = repo.index()?;
-    assert_eq!(index.entries().len(), 1, "All entries are known as per HEAD tree");
-
-    let work_dir = repo.work_dir().expect("non-bare");
-    for entry in index.entries() {
-        let entry_path = work_dir.join(git_path::from_bstr(entry.path(&index)));
-        assert!(entry_path.is_file(), "{:?} not found on disk", entry_path)
-    }
-    Ok(())
-}
-
-#[test]
-#[cfg(feature = "blocking-network-client")]
-#[ignore]
-fn fetch_and_checkout_empty_remote_repo() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
-    let mut prepare = git::prepare_clone(
-        git_testtools::scripted_fixture_repo_read_only("make_empty_repo.sh")?,
-        tmp.path(),
-    )?;
-    let (mut checkout, _out) =
-        prepare.fetch_then_checkout(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-    let (repo, _) = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-
-    assert!(!repo.index_path().is_file(), "newly initialized repos have no index");
-    assert!(repo.head()?.is_unborn());
-
-    Ok(())
-}
-
-#[test]
-#[cfg(feature = "blocking-network-client")]
-fn fetch_only_without_configuration() -> crate::Result {
-    let tmp = git_testtools::tempfile::TempDir::new()?;
-    let (repo, out) = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
-        .fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
-    assert!(repo.find_remote("origin").is_ok(), "default remote name is 'origin'");
-    match out.status {
-        git_repository::remote::fetch::Status::Change { write_pack_bundle, .. } => {
-            assert!(
-                write_pack_bundle.keep_path.is_none(),
-                "keep files aren't kept if refs are written"
-            );
-        }
-        _ => unreachable!("a clone always carries a change"),
-    }
-    Ok(())
 }
 
 #[test]
