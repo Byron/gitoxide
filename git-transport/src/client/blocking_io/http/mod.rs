@@ -21,6 +21,10 @@ mod reqwest;
 ///
 mod traits;
 
+/// The http client configuration when using reqwest
+#[cfg(feature = "http-client-reqwest")]
+pub type Config = reqwest::Config;
+
 /// The actual http client implementation, using curl
 #[cfg(feature = "http-client-curl")]
 pub type Impl = curl::Curl;

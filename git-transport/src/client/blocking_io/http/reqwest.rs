@@ -1,4 +1,4 @@
-use crate::client::http::reqwest::remote::Config;
+pub use crate::client::http::reqwest::remote::Config;
 
 pub struct Remote {
     /// A worker thread which performs the actual request.
@@ -7,11 +7,12 @@ pub struct Remote {
     request: std::sync::mpsc::SyncSender<remote::Request>,
     /// A channel to receive the result of the prior request.
     response: std::sync::mpsc::Receiver<remote::Response>,
+    /// A mechanism for configuring the remote.
     config: Config,
 }
 
 mod remote {
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
     use std::{any::Any, convert::TryFrom, error::Error, io::Write, str::FromStr};
 
     use git_features::io::pipe;
@@ -30,12 +31,16 @@ mod remote {
                     config,
                 } in req_recv
                 {
+                    let mut client = reqwest::blocking::ClientBuilder::new();
+
+                    if let Some(arc) = config.configure {
+                        let mut configure = arc.lock().unwrap();
+                        client = configure(&mut client);
+                    }
+
                     // We may error while configuring, which is expected as part of the internal protocol. The error will be
                     // received and the sender of the request might restart us.
-                    let client = config
-                        .configure(reqwest::blocking::ClientBuilder::new())
-                        .connect_timeout(std::time::Duration::from_secs(20))
-                        .build()?;
+                    let client = client.connect_timeout(std::time::Duration::from_secs(20)).build()?;
                     let mut req = if upload { client.post(url) } else { client.get(url) }.headers(headers);
                     let (post_body_tx, post_body_rx) = pipe::unidirectional(0);
                     if upload {
@@ -107,6 +112,7 @@ mod remote {
                 handle: Some(handle),
                 request: req_send,
                 response: res_recv,
+                config: Config::default(),
             }
         }
     }
@@ -193,9 +199,9 @@ mod remote {
             self.make_request(url, headers, true)
         }
 
-        fn configure(&mut self, _config: &dyn Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-            if let Some(config) = _config.downcast_ref::<Config>() {
-                self.config = config.into();
+        fn configure(&mut self, config: &dyn Any) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+            if let Some(config) = config.downcast_ref::<Config>() {
+                self.config = config.clone();
             }
             Ok(())
         }
@@ -203,8 +209,17 @@ mod remote {
 
     #[derive(Default, Clone)]
     pub struct Config {
-        config: Option<String>,
-        configure: Arc<dyn FnMut(&mut reqwest::ClientBuilder) + Send + Sync + 'static>,
+        pub config: Option<String>,
+        pub configure: Option<
+            Arc<
+                Mutex<
+                    dyn FnMut(&mut reqwest::blocking::ClientBuilder) -> reqwest::blocking::ClientBuilder
+                        + Send
+                        + Sync
+                        + 'static,
+                >,
+            >,
+        >,
     }
 
     pub struct Request {
