@@ -93,6 +93,16 @@ impl Url {
         self.serialize_alternative_form = use_alternate_form;
         self
     }
+
+    /// Turn a file url like `file://relative` into `file:///root/relative`, hence it assures the url's path component is absolute.
+    pub fn canonicalize(&mut self) -> Result<(), git_path::realpath::Error> {
+        if self.scheme == Scheme::File {
+            let path = git_path::from_bstr(self.path.as_ref());
+            let abs_path = git_path::realpath(path)?;
+            self.path = git_path::into_bstr(abs_path).into_owned();
+        }
+        Ok(())
+    }
 }
 
 /// Access
@@ -122,6 +132,16 @@ impl Url {
                 File | Ext(_) => return None,
             })
         })
+    }
+}
+
+/// Transformation
+impl Url {
+    /// Turn a file url like `file://relative` into `file:///root/relative`, hence it assures the url's path component is absolute.
+    pub fn canonicalized(&self) -> Result<Self, git_path::realpath::Error> {
+        let mut res = self.clone();
+        res.canonicalize()?;
+        Ok(res)
     }
 }
 
