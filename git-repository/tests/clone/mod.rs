@@ -9,6 +9,7 @@ mod blocking_io {
     use crate::remote;
 
     #[test]
+    #[ignore]
     fn fetch_only_with_configuration() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
@@ -18,7 +19,10 @@ mod blocking_io {
             tmp.path(),
             git::create::Kind::Bare,
             Default::default(),
-            git::open::Options::isolated().config_overrides(Some("init.defaultBranch=unused-as-overridden-by-remote")),
+            git::open::Options::isolated().config_overrides([
+                "init.defaultBranch=unused-as-overridden-by-remote",
+                "core.logAllRefUpdates",
+            ]),
         )?
         .with_remote_name(remote_name)?
         .configure_remote({
@@ -33,6 +37,7 @@ mod blocking_io {
         });
         let (repo, out) = prepare.fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
         drop(prepare);
+        dbg!(repo.config_snapshot());
 
         assert!(
             called_configure_remote.load(std::sync::atomic::Ordering::Relaxed),
@@ -72,6 +77,7 @@ mod blocking_io {
         }
 
         let head = repo.head()?;
+        let _head_logs = head.log_iter().all()?.expect("log present").collect::<Vec<_>>();
         let referent = head.try_into_referent().expect("symbolic ref is present");
         assert!(
             referent.id().object().is_ok(),

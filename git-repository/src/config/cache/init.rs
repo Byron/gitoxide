@@ -150,12 +150,27 @@ impl Cache {
     /// However, those that are lazily read won't be re-evaluated right away and might thus pass now but fail later.
     ///
     /// Note that we unconditionally re-read all values.
-    pub fn reread_values_and_clear_caches(&mut self, config: crate::Config) -> Result<(), Error> {
+    pub fn reread_values_and_clear_caches_replacing_config(&mut self, config: crate::Config) -> Result<(), Error> {
+        let prev = std::mem::replace(&mut self.resolved, config);
+        if let Err(err) = self.reread_values_and_clear_caches() {
+            drop(std::mem::replace(&mut self.resolved, prev));
+            Err(err)
+        } else {
+            Ok(())
+        }
+    }
+
+    pub fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
+        let config = &self.resolved;
         let hex_len = util::check_lenient(util::parse_core_abbrev(&config, self.object_hash), self.lenient_config)?;
 
         use util::config_bool;
         let ignore_case = config_bool(&config, "core.ignoreCase", false, self.lenient_config)?;
         let object_kind_hint = util::disambiguate_hint(&config);
+
+        self.hex_len = hex_len;
+        self.ignore_case = ignore_case;
+        self.object_kind_hint = object_kind_hint;
 
         self.personas = Default::default();
         self.url_rewrite = Default::default();
@@ -163,11 +178,6 @@ impl Cache {
         {
             self.url_scheme = Default::default();
         }
-
-        self.resolved = config;
-        self.hex_len = hex_len;
-        self.ignore_case = ignore_case;
-        self.object_kind_hint = object_kind_hint;
 
         Ok(())
     }

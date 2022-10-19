@@ -111,7 +111,7 @@ impl<'repo> SnapshotMut<'repo> {
         repo: &'repo mut crate::Repository,
     ) -> Result<&'repo mut crate::Repository, crate::config::Error> {
         repo.config
-            .reread_values_and_clear_caches(std::mem::take(&mut self.config).into())?;
+            .reread_values_and_clear_caches_replacing_config(std::mem::take(&mut self.config).into())?;
         Ok(repo)
     }
 
@@ -146,7 +146,7 @@ impl<'repo> CommitAutoRollback<'repo> {
         repo: &'repo mut crate::Repository,
     ) -> Result<&'repo mut crate::Repository, crate::config::Error> {
         repo.config
-            .reread_values_and_clear_caches(OwnShared::clone(&self.prev_config))?;
+            .reread_values_and_clear_caches_replacing_config(OwnShared::clone(&self.prev_config))?;
         Ok(repo)
     }
 }

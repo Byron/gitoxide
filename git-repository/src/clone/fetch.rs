@@ -56,18 +56,8 @@ impl PrepareFetch {
         P: crate::Progress,
         P::SubProgress: 'static,
     {
-        fn replace_changed_local_config(repo: &mut Repository, config: git_config::File<'static>) {
-            let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
-            let ids_to_remove: Vec<_> = repo_config
-                .sections_and_ids()
-                .filter_map(|(s, id)| (s.meta().source == git_config::Source::Local).then(|| id))
-                .collect();
-            for id in ids_to_remove {
-                repo_config.remove_section_by_id(id);
-            }
-            repo_config.append(config);
-        }
-
+        use crate::bstr::{BStr, ByteVec};
+        use git_ref::transaction::{LogChange, RefLog};
         fn write_remote_to_local_config(
             remote: &mut crate::Remote<'_>,
             remote_name: String,
@@ -82,9 +72,32 @@ impl PrepareFetch {
             Ok(config)
         }
 
+        fn replace_changed_local_config(repo: &mut Repository, config: git_config::File<'static>) {
+            let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
+            let ids_to_remove: Vec<_> = repo_config
+                .sections_and_ids()
+                .filter_map(|(s, id)| {
+                    matches!(s.meta().source, git_config::Source::Local | git_config::Source::Api).then(|| id)
+                })
+                .collect();
+            for id in ids_to_remove {
+                repo_config.remove_section_by_id(id);
+            }
+            repo_config.append(config);
+            crate::config::overrides::apply(repo_config, &repo.options.config_overrides, git_config::Source::Api)
+                .expect("applied once and can be applied again");
+            repo.config
+                .reread_values_and_clear_caches()
+                .expect("values could be read once and can be read again");
+        }
+
         /// HEAD cannot be written by means of refspec by design, so we have to do it manually here. Also create the pointed-to ref
         /// if we have to, as it might not have been naturally included in the ref-specs.
-        fn update_head(repo: &Repository, remote_refs: &[git_protocol::fetch::Ref]) -> Result<(), Error> {
+        fn update_head(
+            repo: &Repository,
+            remote_refs: &[git_protocol::fetch::Ref],
+            reflog_message: &BStr,
+        ) -> Result<(), Error> {
             use git_ref::transaction::{PreviousValue, RefEdit};
             use git_ref::Target;
             use std::convert::TryInto;
@@ -104,6 +117,11 @@ impl PrepareFetch {
             };
 
             let name = "HEAD".try_into().expect("valid");
+            let reflog_message = || LogChange {
+                mode: RefLog::AndReference,
+                force_create_reflog: false,
+                message: reflog_message.to_owned(),
+            };
             match head_ref {
                 Some(referent) => {
                     let referent: git_ref::FullName = referent.try_into().map_err(|err| Error::InvalidHeadRef {
@@ -113,7 +131,7 @@ impl PrepareFetch {
                     repo.edit_references([
                         RefEdit {
                             change: git_ref::transaction::Change::Update {
-                                log: Default::default(),
+                                log: reflog_message(),
                                 expected: PreviousValue::Any,
                                 new: Target::Peeled(head_peeled_id.to_owned()),
                             },
@@ -122,7 +140,7 @@ impl PrepareFetch {
                         },
                         RefEdit {
                             change: git_ref::transaction::Change::Update {
-                                log: Default::default(),
+                                log: reflog_message(),
                                 expected: PreviousValue::Any,
                                 new: Target::Symbolic(referent),
                             },
@@ -134,7 +152,7 @@ impl PrepareFetch {
                 None => {
                     repo.edit_reference(RefEdit {
                         change: git_ref::transaction::Change::Update {
-                            log: Default::default(),
+                            log: reflog_message(),
                             expected: PreviousValue::Any,
                             new: Target::Peeled(head_peeled_id.to_owned()),
                         },
@@ -196,11 +214,12 @@ impl PrepareFetch {
 
         replace_changed_local_config(repo, config);
 
-        let prev_write_ref_log = repo.refs.write_reflog;
-        repo.refs.write_reflog = git_ref::store::WriteReflog::Disable;
-        let res = update_head(repo, &outcome.ref_map.remote_refs);
-        repo.refs.write_reflog = prev_write_ref_log;
-        res?;
+        let reflog_message = {
+            let mut b = self.url.to_bstring();
+            b.insert_str(0, "clone: from ");
+            b
+        };
+        update_head(repo, &outcome.ref_map.remote_refs, reflog_message.as_ref())?;
 
         Ok((self.repo.take().expect("still present"), outcome))
     }

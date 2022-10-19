@@ -42,7 +42,7 @@ pub(crate) fn config_bool(
 }
 
 pub(crate) fn query_refupdates(config: &git_config::File<'static>) -> Option<git_ref::store::WriteReflog> {
-    config.string("core", None, "logallrefupdates").map(|val| {
+    config.string("core", None, "logAllRefUpdates").map(|val| {
         (val.eq_ignore_ascii_case(b"always"))
             .then(|| git_ref::store::WriteReflog::Always)
             .or_else(|| {
