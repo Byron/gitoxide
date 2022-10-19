@@ -78,12 +78,7 @@ mod blocking_io {
         let head = repo.head()?;
         {
             let mut logs = head.log_iter();
-            let head_logs = logs.all()?.expect("log present").collect::<Result<Vec<_>, _>>()?;
-            assert_eq!(head_logs.len(), 1, "just created");
-            let line = &head_logs[0];
-            assert!(line.message.starts_with(b"clone: from "), "{:?} unexpected", line);
-            let path = git_path::from_bstr(line.message.rsplit(|b| *b == b' ').next().expect("path").as_bstr());
-            assert!(path.is_absolute(), "{:?} must be absolute", path);
+            assert_reflog(logs.all());
         }
 
         let referent = head.try_into_referent().expect("symbolic ref is present");
@@ -96,7 +91,25 @@ mod blocking_io {
             remote::repo("base").head_name()?.expect("symbolic").as_bstr(),
             "local clone always adopts the name of the remote"
         );
+
+        {
+            let mut logs = referent.log_iter();
+            assert_reflog(logs.all());
+        }
         Ok(())
+    }
+
+    fn assert_reflog(logs: std::io::Result<Option<git_ref::file::log::iter::Forward<'_>>>) {
+        let logs = logs
+            .unwrap()
+            .expect("log present")
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(logs.len(), 1, "just created");
+        let line = &logs[0];
+        assert!(line.message.starts_with(b"clone: from "), "{:?} unexpected", line);
+        let path = git_path::from_bstr(line.message.rsplit(|b| *b == b' ').next().expect("path").as_bstr());
+        assert!(path.is_absolute(), "{:?} must be absolute", path);
     }
 
     #[test]
