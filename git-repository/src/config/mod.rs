@@ -67,6 +67,8 @@ pub enum Error {
     PathInterpolation(#[from] git_config::path::interpolate::Error),
     #[error("Configuration overrides at open or init time could not be applied.")]
     ConfigOverrides(#[from] overrides::Error),
+    #[error("Invalid value for 'core.logAllRefUpdates': \"{value}\"")]
+    LogAllRefUpdates { value: BString },
 }
 
 ///

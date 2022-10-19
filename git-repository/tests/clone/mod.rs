@@ -75,7 +75,7 @@ mod blocking_io {
         }
 
         let head = repo.head()?;
-        let _head_logs = head.log_iter().all()?.expect("log present").collect::<Vec<_>>();
+        // let _head_logs = head.log_iter().all()?.expect("log present").collect::<Vec<_>>();
         let referent = head.try_into_referent().expect("symbolic ref is present");
         assert!(
             referent.id().object().is_ok(),

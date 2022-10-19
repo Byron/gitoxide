@@ -119,7 +119,7 @@ impl Cache {
         let hex_len = util::check_lenient(util::parse_core_abbrev(&config, object_hash), lenient_config)?;
 
         use util::config_bool;
-        let reflog = util::query_refupdates(&config);
+        let reflog = util::query_refupdates(&config, lenient_config)?;
         let ignore_case = config_bool(&config, "core.ignoreCase", false, lenient_config)?;
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true, lenient_config)?;
         let object_kind_hint = util::disambiguate_hint(&config);
@@ -170,7 +170,7 @@ impl Cache {
         use util::config_bool;
         let ignore_case = config_bool(&config, "core.ignoreCase", false, self.lenient_config)?;
         let object_kind_hint = util::disambiguate_hint(&config);
-        let reflog = util::query_refupdates(config);
+        let reflog = util::query_refupdates(config, self.lenient_config)?;
 
         self.hex_len = hex_len;
         self.ignore_case = ignore_case;

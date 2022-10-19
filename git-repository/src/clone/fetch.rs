@@ -72,7 +72,7 @@ impl PrepareFetch {
             Ok(config)
         }
 
-        fn replace_changed_local_config(repo: &mut Repository, config: git_config::File<'static>) {
+        fn replace_changed_local_config(repo: &mut Repository, mut config: git_config::File<'static>) {
             let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
             let ids_to_remove: Vec<_> = repo_config
                 .sections_and_ids()
@@ -83,9 +83,9 @@ impl PrepareFetch {
             for id in ids_to_remove {
                 repo_config.remove_section_by_id(id);
             }
-            repo_config.append(config);
-            crate::config::overrides::apply(repo_config, &repo.options.config_overrides, git_config::Source::Api)
+            crate::config::overrides::apply(&mut config, &repo.options.config_overrides, git_config::Source::Api)
                 .expect("applied once and can be applied again");
+            repo_config.append(config);
             repo.reread_values_and_clear_caches()
                 .expect("values could be read once and can be read again");
         }

@@ -463,6 +463,7 @@ impl Repository {
     ///
     /// Similar to `reread_values_and_clear_caches_replacing_config()`, but works on the existing instance instead of a passed
     /// in one that it them makes the default.
+    #[cfg(feature = "blocking-network-client")]
     pub(crate) fn reread_values_and_clear_caches(&mut self) -> Result<(), config::Error> {
         self.config.reread_values_and_clear_caches()?;
         self.apply_changed_values();

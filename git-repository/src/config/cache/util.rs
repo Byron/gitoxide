@@ -41,17 +41,27 @@ pub(crate) fn config_bool(
     }
 }
 
-pub(crate) fn query_refupdates(config: &git_config::File<'static>) -> Option<git_ref::store::WriteReflog> {
-    config.string("core", None, "logAllRefUpdates").map(|val| {
-        (val.eq_ignore_ascii_case(b"always"))
-            .then(|| git_ref::store::WriteReflog::Always)
-            .or_else(|| {
-                git_config::Boolean::try_from(val)
-                    .ok()
-                    .and_then(|b| b.is_true().then(|| git_ref::store::WriteReflog::Normal))
-            })
-            .unwrap_or(git_ref::store::WriteReflog::Disable)
-    })
+pub(crate) fn query_refupdates(
+    config: &git_config::File<'static>,
+    lenient_config: bool,
+) -> Result<Option<git_ref::store::WriteReflog>, Error> {
+    match config
+        .boolean("core", None, "logAllRefUpdates")
+        .and_then(|b| b.ok())
+        .map(|b| {
+            b.then(|| git_ref::store::WriteReflog::Normal)
+                .unwrap_or(git_ref::store::WriteReflog::Disable)
+        }) {
+        Some(val) => Ok(Some(val)),
+        None => match config.string("core", None, "logAllRefUpdates") {
+            Some(val) if val.eq_ignore_ascii_case(b"always") => Ok(Some(git_ref::store::WriteReflog::Always)),
+            Some(_val) if lenient_config => Ok(None),
+            Some(val) => Err(Error::LogAllRefUpdates {
+                value: val.into_owned(),
+            }),
+            None => Ok(None),
+        },
+    }
 }
 
 pub(crate) fn check_lenient<T, E>(v: Result<Option<T>, E>, lenient: bool) -> Result<Option<T>, E> {
