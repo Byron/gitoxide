@@ -52,7 +52,9 @@ impl PrepareFetch {
         P::SubProgress: 'static,
     {
         use crate::bstr::{BStr, ByteVec};
+        use crate::remote::fetch::RefLogMessage;
         use git_ref::transaction::{LogChange, RefLog};
+
         fn write_remote_to_local_config_file(
             remote: &mut crate::Remote<'_>,
             remote_name: String,
@@ -207,15 +209,18 @@ impl PrepareFetch {
         if pending_pack.ref_map().object_hash != repo.object_hash() {
             unimplemented!("configure repository to expect a different object hash as advertised by the server")
         }
-        let outcome = pending_pack.receive(should_interrupt)?;
-
-        replace_changed_local_config_file(repo, config);
-
         let reflog_message = {
             let mut b = self.url.to_bstring();
             b.insert_str(0, "clone: from ");
             b
         };
+        let outcome = pending_pack
+            .with_reflog_message(RefLogMessage::Override {
+                message: reflog_message.clone(),
+            })
+            .receive(should_interrupt)?;
+
+        replace_changed_local_config_file(repo, config);
         update_head(repo, &outcome.ref_map.remote_refs, reflog_message.as_ref())?;
 
         Ok((self.repo.take().expect("still present"), outcome))

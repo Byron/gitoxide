@@ -7,6 +7,7 @@ use git_ref::{
     Target, TargetRef,
 };
 
+use crate::remote::fetch::RefLogMessage;
 use crate::{
     ext::ObjectIdExt,
     remote::{fetch, fetch::refs::update::Mode},
@@ -41,7 +42,7 @@ impl From<update::Mode> for Update {
 /// It can be used to produce typical information that one is used to from `git fetch`.
 pub(crate) fn update(
     repo: &Repository,
-    action: &str,
+    message: RefLogMessage,
     mappings: &[fetch::Mapping],
     refspecs: &[git_refspec::RefSpec],
     dry_run: fetch::DryRun,
@@ -161,7 +162,7 @@ pub(crate) fn update(
                         log: LogChange {
                             mode: RefLog::AndReference,
                             force_create_reflog: false,
-                            message: format!("{}: {}", action, reflog_message).into(),
+                            message: message.compose(reflog_message),
                         },
                         expected: previous_value,
                         new: Target::Peeled(remote_id.into()),

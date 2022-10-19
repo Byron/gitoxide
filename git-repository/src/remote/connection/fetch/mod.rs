@@ -1,5 +1,6 @@
 use std::sync::atomic::AtomicBool;
 
+use crate::bstr::BString;
 use git_odb::FindExt;
 use git_protocol::transport::client::Transport;
 
@@ -13,40 +14,31 @@ use crate::{
     Progress,
 };
 
-mod error {
-    /// The error returned by [`receive()`](super::Prepare::receive()).
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error("{message}{}", desired.map(|n| format!(" (got {})", n)).unwrap_or_default())]
-        Configuration {
-            message: &'static str,
-            desired: Option<i64>,
-            source: Option<git_config::value::Error>,
-        },
-        #[error("Could not decode server reply")]
-        FetchResponse(#[from] git_protocol::fetch::response::Error),
-        #[error("Cannot fetch from a remote that uses {remote} while local repository uses {local} for object hashes")]
-        IncompatibleObjectHash {
-            local: git_hash::Kind,
-            remote: git_hash::Kind,
-        },
-        #[error(transparent)]
-        Negotiate(#[from] super::negotiate::Error),
-        #[error(transparent)]
-        Client(#[from] git_protocol::transport::client::Error),
-        #[error(transparent)]
-        WritePack(#[from] git_pack::bundle::write::Error),
-        #[error(transparent)]
-        UpdateRefs(#[from] super::refs::update::Error),
-        #[error("Failed to remove .keep file at \"{}\"", path.display())]
-        RemovePackKeepFile {
-            path: std::path::PathBuf,
-            source: std::io::Error,
-        },
+mod error;
+pub use error::Error;
+
+/// The way reflog messages should be composed whenever a ref is written with recent objects from a remote.
+pub enum RefLogMessage {
+    /// Prefix the log with `action` and generate the typical suffix as `git` would.
+    Prefixed {
+        /// The action to use, like `fetch` or `pull`.
+        action: String,
+    },
+    /// Control the entire message, using `message` verbatim.
+    Override {
+        /// The complete reflog message.
+        message: BString,
+    },
+}
+
+impl RefLogMessage {
+    pub(crate) fn compose(&self, context: &str) -> BString {
+        match self {
+            RefLogMessage::Prefixed { action } => format!("{}: {}", action, context).into(),
+            RefLogMessage::Override { message } => message.to_owned(),
+        }
     }
 }
-pub use error::Error;
 
 /// The status of the repository after the fetch operation
 #[derive(Debug, Clone)]
@@ -118,6 +110,7 @@ where
             con: Some(self),
             ref_map,
             dry_run: DryRun::No,
+            reflog_message: None,
         })
     }
 }
@@ -267,7 +260,9 @@ where
 
         let update_refs = refs::update(
             repo,
-            "fetch",
+            self.reflog_message
+                .take()
+                .unwrap_or_else(|| RefLogMessage::Prefixed { action: "fetch".into() }),
             &self.ref_map.mappings,
             con.remote.refspecs(remote::Direction::Fetch),
             self.dry_run,
@@ -323,6 +318,7 @@ where
     con: Option<Connection<'remote, 'repo, T, P>>,
     ref_map: RefMap,
     dry_run: DryRun,
+    reflog_message: Option<RefLogMessage>,
 }
 
 /// Builder
@@ -335,6 +331,12 @@ where
     /// This works by not actually fetching the pack after negotiating it, nor will refs be updated.
     pub fn with_dry_run(mut self, enabled: bool) -> Self {
         self.dry_run = enabled.then(|| DryRun::Yes).unwrap_or(DryRun::No);
+        self
+    }
+
+    /// Set the reflog message to use when updating refs after fetching a pack.
+    pub fn with_reflog_message(mut self, reflog_message: RefLogMessage) -> Self {
+        self.reflog_message = reflog_message.into();
         self
     }
 }

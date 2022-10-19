@@ -60,4 +60,4 @@ pub struct Mapping {
 }
 
 #[cfg(feature = "blocking-network-client")]
-pub use super::connection::fetch::{negotiate, prepare, refs, Error, Outcome, Prepare, Status};
+pub use super::connection::fetch::{negotiate, prepare, refs, Error, Outcome, Prepare, RefLogMessage, Status};

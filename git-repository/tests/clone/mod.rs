@@ -70,6 +70,11 @@ mod blocking_io {
                         repo.objects.contains(edit.change.new_value().expect("always set").id()),
                         "part of the fetched pack"
                     );
+                    let r = repo.find_reference(edit.name.as_ref()).expect("created");
+                    if r.name().category().expect("known") != git_ref::Category::Tag {
+                        let mut logs = r.log_iter();
+                        assert_reflog(logs.all());
+                    }
                 }
             }
             _ => unreachable!("clones are always causing changes and dry-runs aren't possible"),
@@ -107,7 +112,11 @@ mod blocking_io {
             .unwrap();
         assert_eq!(logs.len(), 1, "just created");
         let line = &logs[0];
-        assert!(line.message.starts_with(b"clone: from "), "{:?} unexpected", line);
+        assert!(
+            line.message.starts_with(b"clone: from "),
+            "{:?} unexpected",
+            line.message
+        );
         let path = git_path::from_bstr(line.message.rsplit(|b| *b == b' ').next().expect("path").as_bstr());
         assert!(path.is_absolute(), "{:?} must be absolute", path);
     }
