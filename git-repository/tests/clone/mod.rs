@@ -13,18 +13,24 @@ mod blocking_io {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
         let remote_name = "special";
-        let mut prepare = git::prepare_clone_bare(remote::repo("base").path(), tmp.path())?
-            .with_remote_name(remote_name)?
-            .configure_remote({
-                let called_configure_remote = called_configure_remote.clone();
-                move |r| {
-                    called_configure_remote.store(true, std::sync::atomic::Ordering::Relaxed);
-                    Ok(
-                        r.with_refspec("+refs/tags/*:refs/tags/*", git::remote::Direction::Fetch)
-                            .expect("valid static spec"),
-                    )
-                }
-            });
+        let mut prepare = git::clone::PrepareFetch::new(
+            remote::repo("base").path(),
+            tmp.path(),
+            git::create::Kind::Bare,
+            Default::default(),
+            git::open::Options::isolated().config_overrides(Some("init.defaultBranch=unused-as-overridden-by-remote")),
+        )?
+        .with_remote_name(remote_name)?
+        .configure_remote({
+            let called_configure_remote = called_configure_remote.clone();
+            move |r| {
+                called_configure_remote.store(true, std::sync::atomic::Ordering::Relaxed);
+                Ok(
+                    r.with_refspec("+refs/tags/*:refs/tags/*", git::remote::Direction::Fetch)
+                        .expect("valid static spec"),
+                )
+            }
+        });
         let (repo, out) = prepare.fetch_only(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
         drop(prepare);
 
@@ -70,6 +76,11 @@ mod blocking_io {
         assert!(
             referent.id().object().is_ok(),
             "the object pointed to by HEAD was fetched as well"
+        );
+        assert_eq!(
+            referent.name().as_bstr(),
+            remote::repo("base").head_name()?.expect("symbolic").as_bstr(),
+            "local clone always adopts the name of the remote"
         );
         Ok(())
     }
