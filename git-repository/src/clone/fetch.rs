@@ -9,6 +9,11 @@ pub enum Error {
     Connect(#[from] crate::remote::connect::Error),
     #[error(transparent)]
     PrepareFetch(#[from] crate::remote::fetch::prepare::Error),
+    #[error("Failed to turn a the relative file url \"{}\" into an absolute one", url.to_bstring())]
+    CanonicalizeUrl {
+        url: git_url::Url,
+        source: git_path::realpath::Error,
+    },
     #[error(transparent)]
     Fetch(#[from] crate::remote::fetch::Error),
     #[error(transparent)]
@@ -157,7 +162,15 @@ impl PrepareFetch {
         };
 
         let mut remote = repo
-            .remote_at(self.url.clone())?
+            .remote_at(match self.url.canonicalized() {
+                Ok(url) => url,
+                Err(err) => {
+                    return Err(Error::CanonicalizeUrl {
+                        url: self.url.clone(),
+                        source: err,
+                    })
+                }
+            })?
             .with_refspec("+refs/heads/*:refs/remotes/origin/*", crate::remote::Direction::Fetch)
             .expect("valid static spec");
         if let Some(f) = self.configure_remote.as_mut() {

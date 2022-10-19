@@ -39,6 +39,17 @@ mod blocking_io {
             2,
             "our added spec was stored as well"
         );
+        assert!(
+            git::path::from_bstr(
+                remote
+                    .url(git::remote::Direction::Fetch)
+                    .expect("present")
+                    .path
+                    .as_ref()
+            )
+            .is_absolute(),
+            "file urls can't be relative paths"
+        );
 
         assert_eq!(out.ref_map.mappings.len(), 14);
         match out.status {
