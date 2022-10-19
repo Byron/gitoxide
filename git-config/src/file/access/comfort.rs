@@ -2,7 +2,7 @@ use std::{borrow::Cow, convert::TryFrom};
 
 use bstr::BStr;
 
-use crate::{file::MetadataFilter, lookup, parse::section, value, File};
+use crate::{file::MetadataFilter, value, File};
 
 /// Comfortable API for accessing values
 impl<'event> File<'event> {
@@ -81,19 +81,22 @@ impl<'event> File<'event> {
         filter: &mut MetadataFilter,
     ) -> Option<Result<bool, value::Error>> {
         let section_name = section_name.as_ref();
+        let section_ids = self
+            .section_ids_by_name_and_subname(section_name, subsection_name)
+            .ok()?;
         let key = key.as_ref();
-        match self.raw_value_filter(section_name, subsection_name, key, filter) {
-            Ok(v) => Some(crate::Boolean::try_from(v).map(|b| b.into())),
-            Err(lookup::existing::Error::KeyMissing) => {
-                let section = self
-                    .section_filter(section_name, subsection_name, filter)
-                    .ok()
-                    .flatten()?;
-                let key = section::Key::try_from(key).ok()?;
-                section.key_and_value_range_by(&key).map(|_| Ok(true))
+        for section_id in section_ids.rev() {
+            let section = self.sections.get(&section_id).expect("known section id");
+            if !filter(section.meta()) {
+                continue;
             }
-            Err(_err) => None,
+            match section.value_implicit(key) {
+                Some(Some(v)) => return Some(crate::Boolean::try_from(v).map(|b| b.into())),
+                Some(None) => return Some(Ok(true)),
+                None => continue,
+            }
         }
+        None
     }
 
     /// Like [`value()`][File::value()], but returning an `Option` if the integer wasn't found.
