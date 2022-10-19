@@ -86,8 +86,7 @@ impl PrepareFetch {
             repo_config.append(config);
             crate::config::overrides::apply(repo_config, &repo.options.config_overrides, git_config::Source::Api)
                 .expect("applied once and can be applied again");
-            repo.config
-                .reread_values_and_clear_caches()
+            repo.reread_values_and_clear_caches()
                 .expect("values could be read once and can be read again");
         }
 

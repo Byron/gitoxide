@@ -152,14 +152,17 @@ impl Cache {
     /// Note that we unconditionally re-read all values.
     pub fn reread_values_and_clear_caches_replacing_config(&mut self, config: crate::Config) -> Result<(), Error> {
         let prev = std::mem::replace(&mut self.resolved, config);
-        if let Err(err) = self.reread_values_and_clear_caches() {
-            drop(std::mem::replace(&mut self.resolved, prev));
-            Err(err)
-        } else {
-            Ok(())
+        match self.reread_values_and_clear_caches() {
+            Err(err) => {
+                drop(std::mem::replace(&mut self.resolved, prev));
+                Err(err)
+            }
+            Ok(()) => Ok(()),
         }
     }
 
+    /// Similar to `reread_values_and_clear_caches_replacing_config()`, but works on the existing configuration instead of a passed
+    /// in one that it them makes the default.
     pub fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
         let config = &self.resolved;
         let hex_len = util::check_lenient(util::parse_core_abbrev(&config, self.object_hash), self.lenient_config)?;
@@ -167,10 +170,12 @@ impl Cache {
         use util::config_bool;
         let ignore_case = config_bool(&config, "core.ignoreCase", false, self.lenient_config)?;
         let object_kind_hint = util::disambiguate_hint(&config);
+        let reflog = util::query_refupdates(config);
 
         self.hex_len = hex_len;
         self.ignore_case = ignore_case;
         self.object_kind_hint = object_kind_hint;
+        self.reflog = reflog;
 
         self.personas = Default::default();
         self.url_rewrite = Default::default();

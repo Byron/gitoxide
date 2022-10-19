@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use git_features::threading::OwnShared;
 
 use crate::bstr::BString;
-use crate::{config, config::cache::interpolate_context, permission, Permissions, ThreadSafeRepository};
+use crate::{config, config::cache::interpolate_context, permission, Permissions, Repository, ThreadSafeRepository};
 
 /// A way to configure the usage of replacement objects, see `git replace`.
 #[derive(Debug, Clone)]
@@ -416,14 +416,7 @@ impl ThreadSafeRepository {
             None => {}
         }
 
-        refs.write_reflog = config.reflog.unwrap_or_else(|| {
-            if worktree_dir.is_none() {
-                git_ref::store::WriteReflog::Disable
-            } else {
-                git_ref::store::WriteReflog::Normal
-            }
-        });
-
+        refs.write_reflog = reflog_or_default(config.reflog, worktree_dir.is_some());
         let replacements = replacement_objects
             .clone()
             .refs_prefix()
@@ -463,6 +456,33 @@ impl ThreadSafeRepository {
             index: git_features::fs::MutableSnapshot::new().into(),
         })
     }
+}
+
+impl Repository {
+    /// Causes our configuration to re-read cached values which will also be applied to the repository in-memory state if applicable.
+    ///
+    /// Similar to `reread_values_and_clear_caches_replacing_config()`, but works on the existing instance instead of a passed
+    /// in one that it them makes the default.
+    pub fn reread_values_and_clear_caches(&mut self) -> Result<(), config::Error> {
+        self.config.reread_values_and_clear_caches()?;
+        self.apply_changed_values();
+        Ok(())
+    }
+
+    fn apply_changed_values(&mut self) {
+        self.refs.write_reflog = reflog_or_default(self.config.reflog, self.work_dir().is_some());
+    }
+}
+
+fn reflog_or_default(
+    config_reflog: Option<git_ref::store::WriteReflog>,
+    has_worktree: bool,
+) -> git_ref::store::WriteReflog {
+    config_reflog.unwrap_or_else(|| {
+        has_worktree
+            .then(|| git_ref::store::WriteReflog::Normal)
+            .unwrap_or(git_ref::store::WriteReflog::Disable)
+    })
 }
 
 fn check_safe_directories(
