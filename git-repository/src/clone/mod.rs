@@ -28,6 +28,11 @@ pub enum Error {
     Init(#[from] crate::init::Error),
     #[error(transparent)]
     UrlParse(#[from] git_url::parse::Error),
+    #[error("Failed to turn a the relative file url \"{}\" into an absolute one", url.to_bstring())]
+    CanonicalizeUrl {
+        url: git_url::Url,
+        source: git_path::realpath::Error,
+    },
 }
 
 /// Instantiation
@@ -48,7 +53,11 @@ impl PrepareFetch {
         Url: TryInto<git_url::Url, Error = E>,
         git_url::parse::Error: From<E>,
     {
-        let url = url.try_into().map_err(git_url::parse::Error::from)?;
+        let mut url = url.try_into().map_err(git_url::parse::Error::from)?;
+        url.canonicalize().map_err(|err| Error::CanonicalizeUrl {
+            url: url.clone(),
+            source: err,
+        })?;
         create_opts.destination_must_be_empty = true;
         let repo = crate::ThreadSafeRepository::init_opts(path, kind, create_opts, open_opts)?.to_thread_local();
         Ok(PrepareFetch {

@@ -9,11 +9,6 @@ pub enum Error {
     Connect(#[from] crate::remote::connect::Error),
     #[error(transparent)]
     PrepareFetch(#[from] crate::remote::fetch::prepare::Error),
-    #[error("Failed to turn a the relative file url \"{}\" into an absolute one", url.to_bstring())]
-    CanonicalizeUrl {
-        url: git_url::Url,
-        source: git_path::realpath::Error,
-    },
     #[error(transparent)]
     Fetch(#[from] crate::remote::fetch::Error),
     #[error(transparent)]
@@ -58,7 +53,7 @@ impl PrepareFetch {
     {
         use crate::bstr::{BStr, ByteVec};
         use git_ref::transaction::{LogChange, RefLog};
-        fn write_remote_to_local_config(
+        fn write_remote_to_local_config_file(
             remote: &mut crate::Remote<'_>,
             remote_name: String,
         ) -> Result<git_config::File<'static>, Error> {
@@ -72,7 +67,7 @@ impl PrepareFetch {
             Ok(config)
         }
 
-        fn replace_changed_local_config(repo: &mut Repository, mut config: git_config::File<'static>) {
+        fn replace_changed_local_config_file(repo: &mut Repository, mut config: git_config::File<'static>) {
             let repo_config = git_features::threading::OwnShared::make_mut(&mut repo.config.resolved);
             let ids_to_remove: Vec<_> = repo_config
                 .sections_and_ids()
@@ -179,25 +174,17 @@ impl PrepareFetch {
         };
 
         let mut remote = repo
-            .remote_at(match self.url.canonicalized() {
-                Ok(url) => url,
-                Err(err) => {
-                    return Err(Error::CanonicalizeUrl {
-                        url: self.url.clone(),
-                        source: err,
-                    })
-                }
-            })?
+            .remote_at(self.url.clone())?
             .with_refspec("+refs/heads/*:refs/remotes/origin/*", crate::remote::Direction::Fetch)
             .expect("valid static spec");
         if let Some(f) = self.configure_remote.as_mut() {
             remote = f(remote)?;
         }
 
-        let config = write_remote_to_local_config(&mut remote, remote_name)?;
+        let config = write_remote_to_local_config_file(&mut remote, remote_name)?;
 
         // Add HEAD after the remote was written to config, we need it to know what to checkout later, and assure
-        // the ref HEAD points to is present no matter what.
+        // the ref that HEAD points to is present no matter what.
         remote.fetch_specs.push(
             git_refspec::parse("HEAD".into(), git_refspec::parse::Operation::Fetch)
                 .expect("valid")
@@ -211,7 +198,7 @@ impl PrepareFetch {
         }
         let outcome = pending_pack.receive(should_interrupt)?;
 
-        replace_changed_local_config(repo, config);
+        replace_changed_local_config_file(repo, config);
 
         let reflog_message = {
             let mut b = self.url.to_bstring();
