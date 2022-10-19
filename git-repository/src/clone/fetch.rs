@@ -110,7 +110,7 @@ impl PrepareFetch {
                 None => return Ok(()),
             };
 
-            let name = "HEAD".try_into().expect("valid");
+            let name: git_ref::FullName = "HEAD".try_into().expect("valid");
             let reflog_message = || LogChange {
                 mode: RefLog::AndReference,
                 force_create_reflog: false,
@@ -138,10 +138,21 @@ impl PrepareFetch {
                                 expected: PreviousValue::Any,
                                 new: Target::Symbolic(referent),
                             },
-                            name,
+                            name: name.clone(),
                             deref: false,
                         },
                     ])?;
+                    let mut log = reflog_message();
+                    log.mode = RefLog::Only;
+                    repo.edit_reference(RefEdit {
+                        change: git_ref::transaction::Change::Update {
+                            log,
+                            expected: PreviousValue::Any,
+                            new: Target::Peeled(head_peeled_id.to_owned()),
+                        },
+                        name,
+                        deref: false,
+                    })?;
                 }
                 None => {
                     repo.edit_reference(RefEdit {

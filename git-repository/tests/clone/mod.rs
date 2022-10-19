@@ -4,6 +4,7 @@ use crate::remote;
 
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
+    use git_object::bstr::ByteSlice;
     use git_repository as git;
 
     use crate::remote;
@@ -75,8 +76,16 @@ mod blocking_io {
         }
 
         let head = repo.head()?;
-        // dbg!(tmp.into_path());
-        // let _head_logs = head.log_iter().all()?.expect("log present").collect::<Vec<_>>();
+        {
+            let mut logs = head.log_iter();
+            let head_logs = logs.all()?.expect("log present").collect::<Result<Vec<_>, _>>()?;
+            assert_eq!(head_logs.len(), 1, "just created");
+            let line = &head_logs[0];
+            assert!(line.message.starts_with(b"clone: from "), "{:?} unexpected", line);
+            let path = git_path::from_bstr(line.message.rsplit(|b| *b == b' ').next().expect("path").as_bstr());
+            assert!(path.is_absolute(), "{:?} must be absolute", path);
+        }
+
         let referent = head.try_into_referent().expect("symbolic ref is present");
         assert!(
             referent.id().object().is_ok(),
