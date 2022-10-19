@@ -165,11 +165,11 @@ impl Cache {
     /// in one that it them makes the default.
     pub fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
         let config = &self.resolved;
-        let hex_len = util::check_lenient(util::parse_core_abbrev(&config, self.object_hash), self.lenient_config)?;
+        let hex_len = util::check_lenient(util::parse_core_abbrev(config, self.object_hash), self.lenient_config)?;
 
         use util::config_bool;
-        let ignore_case = config_bool(&config, "core.ignoreCase", false, self.lenient_config)?;
-        let object_kind_hint = util::disambiguate_hint(&config);
+        let ignore_case = config_bool(config, "core.ignoreCase", false, self.lenient_config)?;
+        let object_kind_hint = util::disambiguate_hint(config);
         let reflog = util::query_refupdates(config, self.lenient_config)?;
 
         self.hex_len = hex_len;

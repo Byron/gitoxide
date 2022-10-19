@@ -44,9 +44,8 @@ fn get_value_for_all_provided_values() -> crate::Result {
             config.value::<Boolean>("core", None, "bool-implicit").is_err(),
             "this cannot work like in git as the original value isn't there for us"
         );
-        assert_eq!(
+        assert!(
             config.boolean("core", None, "bool-implicit").expect("present")?,
-            true,
             "implicit booleans resolve to being true"
         );
         assert_eq!(
