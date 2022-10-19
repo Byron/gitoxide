@@ -31,20 +31,20 @@ mod remote {
                     config,
                 } in req_recv
                 {
-                    let mut client = reqwest::blocking::ClientBuilder::new();
-
-                    if let Some(arc) = config.configure {
-                        let mut configure = arc.lock().unwrap();
-                        client = configure(&mut client);
-                    }
-
                     // We may error while configuring, which is expected as part of the internal protocol. The error will be
                     // received and the sender of the request might restart us.
-                    let client = client.connect_timeout(std::time::Duration::from_secs(20)).build()?;
-                    let mut req = if upload { client.post(url) } else { client.get(url) }.headers(headers);
+                    let client = reqwest::blocking::ClientBuilder::new()
+                        .connect_timeout(std::time::Duration::from_secs(20))
+                        .build()?;
+                    let mut req_builder = if upload { client.post(url) } else { client.get(url) }.headers(headers);
                     let (post_body_tx, post_body_rx) = pipe::unidirectional(0);
                     if upload {
-                        req = req.body(reqwest::blocking::Body::new(post_body_rx));
+                        req_builder = req_builder.body(reqwest::blocking::Body::new(post_body_rx));
+                    }
+                    let mut req = req_builder.build()?;
+                    if let Some(mutex) = config.configure_request {
+                        let mut configure_request = mutex.lock().unwrap();
+                        configure_request(&mut req)
                     }
                     let (mut response_body_tx, response_body_rx) = pipe::unidirectional(0);
                     let (mut headers_tx, headers_rx) = pipe::unidirectional(0);
@@ -60,7 +60,7 @@ mod remote {
                         // Shut down as something is off.
                         break;
                     }
-                    let mut res = match req.send().and_then(|res| res.error_for_status()) {
+                    let mut res = match client.execute(req).and_then(|res| res.error_for_status()) {
                         Ok(res) => res,
                         Err(err) => {
                             let (kind, err) = match err.status() {
@@ -210,16 +210,7 @@ mod remote {
     #[derive(Default, Clone)]
     pub struct Config {
         pub config: Option<String>,
-        pub configure: Option<
-            Arc<
-                Mutex<
-                    dyn FnMut(&mut reqwest::blocking::ClientBuilder) -> reqwest::blocking::ClientBuilder
-                        + Send
-                        + Sync
-                        + 'static,
-                >,
-            >,
-        >,
+        pub configure_request: Option<Arc<Mutex<dyn FnMut(&mut reqwest::blocking::Request) + Send + Sync + 'static>>>,
     }
 
     pub struct Request {
