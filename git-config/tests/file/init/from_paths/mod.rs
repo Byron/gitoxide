@@ -71,7 +71,7 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
     fs::write(a_path.as_path(), b";before a\n[core]\na = true")?;
 
     let b_path = dir.path().join("b");
-    fs::write(b_path.as_path(), b";before b\n [core]\nb = true")?;
+    fs::write(b_path.as_path(), b";before b\n [core]\nb")?;
 
     let c_path = dir.path().join("c");
     fs::write(c_path.as_path(), b"# nothing in c")?;
@@ -84,14 +84,34 @@ fn frontmatter_is_maintained_in_multiple_files() -> crate::Result {
 
     assert_eq!(
         config.to_string(),
-        ";before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n; nothing in d\n"
+        ";before a\n[core]\na = true\n;before b\n [core]\nb\n# nothing in c\n; nothing in d\n"
+    );
+    assert_eq!(
+        config.strings("core", None, "a").expect("present").len(),
+        1,
+        "precondition"
+    );
+    assert_eq!(
+        config.strings("core", None, "b").expect("present").len(),
+        1,
+        "precondition"
     );
 
     config.append(config.clone());
     assert_eq!(
         config.to_string(),
-        ";before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n; nothing in d\n;before a\n[core]\na = true\n;before b\n [core]\nb = true\n# nothing in c\n; nothing in d\n",
+        ";before a\n[core]\na = true\n;before b\n [core]\nb\n# nothing in c\n; nothing in d\n;before a\n[core]\na = true\n;before b\n [core]\nb\n# nothing in c\n; nothing in d\n",
         "other files post-section matter works as well, adding newlines as needed"
+    );
+    assert_eq!(
+        config.strings("core", None, "a").expect("present").len(),
+        2,
+        "the same value is now present twice"
+    );
+    assert_eq!(
+        config.strings("core", None, "b").expect("present").len(),
+        2,
+        "the same value is now present twice"
     );
 
     assert_eq!(

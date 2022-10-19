@@ -48,6 +48,16 @@ fn get_value_for_all_provided_values() -> crate::Result {
             config.boolean("core", None, "bool-implicit").expect("present")?,
             "this should work"
         );
+        assert_eq!(
+            config.string("core", None, "bool-implicit"),
+            None,
+            "unset values are not present"
+        );
+        assert_eq!(
+            config.strings("core", None, "bool-implicit").expect("present"),
+            &[cow_str("")],
+            "unset values show up as empty within a string array"
+        );
 
         assert_eq!(config.string("doesnt", None, "exist"), None);
 
