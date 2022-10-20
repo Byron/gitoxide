@@ -13,6 +13,8 @@ pub enum Extensions {
         tree_cache: bool,
         /// Write the end-of-index-entry extension.
         end_of_index_entry: bool,
+        /// Write the sparse-directory-entries extension.
+        sparse_directory_entries: bool,
     },
     /// Write no extension at all for what should be the smallest possible index
     None,
@@ -33,9 +35,11 @@ impl Extensions {
             Extensions::Given {
                 tree_cache,
                 end_of_index_entry,
+                sparse_directory_entries,
             } => match signature {
                 extension::tree::SIGNATURE => tree_cache,
                 extension::end_of_index_entry::SIGNATURE => end_of_index_entry,
+                extension::sparse::SIGNATURE => sparse_directory_entries,
                 _ => &false,
             }
             .then(|| signature),
@@ -90,11 +94,18 @@ impl State {
         T: std::io::Write,
     {
         type WriteExtFn<'a> = &'a dyn Fn(&mut dyn std::io::Write) -> Option<std::io::Result<extension::Signature>>;
-        let extensions: &[WriteExtFn<'_>] = &[&|write| {
-            extensions
-                .should_write(extension::tree::SIGNATURE)
-                .and_then(|signature| self.tree().map(|tree| tree.write_to(write).map(|_| signature)))
-        }];
+        let extensions: &[WriteExtFn<'_>] = &[
+            &|write| {
+                extensions
+                    .should_write(extension::tree::SIGNATURE)
+                    .and_then(|signature| self.tree().map(|tree| tree.write_to(write).map(|_| signature)))
+            },
+            &|write| {
+                extensions
+                    .should_write(extension::sparse::SIGNATURE)
+                    .and_then(|signature| Some(extension::sparse::write_to(write).map(|_| signature)))
+            },
+        ];
 
         let mut offset_to_previous_ext = offset_to_extensions;
         let mut out = Vec::with_capacity(5);

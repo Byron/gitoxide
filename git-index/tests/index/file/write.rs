@@ -8,13 +8,20 @@ use crate::{fixture_index_path, loose_file_path};
 #[test]
 fn roundtrips() -> crate::Result {
     let input = [
-        (Loose("extended-flags"), all_ext_but_eoie()),
-        (Loose("conflicting-file"), all_ext_but_eoie()),
-        (Loose("very-long-path"), all_ext_but_eoie()),
-        (Generated("v2"), Default::default()),
-        (Generated("V2_empty"), Default::default()),
-        (Generated("v2_more_files"), all_ext_but_eoie()),
-        (Generated("v2_all_file_kinds"), all_ext_but_eoie()),
+        (Loose("extended-flags"), only_tree_ext()),
+        (Loose("conflicting-file"), only_tree_ext()),
+        (Loose("very-long-path"), only_tree_ext()),
+        (
+            Generated("v2"),
+            options_with(write::Extensions::Given {
+                tree_cache: true,
+                end_of_index_entry: true,
+                sparse_directory_entries: false,
+            }),
+        ),
+        (Generated("V2_empty"), only_tree_ext()),
+        (Generated("v2_more_files"), only_tree_ext()),
+        (Generated("v2_all_file_kinds"), only_tree_ext()),
     ];
 
     for (fixture, options) in input {
@@ -30,7 +37,7 @@ fn roundtrips() -> crate::Result {
         assert_eq!(
             actual_version,
             expected.version(),
-            "{} didn't write the expected version",
+            "{:?} didn't write the expected version",
             fixture
         );
         let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
@@ -42,11 +49,59 @@ fn roundtrips() -> crate::Result {
 }
 
 #[test]
-fn state_comparisons_with_various_extension_configurations() {
-    fn options_with(extensions: write::Extensions) -> Options {
-        Options { extensions }
-    }
+fn roundtrips_sparse_index() -> crate::Result {
+    // NOTE: I initially tried putting these fixtures into the main roundtrip test above,
+    // but the call to `compare_raw_bytes` panics. It seems like git is using a different
+    // ordering when it comes to writing the tree extension. Need to investigate more, hence
+    // the seperate test for now.
+    //
+    //          git                     gitoxide
+    //
+    //          treeroot                treeroot
+    //            | d                     | c1
+    //              | c4                    | c2
+    //            | c1                      | c3
+    //              | c2                  | d
+    //              | c3                    | c4
+    //
 
+    let input = [
+        ("v3_skip_worktree", only_tree_ext()),
+        (
+            "v3_sparse_index",
+            options_with(write::Extensions::Given {
+                tree_cache: true,
+                end_of_index_entry: false,
+                sparse_directory_entries: true,
+            }),
+        ),
+        ("v3_sparse_index_non_cone", only_tree_ext()),
+    ];
+
+    for (fixture, options) in input {
+        let path = fixture_index_path(fixture);
+        let expected = git_index::File::at(&path, git_hash::Kind::Sha1, Default::default())?;
+        // let expected_bytes = std::fs::read(&path)?;
+        let mut out_bytes = Vec::new();
+
+        let (actual_version, _) = expected.write_to(&mut out_bytes, options)?;
+        assert_eq!(
+            actual_version,
+            expected.version(),
+            "{:?} didn't write the expected version",
+            fixture
+        );
+        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
+
+        compare_states(&actual, actual_version, &expected, options, fixture);
+        // TODO: make this work and re-enable it
+        // compare_raw_bytes(&out_bytes, &expected_bytes, fixture);
+    }
+    Ok(())
+}
+
+#[test]
+fn state_comparisons_with_various_extension_configurations() {
     for fixture in [
         Loose("extended-flags"),
         Loose("conflicting-file"),
@@ -67,11 +122,23 @@ fn state_comparisons_with_various_extension_configurations() {
             options_with(write::Extensions::All),
             options_with(write::Extensions::Given {
                 tree_cache: true,
-                end_of_index_entry: true,
+                end_of_index_entry: false,
+                sparse_directory_entries: false,
             }),
             options_with(write::Extensions::Given {
                 tree_cache: false,
                 end_of_index_entry: true,
+                sparse_directory_entries: false,
+            }),
+            options_with(write::Extensions::Given {
+                tree_cache: true,
+                end_of_index_entry: false,
+                sparse_directory_entries: true,
+            }),
+            options_with(write::Extensions::Given {
+                tree_cache: false,
+                end_of_index_entry: true,
+                sparse_directory_entries: true,
             }),
         ] {
             let path = fixture.to_path();
@@ -105,33 +172,44 @@ fn compare_states(actual: &State, actual_version: Version, expected: &State, opt
     actual.verify_entries().expect("valid");
     actual.verify_extensions(false, no_find).expect("valid");
 
-    assert_eq!(actual.version(), actual_version, "version mismatch in {}", fixture);
+    assert_eq!(actual.version(), actual_version, "version mismatch in {:?}", fixture);
     assert_eq!(
         actual.tree(),
         options
             .extensions
             .should_write(extension::tree::SIGNATURE)
             .and_then(|_| expected.tree()),
-        "tree extension mismatch in {}",
+        "tree extension mismatch in {:?}",
+        fixture
+    );
+    assert_eq!(
+        actual.is_sparse(),
+        options.extensions.should_write(extension::sparse::SIGNATURE).is_some(),
+        "sparse index entries extension mismatch in {:?}",
         fixture
     );
     assert_eq!(
         actual.entries().len(),
         expected.entries().len(),
-        "entry count mismatch in {}",
+        "entry count mismatch in {:?}",
         fixture
     );
-    assert_eq!(actual.entries(), expected.entries(), "entries mismatch in {}", fixture);
+    assert_eq!(
+        actual.entries(),
+        expected.entries(),
+        "entries mismatch in {:?}",
+        fixture
+    );
     assert_eq!(
         actual.path_backing(),
         expected.path_backing(),
-        "path_backing mismatch in {}",
+        "path_backing mismatch in {:?}",
         fixture
     );
 }
 
 fn compare_raw_bytes(generated: &[u8], expected: &[u8], fixture: &str) {
-    assert_eq!(generated.len(), expected.len(), "file length mismatch in {}", fixture);
+    assert_eq!(generated.len(), expected.len(), "file length mismatch in {:?}", fixture);
 
     let print_range = 10;
     for (index, (a, b)) in generated.iter().zip(expected.iter()).enumerate() {
@@ -149,12 +227,17 @@ fn compare_raw_bytes(generated: &[u8], expected: &[u8], fixture: &str) {
     }
 }
 
-fn all_ext_but_eoie() -> Options {
+fn only_tree_ext() -> Options {
     Options {
         extensions: write::Extensions::Given {
             end_of_index_entry: false,
+            sparse_directory_entries: false,
             tree_cache: true,
         },
         ..Default::default()
     }
+}
+
+fn options_with(extensions: write::Extensions) -> Options {
+    Options { extensions }
 }
