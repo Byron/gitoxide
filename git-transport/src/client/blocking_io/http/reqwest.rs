@@ -51,7 +51,7 @@ mod remote {
                     }
                     let mut req = req_builder.build()?;
                     if let Some(mutex) = config.configure_request {
-                        let mut configure_request = mutex.lock().unwrap();
+                        let mut configure_request = mutex.lock().expect("our thread cannot ordinarily panic");
                         configure_request(&mut req)?;
                     }
                     let (mut response_body_tx, response_body_rx) = pipe::unidirectional(0);
