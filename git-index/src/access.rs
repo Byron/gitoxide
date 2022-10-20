@@ -100,6 +100,11 @@ impl State {
     pub fn entry(&self, idx: usize) -> &Entry {
         &self.entries[idx]
     }
+
+    /// Returns a boolean value indicating whether the index is sparse or not
+    pub fn is_sparse(&self) -> bool {
+        self.is_sparse
+    }
 }
 
 /// Extensions
