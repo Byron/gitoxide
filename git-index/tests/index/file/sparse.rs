@@ -63,5 +63,5 @@ fn skip_worktree() {
         )
     });
 
-    println!("{:#?}", expected.tree().expect("tree extension"));
+    // println!("{:#?}", expected.tree().expect("tree extension"));
 }
