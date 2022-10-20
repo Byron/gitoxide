@@ -209,7 +209,6 @@ mod remote {
 
     #[derive(Default, Clone)]
     pub struct Config {
-        pub config: Option<String>,
         pub configure_request: Option<Arc<Mutex<dyn FnMut(&mut reqwest::blocking::Request) + Send + Sync + 'static>>>,
     }
 
