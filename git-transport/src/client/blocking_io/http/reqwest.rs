@@ -50,10 +50,6 @@ mod remote {
                         req_builder = req_builder.body(reqwest::blocking::Body::new(post_body_rx));
                     }
                     let mut req = req_builder.build()?;
-                    if let Some(mutex) = config.configure_request {
-                        let mut configure_request = mutex.lock().expect("our thread cannot ordinarily panic");
-                        configure_request(&mut req)?;
-                    }
                     let (mut response_body_tx, response_body_rx) = pipe::unidirectional(0);
                     let (mut headers_tx, headers_rx) = pipe::unidirectional(0);
                     if res_send
@@ -67,6 +63,10 @@ mod remote {
                         // This means our internal protocol is violated as the one who sent the request isn't listening anymore.
                         // Shut down as something is off.
                         break;
+                    }
+                    if let Some(mutex) = config.configure_request {
+                        let mut configure_request = mutex.lock().expect("our thread cannot ordinarily panic");
+                        configure_request(&mut req)?;
                     }
                     let mut res = match client.execute(req).and_then(|res| res.error_for_status()) {
                         Ok(res) => res,
