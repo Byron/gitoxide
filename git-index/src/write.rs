@@ -104,15 +104,14 @@ impl State {
     where
         Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
     {
-        self.entries_mut().iter_mut().for_each(|e| match e.mode {
-            entry::Mode::DIR => {
+        self.entries_mut().iter_mut().for_each(|e| {
+            if e.mode == entry::Mode::DIR {
                 // TODO: do a tree traversal and replace the DIR entry with all FILE entries found
                 // maybe we can somehow generalize tree traversal we are already doing in `from_tree`
 
                 // NOTE: this line is just here for the moment to satisfy the test
                 e.mode = entry::Mode::FILE;
             }
-            _ => {}
         });
     }
 }
@@ -164,7 +163,7 @@ impl State {
             &|write| {
                 extensions
                     .should_write(extension::sparse::SIGNATURE)
-                    .and_then(|signature| Some(extension::sparse::write_to(write).map(|_| signature)))
+                    .map(|signature| extension::sparse::write_to(write).map(|_| signature))
             },
         ];
 
