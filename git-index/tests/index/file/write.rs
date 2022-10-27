@@ -236,7 +236,11 @@ fn compare_states(actual: &State, actual_version: Version, expected: &State, opt
     );
     assert_eq!(
         actual.is_sparse(),
-        options.extensions.should_write(extension::sparse::SIGNATURE).is_some(),
+        options
+            .extensions
+            .should_write(extension::sparse::SIGNATURE)
+            .map(|_| expected.is_sparse())
+            .unwrap_or_default(),
         "sparse index entries extension mismatch in {:?}",
         fixture
     );

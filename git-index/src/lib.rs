@@ -96,7 +96,6 @@ pub struct State {
     /// A memory area keeping all index paths, in full length, independently of the index version.
     path_backing: PathStorage,
     /// True if one entry in the index has a special marker mode
-    #[allow(dead_code)]
     is_sparse: bool,
 
     // Extensions

@@ -163,7 +163,10 @@ impl State {
             &|write| {
                 extensions
                     .should_write(extension::sparse::SIGNATURE)
-                    .map(|signature| extension::sparse::write_to(write).map(|_| signature))
+                    .and_then(|signature| {
+                        self.is_sparse
+                            .then(|| extension::sparse::write_to(write).map(|_| signature))
+                    })
             },
         ];
 
