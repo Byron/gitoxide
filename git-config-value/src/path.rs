@@ -170,7 +170,7 @@ impl<'a> Path<'a> {
         Err(interpolate::Error::UserInterpolationUnsupported)
     }
 
-    #[cfg(not(windows))]
+    #[cfg(not(any(target_os = "windows", target_os = "android")))]
     fn interpolate_user(
         self,
         home_for_user: fn(&str) -> Option<PathBuf>,

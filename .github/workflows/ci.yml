@@ -38,6 +38,7 @@ jobs:
     - name: Setup dependencies
       run:
         sudo apt-get install tree
+    - run: git config --global protocol.file.allow always # workaround for https://bugs.launchpad.net/ubuntu/+source/git/+bug/1993586
     - name: test
       env:
         CI: true
