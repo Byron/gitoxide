@@ -102,6 +102,8 @@ impl State {
     }
 
     /// Returns a boolean value indicating whether the index is sparse or not
+    ///
+    /// An index is set to be sparse either if it contains [Mode::DIR][Entry::Mode::DIR] entries or if the `sdir` extension is present
     pub fn is_sparse(&self) -> bool {
         self.is_sparse
     }
