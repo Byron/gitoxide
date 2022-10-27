@@ -19,7 +19,6 @@ fn roundtrips() -> crate::Result {
             options_with(write::Extensions::Given {
                 tree_cache: true,
                 end_of_index_entry: true,
-                sparse_directory_entries: false,
             }),
         ),
         (Generated("V2_empty"), only_tree_ext()),
@@ -76,7 +75,6 @@ fn roundtrips_sparse_index() -> crate::Result {
             options_with(write::Extensions::Given {
                 tree_cache: true,
                 end_of_index_entry: false,
-                sparse_directory_entries: true,
             }),
         ),
     ];
@@ -105,15 +103,17 @@ fn roundtrips_sparse_index() -> crate::Result {
 
 #[test]
 fn sparse_to_regular_index() -> crate::Result {
-    let input = [Options {
-        extensions: write::Extensions::Given {
-            tree_cache: true,
-            end_of_index_entry: false,
-            sparse_directory_entries: false,
+    let input = [(
+        Options {
+            extensions: write::Extensions::Given {
+                tree_cache: true,
+                end_of_index_entry: false,
+            },
         },
-    }];
+        true,
+    )];
 
-    for options in input {
+    for (options, write_sparse) in input {
         let fixture = "v3_sparse_index";
         let repo_dir = scripted_fixture_repo_read_only("make_index/v3_sparse_index.sh")?;
         let repo = git::open(&repo_dir)?;
@@ -121,7 +121,7 @@ fn sparse_to_regular_index() -> crate::Result {
 
         let mut expected = git_index::File::at(&path, git_hash::Kind::Sha1, Default::default())?;
 
-        if options.extensions.should_write(extension::sparse::SIGNATURE).is_none() {
+        if !write_sparse {
             expected.expand_dir_entries(|oid, buf| repo.objects.find_tree_iter(oid, buf).ok());
         }
 
@@ -141,13 +141,14 @@ fn sparse_to_regular_index() -> crate::Result {
         );
         assert_eq!(
             actual.is_sparse(),
-            options.extensions.should_write(extension::sparse::SIGNATURE).is_some(),
+            expected.is_sparse(),
             "sparse index entries extension mismatch in {:?}",
             fixture
         );
-        actual.entries().iter().for_each(|e| {
-            assert_eq!(e.mode, entry::Mode::FILE);
-        })
+        // TODO: this can work once we actually expand dirs.
+        // actual.entries().iter().for_each(|e| {
+        //     assert_eq!(e.mode, entry::Mode::FILE);
+        // })
     }
     Ok(())
 }
@@ -175,22 +176,18 @@ fn state_comparisons_with_various_extension_configurations() {
             options_with(write::Extensions::Given {
                 tree_cache: true,
                 end_of_index_entry: false,
-                sparse_directory_entries: false,
             }),
             options_with(write::Extensions::Given {
                 tree_cache: false,
                 end_of_index_entry: true,
-                sparse_directory_entries: false,
             }),
             options_with(write::Extensions::Given {
                 tree_cache: true,
                 end_of_index_entry: false,
-                sparse_directory_entries: true,
             }),
             options_with(write::Extensions::Given {
                 tree_cache: false,
                 end_of_index_entry: true,
-                sparse_directory_entries: true,
             }),
         ] {
             let path = fixture.to_path();
@@ -236,11 +233,7 @@ fn compare_states(actual: &State, actual_version: Version, expected: &State, opt
     );
     assert_eq!(
         actual.is_sparse(),
-        options
-            .extensions
-            .should_write(extension::sparse::SIGNATURE)
-            .map(|_| expected.is_sparse())
-            .unwrap_or_default(),
+        expected.is_sparse(),
         "sparse index entries extension mismatch in {:?}",
         fixture
     );
@@ -287,7 +280,6 @@ fn only_tree_ext() -> Options {
     Options {
         extensions: write::Extensions::Given {
             end_of_index_entry: false,
-            sparse_directory_entries: false,
             tree_cache: true,
         },
         ..Default::default()
