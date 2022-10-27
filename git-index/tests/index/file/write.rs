@@ -1,6 +1,9 @@
 use crate::index::Fixture::*;
 use filetime::FileTime;
+use git::prelude::FindExt;
 use git_index::{entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
+use git_repository as git;
+use git_testtools::scripted_fixture_repo_read_only;
 
 use crate::{fixture_index_path, loose_file_path};
 
@@ -67,6 +70,7 @@ fn roundtrips_sparse_index() -> crate::Result {
 
     let input = [
         ("v3_skip_worktree", only_tree_ext()),
+        ("v3_sparse_index_non_cone", only_tree_ext()),
         (
             "v3_sparse_index",
             options_with(write::Extensions::Given {
@@ -75,7 +79,6 @@ fn roundtrips_sparse_index() -> crate::Result {
                 sparse_directory_entries: true,
             }),
         ),
-        ("v3_sparse_index_non_cone", only_tree_ext()),
     ];
 
     for (fixture, options) in input {
@@ -96,6 +99,55 @@ fn roundtrips_sparse_index() -> crate::Result {
         compare_states(&actual, actual_version, &expected, options, fixture);
         // TODO: make this work and re-enable it
         // compare_raw_bytes(&out_bytes, &expected_bytes, fixture);
+    }
+    Ok(())
+}
+
+#[test]
+fn sparse_to_regular_index() -> crate::Result {
+    let input = [Options {
+        extensions: write::Extensions::Given {
+            tree_cache: true,
+            end_of_index_entry: false,
+            sparse_directory_entries: false,
+        },
+    }];
+
+    for options in input {
+        let fixture = "v3_sparse_index";
+        let repo_dir = scripted_fixture_repo_read_only("make_index/v3_sparse_index.sh")?;
+        let repo = git::open(&repo_dir)?;
+        let path = fixture_index_path(fixture);
+
+        let mut expected = git_index::File::at(&path, git_hash::Kind::Sha1, Default::default())?;
+
+        if options.extensions.should_write(extension::sparse::SIGNATURE).is_none() {
+            expected.expand_dir_entries(|oid, buf| repo.objects.find_tree_iter(oid, buf).ok());
+        }
+
+        let mut out_bytes = Vec::new();
+        let (_, _) = expected.write_to(&mut out_bytes, options)?;
+        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
+
+        assert_eq!(actual.version(), Version::V3, "version mismatch in {:?}", fixture);
+        assert_eq!(
+            actual.tree(),
+            options
+                .extensions
+                .should_write(extension::tree::SIGNATURE)
+                .and_then(|_| expected.tree()),
+            "tree extension mismatch in {:?}",
+            fixture
+        );
+        assert_eq!(
+            actual.is_sparse(),
+            options.extensions.should_write(extension::sparse::SIGNATURE).is_some(),
+            "sparse index entries extension mismatch in {:?}",
+            fixture
+        );
+        actual.entries().iter().for_each(|e| {
+            assert_eq!(e.mode, entry::Mode::FILE);
+        })
     }
     Ok(())
 }
@@ -239,5 +291,8 @@ fn only_tree_ext() -> Options {
 }
 
 fn options_with(extensions: write::Extensions) -> Options {
-    Options { extensions }
+    Options {
+        extensions,
+        ..Default::default()
+    }
 }

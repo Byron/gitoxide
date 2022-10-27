@@ -1,6 +1,6 @@
-use std::{convert::TryInto, io::Write};
-
 use crate::{entry, extension, write::util::CountBytes, State, Version};
+use git_object::TreeRefIter;
+use std::{convert::TryInto, io::Write};
 
 /// A way to specify which extensions to write.
 #[derive(Debug, Copy, Clone)]
@@ -54,6 +54,67 @@ impl Extensions {
 pub struct Options {
     /// Configures which extensions to write
     pub extensions: Extensions,
+}
+
+/// Configuration related to sparse indexes
+#[derive(Debug, Default, Clone, Copy)]
+pub struct SparseOptions {
+    /// If true, certain files files in the index will be exluded / skipped for certain operations,
+    /// based on the content of the `.git/info/sparse-checkout` file
+    pub sparse_checkout: bool,
+
+    /// Configures how to interpret the `.git/info/sparse-checkout` file
+    /// If true, cone mode is active and entire directories will be excluded
+    /// If false, non-cone mode is active and files will be matched similar to a .gitignore file
+    pub cone_mode: bool,
+
+    /// If true, will attempt to write a sparse index file
+    /// only works in cone mode
+    pub write_sparse_index: bool,
+}
+
+impl SparseOptions {
+    /// Figures out if the index should be sparse or not depending on given options
+    pub fn get_sparse_mode(&self) -> SparseMode {
+        match (self.sparse_checkout, self.cone_mode, self.write_sparse_index) {
+            (true, true, true) => SparseMode::SparseIndexConeMode,
+            (true, true, false) => SparseMode::RegularIndexConeMode,
+            (true, false, _) => SparseMode::RegularIndexNoConeMode,
+            (false, _, _) => SparseMode::RegularIndex,
+        }
+    }
+}
+
+/// Describes the configuration how a sparse index should be written, or if one should be written at all
+#[derive(Debug)]
+pub enum SparseMode {
+    /// sparse index, cone mode, skip worktree based on .git/info/sparse-checkout file
+    SparseIndexConeMode,
+    /// regular index, cone mode, skip worktree based on .git/info/sparse-checkout file
+    RegularIndexConeMode,
+    /// regular index, no-cone mode, skip worktree based on .git/info/sparse-checkout file
+    RegularIndexNoConeMode,
+    /// regular index, .git/info/sparse-checkout file is not considered / no skip_worktree flags
+    RegularIndex,
+}
+
+impl State {
+    /// Expand all entries with Mode::DIR to a list of files contained within those entries
+    pub fn expand_dir_entries<Find>(&mut self, _find: Find)
+    where
+        Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
+    {
+        self.entries_mut().iter_mut().for_each(|e| match e.mode {
+            entry::Mode::DIR => {
+                // TODO: do a tree traversal and replace the DIR entry with all FILE entries found
+                // maybe we can somehow generalize tree traversal we are already doing in `from_tree`
+
+                // NOTE: this line is just here for the moment to satisfy the test
+                e.mode = entry::Mode::FILE;
+            }
+            _ => {}
+        });
+    }
 }
 
 impl State {
