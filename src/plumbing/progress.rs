@@ -317,6 +317,26 @@ static GIT_CONFIG: &[Record] = &[
             deviation: None,
         },
     },
+    Record {
+        config: "advice.updateSparsePath",
+        usage: NotPlanned { reason: "gitoxide does not yet have an 'advice' system" },
+    },
+    Record {
+        config: "core.sparseCheckout",
+        usage: Planned { note: Some("together with 'index.sparse' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not") },
+    },
+    Record {
+        config: "core.sparseCheckoutCone",
+        usage: Planned { note: Some("non-cone mode is deprecated but should still fail gracefully if encountered") },
+    },
+    Record {
+        config: "index.sparse",
+        usage: Planned { note: Some("together with 'core.sparseCheckout' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not") },
+    },
+    Record {
+        config: "sparse.expectFilesOutsideOfPatterns",
+        usage: NotPlanned { reason: "todo" },
+    },
 ];
 
 /// A programmatic way to record and display progress.
