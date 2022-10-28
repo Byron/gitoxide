@@ -282,7 +282,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "diff.algorithm",
-        usage: Planned { note: Some("to be used when doing line diffs") },
+        usage: InModule {name: "config::cache::access", deviation: Some("'patience' diff is not implemented and can default to 'histogram' if lenient config is used")},
     },
     Record {
         config: "extensions.objectFormat",
