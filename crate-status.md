@@ -110,7 +110,7 @@ Check out the [performance discussion][git-diff-performance] as well.
   * There are various ways to generate a patch from two blobs.
   * [ ] any
 * **lines**
-  * [ ] Simple line-by-line diffs powered by the `similar` crate.
+  * [x] Simple line-by-line diffs powered by the `imara-diff` crate.
 * diffing, merging, working with hunks of data
 * find differences between various states, i.e. index, working tree, commit-tree
 * [x] API documentation
