@@ -109,15 +109,24 @@ pub mod change {
     }
 
     impl<'old, 'new> DiffPlatform<'old, 'new> {
-        /// Create a platform for performing various tasks to diff text.
-        ///
-        /// It can be used to traverse [all line changes](git_diff::lines::similar::TextDiff::iter_all_changes()) for example.
-        // TODO: How should this integrate with configurable algorithms? Maybe users should get it themselves and pass it here?
-        pub fn text<'bufs>(
-            &self,
-            algorithm: git_diff::lines::Algorithm,
-        ) -> git_diff::lines::similar::TextDiff<'_, '_, 'bufs, [u8]> {
-            git_diff::lines::with(self.old.data.as_bstr(), self.new.data.as_bstr(), algorithm)
+        /// Perform a diff on lines between the old and the new version of a blob.
+        /// Note that the [`Sink`][git_diff::lines::imara_diff::Sink] implementation is
+        /// what makes the diff usable and relies heavily on what the caller requires.
+        pub fn lines<FnS, S>(&self, algorithm: git_diff::text::Algorithm, make_sink: FnS) -> S::Out
+        where
+            FnS: for<'a> FnOnce(&git_diff::text::imara::intern::InternedInput<&'a [u8]>) -> S,
+            S: git_diff::text::imara::Sink,
+        {
+            git_diff::text::with(
+                self.old.data.as_bstr(),
+                self.new.data.as_bstr(),
+                algorithm,
+                // TODO: make use of `core.eol` and/or filters to do line-counting correctly. It's probably
+                //       OK to just know how these objects are saved to know what constitutes a line.
+                |old, new| git_diff::text::imara::intern::InternedInput::new(old, new),
+                make_sink,
+            )
+            .1
         }
     }
 }
