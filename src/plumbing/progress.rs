@@ -126,6 +126,10 @@ static GIT_CONFIG: &[Record] = &[
         },
     },
     Record {
+        config: "core.eol",
+        usage: Planned {note: Some("needed for filters, but also for doing diffs correctly")}
+    },
+    Record {
         config: "core.filesRefLockTimeout",
         usage: InModule {name: "config::cache::access", deviation: None},
     },
