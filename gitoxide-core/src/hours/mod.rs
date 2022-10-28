@@ -228,24 +228,17 @@ where
                                                             if let Some(Ok(diff)) =
                                                                 is_text_file.then(|| change.event.diff()).flatten()
                                                             {
-                                                                use git::diff::lines::similar::ChangeTag::*;
                                                                 let mut nl = 0;
-                                                                for change in diff
-                                                                    .text(git::diff::lines::Algorithm::Myers)
-                                                                    .iter_all_changes()
-                                                                {
-                                                                    match change.tag() {
-                                                                        Delete => {
-                                                                            lines.removed += 1;
-                                                                            nl += 1;
-                                                                        }
-                                                                        Insert => {
-                                                                            lines.added += 1;
-                                                                            nl += 1
-                                                                        }
-                                                                        Equal => {}
-                                                                    }
-                                                                }
+                                                                let counts = diff.lines(
+                                                                    git::diff::text::Algorithm::Myers,
+                                                                    |_| {
+                                                                        git::diff::text::imara::sink::Counter::default()
+                                                                    },
+                                                                );
+                                                                nl += counts.insertions as usize
+                                                                    + counts.removals as usize;
+                                                                lines.added += counts.insertions as usize;
+                                                                lines.removed += counts.removals as usize;
                                                                 if let Some(c) = lines_counter.as_ref() {
                                                                     c.fetch_add(nl, Ordering::SeqCst);
                                                                 }
