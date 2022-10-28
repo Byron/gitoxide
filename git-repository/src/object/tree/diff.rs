@@ -123,7 +123,7 @@ pub mod change {
                 algorithm,
                 // TODO: make use of `core.eol` and/or filters to do line-counting correctly. It's probably
                 //       OK to just know how these objects are saved to know what constitutes a line.
-                |old, new| git_diff::text::imara::intern::InternedInput::new(old, new),
+                git_diff::text::imara::intern::InternedInput::new,
                 make_sink,
             )
             .1
