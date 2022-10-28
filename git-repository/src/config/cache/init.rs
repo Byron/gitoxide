@@ -141,6 +141,7 @@ impl Cache {
             url_rewrite: Default::default(),
             #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
             url_scheme: Default::default(),
+            diff_algorithm: Default::default(),
             git_prefix,
         })
     }
@@ -179,6 +180,7 @@ impl Cache {
 
         self.personas = Default::default();
         self.url_rewrite = Default::default();
+        self.diff_algorithm = Default::default();
         #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
         {
             self.url_scheme = Default::default();

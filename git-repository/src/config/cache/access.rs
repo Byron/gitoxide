@@ -3,11 +3,46 @@ use std::{convert::TryInto, path::PathBuf, time::Duration};
 
 use git_lock::acquire::Fail;
 
+use crate::config::cache::util::check_lenient_default;
 use crate::config::checkout_options;
 use crate::{config::Cache, remote, repository::identity};
 
 /// Access
 impl Cache {
+    pub(crate) fn diff_algorithm(&self) -> Result<git_diff::text::Algorithm, crate::config::diff::algorithm::Error> {
+        use crate::config::diff::algorithm::Error;
+        self.diff_algorithm
+            .get_or_try_init(|| {
+                let res = (|| {
+                    let name = self
+                        .resolved
+                        .string("diff", None, "algorithm")
+                        .unwrap_or(Cow::Borrowed("myers".into()));
+                    if name.eq_ignore_ascii_case(b"myers") || name.eq_ignore_ascii_case(b"default") {
+                        Ok(git_diff::text::Algorithm::Myers)
+                    } else if name.eq_ignore_ascii_case(b"minimal") {
+                        Ok(git_diff::text::Algorithm::MyersMinimal)
+                    } else if name.eq_ignore_ascii_case(b"histogram") {
+                        Ok(git_diff::text::Algorithm::Histogram)
+                    } else if name.eq_ignore_ascii_case(b"patience") {
+                        if self.lenient_config {
+                            Ok(git_diff::text::Algorithm::Histogram)
+                        } else {
+                            Err(Error::Unimplemented {
+                                name: name.into_owned(),
+                            })
+                        }
+                    } else {
+                        Err(Error::Unknown {
+                            name: name.into_owned(),
+                        })
+                    }
+                })();
+                check_lenient_default(res, self.lenient_config, || git_diff::text::Algorithm::Myers)
+            })
+            .copied()
+    }
+
     pub(crate) fn personas(&self) -> &identity::Personas {
         self.personas
             .get_or_init(|| identity::Personas::from_config_and_env(&self.resolved, self.git_prefix))

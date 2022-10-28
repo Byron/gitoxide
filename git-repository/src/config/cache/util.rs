@@ -72,6 +72,14 @@ pub(crate) fn check_lenient<T, E>(v: Result<Option<T>, E>, lenient: bool) -> Res
     }
 }
 
+pub(crate) fn check_lenient_default<T, E>(v: Result<T, E>, lenient: bool, default: impl FnOnce() -> T) -> Result<T, E> {
+    match v {
+        Ok(v) => Ok(v),
+        Err(_) if lenient => Ok(default()),
+        Err(err) => Err(err),
+    }
+}
+
 pub(crate) fn parse_core_abbrev(
     config: &git_config::File<'static>,
     object_hash: git_hash::Kind,

@@ -44,6 +44,8 @@ pub(crate) mod section {
 }
 
 /// The error returned when failing to initialize the repository configuration.
+///
+/// This configuration is on the critical path when opening a repository.
 #[derive(Debug, thiserror::Error)]
 #[allow(missing_docs)]
 pub enum Error {
@@ -69,6 +71,24 @@ pub enum Error {
     ConfigOverrides(#[from] overrides::Error),
     #[error("Invalid value for 'core.logAllRefUpdates': \"{value}\"")]
     LogAllRefUpdates { value: BString },
+}
+
+///
+pub mod diff {
+    ///
+    pub mod algorithm {
+        use crate::bstr::BString;
+
+        /// The error produced when obtaining `diff.algorithm`.
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("Unknown diff algorithm named '{name}'")]
+            Unknown { name: BString },
+            #[error("The '{name}' algorithm is not yet implemented")]
+            Unimplemented { name: BString },
+        }
+    }
 }
 
 ///
@@ -105,12 +125,14 @@ pub(crate) struct Cache {
     /// The representation of `core.logallrefupdates`, or `None` if the variable wasn't set.
     pub reflog: Option<git_ref::store::WriteReflog>,
     /// identities for later use, lazy initialization.
-    pub personas: OnceCell<identity::Personas>,
+    pub(crate) personas: OnceCell<identity::Personas>,
     /// A lazily loaded rewrite list for remote urls
-    pub url_rewrite: OnceCell<remote::url::Rewrite>,
+    pub(crate) url_rewrite: OnceCell<remote::url::Rewrite>,
     /// A lazily loaded mapping to know which url schemes to allow
     #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
-    pub url_scheme: OnceCell<remote::url::SchemePermission>,
+    pub(crate) url_scheme: OnceCell<remote::url::SchemePermission>,
+    /// The algorithm to use when diffing blobs
+    pub(crate) diff_algorithm: OnceCell<git_diff::text::Algorithm>,
     /// The config section filter from the options used to initialize this instance. Keep these in sync!
     filter_config_section: fn(&git_config::file::Metadata) -> bool,
     /// The object kind to pick if a prefix is ambiguous.

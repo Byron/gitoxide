@@ -49,7 +49,7 @@ pub struct Change<'a, 'old, 'new> {
 pub mod change {
     use git_object::tree::EntryMode;
 
-    use crate::{bstr::ByteSlice, Id};
+    use crate::{bstr::ByteSlice, Id, Repository};
 
     /// An event emitted when finding differences between two trees.
     #[derive(Debug, Clone, Copy)]
@@ -87,12 +87,24 @@ pub mod change {
     pub struct DiffPlatform<'old, 'new> {
         old: crate::Object<'old>,
         new: crate::Object<'new>,
+        algo: git_diff::text::Algorithm,
+    }
+
+    impl<'old, 'new> Event<'old, 'new> {
+        fn repo(&self) -> &Repository {
+            match self {
+                Event::Addition { id, .. } => id.repo,
+                Event::Deletion { id, .. } => id.repo,
+                Event::Modification { id, .. } => id.repo,
+            }
+        }
     }
 
     impl<'old, 'new> Event<'old, 'new> {
         /// Produce a platform for performing a line-diff, or `None` if this is not a [`Modification`][Event::Modification]
         /// or one of the entries to compare is not a blob.
         pub fn diff(&self) -> Option<Result<DiffPlatform<'old, 'new>, crate::object::find::existing::Error>> {
+            // let algo = self.repo().config.diff_algorithm()?;
             match self {
                 Event::Modification {
                     previous_entry_mode: EntryMode::BlobExecutable | EntryMode::Blob,
@@ -100,7 +112,11 @@ pub mod change {
                     entry_mode: EntryMode::BlobExecutable | EntryMode::Blob,
                     id,
                 } => match previous_id.object().and_then(|old| id.object().map(|new| (old, new))) {
-                    Ok((old, new)) => Some(Ok(DiffPlatform { old, new })),
+                    Ok((old, new)) => Some(Ok(DiffPlatform {
+                        old,
+                        new,
+                        algo: git_diff::text::Algorithm::Myers,
+                    })),
                     Err(err) => Some(Err(err)),
                 },
                 _ => None,
