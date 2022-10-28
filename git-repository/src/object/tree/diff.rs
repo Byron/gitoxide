@@ -110,8 +110,8 @@ pub mod change {
 
     impl<'old, 'new> DiffPlatform<'old, 'new> {
         /// Perform a diff on lines between the old and the new version of a blob.
-        /// Note that the [`Sink`][git_diff::lines::imara_diff::Sink] implementation is
-        /// what makes the diff usable and relies heavily on what the caller requires.
+        /// Note that the [`Sink`][git_diff::text::imara::Sink] implementation is
+        /// what makes the diff usable and relies heavily on what the caller requires, as created by `make_sink`.
         pub fn lines<FnS, S>(&self, algorithm: git_diff::text::Algorithm, make_sink: FnS) -> S::Out
         where
             FnS: for<'a> FnOnce(&git_diff::text::imara::intern::InternedInput<&'a [u8]>) -> S,
