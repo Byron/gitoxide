@@ -51,11 +51,26 @@ impl<'old, 'new> Event<'old, 'new> {
     }
 }
 
+///
+pub mod event {
+    ///
+    pub mod diff {
+        /// The error returned by [`Event::diff()`][super::Event::diff()].
+        #[derive(Debug, thiserror::Error)]
+        #[allow(missing_docs)]
+        pub enum Error {
+            #[error("Could not find the previous object to diff against")]
+            FindPrevious(#[from] crate::object::find::existing::Error),
+            #[error("Could not obtain diff algorithm from configuration")]
+            DiffAlgorithm(#[from] crate::config::diff::algorithm::Error),
+        }
+    }
+}
+
 impl<'old, 'new> Event<'old, 'new> {
     /// Produce a platform for performing a line-diff, or `None` if this is not a [`Modification`][Event::Modification]
     /// or one of the entries to compare is not a blob.
-    pub fn diff(&self) -> Option<Result<DiffPlatform<'old, 'new>, crate::object::find::existing::Error>> {
-        // let algo = self.repo().config.diff_algorithm()?;
+    pub fn diff(&self) -> Option<Result<DiffPlatform<'old, 'new>, event::diff::Error>> {
         match self {
             Event::Modification {
                 previous_entry_mode: EntryMode::BlobExecutable | EntryMode::Blob,
@@ -63,12 +78,14 @@ impl<'old, 'new> Event<'old, 'new> {
                 entry_mode: EntryMode::BlobExecutable | EntryMode::Blob,
                 id,
             } => match previous_id.object().and_then(|old| id.object().map(|new| (old, new))) {
-                Ok((old, new)) => Some(Ok(DiffPlatform {
-                    old,
-                    new,
-                    algo: git_diff::text::Algorithm::Myers,
-                })),
-                Err(err) => Some(Err(err)),
+                Ok((old, new)) => {
+                    let algo = match self.repo().config.diff_algorithm() {
+                        Ok(algo) => algo,
+                        Err(err) => return Some(Err(err.into())),
+                    };
+                    Some(Ok(DiffPlatform { old, new, algo }))
+                }
+                Err(err) => Some(Err(err.into())),
             },
             _ => None,
         }
@@ -88,7 +105,7 @@ impl<'old, 'new> DiffPlatform<'old, 'new> {
         git_diff::text::with(
             self.old.data.as_bstr(),
             self.new.data.as_bstr(),
-            git_diff::text::Algorithm::Myers, // TODO: use diff.algorithm
+            self.algo,
             // TODO: make use of `core.eol` and/or filters to do line-counting correctly. It's probably
             //       OK to just know how these objects are saved to know what constitutes a line.
             git_diff::text::imara::intern::InternedInput::new,
