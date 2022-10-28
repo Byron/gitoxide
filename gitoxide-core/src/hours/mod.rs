@@ -145,7 +145,7 @@ where
                                 let mut repo = repo.clone();
                                 repo.object_cache_size_if_unset(4 * 1024 * 1024);
                                 let rx = rx.clone();
-                                move || -> Result<_, git::object::tree::diff::Error> {
+                                move || -> Result<_, git::object::tree::diff::for_each::Error> {
                                     let mut out = Vec::new();
                                     for (commit_idx, parent_commit, commit) in rx {
                                         if let Some(c) = commit_counter.as_ref() {

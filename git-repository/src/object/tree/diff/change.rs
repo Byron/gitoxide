@@ -55,7 +55,7 @@ impl<'old, 'new> Event<'old, 'new> {
 pub mod event {
     ///
     pub mod diff {
-        /// The error returned by [`Event::diff()`][super::Event::diff()].
+        /// The error returned by [`Event::diff()`][super::super::Event::diff()].
         #[derive(Debug, thiserror::Error)]
         #[allow(missing_docs)]
         pub enum Error {
