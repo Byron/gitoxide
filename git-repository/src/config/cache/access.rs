@@ -13,11 +13,11 @@ impl Cache {
         use crate::config::diff::algorithm::Error;
         self.diff_algorithm
             .get_or_try_init(|| {
-                let res = (|| {
+                let res = {
                     let name = self
                         .resolved
                         .string("diff", None, "algorithm")
-                        .unwrap_or(Cow::Borrowed("myers".into()));
+                        .unwrap_or_else(|| Cow::Borrowed("myers".into()));
                     if name.eq_ignore_ascii_case(b"myers") || name.eq_ignore_ascii_case(b"default") {
                         Ok(git_diff::text::Algorithm::Myers)
                     } else if name.eq_ignore_ascii_case(b"minimal") {
@@ -37,7 +37,7 @@ impl Cache {
                             name: name.into_owned(),
                         })
                     }
-                })();
+                };
                 check_lenient_default(res, self.lenient_config, || git_diff::text::Algorithm::Myers)
             })
             .copied()
