@@ -281,6 +281,10 @@ static GIT_CONFIG: &[Record] = &[
         },
     },
     Record {
+        config: "diff.algorithm",
+        usage: Planned { note: Some("to be used when doing line diffs") },
+    },
+    Record {
         config: "extensions.objectFormat",
         usage: InModule {
             name: "config::cache::incubate",
