@@ -104,15 +104,6 @@ impl<'a> Needle<'a> {
                     return Match::None;
                 }
                 let end = item.full_ref_name.len() - tail.len();
-                let end = tail
-                    .is_empty()
-                    .then(|| end)
-                    .or_else(|| {
-                        item.full_ref_name[*asterisk_pos..end]
-                            .find_byte(b'/')
-                            .map(|pos| asterisk_pos + pos)
-                    })
-                    .unwrap_or(end);
                 Match::GlobRange(*asterisk_pos..end)
             }
             Needle::Object(id) => {
