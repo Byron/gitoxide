@@ -29,6 +29,8 @@ mkdir base
   git checkout -b f3 main
   git commit -m "f3" --allow-empty
   git tag v0.0-f3
+
+  git checkout -b sub/f4 main
 )
 
 git clone --shared ./base clone
