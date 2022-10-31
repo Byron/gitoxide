@@ -220,10 +220,7 @@ mod update {
     #[ignore]
     fn local_refs_are_never_written_with_symbolic_ones_unless_forced() {
         let repo = repo("two-origins");
-        let (mappings, specs) = mapping_from_spec(
-            &format!("refs/heads/symbolic:refs/heads/not-currently-checked-out"),
-            &repo,
-        );
+        let (mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/heads/not-currently-checked-out", &repo);
         let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
         assert_eq!(out.edits.len(), 0);
