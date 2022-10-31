@@ -29,6 +29,10 @@ mkdir base
   git checkout -b f3 main
   git commit -m "f3" --allow-empty
   git tag v0.0-f3
+
+  git checkout -b sub/f4 main
+  git checkout -b sub/subdir/f5 main
+  git checkout -b suub/f6 main
 )
 
 git clone --shared ./base clone
@@ -51,6 +55,7 @@ git clone --shared ./base clone
   baseline "+refs/heads/*:refs/remotes/origin/*"
   baseline "refs/heads/*1:refs/remotes/origin/*1"
   baseline "refs/heads/f*:refs/remotes/origin/a*"
+  baseline "refs/heads/*/f6:refs/remotes/origin/*/f6"
   baseline "main" "f1"
   baseline "heads/main" "heads/f1"
   baseline "refs/heads/main" "refs/heads/f1"

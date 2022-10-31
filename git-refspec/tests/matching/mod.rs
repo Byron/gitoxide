@@ -290,7 +290,7 @@ pub mod baseline {
     }
 
     fn full_remote_ref(mut name: BString) -> BString {
-        if !name.contains(&b'/') {
+        if !name.contains(&b'/') || name.starts_with(b"sub/") || name.starts_with(b"suub/") {
             if looks_like_tag(&name) {
                 name.insert_str(0, b"refs/tags/");
             } else if let Ok(_id) = git_hash::ObjectId::from_hex(name.as_ref()) {
