@@ -5,6 +5,7 @@ use crate::remote;
 #[cfg(feature = "blocking-network-client")]
 mod blocking_io {
     use git_object::bstr::ByteSlice;
+    use git_ref::TargetRef;
     use git_repository as git;
 
     use crate::remote;
@@ -67,10 +68,17 @@ mod blocking_io {
             git_repository::remote::fetch::Status::Change { update_refs, .. } => {
                 for edit in &update_refs.edits {
                     use git_odb::Find;
-                    assert!(
-                        repo.objects.contains(edit.change.new_value().expect("always set").id()),
-                        "part of the fetched pack"
-                    );
+                    match edit.change.new_value().expect("always set/no deletion") {
+                        TargetRef::Symbolic(referent) => {
+                            assert!(
+                                repo.find_reference(referent).is_ok(),
+                                "if we set up a symref, the target should exist by now"
+                            )
+                        }
+                        TargetRef::Peeled(id) => {
+                            assert!(repo.objects.contains(id), "part of the fetched pack");
+                        }
+                    }
                     let r = repo.find_reference(edit.name.as_ref()).expect("created");
                     if r.name().category().expect("known") != git_ref::Category::Tag {
                         let mut logs = r.log_iter();
@@ -118,14 +126,14 @@ mod blocking_io {
         Ok(())
     }
 
-    fn assert_reflog(logs: std::io::Result<Option<git_ref::file::log::iter::Forward<'_>>>) {
-        let logs = logs
+    fn assert_reflog(log: std::io::Result<Option<git_ref::file::log::iter::Forward<'_>>>) {
+        let lines = log
             .unwrap()
             .expect("log present")
             .collect::<Result<Vec<_>, _>>()
             .unwrap();
-        assert_eq!(logs.len(), 1, "just created");
-        let line = &logs[0];
+        assert_eq!(lines.len(), 1, "just created");
+        let line = &lines[0];
         assert!(
             line.message.starts_with(b"clone: from "),
             "{:?} unexpected",
