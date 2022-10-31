@@ -61,7 +61,15 @@ pub(crate) mod function {
         let ref_specs = remote.refspecs(git::remote::Direction::Fetch);
         match res.status {
             Status::NoChange => {
-                crate::repository::remote::refs::print_refmap(&repo, ref_specs, res.ref_map, &mut out, err)
+                let show_unmapped = false;
+                crate::repository::remote::refs::print_refmap(
+                    &repo,
+                    ref_specs,
+                    res.ref_map,
+                    show_unmapped,
+                    &mut out,
+                    err,
+                )
             }
             Status::DryRun { update_refs } => print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err),
             Status::Change {

@@ -195,6 +195,9 @@ pub mod remote {
         Refs,
         /// Print all references available on the remote as filtered through ref-specs.
         RefMap {
+            /// Also display remote references that were sent by the server, but filtered by the refspec locally.
+            #[clap(long, short = 'u')]
+            show_unmapped_remote_refs: bool,
             /// Override the built-in and configured ref-specs with one or more of the given ones.
             #[clap(parse(try_from_os_str = git::env::os_str_to_bstring))]
             ref_spec: Vec<git_repository::bstr::BString>,
