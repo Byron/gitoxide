@@ -81,6 +81,12 @@ mod blocking_io {
                     }
                     let r = repo.find_reference(edit.name.as_ref()).expect("created");
                     if r.name().category().expect("known") != git_ref::Category::Tag {
+                        assert!(r
+                            .name()
+                            .category_and_short_name()
+                            .expect("computable")
+                            .1
+                            .starts_with_str(remote_name));
                         let mut logs = r.log_iter();
                         assert_reflog(logs.all());
                     }
