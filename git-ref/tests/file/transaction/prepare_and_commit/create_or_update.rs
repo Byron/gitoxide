@@ -425,8 +425,8 @@ fn symbolic_reference_writes_reflog_if_previous_value_is_set() -> crate::Result 
         .prepare(
             Some(RefEdit {
                 change: Change::Update {
-                    log: log.clone(),
-                    new: new_head_value.clone(),
+                    log,
+                    new: new_head_value,
                     expected: PreviousValue::ExistingMustMatch(Target::Peeled(new_oid)),
                 },
                 name: "refs/heads/symbolic".try_into()?,
