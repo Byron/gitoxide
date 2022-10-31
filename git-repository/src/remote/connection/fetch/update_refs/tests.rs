@@ -196,9 +196,34 @@ mod update {
     }
 
     #[test]
-    fn local_symbolic_refs_are_never_written() {
+    // TODO: symbolic -> other symbolic is OK, and so is symbolic -> peeled and peeled -> symbolic but only if forced
+    #[ignore]
+    fn local_symbolic_refs_are_never_written_unless_forced() {
         let repo = repo("two-origins");
-        let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/heads/symbolic", &repo);
+        for source in ["refs/heads/main", "refs/heads/symbolic", "HEAD"] {
+            let (mappings, specs) = mapping_from_spec(&format!("{source}:refs/heads/symbolic"), &repo);
+            let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+            assert_eq!(out.edits.len(), 0);
+            assert_eq!(
+                out.updates,
+                vec![fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::RejectedSymbolic,
+                    edit_index: None
+                }],
+                "remote ref '{source}' assertion"
+            );
+        }
+    }
+
+    #[test]
+    #[ignore]
+    fn local_refs_are_never_written_with_symbolic_ones_unless_forced() {
+        let repo = repo("two-origins");
+        let (mappings, specs) = mapping_from_spec(
+            &format!("refs/heads/symbolic:refs/heads/not-currently-checked-out"),
+            &repo,
+        );
         let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
         assert_eq!(out.edits.len(), 0);
@@ -245,7 +270,7 @@ mod update {
 
     #[test]
     #[ignore]
-    fn remote_symbolic_refs_can_be_written_locally_if_new() {
+    fn remote_symbolic_refs_can_be_written_locally_and_point_to_tracking_branch() {
         let repo = repo("two-origins");
         let (mappings, specs) = mapping_from_spec("HEAD:refs/remotes/origin/HEAD", &repo);
         let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
@@ -262,16 +287,17 @@ mod update {
         match &edit.change {
             Change::Update { log, new, .. } => {
                 assert_eq!(log.message, "action: storing head");
-                assert!(
-                    new.try_id().is_some(),
-                    "remote is peeled, so local will be peeled as well"
+                assert_eq!(
+                    new.try_name().expect("symbolic name").as_bstr(),
+                    "refs/remotes/origin/main",
+                    "remote is symbolic, so local will be symbolic as well, but is rewritten to tracking branch"
                 );
             }
             _ => unreachable!("only updates"),
         }
         assert_eq!(
             edit.name.as_bstr(),
-            "refs/heads/HEAD",
+            "refs/remotes/origin/HEAD",
             "it's not possible to refer to the local HEAD with refspecs"
         );
     }
