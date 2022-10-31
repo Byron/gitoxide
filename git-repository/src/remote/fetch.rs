@@ -40,6 +40,7 @@ pub enum Source {
 
 impl Source {
     /// Return either the direct object id we refer to or the direct target that a reference refers to.
+    /// The latter may be a direct or a symbolic reference, and we degenerate this to the peeled object id.
     pub fn as_id(&self) -> &git_hash::oid {
         match self {
             Source::ObjectId(id) => id,

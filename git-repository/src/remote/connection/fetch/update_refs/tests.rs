@@ -196,20 +196,84 @@ mod update {
     }
 
     #[test]
-    fn symbolic_refs_are_never_written() {
+    fn local_symbolic_refs_are_never_written() {
         let repo = repo("two-origins");
         let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/heads/symbolic", &repo);
         let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
+        assert_eq!(out.edits.len(), 0);
         assert_eq!(
             out.updates,
             vec![fetch::refs::Update {
                 mode: fetch::refs::update::Mode::RejectedSymbolic,
-                edit_index: None,
+                edit_index: None
             }],
-            "this also protects from writing HEAD, which should in theory be impossible to get from a refspec as it normalizes partial ref names"
         );
-        assert_eq!(out.edits.len(), 0);
+    }
+
+    #[test]
+    fn remote_refs_cannot_map_to_local_head() {
+        let repo = repo("two-origins");
+        let (mappings, specs) = mapping_from_spec("refs/heads/main:HEAD", &repo);
+        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+        assert_eq!(out.edits.len(), 1);
+        assert_eq!(
+            out.updates,
+            vec![fetch::refs::Update {
+                mode: fetch::refs::update::Mode::New,
+                edit_index: Some(0),
+            }],
+        );
+        let edit = &out.edits[0];
+        match &edit.change {
+            Change::Update { log, new, .. } => {
+                assert_eq!(log.message, "action: storing head");
+                assert!(
+                    new.try_id().is_some(),
+                    "remote is peeled, so local will be peeled as well"
+                );
+            }
+            _ => unreachable!("only updates"),
+        }
+        assert_eq!(
+            edit.name.as_bstr(),
+            "refs/heads/HEAD",
+            "it's not possible to refer to the local HEAD with refspecs"
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn remote_symbolic_refs_can_be_written_locally_if_new() {
+        let repo = repo("two-origins");
+        let (mappings, specs) = mapping_from_spec("HEAD:refs/remotes/origin/HEAD", &repo);
+        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+        assert_eq!(out.edits.len(), 1);
+        assert_eq!(
+            out.updates,
+            vec![fetch::refs::Update {
+                mode: fetch::refs::update::Mode::New,
+                edit_index: Some(0),
+            }],
+        );
+        let edit = &out.edits[0];
+        match &edit.change {
+            Change::Update { log, new, .. } => {
+                assert_eq!(log.message, "action: storing head");
+                assert!(
+                    new.try_id().is_some(),
+                    "remote is peeled, so local will be peeled as well"
+                );
+            }
+            _ => unreachable!("only updates"),
+        }
+        assert_eq!(
+            edit.name.as_bstr(),
+            "refs/heads/HEAD",
+            "it's not possible to refer to the local HEAD with refspecs"
+        );
     }
 
     #[test]

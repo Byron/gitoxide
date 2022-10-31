@@ -194,14 +194,17 @@ impl PrepareFetch {
             remote = f(remote)?;
         }
 
-        let config = write_remote_to_local_config_file(&mut remote, remote_name)?;
+        let config = write_remote_to_local_config_file(&mut remote, remote_name.clone())?;
 
         // Add HEAD after the remote was written to config, we need it to know what to checkout later, and assure
         // the ref that HEAD points to is present no matter what.
         remote.fetch_specs.push(
-            git_refspec::parse("HEAD".into(), git_refspec::parse::Operation::Fetch)
-                .expect("valid")
-                .to_owned(),
+            git_refspec::parse(
+                format!("HEAD:refs/remotes/{remote_name}/HEAD").as_str().into(),
+                git_refspec::parse::Operation::Fetch,
+            )
+            .expect("valid")
+            .to_owned(),
         );
         let pending_pack: crate::remote::fetch::Prepare<'_, '_, _, _> = remote
             .connect(crate::remote::Direction::Fetch, progress)?
