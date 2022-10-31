@@ -7,7 +7,7 @@ use git_ref::{
     Target, TargetRef,
 };
 
-use crate::remote::fetch::RefLogMessage;
+use crate::remote::fetch::{RefLogMessage, Source};
 use crate::{
     ext::ObjectIdExt,
     remote::{fetch, fetch::refs::update::Mode},
@@ -165,7 +165,20 @@ pub(crate) fn update(
                             message: message.compose(reflog_message),
                         },
                         expected: previous_value,
-                        new: Target::Peeled(remote_id.into()),
+                        new: if let Source::Ref(git_protocol::fetch::Ref::Symbolic { target, .. }) = &remote {
+                            match mappings.iter().find_map(|m| {
+                                m.remote.as_name().and_then(|name| {
+                                    (name == target)
+                                        .then(|| m.local.as_ref().and_then(|local| local.try_into().ok()))
+                                        .flatten()
+                                })
+                            }) {
+                                Some(local_branch) => Target::Symbolic(local_branch), // TODO: even though it's on the list, it might not actually be created (if it's not existing yet)
+                                None => Target::Peeled(remote_id.into()),
+                            }
+                        } else {
+                            Target::Peeled(remote_id.into())
+                        },
                     },
                     name,
                     deref: false,

@@ -1,5 +1,6 @@
 mod update {
     use git_testtools::{hex_to_id, Result};
+    use std::convert::TryInto;
 
     use crate as git;
 
@@ -33,7 +34,7 @@ mod update {
     use git_ref::{transaction::Change, TargetRef};
 
     use crate::remote::fetch;
-    use crate::remote::fetch::RefLogMessage;
+    use crate::remote::fetch::{Mapping, RefLogMessage, Source};
 
     #[test]
     fn various_valid_updates() {
@@ -216,7 +217,7 @@ mod update {
 
     #[test]
     #[ignore]
-    fn new_refs_can_represent_remote_symbolic_refs_as_local_tracking_branch_if_the_referent_is_part_of_the_ref_set() {
+    fn remote_symbolic_refs_can_fail_to_be_set_if_their_local_tracking_branch_is_not_existing_or_scheduled_to_exist() {
         let repo = repo("two-origins");
         let (mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/remotes/origin/new", &repo);
         let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
@@ -280,37 +281,46 @@ mod update {
     }
 
     #[test]
-    #[ignore]
     fn remote_symbolic_refs_can_be_written_locally_and_point_to_tracking_branch() {
         let repo = repo("two-origins");
-        let (mappings, specs) = mapping_from_spec("HEAD:refs/remotes/origin/HEAD", &repo);
+        let (mut mappings, specs) = mapping_from_spec("HEAD:refs/remotes/origin/new-HEAD", &repo);
+        mappings.push(Mapping {
+            remote: Source::Ref(git_protocol::fetch::Ref::Direct {
+                full_ref_name: "refs/heads/main".try_into().unwrap(),
+                object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
+            }),
+            local: Some("refs/remotes/origin/main".into()),
+            spec_index: 0,
+        });
         let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
-        assert_eq!(out.edits.len(), 1);
         assert_eq!(
             out.updates,
-            vec![fetch::refs::Update {
-                mode: fetch::refs::update::Mode::New,
-                edit_index: Some(0),
-            }],
+            vec![
+                fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::New,
+                    edit_index: Some(0),
+                },
+                fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::NoChangeNeeded,
+                    edit_index: Some(1),
+                }
+            ],
         );
+        assert_eq!(out.edits.len(), 2);
         let edit = &out.edits[0];
         match &edit.change {
             Change::Update { log, new, .. } => {
-                assert_eq!(log.message, "action: storing head");
+                assert_eq!(log.message, "action: storing ref");
                 assert_eq!(
-                    new.try_name().expect("symbolic name").as_bstr(),
+                    new.try_name().expect("symbolic ref").as_bstr(),
                     "refs/remotes/origin/main",
                     "remote is symbolic, so local will be symbolic as well, but is rewritten to tracking branch"
                 );
             }
             _ => unreachable!("only updates"),
         }
-        assert_eq!(
-            edit.name.as_bstr(),
-            "refs/remotes/origin/HEAD",
-            "it's not possible to refer to the local HEAD with refspecs"
-        );
+        assert_eq!(edit.name.as_bstr(), "refs/remotes/origin/new-HEAD",);
     }
 
     #[test]
