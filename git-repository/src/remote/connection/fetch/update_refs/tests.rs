@@ -196,9 +196,7 @@ mod update {
     }
 
     #[test]
-    // TODO: symbolic -> other symbolic is OK, and so is symbolic -> peeled and peeled -> symbolic but only if forced
-    #[ignore]
-    fn local_symbolic_refs_are_never_written_unless_forced() {
+    fn local_symbolic_refs_are_never_written() {
         let repo = repo("two-origins");
         for source in ["refs/heads/main", "refs/heads/symbolic", "HEAD"] {
             let (mappings, specs) = mapping_from_spec(&format!("{source}:refs/heads/symbolic"), &repo);
@@ -211,16 +209,16 @@ mod update {
                     mode: fetch::refs::update::Mode::RejectedSymbolic,
                     edit_index: None
                 }],
-                "remote ref '{source}' assertion"
+                "we don't overwrite these as the checked-out check needs to consider much more than it currently does, we are playing it safe"
             );
         }
     }
 
     #[test]
     #[ignore]
-    fn local_refs_are_never_written_with_symbolic_ones_unless_forced() {
+    fn new_refs_can_represent_remote_symbolic_refs_as_local_tracking_branch_if_the_referent_is_part_of_the_ref_set() {
         let repo = repo("two-origins");
-        let (mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/heads/not-currently-checked-out", &repo);
+        let (mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/remotes/origin/new", &repo);
         let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
         assert_eq!(out.edits.len(), 0);
@@ -229,6 +227,22 @@ mod update {
             vec![fetch::refs::Update {
                 mode: fetch::refs::update::Mode::RejectedSymbolic,
                 edit_index: None
+            }],
+        );
+    }
+
+    #[test]
+    fn local_direct_refs_are_never_written_with_symbolic_ones_but_see_only_the_destination() {
+        let repo = repo("two-origins");
+        let (mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/heads/not-currently-checked-out", &repo);
+        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+        assert_eq!(out.edits.len(), 1);
+        assert_eq!(
+            out.updates,
+            vec![fetch::refs::Update {
+                mode: fetch::refs::update::Mode::NoChangeNeeded,
+                edit_index: Some(0)
             }],
         );
     }
@@ -395,7 +409,8 @@ mod update {
         let spec = git_refspec::parse(spec.into(), git_refspec::parse::Operation::Fetch).unwrap();
         let group = git_refspec::MatchGroup::from_fetch_specs(Some(spec));
         let references = repo.references().unwrap();
-        let references: Vec<_> = references.all().unwrap().map(|r| into_remote_ref(r.unwrap())).collect();
+        let mut references: Vec<_> = references.all().unwrap().map(|r| into_remote_ref(r.unwrap())).collect();
+        references.push(into_remote_ref(repo.find_reference("HEAD").unwrap()));
         let mappings = group
             .match_remotes(references.iter().map(remote_ref_to_item))
             .mappings

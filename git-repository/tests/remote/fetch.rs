@@ -136,7 +136,21 @@ mod blocking_io {
                         assert_eq!(write_pack_bundle.index.index_hash, hex_to_id(expected_hash));
                         assert!(write_pack_bundle.data_path.map_or(false, |f| f.is_file()));
                         assert!(write_pack_bundle.index_path.map_or(false, |f| f.is_file()));
-                        assert_eq!(update_refs.edits.len(), if dry_run { 1 } else { 2 }); // TODO: why is this?
+                        assert_eq!(update_refs.edits.len(), 2);
+
+                        let edit = &update_refs.edits[0];
+                        assert_eq!(edit.name.as_bstr(), "refs/remotes/changes-on-top-of-origin/main");
+                        assert!(
+                            edit.change.new_value().expect("no deletion").try_id().is_some(),
+                            "a simple peeled ref"
+                        );
+                        let edit = &update_refs.edits[1];
+                        assert_eq!(edit.name.as_bstr(), "refs/remotes/changes-on-top-of-origin/symbolic");
+                        assert!(
+                            edit.change.new_value().expect("no deletion").try_id().is_some(),
+                            "on the remote this is a symbolic ref, we just write its destination object id though"
+                        );
+
                         assert!(
                             !write_pack_bundle.keep_path.map_or(false, |f| f.is_file()),
                             ".keep files are deleted if there is one edit"
