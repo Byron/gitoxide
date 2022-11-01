@@ -216,20 +216,44 @@ mod update {
     }
 
     #[test]
-    #[ignore]
-    fn remote_symbolic_refs_can_fail_to_be_set_if_their_local_tracking_branch_is_not_existing_or_scheduled_to_exist() {
+    fn remote_symbolic_refs_can_always_be_set_as_there_is_no_scenario_where_it_could_be_nonexisting_and_rejected() {
         let repo = repo("two-origins");
-        let (mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/remotes/origin/new", &repo);
+        let (mut mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/remotes/origin/new", &repo);
+        mappings.push(Mapping {
+            remote: Source::Ref(git_protocol::fetch::Ref::Direct {
+                full_ref_name: "refs/heads/main".try_into().unwrap(),
+                object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
+            }),
+            local: Some("refs/heads/symbolic".into()),
+            spec_index: 0,
+        });
         let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
-        assert_eq!(out.edits.len(), 0);
+        assert_eq!(out.edits.len(), 1);
         assert_eq!(
             out.updates,
-            vec![fetch::refs::Update {
-                mode: fetch::refs::update::Mode::RejectedSymbolic,
-                edit_index: None
-            }],
+            vec![
+                fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::New,
+                    edit_index: Some(0)
+                },
+                fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::RejectedSymbolic,
+                    edit_index: None
+                }
+            ],
         );
+        let edit = &out.edits[0];
+        match &edit.change {
+            Change::Update { log, new, .. } => {
+                assert_eq!(log.message, "action: storing ref");
+                assert!(
+                    new.try_name().is_some(),
+                    "remote falls back to peeled id as it's the only thing we seem to have locally, it won't refer to a non-existing local ref"
+                );
+            }
+            _ => unreachable!("only updates"),
+        }
     }
 
     #[test]

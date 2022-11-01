@@ -173,7 +173,14 @@ pub(crate) fn update(
                                         .flatten()
                                 })
                             }) {
-                                Some(local_branch) => Target::Symbolic(local_branch), // TODO: even though it's on the list, it might not actually be created (if it's not existing yet)
+                                Some(local_branch) => {
+                                    // This is always safe because…
+                                    // - the reference may exist already
+                                    // - if it doesn't exist it will be created - we are here because it's in the list of mappings after all
+                                    // - if it exists and is updated, and the update is rejected due to non-fastforward for instance, the
+                                    //   target reference still exists and we can point to it.
+                                    Target::Symbolic(local_branch)
+                                }
                                 None => Target::Peeled(remote_id.into()),
                             }
                         } else {
