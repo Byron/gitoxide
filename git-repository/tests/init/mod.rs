@@ -1,4 +1,6 @@
 mod bare {
+    use git_testtools::tempfile;
+
     #[test]
     fn init_into_non_existing_directory_creates_it() -> crate::Result {
         let tmp = tempfile::tempdir()?;
@@ -51,6 +53,7 @@ mod bare {
 
 mod non_bare {
     use git_repository as git;
+    use git_testtools::tempfile;
 
     #[test]
     fn init_bare_with_custom_branch_name() -> crate::Result {

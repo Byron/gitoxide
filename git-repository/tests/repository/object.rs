@@ -1,4 +1,5 @@
 use git_repository as git;
+use git_testtools::tempfile;
 
 mod write_object {
     use crate::repository::object::empty_bare_repo;
@@ -148,7 +149,7 @@ mod tag {
 
 mod commit {
     use git_repository as git;
-    use git_testtools::hex_to_id;
+    use git_testtools::{hex_to_id, tempfile};
 
     use crate::{freeze_time, restricted_and_git};
 

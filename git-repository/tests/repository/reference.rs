@@ -1,6 +1,7 @@
 mod set_namespace {
     use git_repository as git;
     use git_repository::refs::transaction::PreviousValue;
+    use git_testtools::tempfile;
 
     fn easy_repo_rw() -> crate::Result<(git::Repository, tempfile::TempDir)> {
         crate::repo_rw("make_references_repo.sh")

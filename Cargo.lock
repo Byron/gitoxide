@@ -1694,7 +1694,6 @@ dependencies = [
  "serial_test",
  "signal-hook",
  "smallvec",
- "tempfile",
  "thiserror",
  "unicode-normalization",
  "walkdir",
