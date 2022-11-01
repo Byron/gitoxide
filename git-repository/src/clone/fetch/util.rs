@@ -59,7 +59,7 @@ pub fn update_head(
         None => return Ok(()),
     };
 
-    let name: git_ref::FullName = "HEAD".try_into().expect("valid");
+    let head: git_ref::FullName = "HEAD".try_into().expect("valid");
     let reflog_message = || LogChange {
         mode: RefLog::AndReference,
         force_create_reflog: false,
@@ -98,7 +98,7 @@ pub fn update_head(
                                 expected: PreviousValue::Any,
                                 new: Target::Symbolic(referent),
                             },
-                            name: name.clone(),
+                            name: head.clone(),
                             deref: false,
                         },
                     ],
@@ -116,7 +116,7 @@ pub fn update_head(
                     expected: PreviousValue::Any,
                     new: Target::Peeled(head_peeled_id.to_owned()),
                 },
-                name,
+                name: head,
                 deref: false,
             })?;
         }
@@ -127,7 +127,7 @@ pub fn update_head(
                     expected: PreviousValue::Any,
                     new: Target::Peeled(head_peeled_id.to_owned()),
                 },
-                name,
+                name: head,
                 deref: false,
             })?;
         }

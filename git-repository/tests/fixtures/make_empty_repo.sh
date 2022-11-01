@@ -1,4 +1,4 @@
 #!/bin/bash
 set -eu -o pipefail
 
-git init -q
+git -c init.defaultBranch=special init -q
