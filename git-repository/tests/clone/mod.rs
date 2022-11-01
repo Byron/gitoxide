@@ -11,6 +11,7 @@ mod blocking_io {
     use crate::remote;
 
     #[test]
+    #[ignore]
     fn fetch_only_with_configuration() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
@@ -132,6 +133,20 @@ mod blocking_io {
             referent.name().as_bstr(),
             remote::repo("base").head_name()?.expect("symbolic").as_bstr(),
             "local clone always adopts the name of the remote"
+        );
+
+        let short_name = referent.name().shorten().to_str_lossy();
+        assert_eq!(
+            repo.branch_remote_name(short_name.as_ref())
+                .expect("remote is set")
+                .as_ref(),
+            remote_name,
+            "the remote branch information is fully configured"
+        );
+        assert_eq!(
+            repo.branch_remote_ref(short_name.as_ref()).expect("present")?.as_bstr(),
+            remote_name,
+            "the remote branch information is fully configured"
         );
 
         {
