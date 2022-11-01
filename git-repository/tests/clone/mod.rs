@@ -11,6 +11,7 @@ mod blocking_io {
     use crate::remote;
 
     #[test]
+    #[ignore]
     fn fetch_only_with_configuration() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
@@ -105,6 +106,11 @@ mod blocking_io {
                 .as_bstr(),
             format!("refs/remotes/{remote_name}/main"),
             "it points to the local tracking branch of what the remote actually points to"
+        );
+
+        assert!(
+            repo.refs.cached_packed_buffer()?.is_some(),
+            "packed refs should be present"
         );
 
         let head = repo.head()?;
