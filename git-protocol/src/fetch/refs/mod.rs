@@ -77,12 +77,18 @@ pub enum Ref {
         /// The hash of the object the `target` ref points to.
         object: git_hash::ObjectId,
     },
+    /// `HEAD` is unborn on the remote and just points to the initial, unborn branch.
+    Unborn {
+        /// The path of the ref the symbolic ref points to, like `refs/heads/main`.
+        target: BString,
+    },
 }
 
 impl Ref {
     /// Provide shared fields referring to the ref itself, namely `(name, target, [peeled])`.
     /// In case of peeled refs, the tag object itself is returned as it is what the ref directly refers to, and target of the tag is returned
     /// as `peeled`.
+    /// If `unborn`, the first object id will be the null oid.
     pub fn unpack(&self) -> (&BStr, &git_hash::oid, Option<&git_hash::oid>) {
         match self {
             Ref::Direct { full_ref_name, object }
@@ -94,6 +100,10 @@ impl Ref {
                 tag: object,
                 object: peeled,
             } => (full_ref_name.as_ref(), object, Some(peeled)),
+            Ref::Unborn { target: _ } => {
+                static NULL: git_hash::ObjectId = git_hash::ObjectId::null(git_hash::Kind::Sha1);
+                ("HEAD".into(), &NULL, None)
+            }
         }
     }
 }

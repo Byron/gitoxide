@@ -32,6 +32,13 @@ pub async fn refs(
     let ls_refs = Command::LsRefs;
     let mut ls_features = ls_refs.default_features(protocol_version, capabilities);
     let mut ls_args = ls_refs.initial_arguments(&ls_features);
+    if capabilities
+        .capability("ls-refs")
+        .and_then(|cap| cap.supports("unborn"))
+        .unwrap_or_default()
+    {
+        ls_args.push("unborn".into());
+    }
     let refs = match prepare_ls_refs(capabilities, &mut ls_args, &mut ls_features) {
         Ok(LsRefsAction::Skip) => Vec::new(),
         Ok(LsRefsAction::Continue) => {

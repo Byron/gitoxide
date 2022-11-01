@@ -7,6 +7,7 @@ use crate::fetch::{refs, refs::shared::InternalRef, Ref};
 async fn extract_references_from_v2_refs() {
     let input = &mut "808e50d724f604f69ab93c6da2919c014667bedb HEAD symref-target:refs/heads/main
 808e50d724f604f69ab93c6da2919c014667bedb MISSING_NAMESPACE_TARGET symref-target:(null)
+unborn HEAD symref-target:refs/heads/main
 808e50d724f604f69ab93c6da2919c014667bedb refs/heads/main
 7fe1b98b39423b71e14217aa299a03b7c937d656 refs/tags/foo peeled:808e50d724f604f69ab93c6da2919c014667bedb
 7fe1b98b39423b71e14217aa299a03b7c937d6ff refs/tags/blaz
@@ -26,6 +27,9 @@ async fn extract_references_from_v2_refs() {
             Ref::Direct {
                 full_ref_name: "MISSING_NAMESPACE_TARGET".into(),
                 object: oid("808e50d724f604f69ab93c6da2919c014667bedb")
+            },
+            Ref::Unborn {
+                target: "refs/heads/main".into(),
             },
             Ref::Direct {
                 full_ref_name: "refs/heads/main".into(),

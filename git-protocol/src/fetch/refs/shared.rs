@@ -171,7 +171,11 @@ pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
     let mut tokens = trimmed.splitn(3, ' ');
     match (tokens.next(), tokens.next()) {
         (Some(hex_hash), Some(path)) => {
-            let id = git_hash::ObjectId::from_hex(hex_hash.as_bytes())?;
+            let id = if hex_hash == "unborn" {
+                None
+            } else {
+                Some(git_hash::ObjectId::from_hex(hex_hash.as_bytes())?)
+            };
             if path.is_empty() {
                 return Err(Error::MalformedV2RefLine(trimmed.to_owned()));
             }
@@ -186,17 +190,24 @@ pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
                             "peeled" => Ref::Peeled {
                                 full_ref_name: path.into(),
                                 object: git_hash::ObjectId::from_hex(value.as_bytes())?,
-                                tag: id,
+                                tag: id.ok_or_else(|| Error::InvariantViolation {
+                                    message: "got 'unborn' as tag target",
+                                })?,
                             },
                             "symref-target" => match value {
                                 "(null)" => Ref::Direct {
                                     full_ref_name: path.into(),
-                                    object: id,
+                                    object: id.ok_or_else(|| Error::InvariantViolation {
+                                        message: "got 'unborn' while (null) was a symref target",
+                                    })?,
                                 },
-                                name => Ref::Symbolic {
-                                    full_ref_name: path.into(),
-                                    object: id,
-                                    target: name.into(),
+                                name => match id {
+                                    Some(id) => Ref::Symbolic {
+                                        full_ref_name: path.into(),
+                                        object: id,
+                                        target: name.into(),
+                                    },
+                                    None => Ref::Unborn { target: name.into() },
                                 },
                             },
                             _ => {
@@ -211,7 +222,9 @@ pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
                 }
             } else {
                 Ref::Direct {
-                    object: id,
+                    object: id.ok_or_else(|| Error::InvariantViolation {
+                        message: "got 'unborn' as object name of direct reference",
+                    })?,
                     full_ref_name: path.into(),
                 }
             })
