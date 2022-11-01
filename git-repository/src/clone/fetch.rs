@@ -188,6 +188,7 @@ mod util {
     use super::Error;
     use crate::bstr::BStr;
     use crate::Repository;
+    use git_odb::Find;
     use git_ref::transaction::{LogChange, RefLog};
 
     pub fn write_remote_to_local_config_file(
@@ -259,26 +260,43 @@ mod util {
                     head_ref_name: referent.to_owned(),
                     source: err,
                 })?;
-                repo.edit_references([
-                    RefEdit {
-                        change: git_ref::transaction::Change::Update {
-                            log: reflog_message(),
-                            expected: PreviousValue::Any,
-                            new: Target::Peeled(head_peeled_id.to_owned()),
-                        },
-                        name: referent.clone(),
-                        deref: false,
-                    },
-                    RefEdit {
-                        change: git_ref::transaction::Change::Update {
-                            log: reflog_message(),
-                            expected: PreviousValue::Any,
-                            new: Target::Symbolic(referent),
-                        },
-                        name: name.clone(),
-                        deref: false,
-                    },
-                ])?;
+                repo.refs
+                    .transaction()
+                    .packed_refs(git_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
+                        Box::new(|oid, buf| {
+                            repo.objects
+                                .try_find(oid, buf)
+                                .map(|obj| obj.map(|obj| obj.kind))
+                                .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
+                        }),
+                    ))
+                    .prepare(
+                        [
+                            RefEdit {
+                                change: git_ref::transaction::Change::Update {
+                                    log: reflog_message(),
+                                    expected: PreviousValue::Any,
+                                    new: Target::Peeled(head_peeled_id.to_owned()),
+                                },
+                                name: referent.clone(),
+                                deref: false,
+                            },
+                            RefEdit {
+                                change: git_ref::transaction::Change::Update {
+                                    log: reflog_message(),
+                                    expected: PreviousValue::Any,
+                                    new: Target::Symbolic(referent),
+                                },
+                                name: name.clone(),
+                                deref: false,
+                            },
+                        ],
+                        git_lock::acquire::Fail::Immediately,
+                        git_lock::acquire::Fail::Immediately,
+                    )
+                    .map_err(crate::reference::edit::Error::from)?
+                    .commit(repo.committer_or_default())
+                    .map_err(crate::reference::edit::Error::from)?;
                 let mut log = reflog_message();
                 log.mode = RefLog::Only;
                 repo.edit_reference(RefEdit {
