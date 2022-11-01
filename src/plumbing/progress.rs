@@ -202,6 +202,45 @@ static GIT_CONFIG: &[Record] = &[
         usage: Planned {note: Some("very relevant for doing the right thing during checkouts")},
     },
     Record {
+        config: "branch.autoSetupRebase",
+        usage: Planned {
+            note: Some("for when we allow setting up upstream branches")
+        },
+    },
+    Record {
+        config: "branch.<name>.remote",
+        usage: InModule {
+            name: "reference::remote",
+            deviation: None
+        },
+    },
+    Record {
+        config: "branch.<name>.pushRemote",
+        usage: InModule {
+            name: "reference::remote",
+            deviation: None
+        },
+    },
+    Record {
+        config: "branch.<name>.merge",
+        usage: InModule {
+            name: "repository::config",
+            deviation: None
+        },
+    },
+    Record {
+        config: "branch.<name>.rebase",
+        usage: Planned {
+            note: Some("for when we can merge, rebase should be supported")
+        },
+    },
+    Record {
+        config: "branch.<name>.description",
+        usage: NotPlanned {
+            reason: "no plan to implement format-patch or request-pull summary"
+        },
+    },
+    Record {
         config: "core.bare",
         usage: InModule {
             name: "config::cache",
