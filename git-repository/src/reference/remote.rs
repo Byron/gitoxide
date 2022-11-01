@@ -34,7 +34,7 @@ impl Name<'_> {
 
 /// Remotes
 impl<'repo> Reference<'repo> {
-    /// Find the name of our remote for `direction` as configured in `branch.<name>.remote|pushRemote` respectively.
+    /// Find the unvalidated name of our remote for `direction` as configured in `branch.<name>.remote|pushRemote` respectively.
     /// If `Some(<name>)` it can be used in [`Repository::find_remote(…)`][crate::Repository::find_remote()], or if `None` then
     /// [Repository::remote_default_name()][crate::Repository::remote_default_name()] could be used in its place.
     ///

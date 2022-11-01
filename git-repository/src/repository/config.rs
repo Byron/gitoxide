@@ -92,10 +92,10 @@ mod branch {
             self.subsection_names_of("branch")
         }
 
-        /// Returns a reference to the remote associated with the given `short_branch_name`,
+        /// Returns the validated reference on the remote associated with the given `short_branch_name`,
         /// always `main` instead of `refs/heads/main`.
         ///
-        /// The remote-ref is the one we track on the remote side for merging and pushing.
+        /// The returned reference is the one we track on the remote side for merging and pushing.
         /// Returns `None` if the remote reference was not found.
         /// May return an error if the reference is invalid.
         pub fn branch_remote_ref(
@@ -111,9 +111,13 @@ mod branch {
                 })
         }
 
-        /// Returns the name of the remote associated with the given `short_branch_name`, typically `main` instead of `refs/heads/main`.
+        /// Returns the unvalidated name of the remote associated with the given `short_branch_name`,
+        /// typically `main` instead of `refs/heads/main`.
         /// In some cases, the returned name will be an URL.
         /// Returns `None` if the remote was not found.
+        ///
+        /// See also [Reference::remote_name()][crate::Reference::remote_name()] for a more typesafe version
+        /// to be used when a `Reference` is available.
         pub fn branch_remote_name(&self, short_branch_name: &str) -> Option<Cow<'_, BStr>> {
             self.config.resolved.string("branch", Some(short_branch_name), "remote")
         }
