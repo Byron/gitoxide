@@ -190,14 +190,14 @@ pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
                             "peeled" => Ref::Peeled {
                                 full_ref_name: path.into(),
                                 object: git_hash::ObjectId::from_hex(value.as_bytes())?,
-                                tag: id.ok_or_else(|| Error::InvariantViolation {
+                                tag: id.ok_or(Error::InvariantViolation {
                                     message: "got 'unborn' as tag target",
                                 })?,
                             },
                             "symref-target" => match value {
                                 "(null)" => Ref::Direct {
                                     full_ref_name: path.into(),
-                                    object: id.ok_or_else(|| Error::InvariantViolation {
+                                    object: id.ok_or(Error::InvariantViolation {
                                         message: "got 'unborn' while (null) was a symref target",
                                     })?,
                                 },
@@ -222,7 +222,7 @@ pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
                 }
             } else {
                 Ref::Direct {
-                    object: id.ok_or_else(|| Error::InvariantViolation {
+                    object: id.ok_or(Error::InvariantViolation {
                         message: "got 'unborn' as object name of direct reference",
                     })?,
                     full_ref_name: path.into(),
