@@ -4,7 +4,7 @@ use crate::{
     Target,
 };
 
-impl<'s> Transaction<'s> {
+impl<'s, 'p> Transaction<'s, 'p> {
     /// Make all [prepared][Transaction::prepare()] permanent and return the performed edits which represent the current
     /// state of the affected refs in the ref store in that instant. Please note that the obtained edits may have been
     /// adjusted to contain more dependent edits or additional information.
