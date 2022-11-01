@@ -107,9 +107,14 @@ mod blocking_io {
             "it points to the local tracking branch of what the remote actually points to"
         );
 
-        assert!(
-            repo.refs.cached_packed_buffer()?.is_some(),
-            "packed refs should be present"
+        let packed_refs = repo
+            .refs
+            .cached_packed_buffer()?
+            .expect("packed refs should be present");
+        assert_eq!(
+            packed_refs.iter()?.count(),
+            14,
+            "all non-symbolic refs should be stored"
         );
 
         let head = repo.head()?;

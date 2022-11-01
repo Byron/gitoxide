@@ -1,7 +1,6 @@
 use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
 
-use git_odb::FindExt;
-use git_pack::Find;
+use git_odb::{Find, FindExt};
 use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target, TargetRef,
@@ -200,7 +199,26 @@ pub(crate) fn update(
     }
 
     let edits = match dry_run {
-        fetch::DryRun::No => repo.edit_references(edits)?,
+        fetch::DryRun::No => {
+            let (file_lock_fail, packed_refs_lock_fail) = repo
+                .config
+                .lock_timeout()
+                .map_err(crate::reference::edit::Error::from)?;
+            repo.refs
+                .transaction()
+                .packed_refs(git_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
+                    Box::new(|oid, buf| {
+                        repo.objects
+                            .try_find(oid, buf)
+                            .map(|obj| obj.map(|obj| obj.kind))
+                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
+                    }),
+                ))
+                .prepare(edits, file_lock_fail, packed_refs_lock_fail)
+                .map_err(crate::reference::edit::Error::from)?
+                .commit(repo.committer_or_default())
+                .map_err(crate::reference::edit::Error::from)?
+        }
         fetch::DryRun::Yes => edits,
     };
 
