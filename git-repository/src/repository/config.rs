@@ -83,8 +83,6 @@ mod branch {
     use git_ref::FullNameRef;
     use git_validate::reference::name::Error as ValidateNameError;
 
-    use crate::bstr::BStr;
-
     impl crate::Repository {
         /// Return a set of unique short branch names for which custom configuration exists in the configuration,
         /// if we deem them [trustworthy][crate::open::Options::filter_config_section()].
@@ -114,12 +112,15 @@ mod branch {
         /// Returns the unvalidated name of the remote associated with the given `short_branch_name`,
         /// typically `main` instead of `refs/heads/main`.
         /// In some cases, the returned name will be an URL.
-        /// Returns `None` if the remote was not found.
+        /// Returns `None` if the remote was not found or if the name contained illformed UTF-8.
         ///
         /// See also [Reference::remote_name()][crate::Reference::remote_name()] for a more typesafe version
         /// to be used when a `Reference` is available.
-        pub fn branch_remote_name(&self, short_branch_name: &str) -> Option<Cow<'_, BStr>> {
-            self.config.resolved.string("branch", Some(short_branch_name), "remote")
+        pub fn branch_remote_name(&self, short_branch_name: &str) -> Option<crate::reference::remote::Name<'_>> {
+            self.config
+                .resolved
+                .string("branch", Some(short_branch_name), "remote")
+                .and_then(|name| name.try_into().ok())
         }
     }
 }
