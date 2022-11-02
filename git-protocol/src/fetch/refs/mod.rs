@@ -89,21 +89,18 @@ impl Ref {
     /// In case of peeled refs, the tag object itself is returned as it is what the ref directly refers to, and target of the tag is returned
     /// as `peeled`.
     /// If `unborn`, the first object id will be the null oid.
-    pub fn unpack(&self) -> (&BStr, &git_hash::oid, Option<&git_hash::oid>) {
+    pub fn unpack(&self) -> (&BStr, Option<&git_hash::oid>, Option<&git_hash::oid>) {
         match self {
             Ref::Direct { full_ref_name, object }
             | Ref::Symbolic {
                 full_ref_name, object, ..
-            } => (full_ref_name.as_ref(), object, None),
+            } => (full_ref_name.as_ref(), Some(object), None),
             Ref::Peeled {
                 full_ref_name,
                 tag: object,
                 object: peeled,
-            } => (full_ref_name.as_ref(), object, Some(peeled)),
-            Ref::Unborn { target: _ } => {
-                static NULL: git_hash::ObjectId = git_hash::ObjectId::null(git_hash::Kind::Sha1);
-                ("HEAD".into(), &NULL, None)
-            }
+            } => (full_ref_name.as_ref(), Some(object), Some(peeled)),
+            Ref::Unborn { target: _ } => ("HEAD".into(), None, None),
         }
     }
 }
