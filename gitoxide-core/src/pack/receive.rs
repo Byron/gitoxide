@@ -321,10 +321,9 @@ fn write_raw_refs(refs: &[Ref], directory: PathBuf) -> std::io::Result<()> {
     };
     for r in refs {
         let (path, content) = match r {
-            Ref::Unborn { target } => (
-                assure_dir_exists(&"HEAD".to_owned().into())?,
-                format!("unborn HEAD: {}", target),
-            ),
+            Ref::Unborn { full_ref_name, target } => {
+                (assure_dir_exists(full_ref_name)?, format!("unborn HEAD: {}", target))
+            }
             Ref::Symbolic {
                 full_ref_name: path,
                 target,

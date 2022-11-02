@@ -230,8 +230,8 @@ mod refs_impl {
     impl From<fetch::Ref> for JsonRef {
         fn from(value: fetch::Ref) -> Self {
             match value {
-                fetch::Ref::Unborn { target } => JsonRef::Unborn {
-                    path: "HEAD".into(),
+                fetch::Ref::Unborn { full_ref_name, target } => JsonRef::Unborn {
+                    path: full_ref_name.to_string(),
                     target: target.to_string(),
                 },
                 fetch::Ref::Direct {
@@ -279,9 +279,9 @@ mod refs_impl {
                 target,
                 object,
             } => write!(&mut out, "{} {} symref-target:{}", object, path, target).map(|_| object.as_ref()),
-            fetch::Ref::Unborn { target } => {
+            fetch::Ref::Unborn { full_ref_name, target } => {
                 static NULL: git::hash::ObjectId = git::hash::ObjectId::null(git::hash::Kind::Sha1);
-                write!(&mut out, "unborn HEAD symref-target:{}", target).map(|_| NULL.as_ref())
+                write!(&mut out, "unborn {} symref-target:{}", full_ref_name, target).map(|_| NULL.as_ref())
             }
         }
     }
