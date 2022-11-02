@@ -11,7 +11,6 @@ mod blocking_io {
     use crate::remote;
 
     #[test]
-    #[ignore]
     fn fetch_only_with_configuration() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let called_configure_remote = std::sync::Arc::new(std::sync::atomic::AtomicBool::default());
@@ -145,8 +144,7 @@ mod blocking_io {
         );
         assert_eq!(
             repo.branch_remote_ref(short_name.as_ref()).expect("present")?.as_bstr(),
-            remote_name,
-            "the remote branch information is fully configured"
+            "refs/heads/main"
         );
 
         {

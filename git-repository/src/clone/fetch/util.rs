@@ -42,7 +42,7 @@ pub fn replace_changed_local_config_file(repo: &mut Repository, mut config: git_
 /// HEAD cannot be written by means of refspec by design, so we have to do it manually here. Also create the pointed-to ref
 /// if we have to, as it might not have been naturally included in the ref-specs.
 pub fn update_head(
-    repo: &Repository,
+    repo: &mut Repository,
     remote_refs: &[git_protocol::fetch::Ref],
     reflog_message: &BStr,
     remote_name: &str,
@@ -161,7 +161,7 @@ pub fn update_head(
 /// is able to match it.
 /// For that we reload the remote of `remote_name` and use its ref_specs for match.
 fn setup_branch_config(
-    repo: &Repository,
+    repo: &mut Repository,
     branch: &FullNameRef,
     branch_id: Option<&git_hash::oid>,
     remote_name: &str,
@@ -205,6 +205,7 @@ fn setup_branch_config(
             Some(branch.as_bstr()),
         );
         std::fs::write(config_path, config.to_bstring())?;
+        replace_changed_local_config_file(repo, config);
     }
     Ok(())
 }
