@@ -6,10 +6,12 @@ use git_ref::{
     Target, TargetRef,
 };
 
-use crate::remote::fetch::{RefLogMessage, Source};
 use crate::{
     ext::ObjectIdExt,
-    remote::{fetch, fetch::refs::update::Mode},
+    remote::{
+        fetch,
+        fetch::{refs::update::Mode, RefLogMessage, Source},
+    },
     Repository,
 };
 

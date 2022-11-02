@@ -1,9 +1,10 @@
 use std::path::{Path, PathBuf};
 
-use crate::loose_file_path;
 use bstr::ByteSlice;
 use git_index::{entry, Version};
 use git_testtools::hex_to_id;
+
+use crate::loose_file_path;
 
 fn verify(index: git_index::File) -> git_index::File {
     index.verify_integrity().unwrap();

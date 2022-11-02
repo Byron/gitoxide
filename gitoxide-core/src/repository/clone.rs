@@ -9,16 +9,14 @@ pub struct Options {
 pub const PROGRESS_RANGE: std::ops::RangeInclusive<u8> = 1..=3;
 
 pub(crate) mod function {
-    use anyhow::bail;
-    use git_repository as git;
-    use git_repository::bstr::BString;
-    use git_repository::remote::fetch::Status;
-    use git_repository::Progress;
     use std::ffi::OsStr;
 
+    use anyhow::bail;
+    use git_repository as git;
+    use git_repository::{bstr::BString, remote::fetch::Status, Progress};
+
     use super::Options;
-    use crate::repository::fetch::function::print_updates;
-    use crate::OutputFormat;
+    use crate::{repository::fetch::function::print_updates, OutputFormat};
 
     pub fn clone<P>(
         remote: impl AsRef<OsStr>,

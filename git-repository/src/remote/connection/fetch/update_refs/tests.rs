@@ -1,6 +1,7 @@
 mod update {
-    use git_testtools::{hex_to_id, Result};
     use std::convert::TryInto;
+
+    use git_testtools::{hex_to_id, Result};
 
     use crate as git;
 
@@ -30,11 +31,15 @@ mod update {
         let repo = git::open_opts(dir.path().join(name), git::open::Options::isolated()).unwrap();
         (repo, dir)
     }
-    use crate::bstr::BString;
     use git_ref::{transaction::Change, TargetRef};
 
-    use crate::remote::fetch;
-    use crate::remote::fetch::{Mapping, RefLogMessage, Source};
+    use crate::{
+        bstr::BString,
+        remote::{
+            fetch,
+            fetch::{Mapping, RefLogMessage, Source},
+        },
+    };
 
     #[test]
     fn various_valid_updates() {

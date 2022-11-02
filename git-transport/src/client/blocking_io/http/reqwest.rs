@@ -12,8 +12,13 @@ pub struct Remote {
 }
 
 mod remote {
-    use std::sync::{Arc, Mutex};
-    use std::{any::Any, convert::TryFrom, io::Write, str::FromStr};
+    use std::{
+        any::Any,
+        convert::TryFrom,
+        io::Write,
+        str::FromStr,
+        sync::{Arc, Mutex},
+    };
 
     use git_features::io::pipe;
 

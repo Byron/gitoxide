@@ -112,9 +112,7 @@ pub struct Entry<'repo> {
 }
 
 mod entry {
-    use crate::bstr::BStr;
-    use crate::ext::ObjectIdExt;
-    use crate::object::tree::Entry;
+    use crate::{bstr::BStr, ext::ObjectIdExt, object::tree::Entry};
 
     /// Access
     impl<'repo> Entry<'repo> {

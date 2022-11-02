@@ -16,8 +16,7 @@ use git_ref::{
 use git_repository as git;
 use tempfile::tempdir;
 
-use crate::file::cow_str;
-use crate::file::init::from_paths::includes::conditional::git_init;
+use crate::file::{cow_str, init::from_paths::includes::conditional::git_init};
 
 type Result = crate::Result;
 

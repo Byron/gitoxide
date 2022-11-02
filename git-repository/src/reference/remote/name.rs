@@ -1,7 +1,7 @@
+use std::{borrow::Cow, convert::TryFrom};
+
 use super::Name;
 use crate::bstr::{BStr, ByteSlice, ByteVec};
-use std::borrow::Cow;
-use std::convert::TryFrom;
 
 impl Name<'_> {
     /// Obtain the name as string representation.

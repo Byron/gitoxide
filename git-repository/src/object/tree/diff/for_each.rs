@@ -1,10 +1,14 @@
-use super::{change, Action, Change, Platform, Tracking};
-use crate::bstr::{BStr, BString, ByteSlice, ByteVec};
-use crate::ext::ObjectIdExt;
-use crate::{Repository, Tree};
+use std::collections::VecDeque;
+
 use git_object::TreeRefIter;
 use git_odb::FindExt;
-use std::collections::VecDeque;
+
+use super::{change, Action, Change, Platform, Tracking};
+use crate::{
+    bstr::{BStr, BString, ByteSlice, ByteVec},
+    ext::ObjectIdExt,
+    Repository, Tree,
+};
 
 /// The error return by methods on the [diff platform][Platform].
 #[derive(Debug, thiserror::Error)]

@@ -2,8 +2,10 @@ use std::path::PathBuf;
 
 use git_features::threading::OwnShared;
 
-use crate::bstr::BString;
-use crate::{config, config::cache::interpolate_context, permission, Permissions, Repository, ThreadSafeRepository};
+use crate::{
+    bstr::BString, config, config::cache::interpolate_context, permission, Permissions, Repository,
+    ThreadSafeRepository,
+};
 
 /// A way to configure the usage of replacement objects, see `git replace`.
 #[derive(Debug, Clone)]

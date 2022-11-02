@@ -1,6 +1,5 @@
 use super::{interpolate_context, util, Error, StageOne};
-use crate::bstr::BString;
-use crate::{config::Cache, repository};
+use crate::{bstr::BString, config::Cache, repository};
 
 /// Initialization
 impl Cache {

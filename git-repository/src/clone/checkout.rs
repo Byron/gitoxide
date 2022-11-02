@@ -1,13 +1,12 @@
-use crate::clone::PrepareCheckout;
-use crate::Repository;
+use crate::{clone::PrepareCheckout, Repository};
 
 ///
 pub mod main_worktree {
-    use crate::clone::PrepareCheckout;
-    use crate::{Progress, Repository};
+    use std::{path::PathBuf, sync::atomic::AtomicBool};
+
     use git_odb::FindExt;
-    use std::path::PathBuf;
-    use std::sync::atomic::AtomicBool;
+
+    use crate::{clone::PrepareCheckout, Progress, Repository};
 
     /// The error returned by [`PrepareCheckout::main_worktree()`].
     #[derive(Debug, thiserror::Error)]

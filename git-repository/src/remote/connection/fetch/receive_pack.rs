@@ -1,16 +1,17 @@
-use crate::remote::connection::fetch::config;
-use crate::remote::fetch::{negotiate, refs, Prepare, RefLogMessage};
+use std::sync::atomic::AtomicBool;
+
+use git_odb::FindExt;
+use git_protocol::transport::client::Transport;
+
 use crate::{
     remote,
     remote::{
+        connection::fetch::config,
         fetch,
-        fetch::{Error, Outcome, Status},
+        fetch::{negotiate, refs, Error, Outcome, Prepare, RefLogMessage, Status},
     },
     Progress,
 };
-use git_odb::FindExt;
-use git_protocol::transport::client::Transport;
-use std::sync::atomic::AtomicBool;
 
 impl<'remote, 'repo, T, P> Prepare<'remote, 'repo, T, P>
 where

@@ -1,12 +1,12 @@
-use crate::bstr::BString;
-use git_ref::store::WriteReflog;
-use git_ref::transaction::{PreviousValue, RefEdit};
-use git_ref::{FullName, Target};
-use std::borrow::Cow;
-use std::convert::TryInto;
-use std::path::Path;
+use std::{borrow::Cow, convert::TryInto, path::Path};
 
-use crate::ThreadSafeRepository;
+use git_ref::{
+    store::WriteReflog,
+    transaction::{PreviousValue, RefEdit},
+    FullName, Target,
+};
+
+use crate::{bstr::BString, ThreadSafeRepository};
 
 /// The name of the branch to use if non is configured via git configuration.
 ///

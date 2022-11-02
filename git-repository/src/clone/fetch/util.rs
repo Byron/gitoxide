@@ -1,11 +1,16 @@
-use super::Error;
-use crate::bstr::{BStr, ByteSlice};
-use crate::Repository;
+use std::{borrow::Cow, convert::TryInto};
+
 use git_odb::Find;
-use git_ref::transaction::{LogChange, RefLog};
-use git_ref::FullNameRef;
-use std::borrow::Cow;
-use std::convert::TryInto;
+use git_ref::{
+    transaction::{LogChange, RefLog},
+    FullNameRef,
+};
+
+use super::Error;
+use crate::{
+    bstr::{BStr, ByteSlice},
+    Repository,
+};
 
 pub fn write_remote_to_local_config_file(
     remote: &mut crate::Remote<'_>,
@@ -47,8 +52,10 @@ pub fn update_head(
     reflog_message: &BStr,
     remote_name: &str,
 ) -> Result<(), Error> {
-    use git_ref::transaction::{PreviousValue, RefEdit};
-    use git_ref::Target;
+    use git_ref::{
+        transaction::{PreviousValue, RefEdit},
+        Target,
+    };
     let (head_peeled_id, head_ref) = match remote_refs.iter().find_map(|r| {
         Some(match r {
             git_protocol::fetch::Ref::Symbolic {

@@ -1,11 +1,12 @@
-use std::borrow::Cow;
-use std::{convert::TryInto, path::PathBuf, time::Duration};
+use std::{borrow::Cow, convert::TryInto, path::PathBuf, time::Duration};
 
 use git_lock::acquire::Fail;
 
-use crate::config::cache::util::check_lenient_default;
-use crate::config::checkout_options;
-use crate::{config::Cache, remote, repository::identity};
+use crate::{
+    config::{cache::util::check_lenient_default, checkout_options, Cache},
+    remote,
+    repository::identity,
+};
 
 /// Access
 impl Cache {

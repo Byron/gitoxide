@@ -51,8 +51,7 @@ impl PrepareFetch {
         P: crate::Progress,
         P::SubProgress: 'static,
     {
-        use crate::bstr::ByteVec;
-        use crate::remote::fetch::RefLogMessage;
+        use crate::{bstr::ByteVec, remote::fetch::RefLogMessage};
 
         let repo = self
             .repo

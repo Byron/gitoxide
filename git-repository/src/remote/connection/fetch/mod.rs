@@ -1,7 +1,7 @@
-use crate::bstr::BString;
 use git_protocol::transport::client::Transport;
 
 use crate::{
+    bstr::BString,
     remote,
     remote::{
         fetch::{DryRun, RefMap},

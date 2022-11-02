@@ -9,10 +9,12 @@ use std::{
 use bstr::{BString, ByteSlice};
 use git_config::file::init::{self};
 
-use crate::file::init::from_paths::includes::conditional::git_init;
 use crate::file::{
     cow_str,
-    init::from_paths::{escape_backslashes, includes::conditional::options_with_git_dir},
+    init::from_paths::{
+        escape_backslashes,
+        includes::conditional::{git_init, options_with_git_dir},
+    },
 };
 
 #[derive(Debug)]

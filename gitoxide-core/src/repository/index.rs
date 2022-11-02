@@ -1,7 +1,7 @@
+use std::{ffi::OsString, path::PathBuf};
+
 use git::prelude::FindExt;
 use git_repository as git;
-use std::ffi::OsString;
-use std::path::PathBuf;
 
 pub fn from_tree(
     mut spec: OsString,

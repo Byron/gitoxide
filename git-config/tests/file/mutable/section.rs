@@ -123,8 +123,9 @@ mod set {
 mod push {
     use std::convert::{TryFrom, TryInto};
 
-    use crate::file::cow_str;
     use git_config::parse::section::Key;
+
+    use crate::file::cow_str;
 
     #[test]
     fn none_as_value_omits_the_key_value_separator() -> crate::Result {

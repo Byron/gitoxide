@@ -2,10 +2,10 @@
 mod refs_impl {
     use anyhow::bail;
     use git_repository as git;
-    use git_repository::remote::fetch::Source;
     use git_repository::{
         protocol::fetch,
         refspec::{match_group::validate::Fix, RefSpec},
+        remote::fetch::Source,
     };
 
     use super::by_name_or_url;

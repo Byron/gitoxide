@@ -146,8 +146,7 @@ pub mod fetch {
 
 #[cfg(feature = "gitoxide-core-blocking-client")]
 pub mod clone {
-    use std::ffi::OsString;
-    use std::path::PathBuf;
+    use std::{ffi::OsString, path::PathBuf};
 
     #[derive(Debug, clap::Parser)]
     pub struct Platform {
