@@ -446,6 +446,12 @@ static GIT_CONFIG: &[Record] = &[
         },
     },
     Record {
+        config: "init.templateDir",
+        usage: Planned {
+            note: Some("copy non-hidden files from here into the GIT_DIR for support")
+        },
+    },
+    Record {
         config: "init.defaultBranch",
         usage: InModule {
             name: "init",
