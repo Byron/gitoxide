@@ -208,8 +208,10 @@ mod blocking_io {
         let head = repo.head()?;
         assert!(head.is_unborn());
 
-        let mut logs = head.log_iter();
-        assert_reflog(logs.all());
+        assert!(
+            head.log_iter().all()?.is_none(),
+            "no reflog for unborn heads (as it needs non-null destination hash)"
+        );
 
         if out
             .ref_map

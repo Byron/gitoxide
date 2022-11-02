@@ -41,11 +41,6 @@ impl PrepareFetch {
     /// it was newly initialized.
     ///
     /// Note that all data we created will be removed once this instance drops if the operation wasn't successful.
-    ///
-    /// # Deviation
-    ///
-    /// When the remote side is freshly initialized without commits, we pick up their reference name _and_ create a reflog entry like
-    /// before, with old and new hash being the `null-hex-sha`. That way the branch still remembers where it was created from.
     #[cfg(feature = "blocking-network-client")]
     pub fn fetch_only<P>(
         &mut self,

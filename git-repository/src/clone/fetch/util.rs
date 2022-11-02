@@ -117,20 +117,19 @@ pub fn update_head(
                 .commit(repo.committer_or_default())
                 .map_err(crate::reference::edit::Error::from)?;
 
-            let mut log = reflog_message();
-            log.mode = RefLog::Only;
-            repo.edit_reference(RefEdit {
-                change: git_ref::transaction::Change::Update {
-                    log,
-                    expected: PreviousValue::Any,
-                    new: Target::Peeled(match head_peeled_id {
-                        Some(id) => id.to_owned(),
-                        None => git_hash::ObjectId::null(repo.object_hash()),
-                    }),
-                },
-                name: head,
-                deref: false,
-            })?;
+            if let Some(head_peeled_id) = head_peeled_id {
+                let mut log = reflog_message();
+                log.mode = RefLog::Only;
+                repo.edit_reference(RefEdit {
+                    change: git_ref::transaction::Change::Update {
+                        log,
+                        expected: PreviousValue::Any,
+                        new: Target::Peeled(*head_peeled_id),
+                    },
+                    name: head,
+                    deref: false,
+                })?;
+            }
         }
         None => {
             repo.edit_reference(RefEdit {
