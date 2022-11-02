@@ -193,7 +193,6 @@ mod blocking_io {
     }
 
     #[test]
-    #[ignore]
     fn fetch_and_checkout_empty_remote_repo() -> crate::Result {
         let tmp = git_testtools::tempfile::TempDir::new()?;
         let mut prepare = git::prepare_clone(
@@ -206,7 +205,12 @@ mod blocking_io {
         let (repo, _) = checkout.main_worktree(git::progress::Discard, &std::sync::atomic::AtomicBool::default())?;
 
         assert!(!repo.index_path().is_file(), "newly initialized repos have no index");
-        assert!(repo.head()?.is_unborn());
+        let head = repo.head()?;
+        assert!(head.is_unborn());
+
+        let mut logs = head.log_iter();
+        assert_reflog(logs.all());
+
         if out
             .ref_map
             .handshake
@@ -217,13 +221,13 @@ mod blocking_io {
             == Some(true)
         {
             assert_eq!(
-                repo.head()?.referent_name().expect("present").as_bstr(),
+                head.referent_name().expect("present").as_bstr(),
                 "refs/heads/special",
                 "we pick up the name as present on the server, not the one we default to"
             );
         } else {
             assert_eq!(
-                repo.head()?.referent_name().expect("present").as_bstr(),
+                head.referent_name().expect("present").as_bstr(),
                 "refs/heads/main",
                 "we simply keep our own post-init HEAD which defaults to the branch name we configured locally"
             );

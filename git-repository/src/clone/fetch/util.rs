@@ -46,14 +46,19 @@ pub fn update_head(
     use git_ref::transaction::{PreviousValue, RefEdit};
     use git_ref::Target;
     use std::convert::TryInto;
-    let (head_peeled_id, head_ref) = match remote_refs.iter().find_map(|r| match r {
-        git_protocol::fetch::Ref::Symbolic {
-            full_ref_name,
-            target,
-            object,
-        } if full_ref_name == "HEAD" => Some((object, Some(target))),
-        git_protocol::fetch::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => Some((object, None)),
-        _ => None,
+    let (head_peeled_id, head_ref) = match remote_refs.iter().find_map(|r| {
+        Some(match r {
+            git_protocol::fetch::Ref::Symbolic {
+                full_ref_name,
+                target,
+                object,
+            } if full_ref_name == "HEAD" => (Some(object), Some(target)),
+            git_protocol::fetch::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
+                (Some(object), None)
+            }
+            git_protocol::fetch::Ref::Unborn { target } => (None, Some(target)),
+            _ => return None,
+        })
     }) {
         Some(t) => t,
         None => return Ok(()),
@@ -82,39 +87,46 @@ pub fn update_head(
                     }),
                 ))
                 .prepare(
-                    [
-                        RefEdit {
+                    {
+                        let mut edits = vec![RefEdit {
                             change: git_ref::transaction::Change::Update {
                                 log: reflog_message(),
                                 expected: PreviousValue::Any,
-                                new: Target::Peeled(head_peeled_id.to_owned()),
-                            },
-                            name: referent.clone(),
-                            deref: false,
-                        },
-                        RefEdit {
-                            change: git_ref::transaction::Change::Update {
-                                log: reflog_message(),
-                                expected: PreviousValue::Any,
-                                new: Target::Symbolic(referent),
+                                new: Target::Symbolic(referent.clone()),
                             },
                             name: head.clone(),
                             deref: false,
-                        },
-                    ],
+                        }];
+                        if let Some(head_peeled_id) = head_peeled_id {
+                            edits.push(RefEdit {
+                                change: git_ref::transaction::Change::Update {
+                                    log: reflog_message(),
+                                    expected: PreviousValue::Any,
+                                    new: Target::Peeled(head_peeled_id.to_owned()),
+                                },
+                                name: referent,
+                                deref: false,
+                            });
+                        };
+                        edits
+                    },
                     git_lock::acquire::Fail::Immediately,
                     git_lock::acquire::Fail::Immediately,
                 )
                 .map_err(crate::reference::edit::Error::from)?
                 .commit(repo.committer_or_default())
                 .map_err(crate::reference::edit::Error::from)?;
+
             let mut log = reflog_message();
             log.mode = RefLog::Only;
             repo.edit_reference(RefEdit {
                 change: git_ref::transaction::Change::Update {
                     log,
                     expected: PreviousValue::Any,
-                    new: Target::Peeled(head_peeled_id.to_owned()),
+                    new: Target::Peeled(match head_peeled_id {
+                        Some(id) => id.to_owned(),
+                        None => git_hash::ObjectId::null(repo.object_hash()),
+                    }),
                 },
                 name: head,
                 deref: false,
@@ -125,7 +137,11 @@ pub fn update_head(
                 change: git_ref::transaction::Change::Update {
                     log: reflog_message(),
                     expected: PreviousValue::Any,
-                    new: Target::Peeled(head_peeled_id.to_owned()),
+                    new: Target::Peeled(
+                        head_peeled_id
+                            .expect("detached heads always point to something")
+                            .to_owned(),
+                    ),
                 },
                 name: head,
                 deref: false,
