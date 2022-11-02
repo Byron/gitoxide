@@ -293,13 +293,9 @@ fn only_tree_ext() -> Options {
             end_of_index_entry: false,
             tree_cache: true,
         },
-        ..Default::default()
     }
 }
 
 fn options_with(extensions: write::Extensions) -> Options {
-    Options {
-        extensions,
-        ..Default::default()
-    }
+    Options { extensions }
 }

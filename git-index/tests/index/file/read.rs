@@ -232,8 +232,8 @@ fn sparse_checkout_non_sparse_index() {
     let file = file("v3_skip_worktree");
 
     assert_eq!(file.version(), Version::V3);
-    assert_eq!(file.is_sparse(), false);
-    file.entries().into_iter().for_each(|e| {
+    assert!(!file.is_sparse());
+    file.entries().iter().for_each(|e| {
         assert_eq!(e.mode, Mode::FILE);
         let path = e.path(&file);
         if path.starts_with("d".as_bytes()) || path.starts_with("c1/c3".as_bytes()) {
@@ -249,8 +249,8 @@ fn sparse_checkout_cone_mode() {
     let file = file("v3_sparse_index");
 
     assert_eq!(file.version(), Version::V3);
-    assert_eq!(file.is_sparse(), true);
-    file.entries().into_iter().for_each(|e| {
+    assert!(file.is_sparse());
+    file.entries().iter().for_each(|e| {
         let path = e.path(&file);
         if path.starts_with("c1/c3".as_bytes()) || path.starts_with("d".as_bytes()) {
             assert_eq!(e.mode, Mode::DIR);
@@ -267,8 +267,8 @@ fn sparse_checkout_cone_mode_no_dirs() {
     let file = file("v2_sparse_index_no_dirs");
 
     assert_eq!(file.version(), Version::V2);
-    assert_eq!(file.is_sparse(), true);
-    file.entries().into_iter().for_each(|e| {
+    assert!(file.is_sparse());
+    file.entries().iter().for_each(|e| {
         assert_eq!(e.mode, Mode::FILE);
         assert_eq!(e.flags, Flags::empty());
     });
@@ -279,8 +279,8 @@ fn sparse_checkout_non_cone_mode() {
     let file = file("v3_sparse_index_non_cone");
 
     assert_eq!(file.version(), Version::V3);
-    assert_eq!(file.is_sparse(), false);
-    file.entries().into_iter().for_each(|e| {
+    assert!(!file.is_sparse());
+    file.entries().iter().for_each(|e| {
         assert_eq!(e.mode, Mode::FILE);
         if e.path(&file).starts_with("c1/c2".as_bytes()) {
             assert_eq!(e.flags, Flags::empty());
