@@ -280,8 +280,8 @@ mod refs_impl {
                 object,
             } => write!(&mut out, "{} {} symref-target:{}", object, path, target).map(|_| object.as_ref()),
             fetch::Ref::Unborn { full_ref_name, target } => {
-                static NULL: git::hash::ObjectId = git::hash::ObjectId::null(git::hash::Kind::Sha1);
-                write!(&mut out, "unborn {} symref-target:{}", full_ref_name, target).map(|_| NULL.as_ref())
+                let null = git::hash::ObjectId::null(git::hash::Kind::Sha1);
+                write!(&mut out, "unborn {} symref-target:{}", full_ref_name, target).map(|_| null.as_ref())
             }
         }
     }
