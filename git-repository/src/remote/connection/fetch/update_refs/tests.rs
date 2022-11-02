@@ -487,7 +487,7 @@ mod update {
         let (full_ref_name, target, object) = r.unpack();
         git_refspec::match_group::Item {
             full_ref_name,
-            target,
+            target: target.expect("no unborn HEAD"),
             object,
         }
     }

@@ -56,7 +56,10 @@ pub(crate) fn update(
              spec_index,
          }| refspecs.get(*spec_index).map(|spec| (remote, local, spec)),
     ) {
-        let remote_id = remote.as_id();
+        let remote_id = match remote.as_id() {
+            Some(id) => id,
+            None => continue,
+        };
         if dry_run == fetch::DryRun::No && !repo.objects.contains(remote_id) {
             updates.push(update::Mode::RejectedSourceObjectNotFound { id: remote_id.into() }.into());
             continue;

@@ -182,7 +182,7 @@ mod blocking_io {
                     if dry_run {
                         assert_eq!(
                             edit.change.new_value().expect("no deletions").id(),
-                            mapping.remote.as_id()
+                            mapping.remote.as_id().expect("no unborn")
                         );
                         assert!(
                             repo.try_find_reference(edit.name.as_ref())?.is_none(),
@@ -192,7 +192,7 @@ mod blocking_io {
                         let r = repo.find_reference(edit.name.as_ref()).unwrap();
                         assert_eq!(
                             r.id(),
-                            *mapping.remote.as_id(),
+                            *mapping.remote.as_id().expect("no unborn"),
                             "local reference should point to remote id"
                         );
                     }

@@ -82,6 +82,7 @@ where
             handshake_parameters,
         }: Options,
     ) -> Result<fetch::RefMap, Error> {
+        static NULL: git_hash::ObjectId = git_hash::ObjectId::null(git_hash::Kind::Sha1); // OK to hardcode Sha1, it's not supposed to match, ever.
         let remote = self
             .fetch_refs(prefix_from_spec_as_filter_on_remote, handshake_parameters)
             .await?;
@@ -91,7 +92,7 @@ where
                 let (full_ref_name, target, object) = r.unpack();
                 git_refspec::match_group::Item {
                     full_ref_name,
-                    target,
+                    target: target.unwrap_or(&NULL),
                     object,
                 }
             }))
