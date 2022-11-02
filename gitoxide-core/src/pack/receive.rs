@@ -91,13 +91,15 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         if self.wanted_refs.is_empty() {
             for r in refs {
                 let (path, id, _) = r.unpack();
-                match self.ref_filter {
-                    Some(ref_prefixes) => {
-                        if ref_prefixes.iter().any(|prefix| path.starts_with_str(prefix)) {
-                            arguments.want(id);
+                if let Some(id) = id {
+                    match self.ref_filter {
+                        Some(ref_prefixes) => {
+                            if ref_prefixes.iter().any(|prefix| path.starts_with_str(prefix)) {
+                                arguments.want(id);
+                            }
                         }
+                        None => arguments.want(id),
                     }
-                    None => arguments.want(id),
                 }
             }
         } else {
