@@ -207,7 +207,10 @@ pub(in crate::fetch::refs) fn parse_v2(line: &str) -> Result<Ref, Error> {
                                         object: id,
                                         target: name.into(),
                                     },
-                                    None => Ref::Unborn { target: name.into() },
+                                    None => Ref::Unborn {
+                                        full_ref_name: path.into(),
+                                        target: name.into(),
+                                    },
                                 },
                             },
                             _ => {

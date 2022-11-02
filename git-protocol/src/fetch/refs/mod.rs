@@ -77,9 +77,12 @@ pub enum Ref {
         /// The hash of the object the `target` ref points to.
         object: git_hash::ObjectId,
     },
-    /// `HEAD` is unborn on the remote and just points to the initial, unborn branch.
+    /// A ref is unborn on the remote and just points to the initial, unborn branch, as is the case in a newly initialized repository
+    /// or dangling symbolic refs.
     Unborn {
-        /// The path of the ref the symbolic ref points to, like `refs/heads/main`.
+        /// The name at which the ref is located, typically `HEAD`.
+        full_ref_name: BString,
+        /// The path of the ref the symbolic ref points to, like `refs/heads/main`, even though the `target` does not yet exist.
         target: BString,
     },
 }
@@ -100,7 +103,10 @@ impl Ref {
                 tag: object,
                 object: peeled,
             } => (full_ref_name.as_ref(), Some(object), Some(peeled)),
-            Ref::Unborn { target: _ } => ("HEAD".into(), None, None),
+            Ref::Unborn {
+                full_ref_name,
+                target: _,
+            } => (full_ref_name.as_ref(), None, None),
         }
     }
 }
