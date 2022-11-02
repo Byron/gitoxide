@@ -6,7 +6,9 @@ use tabled::{Style, TableIteratorExt, Tabled};
 
 #[derive(Clone)]
 enum Usage {
-    NotApplicable,
+    NotApplicable {
+        reason: &'static str,
+    },
     Planned {
         note: Option<&'static str>,
     },
@@ -26,7 +28,7 @@ impl Display for Usage {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Puzzled => f.write_str("❓")?,
-            NotApplicable => f.write_str("not applicable")?,
+            NotApplicable { reason } => write!(f, "not applicable: {reason}")?,
             NotPlanned { reason } => {
                 write!(f, "{}", "not planned".blink())?;
                 write!(f, " ℹ {} ℹ", reason.bright_white())?;
@@ -52,7 +54,7 @@ impl Usage {
     pub fn icon(&self) -> &'static str {
         match self {
             Puzzled => "?",
-            NotApplicable => "❌",
+            NotApplicable { .. } => "❌",
             Planned { .. } => "🕒",
             NotPlanned { .. } => "🤔",
             InModule { deviation, .. } => deviation.is_some().then(|| "👌️").unwrap_or("✅"),
@@ -84,6 +86,161 @@ impl Tabled for Record {
 
 static GIT_CONFIG: &[Record] = &[
     Record {
+        config: "core.safeCRLF",
+        usage: Planned { note: Some("safety is not optional") },
+    },
+    Record {
+        config: "core.fileMode",
+        usage: InModule {name: "config", deviation: None},
+    },
+    Record {
+        config: "core.hideDotFiles",
+        usage: Planned {note: Some("Seems useful, but needs demand from windows users")}
+    },
+    Record {
+        config: "core.trustCTime",
+        usage: Planned { note: Some("Needed for checkout - read from config but not used yet") },
+    },
+    Record {
+        config: "core.checkStat",
+        usage: Planned { note: Some("Needed for checkout - read from config but not used yet further down") },
+    },
+    Record {
+        config: "core.symlinks",
+        usage: InModule {name: "config", deviation: None},
+    },
+    Record {
+        config: "core.packedGitWindowSize",
+        usage: NotPlanned { reason: "an optimization for handling many large packs more efficiently seems unnecessary" }
+    },
+    Record {
+        config: "core.packedGitLimit",
+        usage: NotApplicable { reason: "we target 32bit systems only and don't use a windowing mechanism" }
+    },
+    Record {
+        config: "core.deltaBaseCacheLimit",
+        usage: NotApplicable { reason: "we use a small 64 slot pack delta cache by default, which can be replaced with larger caches as determined by the algorithm. This keeps memory usage low and is fast enough" }
+    },
+    Record {
+        config: "core.bigFileThreshold",
+        usage: Planned { note: Some("unfortunately we can't stream packed files yet, even if not delta-compressed, but respecting the threshold for other operations is definitely a must") }
+    },
+    Record {
+        config: "core.compression",
+        usage: Planned { note: Some("Allow to remove similar hardcoded value - passing it through will be some effort") },
+    },
+    Record {
+        config: "core.loosecompression",
+        usage: Planned { note: None },
+    },
+    Record {
+        config: "core.ignorecase",
+        usage: InModule {name: "config", deviation: None}
+    },
+    Record {
+        config: "core.precomposeUnicode",
+        usage: InModule {name: "config", deviation: Some("This must be explicitly handled when data is coming into the program to fully work")}
+    },
+    Record {
+        config: "core.protectHFS",
+        usage: Planned { note: Some("relevant for checkout on MacOS") },
+    },
+    Record {
+        config: "core.protectNTFS",
+        usage: NotPlanned { reason: "lack of demand"},
+    },
+    Record {
+        config: "core.sparseCheckout",
+        usage: Planned { note: Some("we want to support huge repos and be the fastest in doing so") },
+    },
+    Record {
+        config: "core.sparseCheckoutCone",
+        usage: Planned { note: Some("this is a nice improvement over spareCheckout alone and should one day be available too") },
+    },
+    Record {
+        config: "checkout.defaultRemote",
+        usage: Planned { note: Some("needed for correct checkout behaviour, similar to what git does") },
+    },
+    Record {
+        config: "core.untrackedCache",
+        usage: Planned { note: Some("needed for fast worktree operation") },
+    },
+    Record {
+        config: "checkout.guess",
+        usage: Planned { note: None },
+    },
+    Record {
+        config: "checkout.workers",
+        usage: InModule {name: "clone::checkout", deviation: Some("if unset, uses all cores instead of just one")},
+    },
+    Record {
+        config: "checkout.thresholdForParallelism",
+        usage: NotApplicable {reason: "parallelism is efficient enough to always run with benefit"},
+    },
+    Record {
+        config: "feature.manyFile",
+        usage: Planned {note: Some("big repositories are on the roadmap")},
+    },
+    Record {
+        config: "core.preloadIndex",
+        usage: Planned {note: Some("it's enabled by default and allows parallel stat checks - it's using a lot of CPU for just minor performance boosts though")},
+    },
+    Record {
+        config: "index.sparse",
+        usage: Planned {note: Some("we can read sparse indices and support for it will be added early on")},
+    },
+    Record {
+        config: "merge.renormalize",
+        usage: Planned {note: Some("once merging is being implemented, renormalization should be respected")},
+    },
+    Record {
+        config: "sparse.expectFilesOutsideOfPatterns",
+        usage: Planned {note: Some("a feature definitely worth having")},
+    },
+    Record {
+        config: "submodule.recurse",
+        usage: Planned {note: Some("very relevant for doing the right thing during checkouts")},
+    },
+    Record {
+        config: "branch.autoSetupRebase",
+        usage: Planned {
+            note: Some("for when we allow setting up upstream branches")
+        },
+    },
+    Record {
+        config: "branch.<name>.remote",
+        usage: InModule {
+            name: "reference::remote",
+            deviation: None
+        },
+    },
+    Record {
+        config: "branch.<name>.pushRemote",
+        usage: InModule {
+            name: "reference::remote",
+            deviation: None
+        },
+    },
+    Record {
+        config: "branch.<name>.merge",
+        usage: InModule {
+            name: "repository::config",
+            deviation: None
+        },
+    },
+    Record {
+        config: "branch.<name>.rebase",
+        usage: Planned {
+            note: Some("for when we can merge, rebase should be supported")
+        },
+    },
+    Record {
+        config: "branch.<name>.description",
+        usage: NotPlanned {
+            reason: "no plan to implement format-patch or request-pull summary"
+        },
+    },
+    Record {
         config: "core.bare",
         usage: InModule {
             name: "config::cache",
@@ -98,9 +255,20 @@ static GIT_CONFIG: &[Record] = &[
         },
     },
     Record {
+        config: "core.attributesFile",
+        usage: Planned {note: Some("for checkout - it's already queried but needs building of attributes group, and of course support during checkout")},
+    },
+    Record {
         config: "core.abbrev",
         usage: InModule {
             name: "config::cache",
+            deviation: None,
+        },
+    },
+    Record {
+        config: "core.askPass",
+        usage: InModule {
+            name: "config::snapshot::credential_helpers",
             deviation: None,
         },
     },
@@ -150,6 +318,10 @@ static GIT_CONFIG: &[Record] = &[
             name: "config::cache::incubate",
             deviation: None,
         },
+    },
+    Record {
+        config: "diff.algorithm",
+        usage: InModule {name: "config::cache::access", deviation: Some("'patience' diff is not implemented and can default to 'histogram' if lenient config is used")},
     },
     Record {
         config: "extensions.objectFormat",
@@ -261,16 +433,23 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "fetch.showForcedUpdates",
-        usage: NotApplicable,
+        usage: NotApplicable {reason: "we don't support advices"},
     },
     Record {
         config: "fetch.output",
-        usage: NotApplicable,
+        usage: NotPlanned {reason: "'gix' might support it, but there is no intention on copying the 'git' CLI"},
     },
     Record {
         config: "fetch.negotiationAlgorithm",
         usage: Planned {
             note: Some("Implements our own 'naive' algorithm, only"),
+        },
+    },
+    Record {
+        config: "init.defaultBranch",
+        usage: InModule {
+            name: "init",
+            deviation: Some("If unset, we default to 'main' instead of 'master'")
         },
     },
     Record {
@@ -332,6 +511,29 @@ pub fn show_progress() -> anyhow::Result<()> {
     };
 
     println!("{}", sorted.table().with(Style::blank()));
-    println!("\nTotal records: {}", GIT_CONFIG.len());
+    println!(
+        "\nTotal records: {} ({perfect_icon} = {perfect}, {deviation_icon} = {deviation}, {planned_icon} = {planned})",
+        GIT_CONFIG.len(),
+        perfect_icon = InModule {
+            name: "",
+            deviation: None
+        }
+        .icon(),
+        deviation_icon = InModule {
+            name: "",
+            deviation: Some("")
+        }
+        .icon(),
+        planned_icon = Planned { note: None }.icon(),
+        planned = GIT_CONFIG.iter().filter(|e| matches!(e.usage, Planned { .. })).count(),
+        perfect = GIT_CONFIG
+            .iter()
+            .filter(|e| matches!(e.usage, InModule { deviation, .. } if deviation.is_none()))
+            .count(),
+        deviation = GIT_CONFIG
+            .iter()
+            .filter(|e| matches!(e.usage, InModule { deviation, .. } if deviation.is_some()))
+            .count()
+    );
     Ok(())
 }

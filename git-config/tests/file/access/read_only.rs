@@ -42,11 +42,21 @@ fn get_value_for_all_provided_values() -> crate::Result {
 
         assert!(
             config.value::<Boolean>("core", None, "bool-implicit").is_err(),
-            "this cannot work like in git as the value isn't there for us"
+            "this cannot work like in git as the original value isn't there for us"
         );
         assert!(
             config.boolean("core", None, "bool-implicit").expect("present")?,
-            "this should work"
+            "implicit booleans resolve to being true"
+        );
+        assert_eq!(
+            config.string("core", None, "bool-implicit"),
+            None,
+            "unset values are not present"
+        );
+        assert_eq!(
+            config.strings("core", None, "bool-implicit").expect("present"),
+            &[cow_str("")],
+            "unset values show up as empty within a string array"
         );
 
         assert_eq!(config.string("doesnt", None, "exist"), None);
@@ -146,8 +156,6 @@ fn get_value_for_all_provided_values() -> crate::Result {
     Ok(())
 }
 
-/// There was a regression where lookup would fail because we only checked the
-/// last section entry for any given section and subsection
 #[test]
 fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
     let config = r#"
@@ -163,14 +171,17 @@ fn get_value_looks_up_all_sections_before_failing() -> crate::Result {
     // Checks that we check the last entry first still
     assert!(
         !file.value::<Boolean>("core", None, "bool-implicit")?.0,
-        "this one can't do it, needs special handling"
+        "implicit bool is invisible to `value` and boolean is the only value we want. Would have to special case it."
     );
     assert!(
-        !file.boolean("core", None, "bool-implicit").expect("present")?,
-        "this should work, but doesn't yet"
+        file.boolean("core", None, "bool-implicit").expect("present")?,
+        "correct handling of booleans is implemented specifically"
     );
 
-    assert!(!file.value::<Boolean>("core", None, "bool-explicit")?.0);
+    assert!(
+        !file.value::<Boolean>("core", None, "bool-explicit")?.0,
+        "explicit values always work"
+    );
 
     Ok(())
 }
@@ -312,4 +323,35 @@ fn multi_line_value_outer_quotes_escaped_inner_quotes() {
     let config = File::try_from(config).unwrap();
     let expected = r#"!f() {            git status;            git add -A;            git commit -m "$1";            git push -f;            git log -1;          };         f;          unset f"#;
     assert_eq!(config.raw_value("alias", None, "save").unwrap().as_ref(), expected);
+}
+
+#[test]
+fn overrides_with_implicit_booleans_work_in_single_section() {
+    let config = r#"
+        [a]
+            b = false
+            b
+        "#;
+    let config = File::try_from(config).unwrap();
+    assert_eq!(
+        config.boolean("a", None, "b"),
+        Some(Ok(true)),
+        "empty implicit booleans "
+    );
+}
+
+#[test]
+fn overrides_with_implicit_booleans_work_across_sections() {
+    let config = r#"
+        [a]
+            b = false
+        [a]
+            b
+        "#;
+    let config = File::try_from(config).unwrap();
+    assert_eq!(
+        config.boolean("a", None, "b"),
+        Some(Ok(true)),
+        "empty implicit booleans "
+    );
 }

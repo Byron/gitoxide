@@ -4,6 +4,7 @@ use git_config::{
     file::{includes, init},
     path, File,
 };
+use git_repository as git;
 use tempfile::tempdir;
 
 use crate::file::{cow_str, init::from_paths::escape_backslashes};
@@ -136,6 +137,17 @@ fn options_with_git_dir(git_dir: &Path) -> init::Options<'_> {
         ),
         ..Default::default()
     }
+}
+
+fn git_init(path: impl AsRef<std::path::Path>, bare: bool) -> crate::Result<git::Repository> {
+    Ok(git::ThreadSafeRepository::init_opts(
+        path,
+        bare.then(|| git::create::Kind::Bare)
+            .unwrap_or(git::create::Kind::WithWorktree),
+        git::create::Options::default(),
+        git::open::Options::isolated(),
+    )?
+    .to_thread_local())
 }
 
 fn create_symlink(from: impl AsRef<Path>, to: impl AsRef<Path>) {

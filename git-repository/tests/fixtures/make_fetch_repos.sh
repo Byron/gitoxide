@@ -8,6 +8,7 @@ git clone --shared base clone-as-base-with-changes
   git add new-file
   git commit -m "add new-file"
   git tag -m "new-file introduction" v1.0
+  git symbolic-ref refs/heads/symbolic refs/tags/v1.0
 )
 
 git clone --shared base two-origins

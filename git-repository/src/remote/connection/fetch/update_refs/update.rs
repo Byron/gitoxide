@@ -94,6 +94,9 @@ impl std::fmt::Display for Mode {
 impl Outcome {
     /// Produce an iterator over all information used to produce the this outcome, ref-update by ref-update, using the `mappings`
     /// used when producing the ref update.
+    ///
+    /// Note that mappings that don't have a corresponding entry in `refspecs`  these will be `None` even though that should never be the case.
+    /// This can happen if the `refspecs` passed in aren't the respecs used to create the `mapping`, and it's up to the caller to sort it out.
     pub fn iter_mapping_updates<'a, 'b>(
         &self,
         mappings: &'a [fetch::Mapping],
@@ -102,7 +105,7 @@ impl Outcome {
         Item = (
             &super::Update,
             &'a fetch::Mapping,
-            &'b git_refspec::RefSpec,
+            Option<&'b git_refspec::RefSpec>,
             Option<&git_ref::transaction::RefEdit>,
         ),
     > {
@@ -110,7 +113,7 @@ impl Outcome {
             (
                 update,
                 mapping,
-                &refspecs[mapping.spec_index],
+                refspecs.get(mapping.spec_index),
                 update.edit_index.and_then(|idx| self.edits.get(idx)),
             )
         })

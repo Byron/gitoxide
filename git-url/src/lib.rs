@@ -28,6 +28,8 @@ pub use scheme::Scheme;
 /// Additionally there is support for [deserialization][Url::from_bytes()] and serialization
 /// (_see the `Display::fmt()` implementation_).
 ///
+/// # Deviation
+///
 /// Note that we do not support passing the password using the URL as it's likely leading to accidents.
 #[derive(PartialEq, Eq, Debug, Hash, Ord, PartialOrd, Clone)]
 #[cfg_attr(feature = "serde1", derive(serde::Serialize, serde::Deserialize))]
@@ -91,6 +93,16 @@ impl Url {
         self.serialize_alternative_form = use_alternate_form;
         self
     }
+
+    /// Turn a file url like `file://relative` into `file:///root/relative`, hence it assures the url's path component is absolute.
+    pub fn canonicalize(&mut self) -> Result<(), git_path::realpath::Error> {
+        if self.scheme == Scheme::File {
+            let path = git_path::from_bstr(self.path.as_ref());
+            let abs_path = git_path::realpath(path)?;
+            self.path = git_path::into_bstr(abs_path).into_owned();
+        }
+        Ok(())
+    }
 }
 
 /// Access
@@ -120,6 +132,16 @@ impl Url {
                 File | Ext(_) => return None,
             })
         })
+    }
+}
+
+/// Transformation
+impl Url {
+    /// Turn a file url like `file://relative` into `file:///root/relative`, hence it assures the url's path component is absolute.
+    pub fn canonicalized(&self) -> Result<Self, git_path::realpath::Error> {
+        let mut res = self.clone();
+        res.canonicalize()?;
+        Ok(res)
     }
 }
 

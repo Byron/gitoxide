@@ -10,24 +10,24 @@ use crate::{
 /// used to obtain the peeled object ids for storage in packed-refs files.
 ///
 /// Resolution means to follow tag objects until the end of the chain.
-pub type FindObjectFn =
-    dyn FnMut(
+pub type FindObjectFn<'a> = dyn FnMut(
         git_hash::ObjectId,
         &mut Vec<u8>,
-    ) -> Result<Option<git_object::Kind>, Box<dyn std::error::Error + Send + Sync + 'static>>;
+    ) -> Result<Option<git_object::Kind>, Box<dyn std::error::Error + Send + Sync + 'static>>
+    + 'a;
 
 /// How to handle packed refs during a transaction
-pub enum PackedRefs {
+pub enum PackedRefs<'a> {
     /// Only propagate deletions of references. This is the default
     DeletionsOnly,
     /// Propagate deletions as well as updates to references which are peeled, that is contain an object id
-    DeletionsAndNonSymbolicUpdates(Box<FindObjectFn>),
+    DeletionsAndNonSymbolicUpdates(Box<FindObjectFn<'a>>),
     /// Propagate deletions as well as updates to references which are peeled, that is contain an object id. Furthermore delete the
     /// reference which is originally updated if it exists. If it doesn't, the new value will be written into the packed ref right away.
-    DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box<FindObjectFn>),
+    DeletionsAndNonSymbolicUpdatesRemoveLooseSourceReference(Box<FindObjectFn<'a>>),
 }
 
-impl Default for PackedRefs {
+impl Default for PackedRefs<'_> {
     fn default() -> Self {
         PackedRefs::DeletionsOnly
     }
@@ -71,7 +71,7 @@ impl file::Store {
     /// will never have been altered.
     ///
     /// The transaction inherits the parent namespace.
-    pub fn transaction(&self) -> Transaction<'_> {
+    pub fn transaction(&self) -> Transaction<'_, '_> {
         Transaction {
             store: self,
             packed_transaction: None,
@@ -81,9 +81,9 @@ impl file::Store {
     }
 }
 
-impl<'s> Transaction<'s> {
+impl<'s, 'p> Transaction<'s, 'p> {
     /// Configure the way packed refs are handled during the transaction
-    pub fn packed_refs(mut self, packed_refs: PackedRefs) -> Self {
+    pub fn packed_refs(mut self, packed_refs: PackedRefs<'p>) -> Self {
         self.packed_refs = packed_refs;
         self
     }

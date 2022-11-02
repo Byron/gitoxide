@@ -18,22 +18,32 @@ impl<'event> Body<'event> {
     /// Note that we consider values without key separator `=` non-existing.
     #[must_use]
     pub fn value(&self, key: impl AsRef<str>) -> Option<Cow<'_, BStr>> {
+        self.value_implicit(key).flatten()
+    }
+
+    /// Retrieves the last matching value in a section with the given key, if present, and indicates an implicit value with `Some(None)`,
+    /// and a non-existing one as `None`
+    #[must_use]
+    pub fn value_implicit(&self, key: impl AsRef<str>) -> Option<Option<Cow<'_, BStr>>> {
         let key = Key::from_str_unchecked(key.as_ref());
         let (_key_range, range) = self.key_and_value_range_by(&key)?;
-        let range = range?;
+        let range = match range {
+            None => return Some(None),
+            Some(range) => range,
+        };
         let mut concatenated = BString::default();
 
         for event in &self.0[range] {
             match event {
                 Event::Value(v) => {
-                    return Some(normalize_bstr(v.as_ref()));
+                    return Some(Some(normalize_bstr(v.as_ref())));
                 }
                 Event::ValueNotDone(v) => {
                     concatenated.push_str(v.as_ref());
                 }
                 Event::ValueDone(v) => {
                     concatenated.push_str(v.as_ref());
-                    return Some(normalize_bstring(concatenated));
+                    return Some(Some(normalize_bstring(concatenated)));
                 }
                 _ => (),
             }

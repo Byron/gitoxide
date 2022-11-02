@@ -29,8 +29,10 @@ pub enum Push<'a> {
     /// Push a single ref or refspec to a known destination ref.
     Matching {
         /// The source ref or refspec to push. If pattern, it contains a single `*`.
+        /// Examples are refnames like `HEAD` or `refs/heads/main`, or patterns like `refs/heads/*`.
         src: &'a BStr,
         /// The ref to update with the object from `src`. If `src`  is a pattern, this is a pattern too.
+        /// Examples are refnames like `HEAD` or `refs/heads/main`, or patterns like `refs/heads/*`.
         dst: &'a BStr,
         /// If true, allow non-fast-forward updates of `dest`.
         allow_non_fast_forward: bool,

@@ -110,7 +110,7 @@ Check out the [performance discussion][git-diff-performance] as well.
   * There are various ways to generate a patch from two blobs.
   * [ ] any
 * **lines**
-  * [ ] Simple line-by-line diffs powered by the `similar` crate.
+  * [x] Simple line-by-line diffs powered by the `imara-diff` crate.
 * diffing, merging, working with hunks of data
 * find differences between various states, i.e. index, working tree, commit-tree
 * [x] API documentation
@@ -143,8 +143,6 @@ Check out the [performance discussion][git-traverse-performance] as well.
 * [x] convert URL to string
 * [x] API documentation
     * [ ] Some examples
-- **deviation**
-    * URLs may not contain passwords, which cannot be represent here and if present, will be ignored.
     
 ### git-protocol
 * _abstract over protocol versions to allow delegates to deal only with a single way of doing things_
@@ -467,7 +465,7 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * [x] access to refs and objects
     * **credentials**
       * [x] run `git credential` directly
-      * [x] use credential helper configuration and to obtain credentials with `git_credential::helper::Cascade`
+      * [x] use credential helper configuration and to obtain credentials with `git_credentials::helper::Cascade`
     * **config**
       * [ ] facilities to apply the [url-match](https://git-scm.com/docs/git-config#Documentation/git-config.txt-httplturlgt) algorithm and to
             [normalize urls](https://github.com/git/git/blob/be1a02a17ede4082a86dfbfee0f54f345e8b43ac/urlmatch.c#L109:L109) before comparison.
@@ -504,11 +502,12 @@ See its [README.md](https://github.com/Byron/gitoxide/blob/main/git-lock/README.
     * **remotes**  
         * [ ] clone 
           * [ ] shallow
-        * [ ] fetch
+          * [ ] [bundles](https://git-scm.com/docs/git-bundle)
+        * [x] fetch
         * [ ] push
         * [x] ls-refs
-        * [ ] ls-refs with ref-spec filter
-        * [ ] list, find by name
+        * [x] ls-refs with ref-spec filter
+        * [x] list, find by name
         * [x] create in memory
         * [ ] groups
         * [ ] [remote and branch files](https://github.com/git/git/blob/master/remote.c#L300)

@@ -12,7 +12,7 @@ use crate::{
     FullName, FullNameRef, Reference, Target,
 };
 
-impl<'s> Transaction<'s> {
+impl<'s, 'p> Transaction<'s, 'p> {
     fn lock_ref_and_apply_change(
         store: &file::Store,
         lock_fail_mode: git_lock::acquire::Fail,
@@ -167,7 +167,7 @@ impl<'s> Transaction<'s> {
     }
 }
 
-impl<'s> Transaction<'s> {
+impl<'s, 'p> Transaction<'s, 'p> {
     /// Prepare for calling [`commit(…)`][Transaction::commit()] in a way that can be rolled back perfectly.
     ///
     /// If the operation succeeds, the transaction can be committed or dropped to cause a rollback automatically.

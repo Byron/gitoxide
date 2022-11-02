@@ -125,8 +125,9 @@ A bunch of notes collected to keep track of what's needed to eventually support 
   
 ## `Options` vs `Context`
 
-- Use `Options` whenever there is something to configure in terms of branching behaviour.
-- Use `Context` when potential optional data is required to perform an operation at all. See `git_config::path::Context` as reference.
+- Use `Options` whenever there is something to configure in terms of branching behaviour. It can be defaulted, and if it can't these fields should be parameters.
+- Use `Context` when potential optional data is required to perform an operation at all. See `git_config::path::Context` as reference. It can't be defaulted and the
+  fields could also be parameters.
 
 ## Examples, Experiments, Porcelain CLI and Plumbing CLI - which does what?
 

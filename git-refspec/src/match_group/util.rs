@@ -69,28 +69,10 @@ impl<'a> Needle<'a> {
                     Match::None
                 }
             }
-            Needle::PartialName(name) => {
-                let mut buf = BString::from(Vec::with_capacity(128));
-                for (base, append_head) in [
-                    ("", false),
-                    ("refs/", false),
-                    ("refs/tags/", false),
-                    ("refs/heads/", false),
-                    ("refs/remotes/", false),
-                    ("refs/remotes/", true),
-                ] {
-                    buf.clear();
-                    buf.push_str(base);
-                    buf.push_str(name);
-                    if append_head {
-                        buf.push_str("/HEAD");
-                    }
-                    if buf == item.full_ref_name {
-                        return Match::Normal;
-                    }
-                }
-                Match::None
-            }
+            Needle::PartialName(name) => crate::spec::expand_partial_name(name, |expanded| {
+                (expanded == item.full_ref_name).then(|| Match::Normal)
+            })
+            .unwrap_or(Match::None),
             Needle::Glob { name, asterisk_pos } => {
                 match item.full_ref_name.get(..*asterisk_pos) {
                     Some(full_name_portion) if full_name_portion != name[..*asterisk_pos] => {

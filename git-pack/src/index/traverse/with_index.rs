@@ -38,7 +38,7 @@ impl index::File {
             git_object::Kind,
             &[u8],
             &index::Entry,
-            &mut <<P as Progress>::SubProgress as Progress>::SubProgress,
+            &mut <P::SubProgress as Progress>::SubProgress,
         ) -> Result<(), E>,
         E: std::error::Error + Send + Sync + 'static,
     {

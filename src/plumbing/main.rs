@@ -113,6 +113,27 @@ pub fn main() -> Result<()> {
 
     match cmd {
         #[cfg(feature = "gitoxide-core-blocking-client")]
+        Subcommands::Clone(crate::plumbing::options::clone::Platform {
+            handshake_info,
+            bare,
+            remote,
+            directory,
+        }) => {
+            let opts = core::repository::clone::Options {
+                format,
+                bare,
+                handshake_info,
+            };
+            prepare_and_run(
+                "clone",
+                verbose,
+                progress,
+                progress_keep_open,
+                core::repository::clone::PROGRESS_RANGE,
+                move |progress, out, err| core::repository::clone(remote, directory, config, progress, out, err, opts),
+            )
+        }
+        #[cfg(feature = "gitoxide-core-blocking-client")]
         Subcommands::Fetch(crate::plumbing::options::fetch::Platform {
             dry_run,
             handshake_info,
@@ -157,9 +178,13 @@ pub fn main() -> Result<()> {
                 remote::Subcommands::Refs | remote::Subcommands::RefMap { .. } => {
                     let kind = match cmd {
                         remote::Subcommands::Refs => core::repository::remote::refs::Kind::Remote,
-                        remote::Subcommands::RefMap { ref_spec } => {
-                            core::repository::remote::refs::Kind::Tracking { ref_specs: ref_spec }
-                        }
+                        remote::Subcommands::RefMap {
+                            ref_spec,
+                            show_unmapped_remote_refs,
+                        } => core::repository::remote::refs::Kind::Tracking {
+                            ref_specs: ref_spec,
+                            show_unmapped_remote_refs,
+                        },
                     };
                     let context = core::repository::remote::refs::Options {
                         name_or_url: name,

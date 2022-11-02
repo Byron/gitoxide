@@ -1,4 +1,5 @@
 use git_repository::{open, Repository, ThreadSafeRepository};
+use git_testtools::tempfile;
 
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 

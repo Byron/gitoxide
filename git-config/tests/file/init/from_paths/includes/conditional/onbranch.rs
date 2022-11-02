@@ -17,6 +17,7 @@ use git_repository as git;
 use tempfile::tempdir;
 
 use crate::file::cow_str;
+use crate::file::init::from_paths::includes::conditional::git_init;
 
 type Result = crate::Result;
 
@@ -188,7 +189,7 @@ struct GitEnv {
 impl GitEnv {
     fn new() -> crate::Result<Self> {
         let dir = tempdir()?;
-        let repo = git_repository::init_bare(dir.path())?;
+        let repo = git_init(dir.path(), true)?;
         Ok(GitEnv { repo, dir })
     }
 }
@@ -284,8 +285,8 @@ value = branch-override-by-include
                 },
                 deref: false,
             }),
-            git_repository::lock::acquire::Fail::Immediately,
-            git_repository::lock::acquire::Fail::Immediately,
+            git::lock::acquire::Fail::Immediately,
+            git::lock::acquire::Fail::Immediately,
         )?
         .commit(repo.committer_or_default())?;
 

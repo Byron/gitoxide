@@ -54,9 +54,17 @@ impl<'repo> Head<'repo> {
             Kind::Detached { .. } => return None,
         })
     }
+
     /// Returns true if this instance is detached, and points to an object directly.
     pub fn is_detached(&self) -> bool {
         matches!(self.kind, Kind::Detached { .. })
+    }
+
+    /// Returns true if this instance is not yet born, hence it points to a ref that doesn't exist yet.
+    ///
+    /// This is the case in a newly initialized repository.
+    pub fn is_unborn(&self) -> bool {
+        matches!(self.kind, Kind::Unborn(_))
     }
 
     // TODO: tests

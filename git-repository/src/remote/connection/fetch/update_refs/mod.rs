@@ -1,12 +1,12 @@
 use std::{collections::BTreeMap, convert::TryInto, path::PathBuf};
 
-use git_odb::FindExt;
-use git_pack::Find;
+use git_odb::{Find, FindExt};
 use git_ref::{
     transaction::{Change, LogChange, PreviousValue, RefEdit, RefLog},
     Target, TargetRef,
 };
 
+use crate::remote::fetch::{RefLogMessage, Source};
 use crate::{
     ext::ObjectIdExt,
     remote::{fetch, fetch::refs::update::Mode},
@@ -41,7 +41,7 @@ impl From<update::Mode> for Update {
 /// It can be used to produce typical information that one is used to from `git fetch`.
 pub(crate) fn update(
     repo: &Repository,
-    action: &str,
+    message: RefLogMessage,
     mappings: &[fetch::Mapping],
     refspecs: &[git_refspec::RefSpec],
     dry_run: fetch::DryRun,
@@ -49,13 +49,17 @@ pub(crate) fn update(
     let mut edits = Vec::new();
     let mut updates = Vec::new();
 
-    for fetch::Mapping {
-        remote,
-        local,
-        spec_index,
-    } in mappings
-    {
-        let remote_id = remote.as_id();
+    for (remote, local, spec) in mappings.iter().filter_map(
+        |fetch::Mapping {
+             remote,
+             local,
+             spec_index,
+         }| refspecs.get(*spec_index).map(|spec| (remote, local, spec)),
+    ) {
+        let remote_id = match remote.as_id() {
+            Some(id) => id,
+            None => continue,
+        };
         if dry_run == fetch::DryRun::No && !repo.objects.contains(remote_id) {
             updates.push(update::Mode::RejectedSourceObjectNotFound { id: remote_id.into() }.into());
             continue;
@@ -83,14 +87,14 @@ pub(crate) fn update(
                                 let (mode, reflog_message) = if local_id == remote_id {
                                     (update::Mode::NoChangeNeeded, "no update will be performed")
                                 } else if let Some(git_ref::Category::Tag) = existing.name().category() {
-                                    if refspecs[*spec_index].allow_non_fast_forward() {
+                                    if spec.allow_non_fast_forward() {
                                         (update::Mode::Forced, "updating tag")
                                     } else {
                                         updates.push(update::Mode::RejectedTagUpdate.into());
                                         continue;
                                     }
                                 } else {
-                                    let mut force = refspecs[*spec_index].allow_non_fast_forward();
+                                    let mut force = spec.allow_non_fast_forward();
                                     let is_fast_forward = match dry_run {
                                         fetch::DryRun::No => {
                                             let ancestors = repo
@@ -160,10 +164,30 @@ pub(crate) fn update(
                         log: LogChange {
                             mode: RefLog::AndReference,
                             force_create_reflog: false,
-                            message: format!("{}: {}", action, reflog_message).into(),
+                            message: message.compose(reflog_message),
                         },
                         expected: previous_value,
-                        new: Target::Peeled(remote_id.into()),
+                        new: if let Source::Ref(git_protocol::fetch::Ref::Symbolic { target, .. }) = &remote {
+                            match mappings.iter().find_map(|m| {
+                                m.remote.as_name().and_then(|name| {
+                                    (name == target)
+                                        .then(|| m.local.as_ref().and_then(|local| local.try_into().ok()))
+                                        .flatten()
+                                })
+                            }) {
+                                Some(local_branch) => {
+                                    // This is always safe because…
+                                    // - the reference may exist already
+                                    // - if it doesn't exist it will be created - we are here because it's in the list of mappings after all
+                                    // - if it exists and is updated, and the update is rejected due to non-fastforward for instance, the
+                                    //   target reference still exists and we can point to it.
+                                    Target::Symbolic(local_branch)
+                                }
+                                None => Target::Peeled(remote_id.into()),
+                            }
+                        } else {
+                            Target::Peeled(remote_id.into())
+                        },
                     },
                     name,
                     deref: false,
@@ -178,7 +202,26 @@ pub(crate) fn update(
     }
 
     let edits = match dry_run {
-        fetch::DryRun::No => repo.edit_references(edits)?,
+        fetch::DryRun::No => {
+            let (file_lock_fail, packed_refs_lock_fail) = repo
+                .config
+                .lock_timeout()
+                .map_err(crate::reference::edit::Error::from)?;
+            repo.refs
+                .transaction()
+                .packed_refs(git_ref::file::transaction::PackedRefs::DeletionsAndNonSymbolicUpdates(
+                    Box::new(|oid, buf| {
+                        repo.objects
+                            .try_find(oid, buf)
+                            .map(|obj| obj.map(|obj| obj.kind))
+                            .map_err(|err| Box::new(err) as Box<dyn std::error::Error + Send + Sync + 'static>)
+                    }),
+                ))
+                .prepare(edits, file_lock_fail, packed_refs_lock_fail)
+                .map_err(crate::reference::edit::Error::from)?
+                .commit(repo.committer_or_default())
+                .map_err(crate::reference::edit::Error::from)?
+        }
         fetch::DryRun::Yes => edits,
     };
 

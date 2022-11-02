@@ -22,9 +22,9 @@ pub(crate) mod function {
     use super::Options;
     use crate::OutputFormat;
 
-    pub fn fetch(
+    pub fn fetch<P>(
         repo: git::Repository,
-        progress: impl git::Progress,
+        progress: P,
         mut out: impl std::io::Write,
         err: impl std::io::Write,
         Options {
@@ -34,7 +34,11 @@ pub(crate) mod function {
             handshake_info,
             ref_specs,
         }: Options,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<()>
+    where
+        P: git::Progress,
+        P::SubProgress: 'static,
+    {
         if format != OutputFormat::Human {
             bail!("JSON output isn't yet supported for fetching.");
         }
@@ -57,7 +61,15 @@ pub(crate) mod function {
         let ref_specs = remote.refspecs(git::remote::Direction::Fetch);
         match res.status {
             Status::NoChange => {
-                crate::repository::remote::refs::print_refmap(&repo, ref_specs, res.ref_map, &mut out, err)
+                let show_unmapped = false;
+                crate::repository::remote::refs::print_refmap(
+                    &repo,
+                    ref_specs,
+                    res.ref_map,
+                    show_unmapped,
+                    &mut out,
+                    err,
+                )
             }
             Status::DryRun { update_refs } => print_updates(&repo, update_refs, ref_specs, res.ref_map, &mut out, err),
             Status::Change {
@@ -91,6 +103,7 @@ pub(crate) mod function {
         let mut last_spec_index = usize::MAX;
         let mut updates = update_refs
             .iter_mapping_updates(&map.mappings, refspecs)
+            .filter_map(|(update, mapping, spec, edit)| spec.map(|spec| (update, mapping, spec, edit)))
             .collect::<Vec<_>>();
         updates.sort_by_key(|t| t.2);
         for (update, mapping, spec, edit) in updates {

@@ -57,7 +57,7 @@ impl StageOne {
             .transpose()?
             .unwrap_or(git_hash::Kind::Sha1);
 
-        let reflog = util::query_refupdates(&config);
+        let reflog = util::query_refupdates(&config, lenient)?;
         Ok(StageOne {
             git_dir_config: config,
             buf,

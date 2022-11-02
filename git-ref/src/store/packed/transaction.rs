@@ -38,7 +38,7 @@ impl packed::Transaction {
     pub fn prepare(
         mut self,
         edits: impl IntoIterator<Item = RefEdit>,
-        find: &mut FindObjectFn,
+        find: &mut FindObjectFn<'_>,
     ) -> Result<Self, prepare::Error> {
         assert!(self.edits.is_none(), "BUG: cannot call prepare(…) more than once");
         let buffer = &self.buffer;
