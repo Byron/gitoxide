@@ -110,7 +110,12 @@ impl PrepareFetch {
             .receive(should_interrupt)?;
 
         util::replace_changed_local_config_file(repo, config);
-        util::update_head(repo, &outcome.ref_map.remote_refs, reflog_message.as_ref())?;
+        util::update_head(
+            repo,
+            &outcome.ref_map.remote_refs,
+            reflog_message.as_ref(),
+            &remote_name,
+        )?;
 
         Ok((self.repo.take().expect("still present"), outcome))
     }

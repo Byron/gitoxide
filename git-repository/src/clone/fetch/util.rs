@@ -1,8 +1,11 @@
 use super::Error;
-use crate::bstr::BStr;
+use crate::bstr::{BStr, ByteSlice};
 use crate::Repository;
 use git_odb::Find;
 use git_ref::transaction::{LogChange, RefLog};
+use git_ref::FullNameRef;
+use std::borrow::Cow;
+use std::convert::TryInto;
 
 pub fn write_remote_to_local_config_file(
     remote: &mut crate::Remote<'_>,
@@ -42,19 +45,19 @@ pub fn update_head(
     repo: &Repository,
     remote_refs: &[git_protocol::fetch::Ref],
     reflog_message: &BStr,
+    remote_name: &str,
 ) -> Result<(), Error> {
     use git_ref::transaction::{PreviousValue, RefEdit};
     use git_ref::Target;
-    use std::convert::TryInto;
     let (head_peeled_id, head_ref) = match remote_refs.iter().find_map(|r| {
         Some(match r {
             git_protocol::fetch::Ref::Symbolic {
                 full_ref_name,
                 target,
                 object,
-            } if full_ref_name == "HEAD" => (Some(object), Some(target)),
+            } if full_ref_name == "HEAD" => (Some(object.as_ref()), Some(target)),
             git_protocol::fetch::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
-                (Some(object), None)
+                (Some(object.as_ref()), None)
             }
             git_protocol::fetch::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
                 (None, Some(target))
@@ -106,7 +109,7 @@ pub fn update_head(
                                     expected: PreviousValue::Any,
                                     new: Target::Peeled(head_peeled_id.to_owned()),
                                 },
-                                name: referent,
+                                name: referent.clone(),
                                 deref: false,
                             });
                         };
@@ -126,12 +129,14 @@ pub fn update_head(
                     change: git_ref::transaction::Change::Update {
                         log,
                         expected: PreviousValue::Any,
-                        new: Target::Peeled(*head_peeled_id),
+                        new: Target::Peeled(head_peeled_id.to_owned()),
                     },
                     name: head,
                     deref: false,
                 })?;
             }
+
+            setup_branch_config(repo, referent.as_ref(), head_peeled_id, remote_name)?;
         }
         None => {
             repo.edit_reference(RefEdit {
@@ -149,5 +154,57 @@ pub fn update_head(
             })?;
         }
     };
+    Ok(())
+}
+
+/// Setup the remote configuration for `branch` so that it points to itself, but on the remote, if an only if currently saved refspec
+/// is able to match it.
+/// For that we reload the remote of `remote_name` and use its ref_specs for match.
+fn setup_branch_config(
+    repo: &Repository,
+    branch: &FullNameRef,
+    branch_id: Option<&git_hash::oid>,
+    remote_name: &str,
+) -> Result<(), Error> {
+    let short_name = match branch.category_and_short_name() {
+        Some((cat, shortened)) if cat == git_ref::Category::LocalBranch => match shortened.to_str() {
+            Ok(s) => s,
+            Err(_) => return Ok(()),
+        },
+        _ => return Ok(()),
+    };
+    let remote = repo
+        .find_remote(remote_name)
+        .expect("remote was just created and must be visible in config");
+    let group = git_refspec::MatchGroup::from_fetch_specs(remote.fetch_specs.iter().map(|s| s.to_ref()));
+    let null = git_hash::ObjectId::null(repo.object_hash());
+    let res = group.match_remotes(
+        Some(git_refspec::match_group::Item {
+            full_ref_name: branch.as_bstr(),
+            target: branch_id.unwrap_or(&null),
+            object: None,
+        })
+        .into_iter(),
+    );
+    if !res.mappings.is_empty() {
+        let mut metadata = git_config::file::Metadata::from(git_config::Source::Local);
+        let config_path = remote.repo.git_dir().join("config");
+        metadata.path = Some(config_path.clone());
+        let mut config =
+            git_config::File::from_paths_metadata(Some(metadata), Default::default())?.expect("one file to load");
+
+        let mut section = config
+            .new_section("branch", Some(Cow::Owned(short_name.into())))
+            .expect("section header name is always valid per naming rules, our input branch name is valid");
+        section.push(
+            "remote".try_into().expect("valid at compile time"),
+            Some(remote_name.into()),
+        );
+        section.push(
+            "merge".try_into().expect("valid at compile time"),
+            Some(branch.as_bstr()),
+        );
+        std::fs::write(config_path, config.to_bstring())?;
+    }
     Ok(())
 }
