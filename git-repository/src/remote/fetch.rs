@@ -54,8 +54,8 @@ impl Source {
         match self {
             Source::ObjectId(_) => None,
             Source::Ref(r) => match r {
-                git_protocol::fetch::Ref::Unborn { target: _ } => Some("HEAD".into()),
-                git_protocol::fetch::Ref::Symbolic { full_ref_name, .. }
+                git_protocol::fetch::Ref::Unborn { full_ref_name, .. }
+                | git_protocol::fetch::Ref::Symbolic { full_ref_name, .. }
                 | git_protocol::fetch::Ref::Direct { full_ref_name, .. }
                 | git_protocol::fetch::Ref::Peeled { full_ref_name, .. } => Some(full_ref_name.as_ref()),
             },

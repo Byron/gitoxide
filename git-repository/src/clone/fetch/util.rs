@@ -56,7 +56,9 @@ pub fn update_head(
             git_protocol::fetch::Ref::Direct { full_ref_name, object } if full_ref_name == "HEAD" => {
                 (Some(object), None)
             }
-            git_protocol::fetch::Ref::Unborn { target } => (None, Some(target)),
+            git_protocol::fetch::Ref::Unborn { full_ref_name, target } if full_ref_name == "HEAD" => {
+                (None, Some(target))
+            }
             _ => return None,
         })
     }) {
