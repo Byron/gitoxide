@@ -17,6 +17,7 @@ pub struct ErrorRecord {
     pub error: Box<dyn std::error::Error + Send + Sync + 'static>,
 }
 
+#[derive(Default)]
 pub struct Outcome {
     /// The amount of files updated, or created.
     pub files_updated: usize,
@@ -53,7 +54,7 @@ pub struct Options {
     /// Default true.
     pub trust_ctime: bool,
     /// If true, all stat fields will be used when checking for up-to-date'ness of the entry. Otherwise
-    /// nano-second parts of mtime and ctime,uid, gid, inode and device number won't be used, leaving only
+    /// nano-second parts of mtime and ctime,uid, gid, inode and device number _will not_ be used, leaving only
     /// the whole-second part of ctime and mtime and the file size to be checked.
     ///
     /// Default true.

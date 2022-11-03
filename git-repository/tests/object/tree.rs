@@ -35,10 +35,9 @@ mod diff {
                     .diff()
                     .expect("changed file")
                     .expect("objects available")
-                    .text(git::diff::lines::Algorithm::Myers)
-                    .iter_all_changes()
-                    .count();
-                assert_eq!(count, 2);
+                    .lines(|_| git_diff::text::imara::sink::Counter::default());
+                assert_eq!(count.insertions, 1);
+                assert_eq!(count.removals, 0);
                 Ok(Default::default())
             })
             .unwrap();

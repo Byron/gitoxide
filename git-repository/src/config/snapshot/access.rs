@@ -4,7 +4,7 @@ use git_features::threading::OwnShared;
 
 use crate::{
     bstr::BStr,
-    config::{cache::interpolate_context, CommitAutoRollback, Snapshot, SnapshotMut},
+    config::{CommitAutoRollback, Snapshot, SnapshotMut},
 };
 
 /// Access configuration values, frozen in time, using a `key` which is a `.` separated string of up to
@@ -70,16 +70,9 @@ impl<'repo> Snapshot<'repo> {
         key: &str,
     ) -> Option<Result<Cow<'_, std::path::Path>, git_config::path::interpolate::Error>> {
         let key = git_config::parse::key(key)?;
-        let path = self.repo.config.resolved.path_filter(
-            key.section_name,
-            key.subsection_name,
-            key.value_name,
-            &mut self.repo.filter_config_section(),
-        )?;
-
-        let install_dir = self.repo.install_dir().ok();
-        let home = self.repo.config.home_dir();
-        Some(path.interpolate(interpolate_context(install_dir.as_deref(), home.as_deref())))
+        self.repo
+            .config
+            .trusted_file_path(key.section_name, key.subsection_name, key.value_name)
     }
 }
 
@@ -95,6 +88,15 @@ impl<'repo> Snapshot<'repo> {
 
 /// Utilities
 impl<'repo> SnapshotMut<'repo> {
+    /// Apply configuration values of the form `core.abbrev=5` or `remote.origin.url = foo` or `core.bool-implicit-true`
+    /// to the repository configuration, marked with [source CLI][git_config::Source::Cli].
+    pub fn apply_cli_overrides(
+        &mut self,
+        values: impl IntoIterator<Item = impl AsRef<BStr>>,
+    ) -> Result<&mut Self, crate::config::overrides::Error> {
+        crate::config::overrides::apply(&mut self.config, values, git_config::Source::Cli)?;
+        Ok(self)
+    }
     /// Apply all changes made to this instance.
     ///
     /// Note that this would also happen once this instance is dropped, but using this method may be more intuitive and won't squelch errors
@@ -108,8 +110,7 @@ impl<'repo> SnapshotMut<'repo> {
         &mut self,
         repo: &'repo mut crate::Repository,
     ) -> Result<&'repo mut crate::Repository, crate::config::Error> {
-        repo.config
-            .reread_values_and_clear_caches(std::mem::take(&mut self.config).into())?;
+        repo.reread_values_and_clear_caches_replacing_config(std::mem::take(&mut self.config).into())?;
         Ok(repo)
     }
 
@@ -143,8 +144,7 @@ impl<'repo> CommitAutoRollback<'repo> {
         &mut self,
         repo: &'repo mut crate::Repository,
     ) -> Result<&'repo mut crate::Repository, crate::config::Error> {
-        repo.config
-            .reread_values_and_clear_caches(OwnShared::clone(&self.prev_config))?;
+        repo.reread_values_and_clear_caches_replacing_config(OwnShared::clone(&self.prev_config))?;
         Ok(repo)
     }
 }

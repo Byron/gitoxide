@@ -121,16 +121,18 @@ pub mod pretty {
                 run(progress::DoOrDiscard::from(None), &mut stdout_lock, &mut stderr_lock)
             }
             (true, false) => {
-                let progress = crate::shared::progress_tree();
+                use crate::shared::{self, STANDARD_RANGE};
+                let progress = shared::progress_tree();
                 let sub_progress = progress.add_child(name);
 
-                use crate::shared::{self, STANDARD_RANGE};
                 let handle = shared::setup_line_renderer_range(&progress, range.into().unwrap_or(STANDARD_RANGE));
 
                 let mut out = Vec::<u8>::new();
-                let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut stderr());
+                let mut err = Vec::<u8>::new();
+                let res = run(progress::DoOrDiscard::from(Some(sub_progress)), &mut out, &mut err);
                 handle.shutdown_and_wait();
                 std::io::Write::write_all(&mut stdout(), &out)?;
+                std::io::Write::write_all(&mut stderr(), &err)?;
                 res
             }
             #[cfg(not(feature = "prodash-render-tui"))]

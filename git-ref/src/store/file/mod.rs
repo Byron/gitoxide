@@ -62,11 +62,11 @@ mod access {
 }
 
 /// A transaction on a file store
-pub struct Transaction<'s> {
+pub struct Transaction<'s, 'p> {
     store: &'s Store,
     packed_transaction: Option<crate::store_impl::packed::Transaction>,
     updates: Option<Vec<transaction::Edit>>,
-    packed_refs: transaction::PackedRefs,
+    packed_refs: transaction::PackedRefs<'p>,
 }
 
 pub(in crate::store_impl::file) fn path_to_name<'a>(path: impl Into<Cow<'a, Path>>) -> Cow<'a, BStr> {

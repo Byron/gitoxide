@@ -1,6 +1,7 @@
 mod from_state {
-    use crate::index::Fixture::*;
     use git_index::Version::{V2, V3};
+
+    use crate::index::Fixture::*;
 
     #[test]
     fn writes_data_to_disk_and_is_a_valid_index() -> git_testtools::Result {

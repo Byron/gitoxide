@@ -1,5 +1,5 @@
 use super::{interpolate_context, util, Error, StageOne};
-use crate::{config::Cache, repository};
+use crate::{bstr::BString, config::Cache, repository};
 
 /// Initialization
 impl Cache {
@@ -33,6 +33,7 @@ impl Cache {
             includes: use_includes,
         }: repository::permissions::Config,
         lenient_config: bool,
+        config_overrides: &[BString],
     ) -> Result<Self, Error> {
         let options = git_config::file::init::Options {
             includes: if use_includes {
@@ -108,13 +109,16 @@ impl Cache {
             if use_env {
                 globals.append(git_config::File::from_env(options)?.unwrap_or_default());
             }
+            if !config_overrides.is_empty() {
+                crate::config::overrides::apply(&mut globals, config_overrides, git_config::Source::Api)?;
+            }
             globals
         };
 
         let hex_len = util::check_lenient(util::parse_core_abbrev(&config, object_hash), lenient_config)?;
 
         use util::config_bool;
-        let reflog = util::query_refupdates(&config);
+        let reflog = util::query_refupdates(&config, lenient_config)?;
         let ignore_case = config_bool(&config, "core.ignoreCase", false, lenient_config)?;
         let use_multi_pack_index = config_bool(&config, "core.multiPackIndex", true, lenient_config)?;
         let object_kind_hint = util::disambiguate_hint(&config);
@@ -136,6 +140,7 @@ impl Cache {
             url_rewrite: Default::default(),
             #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
             url_scheme: Default::default(),
+            diff_algorithm: Default::default(),
             git_prefix,
         })
     }
@@ -145,24 +150,40 @@ impl Cache {
     /// However, those that are lazily read won't be re-evaluated right away and might thus pass now but fail later.
     ///
     /// Note that we unconditionally re-read all values.
-    pub fn reread_values_and_clear_caches(&mut self, config: crate::Config) -> Result<(), Error> {
-        let hex_len = util::check_lenient(util::parse_core_abbrev(&config, self.object_hash), self.lenient_config)?;
+    pub fn reread_values_and_clear_caches_replacing_config(&mut self, config: crate::Config) -> Result<(), Error> {
+        let prev = std::mem::replace(&mut self.resolved, config);
+        match self.reread_values_and_clear_caches() {
+            Err(err) => {
+                drop(std::mem::replace(&mut self.resolved, prev));
+                Err(err)
+            }
+            Ok(()) => Ok(()),
+        }
+    }
+
+    /// Similar to `reread_values_and_clear_caches_replacing_config()`, but works on the existing configuration instead of a passed
+    /// in one that it them makes the default.
+    pub fn reread_values_and_clear_caches(&mut self) -> Result<(), Error> {
+        let config = &self.resolved;
+        let hex_len = util::check_lenient(util::parse_core_abbrev(config, self.object_hash), self.lenient_config)?;
 
         use util::config_bool;
-        let ignore_case = config_bool(&config, "core.ignoreCase", false, self.lenient_config)?;
-        let object_kind_hint = util::disambiguate_hint(&config);
+        let ignore_case = config_bool(config, "core.ignoreCase", false, self.lenient_config)?;
+        let object_kind_hint = util::disambiguate_hint(config);
+        let reflog = util::query_refupdates(config, self.lenient_config)?;
+
+        self.hex_len = hex_len;
+        self.ignore_case = ignore_case;
+        self.object_kind_hint = object_kind_hint;
+        self.reflog = reflog;
 
         self.personas = Default::default();
         self.url_rewrite = Default::default();
+        self.diff_algorithm = Default::default();
         #[cfg(any(feature = "blocking-network-client", feature = "async-network-client"))]
         {
             self.url_scheme = Default::default();
         }
-
-        self.resolved = config;
-        self.hex_len = hex_len;
-        self.ignore_case = ignore_case;
-        self.object_kind_hint = object_kind_hint;
 
         Ok(())
     }

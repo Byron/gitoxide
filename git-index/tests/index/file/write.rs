@@ -1,11 +1,10 @@
-use crate::index::Fixture::*;
 use filetime::FileTime;
 use git::prelude::FindExt;
 use git_index::{entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
 use git_repository as git;
 use git_testtools::scripted_fixture_repo_read_only;
 
-use crate::{fixture_index_path, loose_file_path};
+use crate::{fixture_index_path, index::Fixture::*, loose_file_path};
 
 /// Round-trips should eventually be possible for all files we have, as we write them back exactly as they were read.
 #[test]

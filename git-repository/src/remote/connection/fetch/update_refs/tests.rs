@@ -1,4 +1,6 @@
 mod update {
+    use std::convert::TryInto;
+
     use git_testtools::{hex_to_id, Result};
 
     use crate as git;
@@ -31,7 +33,13 @@ mod update {
     }
     use git_ref::{transaction::Change, TargetRef};
 
-    use crate::remote::fetch;
+    use crate::{
+        bstr::BString,
+        remote::{
+            fetch,
+            fetch::{Mapping, RefLogMessage, Source},
+        },
+    };
 
     #[test]
     fn various_valid_updates() {
@@ -117,7 +125,7 @@ mod update {
             let (mapping, specs) = mapping_from_spec(spec, &repo);
             let out = fetch::refs::update(
                 &repo,
-                "action",
+                prefixed("action"),
                 &mapping,
                 &specs,
                 reflog_message.map(|_| fetch::DryRun::Yes).unwrap_or(fetch::DryRun::No),
@@ -176,7 +184,7 @@ mod update {
         ] {
             let spec = format!("refs/heads/main:refs/heads/{}", branch);
             let (mappings, specs) = mapping_from_spec(&spec, &repo);
-            let out = fetch::refs::update(&repo, "action", &mappings, &specs, fetch::DryRun::Yes)?;
+            let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes)?;
 
             assert_eq!(
                 out.updates,
@@ -194,27 +202,171 @@ mod update {
     }
 
     #[test]
-    fn symbolic_refs_are_never_written() {
+    fn local_symbolic_refs_are_never_written() {
         let repo = repo("two-origins");
-        let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/heads/symbolic", &repo);
-        let out = fetch::refs::update(&repo, "action", &mappings, &specs, fetch::DryRun::Yes).unwrap();
+        for source in ["refs/heads/main", "refs/heads/symbolic", "HEAD"] {
+            let (mappings, specs) = mapping_from_spec(&format!("{source}:refs/heads/symbolic"), &repo);
+            let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
 
+            assert_eq!(out.edits.len(), 0);
+            assert_eq!(
+                out.updates,
+                vec![fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::RejectedSymbolic,
+                    edit_index: None
+                }],
+                "we don't overwrite these as the checked-out check needs to consider much more than it currently does, we are playing it safe"
+            );
+        }
+    }
+
+    #[test]
+    fn remote_symbolic_refs_can_always_be_set_as_there_is_no_scenario_where_it_could_be_nonexisting_and_rejected() {
+        let repo = repo("two-origins");
+        let (mut mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/remotes/origin/new", &repo);
+        mappings.push(Mapping {
+            remote: Source::Ref(git_protocol::fetch::Ref::Direct {
+                full_ref_name: "refs/heads/main".try_into().unwrap(),
+                object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
+            }),
+            local: Some("refs/heads/symbolic".into()),
+            spec_index: 0,
+        });
+        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+        assert_eq!(out.edits.len(), 1);
+        assert_eq!(
+            out.updates,
+            vec![
+                fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::New,
+                    edit_index: Some(0)
+                },
+                fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::RejectedSymbolic,
+                    edit_index: None
+                }
+            ],
+        );
+        let edit = &out.edits[0];
+        match &edit.change {
+            Change::Update { log, new, .. } => {
+                assert_eq!(log.message, "action: storing ref");
+                assert!(
+                    new.try_name().is_some(),
+                    "remote falls back to peeled id as it's the only thing we seem to have locally, it won't refer to a non-existing local ref"
+                );
+            }
+            _ => unreachable!("only updates"),
+        }
+    }
+
+    #[test]
+    fn local_direct_refs_are_never_written_with_symbolic_ones_but_see_only_the_destination() {
+        let repo = repo("two-origins");
+        let (mappings, specs) = mapping_from_spec("refs/heads/symbolic:refs/heads/not-currently-checked-out", &repo);
+        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+        assert_eq!(out.edits.len(), 1);
         assert_eq!(
             out.updates,
             vec![fetch::refs::Update {
-                mode: fetch::refs::update::Mode::RejectedSymbolic,
-                edit_index: None,
+                mode: fetch::refs::update::Mode::NoChangeNeeded,
+                edit_index: Some(0)
             }],
-            "this also protects from writing HEAD, which should in theory be impossible to get from a refspec as it normalizes partial ref names"
         );
-        assert_eq!(out.edits.len(), 0);
+    }
+
+    #[test]
+    fn remote_refs_cannot_map_to_local_head() {
+        let repo = repo("two-origins");
+        let (mappings, specs) = mapping_from_spec("refs/heads/main:HEAD", &repo);
+        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+        assert_eq!(out.edits.len(), 1);
+        assert_eq!(
+            out.updates,
+            vec![fetch::refs::Update {
+                mode: fetch::refs::update::Mode::New,
+                edit_index: Some(0),
+            }],
+        );
+        let edit = &out.edits[0];
+        match &edit.change {
+            Change::Update { log, new, .. } => {
+                assert_eq!(log.message, "action: storing head");
+                assert!(
+                    new.try_id().is_some(),
+                    "remote is peeled, so local will be peeled as well"
+                );
+            }
+            _ => unreachable!("only updates"),
+        }
+        assert_eq!(
+            edit.name.as_bstr(),
+            "refs/heads/HEAD",
+            "it's not possible to refer to the local HEAD with refspecs"
+        );
+    }
+
+    #[test]
+    fn remote_symbolic_refs_can_be_written_locally_and_point_to_tracking_branch() {
+        let repo = repo("two-origins");
+        let (mut mappings, specs) = mapping_from_spec("HEAD:refs/remotes/origin/new-HEAD", &repo);
+        mappings.push(Mapping {
+            remote: Source::Ref(git_protocol::fetch::Ref::Direct {
+                full_ref_name: "refs/heads/main".try_into().unwrap(),
+                object: hex_to_id("f99771fe6a1b535783af3163eba95a927aae21d5"),
+            }),
+            local: Some("refs/remotes/origin/main".into()),
+            spec_index: 0,
+        });
+        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::Yes).unwrap();
+
+        assert_eq!(
+            out.updates,
+            vec![
+                fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::New,
+                    edit_index: Some(0),
+                },
+                fetch::refs::Update {
+                    mode: fetch::refs::update::Mode::NoChangeNeeded,
+                    edit_index: Some(1),
+                }
+            ],
+        );
+        assert_eq!(out.edits.len(), 2);
+        let edit = &out.edits[0];
+        match &edit.change {
+            Change::Update { log, new, .. } => {
+                assert_eq!(log.message, "action: storing ref");
+                assert_eq!(
+                    new.try_name().expect("symbolic ref").as_bstr(),
+                    "refs/remotes/origin/main",
+                    "remote is symbolic, so local will be symbolic as well, but is rewritten to tracking branch"
+                );
+            }
+            _ => unreachable!("only updates"),
+        }
+        assert_eq!(edit.name.as_bstr(), "refs/remotes/origin/new-HEAD",);
     }
 
     #[test]
     fn non_fast_forward_is_rejected_but_appears_to_be_fast_forward_in_dryrun_mode() {
         let repo = repo("two-origins");
         let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/remotes/origin/g", &repo);
-        let out = fetch::refs::update(&repo, "action", &mappings, &specs, fetch::DryRun::Yes).unwrap();
+        let reflog_message: BString = "very special".into();
+        let out = fetch::refs::update(
+            &repo,
+            RefLogMessage::Override {
+                message: reflog_message.clone(),
+            },
+            &mappings,
+            &specs,
+            fetch::DryRun::Yes,
+        )
+        .unwrap();
 
         assert_eq!(
             out.updates,
@@ -225,13 +377,20 @@ mod update {
             "The caller has to be aware and note that dry-runs can't know about fast-forwards as they don't have remote objects"
         );
         assert_eq!(out.edits.len(), 1);
+        let edit = &out.edits[0];
+        match &edit.change {
+            Change::Update { log, .. } => {
+                assert_eq!(log.message, reflog_message);
+            }
+            _ => unreachable!("only updates"),
+        }
     }
 
     #[test]
     fn non_fast_forward_is_rejected_if_dry_run_is_disabled() {
         let (repo, _tmp) = repo_rw("two-origins");
         let (mappings, specs) = mapping_from_spec("refs/remotes/origin/g:refs/heads/not-currently-checked-out", &repo);
-        let out = fetch::refs::update(&repo, "action", &mappings, &specs, fetch::DryRun::No).unwrap();
+        let out = fetch::refs::update(&repo, prefixed("action"), &mappings, &specs, fetch::DryRun::No).unwrap();
 
         assert_eq!(
             out.updates,
@@ -243,7 +402,7 @@ mod update {
         assert_eq!(out.edits.len(), 0);
 
         let (mappings, specs) = mapping_from_spec("refs/heads/main:refs/remotes/origin/g", &repo);
-        let out = fetch::refs::update(&repo, "prefix", &mappings, &specs, fetch::DryRun::No).unwrap();
+        let out = fetch::refs::update(&repo, prefixed("prefix"), &mappings, &specs, fetch::DryRun::No).unwrap();
 
         assert_eq!(
             out.updates,
@@ -266,7 +425,7 @@ mod update {
     fn fast_forwards_are_called_out_even_if_force_is_given() {
         let (repo, _tmp) = repo_rw("two-origins");
         let (mappings, specs) = mapping_from_spec("+refs/heads/main:refs/remotes/origin/g", &repo);
-        let out = fetch::refs::update(&repo, "prefix", &mappings, &specs, fetch::DryRun::No).unwrap();
+        let out = fetch::refs::update(&repo, prefixed("prefix"), &mappings, &specs, fetch::DryRun::No).unwrap();
 
         assert_eq!(
             out.updates,
@@ -289,7 +448,8 @@ mod update {
         let spec = git_refspec::parse(spec.into(), git_refspec::parse::Operation::Fetch).unwrap();
         let group = git_refspec::MatchGroup::from_fetch_specs(Some(spec));
         let references = repo.references().unwrap();
-        let references: Vec<_> = references.all().unwrap().map(|r| into_remote_ref(r.unwrap())).collect();
+        let mut references: Vec<_> = references.all().unwrap().map(|r| into_remote_ref(r.unwrap())).collect();
+        references.push(into_remote_ref(repo.find_reference("HEAD").unwrap()));
         let mappings = group
             .match_remotes(references.iter().map(remote_ref_to_item))
             .mappings
@@ -332,8 +492,12 @@ mod update {
         let (full_ref_name, target, object) = r.unpack();
         git_refspec::match_group::Item {
             full_ref_name,
-            target,
+            target: target.expect("no unborn HEAD"),
             object,
         }
+    }
+
+    fn prefixed(action: &str) -> RefLogMessage {
+        RefLogMessage::Prefixed { action: action.into() }
     }
 }

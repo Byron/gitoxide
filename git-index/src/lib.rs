@@ -61,6 +61,7 @@ pub struct Entry {
 }
 
 /// An index file whose state was read from a file on disk.
+#[derive(Clone)]
 pub struct File {
     /// The state containing the actual index data.
     pub(crate) state: State,

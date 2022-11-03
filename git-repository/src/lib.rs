@@ -200,47 +200,31 @@ pub fn discover(directory: impl AsRef<std::path::Path>) -> Result<Repository, di
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
-    ThreadSafeRepository::init(
-        directory,
-        create::Options {
-            bare: false,
-            fs_capabilities: None,
-        },
-    )
-    .map(Into::into)
+    ThreadSafeRepository::init(directory, create::Kind::WithWorktree, create::Options::default()).map(Into::into)
 }
 
 /// See [ThreadSafeRepository::init()], but returns a [`Repository`] instead.
 pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, init::Error> {
-    ThreadSafeRepository::init(
-        directory,
-        create::Options {
-            bare: true,
-            fs_capabilities: None,
-        },
-    )
-    .map(Into::into)
+    ThreadSafeRepository::init(directory, create::Kind::Bare, create::Options::default()).map(Into::into)
 }
 
 /// Create a platform for configuring a bare clone from `url` to the local `path`, using default options for opening it (but
 /// amended with using configuration from the git installation to ensure all authentication options are honored).
 ///
-/// See [`clone::Prepare::new()] for a function to take full control over all options.
+/// See [`clone::PrepareFetch::new()] for a function to take full control over all options.
 pub fn prepare_clone_bare<Url, E>(
     url: Url,
     path: impl AsRef<std::path::Path>,
-) -> Result<clone::Prepare, clone::prepare::Error>
+) -> Result<clone::PrepareFetch, clone::Error>
 where
     Url: std::convert::TryInto<git_url::Url, Error = E>,
     git_url::parse::Error: From<E>,
 {
-    clone::Prepare::new(
+    clone::PrepareFetch::new(
         url,
         path,
-        create::Options {
-            bare: true,
-            fs_capabilities: None,
-        },
+        create::Kind::Bare,
+        create::Options::default(),
         open_opts_with_git_binary_config(),
     )
 }
@@ -248,22 +232,17 @@ where
 /// Create a platform for configuring a clone with main working tree from `url` to the local `path`, using default options for opening it
 /// (but amended with using configuration from the git installation to ensure all authentication options are honored).
 ///
-/// See [`clone::Prepare::new()] for a function to take full control over all options.
-pub fn prepare_clone<Url, E>(
-    url: Url,
-    path: impl AsRef<std::path::Path>,
-) -> Result<clone::Prepare, clone::prepare::Error>
+/// See [`clone::PrepareFetch::new()] for a function to take full control over all options.
+pub fn prepare_clone<Url, E>(url: Url, path: impl AsRef<std::path::Path>) -> Result<clone::PrepareFetch, clone::Error>
 where
     Url: std::convert::TryInto<git_url::Url, Error = E>,
     git_url::parse::Error: From<E>,
 {
-    clone::Prepare::new(
+    clone::PrepareFetch::new(
         url,
         path,
-        create::Options {
-            bare: false,
-            fs_capabilities: None,
-        },
+        crate::create::Kind::WithWorktree,
+        create::Options::default(),
         open_opts_with_git_binary_config(),
     )
 }
@@ -323,45 +302,7 @@ pub mod revision;
 pub mod remote;
 
 ///
-pub mod init {
-    use std::path::Path;
-
-    use crate::ThreadSafeRepository;
-
-    /// The error returned by [`crate::init()`].
-    #[derive(Debug, thiserror::Error)]
-    #[allow(missing_docs)]
-    pub enum Error {
-        #[error(transparent)]
-        Init(#[from] crate::create::Error),
-        #[error(transparent)]
-        Open(#[from] crate::open::Error),
-    }
-
-    impl ThreadSafeRepository {
-        /// Create a repository with work-tree within `directory`, creating intermediate directories as needed.
-        ///
-        /// Fails without action if there is already a `.git` repository inside of `directory`, but
-        /// won't mind if the `directory` otherwise is non-empty.
-        pub fn init(directory: impl AsRef<Path>, options: crate::create::Options) -> Result<Self, Error> {
-            use git_sec::trust::DefaultForLevel;
-            let open_options = crate::open::Options::default_for_level(git_sec::Trust::Full);
-            Self::init_opts(directory, options, open_options)
-        }
-
-        /// Similar to [`init`][Self::init()], but allows to determine how exactly to open the newly created repository.
-        pub fn init_opts(
-            directory: impl AsRef<Path>,
-            create_options: crate::create::Options,
-            mut open_options: crate::open::Options,
-        ) -> Result<Self, Error> {
-            let path = crate::create::into(directory.as_ref(), create_options)?;
-            let (git_dir, worktree_dir) = path.into_repository_and_work_tree_directories();
-            open_options.git_dir_trust = Some(git_sec::Trust::Full);
-            ThreadSafeRepository::open_from_paths(git_dir, worktree_dir, open_options).map_err(Into::into)
-        }
-    }
-}
+pub mod init;
 
 /// Not to be confused with 'status'.
 pub mod state {

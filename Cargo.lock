@@ -9,6 +9,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
+name = "ahash"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57e6e951cfbb2db8de1828d49073a113a29fd7117b1596caa781a258c7e38d72"
+dependencies = [
+ "cfg-if",
+ "getrandom",
+ "once_cell",
+ "version_check",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "0.7.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -250,15 +262,6 @@ dependencies = [
  "fastrand",
  "futures-lite",
  "once_cell",
-]
-
-[[package]]
-name = "bstr"
-version = "0.2.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba3569f383e8f1598449f1a423e72e99569137b47740b1da11ef19af3d5c3223"
-dependencies = [
- "memchr",
 ]
 
 [[package]]
@@ -1154,7 +1157,7 @@ dependencies = [
 name = "git-actor"
 version = "0.13.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "btoi",
  "document-features",
  "git-date",
@@ -1171,7 +1174,7 @@ dependencies = [
 name = "git-attributes"
 version = "0.5.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "compact_str",
  "document-features",
  "git-features",
@@ -1203,7 +1206,7 @@ dependencies = [
 name = "git-command"
 version = "0.1.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "git-testtools",
 ]
 
@@ -1211,7 +1214,7 @@ dependencies = [
 name = "git-commitgraph"
 version = "0.10.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "git-chunk",
  "git-features",
@@ -1226,7 +1229,7 @@ dependencies = [
 name = "git-config"
 version = "0.9.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "criterion",
  "document-features",
  "git-config-value",
@@ -1254,7 +1257,7 @@ name = "git-config-value"
 version = "0.8.0"
 dependencies = [
  "bitflags",
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "git-path",
  "libc",
@@ -1277,7 +1280,7 @@ dependencies = [
 name = "git-credentials"
 version = "0.6.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "git-command",
  "git-config-value",
@@ -1294,7 +1297,7 @@ dependencies = [
 name = "git-date"
 version = "0.2.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "git-testtools",
  "itoa",
@@ -1313,7 +1316,8 @@ dependencies = [
  "git-odb",
  "git-testtools",
  "git-traverse",
- "similar",
+ "imara-diff",
+ "serde",
  "thiserror",
 ]
 
@@ -1321,7 +1325,7 @@ dependencies = [
 name = "git-discover"
 version = "0.6.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "defer",
  "git-hash",
  "git-path",
@@ -1337,7 +1341,7 @@ dependencies = [
 name = "git-features"
 version = "0.23.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "bytes",
  "crc32fast",
  "crossbeam-channel",
@@ -1370,7 +1374,7 @@ name = "git-glob"
 version = "0.4.0"
 dependencies = [
  "bitflags",
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "git-testtools",
  "serde",
@@ -1393,7 +1397,7 @@ version = "0.6.0"
 dependencies = [
  "atoi",
  "bitflags",
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "filetime",
  "git-bitmap",
@@ -1429,7 +1433,7 @@ dependencies = [
 name = "git-mailmap"
 version = "0.5.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "git-actor",
  "git-testtools",
@@ -1445,7 +1449,7 @@ version = "0.0.0"
 name = "git-object"
 version = "0.22.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "btoi",
  "document-features",
  "git-actor",
@@ -1491,7 +1495,7 @@ dependencies = [
 name = "git-pack"
 version = "0.24.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "bytesize",
  "clru",
  "dashmap",
@@ -1522,7 +1526,7 @@ name = "git-packetline"
 version = "0.13.1"
 dependencies = [
  "async-std",
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "futures-io",
  "futures-lite",
@@ -1539,7 +1543,7 @@ dependencies = [
 name = "git-path"
 version = "0.5.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "tempfile",
  "thiserror",
 ]
@@ -1549,7 +1553,7 @@ name = "git-pathspec"
 version = "0.1.0"
 dependencies = [
  "bitflags",
- "bstr 1.0.1",
+ "bstr",
  "git-attributes",
  "git-glob",
  "git-testtools",
@@ -1577,7 +1581,7 @@ version = "0.21.0"
 dependencies = [
  "async-std",
  "async-trait",
- "bstr 1.0.1",
+ "bstr",
  "btoi",
  "document-features",
  "futures-io",
@@ -1598,7 +1602,7 @@ dependencies = [
 name = "git-quote"
 version = "0.3.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "btoi",
  "quick-error",
 ]
@@ -1634,7 +1638,7 @@ dependencies = [
 name = "git-refspec"
 version = "0.3.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "git-hash",
  "git-revision",
  "git-testtools",
@@ -1690,7 +1694,6 @@ dependencies = [
  "serial_test",
  "signal-hook",
  "smallvec",
- "tempfile",
  "thiserror",
  "unicode-normalization",
  "walkdir",
@@ -1700,7 +1703,7 @@ dependencies = [
 name = "git-revision"
 version = "0.6.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "git-date",
  "git-hash",
@@ -1750,7 +1753,7 @@ dependencies = [
 name = "git-testtools"
 version = "0.10.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "crc",
  "fs_extra",
  "git-attributes",
@@ -1780,7 +1783,7 @@ dependencies = [
  "async-trait",
  "base64",
  "blocking",
- "bstr 1.0.1",
+ "bstr",
  "curl",
  "document-features",
  "futures-io",
@@ -1818,7 +1821,7 @@ version = "0.0.0"
 name = "git-url"
 version = "0.10.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "git-features",
  "git-path",
@@ -1832,7 +1835,7 @@ dependencies = [
 name = "git-validate"
 version = "0.6.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "git-testtools",
  "thiserror",
 ]
@@ -1841,7 +1844,7 @@ dependencies = [
 name = "git-worktree"
 version = "0.6.0"
 dependencies = [
- "bstr 1.0.1",
+ "bstr",
  "document-features",
  "git-attributes",
  "git-features",
@@ -2098,6 +2101,16 @@ checksum = "e14ddfc70884202db2244c223200c204c2bda1bc6e0998d11b5e024d657209e6"
 dependencies = [
  "unicode-bidi",
  "unicode-normalization",
+]
+
+[[package]]
+name = "imara-diff"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "40a70e9f5c6d06a207bce4f910ace167a57965ee4ee58c9af401a675dc7e4c12"
+dependencies = [
+ "ahash",
+ "hashbrown",
 ]
 
 [[package]]
@@ -2767,9 +2780,9 @@ dependencies = [
 
 [[package]]
 name = "prodash"
-version = "20.2.0"
+version = "21.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd4e8b029f29b4eb8f95315957fb7ac8a8fd1924405fadf885b0e208fe34ba39"
+checksum = "d27f6a3ef883aaea624a6ad91c88452e5df05430a79fd880c12673a7bc1648d6"
 dependencies = [
  "async-io",
  "atty",
@@ -3145,9 +3158,6 @@ name = "similar"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62ac7f900db32bf3fd12e0117dd3dc4da74bc52ebaac97f39668446d89694803"
-dependencies = [
- "bstr 0.2.17",
-]
 
 [[package]]
 name = "slab"

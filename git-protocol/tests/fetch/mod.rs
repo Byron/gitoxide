@@ -41,7 +41,9 @@ impl fetch::DelegateBlocking for CloneDelegate {
         _previous_response: Option<&Response>,
     ) -> io::Result<Action> {
         for r in refs {
-            arguments.want(r.unpack().1);
+            if let Some(id) = r.unpack().1 {
+                arguments.want(id);
+            }
         }
         Ok(Action::Cancel)
     }

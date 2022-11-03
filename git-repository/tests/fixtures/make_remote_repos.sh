@@ -126,6 +126,12 @@ git clone --shared base branch-push-remote
   git config branch.main.pushRemote myself
 )
 
+git clone --shared base branch-dot-remote
+(cd branch-dot-remote
+
+  git config branch.main.remote .
+)
+
 git init --bare url-rewriting
 (cd url-rewriting
 

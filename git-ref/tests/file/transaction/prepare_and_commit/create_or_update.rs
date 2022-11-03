@@ -406,6 +406,54 @@ fn cancellation_after_preparation_leaves_no_change() -> crate::Result {
 }
 
 #[test]
+fn symbolic_reference_writes_reflog_if_previous_value_is_set() -> crate::Result {
+    let (_keep, store) = empty_store()?;
+    let referent = "refs/heads/alt-main";
+    assert!(
+        store.try_find_loose(referent)?.is_none(),
+        "the reference does not exist"
+    );
+    let log = LogChange {
+        mode: RefLog::AndReference,
+        force_create_reflog: false,
+        message: "message".into(),
+    };
+    let new_head_value = Target::Symbolic(referent.try_into().unwrap());
+    let new_oid = hex_to_id("28ce6a8b26aa170e1de65536fe8abe1832bd3242");
+    let edits = store
+        .transaction()
+        .prepare(
+            Some(RefEdit {
+                change: Change::Update {
+                    log,
+                    new: new_head_value,
+                    expected: PreviousValue::ExistingMustMatch(Target::Peeled(new_oid)),
+                },
+                name: "refs/heads/symbolic".try_into()?,
+                deref: false,
+            }),
+            Fail::Immediately,
+            Fail::Immediately,
+        )?
+        .commit(committer().to_ref())?;
+    assert_eq!(edits.len(), 1, "no split was performed");
+    let head = store.find_loose(&edits[0].name)?;
+    assert_eq!(head.name.as_bstr(), "refs/heads/symbolic");
+    assert_eq!(head.kind(), git_ref::Kind::Symbolic);
+    assert_eq!(
+        head.target.to_ref().try_name().map(|n| n.as_bstr()),
+        Some(referent.as_bytes().as_bstr())
+    );
+    assert!(
+        head.log_exists(&store),
+        "reflog is written for new symbolic ref with information about the peeled target id"
+    );
+    assert!(store.try_find_loose(referent)?.is_none(), "referent wasn't created");
+
+    Ok(())
+}
+
+#[test]
 fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
     for reflog_writemode in &[WriteReflog::Normal, WriteReflog::Disable, WriteReflog::Always] {
         let (_keep, mut store) = empty_store()?;

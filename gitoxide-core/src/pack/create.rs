@@ -96,12 +96,12 @@ pub struct Context<W> {
     pub out: W,
 }
 
-pub fn create<W>(
+pub fn create<W, P>(
     repository_path: impl AsRef<Path>,
     tips: impl IntoIterator<Item = impl AsRef<OsStr>>,
     input: Option<impl io::BufRead + Send + 'static>,
     output_directory: Option<impl AsRef<Path>>,
-    mut progress: impl Progress,
+    mut progress: P,
     Context {
         expansion,
         nondeterministic_thread_count,
@@ -115,6 +115,8 @@ pub fn create<W>(
 ) -> anyhow::Result<()>
 where
     W: std::io::Write,
+    P: Progress,
+    P::SubProgress: 'static,
 {
     let repo = git::discover(repository_path)?.into_sync();
     progress.init(Some(2), progress::steps());

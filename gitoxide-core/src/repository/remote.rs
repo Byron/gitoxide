@@ -5,6 +5,7 @@ mod refs_impl {
     use git_repository::{
         protocol::fetch,
         refspec::{match_group::validate::Fix, RefSpec},
+        remote::fetch::Source,
     };
 
     use super::by_name_or_url;
@@ -19,7 +20,10 @@ mod refs_impl {
 
         pub enum Kind {
             Remote,
-            Tracking { ref_specs: Vec<BString> },
+            Tracking {
+                ref_specs: Vec<BString>,
+                show_unmapped_remote_refs: bool,
+            },
         }
 
         pub struct Options {
@@ -46,14 +50,21 @@ mod refs_impl {
     ) -> anyhow::Result<()> {
         use anyhow::Context;
         let mut remote = by_name_or_url(&repo, name_or_url.as_deref())?;
-        if let refs::Kind::Tracking { ref_specs, .. } = &kind {
+        let show_unmapped = if let refs::Kind::Tracking {
+            ref_specs,
+            show_unmapped_remote_refs,
+        } = &kind
+        {
             if format != OutputFormat::Human {
                 bail!("JSON output isn't yet supported for listing ref-mappings.");
             }
             if !ref_specs.is_empty() {
                 remote.replace_refspecs(ref_specs.iter(), git::remote::Direction::Fetch)?;
             }
-        }
+            *show_unmapped_remote_refs
+        } else {
+            false
+        };
         progress.info(format!(
             "Connecting to {:?}",
             remote
@@ -75,9 +86,14 @@ mod refs_impl {
             writeln!(out, "\t{:?}", map.handshake)?;
         }
         match kind {
-            refs::Kind::Tracking { .. } => {
-                print_refmap(&repo, remote.refspecs(git::remote::Direction::Fetch), map, out, err)
-            }
+            refs::Kind::Tracking { .. } => print_refmap(
+                &repo,
+                remote.refspecs(git::remote::Direction::Fetch),
+                map,
+                show_unmapped,
+                out,
+                err,
+            ),
             refs::Kind::Remote => {
                 match format {
                     OutputFormat::Human => drop(print(out, &map.remote_refs)),
@@ -96,6 +112,7 @@ mod refs_impl {
         repo: &git::Repository,
         refspecs: &[RefSpec],
         mut map: git::remote::fetch::RefMap,
+        show_unmapped_remotes: bool,
         mut out: impl std::io::Write,
         mut err: impl std::io::Write,
     ) -> anyhow::Result<()> {
@@ -169,6 +186,18 @@ mod refs_impl {
                 map.remote_refs.len() - map.mappings.len(),
                 refspecs.len()
             )?;
+            if show_unmapped_remotes {
+                writeln!(&mut out, "\nFiltered: ")?;
+                for remote_ref in map.remote_refs.iter().filter(|r| {
+                    !map.mappings.iter().any(|m| match &m.remote {
+                        Source::Ref(other) => other == *r,
+                        Source::ObjectId(_) => false,
+                    })
+                }) {
+                    print_ref(&mut out, remote_ref)?;
+                    writeln!(&mut out)?;
+                }
+            }
         }
         if refspecs.is_empty() {
             bail!("Without ref-specs there is nothing to show here. Add ref-specs as arguments or configure them in git-config.")
@@ -187,6 +216,10 @@ mod refs_impl {
             path: String,
             object: String,
         },
+        Unborn {
+            path: String,
+            target: String,
+        },
         Symbolic {
             path: String,
             target: String,
@@ -197,6 +230,10 @@ mod refs_impl {
     impl From<fetch::Ref> for JsonRef {
         fn from(value: fetch::Ref) -> Self {
             match value {
+                fetch::Ref::Unborn { full_ref_name, target } => JsonRef::Unborn {
+                    path: full_ref_name.to_string(),
+                    target: target.to_string(),
+                },
                 fetch::Ref::Direct {
                     full_ref_name: path,
                     object,
@@ -242,6 +279,10 @@ mod refs_impl {
                 target,
                 object,
             } => write!(&mut out, "{} {} symref-target:{}", object, path, target).map(|_| object.as_ref()),
+            fetch::Ref::Unborn { full_ref_name, target } => {
+                static NULL: git::hash::ObjectId = git::hash::ObjectId::null(git::hash::Kind::Sha1);
+                write!(&mut out, "unborn {} symref-target:{}", full_ref_name, target).map(|_| NULL.as_ref())
+            }
         }
     }
 

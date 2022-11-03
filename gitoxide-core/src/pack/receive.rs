@@ -91,13 +91,15 @@ impl<W> protocol::fetch::DelegateBlocking for CloneDelegate<W> {
         if self.wanted_refs.is_empty() {
             for r in refs {
                 let (path, id, _) = r.unpack();
-                match self.ref_filter {
-                    Some(ref_prefixes) => {
-                        if ref_prefixes.iter().any(|prefix| path.starts_with_str(prefix)) {
-                            arguments.want(id);
+                if let Some(id) = id {
+                    match self.ref_filter {
+                        Some(ref_prefixes) => {
+                            if ref_prefixes.iter().any(|prefix| path.starts_with_str(prefix)) {
+                                arguments.want(id);
+                            }
                         }
+                        None => arguments.want(id),
                     }
-                    None => arguments.want(id),
                 }
             }
         } else {
@@ -142,7 +144,7 @@ mod blocking_io {
         }
     }
 
-    pub fn receive<P: Progress, W: io::Write>(
+    pub fn receive<P, W>(
         protocol: Option<net::Protocol>,
         url: &str,
         directory: Option<PathBuf>,
@@ -150,7 +152,12 @@ mod blocking_io {
         wanted_refs: Vec<BString>,
         progress: P,
         ctx: Context<W>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<()>
+    where
+        W: std::io::Write,
+        P: Progress,
+        P::SubProgress: 'static,
+    {
         let transport = net::connect(url, protocol.unwrap_or_default().into())?;
         let delegate = CloneDelegate {
             ctx,
@@ -210,7 +217,7 @@ mod async_io {
         }
     }
 
-    pub async fn receive<P: Progress, W: io::Write + Send + 'static>(
+    pub async fn receive<P, W>(
         protocol: Option<net::Protocol>,
         url: &str,
         directory: Option<PathBuf>,
@@ -218,7 +225,11 @@ mod async_io {
         wanted_refs: Vec<BString>,
         progress: P,
         ctx: Context<W>,
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<()>
+    where
+        P: Progress + 'static,
+        W: io::Write + Send + 'static,
+    {
         let transport = net::connect(url.to_string(), protocol.unwrap_or_default().into()).await?;
         let mut delegate = CloneDelegate {
             ctx,
@@ -310,6 +321,9 @@ fn write_raw_refs(refs: &[Ref], directory: PathBuf) -> std::io::Result<()> {
     };
     for r in refs {
         let (path, content) = match r {
+            Ref::Unborn { full_ref_name, target } => {
+                (assure_dir_exists(full_ref_name)?, format!("unborn HEAD: {}", target))
+            }
             Ref::Symbolic {
                 full_ref_name: path,
                 target,

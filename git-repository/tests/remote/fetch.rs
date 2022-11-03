@@ -83,8 +83,8 @@ mod blocking_io {
             ),
             (
                 Some(git::protocol::transport::Protocol::V1),
-                3,
-                "c75114f60ab2c9389916f3de1082bbaa47491e3b",
+                4,
+                "d07c527cf14e524a8494ce6d5d08e28079f5c6ea", // TODO: if these are the same, remove them
             ),
         ] {
             let (mut repo, _tmp) = repo_rw("two-origins");
@@ -128,7 +128,7 @@ mod blocking_io {
                     } => {
                         assert_eq!(write_pack_bundle.pack_version, git::odb::pack::data::Version::V2);
                         assert_eq!(write_pack_bundle.object_hash, repo.object_hash());
-                        assert_eq!(write_pack_bundle.index.num_objects, expected_objects, "this value is 4 when git does it with 'consecutive' negotiation style, but could be 33 if completely naive.");
+                        assert_eq!(write_pack_bundle.index.num_objects, expected_objects, "{dry_run}: this value is 4 when git does it with 'consecutive' negotiation style, but could be 33 if completely naive.");
                         assert_eq!(
                             write_pack_bundle.index.index_version,
                             git::odb::pack::index::Version::V2
@@ -136,7 +136,21 @@ mod blocking_io {
                         assert_eq!(write_pack_bundle.index.index_hash, hex_to_id(expected_hash));
                         assert!(write_pack_bundle.data_path.map_or(false, |f| f.is_file()));
                         assert!(write_pack_bundle.index_path.map_or(false, |f| f.is_file()));
-                        assert_eq!(update_refs.edits.len(), 1);
+                        assert_eq!(update_refs.edits.len(), 2);
+
+                        let edit = &update_refs.edits[0];
+                        assert_eq!(edit.name.as_bstr(), "refs/remotes/changes-on-top-of-origin/main");
+                        assert!(
+                            edit.change.new_value().expect("no deletion").try_id().is_some(),
+                            "a simple peeled ref"
+                        );
+                        let edit = &update_refs.edits[1];
+                        assert_eq!(edit.name.as_bstr(), "refs/remotes/changes-on-top-of-origin/symbolic");
+                        assert!(
+                            edit.change.new_value().expect("no deletion").try_id().is_some(),
+                            "on the remote this is a symbolic ref, we just write its destination object id though"
+                        );
+
                         assert!(
                             !write_pack_bundle.keep_path.map_or(false, |f| f.is_file()),
                             ".keep files are deleted if there is one edit"
@@ -150,10 +164,16 @@ mod blocking_io {
 
                 assert_eq!(
                     refs.updates,
-                    vec![fetch::refs::Update {
-                        mode: fetch::refs::update::Mode::New,
-                        edit_index: Some(0),
-                    }]
+                    vec![
+                        fetch::refs::Update {
+                            mode: fetch::refs::update::Mode::New,
+                            edit_index: Some(0),
+                        },
+                        fetch::refs::Update {
+                            mode: fetch::refs::update::Mode::New,
+                            edit_index: Some(1),
+                        }
+                    ]
                 );
                 for (_update, mapping, _spec, edit) in
                     refs.iter_mapping_updates(&outcome.ref_map.mappings, remote.refspecs(Fetch))
@@ -162,7 +182,7 @@ mod blocking_io {
                     if dry_run {
                         assert_eq!(
                             edit.change.new_value().expect("no deletions").id(),
-                            mapping.remote.as_id()
+                            mapping.remote.as_id().expect("no unborn")
                         );
                         assert!(
                             repo.try_find_reference(edit.name.as_ref())?.is_none(),
@@ -172,7 +192,7 @@ mod blocking_io {
                         let r = repo.find_reference(edit.name.as_ref()).unwrap();
                         assert_eq!(
                             r.id(),
-                            *mapping.remote.as_id(),
+                            *mapping.remote.as_id().expect("no unborn"),
                             "local reference should point to remote id"
                         );
                     }

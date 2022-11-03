@@ -24,6 +24,15 @@ pub enum Error {
     CreateDirectory { source: std::io::Error, path: PathBuf },
 }
 
+/// The kind of repository to create.
+#[derive(Debug, Copy, Clone)]
+pub enum Kind {
+    /// An empty repository with a `.git` folder, setup to contain files in its worktree.
+    WithWorktree,
+    /// A bare repository without a worktree.
+    Bare,
+}
+
 const TPL_INFO_EXCLUDE: &[u8] = include_bytes!("assets/baseline-init/info/exclude");
 const TPL_HOOKS_APPLYPATCH_MSG: &[u8] = include_bytes!("assets/baseline-init/hooks/applypatch-msg.sample");
 const TPL_HOOKS_COMMIT_MSG: &[u8] = include_bytes!("assets/baseline-init/hooks/commit-msg.sample");
@@ -98,11 +107,12 @@ fn create_dir(p: &Path) -> Result<(), Error> {
 }
 
 /// Options for use in [`into()`];
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Options {
-    /// If true, the repository will be a bare repository without a worktree.
-    pub bare: bool,
-
+    /// If true, and the kind of repository to create has a worktree, then the destination directory must be empty.
+    ///
+    /// By default repos with worktree can be initialized into a non-empty repository as long as there is no `.git` directory.
+    pub destination_must_be_empty: bool,
     /// If set, use these filesystem capabilities to populate the respective git-config fields.
     /// If `None`, the directory will be probed.
     pub fs_capabilities: Option<git_worktree::fs::Capabilities>,
@@ -110,24 +120,40 @@ pub struct Options {
 
 /// Create a new `.git` repository of `kind` within the possibly non-existing `directory`
 /// and return its path.
+/// Note that this is a simple template-based initialization routine which should be accompanied with additional corrections
+/// to respect git configuration, which is accomplished by [its callers][crate::ThreadSafeRepository::init_opts()]
+/// that return a [Repository][crate::Repository].
 pub fn into(
     directory: impl Into<PathBuf>,
-    Options { bare, fs_capabilities }: Options,
+    kind: Kind,
+    Options {
+        fs_capabilities,
+        destination_must_be_empty,
+    }: Options,
 ) -> Result<git_discover::repository::Path, Error> {
     let mut dot_git = directory.into();
+    let bare = matches!(kind, Kind::Bare);
 
-    if bare {
-        if fs::read_dir(&dot_git)
+    if bare || destination_must_be_empty {
+        let num_entries_in_dot_git = fs::read_dir(&dot_git)
+            .or_else(|err| {
+                if err.kind() == std::io::ErrorKind::NotFound {
+                    fs::create_dir(&dot_git).and_then(|_| fs::read_dir(&dot_git))
+                } else {
+                    Err(err)
+                }
+            })
             .map_err(|err| Error::IoOpen {
                 source: err,
                 path: dot_git.clone(),
             })?
-            .count()
-            != 0
-        {
+            .count();
+        if num_entries_in_dot_git != 0 {
             return Err(Error::DirectoryNotEmpty { path: dot_git });
         }
-    } else {
+    }
+
+    if !bare {
         dot_git.push(DOT_GIT_DIR);
 
         if dot_git.is_dir() {

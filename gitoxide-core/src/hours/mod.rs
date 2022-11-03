@@ -145,7 +145,7 @@ where
                                 let mut repo = repo.clone();
                                 repo.object_cache_size_if_unset(4 * 1024 * 1024);
                                 let rx = rx.clone();
-                                move || -> Result<_, git::object::tree::diff::Error> {
+                                move || -> Result<_, git::object::tree::diff::for_each::Error> {
                                     let mut out = Vec::new();
                                     for (commit_idx, parent_commit, commit) in rx {
                                         if let Some(c) = commit_counter.as_ref() {
@@ -228,24 +228,14 @@ where
                                                             if let Some(Ok(diff)) =
                                                                 is_text_file.then(|| change.event.diff()).flatten()
                                                             {
-                                                                use git::diff::lines::similar::ChangeTag::*;
                                                                 let mut nl = 0;
-                                                                for change in diff
-                                                                    .text(git::diff::lines::Algorithm::Myers)
-                                                                    .iter_all_changes()
-                                                                {
-                                                                    match change.tag() {
-                                                                        Delete => {
-                                                                            lines.removed += 1;
-                                                                            nl += 1;
-                                                                        }
-                                                                        Insert => {
-                                                                            lines.added += 1;
-                                                                            nl += 1
-                                                                        }
-                                                                        Equal => {}
-                                                                    }
-                                                                }
+                                                                let counts = diff.lines(|_| {
+                                                                    git::diff::text::imara::sink::Counter::default()
+                                                                });
+                                                                nl += counts.insertions as usize
+                                                                    + counts.removals as usize;
+                                                                lines.added += counts.insertions as usize;
+                                                                lines.removed += counts.removals as usize;
                                                                 if let Some(c) = lines_counter.as_ref() {
                                                                     c.fetch_add(nl, Ordering::SeqCst);
                                                                 }

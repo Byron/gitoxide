@@ -83,6 +83,40 @@ fn not_configured() -> crate::Result {
 }
 
 #[test]
+fn dot_remote_behind_symbol() -> crate::Result {
+    let repo = remote::repo("branch-dot-remote");
+    let head = repo.head()?;
+    let branch = head.clone().try_into_referent().expect("history");
+
+    assert_eq!(
+        branch
+            .remote_name(git::remote::Direction::Push)
+            .expect("derived push")
+            .as_url(),
+        Some(".".into())
+    );
+    assert_eq!(
+        branch
+            .remote_name(git::remote::Direction::Fetch)
+            .expect("fetch")
+            .as_url(),
+        Some(".".into())
+    );
+
+    {
+        let remote = branch
+            .remote(git::remote::Direction::Push)
+            .transpose()?
+            .expect("present");
+        assert_eq!(remote.name(), None, "It's a url after all, anonymous");
+        assert_eq!(remote.url(git::remote::Direction::Push).unwrap().path, ".");
+        assert_eq!(remote.url(git::remote::Direction::Fetch).unwrap().path, ".");
+    }
+
+    Ok(())
+}
+
+#[test]
 fn url_as_remote_name() -> crate::Result {
     let repo = remote::repo("remote-as-url");
     let branch = repo.head_ref()?.expect("history");

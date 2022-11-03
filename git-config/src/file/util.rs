@@ -124,9 +124,6 @@ impl<'event> File<'event> {
             .get(&section_name)
             .ok_or(lookup::existing::Error::SectionMissing)?;
         let mut maybe_ids = None;
-        // Don't simplify if and matches here -- the for loop currently needs
-        // `n + 1` checks, while the if and matches will result in the for loop
-        // needing `2n` checks.
         if let Some(subsection_name) = subsection_name {
             let subsection_name: &BStr = subsection_name.into();
             for node in section_ids {
@@ -152,16 +149,17 @@ impl<'event> File<'event> {
     ) -> Result<impl Iterator<Item = SectionId> + '_, lookup::existing::Error> {
         let section_name = section::Name::from_str_unchecked(section_name);
         match self.section_lookup_tree.get(&section_name) {
-            Some(lookup) => Ok(lookup.iter().flat_map({
-                let section_order = &self.section_order;
-                move |node| match node {
-                    SectionBodyIdsLut::Terminal(v) => Box::new(v.iter().copied()) as Box<dyn Iterator<Item = _>>,
-                    SectionBodyIdsLut::NonTerminal(v) => Box::new({
-                        let v: Vec<_> = v.values().flatten().copied().collect();
-                        section_order.iter().filter(move |a| v.contains(a)).copied()
-                    }),
+            Some(lookup) => {
+                let mut lut = Vec::with_capacity(self.section_order.len());
+                for node in lookup {
+                    match node {
+                        SectionBodyIdsLut::Terminal(v) => lut.extend(v.iter().copied()),
+                        SectionBodyIdsLut::NonTerminal(v) => lut.extend(v.values().flatten().copied()),
+                    }
                 }
-            })),
+
+                Ok(self.section_order.iter().filter(move |a| lut.contains(a)).copied())
+            }
             None => Err(lookup::existing::Error::SectionMissing),
         }
     }

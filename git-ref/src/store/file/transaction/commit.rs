@@ -4,7 +4,7 @@ use crate::{
     Target,
 };
 
-impl<'s> Transaction<'s> {
+impl<'s, 'p> Transaction<'s, 'p> {
     /// Make all [prepared][Transaction::prepare()] permanent and return the performed edits which represent the current
     /// state of the affected refs in the ref store in that instant. Please note that the obtained edits may have been
     /// adjusted to contain more dependent edits or additional information.
@@ -42,26 +42,38 @@ impl<'s> Transaction<'s> {
                         RefLog::AndReference => (true, true),
                     };
                     if update_reflog {
-                        match new {
-                            Target::Symbolic(_) => {} // no reflog for symref changes
+                        let log_update = match new {
+                            Target::Symbolic(_) => {
+                                // no reflog for symref changes, unless the ref is new and we can obtain a peeled id
+                                // identified by the expectation of what could be there, as is the case when cloning.
+                                match expected {
+                                    PreviousValue::ExistingMustMatch(Target::Peeled(oid)) => {
+                                        Some((Some(git_hash::ObjectId::null(oid.kind())), oid))
+                                    }
+                                    _ => None,
+                                }
+                            }
                             Target::Peeled(new_oid) => {
                                 let previous = match expected {
                                     PreviousValue::MustExistAndMatch(Target::Peeled(oid)) => Some(oid.to_owned()),
                                     _ => None,
                                 }
                                 .or(change.leaf_referent_previous_oid);
-                                let do_update = previous.as_ref().map_or(true, |previous| previous != new_oid);
-                                if do_update {
-                                    self.store.reflog_create_or_append(
-                                        change.update.name.as_ref(),
-                                        &lock,
-                                        previous,
-                                        new_oid,
-                                        committer,
-                                        log.message.as_ref(),
-                                        log.force_create_reflog,
-                                    )?;
-                                }
+                                Some((previous, new_oid))
+                            }
+                        };
+                        if let Some((previous, new_oid)) = log_update {
+                            let do_update = previous.as_ref().map_or(true, |previous| previous != new_oid);
+                            if do_update {
+                                self.store.reflog_create_or_append(
+                                    change.update.name.as_ref(),
+                                    &lock,
+                                    previous,
+                                    new_oid,
+                                    committer,
+                                    log.message.as_ref(),
+                                    log.force_create_reflog,
+                                )?;
                             }
                         }
                     }

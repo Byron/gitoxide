@@ -31,7 +31,7 @@ mod with_io {
         /// Only V2
         fn all_argument_prefixes(&self) -> &'static [&'static str] {
             match self {
-                Command::LsRefs => &["symrefs", "peel", "ref-prefix "],
+                Command::LsRefs => &["symrefs", "peel", "ref-prefix ", "unborn"],
                 Command::Fetch => &[
                     "want ", // hex oid
                     "have ", // hex oid

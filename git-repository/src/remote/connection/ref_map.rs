@@ -4,6 +4,7 @@ use git_features::progress::Progress;
 use git_protocol::transport::client::Transport;
 
 use crate::{
+    bstr,
     bstr::{BString, ByteVec},
     remote::{connection::HandshakeWithRefs, fetch, Connection, Direction},
 };
@@ -14,6 +15,8 @@ use crate::{
 pub enum Error {
     #[error(transparent)]
     Handshake(#[from] git_protocol::fetch::handshake::Error),
+    #[error("The object format {format:?} as used by the remote is unsupported")]
+    UnknownObjectFormat { format: BString },
     #[error(transparent)]
     ListRefs(#[from] git_protocol::fetch::refs::Error),
     #[error(transparent)]
@@ -79,6 +82,7 @@ where
             handshake_parameters,
         }: Options,
     ) -> Result<fetch::RefMap, Error> {
+        let null = git_hash::ObjectId::null(git_hash::Kind::Sha1); // OK to hardcode Sha1, it's not supposed to match, ever.
         let remote = self
             .fetch_refs(prefix_from_spec_as_filter_on_remote, handshake_parameters)
             .await?;
@@ -88,7 +92,7 @@ where
                 let (full_ref_name, target, object) = r.unpack();
                 git_refspec::match_group::Item {
                     full_ref_name,
-                    target,
+                    target: target.unwrap_or(&null),
                     object,
                 }
             }))
@@ -110,11 +114,14 @@ where
                 spec_index: m.spec_index,
             })
             .collect();
+
+        let object_hash = extract_object_format(self.remote.repo, &remote.outcome)?;
         Ok(fetch::RefMap {
             mappings,
             fixes,
             remote_refs: remote.refs,
             handshake: remote.outcome,
+            object_hash,
         })
     }
     #[git_protocol::maybe_async::maybe_async]
@@ -156,10 +163,11 @@ where
                             for spec in specs {
                                 let spec = spec.to_ref();
                                 if seen.insert(spec.instruction()) {
-                                    if let Some(prefix) = spec.prefix() {
-                                        let mut arg: BString = "ref-prefix ".into();
-                                        arg.push_str(prefix);
-                                        arguments.push(arg)
+                                    let mut prefixes = Vec::with_capacity(1);
+                                    spec.expand_prefixes(&mut prefixes);
+                                    for mut prefix in prefixes {
+                                        prefix.insert_str(0, "ref-prefix ");
+                                        arguments.push(prefix);
                                     }
                                 }
                             }
@@ -173,4 +181,25 @@ where
         };
         Ok(HandshakeWithRefs { outcome, refs })
     }
+}
+
+/// Assume sha1 if server says nothing, otherwise configure anything beyond sha1 in the local repo configuration
+fn extract_object_format(
+    _repo: &crate::Repository,
+    outcome: &git_protocol::fetch::handshake::Outcome,
+) -> Result<git_hash::Kind, Error> {
+    use bstr::ByteSlice;
+    let object_hash =
+        if let Some(object_format) = outcome.capabilities.capability("object-format").and_then(|c| c.value()) {
+            let object_format = object_format.to_str().map_err(|_| Error::UnknownObjectFormat {
+                format: object_format.into(),
+            })?;
+            match object_format {
+                "sha1" => git_hash::Kind::Sha1,
+                unknown => return Err(Error::UnknownObjectFormat { format: unknown.into() }),
+            }
+        } else {
+            git_hash::Kind::Sha1
+        };
+    Ok(object_hash)
 }

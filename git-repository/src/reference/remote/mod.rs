@@ -1,7 +1,7 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, convert::TryInto};
 
 use crate::{
-    bstr::{BStr, ByteSlice, ByteVec},
+    bstr::{BStr, ByteSlice},
     remote, Reference,
 };
 
@@ -14,27 +14,11 @@ pub enum Name<'repo> {
     Url(Cow<'repo, BStr>),
 }
 
-impl Name<'_> {
-    /// Return this instance as a symbolic name, if it is one.
-    pub fn as_symbol(&self) -> Option<&str> {
-        match self {
-            Name::Symbol(n) => n.as_ref().into(),
-            Name::Url(_) => None,
-        }
-    }
-
-    /// Return this instance as url, if it is one.
-    pub fn as_url(&self) -> Option<&BStr> {
-        match self {
-            Name::Url(n) => n.as_ref().into(),
-            Name::Symbol(_) => None,
-        }
-    }
-}
+mod name;
 
 /// Remotes
 impl<'repo> Reference<'repo> {
-    /// Find the name of our remote for `direction` as configured in `branch.<name>.remote|pushRemote` respectively.
+    /// Find the unvalidated name of our remote for `direction` as configured in `branch.<name>.remote|pushRemote` respectively.
     /// If `Some(<name>)` it can be used in [`Repository::find_remote(…)`][crate::Repository::find_remote()], or if `None` then
     /// [Repository::remote_default_name()][crate::Repository::remote_default_name()] could be used in its place.
     ///
@@ -56,17 +40,7 @@ impl<'repo> Reference<'repo> {
             })
             .flatten()
             .or_else(|| config.string("branch", Some(name), "remote"))
-            .and_then(|name| {
-                if name.contains(&b'/') {
-                    Some(Name::Url(name))
-                } else {
-                    match name {
-                        Cow::Borrowed(n) => n.to_str().ok().map(Cow::Borrowed),
-                        Cow::Owned(n) => Vec::from(n).into_string().ok().map(Cow::Owned),
-                    }
-                    .map(Name::Symbol)
-                }
-            })
+            .and_then(|name| name.try_into().ok())
     }
 
     /// Like [`remote_name(…)`][Self::remote_name()], but configures the returned `Remote` with additional information like

@@ -35,14 +35,19 @@ pub(crate) fn one_round(
                         .and_then(|r| r.target().try_id().map(ToOwned::to_owned))
                 });
                 match have_id {
-                    Some(have_id) if mapping.remote.as_id() != have_id => {
-                        arguments.want(mapping.remote.as_id());
-                        arguments.have(have_id);
+                    Some(have_id) => {
+                        if let Some(want_id) = mapping.remote.as_id() {
+                            if want_id != have_id {
+                                arguments.want(want_id);
+                                arguments.have(have_id);
+                            }
+                        }
                     }
-                    Some(_) => {}
                     None => {
-                        arguments.want(mapping.remote.as_id());
-                        has_missing_tracking_branch = true;
+                        if let Some(have_id) = mapping.remote.as_id() {
+                            arguments.want(have_id);
+                            has_missing_tracking_branch = true;
+                        }
                     }
                 }
             }

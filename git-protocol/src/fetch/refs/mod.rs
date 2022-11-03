@@ -66,14 +66,24 @@ pub enum Ref {
     },
     /// A symbolic ref pointing to `target` ref, which in turn points to an `object`
     Symbolic {
-        /// The name at which the symbolic ref is located, like `refs/heads/main`.
+        /// The name at which the symbolic ref is located, like `HEAD`.
         full_ref_name: BString,
-        /// The path of the ref the symbolic ref points to, see issue [#205] for details
+        /// The path of the ref the symbolic ref points to, like `refs/heads/main`.
+        ///
+        /// See issue [#205] for details
         ///
         /// [#205]: https://github.com/Byron/gitoxide/issues/205
         target: BString,
         /// The hash of the object the `target` ref points to.
         object: git_hash::ObjectId,
+    },
+    /// A ref is unborn on the remote and just points to the initial, unborn branch, as is the case in a newly initialized repository
+    /// or dangling symbolic refs.
+    Unborn {
+        /// The name at which the ref is located, typically `HEAD`.
+        full_ref_name: BString,
+        /// The path of the ref the symbolic ref points to, like `refs/heads/main`, even though the `target` does not yet exist.
+        target: BString,
     },
 }
 
@@ -81,17 +91,22 @@ impl Ref {
     /// Provide shared fields referring to the ref itself, namely `(name, target, [peeled])`.
     /// In case of peeled refs, the tag object itself is returned as it is what the ref directly refers to, and target of the tag is returned
     /// as `peeled`.
-    pub fn unpack(&self) -> (&BStr, &git_hash::oid, Option<&git_hash::oid>) {
+    /// If `unborn`, the first object id will be the null oid.
+    pub fn unpack(&self) -> (&BStr, Option<&git_hash::oid>, Option<&git_hash::oid>) {
         match self {
             Ref::Direct { full_ref_name, object }
             | Ref::Symbolic {
                 full_ref_name, object, ..
-            } => (full_ref_name.as_ref(), object, None),
+            } => (full_ref_name.as_ref(), Some(object), None),
             Ref::Peeled {
                 full_ref_name,
                 tag: object,
                 object: peeled,
-            } => (full_ref_name.as_ref(), object, Some(peeled)),
+            } => (full_ref_name.as_ref(), Some(object), Some(peeled)),
+            Ref::Unborn {
+                full_ref_name,
+                target: _,
+            } => (full_ref_name.as_ref(), None, None),
         }
     }
 }

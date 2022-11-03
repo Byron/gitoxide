@@ -1,4 +1,5 @@
 use git_repository as git;
+use git_testtools::tempfile;
 
 mod write_object {
     use crate::repository::object::empty_bare_repo;
@@ -148,7 +149,7 @@ mod tag {
 
 mod commit {
     use git_repository as git;
-    use git_testtools::hex_to_id;
+    use git_testtools::{hex_to_id, tempfile};
 
     use crate::{freeze_time, restricted_and_git};
 
@@ -270,10 +271,8 @@ fn empty_bare_repo() -> crate::Result<(tempfile::TempDir, git::Repository)> {
     let tmp = tempfile::tempdir()?;
     let repo = git::ThreadSafeRepository::init_opts(
         tmp.path(),
-        git::create::Options {
-            bare: true,
-            fs_capabilities: None,
-        },
+        git::create::Kind::Bare,
+        git::create::Options::default(),
         git::open::Options::isolated(),
     )?
     .into();

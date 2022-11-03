@@ -125,12 +125,20 @@ mod push {
 
     use git_config::parse::section::Key;
 
+    use crate::file::cow_str;
+
     #[test]
     fn none_as_value_omits_the_key_value_separator() -> crate::Result {
         let mut file = git_config::File::default();
         let mut section = file.section_mut_or_create_new("a", Some("sub"))?;
         section.push("key".try_into()?, None);
         let expected = format!("[a \"sub\"]{nl}\tkey{nl}", nl = section.newline());
+        assert_eq!(section.value("key"), None, "single value counts as None");
+        assert_eq!(
+            section.values("key"),
+            &[cow_str("")],
+            "multi-value counts as empty value"
+        );
         assert_eq!(file.to_bstring(), expected);
         Ok(())
     }

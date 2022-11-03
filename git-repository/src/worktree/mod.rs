@@ -133,14 +133,15 @@ pub mod excludes {
                 .then(|| git_glob::pattern::Case::Fold)
                 .unwrap_or_default();
             let mut buf = Vec::with_capacity(512);
+            let excludes_file = match repo.config.excludes_file().transpose()? {
+                Some(user_path) => Some(user_path),
+                None => repo.config.xdg_config_path("ignore")?,
+            };
             let state = git_worktree::fs::cache::State::IgnoreStack(git_worktree::fs::cache::state::Ignore::new(
                 overrides.unwrap_or_default(),
                 git_attributes::MatchGroup::<git_attributes::Ignore>::from_git_dir(
                     repo.git_dir(),
-                    match repo.config.excludes_file()?.as_ref() {
-                        Some(user_path) => Some(user_path.to_owned()),
-                        None => repo.config.xdg_config_path("ignore")?,
-                    },
+                    excludes_file,
                     &mut buf,
                 )?,
                 None,
