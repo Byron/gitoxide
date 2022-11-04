@@ -1,8 +1,6 @@
 use filetime::FileTime;
-use git::prelude::FindExt;
 use git_index::{entry, extension, verify::extensions::no_find, write, write::Options, State, Version};
 use git_repository as git;
-use git_testtools::scripted_fixture_repo_read_only;
 
 use crate::{fixture_index_path, index::Fixture::*, loose_file_path};
 
@@ -84,57 +82,6 @@ fn roundtrips_sparse_index() -> crate::Result {
 }
 
 #[test]
-#[ignore]
-fn sparse_to_regular_index() -> crate::Result {
-    let input = [(only_tree_ext(), true)];
-
-    for (options, write_sparse) in input {
-        let fixture = "v3_sparse_index";
-        let repo_dir = scripted_fixture_repo_read_only("make_index/v3_sparse_index.sh")?;
-        let repo = git::open(&repo_dir)?;
-        let path = fixture_index_path(fixture);
-
-        let mut expected = git_index::File::at(&path, git_hash::Kind::Sha1, Default::default())?;
-
-        if !write_sparse {
-            expected.expand_dir_entries(|oid, buf| repo.objects.find_tree_iter(oid, buf).ok());
-        }
-
-        let mut out_bytes = Vec::new();
-        let (_, _) = expected.write_to(&mut out_bytes, options)?;
-        let (actual, _) = State::from_bytes(&out_bytes, FileTime::now(), git_hash::Kind::Sha1, Default::default())?;
-
-        assert_eq!(actual.version(), Version::V3, "version mismatch in {:?}", fixture);
-        assert_eq!(
-            actual.tree(),
-            options
-                .extensions
-                .should_write(extension::tree::SIGNATURE)
-                .and_then(|_| expected.tree()),
-            "tree extension mismatch in {:?}",
-            fixture
-        );
-        assert_eq!(
-            actual.is_sparse(),
-            expected.is_sparse(),
-            "sparse index entries extension mismatch in {:?}",
-            fixture
-        );
-        // TODO: this can work once we actually expand dirs.
-        // actual.entries().iter().for_each(|e| {
-        //     assert_eq!(e.mode, entry::Mode::FILE);
-        // })
-    }
-    Ok(())
-}
-
-#[test]
-#[ignore]
-fn regular_to_sparse_index() -> crate::Result {
-    unimplemented!()
-}
-
-#[test]
 fn state_comparisons_with_various_extension_configurations() {
     for fixture in [
         Loose("extended-flags"),
@@ -150,7 +97,7 @@ fn state_comparisons_with_various_extension_configurations() {
         Generated("v2_all_file_kinds"),
         Generated("v2_split_index"),
         // TODO: this failes because git allows to configure the index version while gitoxide doesn't
-        // the fixture artificially sets the version to V4 and gitoxide writes it back out as the lowest required verison, V2
+        //       the fixture artificially sets the version to V4 and gitoxide writes it back out as the lowest required verison, V2
         // Generated("v4_more_files_IEOT"),
         Generated("v3_skip_worktree"),
         Generated("v3_sparse_index_non_cone"),

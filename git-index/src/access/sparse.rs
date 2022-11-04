@@ -1,7 +1,3 @@
-use git_object::TreeRefIter;
-
-use crate::{entry, State};
-
 /// Configuration related to sparse indexes.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Options {
@@ -60,25 +56,4 @@ pub enum Mode {
     IncludeByIgnorePatternStoreAllEntriesSkipUnmatched,
     /// index with all entries, non is excluded, `.git/info/sparse-checkout` file is not considered.
     IncludeAllEntries,
-}
-
-/// Transformations and mutations to the state
-impl State {
-    /// Expand all entries with Mode::DIR to a list of files contained within those entries
-    pub fn expand_dir_entries<Find>(&mut self, _find: Find)
-    where
-        Find: for<'a> FnMut(&git_hash::oid, &'a mut Vec<u8>) -> Option<TreeRefIter<'a>>,
-    {
-        self.entries_mut().iter_mut().for_each(|e| {
-            if e.mode == entry::Mode::DIR {
-                // TODO: do a tree traversal and replace the DIR entry with all FILE entries found
-                //       maybe we can somehow generalize tree traversal we are already doing in `from_tree`
-
-                // NOTE: this line is just here for the moment to satisfy the test
-                e.mode = entry::Mode::FILE;
-            }
-        });
-
-        // TODO: self.is_sparse = false
-    }
 }

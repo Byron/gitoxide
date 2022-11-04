@@ -1,24 +1,24 @@
 use crate::{entry, extension, write::util::CountBytes, State, Version};
 use std::{convert::TryInto, io::Write};
 
-/// A way to specify which extensions to write.
+/// A way to specify which of the optional extensions to write.
 #[derive(Debug, Copy, Clone)]
 pub enum Extensions {
-    /// Writes all available extensions to avoid loosing any information, and to allow accelerated reading of the index file.
+    /// Writes all available optional extensions to avoid loosing any information.
     All,
-    /// Only write the given extensions, with each extension being marked by a boolean flag.
+    /// Only write the given optional extensions, with each extension being marked by a boolean flag.
     ///
     /// # Note: mandatory extensions
     ///
     /// Mandatory extensions, like `sdir` or other lower-case ones, may not be configured here as they need to be present
-    /// or absent depending on the state of the index itself and for it to be valid. They are mandatory.
+    /// or absent depending on the state of the index itself and for it to be valid.
     Given {
         /// Write the tree-cache extension, if present.
         tree_cache: bool,
         /// Write the end-of-index-entry extension.
         end_of_index_entry: bool,
     },
-    /// Write no extension at all for what should be the smallest possible index
+    /// Write no optional extension at all for what should be the smallest possible index
     None,
 }
 
