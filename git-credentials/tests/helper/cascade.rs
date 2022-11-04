@@ -124,6 +124,7 @@ mod invoke {
         }
     }
 
+    #[allow(clippy::result_large_err)]
     fn invoke_cascade<'a>(names: impl IntoIterator<Item = &'a str>, action: Action) -> protocol::Result {
         Cascade::default().use_http_path(true).extend(fixtures(names)).invoke(
             action,

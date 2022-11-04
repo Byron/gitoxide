@@ -587,7 +587,7 @@ fn symbolic_head_missing_referent_then_update_referent() -> crate::Result {
             match reflog_writemode {
                 WriteReflog::Normal | WriteReflog::Always => {
                     let expected_line = log_line(git_hash::Kind::Sha1.null(), new_oid, "an actual change");
-                    assert_eq!(reflog_lines(&store, *ref_name)?, vec![expected_line]);
+                    assert_eq!(reflog_lines(&store, ref_name)?, vec![expected_line]);
                 }
                 WriteReflog::Disable => {
                     assert!(

@@ -340,7 +340,7 @@ fn generate_commit_message(
         match (
             pending_changelogs.len(),
             pending_changelogs.iter().fold(0usize, |mut acc, (_, _, lock)| {
-                acc += if !lock.resource_path().is_file() { 1 } else { 0 };
+                acc += usize::from(!lock.resource_path().is_file());
                 acc
             })
         ) {

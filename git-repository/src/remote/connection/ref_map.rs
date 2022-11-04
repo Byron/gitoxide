@@ -65,6 +65,7 @@ where
     ///
     /// Due to management of the transport, it's cleanest to only use it for a single interaction. Thus it's consumed along with
     /// the connection.
+    #[allow(clippy::result_large_err)]
     #[git_protocol::maybe_async::maybe_async]
     pub async fn ref_map(mut self, options: Options) -> Result<fetch::RefMap, Error> {
         let res = self.ref_map_inner(options).await;
@@ -74,6 +75,7 @@ where
         res
     }
 
+    #[allow(clippy::result_large_err)]
     #[git_protocol::maybe_async::maybe_async]
     pub(crate) async fn ref_map_inner(
         &mut self,
@@ -124,6 +126,8 @@ where
             object_hash,
         })
     }
+
+    #[allow(clippy::result_large_err)]
     #[git_protocol::maybe_async::maybe_async]
     async fn fetch_refs(
         &mut self,
@@ -184,6 +188,7 @@ where
 }
 
 /// Assume sha1 if server says nothing, otherwise configure anything beyond sha1 in the local repo configuration
+#[allow(clippy::result_large_err)]
 fn extract_object_format(
     _repo: &crate::Repository,
     outcome: &git_protocol::fetch::handshake::Outcome,

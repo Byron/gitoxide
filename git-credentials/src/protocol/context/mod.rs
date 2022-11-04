@@ -54,6 +54,7 @@ mod mutate {
         /// Destructure the url at our `url` field into parts like protocol, host, username and path and store
         /// them in our respective fields. If `use_http_path` is set, http paths are significant even though
         /// normally this isn't the case.
+        #[allow(clippy::result_large_err)]
         pub fn destructure_url_in_place(&mut self, use_http_path: bool) -> Result<&mut Self, protocol::Error> {
             let url = git_url::parse(self.url.as_ref().ok_or(protocol::Error::UrlMissing)?.as_ref())?;
             self.protocol = Some(url.scheme.as_str().into());

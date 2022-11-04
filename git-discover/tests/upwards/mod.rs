@@ -209,14 +209,14 @@ fn cross_fs() -> crate::Result {
         let dmg_location = tempfile::tempdir()?;
         let dmg_file = dmg_location.path().join("temp.dmg");
         Command::new("hdiutil")
-            .args(&["create", "-size", "1m"])
+            .args(["create", "-size", "1m"])
             .arg(&dmg_file)
             .status()?;
 
         // Mount dmg file into temporary location
         let mount_point = tempfile::tempdir()?;
         Command::new("hdiutil")
-            .args(&["attach", "-nobrowse", "-mountpoint"])
+            .args(["attach", "-nobrowse", "-mountpoint"])
             .arg(mount_point.path())
             .arg(&dmg_file)
             .status()?;

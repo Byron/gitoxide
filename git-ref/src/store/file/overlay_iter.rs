@@ -95,7 +95,7 @@ impl<'p, 's> LooseThenPacked<'p, 's> {
         loose::Reference::try_from_path(name, &self.buf)
             .map_err(|err| {
                 let relative_path = refpath
-                    .strip_prefix(&self.git_dir)
+                    .strip_prefix(self.git_dir)
                     .ok()
                     .or_else(|| {
                         self.common_dir

@@ -11,7 +11,7 @@ fn verify_on_exfat() -> crate::Result<()> {
     let _cleanup = {
         // Mount dmg file
         Command::new("hdiutil")
-            .args(&["attach", "-nobrowse", "-mountpoint"])
+            .args(["attach", "-nobrowse", "-mountpoint"])
             .arg(mount_point.path())
             .arg(fixtures.as_path().join("exfat_repo.dmg"))
             .status()?;

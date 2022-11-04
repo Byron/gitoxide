@@ -212,6 +212,7 @@ pub fn init_bare(directory: impl AsRef<std::path::Path>) -> Result<Repository, i
 /// amended with using configuration from the git installation to ensure all authentication options are honored).
 ///
 /// See [`clone::PrepareFetch::new()] for a function to take full control over all options.
+#[allow(clippy::result_large_err)]
 pub fn prepare_clone_bare<Url, E>(
     url: Url,
     path: impl AsRef<std::path::Path>,
@@ -233,6 +234,7 @@ where
 /// (but amended with using configuration from the git installation to ensure all authentication options are honored).
 ///
 /// See [`clone::PrepareFetch::new()] for a function to take full control over all options.
+#[allow(clippy::result_large_err)]
 pub fn prepare_clone<Url, E>(url: Url, path: impl AsRef<std::path::Path>) -> Result<clone::PrepareFetch, clone::Error>
 where
     Url: std::convert::TryInto<git_url::Url, Error = E>,

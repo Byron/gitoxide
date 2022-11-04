@@ -105,7 +105,7 @@ mod iter {
     fn an_existing_file_makes_directory_creation_fail_permanently() -> crate::Result {
         let dir = tempfile::tempdir()?;
         let new_dir = dir.path().join("also-file");
-        std::fs::write(&new_dir, &[42])?;
+        std::fs::write(&new_dir, [42])?;
         assert!(new_dir.is_file());
 
         let mut it = create_dir::Iter::new(&new_dir);

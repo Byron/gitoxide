@@ -8,10 +8,11 @@ pub fn cow_str(s: &str) -> Cow<'_, BStr> {
 
 #[test]
 fn size_in_memory() {
-    assert_eq!(
-        std::mem::size_of::<git_config::File<'_>>(),
-        1040,
-        "This shouldn't change without us noticing"
+    let actual = std::mem::size_of::<git_config::File<'_>>();
+    assert!(
+        actual <= 1040,
+        "{} <= 1040: This shouldn't change without us noticing",
+        actual
     );
 }
 

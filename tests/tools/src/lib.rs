@@ -357,7 +357,7 @@ fn scripted_fixture_repo_read_only_with_args_inner(
 }
 
 fn write_failure_marker(failure_marker: &Path) {
-    std::fs::write(failure_marker, &[]).ok();
+    std::fs::write(failure_marker, []).ok();
 }
 
 /// The `script_identity` will be baked into the soon to be created `archive` as it identitifies the script
@@ -492,7 +492,7 @@ fn extract_archive(
         if path.to_str() == Some(META_DIR_NAME) || path.parent().and_then(|p| p.to_str()) == Some(META_DIR_NAME) {
             continue;
         }
-        entry.unpack_in(&destination_dir)?;
+        entry.unpack_in(destination_dir)?;
     }
     Ok((archive_identity, platform))
 }

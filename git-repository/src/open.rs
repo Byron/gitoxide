@@ -551,10 +551,11 @@ mod tests {
 
     #[test]
     fn size_of_options() {
-        assert_eq!(
-            std::mem::size_of::<Options>(),
-            96,
-            "size shouldn't change without us knowing"
+        let actual = std::mem::size_of::<Options>();
+        assert!(
+            actual <= 104,
+            "{} <= 104: size shouldn't change without us knowing (on windows, it's bigger)",
+            actual
         );
     }
 }
