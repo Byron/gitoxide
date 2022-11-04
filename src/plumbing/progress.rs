@@ -333,6 +333,12 @@ static GIT_CONFIG: &[Record] = &[
         },
     },
     Record {
+        config: "extensions.worktreeconfig",
+        usage: Planned {
+            note: Some("Seems to be turned on when sparse indices are used")
+        },
+    },
+    Record {
         config: "committer.name",
         usage: InModule {
             name: "repository::identity",
