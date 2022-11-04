@@ -1,53 +1,72 @@
 use crate::{entry, extension, Entry, PathStorage, State, Version};
 use bstr::{BStr, ByteSlice};
 
+// TODO: integrate this somehow, somewhere, depending on later usage.
+#[allow(dead_code)]
 mod sparse {
     use git_object::TreeRefIter;
 
     use crate::{entry, State};
 
-    /// Configuration related to sparse indexes
+    /// Configuration related to sparse indexes.
     #[derive(Debug, Default, Clone, Copy)]
-    pub struct SparseOptions {
-        /// If true, certain files files in the index will be exluded / skipped for certain operations,
-        /// based on the content of the `.git/info/sparse-checkout` file
+    pub struct Options {
+        /// If true, certain entries in the index will be excluded / skipped for certain operations,
+        /// based on the ignore patterns in the `.git/info/sparse-checkout` file. These entries will
+        /// carry the [`SKIP_WORKTREE`][crate::entry::Flags::SKIP_WORKTREE] flag.
+        ///
+        /// This typically is the value of `core.sparseCheckout` in the git configuration.
         pub sparse_checkout: bool,
 
-        /// Configures how to interpret the `.git/info/sparse-checkout` file
-        /// If true, cone mode is active and entire directories will be excluded
-        /// If false, non-cone mode is active and files will be matched similar to a .gitignore file
-        pub cone_mode: bool,
+        /// Interpret the `.git/info/sparse-checkout` file using _cone mode_.
+        ///
+        /// If true, _cone mode_ is active and entire directories will be included in the checkout, as well as files in the root
+        /// of the repository.
+        /// If false, non-cone mode is active and entries to _include_ will be matched with patterns like those found in `.gitignore` files.
+        ///
+        /// This typically is the value of `core.sparseCheckoutCone` in the git configuration.
+        pub directory_patterns_only: bool,
 
-        /// If true, will attempt to write a sparse index file
-        /// only works in cone mode
+        /// If true, will attempt to write a sparse index file which only works in cone mode.
+        ///
+        /// A sparse index has [`DIR` entries][crate::entry::Mode::DIR] that represent entire directories to be skipped
+        /// during checkout and other operations due to the added presence of
+        /// the [`SKIP_WORKTREE`][crate::entry::Flags::SKIP_WORKTREE] flag.
+        ///
+        /// This is typically the value of `index.sparse` in the git configuration.
         pub write_sparse_index: bool,
     }
 
-    impl SparseOptions {
-        /// Figures out if the index should be sparse or not depending on the given options
-        #[allow(dead_code)]
-        pub fn get_sparse_mode(&self) -> SparseMode {
-            match (self.sparse_checkout, self.cone_mode, self.write_sparse_index) {
-                (true, true, true) => SparseMode::SparseIndexConeMode,
-                (true, true, false) => SparseMode::RegularIndexConeMode,
-                (true, false, _) => SparseMode::RegularIndexNoConeMode,
-                (false, _, _) => SparseMode::RegularIndex,
+    impl Options {
+        /// Derive a valid mode from all parameters that affect the 'sparseness' of the index.
+        ///
+        /// Some combinations of them degenerate to one particular mode.
+        pub fn sparse_mode(&self) -> Mode {
+            match (
+                self.sparse_checkout,
+                self.directory_patterns_only,
+                self.write_sparse_index,
+            ) {
+                (true, true, true) => Mode::IncludeDirectoriesStoreIncludedEntriesAndExcludedDirs,
+                (true, true, false) => Mode::IncludeDirectoriesStoreAllEntriesSkipUnmatched,
+                (true, false, _) => Mode::IncludeByIgnorePatternStoreAllEntriesSkipUnmatched,
+                (false, _, _) => Mode::IncludeAllEntries,
             }
         }
     }
 
-    /// Describes the configuration how a sparse index should be written, or if one should be written at all
+    /// Describes the configuration how a sparse index should be written, or if one should be written at all.
     #[derive(Debug)]
-    #[allow(dead_code)]
-    pub enum SparseMode {
-        /// sparse index, cone mode, skip worktree based on .git/info/sparse-checkout file
-        SparseIndexConeMode,
-        /// regular index, cone mode, skip worktree based on .git/info/sparse-checkout file
-        RegularIndexConeMode,
-        /// regular index, no-cone mode, skip worktree based on .git/info/sparse-checkout file
-        RegularIndexNoConeMode,
-        /// regular index, .git/info/sparse-checkout file is not considered / no skip_worktree flags
-        RegularIndex,
+    pub enum Mode {
+        /// Sparse index (with DIR entries, skipping excluded file entries), cone mode,
+        /// skip worktree based on `.git/info/sparse-checkout` file.
+        IncludeDirectoriesStoreIncludedEntriesAndExcludedDirs,
+        /// regular index (with all file entries), cone mode, skip worktree based on `.git/info/sparse-checkout` file.
+        IncludeDirectoriesStoreAllEntriesSkipUnmatched,
+        /// regular index (with all file entries), non-cone mode, skip worktree based on `.git/info/sparse-checkout` file.
+        IncludeByIgnorePatternStoreAllEntriesSkipUnmatched,
+        /// regular index, .git/info/sparse-checkout file is not considered and no entries are skipped.
+        IncludeAllEntries,
     }
 
     /// Transformations and mutations to the state
@@ -60,7 +79,7 @@ mod sparse {
             self.entries_mut().iter_mut().for_each(|e| {
                 if e.mode == entry::Mode::DIR {
                     // TODO: do a tree traversal and replace the DIR entry with all FILE entries found
-                    // maybe we can somehow generalize tree traversal we are already doing in `from_tree`
+                    //       maybe we can somehow generalize tree traversal we are already doing in `from_tree`
 
                     // NOTE: this line is just here for the moment to satisfy the test
                     e.mode = entry::Mode::FILE;
@@ -173,7 +192,7 @@ impl State {
 
     /// Returns a boolean value indicating whether the index is sparse or not.
     ///
-    /// An index is sparse if it contains at least one [Mode::DIR][Entry::Mode::DIR] entry.
+    /// An index is sparse if it contains at least one [Mode::DIR][entry::Mode::DIR] entry.
     pub fn is_sparse(&self) -> bool {
         self.is_sparse
     }
