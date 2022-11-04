@@ -9,11 +9,11 @@ enum Usage {
     NotApplicable {
         reason: &'static str,
     },
-    Planned {
-        note: Option<&'static str>,
-    },
     NotPlanned {
         reason: &'static str,
+    },
+    Planned {
+        note: Option<&'static str>,
     },
     InModule {
         name: &'static str,
@@ -514,7 +514,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "advice.updateSparsePath",
-        usage: NotPlanned { reason: "gitoxide does not yet have an 'advice' system" },
+        usage: NotApplicable { reason: "gitoxide does not yet have an 'advice' system" },
     },
     Record {
         config: "core.sparseCheckout",
@@ -523,6 +523,18 @@ static GIT_CONFIG: &[Record] = &[
     Record {
         config: "core.sparseCheckoutCone",
         usage: Planned { note: Some("non-cone mode is deprecated but should still fail gracefully if encountered") },
+    },
+    Record {
+        config: "core.splitIndex",
+        usage: Planned { note: Some("needed to be able to read split indices (mandatory extension)") },
+    },
+    Record {
+        config: "splitIndex.maxPercentageChange",
+        usage: NotPlanned { reason: "seems like it's superseded by sparse indices" },
+    },
+    Record {
+        config: "splitIndex.sharedIndexExpire",
+        usage: NotPlanned { reason: "seems like it's superseded by sparse indices" },
     },
     Record {
         config: "index.sparse",
