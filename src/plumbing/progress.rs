@@ -526,7 +526,7 @@ static GIT_CONFIG: &[Record] = &[
     },
     Record {
         config: "core.splitIndex",
-        usage: Planned { note: Some("needed to be able to read split indices (mandatory extension)") },
+        usage: NotPlanned { reason: "we don't want to be able to create split indices, but we will read them. It's (somewhat) superseded by sparse indices" },
     },
     Record {
         config: "splitIndex.maxPercentageChange",
@@ -539,6 +539,10 @@ static GIT_CONFIG: &[Record] = &[
     Record {
         config: "index.sparse",
         usage: Planned { note: Some("together with 'core.sparseCheckout' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not") },
+    },
+    Record {
+        config: "index.version",
+        usage: Planned { note: Some("once V4 indices can be written, we need to be able to set a desired version. For now we write the smallest possible index version only.") },
     },
     Record {
         config: "sparse.expectFilesOutsideOfPatterns",
