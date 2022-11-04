@@ -79,7 +79,8 @@ mod error {
 
         #[test]
         fn error_size() {
-            assert_eq!(std::mem::size_of::<Error>(), 88, "should not grow without us noticing");
+            let actual = std::mem::size_of::<Error>();
+            assert!(actual <= 88, "{} <= 88: should not grow without us noticing", actual);
         }
     }
 }

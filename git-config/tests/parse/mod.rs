@@ -9,20 +9,23 @@ mod section;
 
 #[test]
 fn size_in_memory() {
-    assert_eq!(
-        std::mem::size_of::<Section<'_>>(),
-        6768,
-        "This shouldn't change without us noticing"
+    let actual = std::mem::size_of::<Section<'_>>();
+    assert!(
+        actual <= 6768,
+        "{} <= 6768: This shouldn't change without us noticing",
+        actual
     );
-    assert_eq!(
-        std::mem::size_of::<Event<'_>>(),
-        104,
-        "This shouldn't change without us noticing"
+    let actual = std::mem::size_of::<Event<'_>>();
+    assert!(
+        actual <= 104,
+        "{} <= 104: This shouldn't change without us noticing",
+        actual
     );
-    assert_eq!(
-        std::mem::size_of::<Events<'_>>(),
-        872,
-        "This shouldn't change without us noticing"
+    let actual = std::mem::size_of::<Events<'_>>();
+    assert!(
+        actual <= 872,
+        "{} <= 872: This shouldn't change without us noticing",
+        actual
     );
 }
 
