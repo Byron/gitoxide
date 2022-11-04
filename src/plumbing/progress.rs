@@ -532,6 +532,18 @@ static GIT_CONFIG: &[Record] = &[
         config: "sparse.expectFilesOutsideOfPatterns",
         usage: NotPlanned { reason: "todo" },
     },
+    Record {
+        config: "remote.<name>.promisor",
+        usage: Planned {
+            note: Some("required for big monorepos, and typically used in conjunction with sparse indices")
+        }
+    },
+    Record {
+        config: "remote.<name>.partialCloneFilter",
+        usage: Planned {
+            note: Some("required for big monorepos, and typically used in conjunction with sparse indices")
+        }
+    }
 ];
 
 /// A programmatic way to record and display progress.
