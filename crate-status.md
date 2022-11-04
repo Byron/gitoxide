@@ -378,12 +378,26 @@ The git staging area.
     * [x] REUC resolving undo
     * [x] UNTR untracked cache
     * [x] FSMN file system monitor cache V1 and V2
+    * [x] EOIE end of index entry
+    * [x] IEOT index entry offset table
     * [x] 'link' base indices to take information from, split index
-    * [x] 'sdir' sparse directory entries - marker
+    * [x] 'sdir' [sparse directory entries](https://github.blog/2021-08-16-highlights-from-git-2-33/) - marker
   * [x] verification of entries and extensions as well as checksum
+* write
+  * [x] V2
+  * [x] V3 - extension bits
+  * [ ] V4
+  * extensions
+      * [x] TREE 
+      * [ ] REUC 
+      * [ ] UNTR
+      * [ ] FSMN
+      * [x] EOIE 
+      * [x] 'sdir'
+      * [ ] 'link'
 * `stat` update
     * [ ] optional threaded `stat` based on thread_cost (aka preload)
-* [ ] handling of `.gitignore` and system file exclude configuration
+* [x] handling of `.gitignore` and system file exclude configuration
 * [ ] handle potential races
 * maintain extensions when altering the cache
     * [ ] TREE for speeding up tree generation
@@ -394,14 +408,12 @@ The git staging area.
     * [ ] IEOT index entry offset table
     * [ ] 'link' base indices to take information from, split index
     * [ ] 'sdir' sparse directory entries
-* additional support
-    * [ ] non-sparse
-    * [ ] sparse (search for [`sparse index` here](https://github.blog/2021-08-16-highlights-from-git-2-33/))
 * add and remove entries
 * [x] API documentation
     * [ ] Some examples
 
 ### git-commitgraph
+
 * [x] read-only access
     * [x] Graph lookup of commit information to obtain timestamps, generation and parents, and extra edges
     * [ ] Bloom filter index
