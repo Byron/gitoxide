@@ -78,10 +78,11 @@ mod tests {
 
     #[test]
     fn size_of_change() {
-        assert_eq!(
-            std::mem::size_of::<Change>(),
-            46,
-            "this type shouldn't grow without us knowing"
+        let actual = std::mem::size_of::<Change>();
+        assert!(
+            actual <= 46,
+            "{} <= 46: this type shouldn't grow without us knowing",
+            actual
         )
     }
 }

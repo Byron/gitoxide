@@ -30,9 +30,10 @@ fn fixture_bytes(path: &str) -> Vec<u8> {
 
 #[test]
 fn size_in_memory() {
-    assert_eq!(
-        std::mem::size_of::<git_object::Object>(),
-        264,
-        "Prevent unexpected growth of what should be lightweight objects"
+    let actual = std::mem::size_of::<git_object::Object>();
+    assert!(
+        actual <= 264,
+        "{} <= 264: Prevent unexpected growth of what should be lightweight objects",
+        actual
     )
 }
