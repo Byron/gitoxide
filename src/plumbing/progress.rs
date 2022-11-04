@@ -9,11 +9,11 @@ enum Usage {
     NotApplicable {
         reason: &'static str,
     },
-    Planned {
-        note: Option<&'static str>,
-    },
     NotPlanned {
         reason: &'static str,
+    },
+    Planned {
+        note: Option<&'static str>,
     },
     InModule {
         name: &'static str,
@@ -333,6 +333,12 @@ static GIT_CONFIG: &[Record] = &[
         },
     },
     Record {
+        config: "extensions.worktreeconfig",
+        usage: Planned {
+            note: Some("Seems to be turned on when sparse indices are used")
+        },
+    },
+    Record {
         config: "committer.name",
         usage: InModule {
             name: "repository::identity",
@@ -506,6 +512,54 @@ static GIT_CONFIG: &[Record] = &[
             deviation: None,
         },
     },
+    Record {
+        config: "advice.updateSparsePath",
+        usage: NotApplicable { reason: "gitoxide does not yet have an 'advice' system" },
+    },
+    Record {
+        config: "core.sparseCheckout",
+        usage: Planned { note: Some("together with 'index.sparse' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not") },
+    },
+    Record {
+        config: "core.sparseCheckoutCone",
+        usage: Planned { note: Some("non-cone mode is deprecated but should still fail gracefully if encountered") },
+    },
+    Record {
+        config: "core.splitIndex",
+        usage: NotPlanned { reason: "we don't want to be able to create split indices, but we will read them. It's (somewhat) superseded by sparse indices" },
+    },
+    Record {
+        config: "splitIndex.maxPercentageChange",
+        usage: NotPlanned { reason: "seems like it's superseded by sparse indices" },
+    },
+    Record {
+        config: "splitIndex.sharedIndexExpire",
+        usage: NotPlanned { reason: "seems like it's superseded by sparse indices" },
+    },
+    Record {
+        config: "index.sparse",
+        usage: Planned { note: Some("together with 'core.sparseCheckout' and 'core.sparseCheckoutCone', configures if the index should be written sparse or not") },
+    },
+    Record {
+        config: "index.version",
+        usage: Planned { note: Some("once V4 indices can be written, we need to be able to set a desired version. For now we write the smallest possible index version only.") },
+    },
+    Record {
+        config: "sparse.expectFilesOutsideOfPatterns",
+        usage: NotPlanned { reason: "todo" },
+    },
+    Record {
+        config: "remote.<name>.promisor",
+        usage: Planned {
+            note: Some("required for big monorepos, and typically used in conjunction with sparse indices")
+        }
+    },
+    Record {
+        config: "remote.<name>.partialCloneFilter",
+        usage: Planned {
+            note: Some("required for big monorepos, and typically used in conjunction with sparse indices")
+        }
+    }
 ];
 
 /// A programmatic way to record and display progress.

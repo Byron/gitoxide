@@ -1,8 +1,10 @@
-use std::path::{Path, PathBuf};
-
 use bstr::ByteSlice;
-use git_index::{entry, Version};
+use git_index::{
+    entry::{self, Flags, Mode},
+    Version,
+};
 use git_testtools::hex_to_id;
+use std::path::{Path, PathBuf};
 
 use crate::loose_file_path;
 
@@ -224,4 +226,67 @@ fn v4_with_delta_paths_and_ieot_ext() {
         assert_eq!(e.mode, entry::Mode::FILE);
         assert_eq!(e.id, hex_to_id("e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"))
     }
+}
+
+#[test]
+fn sparse_checkout_non_sparse_index() {
+    let file = file("v3_skip_worktree");
+
+    assert_eq!(file.version(), Version::V3);
+    assert!(!file.is_sparse());
+    file.entries().iter().for_each(|e| {
+        assert_eq!(e.mode, Mode::FILE);
+        let path = e.path(&file);
+        if path.starts_with("d".as_bytes()) || path.starts_with("c1/c3".as_bytes()) {
+            assert_eq!(e.flags, Flags::EXTENDED | Flags::SKIP_WORKTREE);
+        } else {
+            assert_eq!(e.flags, Flags::empty());
+        }
+    });
+}
+
+#[test]
+fn sparse_checkout_cone_mode() {
+    let file = file("v3_sparse_index");
+
+    assert_eq!(file.version(), Version::V3);
+    assert!(file.is_sparse());
+    file.entries().iter().for_each(|e| {
+        let path = e.path(&file);
+        if path.starts_with("c1/c3".as_bytes()) || path.starts_with("d".as_bytes()) {
+            assert_eq!(e.mode, Mode::DIR);
+            assert_eq!(e.flags, Flags::EXTENDED | Flags::SKIP_WORKTREE);
+        } else {
+            assert_eq!(e.mode, Mode::FILE);
+            assert_eq!(e.flags, Flags::empty());
+        }
+    });
+}
+
+#[test]
+fn sparse_checkout_cone_mode_no_dirs() {
+    let file = file("v2_sparse_index_no_dirs");
+
+    assert_eq!(file.version(), Version::V2);
+    assert!(file.is_sparse());
+    file.entries().iter().for_each(|e| {
+        assert_eq!(e.mode, Mode::FILE);
+        assert_eq!(e.flags, Flags::empty());
+    });
+}
+
+#[test]
+fn sparse_checkout_non_cone_mode() {
+    let file = file("v3_sparse_index_non_cone");
+
+    assert_eq!(file.version(), Version::V3);
+    assert!(!file.is_sparse());
+    file.entries().iter().for_each(|e| {
+        assert_eq!(e.mode, Mode::FILE);
+        if e.path(&file).starts_with("c1/c2".as_bytes()) {
+            assert_eq!(e.flags, Flags::empty());
+        } else {
+            assert_eq!(e.flags, Flags::EXTENDED | Flags::SKIP_WORKTREE);
+        }
+    });
 }

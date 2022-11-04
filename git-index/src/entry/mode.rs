@@ -2,7 +2,8 @@ use bitflags::bitflags;
 bitflags! {
     /// The kind of file of an entry.
     pub struct Mode: u32 {
-        /// directory (only used for sparse checkouts), equivalent to a tree
+        /// directory (only used for sparse checkouts), equivalent to a tree, which is _excluded_ from the index via
+        /// cone-mode.
         const DIR = 0o040000;
         /// regular file
         const FILE = 0o100644;

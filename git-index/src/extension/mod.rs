@@ -93,9 +93,4 @@ pub(crate) mod resolve_undo;
 pub mod untracked_cache;
 
 ///
-pub mod sparse {
-    use crate::extension::Signature;
-
-    /// The signature of the sparse index extension, nothing more than an indicator at this time.
-    pub const SIGNATURE: Signature = *b"sdir";
-}
+pub mod sparse;

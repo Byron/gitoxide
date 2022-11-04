@@ -1,6 +1,9 @@
+use crate::{entry, extension, Entry, PathStorage, State, Version};
 use bstr::{BStr, ByteSlice};
 
-use crate::{entry, extension, Entry, PathStorage, State, Version};
+// TODO: integrate this somehow, somewhere, depending on later usage.
+#[allow(dead_code)]
+mod sparse;
 
 /// General information and entries
 impl State {
@@ -99,6 +102,13 @@ impl State {
     /// The `idx` is typically returned by [entry_by_path_and_stage()][State::entry_by_path_and_stage()].
     pub fn entry(&self, idx: usize) -> &Entry {
         &self.entries[idx]
+    }
+
+    /// Returns a boolean value indicating whether the index is sparse or not.
+    ///
+    /// An index is sparse if it contains at least one [Mode::DIR][entry::Mode::DIR] entry.
+    pub fn is_sparse(&self) -> bool {
+        self.is_sparse
     }
 }
 
