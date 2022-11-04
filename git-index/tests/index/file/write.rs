@@ -48,7 +48,7 @@ fn roundtrips_sparse_index() -> crate::Result {
     // NOTE: I initially tried putting these fixtures into the main roundtrip test above,
     // but the call to `compare_raw_bytes` panics. It seems like git is using a different
     // ordering when it comes to writing the tree extension. Need to investigate more, hence
-    // the seperate test for now.
+    // the separate test for now.
     //
     //          git                     gitoxide
     //
@@ -64,8 +64,7 @@ fn roundtrips_sparse_index() -> crate::Result {
         ("v3_skip_worktree", only_tree_ext()),
         ("v3_sparse_index_non_cone", only_tree_ext()),
         ("v3_sparse_index", only_tree_ext()),
-        // TODO: this fails because git writes the sdir extension in this case while gitoxide doesn't
-        // ("v2_sparse_index_no_dirs", only_tree_ext()),
+        ("v2_sparse_index_no_dirs", only_tree_ext()),
     ];
 
     for (fixture, options) in input {

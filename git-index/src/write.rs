@@ -101,7 +101,7 @@ impl State {
                     .and_then(|signature| self.tree().map(|tree| tree.write_to(write).map(|_| signature)))
             },
             &|write| {
-                self.checked_is_sparse()
+                self.is_sparse()
                     .then(|| extension::sparse::write_to(write).map(|_| extension::sparse::SIGNATURE))
             },
         ];
@@ -126,10 +126,6 @@ impl State {
             .iter()
             .find_map(|e| e.flags.contains(entry::Flags::EXTENDED).then(|| Version::V3))
             .unwrap_or(Version::V2)
-    }
-
-    fn checked_is_sparse(&self) -> bool {
-        self.entries().iter().any(|e| e.mode.is_sparse())
     }
 }
 
