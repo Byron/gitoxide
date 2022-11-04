@@ -95,13 +95,22 @@ impl Object {
         }
     }
     /// Turns this instance into a [`Blob`][Blob] if it is one.
+    #[allow(clippy::result_large_err)]
     pub fn try_into_blob(self) -> Result<Blob, Self> {
         match self {
             Object::Blob(v) => Ok(v),
             _ => Err(self),
         }
     }
+    /// Turns this instance into a [`BlobRef`][BlobRef] if it is a blob.
+    pub fn try_into_blob_ref(&self) -> Option<BlobRef<'_>> {
+        match self {
+            Object::Blob(v) => Some(v.to_ref()),
+            _ => None,
+        }
+    }
     /// Turns this instance into a [`Commit`][Commit] if it is one.
+    #[allow(clippy::result_large_err)]
     pub fn try_into_commit(self) -> Result<Commit, Self> {
         match self {
             Object::Commit(v) => Ok(v),
@@ -109,6 +118,7 @@ impl Object {
         }
     }
     /// Turns this instance into a [`Tree`][Tree] if it is one.
+    #[allow(clippy::result_large_err)]
     pub fn try_into_tree(self) -> Result<Tree, Self> {
         match self {
             Object::Tree(v) => Ok(v),
@@ -116,6 +126,7 @@ impl Object {
         }
     }
     /// Turns this instance into a [`Tag`][Tag] if it is one.
+    #[allow(clippy::result_large_err)]
     pub fn try_into_tag(self) -> Result<Tag, Self> {
         match self {
             Object::Tag(v) => Ok(v),
