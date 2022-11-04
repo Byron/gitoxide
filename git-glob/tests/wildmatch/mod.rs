@@ -219,7 +219,7 @@ fn corpus() {
         } else if actual != expected {
             failures.push((pattern, pattern_text, text, actual, expected));
         } else {
-            at_least_one_panic += if actual.any_panicked() { 1 } else { 0 };
+            at_least_one_panic += i32::from(actual.any_panicked());
         }
     }
 

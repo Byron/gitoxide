@@ -37,7 +37,7 @@ impl crate::Repository {
             });
         }
         let mut buf = self.free_buf();
-        let kind = self.objects.find(&id, &mut buf)?.kind;
+        let kind = self.objects.find(id, &mut buf)?.kind;
         Ok(Object::from_data(id, kind, buf, self))
     }
 
@@ -60,7 +60,7 @@ impl crate::Repository {
         }
 
         let mut buf = self.free_buf();
-        match self.objects.try_find(&id, &mut buf)? {
+        match self.objects.try_find(id, &mut buf)? {
             Some(obj) => {
                 let kind = obj.kind;
                 Ok(Some(Object::from_data(id, kind, buf, self)))

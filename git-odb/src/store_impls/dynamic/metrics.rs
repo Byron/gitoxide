@@ -53,15 +53,9 @@ impl super::Store {
                     if bundle.is_disposable() {
                         unreachable_indices += 1;
                         unreachable_packs += match bundle {
-                            IndexAndPacks::Index(single) => {
-                                if single.data.is_loaded() {
-                                    1
-                                } else {
-                                    0
-                                }
-                            }
+                            IndexAndPacks::Index(single) => usize::from(single.data.is_loaded()),
                             IndexAndPacks::MultiIndex(multi) => {
-                                multi.data.iter().map(|p| if p.is_loaded() { 1 } else { 0 }).sum()
+                                multi.data.iter().map(|p| usize::from(p.is_loaded())).sum()
                             }
                         }
                     }

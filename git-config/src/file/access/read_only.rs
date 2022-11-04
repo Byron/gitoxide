@@ -264,7 +264,7 @@ impl<'event> File<'event> {
     ///
     /// This is the metadata the file was instantiated with for use in all newly created sections.
     pub fn meta(&self) -> &Metadata {
-        &*self.meta
+        &self.meta
     }
 
     /// Similar to [`meta()`][File::meta()], but with shared ownership.

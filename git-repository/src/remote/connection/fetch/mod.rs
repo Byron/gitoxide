@@ -97,6 +97,7 @@ where
     /// Note that this implementation is currently limited to blocking mode as it relies on Drop semantics to close the connection
     /// should the fetch not be performed. Furthermore, there the code doing the fetch is inherently blocking so there is no benefit.
     /// It's best to unblock it by placing it into its own thread or offload it should usage in an async context be required.
+    #[allow(clippy::result_large_err)]
     pub fn prepare_fetch(mut self, options: ref_map::Options) -> Result<Prepare<'remote, 'repo, T, P>, prepare::Error> {
         if self.remote.refspecs(remote::Direction::Fetch).is_empty() {
             return Err(prepare::Error::MissingRefSpecs);

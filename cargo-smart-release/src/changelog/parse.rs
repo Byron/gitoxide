@@ -246,7 +246,7 @@ fn parse_conventional_to_next_section_title(
     ]
     .iter()
     .find(|kind| {
-        let headline = section::segment::conventional::as_headline(*kind).unwrap_or(*kind);
+        let headline = section::segment::conventional::as_headline(kind).unwrap_or(*kind);
         let common_len = headline.len().min(title.len());
         title
             .get(..common_len)
@@ -256,7 +256,7 @@ fn parse_conventional_to_next_section_title(
     .expect("BUG: this list needs an update too if new kinds of conventional messages are added");
 
     let mut conventional = section::segment::Conventional {
-        kind: *kind,
+        kind,
         is_breaking,
         removed: vec![],
         messages: vec![],

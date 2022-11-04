@@ -59,6 +59,7 @@ impl Cascade {
     ///
     /// When _getting_ credentials, all programs are asked until the credentials are complete, stopping the cascade.
     /// When _storing_ or _erasing_ all programs are instructed in order.
+    #[allow(clippy::result_large_err)]
     pub fn invoke(&mut self, mut action: helper::Action, mut prompt: git_prompt::Options<'_>) -> protocol::Result {
         let mut url = action
             .context_mut()

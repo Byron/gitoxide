@@ -178,7 +178,7 @@ pub(crate) mod index_lookup {
                         },
                         pack_offset: index.pack_offset_at_index(idx),
                     },
-                    index_file: IntraPackLookup::Single(&**index),
+                    index_file: IntraPackLookup::Single(index),
                     pack: data,
                 }),
                 handle::SingleOrMultiIndex::Multi { index, data } => index.lookup(object_id).map(move |idx| {
@@ -192,7 +192,7 @@ pub(crate) mod index_lookup {
                             pack_offset,
                         },
                         index_file: IntraPackLookup::Multi {
-                            index: &**index,
+                            index,
                             required_pack_index: pack_index,
                         },
                         pack: &mut data[pack_index as usize],
@@ -309,7 +309,7 @@ where
 
     /// Return a shared reference to the contained store.
     pub fn store_ref(&self) -> &S::Target {
-        &*self.store
+        &self.store
     }
 
     /// Return an owned store with shared ownership.

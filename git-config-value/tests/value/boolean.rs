@@ -30,7 +30,7 @@ fn ignores_case() {
     // Random subset
     for word in &["no", "yes", "on", "off", "true", "false"] {
         let first: bool = Boolean::try_from(b(word)).unwrap().into();
-        let second: bool = Boolean::try_from(b(&*word.to_uppercase())).unwrap().into();
+        let second: bool = Boolean::try_from(b(&word.to_uppercase())).unwrap().into();
         assert_eq!(first, second);
     }
 }

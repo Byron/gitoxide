@@ -27,7 +27,7 @@ mod imp {
 /// Ask the user given a `prompt`, returning the result.
 pub fn ask(prompt: &str, opts: &Options<'_>) -> Result<String, Error> {
     if let Some(askpass) = opts.askpass.as_deref() {
-        match git_command::prepare(askpass).arg(&prompt).spawn() {
+        match git_command::prepare(askpass).arg(prompt).spawn() {
             Ok(cmd) => {
                 if let Some(mut stdout) = cmd
                     .wait_with_output()

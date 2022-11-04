@@ -42,6 +42,7 @@ impl PrepareFetch {
     ///
     /// Note that this is merely a handle to perform the actual connection to the remote, and if any of it fails the freshly initialized repository
     /// will be removed automatically as soon as this instance drops.
+    #[allow(clippy::result_large_err)]
     pub fn new<Url, E>(
         url: Url,
         path: impl AsRef<std::path::Path>,

@@ -57,6 +57,7 @@ pub struct Context {
 }
 
 /// Convert the outcome of a helper invocation to a helper result, assuring that the identity is complete in the process.
+#[allow(clippy::result_large_err)]
 pub fn helper_outcome_to_result(outcome: Option<helper::Outcome>, action: helper::Action) -> Result {
     fn redact(mut ctx: Context) -> Context {
         if let Some(pw) = ctx.password.as_mut() {

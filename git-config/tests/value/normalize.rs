@@ -42,14 +42,14 @@ fn all_quote_optimization_is_correct() {
 #[test]
 fn quotes_right_next_to_each_other() {
     let cow = normalize_bstr("\"hello\"\" world\"");
-    assert_eq!(cow, cow_str("hello world").to_owned());
+    assert_eq!(cow, cow_str("hello world").clone());
     assert!(matches!(cow, Cow::Owned(_)));
 }
 
 #[test]
 fn escaped_quotes_are_kept() {
     let cow = normalize_bstr(r#""hello \"\" world""#);
-    assert_eq!(cow, cow_str("hello \"\" world").to_owned(),);
+    assert_eq!(cow, cow_str("hello \"\" world").clone(),);
     assert!(matches!(cow, Cow::Owned(_)));
 }
 

@@ -416,7 +416,7 @@ fn perform_release(ctx: &Context, options: Options, crates: &[traverse::Dependen
     let prevent_default_members = ctx.base.meta.workspace_members.len() > 1;
     for (publishee, new_version) in crates.iter().filter_map(try_to_published_crate_and_new_version) {
         if let Some((crate_, version)) = successful_publishees_and_version.last() {
-            if let Err(err) = wait_for_release(*crate_, version, options) {
+            if let Err(err) = wait_for_release(crate_, version, options) {
                 log::warn!(
                     "Failed to wait for crates-index update - trying to publish '{} v{}' anyway: {}.",
                     publishee.name,

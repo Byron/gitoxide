@@ -33,7 +33,7 @@ impl Support {
             return Ok(());
         }
         if Command::new("bat")
-            .args(&["--paging=always", "-l=md", "--file-name"])
+            .args(["--paging=always", "-l=md", "--file-name"])
             .arg(format!("{} ({})", path_for_title.display(), additional_title.as_ref()))
             .arg(path)
             .status()?

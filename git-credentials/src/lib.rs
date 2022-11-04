@@ -34,6 +34,7 @@ pub mod protocol;
 /// contain only the URL to kick off the process, or should be created by [`helper::NextAction`].
 ///
 /// If more control is required, use the [`Cascade`][helper::Cascade] type.
+#[allow(clippy::result_large_err)]
 pub fn builtin(action: helper::Action) -> protocol::Result {
     protocol::helper_outcome_to_result(
         helper::invoke(&mut Program::from_kind(program::Kind::Builtin), &action)?,

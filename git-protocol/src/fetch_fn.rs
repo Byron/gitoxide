@@ -43,6 +43,7 @@ impl Default for FetchConnection {
 /// * `progress` is used to emit progress messages.
 ///
 /// _Note_ that depending on the `delegate`, the actual action performed can be `ls-refs`, `clone` or `fetch`.
+#[allow(clippy::result_large_err)]
 #[maybe_async]
 pub async fn fetch<F, D, T, P>(
     mut transport: T,

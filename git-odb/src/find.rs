@@ -17,7 +17,7 @@ impl PotentialPrefix {
     /// matching this prefix.
     pub fn new(id: impl Into<git_hash::ObjectId>, hex_len: usize) -> Result<Self, git_hash::prefix::Error> {
         let id = id.into();
-        git_hash::Prefix::new(&id, hex_len)?;
+        git_hash::Prefix::new(id, hex_len)?;
         Ok(PotentialPrefix { id, hex_len })
     }
 

@@ -72,7 +72,7 @@ impl Tree {
                 prev = Some(child);
             }
             if let Some(buf) = find_buf.as_mut() {
-                let tree_entries = find(&parent_id, *buf).ok_or(Error::TreeNodeNotFound { oid: parent_id })?;
+                let tree_entries = find(&parent_id, buf).ok_or(Error::TreeNodeNotFound { oid: parent_id })?;
                 let mut num_entries = 0;
                 for entry in tree_entries
                     .filter_map(Result::ok)

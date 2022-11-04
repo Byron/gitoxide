@@ -125,7 +125,7 @@ mod tag {
         let message = "a multi\nline message";
         let tag_ref = repo.tag(
             "v1.0.0",
-            &current_head_id,
+            current_head_id,
             git_object::Kind::Commit,
             Some(repo.committer_or_default()),
             message,

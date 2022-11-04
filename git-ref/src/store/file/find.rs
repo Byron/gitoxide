@@ -79,7 +79,7 @@ impl file::Store {
         }
 
         for inbetween in &["", "tags", "heads", "remotes"] {
-            match self.find_inner(*inbetween, partial_name, packed, Transform::EnforceRefsPrefix, &mut buf) {
+            match self.find_inner(inbetween, partial_name, packed, Transform::EnforceRefsPrefix, &mut buf) {
                 Ok(Some(r)) => return Ok(Some(r)),
                 Ok(None) => {
                     continue;
