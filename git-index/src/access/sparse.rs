@@ -40,7 +40,7 @@ impl Options {
             (true, true, true) => Mode::IncludeDirectoriesStoreIncludedEntriesAndExcludedDirs,
             (true, true, false) => Mode::IncludeDirectoriesStoreAllEntriesSkipUnmatched,
             (true, false, _) => Mode::IncludeByIgnorePatternStoreAllEntriesSkipUnmatched,
-            (false, _, _) => Mode::IncludeAllEntries,
+            (false, _, _) => Mode::Disabled,
         }
     }
 }
@@ -54,6 +54,6 @@ pub enum Mode {
     IncludeDirectoriesStoreAllEntriesSkipUnmatched,
     /// index with all file entries and skip-worktree flags for exclusion, `ignore` patterns to include entries in `.git/info/sparse-checkout` file.
     IncludeByIgnorePatternStoreAllEntriesSkipUnmatched,
-    /// index with all entries, non is excluded, `.git/info/sparse-checkout` file is not considered.
-    IncludeAllEntries,
+    /// index with all entries, non is excluded, `.git/info/sparse-checkout` file is not considered, a regular index.
+    Disabled,
 }
