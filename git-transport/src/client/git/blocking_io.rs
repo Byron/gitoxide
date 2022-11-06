@@ -187,13 +187,14 @@ pub mod connect {
         let vhost = std::env::var("GIT_OVERRIDE_VIRTUAL_HOST")
             .ok()
             .map(parse_host)
-            .transpose()?;
+            .transpose()?
+            .unwrap_or_else(|| (host.to_owned(), port));
         Ok(git::Connection::new(
             read,
             write,
             desired_version,
             path,
-            vhost,
+            Some(vhost),
             git::ConnectMode::Daemon,
         ))
     }
