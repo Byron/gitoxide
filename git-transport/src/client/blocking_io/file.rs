@@ -28,6 +28,7 @@ const ENV_VARS_TO_REMOVE: &[&str] = &[
     "GIT_INTERNAL_SUPER_PREFIX",
     "GIT_SHALLOW_FILE",
     "GIT_COMMON_DIR",
+    "GIT_CONFIG_COUNT",
 ];
 
 /// A utility to spawn a helper process to actually transmit data, possibly over `ssh`.
