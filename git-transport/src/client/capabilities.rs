@@ -1,4 +1,5 @@
 use bstr::{BStr, BString, ByteSlice};
+use git_packetline::TextRef;
 
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 use crate::client;
@@ -133,14 +134,8 @@ impl Capabilities {
 /// internal use
 #[cfg(any(feature = "blocking-client", feature = "async-client"))]
 impl Capabilities {
-    fn extract_protocol<'a>(
-        capabilities_or_version: &'a git_packetline::PacketLineRef<'_>,
-    ) -> Result<(git_packetline::TextRef<'a>, Protocol), client::Error> {
-        let first_line = capabilities_or_version
-            .as_text()
-            .ok_or(client::Error::ExpectedLine("text"))?;
-
-        let line = first_line.as_bstr();
+    fn extract_protocol<'a>(capabilities_or_version: TextRef<'a>) -> Result<Protocol, client::Error> {
+        let line = capabilities_or_version.as_bstr();
         let version = if line.starts_with_str("version ") {
             if line.len() != "version X".len() {
                 return Err(client::Error::UnsupportedProtocolVersion(line.as_bstr().into()));
@@ -153,16 +148,23 @@ impl Capabilities {
         } else {
             Protocol::V1
         };
-        Ok((first_line, version))
+        Ok(version)
     }
 }
 
 #[cfg(feature = "blocking-client")]
 ///
 pub mod recv {
+    use std::io::Read;
     use std::{io, io::BufRead};
 
-    use crate::{client, client::Capabilities, Protocol};
+    use bstr::ByteSlice;
+
+    use crate::{
+        client,
+        client::{http, Capabilities},
+        Protocol, Service,
+    };
 
     /// Success outcome of [`Capabilities::from_lines_with_version_detection`].
     pub struct Outcome<'a> {
@@ -184,6 +186,7 @@ pub mod recv {
         /// advertisement will also be included in the [`Outcome`].
         pub fn from_lines_with_version_detection<T: io::Read>(
             rd: &mut git_packetline::StreamingPeekableIter<T>,
+            service: Service,
         ) -> Result<Outcome<'_>, client::Error> {
             // NOTE that this is vitally important - it is turned on and stays on for all following requests so
             // we automatically abort if the server sends an ERR line anywhere.
@@ -191,14 +194,37 @@ pub mod recv {
             // format looks like, thus there is no binary blob that could ever look like an ERR line by accident.
             rd.fail_on_err_lines(true);
 
-            let capabilities_or_version = rd
+            // the service announcement is only sent sometimes dependening on the exact server/proctol version/used protocol (http?)
+            // eat the anncoument when its there to avoid errors later (and check that the correct service was announced).
+            // Ignore the announcement otherwise
+            // TODO figure out if the protocol specification ever treats this as mandatory (its not for V2, is it for V1?)
+            let mut line_ = rd
                 .peek_line()
-                .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
+                .ok_or(client::Error::ExpectedLine("capabilities, version or service"))???;
+            let mut line = line_.as_text().ok_or(client::Error::ExpectedLine("text"))?;
 
-            let (first_line, version) = Capabilities::extract_protocol(&capabilities_or_version)?;
+            if let Some(announced_service) = line.as_bstr().trim().strip_prefix(b"# service=") {
+                if announced_service != service.as_str().as_bytes() {
+                    return Err(client::Error::Http(http::Error::Detail {
+                        description: format!(
+                            "Expected to see service {:?}, but got {:?}",
+                            service.as_str(),
+                            announced_service
+                        ),
+                    }));
+                }
+
+                rd.as_read().read_to_end(&mut Vec::new())?;
+                line_ = rd
+                    .peek_line()
+                    .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
+                line = line_.as_text().ok_or(client::Error::ExpectedLine("text"))?;
+            }
+
+            let version = Capabilities::extract_protocol(line)?;
             match version {
                 Protocol::V1 => {
-                    let (capabilities, delimiter_position) = Capabilities::from_bytes(first_line.0)?;
+                    let (capabilities, delimiter_position) = Capabilities::from_bytes(line.0)?;
                     rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
                     Ok(Outcome {
                         capabilities,
@@ -227,7 +253,13 @@ pub mod recv {
     use futures_io::{AsyncBufRead, AsyncRead};
     use futures_lite::{AsyncBufReadExt, StreamExt};
 
-    use crate::{client, client::Capabilities, Protocol};
+        use bstr::ByteSlice;
+
+    use crate::{
+        client,
+        client::{http, Capabilities},
+        Protocol, Service,
+    };
 
     /// Success outcome of [`Capabilities::from_lines_with_version_detection`].
     pub struct Outcome<'a> {
@@ -249,6 +281,7 @@ pub mod recv {
         /// advertisement will also be included in the [`Outcome`].
         pub async fn from_lines_with_version_detection<T: AsyncRead + Unpin>(
             rd: &mut git_packetline::StreamingPeekableIter<T>,
+            service: Service,
         ) -> Result<Outcome<'_>, client::Error> {
             // NOTE that this is vitally important - it is turned on and stays on for all following requests so
             // we automatically abort if the server sends an ERR line anywhere.
@@ -256,15 +289,36 @@ pub mod recv {
             // format looks like, thus there is no binary blob that could ever look like an ERR line by accident.
             rd.fail_on_err_lines(true);
 
-            let capabilities_or_version = rd
+            let mut line_ = rd
                 .peek_line()
                 .await
-                .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
+                .ok_or(client::Error::ExpectedLine("capabilities, version or service"))???;
 
-            let (first_line, version) = Capabilities::extract_protocol(&capabilities_or_version)?;
+            let mut line = line_.as_text().ok_or(client::Error::ExpectedLine("text"))?;
+
+            if let Some(announced_service) = line.as_bstr().trim().strip_prefix(b"# service=") {
+                if announced_service != service.as_str().as_bytes() {
+                    return Err(client::Error::Http(http::Error::Detail {
+                        description: format!(
+                            "Expected to see service {:?}, but got {:?}",
+                            service.as_str(),
+                            announced_service
+                        ),
+                    }));
+                }
+
+                rd.as_read().read_to_end(&mut Vec::new())?.await;
+                line_ = rd
+                    .peek_line()
+                    .await
+                    .ok_or(client::Error::ExpectedLine("capabilities or version"))???;
+                line = line_.as_text().ok_or(client::Error::ExpectedLine("text"))?;
+            }
+
+            let version = Capabilities::extract_protocol(line)?;
             match version {
                 Protocol::V1 => {
-                    let (capabilities, delimiter_position) = Capabilities::from_bytes(first_line.0)?;
+                    let (capabilities, delimiter_position) = Capabilities::from_bytes(line.0)?;
                     rd.peek_buffer_replace_and_truncate(delimiter_position, b'\n');
                     Ok(Outcome {
                         capabilities,

@@ -226,24 +226,12 @@ impl<H: Http> client::Transport for Transport<H> {
             .line_provider
             .get_or_insert_with(|| git_packetline::StreamingPeekableIter::new(body, &[PacketLineRef::Flush]));
 
-        let mut announced_service = String::new();
-        line_reader.as_read().read_to_string(&mut announced_service)?;
-        let expected_service_announcement = format!("# service={}", service.as_str());
-        if announced_service.trim() != expected_service_announcement {
-            return Err(client::Error::Http(Error::Detail {
-                description: format!(
-                    "Expected to see {:?}, but got {:?}",
-                    expected_service_announcement,
-                    announced_service.trim()
-                ),
-            }));
-        }
-
+      
         let capabilities::recv::Outcome {
             capabilities,
             refs,
             protocol: actual_protocol,
-        } = Capabilities::from_lines_with_version_detection(line_reader)?;
+        } = Capabilities::from_lines_with_version_detection(line_reader, service)?;
         self.actual_version = actual_protocol;
         self.service = Some(service);
         Ok(client::SetServiceResponse {
