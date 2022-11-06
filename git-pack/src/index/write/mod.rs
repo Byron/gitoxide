@@ -136,7 +136,7 @@ impl crate::index::File {
         }
         if num_objects != anticipated_num_objects {
             objects_progress.info(format!(
-                "{} objects where resolved into {} objects during thin-pack resolution",
+                "{} objects were resolved into {} objects during thin-pack resolution",
                 anticipated_num_objects, num_objects
             ));
         }
