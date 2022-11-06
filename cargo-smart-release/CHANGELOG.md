@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.14.0 (2022-11-06)
+
+### Bug Fixes
+
+ - <csr-id-0eca94d84bd82f2083b41acdb316edce54365f11/> `where -> were` typo fix.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 6 commits contributed to the release over the course of 27 calendar days.
+ - 27 days passed between releases.
+ - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
+ - 1 unique issue was worked on: [#560](https://github.com/Byron/gitoxide/issues/560)
+
+### Thanks Clippy
+
+<csr-read-only-do-not-edit/>
+
+[Clippy](https://github.com/rust-lang/rust-clippy) helped 1 time to make code idiomatic. 
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#560](https://github.com/Byron/gitoxide/issues/560)**
+    - `where -> were` typo fix. ([`0eca94d`](https://github.com/Byron/gitoxide/commit/0eca94d84bd82f2083b41acdb316edce54365f11))
+ * **Uncategorized**
+    - Release git-features v0.23.1, git-glob v0.4.1, git-config-value v0.8.1, git-tempfile v2.0.6, git-object v0.22.1, git-ref v0.18.0, git-sec v0.4.2, git-config v0.10.0, git-prompt v0.1.1, git-url v0.10.1, git-credentials v0.6.1, git-diff v0.21.0, git-discover v0.7.0, git-index v0.7.0, git-pack v0.25.0, git-odb v0.35.0, git-transport v0.21.1, git-protocol v0.22.0, git-refspec v0.3.1, git-worktree v0.7.0, git-repository v0.26.0, git-commitgraph v0.10.0, gitoxide-core v0.19.0, gitoxide v0.17.0, safety bump 9 crates ([`d071583`](https://github.com/Byron/gitoxide/commit/d071583c5576fdf5f7717765ffed5681792aa81f))
+    - Merge branch 'main' into write-sparse-index (upgrade to Rust 1.65) ([`5406630`](https://github.com/Byron/gitoxide/commit/5406630466145990b5adbdadb59151036993060d))
+    - thanks clippy ([`04cfa63`](https://github.com/Byron/gitoxide/commit/04cfa635a65ae34ad6d22391f2febd2ca7eabca9))
+    - Merge branch 'main' into gix-clone ([`3b48317`](https://github.com/Byron/gitoxide/commit/3b48317d6a9f41765d4f2a9f0a49c31afcdb68b6))
+    - adapt to changes in `git-repository` ([`3ad7581`](https://github.com/Byron/gitoxide/commit/3ad758176739a137960ed4d69f7d28d33b7eb4e0))
+</details>
+
 ## 0.13.0 (2022-10-10)
 
 ### Bug Fixes
@@ -26,7 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 25 commits contributed to the release over the course of 40 calendar days.
+ - 26 commits contributed to the release over the course of 40 calendar days.
  - 40 days passed between releases.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 2 unique issues were worked on: [#450](https://github.com/Byron/gitoxide/issues/450), [#470](https://github.com/Byron/gitoxide/issues/470)
@@ -48,6 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  * **[#470](https://github.com/Byron/gitoxide/issues/470)**
     - adapt to changes in `git-repository` ([`5ec714f`](https://github.com/Byron/gitoxide/commit/5ec714fa687100d77b061516194bc9b96a03c9c0))
  * **Uncategorized**
+    - Release cargo-smart-release v0.13.0 ([`919ba0d`](https://github.com/Byron/gitoxide/commit/919ba0d102e7c730549bed9610a6079550a3aafc))
     - Release git-hash v0.9.11, git-features v0.23.0, git-actor v0.13.0, git-attributes v0.5.0, git-object v0.22.0, git-ref v0.17.0, git-sec v0.4.1, git-config v0.9.0, git-url v0.10.0, git-credentials v0.6.0, git-diff v0.20.0, git-discover v0.6.0, git-traverse v0.18.0, git-index v0.6.0, git-mailmap v0.5.0, git-pack v0.24.0, git-odb v0.34.0, git-packetline v0.13.1, git-transport v0.21.0, git-protocol v0.21.0, git-revision v0.6.0, git-refspec v0.3.0, git-worktree v0.6.0, git-repository v0.25.0, safety bump 24 crates ([`104d922`](https://github.com/Byron/gitoxide/commit/104d922add61ab21c534c24ce8ed37cddf3e275a))
     - thanks clippy ([`65e1627`](https://github.com/Byron/gitoxide/commit/65e1627757d05b451d013fadc5bf902fbe0ced7c))
     - Merge branch 'fix-smart-release' ([`aa80b60`](https://github.com/Byron/gitoxide/commit/aa80b606e5570f327660cca42ea81581a6e9d5e3))
@@ -272,7 +310,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - 2 commits contributed to the release.
  - 1 day passed between releases.
  - 1 commit was understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1569,7 +1607,7 @@ For more information, run `cargo changelog -h`.
  - 5 commits contributed to the release over the course of 2 calendar days.
  - 10 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1602,7 +1640,7 @@ For more information, run `cargo changelog -h`.
  - 47 commits contributed to the release over the course of 11 calendar days.
  - 11 days passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1676,7 +1714,7 @@ For more information, run `cargo changelog -h`.
 
  - 2 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1700,7 +1738,7 @@ For more information, run `cargo changelog -h`.
 
  - 7 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1735,7 +1773,7 @@ For more information, run `cargo changelog -h`.
  - 1 commit contributed to the release.
  - 1 day passed between releases.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1755,7 +1793,7 @@ For more information, run `cargo changelog -h`.
 
  - 2 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1776,7 +1814,7 @@ For more information, run `cargo changelog -h`.
 
  - 7 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
@@ -1816,7 +1854,7 @@ For more information, run `cargo changelog -h`.
 
  - 45 commits contributed to the release.
  - 0 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 0 issues like '(#ID)' where seen in commit messages
+ - 0 issues like '(#ID)' were seen in commit messages
 
 ### Commit Details
 
